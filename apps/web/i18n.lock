@@ -289,7 +289,6 @@ checksums:
     common/more_options: 53d90eae6a9b0243b5bc043b3d9de169
     common/move_down: 4f4de55743043355ad4a839aff2c48ff
     common/move_up: 69f25b205c677abdb26cbb69d97cd10b
-    common/my_workspace: 1044efda578897a57858e2d1380cf4f4
     common/name: 9368b5a047572b6051f334af5aa76819
     common/new_version_available: 399ddfc4232712e18ddab2587356b3dc
     common/next: 89ddbcf710eba274963494f312bdc8a9
@@ -2218,6 +2217,10 @@ checksums:
     workspace/settings/billing/custom_plan_description: 53faa38123cc74e5adc7e59630641d66
     workspace/settings/billing/custom_plan_title: f3b71be0d1cd4f81a177ada040119f30
     workspace/settings/billing/downgrade_to_hobby: 77a35281775a0e2bac9c27ae0d28e4bf
+    workspace/settings/billing/dynamic_pricing_first_unit: 76a325bf3f9e14b6020b9fbc35cceb73
+    workspace/settings/billing/dynamic_pricing_last_unit: fc140f03e2f0768ec4cc20ed1bf19c9a
+    workspace/settings/billing/dynamic_pricing_per_unit: 67e4d330b97b8b2e089558ea8148d708
+    workspace/settings/billing/dynamic_pricing_unlimited: 1762c0cfba36e1229b5cb5f22c08aeb8
     workspace/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
     workspace/settings/billing/go_to_billing: cd3ec8ecd7af2e724b44a61b29517ee7
     workspace/settings/billing/keep_current_plan: 57ac15ffa2c29ac364dd405669eeb7f6
@@ -2252,7 +2255,6 @@ checksums:
     workspace/settings/billing/plan_pro_feature_contacts: 7903fb57ee1b2d765432132ab8ed8567
     workspace/settings/billing/plan_pro_feature_hide_branding: 7ad42ebacfd5a093b54628c07fd1c382
     workspace/settings/billing/plan_pro_feature_integrations: e99bdc19cfb95a097311a5bf2b3a6f97
-    workspace/settings/billing/plan_pro_feature_responses: e16ffe385051a16dba76538c13d97a5f
     workspace/settings/billing/plan_pro_feature_sdks: 0963480a27df49657c1b7507adec9a06
     workspace/settings/billing/plan_pro_feature_smart_tools: 109f15a3015999bc7abfbc314c61656b
     workspace/settings/billing/plan_pro_feature_unlimited_seats: 478092018a27a4e588cb5c70968ef11a
@@ -2262,7 +2264,6 @@ checksums:
     workspace/settings/billing/plan_scale_feature_feedback: 412dca7f6c7255b202da88e522f05193
     workspace/settings/billing/plan_scale_feature_quota: f0b44ec6d192e8ee2fd3ff53b8ecda32
     workspace/settings/billing/plan_scale_feature_rbac: ecde7a5204109c220a358d46210c869d
-    workspace/settings/billing/plan_scale_feature_responses: 0b74bf8d089c738ebb7f0867bdd7d7f1
     workspace/settings/billing/plan_scale_feature_security: 6671961cf8d8413d1740b13901bcc033
     workspace/settings/billing/plan_scale_feature_semantic_analysis: 1441e34cacd26f0aa27af4ebad6e5c54
     workspace/settings/billing/plan_scale_feature_workspaces: 6bd1b676b9470ca8cc4e73be3ffd4bef
@@ -3605,13 +3606,17 @@ checksums:
     workspace/unify/select_survey: bac52e59c7847417bef6fe7b7096b475
     workspace/unify/select_survey_and_questions: 53914988a2f48caecea23f3b3b868b9f
     workspace/unify/select_survey_questions_description: 3386ed56085eabebefa3cc453269fc5b
+    workspace/unify/semantic_search_confidence_tooltip: 8686293532c1863f538c71f9dd0cc76c
     workspace/unify/semantic_search_failed: 6adf5f85d453ef2923861ad7b188787a
     workspace/unify/semantic_search_input_label: 3b8af322b080da8b8cb4fcce6c3f3d1e
+    workspace/unify/semantic_search_match_label: 35caa19382f43c0a32fe9e1093c4dea2
+    workspace/unify/semantic_search_match_partial: 514690a02fbd490b0603eeaa7e8f9160
+    workspace/unify/semantic_search_match_strong: caf464aed9340afc08a45bbcc060a1b9
+    workspace/unify/semantic_search_match_weak: 69931360797dcbbd2a006785ba4f937c
     workspace/unify/semantic_search_missing_text: e1ad1ba8f3ab2e05f4f73732543d0ed5
     workspace/unify/semantic_search_no_directories: 2bcebe10f5898f5422ee17ed66295044
     workspace/unify/semantic_search_no_results: 50f0572ad7584c91af5a0a28523f40f2
     workspace/unify/semantic_search_placeholder: b5dbff2cdd334d7b86f18a12c56ffbb1
-    workspace/unify/semantic_search_relevance: ddd1a91cd29944d5af7b899168b988a2
     workspace/unify/semantic_search_results_count: 199b822e4f709787b79dd42ccd70e58f
     workspace/unify/semantic_search_unavailable: eb66fd42fc327627e74fe54a76f33b16
     workspace/unify/semantic_topics_example_confusing_onboarding: ac612953829e6a7f58e34796a472ca71
