@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist"
+  },
+  "exclude": ["node_modules", "dist"],
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src"]
+}
