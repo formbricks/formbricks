@@ -13,6 +13,7 @@ import {
   ZWebhookIdSchema,
   ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { removeSecretFromWebhook } from "@/modules/api/v2/management/webhooks/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
@@ -46,7 +47,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
         });
       }
 
-      return responses.successResponse(webhook);
+      return responses.successResponse({ data: removeSecretFromWebhook(webhook.data) });
     },
   });
 
@@ -126,7 +127,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         auditLog.newObject = updatedWebhook.data;
       }
 
-      return responses.successResponse(updatedWebhook);
+      return responses.successResponse({ data: removeSecretFromWebhook(updatedWebhook.data) });
     },
     action: "updated",
     targetType: "webhook",
@@ -183,7 +184,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
         auditLog.oldObject = webhook.data;
       }
 
-      return responses.successResponse(deletedWebhook);
+      return responses.successResponse({ data: removeSecretFromWebhook(deletedWebhook.data) });
     },
     action: "deleted",
     targetType: "webhook",

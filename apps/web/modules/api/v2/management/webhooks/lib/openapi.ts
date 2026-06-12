@@ -1,5 +1,5 @@
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
-import { ZWebhook } from "@formbricks/database/zod/webhooks";
+import { ZWebhook, ZWebhookWithoutSecret } from "@formbricks/database/zod/webhooks";
 import {
   deleteWebhookEndpoint,
   getWebhookEndpoint,
@@ -21,7 +21,7 @@ export const getWebhooksEndpoint: ZodOpenApiOperationObject = {
       description: "Webhooks retrieved successfully.",
       content: {
         "application/json": {
-          schema: responseWithMetaSchema(makePartialSchema(ZWebhook)),
+          schema: responseWithMetaSchema(makePartialSchema(ZWebhookWithoutSecret)),
         },
       },
     },
