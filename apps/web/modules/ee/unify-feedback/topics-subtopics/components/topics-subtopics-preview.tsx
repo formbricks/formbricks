@@ -1,7 +1,17 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { GitBranchIcon, Loader2Icon, PencilIcon, PlayIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import {
+  ChevronRightIcon,
+  FileTextIcon,
+  GitBranchIcon,
+  Loader2Icon,
+  PencilIcon,
+  PlayIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  Trash2Icon,
+} from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -18,6 +28,14 @@ import type {
 } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -28,6 +46,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/modules/ui/components/sheet";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import {
   getTaxonomyFieldsAction,
@@ -47,6 +72,7 @@ interface TopicsSubtopicsPreviewProps {
 }
 
 const RUNNING_STATUSES = new Set(["pending", "running"]);
+const NODE_RECORD_LIMIT = 50;
 
 const fieldKey = (field: TaxonomyFieldOption) =>
   [field.source_type, field.source_id, field.field_id].join("::");
@@ -108,6 +134,74 @@ const nodeTypeLabel = (nodeType: TaxonomyNode["node_type"], t: TFunction): strin
   }
 };
 
+type TaxonomyColumn = {
+  level: number;
+  nodes: TaxonomyNode[];
+};
+
+const findNodePath = (root: TaxonomyNode | null | undefined, nodeId: string): TaxonomyNode[] => {
+  if (!root) return [];
+  if (root.id === nodeId) return [root];
+
+  for (const child of root.children ?? []) {
+    const childPath = findNodePath(child, nodeId);
+    if (childPath.length > 0) {
+      return [root, ...childPath];
+    }
+  }
+
+  return [];
+};
+
+const firstDeepestNode = (root: TaxonomyNode | null | undefined): TaxonomyNode | null => {
+  if (!root) return null;
+
+  let current = root;
+  while (current.children?.[0]) {
+    current = current.children[0];
+  }
+
+  return current;
+};
+
+const taxonomyColumnsFromPath = (
+  root: TaxonomyNode | null | undefined,
+  path: TaxonomyNode[]
+): TaxonomyColumn[] => {
+  if (!root?.children?.length) return [];
+
+  const columns: TaxonomyColumn[] = [];
+  let parent = root;
+
+  while (parent.children?.length) {
+    columns.push({
+      level: parent.children[0]?.level ?? columns.length + 1,
+      nodes: parent.children,
+    });
+
+    const nextParent = path.find((node) => node.parent_id === parent.id);
+    if (!nextParent) break;
+
+    parent = nextParent;
+  }
+
+  return columns;
+};
+
+const getNodeRecordEstimate = (node: TaxonomyNode): number | null => {
+  const metadata = node.metadata;
+  if (!metadata) return null;
+
+  for (const key of ["record_count", "records_count", "cluster_size", "size"]) {
+    const value = metadata[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
 export const TopicsSubtopicsPreview = ({
   workspaceId,
   directoryMap,
@@ -123,7 +217,9 @@ export const TopicsSubtopicsPreview = ({
   const [runs, setRuns] = useState<TaxonomyRun[]>([]);
   const [selectedNode, setSelectedNode] = useState<TaxonomyNode | null>(null);
   const [nodeRecords, setNodeRecords] = useState<TaxonomyNodeRecordsResponse["data"]>([]);
-  const [renameLabel, setRenameLabel] = useState("");
+  const [editNode, setEditNode] = useState<TaxonomyNode | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [isRecordsDrawerOpen, setIsRecordsDrawerOpen] = useState(false);
   const [isLoadingFields, setIsLoadingFields] = useState(false);
   const [isLoadingState, setIsLoadingState] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -165,6 +261,18 @@ export const TopicsSubtopicsPreview = ({
   const latestRunError = latestRun ? runErrorMessage(latestRun) : null;
   const hasRunningRun = latestRun ? RUNNING_STATUSES.has(latestRun.status) : false;
   const canGenerate = Boolean(selectedField && canWrite && !hasRunningRun && !isGenerating);
+  const selectedPath = useMemo(
+    () => (selectedNode ? findNodePath(activeTree?.root, selectedNode.id) : []),
+    [activeTree?.root, selectedNode]
+  );
+  const selectedPathIds = useMemo(() => new Set(selectedPath.map((node) => node.id)), [selectedPath]);
+  const taxonomyColumns = useMemo(
+    () => taxonomyColumnsFromPath(activeTree?.root, selectedPath),
+    [activeTree?.root, selectedPath]
+  );
+  const selectedNodeRecordEstimate = selectedNode ? getNodeRecordEstimate(selectedNode) : null;
+  const selectedNodeRecordCount =
+    selectedNodeRecordEstimate ?? (nodeRecords.length < NODE_RECORD_LIMIT ? nodeRecords.length : null);
 
   const loadFields = useCallback(
     async (nextDirectoryId: string) => {
@@ -180,6 +288,8 @@ export const TopicsSubtopicsPreview = ({
       setRuns([]);
       setSelectedNode(null);
       setNodeRecords([]);
+      setEditNode(null);
+      setIsRecordsDrawerOpen(false);
 
       try {
         const response = await getTaxonomyFieldsAction({ workspaceId, directoryId: nextDirectoryId });
@@ -215,6 +325,8 @@ export const TopicsSubtopicsPreview = ({
     setNotice(null);
     setSelectedNode(null);
     setNodeRecords([]);
+    setEditNode(null);
+    setIsRecordsDrawerOpen(false);
 
     try {
       const response = await getTaxonomyStateAction({ workspaceId, scope: selectedScope });
@@ -313,33 +425,45 @@ export const TopicsSubtopicsPreview = ({
     }
   };
 
-  const handleSelectNode = async (node: TaxonomyNode) => {
-    if (!selectedScope) return;
+  const handleSelectNode = useCallback(
+    async (node: TaxonomyNode) => {
+      if (!selectedScope) return;
 
-    setSelectedNode(node);
-    setRenameLabel(node.label);
-    setIsLoadingRecords(true);
-    setError(null);
+      setSelectedNode(node);
+      setIsLoadingRecords(true);
+      setError(null);
 
-    try {
-      const response = await getTaxonomyNodeRecordsAction({
-        workspaceId,
-        tenantId: selectedScope.tenant_id,
-        nodeId: node.id,
-        limit: 50,
-      });
-      if (!response?.data) {
-        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_load_records_failed"));
-        return;
+      try {
+        const response = await getTaxonomyNodeRecordsAction({
+          workspaceId,
+          tenantId: selectedScope.tenant_id,
+          nodeId: node.id,
+          limit: 50,
+        });
+        if (!response?.data) {
+          setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_load_records_failed"));
+          return;
+        }
+
+        setNodeRecords(response.data.data);
+      } catch {
+        setError(t("workspace.unify.taxonomy_load_records_failed"));
+      } finally {
+        setIsLoadingRecords(false);
       }
+    },
+    [selectedScope, t, workspaceId]
+  );
 
-      setNodeRecords(response.data.data);
-    } catch {
-      setError(t("workspace.unify.taxonomy_load_records_failed"));
-    } finally {
-      setIsLoadingRecords(false);
+  useEffect(() => {
+    if (!activeTree?.root || !selectedScope) return;
+    if (selectedNode && findNodePath(activeTree.root, selectedNode.id).length > 0) return;
+
+    const defaultNode = firstDeepestNode(activeTree.root);
+    if (defaultNode) {
+      void handleSelectNode(defaultNode);
     }
-  };
+  }, [activeTree?.root, handleSelectNode, selectedNode, selectedScope]);
 
   const reloadTree = async () => {
     if (!activeTree || !selectedScope) return;
@@ -354,8 +478,13 @@ export const TopicsSubtopicsPreview = ({
     }
   };
 
+  const handleOpenEdit = (node: TaxonomyNode) => {
+    setEditNode(node);
+    setEditLabel(node.label);
+  };
+
   const handleRename = async () => {
-    if (!selectedNode || !selectedScope || !renameLabel.trim()) return;
+    if (!editNode || !selectedScope || !editLabel.trim()) return;
 
     setIsSavingNode(true);
     setError(null);
@@ -363,15 +492,18 @@ export const TopicsSubtopicsPreview = ({
       const response = await renameTaxonomyNodeAction({
         workspaceId,
         tenantId: selectedScope.tenant_id,
-        nodeId: selectedNode.id,
-        label: renameLabel.trim(),
+        nodeId: editNode.id,
+        label: editLabel.trim(),
       });
       if (!response?.data) {
         setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_rename_failed"));
         return;
       }
 
-      setSelectedNode(response.data);
+      if (selectedNode?.id === response.data.id) {
+        setSelectedNode(response.data);
+      }
+      setEditNode(null);
       await reloadTree();
     } catch {
       setError(t("workspace.unify.taxonomy_rename_failed"));
@@ -381,7 +513,7 @@ export const TopicsSubtopicsPreview = ({
   };
 
   const handleRemove = async () => {
-    if (!selectedNode || !selectedScope) return;
+    if (!editNode || !selectedScope) return;
 
     setIsSavingNode(true);
     setError(null);
@@ -389,15 +521,18 @@ export const TopicsSubtopicsPreview = ({
       const response = await removeTaxonomyNodeAction({
         workspaceId,
         tenantId: selectedScope.tenant_id,
-        nodeId: selectedNode.id,
+        nodeId: editNode.id,
       });
       if (!response?.data) {
         setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_remove_failed"));
         return;
       }
 
-      setSelectedNode(null);
-      setNodeRecords([]);
+      if (selectedNode?.id === editNode.id) {
+        setSelectedNode(null);
+        setNodeRecords([]);
+      }
+      setEditNode(null);
       await reloadTree();
     } catch {
       setError(t("workspace.unify.taxonomy_remove_failed"));
@@ -546,8 +681,8 @@ export const TopicsSubtopicsPreview = ({
           </div>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+          <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <GitBranchIcon className="size-4 text-slate-500" />
@@ -560,11 +695,27 @@ export const TopicsSubtopicsPreview = ({
 
             <div className="p-4">
               {activeTree?.root ? (
-                <TaxonomyTree
-                  node={activeTree.root}
-                  selectedNodeId={selectedNode?.id}
-                  onSelect={handleSelectNode}
-                />
+                <div className="overflow-x-auto">
+                  <div
+                    className="grid min-h-[560px] gap-3"
+                    style={{
+                      gridTemplateColumns: `repeat(${Math.max(taxonomyColumns.length, 1)}, minmax(220px, 1fr))`,
+                      minWidth: `${Math.max(taxonomyColumns.length, 3) * 244}px`,
+                    }}>
+                    {taxonomyColumns.map((column) => (
+                      <TaxonomyColumnView
+                        key={column.level}
+                        column={column}
+                        selectedPathIds={selectedPathIds}
+                        selectedNodeId={selectedNode?.id}
+                        selectedNodeRecordCount={selectedNodeRecordCount}
+                        canWrite={canWrite}
+                        onSelect={handleSelectNode}
+                        onEdit={handleOpenEdit}
+                      />
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
                   {selectedField
@@ -575,71 +726,39 @@ export const TopicsSubtopicsPreview = ({
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-4 py-3">
-              <h2 className="text-sm font-semibold text-slate-900">
-                {t("workspace.unify.taxonomy_selected_topic")}
-              </h2>
-            </div>
-
-            <div className="space-y-4 p-4">
-              {selectedNode ? (
-                <>
-                  <div className="space-y-2">
-                    <Input value={renameLabel} onChange={(event) => setRenameLabel(event.target.value)} />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={!canWrite || isSavingNode || !renameLabel.trim()}
-                        loading={isSavingNode}
-                        onClick={handleRename}>
-                        <PencilIcon className="size-4" />
-                        {t("workspace.unify.taxonomy_rename")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        disabled={!canWrite || isSavingNode || selectedNode.node_type === "root"}
-                        onClick={handleRemove}>
-                        <Trash2Icon className="size-4" />
-                        {t("workspace.unify.taxonomy_remove")}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-slate-900">
-                        {t("workspace.unify.feedback_records")}
-                      </p>
-                      {isLoadingRecords && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
-                    </div>
-                    {nodeRecords.length > 0 ? (
-                      <div className="max-h-[520px] space-y-3 overflow-auto">
-                        {nodeRecords.map((record) => (
-                          <div key={record.id} className="rounded-lg border border-slate-200 p-3">
-                            <p className="truncate text-xs font-medium text-slate-500">
-                              {record.field_label || record.field_id}
-                            </p>
-                            <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
-                              {record.value_text || t("workspace.unify.taxonomy_no_text_value")}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-500">{t("workspace.unify.taxonomy_no_records")}</p>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-slate-500">{t("workspace.unify.taxonomy_select_topic")}</p>
-              )}
-            </div>
-          </div>
+          <TaxonomyDetailPanel
+            selectedNode={selectedNode}
+            nodeRecords={nodeRecords}
+            selectedNodeRecordCount={selectedNodeRecordCount}
+            isLoadingRecords={isLoadingRecords}
+            canWrite={canWrite}
+            onEdit={handleOpenEdit}
+            onOpenRecords={() => setIsRecordsDrawerOpen(true)}
+          />
         </div>
       </div>
+
+      <EditKeywordDialog
+        node={editNode}
+        label={editLabel}
+        canWrite={canWrite}
+        isSaving={isSavingNode}
+        onOpenChange={(open) => {
+          if (!open) setEditNode(null);
+        }}
+        onLabelChange={setEditLabel}
+        onSave={handleRename}
+        onRemove={handleRemove}
+      />
+
+      <RecordsSheet
+        open={isRecordsDrawerOpen}
+        onOpenChange={setIsRecordsDrawerOpen}
+        selectedNode={selectedNode}
+        nodeRecords={nodeRecords}
+        selectedNodeRecordCount={selectedNodeRecordCount}
+        isLoadingRecords={isLoadingRecords}
+      />
     </PageContentWrapper>
   );
 };
@@ -651,36 +770,384 @@ const Selector = ({ label, children }: Readonly<{ label: string; children: React
   </label>
 );
 
-const TaxonomyTree = ({
-  node,
+const TaxonomyColumnView = ({
+  column,
+  selectedPathIds,
   selectedNodeId,
+  selectedNodeRecordCount,
+  canWrite,
   onSelect,
+  onEdit,
 }: Readonly<{
-  node: TaxonomyNode;
+  column: TaxonomyColumn;
+  selectedPathIds: Set<string>;
   selectedNodeId?: string;
+  selectedNodeRecordCount: number | null;
+  canWrite: boolean;
   onSelect: (node: TaxonomyNode) => void;
-}>) => {
-  const { t } = useTranslation();
-  const isSelected = selectedNodeId === node.id;
-
-  return (
-    <div className="space-y-1">
+  onEdit: (node: TaxonomyNode) => void;
+}>) => (
+  <section className="min-w-0 rounded-lg border border-slate-200 bg-white">
+    <div className="flex h-12 items-center justify-between border-b border-slate-200 px-3">
+      <div className="flex min-w-0 items-baseline gap-2">
+        <h3 className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600">
+          Level {column.level} keywords
+        </h3>
+        <span className="text-xs font-medium text-slate-400">{column.nodes.length}</span>
+      </div>
       <button
         type="button"
-        className={`flex min-h-9 w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm ${
-          isSelected ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
-        }`}
-        style={{
-          marginLeft: `${Math.min(node.level, 5) * 16}px`,
-          width: `calc(100% - ${Math.min(node.level, 5) * 16}px)`,
-        }}
-        onClick={() => onSelect(node)}>
-        <span className="min-w-0 truncate">{node.label}</span>
-        <Badge text={nodeTypeLabel(node.node_type, t)} type="gray" size="tiny" />
+        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled
+        title="Adding taxonomy keywords is not part of the beta edit scope.">
+        <PlusIcon className="size-3.5" />
+        Add
       </button>
-      {node.children?.map((child) => (
-        <TaxonomyTree key={child.id} node={child} selectedNodeId={selectedNodeId} onSelect={onSelect} />
+    </div>
+
+    <div className="space-y-1 p-2">
+      {column.nodes.map((node) => (
+        <TaxonomyColumnRow
+          key={node.id}
+          node={node}
+          isInSelectedPath={selectedPathIds.has(node.id)}
+          isSelected={selectedNodeId === node.id}
+          selectedNodeRecordCount={selectedNodeRecordCount}
+          canWrite={canWrite}
+          onSelect={onSelect}
+          onEdit={onEdit}
+        />
       ))}
+    </div>
+  </section>
+);
+
+const TaxonomyColumnRow = ({
+  node,
+  isInSelectedPath,
+  isSelected,
+  selectedNodeRecordCount,
+  canWrite,
+  onSelect,
+  onEdit,
+}: Readonly<{
+  node: TaxonomyNode;
+  isInSelectedPath: boolean;
+  isSelected: boolean;
+  selectedNodeRecordCount: number | null;
+  canWrite: boolean;
+  onSelect: (node: TaxonomyNode) => void;
+  onEdit: (node: TaxonomyNode) => void;
+}>) => {
+  const count = isSelected ? selectedNodeRecordCount : getNodeRecordEstimate(node);
+  const hasChildren = Boolean(node.children?.length);
+
+  return (
+    <div
+      className={`group flex min-h-9 w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
+        isInSelectedPath ? "bg-slate-950 text-white" : "text-slate-800 hover:bg-slate-50 hover:text-slate-950"
+      }`}>
+      <button
+        type="button"
+        className="min-w-0 flex-1 truncate text-left font-medium"
+        onClick={() => onSelect(node)}>
+        {node.label}
+      </button>
+      {count !== null && (
+        <span className={isInSelectedPath ? "text-xs text-slate-300" : "text-xs text-slate-400"}>
+          {count.toLocaleString()}
+        </span>
+      )}
+      {canWrite && (
+        <button
+          type="button"
+          aria-label={`Edit ${node.label}`}
+          className={`rounded p-0.5 ${
+            isInSelectedPath
+              ? "text-slate-300 hover:text-white"
+              : "text-slate-400 opacity-0 hover:text-slate-700 group-hover:opacity-100"
+          }`}
+          onClick={() => onEdit(node)}>
+          <PencilIcon className="size-3.5" />
+        </button>
+      )}
+      {hasChildren && (
+        <ChevronRightIcon className={isInSelectedPath ? "size-4 text-slate-300" : "size-4 text-slate-400"} />
+      )}
+    </div>
+  );
+};
+
+const TaxonomyDetailPanel = ({
+  selectedNode,
+  nodeRecords,
+  selectedNodeRecordCount,
+  isLoadingRecords,
+  canWrite,
+  onEdit,
+  onOpenRecords,
+}: Readonly<{
+  selectedNode: TaxonomyNode | null;
+  nodeRecords: TaxonomyNodeRecordsResponse["data"];
+  selectedNodeRecordCount: number | null;
+  isLoadingRecords: boolean;
+  canWrite: boolean;
+  onEdit: (node: TaxonomyNode) => void;
+  onOpenRecords: () => void;
+}>) => {
+  const { t } = useTranslation();
+  const childKeywords = selectedNode?.children ?? [];
+
+  return (
+    <aside className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      {selectedNode ? (
+        <div className="space-y-6 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-semibold text-slate-950">{selectedNode.label}</h2>
+              <button
+                type="button"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-dark hover:text-brand-dark/80"
+                onClick={onOpenRecords}>
+                {isLoadingRecords ? (
+                  <Loader2Icon className="size-4 animate-spin" />
+                ) : (
+                  <FileTextIcon className="size-4" />
+                )}
+                {selectedNodeRecordCount === null
+                  ? "View records"
+                  : `View ${selectedNodeRecordCount.toLocaleString()} records`}
+                <ChevronRightIcon className="size-4" />
+              </button>
+            </div>
+            {canWrite && (
+              <Button size="sm" variant="ghost" onClick={() => onEdit(selectedNode)}>
+                <PencilIcon className="size-4" />
+                {t("common.edit")}
+              </Button>
+            )}
+          </div>
+
+          <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+            {selectedNode.description || "Feedback records classified under this keyword."}
+          </div>
+
+          {childKeywords.length > 0 ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-950">{childKeywords.length} child keywords</p>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-500"
+                  disabled
+                  title="Adding taxonomy keywords is not part of the beta edit scope.">
+                  <PlusIcon className="size-4" />
+                  Add keyword
+                </button>
+              </div>
+              <div className="flex h-2 overflow-hidden rounded-full bg-slate-100">
+                {childKeywords.map((child, index) => (
+                  <div
+                    key={child.id}
+                    className={
+                      ["bg-red-400", "bg-amber-400", "bg-emerald-400", "bg-sky-400", "bg-violet-400"][
+                        index % 5
+                      ]
+                    }
+                    style={{ width: `${100 / childKeywords.length}%` }}
+                  />
+                ))}
+              </div>
+              <div className="space-y-3">
+                {childKeywords.map((child, index) => (
+                  <div key={child.id} className="rounded-lg border border-slate-100 p-4">
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`mt-1.5 size-2 rounded-full ${
+                          ["bg-red-400", "bg-amber-400", "bg-emerald-400", "bg-sky-400", "bg-violet-400"][
+                            index % 5
+                          ]
+                        }`}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase text-slate-500">
+                          {nodeTypeLabel(child.node_type, t)}
+                        </p>
+                        <p className="mt-1 truncate text-sm font-semibold text-slate-950">{child.label}</p>
+                        {child.description && (
+                          <p className="mt-1 line-clamp-2 text-sm text-slate-500">{child.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-950">
+                  {t("workspace.unify.feedback_records")}
+                </p>
+                {isLoadingRecords && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
+              </div>
+              {nodeRecords.length > 0 ? (
+                <div className="space-y-3">
+                  {nodeRecords.slice(0, 3).map((record) => (
+                    <FeedbackRecordCard key={record.id} record={record} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">{t("workspace.unify.taxonomy_no_records")}</p>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="p-5">
+          <h2 className="text-sm font-semibold text-slate-900">
+            {t("workspace.unify.taxonomy_selected_topic")}
+          </h2>
+          <p className="mt-4 text-sm text-slate-500">{t("workspace.unify.taxonomy_select_topic")}</p>
+        </div>
+      )}
+    </aside>
+  );
+};
+
+const EditKeywordDialog = ({
+  node,
+  label,
+  canWrite,
+  isSaving,
+  onOpenChange,
+  onLabelChange,
+  onSave,
+  onRemove,
+}: Readonly<{
+  node: TaxonomyNode | null;
+  label: string;
+  canWrite: boolean;
+  isSaving: boolean;
+  onOpenChange: (open: boolean) => void;
+  onLabelChange: (label: string) => void;
+  onSave: () => void;
+  onRemove: () => void;
+}>) => {
+  const { t } = useTranslation();
+
+  return (
+    <Dialog open={Boolean(node)} onOpenChange={onOpenChange}>
+      <DialogContent width="narrow" className="p-6">
+        <DialogHeader>
+          <DialogTitle>Edit Level {node?.level ?? ""} keyword</DialogTitle>
+        </DialogHeader>
+        <DialogBody className="space-y-5 overflow-visible">
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold text-slate-900">Keyword</span>
+            <Input
+              value={label}
+              disabled={!canWrite || isSaving}
+              onChange={(event) => onLabelChange(event.target.value)}
+            />
+          </label>
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold text-slate-900">{t("common.description")}</span>
+            <textarea
+              className="min-h-28 w-full resize-y rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
+              value={node?.description ?? ""}
+              readOnly
+              placeholder="Generated description"
+            />
+            <p className="text-xs text-slate-500">Beta edits currently support keyword rename and removal.</p>
+          </label>
+        </DialogBody>
+        <DialogFooter className="items-center justify-between sm:justify-between">
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={!canWrite || isSaving || !node || node.node_type === "root"}
+            onClick={onRemove}>
+            <Trash2Icon className="size-4" />
+            {t("common.delete")}
+          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="ghost" disabled={isSaving} onClick={() => onOpenChange(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              disabled={!canWrite || isSaving || !label.trim()}
+              loading={isSaving}
+              onClick={onSave}>
+              {t("common.save_changes")}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const RecordsSheet = ({
+  open,
+  onOpenChange,
+  selectedNode,
+  nodeRecords,
+  selectedNodeRecordCount,
+  isLoadingRecords,
+}: Readonly<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedNode: TaxonomyNode | null;
+  nodeRecords: TaxonomyNodeRecordsResponse["data"];
+  selectedNodeRecordCount: number | null;
+  isLoadingRecords: boolean;
+}>) => {
+  const { t } = useTranslation();
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full overflow-y-auto bg-white sm:max-w-[640px]">
+        <SheetHeader className="space-y-1 pr-8">
+          <SheetTitle>{selectedNode?.label ?? t("workspace.unify.feedback_records")}</SheetTitle>
+          <SheetDescription>
+            {selectedNodeRecordCount === null
+              ? `Showing the first ${nodeRecords.length.toLocaleString()} feedback records classified under this keyword.`
+              : `Showing ${nodeRecords.length.toLocaleString()} of ${selectedNodeRecordCount.toLocaleString()} feedback records classified under this keyword.`}
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-6 space-y-3">
+          {isLoadingRecords && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
+          {nodeRecords.length > 0 ? (
+            nodeRecords.map((record) => <FeedbackRecordCard key={record.id} record={record} />)
+          ) : (
+            <p className="text-sm text-slate-500">{t("workspace.unify.taxonomy_no_records")}</p>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+const FeedbackRecordCard = ({
+  record,
+}: Readonly<{ record: TaxonomyNodeRecordsResponse["data"][number] }>) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex flex-wrap gap-2">
+        <Badge text={record.source_type || "feedback"} type="gray" size="tiny" />
+        {record.field_type && <Badge text={record.field_type} type="gray" size="tiny" />}
+      </div>
+      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        {record.field_label || record.field_id}
+      </p>
+      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+        {record.value_text || t("workspace.unify.taxonomy_no_text_value")}
+      </p>
     </div>
   );
 };
