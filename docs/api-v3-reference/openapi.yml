@@ -213,8 +213,8 @@ paths:
         `invalid_reference`.
 
         This first write surface intentionally stays structure-focused: `type` may be omitted or set
-        to `link`, but `app`/in-app survey creation and distribution-channel settings are not part of
-        this operation. Unsupported fields are rejected instead of ignored.
+        to `link` or `app`, but in-app survey creation and distribution-channel settings are not part
+        of this operation. Unsupported fields are rejected instead of ignored.
       tags:
         - V3 Surveys
       requestBody:
@@ -356,8 +356,8 @@ paths:
                     $ref: "#/components/schemas/SurveyResource"
         "400":
           description: |
-            Bad Request — invalid JSON, unsupported fields, non-`link` type, malformed multilingual
-            maps, duplicate stable ids, or dangling logic/reference ids.
+            Bad Request — invalid JSON, unsupported fields, malformed multilingual maps, duplicate
+            stable ids, or dangling logic/reference ids.
           content:
             application/problem+json:
               schema:
@@ -1185,11 +1185,11 @@ components:
           minLength: 1
         type:
           type: string
-          enum: [link]
+          enum: [link, app]
           default: link
           description: |
-            Optional compatibility field. Only `link` is accepted here; app/in-app survey distribution
-            remains outside this structure-focused create endpoint.
+            Optional compatibility field. `link` and `app` survey types are accepted here; app/in-app
+            survey distribution settings remain outside this structure-focused create endpoint.
         status:
           type: string
           enum: [draft, inProgress, paused, completed]

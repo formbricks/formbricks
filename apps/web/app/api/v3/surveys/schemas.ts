@@ -6,6 +6,7 @@ import {
   ZSurveyHiddenFields,
   ZSurveyMetadata,
   ZSurveyStatus,
+  ZSurveyType,
   ZSurveyVariables,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
@@ -1094,7 +1095,7 @@ const ZV3CreateSurveyBodyBase = z.preprocess(
   z
     .object({
       workspaceId: z.cuid2(),
-      type: z.literal("link").prefault("link"),
+      type: ZSurveyType.prefault("link"),
       ...V3_SURVEY_DOCUMENT_SHAPE,
     })
     .strict()

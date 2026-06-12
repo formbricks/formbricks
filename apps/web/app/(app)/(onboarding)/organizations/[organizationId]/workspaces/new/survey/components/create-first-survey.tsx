@@ -3,15 +3,14 @@
 import { PencilLineIcon, SparklesIcon, SquareLibraryIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
+import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { customSurveyTemplate } from "@/app/lib/templates";
+import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { getUnavailableMessageKey } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 
 type TOnboardingSurveyPath = "scratch" | "template" | "ai";
@@ -19,7 +18,7 @@ type TOnboardingSurveyPath = "scratch" | "template" | "ai";
 interface CreateFirstSurveyProps {
   organizationId: string;
   workspaceId: string;
-  userId: string;
+  defaultLanguage: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -27,13 +26,13 @@ interface CreateFirstSurveyProps {
 export const CreateFirstSurvey = ({
   organizationId,
   workspaceId,
-  userId,
+  defaultLanguage,
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<CreateFirstSurveyProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const [isCreatingBlankSurvey, setIsCreatingBlankSurvey] = useState(false);
+  const createSurveyMutation = useCreateSurveyFromTemplate();
 
   const trackPathSelected = (path: TOnboardingSurveyPath) => {
     posthog.capture("onboarding_survey_path_selected", {
@@ -45,32 +44,19 @@ export const CreateFirstSurvey = ({
 
   const handleStartFromScratch = async () => {
     trackPathSelected("scratch");
-    setIsCreatingBlankSurvey(true);
 
     try {
-      const customSurvey = customSurveyTemplate(t);
-      const surveyBody: TSurveyCreateInput = {
-        ...customSurvey.preset,
-        type: "link",
-        createdBy: userId,
-      };
-
-      const response = await createSurveyAction({
+      const survey = await createSurveyMutation.mutateAsync({
         workspaceId,
-        surveyBody,
-        createdFrom: "blank",
+        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
+        source: "custom",
+        surveyType: "link",
+        defaultLanguage,
       });
 
-      if (response?.data) {
-        router.push(`/workspaces/${workspaceId}/surveys/${response.data.id}/edit?mode=cx`);
-        return;
-      }
-
-      toast.error(getFormattedErrorMessage(response));
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    } finally {
-      setIsCreatingBlankSurvey(false);
+      router.push(`/workspaces/${workspaceId}/surveys/${survey.id}/edit?mode=cx`);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -102,7 +88,7 @@ export const CreateFirstSurvey = ({
       description: t("organizations.workspaces.new.survey.start_from_scratch_description"),
       icon: PencilLineIcon,
       onClick: () => void handleStartFromScratch(),
-      isLoading: isCreatingBlankSurvey,
+      isLoading: createSurveyMutation.isPending,
     },
   ];
 

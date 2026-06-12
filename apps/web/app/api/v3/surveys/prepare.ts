@@ -164,9 +164,9 @@ function getImmutableElementIdIssues(
   return issues;
 }
 
-export function prepareV3SurveyCreate(
-  document: TV3CreateSurveyBody
-): TV3SurveyPrepareResult<TV3CreateSurveyBody> {
+export function prepareV3SurveyCreate<TDocument extends TV3CreateSurveyBody>(
+  document: TDocument
+): TV3SurveyPrepareResult<TDocument> {
   return validPreparation(document);
 }
 

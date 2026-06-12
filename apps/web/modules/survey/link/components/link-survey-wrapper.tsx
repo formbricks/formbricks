@@ -14,6 +14,7 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 interface LinkSurveyWrapperProps {
   children: JSX.Element;
   workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding">;
+  workspaceId: string;
   isWelcomeCardEnabled: boolean;
   surveyId: string;
   surveyType: SurveyType;
@@ -33,6 +34,7 @@ interface LinkSurveyWrapperProps {
 export const LinkSurveyWrapper = ({
   children,
   workspace,
+  workspaceId,
   isWelcomeCardEnabled,
   surveyType,
   surveyId,
@@ -102,7 +104,12 @@ export const LinkSurveyWrapper = ({
                 : "max-h-dvh min-h-dvh items-center overflow-clip"
             )}>
             {!styling.isLogoHidden && (workspace.logo?.url || styling.logo?.url) && (
-              <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} dir={dir} />
+              <ClientLogo
+                workspaceLogo={workspace.logo}
+                workspaceId={workspaceId}
+                surveyLogo={styling.logo}
+                dir={dir}
+              />
             )}
             <div
               className={cn(
