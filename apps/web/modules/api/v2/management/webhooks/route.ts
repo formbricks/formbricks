@@ -4,7 +4,6 @@ import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getWorkspaceIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
-import { removeSecretFromWebhook } from "@/modules/api/v2/management/webhooks/lib/utils";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
 import { ZGetWebhooksFilter, ZWebhookCreateInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 
@@ -31,10 +30,7 @@ export const GET = async (request: NextRequest) =>
       const res = await getWebhooks(workspaceIds, query);
 
       if (res.ok) {
-        return responses.successResponse({
-          data: res.data.data.map(removeSecretFromWebhook),
-          meta: res.data.meta,
-        });
+        return responses.successResponse(res.data);
       }
 
       return handleApiError(request, res.error);

@@ -1,6 +1,5 @@
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
-import { removeSecretFromWebhook } from "@/app/api/v1/webhooks/lib/utils";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
@@ -21,7 +20,7 @@ export const GET = withV1ApiWrapper({
       ];
       const webhooks = await getWebhooks(workspaceIds);
       return {
-        response: responses.successResponse(webhooks.map(removeSecretFromWebhook)),
+        response: responses.successResponse(webhooks),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {
