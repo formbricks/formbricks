@@ -48,7 +48,7 @@
       "invite_expired_description": "Les invitations sont valables pendant 7 jours. Veuillez demander une nouvelle invitation.",
       "invite_not_found": "Invitation non trouvée 😥",
       "invite_not_found_description": "Le code d'invitation ne peut pas être trouvé ou a déjà été utilisé.",
-      "login": "Connexion",
+      "login": "Se connecter",
       "welcome_to_organization": "Vous êtes dedans 🎉",
       "welcome_to_organization_description": "Bienvenue dans l'organisation."
     },
@@ -301,7 +301,7 @@
     "load_more": "Charger plus",
     "loading": "Chargement",
     "logo": "Logo",
-    "logout": "Déconnexion",
+    "logout": "Se déconnecter",
     "manage": "Gérer",
     "marketing": "Marketing",
     "members": "Membres",

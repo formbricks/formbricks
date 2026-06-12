@@ -1764,7 +1764,7 @@
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "你目前還沒有可報告的回饋記錄。請設定回饋來源以將資料傳送到系統中。",
       "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
-      "setup_feedback_source": "設定反饋源"
+      "setup_feedback_source": "設定意見回饋來源"
     },
     "api_keys": {
       "add_api_key": "新增 API 金鑰",

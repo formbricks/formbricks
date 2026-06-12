@@ -48,7 +48,7 @@
       "invite_expired_description": "Davetler 7 gün geçerlidir. Lütfen yeni bir davet isteyin.",
       "invite_not_found": "Davet bulunamadı 😥",
       "invite_not_found_description": "Davet kodu bulunamadı veya zaten kullanılmış.",
-      "login": "Giriş",
+      "login": "Giriş yap",
       "welcome_to_organization": "İçeridesiniz 🎉",
       "welcome_to_organization_description": "Organizasyona hoş geldiniz."
     },
@@ -301,7 +301,7 @@
     "load_more": "Daha fazla yükle",
     "loading": "Yükleniyor",
     "logo": "Logo",
-    "logout": "Çıkış",
+    "logout": "Çıkış yap",
     "manage": "Yönet",
     "marketing": "Pazarlama",
     "members": "Üyeler",
