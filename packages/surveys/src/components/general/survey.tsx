@@ -1335,9 +1335,9 @@ export function Survey({
           )}
           <div ref={cardlessScrollRef} className="h-full min-h-0 overflow-y-auto">
             <div
-              className="mx-auto flex min-h-full w-full flex-col items-center px-4 py-6 sm:px-6"
+              className="mx-auto flex w-full flex-col items-center px-4 pt-10 pb-6 sm:px-6 sm:pt-12"
               style={linkSurveyCardMaxWidth ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
-              <div className="my-auto w-full">
+              <div className="w-full">
                 <StackedCardsContainer
                   cardArrangement={cardArrangement}
                   currentBlockId={blockId}
