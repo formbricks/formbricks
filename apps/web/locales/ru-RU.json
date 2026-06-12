@@ -1764,7 +1764,7 @@
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "У тебя пока нет записей отзывов для отчётности. Настрой источники отзывов, чтобы данные поступали в систему.",
       "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
-      "setup_feedback_source": "Настройка источников обратной связи"
+      "setup_feedback_source": "Настройте источники обратной связи"
     },
     "api_keys": {
       "add_api_key": "Добавить API-ключ",

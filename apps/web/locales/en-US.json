@@ -48,7 +48,7 @@
       "invite_expired_description": "Invites are valid for 7 days. Please request a new invite.",
       "invite_not_found": "Invite not found 😥",
       "invite_not_found_description": "The invitation code cannot be found or has already been used.",
-      "login": "Login",
+      "login": "Log in",
       "welcome_to_organization": "You are in 🎉",
       "welcome_to_organization_description": "Welcome to the organization."
     },
@@ -59,8 +59,8 @@
       "enter_your_backup_code": "Enter your backup code",
       "enter_your_two_factor_authentication_code": "Enter your two-factor authentication code",
       "forgot_your_password": "Forgot your password?",
-      "login_to_your_account": "Login to your account",
-      "login_with_email": "Login with Email",
+      "login_to_your_account": "Log in to your account",
+      "login_with_email": "Log in with Email",
       "lost_access": "Lost Access?",
       "new_to_formbricks": "New to Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
@@ -301,7 +301,7 @@
     "load_more": "Load more",
     "loading": "Loading",
     "logo": "Logo",
-    "logout": "Logout",
+    "logout": "Log out",
     "manage": "Manage",
     "marketing": "Marketing",
     "members": "Members",
@@ -661,7 +661,7 @@
         "description": "Make it yours.",
         "no_membership_found": "No membership found!",
         "no_membership_found_description": "You are not a member of any organization at this time. If you believe this is a mistake, please reach out to the organization owner.",
-        "title": "Setup your organization"
+        "title": "Set up your organization"
       }
     },
     "signup": {
@@ -1764,7 +1764,7 @@
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "You don't have feedback records to report on yet. Set up feedback sources to send data into the system.",
       "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
-      "setup_feedback_source": "Setup feedback sources"
+      "setup_feedback_source": "Set up feedback sources"
     },
     "api_keys": {
       "add_api_key": "Add API Key",
@@ -3571,7 +3571,7 @@
         "reset_survey_warning": "Resetting a survey removes all responses and displays associated with this survey. This cannot be undone.",
         "selected_responses_csv": "Selected responses (CSV)",
         "selected_responses_excel": "Selected responses (Excel)",
-        "setup_integrations": "Setup integrations",
+        "setup_integrations": "Set up integrations",
         "share_survey": "Share survey",
         "show_all_responses_that_match": "Show all responses that match",
         "starts": "Starts",
@@ -3782,7 +3782,7 @@
       "semantic_topics_preview_description": "Enter a topic or phrase to surface feedback records by meaning. This is an early preview of future Topics & Subtopics.",
       "semantic_topics_preview_title": "Search feedback by topic",
       "set_value": "set value",
-      "setup_connection": "Setup source & create records",
+      "setup_connection": "Set up source & create records",
       "showing_count_loaded": "Showing {count} records",
       "showing_rows": "Showing {visible} of {total} rows",
       "source": "source",
