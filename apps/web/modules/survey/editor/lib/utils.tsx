@@ -152,11 +152,6 @@ export const getConditionValueOptions = (
   const elementOptions: TComboboxOption[] = [];
 
   allElements.forEach((element) => {
-    // Skip CTAs without external buttons - they're presentation-only elements
-    if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
-      return;
-    }
-
     if (element.type === TSurveyElementTypeEnum.Matrix) {
       const elementHeadline = getElementHeadline(localSurvey, element, "default", t);
 
