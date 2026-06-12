@@ -12,6 +12,7 @@
     "no_results_found": "لم يتم العثور على نتائج",
     "open_in_new_tab": "فتح في علامة تبويب جديدة",
     "people_responded": "{count, plural, one {شخص واحد استجاب} two {شخصان استجابا} few {{count} أشخاص استجابوا} many {{count} شخصًا استجابوا} other {{count} شخص استجابوا}}",
+    "picture_selection_option": "خيار صورة {number}",
     "please_retry_now_or_try_again_later": "يرجى إعادة المحاولة الآن أو المحاولة مرة أخرى لاحقًا.",
     "powered_by": "مشغل بواسطة",
     "privacy_policy": "سياسة الخصوصية",

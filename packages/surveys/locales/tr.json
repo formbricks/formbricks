@@ -12,6 +12,7 @@
     "no_results_found": "Sonuç bulunamadı",
     "open_in_new_tab": "Yeni sekmede aç",
     "people_responded": "{count, plural, one {1 kişi yanıtladı} other {{count} kişi yanıtladı}}",
+    "picture_selection_option": "Görsel seçeneği {number}",
     "please_retry_now_or_try_again_later": "Lütfen şimdi tekrar deneyin veya daha sonra tekrar deneyin.",
     "powered_by": "Destekleyen",
     "privacy_policy": "Gizlilik Politikası",
