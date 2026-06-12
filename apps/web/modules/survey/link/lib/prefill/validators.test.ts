@@ -5,6 +5,7 @@ import { validateNPS, validateRating } from "./validators";
 describe("prefill validators", () => {
   test("rejects JSON literals for NPS values", () => {
     expect(validateNPS("true").isValid).toBe(false);
+    expect(validateNPS("false").isValid).toBe(false);
     expect(validateNPS("null").isValid).toBe(false);
   });
 
@@ -15,6 +16,7 @@ describe("prefill validators", () => {
     };
 
     expect(validateRating(ratingElement as any, "true").isValid).toBe(false);
+    expect(validateRating(ratingElement as any, "false").isValid).toBe(false);
     expect(validateRating(ratingElement as any, "null").isValid).toBe(false);
   });
 });
