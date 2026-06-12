@@ -503,6 +503,8 @@
     "website_survey": "Website Survey",
     "weeks": "weeks",
     "welcome_card": "Welcome card",
+    "workflow_runs": "Workflow Runs",
+    "workflows": "Workflows",
     "workspace": "Workspace",
     "workspace_created_successfully": "Workspace created successfully",
     "workspace_creation_description": "Organize surveys in workspaces for better access control.",

@@ -13,11 +13,13 @@ import {
   MessageSquareTextIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
+  PlayCircleIcon,
   PlusIcon,
   RocketIcon,
   SettingsIcon,
   UserCircleIcon,
   UserIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -179,6 +181,41 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,
             isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
+            isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+        ],
+      },
+      {
+        id: "workflows",
+        name: (
+          <span className="inline-flex items-center gap-2">
+            <span>{t("common.workflows")}</span>
+            <Badge
+              text="Beta"
+              type="gray"
+              size="tiny"
+              className="text-[10px] font-semibold normal-case tracking-normal"
+            />
+          </span>
+        ),
+        items: [
+          {
+            name: t("common.workflows"),
+            href: `/workspaces/${workspace.id}/workflows`,
+            icon: WorkflowIcon,
+            isActive:
+              pathname?.startsWith(`/workspaces/${workspace.id}/workflows`) && !pathname?.includes("/runs"),
+            isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+          {
+            name: t("common.workflow_runs"),
+            href: `/workspaces/${workspace.id}/workflows/runs`,
+            icon: PlayCircleIcon,
+            isActive:
+              pathname?.startsWith(`/workspaces/${workspace.id}/workflows/runs`) ||
+              (pathname?.startsWith(`/workspaces/${workspace.id}/workflows/`) && pathname?.includes("/runs")),
             isHidden: false,
             disabled: isMembershipPending || isBilling,
           },
