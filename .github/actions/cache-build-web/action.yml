@@ -24,15 +24,16 @@ runs:
       uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
       id: cache-build
       env:
-        cache-name: prod-build
+        cache-name: prod-build-typecheck
         key-1: ${{ hashFiles('pnpm-lock.yaml') }}
         key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
+        key-3: ${{ hashFiles('package.json', 'pnpm-workspace.yaml', 'turbo.json', 'apps/**/package.json', 'packages/**/package.json', 'apps/**/tsconfig*.json', 'packages/**/tsconfig*.json', 'packages/config-typescript/**/*.json', 'apps/web/next.config.mjs') }}
       with:
         path: |
           ${{ github.workspace }}/apps/web/.next
           **/.turbo/**
           **/dist/**
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}-${{ env.key-3 }}
 
     - name: Set Cache Hit Status
       run: echo "cache-hit=${{ steps.cache-build.outputs.cache-hit }}" >> "$GITHUB_OUTPUT"
@@ -55,9 +56,11 @@ runs:
 
     - name: Create .env
       run: pnpm dev:setup
+      if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
 
     - name: Fill E2E_TESTING in .env
+      if: steps.cache-build.outputs.cache-hit != 'true'
       env:
         E2E_TESTING_MODE: ${{ inputs.e2e_testing_mode }}
       run: |
@@ -66,6 +69,14 @@ runs:
 
     - run: |
         pnpm build --filter=@formbricks/web...
+      if: steps.cache-build.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        TURBO_TOKEN: ${{ inputs.turbo_token }}
+        TURBO_TEAM: ${{ inputs.turbo_team }}
+
+    - name: Typecheck
+      run: pnpm typecheck
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
       env:
