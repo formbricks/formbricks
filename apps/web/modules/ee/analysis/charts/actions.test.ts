@@ -12,18 +12,14 @@ const mocks = vi.hoisted(() => {
     getIsDashboardsEnabled: vi.fn(),
     createChart: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
-    generateOrganizationAIObject: vi.fn(),
+    generateAIChartQuery: vi.fn(),
     updateChart: vi.fn(),
   };
 });
 
-vi.mock("@/lib/utils/action-client", () => ({
-  authenticatedActionClient: {
-    inputSchema: mocks.actionClientInputSchema,
-  },
-}));
+vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/utils/action-client/index", () => ({
+vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: {
     inputSchema: mocks.actionClientInputSchema,
   },
@@ -39,6 +35,10 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/modules/ee/analysis/api/lib/cube-client", () => ({
   executeTenantScopedQuery: mocks.executeTenantScopedQuery,
+}));
+
+vi.mock("@/modules/ee/analysis/charts/lib/ai-chart-query.server", () => ({
+  generateAIChartQuery: mocks.generateAIChartQuery,
 }));
 
 vi.mock("@/modules/ee/analysis/charts/lib/charts", () => ({
@@ -61,14 +61,6 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
-}));
-
-vi.mock("@/lib/ai/service", () => ({
-  generateOrganizationAIObject: mocks.generateOrganizationAIObject,
-}));
-
-vi.mock("@/modules/ee/analysis/lib/ai-schema-context", () => ({
-  generateSchemaContext: vi.fn(() => "schema context"),
 }));
 
 const ctx = {
@@ -152,14 +144,12 @@ describe("chart Cube actions", () => {
     expect(mocks.checkFeedbackDirectoryAccess).not.toHaveBeenCalled();
   });
 
-  test("generateAIChartAction delegates clean AI queries to the tenant-scoped Cube helper", async () => {
-    mocks.generateOrganizationAIObject.mockResolvedValue({
-      object: {
+  test("generateAIChartAction passes the generated query through to the tenant-scoped Cube helper", async () => {
+    mocks.generateAIChartQuery.mockResolvedValueOnce({
+      chartType: "bar",
+      query: {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
-        timeDimensions: null,
-        chartType: "bar",
-        filters: null,
       },
     });
 
@@ -172,20 +162,18 @@ describe("chart Cube actions", () => {
       },
     } as any);
 
+    expect(mocks.generateAIChartQuery).toHaveBeenCalledWith({
+      organizationId: "organization-1",
+      prompt: "responses by sentiment",
+    });
     expect(result).toMatchObject({
       chartType: "bar",
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sourceType"],
+      },
       data: [{ "FeedbackRecords.count": 1 }],
     });
-    expect(mocks.generateOrganizationAIObject).toHaveBeenCalledWith(
-      expect.objectContaining({
-        organizationId: "organization-1",
-        system: "schema context",
-        prompt: 'User request: "responses by sentiment"',
-        temperature: 0,
-        maxOutputTokens: 1024,
-        timeout: 30000,
-      })
-    );
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
       query: {
         measures: ["FeedbackRecords.count"],
@@ -199,57 +187,38 @@ describe("chart Cube actions", () => {
     });
   });
 
-  test("generateAIChartAction removes nested nulls before validating and executing AI queries", async () => {
-    mocks.generateOrganizationAIObject.mockResolvedValue({
-      object: {
-        measures: ["FeedbackRecords.count"],
-        dimensions: null,
-        timeDimensions: [
-          {
-            dimension: "FeedbackRecords.createdAt",
-            granularity: null,
-            dateRange: null,
-          },
-        ],
-        chartType: "line",
-        filters: [
-          {
-            member: "FeedbackRecords.sourceType",
-            operator: "equals",
-            values: null,
-          },
-        ],
-      },
-    });
+  test("generateAIChartAction does not call the AI lib before access checks succeed", async () => {
+    mocks.checkFeedbackDirectoryAccess.mockRejectedValueOnce(new Error("no access"));
 
-    const result = await generateAIChartAction({
-      ctx,
-      parsedInput: {
-        workspaceId: "workspace-1",
-        prompt: "daily responses",
-        feedbackDirectoryId: "frd-1",
-      },
-    } as any);
+    await expect(
+      generateAIChartAction({
+        ctx,
+        parsedInput: {
+          workspaceId: "workspace-1",
+          prompt: "responses by sentiment",
+          feedbackDirectoryId: "frd-1",
+        },
+      } as any)
+    ).rejects.toThrow("no access");
 
-    expect(result).toMatchObject({
-      chartType: "line",
-      query: {
-        measures: ["FeedbackRecords.count"],
-        timeDimensions: [{ dimension: "FeedbackRecords.createdAt" }],
-        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals" }],
-      },
-    });
-    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
-      query: {
-        measures: ["FeedbackRecords.count"],
-        timeDimensions: [{ dimension: "FeedbackRecords.createdAt" }],
-        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals" }],
-      },
-      feedbackDirectoryId: "frd-1",
-      workspaceId: "workspace-1",
-      organizationId: "organization-1",
-      userId: "user-1",
-      source: "charts.generateAIChartAction",
-    });
+    expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
+    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  test("generateAIChartAction does not execute a Cube query when AI generation fails", async () => {
+    mocks.generateAIChartQuery.mockRejectedValueOnce(new Error("AI failed"));
+
+    await expect(
+      generateAIChartAction({
+        ctx,
+        parsedInput: {
+          workspaceId: "workspace-1",
+          prompt: "responses by sentiment",
+          feedbackDirectoryId: "frd-1",
+        },
+      } as any)
+    ).rejects.toThrow("AI failed");
+
+    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 });

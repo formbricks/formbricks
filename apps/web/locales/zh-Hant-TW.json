@@ -1565,6 +1565,7 @@
         "ai_not_available": "AI 圖表生成功能目前無法使用。",
         "ai_not_enabled": "此組織已停用 AI 智慧工具。",
         "ai_not_in_plan": "你目前的方案不包含 AI 圖表生成功能。",
+        "ai_prompt_could_not_be_converted": "我們無法將該提示轉換為圖表。請嘗試使用具體指標、維度或日期範圍重新表述。",
         "ai_query_placeholder": "例如：上週有多少用戶註冊？",
         "ai_query_section_description": "描述你想看到的內容，讓 AI 幫你建立圖表。",
         "ai_query_section_title": "詢問你的數據",

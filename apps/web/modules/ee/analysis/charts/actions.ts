@@ -1,13 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
+import { ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import {
   createChart,
   deleteChart,
@@ -17,13 +17,7 @@ import {
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
-import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
-import {
-  FEEDBACK_DIMENSION_IDS,
-  FEEDBACK_MEASURE_IDS,
-  FEEDBACK_TIME_DIMENSION_IDS,
-} from "@/modules/ee/analysis/lib/schema-definition";
-import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
+import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -287,75 +281,6 @@ export const executeQueryAction = authenticatedActionClient
     }
   );
 
-const CUBE_NAME = "FeedbackRecords";
-const AI_CHART_GENERATION_TIMEOUT_MS = 30_000;
-const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 1024;
-
-const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
-  if (values.length === 0) {
-    throw new Error("AI query schema requires at least one allowed id");
-  }
-  return [values[0], ...values.slice(1)];
-};
-
-const ZMeasureId = z.enum(toEnumTuple(FEEDBACK_MEASURE_IDS));
-const ZDimensionId = z.enum(toEnumTuple(FEEDBACK_DIMENSION_IDS));
-const ZTimeDimensionId = z.enum(toEnumTuple(FEEDBACK_TIME_DIMENSION_IDS));
-const ZFilterMemberId = z.enum(toEnumTuple([...FEEDBACK_MEASURE_IDS, ...FEEDBACK_DIMENSION_IDS]));
-type TGenerateAIQueryFilter = {
-  member: string;
-  operator: string;
-  values: string[] | null;
-};
-
-type TGenerateAIQueryTimeDimension = {
-  dimension: string;
-  granularity: "hour" | "day" | "week" | "month" | "quarter" | "year" | null;
-  dateRange: string | null;
-};
-
-const ZGenerateAIQueryResponse = z.object({
-  measures: z.array(ZMeasureId),
-  dimensions: z.array(ZDimensionId).nullable(),
-  timeDimensions: z
-    .array(
-      z.object({
-        dimension: ZTimeDimensionId,
-        granularity: z.enum(["hour", "day", "week", "month", "quarter", "year"]).nullable(),
-        dateRange: z.string().nullable(),
-      })
-    )
-    .nullable(),
-  chartType: ZChartType,
-  filters: z
-    .array(
-      z.object({
-        member: ZFilterMemberId,
-        operator: z.enum([
-          "equals",
-          "notEquals",
-          "contains",
-          "notContains",
-          "set",
-          "notSet",
-          "gt",
-          "gte",
-          "lt",
-          "lte",
-        ]),
-        values: z.array(z.string()).nullable(),
-      })
-    )
-    .nullable(),
-});
-type TGenerateAIQueryResponse = {
-  measures: string[];
-  dimensions: string[] | null;
-  timeDimensions: TGenerateAIQueryTimeDimension[] | null;
-  chartType: z.infer<typeof ZChartType>;
-  filters: TGenerateAIQueryFilter[] | null;
-};
-
 const ZGenerateAIChartAction = z.object({
   workspaceId: ZId,
   prompt: z.string().min(1).max(2000),
@@ -388,48 +313,12 @@ export const generateAIChartAction = authenticatedActionClient
         source: "charts.generateAIChartAction",
       });
 
-      const schemaContext = generateSchemaContext();
-
-      const { object: output } = await generateOrganizationAIObject<TGenerateAIQueryResponse>({
+      const { chartType, query } = await generateAIChartQuery({
         organizationId,
-        schema: ZGenerateAIQueryResponse,
-        system: schemaContext,
-        prompt: `User request: "${parsedInput.prompt}"`,
-        temperature: 0,
-        maxOutputTokens: AI_CHART_GENERATION_MAX_OUTPUT_TOKENS,
-        timeout: AI_CHART_GENERATION_TIMEOUT_MS,
+        prompt: parsedInput.prompt,
       });
 
-      const measures = output.measures.length > 0 ? output.measures : [`${CUBE_NAME}.count`];
-
-      const { chartType, ...cubeQuery } = { ...output, measures };
-      const cleanQuery: TChartQuery = { measures: cubeQuery.measures };
-
-      if (cubeQuery.dimensions?.length) {
-        cleanQuery.dimensions = cubeQuery.dimensions;
-      }
-
-      if (cubeQuery.filters?.length) {
-        cleanQuery.filters = cubeQuery.filters.map(
-          ({ member, operator, values }: TGenerateAIQueryFilter) => ({
-            member,
-            operator,
-            ...(values == null ? {} : { values }),
-          })
-        );
-      }
-
-      if (cubeQuery.timeDimensions?.length) {
-        cleanQuery.timeDimensions = cubeQuery.timeDimensions.map(
-          ({ dimension, granularity, dateRange }: TGenerateAIQueryTimeDimension) => ({
-            dimension,
-            ...(granularity == null ? {} : { granularity }),
-            ...(dateRange == null ? {} : { dateRange }),
-          })
-        );
-      }
-
-      const validatedQuery = ZChartQuery.parse(cleanQuery);
+      const validatedQuery = ZChartQuery.parse(query);
 
       const data = await executeTenantScopedQuery({
         query: validatedQuery,

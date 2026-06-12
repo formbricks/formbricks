@@ -1565,6 +1565,7 @@
         "ai_not_available": "La génération de graphiques par IA n'est pas disponible.",
         "ai_not_enabled": "Les outils intelligents IA sont désactivés pour cette organisation.",
         "ai_not_in_plan": "La génération de graphiques par IA n'est pas disponible avec votre forfait actuel.",
+        "ai_prompt_could_not_be_converted": "Nous n’avons pas pu transformer cette invite en graphique. Essayez de la reformuler avec une métrique, une dimension ou une plage de dates précise.",
         "ai_query_placeholder": "ex. Combien d'utilisateurs se sont inscrits la semaine dernière ?",
         "ai_query_section_description": "Décrivez ce que vous souhaitez voir et laissez l'IA créer le graphique.",
         "ai_query_section_title": "Interrogez vos données",
