@@ -53,6 +53,9 @@ describe("deleteWebhook", () => {
       where: {
         id: "test-webhook-id",
       },
+      omit: {
+        secret: true,
+      },
     });
   });
 
@@ -78,6 +81,9 @@ describe("deleteWebhook", () => {
     expect(prisma.webhook.delete).toHaveBeenCalledWith({
       where: {
         id: "test-webhook-id",
+      },
+      omit: {
+        secret: true,
       },
     });
   });
@@ -151,6 +157,9 @@ describe("getWebhook", () => {
       where: {
         id: "test-webhook-id",
       },
+      omit: {
+        secret: true,
+      },
     });
   });
 
@@ -163,6 +172,9 @@ describe("getWebhook", () => {
     expect(prisma.webhook.findUnique).toHaveBeenCalledWith({
       where: {
         id: "non-existent-id",
+      },
+      omit: {
+        secret: true,
       },
     });
   });
@@ -217,6 +229,9 @@ describe("getWebhook", () => {
     expect(prisma.webhook.findUnique).toHaveBeenCalledWith({
       where: {
         id: "test-webhook-id",
+      },
+      omit: {
+        secret: true,
       },
     });
   });
