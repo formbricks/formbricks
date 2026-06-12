@@ -9,6 +9,7 @@ import type {
   TResponseVariables,
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { BlockConditional } from "@/components/general/block-conditional";
@@ -21,6 +22,7 @@ import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
+import { ChevronDownIcon } from "@/components/icons/chevron-down-icon";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
@@ -276,6 +278,57 @@ export function Survey({
     }
     return styling.cardArrangement?.appSurveys ?? "straight";
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
+  const isCardless = cardArrangement === "cardless";
+  const linkSurveyCardMaxWidth =
+    localSurvey.type === "link" ? getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth) : undefined;
+  const cardlessScrollRef = useRef<HTMLDivElement>(null);
+  const [isCardlessScrollAtTop, setIsCardlessScrollAtTop] = useState(true);
+  const [isCardlessScrollAtBottom, setIsCardlessScrollAtBottom] = useState(false);
+  const cardlessScrollFadeColor = useMemo(() => {
+    if (styling.background?.bgType === "color" && styling.background.bg) {
+      return styling.background.bg;
+    }
+
+    return "#ffffff";
+  }, [styling.background?.bg, styling.background?.bgType]);
+
+  const checkCardlessScroll = useCallback(() => {
+    if (!cardlessScrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = cardlessScrollRef.current;
+    const tolerance = 1;
+
+    setIsCardlessScrollAtBottom(scrollTop + clientHeight >= scrollHeight - tolerance);
+    setIsCardlessScrollAtTop(scrollTop <= tolerance);
+  }, []);
+
+  const scrollCardlessToBottom = useCallback(() => {
+    if (cardlessScrollRef.current) {
+      cardlessScrollRef.current.scrollTop = cardlessScrollRef.current.scrollHeight;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isCardless) return;
+
+    const element = cardlessScrollRef.current;
+    if (!element) return;
+
+    const handleScroll = () => {
+      checkCardlessScroll();
+    };
+
+    element.addEventListener("scroll", handleScroll);
+    checkCardlessScroll();
+
+    return () => {
+      element.removeEventListener("scroll", handleScroll);
+    };
+  }, [isCardless, checkCardlessScroll, blockId]);
+
+  useEffect(() => {
+    if (!isCardless) return;
+    checkCardlessScroll();
+  }, [isCardless, blockId, checkCardlessScroll]);
 
   // Current block tracking (replaces currentQuestionIndex)
   const currentBlockIndex = localSurvey.blocks.findIndex((b) => b.id === blockId);
@@ -1110,6 +1163,7 @@ export function Survey({
             variablesData={currentVariables}
             isPreviewMode={isPreviewMode}
             fullSizeCards={fullSizeCards}
+            isCardless={isCardless}
           />
         );
       } else if (blockIdx >= localSurvey.blocks.length) {
@@ -1131,6 +1185,7 @@ export function Survey({
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
               fullSizeCards={fullSizeCards}
+              isCardless={isCardless}
               isOfflineWithPending={offlinePersistEnabled && !isOnline && isSurveyFinished}
             />
           );
@@ -1167,6 +1222,7 @@ export function Survey({
               onOpenExternalURL={onOpenExternalURL}
               dir={dir}
               fullSizeCards={fullSizeCards}
+              isCardless={isCardless}
             />
           )
         );
@@ -1185,44 +1241,51 @@ export function Survey({
         setHasInteracted={setHasInteracted}>
         <div
           className={cn(
-            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-opacity duration-1000 ease-in-out",
-            offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
+            "no-scrollbar flex w-full flex-col justify-between transition-opacity duration-1000 ease-in-out",
+            isCardless ? "" : "bg-survey-bg h-full overflow-hidden",
+            offset === 0 || cardArrangement === "simple" || isCardless ? "opacity-100" : "opacity-0"
           )}>
           <div className={cn("relative")}>
-            <div className="flex w-full flex-col items-end">
-              {showProgressBar ? <ProgressBar survey={localSurvey} blockId={blockId} /> : null}
+            {(!isCardless && showProgressBar) || isLanguageSwitchVisible || isCloseButtonVisible ? (
+              <div className="flex w-full flex-col items-end">
+                {!isCardless && showProgressBar ? (
+                  <ProgressBar survey={localSurvey} blockId={blockId} />
+                ) : null}
 
-              <div
-                className={cn(
-                  "relative w-full",
-                  isCloseButtonVisible || isLanguageSwitchVisible ? "h-8" : "h-5"
-                )}>
-                <div className={cn("flex w-full items-center justify-end")}>
-                  {isLanguageSwitchVisible && (
-                    <LanguageSwitch
-                      survey={localSurvey}
-                      surveyLanguages={localSurvey.languages}
-                      setSelectedLanguageCode={setSelectedLanguage}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
-                      borderRadius={styling.roundness ?? 8}
-                      setDir={setDir}
-                      dir={dir}
-                    />
-                  )}
-                  {isLanguageSwitchVisible && isCloseButtonVisible && (
-                    <div aria-hidden="true" className="z-1001 h-5 w-px bg-slate-200" />
-                  )}
+                {isCloseButtonVisible || isLanguageSwitchVisible ? (
+                  <div
+                    className={cn(
+                      "relative w-full",
+                      isCloseButtonVisible || isLanguageSwitchVisible ? "h-8" : "h-5"
+                    )}>
+                    <div className={cn("flex w-full items-center justify-end")}>
+                      {isLanguageSwitchVisible && (
+                        <LanguageSwitch
+                          survey={localSurvey}
+                          surveyLanguages={localSurvey.languages}
+                          setSelectedLanguageCode={setSelectedLanguage}
+                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          borderRadius={styling.roundness ?? 8}
+                          setDir={setDir}
+                          dir={dir}
+                        />
+                      )}
+                      {isLanguageSwitchVisible && isCloseButtonVisible && (
+                        <div aria-hidden="true" className="z-1001 h-5 w-px bg-slate-200" />
+                      )}
 
-                  {isCloseButtonVisible && (
-                    <SurveyCloseButton
-                      onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
-                      borderRadius={styling.roundness ?? 8}
-                    />
-                  )}
-                </div>
+                      {isCloseButtonVisible && (
+                        <SurveyCloseButton
+                          onClose={onClose}
+                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          borderRadius={styling.roundness ?? 8}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            </div>
+            ) : null}
             <div
               ref={contentRef}
               className={cn(
@@ -1246,17 +1309,81 @@ export function Survey({
     );
   };
 
+  const showCardlessProgressBar = isCardless && showProgressBar;
+
   return (
-    <StackedCardsContainer
-      cardArrangement={cardArrangement}
-      currentBlockId={blockId}
-      getCardContent={getCardContent}
-      survey={localSurvey}
-      styling={styling}
-      setBlockId={setBlockId}
-      shouldResetBlockId={shouldResetQuestionId}
-      fullSizeCards={fullSizeCards}
-      placement={placement}
-    />
+    <div
+      className={cn(
+        "flex w-full flex-col",
+        isCardless && "h-full min-h-0 flex-1",
+        isPreviewMode && isCardless && "pt-8"
+      )}>
+      {showCardlessProgressBar ? (
+        <div className="cardless-progress-bar z-[100] w-full shrink-0">
+          <ProgressBar survey={localSurvey} blockId={blockId} />
+        </div>
+      ) : null}
+      {isCardless ? (
+        <div className="relative min-h-0 flex-1">
+          {!isCardlessScrollAtTop && (
+            <div
+              className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4"
+              style={{
+                background: `linear-gradient(to bottom, ${cardlessScrollFadeColor}, transparent)`,
+              }}
+            />
+          )}
+          <div ref={cardlessScrollRef} className="h-full min-h-0 overflow-y-auto">
+            <div
+              className="mx-auto flex w-full flex-col items-center px-4 pt-10 pb-6 sm:px-6 sm:pt-12"
+              style={linkSurveyCardMaxWidth ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
+              <div className="w-full">
+                <StackedCardsContainer
+                  cardArrangement={cardArrangement}
+                  currentBlockId={blockId}
+                  getCardContent={getCardContent}
+                  survey={localSurvey}
+                  styling={styling}
+                  setBlockId={setBlockId}
+                  shouldResetBlockId={shouldResetQuestionId}
+                  fullSizeCards={fullSizeCards}
+                  placement={placement}
+                />
+              </div>
+            </div>
+          </div>
+          {!isCardlessScrollAtBottom && (
+            <>
+              <div
+                className="pointer-events-none absolute right-4 bottom-0 left-4 z-10 h-4"
+                style={{
+                  background: `linear-gradient(to top, ${cardlessScrollFadeColor}, transparent)`,
+                }}
+              />
+              <button
+                type="button"
+                onClick={scrollCardlessToBottom}
+                style={{ transform: "translateX(-50%)", backgroundColor: cardlessScrollFadeColor }}
+                className="hover:border-border focus:ring-brand absolute bottom-2 left-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-transparent shadow-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+                aria-label="Scroll to bottom">
+                <ChevronDownIcon className="text-heading h-5 w-5" />
+              </button>
+            </>
+          )}
+        </div>
+      ) : (
+        <StackedCardsContainer
+          cardArrangement={cardArrangement}
+          currentBlockId={blockId}
+          getCardContent={getCardContent}
+          survey={localSurvey}
+          styling={styling}
+          setBlockId={setBlockId}
+          shouldResetBlockId={shouldResetQuestionId}
+          fullSizeCards={fullSizeCards}
+          placement={placement}
+        />
+      )}
+    </div>
   );
 }
