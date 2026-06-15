@@ -1,7 +1,8 @@
 import type { TFunction } from "i18next";
-import { MoreVerticalIcon } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 
 const workflowRunRows = [
   {
@@ -38,41 +39,74 @@ export const WorkflowRunsTable = ({
   workspaceId,
 }: Readonly<WorkflowRunsTableProps>) => {
   const routeWorkflowId = workflowId ?? "response-completed-follow-up";
-  const runColumnSpan = showWorkflowColumn ? "col-span-2" : "col-span-3";
+  const idColumnClassName = showWorkflowColumn ? "w-[30%]" : "w-[44%]";
+  const statusColumnClassName = showWorkflowColumn ? "w-[14%]" : "w-[16%]";
+  const dateColumnClassName = showWorkflowColumn ? "w-[16%]" : "w-[20%]";
+  const timeColumnClassName = showWorkflowColumn ? "w-[16%]" : "w-[20%]";
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <div className="grid grid-cols-12 gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-500">
-        <div className={runColumnSpan}>{t("common.id")}</div>
-        {showWorkflowColumn ? <div className="col-span-2">{t("common.workflows")}</div> : null}
-        <div className="col-span-2">{t("common.status")}</div>
-        <div className="col-span-3">{t("common.created_at")}</div>
-        <div className="col-span-2">{t("common.time")}</div>
-        <div className="col-span-1" />
-      </div>
+    <div
+      className="overflow-hidden rounded-lg border border-slate-200 bg-white"
+      aria-label="Workflow runs list">
+      <Table className="table-fixed">
+        <TableHeader role="rowgroup">
+          <TableRow className="bg-slate-100" role="row">
+            <TableHead className={cn("font-medium text-slate-500", idColumnClassName)}>
+              {t("common.id")}
+            </TableHead>
+            {showWorkflowColumn ? (
+              <TableHead className="w-[24%] font-medium text-slate-500">{t("common.workflows")}</TableHead>
+            ) : null}
+            <TableHead className={cn("font-medium text-slate-500", statusColumnClassName)}>
+              {t("common.status")}
+            </TableHead>
+            <TableHead className={cn("font-medium text-slate-500", dateColumnClassName)}>
+              {t("common.created_at")}
+            </TableHead>
+            <TableHead className={cn("font-medium text-slate-500", timeColumnClassName)}>
+              {t("common.time")}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {workflowRunRows.map((run) => {
+            const href = `/workspaces/${workspaceId}/workflows/${routeWorkflowId}/runs/${run.id}`;
 
-      {workflowRunRows.map((run) => (
-        <Link
-          key={run.id}
-          href={`/workspaces/${workspaceId}/workflows/${routeWorkflowId}/runs/${run.id}`}
-          className="grid grid-cols-12 items-center gap-4 border-b border-slate-100 px-4 py-4 text-sm last:border-b-0 hover:bg-slate-50">
-          <div className={`${runColumnSpan} min-w-0`}>
-            <p className="truncate font-mono text-slate-900">{run.id}</p>
-            <p className="truncate text-slate-500">{run.description}</p>
-          </div>
-          {showWorkflowColumn ? (
-            <div className="col-span-2 truncate text-slate-700">Response follow-up</div>
-          ) : null}
-          <div className="col-span-2">
-            <Badge text={run.statusLabel} type={run.statusType} size="normal" />
-          </div>
-          <div className="col-span-3 text-slate-600">Not set</div>
-          <div className="col-span-2 text-slate-600">Not set</div>
-          <div className="col-span-1 flex justify-end text-slate-500">
-            <MoreVerticalIcon className="h-4 w-4" aria-hidden="true" />
-          </div>
-        </Link>
-      ))}
+            return (
+              <TableRow key={run.id}>
+                <TableCell className="p-0">
+                  <Link href={href} className="block min-w-0 p-4">
+                    <p className="truncate font-mono text-sm font-medium text-slate-900">{run.id}</p>
+                    <p className="truncate text-sm text-slate-500">{run.description}</p>
+                  </Link>
+                </TableCell>
+                {showWorkflowColumn ? (
+                  <TableCell className="p-0">
+                    <Link href={href} className="block truncate p-4 text-sm text-slate-700">
+                      Response follow-up
+                    </Link>
+                  </TableCell>
+                ) : null}
+                <TableCell className="p-0">
+                  <Link href={href} className="block p-4">
+                    <Badge text={run.statusLabel} type={run.statusType} size="tiny" />
+                  </Link>
+                </TableCell>
+                <TableCell className="p-0">
+                  <Link href={href} className="block truncate p-4 text-sm text-slate-600">
+                    Not set
+                  </Link>
+                </TableCell>
+                <TableCell className="p-0">
+                  <Link href={href} className="block truncate p-4 text-sm text-slate-600">
+                    Not set
+                  </Link>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 };
