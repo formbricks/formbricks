@@ -35,7 +35,6 @@ interface OrganizationActionsProps {
   isFormbricksCloud: boolean;
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
-  isStorageConfigured: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
   enterpriseLicenseRequestFormUrl: string;
@@ -52,7 +51,6 @@ export const OrganizationActions = ({
   isFormbricksCloud,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
-  isStorageConfigured,
   isTeamAdmin,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
@@ -169,7 +167,6 @@ export const OrganizationActions = ({
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
         teams={teams}
-        isStorageConfigured={isStorageConfigured}
         isOwnerOrManager={isOwnerOrManager}
         isTeamAdmin={isTeamAdmin}
         userAdminTeamIds={userAdminTeamIds}
