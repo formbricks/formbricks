@@ -182,6 +182,9 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@formbricks/workflows':
+        specifier: workspace:*
+        version: link:../../packages/workflows
       '@hookform/resolvers':
         specifier: 5.2.2
         version: 5.2.2(react-hook-form@7.71.2(react@19.2.6))

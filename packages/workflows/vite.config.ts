@@ -7,12 +7,18 @@ export default defineConfig({
   build: {
     minify: false,
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
-      fileName: "index",
+      // Two entries: the browser-safe contracts/types (`.`) and the server-only handlers/service
+      // (`./server`). Keeping them separate stops Prisma/runtime concerns from leaking into the
+      // browser bundle that the dashboard imports.
+      entry: {
+        index: resolve(__dirname, "src/index.ts"),
+        server: resolve(__dirname, "src/server/index.ts"),
+      },
       formats: ["es"],
     },
     rollupOptions: {
-      external: ["zod"],
+      // `@prisma/client` is type-only here and is provided by the host app at runtime; never bundle it.
+      external: ["zod", "@prisma/client", "server-only", /^node:/],
     },
   },
 });
