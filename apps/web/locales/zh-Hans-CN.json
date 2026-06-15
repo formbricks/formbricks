@@ -59,8 +59,8 @@
       "enter_your_backup_code": "输入 你的 备用代码",
       "enter_your_two_factor_authentication_code": "输入 你的 双因素 认证 代码",
       "forgot_your_password": "忘记你的密码？",
-      "login_to_your_account": "登录到你的帐户",
-      "login_with_email": "使用 邮箱 登录",
+      "login_to_your_account": "登录您的账户",
+      "login_with_email": "使用邮箱登录",
       "lost_access": "失去访问？",
       "new_to_formbricks": "新用户 Formbricks ?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
@@ -661,7 +661,7 @@
         "description": "使 它 成为 你的。",
         "no_membership_found": "未找到会员资格！",
         "no_membership_found_description": "您 目前 不 是 任何 组织 的 成员 。如果 您 认为 这是 一个 错误 ，请 联系 组织 所有者 。",
-        "title": "设置你的组织"
+        "title": "设置您的组织"
       }
     },
     "signup": {
@@ -3571,7 +3571,7 @@
         "reset_survey_warning": "重置 一个调查 会移除与 此调查 相关 的 所有响应 和 展示 。此操作 不能 撤销 。",
         "selected_responses_csv": "选定 反馈 （CSV）",
         "selected_responses_excel": "选定 反馈 （Excel）",
-        "setup_integrations": "设置 集成",
+        "setup_integrations": "设置集成",
         "share_survey": "分享 问卷调查",
         "show_all_responses_that_match": "显示所有匹配的响应",
         "starts": "开始",
