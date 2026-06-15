@@ -1,17 +1,19 @@
-import type { TFunction } from "i18next";
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface WorkspaceWorkflowsSecondaryNavigationProps {
   activeId: "workflows" | "runs";
-  t: TFunction;
   workspaceId: string;
 }
 
 export const WorkspaceWorkflowsSecondaryNavigation = ({
   activeId,
-  t,
   workspaceId,
 }: Readonly<WorkspaceWorkflowsSecondaryNavigationProps>) => {
+  const { t } = useTranslation();
+
   const navigation = [
     {
       id: "workflows",

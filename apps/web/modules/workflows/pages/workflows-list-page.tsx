@@ -1,47 +1,28 @@
-import type { TFunction } from "i18next";
+"use client";
+
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { WorkflowListActions } from "../components/workflow-list-actions";
 import { WorkspaceWorkflowsSecondaryNavigation } from "../components/workspace-workflows-secondary-navigation";
+import { placeholderWorkflows } from "../lib/placeholder-data";
 import { WorkflowPageLayout } from "./workflow-page-layout";
-
-const workflowRows = [
-  {
-    id: "response-completed-follow-up",
-    name: "Response follow-up",
-    status: "inProgress",
-    statusLabel: "Enabled",
-  },
-  {
-    id: "response-completed-draft",
-    name: "Ending card follow-up",
-    status: "draft",
-    statusLabel: "Draft",
-  },
-  {
-    id: "team-notification-follow-up",
-    name: "Team notification",
-    status: "paused",
-    statusLabel: "Disabled",
-  },
-] as const;
 
 interface WorkflowsListPageProps {
   isReadOnly: boolean;
-  t: TFunction;
   workspaceId: string;
 }
 
-export const WorkflowsListPage = ({ isReadOnly, t, workspaceId }: Readonly<WorkflowsListPageProps>) => {
+export const WorkflowsListPage = ({ isReadOnly, workspaceId }: Readonly<WorkflowsListPageProps>) => {
+  const { t } = useTranslation();
+
   return (
     <WorkflowPageLayout
       pageTitle={t("common.workflows")}
-      navigation={
-        <WorkspaceWorkflowsSecondaryNavigation activeId="workflows" t={t} workspaceId={workspaceId} />
-      }
+      navigation={<WorkspaceWorkflowsSecondaryNavigation activeId="workflows" workspaceId={workspaceId} />}
       cta={
         <Button type="button" size="sm" disabled={isReadOnly}>
           <PlusIcon />
@@ -57,7 +38,7 @@ export const WorkflowsListPage = ({ isReadOnly, t, workspaceId }: Readonly<Workf
           <div className="col-span-2">{t("common.activity")}</div>
         </div>
 
-        {workflowRows.map((workflow) => (
+        {placeholderWorkflows.map((workflow) => (
           <div key={workflow.id} className="relative block">
             <Link
               href={`/workspaces/${workspaceId}/workflows/${workflow.id}`}
@@ -75,13 +56,13 @@ export const WorkflowsListPage = ({ isReadOnly, t, workspaceId }: Readonly<Workf
                 <SurveyStatusIndicator status={workflow.status} /> {workflow.statusLabel}
               </div>
               <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-                Not set
+                {workflow.createdAtLabel}
               </div>
               <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-                Not set
+                {workflow.updatedAtLabel}
               </div>
               <div className="col-span-2 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-                Not set
+                {workflow.activityLabel}
               </div>
             </Link>
             <div className="absolute right-3 top-3.5">

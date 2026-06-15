@@ -75,8 +75,23 @@ export const WorkflowsListLoading = () => (
 export const WorkflowBuilderLoading = () => (
   <PageContentWrapper className="space-y-4">
     <HeaderSkeleton cta tabs />
-    <div className="relative min-h-[680px] overflow-hidden rounded-lg border border-slate-200 bg-slate-50 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:18px_18px]">
-      <Skeleton className="absolute right-4 top-4 size-8 rounded-md" />
+    <div className="flex min-h-[680px] flex-col gap-4 md:flex-row">
+      <div className="relative min-h-[680px] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:18px_18px]">
+        <Skeleton className="absolute right-4 top-4 size-8 rounded-md" />
+      </div>
+      <aside className="h-[360px] overflow-hidden md:h-auto md:w-[360px] md:shrink-0">
+        <div className="h-full w-full space-y-6 overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 md:w-[360px]">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-40 rounded-md" />
+            <Skeleton className="h-4 w-24 rounded-md" />
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-16 rounded-md" />
+            <Skeleton className="h-16 rounded-md" />
+            <Skeleton className="h-28 rounded-lg" />
+          </div>
+        </div>
+      </aside>
     </div>
   </PageContentWrapper>
 );

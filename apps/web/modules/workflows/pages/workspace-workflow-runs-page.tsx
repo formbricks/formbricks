@@ -1,19 +1,22 @@
-import type { TFunction } from "i18next";
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { WorkflowRunsTable } from "../components/workflow-runs-table";
 import { WorkspaceWorkflowsSecondaryNavigation } from "../components/workspace-workflows-secondary-navigation";
 import { WorkflowPageLayout } from "./workflow-page-layout";
 
 interface WorkspaceWorkflowRunsPageProps {
-  t: TFunction;
   workspaceId: string;
 }
 
-export const WorkspaceWorkflowRunsPage = ({ t, workspaceId }: Readonly<WorkspaceWorkflowRunsPageProps>) => {
+export const WorkspaceWorkflowRunsPage = ({ workspaceId }: Readonly<WorkspaceWorkflowRunsPageProps>) => {
+  const { t } = useTranslation();
+
   return (
     <WorkflowPageLayout
       pageTitle={t("common.workflows")}
-      navigation={<WorkspaceWorkflowsSecondaryNavigation activeId="runs" t={t} workspaceId={workspaceId} />}>
-      <WorkflowRunsTable t={t} workspaceId={workspaceId} showWorkflowColumn />
+      navigation={<WorkspaceWorkflowsSecondaryNavigation activeId="runs" workspaceId={workspaceId} />}>
+      <WorkflowRunsTable workspaceId={workspaceId} showWorkflowColumn />
     </WorkflowPageLayout>
   );
 };

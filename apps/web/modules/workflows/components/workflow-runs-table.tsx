@@ -1,44 +1,25 @@
-import type { TFunction } from "i18next";
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-
-const workflowRunRows = [
-  {
-    description: "Survey response matched the ending-card condition.",
-    id: "run_placeholder_completed",
-    statusLabel: "Completed",
-    statusType: "success",
-  },
-  {
-    description: "Manual dry run from the workflow builder.",
-    id: "run_placeholder_dry_run",
-    statusLabel: "Dry run",
-    statusType: "gray",
-  },
-  {
-    description: "Email provider returned a delivery error.",
-    id: "run_placeholder_failed",
-    statusLabel: "Failed",
-    statusType: "error",
-  },
-] as const;
+import { getPlaceholderWorkflow, getPlaceholderWorkflowRuns } from "../lib/placeholder-data";
 
 interface WorkflowRunsTableProps {
   showWorkflowColumn?: boolean;
-  t: TFunction;
   workflowId?: string;
   workspaceId: string;
 }
 
 export const WorkflowRunsTable = ({
   showWorkflowColumn = false,
-  t,
   workflowId,
   workspaceId,
 }: Readonly<WorkflowRunsTableProps>) => {
-  const routeWorkflowId = workflowId ?? "response-completed-follow-up";
+  const { t } = useTranslation();
+  const workflowRunRows = getPlaceholderWorkflowRuns(workflowId);
   const idColumnClassName = showWorkflowColumn ? "w-[30%]" : "w-[44%]";
   const statusColumnClassName = showWorkflowColumn ? "w-[14%]" : "w-[16%]";
   const dateColumnClassName = showWorkflowColumn ? "w-[16%]" : "w-[20%]";
@@ -47,7 +28,7 @@ export const WorkflowRunsTable = ({
   return (
     <div
       className="overflow-hidden rounded-lg border border-slate-200 bg-white"
-      aria-label="Workflow runs list">
+      aria-label={t("common.workflow_runs")}>
       <Table className="table-fixed">
         <TableHeader role="rowgroup">
           <TableRow className="bg-slate-100" role="row">
@@ -70,7 +51,8 @@ export const WorkflowRunsTable = ({
         </TableHeader>
         <TableBody>
           {workflowRunRows.map((run) => {
-            const href = `/workspaces/${workspaceId}/workflows/${routeWorkflowId}/runs/${run.id}`;
+            const href = `/workspaces/${workspaceId}/workflows/${run.workflowId}/runs/${run.id}`;
+            const workflowName = getPlaceholderWorkflow(run.workflowId)?.name ?? run.workflowId;
 
             return (
               <TableRow key={run.id}>
@@ -83,7 +65,7 @@ export const WorkflowRunsTable = ({
                 {showWorkflowColumn ? (
                   <TableCell className="p-0">
                     <Link href={href} className="block truncate p-4 text-sm text-slate-700">
-                      Response follow-up
+                      {workflowName}
                     </Link>
                   </TableCell>
                 ) : null}
@@ -94,12 +76,12 @@ export const WorkflowRunsTable = ({
                 </TableCell>
                 <TableCell className="p-0">
                   <Link href={href} className="block truncate p-4 text-sm text-slate-600">
-                    Not set
+                    {run.createdAtLabel}
                   </Link>
                 </TableCell>
                 <TableCell className="p-0">
                   <Link href={href} className="block truncate p-4 text-sm text-slate-600">
-                    Not set
+                    {run.timeLabel}
                   </Link>
                 </TableCell>
               </TableRow>
