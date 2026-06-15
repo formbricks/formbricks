@@ -31,6 +31,12 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return {
+          responseId,
+          tagId,
+        };
+      }
       throw new DatabaseError(error.message);
     }
 

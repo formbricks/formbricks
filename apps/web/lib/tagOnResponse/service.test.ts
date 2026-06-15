@@ -134,9 +134,52 @@ describe("TagOnResponse Service", () => {
     });
   });
 
-  test("should throw DatabaseError when prisma operation fails", async () => {
+  test("addTagToRespone should be a no-op when the tag is already on the response (P2002)", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed on the fields: (`responseId`,`tagId`)",
+      {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      }
+    );
+    vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
+
+    const result = await addTagToRespone("response1", "tag1");
+
+    expect(result).toEqual({
+      responseId: "response1",
+      tagId: "tag1",
+    });
+  });
+
+  test("addTagToRespone should not throw when called twice with the same (responseId, tagId)", async () => {
+    const mockTagOnResponse = {
+      tag: {
+        workspaceId: "workspace1",
+      },
+    };
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed on the fields: (`responseId`,`tagId`)",
+      {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      }
+    );
+
+    vi.mocked(prisma.tagsOnResponses.create)
+      .mockResolvedValueOnce(mockTagOnResponse as any)
+      .mockRejectedValueOnce(prismaError);
+
+    const first = await addTagToRespone("response1", "tag1");
+    const second = await addTagToRespone("response1", "tag1");
+
+    expect(first).toEqual({ responseId: "response1", tagId: "tag1" });
+    expect(second).toEqual({ responseId: "response1", tagId: "tag1" });
+  });
+
+  test("addTagToRespone should throw DatabaseError for non-P2002 prisma errors", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
-      code: "P2002",
+      code: "P2025",
       clientVersion: "5.0.0",
     });
     vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
