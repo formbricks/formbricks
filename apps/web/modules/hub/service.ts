@@ -22,37 +22,19 @@ import type {
   TaxonomyScope,
   TaxonomyTreeResponse,
 } from "./types";
-
-type HubError = { status: number; message: string; detail: string };
+import {
+  type HubError,
+  type HubResult,
+  NO_CONFIG_ERROR,
+  createHubResultFromError,
+  getErrorMessage,
+  getErrorStatus,
+  toQueryString,
+} from "./utils";
 
 export type HubFeedbackRecordResult = {
   data: FeedbackRecordData | null;
   error: HubError | null;
-};
-
-const NO_CONFIG_ERROR = {
-  status: 0,
-  message: "HUB_API_KEY is not set; Hub integration is disabled.",
-  detail: "HUB_API_KEY is not set; Hub integration is disabled.",
-} as const;
-
-const getErrorMessage = (err: unknown): string => {
-  if (err instanceof Error) return err.message;
-  if (typeof err === "string") return err;
-  return "Unknown error";
-};
-
-// Duck-typed: `instanceof` against the SDK error class breaks under Next dev/Turbopack
-// when @formbricks/hub is loaded into more than one module scope.
-const getErrorStatus = (err: unknown): number =>
-  err && typeof err === "object" && typeof (err as { status?: unknown }).status === "number"
-    ? (err as { status: number }).status
-    : 0;
-
-const createResultFromError = (err: unknown): HubFeedbackRecordResult => {
-  const status = getErrorStatus(err);
-  const message = getErrorMessage(err);
-  return { data: null, error: { status, message, detail: message } };
 };
 
 /**
@@ -71,7 +53,7 @@ export const createFeedbackRecord = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
-    return createResultFromError(err);
+    return createHubResultFromError(err);
   }
 };
 
@@ -89,7 +71,7 @@ export const retrieveFeedbackRecord = async (id: string): Promise<HubFeedbackRec
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id }, "Hub: retrieveFeedbackRecord failed");
-    return createResultFromError(err);
+    return createHubResultFromError(err);
   }
 };
 
@@ -110,7 +92,7 @@ export const updateFeedbackRecord = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id }, "Hub: updateFeedbackRecord failed");
-    return createResultFromError(err);
+    return createHubResultFromError(err);
   }
 };
 
@@ -290,34 +272,11 @@ export const createFeedbackRecordsBatch = async (
         return { data, error: null as HubFeedbackRecordResult["error"] };
       } catch (err) {
         logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
-        return createResultFromError(err);
+        return createHubResultFromError<FeedbackRecordData>(err);
       }
     })
   );
   return { results };
-};
-
-export type HubResult<T> = {
-  data: T | null;
-  error: HubError | null;
-};
-
-const toQueryString = (params: Record<string, string | number | undefined>): string => {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== "") {
-      query.set(key, String(value));
-    }
-  }
-
-  const serialized = query.toString();
-  return serialized ? `?${serialized}` : "";
-};
-
-const createHubResultFromError = <T>(err: unknown): HubResult<T> => {
-  const status = getErrorStatus(err);
-  const message = getErrorMessage(err);
-  return { data: null, error: { status, message, detail: message } };
 };
 
 export const listTaxonomyFields = async (tenantId: string): Promise<HubResult<TaxonomyFieldsResponse>> => {

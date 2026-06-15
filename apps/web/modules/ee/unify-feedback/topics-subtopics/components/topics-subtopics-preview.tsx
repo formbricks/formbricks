@@ -73,11 +73,12 @@ interface TopicsSubtopicsPreviewProps {
 
 const RUNNING_STATUSES = new Set(["pending", "running"]);
 const NODE_RECORD_LIMIT = 50;
+const NODE_RECORD_COUNT_METADATA_KEYS = ["record_count", "records_count", "cluster_size", "size"] as const;
 
 const fieldKey = (field: TaxonomyFieldOption) =>
-  [field.source_type, field.source_id, field.field_id].join("::");
+  `${field.source_type}::${field.source_id}::${field.field_id}`;
 
-const sourceKey = (field: TaxonomyFieldOption) => [field.source_type, field.source_id].join("::");
+const sourceKey = (field: TaxonomyFieldOption) => `${field.source_type}::${field.source_id}`;
 
 const scopeFromField = (field: TaxonomyFieldOption): TaxonomyScope => ({
   tenant_id: field.tenant_id,
@@ -86,11 +87,11 @@ const scopeFromField = (field: TaxonomyFieldOption): TaxonomyScope => ({
   field_id: field.field_id,
 });
 
-const statusBadgeType = (status: TaxonomyRun["status"]): "warning" | "success" | "error" | "gray" => {
+const statusBadgeType = (status: TaxonomyRun["status"]): "warning" | "success" | "error" | "info" => {
   if (status === "succeeded") return "success";
   if (status === "failed" || status === "canceled") return "error";
   if (status === "pending" || status === "running") return "warning";
-  return "gray";
+  return "info";
 };
 
 const runFailureMessage = (code: TaxonomyRunFailureCode, t: TFunction): string => {
@@ -192,7 +193,7 @@ const getNodeRecordEstimate = (node: TaxonomyNode): number | null => {
   const metadata = node.metadata;
   if (!metadata) return null;
 
-  for (const key of ["record_count", "records_count", "cluster_size", "size"]) {
+  for (const key of NODE_RECORD_COUNT_METADATA_KEYS) {
     const value = metadata[key];
     if (typeof value === "number" && Number.isFinite(value)) {
       return value;
@@ -786,41 +787,45 @@ const TaxonomyColumnView = ({
   canWrite: boolean;
   onSelect: (node: TaxonomyNode) => void;
   onEdit: (node: TaxonomyNode) => void;
-}>) => (
-  <section className="min-w-0 rounded-lg border border-slate-200 bg-white">
-    <div className="flex h-12 items-center justify-between border-b border-slate-200 px-3">
-      <div className="flex min-w-0 items-baseline gap-2">
-        <h3 className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600">
-          Level {column.level} keywords
-        </h3>
-        <span className="text-xs font-medium text-slate-400">{column.nodes.length}</span>
-      </div>
-      <button
-        type="button"
-        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
-        disabled
-        title="Adding taxonomy keywords is not part of the beta edit scope.">
-        <PlusIcon className="size-3.5" />
-        Add
-      </button>
-    </div>
+}>) => {
+  const { t } = useTranslation();
 
-    <div className="space-y-1 p-2">
-      {column.nodes.map((node) => (
-        <TaxonomyColumnRow
-          key={node.id}
-          node={node}
-          isInSelectedPath={selectedPathIds.has(node.id)}
-          isSelected={selectedNodeId === node.id}
-          selectedNodeRecordCount={selectedNodeRecordCount}
-          canWrite={canWrite}
-          onSelect={onSelect}
-          onEdit={onEdit}
-        />
-      ))}
-    </div>
-  </section>
-);
+  return (
+    <section className="min-w-0 rounded-lg border border-slate-200 bg-white">
+      <div className="flex h-12 items-center justify-between border-b border-slate-200 px-3">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <h3 className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600">
+            {t("workspace.unify.taxonomy_level_keywords", { level: column.level })}
+          </h3>
+          <span className="text-xs font-medium text-slate-400">{column.nodes.length}</span>
+        </div>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled
+          title={t("workspace.unify.taxonomy_add_keyword_disabled")}>
+          <PlusIcon className="size-3.5" />
+          {t("workspace.unify.taxonomy_add")}
+        </button>
+      </div>
+
+      <div className="space-y-1 p-2">
+        {column.nodes.map((node) => (
+          <TaxonomyColumnRow
+            key={node.id}
+            node={node}
+            isInSelectedPath={selectedPathIds.has(node.id)}
+            isSelected={selectedNodeId === node.id}
+            selectedNodeRecordCount={selectedNodeRecordCount}
+            canWrite={canWrite}
+            onSelect={onSelect}
+            onEdit={onEdit}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};
 
 const TaxonomyColumnRow = ({
   node,
@@ -839,6 +844,7 @@ const TaxonomyColumnRow = ({
   onSelect: (node: TaxonomyNode) => void;
   onEdit: (node: TaxonomyNode) => void;
 }>) => {
+  const { t } = useTranslation();
   const count = isSelected ? selectedNodeRecordCount : getNodeRecordEstimate(node);
   const hasChildren = Boolean(node.children?.length);
 
@@ -861,7 +867,7 @@ const TaxonomyColumnRow = ({
       {canWrite && (
         <button
           type="button"
-          aria-label={`Edit ${node.label}`}
+          aria-label={t("workspace.unify.taxonomy_edit_keyword_aria", { keyword: node.label })}
           className={`rounded p-0.5 ${
             isInSelectedPath
               ? "text-slate-300 hover:text-white"
@@ -915,34 +921,40 @@ const TaxonomyDetailPanel = ({
                   <FileTextIcon className="size-4" />
                 )}
                 {selectedNodeRecordCount === null
-                  ? "View records"
-                  : `View ${selectedNodeRecordCount.toLocaleString()} records`}
+                  ? t("workspace.unify.taxonomy_view_records")
+                  : t("workspace.unify.taxonomy_view_records_count", {
+                      count: selectedNodeRecordCount,
+                    })}
                 <ChevronRightIcon className="size-4" />
               </button>
             </div>
             {canWrite && (
               <Button size="sm" variant="ghost" onClick={() => onEdit(selectedNode)}>
                 <PencilIcon className="size-4" />
-                {t("common.edit")}
+                {t("workspace.unify.taxonomy_rename")}
               </Button>
             )}
           </div>
 
           <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-            {selectedNode.description || "Feedback records classified under this keyword."}
+            {selectedNode.description || t("workspace.unify.taxonomy_keyword_description_fallback")}
           </div>
 
           {childKeywords.length > 0 ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-950">{childKeywords.length} child keywords</p>
+                <p className="text-sm font-semibold text-slate-950">
+                  {t("workspace.unify.taxonomy_child_keywords", {
+                    count: childKeywords.length,
+                  })}
+                </p>
                 <button
                   type="button"
                   className="inline-flex items-center gap-1 text-sm font-medium text-slate-500"
                   disabled
-                  title="Adding taxonomy keywords is not part of the beta edit scope.">
+                  title={t("workspace.unify.taxonomy_add_keyword_disabled")}>
                   <PlusIcon className="size-4" />
-                  Add keyword
+                  {t("workspace.unify.taxonomy_add_keyword")}
                 </button>
               </div>
               <div className="flex h-2 overflow-hidden rounded-full bg-slate-100">
@@ -1040,11 +1052,15 @@ const EditKeywordDialog = ({
     <Dialog open={Boolean(node)} onOpenChange={onOpenChange}>
       <DialogContent width="narrow" className="p-6">
         <DialogHeader>
-          <DialogTitle>Edit Level {node?.level ?? ""} keyword</DialogTitle>
+          <DialogTitle>
+            {t("workspace.unify.taxonomy_edit_level_keyword", { level: node?.level ?? "" })}
+          </DialogTitle>
         </DialogHeader>
         <DialogBody className="space-y-5 overflow-visible">
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-slate-900">Keyword</span>
+            <span className="text-sm font-semibold text-slate-900">
+              {t("workspace.unify.taxonomy_keyword")}
+            </span>
             <Input
               value={label}
               disabled={!canWrite || isSaving}
@@ -1057,9 +1073,9 @@ const EditKeywordDialog = ({
               className="min-h-28 w-full resize-y rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
               value={node?.description ?? ""}
               readOnly
-              placeholder="Generated description"
+              placeholder={t("workspace.unify.taxonomy_generated_description")}
             />
-            <p className="text-xs text-slate-500">Beta edits currently support keyword rename and removal.</p>
+            <p className="text-xs text-slate-500">{t("workspace.unify.taxonomy_beta_edit_scope")}</p>
           </label>
         </DialogBody>
         <DialogFooter className="items-center justify-between sm:justify-between">
@@ -1069,7 +1085,7 @@ const EditKeywordDialog = ({
             disabled={!canWrite || isSaving || !node || node.node_type === "root"}
             onClick={onRemove}>
             <Trash2Icon className="size-4" />
-            {t("common.delete")}
+            {t("workspace.unify.taxonomy_remove")}
           </Button>
           <div className="flex gap-2">
             <Button type="button" variant="ghost" disabled={isSaving} onClick={() => onOpenChange(false)}>
@@ -1113,8 +1129,13 @@ const RecordsSheet = ({
           <SheetTitle>{selectedNode?.label ?? t("workspace.unify.feedback_records")}</SheetTitle>
           <SheetDescription>
             {selectedNodeRecordCount === null
-              ? `Showing the first ${nodeRecords.length.toLocaleString()} feedback records classified under this keyword.`
-              : `Showing ${nodeRecords.length.toLocaleString()} of ${selectedNodeRecordCount.toLocaleString()} feedback records classified under this keyword.`}
+              ? t("workspace.unify.taxonomy_records_sheet_first", {
+                  count: nodeRecords.length,
+                })
+              : t("workspace.unify.taxonomy_records_sheet_count", {
+                  shownCount: nodeRecords.length.toLocaleString(),
+                  totalCount: selectedNodeRecordCount.toLocaleString(),
+                })}
           </SheetDescription>
         </SheetHeader>
 
@@ -1139,7 +1160,11 @@ const FeedbackRecordCard = ({
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
       <div className="flex flex-wrap gap-2">
-        <Badge text={record.source_type || "feedback"} type="gray" size="tiny" />
+        <Badge
+          text={record.source_type || t("workspace.unify.taxonomy_feedback_source_fallback")}
+          type="gray"
+          size="tiny"
+        />
         {record.field_type && <Badge text={record.field_type} type="gray" size="tiny" />}
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
