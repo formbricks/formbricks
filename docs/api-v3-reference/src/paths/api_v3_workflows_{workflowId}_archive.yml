@@ -1,0 +1,41 @@
+post:
+  operationId: archiveWorkflowV3
+  summary: Archive a workflow
+  description: >
+    Soft-deletes a workflow by moving it from any non-archived state to
+    `archived`. Archived
+
+    workflows stop responding to trigger events immediately, become read-only,
+    and are excluded
+
+    from list responses unless requested with `filter[status][in]=archived`.
+    Their runs, version
+
+    history, and definition are preserved, and the workflow can be restored with
+
+    `POST /api/v3/workflows/{workflowId}/unarchive`. Archiving an already
+    archived workflow
+
+    returns **422** with code `invalid_workflow_state`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  responses:
+    '200':
+      $ref: ../components/responses/WorkflowResourceResponse.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '422':
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

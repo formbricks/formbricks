@@ -1,0 +1,22 @@
+type: object
+description: Optional card shown before the first survey block.
+required:
+  - enabled
+properties:
+  enabled:
+    type: boolean
+  headline:
+    $ref: ./TranslatableText.yml
+  subheader:
+    $ref: ./TranslatableText.yml
+  buttonLabel:
+    $ref: ./TranslatableText.yml
+  fileUrl:
+    type: string
+  videoUrl:
+    type: string
+  timeToFinish:
+    type: boolean
+  showResponseCount:
+    type: boolean
+additionalProperties: false

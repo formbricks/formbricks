@@ -1,0 +1,18 @@
+type: string
+enum:
+  - queued
+  - running
+  - completed
+  - failed
+  - canceled
+description: >
+  Workflow run lifecycle state. `completed`, `failed`, and `canceled` are
+  terminal. Valid
+
+  transitions: `queued` → `running`, `running` → `queued` (retry/backoff),
+  `queued` →
+
+  `canceled`, and `running` → `completed`/`failed`/`canceled`. Retries do not
+  introduce a
+
+  separate status; retry state is exposed via `attempt` and `nextAttemptAt`.

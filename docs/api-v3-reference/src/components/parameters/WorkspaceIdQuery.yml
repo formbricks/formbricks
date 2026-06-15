@@ -1,0 +1,7 @@
+in: query
+name: workspaceId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Workspace identifier. This is the canonical container ID for v3 APIs.

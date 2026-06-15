@@ -1,0 +1,22 @@
+type: object
+required:
+  - name
+  - type
+  - value
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Optional stable variable id. Generated when omitted.
+  name:
+    type: string
+    pattern: ^[a-z0-9_]+$
+    description: Unique variable name. Lowercase letters, numbers, and underscores only.
+  type:
+    type: string
+    enum:
+      - number
+  value:
+    type: number
+    description: Default numeric value.
+additionalProperties: false

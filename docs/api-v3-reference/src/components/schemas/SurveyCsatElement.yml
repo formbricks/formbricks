@@ -1,0 +1,29 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - scale
+      - range
+    properties:
+      type:
+        type: string
+        enum:
+          - csat
+      scale:
+        type: string
+        enum:
+          - number
+          - smiley
+          - star
+      range:
+        type: integer
+        enum:
+          - 5
+      lowerLabel:
+        $ref: ./TranslatableText.yml
+      upperLabel:
+        $ref: ./TranslatableText.yml
+      isColorCodingEnabled:
+        type: boolean
+        default: false
+unevaluatedProperties: false

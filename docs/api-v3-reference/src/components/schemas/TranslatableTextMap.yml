@@ -1,0 +1,9 @@
+type: object
+description: >-
+  Multilingual text map keyed by the emitted `languages[].code` values for this
+  survey.
+propertyNames:
+  type: string
+  description: Survey language code/tag, for example `en-US`, `de-DE`, `vi`, or `zh-Hans`.
+additionalProperties:
+  type: string

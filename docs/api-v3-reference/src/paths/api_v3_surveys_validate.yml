@@ -1,0 +1,144 @@
+post:
+  operationId: validateSurveyV3
+  summary: Validate a survey document
+  description: >
+    Validates a future create or patch survey payload without writing data,
+    creating languages,
+
+    or creating survey versions. Invalid survey documents return `200` with
+    `data.valid=false`
+
+    so agents and MCP clients can repair payloads from structured
+    `invalid_params`.
+
+
+    Use `400` only for malformed validation envelopes, unsupported operations,
+    invalid `surveyId`,
+
+    or unsupported query parameters.
+  tags:
+    - V3 Surveys
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ValidateSurveyRequest.yml
+        examples:
+          createValidation:
+            summary: Validate a create payload
+            value:
+              operation: create
+              data:
+                workspaceId: clxx1234567890123456789012
+                name: Product Feedback Survey
+                defaultLanguage: en-US
+                blocks:
+                  - id: clbk1234567890123456789012
+                    name: Main Block
+                    elements:
+                      - id: satisfaction
+                        type: openText
+                        headline:
+                          en-US: What should we improve?
+                        required: true
+          patchValidation:
+            summary: Validate a patch payload
+            value:
+              operation: patch
+              surveyId: clsv1234567890123456789012
+              data:
+                blocks:
+                  - id: clbk1234567890123456789012
+                    name: Main Block
+                    elements:
+                      - id: satisfaction
+                        type: openText
+                        headline:
+                          en-US: What should we improve?
+                        required: true
+  responses:
+    '200':
+      description: Validation completed. The survey document may still be invalid.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyValidationResult.yml
+          examples:
+            invalid:
+              summary: Invalid survey document
+              value:
+                data:
+                  valid: false
+                  operation: create
+                  invalid_params:
+                    - name: blocks.0.elements.0.buttonUrl
+                      reason: >-
+                        Unsupported field 'buttonUrl' for element type
+                        'openText'. Allowed fields...
+            valid:
+              summary: Valid survey document
+              value:
+                data:
+                  valid: true
+                  operation: create
+                  invalid_params: []
+                  languages:
+                    - code: en-US
+                      default: true
+                      enabled: true
+                      writeBehavior: connect_or_create
+    '400':
+      description: >-
+        Malformed validation envelope, invalid route/query data, or unsupported
+        operation
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '401':
+      description: Not authenticated (no valid session or API key)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '403':
+      description: Forbidden — no write access, or survey/workspace does not exist
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '429':
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the current rate-limit window resets
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '500':
+      description: Internal Server Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
