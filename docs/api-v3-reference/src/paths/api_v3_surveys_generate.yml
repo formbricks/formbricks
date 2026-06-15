@@ -1,0 +1,247 @@
+post:
+  operationId: generateSurveyV3
+  summary: Create a survey draft payload with AI
+  description: >
+    Creates a strict v3 `POST /api/v3/surveys` create payload from a creator
+    prompt and returns
+
+    validation metadata. This endpoint is single-purpose: it does **not**
+    persist the survey.
+
+    Clients should validate the returned payload with `/api/v3/surveys/validate`
+    or use the
+
+    embedded validation metadata, then create the draft through `POST
+    /api/v3/surveys`.
+
+
+    The generated payload always sets `status: draft`. The initial contract
+    supports only
+
+    `type: link`; app and website survey creation must stay disabled until the
+    v3 create
+
+    endpoint accepts those types.
+
+
+    Prompt privacy: prompt text is sent to the configured AI provider to create
+    the payload, but
+
+    this endpoint does not store prompts and server logs should use request ids
+    and failure
+
+    categories instead of raw prompt content.
+  tags:
+    - V3 Surveys
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/GenerateSurveyRequest.yml
+        examples:
+          onboarding:
+            summary: Create a link survey draft
+            value:
+              workspaceId: clxx1234567890123456789012
+              type: link
+              language: en-US
+              prompt: >-
+                Understand why new users stop during onboarding and what would
+                help them finish setup.
+  responses:
+    '200':
+      description: >-
+        Survey create payload generated successfully. The survey has not been
+        created yet.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/GenerateSurveyResult.yml
+          examples:
+            generated:
+              summary: Generated draft create payload
+              value:
+                data:
+                  language: en-US
+                  payload:
+                    workspaceId: clxx1234567890123456789012
+                    type: link
+                    name: Onboarding Completion Survey
+                    status: draft
+                    defaultLanguage: en-US
+                    languages:
+                      - code: en-US
+                        default: true
+                        enabled: true
+                    metadata:
+                      title:
+                        en-US: Onboarding Completion Survey
+                    welcomeCard:
+                      enabled: false
+                    blocks:
+                      - id: clbk1234567890123456789012
+                        name: Main
+                        elements:
+                          - id: q_1_example
+                            type: openText
+                            headline:
+                              en-US: What made onboarding hard to complete?
+                            required: false
+                            isDraft: true
+                            inputType: text
+                            longAnswer: false
+                            charLimit:
+                              enabled: false
+                    endings:
+                      - id: clen1234567890123456789012
+                        type: endScreen
+                        headline:
+                          en-US: Thanks for your feedback
+                    hiddenFields:
+                      enabled: false
+                    variables: []
+                  validation:
+                    valid: true
+                    invalid_params: []
+                    languages:
+                      - code: en-US
+                        default: true
+                        enabled: true
+    '400':
+      description: Malformed body or a prompt that is too short or underspecified
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            shortPrompt:
+              summary: Prompt needs more detail
+              value:
+                title: Bad Request
+                status: 400
+                detail: Prompt needs more detail
+                code: bad_request
+                requestId: req_123
+                invalid_params:
+                  - name: prompt
+                    reason: >-
+                      Describe the survey goal, audience, or topic in a sentence
+                      so the AI can create a useful draft.
+    '401':
+      description: Not authenticated (no valid session or API key)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '403':
+      description: >-
+        Forbidden — no write access, workspace does not exist, AI is not in
+        plan, or AI smart tools are disabled
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            noWorkspaceWriteAccess:
+              summary: No workspace write access
+              value:
+                title: Forbidden
+                status: 403
+                detail: You are not authorized to access this resource
+                code: forbidden
+                requestId: req_123
+            aiDisabled:
+              summary: AI smart tools disabled
+              value:
+                title: AI Unavailable
+                status: 403
+                detail: AI smart tools are disabled for this organization.
+                code: ai_smart_tools_disabled
+                requestId: req_123
+    '422':
+      description: AI generated an invalid payload after schema and v3 create validation
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            invalidGeneratedPayload:
+              summary: Invalid generated payload
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: >-
+                  Generated survey payload is invalid: generatedSurvey.blocks:
+                  Too small
+                code: ai_generated_payload_invalid
+                requestId: req_123
+                invalid_params:
+                  - name: generatedSurvey.blocks
+                    reason: Too small
+    '429':
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the current rate-limit window resets
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '500':
+      description: Internal Server Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '502':
+      description: The configured AI provider failed or could not produce a valid draft
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            providerFailed:
+              summary: AI provider failed
+              value:
+                title: Bad Gateway
+                status: 502
+                detail: >-
+                  The AI provider could not generate a valid survey draft. Try
+                  again or add more detail.
+                code: bad_gateway
+                requestId: req_123
+    '503':
+      description: AI is not configured on this Formbricks instance
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            instanceNotConfigured:
+              summary: AI instance configuration missing
+              value:
+                title: AI Unavailable
+                status: 503
+                detail: AI is not configured for this Formbricks instance.
+                code: ai_instance_not_configured
+                requestId: req_123
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

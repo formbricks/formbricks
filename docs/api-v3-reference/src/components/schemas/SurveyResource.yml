@@ -1,0 +1,73 @@
+type: object
+required:
+  - id
+  - workspaceId
+  - createdAt
+  - updatedAt
+  - name
+  - type
+  - status
+  - metadata
+  - defaultLanguage
+  - languages
+  - welcomeCard
+  - blocks
+  - endings
+  - hiddenFields
+  - variables
+properties:
+  id:
+    type: string
+  workspaceId:
+    type: string
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  name:
+    type: string
+  type:
+    type: string
+    enum:
+      - link
+      - app
+      - website
+      - web
+  status:
+    type: string
+    enum:
+      - draft
+      - inProgress
+      - paused
+      - completed
+  metadata:
+    anyOf:
+      - $ref: ./SurveyMetadata.yml
+      - type: 'null'
+  defaultLanguage:
+    type: string
+    description: >-
+      Emitted language code/tag for the survey default language. The internal
+      `default` translation key is never exposed.
+  languages:
+    type: array
+    items:
+      $ref: ./SurveyLanguage.yml
+  welcomeCard:
+    $ref: ./SurveyWelcomeCard.yml
+  blocks:
+    type: array
+    items:
+      $ref: ./SurveyBlock.yml
+  endings:
+    type: array
+    items:
+      $ref: ./SurveyEnding.yml
+  hiddenFields:
+    $ref: ./SurveyHiddenFields.yml
+  variables:
+    type: array
+    items:
+      $ref: ./SurveyVariable.yml

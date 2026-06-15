@@ -1,0 +1,58 @@
+type: object
+description: >-
+  Persisted trace entry for one workflow run step, mirroring the
+  `WorkflowRunLog` table row.
+required:
+  - id
+  - runId
+  - sequence
+  - stepId
+  - stepType
+  - status
+  - input
+  - output
+  - error
+  - startedAt
+  - finishedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  runId:
+    type: string
+    format: cuid2
+  sequence:
+    type: integer
+    minimum: 0
+    description: Order of the entry within the run.
+  stepId:
+    type: string
+    minLength: 1
+  stepType:
+    type: string
+    minLength: 1
+  status:
+    $ref: ./WorkflowRunLogStatus.yml
+  input:
+    type: object
+    description: Step input snapshot. Empty object when nothing was recorded.
+  output:
+    type: object
+    description: >-
+      Step output snapshot (mocked for dry runs). Empty object when nothing was
+      recorded.
+  error:
+    type:
+      - string
+      - 'null'
+  startedAt:
+    type:
+      - string
+      - 'null'
+    format: date-time
+  finishedAt:
+    type:
+      - string
+      - 'null'
+    format: date-time
+additionalProperties: false

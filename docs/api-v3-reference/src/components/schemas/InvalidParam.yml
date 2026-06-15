@@ -1,0 +1,76 @@
+type: object
+description: >
+  Field-level validation error. `name` and `reason` are always intended for
+  humans.
+
+  Optional machine-readable fields are included when the API can identify the
+  semantic error,
+
+  especially for survey locale, identifier, and reference validation used by MCP
+  and agent clients.
+required:
+  - name
+  - reason
+properties:
+  name:
+    type: string
+    description: Dot-path to the invalid request field.
+  reason:
+    type: string
+    description: Human-readable repair guidance.
+  code:
+    type: string
+    enum:
+      - dangling_reference
+      - duplicate_identifier
+      - duplicate_locale
+      - forbidden_identifier
+      - immutable_identifier
+      - invalid_graph
+      - invalid_locale
+      - invalid_reference
+      - missing_required_field
+      - missing_translation
+      - unsupported_field
+      - unsupported_locale
+    description: >
+      Machine-readable validation category, when available. `invalid_graph`
+      covers workflow
+
+      graph-structure violations such as a duplicated trigger edge, an
+      unreachable node, or a
+
+      cycle.
+  identifier:
+    type: string
+    description: >-
+      Identifier involved in the validation failure, when available. For
+      language errors, this can be the normalized language code.
+  referenceType:
+    type: string
+    enum:
+      - block
+      - element
+      - ending
+      - hiddenField
+      - language
+      - variable
+      - variableName
+      - recall
+      - node
+      - edge
+      - survey
+      - endingCard
+    description: >-
+      Identifier namespace involved in the validation failure. `node`, `edge`,
+      `survey`, and `endingCard` are used by workflow validation.
+  missingId:
+    type: string
+    description: Referenced id that does not exist in the submitted survey document.
+  firstUsedAt:
+    type: string
+    description: Dot-path where a duplicate identifier was first used.
+  conflictsWith:
+    type: string
+    description: Dot-path to the existing identifier that conflicts with this field.
+additionalProperties: false

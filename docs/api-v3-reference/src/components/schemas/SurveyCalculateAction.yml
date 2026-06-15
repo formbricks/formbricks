@@ -1,0 +1,32 @@
+type: object
+description: Updates a survey variable when the logic rule matches.
+required:
+  - id
+  - objective
+  - variableId
+  - operator
+  - value
+properties:
+  id:
+    type: string
+    format: cuid2
+  objective:
+    type: string
+    enum:
+      - calculate
+  variableId:
+    type: string
+    format: cuid2
+    description: Variable id for `calculate`.
+  operator:
+    type: string
+    enum:
+      - assign
+      - concat
+      - add
+      - subtract
+      - multiply
+      - divide
+  value:
+    $ref: ./SurveyLogicOperand.yml
+additionalProperties: false

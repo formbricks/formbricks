@@ -1,0 +1,18 @@
+type: object
+description: Requires an element/question to be answered before continuing.
+required:
+  - id
+  - objective
+  - target
+properties:
+  id:
+    type: string
+    format: cuid2
+  objective:
+    type: string
+    enum:
+      - requireAnswer
+  target:
+    type: string
+    description: Target element id.
+additionalProperties: false

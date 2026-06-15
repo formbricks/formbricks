@@ -1,0 +1,43 @@
+name: API v3 Spec
+
+on:
+  pull_request:
+    paths:
+      - "docs/api-v3-reference/**"
+      - ".github/workflows/api-v3-spec.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint source & verify bundle freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.x
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      # Root importer only: installs the lockfile-pinned @redocly/cli (and other root devDeps)
+      # without building the whole workspace. bundle.mjs falls back to pinned npx when absent.
+      - name: Install spec tooling (root dev dependencies)
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter formbricks
+
+      - name: Lint OpenAPI v3 source tree
+        run: node docs/api-v3-reference/scripts/bundle.mjs --lint
+
+      - name: Verify committed bundle is in sync with src/
+        run: node docs/api-v3-reference/scripts/bundle.mjs --check

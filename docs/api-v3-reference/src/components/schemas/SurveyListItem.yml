@@ -1,0 +1,54 @@
+type: object
+description: >
+  Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601
+  strings.
+
+  The v3 overview contract intentionally omits internal fields such as `_count`.
+
+  Legacy DB rows may include survey **type** values `website` or `web` (see
+  Prisma); filter **type** only accepts `link` | `app`.
+properties:
+  id:
+    type: string
+  name:
+    type: string
+  workspaceId:
+    type: string
+  type:
+    type: string
+    enum:
+      - link
+      - app
+      - website
+      - web
+  status:
+    type: string
+    enum:
+      - draft
+      - inProgress
+      - paused
+      - completed
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  responseCount:
+    type: integer
+  creator:
+    type:
+      - object
+      - 'null'
+    properties:
+      name:
+        type: string
+  singleUse:
+    type:
+      - object
+      - 'null'
+    properties:
+      enabled:
+        type: boolean
+      isEncrypted:
+        type: boolean
