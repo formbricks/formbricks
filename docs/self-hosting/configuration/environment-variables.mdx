@@ -15,7 +15,7 @@ These variables are present inside your machine's docker-compose file. Restart t
 
 For `AI_PROVIDER=google`, use a Gemini model ID such as `gemini-3.5-flash` together with Google Cloud credentials. `gemini-3.5-flash` must use `AI_GOOGLE_CLOUD_LOCATION=global`, `us`, or `eu`; keep regional locations such as `europe-west3` or `me-central2` only for models Google lists as supported there, such as `gemini-2.5-flash`. Formbricks uses Google Cloud naming here, even though the underlying SDK still talks to Vertex AI endpoints for Gemini model access.
 
-For `AI_PROVIDER=openai-compatible`, the LLM GA v1 self-hosted path is Qwen served by vLLM through an OpenAI-compatible `/v1` endpoint. Set only the variables for the provider you use; unused provider variables can be omitted.
+For `AI_PROVIDER=openai-compatible`, the LLM GA v1 self-hosted path is Qwen served by vLLM through an OpenAI-compatible `/v1` endpoint. Docker Compose users can enable the bundled Qwen/vLLM service with `COMPOSE_PROFILES=qwen`, or point `AI_OPENAI_COMPATIBLE_BASE_URL` at their own endpoint. Set only the variables for the provider you use; unused provider variables can be omitted.
 
 {/* prettier-ignore-start */}
 
