@@ -26,7 +26,9 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
+    "@types/js-yaml": "4.0.9",
     "@vitest/coverage-v8": "4.1.6",
+    "js-yaml": "4.1.0",
     "publint": "0.3.21",
     "rimraf": "^6.1.2",
     "typescript": "^5.9.3",
