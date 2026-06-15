@@ -189,6 +189,125 @@ deployment:
       exposed: true
 
 ##########################################################
+# Optional bundled web LLM runtime
+##########################################################
+llm:
+  # Deploy Formbricks-provided Qwen through the vLLM OpenAI-compatible runtime.
+  # Disabled by default; keep using deployment.env for Google Vertex, Azure, Bedrock,
+  # or externally managed OpenAI-compatible providers.
+  enabled: false
+
+  # When enabled, automatically points the Formbricks app at the bundled vLLM router.
+  # Any AI_* value explicitly set in deployment.env takes precedence over these defaults.
+  autoConfigureApp: true
+
+  # Formbricks app-facing settings for the bundled runtime.
+  formbricks:
+    # Defaults to http://<release-name>-router-service:<llm.routerSpec.servicePort>/v1 when empty.
+    baseUrl: ""
+    model: qwen3-14b-awq
+    providerName: vllm
+    supportsStructuredOutputs: "1"
+
+  servingEngineSpec:
+    enableEngine: true
+    labels:
+      environment: llm
+      release: vllm
+    imagePullPolicy: IfNotPresent
+    servicePort: 8000
+    runtimeClassName: ""
+    strategy:
+      type: Recreate
+    modelSpec:
+      - name: qwen
+        enabled: true
+        repository: vllm/vllm-openai
+        tag: v0.14.0
+        modelURL: Qwen/Qwen3-14B-AWQ
+        replicaCount: 1
+        requestCPU: 4
+        requestMemory: 24Gi
+        limitCPU: 8
+        limitMemory: 32Gi
+        requestGPU: 1
+        requestGPUType: nvidia.com/gpu
+        pvcStorage: 100Gi
+        runtimeClassName: ""
+        shmSize: 8Gi
+        vllmConfig:
+          maxModelLen: 8192
+          dtype: float16
+          tensorParallelSize: 1
+          maxNumSeqs: 8
+          gpuMemoryUtilization: 0.9
+          extraArgs:
+            - --served-model-name
+            - qwen3-14b-awq
+            - --default-chat-template-kwargs
+            - '{"enable_thinking": false}'
+        lmcacheConfig:
+          enabled: false
+        keda:
+          enabled: false
+    startupProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 180
+      httpGet:
+        path: /health
+        port: 8000
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        path: /health
+        port: 8000
+    readinessProbe:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 12
+      httpGet:
+        path: /health
+        port: 8000
+
+  routerSpec:
+    enableRouter: true
+    imagePullPolicy: IfNotPresent
+    serviceType: ClusterIP
+    servicePort: 8000
+    serviceDiscovery: k8s
+    k8sServiceDiscoveryType: service-name
+    resources:
+      requests:
+        cpu: 400m
+        memory: 1Gi
+      limits:
+        memory: 2Gi
+    startupProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 120
+      httpGet:
+        path: /health
+        port: router-port
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        path: /health
+        port: router-port
+    readinessProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 30
+      httpGet:
+        path: /health
+        port: router-port
+
+##########################################################
 # Horizontal Pod Autoscaler (HPA)
 ##########################################################
 autoscaling:
