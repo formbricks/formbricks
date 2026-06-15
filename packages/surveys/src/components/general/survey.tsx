@@ -113,6 +113,7 @@ export function Survey({
   placement,
   offlineSupport = false,
   onOfflineStatusChange,
+  showCardlessPreviewLogoSlot = false,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -1312,16 +1313,18 @@ export function Survey({
   const showCardlessProgressBar = isCardless && showProgressBar;
 
   return (
-    <div
-      className={cn(
-        "flex w-full flex-col",
-        isCardless && "h-full min-h-0 flex-1",
-        isPreviewMode && isCardless && "pt-8"
-      )}>
+    <div className={cn("flex w-full flex-col", isCardless && "h-full min-h-0 flex-1")}>
       {showCardlessProgressBar ? (
         <div className="cardless-progress-bar z-[100] w-full shrink-0">
           <ProgressBar survey={localSurvey} blockId={blockId} />
         </div>
+      ) : null}
+      {isPreviewMode && isCardless && showCardlessPreviewLogoSlot ? (
+        <div
+          id="formbricks-cardless-preview-logo-slot"
+          className="mx-auto w-full shrink-0 px-4 pt-5 pb-2 sm:px-6 sm:pt-6"
+          style={linkSurveyCardMaxWidth ? { maxWidth: linkSurveyCardMaxWidth } : undefined}
+        />
       ) : null}
       {isCardless ? (
         <div className="relative min-h-0 flex-1">
@@ -1335,7 +1338,10 @@ export function Survey({
           )}
           <div ref={cardlessScrollRef} className="h-full min-h-0 overflow-y-auto">
             <div
-              className="mx-auto flex w-full flex-col items-center px-4 pt-10 pb-6 sm:px-6 sm:pt-12"
+              className={cn(
+                "mx-auto flex w-full flex-col items-center px-4 pb-6 sm:px-6",
+                isPreviewMode && showCardlessPreviewLogoSlot ? "pt-6" : "pt-10 sm:pt-12"
+              )}
               style={linkSurveyCardMaxWidth ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
               <div className="w-full">
                 <StackedCardsContainer

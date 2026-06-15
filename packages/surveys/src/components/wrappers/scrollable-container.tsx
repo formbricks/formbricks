@@ -88,7 +88,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
           style={{
             maxHeight,
           }}
-          className={cn("bg-survey-bg px-4", disableInternalScroll ? "overflow-visible" : "overflow-auto")}>
+          className={cn(disableInternalScroll ? "overflow-visible" : "bg-survey-bg overflow-auto px-4 pt-4")}>
           {children}
         </div>
         {!disableInternalScroll && !isAtBottom && (

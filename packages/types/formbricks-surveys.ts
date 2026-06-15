@@ -32,6 +32,7 @@ export interface SurveyBaseProps {
   hiddenFieldsRecord?: TResponseHiddenFieldValue;
   shouldResetQuestionId?: boolean;
   fullSizeCards?: boolean;
+  showCardlessPreviewLogoSlot?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

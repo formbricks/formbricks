@@ -13,6 +13,7 @@ interface ClientLogoProps {
   workspaceId: string;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;
+  position?: "overlay" | "inline";
   dir?: "ltr" | "rtl" | "auto";
 }
 
@@ -21,14 +22,15 @@ export const ClientLogo = ({
   workspaceId,
   surveyLogo,
   previewSurvey = false,
+  position = "overlay",
   dir = "auto",
-}: ClientLogoProps) => {
+}: Readonly<ClientLogoProps>) => {
   const { t } = useTranslation();
   const logoToUse = surveyLogo?.url ? surveyLogo : workspaceLogo;
   const lookSettingsHref = `/workspaces/${workspaceId}/settings/workspace/look`;
 
   let positionClasses = "";
-  if (!previewSurvey) {
+  if (position === "overlay" && !previewSurvey) {
     if (dir === "rtl") {
       positionClasses = "top-3 right-3 md:top-7 md:right-7";
     } else {
@@ -38,7 +40,11 @@ export const ClientLogo = ({
 
   return (
     <div
-      className={cn(positionClasses, "group absolute z-0 rounded-lg")}
+      className={cn(
+        positionClasses,
+        position === "overlay" ? "absolute z-0" : "relative",
+        "group rounded-lg"
+      )}
       style={{ backgroundColor: logoToUse?.bgColor }}>
       {previewSurvey && (
         <Link

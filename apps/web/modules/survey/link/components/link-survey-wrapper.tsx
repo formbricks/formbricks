@@ -124,7 +124,12 @@ export const LinkSurveyWrapper = ({
                   <ResetProgressButton onClick={handleResetSurvey} />
                 </div>
               )}
-              <div className={cn("flex min-h-0 w-full flex-1 flex-col", !isCardless && "justify-center")}>
+              <div
+                className={cn(
+                  "flex min-h-0 w-full flex-1 flex-col",
+                  isPreview && isCardless && "pt-8",
+                  !isCardless && "justify-center"
+                )}>
                 {children}
               </div>
               {isCardless && (
