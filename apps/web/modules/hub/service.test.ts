@@ -605,6 +605,26 @@ describe("hub service", () => {
       );
     });
 
+    test("preserves an empty source_id in taxonomy scope query params (the no-source bucket)", async () => {
+      const get = vi.fn().mockResolvedValue({ run: {}, root: null });
+      vi.mocked(getHubClient).mockReturnValue({ get } as any);
+
+      const noSourceScope = { ...taxonomyScope, source_id: "" };
+      await getActiveTaxonomyTree(noSourceScope);
+      await listTaxonomyRuns({ ...noSourceScope, limit: 5 });
+
+      // source_id="" must be sent (source_id=), not dropped — otherwise Hub reads it as
+      // "no source filter" instead of "the unattributed bucket". See Hub PR #88.
+      expect(get).toHaveBeenNthCalledWith(
+        1,
+        "/v1/taxonomy/runs/active/tree?tenant_id=tenant-1&source_type=formbricks_survey&source_id=&field_id=question-1"
+      );
+      expect(get).toHaveBeenNthCalledWith(
+        2,
+        "/v1/taxonomy/runs?tenant_id=tenant-1&source_type=formbricks_survey&source_id=&field_id=question-1&limit=5"
+      );
+    });
+
     test("maps taxonomy endpoint failures to HubResult errors", async () => {
       vi.mocked(getHubClient).mockReturnValue({
         get: vi.fn().mockRejectedValue(new Error("taxonomy unavailable")),

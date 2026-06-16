@@ -31,7 +31,10 @@ import type {
 const ZTaxonomyScope = z.object({
   tenant_id: ZId,
   source_type: z.string().trim().min(1).max(255),
-  source_id: z.string().trim().min(1).max(255),
+  // Empty string is valid: it's the "no source" bucket for feedback ingested without an
+  // attributed source_id. Hub canonicalizes "no source" to "" (Hub PR #88), so the scope
+  // must accept and forward it rather than reject it as missing.
+  source_id: z.string().trim().max(255),
   field_id: z.string().trim().min(1).max(255),
 });
 

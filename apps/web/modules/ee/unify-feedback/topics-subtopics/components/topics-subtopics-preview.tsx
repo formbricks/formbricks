@@ -582,7 +582,8 @@ export const TopicsSubtopicsPreview = ({
                 <SelectContent>
                   {sourceOptions.map((field) => (
                     <SelectItem key={sourceKey(field)} value={sourceKey(field)}>
-                      {field.source_name || field.source_id} ({field.source_type})
+                      {field.source_name || field.source_id || t("workspace.unify.taxonomy_no_source")} (
+                      {field.source_type})
                     </SelectItem>
                   ))}
                 </SelectContent>
