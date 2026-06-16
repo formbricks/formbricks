@@ -18,6 +18,10 @@ vi.mock("@/lib/jobs/config", () => ({
   getJobsQueueingConfig: vi.fn(),
 }));
 
+vi.mock("@/lib/utils/locale", () => ({
+  findMatchingLocale: vi.fn(() => Promise.resolve("en-US")),
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
@@ -50,7 +54,7 @@ describe("sendToPipeline", () => {
     await sendToPipeline(testData);
 
     expect(getBackgroundJobProducer).toHaveBeenCalledTimes(1);
-    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith(testData);
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({ ...testData, locale: "en-US" });
   });
 
   test("logs enqueue failures and rethrows", async () => {
