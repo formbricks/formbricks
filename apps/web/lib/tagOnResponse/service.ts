@@ -31,7 +31,11 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002" && isTagsOnResponsesUniqueViolation(error)) {
+      const target = error.meta?.target;
+      const isTagsOnResponsesUniqueViolation =
+        Array.isArray(target) && target.includes("responseId") && target.includes("tagId");
+
+      if (error.code === "P2002" && isTagsOnResponsesUniqueViolation) {
         return {
           responseId,
           tagId,
@@ -42,12 +46,6 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
 
     throw error;
   }
-};
-
-const isTagsOnResponsesUniqueViolation = (error: Prisma.PrismaClientKnownRequestError): boolean => {
-  const target = error.meta?.target;
-  if (!Array.isArray(target)) return false;
-  return target.includes("responseId") && target.includes("tagId");
 };
 
 export const deleteTagOnResponse = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
