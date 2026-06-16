@@ -27,6 +27,7 @@ import {
   undoPendingPlanChangeAction,
 } from "../actions";
 import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
+import { PlanResponseFeature } from "./response-pricing-tooltip";
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
@@ -82,12 +83,14 @@ const formatMoney = (currency: string, unitAmount: number | null, locale: string
   }).format(unitAmount / 100);
 };
 
+type TPlanFeature = { type: "text"; label: string } | { type: "responses"; plan: "pro" | "scale" };
+
 type TPlanCardData = {
   plan: TStandardPlan;
   interval: TCloudBillingInterval;
   amount: string;
   description: string;
-  features: string[];
+  features: TPlanFeature[];
 };
 
 const getPlanPeriodLabel = (
@@ -330,14 +333,14 @@ export const PricingTable = ({
         ),
         description: t("workspace.settings.billing.plan_hobby_description"),
         features: [
-          t("workspace.settings.billing.plan_hobby_feature_responses"),
-          t("workspace.settings.billing.plan_hobby_feature_workspaces"),
-          t("workspace.settings.billing.plan_hobby_feature_surveys"),
-          t("workspace.settings.billing.plan_hobby_feature_question_types"),
-          t("workspace.settings.billing.plan_hobby_feature_logic"),
-          t("workspace.settings.billing.plan_hobby_feature_partial"),
-          t("workspace.settings.billing.plan_hobby_feature_file_uploads"),
-          t("workspace.settings.billing.plan_hobby_feature_api"),
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_responses") },
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_workspaces") },
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_surveys") },
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_question_types") },
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_logic") },
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_partial") },
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_file_uploads") },
+          { type: "text", label: t("workspace.settings.billing.plan_hobby_feature_api") },
         ],
       },
       {
@@ -350,16 +353,16 @@ export const PricingTable = ({
         ),
         description: t("workspace.settings.billing.plan_pro_description"),
         features: [
-          t("workspace.settings.billing.plan_feature_everything_in_hobby"),
-          t("workspace.settings.billing.plan_pro_feature_smart_tools"),
-          t("workspace.settings.billing.plan_pro_feature_responses"),
-          t("workspace.settings.billing.plan_pro_feature_workspaces"),
-          t("workspace.settings.billing.plan_pro_feature_unlimited_seats"),
-          t("workspace.settings.billing.plan_pro_feature_hide_branding"),
-          t("workspace.settings.billing.plan_pro_feature_contacts"),
-          t("workspace.settings.billing.plan_pro_feature_integrations"),
-          t("workspace.settings.billing.plan_pro_feature_sdks"),
-          t("workspace.settings.billing.plan_pro_feature_ai_translations"),
+          { type: "text", label: t("workspace.settings.billing.plan_feature_everything_in_hobby") },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_smart_tools") },
+          { type: "responses", plan: "pro" },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_workspaces") },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_unlimited_seats") },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_hide_branding") },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_contacts") },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_integrations") },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_sdks") },
+          { type: "text", label: t("workspace.settings.billing.plan_pro_feature_ai_translations") },
         ],
       },
       {
@@ -372,14 +375,14 @@ export const PricingTable = ({
         ),
         description: t("workspace.settings.billing.plan_scale_description"),
         features: [
-          t("workspace.settings.billing.plan_feature_everything_in_pro"),
-          t("workspace.settings.billing.plan_scale_feature_responses"),
-          t("workspace.settings.billing.plan_scale_feature_workspaces"),
-          t("workspace.settings.billing.plan_scale_feature_rbac"),
-          t("workspace.settings.billing.plan_scale_feature_quota"),
-          t("workspace.settings.billing.plan_scale_feature_feedback"),
-          t("workspace.settings.billing.plan_scale_feature_semantic_analysis"),
-          t("workspace.settings.billing.plan_scale_feature_security"),
+          { type: "text", label: t("workspace.settings.billing.plan_feature_everything_in_pro") },
+          { type: "responses", plan: "scale" },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_workspaces") },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_rbac") },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_quota") },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_feedback") },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_semantic_analysis") },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_security") },
         ],
       },
     ];
@@ -721,7 +724,7 @@ export const PricingTable = ({
           title={t("workspace.settings.billing.subscription")}
           description={t("workspace.settings.billing.subscription_description")}
           buttonInfo={
-            canShowSubscriptionButton && hasPaymentMethod
+            canShowSubscriptionButton
               ? {
                   text: t("workspace.settings.billing.manage_billing_details"),
                   onClick: () => void openBillingPortal(),
@@ -902,9 +905,22 @@ export const PricingTable = ({
                         </p>
                         <ul className="space-y-3">
                           {planCard.features.map((feature) => (
-                            <li key={feature} className="flex items-start gap-3 text-sm text-slate-700">
+                            <li
+                              key={feature.type === "text" ? feature.label : `${feature.plan}-responses`}
+                              className="flex items-start gap-3 text-sm text-slate-700">
                               <CheckIcon className="mt-0.5 size-4 shrink-0 text-slate-500" />
-                              <span>{feature}</span>
+                              <span>
+                                {feature.type === "text" ? (
+                                  feature.label
+                                ) : (
+                                  <PlanResponseFeature
+                                    plan={feature.plan}
+                                    locale={locale}
+                                    overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
+                                    t={t}
+                                  />
+                                )}
+                              </span>
                             </li>
                           ))}
                         </ul>

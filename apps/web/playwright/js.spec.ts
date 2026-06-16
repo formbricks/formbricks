@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import http from "http";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
+import { useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript">
@@ -69,10 +70,9 @@ test.describe("JS Package Test", async () => {
     await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
     await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
     await page.getByRole("button", { name: "Use this template" }).isVisible();
-    await page.getByRole("button", { name: "Use this template" }).click();
+    await useSelectedTemplate(page);
 
     // Configure survey settings
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit/);
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();

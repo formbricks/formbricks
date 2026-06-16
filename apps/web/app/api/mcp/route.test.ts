@@ -1,8 +1,17 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
-import { successListResponse } from "@/app/api/v3/lib/response";
-import { listV3Surveys } from "@/app/api/v3/surveys/lib/operations";
+import {
+  createdResponse,
+  problemBadRequest,
+  successListResponse,
+  successResponse,
+} from "@/app/api/v3/lib/response";
+import {
+  createV3SurveyResponseFromRawInput,
+  listV3Surveys,
+  validateV3SurveyFromRawInput,
+} from "@/app/api/v3/surveys/lib/operations";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -13,16 +22,16 @@ vi.mock("@/modules/api/lib/api-key-auth", () => ({
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
-  applyRateLimit: vi.fn().mockResolvedValue(undefined),
+  applyRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
 }));
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
-  createV3SurveyResponse: vi.fn(),
+  createV3SurveyResponseFromRawInput: vi.fn(),
   deleteV3Survey: vi.fn(),
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
   patchV3SurveyResponse: vi.fn(),
-  validateV3Survey: vi.fn(),
+  validateV3SurveyFromRawInput: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
@@ -83,7 +92,7 @@ describe("POST /api/mcp", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
-    vi.mocked(applyRateLimit).mockResolvedValue(undefined);
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(listV3Surveys).mockResolvedValue(
       successListResponse([], { limit: 20, nextCursor: null, totalCount: 0 }, { requestId: "req_mcp" })
     );
@@ -152,6 +161,29 @@ describe("POST /api/mcp", () => {
       "patch_survey",
       "delete_survey",
     ]);
+    const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
+    expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(
+      expect.arrayContaining([
+        "workspaceId",
+        "name",
+        "type",
+        "status",
+        "defaultLanguage",
+        "metadata",
+        "languages",
+        "welcomeCard",
+        "blocks",
+        "endings",
+        "hiddenFields",
+        "variables",
+      ])
+    );
+    expect(Object.keys((tools.get("validate_survey") as any).inputSchema.properties)).toEqual(
+      expect.arrayContaining(["operation", "surveyId", "data"])
+    );
+    expect(Object.keys((tools.get("patch_survey") as any).inputSchema.properties)).toEqual(
+      expect.arrayContaining(["surveyId", "data"])
+    );
     expect(message.result.tools.find((tool: { name: string }) => tool.name === "list_surveys")).toMatchObject(
       {
         annotations: {
@@ -217,5 +249,170 @@ describe("POST /api/mcp", () => {
         instance: "/api/mcp",
       })
     );
+  });
+
+  test("calls create_survey through the MCP route", async () => {
+    vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
+      createdResponse(
+        { id: "clsv1234567890123456789012" },
+        { requestId: "req_create", location: "/api/v3/surveys/clsv1234567890123456789012" }
+      )
+    );
+
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 3,
+          method: "tools/call",
+          params: {
+            name: "create_survey",
+            arguments: {
+              workspaceId: "clxx1234567890123456789012",
+              name: "MCP QA create",
+              blocks: [
+                {
+                  id: "clbk1234567890123456789012",
+                  name: "Main Block",
+                  elements: [
+                    {
+                      id: "feedback",
+                      type: "openText",
+                      headline: { "en-US": "What should we improve?" },
+                      required: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        {
+          "x-request-id": "req_create",
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const message = await readMcpResponse(response);
+    expect(message.result.structuredContent).toEqual({
+      data: { id: "clsv1234567890123456789012" },
+      requestId: "req_create",
+    });
+    expect(createV3SurveyResponseFromRawInput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authentication: apiKeyAuth,
+        requestId: "req_create",
+        instance: "/api/mcp",
+      })
+    );
+  });
+
+  test("calls validate_survey patch through the MCP route", async () => {
+    vi.mocked(validateV3SurveyFromRawInput).mockResolvedValue(
+      successResponse({ valid: true, operation: "patch", invalid_params: [] }, { requestId: "req_validate" })
+    );
+
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 4,
+          method: "tools/call",
+          params: {
+            name: "validate_survey",
+            arguments: {
+              operation: "patch",
+              surveyId: "clsv1234567890123456789012",
+              data: { name: "Updated survey" },
+            },
+          },
+        },
+        {
+          "x-request-id": "req_validate",
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const message = await readMcpResponse(response);
+    expect(message.result.structuredContent).toEqual({
+      data: { valid: true, operation: "patch", invalid_params: [] },
+      requestId: "req_validate",
+    });
+    expect(validateV3SurveyFromRawInput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: {
+          operation: "patch",
+          surveyId: "clsv1234567890123456789012",
+          data: { name: "Updated survey" },
+        },
+        authentication: apiKeyAuth,
+        requestId: "req_validate",
+        instance: "/api/mcp",
+      })
+    );
+  });
+
+  test("maps v3 create and validate bad requests to MCP tool errors", async () => {
+    vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValueOnce(
+      problemBadRequest("req_create_invalid", "Invalid survey document", {
+        instance: "/api/mcp",
+        invalid_params: [{ name: "blocks.0.elements", reason: "Required" }],
+      })
+    );
+    vi.mocked(validateV3SurveyFromRawInput).mockResolvedValueOnce(
+      problemBadRequest("req_validate_invalid", "Invalid survey validation request", {
+        instance: "/api/mcp",
+        invalid_params: [{ name: "surveyId", reason: "Required" }],
+      })
+    );
+
+    const createResponse = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 5,
+          method: "tools/call",
+          params: {
+            name: "create_survey",
+            arguments: {
+              workspaceId: "clxx1234567890123456789012",
+              name: "Invalid create",
+              blocks: [{ id: "clbk1234567890123456789012" }],
+            },
+          },
+        },
+        { "x-request-id": "req_create_invalid" }
+      )
+    );
+    const validateResponse = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 6,
+          method: "tools/call",
+          params: {
+            name: "validate_survey",
+            arguments: {
+              operation: "patch",
+              data: {},
+            },
+          },
+        },
+        { "x-request-id": "req_validate_invalid" }
+      )
+    );
+
+    expect((await readMcpResponse(createResponse)).result.structuredContent.error).toMatchObject({
+      status: 400,
+      detail: "Invalid survey document",
+      invalid_params: [{ name: "blocks.0.elements", reason: "Required" }],
+    });
+    expect((await readMcpResponse(validateResponse)).result.structuredContent.error).toMatchObject({
+      status: 400,
+      detail: "Invalid survey validation request",
+      invalid_params: [{ name: "surveyId", reason: "Required" }],
+    });
   });
 });

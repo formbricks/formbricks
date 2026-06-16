@@ -8,6 +8,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { TemplateList } from "@/modules/survey/components/template-list";
+import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/template-list/query-client-provider";
 import { MenuBar } from "@/modules/survey/templates/components/menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
@@ -15,9 +16,9 @@ import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
   workspace: Workspace;
-  userId: string;
   isTemplatePage?: boolean;
   publicDomain: string;
+  defaultLanguage: TUserLocale;
   language?: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
@@ -25,13 +26,13 @@ type TemplateContainerWithPreviewProps = {
 
 export const TemplateContainerWithPreview = ({
   workspace,
-  userId,
   isTemplatePage = true,
   publicDomain,
-  language = "en-US",
+  defaultLanguage,
+  language = defaultLanguage,
   isAIAvailable = false,
   aiUnavailableReason,
-}: TemplateContainerWithPreviewProps) => {
+}: Readonly<TemplateContainerWithPreviewProps>) => {
   const { t } = useTranslation();
   const initialTemplate = customSurveyTemplate(t);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
@@ -60,20 +61,22 @@ export const TemplateContainerWithPreview = ({
               />
             </div>
           </div>
-          <TemplateList
-            workspaceId={workspace.id}
-            workspace={workspace}
-            userId={userId}
-            templateSearch={templateSearch ?? ""}
-            showAICreateCard={!isTemplatePage}
-            language={language}
-            isAIAvailable={isAIAvailable}
-            aiUnavailableReason={aiUnavailableReason}
-            onTemplateClick={(template) => {
-              setActiveElementId(template.preset.blocks[0]?.elements[0]?.id || "");
-              setActiveTemplate(template);
-            }}
-          />
+          <TemplateCreateQueryClientProvider>
+            <TemplateList
+              workspaceId={workspace.id}
+              workspace={workspace}
+              defaultLanguage={defaultLanguage}
+              templateSearch={templateSearch ?? ""}
+              showAICreateCard={!isTemplatePage}
+              language={language}
+              isAIAvailable={isAIAvailable}
+              aiUnavailableReason={aiUnavailableReason}
+              onTemplateClick={(template) => {
+                setActiveElementId(template.preset.blocks[0]?.elements[0]?.id || "");
+                setActiveTemplate(template);
+              }}
+            />
+          </TemplateCreateQueryClientProvider>
         </div>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (

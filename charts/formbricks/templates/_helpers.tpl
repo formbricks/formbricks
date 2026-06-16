@@ -114,6 +114,17 @@ value: {{ include "formbricks.tplvalues.render" (dict "value" (toString $value) 
 {{- end }}
 
 {{/*
+Default OpenAI-compatible base URL for the bundled vLLM router.
+*/}}
+{{- define "formbricks.llmBaseUrl" -}}
+{{- if .Values.llm.formbricks.baseUrl -}}
+{{- include "formbricks.tplvalues.render" (dict "value" .Values.llm.formbricks.baseUrl "context" .) -}}
+{{- else -}}
+{{- printf "http://%s-router-service:%s/v1" .Release.Name (toString .Values.llm.routerSpec.servicePort) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Allow the release namespace to be overridden.
 If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `.Release.Namespace`.
 */}}

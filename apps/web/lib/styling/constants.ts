@@ -31,7 +31,7 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
   // Input border: visible brand-tinted border
   const inputBorder = mixColor(brandColor, "#ffffff", 0.6);
   // Card tones
-  const cardBg = mixColor(brandColor, "#ffffff", 0.97);
+  const cardBg = "#ffffff";
   const cardBorder = mixColor(brandColor, "#ffffff", 0.8);
   // Page background
   const pageBg = mixColor(brandColor, "#ffffff", 0.855);

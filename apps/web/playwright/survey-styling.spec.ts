@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { startSurveyFromScratch } from "./lib/utils";
+import { createSurveyFromScratch } from "./utils/helper";
 
 test.describe("Survey Styling", async () => {
   // Shared Helpers
@@ -230,9 +230,8 @@ test.describe("Survey Styling", async () => {
     expect(css).toContain("--fb-input-background-color:");
     expect(css).not.toContain("--fb-input-background-color: #ffffff");
 
-    // Card/survey background should be brand-tinted, NOT hardcoded #ffffff
-    expect(css).toContain("--fb-survey-background-color:");
-    expect(css).not.toContain("--fb-survey-background-color: #ffffff");
+    // Card/survey background should always be white
+    expect(css).toContain("--fb-survey-background-color: #ffffff");
 
     // Question/heading color should be derived, NOT the old hardcoded #2b2524
     expect(css).toContain("--fb-heading-color:");
@@ -306,10 +305,7 @@ test.describe("Survey Styling", async () => {
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
-    // Create a new survey
-    await startSurveyFromScratch(page, {
-      waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
-    });
+    await createSurveyFromScratch(page);
 
     // Ensure Welcome Card is active so we can see it
     await page.locator("p", { hasText: "Welcome card" }).first().click({ force: true });
