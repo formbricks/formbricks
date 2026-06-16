@@ -4,7 +4,10 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { buildWorkflowApiContext } from "./context";
 
-vi.mock("@formbricks/database", () => ({ prisma: { workflow: {} } }));
+const { surveyFindUnique } = vi.hoisted(() => ({ surveyFindUnique: vi.fn() }));
+vi.mock("@formbricks/database", () => ({
+  prisma: { workflow: {}, survey: { findUnique: surveyFindUnique } },
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn() })) },
 }));
@@ -55,5 +58,42 @@ describe("buildWorkflowApiContext", () => {
       "https://app.formbricks.com"
     );
     expect(result).toEqual(resolved);
+  });
+});
+
+describe("verifyTriggerSurvey", () => {
+  const verify = (input: { workspaceId: string; surveyId: string; endingCardIds: string[] }) =>
+    buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").verifyTriggerSurvey(input);
+
+  test("reports the survey as absent when the lookup returns null", async () => {
+    surveyFindUnique.mockResolvedValue(null);
+
+    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: ["e_1"] });
+
+    expect(result).toEqual({ surveyExists: false, missingEndingCardIds: [] });
+    expect(surveyFindUnique).toHaveBeenCalledWith({
+      where: { id_workspaceId: { id: "s_1", workspaceId: "ws_1" } },
+      select: { endings: true },
+    });
+  });
+
+  test("flags ending card ids that are not on the survey", async () => {
+    surveyFindUnique.mockResolvedValue({ endings: [{ id: "e_1" }, { id: "e_2" }] });
+
+    const result = await verify({
+      workspaceId: "ws_1",
+      surveyId: "s_1",
+      endingCardIds: ["e_1", "e_missing"],
+    });
+
+    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: ["e_missing"] });
+  });
+
+  test("reports no missing ending cards when every referenced id is present", async () => {
+    surveyFindUnique.mockResolvedValue({ endings: [{ id: "e_1" }] });
+
+    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: ["e_1"] });
+
+    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: [] });
   });
 });

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { WorkflowDelegate, WorkflowRowWithLastRun, WorkflowsDb } from "./ports";
+import { WorkflowConflictError } from "../errors";
+import type { WorkflowDelegate, WorkflowRowWithLastRun, WorkflowVersionDelegate, WorkflowsDb } from "./ports";
 import { createWorkflowsService } from "./workflows.service";
 
 const surveyId = "cm9zr4q7i000108l84gozfggr";
@@ -49,7 +50,17 @@ const makeRow = (overrides: Partial<WorkflowRowWithLastRun> = {}): WorkflowRowWi
 const findMany = vi.fn<WorkflowDelegate["findMany"]>();
 const findUnique = vi.fn<WorkflowDelegate["findUnique"]>();
 const create = vi.fn<WorkflowDelegate["create"]>();
-const prisma: WorkflowsDb = { workflow: { findMany, findUnique, create } };
+const update = vi.fn<WorkflowDelegate["update"]>();
+const deleteFn = vi.fn<WorkflowDelegate["delete"]>();
+const versionFindFirst = vi.fn<WorkflowVersionDelegate["findFirst"]>();
+const versionCreate = vi.fn<WorkflowVersionDelegate["create"]>();
+const workflow = { findMany, findUnique, create, update, delete: deleteFn };
+const workflowVersion = { findFirst: versionFindFirst, create: versionCreate };
+const prisma: WorkflowsDb = {
+  workflow,
+  workflowVersion,
+  $transaction: (fn) => fn({ workflow, workflowVersion }),
+};
 const service = createWorkflowsService({ prisma });
 
 beforeEach(() => {
@@ -147,5 +158,139 @@ describe("getWorkflowById", () => {
   test("returns null when the workflow does not exist", async () => {
     findUnique.mockResolvedValue(null);
     expect(await service.getWorkflowById("missing")).toBeNull();
+  });
+});
+
+describe("updateWorkflow", () => {
+  test("updates only the provided fields by composite key", async () => {
+    update.mockResolvedValue(makeRow({ name: "Renamed" }));
+
+    await service.updateWorkflow(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+      { name: "Renamed" }
+    );
+
+    const args = update.mock.calls[0][0];
+    expect(args.where).toEqual({
+      id_workspaceId: { id: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+    });
+    expect(args.data).toEqual({ name: "Renamed" });
+  });
+
+  test("passes through an explicit null description but omits absent fields", async () => {
+    update.mockResolvedValue(makeRow());
+    await service.updateWorkflow(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+      { description: null }
+    );
+    expect(update.mock.calls[0][0].data).toEqual({ description: null });
+  });
+});
+
+describe("duplicateWorkflow", () => {
+  test("clones into a new draft with a default copy name", async () => {
+    create.mockResolvedValue(makeRow());
+    await service.duplicateWorkflow(makeRow({ name: "Original" }), { createdBy: "user_1" });
+
+    expect(create.mock.calls[0][0].data).toMatchObject({
+      workspaceId,
+      name: "Original (copy)",
+      status: "draft",
+      createdBy: "user_1",
+    });
+  });
+
+  test("honors an explicit duplicate name", async () => {
+    create.mockResolvedValue(makeRow());
+    await service.duplicateWorkflow(makeRow({ name: "Original" }), { name: "Custom", createdBy: null });
+    expect(create.mock.calls[0][0].data.name).toBe("Custom");
+  });
+});
+
+describe("deleteWorkflow", () => {
+  test("hard-deletes by composite key", async () => {
+    deleteFn.mockResolvedValue({ id: "cm9zr4t2b000208l8h2m1aq3c" });
+    await service.deleteWorkflow({ workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId });
+    expect(deleteFn).toHaveBeenCalledWith({
+      where: { id_workspaceId: { id: "cm9zr4t2b000208l8h2m1aq3c", workspaceId } },
+    });
+  });
+});
+
+describe("setStatus", () => {
+  test("updates status by composite key", async () => {
+    update.mockResolvedValue(makeRow({ status: "archived" }));
+    await service.setStatus({ workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId }, "archived");
+    const args = update.mock.calls[0][0];
+    expect(args.where).toEqual({ id_workspaceId: { id: "cm9zr4t2b000208l8h2m1aq3c", workspaceId } });
+    expect(args.data).toEqual({ status: "archived" });
+  });
+});
+
+describe("enableWorkflow", () => {
+  test("snapshots version max+1 and flips status to enabled in one transaction", async () => {
+    versionFindFirst.mockResolvedValue({ version: 3 });
+    update.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    const result = await service.enableWorkflow(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+      { definition, publishedBy: "cm9zr52kh000508l8e3q7bw9j" }
+    );
+
+    expect(versionCreate.mock.calls[0][0].data).toMatchObject({
+      workflowId: "cm9zr4t2b000208l8h2m1aq3c",
+      workspaceId,
+      version: 4,
+      publishedBy: "cm9zr52kh000508l8e3q7bw9j",
+    });
+    expect(update.mock.calls[0][0].data).toEqual({ status: "enabled" });
+    expect(result.status).toBe("enabled");
+  });
+
+  test("uses version 1 when no prior version exists and stores null publishedBy", async () => {
+    versionFindFirst.mockResolvedValue(null);
+    update.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    await service.enableWorkflow(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+      { definition, publishedBy: null }
+    );
+
+    expect(versionCreate.mock.calls[0][0].data.version).toBe(1);
+    expect(versionCreate.mock.calls[0][0].data.publishedBy).toBeNull();
+  });
+
+  test("maps a concurrent-enable unique violation (P2002) to a conflict error", async () => {
+    versionFindFirst.mockResolvedValue({ version: 1 });
+    versionCreate.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+
+    await expect(
+      service.enableWorkflow(
+        { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+        { definition, publishedBy: null }
+      )
+    ).rejects.toBeInstanceOf(WorkflowConflictError);
+  });
+
+  test("rethrows non-unique transaction errors unchanged", async () => {
+    const boom = new Error("connection reset");
+    versionFindFirst.mockRejectedValue(boom);
+
+    await expect(
+      service.enableWorkflow(
+        { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+        { definition, publishedBy: null }
+      )
+    ).rejects.toBe(boom);
+  });
+});
+
+describe("disableWorkflow", () => {
+  test("sets status to disabled by composite key", async () => {
+    update.mockResolvedValue(makeRow({ status: "disabled" }));
+    await service.disableWorkflow({ workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId });
+    const args = update.mock.calls[0][0];
+    expect(args.where).toEqual({ id_workspaceId: { id: "cm9zr4t2b000208l8h2m1aq3c", workspaceId } });
+    expect(args.data).toEqual({ status: "disabled" });
   });
 });

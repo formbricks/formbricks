@@ -1,5 +1,5 @@
 import type { TWorkflowStatus } from "../types/common";
-import type { TWorkflowDefinition } from "../types/document";
+import type { TWorkflowDefinition, TWorkflowExecutableDefinition } from "../types/document";
 import type { TWorkflowRunStatus } from "../types/runs";
 
 /**
@@ -10,8 +10,8 @@ import type { TWorkflowRunStatus } from "../types/runs";
  *
  * The row and delegate shapes are hand-authored from our own domain types (the row's
  * `definition`/`status` ARE our types) rather than imported from Prisma's generated client. This
- * keeps the package a dependency-free leaf; the adapter bridges the real Prisma client to these
- * ports (a single contained cast on the app side).
+ * keeps the package a dependency-free leaf; the real Prisma client structurally satisfies these
+ * ports, so the adapter wires it in directly — no cast required.
  */
 
 /** A `Workflow` row, matching `packages/database/schema/workflows.prisma`. */
@@ -98,10 +98,61 @@ export interface WorkflowDelegate {
     };
     include: LastRunInclude;
   }) => Promise<WorkflowRowWithLastRun>;
+  update: (args: {
+    where: { id_workspaceId: { id: string; workspaceId: string } };
+    data: {
+      name?: string;
+      description?: string | null;
+      status?: TWorkflowStatus;
+      definition?: TWorkflowDefinition;
+    };
+    include: LastRunInclude;
+  }) => Promise<WorkflowRowWithLastRun>;
+  delete: (args: {
+    where: { id_workspaceId: { id: string; workspaceId: string } };
+  }) => Promise<{ id: string }>;
+}
+
+/** A `WorkflowVersion` row (immutable executable snapshot), matching the Prisma schema. */
+export interface WorkflowVersionRow {
+  id: string;
+  workflowId: string;
+  workspaceId: string;
+  version: number;
+  definition: TWorkflowExecutableDefinition;
+  publishedAt: Date;
+  publishedBy: string | null;
+}
+
+/** The slice of `prisma.workflowVersion` the enable transaction calls. */
+export interface WorkflowVersionDelegate {
+  findFirst: (args: {
+    where: { workflowId: string };
+    orderBy: { version: "desc" };
+    select: { version: true };
+  }) => Promise<{ version: number } | null>;
+  create: (args: {
+    data: {
+      workflowId: string;
+      workspaceId: string;
+      version: number;
+      definition: TWorkflowExecutableDefinition;
+      publishedBy: string | null;
+    };
+  }) => Promise<WorkflowVersionRow>;
+}
+
+/** Delegates available inside an interactive transaction (the subset enable needs to be atomic). */
+export interface WorkflowsTransaction {
+  workflow: WorkflowDelegate;
+  workflowVersion: WorkflowVersionDelegate;
 }
 
 export interface WorkflowsDb {
   workflow: WorkflowDelegate;
+  workflowVersion: WorkflowVersionDelegate;
+  /** Interactive transaction; the real Prisma client's `$transaction` satisfies this structurally. */
+  $transaction: <R>(fn: (tx: WorkflowsTransaction) => Promise<R>) => Promise<R>;
 }
 
 /**

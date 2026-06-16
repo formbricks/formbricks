@@ -1,22 +1,67 @@
 import type { TCreateWorkflowInput, TListWorkflowsInput, TWorkflowSortBy } from "../contracts";
+import { WorkflowConflictError } from "../errors";
 import {
   type TWorkflowListCursor,
   buildNextWorkflowListCursor,
   decodeWorkflowListCursor,
   encodeWorkflowListCursor,
 } from "../handlers/cursor";
+import type { TWorkflowStatus } from "../types/common";
+import type { TWorkflowDefinition, TWorkflowExecutableDefinition } from "../types/document";
 import type {
   LastRunInclude,
+  WorkflowDelegate,
   WorkflowOrderByInput,
   WorkflowRowWithLastRun,
   WorkflowWhereInput,
   WorkflowsDb,
 } from "./ports";
 
+/** Identifies one workflow within its workspace, for composite-key (`id`, `workspaceId`) scoping. */
+export interface WorkflowScopedParams {
+  workflowId: string;
+  workspaceId: string;
+}
+
+/** Fields a patch may persist. `status` is changed only through the lifecycle methods, never here. */
+export interface WorkflowUpdateInput {
+  name?: string;
+  description?: string | null;
+  definition?: TWorkflowDefinition;
+}
+
 /** Eagerly load the most recent run so the serializer can emit `lastRun` without an N+1. */
 const LAST_RUN_INCLUDE: LastRunInclude = {
   runs: { take: 1, orderBy: { createdAt: "desc" } },
 };
+
+/** Every field a workflow update may set; mirrors the injected delegate's `update` data shape. */
+type WorkflowUpdateData = Parameters<WorkflowDelegate["update"]>[0]["data"];
+
+/**
+ * Single place that issues a workspace-scoped `workflow.update` with the standard last-run include.
+ * The delegate is passed explicitly so it serves both the base client and an interactive transaction.
+ */
+const updateWorkflowRow = (
+  workflow: WorkflowDelegate,
+  { workflowId, workspaceId }: WorkflowScopedParams,
+  data: WorkflowUpdateData
+): Promise<WorkflowRowWithLastRun> =>
+  workflow.update({
+    where: { id_workspaceId: { id: workflowId, workspaceId } },
+    data,
+    include: LAST_RUN_INCLUDE,
+  });
+
+// Prisma's unique-constraint violation code, mirroring `PrismaErrorType.UniqueConstraintViolation`
+// in `@formbricks/database` — which this leaf package can't import without recreating a build cycle.
+const PRISMA_UNIQUE_CONSTRAINT_VIOLATION = "P2002";
+
+/** Duck-typed P2002 detection — keeps the package free of a `@prisma/client` dependency. */
+const isUniqueConstraintError = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  (error as { code?: unknown }).code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION;
 
 const getOrderBy = (sortBy: TWorkflowSortBy): WorkflowOrderByInput[] => {
   switch (sortBy) {
@@ -68,6 +113,21 @@ export interface WorkflowsService {
     options: { createdBy: string | null }
   ) => Promise<WorkflowRowWithLastRun>;
   getWorkflowById: (workflowId: string) => Promise<WorkflowRowWithLastRun | null>;
+  updateWorkflow: (
+    params: WorkflowScopedParams,
+    data: WorkflowUpdateInput
+  ) => Promise<WorkflowRowWithLastRun>;
+  duplicateWorkflow: (
+    source: WorkflowRowWithLastRun,
+    options: { name?: string; createdBy: string | null }
+  ) => Promise<WorkflowRowWithLastRun>;
+  deleteWorkflow: (params: WorkflowScopedParams) => Promise<void>;
+  setStatus: (params: WorkflowScopedParams, status: TWorkflowStatus) => Promise<WorkflowRowWithLastRun>;
+  enableWorkflow: (
+    params: WorkflowScopedParams,
+    options: { definition: TWorkflowExecutableDefinition; publishedBy: string | null }
+  ) => Promise<WorkflowRowWithLastRun>;
+  disableWorkflow: (params: WorkflowScopedParams) => Promise<WorkflowRowWithLastRun>;
 }
 
 /**
@@ -119,5 +179,73 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
       where: { id: workflowId },
       include: LAST_RUN_INCLUDE,
     });
+  },
+
+  async updateWorkflow({ workflowId, workspaceId }, data) {
+    return updateWorkflowRow(
+      prisma.workflow,
+      { workflowId, workspaceId },
+      {
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.description !== undefined ? { description: data.description } : {}),
+        ...(data.definition !== undefined ? { definition: data.definition } : {}),
+      }
+    );
+  },
+
+  async duplicateWorkflow(source, { name, createdBy }) {
+    return prisma.workflow.create({
+      data: {
+        workspaceId: source.workspaceId,
+        name: name ?? `${source.name} (copy)`,
+        description: source.description,
+        status: "draft",
+        definition: source.definition,
+        createdBy,
+      },
+      include: LAST_RUN_INCLUDE,
+    });
+  },
+
+  async deleteWorkflow({ workflowId, workspaceId }) {
+    // Hard delete; Prisma `onDelete: Cascade` removes the workflow's runs + run logs (GDPR).
+    await prisma.workflow.delete({ where: { id_workspaceId: { id: workflowId, workspaceId } } });
+  },
+
+  async setStatus({ workflowId, workspaceId }, status) {
+    return updateWorkflowRow(prisma.workflow, { workflowId, workspaceId }, { status });
+  },
+
+  async enableWorkflow({ workflowId, workspaceId }, { definition, publishedBy }) {
+    // Atomic: snapshot an immutable version (version = max + 1) and flip status in one transaction,
+    // so an enabled workflow always has a live version to run against. The executable `definition`
+    // is validated by the handler; the service trusts it.
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const latest = await tx.workflowVersion.findFirst({
+          where: { workflowId },
+          orderBy: { version: "desc" },
+          select: { version: true },
+        });
+
+        await tx.workflowVersion.create({
+          data: { workflowId, workspaceId, version: (latest?.version ?? 0) + 1, definition, publishedBy },
+        });
+
+        return updateWorkflowRow(tx.workflow, { workflowId, workspaceId }, { status: "enabled" });
+      });
+    } catch (error) {
+      // Concurrent enable: two requests read the same max version and both insert version+1; the
+      // loser violates @@unique([workflowId, version]). The transaction has already rolled back
+      // cleanly, so surface a retryable 409 instead of a generic 500.
+      if (isUniqueConstraintError(error)) {
+        throw new WorkflowConflictError("The workflow was just enabled by another request. Please retry.");
+      }
+      throw error;
+    }
+  },
+
+  async disableWorkflow({ workflowId, workspaceId }) {
+    return updateWorkflowRow(prisma.workflow, { workflowId, workspaceId }, { status: "disabled" });
   },
 });

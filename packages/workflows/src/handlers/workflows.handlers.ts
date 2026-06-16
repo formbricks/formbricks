@@ -1,6 +1,8 @@
 import {
   type TWorkflowIdInput,
   ZCreateWorkflowInput,
+  ZDuplicateWorkflowInput,
+  ZPatchWorkflowInput,
   ZWorkflowListItem,
   ZWorkflowResource,
   zCursorPage,
@@ -8,12 +10,17 @@ import {
 import {
   WorkflowForbiddenError,
   WorkflowInvalidInputError,
+  type WorkflowInvalidParam,
+  WorkflowInvalidStateError,
+  WorkflowNotExecutableError,
   toProblemResponse,
   validateOutput,
 } from "../errors";
-import { createdResponse, dataResponse, listResponse } from "../responses";
+import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
+import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
-import type { WorkflowApiContext } from "./context";
+import { ZWorkflowExecutableDefinition } from "../types/document";
+import type { TriggerSurveyCheck, WorkflowApiAccess, WorkflowApiContext } from "./context";
 import { parseListWorkflowsQuery } from "./parse-list-query";
 import { toWorkflowListItem, toWorkflowResource } from "./serializers";
 
@@ -22,7 +29,7 @@ const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
 
 const ZWorkflowListPage = zCursorPage(ZWorkflowListItem);
 
-const readJsonBody = async (req: Request): Promise<unknown> => {
+const readJsonBody = async (req: Request, options?: { allowEmpty?: boolean }): Promise<unknown> => {
   // Reject oversized payloads up front via Content-Length so we never buffer them into memory.
   const contentLength = req.headers.get("content-length");
   if (contentLength && Number(contentLength) > MAX_REQUEST_BODY_BYTES) {
@@ -35,6 +42,12 @@ const readJsonBody = async (req: Request): Promise<unknown> => {
     throw new WorkflowInvalidInputError("Request body is too large.");
   }
 
+  // Optional-body operations (e.g. duplicate) treat an empty body as `{}`.
+  if (text.trim() === "") {
+    if (options?.allowEmpty) return {};
+    throw new WorkflowInvalidInputError("Malformed JSON body.");
+  }
+
   try {
     return JSON.parse(text) as unknown;
   } catch {
@@ -42,10 +55,56 @@ const readJsonBody = async (req: Request): Promise<unknown> => {
   }
 };
 
+/**
+ * Load a workflow by id and authorize the caller against its workspace. Returns the row on success,
+ * or a ready-to-return denial `Response`; throws `WorkflowForbiddenError` (→ 403) for unknown ids so
+ * existence is never leaked. Shared by every by-id operation (get, patch, duplicate, delete,
+ * archive, unarchive) — load once, authorize once, no double round-trip.
+ */
+const loadAndAuthorize = async (
+  service: WorkflowsService,
+  ctx: WorkflowApiContext,
+  workflowId: string,
+  access: WorkflowApiAccess
+): Promise<WorkflowRowWithLastRun | Response> => {
+  const row = await service.getWorkflowById(workflowId);
+  if (!row) throw new WorkflowForbiddenError();
+
+  const authorized = await ctx.authorize(row.workspaceId, access);
+  if (authorized instanceof Response) return authorized;
+
+  return row;
+};
+
+/** Map a failed trigger-survey check to field-level `invalid_params` on the definition's trigger config. */
+const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidParam[] => {
+  const invalidParams: WorkflowInvalidParam[] = [];
+  if (!check.surveyExists) {
+    invalidParams.push({
+      name: "definition.trigger.config.surveyId",
+      reason: "The referenced survey does not exist in this workspace.",
+    });
+  }
+  for (const endingCardId of check.missingEndingCardIds) {
+    invalidParams.push({
+      name: "definition.trigger.config.endingCardIds",
+      reason: `Ending card ${endingCardId} does not exist on the survey.`,
+    });
+  }
+  return invalidParams;
+};
+
 export interface WorkflowsHandlers {
   list: (req: Request, ctx: WorkflowApiContext) => Promise<Response>;
   create: (req: Request, ctx: WorkflowApiContext) => Promise<Response>;
   get: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  patch: (req: Request, ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  duplicate: (req: Request, ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  delete: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  archive: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  unarchive: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  enable: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  disable: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
 }
 
 /**
@@ -98,16 +157,154 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
   async get(ctx, params) {
     try {
-      const row = await service.getWorkflowById(params.workflowId);
-      // 403 (not 404) for unknown ids so existence is never leaked across workspaces.
-      if (!row) throw new WorkflowForbiddenError();
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "read");
+      if (loaded instanceof Response) return loaded;
 
-      const authorized = await ctx.authorize(row.workspaceId, "read");
-      if (authorized instanceof Response) return authorized;
+      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(loaded)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
 
-      const resource = validateOutput(ZWorkflowResource, toWorkflowResource(row));
+  async patch(req, ctx, params) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+      if (loaded.status === "archived") {
+        throw new WorkflowInvalidStateError("Archived workflows are read-only; unarchive before editing.");
+      }
 
-      return dataResponse(resource, ctx.requestId);
+      const input = ZPatchWorkflowInput.parse(await readJsonBody(req));
+      if (input.definition !== undefined && loaded.status === "enabled") {
+        throw new WorkflowInvalidStateError(
+          "A workflow's definition can only be updated while it is draft or disabled."
+        );
+      }
+
+      const updated = await service.updateWorkflow(
+        { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
+        input
+      );
+
+      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async duplicate(req, ctx, params) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+
+      const input = ZDuplicateWorkflowInput.parse(await readJsonBody(req, { allowEmpty: true }));
+      const created = await service.duplicateWorkflow(loaded, { name: input.name, createdBy: ctx.userId });
+
+      const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
+      return createdResponse(resource, `/api/v3/workflows/${resource.id}`, ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async delete(ctx, params) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+
+      await service.deleteWorkflow({ workflowId: params.workflowId, workspaceId: loaded.workspaceId });
+      return noContentResponse(ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async archive(ctx, params) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+      if (loaded.status === "archived") {
+        throw new WorkflowInvalidStateError("Workflow is already archived.");
+      }
+
+      const updated = await service.setStatus(
+        { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
+        "archived"
+      );
+
+      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async unarchive(ctx, params) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+      if (loaded.status !== "archived") {
+        throw new WorkflowInvalidStateError("Only archived workflows can be unarchived.");
+      }
+
+      const updated = await service.setStatus(
+        { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
+        "draft"
+      );
+
+      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async enable(ctx, params) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+      if (loaded.status !== "draft" && loaded.status !== "disabled") {
+        throw new WorkflowInvalidStateError("Only draft or disabled workflows can be enabled.");
+      }
+
+      // safeParse (not parse): a non-executable definition is a 422 workflow_not_executable,
+      // not the generic 400 a thrown ZodError would map to.
+      const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
+      if (!executable.success) throw WorkflowNotExecutableError.fromZodError(executable.error);
+
+      const { surveyId, endingCardIds } = executable.data.trigger.config;
+      const surveyCheck = await ctx.verifyTriggerSurvey({
+        workspaceId: loaded.workspaceId,
+        surveyId,
+        endingCardIds,
+      });
+      if (!surveyCheck.surveyExists || surveyCheck.missingEndingCardIds.length > 0) {
+        throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
+      }
+
+      const updated = await service.enableWorkflow(
+        { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
+        { definition: executable.data, publishedBy: ctx.userId }
+      );
+
+      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async disable(ctx, params) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+      if (loaded.status !== "enabled") {
+        throw new WorkflowInvalidStateError("Only enabled workflows can be disabled.");
+      }
+
+      const updated = await service.disableWorkflow({
+        workflowId: params.workflowId,
+        workspaceId: loaded.workspaceId,
+      });
+
+      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
     }

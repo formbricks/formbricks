@@ -22,6 +22,8 @@ export {
   WorkflowConflictError,
   WorkflowForbiddenError,
   WorkflowInvalidInputError,
+  WorkflowInvalidStateError,
+  WorkflowNotExecutableError,
   WorkflowSerializationError,
   toProblemResponse,
 } from "../errors";
