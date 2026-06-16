@@ -97,7 +97,7 @@ services:
   # Keep hub, hub-migrate, and any future hub-worker on the same tag — they share one image and
   # drift breaks migrations or job processing.
   hub-migrate:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.5.0}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
     restart: "no"
     entrypoint: ["sh", "-c"]
     command:
@@ -112,7 +112,7 @@ services:
 
   # Formbricks Hub API (ghcr.io/formbricks/hub). Uses a dedicated local Hub database by default.
   hub:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.5.0}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -142,7 +142,7 @@ services:
 
   # Hub worker processes async jobs enqueued by the API, including embeddings.
   hub-worker:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.5.0}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
