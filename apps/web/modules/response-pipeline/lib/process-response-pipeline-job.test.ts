@@ -318,6 +318,7 @@ describe("processResponsePipelineJob", () => {
         {
           ...baseData,
           event: "responseFinished",
+          locale: "de-DE",
         },
         baseContext
       )
@@ -385,7 +386,7 @@ describe("processResponsePipelineJob", () => {
         ],
       },
     });
-    expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123");
+    expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123", "de-DE");
     expect(mockSendResponseFinishedEmail).toHaveBeenCalledWith(
       "owner@example.com",
       "en-US",
@@ -549,7 +550,7 @@ describe("processResponsePipelineJob", () => {
     ).resolves.toBeUndefined();
 
     expect(mockHandleIntegrations).toHaveBeenCalledTimes(1);
-    expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123");
+    expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123", undefined);
     expect(mockSendResponseFinishedEmail).toHaveBeenCalledTimes(1);
     expect(mockPrismaSurveyUpdate).toHaveBeenCalledTimes(1);
     expect(mockLoggerError).toHaveBeenCalledWith(
