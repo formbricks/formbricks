@@ -1758,7 +1758,7 @@
         "no_dashboards_found_description": "建立你的第一個儀表板，以便在同一處整理圖表並監控回饋洞察。",
         "no_data_message": "無資料。目前沒有可顯示的資訊。請新增圖表來建立你的儀表板。",
         "please_enter_name": "請輸入儀表板名稱",
-        "upgrade_prompt_description": "從您的回饋資料建立洞察儀表板。專業版和企業版方案提供此功能。",
+        "upgrade_prompt_description": "從您的回饋資料建立洞察儀表板。",
         "upgrade_prompt_title": "升級以解鎖儀表板功能"
       },
       "manage_feedback_sources": "管理意見來源",
@@ -2367,7 +2367,7 @@
         "plan_selection_title": "選擇您的方案",
         "plan_unknown": "未知",
         "retry_setup": "重新設定",
-        "select_plan_cta": "開始免費試用",
+        "select_plan_cta": "建立我的第一份問卷",
         "select_plan_cta_variant_b": "開始收集意見回饋",
         "select_plan_cta_variant_c": "設定我的工作區",
         "select_plan_cta_variant_d": "開始使用",
@@ -2510,7 +2510,7 @@
         "title": "意見回饋目錄",
         "unarchive": "取消封存",
         "unarchive_workspace_conflict": "無法取消封存此目錄，因為一個或多個已指派工作區已封存。",
-        "upgrade_prompt_description": "將回饋記錄整理至目錄中，並將資料導向正確的工作區。專業版和企業版方案提供此功能。",
+        "upgrade_prompt_description": "將回饋記錄整理至目錄中，並將資料導向正確的工作區。",
         "upgrade_prompt_title": "升級以解鎖回饋記錄目錄功能",
         "workspace_access": "工作區存取權限",
         "workspace_assigned_to_directory": "{workspaceName} 已連結到 {directoryName}",
@@ -3124,7 +3124,7 @@
         "randomize_all": "全部隨機排序",
         "randomize_all_except_last": "全部隨機排序（最後一項除外）",
         "range": "範圍",
-        "recall_data": "回憶資料",
+        "recall_data": "帶入資料",
         "recall_information_from": "召回資訊來源",
         "recontact_options_section": "重新聯絡選項",
         "recontact_options_section_description": "若冷卻期允許，請選擇此問卷可對同一人顯示的頻率。",
@@ -3588,7 +3588,7 @@
         "unknown_question_type": "未知的問題類型",
         "use_personal_links": "使用個人連結",
         "whats_next": "下一步是什麼？",
-        "your_survey_is_public": "您的問卷是公開的",
+        "your_survey_is_public": "您的問卷已上線",
         "youre_not_plugged_in_yet": "您尚未插入任何內容！"
       },
       "survey_deleted_successfully": "問卷已成功刪除！",
@@ -3818,7 +3818,7 @@
       "unify_feedback": "整合回饋",
       "update_mapping_description": "更新此來源的對應設定。",
       "updated_at": "更新時間",
-      "upgrade_prompt_description": "將來自連接來源的客戶回饋整合到單一收件匣。適用於 Pro 和 Scale 方案。",
+      "upgrade_prompt_description": "將來自連接來源的客戶回饋整合到單一收件匣。",
       "upgrade_prompt_title": "升級以解鎖統一回饋功能",
       "upload_csv_data_description": "上傳 CSV 檔案以匯入回饋資料。",
       "upload_csv_file": "上傳 CSV 檔案",
@@ -3831,18 +3831,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "利用每個接觸點來瞭解客戶互動的便利性。",
+      "ces_description": "客戶費力度（CES）",
       "csat": "CSAT",
-      "csat_description": "實施最佳實務以衡量客戶滿意度。",
+      "csat_description": "衡量客戶滿意度",
       "enps": "eNPS",
-      "enps_description": "通用回饋，瞭解員工投入程度和滿意度。",
+      "enps_description": "員工淨推薦值",
       "five_star_rating": "5 星評分",
-      "five_star_rating_description": "用於衡量整體滿意度的通用回饋解決方案。",
+      "five_star_rating_description": "整體滿意度評分",
       "headline": "您想要取得哪種回饋？",
       "nps": "NPS",
-      "nps_description": "實施經過驗證的最佳實務，以瞭解人們為何購買。",
+      "nps_description": "淨推薦值（NPS）",
       "smileys": "表情符號",
-      "smileys_description": "使用視覺指標來擷取客戶接觸點的回饋。"
+      "smileys_description": "以表情符號為基礎的滿意度評分"
     }
   }
 }
