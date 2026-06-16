@@ -30,6 +30,7 @@ const baseAuth = {
   hasReadAccess: false,
   hasReadWriteAccess: false,
   hasManageAccess: false,
+  isReadOnly: false,
 };
 
 const buildAuth = (overrides: Partial<typeof baseAuth>): TAuth =>
@@ -60,12 +61,11 @@ describe("getWorkflowsRouteAuth", () => {
   });
 
   test.each(["isOwner", "isManager", "hasReadAccess", "hasReadWriteAccess", "hasManageAccess"] as const)(
-    "returns the auth object when %s grants access",
+    "returns only the read-only flag when %s grants access",
     async (flag) => {
-      const auth = buildAuth({ [flag]: true });
-      vi.mocked(getWorkspaceAuth).mockResolvedValue(auth);
+      vi.mocked(getWorkspaceAuth).mockResolvedValue(buildAuth({ [flag]: true, isReadOnly: true }));
 
-      await expect(getWorkflowsRouteAuth(workspaceId)).resolves.toBe(auth);
+      await expect(getWorkflowsRouteAuth(workspaceId)).resolves.toEqual({ isReadOnly: true });
       expect(redirect).not.toHaveBeenCalled();
       expect(notFound).not.toHaveBeenCalled();
     }

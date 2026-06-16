@@ -24,7 +24,6 @@ export const WorkflowCanvas = ({ isPanelVisible, onTogglePanel }: Readonly<Workf
           aria-expanded={isPanelVisible}
           onClick={onTogglePanel}>
           {isPanelVisible ? <PanelRightCloseIcon /> : <PanelRightOpenIcon />}
-          <span className="sr-only">{t("common.settings")}</span>
         </Button>
       </div>
     </div>

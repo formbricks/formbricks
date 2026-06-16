@@ -337,6 +337,7 @@
     "no_results": "結果なし",
     "no_surveys_found": "フォームが見つかりません。",
     "no_text_found": "テキストが見つかりません",
+    "no_workflows_found": "ワークフローが見つかりません。",
     "none_of_the_above": "いずれも該当しません",
     "not_authenticated": "このアクションを実行するための認証がされていません。",
     "not_authorized": "権限がありません",

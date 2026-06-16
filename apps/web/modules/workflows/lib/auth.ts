@@ -18,5 +18,6 @@ export const getWorkflowsRouteAuth = async (workspaceId: string) => {
     notFound();
   }
 
-  return auth;
+  // Consumers only need the read-only flag; keep the contract narrow.
+  return { isReadOnly: auth.isReadOnly };
 };

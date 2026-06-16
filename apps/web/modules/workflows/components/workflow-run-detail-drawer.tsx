@@ -1,11 +1,9 @@
 "use client";
 
-import { CheckIcon, CopyIcon } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
+import { CodeBlock } from "@/modules/ui/components/code-block";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import {
   Sheet,
@@ -16,38 +14,6 @@ import {
 } from "@/modules/ui/components/sheet";
 import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "../lib/display";
 import { type TWorkflowRunListItem } from "../types";
-
-const JsonBlock = ({ value }: Readonly<{ value: unknown }>) => {
-  const { t } = useTranslation();
-  const [isCopied, setIsCopied] = useState(false);
-  const text = JSON.stringify(value, null, 2);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(t("common.copied_to_clipboard"));
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    }
-  };
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={handleCopy}
-        aria-label={t("common.copy")}
-        className="absolute right-2 top-2 z-10 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100">
-        {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-      </button>
-      <pre className="overflow-auto rounded-lg bg-slate-950 p-4 pr-10 text-xs leading-6 text-slate-100">
-        {text}
-      </pre>
-    </div>
-  );
-};
 
 interface WorkflowRunDetailDrawerProps {
   run: TWorkflowRunListItem | null;
@@ -106,22 +72,28 @@ export const WorkflowRunDetailDrawer = ({
 
             <section className="rounded-lg border border-slate-200 bg-white p-5">
               <h2 className="mb-4 text-lg font-semibold text-slate-900">{t("common.metadata")}</h2>
-              <JsonBlock
-                value={{
-                  isDryRun: run.isDryRun,
-                  triggerType: run.triggerType,
-                  surveyId: run.surveyId,
-                  responseId: run.responseId,
-                  attempt: run.attempt,
-                  error: run.error,
-                  workflowVersionId: run.workflowVersionId,
-                }}
-              />
+              <CodeBlock language="json" noMargin>
+                {JSON.stringify(
+                  {
+                    isDryRun: run.isDryRun,
+                    triggerType: run.triggerType,
+                    surveyId: run.surveyId,
+                    responseId: run.responseId,
+                    attempt: run.attempt,
+                    error: run.error,
+                    workflowVersionId: run.workflowVersionId,
+                  },
+                  null,
+                  2
+                )}
+              </CodeBlock>
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white p-5">
               <h2 className="mb-4 text-lg font-semibold text-slate-900">{t("common.activity")}</h2>
-              <JsonBlock value={run.logs} />
+              <CodeBlock language="json" noMargin>
+                {JSON.stringify(run.logs, null, 2)}
+              </CodeBlock>
             </section>
           </div>
         ) : null}
