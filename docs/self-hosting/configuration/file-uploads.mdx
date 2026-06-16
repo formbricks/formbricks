@@ -334,12 +334,16 @@ Configure CORS on your S3 bucket with the following settings:
 
 - **AWS S3**: Navigate to your bucket → Permissions → Cross-origin resource sharing (CORS) → Edit → Paste the JSON configuration
 - **DigitalOcean Spaces**: Navigate to your Space → Settings → CORS Configurations → Add CORS configuration → Paste the JSON
-- **RustFS (self-hosted)**: RustFS configures CORS at the server level, not per bucket — see [RustFS CORS Configuration](#rustfs-cors-configuration) below.
+- **RustFS (self-hosted)**: configured automatically by the bundled setup, or via a server-level env var for standalone deployments — see [RustFS CORS Configuration](#rustfs-cors-configuration) below.
 - **Other S3-compatible providers**: Refer to your provider's documentation for CORS configuration
 
 ### RustFS CORS Configuration
 
-RustFS does **not** use a per-bucket CORS policy. It controls CORS at the server level through the `RUSTFS_CORS_ALLOWED_ORIGINS` environment variable, set on the **RustFS** container (not on Formbricks). Set it to the origin(s) you serve Formbricks from — your `WEBAPP_URL` — comma-separated for multiple values:
+RustFS supports CORS two ways: a **server-level** allow-list set via the `RUSTFS_CORS_ALLOWED_ORIGINS` environment variable on the RustFS server, and **per-bucket** CORS via the S3 `PutBucketCors` API (e.g. `mc cors set`).
+
+**Bundled Formbricks setup** (the [one-click script](/self-hosting/setup/one-click), driven by `docker/rustfs-init.sh`): CORS is configured for you. The bootstrap applies a per-bucket policy via `mc cors set`, scoped to your Formbricks domain — nothing else to do.
+
+**Standalone RustFS** (managed separately from Formbricks): set `RUSTFS_CORS_ALLOWED_ORIGINS` on the RustFS server to the origin(s) you serve Formbricks from — your `WEBAPP_URL` — comma-separated for multiple values:
 
 ```env
 # Set on the RustFS server, then restart RustFS
@@ -347,19 +351,18 @@ RUSTFS_CORS_ALLOWED_ORIGINS=https://app.yourdomain.com
 ```
 
 <Note>
-  When `RUSTFS_CORS_ALLOWED_ORIGINS` is unset, RustFS allows **all** origins; a non-empty value is treated as an
-  allow-list. So if browser uploads fail with a CORS error while the file still appears in RustFS, this variable
-  is most likely already set to a value that excludes your Formbricks origin — add your origin to it (or set it to
-  `*` to allow all). Use an explicit origin list in production.
+  When `RUSTFS_CORS_ALLOWED_ORIGINS` is unset, the RustFS server allows **all** origins; a non-empty value is
+  treated as an allow-list. So if browser uploads fail with a CORS error while the file still appears in RustFS,
+  this variable is most likely already set to a value that excludes your Formbricks origin — add your origin to it
+  (or set it to `*` to allow all). Use an explicit origin list in production.
 </Note>
 
 <Warning>
-  Avoid relying on per-bucket CORS for RustFS. RustFS's support for the S3 `PutBucketCors` API (used by tools such
-  as `mc cors set`) has varied across releases and can return "not implemented" on some builds. The
-  `RUSTFS_CORS_ALLOWED_ORIGINS` server variable above is the reliable mechanism.
+  For standalone deployments, prefer the server-level `RUSTFS_CORS_ALLOWED_ORIGINS` variable over manually applying
+  a per-bucket CORS policy: RustFS's support for the S3 `PutBucketCors` API has varied across releases and can
+  return "not implemented" on some builds. (The bundled bootstrap pins a RustFS version where per-bucket
+  `mc cors set` works.)
 </Warning>
-
-If you use the bundled RustFS setup (the [one-click script](/self-hosting/setup/one-click)), CORS is configured for you and scoped to your Formbricks domain.
 
 ### RustFS Security
 
