@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getJobsQueueingConfig } from "@/lib/jobs/config";
+import { findMatchingLocale } from "@/lib/utils/locale";
 
 const mockEnqueueResponsePipeline = vi.fn();
 
@@ -84,5 +85,31 @@ describe("sendToPipeline", () => {
       "BullMQ response pipeline queueing is not enabled"
     );
     expect(getBackgroundJobProducer).not.toHaveBeenCalled();
+  });
+
+  test("falls back to undefined locale when findMatchingLocale throws", async () => {
+    vi.mocked(findMatchingLocale).mockRejectedValueOnce(new Error("headers unavailable"));
+    mockEnqueueResponsePipeline.mockResolvedValue({
+      jobId: "job-1",
+      jobName: "response-pipeline.process",
+      queueName: "background-jobs",
+    });
+
+    await sendToPipeline(testData);
+
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({ ...testData, locale: undefined });
+  });
+
+  test("preserves an existing job.locale instead of resolving it", async () => {
+    mockEnqueueResponsePipeline.mockResolvedValue({
+      jobId: "job-1",
+      jobName: "response-pipeline.process",
+      queueName: "background-jobs",
+    });
+
+    await sendToPipeline({ ...testData, locale: "de-DE" });
+
+    expect(findMatchingLocale).not.toHaveBeenCalled();
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith({ ...testData, locale: "de-DE" });
   });
 });
