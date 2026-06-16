@@ -1,10 +1,10 @@
 import { type Locator, expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
-import { startSurveyFromScratch } from "./lib/utils";
 import * as helper from "./utils/helper";
 import {
   createSurvey,
+  createSurveyFromScratch,
   createSurveyWithLogic,
   isWorkspaceStorageConfigured,
   uploadImageChoicesForPictureSelection,
@@ -114,7 +114,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       // Multi Select Question
       await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.question)).toBeVisible();
       await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.description)).toBeVisible();
-      for (let i = 0; i < surveys.createAndSubmit.singleSelectQuestion.options.length; i++) {
+      for (let i = 0; i < surveys.createAndSubmit.multiSelectQuestion.options.length; i++) {
         await expect(
           page
             .locator("#questionCard-2 label")
@@ -304,9 +304,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Create survey and add all questions in English (default language)
     await page.goto(`/workspaces/${workspaceId}/surveys`);
-    await startSurveyFromScratch(page, {
-      waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
-    });
+    await createSurveyFromScratch(page);
 
     // Enable welcome card
     await page.locator("#welcome-toggle").click();
@@ -442,12 +440,21 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Navigate to Language tab to enable translations and add German
     await page.getByText("Language").click();
-    await page.locator("#activate-translations-toggle").click();
+    const translationsToggle = page.locator("#activate-translations-toggle");
+    await expect(translationsToggle).toBeVisible();
+    const translationsWereEnabled = (await translationsToggle.getAttribute("aria-checked")) === "true";
+    if (!translationsWereEnabled) {
+      await translationsToggle.click();
+      await expect(translationsToggle).toHaveAttribute("aria-checked", "true");
+    }
 
-    // Select English as default language
-    await page.locator("button", { hasText: "Select Language" }).click();
-    await page.getByText("English (en)", { exact: true }).click();
-    await page.getByRole("button", { name: "Confirm" }).click();
+    // Select English as default language if the survey does not already have one.
+    const defaultLanguageSelect = page.locator("button", { hasText: "Select Language" });
+    if (!translationsWereEnabled || (await defaultLanguageSelect.isVisible())) {
+      await defaultLanguageSelect.click();
+      await page.getByText("English (en)", { exact: true }).click();
+      await page.getByRole("button", { name: "Confirm" }).click();
+    }
 
     // Enable German by toggling its switch in the language table
     await page
@@ -835,7 +842,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(
         page.getByText(surveys.createWithLogicAndSubmit.multiSelectQuestion.description)
       ).toBeVisible();
-      for (let i = 0; i < surveys.createWithLogicAndSubmit.singleSelectQuestion.options.length; i++) {
+      for (let i = 0; i < surveys.createWithLogicAndSubmit.multiSelectQuestion.options.length; i++) {
         await expect(
           page
             .locator("#questionCard-2 label")
@@ -1025,7 +1032,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 
       const currentUrl = page.url();
-      const updatedUrl = currentUrl.replace("summary?share=true", "responses");
+      const updatedUrl = currentUrl.replace(/summary(?:\?.*)?$/, "responses");
 
       await page.goto(updatedUrl);
       const responseTable = page.locator("table#response-table");

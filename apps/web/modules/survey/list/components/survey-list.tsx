@@ -6,16 +6,15 @@ import { useRouter } from "next/navigation";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
-import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
-import { customSurveyTemplate } from "@/app/lib/templates";
+import type { TSurveyType } from "@formbricks/types/surveys/types";
+import type { TUserLocale } from "@formbricks/types/user";
+import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
+import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
-import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
+import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
@@ -42,7 +41,6 @@ import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
-  userId: string;
   publicDomain: string;
   isReadOnly: boolean;
   surveysPerPage: number;
@@ -54,23 +52,16 @@ interface SurveysListProps {
 
 type NewSurveyMenuProps = {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
-  userId: string;
   language: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 };
 
-const NewSurveyMenu = ({
-  workspace,
-  userId,
-  language,
-  isAIAvailable,
-  aiUnavailableReason,
-}: NewSurveyMenuProps) => {
+const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason }: NewSurveyMenuProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
-  const [isCreatingBlankSurvey, setIsCreatingBlankSurvey] = useState(false);
+  const createSurveyMutation = useCreateSurveyFromTemplate();
   const workspaceBasePath = `/workspaces/${workspace.id}`;
 
   const surveyType: TSurveyType = useMemo(() => {
@@ -86,32 +77,18 @@ const NewSurveyMenu = ({
   }, [workspace.config.channel]);
 
   const handleStartFromScratch = async () => {
-    setIsCreatingBlankSurvey(true);
-
     try {
-      const customSurvey = customSurveyTemplate(t);
-      const surveyBody: TSurveyCreateInput = {
-        ...customSurvey.preset,
-        type: surveyType,
-        createdBy: userId,
-      };
-
-      const response = await createSurveyAction({
+      const survey = await createSurveyMutation.mutateAsync({
         workspaceId: workspace.id,
-        surveyBody,
-        createdFrom: "blank",
+        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
+        source: "custom",
+        surveyType,
+        defaultLanguage: language,
       });
 
-      if (response?.data) {
-        router.push(`${workspaceBasePath}/surveys/${response.data.id}/edit`);
-        return;
-      }
-
-      toast.error(getFormattedErrorMessage(response));
+      router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
-    } finally {
-      setIsCreatingBlankSurvey(false);
     }
   };
 
@@ -136,7 +113,7 @@ const NewSurveyMenu = ({
             {t("workspace.surveys.ai_create.choose_template")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            disabled={isCreatingBlankSurvey}
+            disabled={createSurveyMutation.isPending}
             icon={<PlusCircleIcon className="size-4" />}
             onSelect={(event) => {
               event.preventDefault();
@@ -160,7 +137,6 @@ const NewSurveyMenu = ({
 
 export const SurveysList = ({
   workspace,
-  userId,
   publicDomain,
   isReadOnly,
   surveysPerPage,
@@ -240,7 +216,6 @@ export const SurveysList = ({
   const createSurveyButton = (
     <NewSurveyMenu
       workspace={workspace}
-      userId={userId}
       language={locale}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
@@ -270,10 +245,10 @@ export const SurveysList = ({
   if (showTemplateEmptyState) {
     return (
       <TemplateContainerWithPreview
-        userId={userId}
         workspace={workspace}
         isTemplatePage={false}
         publicDomain={publicDomain}
+        defaultLanguage={locale}
         language={locale}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}

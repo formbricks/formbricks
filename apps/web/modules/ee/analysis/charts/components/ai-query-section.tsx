@@ -12,6 +12,7 @@ import {
   type TAIUnavailableReason,
   getAIUnavailableAction,
 } from "@/modules/ee/analysis/charts/lib/ai-availability";
+import { getTranslatedAIChartError } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -91,7 +92,7 @@ export function AIQuerySection({
       if (result?.data) {
         onChartGenerated(result.data);
       } else {
-        const errorMessage = getFormattedErrorMessage(result);
+        const errorMessage = getTranslatedAIChartError(getFormattedErrorMessage(result), t);
         toast.error(errorMessage);
       }
     } catch (error: unknown) {

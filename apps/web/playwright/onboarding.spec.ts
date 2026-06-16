@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { createSurveyFromScratch, createXMTemplateSurvey } from "./utils/helper";
 
 test.describe("Onboarding Flow Test", async () => {
   test("start from scratch", async ({ page, users }) => {
@@ -7,9 +8,7 @@ test.describe("Onboarding Flow Test", async () => {
     await user.login();
 
     await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/survey/);
-    await page.getByRole("button", { name: "Start from scratch" }).click();
-
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx/);
+    await createSurveyFromScratch(page, { mode: "cx" });
     await page.getByRole("button", { name: "Save & Close" }).click();
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
@@ -24,9 +23,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByRole("button", { name: "Use a template" }).click();
 
     await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/templates/);
-    await page.getByRole("button", { name: "NPS Net Promoter Score" }).click();
-
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx/);
+    await createXMTemplateSurvey(page, "NPS Net Promoter Score");
     await page.getByRole("button", { name: "Save & Close" }).click();
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);

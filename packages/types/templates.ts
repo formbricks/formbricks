@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { ZSurveyBlocks } from "./surveys/blocks";
-import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyWelcomeCard } from "./surveys/types";
+import {
+  ZSurveyEndings,
+  ZSurveyHiddenFields,
+  ZSurveyMetadata,
+  ZSurveyVariables,
+  ZSurveyWelcomeCard,
+} from "./surveys/types";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "./workspace";
 
 export const ZTemplateRole = z.enum([
@@ -12,8 +18,13 @@ export const ZTemplateRole = z.enum([
 ]);
 export type TTemplateRole = z.infer<typeof ZTemplateRole>;
 
+const ZTemplateId = z
+  .string()
+  .trim()
+  .min(1, "Template id must contain at least one non-whitespace character");
+
 export const ZTemplate = z.object({
-  id: z.string().min(1),
+  id: ZTemplateId,
   name: z.string(),
   description: z.string(),
   icon: z.any().optional(),
@@ -26,6 +37,8 @@ export const ZTemplate = z.object({
     blocks: ZSurveyBlocks.prefault([]),
     endings: ZSurveyEndings,
     hiddenFields: ZSurveyHiddenFields,
+    metadata: ZSurveyMetadata.optional(),
+    variables: ZSurveyVariables.optional(),
   }),
 });
 

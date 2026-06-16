@@ -7,4 +7,27 @@ sidebarTitle: "AI Features"
 
 A single organization toggle unlocks AI-assisted survey translation and AI chart creation across the app. Requires `AI_PROVIDER`, `AI_MODEL`, and the matching provider configuration on the instance.
 
+## Kubernetes Helm
+
+The Formbricks Helm chart can deploy a bundled Qwen/vLLM runtime for Smart functionality. This path is disabled
+by default and requires GPU-capable Kubernetes nodes.
+
+```yaml
+llm:
+  enabled: true
+```
+
+When `llm.enabled` is true, the chart deploys the vLLM router and Qwen serving engine. By default it also points
+the Formbricks app at the in-cluster OpenAI-compatible endpoint by injecting the required `AI_*` environment
+variables.
+
+Set `llm.autoConfigureApp=false` if you want the chart to deploy Qwen/vLLM but prefer to configure the app
+provider manually.
+
+## External Providers
+
+Keep `llm.enabled=false` when you use Google Vertex, Azure, AWS Bedrock, or your own OpenAI-compatible runtime.
+Configure those providers with `deployment.env` in your Helm values or with environment variables in your
+deployment platform.
+
 Read the full guide: [AI Features](/platform/features/ai-features).

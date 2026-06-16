@@ -138,6 +138,7 @@ export namespace Prisma {
   export type SurveyOrderByWithRelationInput = PrismaModelTypes.SurveyOrderByWithRelationInput;
   export type SurveySelect = PrismaModelTypes.SurveySelect;
   export type SurveyTriggerCreateWithoutSurveyInput = PrismaModelTypes.SurveyTriggerCreateWithoutSurveyInput;
+  export type SurveyUpdateInput = PrismaModelTypes.SurveyUpdateInput;
   export type SurveyWhereInput = PrismaModelTypes.SurveyWhereInput;
   export type TeamFindManyArgs = PrismaModelTypes.TeamFindManyArgs;
   export type TeamUpdateInput = PrismaModelTypes.TeamUpdateInput;

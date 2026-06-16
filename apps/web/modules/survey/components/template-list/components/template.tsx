@@ -30,10 +30,10 @@ export const Template = ({
   loading,
   selectedFilter,
   noPreview,
-}: TemplateProps) => {
+}: Readonly<TemplateProps>) => {
   const { t } = useTranslation();
 
-  const showCreateSurveyButton = activeTemplate?.name === template.name;
+  const showCreateSurveyButton = activeTemplate?.id === template.id;
 
   const handleCardClick = () => {
     const newTemplate = replacePresetPlaceholders(template, workspace);
@@ -58,11 +58,12 @@ export const Template = ({
       {showCreateSurveyButton && (
         <div className="flex justify-start">
           <Button
-            className="mt-6 px-6 py-3"
+            className="mt-6 max-w-full px-6 py-3"
             disabled={activeTemplate === null}
             loading={loading}
+            aria-label={t("workspace.surveys.templates.use_this_template")}
             onClick={() => createSurvey(activeTemplate)}>
-            {t("workspace.surveys.templates.use_this_template")}
+            <span className="truncate">{t("workspace.surveys.templates.use_this_template")}</span>
           </Button>
         </div>
       )}
@@ -74,7 +75,7 @@ export const Template = ({
   }
 
   return (
-    <button type="button" className={cardClass} onClick={handleCardClick} key={template.name}>
+    <button type="button" className={cardClass} onClick={handleCardClick}>
       {cardContent}
     </button>
   );

@@ -54,7 +54,6 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       workspace={workspaceWithRequiredProps}
       isReadOnly={isReadOnly}
       publicDomain={publicDomain}
-      userId={session.user.id}
       surveysPerPage={SURVEYS_PER_PAGE}
       currentWorkspaceChannel={currentWorkspaceChannel}
       locale={locale}

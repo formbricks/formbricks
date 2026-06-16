@@ -6,6 +6,7 @@ import type { TCloudBillingInterval } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
+import { type TResponsePricingTier, mapStripeTiersToResponsePricingTiers } from "./response-pricing-tiers";
 import { stripeClient } from "./stripe-client";
 
 export type TStandardCloudPlan = "hobby" | "pro" | "scale";
@@ -36,11 +37,17 @@ export type TStripeBillingCatalog = {
   };
 };
 
+export type TResponseOverageDisplay = {
+  currency: string;
+  tiers: TResponsePricingTier[];
+};
+
 export type TStripeBillingCatalogDisplayItem = {
   plan: TStandardCloudPlan;
   interval: TCloudBillingInterval;
   currency: string;
   unitAmount: number | null;
+  responseOverage: TResponseOverageDisplay | null;
 };
 
 export type TStripeBillingCatalogDisplay = {
@@ -59,7 +66,8 @@ export type TStripeBillingCatalogDisplay = {
 
 const STANDARD_CLOUD_PLANS = new Set<TStandardCloudPlan>(["hobby", "pro", "scale"]);
 const STRIPE_BILLING_CATALOG_CACHE_TTL_MS = 10 * 60 * 1000;
-const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v1";
+// v2: response prices include expanded tiers
+const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v2";
 
 const getStripeBillingCatalogCacheKey = () =>
   createCacheKey.custom(
@@ -146,7 +154,7 @@ const listAllActivePrices = async (): Promise<TStripeCatalogPrice[]> => {
     const result = await stripeClient.prices.list({
       active: true,
       limit: 100,
-      expand: ["data.product"],
+      expand: ["data.product", "data.tiers"],
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
 
@@ -242,45 +250,43 @@ export const getStripeBillingCatalog = reactCache(async (): Promise<TStripeBilli
   );
 });
 
+const toResponseOverageDisplay = (item: TStripeBillingCatalogItem): TResponseOverageDisplay | null => {
+  // The tier table renders graduated semantics (each band priced separately),
+  // so volume-mode prices must not be displayed with it.
+  if (item.responsePrice?.tiers_mode !== "graduated") {
+    return null;
+  }
+
+  const tiers = mapStripeTiersToResponsePricingTiers(item.responsePrice.tiers);
+  if (!tiers) {
+    return null;
+  }
+
+  return { currency: item.responsePrice.currency, tiers };
+};
+
+const toDisplayItem = (item: TStripeBillingCatalogItem): TStripeBillingCatalogDisplayItem => ({
+  plan: item.plan,
+  interval: item.interval,
+  currency: item.basePrice.currency,
+  unitAmount: item.basePrice.unit_amount,
+  responseOverage: toResponseOverageDisplay(item),
+});
+
 export const getStripeBillingCatalogDisplay = reactCache(async (): Promise<TStripeBillingCatalogDisplay> => {
   const catalog = await getStripeBillingCatalog();
 
   return {
     hobby: {
-      monthly: {
-        plan: "hobby",
-        interval: "monthly",
-        currency: catalog.hobby.monthly.basePrice.currency,
-        unitAmount: catalog.hobby.monthly.basePrice.unit_amount,
-      },
+      monthly: toDisplayItem(catalog.hobby.monthly),
     },
     pro: {
-      monthly: {
-        plan: "pro",
-        interval: "monthly",
-        currency: catalog.pro.monthly.basePrice.currency,
-        unitAmount: catalog.pro.monthly.basePrice.unit_amount,
-      },
-      yearly: {
-        plan: "pro",
-        interval: "yearly",
-        currency: catalog.pro.yearly.basePrice.currency,
-        unitAmount: catalog.pro.yearly.basePrice.unit_amount,
-      },
+      monthly: toDisplayItem(catalog.pro.monthly),
+      yearly: toDisplayItem(catalog.pro.yearly),
     },
     scale: {
-      monthly: {
-        plan: "scale",
-        interval: "monthly",
-        currency: catalog.scale.monthly.basePrice.currency,
-        unitAmount: catalog.scale.monthly.basePrice.unit_amount,
-      },
-      yearly: {
-        plan: "scale",
-        interval: "yearly",
-        currency: catalog.scale.yearly.basePrice.currency,
-        unitAmount: catalog.scale.yearly.basePrice.unit_amount,
-      },
+      monthly: toDisplayItem(catalog.scale.monthly),
+      yearly: toDisplayItem(catalog.scale.yearly),
     },
   };
 });
