@@ -78,6 +78,13 @@ export const UnifyTopicsSubtopicsPage = async (
   }
 
   const directoryMap = Object.fromEntries(directories.map((directory) => [directory.id, directory.name]));
+  const canWrite = isOwner || isManager || hasReadWriteAccess || hasManageAccess;
 
-  return <TopicsSubtopicsPreview workspaceId={params.workspaceId} directoryMap={directoryMap} />;
+  return (
+    <TopicsSubtopicsPreview
+      workspaceId={params.workspaceId}
+      directoryMap={directoryMap}
+      canWrite={canWrite}
+    />
+  );
 };
