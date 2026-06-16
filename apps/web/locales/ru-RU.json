@@ -1764,7 +1764,7 @@
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "У тебя пока нет записей отзывов для отчётности. Настрой источники отзывов, чтобы данные поступали в систему.",
       "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
-      "setup_feedback_source": "Настройка источников обратной связи"
+      "setup_feedback_source": "Настройте источники обратной связи"
     },
     "api_keys": {
       "add_api_key": "Добавить API-ключ",
@@ -2351,6 +2351,7 @@
         "plan_pro_feature_contacts": "Управление контактами и сегментами",
         "plan_pro_feature_hide_branding": "Скрыть брендинг Formbricks",
         "plan_pro_feature_integrations": "Все интеграции и email-уведомления",
+        "plan_pro_feature_responses": "2 000 ответов в месяц с <dynamicPricing>динамическим ценообразованием</dynamicPricing>",
         "plan_pro_feature_sdks": "SDK для iOS и Android",
         "plan_pro_feature_smart_tools": "Умные инструменты (AI)",
         "plan_pro_feature_unlimited_seats": "Неограниченное количество мест",
@@ -2360,6 +2361,7 @@
         "plan_scale_feature_feedback": "Управление обратной связью",
         "plan_scale_feature_quota": "Управление квотами",
         "plan_scale_feature_rbac": "Команды и роли доступа",
+        "plan_scale_feature_responses": "5 000 ответов в месяц с <dynamicPricing>динамическим ценообразованием</dynamicPricing>",
         "plan_scale_feature_security": "Двухфакторная аутентификация и защита от спама",
         "plan_scale_feature_semantic_analysis": "Семантический анализ (AI)",
         "plan_scale_feature_workspaces": "5 рабочих пространств",

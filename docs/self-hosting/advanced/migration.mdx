@@ -78,6 +78,8 @@ enterprise functionality.
   `AI_AZURE_RESOURCE_NAME`
 - `AI_PROVIDER=openai-compatible` requires `AI_OPENAI_COMPATIBLE_BASE_URL`; the LLM GA v1 self-hosted
   path is Qwen served by vLLM
+- Helm operators can set `llm.enabled: true` to deploy the bundled Qwen/vLLM runtime, or keep it disabled and
+  configure Google Vertex, Azure, AWS Bedrock, or an external OpenAI-compatible endpoint manually
 
 #### Cube
 

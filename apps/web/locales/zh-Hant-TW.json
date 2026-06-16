@@ -1764,7 +1764,7 @@
       "manage_feedback_sources": "管理意見來源",
       "no_feedback_records_message": "你目前還沒有可報告的回饋記錄。請設定回饋來源以將資料傳送到系統中。",
       "no_feedback_records_with_sources_message": "尚無意見記錄。當意見來源開始傳送資料後，記錄就會顯示在這裡。",
-      "setup_feedback_source": "設定反饋源"
+      "setup_feedback_source": "設定意見回饋來源"
     },
     "api_keys": {
       "add_api_key": "新增 API 金鑰",
@@ -2351,6 +2351,7 @@
         "plan_pro_feature_contacts": "聯絡人與區隔管理",
         "plan_pro_feature_hide_branding": "隱藏 Formbricks 品牌標識",
         "plan_pro_feature_integrations": "所有整合與電子郵件後續追蹤",
+        "plan_pro_feature_responses": "每月 2,000 次回應，採用<dynamicPricing>動態定價</dynamicPricing>",
         "plan_pro_feature_sdks": "iOS 與 Android SDK",
         "plan_pro_feature_smart_tools": "智慧工具（AI）",
         "plan_pro_feature_unlimited_seats": "無限座位數",
@@ -2360,6 +2361,7 @@
         "plan_scale_feature_feedback": "意見反饋管理",
         "plan_scale_feature_quota": "配額管理",
         "plan_scale_feature_rbac": "團隊與存取權限角色",
+        "plan_scale_feature_responses": "每月 5,000 次回應，採用<dynamicPricing>動態定價</dynamicPricing>",
         "plan_scale_feature_security": "雙因素驗證與垃圾訊息防護",
         "plan_scale_feature_semantic_analysis": "語義分析（AI）",
         "plan_scale_feature_workspaces": "5 個工作區",

@@ -724,7 +724,7 @@ export const PricingTable = ({
           title={t("workspace.settings.billing.subscription")}
           description={t("workspace.settings.billing.subscription_description")}
           buttonInfo={
-            canShowSubscriptionButton && hasPaymentMethod
+            canShowSubscriptionButton
               ? {
                   text: t("workspace.settings.billing.manage_billing_details"),
                   onClick: () => void openBillingPortal(),
@@ -917,6 +917,7 @@ export const PricingTable = ({
                                     plan={feature.plan}
                                     locale={locale}
                                     overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
+                                    t={t}
                                   />
                                 )}
                               </span>
