@@ -39,9 +39,9 @@ export const getWorkflowRunStatusBadge = (status: TWorkflowRunStatus, t: TFuncti
 };
 
 export const getWorkflowTriggerTypeLabel = (triggerType: TWorkflowTriggerType, t: TFunction): string => {
-  switch (triggerType) {
-    case "response.completed":
-    default:
-      return t("common.response_completed");
-  }
+  const labels: Record<TWorkflowTriggerType, string> = {
+    "response.completed": t("common.response_completed"),
+  };
+
+  return labels[triggerType];
 };

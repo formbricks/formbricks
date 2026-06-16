@@ -1,3 +1,1 @@
-import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
-
-export default WorkflowBuilderBodyLoading;
+export { WorkflowBuilderBodyLoading as default } from "@/modules/workflows/loading";

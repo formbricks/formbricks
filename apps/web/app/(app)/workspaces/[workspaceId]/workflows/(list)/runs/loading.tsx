@@ -1,3 +1,1 @@
-import { WorkspaceWorkflowRunsBodyLoading } from "@/modules/workflows/loading";
-
-export default WorkspaceWorkflowRunsBodyLoading;
+export { WorkspaceWorkflowRunsBodyLoading as default } from "@/modules/workflows/loading";
