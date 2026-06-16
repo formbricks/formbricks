@@ -140,6 +140,7 @@ describe("TagOnResponse Service", () => {
       {
         code: "P2002",
         clientVersion: "5.0.0",
+        meta: { target: ["responseId", "tagId"] },
       }
     );
     vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
@@ -163,6 +164,7 @@ describe("TagOnResponse Service", () => {
       {
         code: "P2002",
         clientVersion: "5.0.0",
+        meta: { target: ["responseId", "tagId"] },
       }
     );
 
@@ -180,6 +182,30 @@ describe("TagOnResponse Service", () => {
   test("addTagToRespone should throw DatabaseError for non-P2002 prisma errors", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
       code: "P2025",
+      clientVersion: "5.0.0",
+    });
+    vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
+
+    await expect(addTagToRespone("response1", "tag1")).rejects.toThrow(DatabaseError);
+  });
+
+  test("addTagToRespone should throw DatabaseError for P2002 on a different target", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed on the fields: (`someOtherField`)",
+      {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["someOtherField"] },
+      }
+    );
+    vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
+
+    await expect(addTagToRespone("response1", "tag1")).rejects.toThrow(DatabaseError);
+  });
+
+  test("addTagToRespone should throw DatabaseError for P2002 without meta.target", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
       clientVersion: "5.0.0",
     });
     vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
