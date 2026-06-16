@@ -57,11 +57,12 @@ export const StartFromScratchTemplate = ({
       {showCreateSurveyButton && (
         <div className="text-left">
           <Button
-            className="mt-6 px-6 py-3"
+            className="mt-6 max-w-full px-6 py-3"
             disabled={activeTemplate === null}
             loading={loading}
+            aria-label={t("common.create_survey")}
             onClick={() => createSurvey(activeTemplate)}>
-            {t("common.create_survey")}
+            <span className="truncate">{t("common.create_survey")}</span>
           </Button>
         </div>
       )}
