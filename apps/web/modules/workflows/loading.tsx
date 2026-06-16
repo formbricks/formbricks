@@ -1,32 +1,23 @@
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
-const RunsTableSkeleton = ({ showWorkflowColumn = false }: Readonly<{ showWorkflowColumn?: boolean }>) => {
-  const runColumnSpan = showWorkflowColumn ? "col-span-3" : "col-span-4";
-  const timeColumnSpan = showWorkflowColumn ? "col-span-2" : "col-span-3";
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <div className="grid grid-cols-12 gap-4 border-b border-slate-200 bg-slate-100 px-4 py-3">
-        <Skeleton className={`${runColumnSpan} h-4 rounded-md`} />
-        {showWorkflowColumn ? <Skeleton className="col-span-2 h-4 rounded-md" /> : null}
-        <Skeleton className="col-span-2 h-4 rounded-md" />
-        <Skeleton className="col-span-3 h-4 rounded-md" />
-        <Skeleton className={`${timeColumnSpan} h-4 rounded-md`} />
-      </div>
-      {[0, 1, 2].map((row) => (
-        <div
-          key={row}
-          className="grid grid-cols-12 gap-4 border-b border-slate-100 px-4 py-4 last:border-b-0">
-          <Skeleton className={`${runColumnSpan} h-4 rounded-md`} />
-          {showWorkflowColumn ? <Skeleton className="col-span-2 h-4 rounded-md" /> : null}
-          <Skeleton className="col-span-2 h-6 rounded-full" />
-          <Skeleton className="col-span-3 h-4 rounded-md" />
-          <Skeleton className={`${timeColumnSpan} h-4 rounded-md`} />
-        </div>
-      ))}
+const RunsTableSkeleton = () => (
+  <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
+    <div className="grid grid-cols-12 gap-4 border-b border-slate-200 px-4 py-3">
+      <Skeleton className="col-span-6 h-4 rounded-md" />
+      <Skeleton className="col-span-2 h-4 rounded-md" />
+      <Skeleton className="col-span-2 h-4 rounded-md" />
+      <Skeleton className="col-span-2 h-4 rounded-md" />
     </div>
-  );
-};
+    {[0, 1, 2].map((row) => (
+      <div key={row} className="grid grid-cols-12 gap-4 border-b border-slate-100 px-4 py-3 last:border-b-0">
+        <Skeleton className="col-span-6 h-4 rounded-md" />
+        <Skeleton className="col-span-2 h-6 rounded-full" />
+        <Skeleton className="col-span-2 h-4 rounded-md" />
+        <Skeleton className="col-span-2 h-4 rounded-md" />
+      </div>
+    ))}
+  </div>
+);
 
 export const WorkflowsListBodyLoading = () => (
   <div className="space-y-3">
@@ -53,7 +44,7 @@ export const WorkflowsListBodyLoading = () => (
   </div>
 );
 
-export const WorkspaceWorkflowRunsBodyLoading = () => <RunsTableSkeleton showWorkflowColumn />;
+export const WorkspaceWorkflowRunsBodyLoading = () => <RunsTableSkeleton />;
 
 export const WorkflowBuilderBodyLoading = () => (
   <div className="flex min-h-[680px] flex-col gap-4 md:flex-row">

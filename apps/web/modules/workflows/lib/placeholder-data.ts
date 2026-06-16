@@ -86,24 +86,6 @@ export const placeholderWorkflowRuns = [
   },
   {
     createdAtLabel: placeholderUnavailableLabel,
-    description: "Manual dry run from the workflow builder.",
-    id: "019ecf4d-1fe5-7a35-9bb6-d8134729e491",
-    logs: [
-      {
-        level: "info",
-        message: "Started manual dry run.",
-      },
-    ],
-    mode: "dryRun",
-    responseId: "response_placeholder",
-    statusLabel: "Dry run",
-    statusType: "gray",
-    timeLabel: placeholderUnavailableLabel,
-    trigger: "response.completed",
-    workflowId: "019ecf4c-1fca-776c-8ee4-56e9ce4a879d",
-  },
-  {
-    createdAtLabel: placeholderUnavailableLabel,
     description: "Email provider returned a delivery error.",
     id: "019ecf4d-1fe5-76e5-9032-a9cf1e403cfd",
     logs: [

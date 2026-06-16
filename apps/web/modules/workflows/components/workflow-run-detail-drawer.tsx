@@ -64,8 +64,8 @@ export const WorkflowRunDetailDrawer = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto bg-white px-5 sm:max-w-2xl">
         <SheetHeader>
-          <SheetTitle>{run?.description ?? t("common.workflow_runs")}</SheetTitle>
-          <SheetDescription>{run?.workflowName}</SheetDescription>
+          <SheetTitle>{run?.workflowName ?? t("common.workflow_runs")}</SheetTitle>
+          <SheetDescription>{run?.description}</SheetDescription>
         </SheetHeader>
 
         {run ? (
@@ -84,10 +84,6 @@ export const WorkflowRunDetailDrawer = ({
                   <dd className="mt-1">
                     <Badge text={run.statusLabel} type={run.statusType} size="normal" />
                   </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">{t("common.workflow")}</dt>
-                  <dd className="text-slate-900">{run.workflowName}</dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">{t("common.started_at")}</dt>
