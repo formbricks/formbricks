@@ -100,3 +100,37 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}
+{{- if and .Values.taxonomy.enabled .Values.taxonomy.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "formbricks.taxonomyName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: taxonomy
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.taxonomy.autoscaling.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.taxonomy.autoscaling.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "formbricks.taxonomyName" . }}
+  minReplicas: {{ .Values.taxonomy.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.taxonomy.autoscaling.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.taxonomy.autoscaling.metrics | nindent 4 }}
+  {{- with .Values.taxonomy.autoscaling.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

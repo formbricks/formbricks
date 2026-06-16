@@ -153,6 +153,50 @@ externalSecret:
             property: apiKey
 ```
 
+## AI Taxonomy Beta
+
+The chart can optionally deploy the standalone AI taxonomy service. It is disabled by default and remains internal
+to the cluster through a `ClusterIP` service.
+
+To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
+
+```yaml
+llm:
+  enabled: true
+
+taxonomy:
+  enabled: true
+```
+
+When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment, Service, and Secret, then injects these
+Hub API env vars unless `taxonomy.autoConfigureHub=false`:
+
+```yaml
+TAXONOMY_SERVICE_URL: http://formbricks-taxonomy:8000
+TAXONOMY_SERVICE_TOKEN: <from taxonomy auth secret>
+HUB_INTERNAL_API_TOKEN: <from taxonomy auth secret>
+```
+
+If `llm.enabled=true` and `taxonomy.llm.baseUrl` is empty, taxonomy uses the bundled vLLM router at
+`http://<release-name>-router-service:8000/v1`. To use an external OpenAI-compatible LLM instead:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    model: qwen3-14b-awq
+    baseUrl: http://my-llm-gateway:8000/v1
+    existingSecret: taxonomy-llm-secret
+```
+
+The taxonomy service exposes public `/health` only for Kubernetes probes. Use authenticated `/v1/preflight` as an
+operator check after install:
+
+```sh
+kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
+  python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
+```
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |
@@ -409,3 +453,12 @@ externalSecret:
 | serviceMonitor.endpoints[0].interval                               | string | `"5s"`                                                                      |                                                           |
 | serviceMonitor.endpoints[0].path                                   | string | `"/metrics"`                                                                |                                                           |
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
+| taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
+| taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
+| taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
+| taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
+| taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
+| taxonomy.llm.existingSecret                                        | string | `""`                                                                        | Existing secret containing `TAXONOMY_LLM_API_KEY`.        |
+| taxonomy.llm.model                                                 | string | `"qwen3-14b-awq"`                                                           | LLM model used by taxonomy labeling and tree generation.  |
+| taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Taxonomy LLM provider.                                    |
+| taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |

@@ -127,3 +127,46 @@ spec:
       app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+{{- if and .Values.taxonomy.enabled .Values.taxonomy.pdb.enabled }}
+{{- $hasMinAvailable := not (kindIs "invalid" .Values.taxonomy.pdb.minAvailable) -}}
+{{- $hasMaxUnavailable := not (kindIs "invalid" .Values.taxonomy.pdb.maxUnavailable) -}}
+{{- if and $hasMinAvailable $hasMaxUnavailable }}
+  {{- fail "taxonomy.pdb.minAvailable and taxonomy.pdb.maxUnavailable are mutually exclusive; set only one" }}
+{{- end }}
+{{- if not (or $hasMinAvailable $hasMaxUnavailable) }}
+  {{- fail "taxonomy.pdb.enabled is true but neither taxonomy.pdb.minAvailable nor taxonomy.pdb.maxUnavailable is set; set exactly one" }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "formbricks.taxonomyName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: taxonomy
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.taxonomy.pdb.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.taxonomy.pdb.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if $hasMinAvailable }}
+  minAvailable: {{ .Values.taxonomy.pdb.minAvailable }}
+  {{- end }}
+  {{- if $hasMaxUnavailable }}
+  maxUnavailable: {{ .Values.taxonomy.pdb.maxUnavailable }}
+  {{- end }}
+  {{- with .Values.taxonomy.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
