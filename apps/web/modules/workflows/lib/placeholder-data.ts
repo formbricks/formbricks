@@ -7,7 +7,7 @@ export const placeholderWorkflows = [
   {
     activityLabel: placeholderUnavailableLabel,
     createdAtLabel: placeholderUnavailableLabel,
-    id: "response-completed-follow-up",
+    id: "019ecf4c-1fca-723d-9228-ae23e8f2bcc3",
     name: "Response follow-up",
     status: "inProgress",
     statusLabel: "Enabled",
@@ -16,7 +16,7 @@ export const placeholderWorkflows = [
   {
     activityLabel: placeholderUnavailableLabel,
     createdAtLabel: placeholderUnavailableLabel,
-    id: "response-completed-draft",
+    id: "019ecf4c-1fca-776c-8ee4-56e9ce4a879d",
     name: "Ending card follow-up",
     status: "draft",
     statusLabel: "Draft",
@@ -25,7 +25,7 @@ export const placeholderWorkflows = [
   {
     activityLabel: placeholderUnavailableLabel,
     createdAtLabel: placeholderUnavailableLabel,
-    id: "team-notification-follow-up",
+    id: "019ecf4c-1fca-7790-94bd-7de1ffbd2a17",
     name: "Team notification",
     status: "paused",
     statusLabel: "Disabled",
@@ -61,7 +61,7 @@ export const placeholderWorkflowRuns = [
   {
     createdAtLabel: placeholderUnavailableLabel,
     description: "Survey response matched the ending-card condition.",
-    id: "run_placeholder_completed",
+    id: "019ecf4c-1fca-7b72-bc62-70f4380c293e",
     logs: [
       {
         level: "info",
@@ -82,12 +82,12 @@ export const placeholderWorkflowRuns = [
     statusType: "success",
     timeLabel: placeholderUnavailableLabel,
     trigger: "response.completed",
-    workflowId: "response-completed-follow-up",
+    workflowId: "019ecf4c-1fca-723d-9228-ae23e8f2bcc3",
   },
   {
     createdAtLabel: placeholderUnavailableLabel,
     description: "Manual dry run from the workflow builder.",
-    id: "run_placeholder_dry_run",
+    id: "019ecf4d-1fe5-7a35-9bb6-d8134729e491",
     logs: [
       {
         level: "info",
@@ -100,12 +100,12 @@ export const placeholderWorkflowRuns = [
     statusType: "gray",
     timeLabel: placeholderUnavailableLabel,
     trigger: "response.completed",
-    workflowId: "response-completed-draft",
+    workflowId: "019ecf4c-1fca-776c-8ee4-56e9ce4a879d",
   },
   {
     createdAtLabel: placeholderUnavailableLabel,
     description: "Email provider returned a delivery error.",
-    id: "run_placeholder_failed",
+    id: "019ecf4d-1fe5-76e5-9032-a9cf1e403cfd",
     logs: [
       {
         level: "error",
@@ -118,7 +118,7 @@ export const placeholderWorkflowRuns = [
     statusType: "error",
     timeLabel: placeholderUnavailableLabel,
     trigger: "response.completed",
-    workflowId: "team-notification-follow-up",
+    workflowId: "019ecf4c-1fca-7790-94bd-7de1ffbd2a17",
   },
 ] as const satisfies readonly {
   createdAtLabel: string;
