@@ -1,11 +1,12 @@
 "use client";
 
 import { WorkflowRunsTable } from "../components/workflow-runs-table";
+import { type TPlaceholderWorkflowRunListItem } from "../lib/placeholder-data";
 
 interface WorkspaceWorkflowRunsPageProps {
-  workspaceId: string;
+  runs: TPlaceholderWorkflowRunListItem[];
 }
 
-export const WorkspaceWorkflowRunsPage = ({ workspaceId }: Readonly<WorkspaceWorkflowRunsPageProps>) => {
-  return <WorkflowRunsTable workspaceId={workspaceId} showWorkflowColumn />;
+export const WorkspaceWorkflowRunsPage = ({ runs }: Readonly<WorkspaceWorkflowRunsPageProps>) => {
+  return <WorkflowRunsTable runs={runs} showWorkflowColumn />;
 };

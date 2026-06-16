@@ -77,18 +77,3 @@ export const WorkflowBuilderBodyLoading = () => (
 );
 
 export const WorkflowRunsBodyLoading = () => <RunsTableSkeleton />;
-
-export const WorkflowRunDetailBodyLoading = () => (
-  <div className="grid grid-cols-12 gap-6">
-    <section className="col-span-4 space-y-4 rounded-lg border border-slate-200 bg-white p-5">
-      <Skeleton className="h-6 w-36 rounded-md" />
-      <Skeleton className="h-4 w-28 rounded-md" />
-      <Skeleton className="h-6 w-24 rounded-full" />
-      <Skeleton className="h-4 w-48 rounded-md" />
-    </section>
-    <section className="col-span-8 space-y-6">
-      <Skeleton className="h-64 rounded-lg" />
-      <Skeleton className="h-64 rounded-lg" />
-    </section>
-  </div>
-);

@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { placeholderWorkflowAction } from "../lib/placeholder-data";
+import { type TPlaceholderWorkflowAction } from "../lib/placeholder-data";
 import { WorkflowCanvas } from "./workflow-canvas";
 import { WorkflowDetailsPanel } from "./workflow-details-panel";
 
-export const WorkflowBuilderCanvas = () => {
+interface WorkflowBuilderCanvasProps {
+  action: TPlaceholderWorkflowAction;
+}
+
+export const WorkflowBuilderCanvas = ({ action }: Readonly<WorkflowBuilderCanvasProps>) => {
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
   return (
@@ -19,7 +23,7 @@ export const WorkflowBuilderCanvas = () => {
         isPanelVisible={isPanelVisible}
         onTogglePanel={() => setIsPanelVisible((isVisible) => !isVisible)}
       />
-      <WorkflowDetailsPanel action={placeholderWorkflowAction} isVisible={isPanelVisible} />
+      <WorkflowDetailsPanel action={action} isVisible={isPanelVisible} />
     </section>
   );
 };

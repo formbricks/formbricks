@@ -149,3 +149,11 @@ export const getPlaceholderWorkflowRuns = (workflowId?: string) =>
 
 export const getPlaceholderWorkflowRun = (workflowId: string, runId: string) =>
   placeholderWorkflowRuns.find((run) => run.workflowId === workflowId && run.id === runId);
+
+export type TPlaceholderWorkflow = (typeof placeholderWorkflows)[number];
+
+export type TPlaceholderWorkflowRun = (typeof placeholderWorkflowRuns)[number];
+
+export type TPlaceholderWorkflowBuilderBadge = typeof placeholderWorkflowBuilderBadge;
+
+export type TPlaceholderWorkflowRunListItem = TPlaceholderWorkflowRun & { workflowName: string };

@@ -34,7 +34,7 @@ export const WorkflowListActions = ({ workflowId, workspaceId }: Readonly<Workfl
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
-            <DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <Link
                 className="flex w-full items-center"
                 href={`/workspaces/${workspaceId}/workflows/${workflowId}`}>
@@ -43,16 +43,16 @@ export const WorkflowListActions = ({ workflowId, workspaceId }: Readonly<Workfl
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem disabled>
-              <button type="button" className="flex w-full items-center opacity-50" disabled>
+              <div className="flex w-full items-center opacity-50">
                 <CopyIcon className="mr-2 size-4" />
                 {t("common.duplicate")}
-              </button>
+              </div>
             </DropdownMenuItem>
             <DropdownMenuItem disabled>
-              <button type="button" className="flex w-full items-center opacity-50" disabled>
+              <div className="flex w-full items-center opacity-50">
                 <TrashIcon className="mr-2 size-4" />
                 {t("common.delete")}
-              </button>
+              </div>
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

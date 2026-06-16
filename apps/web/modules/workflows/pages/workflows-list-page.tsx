@@ -5,13 +5,14 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { WorkflowListActions } from "../components/workflow-list-actions";
-import { placeholderWorkflows } from "../lib/placeholder-data";
+import { type TPlaceholderWorkflow } from "../lib/placeholder-data";
 
 interface WorkflowsListPageProps {
   workspaceId: string;
+  workflows: readonly TPlaceholderWorkflow[];
 }
 
-export const WorkflowsListPage = ({ workspaceId }: Readonly<WorkflowsListPageProps>) => {
+export const WorkflowsListPage = ({ workspaceId, workflows }: Readonly<WorkflowsListPageProps>) => {
   const { t } = useTranslation();
 
   return (
@@ -24,7 +25,7 @@ export const WorkflowsListPage = ({ workspaceId }: Readonly<WorkflowsListPagePro
         <div className="col-span-2">{t("common.activity")}</div>
       </div>
 
-      {placeholderWorkflows.map((workflow) => (
+      {workflows.map((workflow) => (
         <div key={workflow.id} className="relative block">
           <Link
             href={`/workspaces/${workspaceId}/workflows/${workflow.id}`}

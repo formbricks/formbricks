@@ -5,13 +5,14 @@ import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { placeholderWorkflowBuilderBadge } from "../lib/placeholder-data";
+import { type TPlaceholderWorkflowBuilderBadge } from "../lib/placeholder-data";
 
 interface WorkflowHeaderCtaProps {
   isReadOnly: boolean;
+  badge: TPlaceholderWorkflowBuilderBadge;
 }
 
-export const WorkflowHeaderCta = ({ isReadOnly }: Readonly<WorkflowHeaderCtaProps>) => {
+export const WorkflowHeaderCta = ({ isReadOnly, badge }: Readonly<WorkflowHeaderCtaProps>) => {
   const { t } = useTranslation();
   // Builder actions only belong to the edit tab (the index segment); the runs tab has no CTA.
   const segment = useSelectedLayoutSegment();
@@ -22,11 +23,7 @@ export const WorkflowHeaderCta = ({ isReadOnly }: Readonly<WorkflowHeaderCtaProp
 
   return (
     <div className="flex items-center gap-2">
-      <Badge
-        text={placeholderWorkflowBuilderBadge.label}
-        type={placeholderWorkflowBuilderBadge.type}
-        size="normal"
-      />
+      <Badge text={badge.label} type={badge.type} size="normal" />
       <Button type="button" variant="secondary" size="sm" disabled={isReadOnly}>
         <PlayIcon />
         {t("common.test")}

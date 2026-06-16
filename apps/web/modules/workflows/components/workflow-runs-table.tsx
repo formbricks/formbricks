@@ -1,94 +1,73 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/cn";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { getPlaceholderWorkflow, getPlaceholderWorkflowRuns } from "../lib/placeholder-data";
+import { type TPlaceholderWorkflowRunListItem } from "../lib/placeholder-data";
+import { WorkflowRunDetailDrawer } from "./workflow-run-detail-drawer";
 
 interface WorkflowRunsTableProps {
+  runs: TPlaceholderWorkflowRunListItem[];
   showWorkflowColumn?: boolean;
-  workflowId?: string;
-  workspaceId: string;
 }
 
-export const WorkflowRunsTable = ({
-  showWorkflowColumn = false,
-  workflowId,
-  workspaceId,
-}: Readonly<WorkflowRunsTableProps>) => {
+export const WorkflowRunsTable = ({ runs, showWorkflowColumn = false }: Readonly<WorkflowRunsTableProps>) => {
   const { t } = useTranslation();
-  const workflowRunRows = getPlaceholderWorkflowRuns(workflowId);
-  const idColumnClassName = showWorkflowColumn ? "w-[30%]" : "w-[44%]";
-  const statusColumnClassName = showWorkflowColumn ? "w-[14%]" : "w-[16%]";
-  const dateColumnClassName = showWorkflowColumn ? "w-[16%]" : "w-[20%]";
-  const timeColumnClassName = showWorkflowColumn ? "w-[16%]" : "w-[20%]";
+  const [selectedRun, setSelectedRun] = useState<TPlaceholderWorkflowRunListItem | null>(null);
 
   return (
-    <div
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white"
-      aria-label={t("common.workflow_runs")}>
-      <Table className="table-fixed">
-        <TableHeader role="rowgroup">
-          <TableRow className="bg-slate-100" role="row">
-            <TableHead className={cn("font-medium text-slate-500", idColumnClassName)}>
-              {t("common.id")}
-            </TableHead>
-            {showWorkflowColumn ? (
-              <TableHead className="w-[24%] font-medium text-slate-500">{t("common.workflows")}</TableHead>
-            ) : null}
-            <TableHead className={cn("font-medium text-slate-500", statusColumnClassName)}>
-              {t("common.status")}
-            </TableHead>
-            <TableHead className={cn("font-medium text-slate-500", dateColumnClassName)}>
-              {t("common.created_at")}
-            </TableHead>
-            <TableHead className={cn("font-medium text-slate-500", timeColumnClassName)}>
-              {t("common.time")}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {workflowRunRows.map((run) => {
-            const href = `/workspaces/${workspaceId}/workflows/${run.workflowId}/runs/${run.id}`;
-            const workflowName = getPlaceholderWorkflow(run.workflowId)?.name ?? run.workflowId;
-
-            return (
-              <TableRow key={run.id}>
-                <TableCell className="p-0">
-                  <Link href={href} className="block min-w-0 p-4">
-                    <p className="truncate font-mono text-sm font-medium text-slate-900">{run.id}</p>
-                    <p className="truncate text-sm text-slate-500">{run.description}</p>
-                  </Link>
+    <>
+      <div
+        className="overflow-hidden rounded-lg border border-slate-200 bg-white"
+        aria-label={t("common.workflow_runs")}>
+        <Table className="table-fixed">
+          <TableHeader role="rowgroup">
+            <TableRow className="bg-slate-100" role="row">
+              <TableHead className="w-[46%] font-medium text-slate-500">
+                {showWorkflowColumn ? t("common.workflow_name") : t("common.summary")}
+              </TableHead>
+              <TableHead className="w-[18%] font-medium text-slate-500">{t("common.status")}</TableHead>
+              <TableHead className="w-[18%] font-medium text-slate-500">{t("common.started_at")}</TableHead>
+              <TableHead className="w-[18%] font-medium text-slate-500">{t("common.finished_at")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {runs.map((run) => (
+              <TableRow
+                key={run.id}
+                onClick={() => setSelectedRun(run)}
+                className="cursor-pointer transition-colors hover:bg-slate-50">
+                <TableCell className="min-w-0">
+                  {showWorkflowColumn ? (
+                    <>
+                      <p className="truncate text-sm font-medium text-slate-900">{run.workflowName}</p>
+                      <p className="truncate text-sm text-slate-500">{run.description}</p>
+                    </>
+                  ) : (
+                    <p className="truncate text-sm text-slate-700">{run.description}</p>
+                  )}
                 </TableCell>
-                {showWorkflowColumn ? (
-                  <TableCell className="p-0">
-                    <Link href={href} className="block truncate p-4 text-sm text-slate-700">
-                      {workflowName}
-                    </Link>
-                  </TableCell>
-                ) : null}
-                <TableCell className="p-0">
-                  <Link href={href} className="block p-4">
-                    <Badge text={run.statusLabel} type={run.statusType} size="tiny" />
-                  </Link>
+                <TableCell>
+                  <Badge text={run.statusLabel} type={run.statusType} size="tiny" />
                 </TableCell>
-                <TableCell className="p-0">
-                  <Link href={href} className="block truncate p-4 text-sm text-slate-600">
-                    {run.createdAtLabel}
-                  </Link>
-                </TableCell>
-                <TableCell className="p-0">
-                  <Link href={href} className="block truncate p-4 text-sm text-slate-600">
-                    {run.timeLabel}
-                  </Link>
-                </TableCell>
+                <TableCell className="truncate text-sm text-slate-600">{run.createdAtLabel}</TableCell>
+                <TableCell className="truncate text-sm text-slate-600">{run.timeLabel}</TableCell>
               </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <WorkflowRunDetailDrawer
+        run={selectedRun}
+        open={selectedRun !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setSelectedRun(null);
+          }
+        }}
+      />
+    </>
   );
 };

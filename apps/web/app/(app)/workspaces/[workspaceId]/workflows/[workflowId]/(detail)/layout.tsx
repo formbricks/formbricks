@@ -5,7 +5,10 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { WorkflowHeaderCta } from "@/modules/workflows/components/workflow-header-cta";
 import { WorkflowSecondaryNavigation } from "@/modules/workflows/components/workflow-secondary-navigation";
 import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
-import { getPlaceholderWorkflow } from "@/modules/workflows/lib/placeholder-data";
+import {
+  getPlaceholderWorkflow,
+  placeholderWorkflowBuilderBadge,
+} from "@/modules/workflows/lib/placeholder-data";
 
 const WorkflowDetailLayout = async (
   props: Readonly<{
@@ -23,7 +26,9 @@ const WorkflowDetailLayout = async (
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={workflow.name} cta={<WorkflowHeaderCta isReadOnly={isReadOnly} />}>
+      <PageHeader
+        pageTitle={workflow.name}
+        cta={<WorkflowHeaderCta isReadOnly={isReadOnly} badge={placeholderWorkflowBuilderBadge} />}>
         <WorkflowSecondaryNavigation workspaceId={params.workspaceId} workflowId={params.workflowId} />
       </PageHeader>
       {props.children}

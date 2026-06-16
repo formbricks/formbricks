@@ -1,9 +1,13 @@
+import { getPlaceholderWorkflow, getPlaceholderWorkflowRuns } from "@/modules/workflows/lib/placeholder-data";
 import { WorkspaceWorkflowRunsPage } from "@/modules/workflows/pages/workspace-workflow-runs-page";
 
-const WorkflowRunsPage = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
-  const params = await props.params;
+const WorkflowRunsPage = () => {
+  const runs = getPlaceholderWorkflowRuns().map((run) => ({
+    ...run,
+    workflowName: getPlaceholderWorkflow(run.workflowId)?.name ?? run.workflowId,
+  }));
 
-  return <WorkspaceWorkflowRunsPage workspaceId={params.workspaceId} />;
+  return <WorkspaceWorkflowRunsPage runs={runs} />;
 };
 
 export default WorkflowRunsPage;
