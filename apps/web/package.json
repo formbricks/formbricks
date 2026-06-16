@@ -39,6 +39,7 @@
     "@formbricks/storage": "workspace:*",
     "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@formbricks/workflows": "workspace:*",
     "@hookform/resolvers": "5.2.2",
     "@json2csv/node": "7.0.6",
     "@lexical/code": "0.41.0",
