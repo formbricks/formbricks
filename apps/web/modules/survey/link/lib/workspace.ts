@@ -18,6 +18,9 @@ export interface TWorkspaceContextForLinkSurvey {
   organizationId: string;
   organizationBilling: TOrganizationBilling;
   organizationWhitelabel: TOrganizationWhitelabel | null;
+  /// True when the owning organization is suspended by moderation. Suspended
+  /// organizations have their link surveys taken offline.
+  isOrganizationSuspended: boolean;
 }
 
 /**
@@ -48,6 +51,7 @@ export const getWorkspaceContextForLinkSurvey = reactCache(
           organization: {
             select: {
               id: true,
+              suspendedAt: true,
               billing: {
                 select: {
                   stripeCustomerId: true,
@@ -93,6 +97,7 @@ export const getWorkspaceContextForLinkSurvey = reactCache(
             : { stripe: workspace.organization.billing.stripe }),
         },
         organizationWhitelabel: workspace.organization.whitelabel ?? null,
+        isOrganizationSuspended: workspace.organization.suspendedAt !== null,
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

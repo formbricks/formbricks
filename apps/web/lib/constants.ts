@@ -19,6 +19,7 @@ export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
 export const CRON_SECRET = env.CRON_SECRET;
+export const ORGANIZATION_MODERATION_SECRET = env.ORGANIZATION_MODERATION_SECRET;
 export const FB_LOGO_URL = `${WEBAPP_URL}/logo-transparent.png`;
 
 export const PRIVACY_URL = env.PRIVACY_URL;

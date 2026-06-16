@@ -124,6 +124,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
       organizationId: "clh1a2b3c4d5e6f7g8h9k",
       organization: {
         id: "clh1a2b3c4d5e6f7g8h9k",
+        suspendedAt: null,
         billing: {
           stripeCustomerId: null,
           limits: {
@@ -162,6 +163,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
         usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
       },
       organizationWhitelabel: null,
+      isOrganizationSuspended: false,
     });
 
     expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
@@ -177,6 +179,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
         organization: {
           select: {
             id: true,
+            suspendedAt: true,
             billing: {
               select: {
                 stripeCustomerId: true,
@@ -254,6 +257,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
       organizationId: "clh1a2b3c4d5e6f7g8h9u",
       organization: {
         id: "clh1a2b3c4d5e6f7g8h9u",
+        suspendedAt: null,
         billing: {
           stripeCustomerId: null,
           limits: {
@@ -292,6 +296,37 @@ describe("getWorkspaceContextForLinkSurvey", () => {
         usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
       },
       organizationWhitelabel: null,
+      isOrganizationSuspended: false,
     });
+  });
+
+  test("should report isOrganizationSuspended true when the organization is suspended", async () => {
+    const mockWorkspaceId = "clh1a2b3c4d5e6f7g8h9v";
+    const mockData = {
+      id: mockWorkspaceId,
+      name: "Suspended Workspace",
+      styling: null,
+      logo: null,
+      linkSurveyBranding: false,
+      customHeadScripts: null,
+      organizationId: "clh1a2b3c4d5e6f7g8h9w",
+      organization: {
+        id: "clh1a2b3c4d5e6f7g8h9w",
+        suspendedAt: new Date("2026-06-16T00:00:00.000Z"),
+        billing: {
+          stripeCustomerId: null,
+          limits: { monthly: { responses: 100 }, workspaces: 3 },
+          usageCycleAnchor: new Date("2026-01-01T00:00:00.000Z"),
+          stripe: null,
+        },
+        whitelabel: null,
+      },
+    };
+
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
+
+    const result = await getWorkspaceContextForLinkSurvey(mockWorkspaceId);
+
+    expect(result.isOrganizationSuspended).toBe(true);
   });
 });

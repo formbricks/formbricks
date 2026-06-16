@@ -111,6 +111,12 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
       : Promise.resolve(undefined),
   ]);
 
+  // Suspended organizations (e.g. flagged for abuse/fraud) have their link surveys
+  // taken offline. Return a 404 so the public link no longer serves the survey.
+  if (workspaceContext.isOrganizationSuspended) {
+    return notFound();
+  }
+
   // Fetch responseCount only if needed (depends on survey config)
   const responseCount = survey.welcomeCard.showResponseCount
     ? await getResponseCountBySurveyId(survey.id)

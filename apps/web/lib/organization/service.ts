@@ -321,6 +321,58 @@ export const deleteOrganization = async (organizationId: string) => {
   }
 };
 
+export const suspendOrganization = async (organizationId: string, reason?: string): Promise<void> => {
+  validateInputs([organizationId, ZId]);
+  try {
+    await prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        suspendedAt: new Date(),
+        suspendedReason: reason ?? null,
+      },
+      select: { id: true },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist)
+    ) {
+      throw new ResourceNotFoundError("Organization", organizationId);
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const unsuspendOrganization = async (organizationId: string): Promise<void> => {
+  validateInputs([organizationId, ZId]);
+  try {
+    await prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        suspendedAt: null,
+        suspendedReason: null,
+      },
+      select: { id: true },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist)
+    ) {
+      throw new ResourceNotFoundError("Organization", organizationId);
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
 export const getMonthlyOrganizationResponseCount = reactCache(
   async (organizationId: string): Promise<number> => {
     validateInputs([organizationId, ZId]);

@@ -15,6 +15,8 @@ import {
   getOrganizationsByUserId,
   select as organizationSelect,
   subscribeOrganizationMembersToSurveyResponses,
+  suspendOrganization,
+  unsuspendOrganization,
   updateOrganization,
 } from "./service";
 
@@ -83,7 +85,7 @@ describe("Organization Service", () => {
         whitelabel: false,
       };
 
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as any);
 
       const result = await getOrganization("org1");
 
@@ -136,7 +138,7 @@ describe("Organization Service", () => {
         },
       ];
 
-      vi.mocked(prisma.organization.findMany).mockResolvedValue(mockOrganizations);
+      vi.mocked(prisma.organization.findMany).mockResolvedValue(mockOrganizations as any);
 
       const result = await getOrganizationsByUserId("user1");
 
@@ -187,7 +189,7 @@ describe("Organization Service", () => {
         whitelabel: false,
       };
 
-      vi.mocked(prisma.organization.create).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.organization.create).mockResolvedValue(mockOrganization as any);
 
       const result = await createOrganization({ name: "Test Org" });
 
@@ -252,13 +254,13 @@ describe("Organization Service", () => {
         ],
       };
 
-      vi.mocked(prisma.organization.update).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.organization.update).mockResolvedValue(mockOrganization as any);
       vi.mocked(prisma.$transaction).mockImplementation(
         async (fn: any) =>
           await fn({
             organization: {
               update: prisma.organization.update,
-              findUnique: vi.fn().mockResolvedValue(mockOrganization),
+              findUnique: vi.fn().mockResolvedValue(mockOrganization as any),
             },
             organizationBilling: {
               upsert: prisma.organizationBilling.upsert,
@@ -383,6 +385,56 @@ describe("Organization Service", () => {
       expect(deleteHubTenantData).toHaveBeenCalledTimes(2);
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_1");
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_2");
+    });
+  });
+
+  describe("suspendOrganization", () => {
+    test("sets suspendedAt and reason", async () => {
+      vi.mocked(prisma.organization.update).mockResolvedValue({ id: "org1" } as any);
+
+      await suspendOrganization("org1", "fraud");
+
+      expect(prisma.organization.update).toHaveBeenCalledWith({
+        where: { id: "org1" },
+        data: { suspendedAt: expect.any(Date), suspendedReason: "fraud" },
+        select: { id: true },
+      });
+    });
+
+    test("throws ResourceNotFoundError when the organization does not exist", async () => {
+      vi.mocked(prisma.organization.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("not found", {
+          code: "P2025",
+          clientVersion: "5.0.0",
+        })
+      );
+
+      await expect(suspendOrganization("org1")).rejects.toThrow("Organization");
+    });
+  });
+
+  describe("unsuspendOrganization", () => {
+    test("clears suspendedAt and reason", async () => {
+      vi.mocked(prisma.organization.update).mockResolvedValue({ id: "org1" } as any);
+
+      await unsuspendOrganization("org1");
+
+      expect(prisma.organization.update).toHaveBeenCalledWith({
+        where: { id: "org1" },
+        data: { suspendedAt: null, suspendedReason: null },
+        select: { id: true },
+      });
+    });
+
+    test("wraps other Prisma errors in DatabaseError", async () => {
+      vi.mocked(prisma.organization.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("boom", {
+          code: "P2002",
+          clientVersion: "5.0.0",
+        })
+      );
+
+      await expect(unsuspendOrganization("org1")).rejects.toThrow(DatabaseError);
     });
   });
 });

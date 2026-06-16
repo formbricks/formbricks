@@ -663,6 +663,11 @@ model Organization {
   teams                 Team[]
   apiKeys               ApiKey[]
   feedbackDirectories   FeedbackDirectory[]
+  /// When set, the organization is suspended: its link surveys are taken offline
+  /// (the public /s/[surveyId] route returns 404). Used by moderation to react to
+  /// reported/abusive content without immediately deleting data. Reversible.
+  suspendedAt           DateTime?            @map(name: "suspended_at")
+  suspendedReason       String?              @map(name: "suspended_reason")
 }
 
 /// Stores billing and Stripe synchronization data for an organization.

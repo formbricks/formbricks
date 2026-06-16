@@ -291,6 +291,10 @@ const parsedEnv = createEnv({
     OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
+    // Shared secret protecting the internal organization moderation endpoint
+    // (suspend / unsuspend / delete by reported survey id). Min length enforces
+    // a non-trivial token; the endpoint is disabled entirely when this is unset.
+    ORGANIZATION_MODERATION_SECRET: z.string().trim().min(32).optional(),
     REDIS_URL:
       process.env.NODE_ENV === "test"
         ? z.string().optional()
@@ -458,6 +462,7 @@ const parsedEnv = createEnv({
     OIDC_DISPLAY_NAME: process.env.OIDC_DISPLAY_NAME,
     OIDC_ISSUER: process.env.OIDC_ISSUER,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
+    ORGANIZATION_MODERATION_SECRET: process.env.ORGANIZATION_MODERATION_SECRET,
     REDIS_URL: process.env.REDIS_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
