@@ -9,6 +9,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { DEFAULT_LOCALE, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL, TERMS_URL } from "@/lib/constants";
 import { getElementResponseMapping } from "@/lib/responses";
 import { parseRecallInfo } from "@/lib/utils/recall";
@@ -26,6 +27,7 @@ export const sendFollowUpEmail = async ({
   includeVariables = false,
   includeHiddenFields = false,
   logoUrl,
+  locale,
 }: {
   followUp: TSurveyFollowUp;
   to: string;
@@ -36,6 +38,7 @@ export const sendFollowUpEmail = async ({
   survey: TSurvey;
   response: TResponse;
   logoUrl?: string;
+  locale?: TUserLocale;
 }): Promise<void> => {
   const {
     action: {
@@ -44,7 +47,8 @@ export const sendFollowUpEmail = async ({
   } = followUp;
 
   // Worker context (no request scope) — pass explicit locale to skip headers()/cookies().
-  const t = await getTranslate(DEFAULT_LOCALE);
+  // Falls back to DEFAULT_LOCALE when the respondent locale wasn't captured at submission.
+  const t = await getTranslate(locale ?? DEFAULT_LOCALE);
 
   // Process body: parse recall tags and sanitize HTML
   const processedBody = sanitizeHtml(parseRecallInfo(body, response.data, response.variables), {
