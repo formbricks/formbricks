@@ -86,8 +86,8 @@ To enable taxonomy in Docker Compose, add the required values to `.env`:
 # Use COMPOSE_PROFILES=qwen,taxonomy when taxonomy should share the bundled Qwen/vLLM service.
 COMPOSE_PROFILES=qwen,taxonomy
 TAXONOMY_SERVICE_URL=http://taxonomy:8000
-TAXONOMY_SERVICE_TOKEN=<strong-random-secret>
-HUB_INTERNAL_API_TOKEN=<strong-random-secret>
+TAXONOMY_SERVICE_TOKEN=<random-strong-secret>
+HUB_INTERNAL_API_TOKEN=<random-strong-secret>
 TAXONOMY_IMAGE_REF=:v0.1.0
 TAXONOMY_LLM_PROVIDER=openai-compatible
 TAXONOMY_LLM_MODEL=qwen3-14b-awq

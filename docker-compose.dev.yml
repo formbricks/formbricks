@@ -192,7 +192,13 @@ services:
   vllm:
     image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
     profiles: ["qwen"]
-    gpus: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     command:
       - vllm
       - serve
@@ -239,6 +245,15 @@ services:
     image: cubejs/cube:v1.6.6
     env_file:
       - apps/web/.env
+    command:
+      - sh
+      - -c
+      - |
+        if [ -z "$$CUBEJS_API_SECRET" ]; then
+          echo "CUBEJS_API_SECRET is required for Cube JWT authentication" >&2
+          exit 1
+        fi
+        exec cubejs server
     depends_on:
       postgres:
         condition: service_healthy
