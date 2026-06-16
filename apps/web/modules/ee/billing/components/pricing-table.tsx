@@ -917,6 +917,7 @@ export const PricingTable = ({
                                     plan={feature.plan}
                                     locale={locale}
                                     overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
+                                    t={t}
                                   />
                                 )}
                               </span>
