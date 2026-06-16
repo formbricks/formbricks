@@ -293,6 +293,9 @@ services:
       RUSTFS_ADDRESS: ":9000"
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: ":9001"
+      # CORS for browser uploads: set to your Formbricks origin(s), comma-separated.
+      # Unset = allow all origins; a value is treated as an allow-list. See the File Uploads guide.
+      RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.yourdomain.com"
     ports:
       - "9000:9000"
       - "9001:9001"

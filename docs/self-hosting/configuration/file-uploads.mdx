@@ -334,7 +334,32 @@ Configure CORS on your S3 bucket with the following settings:
 
 - **AWS S3**: Navigate to your bucket → Permissions → Cross-origin resource sharing (CORS) → Edit → Paste the JSON configuration
 - **DigitalOcean Spaces**: Navigate to your Space → Settings → CORS Configurations → Add CORS configuration → Paste the JSON
+- **RustFS (self-hosted)**: RustFS configures CORS at the server level, not per bucket — see [RustFS CORS Configuration](#rustfs-cors-configuration) below.
 - **Other S3-compatible providers**: Refer to your provider's documentation for CORS configuration
+
+### RustFS CORS Configuration
+
+RustFS does **not** use a per-bucket CORS policy. It controls CORS at the server level through the `RUSTFS_CORS_ALLOWED_ORIGINS` environment variable, set on the **RustFS** container (not on Formbricks). Set it to the origin(s) you serve Formbricks from — your `WEBAPP_URL` — comma-separated for multiple values:
+
+```env
+# Set on the RustFS server, then restart RustFS
+RUSTFS_CORS_ALLOWED_ORIGINS=https://app.yourdomain.com
+```
+
+<Note>
+  When `RUSTFS_CORS_ALLOWED_ORIGINS` is unset, RustFS allows **all** origins; a non-empty value is treated as an
+  allow-list. So if browser uploads fail with a CORS error while the file still appears in RustFS, this variable
+  is most likely already set to a value that excludes your Formbricks origin — add your origin to it (or set it to
+  `*` to allow all). Use an explicit origin list in production.
+</Note>
+
+<Warning>
+  Avoid relying on per-bucket CORS for RustFS. RustFS's support for the S3 `PutBucketCors` API (used by tools such
+  as `mc cors set`) has varied across releases and can return "not implemented" on some builds. The
+  `RUSTFS_CORS_ALLOWED_ORIGINS` server variable above is the reliable mechanism.
+</Warning>
+
+If you use the bundled RustFS setup (the [one-click script](/self-hosting/setup/one-click)), CORS is configured for you and scoped to your Formbricks domain.
 
 ### RustFS Security
 
@@ -365,6 +390,7 @@ When using bundled RustFS:
 5. We use S3 presigned URLs for uploads. Make sure your CORS policy allows presigned URL uploads; otherwise, uploads will fail.
    Some providers (e.g., Hetzner’s object storage) [require a specific CORS configuration](https://github.com/formbricks/formbricks/discussions/6641#discussioncomment-14574048).
    If you’re using the bundled RustFS setup, this is already configured for you.
+6. **The file appears in your storage but Formbricks still reports “upload failed.”** This is the classic CORS symptom — the browser uploaded the file successfully but could not read the response. For RustFS, set `RUSTFS_CORS_ALLOWED_ORIGINS` to include your Formbricks origin (see [RustFS CORS Configuration](#rustfs-cors-configuration)).
 
 **Images not displaying in surveys:**
 
