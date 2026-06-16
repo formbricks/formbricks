@@ -132,7 +132,7 @@ S3_FORCE_PATH_STYLE=1
 When using S3 in a cluster setup, ensure:
 
 - all replicas use the same bucket
-- the bucket has the required CORS settings
+- CORS allows your Formbricks origin (for RustFS, set `RUSTFS_CORS_ALLOWED_ORIGINS`; see [File Uploads](/self-hosting/configuration/file-uploads#rustfs-cors-configuration))
 - the credentials have read/write access for the assets you expect Formbricks to manage
 
 ## v5 Cluster Notes
