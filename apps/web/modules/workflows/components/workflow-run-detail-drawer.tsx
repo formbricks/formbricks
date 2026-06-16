@@ -4,6 +4,7 @@ import { CheckIcon, CopyIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import {
@@ -13,7 +14,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/modules/ui/components/sheet";
-import { type TPlaceholderWorkflowRunListItem } from "../lib/placeholder-data";
+import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "../lib/display";
+import { type TWorkflowRunListItem } from "../types";
 
 const JsonBlock = ({ value }: Readonly<{ value: unknown }>) => {
   const { t } = useTranslation();
@@ -48,7 +50,7 @@ const JsonBlock = ({ value }: Readonly<{ value: unknown }>) => {
 };
 
 interface WorkflowRunDetailDrawerProps {
-  run: TPlaceholderWorkflowRunListItem | null;
+  run: TWorkflowRunListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -58,17 +60,19 @@ export const WorkflowRunDetailDrawer = ({
   open,
   onOpenChange,
 }: Readonly<WorkflowRunDetailDrawerProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
+  const statusBadge = run ? getWorkflowRunStatusBadge(run.status, t) : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto bg-white px-5 sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle>{run?.workflowName ?? t("common.workflow_runs")}</SheetTitle>
-          <SheetDescription>{run?.description}</SheetDescription>
+          <SheetDescription>{run ? getWorkflowTriggerTypeLabel(run.triggerType, t) : null}</SheetDescription>
         </SheetHeader>
 
-        {run ? (
+        {run && statusBadge ? (
           <div className="space-y-6 py-4">
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
               <h2 className="mb-4 text-lg font-semibold text-slate-900">{t("common.summary")}</h2>
@@ -82,16 +86,20 @@ export const WorkflowRunDetailDrawer = ({
                 <div>
                   <dt className="text-slate-500">{t("common.status")}</dt>
                   <dd className="mt-1">
-                    <Badge text={run.statusLabel} type={run.statusType} size="normal" />
+                    <Badge text={statusBadge.label} type={statusBadge.type} size="normal" />
                   </dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">{t("common.started_at")}</dt>
-                  <dd className="text-slate-900">{run.createdAtLabel}</dd>
+                  <dd className="text-slate-900">
+                    {run.startedAt ? timeSince(run.startedAt, locale) : t("common.not_set")}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">{t("common.finished_at")}</dt>
-                  <dd className="text-slate-900">{run.timeLabel}</dd>
+                  <dd className="text-slate-900">
+                    {run.finishedAt ? timeSince(run.finishedAt, locale) : t("common.not_set")}
+                  </dd>
                 </div>
               </dl>
             </section>
@@ -100,10 +108,13 @@ export const WorkflowRunDetailDrawer = ({
               <h2 className="mb-4 text-lg font-semibold text-slate-900">{t("common.metadata")}</h2>
               <JsonBlock
                 value={{
-                  mode: run.mode,
+                  isDryRun: run.isDryRun,
+                  triggerType: run.triggerType,
+                  surveyId: run.surveyId,
                   responseId: run.responseId,
-                  trigger: run.trigger,
-                  workflowId: run.workflowId,
+                  attempt: run.attempt,
+                  error: run.error,
+                  workflowVersionId: run.workflowVersionId,
                 }}
               />
             </section>

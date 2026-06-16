@@ -3,16 +3,17 @@
 import { PlayIcon } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import type { TWorkflowStatus } from "@formbricks/workflows";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { type TPlaceholderWorkflowBuilderBadge } from "../lib/placeholder-data";
+import { getWorkflowStatusBadge } from "../lib/display";
 
 interface WorkflowHeaderCtaProps {
   isReadOnly: boolean;
-  badge: TPlaceholderWorkflowBuilderBadge;
+  status: TWorkflowStatus;
 }
 
-export const WorkflowHeaderCta = ({ isReadOnly, badge }: Readonly<WorkflowHeaderCtaProps>) => {
+export const WorkflowHeaderCta = ({ isReadOnly, status }: Readonly<WorkflowHeaderCtaProps>) => {
   const { t } = useTranslation();
   // Builder actions only belong to the edit tab (the index segment); the runs tab has no CTA.
   const segment = useSelectedLayoutSegment();
@@ -21,9 +22,11 @@ export const WorkflowHeaderCta = ({ isReadOnly, badge }: Readonly<WorkflowHeader
     return null;
   }
 
+  const statusBadge = getWorkflowStatusBadge(status, t);
+
   return (
     <div className="flex items-center gap-2">
-      <Badge text={badge.label} type={badge.type} size="normal" />
+      <Badge text={statusBadge.label} type={statusBadge.type} size="normal" />
       <Button type="button" variant="secondary" size="sm" disabled={isReadOnly}>
         <PlayIcon />
         {t("common.test")}

@@ -1,7 +1,7 @@
 "use client";
 
 import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ interface WorkflowListActionsProps {
 
 export const WorkflowListActions = ({ workflowId, workspaceId }: Readonly<WorkflowListActionsProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
 
   return (
     <div id={`${workflowId}-workflow-actions`} data-testid="workflow-dropdown-menu">
@@ -34,25 +35,16 @@ export const WorkflowListActions = ({ workflowId, workspaceId }: Readonly<Workfl
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
-            <DropdownMenuItem asChild>
-              <Link
-                className="flex w-full items-center"
-                href={`/workspaces/${workspaceId}/workflows/${workflowId}`}>
-                <SquarePenIcon className="mr-2 size-4" />
-                {t("common.edit")}
-              </Link>
+            <DropdownMenuItem
+              icon={<SquarePenIcon className="size-4" />}
+              onSelect={() => router.push(`/workspaces/${workspaceId}/workflows/${workflowId}`)}>
+              {t("common.edit")}
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>
-              <div className="flex w-full items-center opacity-50">
-                <CopyIcon className="mr-2 size-4" />
-                {t("common.duplicate")}
-              </div>
+            <DropdownMenuItem disabled icon={<CopyIcon className="size-4" />}>
+              {t("common.duplicate")}
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>
-              <div className="flex w-full items-center opacity-50">
-                <TrashIcon className="mr-2 size-4" />
-                {t("common.delete")}
-              </div>
+            <DropdownMenuItem disabled icon={<TrashIcon className="size-4" />}>
+              {t("common.delete")}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

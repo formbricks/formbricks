@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import type { TWorkflowSendEmailActionNode } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
-import { type TPlaceholderWorkflowAction } from "../lib/placeholder-data";
 import { WorkflowCanvas } from "./workflow-canvas";
 import { WorkflowDetailsPanel } from "./workflow-details-panel";
 
 interface WorkflowBuilderCanvasProps {
-  action: TPlaceholderWorkflowAction;
+  action: TWorkflowSendEmailActionNode;
 }
 
 export const WorkflowBuilderCanvas = ({ action }: Readonly<WorkflowBuilderCanvasProps>) => {
