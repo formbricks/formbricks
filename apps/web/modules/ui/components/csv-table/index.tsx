@@ -5,14 +5,12 @@ interface CsvTableProps {
 }
 
 const buildRowKey = (row: CsvRow, columns: string[], fallback: number): string => {
-  const composite = columns
-    .map((column) => {
-      const value = row[column];
-      return value === undefined || value === null ? "" : String(value);
-    })
-    .join("|");
+  const cells = columns.map((column) => {
+    const value = row[column];
+    return value === undefined || value === null ? "" : String(value);
+  });
 
-  return composite.replace(/\|+$/g, "") === "" ? `row-${fallback.toString()}` : composite;
+  return cells.some((cell) => cell !== "") ? cells.join("|") : `row-${fallback.toString()}`;
 };
 
 export const CsvTable = ({ data }: Readonly<CsvTableProps>) => {
