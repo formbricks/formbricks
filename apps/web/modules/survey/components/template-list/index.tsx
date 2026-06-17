@@ -4,24 +4,24 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
-import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
-import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
-import { TUserLocale } from "@formbricks/types/user";
+import type { Workspace } from "@formbricks/database/prisma-browser";
+import type { TSurveyType } from "@formbricks/types/surveys/types";
+import { type TTemplate, type TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
+import type { TUserLocale } from "@formbricks/types/user";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
-import { customSurveyTemplate, templates } from "@/app/lib/templates";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { CUSTOM_SURVEY_TEMPLATE_ID, templates } from "@/app/lib/templates";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
-import { createSurveyAction } from "./actions";
 import { CreateWithAITemplate } from "./components/create-with-ai-template";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
 import { TemplateFilters } from "./components/template-filters";
+import { useCreateSurveyFromTemplate } from "./hooks/use-create-survey-from-template";
 
 interface TemplateListProps {
-  userId: string;
   workspaceId: string;
   workspace: Workspace;
+  defaultLanguage: TUserLocale;
   templateSearch?: string;
   showFilters?: boolean;
   onTemplateClick?: (template: TTemplate) => void;
@@ -33,24 +33,24 @@ interface TemplateListProps {
 }
 
 export const TemplateList = ({
-  userId,
   workspace,
   workspaceId,
+  defaultLanguage,
   showFilters = true,
   templateSearch,
   onTemplateClick = () => {},
   noPreview,
   showAICreateCard = false,
-  language = "en-US",
+  language = defaultLanguage,
   isAIAvailable = false,
   aiUnavailableReason,
-}: TemplateListProps) => {
+}: Readonly<TemplateListProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
-  const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>([null, null, null]);
+  const createSurveyMutation = useCreateSurveyFromTemplate();
   const surveyType: TSurveyType = useMemo(() => {
     if (workspace.config.channel) {
       if (workspace.config.channel === "website") {
@@ -64,24 +64,18 @@ export const TemplateList = ({
   }, [workspace.config.channel]);
 
   const createSurvey = async (activeTemplate: TTemplate) => {
-    setLoading(true);
-    const augmentedTemplate: TSurveyCreateInput = {
-      ...activeTemplate.preset,
-      type: surveyType,
-      createdBy: userId,
-    };
-    const isBlank = activeTemplate.name === customSurveyTemplate(t).name;
-    const createSurveyResponse = await createSurveyAction({
-      workspaceId: workspaceId,
-      surveyBody: augmentedTemplate,
-      createdFrom: isBlank ? "blank" : "template",
-    });
+    try {
+      const survey = await createSurveyMutation.mutateAsync({
+        workspaceId,
+        templateId: activeTemplate.id,
+        source: activeTemplate.id === CUSTOM_SURVEY_TEMPLATE_ID ? "custom" : "catalog",
+        surveyType,
+        defaultLanguage,
+      });
 
-    if (createSurveyResponse?.data) {
-      router.push(`${workspaceBasePath}/surveys/${createSurveyResponse.data.id}/edit`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(createSurveyResponse);
-      toast.error(errorMessage);
+      router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -132,7 +126,7 @@ export const TemplateList = ({
           onTemplateClick={onTemplateClick}
           workspace={workspace}
           createSurvey={createSurvey}
-          loading={loading}
+          loading={createSurveyMutation.isPending}
           noPreview={noPreview}
         />
         {showAICreateCard && (
@@ -147,14 +141,14 @@ export const TemplateList = ({
           (template: TTemplate) => {
             return (
               <Template
-                key={template.name}
+                key={template.id}
                 template={template}
                 activeTemplate={activeTemplate}
                 setActiveTemplate={setActiveTemplate}
                 onTemplateClick={onTemplateClick}
                 workspace={workspace}
                 createSurvey={createSurvey}
-                loading={loading}
+                loading={createSurveyMutation.isPending}
                 selectedFilter={selectedFilter}
                 noPreview={noPreview}
               />

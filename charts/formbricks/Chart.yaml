@@ -37,3 +37,8 @@ dependencies:
     version: 20.11.2
     repository: "oci://registry-1.docker.io/bitnamicharts"
     condition: envoyRedis.enabled
+  - name: vllm-stack
+    alias: llm
+    version: "0.1.11"
+    repository: "https://vllm-project.github.io/production-stack"
+    condition: llm.enabled

@@ -1,4 +1,5 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
 import { validateV3SurveyReferences } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
@@ -139,9 +140,25 @@ function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidP
   return issues;
 }
 
+export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"]): InvalidParam[] {
+  const validation = checkForInvalidMediaInBlocks(blocks);
+
+  if (validation.ok) {
+    return [];
+  }
+
+  return [
+    {
+      name: "blocks",
+      reason: validation.error.message,
+    },
+  ];
+}
+
 export function validateV3SurveyDocument(document: TV3SurveyDocument): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
-  const invalidParams = [...languageInvalidParams];
+  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
+  const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
 
   const referenceValidation = validateV3SurveyReferences({
     blocks: document.blocks,

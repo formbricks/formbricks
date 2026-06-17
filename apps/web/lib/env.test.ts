@@ -54,6 +54,14 @@ describe("env", () => {
     expect(env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES).toBe(45);
   });
 
+  test("includes the failing field name and validation message in thrown errors", async () => {
+    setTestEnv({
+      ENCRYPTION_KEY: undefined,
+    });
+
+    await expect(import("./env")).rejects.toThrow(/ENCRYPTION_KEY[\s\S]*expected string/);
+  });
+
   test("fails to load when the password reset token lifetime is not an integer", async () => {
     setTestEnv({
       PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: "30minutes",

@@ -47,6 +47,12 @@ ${dimensionsText}
 The time field is \`${CUBE_NAME}.collectedAt\`. Supported granularities: hour, day, week, month, quarter, year.
 Date range presets: ${datePresetsText}
 
+### Metric aliases
+- "NPS score" or "net promoter score" means \`${CUBE_NAME}.npsScore\`.
+- "NPS value", "NPS average", or "NPS average rating" means \`${CUBE_NAME}.npsAverage\`.
+- "CSAT score" means \`${CUBE_NAME}.csatScore\`; "CSAT average" means \`${CUBE_NAME}.csatAverage\`.
+- "CES average" or "CES score" means \`${CUBE_NAME}.cesAverage\`.
+
 ### Filter operators by field type
 ${operatorsText}
 

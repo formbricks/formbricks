@@ -2,7 +2,7 @@ import { Session } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { checkAuth } from "./utils";
 
@@ -12,7 +12,7 @@ const mockNotAuthenticatedResponse = new Response("Not authenticated", { status:
 const mockUnauthorizedResponse = new Response("Unauthorized", { status: 401 });
 
 vi.mock("@/lib/workspace/auth", () => ({
-  hasUserWorkspaceAccess: vi.fn(),
+  hasUserWorkspaceAccessForAction: vi.fn(),
 }));
 
 vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
@@ -111,11 +111,11 @@ describe("checkAuth", () => {
       expires: "2024-12-31T23:59:59.999Z",
     };
 
-    vi.mocked(hasUserWorkspaceAccess).mockResolvedValue(false);
+    vi.mocked(hasUserWorkspaceAccessForAction).mockResolvedValue(false);
 
     const result = await checkAuth(mockSession, workspaceId);
 
-    expect(hasUserWorkspaceAccess).toHaveBeenCalledWith("user-123", workspaceId);
+    expect(hasUserWorkspaceAccessForAction).toHaveBeenCalledWith("user-123", workspaceId, "POST");
     expect(responses.unauthorizedResponse).toHaveBeenCalled();
     expect(result).toBe(mockUnauthorizedResponse);
   });
@@ -128,11 +128,11 @@ describe("checkAuth", () => {
       expires: "2024-12-31T23:59:59.999Z",
     };
 
-    vi.mocked(hasUserWorkspaceAccess).mockResolvedValue(true);
+    vi.mocked(hasUserWorkspaceAccessForAction).mockResolvedValue(true);
 
     const result = await checkAuth(mockSession, workspaceId);
 
-    expect(hasUserWorkspaceAccess).toHaveBeenCalledWith("user-123", workspaceId);
+    expect(hasUserWorkspaceAccessForAction).toHaveBeenCalledWith("user-123", workspaceId, "POST");
     expect(result).toBeUndefined();
   });
 

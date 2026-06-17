@@ -11,6 +11,11 @@ export const ZAITranslationField = z.object({
 
 export type TAITranslationField = z.infer<typeof ZAITranslationField>;
 
+const AI_TRANSLATION_TIMEOUT_MS = 45_000;
+const AI_TRANSLATION_MIN_OUTPUT_TOKENS = 1024;
+const AI_TRANSLATION_MAX_OUTPUT_TOKENS = 8192;
+const AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD = 160;
+
 interface TranslateFieldsInput {
   organizationId: string;
   fields: TAITranslationField[];
@@ -73,6 +78,14 @@ Rules:
     system: systemPrompt,
     prompt: userPayload,
     temperature: 0,
+    maxOutputTokens: Math.min(
+      AI_TRANSLATION_MAX_OUTPUT_TOKENS,
+      Math.max(
+        AI_TRANSLATION_MIN_OUTPUT_TOKENS,
+        translatableFields.length * AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD
+      )
+    ),
+    timeout: AI_TRANSLATION_TIMEOUT_MS,
   });
 
   const translatedById = result.object;

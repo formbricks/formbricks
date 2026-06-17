@@ -350,14 +350,15 @@ describe("ZV3CreateSurveyBody", () => {
     });
   });
 
-  test("rejects non-link survey types for this survey-template endpoint", () => {
-    const result = ZV3CreateSurveyBody.safeParse({
+  test("accepts link and app survey types for the public create endpoint", () => {
+    expect(ZV3CreateSurveyBody.parse(validCreateBody).type).toBe("link");
+
+    const result = ZV3CreateSurveyBody.parse({
       ...validCreateBody,
       type: "app",
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error?.issues[0].path).toEqual(["type"]);
+    expect(result.type).toBe("app");
   });
 
   test("rejects malformed locale maps that do not include the default language", () => {

@@ -12,13 +12,16 @@ import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 export const getWebhooks = async (
   workspaceIds: string[],
   params: TGetWebhooksFilter
-): Promise<Result<ApiResponseWithMeta<Webhook[]>, ApiErrorResponseV2>> => {
+): Promise<Result<ApiResponseWithMeta<Omit<Webhook, "secret">[]>, ApiErrorResponseV2>> => {
   try {
     const query = getWebhooksQuery(workspaceIds, params);
 
     const [webhooks, count] = await prisma.$transaction([
       prisma.webhook.findMany({
         ...query,
+        omit: {
+          secret: true,
+        },
       }),
       prisma.webhook.count({
         where: query.where,

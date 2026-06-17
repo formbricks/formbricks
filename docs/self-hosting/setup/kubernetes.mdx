@@ -119,6 +119,74 @@ Cube is part of the baseline Formbricks v5 stack and is bundled with the chart b
 - supply `CUBEJS_API_SECRET` via `deployment.env` or `deployment.envFrom` if you disable generated
   secrets
 
+### Optional Bundled Qwen/vLLM For AI
+
+The Helm chart can optionally deploy a Formbricks-provided Qwen runtime through vLLM. This is disabled by
+default and requires GPU-capable Kubernetes nodes.
+
+To deploy Qwen/vLLM and automatically point the Formbricks app at the in-cluster OpenAI-compatible endpoint:
+
+```yaml
+llm:
+  enabled: true
+```
+
+With `llm.enabled: true`, the chart renders the vLLM router and Qwen serving engine, then injects the required
+`AI_PROVIDER=openai-compatible` app environment variables unless you override them in `deployment.env`.
+
+If you want to deploy the bundled Qwen runtime without changing the Formbricks app AI configuration:
+
+```yaml
+llm:
+  enabled: true
+  autoConfigureApp: false
+```
+
+Keep `llm.enabled: false` when you use Google Vertex, Azure, AWS Bedrock, or an externally managed
+OpenAI-compatible endpoint. Configure those providers through `deployment.env`.
+
+### Optional AI Taxonomy Beta
+
+The Helm chart can optionally deploy the standalone taxonomy service. This is disabled by default and does not
+force the bundled Qwen/vLLM runtime.
+
+To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
+
+```yaml
+llm:
+  enabled: true
+
+taxonomy:
+  enabled: true
+```
+
+With this setup, taxonomy uses the in-cluster vLLM router for cluster labeling and 5-level taxonomy generation.
+The chart also injects `TAXONOMY_SERVICE_URL`, `TAXONOMY_SERVICE_TOKEN`, and `HUB_INTERNAL_API_TOKEN` into Hub API.
+
+To use your own OpenAI-compatible LLM endpoint instead, keep `llm.enabled: false` and set the taxonomy LLM values:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    model: qwen3-14b-awq
+    baseUrl: http://my-llm-gateway:8000/v1
+    existingSecret: taxonomy-llm-secret
+```
+
+The `taxonomy-llm-secret` secret must contain `TAXONOMY_LLM_API_KEY`. If your endpoint does not enforce
+authentication, store a non-empty dummy value.
+
+After startup, run the authenticated preflight check from inside the taxonomy pod:
+
+```sh
+kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
+  python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
+```
+
+The taxonomy service is internal-only by default. Kubernetes probes use public `/health`; `/v1/preflight` is for
+operator validation and requires the internal taxonomy bearer token.
+
 ## 4. Upgrade The Deployment
 
 For normal chart upgrades:
@@ -149,6 +217,9 @@ For a Formbricks 4.x to 5.0 migration, confirm the following before running the 
 | `envoy.enabled`               | Enables chart-managed Envoy Gateway resources                 |
 | `envoy.controller.enabled`    | Installs the bundled Envoy controller when `true`             |
 | `envoyRedis.enabled`          | Deploys a dedicated Redis backend for Envoy rate limiting     |
+| `llm.enabled`                 | Deploys the optional bundled Qwen/vLLM runtime                |
+| `llm.autoConfigureApp`        | Injects Formbricks OpenAI-compatible env vars for bundled Qwen |
+| `taxonomy.enabled`            | Deploys the optional standalone AI taxonomy service           |
 | `postgresql.externalDatabaseUrl` | Uses an external PostgreSQL service instead of in-cluster |
 | `redis.externalRedisUrl`      | Uses an external Redis/Valkey service instead of in-cluster   |
 

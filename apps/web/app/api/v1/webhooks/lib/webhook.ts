@@ -43,13 +43,19 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
   }
 };
 
-export const getWebhooks = async (workspaceIds: string[], page?: number): Promise<Webhook[]> => {
+export const getWebhooks = async (
+  workspaceIds: string[],
+  page?: number
+): Promise<Omit<Webhook, "secret">[]> => {
   validateInputs([workspaceIds, ZId.array()], [page, ZOptionalNumber]);
 
   try {
     const webhooks = await prisma.webhook.findMany({
       where: {
         workspaceId: { in: workspaceIds },
+      },
+      omit: {
+        secret: true,
       },
       take: page ? ITEMS_PER_PAGE : undefined,
       skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,

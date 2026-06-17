@@ -64,7 +64,8 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    docker compose config >/dev/null
    ```
 
-   This command fails if `HUB_API_KEY` or `CUBEJS_API_SECRET` is missing or empty in `.env`.
+   This command validates Docker Compose syntax. `HUB_API_KEY` and `CUBEJS_API_SECRET` are still required for
+   production startup, but missing secrets are reported by the service that needs them at runtime.
 
 1. **Generate NextAuth Secret**
 
@@ -137,6 +138,101 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
      <code>HUB_API_KEY</code> available there as well.
    </Info>
 
+1. **Optional: Enable Bundled Qwen/vLLM For AI**
+
+   The Docker stack can optionally run Qwen through vLLM as an OpenAI-compatible `/v1` endpoint. Baseline
+   installs do not start vLLM and can still use Google Vertex, Azure, AWS Bedrock, or another
+   OpenAI-compatible endpoint.
+
+   The bundled Qwen/vLLM service requires a GPU-capable Docker host with the NVIDIA Container Toolkit
+   installed.
+
+   To use the bundled Qwen runtime, add these values to `.env`:
+
+   ```bash
+   cat <<EOF >> .env
+   COMPOSE_PROFILES=qwen
+   AI_PROVIDER=openai-compatible
+   AI_MODEL=qwen3-14b-awq
+   AI_OPENAI_COMPATIBLE_BASE_URL=http://vllm:8000/v1
+   AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
+   AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
+   EOF
+   ```
+
+   The vLLM endpoint is available inside the Compose network at `http://vllm:8000/v1` and is bound to
+   `127.0.0.1:8000` by default for local checks. Model files are stored in the `qwen-model-cache` Docker
+   volume.
+
+   If you run your own Qwen/vLLM service, do not enable the `qwen` profile. Set `AI_PROVIDER`,
+   `AI_MODEL`, and `AI_OPENAI_COMPATIBLE_BASE_URL` to your external endpoint instead.
+
+1. **Optional: Enable AI Taxonomy Beta**
+
+   The Docker stack includes the standalone taxonomy service as an opt-in Compose profile. Baseline installs do
+   not start taxonomy and do not require taxonomy or LLM secrets.
+
+   To enable taxonomy, add these values to `.env`:
+
+   ```bash
+   cat <<EOF >> .env
+   # Use COMPOSE_PROFILES=taxonomy when taxonomy points at your own LLM endpoint.
+   # Use COMPOSE_PROFILES=qwen,taxonomy when taxonomy should share the bundled Qwen/vLLM service.
+   COMPOSE_PROFILES=qwen,taxonomy
+   TAXONOMY_SERVICE_URL=http://taxonomy:8000
+   TAXONOMY_SERVICE_TOKEN=<random-strong-secret>
+   HUB_INTERNAL_API_TOKEN=<random-strong-secret>
+   TAXONOMY_IMAGE_REF=:v0.1.0
+   TAXONOMY_LLM_PROVIDER=openai-compatible
+   TAXONOMY_LLM_MODEL=qwen3-14b-awq
+   TAXONOMY_LLM_BASE_URL=http://vllm:8000/v1
+   TAXONOMY_LLM_API_KEY=<api-key-or-dummy-value>
+   EOF
+   ```
+
+   Replace `:v0.1.0` with the current released `ghcr.io/formbricks/taxonomy` image tag for your Formbricks
+   version. Production installs should pin a release tag instead of relying on `:latest`.
+
+   If you run your own OpenAI-compatible endpoint, keep only the `taxonomy` profile and point
+   `TAXONOMY_LLM_BASE_URL` at that `/v1` endpoint. The selected model must reliably return strict JSON because
+   taxonomy generation validates an exact 5-level tree.
+
+   To use Amazon Bedrock instead of an OpenAI-compatible endpoint, set:
+
+   ```bash
+   TAXONOMY_LLM_PROVIDER=bedrock
+   TAXONOMY_LLM_MODEL=eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+   AWS_REGION=eu-north-1
+   AWS_BEARER_TOKEN_BEDROCK=<bedrock-api-key>
+   ```
+
+   When you reach the start step below, start with the selected profile set:
+
+   ```bash
+   COMPOSE_PROFILES=qwen,taxonomy docker compose up -d
+   docker compose --profile qwen --profile taxonomy ps
+   docker compose logs vllm taxonomy hub
+   ```
+
+   Run the authenticated preflight after startup to verify Hub internal auth and LLM reachability:
+
+   ```bash
+   docker compose --profile taxonomy exec taxonomy python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
+   ```
+
+   This command runs inside the taxonomy container, so `127.0.0.1:8000` refers to the taxonomy service itself.
+   The preflight endpoint then checks Hub internal auth and LLM reachability from taxonomy.
+
+   The taxonomy service remains internal to the compose network by default. For production workloads,
+   `TAXONOMY_MAX_RECORDS` defaults to `50000`; override it only as an advanced safety limit after sizing CPU,
+   memory, and LLM capacity.
+
+   <Info>
+     The taxonomy service is internal to the Docker network. Formbricks Web still calls Hub with
+     <code>HUB_API_KEY</code>; Hub calls taxonomy with <code>TAXONOMY_SERVICE_TOKEN</code>; taxonomy calls Hub
+     internal APIs with <code>HUB_INTERNAL_API_TOKEN</code>.
+   </Info>
+
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
@@ -154,8 +250,15 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
 <Note>
   The bundled Docker stack keeps Formbricks Hub and Cube internal to the compose network. The app reaches them
-  through `http://hub:8080` and `http://cube:4000`.
+  through `http://hub:8080` and `http://cube:4000`. When AI taxonomy beta is enabled, Hub reaches taxonomy
+  internally through `http://taxonomy:8000`.
 </Note>
+
+<Info>
+  The one-click installer does not prompt for AI taxonomy settings. One-click users can enable the beta later by
+  editing `./formbricks/.env`, adding the taxonomy variables above, and restarting with
+  `COMPOSE_PROFILES=taxonomy docker compose up -d`.
+</Info>
 
 <Info>
   If you use the one-click Traefik setup, FeedbackRecords are available on the Formbricks origin at
@@ -293,6 +396,9 @@ services:
       RUSTFS_ADDRESS: ":9000"
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: ":9001"
+      # CORS for browser uploads: set to your Formbricks origin(s), comma-separated.
+      # Unset = allow all origins; a value is treated as an allow-list. See the File Uploads guide.
+      RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.yourdomain.com"
     ports:
       - "9000:9000"
       - "9001:9001"

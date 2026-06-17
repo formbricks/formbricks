@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -12,7 +14,7 @@ interface SurveyTemplateProps {
   }>;
 }
 
-export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
+export const SurveyTemplatesPage = async (props: Readonly<SurveyTemplateProps>) => {
   const t = await getTranslate();
   const params = await props.params;
   const workspaceId = params.workspaceId;
@@ -30,12 +32,13 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   }
 
   const publicDomain = getPublicDomain();
+  const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
 
   return (
     <TemplateContainerWithPreview
-      userId={session.user.id}
       workspace={workspace}
       publicDomain={publicDomain}
+      defaultLanguage={locale}
     />
   );
 };

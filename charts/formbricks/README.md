@@ -99,7 +99,28 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 
 ## Web AI with self-hosted Qwen/vLLM
 
-The chart does not deploy a web LLM runtime. For LLM GA v1, point the web app at a Qwen model served by an internal vLLM OpenAI-compatible `/v1` endpoint through `deployment.env`.
+The chart can optionally deploy a Formbricks-provided Qwen runtime through the `vllm-stack` dependency. It is disabled by default so existing installs keep using their current AI provider settings.
+
+To deploy the bundled Qwen/vLLM runtime and automatically point the Formbricks app at it:
+
+```yaml
+llm:
+  enabled: true
+```
+
+This renders the vLLM router and Qwen serving engine, then injects these app env vars unless you override them in `deployment.env`:
+
+```yaml
+AI_PROVIDER: openai-compatible
+AI_MODEL: qwen3-14b-awq
+AI_OPENAI_COMPATIBLE_BASE_URL: http://<release-name>-router-service:8000/v1
+AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
+AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
+```
+
+Set `llm.autoConfigureApp=false` to deploy the bundled runtime without injecting Formbricks app AI env vars.
+
+If you manage your own LLM runtime, keep `llm.enabled=false` and point the web app at your OpenAI-compatible `/v1` endpoint through `deployment.env`.
 
 Only set these variables when you use `AI_PROVIDER=openai-compatible`; Google Vertex, AWS Bedrock, and Azure continue to use their own provider-specific variables.
 
@@ -130,6 +151,50 @@ externalSecret:
           remoteRef:
             key: formbricks/qwen-vllm
             property: apiKey
+```
+
+## AI Taxonomy Beta
+
+The chart can optionally deploy the standalone AI taxonomy service. It is disabled by default and remains internal
+to the cluster through a `ClusterIP` service.
+
+To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
+
+```yaml
+llm:
+  enabled: true
+
+taxonomy:
+  enabled: true
+```
+
+When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment, Service, and Secret, then injects these
+Hub API env vars unless `taxonomy.autoConfigureHub=false`:
+
+```yaml
+TAXONOMY_SERVICE_URL: http://formbricks-taxonomy:8000
+TAXONOMY_SERVICE_TOKEN: <from taxonomy auth secret>
+HUB_INTERNAL_API_TOKEN: <from taxonomy auth secret>
+```
+
+If `llm.enabled=true` and `taxonomy.llm.baseUrl` is empty, taxonomy uses the bundled vLLM router at
+`http://<release-name>-router-service:8000/v1`. To use an external OpenAI-compatible LLM instead:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    model: qwen3-14b-awq
+    baseUrl: http://my-llm-gateway:8000/v1
+    existingSecret: taxonomy-llm-secret
+```
+
+The taxonomy service exposes public `/health` only for Kubernetes probes. Use authenticated `/v1/preflight` as an
+operator check after install:
+
+```sh
+kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
+  python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
 ```
 
 ## Values
@@ -289,6 +354,25 @@ externalSecret:
 | ingress.hosts[0].paths[0].pathType                                 | string | `"Prefix"`                                                                  |                                                           |
 | ingress.hosts[0].paths[0].serviceName                              | string | `"formbricks"`                                                              |                                                           |
 | ingress.ingressClassName                                           | string | `"alb"`                                                                     |                                                           |
+| llm.autoConfigureApp                                               | bool   | `true`                                                                      | Inject OpenAI-compatible app env vars when bundled Qwen/vLLM is enabled. |
+| llm.enabled                                                        | bool   | `false`                                                                     | Deploy bundled Qwen/vLLM through the optional vllm-stack dependency. |
+| llm.formbricks.baseUrl                                             | string | `""`                                                                        | Defaults to `http://<release-name>-router-service:<llm.routerSpec.servicePort>/v1`. |
+| llm.formbricks.model                                               | string | `"qwen3-14b-awq"`                                                           | Formbricks `AI_MODEL` value for the bundled runtime.      |
+| llm.formbricks.providerName                                        | string | `"vllm"`                                                                    | Formbricks OpenAI-compatible provider display name.       |
+| llm.formbricks.supportsStructuredOutputs                           | string | `"1"`                                                                       | Enables structured output usage for the bundled runtime.  |
+| llm.routerSpec.enableRouter                                        | bool   | `true`                                                                      | Enable the vLLM router service.                           |
+| llm.routerSpec.k8sServiceDiscoveryType                             | string | `"service-name"`                                                            | vLLM router Kubernetes service discovery mode.            |
+| llm.routerSpec.servicePort                                         | int    | `8000`                                                                      | vLLM router service port used by the app base URL.        |
+| llm.routerSpec.serviceType                                         | string | `"ClusterIP"`                                                               | vLLM router service type.                                 |
+| llm.servingEngineSpec.enableEngine                                 | bool   | `true`                                                                      | Enable the vLLM serving engine.                           |
+| llm.servingEngineSpec.modelSpec[0].modelURL                        | string | `"Qwen/Qwen3-14B-AWQ"`                                                      | Hugging Face model loaded by vLLM.                        |
+| llm.servingEngineSpec.modelSpec[0].name                            | string | `"qwen"`                                                                    | vLLM model spec name.                                     |
+| llm.servingEngineSpec.modelSpec[0].repository                      | string | `"vllm/vllm-openai"`                                                        | vLLM runtime image repository.                            |
+| llm.servingEngineSpec.modelSpec[0].requestGPU                      | int    | `1`                                                                         | GPU request for the Qwen serving pod.                     |
+| llm.servingEngineSpec.modelSpec[0].requestGPUType                  | string | `"nvidia.com/gpu"`                                                          | Kubernetes GPU resource key.                              |
+| llm.servingEngineSpec.modelSpec[0].tag                             | string | `"v0.14.0"`                                                                 | vLLM runtime image tag.                                   |
+| llm.servingEngineSpec.servicePort                                  | int    | `8000`                                                                      | Qwen serving engine service port.                         |
+| llm.servingEngineSpec.strategy.type                                | string | `"Recreate"`                                                                | Avoids requiring a second GPU during model pod upgrades.  |
 | migration.annotations                                              | object | `{}`                                                                        |                                                           |
 | migration.backoffLimit                                             | int    | `3`                                                                         |                                                           |
 | migration.enabled                                                  | bool   | `true`                                                                      |                                                           |
@@ -369,3 +453,12 @@ externalSecret:
 | serviceMonitor.endpoints[0].interval                               | string | `"5s"`                                                                      |                                                           |
 | serviceMonitor.endpoints[0].path                                   | string | `"/metrics"`                                                                |                                                           |
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
+| taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
+| taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
+| taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
+| taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
+| taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
+| taxonomy.llm.existingSecret                                        | string | `""`                                                                        | Existing secret containing `TAXONOMY_LLM_API_KEY`.        |
+| taxonomy.llm.model                                                 | string | `"qwen3-14b-awq"`                                                           | LLM model used by taxonomy labeling and tree generation.  |
+| taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Taxonomy LLM provider.                                    |
+| taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |

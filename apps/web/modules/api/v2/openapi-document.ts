@@ -9,7 +9,7 @@ import { ZRoles } from "@formbricks/database/zod/roles";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 import { ZTeam } from "@formbricks/database/zod/teams";
 import { ZUser } from "@formbricks/database/zod/users";
-import { ZWebhook } from "@formbricks/database/zod/webhooks";
+import { ZWebhook, ZWebhookWithoutSecret } from "@formbricks/database/zod/webhooks";
 import { ZWorkspaceTeam } from "@formbricks/database/zod/workspace-teams";
 import { healthPaths } from "@/modules/api/v2/health/lib/openapi";
 import { ZOverallHealthStatus } from "@/modules/api/v2/health/types/health-status";
@@ -127,6 +127,7 @@ const document = createDocument({
       contactAttributeKey: ZContactAttributeKey,
       survey: ZSurveyWithoutQuestionType,
       webhook: ZWebhook,
+      webhookWithoutSecret: ZWebhookWithoutSecret,
       team: ZTeam,
       workspaceTeam: ZWorkspaceTeam,
       user: ZUser,

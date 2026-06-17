@@ -31,6 +31,8 @@ export type TV3SurveyGenerateResult = {
   validation: TV3SurveyGenerateValidation;
 };
 
+const V3_SURVEY_GENERATION_TIMEOUT_MS = 45_000;
+
 export class V3SurveyGeneratePromptError extends Error {
   invalidParams: InvalidParam[];
 
@@ -388,6 +390,7 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
     ),
     temperature: 0.2,
     maxOutputTokens: 3000,
+    timeout: V3_SURVEY_GENERATION_TIMEOUT_MS,
   });
 
   const generatedSurvey = ZGeneratedSurveyDraft.safeParse(generation.object);

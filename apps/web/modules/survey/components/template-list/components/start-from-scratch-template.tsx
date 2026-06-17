@@ -27,10 +27,10 @@ export const StartFromScratchTemplate = ({
   createSurvey,
   loading,
   noPreview,
-}: StartFromScratchTemplateProps) => {
+}: Readonly<StartFromScratchTemplateProps>) => {
   const { t } = useTranslation();
   const customSurvey = customSurveyTemplate(t);
-  const showCreateSurveyButton = activeTemplate?.name === customSurvey.name;
+  const showCreateSurveyButton = activeTemplate?.id === customSurvey.id;
 
   const handleCardClick = () => {
     if (noPreview) {
@@ -57,11 +57,12 @@ export const StartFromScratchTemplate = ({
       {showCreateSurveyButton && (
         <div className="text-left">
           <Button
-            className="mt-6 px-6 py-3"
+            className="mt-6 max-w-full px-6 py-3"
             disabled={activeTemplate === null}
             loading={loading}
+            aria-label={t("common.create_survey")}
             onClick={() => createSurvey(activeTemplate)}>
-            {t("common.create_survey")}
+            <span className="truncate">{t("common.create_survey")}</span>
           </Button>
         </div>
       )}
