@@ -3,7 +3,7 @@
 import { ArrowUpFromLineIcon } from "lucide-react";
 import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { cn } from "@/lib/cn";
@@ -53,7 +53,6 @@ export const BulkInviteTab = ({
   const [csvFile, setCSVFile] = useState<File>();
   const [previewRows, setPreviewRows] = useState<BulkCsvRow[]>([]);
   const [error, setError] = useState<string>("");
-  const errorContainerRef = useRef<HTMLDivElement | null>(null);
 
   const handleFileSelected = (file: File | undefined) => {
     if (!file) return;
@@ -72,6 +71,11 @@ export const BulkInviteTab = ({
       skipEmptyLines: true,
       header: true,
       complete: (results: ParseResult<BulkCsvRow>) => {
+        if (results.errors.length > 0) {
+          setError(t("workspace.settings.general.please_check_csv_file"));
+          setPreviewRows([]);
+          return;
+        }
         setPreviewRows(results.data);
       },
       error: () => {
@@ -163,16 +167,35 @@ export const BulkInviteTab = ({
     <>
       <div className="flex flex-col gap-4">
         {error ? (
-          <div ref={errorContainerRef}>
-            <Alert variant="error" size="small">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          </div>
+          <Alert variant="error" size="small">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         ) : null}
 
         <div className="flex flex-col gap-2">
           <div className="no-scrollbar rounded-md border-2 border-dashed border-slate-300 bg-slate-50 p-4">
-            {!csvFile ? (
+            {csvFile ? (
+              <div className="flex flex-col items-center gap-3 py-2">
+                <h3 className="font-medium text-slate-700">{csvFile.name}</h3>
+                {previewCount > 0 ? (
+                  <>
+                    <div className="max-h-[300px] w-full overflow-auto rounded-md border border-slate-300">
+                      <CsvTable data={previewRows.slice(0, PREVIEW_ROW_LIMIT)} />
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {t("workspace.settings.general.bulk_invite_rows_detected", { count: previewCount })}
+                      {extraRowCount > 0
+                        ? ` · ${t("workspace.settings.general.bulk_invite_rows_more", { count: extraRowCount })}`
+                        : ""}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    {t("workspace.settings.general.bulk_invite_rows_detected", { count: 0 })}
+                  </p>
+                )}
+              </div>
+            ) : (
               <label
                 htmlFor="bulk-invite-file"
                 className={cn(
@@ -195,31 +218,10 @@ export const BulkInviteTab = ({
                   />
                 </div>
               </label>
-            ) : (
-              <div className="flex flex-col items-center gap-3 py-2">
-                <h3 className="font-medium text-slate-700">{csvFile.name}</h3>
-                {previewCount > 0 ? (
-                  <>
-                    <div className="max-h-[300px] w-full overflow-auto rounded-md border border-slate-300">
-                      <CsvTable data={previewRows.slice(0, PREVIEW_ROW_LIMIT)} />
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {t("workspace.settings.general.bulk_invite_rows_detected", { count: previewCount })}
-                      {extraRowCount > 0
-                        ? ` · ${t("workspace.settings.general.bulk_invite_rows_more", { count: extraRowCount })}`
-                        : ""}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-xs text-slate-500">
-                    {t("workspace.settings.general.bulk_invite_rows_detected", { count: 0 })}
-                  </p>
-                )}
-              </div>
             )}
           </div>
 
-          {!csvFile && (
+          {csvFile ? null : (
             <div className="flex justify-start">
               <Link
                 download
