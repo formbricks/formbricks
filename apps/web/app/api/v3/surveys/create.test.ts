@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { createSurvey } from "@/lib/survey/service";
+import { createSurvey, getSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, createV3Survey } from "./create";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
+import { resolveV3ContactsEntitlement, setV3SurveySegmentFilters } from "./targeting";
 
 vi.mock("server-only", () => ({}));
 
@@ -20,6 +22,17 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/lib/survey/service", () => ({
   createSurvey: vi.fn(),
+  getSurvey: vi.fn(),
+}));
+
+vi.mock("@/lib/actionClass/service", () => ({
+  getActionClasses: vi.fn(),
+}));
+
+vi.mock("./targeting", () => ({
+  setV3SurveySegmentFilters: vi.fn(),
+  resolveV3ContactsEntitlement: vi.fn(),
+  V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -128,6 +141,12 @@ describe("createV3Survey", () => {
       whitelabel: undefined,
     });
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    vi.mocked(getActionClasses).mockResolvedValue([]);
+    vi.mocked(resolveV3ContactsEntitlement).mockResolvedValue({
+      resolvedOrganizationId: "org_1",
+      isContactsEnabled: true,
+    });
+    vi.mocked(getSurvey).mockResolvedValue(createdSurvey);
   });
 
   test("maps the public v3 body to the internal create payload", async () => {
@@ -403,5 +422,151 @@ describe("createV3Survey", () => {
       )
     ).rejects.toThrow(V3SurveyReferenceValidationError);
     expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  describe("app surveys", () => {
+    const actionClass = {
+      id: "claa1234567890123456789012",
+      name: "Checkout Complete",
+      description: null,
+      type: "code" as const,
+      key: "checkout_complete",
+      noCodeConfig: null,
+      workspaceId,
+      createdAt: new Date("2026-04-21T10:00:00.000Z"),
+      updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+    };
+
+    const appSurveyId = "clsvapp01234567890123456789";
+    const appSegment = { id: "clsg1234567890123456789012", filters: [] };
+    // `createSurvey` returns the survey BEFORE the private segment is connected (segment: null).
+    const createdAppSurvey = {
+      ...createdSurvey,
+      id: appSurveyId,
+      type: "app",
+      segment: null,
+    } as unknown as TSurvey;
+    // `getSurvey` re-reads it WITH the auto-created segment connected.
+    const appSurveyWithSegment = {
+      ...createdSurvey,
+      id: appSurveyId,
+      type: "app",
+      segment: appSegment,
+    } as unknown as TSurvey;
+
+    beforeEach(() => {
+      vi.mocked(createSurvey).mockResolvedValue(createdAppSurvey);
+      vi.mocked(getSurvey).mockResolvedValue(appSurveyWithSegment);
+    });
+
+    const attributeFilters = [
+      {
+        id: "clf01234567890123456789012",
+        connector: null,
+        resource: {
+          id: "clf11234567890123456789012",
+          root: { type: "attribute", contactAttributeKey: "plan" },
+          qualifier: { operator: "equals" },
+          value: "pro",
+        },
+      },
+    ];
+
+    const buildAppBody = (overrides: Record<string, unknown> = {}) =>
+      ZV3CreateSurveyBody.parse({
+        workspaceId,
+        name: "In-App Feedback",
+        type: "app",
+        defaultLanguage: "en-US",
+        blocks: [
+          {
+            id: "clbk1234567890123456789012",
+            name: "Main",
+            elements: [
+              {
+                id: "feedback",
+                type: "openText",
+                headline: { "en-US": "How is it going?" },
+                required: false,
+              },
+            ],
+          },
+        ],
+        ...overrides,
+      });
+
+    test("forwards distribution scalars and resolved triggers to createSurvey", async () => {
+      vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+
+      const body = buildAppBody({
+        distribution: {
+          displayOption: "respondMultiple",
+          recontactDays: 7,
+          delay: 5,
+          triggers: [{ actionClassId: actionClass.id }],
+        },
+      });
+
+      await createV3Survey(body, null, "req_app_1");
+
+      expect(createSurvey).toHaveBeenCalledWith(
+        workspaceId,
+        expect.objectContaining({
+          type: "app",
+          displayOption: "respondMultiple",
+          recontactDays: 7,
+          delay: 5,
+          triggers: [{ actionClass }],
+        })
+      );
+      // No targeting filters → no segment write, no entitlement check.
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(resolveV3ContactsEntitlement).not.toHaveBeenCalled();
+    });
+
+    test("re-reads the created survey and applies targeting filters to its segment", async () => {
+      // Regression guard: createSurvey returns segment:null, so the segment must be obtained via the
+      // re-read. Without it, setV3SurveySegmentFilters is never called and targeting is silently dropped.
+      const body = buildAppBody({ targeting: { filters: attributeFilters } });
+
+      const result = await createV3Survey(body, null, "req_app_2", "org_1");
+
+      expect(resolveV3ContactsEntitlement).toHaveBeenCalledWith(workspaceId, "org_1");
+      expect(getSurvey).toHaveBeenCalledWith(appSurveyId);
+      expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(appSegment.id, attributeFilters);
+      expect(result.segment?.filters).toEqual(attributeFilters);
+    });
+
+    test("rejects targeting when contacts are not enabled, before any write", async () => {
+      vi.mocked(resolveV3ContactsEntitlement).mockResolvedValue({
+        resolvedOrganizationId: "org_1",
+        isContactsEnabled: false,
+      });
+      const body = buildAppBody({ targeting: { filters: attributeFilters } });
+
+      await expect(createV3Survey(body, null, "req_app_3", "org_1")).rejects.toThrow(
+        V3SurveyCreatePermissionError
+      );
+      expect(createSurvey).not.toHaveBeenCalled();
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+    });
+
+    test("rejects unknown trigger action class ids", async () => {
+      vi.mocked(getActionClasses).mockResolvedValue([]);
+      const body = buildAppBody({ distribution: { triggers: [{ actionClassId: actionClass.id }] } });
+
+      await expect(createV3Survey(body, null, "req_app_4")).rejects.toThrow(V3SurveyReferenceValidationError);
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
+
+    test("rejects duplicate trigger action class ids", async () => {
+      vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+      const body = buildAppBody({
+        distribution: { triggers: [{ actionClassId: actionClass.id }, { actionClassId: actionClass.id }] },
+      });
+
+      await expect(createV3Survey(body, null, "req_app_5")).rejects.toThrow(V3SurveyReferenceValidationError);
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
   });
 });

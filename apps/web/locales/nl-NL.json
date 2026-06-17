@@ -2680,6 +2680,7 @@
         "ai_not_available": "AI-enquêtecreatie is niet beschikbaar.",
         "ai_not_enabled": "AI slimme tools zijn uitgeschakeld voor deze organisatie.",
         "ai_not_in_plan": "AI-enquêtecreatie is niet beschikbaar in je huidige abonnement.",
+        "app_survey": "App-enquête",
         "card_description": "Beschrijf wat je wilt leren en maak een conceptenquête.",
         "card_title": "Maak met AI",
         "characters": "{count}/{max}",
@@ -2692,7 +2693,6 @@
         "enable_ai_in_settings": "Inschakelen in instellingen",
         "generated_payload_invalid": "Het enquêteconcept kon niet worden gevalideerd. Probeer meer details toe te voegen.",
         "link_survey": "Link-enquête",
-        "only_link_supported": "Alleen Link-enquête kan op dit moment worden aangemaakt.",
         "opening_editor": "Editor openen...",
         "prompt_helper_churn": "Begrijp waarom actieve klanten mogelijk afhaken en wat hen betrokken zou houden",
         "prompt_helper_churn_label": "Klantverloop risico",
@@ -2706,6 +2706,7 @@
         "prompt_placeholder": "bijv. Begrijp waarom nieuwe gebruikers afhaken tijdens onboarding en wat hen zou helpen om de setup af te ronden",
         "shortcut_hint": "⌘/Ctrl + Enter om aan te maken",
         "start_from_scratch": "Begin vanaf nul",
+        "survey_type_help": "Je kunt de installatie in de editor voltooien nadat het concept is aangemaakt.",
         "survey_type_label": "Type enquête",
         "try_prompt": "Bekijk voorbeeldprompt",
         "upgrade_plan": "Upgrade abonnement"

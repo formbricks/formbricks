@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   createdResponse,
@@ -9,6 +9,7 @@ import {
   problemBadRequest,
   problemForbidden,
   problemInternalError,
+  problemUnprocessableContent,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -272,8 +273,11 @@ export async function createV3SurveyResponse({
     });
   } catch (err) {
     if (err instanceof V3SurveyReferenceValidationError) {
-      log.warn({ statusCode: 400, invalidParams: err.invalidParams }, "Survey document validation failed");
-      return problemBadRequest(requestId, "Invalid survey document", {
+      // Well-formed JSON that fails semantic/reference validation (dangling refs, duplicate ids,
+      // undeclared locales, invalid media, unknown action-class ids) → 422, not 400 (which is reserved
+      // for malformed/unknown-field requests rejected at the schema layer).
+      log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey document validation failed");
+      return problemUnprocessableContent(requestId, "Survey document failed validation", {
         invalid_params: err.invalidParams,
         instance,
       });
@@ -292,6 +296,13 @@ export async function createV3SurveyResponse({
     if (err instanceof ResourceNotFoundError) {
       log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
       return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+    }
+    if (err instanceof InvalidInputError) {
+      log.warn({ statusCode: 400, errorCode: err.name }, "Invalid survey input");
+      return problemBadRequest(requestId, err.message, {
+        invalid_params: [{ name: "body", reason: err.message }],
+        instance,
+      });
     }
     if (err instanceof DatabaseError) {
       log.error({ error: err, statusCode: 500 }, "Database error");
@@ -490,11 +501,12 @@ export async function patchV3SurveyResponse({
     });
   } catch (error) {
     if (error instanceof V3SurveyReferenceValidationError) {
+      // Semantic/reference validation failure on a well-formed document → 422 (see create handler).
       log.warn(
-        { statusCode: 400, workspaceId, invalidParamCount: error.invalidParams.length },
+        { statusCode: 422, workspaceId, invalidParamCount: error.invalidParams.length },
         "Survey document validation failed"
       );
-      return problemBadRequest(requestId, "Invalid survey document", {
+      return problemUnprocessableContent(requestId, "Survey document failed validation", {
         invalid_params: error.invalidParams,
         instance,
       });
@@ -524,6 +536,14 @@ export async function patchV3SurveyResponse({
     if (error instanceof ResourceNotFoundError) {
       log.warn({ errorCode: error.name, workspaceId, statusCode: 403 }, "Survey not found or not accessible");
       return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+    }
+
+    if (error instanceof InvalidInputError) {
+      log.warn({ errorCode: error.name, workspaceId, statusCode: 400 }, "Invalid survey input");
+      return problemBadRequest(requestId, error.message, {
+        invalid_params: [{ name: "body", reason: error.message }],
+        instance,
+      });
     }
 
     if (error instanceof DatabaseError) {

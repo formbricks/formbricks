@@ -1,0 +1,188 @@
+description: >
+  A single targeting condition. `root.type` selects the subject and determines the valid
+  `qualifier.operator` set: `attribute` (a workspace contact-attribute key), `person` (a built-in
+  person identifier such as `userId`/`email`), `segment` (membership in another segment), or `device`.
+  Each variant is one member of this union; the matching member is chosen by `root.type`.
+oneOf:
+  - title: AttributeFilter
+    description: Matches on a workspace contact-attribute value.
+    type: object
+    required:
+      - id
+      - root
+      - qualifier
+      - value
+    properties:
+      id:
+        type: string
+        format: cuid2
+      root:
+        type: object
+        required:
+          - type
+          - contactAttributeKey
+        properties:
+          type:
+            type: string
+            enum:
+              - attribute
+          contactAttributeKey:
+            type: string
+            description: A contact-attribute key defined in the workspace (e.g. `plan`, `role`).
+        additionalProperties: false
+      qualifier:
+        type: object
+        required:
+          - operator
+        properties:
+          operator:
+            type: string
+            enum:
+              - lessThan
+              - lessEqual
+              - greaterThan
+              - greaterEqual
+              - equals
+              - notEquals
+              - isSet
+              - isNotSet
+              - contains
+              - doesNotContain
+              - startsWith
+              - endsWith
+              - isOlderThan
+              - isNewerThan
+              - isBefore
+              - isAfter
+              - isBetween
+              - isSameDay
+        additionalProperties: false
+      value:
+        $ref: ./SegmentFilterValue.yml
+    additionalProperties: false
+  - title: PersonFilter
+    description: Matches on a built-in person identifier.
+    type: object
+    required:
+      - id
+      - root
+      - qualifier
+      - value
+    properties:
+      id:
+        type: string
+        format: cuid2
+      root:
+        type: object
+        required:
+          - type
+          - personIdentifier
+        properties:
+          type:
+            type: string
+            enum:
+              - person
+          personIdentifier:
+            type: string
+            description: A built-in person identifier (e.g. `userId`).
+        additionalProperties: false
+      qualifier:
+        type: object
+        required:
+          - operator
+        properties:
+          operator:
+            type: string
+            enum:
+              - equals
+              - notEquals
+              - isSet
+              - isNotSet
+              - contains
+              - doesNotContain
+              - startsWith
+              - endsWith
+        additionalProperties: false
+      value:
+        $ref: ./SegmentFilterValue.yml
+    additionalProperties: false
+  - title: SegmentFilter
+    description: Matches on membership in another segment.
+    type: object
+    required:
+      - id
+      - root
+      - qualifier
+      - value
+    properties:
+      id:
+        type: string
+        format: cuid2
+      root:
+        type: object
+        required:
+          - type
+          - segmentId
+        properties:
+          type:
+            type: string
+            enum:
+              - segment
+          segmentId:
+            type: string
+            description: Id of the segment to test membership against.
+        additionalProperties: false
+      qualifier:
+        type: object
+        required:
+          - operator
+        properties:
+          operator:
+            type: string
+            enum:
+              - userIsIn
+              - userIsNotIn
+        additionalProperties: false
+      value:
+        $ref: ./SegmentFilterValue.yml
+    additionalProperties: false
+  - title: DeviceFilter
+    description: Matches on the contact's device type.
+    type: object
+    required:
+      - id
+      - root
+      - qualifier
+      - value
+    properties:
+      id:
+        type: string
+        format: cuid2
+      root:
+        type: object
+        required:
+          - type
+          - deviceType
+        properties:
+          type:
+            type: string
+            enum:
+              - device
+          deviceType:
+            type: string
+            description: Device type (e.g. `desktop`, `phone`).
+        additionalProperties: false
+      qualifier:
+        type: object
+        required:
+          - operator
+        properties:
+          operator:
+            type: string
+            enum:
+              - equals
+              - notEquals
+        additionalProperties: false
+      value:
+        $ref: ./SegmentFilterValue.yml
+    additionalProperties: false

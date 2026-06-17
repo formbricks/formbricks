@@ -1,0 +1,30 @@
+type: array
+description: >
+  Contact targeting filter tree. An empty array targets everyone. Each node joins the previous one via
+  its `connector` (`and`/`or`; the first node's connector is null). A node's `resource` is either a
+  single filter condition or a nested filter group (enabling parenthesized `and`/`or` logic).
+items:
+  type: object
+  required:
+    - id
+    - connector
+    - resource
+  properties:
+    id:
+      type: string
+      format: cuid2
+    connector:
+      type:
+        - string
+        - "null"
+      enum:
+        - and
+        - or
+        - null
+      description: Logical connector joining this node to the previous one. Null for the first node.
+    resource:
+      oneOf:
+        - $ref: ./SegmentFilter.yml
+        - $ref: ./SegmentFilters.yml
+      description: A single filter condition, or a nested filter group for grouped logic.
+  additionalProperties: false

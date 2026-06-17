@@ -217,13 +217,10 @@ post:
     `invalid_reference`.
 
 
-    This first write surface intentionally stays structure-focused: `type` may
-    be omitted or set
-
-    to `link` or `app`, but in-app survey creation and distribution-channel
-    settings are not part
-
-    of this operation. Unsupported fields are rejected instead of ignored.
+    `type` may be omitted or set to `link` or `app`. App surveys additionally accept the
+    `distribution` (display options + triggers) and `targeting` (contact segment filters) objects;
+    both are rejected for link surveys. Trigger ids must reference existing workspace action classes
+    (discover them via `GET /api/v3/action-classes`). Unsupported fields are rejected instead of ignored.
   tags:
     - V3 Surveys
   requestBody:
@@ -266,6 +263,74 @@ post:
               hiddenFields:
                 enabled: false
               variables: []
+          appSurvey:
+            summary: Create an in-app (app) survey with distribution and triggers
+            description: >
+              App surveys are shown inside your web or mobile app. `distribution` controls display
+              behavior and the action classes that trigger the survey (by id — discover ids via
+              `GET /api/v3/action-classes`). `targeting.filters` scopes the audience; an empty array
+              targets everyone. `type` is immutable after creation.
+            value:
+              workspaceId: clxx1234567890123456789012
+              name: In-App Onboarding Feedback
+              type: app
+              status: draft
+              defaultLanguage: en-US
+              blocks:
+                - name: Onboarding
+                  elements:
+                    - id: onboarding_feedback
+                      type: openText
+                      headline:
+                        en-US: How was your setup experience?
+                      required: false
+              endings: []
+              hiddenFields:
+                enabled: false
+              variables: []
+              distribution:
+                displayOption: respondMultiple
+                recontactDays: 7
+                delay: 5
+                triggers:
+                  - actionClassId: clyy1234567890123456789012
+              targeting:
+                # Target: plan = pro AND (role = admin OR role = owner). A node's `resource` is either a
+                # single condition or a nested group (array); the first node's `connector` is null.
+                filters:
+                  - id: clf0aaaaaaaaaaaaaaaaaaaa01
+                    connector: null
+                    resource:
+                      id: clf1aaaaaaaaaaaaaaaaaaaa01
+                      root:
+                        type: attribute
+                        contactAttributeKey: plan
+                      qualifier:
+                        operator: equals
+                      value: pro
+                  - id: clf2aaaaaaaaaaaaaaaaaaaa01
+                    connector: and
+                    resource:
+                      - id: clf3aaaaaaaaaaaaaaaaaaaa01
+                        connector: null
+                        resource:
+                          id: clf4aaaaaaaaaaaaaaaaaaaa01
+                          root:
+                            type: attribute
+                            contactAttributeKey: role
+                          qualifier:
+                            operator: equals
+                          value: admin
+                      - id: clf5aaaaaaaaaaaaaaaaaaaa01
+                        connector: or
+                        resource:
+                          id: clf6aaaaaaaaaaaaaaaaaaaa01
+                          root:
+                            type: attribute
+                            contactAttributeKey: role
+                          qualifier:
+                            operator: equals
+                          value: owner
           sequentialProductSurvey:
             summary: Create a richer sequential survey without logicFallback
             description: >
@@ -368,10 +433,19 @@ post:
                 $ref: ../components/schemas/SurveyResource.yml
     '400':
       description: >
-        Bad Request — invalid JSON, unsupported fields, malformed multilingual
-        maps, duplicate
-
-        stable ids, or dangling logic/reference ids.
+        Bad Request — the document failed schema validation, i.e. any rule checkable from the
+        request body alone, without consulting stored state. Covers: invalid JSON; unknown or
+        unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are
+        `app`-only); missing required fields; wrong types or out-of-range values; bad enum values;
+        malformed multilingual maps; and intra-document field-combination rules — notably
+        `displayPercentage` is required when `displayOption` is `displaySome` and forbidden
+        otherwise. Cross-reference failures that need stored state to detect return **422** instead.
+        Every offending field is itemized in `invalid_params`. Unknown, forbidden, or wrongly-combined
+        fields carry `code: unsupported_field` (e.g. `distribution` on a link survey, or
+        `displayPercentage` without `displayOption: displaySome`); omissions carry
+        `code: missing_required_field` (e.g. `displayPercentage` when `displayOption` is `displaySome`).
+        Bare type, range, enum, and malformed-locale-map violations report the field `name` with a
+        human-readable `reason` and no machine `code`.
       content:
         application/problem+json:
           schema:
@@ -384,8 +458,21 @@ post:
             $ref: ../components/schemas/Problem.yml
     '403':
       description: >-
-        Forbidden — no write access, missing external URL permission, or
-        workspace does not exist (404 not used; avoids existence leak)
+        Forbidden — no write access, missing external URL permission, missing
+        Contacts entitlement for app-survey targeting, or workspace does not
+        exist (404 not used; avoids existence leak)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '422':
+      description: >-
+        Unprocessable Content — the document passed schema validation but failed a cross-reference
+        check that requires stored state to detect: duplicate stable ids, dangling logic/jump
+        references, undeclared locale keys used in content, invalid media URLs, or a
+        `distribution.triggers[].actionClassId` referencing an action class that does not exist in
+        the workspace (discover valid ids via `GET /api/v3/action-classes`). The `invalid_params`
+        array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
       content:
         application/problem+json:
           schema:

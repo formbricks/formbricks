@@ -2680,6 +2680,7 @@
         "ai_not_available": "AIによるアンケート作成は利用できません。",
         "ai_not_enabled": "この組織ではAIスマートツールが無効になっています。",
         "ai_not_in_plan": "現在のプランではAIによるアンケート作成は利用できません。",
+        "app_survey": "アプリ内フォーム",
         "card_description": "知りたいことを説明するだけで、アンケートの下書きを作成できます。",
         "card_title": "AIで作成",
         "characters": "{count}/{max}",
@@ -2692,7 +2693,6 @@
         "enable_ai_in_settings": "設定で有効にする",
         "generated_payload_invalid": "アンケートの下書きを検証できませんでした。詳細を追加してみてください。",
         "link_survey": "リンク型アンケート",
-        "only_link_supported": "現在、リンク型アンケートのみ作成できます。",
         "opening_editor": "エディターを開いています...",
         "prompt_helper_churn": "アクティブな顧客が離脱する理由と、顧客のエンゲージメントを維持するために必要なことを理解する",
         "prompt_helper_churn_label": "解約リスク",
@@ -2706,6 +2706,7 @@
         "prompt_placeholder": "例:新規ユーザーがオンボーディング中に離脱する理由と、セットアップ完了に必要なサポートを理解する",
         "shortcut_hint": "⌘/Ctrl + Enterで作成",
         "start_from_scratch": "ゼロから作成",
+        "survey_type_help": "下書きの作成後、エディターでセットアップを完了できます。",
         "survey_type_label": "アンケートタイプ",
         "try_prompt": "プロンプト例を見る",
         "upgrade_plan": "プランをアップグレード"

@@ -7,31 +7,38 @@ info:
   description: |
     **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, and **DELETE /api/v3/surveys/{surveyId}**.
 
+    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
+
     Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
 
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
     **workspaceId**
-    Query param `workspaceId` is the canonical container identifier for this API.
+    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection endpoints** (e.g. `GET`/`POST /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`) because those operate within a workspace. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** (`Unrecognized key: "workspaceId"`). `POST /api/v3/surveys` also requires `workspaceId` in the request body.
 
     **Auth**
     Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation.
 
     **Pagination**
-    Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey list responses also include `meta.totalCount`, the total number of surveys matching the current filters across all pages. There is no `offset` in this contract.
+    Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey list responses also include `meta.totalCount`, the total number of surveys matching the current filters across all pages. Workflow list responses do not require total counts in Scope 1. There is no `offset` in this contract.
 
     **Filtering**
-    Filters use explicit operator-style query parameters under the **`filter[...]` family**. The survey list supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. Resource-scoping identifiers (`workspaceId`, `responseId`) stay plain query parameters. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
+    Filters use explicit operator-style query parameters under the **`filter[...]` family**. The survey list supports `filter[name][contains]`, `filter[status][in]`, and `filter[type][in]`. The workflow list supports `filter[name][contains]` and `filter[status][in]`; the workflow run list supports `filter[status][in]` and `filter[isDryRun][eq]`. Resource-scoping identifiers (`workspaceId`, `workflowId`, `responseId`) stay plain query parameters. Multi-value filters use repeated keys or comma-separated values (e.g. `filter[status][in]=draft&filter[status][in]=inProgress` or `filter[status][in]=draft,inProgress`). Sorting remains a flat `sortBy` query parameter.
 
     **Security**
-    Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. List responses use `private, no-store`.
+    Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. Workflow and workflow-run detail endpoints also return **403** for unknown IDs or inaccessible IDs to avoid IDOR leaks. List responses use `private, no-store`.
 
     **AI survey creation**
-    `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. Generated payloads are currently link-survey only because the v3 create contract accepts only `type: link`.
+    `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. It generates survey content for both `link` and `app` surveys; for `app` it seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
     Prompt text is sent to the configured AI provider for generation, but it is not stored by this endpoint, not logged by default, and not included in audit data.
 
     **OpenAPI**
     This spec is **not** produced by `pnpm generate-api-specs` (that script only builds v2 → `docs/api-v2-reference/openapi.yml`). When the route contract changes, edit the files under `docs/api-v3-reference/src/`, then run `pnpm api:v3:bundle` to regenerate the committed single-file bundle. `pnpm api:v3:lint` lints the source tree; `pnpm api:v3:check` (CI) fails when the bundle is stale.
+
+    **Workflows Scope 1**
+    Workflows are a follow-up extension of the existing v3 Survey API work. The Survey API establishes API-first survey authoring; Workflows build on that same v3 style to automate actions around survey responses through workspace-scoped JSON definitions. Scope 1 models the existing Follow-ups capability as workflows: one `response.completed` trigger with an optional `endingCardIds` filter, and `send_email` actions with Follow-up email field parity. The definition and run shapes mirror the shared Zod schemas in `packages/workflows` (ENG-1100), which are the implementation source of truth for this contract.
+
+    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. Dry-run tests create real run records with `isDryRun: true` that mock action execution and never send email. Runs execute asynchronously: `POST .../test` returns a `queued` run to poll via `GET /api/v3/workflows/runs/{runId}`.
 
     **Overview migration note**
     The v3-backed survey overview page intentionally removes actions that are not yet exposed by this contract: `Created by` filtering, `Duplicate`, `Copy...`, `Preview`, and `Copy link`.
@@ -45,6 +52,9 @@ info:
     query-parser: apps/web/app/api/v3/surveys/parse-v3-surveys-list-query.ts
     auth: apps/web/app/api/v3/lib/auth.ts
     workspace-resolution: apps/web/app/api/v3/lib/workspace-context.ts
+    workflow-contract-ticket: ENG-1101
+    workflow-shared-schemas: packages/workflows/src/types (feat/workflows-types)
+    workflow-prisma-schema: packages/database/schema/workflows.prisma (feat/workflows-prisma-schema)
     openapi-generated: false
     spec-source: docs/api-v3-reference/src (regenerate bundle with `pnpm api:v3:bundle`)
     pagination-model: cursor
@@ -235,9 +245,7 @@ paths:
         when the same block has at least one `logic` rule; otherwise the API returns
         `invalid_reference`.
 
-        This first write surface intentionally stays structure-focused: `type` may be omitted or set
-        to `link` or `app`, but in-app survey creation and distribution-channel settings are not part
-        of this operation. Unsupported fields are rejected instead of ignored.
+        `type` may be omitted or set to `link` or `app`. App surveys additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; both are rejected for link surveys. Trigger ids must reference existing workspace action classes (discover them via `GET /api/v3/action-classes`). Unsupported fields are rejected instead of ignored.
       tags:
         - V3 Surveys
       requestBody:
@@ -280,6 +288,69 @@ paths:
                   hiddenFields:
                     enabled: false
                   variables: []
+              appSurvey:
+                summary: Create an in-app (app) survey with distribution and triggers
+                description: |
+                  App surveys are shown inside your web or mobile app. `distribution` controls display behavior and the action classes that trigger the survey (by id — discover ids via `GET /api/v3/action-classes`). `targeting.filters` scopes the audience; an empty array targets everyone. `type` is immutable after creation.
+                value:
+                  workspaceId: clxx1234567890123456789012
+                  name: In-App Onboarding Feedback
+                  type: app
+                  status: draft
+                  defaultLanguage: en-US
+                  blocks:
+                    - name: Onboarding
+                      elements:
+                        - id: onboarding_feedback
+                          type: openText
+                          headline:
+                            en-US: How was your setup experience?
+                          required: false
+                  endings: []
+                  hiddenFields:
+                    enabled: false
+                  variables: []
+                  distribution:
+                    displayOption: respondMultiple
+                    recontactDays: 7
+                    delay: 5
+                    triggers:
+                      - actionClassId: clyy1234567890123456789012
+                  targeting:
+                    filters:
+                      - id: clf0aaaaaaaaaaaaaaaaaaaa01
+                        connector: null
+                        resource:
+                          id: clf1aaaaaaaaaaaaaaaaaaaa01
+                          root:
+                            type: attribute
+                            contactAttributeKey: plan
+                          qualifier:
+                            operator: equals
+                          value: pro
+                      - id: clf2aaaaaaaaaaaaaaaaaaaa01
+                        connector: and
+                        resource:
+                          - id: clf3aaaaaaaaaaaaaaaaaaaa01
+                            connector: null
+                            resource:
+                              id: clf4aaaaaaaaaaaaaaaaaaaa01
+                              root:
+                                type: attribute
+                                contactAttributeKey: role
+                              qualifier:
+                                operator: equals
+                              value: admin
+                          - id: clf5aaaaaaaaaaaaaaaaaaaa01
+                            connector: or
+                            resource:
+                              id: clf6aaaaaaaaaaaaaaaaaaaa01
+                              root:
+                                type: attribute
+                                contactAttributeKey: role
+                              qualifier:
+                                operator: equals
+                              value: owner
               sequentialProductSurvey:
                 summary: Create a richer sequential survey without logicFallback
                 description: |
@@ -380,8 +451,7 @@ paths:
                     $ref: '#/components/schemas/SurveyResource'
         '400':
           description: |
-            Bad Request — invalid JSON, unsupported fields, malformed multilingual maps, duplicate
-            stable ids, or dangling logic/reference ids.
+            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayPercentage` is required when `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution` on a link survey, or `displayPercentage` without `displayOption: displaySome`); omissions carry `code: missing_required_field` (e.g. `displayPercentage` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
           content:
             application/problem+json:
               schema:
@@ -393,7 +463,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '403':
-          description: Forbidden — no write access, missing external URL permission, or workspace does not exist (404 not used; avoids existence leak)
+          description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or workspace does not exist (404 not used; avoids existence leak)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: 'Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, or a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`). The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
           content:
             application/problem+json:
               schema:
@@ -428,9 +504,9 @@ paths:
         Clients should validate the returned payload with `/api/v3/surveys/validate` or use the
         embedded validation metadata, then create the draft through `POST /api/v3/surveys`.
 
-        The generated payload always sets `status: draft`. The initial contract supports only
-        `type: link`; app and website survey creation must stay disabled until the v3 create
-        endpoint accepts those types.
+        The generated payload always sets `status: draft`. Both `type: link` and `type: app` are
+        supported; for `app`, the payload includes a default `distribution` (display once, no triggers,
+        no targeting) that you finish configuring in the editor or via the create request.
 
         Prompt privacy: prompt text is sent to the configured AI provider to create the payload, but
         this endpoint does not store prompts and server logs should use request ids and failure
@@ -568,6 +644,14 @@ paths:
                     status: 403
                     detail: AI smart tools are disabled for this organization.
                     code: ai_smart_tools_disabled
+                    requestId: req_123
+                aiNotInPlan:
+                  summary: AI features not enabled for the plan
+                  value:
+                    title: AI Unavailable
+                    status: 403
+                    detail: AI features are not enabled for this organization's plan.
+                    code: ai_features_not_enabled
                     requestId: req_123
         '422':
           description: AI generated an invalid payload after schema and v3 create validation
@@ -1039,9 +1123,7 @@ paths:
                     $ref: '#/components/schemas/SurveyResource'
         '400':
           description: |
-            Bad Request — malformed JSON, unsupported query parameter, unsupported field,
-            invalid locale map, duplicate id, immutable element id change, dangling reference,
-            or invalid survey document.
+            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation, and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayPercentage` is required when `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
           content:
             application/problem+json:
               schema:
@@ -1053,7 +1135,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '403':
-          description: Forbidden — no write access, or survey does not exist (404 not used; avoids existence leak)
+          description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or survey does not exist (404 not used; avoids existence leak)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: 'Unprocessable Content — the patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, or a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`). The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
           content:
             application/problem+json:
               schema:
@@ -1142,6 +1230,954 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+  /api/v3/action-classes:
+    get:
+      operationId: listActionClassesV3
+      summary: List action classes
+      description: |
+        Returns the action classes (user actions that can trigger an app survey) for a workspace. Use
+        the returned ids as `distribution.triggers[].actionClassId` when creating or updating app
+        surveys. Read-only: this v3 endpoint lists action classes but does not create them — action
+        classes are managed in the Formbricks app (Actions settings) or via the v1/v2 management API.
+
+        An empty `data` array means the workspace has no action classes yet. Triggers are optional, so
+        you can still create an app survey with `distribution.triggers: []` (or omit `distribution`
+        entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie or
+        x-api-key.
+      tags:
+        - V3 Action Classes
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: |
+            Workspace identifier. This is the canonical container ID for v3 APIs.
+      responses:
+        '200':
+          description: Action classes retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActionClassResource'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated (no valid session or API key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden — no access, or workspace does not exist (404 not used; avoids existence leak)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the current rate-limit window resets
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/contact-attribute-keys:
+    get:
+      operationId: listContactAttributeKeysV3
+      summary: List contact attribute keys
+      description: |
+        Returns the contact attribute keys for a workspace. Use the returned `key` values as
+        `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
+        operators apply. Session cookie or x-api-key. (Applying targeting filters requires the Contacts
+        entitlement; this discovery endpoint does not.)
+      tags:
+        - V3 Contact Attribute Keys
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: |
+            Workspace identifier. This is the canonical container ID for v3 APIs.
+      responses:
+        '200':
+          description: Contact attribute keys retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContactAttributeKeyResource'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated (no valid session or API key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden — no access, or workspace does not exist (404 not used; avoids existence leak)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the current rate-limit window resets
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows:
+    get:
+      operationId: listWorkflowsV3
+      summary: List workflows
+      description: |
+        Returns workflow list items for a workspace, sorted by `sortBy` (default `updatedAt`,
+        newest first). Workflows are workspace-scoped and exposed through the same v3
+        session-or-`x-api-key` authorization model as surveys.
+
+        List items are intentionally slim: they include the derived `triggerType` and `surveyId`
+        plus a `lastRun` summary, but not the full `definition`. Use
+        `GET /api/v3/workflows/{workflowId}` to read the definition.
+
+        `archived` workflows are excluded unless explicitly requested with
+        `filter[status][in]=archived`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: filter[name][contains]
+          schema:
+            type: string
+            maxLength: 512
+          description: Case-insensitive substring match on workflow name (same semantics as the survey list filter).
+        - in: query
+          name: filter[status][in]
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/WorkflowStatus'
+          style: form
+          explode: true
+          description: |
+            Workflow lifecycle-state filter. Repeat the parameter (`filter[status][in]=draft&filter[status][in]=disabled`)
+            or use comma-separated values (`filter[status][in]=draft,disabled`). Omitting the filter returns
+            every status except `archived`. Invalid values → **400**.
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+              - name
+          description: Sort order. Defaults to `updatedAt` (newest first). The `cursor` token is bound to the selected sort order.
+      responses:
+        '200':
+          description: Workflows retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowListItem'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+    post:
+      operationId: createWorkflowV3
+      summary: Create a workflow
+      description: |
+        Creates a `draft` workflow. The workflow definition is the public source of truth used by
+        the dashboard and external clients, following the document-first pattern established by the
+        v3 Survey API. Runtime persistence, revision creation, and version snapshotting are
+        implementation details behind this contract.
+
+        Workflows are always created as drafts; use `POST /api/v3/workflows/{workflowId}/enable` to
+        make them respond to trigger events. Graph reference failures (duplicate node ids, edges
+        pointing at missing nodes, `entryNodeId` not referencing the trigger, unknown `surveyId` or
+        `endingCardIds` in the workspace) are rejected with **400** and structured `invalid_params`.
+      tags:
+        - V3 Workflows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+            examples:
+              responseCompletedEmail:
+                summary: Create a response-completed email workflow
+                value:
+                  workspaceId: clworkspace000000000000000
+                  name: Notify team after CSAT completion
+                  description: Sends an internal email when a respondent reaches the negative CSAT ending.
+                  status: draft
+                  definition:
+                    schemaVersion: 1
+                    trigger:
+                      id: trigger
+                      type: trigger
+                      triggerType: response.completed
+                      label: CSAT survey completed
+                      config:
+                        surveyId: clsurvey000000000000000000
+                        endingCardIds:
+                          - clending000000000000000000
+                    nodes:
+                      - id: send-email
+                        type: action
+                        actionType: send_email
+                        label: Notify support team
+                        config:
+                          to: support@example.com
+                          from: noreply@example.com
+                          replyTo:
+                            - support@example.com
+                          subject: Thanks for your feedback
+                          body: We saw your feedback and will follow up soon.
+                          attachResponseData: true
+                          includeVariables: true
+                          includeHiddenFields: false
+                        ui:
+                          position:
+                            x: 260
+                            'y': 120
+                    edges:
+                      - id: edge-trigger-email
+                        source: trigger
+                        target: send-email
+                    entryNodeId: trigger
+      responses:
+        '201':
+          description: Workflow created successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/workflows/clworkflow000000000000000
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/runs:
+    get:
+      operationId: listWorkflowRunsV3
+      summary: List workflow runs
+      description: |
+        Returns workflow run summaries for a workspace, newest first (`createdAt` descending). Use
+        `workflowId` to narrow the list to one workflow, or `responseId` to find the runs a specific
+        survey response produced.
+
+        List items are summaries without `triggerPayload`, `data`, or `logs`; fetch
+        `GET /api/v3/workflows/runs/{runId}` for the full debug-oriented payload. This keeps
+        response-level data out of list reads by default.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: workflowId
+          schema:
+            type: string
+            format: cuid2
+          description: Optional workflow scoping. Returns only runs of this workflow.
+        - in: query
+          name: responseId
+          schema:
+            type: string
+            format: cuid2
+          description: Optional response scoping. Returns only runs triggered by this survey response.
+        - in: query
+          name: filter[status][in]
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/WorkflowRunStatus'
+          style: form
+          explode: true
+          description: |
+            Run lifecycle-state filter. Repeat the parameter or use comma-separated values
+            (`filter[status][in]=failed,canceled`). Invalid values → **400**.
+        - in: query
+          name: filter[isDryRun][eq]
+          schema:
+            type: boolean
+          description: |
+            Filter for dry runs created by `POST /api/v3/workflows/{workflowId}/test` (`true`) or
+            for real trigger-initiated runs only (`false`). Omit to return both.
+      responses:
+        '200':
+          description: Workflow runs retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowRunSummary'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/runs/{runId}:
+    get:
+      operationId: getWorkflowRunV3
+      summary: Retrieve a workflow run
+      description: |
+        Returns one workflow run by globally unique run id, including the full debug payload: the
+        captured `triggerPayload`, the run `data` (per-step results), the persisted `logs` trace,
+        and retry metadata (`attempt`, `nextAttemptAt`, `lastErrorAt`). Scope 1 deliberately exposes
+        these as JSON dumps so users and agents can understand exactly what happened in a run.
+
+        Poll this endpoint after `POST /api/v3/workflows/{workflowId}/test`: runs execute
+        asynchronously and transition `queued` → `running` → `completed`/`failed`/`canceled`.
+
+        Unknown or inaccessible run ids return `403` rather than `404` to avoid leaking
+        cross-workspace resource existence.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowRunIdPath'
+      responses:
+        '200':
+          description: Workflow run retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowRunResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/{workflowId}:
+    get:
+      operationId: getWorkflowV3
+      summary: Retrieve a workflow
+      description: |
+        Returns one workflow definition by id. Unknown or inaccessible workflow ids return `403`
+        rather than `404` to avoid leaking cross-workspace resource existence.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          description: Workflow retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+    patch:
+      operationId: patchWorkflowV3
+      summary: Update a workflow
+      description: |
+        Updates human-facing workflow metadata and/or the workflow definition. Status changes are
+        handled by lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`) so the state
+        machine remains explicit. Provided fields replace the corresponding stored fields; this
+        endpoint does not implement JSON Patch.
+
+        `name` and `description` can be updated in any state except `archived`. The `definition`
+        can only be updated while the workflow is `draft` or `disabled`: the live version of an
+        `enabled` workflow is an immutable snapshot, so definition changes require disabling (or
+        moving to draft) first and re-enabling afterwards. Violations return **422** with code
+        `invalid_workflow_state`. Graph reference failures return **400** with structured
+        `invalid_params`, mirroring the survey identifier rules.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchWorkflowRequest'
+      responses:
+        '200':
+          description: Workflow updated successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+    delete:
+      operationId: deleteWorkflowV3
+      summary: Delete a workflow
+      description: |
+        Permanently deletes a workflow by id. Deletion cascades to the workflow's versions, runs,
+        and run logs so no response-derived data is left behind (GDPR requirement). This is
+        irreversible; use `POST /api/v3/workflows/{workflowId}/archive` for a reversible
+        soft-delete that keeps history. Returns `204 No Content`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '204':
+          description: Workflow deleted successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/{workflowId}/duplicate:
+    post:
+      operationId: duplicateWorkflowV3
+      summary: Duplicate a workflow
+      description: |
+        Creates a new `draft` workflow by copying an existing workflow's definition, name (or the
+        provided override), and description. The duplicate receives its own id and timestamps and
+        starts with empty run and version history; the source workflow is unchanged. Archived
+        workflows can be duplicated (the copy starts as a normal draft).
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DuplicateWorkflowRequest'
+      responses:
+        '201':
+          description: Workflow duplicated successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/workflows/clworkflowcopy000000000
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/{workflowId}/enable:
+    post:
+      operationId: enableWorkflowV3
+      summary: Enable a workflow
+      description: |
+        Moves a workflow from `draft` or `disabled` to `enabled`. Only enabled workflows respond to
+        trigger events.
+
+        Enabling validates that the definition is executable — the trigger has exactly one outgoing
+        edge (trigger-only drafts cannot be enabled), the graph is acyclic, every node is
+        reachable from the trigger, only Scope 1 node types are present, and the referenced survey
+        and ending cards still exist — and then snapshots an immutable workflow version. Runs
+        reference that snapshot via `workflowVersionId`, so later draft edits never change what an
+        enabled workflow executes. Validation failures return **422** with code
+        `workflow_not_executable` and structured `invalid_params`; calling enable in a state other
+        than `draft` or `disabled` returns **422** with code `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowResourceResponse'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/{workflowId}/disable:
+    post:
+      operationId: disableWorkflowV3
+      summary: Disable a workflow
+      description: |
+        Moves an `enabled` workflow to `disabled`. Disabled workflows keep their configuration but
+        do not respond to trigger events; runs that are already queued or running are not canceled.
+        Calling disable in any other state returns **422** with code `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowResourceResponse'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/{workflowId}/archive:
+    post:
+      operationId: archiveWorkflowV3
+      summary: Archive a workflow
+      description: |
+        Soft-deletes a workflow by moving it from any non-archived state to `archived`. Archived
+        workflows stop responding to trigger events immediately, become read-only, and are excluded
+        from list responses unless requested with `filter[status][in]=archived`. Their runs, version
+        history, and definition are preserved, and the workflow can be restored with
+        `POST /api/v3/workflows/{workflowId}/unarchive`. Archiving an already archived workflow
+        returns **422** with code `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowResourceResponse'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/{workflowId}/unarchive:
+    post:
+      operationId: unarchiveWorkflowV3
+      summary: Unarchive a workflow
+      description: |
+        Restores an `archived` workflow to `draft`. Unarchiving never re-enables a workflow
+        automatically: re-enable explicitly with `POST /api/v3/workflows/{workflowId}/enable`, which
+        re-validates the definition (the referenced survey or ending cards may have changed while
+        the workflow was archived). Calling unarchive on a non-archived workflow returns **422**
+        with code `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowResourceResponse'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/workflows/{workflowId}/test:
+    post:
+      operationId: testWorkflowV3
+      summary: Test a workflow with a dry run
+      description: |
+        Creates a dry-run workflow run for configuration validation and debugging. Dry runs validate
+        the definition, evaluate the trigger against sample data, and mock action execution — they
+        never send email or perform real side effects. The run is persisted with `isDryRun: true`.
+
+        Testing works in `draft`, `enabled`, and `disabled` states so workflows can be verified
+        before they go live; testing an `archived` workflow returns **422** with code
+        `invalid_workflow_state`. Definitions that cannot execute return **422** with code
+        `workflow_not_executable` and structured `invalid_params`.
+
+        By default the server synthesizes a sample `response.completed` payload from the configured
+        survey; pass `responseId` to replay an existing response instead. Execution is asynchronous:
+        the endpoint returns the created run (initially `queued`) and clients poll
+        `GET /api/v3/workflows/runs/{runId}` for step results and logs.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+          description: |
+            Optional client-generated key that makes dry-run creation retry-safe (IETF
+            `draft-ietf-httpapi-idempotency-key-header` semantics). Keys are unique per workflow; a
+            retried request with the same key returns the previously created run instead of creating
+            a duplicate. A retry that arrives while the original request is still being processed
+            is rejected with **409 Conflict**; retry after the first request completes.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestWorkflowRequest'
+      responses:
+        '201':
+          description: Dry-run workflow run created successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/workflows/runs/clworkflowrun000000000
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowRunResource'
+              examples:
+                queuedDryRun:
+                  summary: Newly created dry run (poll the run endpoint for results)
+                  value:
+                    data:
+                      id: clworkflowrun0000000000000
+                      workflowId: clworkflow0000000000000000
+                      workspaceId: clworkspace000000000000000
+                      workflowVersionId: null
+                      status: queued
+                      isDryRun: true
+                      triggerType: response.completed
+                      surveyId: clsurvey000000000000000000
+                      responseId: null
+                      error: null
+                      attempt: 0
+                      createdAt: '2026-06-11T09:30:00.000Z'
+                      updatedAt: '2026-06-11T09:30:00.000Z'
+                      startedAt: null
+                      finishedAt: null
+                      idempotencyKey: null
+                      nextAttemptAt: null
+                      lastErrorAt: null
+                      triggerPayload:
+                        type: response.completed
+                        workspaceId: clworkspace000000000000000
+                        surveyId: clsurvey000000000000000000
+                        responseId: clresponse0000000000000000
+                        endingCardId: clending000000000000000000
+                        triggeredAt: '2026-06-11T09:30:00.000Z'
+                      data:
+                        steps: []
+                      logs: []
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '409':
+          $ref: '#/components/responses/V3Conflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
 components:
   securitySchemes:
     sessionAuth:
@@ -1164,6 +2200,17 @@ components:
         Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601 strings.
         The v3 overview contract intentionally omits internal fields such as `_count`.
         Legacy DB rows may include survey **type** values `website` or `web` (see Prisma); filter **type** only accepts `link` | `app`.
+      required:
+        - id
+        - name
+        - workspaceId
+        - type
+        - status
+        - publishOn
+        - createdAt
+        - updatedAt
+        - responseCount
+        - creator
       properties:
         id:
           type: string
@@ -1191,24 +2238,22 @@ components:
         updatedAt:
           type: string
           format: date-time
+        publishOn:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Scheduled publish time (ISO 8601), or null if not scheduled.
         responseCount:
           type: integer
         creator:
           type:
             - object
             - 'null'
+          description: The user who created the survey, or null for API-key/system-created surveys.
           properties:
             name:
               type: string
-        singleUse:
-          type:
-            - object
-            - 'null'
-          properties:
-            enabled:
-              type: boolean
-            isEncrypted:
-              type: boolean
     InvalidParam:
       type: object
       description: |
@@ -1233,13 +2278,17 @@ components:
             - duplicate_locale
             - forbidden_identifier
             - immutable_identifier
+            - invalid_graph
             - invalid_locale
             - invalid_reference
             - missing_required_field
             - missing_translation
             - unsupported_field
             - unsupported_locale
-          description: Machine-readable validation category, when available.
+          description: |
+            Machine-readable validation category, when available. `invalid_graph` covers workflow
+            graph-structure violations such as a duplicated trigger edge, an unreachable node, or a
+            cycle.
         identifier:
           type: string
           description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
@@ -1254,7 +2303,11 @@ components:
             - variable
             - variableName
             - recall
-          description: Identifier namespace involved in the validation failure.
+            - node
+            - edge
+            - survey
+            - endingCard
+          description: Identifier namespace involved in the validation failure. `node`, `edge`, `survey`, and `endingCard` are used by workflow validation.
         missingId:
           type: string
           description: Referenced id that does not exist in the submitted survey document.
@@ -1294,11 +2347,16 @@ components:
             - ai_smart_tools_disabled
             - bad_gateway
             - bad_request
+            - conflict
             - forbidden
             - internal_server_error
+            - invalid_workflow_state
             - not_authenticated
+            - not_found
+            - payload_too_large
             - too_many_requests
             - unprocessable_content
+            - workflow_not_executable
         requestId:
           type: string
         details:
@@ -1339,8 +2397,8 @@ components:
       additionalProperties: true
     LocaleCode:
       type: string
-      pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?(?:-[A-Z]{2})?$
-      description: Locale code accepted by v3 survey APIs. The region subtag is optional, so both full codes (`en-US`, `de-DE`, `zh-Hans-CN`) and language-only / script-only codes (`vi`, `zh-Hans`) are accepted; codes are normalized server-side.
+      pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$
+      description: Canonical locale code accepted by v3 survey APIs, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
       example: en-US
     CreateSurveyLanguage:
       type: object
@@ -1664,16 +2722,6 @@ components:
               type: string
             ctaButtonLabel:
               $ref: '#/components/schemas/TranslatableText'
-        - if:
-            required:
-              - buttonExternal
-            properties:
-              buttonExternal:
-                const: true
-          then:
-            required:
-              - buttonUrl
-              - ctaButtonLabel
       unevaluatedProperties: false
     SurveyRatingElement:
       allOf:
@@ -2333,7 +3381,6 @@ components:
             - redirectToUrl
         url:
           type: string
-          format: uri
           description: External redirect URL. Requires the organization's external URL permission.
         label:
           type: string
@@ -2423,14 +3470,354 @@ components:
         Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
         generated by the server. Provide an explicit cuid2 id when logic in the same request needs
         to reference this variable.
+    SurveyTrigger:
+      type: object
+      description: |
+        Reference to an existing workspace action class that triggers this app survey. Discover available action-class ids with `GET /api/v3/action-classes`.
+      required:
+        - actionClassId
+      properties:
+        actionClassId:
+          type: string
+          format: cuid2
+          description: Id of an action class in the same workspace.
+      additionalProperties: false
+    SurveyDistribution:
+      type: object
+      description: |
+        App-survey runtime/display settings. Only valid for `type: app`; rejected for link surveys.
+        **Replacement semantics (destructive):** when `distribution` is provided on PATCH it fully replaces the stored object — any sub-field you omit is reset to its default, NOT preserved. In particular, omitting `triggers` removes ALL existing triggers, and omitting `displayOption` resets it to `displayOnce`. To change one setting, send the complete desired distribution. To leave distribution untouched, omit the whole `distribution` key.
+      properties:
+        displayOption:
+          type: string
+          enum:
+            - displayOnce
+            - displayMultiple
+            - respondMultiple
+            - displaySome
+          default: displayOnce
+          description: |
+            How often the survey may be shown to a contact. `displaySome` shows it to `displayPercentage` of contacts.
+        displayPercentage:
+          type:
+            - number
+            - 'null'
+          minimum: 0.01
+          maximum: 100
+          default: null
+          description: |
+            Percentage of contacts to show the survey to. Required when `displayOption` is `displaySome`; must be null/omitted otherwise.
+        displayLimit:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          default: null
+          description: Maximum number of times the survey is shown to a single contact.
+        recontactDays:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          default: null
+          description: Days to wait before showing this survey again to the same contact. Null uses the workspace default.
+        autoClose:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          default: null
+          description: Seconds of inactivity after which the survey widget auto-closes. Null disables auto-close.
+        autoComplete:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          default: null
+          description: Automatically stop collecting responses after this many completed responses. Null disables it.
+        delay:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Seconds to wait after a trigger fires before showing the survey.
+        triggers:
+          type: array
+          default: []
+          items:
+            $ref: '#/components/schemas/SurveyTrigger'
+          description: |
+            Action classes that trigger the survey. Every id must reference an existing workspace action class. On PATCH this list fully replaces the survey's triggers — omitting it (or sending `[]`) removes all existing triggers.
+      additionalProperties: false
+      example:
+        displayOption: displaySome
+        displayPercentage: 50
+        displayLimit: null
+        recontactDays: 7
+        autoClose: null
+        autoComplete: null
+        delay: 0
+        triggers:
+          - actionClassId: clyy1234567890123456789012
+    SegmentFilterValue:
+      description: |
+        Comparison value for a segment filter condition. A string or number for most operators; a relative-date object (`{ amount, unit }`) for `isOlderThan` / `isNewerThan`; a two-element `[from, to]` string array for `isBetween`. Ignored for `isSet` / `isNotSet` but still required.
+      oneOf:
+        - type: string
+        - type: number
+        - type: object
+          required:
+            - amount
+            - unit
+          properties:
+            amount:
+              type: number
+            unit:
+              type: string
+              enum:
+                - days
+                - weeks
+                - months
+                - years
+          additionalProperties: false
+        - type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 2
+    SegmentFilter:
+      description: |
+        A single targeting condition. `root.type` selects the subject and determines the valid `qualifier.operator` set: `attribute` (a workspace contact-attribute key), `person` (a built-in person identifier such as `userId`/`email`), `segment` (membership in another segment), or `device`. Each variant is one member of this union; the matching member is chosen by `root.type`.
+      oneOf:
+        - title: AttributeFilter
+          description: Matches on a workspace contact-attribute value.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - contactAttributeKey
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - attribute
+                contactAttributeKey:
+                  type: string
+                  description: A contact-attribute key defined in the workspace (e.g. `plan`, `role`).
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - lessThan
+                    - lessEqual
+                    - greaterThan
+                    - greaterEqual
+                    - equals
+                    - notEquals
+                    - isSet
+                    - isNotSet
+                    - contains
+                    - doesNotContain
+                    - startsWith
+                    - endsWith
+                    - isOlderThan
+                    - isNewerThan
+                    - isBefore
+                    - isAfter
+                    - isBetween
+                    - isSameDay
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: PersonFilter
+          description: Matches on a built-in person identifier.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - personIdentifier
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - person
+                personIdentifier:
+                  type: string
+                  description: A built-in person identifier (e.g. `userId`).
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - equals
+                    - notEquals
+                    - isSet
+                    - isNotSet
+                    - contains
+                    - doesNotContain
+                    - startsWith
+                    - endsWith
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: SegmentFilter
+          description: Matches on membership in another segment.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - segmentId
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - segment
+                segmentId:
+                  type: string
+                  description: Id of the segment to test membership against.
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - userIsIn
+                    - userIsNotIn
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: DeviceFilter
+          description: Matches on the contact's device type.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - deviceType
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - device
+                deviceType:
+                  type: string
+                  description: Device type (e.g. `desktop`, `phone`).
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - equals
+                    - notEquals
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+    SegmentFilters:
+      type: array
+      description: |
+        Contact targeting filter tree. An empty array targets everyone. Each node joins the previous one via its `connector` (`and`/`or`; the first node's connector is null). A node's `resource` is either a single filter condition or a nested filter group (enabling parenthesized `and`/`or` logic).
+      items:
+        type: object
+        required:
+          - id
+          - connector
+          - resource
+        properties:
+          id:
+            type: string
+            format: cuid2
+          connector:
+            type:
+              - string
+              - 'null'
+            enum:
+              - and
+              - or
+              - null
+            description: Logical connector joining this node to the previous one. Null for the first node.
+          resource:
+            oneOf:
+              - $ref: '#/components/schemas/SegmentFilter'
+              - $ref: '#/components/schemas/SegmentFilters'
+            description: A single filter condition, or a nested filter group for grouped logic.
+        additionalProperties: false
+    SurveyTargeting:
+      type: object
+      description: |
+        App-survey contact targeting. Only valid for `type: app`. `filters: []` targets everyone. Setting or changing non-empty filters requires the Contacts entitlement; otherwise create/patch returns 403.
+
+        `attribute` filters reference workspace contact-attribute keys (discover them via `GET /api/v3/contact-attribute-keys`) and `segment` filters reference other segment ids — both are workspace-scoped resources you must obtain before constructing filters (an invalid key/id targets no one rather than erroring). See `SegmentFilter` for the per-`root.type` operator sets.
+      required:
+        - filters
+      properties:
+        filters:
+          $ref: '#/components/schemas/SegmentFilters'
+      additionalProperties: false
     CreateSurveyRequest:
       type: object
       description: |
         Strict v3 survey creation document. This endpoint accepts survey structure only: name,
         metadata, languages, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
-        It rejects legacy `questions` and out-of-scope settings such as styling, targeting, segments,
-        follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields,
-        timestamps, and `createdBy`.
+        App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
+        It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
         Translatable fields use real locale-code maps. The map must include the canonical
         `defaultLanguage` key, such as `en-US`, so the server can persist the internal default
@@ -2461,8 +3848,7 @@ components:
             - app
           default: link
           description: |
-            Optional compatibility field. `link` and `app` survey types are accepted here; app/in-app
-            survey distribution settings remain outside this structure-focused create endpoint.
+            Survey type. `link` surveys are distributed by URL; `app` surveys are shown in-app and configure their runtime behavior via the `distribution` and `targeting` objects. `type` is immutable after creation (it cannot be changed via PATCH).
         status:
           type: string
           enum:
@@ -2513,6 +3899,14 @@ components:
           default: []
           items:
             $ref: '#/components/schemas/CreateSurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: App-survey runtime/display settings. Only valid when `type` is `app`.
+        targeting:
+          allOf:
+            - $ref: '#/components/schemas/SurveyTargeting'
+          description: App-survey contact targeting. Only valid when `type` is `app`.
       additionalProperties: false
     SurveyLanguage:
       type: object
@@ -2711,6 +4105,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: App-survey runtime/display settings. Present only for app surveys; omitted for link surveys.
+        targeting:
+          allOf:
+            - $ref: '#/components/schemas/SurveyTargeting'
+          description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
     AISurveyGenerationLocaleCode:
       type: string
       enum:
@@ -2756,8 +4158,9 @@ components:
           type: string
           enum:
             - link
+            - app
           default: link
-          description: Link Survey is the only AI-created type until the v3 create endpoint supports additional types.
+          description: Survey type to generate. The AI generates the survey content (blocks/questions) for both types; for `app` it additionally seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
         language:
           $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
           description: |
@@ -2841,8 +4244,8 @@ components:
       description: |
         Patch payload shape. Top-level fields are partial; any provided nested object or array
         fully replaces that subtree. Omitted top-level fields are preserved. Immutable/system fields
-        such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps, `questions`, analytics,
-        distribution, styling, targeting, and scripts are rejected.
+        such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps, `questions`, analytics, styling,
+        and scripts are rejected. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
         `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
@@ -2892,6 +4295,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: |
+            App-survey runtime/display settings. Only valid for stored `type: app`. Replaces the full distribution; omitted scalars reset to their defaults.
+        targeting:
+          allOf:
+            - $ref: '#/components/schemas/SurveyTargeting'
+          description: App-survey contact targeting. Only valid for stored app surveys.
       additionalProperties: false
     ValidateSurveyPatchRequest:
       type: object
@@ -2969,3 +4381,906 @@ components:
           items:
             $ref: '#/components/schemas/SurveyValidationLanguage'
       additionalProperties: false
+    ActionClassResource:
+      type: object
+      description: A workspace action class that can be referenced from an app-survey trigger.
+      required:
+        - id
+        - name
+        - description
+        - type
+        - key
+      properties:
+        id:
+          type: string
+          description: Use this value as `distribution.triggers[].actionClassId` on an app survey.
+        name:
+          type: string
+        description:
+          type:
+            - string
+            - 'null'
+        type:
+          type: string
+          enum:
+            - code
+            - noCode
+        key:
+          type:
+            - string
+            - 'null'
+          description: Code-action key for code-type action classes; null for no-code actions.
+      additionalProperties: false
+    ContactAttributeKeyResource:
+      type: object
+      description: |
+        A workspace contact-attribute key. Use `key` as `targeting.filters[].root.contactAttributeKey` on an app survey; `dataType` indicates which operators apply (e.g. `number`/`date` attributes support arithmetic/date operators).
+      required:
+        - id
+        - key
+        - name
+        - description
+        - type
+        - dataType
+      properties:
+        id:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          description: The attribute key used in targeting filters (e.g. `plan`, `role`).
+        name:
+          type:
+            - string
+            - 'null'
+          description: Human-readable display name, or null.
+        description:
+          type:
+            - string
+            - 'null'
+        type:
+          type: string
+          enum:
+            - default
+            - custom
+          description: Whether this is a built-in (`default`) or workspace-defined (`custom`) attribute.
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - date
+      additionalProperties: false
+    WorkflowStatus:
+      type: string
+      enum:
+        - draft
+        - enabled
+        - disabled
+        - archived
+      description: |
+        Workflow lifecycle state. `draft` workflows are editable and inert. `enabled` workflows
+        respond to trigger events. `disabled` workflows keep their configuration but are inert.
+        `archived` workflows are soft-deleted: read-only, excluded from default list reads, and
+        restorable via unarchive.
+
+        Status only changes through lifecycle endpoints. Valid transitions: `draft` → `enabled`,
+        `enabled` ↔ `disabled`, `enabled`/`disabled` → `draft`, any non-archived state → `archived`
+        (archive), and `archived` → `draft` (unarchive).
+    WorkflowRunStatus:
+      type: string
+      enum:
+        - queued
+        - running
+        - completed
+        - failed
+        - canceled
+      description: |
+        Workflow run lifecycle state. `completed`, `failed`, and `canceled` are terminal. Valid
+        transitions: `queued` → `running`, `running` → `queued` (retry/backoff), `queued` →
+        `canceled`, and `running` → `completed`/`failed`/`canceled`. Retries do not introduce a
+        separate status; retry state is exposed via `attempt` and `nextAttemptAt`.
+    WorkflowRunSummary:
+      type: object
+      description: |
+        Slim run shape returned by `GET /api/v3/workflows/runs` and embedded as `lastRun` in
+        workflow resources. Excludes `triggerPayload`, `data`, and `logs`.
+      required:
+        - id
+        - workflowId
+        - workspaceId
+        - workflowVersionId
+        - status
+        - isDryRun
+        - triggerType
+        - surveyId
+        - responseId
+        - error
+        - attempt
+        - createdAt
+        - updatedAt
+        - startedAt
+        - finishedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workflowId:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        workflowVersionId:
+          type:
+            - string
+            - 'null'
+          format: cuid2
+          description: |
+            Immutable workflow version snapshot the run executes against. `null` for dry runs of
+            workflows that have never been enabled. Version contents are not readable through the
+            v3 API in Scope 1.
+        status:
+          $ref: '#/components/schemas/WorkflowRunStatus'
+        isDryRun:
+          type: boolean
+          description: '`true` for runs created by `POST /api/v3/workflows/{workflowId}/test`.'
+        triggerType:
+          type: string
+          enum:
+            - response.completed
+        surveyId:
+          type:
+            - string
+            - 'null'
+          format: cuid2
+        responseId:
+          type:
+            - string
+            - 'null'
+          format: cuid2
+          description: Survey response that triggered the run. `null` for synthesized dry-run data or when the response was deleted.
+        error:
+          type:
+            - string
+            - 'null'
+          description: Terminal or most recent failure reason. `null` while the run is healthy.
+        attempt:
+          type: integer
+          minimum: 0
+          description: Retry attempt counter. `0` on the first execution; retries increment it without changing `status`.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        finishedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+    WorkflowListItem:
+      type: object
+      description: |
+        Slim workflow shape returned by `GET /api/v3/workflows`. `triggerType` and `surveyId` are
+        derived read-only projections of `definition.trigger`, so list consumers can render and
+        filter without loading full definitions. Serialized dates are ISO 8601 strings.
+      required:
+        - id
+        - workspaceId
+        - name
+        - description
+        - status
+        - triggerType
+        - surveyId
+        - createdBy
+        - createdAt
+        - updatedAt
+        - lastRun
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        description:
+          type:
+            - string
+            - 'null'
+        status:
+          $ref: '#/components/schemas/WorkflowStatus'
+        triggerType:
+          type: string
+          enum:
+            - response.completed
+          description: Derived from `definition.trigger.triggerType`.
+        surveyId:
+          type: string
+          format: cuid2
+          description: Derived from `definition.trigger.config.surveyId`.
+        createdBy:
+          type:
+            - string
+            - 'null'
+          format: cuid2
+          description: User id that created the workflow. `null` when the creating user was deleted.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastRun:
+          anyOf:
+            - $ref: '#/components/schemas/WorkflowRunSummary'
+            - type: 'null'
+          description: Most recent run summary (dry runs included). `null` when the workflow has never run.
+    CursorPaginationMeta:
+      type: object
+      required:
+        - limit
+        - nextCursor
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        nextCursor:
+          type:
+            - string
+            - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+      additionalProperties: false
+    WorkflowNodeUi:
+      type: object
+      description: Builder-only UI metadata that does not affect workflow execution. Additional keys are preserved.
+      properties:
+        position:
+          type: object
+          required:
+            - x
+            - 'y'
+          properties:
+            x:
+              type: number
+            'y':
+              type: number
+          additionalProperties: false
+        collapsed:
+          type: boolean
+      additionalProperties: true
+    WorkflowResponseCompletedTriggerNode:
+      type: object
+      required:
+        - id
+        - type
+        - triggerType
+        - config
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - trigger
+        triggerType:
+          type: string
+          enum:
+            - response.completed
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          type: object
+          required:
+            - surveyId
+          properties:
+            surveyId:
+              type: string
+              format: cuid2
+              description: Survey whose completed responses trigger the workflow. Must exist in the workspace.
+            endingCardIds:
+              type: array
+              items:
+                type: string
+                format: cuid2
+              default: []
+              description: Ending card ids that should trigger the workflow. Empty or omitted means every ending matches.
+          additionalProperties: false
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
+    WorkflowSendEmailActionConfig:
+      type: object
+      description: Send-email action with 1:1 field parity to survey Follow-ups (`ZSurveyFollowUpAction`).
+      required:
+        - to
+        - from
+        - replyTo
+        - subject
+        - body
+        - attachResponseData
+      properties:
+        to:
+          type: string
+          minLength: 1
+          description: |
+            Recipient: either a literal email address (e.g. a teammate) or the element id of a
+            survey question whose answer contains the respondent's email address — the same
+            semantics as the Follow-ups `to` field.
+        from:
+          type: string
+          format: email
+        replyTo:
+          type: array
+          items:
+            type: string
+            format: email
+        subject:
+          type: string
+          minLength: 1
+        body:
+          type: string
+          minLength: 1
+        attachResponseData:
+          type: boolean
+        includeVariables:
+          type: boolean
+          default: false
+        includeHiddenFields:
+          type: boolean
+          default: false
+      additionalProperties: false
+    WorkflowSendEmailActionNode:
+      type: object
+      required:
+        - id
+        - type
+        - actionType
+        - config
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - action
+        actionType:
+          type: string
+          enum:
+            - send_email
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          $ref: '#/components/schemas/WorkflowSendEmailActionConfig'
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
+    WorkflowEdge:
+      type: object
+      required:
+        - id
+        - source
+        - target
+      properties:
+        id:
+          type: string
+          minLength: 1
+        source:
+          type: string
+          minLength: 1
+          description: Node id the edge starts from.
+        target:
+          type: string
+          minLength: 1
+          description: Node id the edge points to.
+        sourceHandle:
+          type: string
+          minLength: 1
+          description: Builder handle identifier on the source node. Reserved for branch nodes (`then`/`else`) in future scopes.
+        targetHandle:
+          type: string
+          minLength: 1
+          description: Builder handle identifier on the target node.
+      additionalProperties: false
+    WorkflowDefinition:
+      type: object
+      description: |
+        Scope 1 workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The
+        definition is the public source of truth for the builder and API clients. Scope 1
+        intentionally excludes user-authored if/else branches, webhook actions, schedules, delays,
+        loops, and AI/MCP-assisted creation; future node types extend `nodes` additively.
+
+        Graph rules enforced on every write (**400** with `invalid_params` on violation):
+        node ids are unique across `trigger` and `nodes`; every edge references existing node ids;
+        the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`. Trigger-only
+        drafts (no `nodes`, no `edges`) are valid persisted documents. Executability rules (exactly
+        one outgoing trigger edge, acyclic graph, every node reachable from the trigger) are
+        additionally enforced by `enable` and `test` with **422** `workflow_not_executable`.
+      required:
+        - trigger
+        - entryNodeId
+      properties:
+        schemaVersion:
+          type: integer
+          enum:
+            - 1
+          default: 1
+          description: Definition schema version. Optional on writes (defaults to the current version); always present in responses.
+        trigger:
+          $ref: '#/components/schemas/WorkflowResponseCompletedTriggerNode'
+        nodes:
+          type: array
+          default: []
+          items:
+            $ref: '#/components/schemas/WorkflowSendEmailActionNode'
+          description: Child nodes of the graph. The trigger lives in `trigger`, not in this array. Scope 1 accepts `send_email` action nodes only. Optional on writes (defaults to empty for trigger-only drafts); always present in responses.
+        edges:
+          type: array
+          default: []
+          items:
+            $ref: '#/components/schemas/WorkflowEdge'
+          description: Optional on writes (defaults to empty for trigger-only drafts); always present in responses.
+        entryNodeId:
+          type: string
+          minLength: 1
+          description: Workflow entry point. Must equal `trigger.id`.
+      additionalProperties: false
+    CreateWorkflowRequest:
+      type: object
+      required:
+        - workspaceId
+        - name
+        - definition
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        status:
+          type: string
+          enum:
+            - draft
+          description: New workflows are created as drafts in Scope 1.
+        definition:
+          $ref: '#/components/schemas/WorkflowDefinition'
+      additionalProperties: false
+    WorkflowResource:
+      description: |
+        Full workflow shape returned by detail, create, update, duplicate, and lifecycle endpoints:
+        the list-item fields plus the complete `definition` document.
+      allOf:
+        - $ref: '#/components/schemas/WorkflowListItem'
+        - type: object
+          required:
+            - definition
+          properties:
+            definition:
+              $ref: '#/components/schemas/WorkflowDefinition'
+    WorkflowTriggerPayload:
+      type: object
+      description: |
+        Trigger payload snapshot captured when a run is created, mirroring
+        `ZWorkflowTriggerRunPayload`. Additional runner keys may be present.
+      required:
+        - type
+        - workspaceId
+        - surveyId
+        - responseId
+        - triggeredAt
+      properties:
+        type:
+          type: string
+          enum:
+            - response.completed
+        workspaceId:
+          type: string
+          format: cuid2
+        surveyId:
+          type: string
+          format: cuid2
+        responseId:
+          type: string
+          format: cuid2
+          description: For dry runs without a `responseId` input, this references the synthesized sample response.
+        endingCardId:
+          type: string
+          format: cuid2
+          description: Ending card the respondent reached, when the survey uses ending cards.
+        data:
+          type: object
+          description: Response data snapshot used by the runner.
+        triggeredAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    WorkflowRunLogStatus:
+      type: string
+      enum:
+        - pending
+        - running
+        - succeeded
+        - failed
+        - skipped
+      description: Status of one executed (or skipped) workflow step within a run.
+    WorkflowRunStepResult:
+      type: object
+      description: In-document result for one workflow step, mirroring `ZWorkflowStepResult`.
+      required:
+        - stepId
+        - stepType
+        - status
+      properties:
+        stepId:
+          type: string
+          minLength: 1
+          description: Node id of the executed step.
+        stepType:
+          type: string
+          minLength: 1
+          description: Node/step type, e.g. `response.completed` or `send_email`.
+        status:
+          $ref: '#/components/schemas/WorkflowRunLogStatus'
+        input:
+          type: object
+          description: Step input snapshot.
+        output:
+          type: object
+          description: Step output snapshot, or the mocked output for dry runs.
+        error:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    WorkflowRunData:
+      type: object
+      description: |
+        Run execution data persisted with the run, mirroring `ZWorkflowRunData`. Scope 1 exposes
+        this as a debug-oriented JSON dump. Additional runner keys may be present.
+      required:
+        - steps
+      properties:
+        trigger:
+          allOf:
+            - $ref: '#/components/schemas/WorkflowTriggerPayload'
+          description: Optional duplicate of the trigger payload snapshot kept inside the run data document.
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowRunStepResult'
+      additionalProperties: true
+    WorkflowRunLog:
+      type: object
+      description: Persisted trace entry for one workflow run step, mirroring the `WorkflowRunLog` table row.
+      required:
+        - id
+        - runId
+        - sequence
+        - stepId
+        - stepType
+        - status
+        - input
+        - output
+        - error
+        - startedAt
+        - finishedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        runId:
+          type: string
+          format: cuid2
+        sequence:
+          type: integer
+          minimum: 0
+          description: Order of the entry within the run.
+        stepId:
+          type: string
+          minLength: 1
+        stepType:
+          type: string
+          minLength: 1
+        status:
+          $ref: '#/components/schemas/WorkflowRunLogStatus'
+        input:
+          type: object
+          description: Step input snapshot. Empty object when nothing was recorded.
+        output:
+          type: object
+          description: Step output snapshot (mocked for dry runs). Empty object when nothing was recorded.
+        error:
+          type:
+            - string
+            - 'null'
+        startedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        finishedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+      additionalProperties: false
+    WorkflowRunResource:
+      description: |
+        Full run shape returned by `GET /api/v3/workflows/runs/{runId}` and
+        `POST /api/v3/workflows/{workflowId}/test`: the summary fields plus the captured trigger
+        payload, per-step results, the persisted log trace, and retry/idempotency metadata.
+      allOf:
+        - $ref: '#/components/schemas/WorkflowRunSummary'
+        - type: object
+          required:
+            - triggerPayload
+            - data
+            - logs
+            - idempotencyKey
+            - nextAttemptAt
+            - lastErrorAt
+          properties:
+            triggerPayload:
+              $ref: '#/components/schemas/WorkflowTriggerPayload'
+            data:
+              $ref: '#/components/schemas/WorkflowRunData'
+            logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowRunLog'
+              description: Persisted step-by-step trace, ordered by `sequence`. Empty while the run is still `queued`.
+            idempotencyKey:
+              type:
+                - string
+                - 'null'
+              description: Deduplication key for this run, unique per workflow. Set from the `Idempotency-Key` header on dry runs or from trigger-event deduplication.
+            nextAttemptAt:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: When the next retry attempt is scheduled. `null` when no retry is pending.
+            lastErrorAt:
+              type:
+                - string
+                - 'null'
+              format: date-time
+    PatchWorkflowRequest:
+      type: object
+      description: |
+        Partial workflow update. `name` and `description` are accepted in any state except
+        `archived`; `definition` is only accepted while the workflow is `draft` or `disabled`.
+        `status` is intentionally not patchable — use the lifecycle endpoints.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        definition:
+          $ref: '#/components/schemas/WorkflowDefinition'
+      additionalProperties: false
+    DuplicateWorkflowRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional name for the duplicate. If omitted, the server chooses a non-conflicting copy name.
+      additionalProperties: false
+    TestWorkflowRequest:
+      type: object
+      description: |
+        Optional dry-run input. When `responseId` is omitted, the server synthesizes a sample
+        `response.completed` payload from the survey configured on the workflow trigger. Manually
+        authored trigger payloads are intentionally not accepted in Scope 1.
+      properties:
+        responseId:
+          type: string
+          format: cuid2
+          description: Optional existing response id (from the trigger's survey) to replay as dry-run sample data.
+      additionalProperties: false
+  parameters:
+    WorkspaceIdQuery:
+      in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workspace identifier. This is the canonical container ID for v3 APIs.
+    LimitQuery:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size (max 100).
+    CursorQuery:
+      in: query
+      name: cursor
+      schema:
+        type: string
+      description: Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+    WorkflowRunIdPath:
+      in: path
+      name: runId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workflow run identifier.
+    WorkflowIdPath:
+      in: path
+      name: workflowId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workflow identifier.
+  responses:
+    V3BadRequest:
+      description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3Unauthorized:
+      description: Not authenticated (no valid session or API key).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3Forbidden:
+      description: Forbidden — no workspace access, or resource does not exist (404 not used; avoids existence leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3TooManyRequests:
+      description: Rate limit exceeded.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the current rate-limit window resets.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3InternalServerError:
+      description: Internal Server Error.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3UnprocessableContent:
+      description: Unprocessable Content — semantic validation failed or the requested lifecycle transition is invalid.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    WorkflowResourceResponse:
+      description: Workflow returned successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: '#/components/schemas/WorkflowResource'
+    V3Conflict:
+      description: Conflict — an `Idempotency-Key` retry arrived while the original request was still being processed (IETF `draft-ietf-httpapi-idempotency-key-header` semantics). Retry after the original request completes to receive its stored result.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

@@ -2680,6 +2680,7 @@
         "ai_not_available": "AI 問卷建立功能目前無法使用。",
         "ai_not_enabled": "此組織已停用 AI 智慧工具。",
         "ai_not_in_plan": "你目前的方案不包含 AI 問卷建立功能。",
+        "app_survey": "應用程式問卷",
         "card_description": "描述你想了解的內容,即可建立問卷草稿。",
         "card_title": "使用 AI 建立",
         "characters": "{count}/{max}",
@@ -2692,7 +2693,6 @@
         "enable_ai_in_settings": "在設定中啟用",
         "generated_payload_invalid": "問卷草稿無法驗證。請嘗試新增更多細節。",
         "link_survey": "連結問卷",
-        "only_link_supported": "目前只能建立連結問卷。",
         "opening_editor": "正在開啟編輯器...",
         "prompt_helper_churn": "了解活躍客戶可能流失的原因,以及如何讓他們保持參與度",
         "prompt_helper_churn_label": "流失風險",
@@ -2706,6 +2706,7 @@
         "prompt_placeholder": "例如：了解新用戶為何在引導過程中停止，以及什麼能幫助他們完成設定",
         "shortcut_hint": "⌘/Ctrl + Enter 建立",
         "start_from_scratch": "從零開始",
+        "survey_type_help": "建立草稿後，您可以在編輯器中完成設定。",
         "survey_type_label": "問卷類型",
         "try_prompt": "查看範例提示",
         "upgrade_plan": "升級方案"

@@ -71,3 +71,11 @@ properties:
     type: array
     items:
       $ref: ./SurveyVariable.yml
+  distribution:
+    allOf:
+      - $ref: ./SurveyDistribution.yml
+    description: App-survey runtime/display settings. Present only for app surveys; omitted for link surveys.
+  targeting:
+    allOf:
+      - $ref: ./SurveyTargeting.yml
+    description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.

@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
@@ -13,12 +14,17 @@ import {
 import { executeV3SurveyPatch, patchV3Survey } from "./patch";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
+import {
+  areV3SurveyTargetingFiltersEqual,
+  resolveV3ContactsEntitlement,
+  setV3SurveySegmentFilters,
+} from "./targeting";
 import { V3SurveyWritePermissionError } from "./write-permissions";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
+vi.mock("@formbricks/database", () => {
+  const prisma = {
     language: {
       upsert: vi.fn(),
     },
@@ -26,13 +32,30 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-  },
-}));
+    segment: {
+      update: vi.fn(),
+    },
+    // Interactive transaction: run the callback with the mocked client as the tx client.
+    $transaction: vi.fn((callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
+  };
+  return { prisma };
+});
 
 vi.mock("@/lib/survey/service", () => ({
   selectSurvey: {
     id: true,
   },
+}));
+
+vi.mock("@/lib/actionClass/service", () => ({
+  getActionClasses: vi.fn(),
+}));
+
+vi.mock("./targeting", () => ({
+  setV3SurveySegmentFilters: vi.fn(),
+  areV3SurveyTargetingFiltersEqual: vi.fn(),
+  resolveV3ContactsEntitlement: vi.fn(),
+  V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -202,6 +225,8 @@ describe("patchV3Survey", () => {
         publishOn: data.publishOn ?? currentSurvey.publishOn,
       }) as unknown as TSurveyUpdateReturn;
     });
+    vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
+      callback(prisma)) as typeof prisma.$transaction);
     vi.mocked(normalizeSurveyScheduling).mockImplementation(({ closeOn, publishOn }) => ({
       closeOn,
       publishOn,
@@ -226,6 +251,12 @@ describe("patchV3Survey", () => {
       whitelabel: undefined,
     });
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    vi.mocked(getActionClasses).mockResolvedValue([]);
+    vi.mocked(resolveV3ContactsEntitlement).mockResolvedValue({
+      resolvedOrganizationId: "org_1",
+      isContactsEnabled: true,
+    });
+    vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(true);
   });
 
   test("patches a name-only payload through v3 persistence", async () => {
@@ -605,5 +636,137 @@ describe("patchV3Survey", () => {
 
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
     expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
+  describe("app surveys", () => {
+    const actionClass = {
+      id: "claa1234567890123456789012",
+      name: "Checkout Complete",
+      description: null,
+      type: "code" as const,
+      key: "checkout_complete",
+      noCodeConfig: null,
+      workspaceId,
+      createdAt: new Date("2026-04-21T10:00:00.000Z"),
+      updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+    };
+
+    const appCurrentSurvey = {
+      ...currentSurvey,
+      type: "app",
+      recontactDays: 7,
+      triggers: [],
+      segment: { id: "clsg1234567890123456789012", filters: [] },
+    } as unknown as TSurvey;
+
+    const attributeFilters = [
+      {
+        id: "clf01234567890123456789012",
+        connector: null,
+        resource: {
+          id: "clf11234567890123456789012",
+          root: { type: "attribute", contactAttributeKey: "plan" },
+          qualifier: { operator: "equals" },
+          value: "pro",
+        },
+      },
+    ];
+
+    test("writes distribution scalars and the trigger diff", async () => {
+      vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+
+      await patchV3Survey(
+        appCurrentSurvey,
+        {
+          distribution: {
+            displayOption: "displayMultiple",
+            recontactDays: 14,
+            triggers: [{ actionClassId: actionClass.id }],
+          },
+        },
+        "req_app_patch_1",
+        "org_1"
+      );
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            displayOption: "displayMultiple",
+            recontactDays: 14,
+            triggers: { create: [{ actionClassId: actionClass.id }] },
+          }),
+        })
+      );
+    });
+
+    test("preserves omitted app fields under replacement merge", async () => {
+      await patchV3Survey(appCurrentSurvey, { name: "Renamed" }, "req_app_patch_2", "org_1");
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: "Renamed",
+            recontactDays: 7,
+            displayOption: "displayOnce",
+          }),
+        })
+      );
+    });
+
+    test("updates segment filters when targeting changes and contacts are enabled", async () => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+
+      await patchV3Survey(
+        appCurrentSurvey,
+        { targeting: { filters: attributeFilters } },
+        "req_app_patch_3",
+        "org_1"
+      );
+
+      expect(resolveV3ContactsEntitlement).toHaveBeenCalledWith(workspaceId, "org_1");
+      // Segment write runs inside the transaction (third arg is the tx client).
+      expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(
+        "clsg1234567890123456789012",
+        attributeFilters,
+        expect.anything()
+      );
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+
+    test("rejects targeting changes when contacts are not enabled", async () => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      vi.mocked(resolveV3ContactsEntitlement).mockResolvedValue({
+        resolvedOrganizationId: "org_1",
+        isContactsEnabled: false,
+      });
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { targeting: { filters: attributeFilters } },
+          "req_app_patch_4",
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("rejects unknown trigger action class ids before writing", async () => {
+      vi.mocked(getActionClasses).mockResolvedValue([]);
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { distribution: { triggers: [{ actionClassId: actionClass.id }] } },
+          "req_app_patch_5",
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
   });
 });

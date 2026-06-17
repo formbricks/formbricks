@@ -1,0 +1,82 @@
+get:
+  operationId: listContactAttributeKeysV3
+  summary: List contact attribute keys
+  description: |
+    Returns the contact attribute keys for a workspace. Use the returned `key` values as
+    `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
+    operators apply. Session cookie or x-api-key. (Applying targeting filters requires the Contacts
+    entitlement; this discovery endpoint does not.)
+  tags:
+    - V3 Contact Attribute Keys
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: |
+        Workspace identifier. This is the canonical container ID for v3 APIs.
+  responses:
+    "200":
+      description: Contact attribute keys retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/ContactAttributeKeyResource.yml
+    "400":
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      description: Not authenticated (no valid session or API key)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "403":
+      description: >-
+        Forbidden — no access, or workspace does not exist (404 not used; avoids
+        existence leak)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the current rate-limit window resets
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "500":
+      description: Internal Server Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

@@ -313,13 +313,19 @@ patch:
                 $ref: ../components/schemas/SurveyResource.yml
     '400':
       description: >
-        Bad Request — malformed JSON, unsupported query parameter, unsupported
-        field,
-
-        invalid locale map, duplicate id, immutable element id change, dangling
-        reference,
-
-        or invalid survey document.
+        Bad Request — the patch failed schema validation, i.e. any rule checkable from the request
+        body alone, without consulting stored state. Covers: malformed JSON; an unsupported query
+        parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation,
+        and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is
+        rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps;
+        and intra-document field-combination rules — notably `displayPercentage` is required when
+        `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need
+        stored state to detect return **422** instead. Every offending field is itemized in
+        `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry
+        `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey);
+        omissions carry `code: missing_required_field`. Bare type, range, enum, and
+        malformed-locale-map violations report the field `name` with a human-readable `reason` and no
+        machine `code`.
       content:
         application/problem+json:
           schema:
@@ -332,8 +338,22 @@ patch:
             $ref: ../components/schemas/Problem.yml
     '403':
       description: >-
-        Forbidden — no write access, or survey does not exist (404 not used;
-        avoids existence leak)
+        Forbidden — no write access, missing external URL permission, missing
+        Contacts entitlement for app-survey targeting, or survey does not exist
+        (404 not used; avoids existence leak)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '422':
+      description: >-
+        Unprocessable Content — the patched document passed schema validation but failed a
+        cross-reference check that requires stored state to detect: an undeclared locale key used in
+        content, a duplicate stable id, an immutable element-id change on a published survey, a
+        dangling logic/jump reference, an invalid media URL, or a
+        `distribution.triggers[].actionClassId` referencing an action class that does not exist in
+        the workspace (discover valid ids via `GET /api/v3/action-classes`). The `invalid_params`
+        array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
       content:
         application/problem+json:
           schema:

@@ -2680,6 +2680,7 @@
         "ai_not_available": "A criação de pesquisas com IA não está disponível.",
         "ai_not_enabled": "As ferramentas inteligentes de IA estão desabilitadas para esta organização.",
         "ai_not_in_plan": "A criação de pesquisas com IA não está disponível no seu plano atual.",
+        "app_survey": "Pesquisa de App",
         "card_description": "Descreva o que você quer aprender e crie um rascunho de pesquisa.",
         "card_title": "Criar com IA",
         "characters": "{count}/{max}",
@@ -2692,7 +2693,6 @@
         "enable_ai_in_settings": "Habilitar nas configurações",
         "generated_payload_invalid": "O rascunho da pesquisa não pôde ser validado. Tente adicionar mais detalhes.",
         "link_survey": "Pesquisa de Link",
-        "only_link_supported": "Apenas a Pesquisa de Link pode ser criada no momento.",
         "opening_editor": "Abrindo o editor...",
         "prompt_helper_churn": "Entenda por que clientes ativos podem cancelar e o que os manteria engajados",
         "prompt_helper_churn_label": "Risco de cancelamento",
@@ -2706,6 +2706,7 @@
         "prompt_placeholder": "ex: Entender por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",
         "shortcut_hint": "⌘/Ctrl + Enter para criar",
         "start_from_scratch": "Começar do zero",
+        "survey_type_help": "Você pode concluir a configuração no editor após criar o rascunho.",
         "survey_type_label": "Tipo de pesquisa",
         "try_prompt": "Ver exemplo de prompt",
         "upgrade_plan": "Fazer upgrade do plano"

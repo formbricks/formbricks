@@ -98,6 +98,70 @@ const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
   }) as unknown as TSurvey;
 
 describe("serializeV3SurveyResource", () => {
+  test("includes distribution and targeting for app surveys", () => {
+    const appSurvey = {
+      ...baseSurvey,
+      type: "app",
+      displayOption: "respondMultiple",
+      displayPercentage: 25,
+      displayLimit: 3,
+      recontactDays: 7,
+      autoClose: 30,
+      autoComplete: 100,
+      delay: 5,
+      triggers: [{ actionClass: { id: "claa1234567890123456789012", name: "Checkout" } }],
+      segment: {
+        id: "seg_1",
+        filters: [
+          {
+            id: "f1",
+            connector: null,
+            resource: {
+              id: "r1",
+              root: { type: "attribute", contactAttributeKey: "plan" },
+              qualifier: { operator: "equals" },
+              value: "pro",
+            },
+          },
+        ],
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(appSurvey);
+
+    expect(resource.distribution).toEqual({
+      displayOption: "respondMultiple",
+      displayPercentage: 25,
+      displayLimit: 3,
+      recontactDays: 7,
+      autoClose: 30,
+      autoComplete: 100,
+      delay: 5,
+      triggers: [{ actionClassId: "claa1234567890123456789012" }],
+    });
+    expect(resource.targeting).toEqual({
+      filters: [
+        {
+          id: "f1",
+          connector: null,
+          resource: {
+            id: "r1",
+            root: { type: "attribute", contactAttributeKey: "plan" },
+            qualifier: { operator: "equals" },
+            value: "pro",
+          },
+        },
+      ],
+    });
+  });
+
+  test("omits distribution and targeting for link surveys", () => {
+    const resource = serializeV3SurveyResource(baseSurvey);
+
+    expect(resource).not.toHaveProperty("distribution");
+    expect(resource).not.toHaveProperty("targeting");
+  });
+
   test("returns multilingual fields using emitted survey language codes", () => {
     const resource = serializeV3SurveyResource(baseSurvey);
 

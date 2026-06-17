@@ -1,0 +1,29 @@
+type: object
+description: A workspace action class that can be referenced from an app-survey trigger.
+required:
+  - id
+  - name
+  - description
+  - type
+  - key
+properties:
+  id:
+    type: string
+    description: Use this value as `distribution.triggers[].actionClassId` on an app survey.
+  name:
+    type: string
+  description:
+    type:
+      - string
+      - "null"
+  type:
+    type: string
+    enum:
+      - code
+      - noCode
+  key:
+    type:
+      - string
+      - "null"
+    description: Code-action key for code-type action classes; null for no-code actions.
+additionalProperties: false
