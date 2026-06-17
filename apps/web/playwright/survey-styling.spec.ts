@@ -230,9 +230,8 @@ test.describe("Survey Styling", async () => {
     expect(css).toContain("--fb-input-background-color:");
     expect(css).not.toContain("--fb-input-background-color: #ffffff");
 
-    // Card/survey background should be brand-tinted, NOT hardcoded #ffffff
-    expect(css).toContain("--fb-survey-background-color:");
-    expect(css).not.toContain("--fb-survey-background-color: #ffffff");
+    // Card/survey background should always be white
+    expect(css).toContain("--fb-survey-background-color: #ffffff");
 
     // Question/heading color should be derived, NOT the old hardcoded #2b2524
     expect(css).toContain("--fb-heading-color:");

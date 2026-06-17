@@ -58,11 +58,12 @@ export const Template = ({
       {showCreateSurveyButton && (
         <div className="flex justify-start">
           <Button
-            className="mt-6 px-6 py-3"
+            className="mt-6 max-w-full px-6 py-3"
             disabled={activeTemplate === null}
             loading={loading}
+            aria-label={t("workspace.surveys.templates.use_this_template")}
             onClick={() => createSurvey(activeTemplate)}>
-            {t("workspace.surveys.templates.use_this_template")}
+            <span className="truncate">{t("workspace.surveys.templates.use_this_template")}</span>
           </Button>
         </div>
       )}

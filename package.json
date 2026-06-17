@@ -2,10 +2,6 @@
   "name": "formbricks",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "agents:update": "npx @next/codemod@canary agents-md --output AGENTS.md",
     "clean:all": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
@@ -73,12 +69,7 @@
   "engines": {
     "node": ">=20.19.0 <21 || >=22.12.0 <23 || >=24.0.0 <25"
   },
-  "packageManager": "pnpm@10.32.1",
-  "pnpm": {
-    "overrides": {
-      "@grpc/grpc-js": "1.14.4"
-    }
-  },
+  "packageManager": "pnpm@11.7.0",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
