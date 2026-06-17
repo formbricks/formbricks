@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "Inga instrumentpaneler tillgängliga",
         "no_dashboards_create_first": "Skapa först en instrumentpanel för att lägga till diagram.",
         "no_data_available": "Ingen data tillgänglig",
-        "no_data_returned": "Ingen data returnerades från frågan",
+        "no_data_returned": "Ingen data att visa, ändra dina inställningar.",
         "no_data_returned_for_chart": "Ingen data returnerades för diagrammet",
         "no_data_source_available": "Ingen feedback-katalog är tilldelad till denna arbetsyta.",
         "no_grouping": "Ingen (endast filter)",

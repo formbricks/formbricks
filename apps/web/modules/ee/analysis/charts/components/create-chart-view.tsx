@@ -94,7 +94,7 @@ export function CreateChartView({
   if (isEditing && !isLoadingChart && !chartData && !initialChart && chartLoadError) {
     return (
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-        <DialogContent width="wide">
+        <DialogContent width="full">
           <DialogHeader>
             <DialogTitle>{t("common.error")}</DialogTitle>
             <DialogDescription />
@@ -118,10 +118,7 @@ export function CreateChartView({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent
-        className="max-h-[90vh] overflow-y-auto"
-        width="wide"
-        disableCloseOnOutsideClick={!isEditing}>
+      <DialogContent width="full" disableCloseOnOutsideClick={!isEditing}>
         <DialogHeader>
           <DialogTitle>
             {isEditing
@@ -134,12 +131,12 @@ export function CreateChartView({
               : t("workspace.analysis.charts.create_chart_description")}
           </DialogDescription>
         </DialogHeader>
-        <DialogBody>
+        <DialogBody className="min-h-0">
           <div className="grid gap-4">
             {hasSelectedDirectory ? (
               <div className="grid gap-6 lg:grid-cols-2">
-                <div className="min-w-0 space-y-4">
-                  {!isEditing && !isAIQueryAvailable && (
+                <div className="flex min-w-0 flex-col gap-4">
+                  {!isEditing && (
                     <AIQuerySection
                       workspaceId={workspaceId}
                       onChartGenerated={handleChartGenerated}
@@ -149,60 +146,17 @@ export function CreateChartView({
                     />
                   )}
 
-                  <form
-                    id={CREATE_CHART_FORM_ID}
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      setChartNameError(null);
-                      return handleSaveChart();
-                    }}
-                    className="space-y-2">
-                    <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
-                      {t("workspace.analysis.charts.chart_name")}
-                    </Label>
-                    <Input
-                      id="create-chart-name"
-                      value={chartName}
-                      onChange={(event) => {
-                        if (chartNameError) setChartNameError(null);
-                        setChartName(event.target.value);
-                      }}
-                      onInvalid={(event) => {
-                        // Suppress the browser tooltip and render our inline message instead.
-                        event.preventDefault();
-                        event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-                        event.currentTarget.focus();
-                        setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
-                      }}
-                      placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
-                      maxLength={255}
-                      required
-                      isInvalid={!!chartNameError}
-                    />
-                    {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
-                  </form>
-
                   {!isEditing && isAIQueryAvailable && (
-                    <>
-                      <AIQuerySection
-                        workspaceId={workspaceId}
-                        onChartGenerated={handleChartGenerated}
-                        feedbackDirectoryId={selectedDirectoryId}
-                        isAIAvailable={isAIAvailable}
-                        aiUnavailableReason={aiUnavailableReason}
-                      />
-
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                          <div className="w-full border-t border-gray-200" />
-                        </div>
-                        <div className="relative flex justify-center">
-                          <span className="bg-white px-2 text-sm text-gray-500">
-                            {t("workspace.analysis.charts.OR")}
-                          </span>
-                        </div>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-gray-200" />
                       </div>
-                    </>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white px-2 text-sm text-gray-500">
+                          {t("workspace.analysis.charts.OR")}
+                        </span>
+                      </div>
+                    </div>
                   )}
 
                   <ManualChartBuilder
@@ -223,13 +177,46 @@ export function CreateChartView({
                 </div>
 
                 <div className="min-w-0">
-                  <div className="lg:sticky lg:top-2">
+                  <div className="flex flex-col gap-4 lg:sticky lg:top-0">
                     <ChartPreview
                       chartData={chartData}
                       isLoading={isLoadingChart || queryState.isLoading}
                       error={chartLoadError ?? queryState.error}
                       emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
                     />
+
+                    <form
+                      id={CREATE_CHART_FORM_ID}
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        setChartNameError(null);
+                        return handleSaveChart();
+                      }}
+                      className="space-y-2">
+                      <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
+                        {t("workspace.analysis.charts.chart_name")}
+                      </Label>
+                      <Input
+                        id="create-chart-name"
+                        value={chartName}
+                        onChange={(event) => {
+                          if (chartNameError) setChartNameError(null);
+                          setChartName(event.target.value);
+                        }}
+                        onInvalid={(event) => {
+                          // Suppress the browser tooltip and render our inline message instead.
+                          event.preventDefault();
+                          event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+                          event.currentTarget.focus();
+                          setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
+                        }}
+                        placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
+                        maxLength={255}
+                        required
+                        isInvalid={!!chartNameError}
+                      />
+                      {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
+                    </form>
                   </div>
                 </div>
               </div>

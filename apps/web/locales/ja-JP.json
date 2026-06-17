@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "利用可能なダッシュボードがありません",
         "no_dashboards_create_first": "チャートを追加するには、まずダッシュボードを作成してください。",
         "no_data_available": "利用可能なデータがありません",
-        "no_data_returned": "クエリからデータが返されませんでした",
+        "no_data_returned": "表示するデータがありません。設定を変更してください。",
         "no_data_returned_for_chart": "チャートのデータが返されませんでした",
         "no_data_source_available": "このワークスペースにはフィードバックディレクトリが割り当てられていません。",
         "no_grouping": "なし(フィルターのみ)",

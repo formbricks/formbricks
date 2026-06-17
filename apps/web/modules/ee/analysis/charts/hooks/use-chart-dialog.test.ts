@@ -312,6 +312,38 @@ describe("useChartDialog", () => {
     });
   });
 
+  describe("handleChartGenerated", () => {
+    test("prefills chart name from suggestedName when name is empty", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "Responses by Source",
+        } as any);
+      });
+
+      expect(result.current.chartName).toBe("Responses by Source");
+    });
+
+    test("does not overwrite an existing chart name with suggestedName", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await act(async () => {
+        result.current.setChartName("Custom Chart");
+      });
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "Responses by Source",
+        } as any);
+      });
+
+      expect(result.current.chartName).toBe("Custom Chart");
+    });
+  });
+
   describe("handleSaveChart - validation + error paths", () => {
     test("toasts when chartName is empty", async () => {
       const { result } = renderHook(() => useChartDialog(baseProps));

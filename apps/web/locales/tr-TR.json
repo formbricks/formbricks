@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "Kullanılabilir kontrol paneli yok",
         "no_dashboards_create_first": "Grafik eklemek için önce bir kontrol paneli oluştur.",
         "no_data_available": "Veri mevcut değil",
-        "no_data_returned": "Sorgudan veri döndürülmedi",
+        "no_data_returned": "Görüntülenecek veri yok, lütfen ayarlarını değiştir.",
         "no_data_returned_for_chart": "Grafik için veri döndürülmedi",
         "no_data_source_available": "Bu çalışma alanına atanmış geri bildirim dizini yok.",
         "no_grouping": "Yok (sadece filtre)",

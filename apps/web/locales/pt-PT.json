@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "Nenhum painel disponível",
         "no_dashboards_create_first": "Cria primeiro um painel para adicionar gráficos.",
         "no_data_available": "Nenhum dado disponível",
-        "no_data_returned": "Nenhum dado devolvido pela consulta",
+        "no_data_returned": "Não há dados para apresentar, por favor altera as tuas definições.",
         "no_data_returned_for_chart": "Nenhum dado devolvido para o gráfico",
         "no_data_source_available": "Nenhum diretório de feedback está atribuído a este workspace.",
         "no_grouping": "Nenhum (apenas filtro)",

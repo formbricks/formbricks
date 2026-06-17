@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "沒有可用的儀表板",
         "no_dashboards_create_first": "請先建立儀表板，才能新增圖表。",
         "no_data_available": "沒有可用資料",
-        "no_data_returned": "查詢沒有回傳資料",
+        "no_data_returned": "沒有資料可顯示,請更改你的設定。",
         "no_data_returned_for_chart": "此圖表沒有回傳資料",
         "no_data_source_available": "此工作區未指派任何意見回饋目錄。",
         "no_grouping": "無（僅篩選）",

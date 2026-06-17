@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "Nem érhetők el vezérlőpultok",
         "no_dashboards_create_first": "Először hozzon létre egy vezérlőpultot, hogy diagramokat adjon hozzá.",
         "no_data_available": "Nem érhető el adat",
-        "no_data_returned": "Nem lett adat visszaadva a lekérdezésből",
+        "no_data_returned": "Nincs megjeleníthető adat, kérem, módosítsa a beállításait.",
         "no_data_returned_for_chart": "Nem lett adat visszaadva a diagramhoz",
         "no_data_source_available": "Nincs visszajelzési könyvtár hozzárendelve ehhez a munkaterülethez.",
         "no_grouping": "Nincs (csak szűrő)",

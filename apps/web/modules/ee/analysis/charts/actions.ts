@@ -317,6 +317,7 @@ const ZGenerateAIQueryResponse = z.object({
     )
     .nullable(),
   chartType: ZChartType,
+  chartName: z.string().min(1).max(255),
   filters: z
     .array(
       z.object({
@@ -421,6 +422,7 @@ export const generateAIChartAction = authenticatedActionClient
         query: cleanQuery,
         chartType,
         data: Array.isArray(data) ? data : [],
+        suggestedName: output.chartName,
       };
     }
   );

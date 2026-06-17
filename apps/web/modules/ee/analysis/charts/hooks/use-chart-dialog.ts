@@ -159,6 +159,9 @@ export function useChartDialog({
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
     setSelectedChartType(data.chartType);
+    if (data.suggestedName && !chartName.trim()) {
+      setChartName(data.suggestedName);
+    }
   };
 
   const handleSaveChart = async () => {

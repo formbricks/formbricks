@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "No hay paneles de control disponibles",
         "no_dashboards_create_first": "Crea primero un panel de control para añadirle gráficos.",
         "no_data_available": "No hay datos disponibles",
-        "no_data_returned": "La consulta no ha devuelto datos",
+        "no_data_returned": "No hay datos para mostrar, por favor cambia tu configuración.",
         "no_data_returned_for_chart": "No se han devuelto datos para el gráfico",
         "no_data_source_available": "No hay ningún directorio de feedback asignado a este espacio de trabajo.",
         "no_grouping": "Ninguno (solo filtro)",

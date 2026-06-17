@@ -86,7 +86,7 @@ export function ChartPreview({
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h3 className="mb-4 font-semibold text-gray-900">{t("workspace.analysis.charts.chart_preview")}</h3>
       {renderContent()}
     </div>

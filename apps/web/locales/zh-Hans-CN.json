@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "暂无可用 Dashboard",
         "no_dashboards_create_first": "请先创建一个 Dashboard，然后再添加图表。",
         "no_data_available": "暂无数据",
-        "no_data_returned": "查询未返回数据",
+        "no_data_returned": "没有可显示的数据,请更改你的设置。",
         "no_data_returned_for_chart": "该图表未返回数据",
         "no_data_source_available": "此工作区未分配反馈目录。",
         "no_grouping": "无（仅筛选）",

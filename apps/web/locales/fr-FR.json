@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "Aucun tableau de bord disponible",
         "no_dashboards_create_first": "Créez d'abord un tableau de bord pour y ajouter des graphiques.",
         "no_data_available": "Aucune donnée disponible",
-        "no_data_returned": "Aucune donnée retournée par la requête",
+        "no_data_returned": "Aucune donnée à afficher, merci de modifier tes paramètres.",
         "no_data_returned_for_chart": "Aucune donnée retournée pour le graphique",
         "no_data_source_available": "Aucun répertoire de retours n'est attribué à cet espace de travail.",
         "no_grouping": "Aucun (filtre uniquement)",

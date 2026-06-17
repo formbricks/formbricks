@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "Geen dashboards beschikbaar",
         "no_dashboards_create_first": "Maak eerst een dashboard aan om er diagrammen aan toe te voegen.",
         "no_data_available": "Geen gegevens beschikbaar",
-        "no_data_returned": "Geen gegevens geretourneerd uit query",
+        "no_data_returned": "Geen gegevens om weer te geven, pas je instellingen aan.",
         "no_data_returned_for_chart": "Geen gegevens geretourneerd voor diagram",
         "no_data_source_available": "Er is geen feedbackmap toegewezen aan deze workspace.",
         "no_grouping": "Geen (alleen filteren)",

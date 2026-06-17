@@ -178,6 +178,7 @@ describe("chart Cube actions", () => {
         dimensions: ["FeedbackRecords.sourceType"],
         timeDimensions: null,
         chartType: "bar",
+        chartName: "Responses by Source",
         filters: null,
       },
     });
@@ -194,6 +195,7 @@ describe("chart Cube actions", () => {
     expect(result).toMatchObject({
       chartType: "bar",
       data: [{ "FeedbackRecords.count": 1 }],
+      suggestedName: "Responses by Source",
     });
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
       query: {

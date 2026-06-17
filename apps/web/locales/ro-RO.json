@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "Nu există tablouri de bord disponibile",
         "no_dashboards_create_first": "Creează mai întâi un tablou de bord pentru a adăuga grafice.",
         "no_data_available": "Nu există date disponibile",
-        "no_data_returned": "Nu au fost returnate date din interogare",
+        "no_data_returned": "Nu există date de afișat, te rugăm să modifici setările.",
         "no_data_returned_for_chart": "Nu au fost returnate date pentru grafic",
         "no_data_source_available": "Niciun director de feedback nu este atribuit acestui spațiu de lucru.",
         "no_grouping": "Niciuna (doar filtru)",

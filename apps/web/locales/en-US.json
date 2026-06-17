@@ -1688,7 +1688,7 @@
         "no_dashboards_available": "No dashboards available",
         "no_dashboards_create_first": "Create a dashboard first to add charts to it.",
         "no_data_available": "No data available",
-        "no_data_returned": "No data returned from query",
+        "no_data_returned": "No data to display, please change your settings.",
         "no_data_returned_for_chart": "No data returned for chart",
         "no_data_source_available": "No feedback directory is assigned to this workspace.",
         "no_grouping": "None (filter only)",
