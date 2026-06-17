@@ -3,6 +3,7 @@
  */
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 
 const mockCreateChartAction = vi.fn();
 const mockUpdateChartAction = vi.fn();
@@ -69,16 +70,16 @@ const baseProps = {
   directories: [{ id: DIRECTORY_ID, name: "Dir 1" }],
 };
 
-const sampleChartData = {
+const sampleChartData: AnalyticsResponse = {
   query: { foo: "bar" },
-  chartType: "bar" as const,
+  chartType: "bar",
   data: [],
 };
 
 const setHookReady = async (result: { current: ReturnType<typeof useChartDialog> }, withChartData = true) => {
   await act(async () => {
     if (withChartData) {
-      result.current.handleChartGenerated(sampleChartData as any);
+      result.current.handleChartGenerated(sampleChartData);
     }
     result.current.setChartName("My Chart");
   });
@@ -243,7 +244,7 @@ describe("useChartDialog", () => {
       // by providing initialChart so the effect short-circuits.
       await act(async () => {
         result.current.setCurrentChartId(CHART_ID);
-        result.current.handleChartGenerated(sampleChartData as any);
+        result.current.handleChartGenerated(sampleChartData);
         result.current.setChartName("My Chart");
         result.current.setSelectedDashboardId(DASHBOARD_ID);
       });
@@ -263,7 +264,7 @@ describe("useChartDialog", () => {
       const { result } = renderHook(() => useChartDialog(baseProps));
 
       await act(async () => {
-        result.current.handleChartGenerated(sampleChartData as any);
+        result.current.handleChartGenerated(sampleChartData);
         result.current.setSelectedDashboardId(DASHBOARD_ID);
       });
 
@@ -320,7 +321,7 @@ describe("useChartDialog", () => {
         result.current.handleChartGenerated({
           ...sampleChartData,
           suggestedName: "Responses by Source",
-        } as any);
+        });
       });
 
       expect(result.current.chartName).toBe("Responses by Source");
@@ -337,10 +338,27 @@ describe("useChartDialog", () => {
         result.current.handleChartGenerated({
           ...sampleChartData,
           suggestedName: "Responses by Source",
-        } as any);
+        });
       });
 
       expect(result.current.chartName).toBe("Custom Chart");
+    });
+
+    test("preserves custom chart name when user types before delayed AI response completes", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await act(async () => {
+        result.current.setChartName("User Typed Name");
+      });
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "AI Generated Name",
+        });
+      });
+
+      expect(result.current.chartName).toBe("User Typed Name");
     });
   });
 
@@ -349,7 +367,7 @@ describe("useChartDialog", () => {
       const { result } = renderHook(() => useChartDialog(baseProps));
 
       await act(async () => {
-        result.current.handleChartGenerated(sampleChartData as any);
+        result.current.handleChartGenerated(sampleChartData);
       });
 
       await act(async () => {
@@ -387,7 +405,7 @@ describe("useChartDialog", () => {
       // Skip async load-chart branch by setting currentChartId directly
       await act(async () => {
         result.current.setCurrentChartId(CHART_ID);
-        result.current.handleChartGenerated(sampleChartData as any);
+        result.current.handleChartGenerated(sampleChartData);
         result.current.setChartName("My Chart");
       });
 

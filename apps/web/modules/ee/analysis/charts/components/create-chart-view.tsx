@@ -85,7 +85,11 @@ export function CreateChartView({
 
   const CREATE_CHART_FORM_ID = "create-chart-form";
   const [chartNameError, setChartNameError] = useState<string | null>(null);
-  const [queryState, setQueryState] = useState<ChartQueryState>({ isLoading: false, error: null });
+  const [queryState, setQueryState] = useState<ChartQueryState>({
+    isLoading: false,
+    error: null,
+    isPending: false,
+  });
 
   if (isLoadingChart && isEditing && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
@@ -235,7 +239,7 @@ export function CreateChartView({
           </div>
         </DialogBody>
 
-        {chartData && !queryState.error && (
+        {chartData && !queryState.error && !queryState.isPending && (
           <ChartDialogFooter
             formId={CREATE_CHART_FORM_ID}
             isSaving={isSaving}

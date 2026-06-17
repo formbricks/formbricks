@@ -175,4 +175,47 @@ describe("useChartQuery", () => {
     expect(result.current.chartData).toEqual(secondData);
     expect(result.current.isLoading).toBe(false);
   });
+
+  test("ignores stale responses when scope changes during an in-flight request", async () => {
+    let resolveFirst: ((value: { data: typeof sampleData }) => void) | undefined;
+    const firstPromise = new Promise<{ data: typeof sampleData }>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const NEW_DIRECTORY_ID = "frd-2";
+    const secondData = [{ "FeedbackRecords.count": 9, "FeedbackRecords.sourceType": "link" }];
+
+    mockExecuteQueryAction.mockReturnValueOnce(firstPromise).mockResolvedValueOnce({ data: secondData });
+
+    const { result, rerender } = renderHook(
+      ({ feedbackDirectoryId }: { feedbackDirectoryId: string | null }) =>
+        useChartQuery(WORKSPACE_ID, feedbackDirectoryId),
+      { initialProps: { feedbackDirectoryId: DIRECTORY_ID } }
+    );
+
+    await act(async () => {
+      void result.current.runQuery(sampleQuery);
+    });
+
+    rerender({ feedbackDirectoryId: NEW_DIRECTORY_ID });
+
+    await act(async () => {
+      resolveFirst?.({ data: sampleData });
+      await Promise.resolve();
+    });
+
+    expect(result.current.chartData).toBeNull();
+
+    let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
+    await act(async () => {
+      response = await result.current.runQuery(sampleQuery);
+    });
+
+    expect(response).toEqual({ query: sampleQuery, data: secondData });
+    expect(result.current.chartData).toEqual(secondData);
+    expect(mockExecuteQueryAction).toHaveBeenLastCalledWith({
+      workspaceId: WORKSPACE_ID,
+      query: sampleQuery,
+      feedbackDirectoryId: NEW_DIRECTORY_ID,
+    });
+  });
 });
