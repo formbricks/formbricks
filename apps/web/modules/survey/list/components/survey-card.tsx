@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
@@ -18,9 +19,17 @@ interface SurveyCardProps {
   publicDomain: string;
   isReadOnly: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
+  updateSurveyStatus: (surveyId: string, status: TSurveyStatus) => Promise<void>;
   locale: TUserLocale;
 }
-export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, locale }: SurveyCardProps) => {
+export const SurveyCard = ({
+  survey,
+  publicDomain,
+  isReadOnly,
+  deleteSurvey,
+  updateSurveyStatus,
+  locale,
+}: SurveyCardProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -103,7 +112,9 @@ export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, loc
           publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
+          isReadOnly={isReadOnly}
           deleteSurvey={deleteSurvey}
+          updateSurveyStatus={updateSurveyStatus}
         />
       </div>
     </div>
