@@ -308,6 +308,131 @@ llm:
         port: router-port
 
 ##########################################################
+# Optional AI taxonomy service
+##########################################################
+taxonomy:
+  # Deploy the standalone taxonomy service. Disabled by default.
+  enabled: false
+  replicas: 1
+
+  # When enabled, automatically points Hub API at the in-cluster taxonomy service.
+  # Disable only when you want to wire Hub manually through hub.env.
+  autoConfigureHub: true
+
+  image:
+    repository: "ghcr.io/formbricks/taxonomy"
+    tag: "v0.1.0"
+    digest: ""
+    pullPolicy: IfNotPresent
+
+  port: 8000
+
+  service:
+    type: ClusterIP
+    port: 8000
+    annotations: {}
+    additionalLabels: {}
+
+  auth:
+    # Existing secret must contain serviceTokenKey and hubInternalApiTokenKey.
+    existingSecret: ""
+    serviceTokenKey: TAXONOMY_SERVICE_TOKEN
+    hubInternalApiTokenKey: HUB_INTERNAL_API_TOKEN
+    serviceToken: ""
+    hubInternalApiToken: ""
+
+  llm:
+    provider: openai-compatible
+    model: qwen3-14b-awq
+    # Defaults to the bundled vLLM router URL when llm.enabled=true. Required otherwise.
+    baseUrl: ""
+    # Existing secret must contain apiKeySecretKey. When unset, the chart creates a non-empty dummy key.
+    existingSecret: ""
+    apiKeySecretKey: TAXONOMY_LLM_API_KEY
+    apiKey: ""
+    temperature: "0.1"
+    maxAttempts: "4"
+    timeoutSeconds: "60"
+
+  embeddingDimension: "768"
+  minEmbeddedRecords: "20"
+  maxRecords: "50000"
+  maxClusters: "80"
+  randomSeed: "42"
+  hubClientTimeoutSeconds: "120"
+
+  envFrom: []
+  env: {}
+
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      memory: 4Gi
+
+  autoscaling:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minReplicas: 1
+    maxReplicas: 3
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: Resource
+        resource:
+          name: memory
+          target:
+            type: Utilization
+            averageUtilization: 80
+    behavior: {}
+
+  # Disabled by default because the default taxonomy replica count is 1.
+  pdb:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minAvailable: 1
+    # maxUnavailable: 1
+    # unhealthyPodEvictionPolicy: AlwaysAllow
+
+  probes:
+    startupProbe:
+      failureThreshold: 30
+      periodSeconds: 10
+      httpGet:
+        path: /health
+        port: http
+    readinessProbe:
+      failureThreshold: 6
+      periodSeconds: 10
+      timeoutSeconds: 5
+      httpGet:
+        path: /health
+        port: http
+    livenessProbe:
+      failureThreshold: 6
+      periodSeconds: 20
+      timeoutSeconds: 5
+      httpGet:
+        path: /health
+        port: http
+
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+##########################################################
 # Horizontal Pod Autoscaler (HPA)
 ##########################################################
 autoscaling:
