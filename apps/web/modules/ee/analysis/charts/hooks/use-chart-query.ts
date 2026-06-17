@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -24,6 +24,10 @@ export function useChartQuery(
   const [error, setError] = useState<string | null>(null);
   // Queries run reactively while the user edits the config; only the latest response may win.
   const runSeqRef = useRef(0);
+
+  useEffect(() => {
+    runSeqRef.current++;
+  }, [workspaceId, feedbackDirectoryId]);
 
   const runQuery = async (cubeQuery: TChartQuery): Promise<QueryResult | null> => {
     if (!feedbackDirectoryId) {

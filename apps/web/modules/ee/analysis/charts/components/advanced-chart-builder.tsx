@@ -22,6 +22,7 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 export interface ChartQueryState {
   isLoading: boolean;
   error: string | null;
+  isPending: boolean;
 }
 
 interface AdvancedChartBuilderProps {
@@ -99,10 +100,16 @@ export function AdvancedChartBuilder({
   );
 
   const { isLoading, error, runQuery } = useChartQuery(workspaceId, feedbackDirectoryId, initialQuery);
+  const [isConfigDirty, setIsConfigDirty] = useState(false);
+  const chartTypeRef = useRef(chartType);
 
   useEffect(() => {
-    onQueryStateChange?.({ isLoading, error });
-  }, [isLoading, error, onQueryStateChange]);
+    chartTypeRef.current = chartType;
+  }, [chartType]);
+
+  useEffect(() => {
+    onQueryStateChange?.({ isLoading, error, isPending: isConfigDirty || isLoading });
+  }, [isLoading, error, isConfigDirty, onQueryStateChange]);
 
   const [dimensionsOpen, setDimensionsOpen] = useState(
     () => (parsedInitial?.selectedDimensions?.length ?? 0) > 0
@@ -141,23 +148,29 @@ export function AdvancedChartBuilder({
   }, [state, dimensionsOpen]);
 
   // Latest-value ref so the debounce timer is not reset by parent re-renders or
-  // identity changes of runQuery/onChartGenerated/chartType.
+  // identity changes of runQuery/onChartGenerated.
   const executeQueryRef = useRef<() => void>(() => {});
   useEffect(() => {
     executeQueryRef.current = () => {
       lastRunQueryJsonRef.current = currentQueryJson;
+      setIsConfigDirty(false);
       void runQuery(currentQuery).then((result) => {
         if (result) {
-          onChartGenerated?.({ ...result, chartType });
+          onChartGenerated?.({ ...result, chartType: chartTypeRef.current });
         }
       });
     };
   });
 
   useEffect(() => {
-    if (!feedbackDirectoryId) return;
-    if (!isConfigComplete) return;
-    if (currentQueryJson === lastRunQueryJsonRef.current) return;
+    if (!feedbackDirectoryId || !isConfigComplete) {
+      setIsConfigDirty(false);
+      return;
+    }
+
+    const hasDrift = currentQueryJson !== lastRunQueryJsonRef.current;
+    setIsConfigDirty(hasDrift);
+    if (!hasDrift) return;
 
     const timeout = setTimeout(() => {
       executeQueryRef.current();
