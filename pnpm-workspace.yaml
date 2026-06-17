@@ -2,6 +2,20 @@ packages:
   - "apps/*"
   - "packages/*"
 
+allowBuilds:
+  '@prisma/engines': true
+  '@sentry/cli': true
+  better-sqlite3: true
+  core-js: true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: true
+  protobufjs: true
+  sharp: true
+  sqlite3: true
+  unrs-resolver: true
+  '@prisma/client': true
+
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
 overrides:
@@ -38,19 +52,20 @@ overrides:
   # ENG-1111 / GHSA-58qx-3vcg-4xpx: ws is patched in 8.20.1+.
   ws@8: 8.21.0
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
-  "@babel/core": 7.29.6        # ENG-1376 / GHSA-4x5r-pxfx-6jf8
+  "@babel/core": 7.29.6 # ENG-1376 / GHSA-4x5r-pxfx-6jf8
   "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf
-  dompurify: 3.4.9             # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9)
-  esbuild: 0.28.1             # ENG-1327 / GHSA-g7r4-m6w7-qqqr
+  dompurify: 3.4.9 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9)
+  esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
 
 patchedDependencies:
   next-auth@4.24.13: patches/next-auth@4.24.13.patch
 
-# Allow lifecycle scripts for packages that need to build native binaries
-# Required for pnpm v10+ which blocks scripts by default
-onlyBuiltDependencies:
-  - sharp
-  - esbuild
-  - prisma
-  - "@prisma/client"
-  - "@prisma/engines"
+autoInstallPeers: true
+linkWorkspacePackages: true
+shamefullyHoist: true
+sharedWorkspaceShrinkwrap: true
+access: public
+enablePrePostScripts: true
+legacyPeerDeps: true
+nodeLinker: hoisted
+saveExact: true
