@@ -12,6 +12,10 @@ const ClientWorkspaceRedirect = ({ userWorkspaceIds }: ClientWorkspaceRedirectPr
   const router = useRouter();
 
   useEffect(() => {
+    if (userWorkspaceIds.length === 0) {
+      return;
+    }
+
     const lastWorkspaceId = localStorage.getItem(FORMBRICKS_WORKSPACE_ID_LS);
 
     if (lastWorkspaceId && userWorkspaceIds.includes(lastWorkspaceId)) {
