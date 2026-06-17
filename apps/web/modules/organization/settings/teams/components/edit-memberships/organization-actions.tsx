@@ -134,6 +134,7 @@ export const OrganizationActions = ({
         toast.success(
           `${successInvites.length} ${t("workspace.settings.general.member_invited_successfully")}`
         );
+        router.refresh();
       }
     }
   };

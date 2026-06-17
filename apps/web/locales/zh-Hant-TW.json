@@ -2526,6 +2526,7 @@
         "ai_smart_tools_enabled_description": "AI 幫你更快完成更多事。絕不會接觸 Formbricks 收集的資料，只用於像是將問卷翻譯成其他語言等用途。",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
+        "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",
         "bulk_invite_unknown_teams": "Unknown teams in CSV: {teams}. Create them first or remove them from the file.",
         "bulk_invite_warning_description": "在免費方案中，所有組織成員始終會被指派「擁有者」角色。",
         "cannot_delete_only_organization": "這是您唯一的組織，無法刪除。請先建立新組織。",

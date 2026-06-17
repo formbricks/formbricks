@@ -11,6 +11,7 @@ import type { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team"
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { CsvTable } from "@/modules/ui/components/csv-table";
 import { DialogFooter } from "@/modules/ui/components/dialog";
 
 interface BulkInviteTabProps {
@@ -21,12 +22,17 @@ interface BulkInviteTabProps {
   isFormbricksCloud: boolean;
 }
 
-interface BulkCsvRow {
-  name: string;
-  email: string;
-  role: string;
-  teams?: string;
-}
+type BulkCsvRow = Record<string, string | undefined>;
+
+const PREVIEW_ROW_LIMIT = 11;
+
+const readCell = (row: BulkCsvRow, ...keys: string[]): string => {
+  for (const key of keys) {
+    const value = row[key];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return "";
+};
 
 const parseTeamCell = (cell: string | undefined): string[] => {
   if (!cell) return [];
@@ -52,6 +58,8 @@ export const BulkInviteTab = ({
   const handleFileSelected = (file: File | undefined) => {
     if (!file) return;
 
+    setPreviewRows([]);
+
     if (!file.name.toLowerCase().endsWith(".csv")) {
       setError(t("common.invalid_file_type"));
       return;
@@ -63,15 +71,12 @@ export const BulkInviteTab = ({
     Papa.parse<BulkCsvRow>(file, {
       skipEmptyLines: true,
       header: true,
-      transformHeader: (header) => {
-        if (header === "Full Name") return "name";
-        if (header === "Email Address") return "email";
-        if (header === "Role") return "role";
-        if (header === "Teams") return "teams";
-        return header;
-      },
       complete: (results: ParseResult<BulkCsvRow>) => {
         setPreviewRows(results.data);
+      },
+      error: () => {
+        setError(t("workspace.settings.general.please_check_csv_file"));
+        setPreviewRows([]);
       },
     });
   };
@@ -103,13 +108,15 @@ export const BulkInviteTab = ({
     const unknownTeamNames = new Set<string>();
 
     const members = previewRows.map((csv) => {
-      let orgRole = isAccessControlAllowed ? (csv.role ?? "").trim().toLowerCase() : "owner";
+      const roleCell = readCell(csv, "Role", "role");
+      let orgRole = isAccessControlAllowed ? roleCell.trim().toLowerCase() : "owner";
       if (!isFormbricksCloud) {
         orgRole = orgRole === "billing" ? "owner" : orgRole;
       }
 
+      const teamsCell = readCell(csv, "Teams", "teams");
       const teamIds = isAccessControlAllowed
-        ? parseTeamCell(csv.teams).reduce<string[]>((acc, teamName) => {
+        ? parseTeamCell(teamsCell).reduce<string[]>((acc, teamName) => {
             const match = teamByName.get(teamName.toLowerCase());
             if (match) {
               if (!acc.includes(match.id)) {
@@ -123,8 +130,8 @@ export const BulkInviteTab = ({
         : [];
 
       return {
-        name: (csv.name ?? "").trim(),
-        email: (csv.email ?? "").trim(),
+        name: readCell(csv, "Full Name", "name").trim(),
+        email: readCell(csv, "Email Address", "email").trim(),
         role: orgRole as TOrganizationRole,
         teamIds,
       };
@@ -150,6 +157,7 @@ export const BulkInviteTab = ({
   };
 
   const previewCount = previewRows.length;
+  const extraRowCount = Math.max(previewCount - PREVIEW_ROW_LIMIT, 0);
 
   return (
     <>
@@ -188,11 +196,25 @@ export const BulkInviteTab = ({
                 </div>
               </label>
             ) : (
-              <div className="flex flex-col items-center gap-2 py-2">
+              <div className="flex flex-col items-center gap-3 py-2">
                 <h3 className="font-medium text-slate-700">{csvFile.name}</h3>
-                <p className="text-xs text-slate-500">
-                  {t("workspace.settings.general.bulk_invite_rows_detected", { count: previewCount })}
-                </p>
+                {previewCount > 0 ? (
+                  <>
+                    <div className="max-h-[300px] w-full overflow-auto rounded-md border border-slate-300">
+                      <CsvTable data={previewRows.slice(0, PREVIEW_ROW_LIMIT)} />
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {t("workspace.settings.general.bulk_invite_rows_detected", { count: previewCount })}
+                      {extraRowCount > 0
+                        ? ` · ${t("workspace.settings.general.bulk_invite_rows_more", { count: extraRowCount })}`
+                        : ""}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    {t("workspace.settings.general.bulk_invite_rows_detected", { count: 0 })}
+                  </p>
+                )}
               </div>
             )}
           </div>

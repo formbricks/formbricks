@@ -1,10 +1,10 @@
-import { TContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
+type CsvRow = Record<string, string | number | null | undefined>;
 
 interface CsvTableProps {
-  data: TContactCSVUploadResponse;
+  data: CsvRow[];
 }
 
-export const CsvTable = ({ data }: CsvTableProps) => {
+export const CsvTable = ({ data }: Readonly<CsvTableProps>) => {
   if (data.length === 0) {
     return <p>No data available</p>;
   }

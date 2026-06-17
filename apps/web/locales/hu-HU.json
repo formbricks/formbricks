@@ -2526,6 +2526,7 @@
         "ai_smart_tools_enabled_description": "Mesterséges intelligencia ahhoz, hogy segítsen Önnek többet elérni kevesebb idő alatt. Soha sem érinti a Formbricks segítségével gyűjtött adatokat. Csak például a kérdőívek más nyelvekre történő fordításához kerül felhasználásra.",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
+        "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",
         "bulk_invite_unknown_teams": "Unknown teams in CSV: {teams}. Create them first or remove them from the file.",
         "bulk_invite_warning_description": "Az ingyenes csomagban az összes szervezeti tag mindig a „Tulajdonos” szerephez van hozzárendelve.",
         "cannot_delete_only_organization": "Ez az egyetlen szervezete, nem lehet törölni. Először hozzon létre egy új szervezetet.",

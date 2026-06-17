@@ -2526,6 +2526,7 @@
         "ai_smart_tools_enabled_description": "ИИ помогает тебе делать больше за меньшее время. Никогда не использует данные, собранные с помощью Formbricks. Применяется, например, для перевода опросов на другие языки.",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
+        "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",
         "bulk_invite_unknown_teams": "Unknown teams in CSV: {teams}. Create them first or remove them from the file.",
         "bulk_invite_warning_description": "В бесплатном тарифе всем участникам организации всегда назначается роль \"Владелец\".",
         "cannot_delete_only_organization": "Это ваша единственная организация, её нельзя удалить. Сначала создайте новую организацию.",

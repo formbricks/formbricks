@@ -2526,6 +2526,7 @@
         "ai_smart_tools_enabled_description": "AI 帮你更高效地完成更多任务。绝不会接触 Formbricks 收集的数据，仅用于如问卷翻译等功能。",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
+        "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",
         "bulk_invite_unknown_teams": "Unknown teams in CSV: {teams}. Create them first or remove them from the file.",
         "bulk_invite_warning_description": "在免费计划中，所有组织成员都会被分配为 \"Owner \"角色。",
         "cannot_delete_only_organization": "这是 您 唯一的 组织，不可 删除。请 先 创建一个新的 组织。",

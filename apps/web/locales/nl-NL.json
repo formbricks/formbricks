@@ -2526,6 +2526,7 @@
         "ai_smart_tools_enabled_description": "AI om je te helpen meer te bereiken in minder tijd. Raakt nooit data aan die met Formbricks is verzameld. Wordt alleen gebruikt om bijvoorbeeld enquêtes naar andere talen te vertalen.",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
+        "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",
         "bulk_invite_unknown_teams": "Unknown teams in CSV: {teams}. Create them first or remove them from the file.",
         "bulk_invite_warning_description": "Bij het gratis abonnement krijgen alle organisatieleden altijd de rol 'Eigenaar' toegewezen.",
         "cannot_delete_only_organization": "Dit is uw enige organisatie. Deze kan niet worden verwijderd. Maak eerst een nieuwe organisatie aan.",
