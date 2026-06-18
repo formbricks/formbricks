@@ -217,27 +217,44 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
   },
 
   async enableWorkflow({ workflowId, workspaceId }, { definition, publishedBy }) {
-    // Atomic: snapshot an immutable version (version = max + 1) and flip status in one transaction,
-    // so an enabled workflow always has a live version to run against. The executable `definition`
-    // is validated by the handler; the service trusts it.
+    // Enable atomically. The state guard lives INSIDE the transaction: a conditional updateMany flips
+    // exactly one draft/disabled row to enabled. The row lock serializes concurrent enables, so a
+    // request that lost the race reads `count: 0` and is rejected here — a workflow can never be
+    // enabled twice (nor gain a duplicate version) by a check that passed before the transaction. The
+    // version snapshot (version = max + 1) is written in the same transaction, so an enabled workflow
+    // always has a live version. The executable `definition` is validated by the handler.
     try {
       return await prisma.$transaction(async (tx) => {
+        const { count } = await tx.workflow.updateMany({
+          where: { id: workflowId, workspaceId, status: { in: ["draft", "disabled"] } },
+          data: { status: "enabled" },
+        });
+        if (count !== 1) {
+          throw new WorkflowConflictError("The workflow is no longer in a state that can be enabled.");
+        }
+
         const latest = await tx.workflowVersion.findFirst({
           where: { workflowId },
           orderBy: { version: "desc" },
           select: { version: true },
         });
-
         await tx.workflowVersion.create({
           data: { workflowId, workspaceId, version: (latest?.version ?? 0) + 1, definition, publishedBy },
         });
 
-        return updateWorkflowRow(tx.workflow, { workflowId, workspaceId }, { status: "enabled" });
+        const enabled = await tx.workflow.findUnique({
+          where: { id: workflowId },
+          include: LAST_RUN_INCLUDE,
+        });
+        if (!enabled) {
+          throw new WorkflowConflictError("The workflow no longer exists.");
+        }
+        return enabled;
       });
     } catch (error) {
-      // Concurrent enable: two requests read the same max version and both insert version+1; the
-      // loser violates @@unique([workflowId, version]). The transaction has already rolled back
-      // cleanly, so surface a retryable 409 instead of a generic 500.
+      // Belt-and-suspenders for the simultaneous case: if two transactions read the same max version
+      // before either commits, the second `workflowVersion.create` violates @@unique([workflowId,
+      // version]). The transaction has rolled back cleanly, so surface a retryable 409.
       if (isUniqueConstraintError(error)) {
         throw new WorkflowConflictError("The workflow was just enabled by another request. Please retry.");
       }

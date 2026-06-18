@@ -52,9 +52,10 @@ const findUnique = vi.fn<WorkflowDelegate["findUnique"]>();
 const create = vi.fn<WorkflowDelegate["create"]>();
 const update = vi.fn<WorkflowDelegate["update"]>();
 const deleteFn = vi.fn<WorkflowDelegate["delete"]>();
+const updateMany = vi.fn<WorkflowDelegate["updateMany"]>();
 const versionFindFirst = vi.fn<WorkflowVersionDelegate["findFirst"]>();
 const versionCreate = vi.fn<WorkflowVersionDelegate["create"]>();
-const workflow = { findMany, findUnique, create, update, delete: deleteFn };
+const workflow = { findMany, findUnique, create, update, delete: deleteFn, updateMany };
 const workflowVersion = { findFirst: versionFindFirst, create: versionCreate };
 const prisma: WorkflowsDb = {
   workflow,
@@ -228,28 +229,34 @@ describe("setStatus", () => {
 });
 
 describe("enableWorkflow", () => {
-  test("snapshots version max+1 and flips status to enabled in one transaction", async () => {
+  test("guards the transition then snapshots version max+1 in one transaction", async () => {
+    updateMany.mockResolvedValue({ count: 1 });
     versionFindFirst.mockResolvedValue({ version: 3 });
-    update.mockResolvedValue(makeRow({ status: "enabled" }));
+    findUnique.mockResolvedValue(makeRow({ status: "enabled" }));
 
     const result = await service.enableWorkflow(
       { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
       { definition, publishedBy: "cm9zr52kh000508l8e3q7bw9j" }
     );
 
+    // The status guard runs inside the transaction, scoped to draft/disabled rows only.
+    expect(updateMany.mock.calls[0][0]).toEqual({
+      where: { id: "cm9zr4t2b000208l8h2m1aq3c", workspaceId, status: { in: ["draft", "disabled"] } },
+      data: { status: "enabled" },
+    });
     expect(versionCreate.mock.calls[0][0].data).toMatchObject({
       workflowId: "cm9zr4t2b000208l8h2m1aq3c",
       workspaceId,
       version: 4,
       publishedBy: "cm9zr52kh000508l8e3q7bw9j",
     });
-    expect(update.mock.calls[0][0].data).toEqual({ status: "enabled" });
     expect(result.status).toBe("enabled");
   });
 
   test("uses version 1 when no prior version exists and stores null publishedBy", async () => {
+    updateMany.mockResolvedValue({ count: 1 });
     versionFindFirst.mockResolvedValue(null);
-    update.mockResolvedValue(makeRow({ status: "enabled" }));
+    findUnique.mockResolvedValue(makeRow({ status: "enabled" }));
 
     await service.enableWorkflow(
       { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
@@ -260,7 +267,20 @@ describe("enableWorkflow", () => {
     expect(versionCreate.mock.calls[0][0].data.publishedBy).toBeNull();
   });
 
-  test("maps a concurrent-enable unique violation (P2002) to a conflict error", async () => {
+  test("rejects with a conflict (and writes no version) when the guard matches no row", async () => {
+    updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.enableWorkflow(
+        { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId },
+        { definition, publishedBy: null }
+      )
+    ).rejects.toBeInstanceOf(WorkflowConflictError);
+    expect(versionCreate).not.toHaveBeenCalled();
+  });
+
+  test("maps a simultaneous-enable unique violation (P2002) to a conflict error", async () => {
+    updateMany.mockResolvedValue({ count: 1 });
     versionFindFirst.mockResolvedValue({ version: 1 });
     versionCreate.mockRejectedValue(Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
 
@@ -273,6 +293,7 @@ describe("enableWorkflow", () => {
   });
 
   test("rethrows non-unique transaction errors unchanged", async () => {
+    updateMany.mockResolvedValue({ count: 1 });
     const boom = new Error("connection reset");
     versionFindFirst.mockRejectedValue(boom);
 

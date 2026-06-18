@@ -108,6 +108,15 @@ export interface WorkflowDelegate {
     };
     include: LastRunInclude;
   }) => Promise<WorkflowRowWithLastRun>;
+  /**
+   * Conditional status transition. `enable` uses it inside its transaction to flip a draft/disabled
+   * row to enabled and assert exactly one row changed — the row lock serializes concurrent enables,
+   * so the guard can't be bypassed the way a pre-transaction status read could.
+   */
+  updateMany: (args: {
+    where: { id: string; workspaceId: string; status: { in: TWorkflowStatus[] } };
+    data: { status: TWorkflowStatus };
+  }) => Promise<{ count: number }>;
   delete: (args: {
     where: { id_workspaceId: { id: string; workspaceId: string } };
   }) => Promise<{ id: string }>;
