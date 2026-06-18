@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import type { TFunction } from "i18next";
 import {
   ArrowRightLeftIcon,
   CopyIcon,
@@ -55,12 +56,6 @@ interface SurveyDropDownMenuProps {
 // Non-draft statuses that can be targeted by a status change from the list.
 const CHANGEABLE_STATUSES: TSurveyStatus[] = ["inProgress", "paused", "completed"];
 
-const STATUS_LABEL_KEY: Record<(typeof CHANGEABLE_STATUSES)[number], string> = {
-  inProgress: "common.in_progress",
-  paused: "common.paused",
-  completed: "common.completed",
-};
-
 export const SurveyDropDownMenu = ({
   survey,
   publicDomain,
@@ -91,6 +86,21 @@ export const SurveyDropDownMenu = ({
   // Show the status submenu for non-draft surveys when the user has write access.
   const canChangeStatus = !isReadOnly && survey.status !== "draft";
   const hasVisibleActions = canManageSurvey || canPreviewOrCopyLink || canChangeStatus;
+
+  const getStatusLabel = (t: TFunction, status: TSurveyStatus): string => {
+    switch (status) {
+      case "inProgress":
+        return t("common.in_progress");
+      case "paused":
+        return t("common.paused");
+      case "completed":
+        return t("common.completed");
+      case "draft":
+        return t("common.draft");
+      default:
+        return "";
+    }
+  };
 
   const handleStatusChange = async (status: TSurveyStatus) => {
     setIsDropDownOpen(false);
@@ -206,7 +216,7 @@ export const SurveyDropDownMenu = ({
                         }}>
                         <span className="flex items-center gap-2">
                           <SurveyStatusIndicator status={status} />
-                          {t(STATUS_LABEL_KEY[status])}
+                          {getStatusLabel(t, status)}
                         </span>
                       </DropdownMenuRadioItem>
                     ))}
