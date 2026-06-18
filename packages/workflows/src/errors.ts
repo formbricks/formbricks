@@ -16,6 +16,8 @@ export type WorkflowProblemCode =
   | "bad_request"
   | "forbidden"
   | "conflict"
+  | "invalid_workflow_state"
+  | "workflow_not_executable"
   | "unprocessable_content"
   | "internal_server_error";
 
@@ -64,9 +66,9 @@ export class WorkflowInvalidInputError extends WorkflowApiError {
 }
 
 /**
- * 409 for write conflicts (e.g. a future workspace-unique-name constraint). Not currently thrown in
- * Scope 1 — the `Workflow` model has no unique constraint beyond `(id, workspaceId)` — but kept so
- * ENG-1222/1223 reuse the same mapper.
+ * 409 for write conflicts. Thrown when a concurrent enable loses the race to insert the next
+ * `WorkflowVersion` (`@@unique([workflowId, version])`): the transaction rolls back cleanly and the
+ * caller can safely retry. Also reusable for future unique constraints (e.g. a workspace-unique name).
  */
 export class WorkflowConflictError extends WorkflowApiError {
   readonly status = 409;
@@ -75,6 +77,16 @@ export class WorkflowConflictError extends WorkflowApiError {
   constructor(message = "The request conflicts with the current state of the resource") {
     super(message);
   }
+}
+
+/**
+ * 422 for an operation that is invalid for the workflow's current lifecycle state — e.g. patching
+ * the definition of an `enabled` workflow, or any write to an `archived` one. Distinct from a bad
+ * request (the payload is well-formed; the state machine forbids the transition).
+ */
+export class WorkflowInvalidStateError extends WorkflowApiError {
+  readonly status = 422;
+  readonly code = "invalid_workflow_state" as const;
 }
 
 /**
@@ -109,6 +121,25 @@ const invalidParamsFromZodError = (error: ZodError): WorkflowInvalidParam[] =>
     name: issue.path.map(String).join("."),
     reason: issue.message,
   }));
+
+/**
+ * 422 when a workflow cannot be enabled because its definition is not executable — the graph fails
+ * `ZWorkflowExecutableDefinition` (cycle, unreachable node, wrong trigger-edge count, if_else), or a
+ * referenced survey / ending card no longer exists. Carries field-level `invalidParams` so the
+ * caller (or an agent) can repair the exact node/edge/reference.
+ */
+export class WorkflowNotExecutableError extends WorkflowApiError {
+  readonly status = 422;
+  readonly code = "workflow_not_executable" as const;
+
+  constructor(invalidParams: WorkflowInvalidParam[], message = "The workflow definition is not executable.") {
+    super(message, invalidParams);
+  }
+
+  static fromZodError(error: ZodError): WorkflowNotExecutableError {
+    return new WorkflowNotExecutableError(invalidParamsFromZodError(error));
+  }
+}
 
 const problemResponse = (
   status: number,

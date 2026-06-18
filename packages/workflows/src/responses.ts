@@ -1,5 +1,5 @@
 import type { TCursorPaginationMeta } from "./contracts";
-import { buildV3Headers } from "./http";
+import { CACHE_CONTROL_NO_STORE, buildV3Headers } from "./http";
 
 /**
  * Success envelope builders for the workflow handlers. Body shapes and headers mirror
@@ -20,3 +20,9 @@ export const createdResponse = <T>(data: T, location: string, requestId: string)
     { data },
     { status: 201, headers: buildV3Headers(JSON_CONTENT_TYPE, requestId, { Location: location }) }
   );
+
+export const noContentResponse = (requestId: string): Response =>
+  new Response(null, {
+    status: 204,
+    headers: { "Cache-Control": CACHE_CONTROL_NO_STORE, "X-Request-Id": requestId },
+  });
