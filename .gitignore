@@ -67,8 +67,3 @@ i18n.cache
 stats.html
 # next-agents-md
 .next-docs/
-
-# ship-ticket / Playwright MCP artifacts
-.playwright-mcp/
-ship-ticket-deck.pptx
-ship-ticket-deck.md
