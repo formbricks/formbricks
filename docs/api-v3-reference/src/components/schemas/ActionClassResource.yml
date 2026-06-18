@@ -9,6 +9,7 @@ required:
 properties:
   id:
     type: string
+    format: cuid2
     description: Use this value as `distribution.triggers[].actionClassId` on an app survey.
   name:
     type: string

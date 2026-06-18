@@ -40,6 +40,7 @@ const attributeKey = {
 
 const params = {
   workspaceId,
+  limit: 50,
   authentication: null,
   requestId: "req_1",
   instance: "/api/v3/contact-attribute-keys",
@@ -70,8 +71,37 @@ describe("listV3ContactAttributeKeys", () => {
           dataType: "string",
         },
       ],
+      meta: { limit: 50, nextCursor: null },
     });
     expect(getContactAttributeKeys).toHaveBeenCalledWith(workspaceId);
+  });
+
+  test("paginates with limit + cursor (nextCursor points to the next page)", async () => {
+    const second = {
+      ...attributeKey,
+      id: "clbk1234567890123456789012",
+      key: "role",
+    } as typeof attributeKey;
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
+      workspaceId,
+    } as Awaited<ReturnType<typeof requireV3WorkspaceAccess>>);
+    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKey, second]);
+
+    const page1 = await listV3ContactAttributeKeys({ ...params, limit: 1 });
+    const body1 = await page1.json();
+    expect(body1.data).toHaveLength(1);
+    expect(body1.data[0].id).toBe("clak1234567890123456789012");
+    expect(typeof body1.meta.nextCursor).toBe("string");
+
+    const page2 = await listV3ContactAttributeKeys({
+      ...params,
+      limit: 1,
+      cursor: body1.meta.nextCursor,
+    });
+    const body2 = await page2.json();
+    expect(body2.data).toHaveLength(1);
+    expect(body2.data[0].id).toBe("clbk1234567890123456789012");
+    expect(body2.meta.nextCursor).toBeNull();
   });
 
   test("returns the auth response and skips fetching when access is denied", async () => {

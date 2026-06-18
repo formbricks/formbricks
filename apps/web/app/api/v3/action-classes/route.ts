@@ -15,6 +15,8 @@ export const GET = withV3ApiWrapper({
   handler: async ({ authentication, parsedInput, requestId, instance }) => {
     return await listV3ActionClasses({
       workspaceId: parsedInput.query.workspaceId,
+      limit: parsedInput.query.limit,
+      cursor: parsedInput.query.cursor,
       authentication,
       requestId,
       instance,

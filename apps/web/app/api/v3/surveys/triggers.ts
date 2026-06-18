@@ -8,7 +8,7 @@ import type { TV3SurveyTrigger } from "./schemas";
  * Validate trigger action-class ids against the workspace's action classes and resolve them to the
  * full action-class objects that the survey service expects (ZSurveyCreateInput / handleTriggerUpdates
  * both ultimately read `actionClass.id`, but ZSurveyCreateInput validates the full ZActionClass shape).
- * Throws structured `invalid_params` on unknown or duplicate ids so the v3 layer returns a 400.
+ * Throws structured `invalid_params` on unknown or duplicate ids; the v3 layer maps this to a 422.
  */
 export function resolveV3SurveyTriggers(
   triggers: TV3SurveyTrigger[],

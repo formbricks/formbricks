@@ -58,6 +58,9 @@ properties:
       - object
       - 'null'
     description: The user who created the survey, or null for API-key/system-created surveys.
+    required:
+      - name
     properties:
       name:
         type: string
+    additionalProperties: false

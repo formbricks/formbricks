@@ -22,6 +22,21 @@ get:
         format: cuid2
       description: |
         Workspace identifier. This is the canonical container ID for v3 APIs.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Page size (max 100).
+    - in: query
+      name: cursor
+      schema:
+        type: string
+      description: >
+        Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first
+        request.
   responses:
     "200":
       description: Action classes retrieved successfully
@@ -40,11 +55,26 @@ get:
             type: object
             required:
               - data
+              - meta
             properties:
               data:
                 type: array
                 items:
                   $ref: ../components/schemas/ActionClassResource.yml
+              meta:
+                type: object
+                required:
+                  - limit
+                  - nextCursor
+                properties:
+                  limit:
+                    type: integer
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                    description: >-
+                      Opaque cursor for the next page. `null` when there are no more results.
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":
