@@ -16,4 +16,14 @@ allOf:
         type: string
       ctaButtonLabel:
         $ref: ./TranslatableText.yml
+  - if:
+      required:
+        - buttonExternal
+      properties:
+        buttonExternal:
+          const: true
+    then:
+      required:
+        - buttonUrl
+        - ctaButtonLabel
 unevaluatedProperties: false
