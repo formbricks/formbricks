@@ -104,6 +104,17 @@ describe("listV3ContactAttributeKeys", () => {
     expect(body2.meta.nextCursor).toBeNull();
   });
 
+  test("returns 400 on a malformed cursor", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
+      workspaceId,
+    } as Awaited<ReturnType<typeof requireV3WorkspaceAccess>>);
+    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKey]);
+
+    const response = await listV3ContactAttributeKeys({ ...params, cursor: "%%%%" });
+
+    expect(response.status).toBe(400);
+  });
+
   test("returns the auth response and skips fetching when access is denied", async () => {
     const denied = new Response("forbidden", { status: 403 });
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(denied);

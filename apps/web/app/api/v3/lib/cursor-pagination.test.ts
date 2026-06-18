@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { paginateByIdCursor } from "./cursor-pagination";
 
 const item = (id: string) => ({ id });
@@ -38,5 +39,12 @@ describe("paginateByIdCursor", () => {
     const page2 = paginateByIdCursor([item("b"), item("c")], { limit: 5, cursor: page1.nextCursor! });
     expect(page2.page.map((i) => i.id)).toEqual(["b", "c"]);
     expect(page2.nextCursor).toBeNull();
+  });
+
+  test("rejects a malformed (non-canonical) cursor", () => {
+    expect(() => paginateByIdCursor([item("a")], { limit: 5, cursor: "%%%%" })).toThrow(InvalidInputError);
+    expect(() => paginateByIdCursor([item("a")], { limit: 5, cursor: "not base64url!" })).toThrow(
+      InvalidInputError
+    );
   });
 });

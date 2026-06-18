@@ -1,9 +1,9 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { paginateByIdCursor } from "@/app/api/v3/lib/cursor-pagination";
-import { problemInternalError, successListResponse } from "@/app/api/v3/lib/response";
+import { problemBadRequest, problemInternalError, successListResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { serializeV3ContactAttributeKey } from "../serializers";
@@ -48,6 +48,13 @@ export async function listV3ContactAttributeKeys({
       { requestId, cache: "private, no-store" }
     );
   } catch (err) {
+    if (err instanceof InvalidInputError) {
+      log.warn({ statusCode: 400 }, "Invalid pagination cursor");
+      return problemBadRequest(requestId, err.message, {
+        invalid_params: [{ name: "cursor", reason: err.message }],
+        instance,
+      });
+    }
     if (err instanceof DatabaseError) {
       log.error({ err }, "Database error while listing contact attribute keys");
     } else {
