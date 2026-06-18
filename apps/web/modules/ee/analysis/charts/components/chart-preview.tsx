@@ -59,6 +59,14 @@ export function ChartPreview({
       );
     }
 
+    if (data.length === 0) {
+      return (
+        <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-gray-500">
+          {t("workspace.analysis.charts.no_data_returned")}
+        </div>
+      );
+    }
+
     return (
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <div className="mb-4 flex justify-end">

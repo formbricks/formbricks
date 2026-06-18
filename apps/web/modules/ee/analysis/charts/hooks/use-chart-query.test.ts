@@ -99,7 +99,7 @@ describe("useChartQuery", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  test("sets error when query returns no data", async () => {
+  test("treats empty data as success so chart can still be saved", async () => {
     mockExecuteQueryAction.mockResolvedValue({ data: [] });
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
@@ -109,8 +109,10 @@ describe("useChartQuery", () => {
       response = await result.current.runQuery(sampleQuery);
     });
 
-    expect(response).toBeNull();
-    expect(result.current.error).toBe("workspace.analysis.charts.no_data_returned");
+    expect(response).toEqual({ query: sampleQuery, data: [] });
+    expect(result.current.chartData).toEqual([]);
+    expect(result.current.query).toEqual(sampleQuery);
+    expect(result.current.error).toBeNull();
   });
 
   test("sets error message when executeQueryAction throws an Error", async () => {

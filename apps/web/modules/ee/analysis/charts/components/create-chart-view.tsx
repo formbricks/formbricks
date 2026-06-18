@@ -239,10 +239,11 @@ export function CreateChartView({
           </div>
         </DialogBody>
 
-        {chartData && !queryState.error && !queryState.isPending && (
+        {chartData && !queryState.error && (
           <ChartDialogFooter
             formId={CREATE_CHART_FORM_ID}
             isSaving={isSaving}
+            isDisabled={queryState.isPending}
             showAddToDashboard={false}
             saveLabel={
               autoAddToDashboardId

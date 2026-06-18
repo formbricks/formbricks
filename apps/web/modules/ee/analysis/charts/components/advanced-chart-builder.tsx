@@ -163,14 +163,10 @@ export function AdvancedChartBuilder({
   });
 
   useEffect(() => {
-    if (!feedbackDirectoryId || !isConfigComplete) {
-      setIsConfigDirty(false);
-      return;
-    }
-
     const hasDrift = currentQueryJson !== lastRunQueryJsonRef.current;
     setIsConfigDirty(hasDrift);
-    if (!hasDrift) return;
+
+    if (!feedbackDirectoryId || !isConfigComplete || !hasDrift) return;
 
     const timeout = setTimeout(() => {
       executeQueryRef.current();

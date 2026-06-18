@@ -53,11 +53,6 @@ export function useChartQuery(
       }
 
       const data = Array.isArray(result?.data) ? result.data : [];
-      if (data.length === 0) {
-        setError(t("workspace.analysis.charts.no_data_returned"));
-        return null;
-      }
-
       setChartData(data);
       setQuery(cubeQuery);
       return { query: cubeQuery, data };
