@@ -1700,7 +1700,7 @@ paths:
         reference that snapshot via `workflowVersionId`, so later draft edits never change what an
         enabled workflow executes. Validation failures return **422** with code
         `workflow_not_executable` and structured `invalid_params`; calling enable in a state other
-        than `draft` or `disabled` returns **422** with code `invalid_workflow_state`.
+        than `draft` or `disabled` returns **422** with code `invalid_workflow_state`. Two concurrent enable requests race to publish the next version; the loser is rejected with **409** code `conflict` and can safely retry.
       tags:
         - V3 Workflows
       parameters:
@@ -1714,6 +1714,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '409':
+          $ref: '#/components/responses/V3Conflict'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
         '429':

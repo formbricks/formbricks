@@ -29,7 +29,9 @@ post:
     a state other
 
     than `draft` or `disabled` returns **422** with code
-    `invalid_workflow_state`.
+    `invalid_workflow_state`. Two concurrent enable requests race to publish the
+    next version; the loser is rejected with **409** code `conflict` and can
+    safely retry.
   tags:
     - V3 Workflows
   parameters:
@@ -43,6 +45,8 @@ post:
       $ref: ../components/responses/V3Unauthorized.yml
     '403':
       $ref: ../components/responses/V3Forbidden.yml
+    '409':
+      $ref: ../components/responses/V3Conflict.yml
     '422':
       $ref: ../components/responses/V3UnprocessableContent.yml
     '429':
