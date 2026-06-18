@@ -4,6 +4,6 @@ description: >-
   survey.
 propertyNames:
   type: string
-  description: Survey language code/tag, for example `en-US`, `de-DE`, `vi`, or `zh-Hans`.
+  description: Survey language code/tag, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
 additionalProperties:
   type: string

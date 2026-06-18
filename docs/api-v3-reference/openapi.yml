@@ -2115,7 +2115,7 @@ components:
       description: Multilingual text map keyed by the emitted `languages[].code` values for this survey.
       propertyNames:
         type: string
-        description: Survey language code/tag, for example `en-US`, `de-DE`, `vi`, or `zh-Hans`.
+        description: Survey language code/tag, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
       additionalProperties:
         type: string
     TranslatableText:
@@ -2142,8 +2142,8 @@ components:
       additionalProperties: true
     LocaleCode:
       type: string
-      pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?(?:-[A-Z]{2})?$
-      description: Locale code accepted by v3 survey APIs. The region subtag is optional, so both full codes (`en-US`, `de-DE`, `zh-Hans-CN`) and language-only / script-only codes (`vi`, `zh-Hans`) are accepted; codes are normalized server-side.
+      pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$
+      description: Canonical locale code accepted by v3 survey APIs, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
       example: en-US
     CreateSurveyLanguage:
       type: object
