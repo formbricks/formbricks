@@ -83,7 +83,7 @@ const meta: Meta<StoryProps> = {
     // Story Options - Appearance Category
     width: {
       control: "select",
-      options: ["default", "wide"],
+      options: ["default", "wide", "full", "narrow"],
       description: "Width of the modal",
       table: {
         category: "Appearance",
