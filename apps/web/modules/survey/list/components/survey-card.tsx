@@ -29,7 +29,7 @@ export const SurveyCard = ({
   deleteSurvey,
   updateSurveyStatus,
   locale,
-}: SurveyCardProps) => {
+}: Readonly<SurveyCardProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;

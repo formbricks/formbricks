@@ -55,6 +55,12 @@ interface SurveyDropDownMenuProps {
 // Non-draft statuses that can be targeted by a status change from the list.
 const CHANGEABLE_STATUSES: TSurveyStatus[] = ["inProgress", "paused", "completed"];
 
+const STATUS_LABEL_KEY: Record<(typeof CHANGEABLE_STATUSES)[number], string> = {
+  inProgress: "common.in_progress",
+  paused: "common.paused",
+  completed: "common.completed",
+};
+
 export const SurveyDropDownMenu = ({
   survey,
   publicDomain,
@@ -63,7 +69,7 @@ export const SurveyDropDownMenu = ({
   isReadOnly,
   deleteSurvey,
   updateSurveyStatus,
-}: SurveyDropDownMenuProps) => {
+}: Readonly<SurveyDropDownMenuProps>) => {
   const { workspace } = useWorkspace();
 
   const { t } = useTranslation();
@@ -200,11 +206,7 @@ export const SurveyDropDownMenu = ({
                         }}>
                         <span className="flex items-center gap-2">
                           <SurveyStatusIndicator status={status} />
-                          {status === "inProgress"
-                            ? t("common.in_progress")
-                            : status === "paused"
-                              ? t("common.paused")
-                              : t("common.completed")}
+                          {t(STATUS_LABEL_KEY[status])}
                         </span>
                       </DropdownMenuRadioItem>
                     ))}

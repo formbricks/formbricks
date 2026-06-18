@@ -28,10 +28,10 @@ type DropdownMenuSubTriggerExtraProps = {
 };
 
 const DropdownMenuSubTrigger: React.ComponentType<
-  DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps
+  Readonly<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps>
 > = React.forwardRef<
   HTMLDivElement,
-  DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps
+  Readonly<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps>
 >(({ className, inset, chevronSide = "right", children, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger
     ref={ref as any}

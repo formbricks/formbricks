@@ -41,7 +41,7 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             name: "Survey 2",
             workspaceId: "env_1",
             type: "link",
-            status: "paused",
+            status: "completed",
             createdAt: new Date("2026-04-16T10:00:00.000Z"),
             updatedAt: new Date("2026-04-16T10:00:00.000Z"),
             publishOn: null,
@@ -114,9 +114,9 @@ describe("useUpdateSurveyStatus", () => {
       expect(cached?.pages[0]?.data.find((s) => s.id === "survey_1")?.status).toBe("paused");
     });
 
-    // survey_2 must remain untouched
+    // survey_2 must remain untouched (seeded as "completed", differs from mutation target).
     const cached = queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey);
-    expect(cached?.pages[0]?.data.find((s) => s.id === "survey_2")?.status).toBe("paused");
+    expect(cached?.pages[0]?.data.find((s) => s.id === "survey_2")?.status).toBe("completed");
 
     resolveFetch?.(
       new Response(JSON.stringify({ data: { id: "survey_1", status: "paused" } }), {
