@@ -19,6 +19,9 @@ allowBuilds:
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
 overrides:
+  # ENG-1324 / GHSA-5375-pq7m-f5r2, ENG-1325 / GHSA-99f4-grh7-6pcq:
+  # @grpc/grpc-js is patched in 1.14.4 against malformed-request and malformed-compressed-message crashes.
+  "@grpc/grpc-js": 1.14.4
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
   "@hono/node-server": 1.19.13
   hono: 4.12.25
