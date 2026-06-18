@@ -171,36 +171,13 @@ get:
           schema:
             $ref: ../components/schemas/Problem.yml
     '401':
-      description: Not authenticated (no valid session or API key)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     '403':
-      description: >-
-        Forbidden — no access, or survey does not exist (404 not used; avoids
-        existence leak)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Forbidden.yml
     '429':
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: Seconds until the current rate-limit window resets
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3TooManyRequests.yml
     '500':
-      description: Internal Server Error
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
     - apiKeyAuth: []
@@ -331,11 +308,7 @@ patch:
           schema:
             $ref: ../components/schemas/Problem.yml
     '401':
-      description: Not authenticated (no valid session or API key)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     '403':
       description: >-
         Forbidden — no write access, missing external URL permission, missing
@@ -359,22 +332,9 @@ patch:
           schema:
             $ref: ../components/schemas/Problem.yml
     '429':
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: Seconds until the current rate-limit window resets
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3TooManyRequests.yml
     '500':
-      description: Internal Server Error
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
     - apiKeyAuth: []
@@ -405,42 +365,15 @@ delete:
             type: string
           example: private, no-store
     '400':
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3BadRequest.yml
     '401':
-      description: Not authenticated (no valid session or API key)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     '403':
-      description: >-
-        Forbidden — no access, or survey does not exist (404 not used; avoids
-        existence leak)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Forbidden.yml
     '429':
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: Seconds until the current rate-limit window resets
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3TooManyRequests.yml
     '500':
-      description: Internal Server Error
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
     - apiKeyAuth: []

@@ -179,40 +179,15 @@ paths:
                         minimum: 0
                         description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
         '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3BadRequest'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or workspace does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -447,11 +422,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or workspace does not exist (404 not used; avoids existence leak)
           content:
@@ -465,22 +436,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -607,11 +565,7 @@ paths:
                       - name: prompt
                         reason: Describe the survey goal, audience, or topic in a sentence so the AI can create a useful draft.
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           description: Forbidden — no write access, workspace does not exist, AI is not in plan, or AI smart tools are disabled
           content:
@@ -662,22 +616,9 @@ paths:
                       - name: generatedSurvey.blocks
                         reason: Too small
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
         '502':
           description: The configured AI provider failed or could not produce a valid draft
           content:
@@ -813,34 +754,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no write access, or survey/workspace does not exist
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -995,34 +915,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or survey does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -1119,11 +1018,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or survey does not exist (404 not used; avoids existence leak)
           content:
@@ -1137,22 +1032,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -1183,40 +1065,15 @@ paths:
                 type: string
               example: private, no-store
         '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3BadRequest'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or survey does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -1269,40 +1126,15 @@ paths:
                     items:
                       $ref: '#/components/schemas/ActionClassResource'
         '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3BadRequest'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or workspace does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -1350,40 +1182,15 @@ paths:
                     items:
                       $ref: '#/components/schemas/ContactAttributeKeyResource'
         '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3BadRequest'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or workspace does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -3660,3 +3467,83 @@ components:
             - number
             - date
       additionalProperties: false
+  responses:
+    V3BadRequest:
+      description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3Unauthorized:
+      description: Not authenticated (no valid session or API key).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3Forbidden:
+      description: Forbidden — no workspace access, or resource does not exist (404 not used; avoids existence leak).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3TooManyRequests:
+      description: Rate limit exceeded.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the current rate-limit window resets.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3InternalServerError:
+      description: Internal Server Error.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

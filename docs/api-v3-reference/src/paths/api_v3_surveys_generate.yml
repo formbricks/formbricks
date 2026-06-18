@@ -144,11 +144,7 @@ post:
                       Describe the survey goal, audience, or topic in a sentence
                       so the AI can create a useful draft.
     '401':
-      description: Not authenticated (no valid session or API key)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     '403':
       description: >-
         Forbidden — no write access, workspace does not exist, AI is not in
@@ -203,22 +199,9 @@ post:
                   - name: generatedSurvey.blocks
                     reason: Too small
     '429':
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: Seconds until the current rate-limit window resets
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3TooManyRequests.yml
     '500':
-      description: Internal Server Error
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3InternalServerError.yml
     '502':
       description: The configured AI provider failed or could not produce a valid draft
       content:
