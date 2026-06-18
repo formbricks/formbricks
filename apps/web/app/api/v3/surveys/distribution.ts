@@ -35,7 +35,7 @@ export function surveyToV3Distribution(survey: TSurvey): TV3SurveyDistribution {
 
 /** Build the public `targeting` block from a stored survey's segment (empty filters = "show everyone"). */
 export function surveyToV3Targeting(survey: TSurvey): TV3SurveyTargeting {
-  return { filters: (survey.segment?.filters ?? []) as TV3SurveyTargeting["filters"] };
+  return { filters: survey.segment?.filters ?? [] };
 }
 
 /**

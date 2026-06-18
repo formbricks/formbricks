@@ -203,6 +203,59 @@ export async function listV3Surveys({
   }
 }
 
+/**
+ * Map an error thrown during survey creation to its problem+json Response. Extracted from
+ * createV3SurveyResponse to keep that handler's cognitive complexity within bounds.
+ */
+function mapV3SurveyCreateError(
+  err: unknown,
+  {
+    log,
+    requestId,
+    instance,
+  }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string }
+): Response {
+  if (err instanceof V3SurveyReferenceValidationError) {
+    // Well-formed JSON that fails semantic/reference validation (dangling refs, duplicate ids,
+    // undeclared locales, invalid media, unknown action-class ids) → 422, not 400 (which is reserved
+    // for malformed/unknown-field requests rejected at the schema layer).
+    log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey document validation failed");
+    return problemUnprocessableContent(requestId, "Survey document failed validation", {
+      invalid_params: err.invalidParams,
+      instance,
+    });
+  }
+  if (err instanceof V3SurveyUnsupportedShapeError) {
+    log.warn({ statusCode: 400, errorCode: err.name }, "Unsupported survey shape");
+    return problemBadRequest(requestId, err.message, {
+      invalid_params: [{ name: "body", reason: err.message }],
+      instance,
+    });
+  }
+  if (err instanceof V3SurveyCreatePermissionError) {
+    log.warn({ statusCode: 403, errorCode: err.name }, "Survey create permission check failed");
+    return problemForbidden(requestId, err.message, instance);
+  }
+  if (err instanceof ResourceNotFoundError) {
+    log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
+    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+  }
+  if (err instanceof InvalidInputError) {
+    log.warn({ statusCode: 400, errorCode: err.name }, "Invalid survey input");
+    return problemBadRequest(requestId, err.message, {
+      invalid_params: [{ name: "body", reason: err.message }],
+      instance,
+    });
+  }
+  if (err instanceof DatabaseError) {
+    log.error({ error: err, statusCode: 500 }, "Database error");
+    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+  }
+
+  log.error({ error: err, statusCode: 500 }, "V3 survey create unexpected error");
+  return problemInternalError(requestId, "An unexpected error occurred.", instance);
+}
+
 export async function createV3SurveyResponse({
   body,
   authentication,
@@ -272,45 +325,7 @@ export async function createV3SurveyResponse({
       location: `/api/v3/surveys/${survey.id}`,
     });
   } catch (err) {
-    if (err instanceof V3SurveyReferenceValidationError) {
-      // Well-formed JSON that fails semantic/reference validation (dangling refs, duplicate ids,
-      // undeclared locales, invalid media, unknown action-class ids) → 422, not 400 (which is reserved
-      // for malformed/unknown-field requests rejected at the schema layer).
-      log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey document validation failed");
-      return problemUnprocessableContent(requestId, "Survey document failed validation", {
-        invalid_params: err.invalidParams,
-        instance,
-      });
-    }
-    if (err instanceof V3SurveyUnsupportedShapeError) {
-      log.warn({ statusCode: 400, errorCode: err.name }, "Unsupported survey shape");
-      return problemBadRequest(requestId, err.message, {
-        invalid_params: [{ name: "body", reason: err.message }],
-        instance,
-      });
-    }
-    if (err instanceof V3SurveyCreatePermissionError) {
-      log.warn({ statusCode: 403, errorCode: err.name }, "Survey create permission check failed");
-      return problemForbidden(requestId, err.message, instance);
-    }
-    if (err instanceof ResourceNotFoundError) {
-      log.warn({ statusCode: 403, errorCode: err.name }, "Resource not found");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-    }
-    if (err instanceof InvalidInputError) {
-      log.warn({ statusCode: 400, errorCode: err.name }, "Invalid survey input");
-      return problemBadRequest(requestId, err.message, {
-        invalid_params: [{ name: "body", reason: err.message }],
-        instance,
-      });
-    }
-    if (err instanceof DatabaseError) {
-      log.error({ error: err, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-
-    log.error({ error: err, statusCode: 500 }, "V3 survey create unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3SurveyCreateError(err, { log, requestId, instance });
   }
 }
 
