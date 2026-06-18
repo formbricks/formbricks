@@ -12,8 +12,8 @@ export const POST = withV3ApiWrapper({
   targetType: "workflow",
   schemas: { params: ZWorkflowIdInput },
   handler: async ({ parsedInput, authentication, requestId, instance }) =>
-    workflowsHandlers.disable(
-      buildWorkflowApiContext(authentication, requestId, instance),
-      parsedInput.params
-    ),
+    workflowsHandlers.disable({
+      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      params: parsedInput.params,
+    }),
 });

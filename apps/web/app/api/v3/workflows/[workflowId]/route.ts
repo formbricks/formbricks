@@ -13,7 +13,10 @@ export const GET = withV3ApiWrapper({
   auth: "both",
   schemas: { params: ZWorkflowIdInput },
   handler: async ({ parsedInput, authentication, requestId, instance }) =>
-    workflowsHandlers.get(buildWorkflowApiContext(authentication, requestId, instance), parsedInput.params),
+    workflowsHandlers.get({
+      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      params: parsedInput.params,
+    }),
 });
 
 export const PATCH = withV3ApiWrapper({
@@ -22,11 +25,11 @@ export const PATCH = withV3ApiWrapper({
   targetType: "workflow",
   schemas: { params: ZWorkflowIdInput },
   handler: async ({ req, parsedInput, authentication, requestId, instance }) =>
-    workflowsHandlers.patch(
+    workflowsHandlers.patch({
       req,
-      buildWorkflowApiContext(authentication, requestId, instance),
-      parsedInput.params
-    ),
+      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      params: parsedInput.params,
+    }),
 });
 
 export const DELETE = withV3ApiWrapper({
@@ -35,8 +38,8 @@ export const DELETE = withV3ApiWrapper({
   targetType: "workflow",
   schemas: { params: ZWorkflowIdInput },
   handler: async ({ parsedInput, authentication, requestId, instance }) =>
-    workflowsHandlers.delete(
-      buildWorkflowApiContext(authentication, requestId, instance),
-      parsedInput.params
-    ),
+    workflowsHandlers.delete({
+      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      params: parsedInput.params,
+    }),
 });

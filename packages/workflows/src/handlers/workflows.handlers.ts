@@ -94,17 +94,35 @@ const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidPar
   return invalidParams;
 };
 
+/**
+ * Handler argument shapes. Every handler takes a single object (never positional args) so call
+ * sites are uniform and self-documenting — mirroring the v3 API's single-object handler convention
+ * (e.g. `listV3Surveys({ searchParams, authentication, ... })`). Each shape carries only the fields
+ * its handler uses, so there are no unused parameters to thread through.
+ */
+interface WorkflowRequestArgs {
+  req: Request;
+  ctx: WorkflowApiContext;
+}
+interface WorkflowResourceArgs {
+  ctx: WorkflowApiContext;
+  params: TWorkflowIdInput;
+}
+interface WorkflowResourceBodyArgs extends WorkflowResourceArgs {
+  req: Request;
+}
+
 export interface WorkflowsHandlers {
-  list: (req: Request, ctx: WorkflowApiContext) => Promise<Response>;
-  create: (req: Request, ctx: WorkflowApiContext) => Promise<Response>;
-  get: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
-  patch: (req: Request, ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
-  duplicate: (req: Request, ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
-  delete: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
-  archive: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
-  unarchive: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
-  enable: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
-  disable: (ctx: WorkflowApiContext, params: TWorkflowIdInput) => Promise<Response>;
+  list: (args: WorkflowRequestArgs) => Promise<Response>;
+  create: (args: WorkflowRequestArgs) => Promise<Response>;
+  get: (args: WorkflowResourceArgs) => Promise<Response>;
+  patch: (args: WorkflowResourceBodyArgs) => Promise<Response>;
+  duplicate: (args: WorkflowResourceBodyArgs) => Promise<Response>;
+  delete: (args: WorkflowResourceArgs) => Promise<Response>;
+  archive: (args: WorkflowResourceArgs) => Promise<Response>;
+  unarchive: (args: WorkflowResourceArgs) => Promise<Response>;
+  enable: (args: WorkflowResourceArgs) => Promise<Response>;
+  disable: (args: WorkflowResourceArgs) => Promise<Response>;
 }
 
 /**
@@ -115,7 +133,7 @@ export interface WorkflowsHandlers {
  * `toProblemResponse`, so handlers never leak or swallow.
  */
 export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHandlers => ({
-  async list(req, ctx) {
+  async list({ req, ctx }) {
     try {
       const input = parseListWorkflowsQuery(new URL(req.url).searchParams);
 
@@ -135,7 +153,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async create(req, ctx) {
+  async create({ req, ctx }) {
     try {
       const input = ZCreateWorkflowInput.parse(await readJsonBody(req));
 
@@ -155,7 +173,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async get(ctx, params) {
+  async get({ ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "read");
       if (loaded instanceof Response) return loaded;
@@ -166,7 +184,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async patch(req, ctx, params) {
+  async patch({ req, ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;
@@ -192,7 +210,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async duplicate(req, ctx, params) {
+  async duplicate({ req, ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;
@@ -207,7 +225,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async delete(ctx, params) {
+  async delete({ ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;
@@ -219,7 +237,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async archive(ctx, params) {
+  async archive({ ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;
@@ -238,7 +256,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async unarchive(ctx, params) {
+  async unarchive({ ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;
@@ -257,7 +275,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async enable(ctx, params) {
+  async enable({ ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;
@@ -291,7 +309,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     }
   },
 
-  async disable(ctx, params) {
+  async disable({ ctx, params }) {
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;

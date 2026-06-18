@@ -97,7 +97,7 @@ describe("get", () => {
   test("returns 403 (not 404) when the workflow does not exist", async () => {
     service.getWorkflowById.mockResolvedValue(null);
 
-    const res = await handlers.get(makeCtx(), { workflowId });
+    const res = await handlers.get({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(403);
     expect(authorizeAllow).not.toHaveBeenCalled();
@@ -109,7 +109,7 @@ describe("get", () => {
     service.getWorkflowById.mockResolvedValue(makeRow());
     const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
 
-    const res = await handlers.get(ctx, { workflowId });
+    const res = await handlers.get({ ctx, params: { workflowId } });
 
     expect(res.status).toBe(403);
   });
@@ -117,7 +117,7 @@ describe("get", () => {
   test("returns 200 with the workflow resource on success", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow());
 
-    const res = await handlers.get(makeCtx(), { workflowId });
+    const res = await handlers.get({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(200);
     expect(res.headers.get("X-Request-Id")).toBe("req_1");
@@ -136,7 +136,7 @@ describe("get", () => {
     });
     service.getWorkflowById.mockResolvedValue(badRow);
 
-    const res = await handlers.get(makeCtx(), { workflowId });
+    const res = await handlers.get({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(500);
     expect(logger.error).toHaveBeenCalled();
@@ -154,10 +154,10 @@ describe("create", () => {
   test("creates a draft and returns 201 with a Location header", async () => {
     service.createWorkflow.mockResolvedValue(makeRow());
 
-    const res = await handlers.create(
-      postRequest({ workspaceId, name: "Notify team", definition }),
-      makeCtx()
-    );
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx: makeCtx(),
+    });
 
     expect(res.status).toBe(201);
     expect(res.headers.get("Location")).toBe(`/api/v3/workflows/${workflowId}`);
@@ -167,14 +167,14 @@ describe("create", () => {
   });
 
   test("rejects an invalid definition with 400 and invalid_params", async () => {
-    const res = await handlers.create(
-      postRequest({
+    const res = await handlers.create({
+      req: postRequest({
         workspaceId,
         name: "Broken",
         definition: { schemaVersion: 1, trigger: {}, nodes: [], edges: [], entryNodeId: "trigger" },
       }),
-      makeCtx()
-    );
+      ctx: makeCtx(),
+    });
 
     expect(res.status).toBe(400);
     const body = await readJson<{ code: string; invalid_params: unknown }>(res);
@@ -186,7 +186,10 @@ describe("create", () => {
   test("returns the denial response without creating when access is missing", async () => {
     const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
 
-    const res = await handlers.create(postRequest({ workspaceId, name: "Notify team", definition }), ctx);
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx,
+    });
 
     expect(res.status).toBe(403);
     expect(service.createWorkflow).not.toHaveBeenCalled();
@@ -199,7 +202,7 @@ describe("create", () => {
       headers: { "Content-Type": "application/json" },
     });
 
-    const res = await handlers.create(req, makeCtx());
+    const res = await handlers.create({ req, ctx: makeCtx() });
 
     expect(res.status).toBe(400);
     expect(service.createWorkflow).not.toHaveBeenCalled();
@@ -208,10 +211,10 @@ describe("create", () => {
   test("rejects a body that exceeds the size limit with 400", async () => {
     const oversizedName = "x".repeat(2 * 1024 * 1024 + 1);
 
-    const res = await handlers.create(
-      postRequest({ workspaceId, name: oversizedName, definition }),
-      makeCtx()
-    );
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: oversizedName, definition }),
+      ctx: makeCtx(),
+    });
 
     expect(res.status).toBe(400);
     expect(service.createWorkflow).not.toHaveBeenCalled();
@@ -224,7 +227,10 @@ describe("list", () => {
   test("returns 200 with a cursor-paginated envelope", async () => {
     service.listWorkflows.mockResolvedValue({ workflows: [makeRow()], nextCursor: null });
 
-    const res = await handlers.list(listRequest(`workspaceId=${workspaceId}&sortBy=name`), makeCtx());
+    const res = await handlers.list({
+      req: listRequest(`workspaceId=${workspaceId}&sortBy=name`),
+      ctx: makeCtx(),
+    });
 
     expect(res.status).toBe(200);
     const body = await readJson<{ data: unknown[]; meta: { limit: number; nextCursor: string | null } }>(res);
@@ -234,14 +240,17 @@ describe("list", () => {
   });
 
   test("rejects an out-of-range limit with 400", async () => {
-    const res = await handlers.list(listRequest(`workspaceId=${workspaceId}&limit=500`), makeCtx());
+    const res = await handlers.list({
+      req: listRequest(`workspaceId=${workspaceId}&limit=500`),
+      ctx: makeCtx(),
+    });
     expect(res.status).toBe(400);
     expect(service.listWorkflows).not.toHaveBeenCalled();
   });
 
   test("returns the denial response when access is missing", async () => {
     const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
-    const res = await handlers.list(listRequest(`workspaceId=${workspaceId}`), ctx);
+    const res = await handlers.list({ req: listRequest(`workspaceId=${workspaceId}`), ctx });
     expect(res.status).toBe(403);
     expect(service.listWorkflows).not.toHaveBeenCalled();
   });
@@ -259,7 +268,11 @@ describe("patch", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     service.updateWorkflow.mockResolvedValue(makeRow({ name: "Renamed" }));
 
-    const res = await handlers.patch(patchRequest({ name: "Renamed" }), makeCtx(), { workflowId });
+    const res = await handlers.patch({
+      req: patchRequest({ name: "Renamed" }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
 
     expect(res.status).toBe(200);
     expect(service.updateWorkflow).toHaveBeenCalledWith({ workflowId, workspaceId }, { name: "Renamed" });
@@ -269,7 +282,11 @@ describe("patch", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
     service.updateWorkflow.mockResolvedValue(makeRow({ status: "enabled", description: "x" }));
 
-    const res = await handlers.patch(patchRequest({ description: "x" }), makeCtx(), { workflowId });
+    const res = await handlers.patch({
+      req: patchRequest({ description: "x" }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
 
     expect(res.status).toBe(200);
     expect(service.updateWorkflow).toHaveBeenCalled();
@@ -278,7 +295,11 @@ describe("patch", () => {
   test("rejects a definition edit on an enabled workflow with 422", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
 
-    const res = await handlers.patch(patchRequest({ definition }), makeCtx(), { workflowId });
+    const res = await handlers.patch({
+      req: patchRequest({ definition }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
 
     expect(res.status).toBe(422);
     const body = await readJson<{ code: string }>(res);
@@ -289,7 +310,11 @@ describe("patch", () => {
   test("rejects any patch on an archived workflow with 422", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
 
-    const res = await handlers.patch(patchRequest({ name: "x" }), makeCtx(), { workflowId });
+    const res = await handlers.patch({
+      req: patchRequest({ name: "x" }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
 
     expect(res.status).toBe(422);
     expect(service.updateWorkflow).not.toHaveBeenCalled();
@@ -298,7 +323,7 @@ describe("patch", () => {
   test("rejects an empty patch with 400", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
 
-    const res = await handlers.patch(patchRequest({}), makeCtx(), { workflowId });
+    const res = await handlers.patch({ req: patchRequest({}), ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(400);
     expect(service.updateWorkflow).not.toHaveBeenCalled();
@@ -307,7 +332,11 @@ describe("patch", () => {
   test("returns 403 for an unknown workflow", async () => {
     service.getWorkflowById.mockResolvedValue(null);
 
-    const res = await handlers.patch(patchRequest({ name: "x" }), makeCtx(), { workflowId });
+    const res = await handlers.patch({
+      req: patchRequest({ name: "x" }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
 
     expect(res.status).toBe(403);
     expect(service.updateWorkflow).not.toHaveBeenCalled();
@@ -322,7 +351,7 @@ describe("duplicate", () => {
     service.getWorkflowById.mockResolvedValue(makeRow());
     service.duplicateWorkflow.mockResolvedValue(makeRow());
 
-    const res = await handlers.duplicate(emptyPost(), makeCtx(), { workflowId });
+    const res = await handlers.duplicate({ req: emptyPost(), ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(201);
     expect(res.headers.get("Location")).toBe(`/api/v3/workflows/${workflowId}`);
@@ -338,7 +367,7 @@ describe("delete", () => {
     service.getWorkflowById.mockResolvedValue(makeRow());
     service.deleteWorkflow.mockResolvedValue(undefined);
 
-    const res = await handlers.delete(makeCtx(), { workflowId });
+    const res = await handlers.delete({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(204);
     expect(service.deleteWorkflow).toHaveBeenCalledWith({ workflowId, workspaceId });
@@ -347,7 +376,7 @@ describe("delete", () => {
   test("returns 403 for an unknown workflow without deleting", async () => {
     service.getWorkflowById.mockResolvedValue(null);
 
-    const res = await handlers.delete(makeCtx(), { workflowId });
+    const res = await handlers.delete({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(403);
     expect(service.deleteWorkflow).not.toHaveBeenCalled();
@@ -359,7 +388,7 @@ describe("archive / unarchive", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     service.setStatus.mockResolvedValue(makeRow({ status: "archived" }));
 
-    const res = await handlers.archive(makeCtx(), { workflowId });
+    const res = await handlers.archive({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(200);
     expect(service.setStatus).toHaveBeenCalledWith({ workflowId, workspaceId }, "archived");
@@ -368,7 +397,7 @@ describe("archive / unarchive", () => {
   test("rejects archiving an already-archived workflow with 422", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
 
-    const res = await handlers.archive(makeCtx(), { workflowId });
+    const res = await handlers.archive({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     expect(service.setStatus).not.toHaveBeenCalled();
@@ -378,7 +407,7 @@ describe("archive / unarchive", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
     service.setStatus.mockResolvedValue(makeRow({ status: "draft" }));
 
-    const res = await handlers.unarchive(makeCtx(), { workflowId });
+    const res = await handlers.unarchive({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(200);
     expect(service.setStatus).toHaveBeenCalledWith({ workflowId, workspaceId }, "draft");
@@ -387,7 +416,7 @@ describe("archive / unarchive", () => {
   test("rejects unarchiving a non-archived workflow with 422", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
 
-    const res = await handlers.unarchive(makeCtx(), { workflowId });
+    const res = await handlers.unarchive({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     expect(service.setStatus).not.toHaveBeenCalled();
@@ -399,7 +428,7 @@ describe("enable", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(200);
     expect(verifyTriggerSurvey).toHaveBeenCalledWith({ workspaceId, surveyId, endingCardIds: [] });
@@ -415,7 +444,7 @@ describe("enable", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled" }));
     service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(200);
     expect(service.enableWorkflow).toHaveBeenCalled();
@@ -425,7 +454,7 @@ describe("enable", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
 
-    await handlers.enable(makeCtx({ userId: null }), { workflowId });
+    await handlers.enable({ ctx: makeCtx({ userId: null }), params: { workflowId } });
 
     expect(service.enableWorkflow.mock.calls[0][1].publishedBy).toBeNull();
   });
@@ -433,7 +462,7 @@ describe("enable", () => {
   test("rejects enabling an already-enabled workflow with 422 invalid_workflow_state", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     const body = await readJson<{ code: string }>(res);
@@ -444,7 +473,7 @@ describe("enable", () => {
   test("rejects enabling an archived workflow with 422 invalid_workflow_state", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     const body = await readJson<{ code: string }>(res);
@@ -457,7 +486,7 @@ describe("enable", () => {
       makeRow({ status: "draft", definition: { ...definition, nodes: [], edges: [] } })
     );
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     const body = await readJson<{ code: string; invalid_params: unknown[] }>(res);
@@ -472,7 +501,7 @@ describe("enable", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: false, missingEndingCardIds: [] });
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     const body = await readJson<{ code: string; invalid_params: { name: string }[] }>(res);
@@ -485,7 +514,7 @@ describe("enable", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: ["ec_missing"] });
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     const body = await readJson<{ code: string; invalid_params: { name: string }[] }>(res);
@@ -498,7 +527,7 @@ describe("enable", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     service.enableWorkflow.mockRejectedValue(new WorkflowConflictError());
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(409);
     const body = await readJson<{ code: string }>(res);
@@ -508,7 +537,7 @@ describe("enable", () => {
   test("returns 403 for an unknown workflow without enabling", async () => {
     service.getWorkflowById.mockResolvedValue(null);
 
-    const res = await handlers.enable(makeCtx(), { workflowId });
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(403);
     expect(service.enableWorkflow).not.toHaveBeenCalled();
@@ -520,7 +549,7 @@ describe("disable", () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
     service.disableWorkflow.mockResolvedValue(makeRow({ status: "disabled" }));
 
-    const res = await handlers.disable(makeCtx(), { workflowId });
+    const res = await handlers.disable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(200);
     expect(service.disableWorkflow).toHaveBeenCalledWith({ workflowId, workspaceId });
@@ -531,7 +560,7 @@ describe("disable", () => {
   test("rejects disabling a draft workflow with 422 invalid_workflow_state", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
 
-    const res = await handlers.disable(makeCtx(), { workflowId });
+    const res = await handlers.disable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(422);
     const body = await readJson<{ code: string }>(res);
@@ -542,7 +571,7 @@ describe("disable", () => {
   test("returns 403 for an unknown workflow without disabling", async () => {
     service.getWorkflowById.mockResolvedValue(null);
 
-    const res = await handlers.disable(makeCtx(), { workflowId });
+    const res = await handlers.disable({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(403);
     expect(service.disableWorkflow).not.toHaveBeenCalled();

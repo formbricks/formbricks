@@ -11,7 +11,7 @@ import { buildWorkflowApiContext, workflowsHandlers } from "./lib/context";
 export const GET = withV3ApiWrapper({
   auth: "both",
   handler: async ({ req, authentication, requestId, instance }) =>
-    workflowsHandlers.list(req, buildWorkflowApiContext(authentication, requestId, instance)),
+    workflowsHandlers.list({ req, ctx: buildWorkflowApiContext(authentication, requestId, instance) }),
 });
 
 export const POST = withV3ApiWrapper({
@@ -19,5 +19,5 @@ export const POST = withV3ApiWrapper({
   action: "created",
   targetType: "workflow",
   handler: async ({ req, authentication, requestId, instance }) =>
-    workflowsHandlers.create(req, buildWorkflowApiContext(authentication, requestId, instance)),
+    workflowsHandlers.create({ req, ctx: buildWorkflowApiContext(authentication, requestId, instance) }),
 });
