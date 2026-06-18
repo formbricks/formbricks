@@ -1,0 +1,13 @@
+type: object
+required:
+  - code
+  - default
+  - enabled
+properties:
+  code:
+    $ref: ./AISurveyGenerationLocaleCode.yml
+  default:
+    type: boolean
+  enabled:
+    type: boolean
+additionalProperties: false

@@ -1,0 +1,29 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - openText
+      placeholder:
+        $ref: ./TranslatableText.yml
+      longAnswer:
+        type: boolean
+      inputType:
+        type: string
+        enum:
+          - text
+          - email
+          - url
+          - number
+          - phone
+        default: text
+      insightsEnabled:
+        type: boolean
+        default: false
+      charLimit:
+        $ref: ./SurveyCharLimit.yml
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

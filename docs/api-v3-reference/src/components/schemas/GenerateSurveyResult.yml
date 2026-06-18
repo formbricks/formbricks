@@ -1,0 +1,20 @@
+type: object
+required:
+  - language
+  - payload
+  - validation
+properties:
+  language:
+    $ref: ./AISurveyGenerationLocaleCode.yml
+    description: >-
+      Supported app locale used for the AI-created survey content and create
+      payload language maps.
+  payload:
+    allOf:
+      - $ref: ./CreateSurveyRequest.yml
+    description: >
+      Strict create payload ready for `POST /api/v3/surveys`. It always has
+      `status: draft`.
+  validation:
+    $ref: ./GeneratedSurveyValidationResult.yml
+additionalProperties: false

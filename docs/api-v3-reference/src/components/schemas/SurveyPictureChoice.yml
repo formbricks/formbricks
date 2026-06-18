@@ -1,0 +1,11 @@
+type: object
+required:
+  - id
+  - imageUrl
+properties:
+  id:
+    type: string
+    description: Stable picture choice id.
+  imageUrl:
+    type: string
+additionalProperties: false

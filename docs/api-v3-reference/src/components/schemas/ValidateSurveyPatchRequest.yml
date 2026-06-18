@@ -1,0 +1,22 @@
+type: object
+required:
+  - operation
+  - surveyId
+  - data
+properties:
+  operation:
+    type: string
+    enum:
+      - patch
+  surveyId:
+    type: string
+    format: cuid2
+  data:
+    description: >-
+      Intended patch payload. Invalid documents are allowed so the endpoint can
+      return repairable validation errors.
+    anyOf:
+      - $ref: ./PatchSurveyRequest.yml
+      - type: object
+        additionalProperties: true
+additionalProperties: false
