@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ALLOWED_FILE_EXTENSIONS, TAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
+import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
@@ -35,6 +37,7 @@ export const ValidationRuleValueInput = ({
   element,
 }: ValidationRuleValueInputProps) => {
   const { t } = useTranslation();
+  const [patternError, setPatternError] = useState<string | null>(null);
 
   // Determine HTML input type for value inputs
   let htmlInputType: "number" | "date" | "text" = "text";
@@ -120,6 +123,55 @@ export const ValidationRuleValueInput = ({
         placeholder={t("workspace.surveys.edit.validation.select_file_extensions")}
         disabled={false}
       />
+    );
+  }
+
+  // Pattern rule: compile the regex on blur so authors get an inline error before they save.
+  // The API also rejects malformed patterns; this is the design-time guard that stops the bad
+  // value from leaving the editor in the first place.
+  if (ruleType === "pattern") {
+    const patternValue = typeof currentValue === "string" ? currentValue : "";
+    const validatePattern = (value: string) => {
+      if (!value) {
+        setPatternError(null);
+        return;
+      }
+      try {
+        new RegExp(value);
+        setPatternError(null);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Invalid regular expression";
+        setPatternError(message);
+      }
+    };
+
+    // Reserve fixed space for the error so adding/removing the message does not push
+    // sibling rows. The <p> is always rendered; we toggle visibility instead of mount.
+    return (
+      <div className="flex w-full flex-col gap-1">
+        <Input
+          type="text"
+          value={patternValue}
+          onChange={(e) => {
+            if (patternError) setPatternError(null);
+            onChange(e.target.value);
+          }}
+          onBlur={(e) => validatePattern(e.target.value)}
+          placeholder={config.valuePlaceholder}
+          className="h-9 min-w-[80px] bg-white"
+          isInvalid={!!patternError}
+          aria-invalid={!!patternError}
+          aria-describedby={patternError ? `${rule.id}-pattern-error` : undefined}
+        />
+        <p
+          id={`${rule.id}-pattern-error`}
+          className={cn(
+            "line-clamp-2 min-h-[2.25rem] text-xs leading-tight text-red-500",
+            !patternError && "invisible"
+          )}>
+          {patternError ?? " "}
+        </p>
+      </div>
     );
   }
 

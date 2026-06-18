@@ -1749,6 +1749,39 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
             }
           });
         }
+
+        // Reject malformed regex patterns at the survey level. A pattern that cannot be
+        // compiled would otherwise persist into the DB and break response validation at
+        // runtime — the surveys SDK can only fail open (accept everything) or fail
+        // closed (reject everything), both wrong. Stop the bad value at save time.
+        const validationRules = element.validation?.rules ?? [];
+        validationRules.forEach((rule, ruleIndex) => {
+          if (rule.type !== "pattern") return;
+          const params = rule.params as { pattern?: unknown; flags?: unknown };
+          const pattern = typeof params?.pattern === "string" ? params.pattern : "";
+          const flags = typeof params?.flags === "string" ? params.flags : undefined;
+          if (!pattern) return;
+          try {
+            new RegExp(pattern, flags);
+          } catch (error) {
+            const reason = error instanceof Error ? error.message : "Invalid regular expression";
+            ctx.addIssue({
+              code: "custom",
+              message: `Invalid regular expression: ${reason}`,
+              path: [
+                "blocks",
+                blockIndex,
+                "elements",
+                elementIndex,
+                "validation",
+                "rules",
+                ruleIndex,
+                "params",
+                "pattern",
+              ],
+            });
+          }
+        });
       });
 
       // Validate block logic (conditions, actions, fallback)

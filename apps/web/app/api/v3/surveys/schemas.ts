@@ -748,7 +748,31 @@ function validateValidation(value: unknown, path: string, issues: InvalidParam[]
   value.rules.forEach((rule, index) => {
     const rulePath = `${path}.rules.${index}`;
     addUnknownKeyIssues(rule, VALIDATION_RULE_KEYS, rulePath, issues);
+    validatePatternRule(rule, rulePath, issues);
   });
+}
+
+// Reject pattern rules whose regex cannot be compiled. Persisting a malformed
+// pattern means the surveys SDK has to either accept every response (silent
+// data corruption) or reject every response (broken UX). The only correct
+// fix is to refuse the write up front.
+function validatePatternRule(rule: unknown, path: string, issues: InvalidParam[]): void {
+  if (!isPlainObject(rule) || rule.type !== "pattern" || !isPlainObject(rule.params)) {
+    return;
+  }
+  const { pattern, flags } = rule.params as { pattern?: unknown; flags?: unknown };
+  if (typeof pattern !== "string") {
+    return;
+  }
+  try {
+    new RegExp(pattern, typeof flags === "string" ? flags : undefined);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Invalid regular expression";
+    issues.push({
+      name: `${path}.params.pattern`,
+      reason: `Invalid regular expression: ${reason}`,
+    });
+  }
 }
 
 function validateDynamicReference(value: unknown, path: string, issues: InvalidParam[]): void {

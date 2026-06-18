@@ -153,6 +153,73 @@ describe("ZV3CreateSurveyBody", () => {
     }
   });
 
+  test("rejects pattern validation rules whose regex cannot be compiled", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [
+            {
+              ...validCreateBody.blocks[0].elements[0],
+              validation: {
+                rules: [{ id: "rule_pattern", type: "pattern", params: { pattern: "[a-z" } }],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    const paths = result.error?.issues.map((issue) => issue.path.join("."));
+    expect(paths).toEqual(expect.arrayContaining(["blocks.0.elements.0.validation.rules.0.params.pattern"]));
+  });
+
+  test("accepts pattern validation rules whose regex compiles", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [
+            {
+              ...validCreateBody.blocks[0].elements[0],
+              validation: {
+                rules: [{ id: "rule_pattern", type: "pattern", params: { pattern: "^[a-z]+$", flags: "i" } }],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects pattern validation rules with invalid regex flags", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [
+            {
+              ...validCreateBody.blocks[0].elements[0],
+              validation: {
+                rules: [{ id: "rule_pattern", type: "pattern", params: { pattern: ".*", flags: "zzz" } }],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    const paths = result.error?.issues.map((issue) => issue.path.join("."));
+    expect(paths).toEqual(expect.arrayContaining(["blocks.0.elements.0.validation.rules.0.params.pattern"]));
+  });
+
   test("rejects unsupported top-level fields instead of silently ignoring them", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
