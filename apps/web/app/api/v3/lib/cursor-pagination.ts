@@ -28,6 +28,7 @@ export function paginateByIdCursor<T extends { id: string }>(
   const afterId = options.cursor ? decodeIdCursor(options.cursor) : null;
   const remaining = afterId ? ordered.filter((item) => item.id.localeCompare(afterId) > 0) : ordered;
   const page = remaining.slice(0, options.limit);
-  const nextCursor = remaining.length > options.limit ? encodeIdCursor(page[page.length - 1].id) : null;
+  const lastItem = page.at(-1);
+  const nextCursor = remaining.length > options.limit && lastItem ? encodeIdCursor(lastItem.id) : null;
   return { page, nextCursor };
 }
