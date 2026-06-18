@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "Всё готово! Пора создать первый опрос",
       "alphabetical": "По алфавиту",
+      "change_status": "Изменить статус",
       "copy_survey": "Копировать опрос",
       "copy_survey_description": "Выбери рабочее пространство, в которое хочешь скопировать этот опрос.",
       "copy_survey_error": "Не удалось скопировать опрос",
@@ -3300,6 +3301,7 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "Произошла ошибка при удалении опроса",
+      "error_updating_status": "Произошла ошибка при обновлении статуса опроса",
       "filter": {
         "complete_and_partial_responses": "Полные и частичные ответы",
         "complete_responses": "Полные ответы",
@@ -3476,6 +3478,8 @@
           "title": "Социальные сети"
         }
       },
+      "status_updated_successfully": "Статус опроса успешно обновлен",
+      "status_updating": "Обновление статуса опроса...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Добавлен фильтр для ответов, где ответ на вопрос {questionIdx} — {filterComboBoxValue} — {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Добавлен фильтр для ответов, где вопрос {questionIdx} был пропущен",

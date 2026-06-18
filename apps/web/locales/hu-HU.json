@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "Mindent beállított! Ideje létrehozni az első kérdőívet",
       "alphabetical": "Ábécé-sorrend",
+      "change_status": "Állapot módosítása",
       "copy_survey": "Felmérés másolása",
       "copy_survey_description": "Válasszon ki egy munkaterületet, amelyre ezt a felmérést másolni szeretné.",
       "copy_survey_error": "A felmérés másolása sikertelen volt",
@@ -3300,6 +3301,7 @@
         "zip": "Irányítószám"
       },
       "error_deleting_survey": "Hiba történt a kérdőív törlése során",
+      "error_updating_status": "Hiba történt a felmérés állapotának frissítése során",
       "filter": {
         "complete_and_partial_responses": "Teljes és részleges válaszok",
         "complete_responses": "Teljes válaszok",
@@ -3476,6 +3478,8 @@
           "title": "Közösségi média"
         }
       },
+      "status_updated_successfully": "A felmérés állapota sikeresen frissítve",
+      "status_updating": "A felmérés állapotának frissítése folyamatban...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Szűrő hozzáadva azokhoz a válaszokhoz, ahol a(z) {questionIdx}. kérdésre adott válasz {filterComboBoxValue} – {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Szűrő hozzáadva azokhoz a válaszokhoz, ahol a(z) {questionIdx}. kérdésre adott válasz kihagyva",

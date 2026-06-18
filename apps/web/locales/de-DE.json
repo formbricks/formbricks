@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "Alles klar! Zeit, deine erste Umfrage zu erstellen",
       "alphabetical": "alphabetisch",
+      "change_status": "Status ändern",
       "copy_survey": "Umfrage kopieren",
       "copy_survey_description": "Wähle einen Workspace aus, in den du diese Umfrage kopieren möchtest.",
       "copy_survey_error": "Umfrage konnte nicht kopiert werden",
@@ -3300,6 +3301,7 @@
         "zip": "PLZ"
       },
       "error_deleting_survey": "Beim Löschen der Umfrage ist ein Fehler aufgetreten",
+      "error_updating_status": "Beim Aktualisieren des Umfragestatus ist ein Fehler aufgetreten",
       "filter": {
         "complete_and_partial_responses": "Vollständige und teilweise Antworten",
         "complete_responses": "Vollständige Antworten",
@@ -3476,6 +3478,8 @@
           "title": "Social Media"
         }
       },
+      "status_updated_successfully": "Umfragestatus erfolgreich aktualisiert",
+      "status_updating": "Umfragestatus wird aktualisiert...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} übersprungen wurde",

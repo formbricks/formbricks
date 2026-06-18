@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "Ești gata! Este timpul să creezi primul tău chestionar",
       "alphabetical": "Alfabetic",
+      "change_status": "Schimbă status",
       "copy_survey": "Copiază chestionarul",
       "copy_survey_description": "Alege un spațiu de lucru în care să copiezi acest chestionar.",
       "copy_survey_error": "Copierea chestionarului a eșuat",
@@ -3300,6 +3301,7 @@
         "zip": "Cod Poștal"
       },
       "error_deleting_survey": "A apărut o eroare la ștergerea sondajului",
+      "error_updating_status": "A apărut o eroare la actualizarea statusului sondajului",
       "filter": {
         "complete_and_partial_responses": "Răspunsuri complete și parțiale",
         "complete_responses": "Răspunsuri complete",
@@ -3476,6 +3478,8 @@
           "title": "Rețele Sociale"
         }
       },
+      "status_updated_successfully": "Statusul sondajului a fost actualizat cu succes",
+      "status_updating": "Se actualizează statusul sondajului...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "S-a adăugat un filtru pentru răspunsurile unde răspunsul la întrebarea {questionIdx} este {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtru adăugat pentru răspunsuri unde răspunsul la întrebarea {questionIdx} este omis",

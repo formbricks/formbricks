@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "Tá tudo pronto! Hora de criar sua primeira pesquisa",
       "alphabetical": "alfabético",
+      "change_status": "Alterar status",
       "copy_survey": "Copiar pesquisa",
       "copy_survey_description": "Escolha um espaço de trabalho para copiar esta pesquisa.",
       "copy_survey_error": "Falha ao copiar pesquisa",
@@ -3300,6 +3301,7 @@
         "zip": "Fecho éclair"
       },
       "error_deleting_survey": "Ocorreu um erro ao excluir a pesquisa",
+      "error_updating_status": "Ocorreu um erro ao atualizar o status da pesquisa",
       "filter": {
         "complete_and_partial_responses": "Respostas completas e parciais",
         "complete_responses": "Respostas completas",
@@ -3476,6 +3478,8 @@
           "title": "Mídia Social"
         }
       },
+      "status_updated_successfully": "Status da pesquisa atualizado com sucesso",
+      "status_updating": "Atualizando status da pesquisa...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtro adicionado para respostas onde a resposta da pergunta {questionIdx} é {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} foi pulada",

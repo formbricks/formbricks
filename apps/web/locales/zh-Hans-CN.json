@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "一切准备就绪！是时候创建您的第一个调查了",
       "alphabetical": "字母顺序",
+      "change_status": "更改状态",
       "copy_survey": "复制问卷",
       "copy_survey_description": "选择要将此问卷复制到的工作区。",
       "copy_survey_error": "复制问卷失败",
@@ -3300,6 +3301,7 @@
         "zip": "邮编"
       },
       "error_deleting_survey": "删除问卷时发生错误",
+      "error_updating_status": "更新调查状态时出错",
       "filter": {
         "complete_and_partial_responses": "完整 和 部分 反馈",
         "complete_responses": "完整反馈",
@@ -3476,6 +3478,8 @@
           "title": "社交媒体"
         }
       },
+      "status_updated_successfully": "调查状态更新成功",
+      "status_updating": "正在更新调查状态...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已添加筛选条件：问题 {questionIdx} 的答案为 {filterComboBoxValue} - {filterValue} 的回复",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "为 回答 问题 {questionIdx} 的 答复 增加 了 筛选器，筛选条件 是 略过",

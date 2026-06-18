@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "Je bent helemaal klaar! Tijd om uw eerste enquête te maken",
       "alphabetical": "Alfabetisch",
+      "change_status": "Status wijzigen",
       "copy_survey": "Enquête kopiëren",
       "copy_survey_description": "Kies een workspace waarnaar je deze enquête wilt kopiëren.",
       "copy_survey_error": "Enquête kopiëren mislukt",
@@ -3300,6 +3301,7 @@
         "zip": "Ritssluiting"
       },
       "error_deleting_survey": "Er is een fout opgetreden bij het verwijderen van de enquête",
+      "error_updating_status": "Er is een fout opgetreden bij het bijwerken van de enquêtestatus",
       "filter": {
         "complete_and_partial_responses": "Volledige en gedeeltelijke antwoorden",
         "complete_responses": "Volledige reacties",
@@ -3476,6 +3478,8 @@
           "title": "Sociale media"
         }
       },
+      "status_updated_successfully": "Enquêtestatus succesvol bijgewerkt",
+      "status_updating": "Enquêtestatus wordt bijgewerkt...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter toegevoegd voor reacties waar het antwoord op vraag {questionIdx} {filterComboBoxValue} - {filterValue} is",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter toegevoegd voor antwoorden waarbij het antwoord op vraag {questionIdx} wordt overgeslagen",

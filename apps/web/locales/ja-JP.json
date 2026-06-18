@@ -2721,6 +2721,7 @@
       },
       "all_set_time_to_create_first_survey": "すべての準備が整いました！最初のフォームを作成しましょう",
       "alphabetical": "アルファベット順",
+      "change_status": "ステータスを変更",
       "copy_survey": "アンケートをコピー",
       "copy_survey_description": "このアンケートをコピーするワークスペースを選択してください。",
       "copy_survey_error": "アンケートのコピーに失敗しました",
@@ -3300,6 +3301,7 @@
         "zip": "郵便番号"
       },
       "error_deleting_survey": "アンケートの削除中にエラーが発生しました",
+      "error_updating_status": "アンケートのステータス更新中にエラーが発生しました",
       "filter": {
         "complete_and_partial_responses": "完了および部分的な回答",
         "complete_responses": "完了した回答",
@@ -3476,6 +3478,8 @@
           "title": "ソーシャルメディア"
         }
       },
+      "status_updated_successfully": "アンケートのステータスが正常に更新されました",
+      "status_updating": "アンケートのステータスを更新中...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "質問{questionIdx}の答えが{filterComboBoxValue} - {filterValue}の回答にフィルターを追加しました",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "質問 {questionIdx} の回答がスキップされた回答のフィルターを追加しました",
