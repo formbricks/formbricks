@@ -65,10 +65,16 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
   const verify = (input: { workspaceId: string; surveyId: string; endingCardIds: string[] }) =>
     buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").verifyTriggerSurvey(input);
 
+  // The adapter parses `survey.endings` with `ZSurveyEndings`, so mocked endings must be valid
+  // ending cards (cuid2 id + type), matching how the survey is stored.
+  const endingId1 = "cm9zr4q7i000108l84goze001";
+  const endingId2 = "cm9zr4q7i000108l84goze002";
+  const endScreen = (id: string) => ({ id, type: "endScreen" as const });
+
   test("rejects a workflow trigger whose survey no longer exists in the workspace", async () => {
     surveyFindUnique.mockResolvedValue(null);
 
-    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: ["e_1"] });
+    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: [endingId1] });
 
     expect(result).toEqual({ surveyExists: false, missingEndingCardIds: [] });
     expect(surveyFindUnique).toHaveBeenCalledWith({
@@ -78,21 +84,21 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
   });
 
   test("flags the trigger's ending-card ids that are missing from the survey", async () => {
-    surveyFindUnique.mockResolvedValue({ endings: [{ id: "e_1" }, { id: "e_2" }] });
+    surveyFindUnique.mockResolvedValue({ endings: [endScreen(endingId1), endScreen(endingId2)] });
 
     const result = await verify({
       workspaceId: "ws_1",
       surveyId: "s_1",
-      endingCardIds: ["e_1", "e_missing"],
+      endingCardIds: [endingId1, "ending_missing"],
     });
 
-    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: ["e_missing"] });
+    expect(result).toEqual({ surveyExists: true, missingEndingCardIds: ["ending_missing"] });
   });
 
   test("accepts a workflow trigger whose survey and ending cards all exist", async () => {
-    surveyFindUnique.mockResolvedValue({ endings: [{ id: "e_1" }] });
+    surveyFindUnique.mockResolvedValue({ endings: [endScreen(endingId1)] });
 
-    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: ["e_1"] });
+    const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: [endingId1] });
 
     expect(result).toEqual({ surveyExists: true, missingEndingCardIds: [] });
   });
