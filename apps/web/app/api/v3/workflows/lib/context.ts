@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { ZSurveyEndings } from "@formbricks/types/surveys/types";
 import {
   type WorkflowApiContext,
   createWorkflowsHandlers,
@@ -26,7 +27,8 @@ const getUserId = (authentication: TV3Authentication): string | null =>
 /**
  * Confirm a workflow trigger's referenced survey + ending cards exist in the workspace. Injected so
  * `@formbricks/workflows` stays survey-agnostic. Scoped by the survey's `(id, workspaceId)` composite
- * key; ending ids are read from the survey's `endings` JSON.
+ * key; ending ids come from the survey's `endings`, parsed through `ZSurveyEndings` so the JSON
+ * column is validated (not accessed untyped) before reading ids.
  */
 const verifyTriggerSurvey: WorkflowApiContext["verifyTriggerSurvey"] = async ({
   workspaceId,
@@ -42,7 +44,7 @@ const verifyTriggerSurvey: WorkflowApiContext["verifyTriggerSurvey"] = async ({
     return { surveyExists: false, missingEndingCardIds: [] };
   }
 
-  const endingIds = new Set(survey.endings.map((ending) => ending.id));
+  const endingIds = new Set(ZSurveyEndings.parse(survey.endings).map((ending) => ending.id));
   return {
     surveyExists: true,
     missingEndingCardIds: endingCardIds.filter((endingCardId) => !endingIds.has(endingCardId)),
