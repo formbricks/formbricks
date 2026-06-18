@@ -24,6 +24,9 @@ export interface TriggerSurveyCheck {
  *
  * `verifyTriggerSurvey` is an injected lookup (the adapter queries the Survey table) so the package
  * stays survey-agnostic; enable uses it to confirm the trigger's survey + ending cards still exist.
+ * It is intentionally specific to the `response.completed` trigger (the only kind today); once other
+ * trigger types need reference validation, this generalizes to a per-trigger validator keyed on
+ * `trigger.type` rather than growing a `verifyXxx` capability per trigger.
  */
 export interface WorkflowApiContext {
   userId: string | null;

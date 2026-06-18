@@ -72,10 +72,9 @@ patch:
     moving to draft) first and re-enabling afterwards. Violations return **422**
     with code
 
-    `invalid_workflow_state`. Graph reference failures return **400** with
-    structured
-
-    `invalid_params`, mirroring the survey identifier rules.
+    `invalid_workflow_state`. A structurally invalid definition returns **400**
+    with structured `invalid_params`; the referenced survey and ending cards are
+    not verified here — that existence check runs when the workflow is enabled.
   tags:
     - V3 Workflows
   parameters:
