@@ -61,11 +61,11 @@ describe("buildWorkflowApiContext", () => {
   });
 });
 
-describe("verifyTriggerSurvey", () => {
+describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)", () => {
   const verify = (input: { workspaceId: string; surveyId: string; endingCardIds: string[] }) =>
     buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").verifyTriggerSurvey(input);
 
-  test("reports the survey as absent when the lookup returns null", async () => {
+  test("rejects a workflow trigger whose survey no longer exists in the workspace", async () => {
     surveyFindUnique.mockResolvedValue(null);
 
     const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: ["e_1"] });
@@ -77,7 +77,7 @@ describe("verifyTriggerSurvey", () => {
     });
   });
 
-  test("flags ending card ids that are not on the survey", async () => {
+  test("flags the trigger's ending-card ids that are missing from the survey", async () => {
     surveyFindUnique.mockResolvedValue({ endings: [{ id: "e_1" }, { id: "e_2" }] });
 
     const result = await verify({
@@ -89,7 +89,7 @@ describe("verifyTriggerSurvey", () => {
     expect(result).toEqual({ surveyExists: true, missingEndingCardIds: ["e_missing"] });
   });
 
-  test("reports no missing ending cards when every referenced id is present", async () => {
+  test("accepts a workflow trigger whose survey and ending cards all exist", async () => {
     surveyFindUnique.mockResolvedValue({ endings: [{ id: "e_1" }] });
 
     const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: ["e_1"] });
