@@ -7,7 +7,7 @@ import { WorkflowHeaderCta } from "@/modules/workflows/components/workflow-heade
 import { WorkflowPageTitle } from "@/modules/workflows/components/workflow-page-title";
 import { WorkflowSecondaryNavigation } from "@/modules/workflows/components/workflow-secondary-navigation";
 import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
-import { getPlaceholderWorkflow } from "@/modules/workflows/lib/placeholder-data";
+import { loadWorkflowResource } from "@/modules/workflows/lib/server-data";
 
 const WorkflowDetailLayout = async (
   props: Readonly<{
@@ -17,9 +17,9 @@ const WorkflowDetailLayout = async (
 ) => {
   const params = await props.params;
   const { isReadOnly } = await getWorkflowsRouteAuth(params.workspaceId);
-  const workflow = getPlaceholderWorkflow(params.workflowId);
+  const workflow = await loadWorkflowResource(params.workflowId);
 
-  if (!workflow) {
+  if (!workflow || workflow.workspaceId !== params.workspaceId) {
     notFound();
   }
 

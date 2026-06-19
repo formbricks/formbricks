@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
-import type { TWorkflowHistorySummary } from "@/modules/workflows/lib/placeholder-data";
+import type { TWorkflowHistorySummary } from "@/modules/workflows/types";
 
 const HISTORY_PAGE_SIZE = 5;
 

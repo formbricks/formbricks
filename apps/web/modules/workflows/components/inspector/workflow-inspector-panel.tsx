@@ -8,10 +8,6 @@ import { AiAssistantSection } from "@/modules/workflows/components/inspector/wor
 import { HistorySection } from "@/modules/workflows/components/inspector/workflow-history-section";
 import { SettingsSection } from "@/modules/workflows/components/inspector/workflow-settings-section";
 import {
-  getPlaceholderWorkflowHistory,
-  getPlaceholderWorkflowSettings,
-} from "@/modules/workflows/lib/placeholder-data";
-import {
   isWorkflowInspectorCollapsedAtom,
   toggleWorkflowInspectorAtom,
   workflowAtom,
@@ -36,8 +32,6 @@ export const WorkflowInspectorPanel = ({
   const definition = useAtomValue(workflowDefinitionAtom);
   const isCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const toggleCollapsed = useSetAtom(toggleWorkflowInspectorAtom);
-  const settings = workflow ? getPlaceholderWorkflowSettings(workflow.id) : undefined;
-  const history = workflow ? getPlaceholderWorkflowHistory(workflow.id, t) : undefined;
 
   if (isCollapsed) {
     return (
@@ -59,7 +53,6 @@ export const WorkflowInspectorPanel = ({
   const triggerNode = definition?.trigger;
   const hasEndingFilter = triggerNode ? triggerNode.config.endingCardIds.length > 0 : false;
   const overviewText =
-    settings?.aiOverview ??
     workflow?.description ??
     (hasEndingFilter
       ? t("workspace.workflows.overview_trigger_with_endings")
@@ -86,9 +79,8 @@ export const WorkflowInspectorPanel = ({
         isReadOnly={isReadOnly}
         canEditDefinition={canEditDefinition}
         canEditMetadata={canEditMetadata}
-        settings={settings}
       />
-      <HistorySection history={history} />
+      <HistorySection />
     </aside>
   );
 };

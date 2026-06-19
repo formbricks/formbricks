@@ -15,7 +15,6 @@ import {
   updateWorkflow,
 } from "@/modules/workflows/lib/api-client";
 import { workflowDefinitionToFlowNodes } from "@/modules/workflows/lib/definition-to-flow";
-import { getPlaceholderWorkflowResource } from "@/modules/workflows/lib/placeholder-data";
 import {
   hydrateWorkflowEditorAtom,
   isWorkflowSavingAtom,
@@ -60,23 +59,11 @@ export const useWorkflowBuilder = ({
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Reload on workflowId change; abort in-flight fetches when the page navigates away.
-  // Until the real DB-backed workflows ship (ENG-1222), placeholder ids resolve to in-memory
-  // demo data so the builder UI is testable without hitting the API.
   useEffect(() => {
     if (!loadOnMount) return;
     const controller = new AbortController();
     setIsLoading(true);
     setLoadError(null);
-
-    const placeholderWorkflow = getPlaceholderWorkflowResource(workflowId);
-    if (placeholderWorkflow) {
-      hydrateEditor({
-        workflow: placeholderWorkflow,
-        flowNodes: workflowDefinitionToFlowNodes(placeholderWorkflow.definition, t),
-      });
-      setIsLoading(false);
-      return () => controller.abort();
-    }
 
     getWorkflow(workflowId, controller.signal)
       .then((loadedWorkflow) => {
@@ -131,19 +118,6 @@ export const useWorkflowBuilder = ({
       payload.definition = parsedDefinition.data;
     }
 
-    // Placeholder demo path: avoid hitting the API (no DB row); persist to local state instead.
-    if (getPlaceholderWorkflowResource(workflow.id)) {
-      setWorkflow({
-        ...workflow,
-        name: trimmedName,
-        description: trimmedDescription,
-        definition: payload.definition ?? workflow.definition,
-        updatedAt: new Date().toISOString(),
-      });
-      toast.success(t("workspace.workflows.save_success"));
-      return;
-    }
-
     setIsSaving(true);
     try {
       const savedWorkflow = await updateWorkflow(workflow.id, payload);
@@ -176,21 +150,6 @@ export const useWorkflowBuilder = ({
           toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.archive_failed")));
         else toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.unarchive_failed")));
       };
-
-      // Placeholder demo path: toggle status locally instead of calling the lifecycle endpoint.
-      if (getPlaceholderWorkflowResource(workflow.id)) {
-        const nextStatus =
-          operation === "enable"
-            ? "enabled"
-            : operation === "disable"
-              ? "disabled"
-              : operation === "archive"
-                ? "archived"
-                : "draft";
-        setWorkflow({ ...workflow, status: nextStatus, updatedAt: new Date().toISOString() });
-        toastSuccess();
-        return;
-      }
 
       setIsTransitioning(true);
       try {

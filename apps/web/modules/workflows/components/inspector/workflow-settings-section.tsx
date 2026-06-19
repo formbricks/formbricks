@@ -15,7 +15,6 @@ import {
 import { Switch } from "@/modules/ui/components/switch";
 import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
-import type { TWorkflowOperationalSettings } from "@/modules/workflows/lib/placeholder-data";
 import {
   setWorkflowDescriptionAtom,
   setWorkflowNameAtom,
@@ -23,6 +22,7 @@ import {
   workflowDescriptionAtom,
   workflowNameAtom,
 } from "@/modules/workflows/state/editor";
+import type { TWorkflowOperationalSettings } from "@/modules/workflows/types";
 
 interface SettingsSectionProps {
   workflowId: string;

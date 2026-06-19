@@ -32,11 +32,6 @@ vi.mock("@/modules/workflows/lib/api-client", () => ({
   unarchiveWorkflow: (...args: unknown[]) => unarchiveWorkflow(...args),
 }));
 
-const getPlaceholderWorkflowResource = vi.fn();
-vi.mock("@/modules/workflows/lib/placeholder-data", () => ({
-  getPlaceholderWorkflowResource: (...args: unknown[]) => getPlaceholderWorkflowResource(...args),
-}));
-
 vi.mock("@/modules/workflows/lib/definition-to-flow", () => ({
   workflowDefinitionToFlowNodes: () => [],
 }));
@@ -47,18 +42,12 @@ vi.mock("@formbricks/workflows", () => ({
   },
 }));
 
-const placeholderWorkflow = {
-  id: "wf-placeholder",
-  name: "Placeholder",
-  description: "Demo",
-  status: "draft",
-  definition: { trigger: { id: "trigger-1" }, nodes: [], edges: [] },
-} as unknown as TWorkflowResource;
-
 const apiWorkflow = {
-  ...placeholderWorkflow,
   id: "wf-api",
   name: "From API",
+  description: "Desc",
+  status: "draft",
+  definition: { trigger: { id: "trigger-1" }, nodes: [], edges: [] },
 } as unknown as TWorkflowResource;
 
 const renderBuilder = (args: Parameters<typeof useWorkflowBuilder>[0]) => {
@@ -76,7 +65,6 @@ beforeEach(() => {
   disableWorkflow.mockReset();
   archiveWorkflow.mockReset();
   unarchiveWorkflow.mockReset();
-  getPlaceholderWorkflowResource.mockReset();
 });
 
 afterEach(() => {
@@ -84,18 +72,7 @@ afterEach(() => {
 });
 
 describe("load", () => {
-  test("hydrates from placeholder data without calling the API", async () => {
-    getPlaceholderWorkflowResource.mockReturnValue(placeholderWorkflow);
-
-    const { result } = renderBuilder({ workflowId: "wf-placeholder", isReadOnly: false });
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.workflow).toEqual(placeholderWorkflow);
-    expect(getWorkflow).not.toHaveBeenCalled();
-  });
-
-  test("fetches via API when no placeholder match", async () => {
-    getPlaceholderWorkflowResource.mockReturnValue(undefined);
+  test("fetches via API and hydrates the editor", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
 
     const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
@@ -105,7 +82,6 @@ describe("load", () => {
   });
 
   test("surfaces load error via toast and loadError", async () => {
-    getPlaceholderWorkflowResource.mockReturnValue(undefined);
     getWorkflow.mockRejectedValue(new Error("boom"));
 
     const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
@@ -115,11 +91,8 @@ describe("load", () => {
   });
 
   test("skips load when loadOnMount is false", () => {
-    getPlaceholderWorkflowResource.mockReturnValue(placeholderWorkflow);
+    renderBuilder({ workflowId: "wf-api", isReadOnly: false, loadOnMount: false });
 
-    renderBuilder({ workflowId: "wf-placeholder", isReadOnly: false, loadOnMount: false });
-
-    expect(getPlaceholderWorkflowResource).not.toHaveBeenCalled();
     expect(getWorkflow).not.toHaveBeenCalled();
   });
 });
@@ -134,9 +107,9 @@ describe("canEdit flags", () => {
   ] as const)(
     "status=%s isReadOnly=%s → canEditDefinition=%s canEditMetadata=%s",
     async (status, isReadOnly, expectedDef, expectedMeta) => {
-      getPlaceholderWorkflowResource.mockReturnValue({ ...placeholderWorkflow, status });
+      getWorkflow.mockResolvedValue({ ...apiWorkflow, status });
 
-      const { result } = renderBuilder({ workflowId: "wf-placeholder", isReadOnly });
+      const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly });
 
       await waitFor(() => expect(result.current.workflow).toBeTruthy());
       expect(result.current.canEditDefinition).toBe(expectedDef);
@@ -147,9 +120,9 @@ describe("canEdit flags", () => {
 
 describe("save", () => {
   test("rejects empty name with a toast", async () => {
-    getPlaceholderWorkflowResource.mockReturnValue({ ...placeholderWorkflow, name: "  " });
+    getWorkflow.mockResolvedValue({ ...apiWorkflow, name: "  " });
 
-    const { result } = renderBuilder({ workflowId: "wf-placeholder", isReadOnly: false });
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
     await waitFor(() => expect(result.current.workflow).toBeTruthy());
 
     await act(async () => {
@@ -160,24 +133,7 @@ describe("save", () => {
     expect(updateWorkflow).not.toHaveBeenCalled();
   });
 
-  test("placeholder save persists locally, no API hit", async () => {
-    getPlaceholderWorkflowResource.mockReturnValue(placeholderWorkflow);
-
-    const { result } = renderBuilder({ workflowId: "wf-placeholder", isReadOnly: false });
-    await waitFor(() => expect(result.current.workflow).toBeTruthy());
-
-    await act(async () => {
-      await result.current.save();
-    });
-
-    expect(updateWorkflow).not.toHaveBeenCalled();
-    expect(toastSuccess).toHaveBeenCalledWith("workspace.workflows.save_success");
-  });
-
-  test("non-placeholder save PATCHes via API", async () => {
-    getPlaceholderWorkflowResource.mockImplementation((id: string) =>
-      id === "wf-placeholder" ? placeholderWorkflow : undefined
-    );
+  test("PATCHes via API", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     updateWorkflow.mockResolvedValue(apiWorkflow);
 
@@ -191,32 +147,24 @@ describe("save", () => {
     expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "From API" }));
     expect(toastSuccess).toHaveBeenCalledWith("workspace.workflows.save_success");
   });
+
+  test("save reports a failure toast", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(new Error("save kaboom"));
+
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(async () => {
+      await result.current.save();
+    });
+
+    expect(toastError).toHaveBeenCalled();
+  });
 });
 
 describe("transition", () => {
-  test.each([
-    ["enable", "enable_success"],
-    ["disable", "disable_success"],
-    ["archive", "archive_success"],
-    ["unarchive", "unarchive_success"],
-  ] as const)("placeholder %s flips local status", async (op, successKey) => {
-    getPlaceholderWorkflowResource.mockReturnValue(placeholderWorkflow);
-
-    const { result } = renderBuilder({ workflowId: "wf-placeholder", isReadOnly: false });
-    await waitFor(() => expect(result.current.workflow).toBeTruthy());
-
-    await act(async () => {
-      await result.current[op]();
-    });
-
-    expect(enableWorkflow).not.toHaveBeenCalled();
-    expect(toastSuccess).toHaveBeenCalledWith(`workspace.workflows.${successKey}`);
-  });
-
-  test("non-placeholder enable calls the API", async () => {
-    getPlaceholderWorkflowResource.mockImplementation((id: string) =>
-      id === "wf-placeholder" ? placeholderWorkflow : undefined
-    );
+  test("enable calls the API + success toast", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     enableWorkflow.mockResolvedValue(apiWorkflow);
 
@@ -229,10 +177,24 @@ describe("transition", () => {
     expect(toastSuccess).toHaveBeenCalledWith("workspace.workflows.enable_success");
   });
 
+  test.each([
+    ["disable", disableWorkflow, "disable_success"],
+    ["archive", archiveWorkflow, "archive_success"],
+    ["unarchive", unarchiveWorkflow, "unarchive_success"],
+  ] as const)("%s calls the API + success toast", async (op, mock, successKey) => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    mock.mockResolvedValue(apiWorkflow);
+
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(() => result.current[op]());
+
+    await waitFor(() => expect(mock).toHaveBeenCalledWith("wf-api"));
+    expect(toastSuccess).toHaveBeenCalledWith(`workspace.workflows.${successKey}`);
+  });
+
   test("API failure surfaces a failure toast", async () => {
-    getPlaceholderWorkflowResource.mockImplementation((id: string) =>
-      id === "wf-placeholder" ? placeholderWorkflow : undefined
-    );
     getWorkflow.mockResolvedValue(apiWorkflow);
     archiveWorkflow.mockRejectedValue(new Error("nope"));
 
