@@ -19,6 +19,12 @@ vi.mock("@/modules/auth/lib/brevo", () => ({
   deleteBrevoCustomerByEmail: vi.fn(),
 }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+// Pin multi-org OFF so the gate test exercises the fresh-instance branch specifically (the multi-org
+// branch returns the same shape; the license flag is an external input, not the behavior under test).
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return { ...actual, getIsMultiOrgEnabled: vi.fn().mockResolvedValue(false) };
+});
 
 const createUser = async (email: string): Promise<string> => {
   await auth.api.signUpEmail({ body: { email, password: "Passw0rd!", name: "Sso" }, asResponse: true });
@@ -31,6 +37,7 @@ beforeEach(async () => {
 
 describe("SSO provisioning (real Postgres)", () => {
   test("gate: a fresh/empty instance provisions with no org auto-assignment", async () => {
+    // multi-org mocked off → provision-null here is the fresh-instance (isFirstUser) branch, not multi-org
     const decision = await gateSsoProvisioning({ email: "first@example.com", callbackUrl: "" });
     expect(decision).toEqual({
       action: "provision",

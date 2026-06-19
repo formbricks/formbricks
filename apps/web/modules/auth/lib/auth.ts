@@ -194,8 +194,8 @@ export const auth = betterAuth({
     cookiePrefix: "formbricks",
     // Formbricks ids are cuid2 (Prisma `@default(cuid())` + the `ZId = z.cuid2()` validators in the
     // service layer). Better Auth's default id format is NOT cuid2, so without this every Formbricks
-    // service that validates an id (e.g. createMembership) would reject BA-created users/orgs at
-    // cutover — caught by the SSO-provisioning integration test.
+    // service that validates a user id via ZId (e.g. updateUser, called from the SSO provisioning
+    // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: true, path: "/" },
     ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
