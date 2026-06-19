@@ -63,9 +63,8 @@ export const WorkflowListActions = ({
     duplicateWorkflowMutation.mutate(
       { workflowId },
       {
-        onSuccess: (workflow) => {
+        onSuccess: () => {
           toast.success(t("workspace.workflows.duplicate_success"));
-          router.push(`/workspaces/${workspaceId}/workflows/${workflow.id}`);
         },
         onError: (error) => {
           toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.duplicate_failed")));

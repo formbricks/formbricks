@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { TFunction } from "i18next";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -9,7 +10,7 @@ import { FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import { CardTable, CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
+import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Switch } from "@/modules/ui/components/switch";
@@ -52,6 +53,7 @@ export const WorkflowsListPage = ({
 }: Readonly<WorkflowsListPageProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const [animationParent] = useAutoAnimate();
 
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearchValue = useDebouncedValue(searchValue, 300);
@@ -150,7 +152,7 @@ export const WorkflowsListPage = ({
   } else {
     listContent = (
       <div>
-        <CardTable>
+        <div ref={animationParent} className="space-y-3">
           <CardTableHeader className="grid-cols-7">
             <div className="col-span-2 place-self-start">{t("common.name")}</div>
             <div className="col-span-1">{t("common.status")}</div>
@@ -194,7 +196,7 @@ export const WorkflowsListPage = ({
               </div>
             </CardTableRow>
           ))}
-        </CardTable>
+        </div>
 
         {hasNextPage ? (
           <div className="flex justify-center py-5">
