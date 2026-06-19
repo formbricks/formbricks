@@ -56,15 +56,18 @@ export const redisSecondaryStorage = {
     const client = await getClient();
     return client.getDel(key);
   },
-  // Atomic rate-limit counter across instances; TTL (seconds) is applied only on first increment.
-  // Without this, Better Auth's rate limiting degrades to a non-atomic check-then-write that
-  // concurrent requests can bypass.
+  // Atomic rate-limit counter across instances. INCR + EXPIRE-on-first-write run in a single Lua eval
+  // so a crash between the two can't leave a TTL-less (never-expiring) counter that would wedge the
+  // limit at max forever. Mirrors the atomic INCR/EXPIRE pattern in
+  // modules/core/rate-limit/rate-limit.ts. TTL (seconds) is applied only on creation.
   increment: async (key: string, ttl: number): Promise<number> => {
     const client = await getClient();
-    const count = await client.incr(key);
-    if (count === 1) {
-      await client.expire(key, ttl);
-    }
-    return count;
+    const count = await client.eval(
+      `local count = redis.call('INCR', KEYS[1])
+if count == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return count`,
+      { keys: [key], arguments: [String(ttl)] }
+    );
+    return Number(count);
   },
 };
