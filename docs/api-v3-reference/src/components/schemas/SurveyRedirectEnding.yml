@@ -20,6 +20,7 @@ properties:
       - redirectToUrl
   url:
     type: string
+    format: uri
     description: >-
       External redirect URL. Requires the organization's external URL
       permission.
