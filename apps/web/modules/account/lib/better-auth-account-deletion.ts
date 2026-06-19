@@ -4,6 +4,7 @@ import { APIError } from "better-auth/api";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
@@ -70,6 +71,9 @@ export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDele
     status: "success",
     targetUserId: user.id,
   });
+
+  // Analytics parity with the original deleteUserAction success path (fire-and-forget; self-swallowing).
+  capturePostHogEvent(user.id, "delete_account");
 };
 
 export const accountDeletionConfig = {

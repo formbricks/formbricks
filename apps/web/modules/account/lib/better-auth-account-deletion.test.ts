@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
@@ -18,6 +19,7 @@ vi.mock("@/lib/organization/service", () => ({
   deleteOrganization: vi.fn(),
   getOrganizationsWhereUserIsSingleOwner: vi.fn(),
 }));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ deleteBrevoCustomerByEmail: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
 vi.mock("./account-deletion-audit", () => ({ queueAccountDeletionAuditEvent: vi.fn() }));
@@ -85,6 +87,7 @@ describe("accountDeletionAfterDelete", () => {
       status: "success",
       targetUserId: "user-1",
     });
+    expect(capturePostHogEvent).toHaveBeenCalledWith("user-1", "delete_account");
   });
 
   test("logs and swallows a Brevo failure, then still emits the audit event", async () => {
