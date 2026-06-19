@@ -91,4 +91,29 @@ describe("Better Auth account deletion (real Postgres)", () => {
     expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
     expect(await prisma.organization.findUnique({ where: { id: org.id } })).toBeNull();
   });
+
+  test("SSO email-link path: a delete-account token + session deletes the user without a password", async () => {
+    const userId = await createVerifiedUser("ssodelete@example.com", "Passw0rd!");
+    const cookie = await signInCookie("ssodelete@example.com", "Passw0rd!");
+
+    // what the SSO request-deletion action does (design §14): mint a `delete-account-<token>`
+    // verification value carrying the user id; the global sendDeleteAccountVerification stays OFF.
+    const token = `tok-${userId}`;
+    const ctx = await auth.$context;
+    await ctx.internalAdapter.createVerificationValue({
+      identifier: `delete-account-${token}`,
+      value: userId,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    });
+
+    // BA's native GET /delete-user/callback consumes the token (value === session.user.id) and deletes
+    await auth.api.deleteUserCallback({
+      query: { token, callbackURL: "/" },
+      headers: { cookie },
+      asResponse: true,
+    });
+
+    // deleted via the email-link path — no password supplied (the SSO half of §14)
+    expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
+  });
 });
