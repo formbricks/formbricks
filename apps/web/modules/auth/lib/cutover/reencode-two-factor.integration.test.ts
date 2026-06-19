@@ -56,7 +56,7 @@ describe("2FA secret re-encode (real Postgres)", () => {
     });
 
     // re-encode the secret + backup codes into BA's TwoFactor table, using BA's secretConfig
-    const secretConfig = (await auth.$context).secretConfig as string;
+    const secretConfig = (await auth.$context).secretConfig;
     await prisma.twoFactor.create({
       data: {
         userId: user.id,
@@ -81,6 +81,56 @@ describe("2FA secret re-encode (real Postgres)", () => {
     expect(await prisma.session.count()).toBe(1);
   });
 
+  test("an existing user's saved (hyphenated) backup code verifies via BA after re-encode", async () => {
+    const password = "Backup-User1!";
+    const fbSecret = authenticator.generateSecret(20);
+    // legacy backup codes are stored bare (10-char hex); the user saved the displayed hyphenated form
+    const bareCodes = ["a1b2c3d4e5", "0f1e2d3c4b"];
+    const user = await prisma.user.create({
+      data: {
+        email: "tfa-backup@example.com",
+        name: "TfaBackup",
+        emailVerified: true,
+        password: await hashSecret(password),
+        twoFactorEnabled: true,
+        twoFactorSecret: symmetricEncrypt(fbSecret, ENCRYPTION_KEY),
+        backupCodes: symmetricEncrypt(JSON.stringify(bareCodes), ENCRYPTION_KEY),
+      },
+    });
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        type: "credential",
+        provider: "credential",
+        providerAccountId: user.id,
+        password: user.password!,
+      },
+    });
+
+    const secretConfig = (await auth.$context).secretConfig;
+    await prisma.twoFactor.create({
+      data: {
+        userId: user.id,
+        secret: await reencodeTwoFactorSecret(user.twoFactorSecret!, secretConfig),
+        backupCodes: await reencodeTwoFactorBackupCodes(user.backupCodes!, secretConfig),
+      },
+    });
+
+    const challenge = await auth.api.signInEmail({
+      body: { email: "tfa-backup@example.com", password },
+      asResponse: true,
+    });
+    expect(challenge.status).toBe(200);
+    expect(await prisma.session.count()).toBe(0);
+
+    // the user enters their SAVED backup code (the displayed hyphenated form); BA exact-matches it
+    await auth.api.verifyBackupCode({
+      body: { code: "a1b2c-3d4e5" },
+      headers: { cookie: allCookies(challenge) },
+    });
+    expect(await prisma.session.count()).toBe(1);
+  });
+
   test("batch re-encode migrates every legacy 2FA user and is idempotent", async () => {
     authenticator.options = { digits: 6, step: 30 };
     const fbSecret = authenticator.generateSecret(20);
@@ -94,7 +144,7 @@ describe("2FA secret re-encode (real Postgres)", () => {
         backupCodes: symmetricEncrypt(JSON.stringify(["zzzzzwwwww"]), ENCRYPTION_KEY),
       },
     });
-    const secretConfig = (await auth.$context).secretConfig as string;
+    const secretConfig = (await auth.$context).secretConfig;
 
     const first = await reencodeAllTwoFactorSecrets(secretConfig);
     expect(first.migrated).toBe(1);

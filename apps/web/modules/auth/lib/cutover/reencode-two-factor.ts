@@ -1,6 +1,6 @@
 import "server-only";
 import { base32 } from "@better-auth/utils/base32";
-import { symmetricEncrypt } from "better-auth/crypto";
+import { type SecretConfig, symmetricEncrypt } from "better-auth/crypto";
 import { prisma } from "@formbricks/database";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
@@ -11,17 +11,24 @@ import { symmetricDecrypt } from "@/lib/crypto";
  *
  * NextAuth/otplib stored the TOTP secret as a base32 string (`twoFactorSecret`), encrypted with
  * `ENCRYPTION_KEY` (AES-GCM, lib/crypto.ts), and HMACs base32-decode(secret). Better Auth stores the
- * RAW key bytes (encrypted with its own `secretConfig`) and HMACs those bytes directly. So the bridge
- * is: decrypt with ENCRYPTION_KEY → base32-decode to the raw key → re-encrypt with BA's secretConfig.
- * Empirically validated end-to-end (the user's current authenticator code verifies via BA) by
+ * key bytes (encrypted with its own `secretConfig`) and HMACs `utf8(secretString)` directly. So the
+ * bridge is: decrypt with ENCRYPTION_KEY → base32-decode to the key bytes → re-encrypt with secretConfig.
+ *
+ * Why a latin1 string survives: otplib's `authenticator.generateSecret(20)` ascii-masks its entropy
+ * (`randomBytes(20).toString("ascii")`) BEFORE base32-encoding, so `base32.decode` always yields bytes
+ * ≤ 0x7F. Within that 7-bit range latin1 and utf8 coincide, so `latin1 → symmetricEncrypt(utf8) →
+ * symmetricDecrypt(utf8) → HMAC(utf8)` round-trips byte-exact. This is NOT generically latin1-safe — it
+ * holds because `two-factor-auth.ts` is the only writer of `twoFactorSecret` and always uses
+ * `generateSecret(20)`. Validated end-to-end (the user's current authenticator code verifies via BA) by
  * reencode-two-factor.integration.test.ts.
  *
- * `secretConfig` comes from `(await auth.$context).secretConfig` (the BA secret, or rotation config).
- * These run at the cutover deploy; the per-user functions are pure so they're harness-testable.
+ * `secretConfig` comes from `(await auth.$context).secretConfig` (the BA secret string, or — under key
+ * rotation — the SecretConfig object). These run at the cutover deploy; the per-user functions are pure
+ * so they're harness-testable.
  */
 export const reencodeTwoFactorSecret = async (
   encryptedFormbricksSecret: string,
-  secretConfig: string
+  secretConfig: string | SecretConfig
 ): Promise<string> => {
   const formbricksSecret = symmetricDecrypt(encryptedFormbricksSecret, ENCRYPTION_KEY); // otplib base32
   const keyBytes = Buffer.from(base32.decode(formbricksSecret));
@@ -29,37 +36,43 @@ export const reencodeTwoFactorSecret = async (
 };
 
 /**
- * Re-encrypt the backup codes from the Formbricks envelope (a JSON array of codes, AES-GCM with
- * ENCRYPTION_KEY) into Better Auth's envelope (the same JSON array, encrypted with secretConfig).
+ * Re-encode backup codes from the Formbricks envelope (a JSON array, AES-GCM with ENCRYPTION_KEY) into
+ * Better Auth's envelope (a JSON array encrypted with secretConfig — matching BA's
+ * `storeBackupCodes: "encrypted"`). Formbricks stored bare 10-char hex but DISPLAYED (so users saved)
+ * the hyphenated `XXXXX-XXXXX` form (`display-backup-codes.tsx` formatBackupCode), and BA's
+ * verify-backup-code does an EXACT match with no hyphen-stripping. So we store the displayed form — the
+ * string the user will actually enter.
  */
 export const reencodeTwoFactorBackupCodes = async (
   encryptedFormbricksBackupCodes: string,
-  secretConfig: string
+  secretConfig: string | SecretConfig
 ): Promise<string> => {
-  const codes = JSON.parse(symmetricDecrypt(encryptedFormbricksBackupCodes, ENCRYPTION_KEY)) as string[];
-  return symmetricEncrypt({ key: secretConfig, data: JSON.stringify(codes) });
+  const bareCodes = JSON.parse(symmetricDecrypt(encryptedFormbricksBackupCodes, ENCRYPTION_KEY)) as string[];
+  const displayedCodes = bareCodes.map((code) => `${code.slice(0, 5)}-${code.slice(5, 10)}`);
+  return symmetricEncrypt({ key: secretConfig, data: JSON.stringify(displayedCodes) });
 };
 
-/**
- * Batch re-encode for the cutover deploy: create a Better Auth TwoFactor row for every legacy 2FA user
- * (those with a `User.twoFactorSecret`). Idempotent — skips users who already have a TwoFactor row.
- * Run from a cutover script that supplies `secretConfig = (await auth.$context).secretConfig`. A user
- * with a secret but no stored backup codes gets an empty (encrypted) code list.
- */
 interface TwoFactorUserRow {
   id: string;
   twoFactorSecret: string;
   backupCodes: string | null;
 }
 
+/**
+ * Batch re-encode for the cutover deploy: create a Better Auth TwoFactor row for every legacy 2FA user
+ * (those with a `User.twoFactorSecret`). Idempotent — skips users who already have a TwoFactor row. Run
+ * from a cutover script that supplies `secretConfig = (await auth.$context).secretConfig`. A user with a
+ * secret but no stored backup codes gets an empty (encrypted) code list.
+ */
 export const reencodeAllTwoFactorSecrets = async (
-  secretConfig: string
+  secretConfig: string | SecretConfig
 ): Promise<{ scanned: number; migrated: number; skipped: number }> => {
   const stats = { scanned: 0, migrated: 0, skipped: 0 };
   const BATCH_SIZE = 500;
 
-  // Keyset pagination via raw SQL (avoids Prisma's relation-select inference quirk); the idempotency
-  // check is a separate findFirst since TwoFactor has no unique key to ON CONFLICT on.
+  // Keyset pagination via raw SQL (avoids Prisma's relation-select inference quirk). Idempotency is a
+  // per-user findFirst since TwoFactor has no unique key to ON CONFLICT on — safe for this one-shot,
+  // single-process cutover migration (NOT concurrency-safe; don't run alongside live BA enrollment).
   const fetchBatch = (afterUserId: string | null): Promise<TwoFactorUserRow[]> =>
     afterUserId
       ? prisma.$queryRaw<TwoFactorUserRow[]>`
