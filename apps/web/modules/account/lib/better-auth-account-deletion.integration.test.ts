@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
-// Force single-org so the sole-owner guard is deterministic regardless of the test env's license
-// (this is an external input to the deletion logic, not the behavior under test). The rest of the
-// license-check module stays real.
+// getIsMultiOrgEnabled is an external license input to the deletion guard (not the behavior under
+// test), so we mock just that one export and drive it per-test (default single-org, set in
+// beforeEach); the rest of the license-check module stays real.
 vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
-  return { ...actual, getIsMultiOrgEnabled: vi.fn().mockResolvedValue(false) };
+  return { ...actual, getIsMultiOrgEnabled: vi.fn() };
 });
 
 /**
@@ -20,7 +21,8 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => {
 const signInCookie = async (email: string, password: string): Promise<string> => {
   const res = await auth.api.signInEmail({ body: { email, password }, asResponse: true });
   const cookies = res.headers.getSetCookie();
-  const session = cookies.find((c) => c.includes("session_token")) ?? cookies[0] ?? "";
+  const session = cookies.find((c) => c.includes("session_token"));
+  if (!session) throw new Error(`no session cookie in sign-in response (got: ${cookies.join(", ")})`);
   return session.split(";")[0]; // name=value, dropping attributes
 };
 
@@ -32,6 +34,7 @@ const createVerifiedUser = async (email: string, password: string): Promise<stri
 
 beforeEach(async () => {
   await resetDb();
+  vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false); // single-org by default
 });
 
 describe("Better Auth account deletion (real Postgres)", () => {
@@ -52,8 +55,13 @@ describe("Better Auth account deletion (real Postgres)", () => {
     expect(await prisma.organization.findUnique({ where: { id: org.id } })).not.toBeNull();
   });
 
-  test("deletes the user and cascades its account + session rows", async () => {
+  test("deletes the user and cascades its account, session, and membership rows", async () => {
     const userId = await createVerifiedUser("gone@example.com", "Passw0rd!");
+    // a non-owner membership: the user isn't a sole owner, so deletion proceeds and the row cascades
+    const org = await prisma.organization.create({ data: { name: "Shared Org" } });
+    await prisma.membership.create({
+      data: { userId, organizationId: org.id, role: "member", accepted: true },
+    });
     const cookie = await signInCookie("gone@example.com", "Passw0rd!");
     expect(await prisma.session.count()).toBe(1);
     expect(await prisma.account.count()).toBe(1);
@@ -63,5 +71,24 @@ describe("Better Auth account deletion (real Postgres)", () => {
     expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
     expect(await prisma.account.count()).toBe(0); // Prisma cascade
     expect(await prisma.session.count()).toBe(0); // Prisma cascade
+    expect(await prisma.membership.count()).toBe(0); // Prisma cascade
+    // the org survives (the user wasn't its sole owner)
+    expect(await prisma.organization.findUnique({ where: { id: org.id } })).not.toBeNull();
+  });
+
+  test("multi-org: deletes the user's sole-owned orgs instead of blocking", async () => {
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    const userId = await createVerifiedUser("multiowner@example.com", "Passw0rd!");
+    const org = await prisma.organization.create({ data: { name: "Owned Org" } });
+    await prisma.membership.create({
+      data: { userId, organizationId: org.id, role: "owner", accepted: true },
+    });
+    const cookie = await signInCookie("multiowner@example.com", "Passw0rd!");
+
+    await auth.api.deleteUser({ body: { password: "Passw0rd!" }, headers: { cookie } });
+
+    // no block on a multi-org instance: the user is gone AND the sole-owned org was deleted (cascade)
+    expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
+    expect(await prisma.organization.findUnique({ where: { id: org.id } })).toBeNull();
   });
 });
