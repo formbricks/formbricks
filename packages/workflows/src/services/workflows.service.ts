@@ -1,5 +1,5 @@
 import type { TCreateWorkflowInput, TListWorkflowsInput, TWorkflowSortBy } from "../contracts";
-import { WorkflowConflictError } from "../errors";
+import { WorkflowConflictError, isUniqueConstraintViolation } from "../errors";
 import {
   type TWorkflowListCursor,
   buildNextWorkflowListCursor,
@@ -57,15 +57,12 @@ const updateWorkflowRow = (
     include: LAST_RUN_INCLUDE,
   });
 
-// Prisma's unique-constraint violation code, mirroring `PrismaErrorType.UniqueConstraintViolation`
-// in `@formbricks/database` — which this leaf package can't import without recreating a build cycle.
-const PRISMA_UNIQUE_CONSTRAINT_VIOLATION = "P2002";
+// Bound on copy-name retries in `duplicateWorkflow`; high enough to never hit in practice, low
+// enough to fail fast instead of looping forever against a pathological set of taken names.
+const MAX_DUPLICATE_NAME_ATTEMPTS = 50;
 
-/** Duck-typed P2002 detection — keeps the package free of a `@prisma/client` dependency. */
-const isUniqueConstraintError = (error: unknown): boolean =>
-  typeof error === "object" &&
-  error !== null &&
-  (error as { code?: unknown }).code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION;
+const buildCopyName = (baseName: string, attempt: number): string =>
+  attempt === 1 ? `${baseName} (copy)` : `${baseName} (copy ${attempt.toString()})`;
 
 const getOrderBy = (sortBy: TWorkflowSortBy): WorkflowOrderByInput[] => {
   switch (sortBy) {
@@ -198,17 +195,39 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
   },
 
   async duplicateWorkflow(source, { name, createdBy }) {
-    return prisma.workflow.create({
-      data: {
-        workspaceId: source.workspaceId,
-        name: name ?? `${source.name} (copy)`,
-        description: source.description,
-        status: "draft",
-        definition: source.definition,
-        createdBy,
-      },
-      include: LAST_RUN_INCLUDE,
-    });
+    const createCopy = (copyName: string): Promise<WorkflowRowWithLastRun> =>
+      prisma.workflow.create({
+        data: {
+          workspaceId: source.workspaceId,
+          name: copyName,
+          description: source.description,
+          status: "draft",
+          definition: source.definition,
+          createdBy,
+        },
+        include: LAST_RUN_INCLUDE,
+      });
+
+    // A caller-supplied name is used verbatim; a collision surfaces as a clean 409 (do not rename it).
+    if (name !== undefined) {
+      return createCopy(name);
+    }
+
+    // No name given: honor the contract's promise to "choose a non-conflicting copy name". Each attempt
+    // is an independent `create` (a failed one rolls back on its own), so on the workspace-unique-name
+    // P2002 we just advance the suffix and retry. Any other error is a real failure → rethrow.
+    for (let attempt = 1; attempt <= MAX_DUPLICATE_NAME_ATTEMPTS; attempt++) {
+      try {
+        return await createCopy(buildCopyName(source.name, attempt));
+      } catch (error) {
+        if (isUniqueConstraintViolation(error)) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new WorkflowConflictError("Could not find an available copy name for this workflow.");
   },
 
   async deleteWorkflow({ workflowId, workspaceId }) {
@@ -259,7 +278,7 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
       // Belt-and-suspenders for the simultaneous case: if two transactions read the same max version
       // before either commits, the second `workflowVersion.create` violates @@unique([workflowId,
       // version]). The transaction has rolled back cleanly, so surface a retryable 409.
-      if (isUniqueConstraintError(error)) {
+      if (isUniqueConstraintViolation(error)) {
         throw new WorkflowConflictError("The workflow was just enabled by another request. Please retry.");
       }
       throw error;

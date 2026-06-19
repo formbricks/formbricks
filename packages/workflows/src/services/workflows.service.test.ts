@@ -193,6 +193,9 @@ describe("updateWorkflow", () => {
 });
 
 describe("duplicateWorkflow", () => {
+  const uniqueViolation = (): Error & { code: string } =>
+    Object.assign(new Error("Unique constraint failed"), { code: "P2002" });
+
   test("clones into a new draft with a default copy name", async () => {
     create.mockResolvedValue(makeRow());
     await service.duplicateWorkflow(makeRow({ name: "Original" }), { createdBy: "user_1" });
@@ -205,10 +208,43 @@ describe("duplicateWorkflow", () => {
     });
   });
 
-  test("honors an explicit duplicate name", async () => {
+  test("retries past a taken copy name and persists '<name> (copy 2)'", async () => {
+    const duplicated = makeRow({ name: "Original (copy 2)" });
+    create.mockRejectedValueOnce(uniqueViolation()).mockResolvedValueOnce(duplicated);
+
+    const result = await service.duplicateWorkflow(makeRow({ name: "Original" }), { createdBy: "user_1" });
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create.mock.calls[0][0].data.name).toBe("Original (copy)");
+    expect(create.mock.calls[1][0].data.name).toBe("Original (copy 2)");
+    expect(result).toBe(duplicated);
+  });
+
+  test("rethrows a non-unique error without retrying", async () => {
+    const boom = new Error("connection reset");
+    create.mockRejectedValueOnce(boom);
+
+    await expect(service.duplicateWorkflow(makeRow({ name: "Original" }), { createdBy: null })).rejects.toBe(
+      boom
+    );
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  test("honors an explicit duplicate name with a single create", async () => {
     create.mockResolvedValue(makeRow());
     await service.duplicateWorkflow(makeRow({ name: "Original" }), { name: "Custom", createdBy: null });
+    expect(create).toHaveBeenCalledTimes(1);
     expect(create.mock.calls[0][0].data.name).toBe("Custom");
+  });
+
+  test("does not retry an explicit name — a P2002 propagates to the caller", async () => {
+    const conflict = uniqueViolation();
+    create.mockRejectedValueOnce(conflict);
+
+    await expect(
+      service.duplicateWorkflow(makeRow({ name: "Original" }), { name: "Custom", createdBy: null })
+    ).rejects.toBe(conflict);
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });
 
