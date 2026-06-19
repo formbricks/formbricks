@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { sendPasswordResetLinkEmail, sendVerificationLinkEmail } from "@/modules/email";
 
@@ -8,8 +9,6 @@ import { sendPasswordResetLinkEmail, sendVerificationLinkEmail } from "@/modules
  * Exercises the Better Auth email callbacks (which reuse the Formbricks mailer — captured here), the
  * hashed-at-rest verification tokens, the bcrypt re-hash on reset, and revokeSessionsOnPasswordReset.
  */
-const truncate = (): Promise<unknown> =>
-  prisma.$executeRawUnsafe('TRUNCATE "Account","Session","User" RESTART IDENTITY CASCADE;');
 
 // Verification links are query-form (/verify-email?token=…); reset links are path-form
 // (/reset-password/<token>?callbackURL=…). Handle both.
@@ -19,7 +18,7 @@ const tokenFromLink = (link: string): string => {
 };
 
 beforeEach(async () => {
-  await truncate();
+  await resetDb();
   vi.clearAllMocks();
 });
 

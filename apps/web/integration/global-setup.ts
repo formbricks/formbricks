@@ -30,9 +30,13 @@ export default function setup(): void {
 
   adminPsql(`DROP DATABASE IF EXISTS ${TEST_DB} WITH (FORCE);`);
   adminPsql(`CREATE DATABASE ${TEST_DB};`);
+  // Dump to a file then restore (instead of piping) so BOTH a pg_dump failure (via &&) and a restore
+  // SQL error (via ON_ERROR_STOP) abort loudly — a pipe would swallow a left-side failure, and the
+  // container's `sh` (dash) has no `pipefail`. Without this a half-provisioned DB silently passes.
   sh(
     `docker exec ${CONTAINER} sh -c ${JSON.stringify(
-      `pg_dump -U postgres --schema-only --no-owner --no-privileges ${SOURCE_DB} | psql -U postgres -q ${TEST_DB}`
+      `pg_dump -U postgres --schema-only --no-owner --no-privileges ${SOURCE_DB} > /tmp/ba_test_schema.sql && ` +
+        `psql -U postgres -q -v ON_ERROR_STOP=1 -d ${TEST_DB} -f /tmp/ba_test_schema.sql`
     )}`
   );
   testPsql(

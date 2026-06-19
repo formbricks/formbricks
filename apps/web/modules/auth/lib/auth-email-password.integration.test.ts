@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 
 /**
@@ -8,11 +9,8 @@ import { auth } from "@/modules/auth/lib/auth";
  * (integration/db-boolean.ts). This is the first runtime exercise of the BA↔Formbricks boundary:
  * the user/account field mappings, the bcrypt password hook, and DB session issuance.
  */
-const truncate = (): Promise<unknown> =>
-  prisma.$executeRawUnsafe('TRUNCATE "Account","Session","User" RESTART IDENTITY CASCADE;');
-
 beforeEach(async () => {
-  await truncate();
+  await resetDb();
 });
 
 describe("Better Auth email/password (real Postgres)", () => {
