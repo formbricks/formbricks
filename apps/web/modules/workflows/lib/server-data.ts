@@ -2,8 +2,12 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZSurveyEndings } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import type { TWorkflowDefinition, TWorkflowListItem, TWorkflowResource } from "@formbricks/workflows";
+import type { TWorkflowDefinition, TWorkflowResource } from "@formbricks/workflows";
 import type { TWorkflowSurveyChoice } from "@/modules/workflows/types";
+
+// The list view is fetched client-side via TanStack Query (see modules/workflows/list/hooks/
+// use-workflows.ts); the helpers below are server-only fetches used by the workflow detail
+// shell (single workflow + survey-choices atom hydration).
 
 const baseSelect = {
   id: true,
@@ -29,7 +33,7 @@ type WorkflowRow = {
   definition: TWorkflowDefinition;
 };
 
-const toListItem = (row: WorkflowRow): TWorkflowListItem => ({
+const toResource = (row: WorkflowRow): TWorkflowResource => ({
   id: row.id,
   workspaceId: row.workspaceId,
   name: row.name,
@@ -41,25 +45,12 @@ const toListItem = (row: WorkflowRow): TWorkflowListItem => ({
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
   lastRun: null,
-});
-
-const toResource = (row: WorkflowRow): TWorkflowResource => ({
-  ...toListItem(row),
   definition: row.definition,
 });
 
 export async function loadWorkflowResource(workflowId: string): Promise<TWorkflowResource | null> {
   const row = await prisma.workflow.findUnique({ where: { id: workflowId }, select: baseSelect });
   return row ? toResource(row) : null;
-}
-
-export async function loadWorkspaceWorkflowList(workspaceId: string): Promise<TWorkflowListItem[]> {
-  const rows = await prisma.workflow.findMany({
-    where: { workspaceId },
-    orderBy: { updatedAt: "desc" },
-    select: baseSelect,
-  });
-  return rows.map(toListItem);
 }
 
 // Headline cards store the editor's rich-text HTML in the i18n `default` slot. The trigger

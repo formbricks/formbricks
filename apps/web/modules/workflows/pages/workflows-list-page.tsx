@@ -1,22 +1,36 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import type { TWorkflowListItem } from "@formbricks/workflows";
 import { timeSince } from "@/lib/time";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Badge } from "@/modules/ui/components/badge";
 import { CardTable, CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { WorkflowListActions } from "@/modules/workflows/components/workflow-list-actions";
 import { getWorkflowStatusBadge } from "@/modules/workflows/lib/display";
+import { useWorkflows } from "@/modules/workflows/list/hooks/use-workflows";
+
+const WORKFLOWS_PER_PAGE = 50;
 
 interface WorkflowsListPageProps {
   workspaceId: string;
-  workflows: TWorkflowListItem[];
 }
 
-export const WorkflowsListPage = ({ workspaceId, workflows }: Readonly<WorkflowsListPageProps>) => {
+export const WorkflowsListPage = ({ workspaceId }: Readonly<WorkflowsListPageProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
+  const { workflows, isLoading, isError, error } = useWorkflows({
+    workspaceId,
+    limit: WORKFLOWS_PER_PAGE,
+  });
+
+  if (isLoading) {
+    return <EmptyState text={t("common.loading")} />;
+  }
+
+  if (isError) {
+    return <EmptyState text={getV3ApiErrorMessage(error, t("workspace.workflows.load_failed"))} />;
+  }
 
   if (workflows.length === 0) {
     return <EmptyState text={t("common.no_workflows_found")} />;
