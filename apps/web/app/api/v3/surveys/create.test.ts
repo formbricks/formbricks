@@ -537,6 +537,16 @@ describe("createV3Survey", () => {
       expect(result.segment?.filters).toEqual(attributeFilters);
     });
 
+    test("surfaces an error when post-create targeting persistence fails", async () => {
+      // createSurvey succeeds but the segment write fails; the request must reject (failure surfaced)
+      // rather than silently return a survey whose targeting was never persisted.
+      vi.mocked(setV3SurveySegmentFilters).mockRejectedValueOnce(new Error("segment write failed"));
+      const body = buildAppBody({ targeting: { filters: attributeFilters } });
+
+      await expect(createV3Survey(body, null, "req_app_targeting_fail", "org_1")).rejects.toThrow();
+      expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(appSegment.id, attributeFilters);
+    });
+
     test("rejects targeting when contacts are not enabled, before any write", async () => {
       vi.mocked(resolveV3ContactsEntitlement).mockResolvedValue({
         resolvedOrganizationId: "org_1",

@@ -25,14 +25,15 @@ info:
     **workspaceId**
 
     `workspaceId` is the canonical container identifier for this API. It is a
-    **required query parameter on collection endpoints** (e.g. `GET`/`POST
+    **required query parameter on collection read endpoints** (`GET
     /api/v3/surveys`, `GET /api/v3/action-classes`, `GET
     /api/v3/contact-attribute-keys`) because those operate within a workspace.
-    Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`)
-    locate the resource by its globally-unique id and resolve the workspace from
-    it, so they do **not** accept a `workspaceId` query parameter — sending one
-    returns **400** (`Unrecognized key: "workspaceId"`). `POST /api/v3/surveys`
-    also requires `workspaceId` in the request body.
+    **`POST /api/v3/surveys` instead requires `workspaceId` in the request
+    body**, not as a query parameter. Single-resource endpoints
+    (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by
+    its globally-unique id and resolve the workspace from it, so they do **not**
+    accept a `workspaceId` query parameter — sending one returns **400**
+    (`Unrecognized key: "workspaceId"`).
 
 
     **Auth**

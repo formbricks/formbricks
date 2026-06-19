@@ -715,6 +715,15 @@ describe("patchV3Survey", () => {
 
     test("updates segment filters when targeting changes and contacts are enabled", async () => {
       vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      // Run the interactive transaction with a DISTINCT tx client so the assertions prove both writes
+      // go through it (not the global prisma) — i.e. that the update really is transactional.
+      const tx = {
+        survey: { update: vi.fn(vi.mocked(prisma.survey.update).getMockImplementation()) },
+        segment: { update: vi.fn() },
+      };
+      vi.mocked(prisma.$transaction).mockImplementationOnce(((
+        callback: (client: typeof tx) => Promise<unknown>
+      ) => callback(tx)) as unknown as typeof prisma.$transaction);
 
       await patchV3Survey(
         appCurrentSurvey,
@@ -724,14 +733,33 @@ describe("patchV3Survey", () => {
       );
 
       expect(resolveV3ContactsEntitlement).toHaveBeenCalledWith(workspaceId, "org_1");
-      // Segment write runs inside the transaction (third arg is the tx client).
+      // Segment-filter write and survey update must use the SAME tx client (true atomic behavior).
       expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(
         "clsg1234567890123456789012",
         attributeFilters,
-        expect.anything()
+        tx
       );
-      expect(prisma.$transaction).toHaveBeenCalled();
-      expect(prisma.survey.update).toHaveBeenCalled();
+      expect(tx.survey.update).toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("rejects a targeting change when the app survey has no segment", async () => {
+      // App surveys always get an auto-created segment; if one is missing, a targeting change must
+      // fail loudly rather than return 200 while silently dropping the filters.
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      const segmentlessSurvey = { ...appCurrentSurvey, segment: null } as unknown as TSurvey;
+
+      await expect(
+        patchV3Survey(
+          segmentlessSurvey,
+          { targeting: { filters: attributeFilters } },
+          "req_app_no_segment",
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
     test("rejects targeting changes when contacts are not enabled", async () => {

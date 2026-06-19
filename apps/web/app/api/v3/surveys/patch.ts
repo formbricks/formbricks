@@ -135,13 +135,23 @@ async function buildV3AppSurveyPatchWrites(params: {
   data.triggers = handleTriggerUpdates(resolvedTriggers, currentSurvey.triggers, actionClasses);
 
   const nextFilters = document.targeting?.filters ?? [];
-  if (
-    currentSurvey.segment?.id &&
-    !areV3SurveyTargetingFiltersEqual(currentSurvey.segment.filters, nextFilters)
-  ) {
-    return { segmentId: currentSurvey.segment.id, filters: nextFilters };
+  const segmentId = currentSurvey.segment?.id;
+  const filtersChanged = !areV3SurveyTargetingFiltersEqual(currentSurvey.segment?.filters ?? [], nextFilters);
+
+  if (!filtersChanged) {
+    return null;
   }
-  return null;
+  // App surveys auto-create a private segment; if one is somehow missing we cannot persist the
+  // targeting change. Fail loudly instead of returning 200 while silently dropping the filters.
+  if (!segmentId) {
+    throw new V3SurveyReferenceValidationError([
+      {
+        name: "targeting.filters",
+        reason: "Cannot apply contact targeting: this app survey has no segment to store filters on.",
+      },
+    ]);
+  }
+  return { segmentId, filters: nextFilters };
 }
 
 export async function executeV3SurveyPatch(params: {
