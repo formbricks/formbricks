@@ -66,11 +66,12 @@ describe("Better Auth two-factor (real Postgres)", () => {
     await auth.api.verifyTOTP({ body: { code: totp(secret) }, headers: { cookie: enrollCookie } });
     await prisma.session.deleteMany(); // clear the enrollment session
 
-    // password-only sign-in returns a 2FA challenge — no full session yet
+    // password-only sign-in returns a 2FA challenge (a 200, not an error) — but no full session yet
     const challenge = await auth.api.signInEmail({
       body: { email: "login2fa@example.com", password: "Passw0rd!" },
       asResponse: true,
     });
+    expect(challenge.status).toBe(200);
     expect(await prisma.session.count()).toBe(0);
 
     // completing the TOTP challenge issues the session

@@ -6,8 +6,9 @@ import { sendPasswordResetLinkEmail, sendVerificationLinkEmail } from "@/modules
 
 /**
  * Integration coverage for email verification + password reset (ENG-1054) against a real Postgres.
- * Exercises the Better Auth email callbacks (which reuse the Formbricks mailer — captured here),
- * single-use token consumption (getAndDelete), the bcrypt re-hash on reset, and revokeSessionsOnPasswordReset.
+ * Exercises the Better Auth email callbacks (which reuse the Formbricks mailer — captured here): the
+ * single-use password-reset token (getAndDelete), the bcrypt re-hash + revokeSessionsOnPasswordReset on
+ * reset, and the idempotent stateless-JWT verify-email.
  */
 
 // Verification links are query-form (/verify-email?token=…); reset links are path-form
@@ -42,9 +43,10 @@ describe("Better Auth email verification (real Postgres)", () => {
       true
     );
 
-    // re-verifying is idempotent (already-verified → success, no user), not an error
+    // verify-email is a stateless signed JWT (no getAndDelete), so re-verifying is idempotent:
+    // the already-verified branch returns { status: true, user: null }
     const replay = await auth.api.verifyEmail({ query: { token } });
-    expect(replay).toMatchObject({ status: true });
+    expect(replay).toMatchObject({ status: true, user: null });
   });
 });
 
