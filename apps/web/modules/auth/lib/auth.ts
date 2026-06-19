@@ -12,6 +12,7 @@ import {
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
+import { accountDeletionConfig } from "@/modules/account/lib/better-auth-account-deletion";
 import {
   ssoDatabaseHooks,
   ssoLicenseGateBefore,
@@ -154,6 +155,11 @@ export const auth = betterAuth({
       identityProvider: { type: "string", required: false, input: false },
       identityProviderAccountId: { type: "string", required: false, input: false },
     },
+    // Account deletion (design doc §14): native Better Auth deleteUser with Formbricks' pre/post
+    // cleanup (sole-owner-org guard + org/invite removal, then Brevo + audit). Confirmation friction
+    // is asymmetric and wired at the edges in Phase 6 — password for credential users, email-link for
+    // SSO — so `sendDeleteAccountVerification` is intentionally NOT set here (it would email everyone).
+    deleteUser: accountDeletionConfig,
   },
 
   // SSO sign-up flow — email-verification, identity denormalization, and JIT provisioning
