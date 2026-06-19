@@ -118,6 +118,8 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     expect(result).toEqual({
       data: { emailVerified: true, identityProvider: "openid", locale: "en-US", name: "john doe" },
     });
+    // image is present-as-undefined so Better Auth's transformInput drops it (no User.image column).
+    expect(result).toHaveProperty("data.image", undefined);
     expect(stashed).toEqual(provisionDecision);
     expect(gateSsoProvisioning).toHaveBeenCalledWith({ email: "john.doe@example.com", callbackUrl: "/" });
   });

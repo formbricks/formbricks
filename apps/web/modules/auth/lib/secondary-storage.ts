@@ -39,7 +39,7 @@ export const redisSecondaryStorage = {
   },
   set: async (key: string, value: string, ttl?: number): Promise<void> => {
     const client = await getClient();
-    if (ttl) {
+    if (ttl !== undefined) {
       await client.set(key, value, { EX: ttl });
     } else {
       await client.set(key, value);
@@ -48,5 +48,23 @@ export const redisSecondaryStorage = {
   delete: async (key: string): Promise<void> => {
     const client = await getClient();
     await client.del(key);
+  },
+  // Atomic single-use consumption (verification / password-reset tokens) across instances. Without
+  // this, Better Auth falls back to a per-process lock that can't span pods, so a token could be
+  // consumed twice under concurrent requests on different instances.
+  getAndDelete: async (key: string): Promise<string | null> => {
+    const client = await getClient();
+    return client.getDel(key);
+  },
+  // Atomic rate-limit counter across instances; TTL (seconds) is applied only on first increment.
+  // Without this, Better Auth's rate limiting degrades to a non-atomic check-then-write that
+  // concurrent requests can bypass.
+  increment: async (key: string, ttl: number): Promise<number> => {
+    const client = await getClient();
+    const count = await client.incr(key);
+    if (count === 1) {
+      await client.expire(key, ttl);
+    }
+    return count;
   },
 };

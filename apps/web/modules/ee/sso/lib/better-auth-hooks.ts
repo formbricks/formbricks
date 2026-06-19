@@ -85,6 +85,11 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
             emailVerified: true,
             identityProvider,
             locale: await findMatchingLocale(),
+            // `User` has no `image` column (parity with provisionNewSsoUser, which never stored it).
+            // Strip Better Auth's default image mapping (Google picture / GitHub avatar / OIDC
+            // picture): transformInput drops undefined fields that have no schema default, so this
+            // prevents a prisma.user.create validation error on SSO sign-up.
+            image: undefined,
             ...(user.name ? {} : { name: deriveNameFromEmail(user.email) }),
           },
         };
