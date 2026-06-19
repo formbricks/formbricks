@@ -24,3 +24,14 @@ export interface TWorkflowHistorySummary {
   avgRunTime: string;
   rows: TWorkflowHistoryRow[];
 }
+
+export interface TWorkflowSurveyEndingChoice {
+  id: string;
+  label: string;
+}
+
+export interface TWorkflowSurveyChoice {
+  id: string;
+  name: string;
+  endings: TWorkflowSurveyEndingChoice[];
+}

@@ -39,7 +39,11 @@ export const WorkflowBuilderPage = ({ workflowId, isReadOnly }: Readonly<Workflo
           canEditMetadata={builder.canEditMetadata}
         />
       </section>
-      <WorkflowNodeConfigModal isEditable={builder.canEditDefinition} />
+      <WorkflowNodeConfigModal
+        isEditable={builder.canEditDefinition}
+        onSave={builder.save}
+        isSaving={builder.isSaving}
+      />
     </div>
   );
 };

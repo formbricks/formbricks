@@ -24,6 +24,8 @@ import {
 
 interface WorkflowNodeConfigModalProps {
   isEditable: boolean;
+  onSave?: () => Promise<void> | void;
+  isSaving?: boolean;
 }
 
 const findSelectedNode = (
@@ -50,7 +52,11 @@ const replaceNode = (definition: TWorkflowDefinition, node: TWorkflowNode): TWor
   };
 };
 
-export const WorkflowNodeConfigModal = ({ isEditable }: Readonly<WorkflowNodeConfigModalProps>) => {
+export const WorkflowNodeConfigModal = ({
+  isEditable,
+  onSave,
+  isSaving = false,
+}: Readonly<WorkflowNodeConfigModalProps>) => {
   const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
@@ -71,13 +77,14 @@ export const WorkflowNodeConfigModal = ({ isEditable }: Readonly<WorkflowNodeCon
     if (!open) closeModal();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!draftNode || !definition) {
       closeModal();
       return;
     }
     setDefinition(replaceNode(definition, draftNode));
     closeModal();
+    await onSave?.();
   };
 
   if (!selectedNode) {
@@ -109,7 +116,11 @@ export const WorkflowNodeConfigModal = ({ isEditable }: Readonly<WorkflowNodeCon
           <Button type="button" variant="secondary" onClick={() => closeModal()}>
             {t("common.cancel")}
           </Button>
-          <Button type="button" onClick={handleSave} disabled={!isEditable || !ConfigForm}>
+          <Button
+            type="button"
+            onClick={handleSave}
+            loading={isSaving}
+            disabled={!isEditable || !ConfigForm || isSaving}>
             {t("common.save")}
           </Button>
         </DialogFooter>

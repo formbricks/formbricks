@@ -1,6 +1,6 @@
 "use client";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -24,8 +24,7 @@ import {
   setWorkflowTransitioningAtom,
   workflowAtom,
   workflowDefinitionAtom,
-  workflowDescriptionAtom,
-  workflowNameAtom,
+  workflowEditorAtom,
 } from "@/modules/workflows/state/editor";
 
 interface UseWorkflowBuilderArgs {
@@ -44,9 +43,8 @@ export const useWorkflowBuilder = ({
   loadOnMount = true,
 }: UseWorkflowBuilderArgs) => {
   const { t } = useTranslation();
+  const store = useStore();
   const workflow = useAtomValue(workflowAtom);
-  const workflowName = useAtomValue(workflowNameAtom);
-  const workflowDescription = useAtomValue(workflowDescriptionAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
   const hydrateEditor = useSetAtom(hydrateWorkflowEditorAtom);
   const setWorkflow = useSetAtom(setWorkflowAtom);
@@ -94,22 +92,28 @@ export const useWorkflowBuilder = ({
   const canEditDefinition = Boolean(workflow && !isReadOnly && !isEnabled && !isArchived);
   const canEditMetadata = Boolean(workflow && !isReadOnly && !isArchived);
 
+  // Reads atom values via the store so the modal can call save() immediately after a
+  // setDefinition write — useCallback closures otherwise pin the stale definition until the
+  // next render, which would drop the just-edited node from the PATCH payload.
   const save = useCallback(async () => {
-    if (!workflow || !definition) return;
+    const state = store.get(workflowEditorAtom);
+    const currentWorkflow = state.workflow;
+    const currentDefinition = state.definition;
+    if (!currentWorkflow || !currentDefinition) return;
 
-    const trimmedName = workflowName.trim();
+    const trimmedName = state.workflowName.trim();
     if (!trimmedName) {
       toast.error(t("workspace.workflows.name_required"));
       return;
     }
 
-    const trimmedDescription = workflowDescription.trim() || null;
+    const trimmedDescription = state.workflowDescription.trim() || null;
     const payload: TPatchWorkflowInput = { name: trimmedName, description: trimmedDescription };
 
     // Only include the definition in the PATCH when the API will accept it. Sending it while
     // the workflow is enabled would return a 422 — disable first.
-    if (!isEnabled) {
-      const parsedDefinition = ZWorkflowDefinition.safeParse(definition);
+    if (currentWorkflow.status !== "enabled") {
+      const parsedDefinition = ZWorkflowDefinition.safeParse(currentDefinition);
       if (!parsedDefinition.success) {
         const issue = parsedDefinition.error.issues[0];
         toast.error(issue?.message ?? t("workspace.workflows.validation_failed"));
@@ -120,7 +124,7 @@ export const useWorkflowBuilder = ({
 
     setIsSaving(true);
     try {
-      const savedWorkflow = await updateWorkflow(workflow.id, payload);
+      const savedWorkflow = await updateWorkflow(currentWorkflow.id, payload);
       setWorkflow(savedWorkflow);
       toast.success(t("workspace.workflows.save_success"));
     } catch (error) {
@@ -128,7 +132,7 @@ export const useWorkflowBuilder = ({
     } finally {
       setIsSaving(false);
     }
-  }, [workflow, definition, workflowName, workflowDescription, isEnabled, setWorkflow, setIsSaving, t]);
+  }, [store, setWorkflow, setIsSaving, t]);
 
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {

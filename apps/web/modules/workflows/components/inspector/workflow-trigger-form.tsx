@@ -1,10 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useAtomValue } from "jotai";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
-import { Input } from "@/modules/ui/components/input";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import { surveyChoicesAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowTriggerFormProps {
   node: TWorkflowResponseCompletedTriggerNode;
@@ -12,61 +21,87 @@ interface WorkflowTriggerFormProps {
   onChange: (next: TWorkflowResponseCompletedTriggerNode) => void;
 }
 
-const parseIdList = (raw: string): string[] =>
-  raw
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-
 export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<WorkflowTriggerFormProps>) => {
   const { t } = useTranslation();
-  // Hold the raw user input separately from the parsed array so the comma and trailing/empty
-  // tokens survive a render round-trip. Without this, typing a `,` would be filtered out by
-  // `parseIdList` and the controlled input would immediately render the stripped value back to
-  // the user. Seeded once from the node prop; the modal re-mounts this form per node so it
-  // stays in sync with the underlying config.
-  const [endingCardIdsRaw, setEndingCardIdsRaw] = useState(() => node.config.endingCardIds.join(", "));
+  const surveyChoices = useAtomValue(surveyChoicesAtom);
+
+  const selectedSurvey = useMemo(
+    () => surveyChoices.find((survey) => survey.id === node.config.surveyId),
+    [surveyChoices, node.config.surveyId]
+  );
+
+  const handleSurveyChange = (surveyId: string) => {
+    // Clear ending selection when survey changes — ids belong to the previous survey's endings.
+    onChange({
+      ...node,
+      config: { ...node.config, surveyId, endingCardIds: [] },
+    });
+  };
+
+  const toggleEnding = (endingId: string, checked: boolean) => {
+    const current = node.config.endingCardIds;
+    const next = checked ? [...current, endingId] : current.filter((id) => id !== endingId);
+    onChange({ ...node, config: { ...node.config, endingCardIds: next } });
+  };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="workflow-trigger-survey-id">{t("workspace.workflows.trigger_survey_id_label")}</Label>
-        <Input
-          id="workflow-trigger-survey-id"
-          value={node.config.surveyId ?? ""}
-          disabled={!isEditable}
-          placeholder={t("workspace.workflows.trigger_survey_id_placeholder")}
-          onChange={(event) =>
-            onChange({
-              ...node,
-              config: { ...node.config, surveyId: event.target.value.trim() },
-            })
-          }
-        />
-        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_survey_id_description")}</p>
+        <Label htmlFor="workflow-trigger-survey">{t("workspace.workflows.trigger_survey_label")}</Label>
+        <Select
+          value={node.config.surveyId || undefined}
+          onValueChange={handleSurveyChange}
+          disabled={!isEditable}>
+          <SelectTrigger id="workflow-trigger-survey" className="bg-white">
+            <SelectValue placeholder={t("workspace.workflows.trigger_survey_placeholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            {surveyChoices.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-slate-500">
+                {t("workspace.workflows.trigger_survey_empty")}
+              </div>
+            ) : (
+              surveyChoices.map((survey) => (
+                <SelectItem key={survey.id} value={survey.id}>
+                  {survey.name}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_survey_description")}</p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="workflow-trigger-ending-ids">
-          {t("workspace.workflows.trigger_ending_card_ids_label")}
-        </Label>
-        <Input
-          id="workflow-trigger-ending-ids"
-          value={endingCardIdsRaw}
-          disabled={!isEditable}
-          placeholder={t("workspace.workflows.trigger_ending_card_ids_placeholder")}
-          onChange={(event) => {
-            const raw = event.target.value;
-            setEndingCardIdsRaw(raw);
-            onChange({
-              ...node,
-              config: { ...node.config, endingCardIds: parseIdList(raw) },
-            });
-          }}
-        />
-        <p className="text-xs text-slate-500">
-          {t("workspace.workflows.trigger_ending_card_ids_description")}
-        </p>
+        <Label>{t("workspace.workflows.trigger_ending_cards_label")}</Label>
+        {!selectedSurvey ? (
+          <p className="text-xs text-slate-500">
+            {t("workspace.workflows.trigger_ending_cards_pick_survey")}
+          </p>
+        ) : selectedSurvey.endings.length === 0 ? (
+          <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>
+        ) : (
+          <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
+            {selectedSurvey.endings.map((ending) => {
+              const checked = node.config.endingCardIds.includes(ending.id);
+              return (
+                <label
+                  key={ending.id}
+                  className="flex items-center gap-2 text-sm text-slate-700"
+                  htmlFor={`workflow-trigger-ending-${ending.id}`}>
+                  <Checkbox
+                    id={`workflow-trigger-ending-${ending.id}`}
+                    checked={checked}
+                    disabled={!isEditable}
+                    onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
+                  />
+                  <span className="truncate">{ending.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_description")}</p>
       </div>
     </div>
   );
