@@ -61,31 +61,14 @@ export async function loadWorkspaceWorkflowList(workspaceId: string): Promise<TW
   return rows.map((row) => toListItem(row as WorkflowRow));
 }
 
-// Survey headline cards store rich-text HTML in the i18n `default` slot (e.g. the Formbricks
-// editor wraps copy in `<p class="fb-editor-paragraph"><strong>…</strong></p>`). The trigger
-// dropdown only renders plain text, so strip tags + decode common entities here.
-const HTML_ENTITY_MAP: Record<string, string> = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-};
-
-const stripHtml = (raw: string): string =>
-  raw
-    .replace(/<[^>]*>/g, "")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
-    .replace(/&([a-zA-Z]+);/g, (match, entity: string) => HTML_ENTITY_MAP[entity] ?? match)
-    .replace(/\s+/g, " ")
-    .trim();
-
+// Headline cards store the editor's rich-text HTML in the i18n `default` slot. We pass it
+// through unchanged so the trigger dropdown can render it (sanitized + dangerouslySetInnerHTML);
+// the redirect ending has a plain `label` and the id is the last fallback.
 const endingDisplayLabel = (ending: { id: string } & Record<string, unknown>): string => {
   if (ending.type === "endScreen") {
     const headline = ending.headline as { default?: string } | undefined;
-    const text = stripHtml(headline?.default ?? "");
-    if (text) return text;
+    const html = headline?.default?.trim();
+    if (html) return html;
   } else if (ending.type === "redirectToUrl") {
     const label = (ending.label as string | undefined)?.trim();
     if (label) return label;

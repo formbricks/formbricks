@@ -1,9 +1,11 @@
 "use client";
 
+import DOMPurify from "isomorphic-dompurify";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -45,7 +47,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 px-1">
       <div className="flex flex-col gap-2">
         <Label htmlFor="workflow-trigger-survey">{t("workspace.workflows.trigger_survey_label")}</Label>
         <Select
@@ -55,7 +57,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
           <SelectTrigger id="workflow-trigger-survey" className="bg-white">
             <SelectValue placeholder={t("workspace.workflows.trigger_survey_placeholder")} />
           </SelectTrigger>
-          <SelectContent className="mx-1">
+          <SelectContent>
             {surveyChoices.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-500">
                 {t("workspace.workflows.trigger_survey_empty")}
@@ -95,13 +97,20 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
                     disabled={!isEditable}
                     onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
                   />
-                  <span className="truncate">{ending.label}</span>
+                  <span
+                    className="truncate [&_p]:m-0"
+                    // Headlines are stored as the editor's rich-text HTML; sanitize before
+                    // rendering so styles + bold/italic survive without an XSS hole.
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ending.label) }}
+                  />
                 </label>
               );
             })}
           </div>
         )}
-        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_description")}</p>
+        <Alert variant="info" size="small">
+          <AlertDescription>{t("workspace.workflows.trigger_ending_cards_description")}</AlertDescription>
+        </Alert>
       </div>
     </div>
   );
