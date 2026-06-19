@@ -26,6 +26,8 @@ export const AzureButton = ({ returnToUrl, directRedirect = false, lastUsed, sou
     await authClient.signIn.oauth2({
       providerId: "azuread",
       callbackURL: returnToUrlWithSource,
+      // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
+      errorCallbackURL: "/auth/login",
     });
   }, [returnToUrl, source]);
 

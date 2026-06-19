@@ -32,6 +32,8 @@ export const OpenIdButton = ({
     await authClient.signIn.oauth2({
       providerId: "openid",
       callbackURL: returnToUrlWithSource,
+      // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
+      errorCallbackURL: "/auth/login",
     });
   }, [returnToUrl, source]);
 

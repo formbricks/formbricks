@@ -54,9 +54,15 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
 
     // Better Auth sign-out clears the BA session; the redirect is manual (BA's signOut doesn't take
     // redirect/callbackUrl like NextAuth's did). Mirror NextAuth's contract: navigate by default, or
-    // return { url } when the caller passes redirect:false so it can navigate itself.
-    await authClient.signOut();
+    // return { url } when the caller passes redirect:false so it can navigate itself. Logout must
+    // ALWAYS navigate away even if the BA /sign-out call fails (best-effort + audited above), so
+    // swallow+log and fall through to the redirect/return.
     const url = options?.callbackUrl ?? "/auth/login";
+    try {
+      await authClient.signOut();
+    } catch (error) {
+      logger.error(error instanceof Error ? error : new Error(String(error)), "Better Auth signOut failed");
+    }
     if (options?.redirect === false) {
       return { url };
     }

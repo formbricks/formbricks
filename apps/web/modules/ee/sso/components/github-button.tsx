@@ -24,6 +24,8 @@ export const GithubButton = ({ returnToUrl, lastUsed, source }: GithubButtonProp
     await authClient.signIn.social({
       provider: "github",
       callbackURL: returnToUrlWithSource,
+      // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
+      errorCallbackURL: "/auth/login",
     });
   };
 

@@ -24,6 +24,8 @@ export const GoogleButton = ({ returnToUrl, lastUsed, source }: GoogleButtonProp
     await authClient.signIn.social({
       provider: "google",
       callbackURL: returnToUrlWithSource,
+      // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
+      errorCallbackURL: "/auth/login",
     });
   };
 
