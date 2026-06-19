@@ -24,6 +24,8 @@ type TWorkflowEditorState = {
   isInspectorCollapsed: boolean;
   isSnapToCanvasEnabled: boolean;
   isNodeConfigModalOpen: boolean;
+  isSaving: boolean;
+  isTransitioning: boolean;
 };
 
 const initialWorkflowEditorState: TWorkflowEditorState = {
@@ -36,6 +38,8 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   isInspectorCollapsed: false,
   isSnapToCanvasEnabled: true,
   isNodeConfigModalOpen: false,
+  isSaving: false,
+  isTransitioning: false,
 };
 
 export const workflowEditorAtom = atom<TWorkflowEditorState>(initialWorkflowEditorState);
@@ -49,6 +53,26 @@ export const selectedWorkflowNodeIdAtom = atom((get) => get(workflowEditorAtom).
 export const isWorkflowInspectorCollapsedAtom = atom((get) => get(workflowEditorAtom).isInspectorCollapsed);
 export const isWorkflowSnapToCanvasEnabledAtom = atom((get) => get(workflowEditorAtom).isSnapToCanvasEnabled);
 export const isWorkflowNodeConfigModalOpenAtom = atom((get) => get(workflowEditorAtom).isNodeConfigModalOpen);
+export const isWorkflowSavingAtom = atom((get) => get(workflowEditorAtom).isSaving);
+export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom).isTransitioning);
+
+export const setWorkflowSavingAtom = atom(null, (get, set, isSaving: boolean) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      draft.isSaving = isSaving;
+    })
+  );
+});
+
+export const setWorkflowTransitioningAtom = atom(null, (get, set, isTransitioning: boolean) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      draft.isTransitioning = isTransitioning;
+    })
+  );
+});
 
 export const hydrateWorkflowEditorAtom = atom(
   null,

@@ -19,6 +19,8 @@ import {
 } from "@/modules/workflows/state/editor";
 
 interface WorkflowInspectorPanelProps {
+  workflowId: string;
+  isReadOnly: boolean;
   isEditable: boolean;
 }
 
@@ -28,7 +30,9 @@ interface WorkflowInspectorPanelProps {
  * own component so they stay small and easy to swap when the real data sources land.
  */
 export const WorkflowInspectorPanel = ({
-  isEditable: _isEditable,
+  workflowId,
+  isReadOnly,
+  isEditable,
 }: Readonly<WorkflowInspectorPanelProps>) => {
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
@@ -65,7 +69,7 @@ export const WorkflowInspectorPanel = ({
       : t("workspace.workflows.overview_trigger_any_response"));
 
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col gap-3">
+    <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start">
       <div className="flex justify-start">
         <Button
           aria-label={t("workspace.workflows.collapse_inspector")}
@@ -80,7 +84,12 @@ export const WorkflowInspectorPanel = ({
       </div>
 
       <AiAssistantSection overviewText={overviewText} />
-      <SettingsSection settings={settings} />
+      <SettingsSection
+        workflowId={workflowId}
+        isReadOnly={isReadOnly}
+        isEditable={isEditable}
+        settings={settings}
+      />
       <HistorySection history={history} />
     </aside>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useReactFlow } from "@xyflow/react";
-import { HandIcon, MinusIcon, MousePointerClickIcon, PlusIcon } from "lucide-react";
+import { HandIcon, MousePointerClickIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 
@@ -36,7 +36,7 @@ export const CanvasControls = ({
           aria-label={t("workspace.workflows.zoom_in")}
           title={t("workspace.workflows.zoom_in")}
           onClick={() => zoomIn()}>
-          <PlusIcon />
+          <ZoomInIcon />
         </Button>
         <Button
           type="button"
@@ -45,7 +45,7 @@ export const CanvasControls = ({
           aria-label={t("workspace.workflows.zoom_out")}
           title={t("workspace.workflows.zoom_out")}
           onClick={() => zoomOut()}>
-          <MinusIcon />
+          <ZoomOutIcon />
         </Button>
         <Button
           type="button"

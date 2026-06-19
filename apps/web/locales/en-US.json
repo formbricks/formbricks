@@ -3890,6 +3890,8 @@
       "value_text": "Value (Text)"
     },
     "workflows": {
+      "active_description": "Run this workflow when its trigger fires.",
+      "active_label": "Active",
       "ai_assistant_description": "AI outputs can be wrong",
       "ai_assistant_placeholder": "How can I help you?",
       "ai_assistant_send": "Send",

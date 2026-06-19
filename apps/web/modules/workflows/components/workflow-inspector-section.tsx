@@ -21,7 +21,7 @@ interface InspectorSectionProps {
 export const InspectorSection = ({
   title,
   description,
-  defaultOpen = true,
+  defaultOpen = false,
   className,
   children,
 }: Readonly<InspectorSectionProps>) => {

@@ -3890,6 +3890,8 @@
       "value_text": "Valor (Texto)"
     },
     "workflows": {
+      "active_description": "Ejecuta este flujo de trabajo cuando se active su disparador.",
+      "active_label": "Activo",
       "ai_assistant_description": "Las respuestas de la IA pueden ser incorrectas",
       "ai_assistant_placeholder": "¿Cómo puedo ayudarte?",
       "ai_assistant_send": "Enviar",

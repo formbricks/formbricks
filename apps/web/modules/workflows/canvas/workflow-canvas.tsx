@@ -120,7 +120,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   return (
     <div
       className={cn(
-        "relative min-h-[680px] flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
+        "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
       <Button variant="secondary" className="absolute right-4 top-4 z-10" onClick={handleRunWorkflow}>
         <PlayIcon className="size-4" />

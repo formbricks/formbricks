@@ -3890,6 +3890,8 @@
       "value_text": "Waarde (tekst)"
     },
     "workflows": {
+      "active_description": "Voer deze workflow uit wanneer de trigger wordt geactiveerd.",
+      "active_label": "Actief",
       "ai_assistant_description": "AI-outputs kunnen fout zijn",
       "ai_assistant_placeholder": "Hoe kan ik je helpen?",
       "ai_assistant_send": "Versturen",

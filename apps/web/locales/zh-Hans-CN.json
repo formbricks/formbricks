@@ -3890,6 +3890,8 @@
       "value_text": "值（文本）"
     },
     "workflows": {
+      "active_description": "当触发器触发时运行此工作流。",
+      "active_label": "活跃",
       "ai_assistant_description": "AI 输出可能出错",
       "ai_assistant_placeholder": "我能帮你什么？",
       "ai_assistant_send": "发送",

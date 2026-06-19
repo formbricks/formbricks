@@ -3890,6 +3890,8 @@
       "value_text": "Значение (текст)"
     },
     "workflows": {
+      "active_description": "Запускать этот процесс при срабатывании триггера.",
+      "active_label": "Активен",
       "ai_assistant_description": "Ответы ИИ могут быть неточными",
       "ai_assistant_placeholder": "Как я могу помочь?",
       "ai_assistant_send": "Отправить",

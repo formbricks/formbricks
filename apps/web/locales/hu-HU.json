@@ -3890,6 +3890,8 @@
       "value_text": "Érték (szöveg)"
     },
     "workflows": {
+      "active_description": "Futtassa ezt a munkafolyamatot, amikor az eseményindító aktiválódik.",
+      "active_label": "Aktív",
       "ai_assistant_description": "Az AI kimenetek hibásak lehetnek",
       "ai_assistant_placeholder": "Hogyan segíthetek Önnek?",
       "ai_assistant_send": "Küldés",

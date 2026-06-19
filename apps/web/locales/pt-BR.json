@@ -3890,6 +3890,8 @@
       "value_text": "Valor (Texto)"
     },
     "workflows": {
+      "active_description": "Executar este fluxo de trabalho quando seu gatilho for acionado.",
+      "active_label": "Ativo",
       "ai_assistant_description": "As respostas da IA podem estar incorretas",
       "ai_assistant_placeholder": "Como posso te ajudar?",
       "ai_assistant_send": "Enviar",

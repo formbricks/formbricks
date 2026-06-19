@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { WorkflowEditorProvider } from "@/modules/workflows/components/workflow-editor-provider";
 import { WorkflowHeaderCta } from "@/modules/workflows/components/workflow-header-cta";
 import { WorkflowSecondaryNavigation } from "@/modules/workflows/components/workflow-secondary-navigation";
 import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
@@ -22,14 +23,16 @@ const WorkflowDetailLayout = async (
   }
 
   return (
-    <PageContentWrapper>
-      <PageHeader
-        pageTitle={workflow.name}
-        cta={<WorkflowHeaderCta isReadOnly={isReadOnly} status={workflow.status} />}>
-        <WorkflowSecondaryNavigation workspaceId={params.workspaceId} workflowId={params.workflowId} />
-      </PageHeader>
-      {props.children}
-    </PageContentWrapper>
+    <WorkflowEditorProvider>
+      <PageContentWrapper>
+        <PageHeader
+          pageTitle={workflow.name}
+          cta={<WorkflowHeaderCta workflowId={params.workflowId} isReadOnly={isReadOnly} />}>
+          <WorkflowSecondaryNavigation workspaceId={params.workspaceId} workflowId={params.workflowId} />
+        </PageHeader>
+        {props.children}
+      </PageContentWrapper>
+    </WorkflowEditorProvider>
   );
 };
 

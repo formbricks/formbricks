@@ -3890,6 +3890,8 @@
       "value_text": "Wert (Text)"
     },
     "workflows": {
+      "active_description": "Führe diesen Workflow aus, wenn sein Trigger ausgelöst wird.",
+      "active_label": "Aktiv",
       "ai_assistant_description": "KI-Ausgaben können falsch sein",
       "ai_assistant_placeholder": "Wie kann ich dir helfen?",
       "ai_assistant_send": "Senden",

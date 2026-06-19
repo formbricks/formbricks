@@ -3890,6 +3890,8 @@
       "value_text": "Valoare (Text)"
     },
     "workflows": {
+      "active_description": "Rulează acest workflow când declanșatorul său se activează.",
+      "active_label": "Activ",
       "ai_assistant_description": "Rezultatele AI pot fi greșite",
       "ai_assistant_placeholder": "Cum te pot ajuta?",
       "ai_assistant_send": "Trimite",

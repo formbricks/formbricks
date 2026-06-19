@@ -3890,6 +3890,8 @@
       "value_text": "Valeur (texte)"
     },
     "workflows": {
+      "active_description": "Exécute ce workflow lorsque son déclencheur se lance.",
+      "active_label": "Actif",
       "ai_assistant_description": "Les résultats de l'IA peuvent être incorrects",
       "ai_assistant_placeholder": "Comment puis-je t'aider ?",
       "ai_assistant_send": "Envoyer",

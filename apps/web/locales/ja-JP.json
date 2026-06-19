@@ -3890,6 +3890,8 @@
       "value_text": "値 (テキスト)"
     },
     "workflows": {
+      "active_description": "トリガーが発火したときにこのワークフローを実行します。",
+      "active_label": "アクティブ",
       "ai_assistant_description": "AIの出力には誤りが含まれる可能性があります",
       "ai_assistant_placeholder": "どのようにお手伝いしましょうか？",
       "ai_assistant_send": "送信",

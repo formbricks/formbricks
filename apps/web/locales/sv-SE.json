@@ -3890,6 +3890,8 @@
       "value_text": "Värde (text)"
     },
     "workflows": {
+      "active_description": "Kör det här arbetsflödet när dess utlösare aktiveras.",
+      "active_label": "Aktiv",
       "ai_assistant_description": "AI-utdata kan vara felaktiga",
       "ai_assistant_placeholder": "Hur kan jag hjälpa dig?",
       "ai_assistant_send": "Skicka",

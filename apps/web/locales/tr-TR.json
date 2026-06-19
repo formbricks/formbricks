@@ -3890,6 +3890,8 @@
       "value_text": "Değer (Metin)"
     },
     "workflows": {
+      "active_description": "Tetikleyicisi devreye girdiğinde bu iş akışını çalıştır.",
+      "active_label": "Etkin",
       "ai_assistant_description": "AI çıktıları yanlış olabilir",
       "ai_assistant_placeholder": "Sana nasıl yardımcı olabilirim?",
       "ai_assistant_send": "Gönder",

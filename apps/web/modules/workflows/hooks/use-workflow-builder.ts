@@ -18,7 +18,11 @@ import { workflowDefinitionToFlowNodes } from "@/modules/workflows/lib/definitio
 import { getPlaceholderWorkflowResource } from "@/modules/workflows/lib/placeholder-data";
 import {
   hydrateWorkflowEditorAtom,
+  isWorkflowSavingAtom,
+  isWorkflowTransitioningAtom,
   setWorkflowAtom,
+  setWorkflowSavingAtom,
+  setWorkflowTransitioningAtom,
   workflowAtom,
   workflowDefinitionAtom,
   workflowDescriptionAtom,
@@ -28,9 +32,18 @@ import {
 interface UseWorkflowBuilderArgs {
   workflowId: string;
   isReadOnly: boolean;
+  /**
+   * When true, the hook fetches the workflow on mount. The page-level builder owns the load;
+   * components that only need actions + atom state (e.g. the layout header CTA) pass false.
+   */
+  loadOnMount?: boolean;
 }
 
-export const useWorkflowBuilder = ({ workflowId, isReadOnly }: UseWorkflowBuilderArgs) => {
+export const useWorkflowBuilder = ({
+  workflowId,
+  isReadOnly,
+  loadOnMount = true,
+}: UseWorkflowBuilderArgs) => {
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
   const workflowName = useAtomValue(workflowNameAtom);
@@ -38,16 +51,19 @@ export const useWorkflowBuilder = ({ workflowId, isReadOnly }: UseWorkflowBuilde
   const definition = useAtomValue(workflowDefinitionAtom);
   const hydrateEditor = useSetAtom(hydrateWorkflowEditorAtom);
   const setWorkflow = useSetAtom(setWorkflowAtom);
+  const isSaving = useAtomValue(isWorkflowSavingAtom);
+  const isTransitioning = useAtomValue(isWorkflowTransitioningAtom);
+  const setIsSaving = useSetAtom(setWorkflowSavingAtom);
+  const setIsTransitioning = useSetAtom(setWorkflowTransitioningAtom);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(loadOnMount);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Reload on workflowId change; abort in-flight fetches when the page navigates away.
   // Until the real DB-backed workflows ship (ENG-1222), placeholder ids resolve to in-memory
   // demo data so the builder UI is testable without hitting the API.
   useEffect(() => {
+    if (!loadOnMount) return;
     const controller = new AbortController();
     setIsLoading(true);
     setLoadError(null);
@@ -81,7 +97,7 @@ export const useWorkflowBuilder = ({ workflowId, isReadOnly }: UseWorkflowBuilde
       });
 
     return () => controller.abort();
-  }, [workflowId, hydrateEditor, t]);
+  }, [workflowId, hydrateEditor, t, loadOnMount]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
@@ -130,7 +146,7 @@ export const useWorkflowBuilder = ({ workflowId, isReadOnly }: UseWorkflowBuilde
     } finally {
       setIsSaving(false);
     }
-  }, [workflow, definition, workflowName, workflowDescription, setWorkflow, t]);
+  }, [workflow, definition, workflowName, workflowDescription, setWorkflow, setIsSaving, t]);
 
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {
@@ -186,7 +202,7 @@ export const useWorkflowBuilder = ({ workflowId, isReadOnly }: UseWorkflowBuilde
         setIsTransitioning(false);
       }
     },
-    [workflow, setWorkflow, t]
+    [workflow, setWorkflow, setIsTransitioning, t]
   );
 
   return {

@@ -3890,6 +3890,8 @@
       "value_text": "Valor (Texto)"
     },
     "workflows": {
+      "active_description": "Executa este fluxo de trabalho quando o respetivo acionador é disparado.",
+      "active_label": "Ativo",
       "ai_assistant_description": "As respostas da IA podem estar erradas",
       "ai_assistant_placeholder": "Como posso ajudar-te?",
       "ai_assistant_send": "Enviar",

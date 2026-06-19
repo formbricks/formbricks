@@ -3890,6 +3890,8 @@
       "value_text": "值（文字）"
     },
     "workflows": {
+      "active_description": "當觸發條件啟動時執行此工作流程。",
+      "active_label": "啟用",
       "ai_assistant_description": "AI 輸出可能有誤",
       "ai_assistant_placeholder": "有什麼可以幫你的嗎？",
       "ai_assistant_send": "傳送",
