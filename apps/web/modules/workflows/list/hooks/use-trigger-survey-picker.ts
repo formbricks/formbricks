@@ -7,7 +7,10 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { listSurveys } from "@/modules/survey/list/lib/v3-surveys-client";
 
-const SURVEY_LIST_LIMIT = 100;
+// Trigger picker needs every survey in the workspace, not just the first page. Walk the v3
+// cursor-paginated list until exhausted. A typeahead-driven endpoint would scale better for
+// huge workspaces — track that as a follow-up.
+const SURVEY_LIST_PAGE_SIZE = 100;
 
 interface TWorkflowSurveyOption {
   id: string;
@@ -34,16 +37,21 @@ export const useWorkflowSurveyOptions = (workspaceId: string) => {
   const query = useQuery({
     queryKey: ["workflow-trigger", "surveys", workspaceId],
     queryFn: async ({ signal }) => {
-      const page = await listSurveys({
-        workspaceId,
-        limit: SURVEY_LIST_LIMIT,
-        filters: initialFilters,
-        signal,
-      });
-      const options: TWorkflowSurveyOption[] = page.data.map((survey) => ({
-        id: survey.id,
-        name: survey.name,
-      }));
+      const options: TWorkflowSurveyOption[] = [];
+      let cursor: string | null = null;
+      do {
+        const page = await listSurveys({
+          workspaceId,
+          limit: SURVEY_LIST_PAGE_SIZE,
+          cursor,
+          filters: initialFilters,
+          signal,
+        });
+        for (const survey of page.data) {
+          options.push({ id: survey.id, name: survey.name });
+        }
+        cursor = page.meta.nextCursor;
+      } while (cursor);
       return options;
     },
   });
