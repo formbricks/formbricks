@@ -1,6 +1,5 @@
 "use client";
 
-import DOMPurify from "isomorphic-dompurify";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -97,12 +96,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
                     disabled={!isEditable}
                     onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
                   />
-                  <span
-                    className="truncate [&_p]:m-0"
-                    // Headlines are stored as the editor's rich-text HTML; sanitize before
-                    // rendering so styles + bold/italic survive without an XSS hole.
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ending.label) }}
-                  />
+                  <span className="truncate">{ending.label}</span>
                 </label>
               );
             })}
