@@ -1,4 +1,5 @@
 import "server-only";
+import type { BetterAuthOptions } from "better-auth";
 import type { GenericOAuthConfig } from "better-auth/plugins";
 import {
   AZUREAD_CLIENT_ID,
@@ -20,6 +21,17 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { captureSsoIdentity } from "./sso-request-context";
+
+// Better Auth's per-provider profile types, extracted so the social mappers below aren't implicitly
+// `any` (their generic-OAuth siblings get this from `satisfies GenericOAuthConfig`).
+type SocialProviders = NonNullable<BetterAuthOptions["socialProviders"]>;
+// Each provider is `Config | (() => Awaitable<Config>)`; pull the config object out of that union.
+type SocialConfig<K extends keyof SocialProviders> = Extract<
+  NonNullable<SocialProviders[K]>,
+  { mapProfileToUser?: unknown }
+>;
+type GithubProfile = Parameters<NonNullable<SocialConfig<"github">["mapProfileToUser"]>>[0];
+type GoogleProfile = Parameters<NonNullable<SocialConfig<"google">["mapProfileToUser"]>>[0];
 
 /**
  * Better Auth SSO providers (ENG-1054), mirroring the NextAuth set in `./providers.ts`. Gated behind
@@ -46,7 +58,7 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
               clientSecret: GITHUB_SECRET ?? "",
               // Capture the resolved identity for verify-before-link recovery (design doc §13).
               // ⚠ providerAccountId must equal Better Auth's account.accountId — validate at cutover.
-              mapProfileToUser: (profile) => {
+              mapProfileToUser: (profile: GithubProfile) => {
                 captureSsoIdentity({ email: profile.email, providerAccountId: String(profile.id) });
                 return { email: profile.email };
               },
@@ -58,7 +70,7 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
             google: {
               clientId: GOOGLE_CLIENT_ID ?? "",
               clientSecret: GOOGLE_CLIENT_SECRET ?? "",
-              mapProfileToUser: (profile) => {
+              mapProfileToUser: (profile: GoogleProfile) => {
                 captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
                 return { email: profile.email };
               },

@@ -51,9 +51,18 @@ export const getSsoProvisioningDecision = (): SsoProvisionDecision | undefined =
  * default error redirect (the route-wrapper misconfiguration already fails loud via the provisioning
  * guard on new-user sign-ups).
  */
-export const captureSsoIdentity = (identity: PendingSsoIdentity): void => {
+export const captureSsoIdentity = (identity: {
+  email: string | null | undefined;
+  providerAccountId: string | null | undefined;
+}): void => {
   const store = ssoRequestContext.getStore();
-  if (store) store.pendingIdentity = identity;
+  if (!store) return;
+  // Only stash a usable identity: a provider that omits either field can't drive recovery (it would
+  // fail the email lookup or link the wrong account), so let the collision fall through to Better
+  // Auth's default error instead.
+  if (identity.email && identity.providerAccountId) {
+    store.pendingIdentity = { email: identity.email, providerAccountId: identity.providerAccountId };
+  }
 };
 
 export const getPendingSsoIdentity = (): PendingSsoIdentity | undefined =>
