@@ -1,4 +1,5 @@
 import "server-only";
+import { createId } from "@paralleldrive/cuid2";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
@@ -191,6 +192,11 @@ export const auth = betterAuth({
   advanced: {
     useSecureCookies: true, // also yields the browser-enforced "__Secure-" cookie name prefix
     cookiePrefix: "formbricks",
+    // Formbricks ids are cuid2 (Prisma `@default(cuid())` + the `ZId = z.cuid2()` validators in the
+    // service layer). Better Auth's default id format is NOT cuid2, so without this every Formbricks
+    // service that validates an id (e.g. createMembership) would reject BA-created users/orgs at
+    // cutover — caught by the SSO-provisioning integration test.
+    database: { generateId: () => createId() },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: true, path: "/" },
     ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
   },
