@@ -1,28 +1,20 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
+import { ArrowLeftIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import { Button } from "@/modules/ui/components/button";
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/modules/ui/components/dialog";
 import { getNodeRegistryEntry } from "@/modules/workflows/lib/node-registry";
 import {
   closeWorkflowNodeConfigModalAtom,
-  isWorkflowNodeConfigModalOpenAtom,
   selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
   workflowDefinitionAtom,
 } from "@/modules/workflows/state/editor";
 
-interface WorkflowNodeConfigModalProps {
+interface WorkflowNodeConfigPanelProps {
   isEditable: boolean;
   onSave?: () => Promise<void> | void;
   isSaving?: boolean;
@@ -52,79 +44,79 @@ const replaceNode = (definition: TWorkflowDefinition, node: TWorkflowNode): TWor
   };
 };
 
-export const WorkflowNodeConfigModal = ({
+// Renders inside the inspector aside (replaces the workflow-level sections while a node is
+// being configured). The Back arrow restores the workflow-level view; Save commits the draft
+// to the definition atom and triggers the page-level save.
+export const WorkflowNodeConfigPanel = ({
   isEditable,
   onSave,
   isSaving = false,
-}: Readonly<WorkflowNodeConfigModalProps>) => {
+}: Readonly<WorkflowNodeConfigPanelProps>) => {
   const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
-  const isOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
-  const closeModal = useSetAtom(closeWorkflowNodeConfigModalAtom);
+  const closePanel = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
 
   const selectedNode = findSelectedNode(definition, selectedNodeId);
   const [draftNode, setDraftNode] = useState<TWorkflowNode | null>(selectedNode);
 
+  // Re-seed the draft whenever the panel is opened against a new node so we don't carry over
+  // a stale draft from a previous selection.
   useEffect(() => {
-    if (isOpen) {
-      setDraftNode(selectedNode);
-    }
-  }, [isOpen, selectedNode]);
+    setDraftNode(selectedNode);
+  }, [selectedNode]);
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) closeModal();
-  };
-
-  const handleSave = async () => {
-    if (!draftNode || !definition) {
-      closeModal();
-      return;
-    }
-    setDefinition(replaceNode(definition, draftNode));
-    closeModal();
-    await onSave?.();
-  };
-
-  if (!selectedNode) {
-    return null;
-  }
+  if (!selectedNode) return null;
 
   const registryEntry = getNodeRegistryEntry(selectedNode);
   const ConfigForm = registryEntry.ConfigForm;
 
+  const handleSave = async () => {
+    if (!draftNode || !definition) {
+      closePanel();
+      return;
+    }
+    setDefinition(replaceNode(definition, draftNode));
+    closePanel();
+    await onSave?.();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{registryEntry.title(selectedNode, t)}</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
-          {ConfigForm && draftNode ? (
-            <ConfigForm
-              key={selectedNode.id}
-              node={draftNode}
-              isEditable={isEditable}
-              onChange={setDraftNode}
-            />
-          ) : (
-            <p className="text-sm text-slate-500">{t("workspace.workflows.inspector_unsupported_node")}</p>
-          )}
-        </DialogBody>
-        <DialogFooter>
-          <Button type="button" variant="secondary" onClick={() => closeModal()}>
-            {t("common.cancel")}
-          </Button>
+    <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start rounded-lg border border-slate-200 bg-white">
+      <header className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
+        <div className="flex items-center gap-2">
           <Button
             type="button"
-            onClick={handleSave}
-            loading={isSaving}
-            disabled={!isEditable || !ConfigForm || isSaving}>
-            {t("common.save")}
+            variant="ghost"
+            size="icon"
+            aria-label={t("common.back")}
+            onClick={() => closePanel()}>
+            <ArrowLeftIcon className="size-4" />
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <span className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</span>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleSave}
+          loading={isSaving}
+          disabled={!isEditable || !ConfigForm || isSaving}>
+          {t("common.save")}
+        </Button>
+      </header>
+      <div className="px-3 pb-4">
+        {ConfigForm && draftNode ? (
+          <ConfigForm
+            key={selectedNode.id}
+            node={draftNode}
+            isEditable={isEditable}
+            onChange={setDraftNode}
+          />
+        ) : (
+          <p className="text-sm text-slate-500">{t("workspace.workflows.inspector_unsupported_node")}</p>
+        )}
+      </div>
+    </aside>
   );
 };

@@ -4,7 +4,6 @@ import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
-import { WorkflowNodeConfigModal } from "@/modules/workflows/components/inspector/workflow-node-config-modal";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
 import { isCanvasLockedAtom } from "@/modules/workflows/state/editor";
@@ -36,7 +35,7 @@ export const WorkflowBuilderPage = ({
     );
   }
 
-  // Modal inputs honour the canvas lock — when locked, the user can still open a node and
+  // Inspector inputs honour the canvas lock — when locked, the user can still open a node and
   // inspect its configuration, but every field is read-only.
   const canEditNode = builder.canEditDefinition && !isLocked;
 
@@ -47,9 +46,11 @@ export const WorkflowBuilderPage = ({
         <WorkflowInspectorPanel
           canEditDefinition={builder.canEditDefinition}
           canEditMetadata={builder.canEditMetadata}
+          isEditingNode={canEditNode}
+          onSaveNode={builder.save}
+          isSavingNode={builder.isSaving}
         />
       </section>
-      <WorkflowNodeConfigModal isEditable={canEditNode} onSave={builder.save} isSaving={builder.isSaving} />
     </div>
   );
 };
