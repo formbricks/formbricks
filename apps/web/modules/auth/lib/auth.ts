@@ -4,12 +4,23 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
-import { SESSION_MAX_AGE } from "@/lib/constants";
+import type { TUserLocale } from "@formbricks/types/user";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
+  SESSION_MAX_AGE,
+} from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
+
+/** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
+const getUserLocale = async (userId: string): Promise<TUserLocale> => {
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
+  return (dbUser?.locale ?? "en-US") as TUserLocale;
+};
 
 /**
  * Better Auth server instance (ENG-1054 — NextAuth → Better Auth migration).
@@ -26,8 +37,7 @@ const DAY_IN_SECONDS = 60 * 60 * 24;
  * verification stays Redis-only (ephemeral; no Verification Prisma model needed).
  *
  * Deferred to later phases (kept out so they don't half-activate against the live NextAuth flows):
- *  - `requireEmailVerification`, `sendResetPassword`/`sendVerificationEmail`, `revokeSessionsOnPasswordReset` (Phase 3)
- *  - `emailVerified` Date→boolean column conversion (Phase 2/3)
+ *  - `emailVerified` Date→boolean column conversion (Phase 2/3 — required before requireEmailVerification works at cutover)
  *  - `genericOAuth` providers: Google/GitHub/Azure/OIDC + the BoxyHQ SAML bridge (Phase 5)
  *  - audit-log + Sentry wiring via hooks/onAPIError (Phase 7)
  */
@@ -51,13 +61,40 @@ export const auth = betterAuth({
     // by ZUserPassword at the app layer (deferred policy modernization → design doc §10.6).
     minPasswordLength: 8,
     maxPasswordLength: 128,
+    requireEmailVerification: !EMAIL_VERIFICATION_DISABLED, // match current behavior (same gating flag)
+    autoSignIn: false, // match current (no auto-login before verification); also enumeration-safe
+    resetPasswordTokenExpiresIn: PASSWORD_RESET_TOKEN_LIFETIME_MINUTES * 60, // seconds
+    revokeSessionsOnPasswordReset: true, // BA default is false; today we delete all sessions on reset (§10.1)
     // Keep existing bcrypt (cost 12) so current hashes verify without forcing a reset (design doc D4).
     password: {
       hash: (password) => hashSecret(password),
       verify: ({ password, hash }) => verifySecret(password, hash),
     },
-    // TODO(Phase 3): requireEmailVerification, sendResetPassword, revokeSessionsOnPasswordReset,
-    // resetPasswordTokenExpiresIn (30 min), reusing @formbricks/email + sendEmail.
+    // Reuse Formbricks' mailer. Dynamic import keeps the heavy email/nodemailer graph out of auth.ts's
+    // app-wide static import chain (only loaded when a reset is actually sent).
+    sendResetPassword: async ({ user, url }) => {
+      const { sendPasswordResetLinkEmail } = await import("@/modules/email");
+      await sendPasswordResetLinkEmail({
+        email: user.email,
+        locale: await getUserLocale(user.id),
+        verifyLink: url,
+        linkValidityInMinutes: PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
+      });
+    },
+  },
+
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: false,
+    expiresIn: 60 * 60, // 1 hour
+    sendVerificationEmail: async ({ user, url }) => {
+      const { sendVerificationLinkEmail } = await import("@/modules/email");
+      await sendVerificationLinkEmail({
+        email: user.email,
+        locale: await getUserLocale(user.id),
+        verifyLink: url,
+      });
+    },
   },
 
   // Hash verification/reset token identifiers at rest (BA default is plaintext) — matches the

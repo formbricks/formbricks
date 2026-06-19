@@ -197,6 +197,27 @@ export const sendPasswordResetLinkEmail = async (user: {
   });
 };
 
+export const sendVerificationLinkEmail = async (data: {
+  email: TUserEmail;
+  locale: TUserLocale;
+  verifyLink: string;
+}): Promise<boolean> => {
+  const t = await getTranslate(data.locale);
+  const html = await renderVerificationEmail({
+    // Better Auth supplies a single verification link; reuse it for the resend CTA for now.
+    // TODO(ENG-1054 cutover): point verificationRequestLink at Better Auth's resend flow.
+    verificationRequestLink: data.verifyLink,
+    verifyLink: data.verifyLink,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    to: data.email,
+    subject: t("emails.verification_email_subject"),
+    html,
+  });
+};
+
 export const sendPasswordResetNotifyEmail = async (user: {
   email: string;
   locale: TUserLocale;
