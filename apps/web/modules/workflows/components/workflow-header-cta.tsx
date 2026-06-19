@@ -57,7 +57,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             size="sm"
             onClick={builder.save}
             loading={builder.isSaving}
-            disabled={!builder.canEdit}>
+            disabled={!builder.canEditMetadata}>
             {t("common.save")}
           </Button>
         </>

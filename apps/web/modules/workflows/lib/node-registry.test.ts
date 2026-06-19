@@ -73,4 +73,25 @@ describe("getNodeRegistryEntry", () => {
     expect(entry.title(sendEmailNode, t)).toBe("workspace.workflows.send_email");
     expect(entry.summary(sendEmailNode, t)).toContain("respondent@example.com");
   });
+
+  test("send-email entry uses label override when present", () => {
+    const labelled = { ...sendEmailNode, label: "Custom send" };
+    expect(getNodeRegistryEntry(labelled).title(labelled, t)).toBe("Custom send");
+  });
+
+  test("send-email entry falls back to the unconfigured summary when `to` is blank", () => {
+    const unconfigured = { ...sendEmailNode, config: { ...sendEmailNode.config, to: "" } };
+    expect(getNodeRegistryEntry(unconfigured).summary(unconfigured, t)).toBe(
+      "workspace.workflows.send_email_unconfigured"
+    );
+  });
+
+  test("if-else entry exposes flow category + summary key", () => {
+    const entry = getNodeRegistryEntry(ifElseNode);
+    expect(entry.category).toBe("flow");
+    expect(entry.icon).toBe("ifElse");
+    expect(entry.title(ifElseNode, t)).toBe("workspace.workflows.if_else");
+    expect(entry.summary(ifElseNode, t)).toBe("workspace.workflows.if_else_summary");
+    expect(entry.ConfigForm).toBeNull();
+  });
 });

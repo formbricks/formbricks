@@ -95,7 +95,12 @@ export const WorkflowNodeConfigModal = ({ isEditable }: Readonly<WorkflowNodeCon
         </DialogHeader>
         <DialogBody>
           {ConfigForm && draftNode ? (
-            <ConfigForm node={draftNode} isEditable={isEditable} onChange={setDraftNode} />
+            <ConfigForm
+              key={selectedNode.id}
+              node={draftNode}
+              isEditable={isEditable}
+              onChange={setDraftNode}
+            />
           ) : (
             <p className="text-sm text-slate-500">{t("workspace.workflows.inspector_unsupported_node")}</p>
           )}

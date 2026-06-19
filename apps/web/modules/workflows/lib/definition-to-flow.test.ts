@@ -104,4 +104,25 @@ describe("reorganizeWorkflowDefinition", () => {
     const actionY = next.nodes[0].ui?.position?.y ?? 0;
     expect(actionY).toBeGreaterThan(triggerY);
   });
+
+  test("places unreachable nodes below the reachable graph", () => {
+    const base = buildDefinition();
+    const orphan = { ...base.nodes[0], id: "orphan", ui: undefined } as (typeof base.nodes)[number];
+    const def: TWorkflowDefinition = { ...base, nodes: [...base.nodes, orphan] };
+
+    const next = reorganizeWorkflowDefinition(def);
+    const reachableY = next.nodes[0].ui?.position?.y ?? 0;
+    const orphanY = next.nodes[1].ui?.position?.y ?? 0;
+    expect(orphanY).toBeGreaterThan(reachableY);
+  });
+});
+
+describe("workflowDefinitionToFlowNodes fallback", () => {
+  test("falls back to a derived position when ui.position is missing", () => {
+    const base = buildDefinition();
+    const triggerWithoutUi = { ...base.trigger, ui: undefined };
+    const def = { ...base, trigger: triggerWithoutUi } as TWorkflowDefinition;
+    const nodes = workflowDefinitionToFlowNodes(def, t);
+    expect(nodes[0].position).toEqual({ x: 120, y: 80 });
+  });
 });

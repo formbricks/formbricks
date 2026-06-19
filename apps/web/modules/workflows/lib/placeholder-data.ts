@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import type {
   TWorkflowDefinition,
   TWorkflowListItem,
@@ -425,14 +426,16 @@ export interface TWorkflowHistorySummary {
   rows: TWorkflowHistoryRow[];
 }
 
-const HISTORY_ROW_LIMIT = 5;
-
 /**
  * Derives the history-section view from the same `placeholderWorkflowRuns` array the runs page
- * consumes, so the two views stay in sync. When the real listWorkflowRuns API client lands, the
- * single source of truth above swaps out and this derivation stays unchanged.
+ * consumes, so the two views stay in sync. Returns every row — the consuming component is
+ * responsible for paginating. When the real listWorkflowRuns API client lands, the single source
+ * of truth above swaps out and this derivation stays unchanged.
  */
-export const getPlaceholderWorkflowHistory = (workflowId: string): TWorkflowHistorySummary | undefined => {
+export const getPlaceholderWorkflowHistory = (
+  workflowId: string,
+  t: TFunction
+): TWorkflowHistorySummary | undefined => {
   const runs = placeholderWorkflowRuns.filter((run) => run.workflowId === workflowId);
   if (runs.length === 0) return undefined;
 
@@ -447,9 +450,9 @@ export const getPlaceholderWorkflowHistory = (workflowId: string): TWorkflowHist
     ? Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length)
     : 0;
 
-  const rows: TWorkflowHistoryRow[] = runs.slice(0, HISTORY_ROW_LIMIT).map((run) => ({
+  const rows: TWorkflowHistoryRow[] = runs.map((run) => ({
     id: run.id,
-    date: formatRelativeDate(run.createdAt, PLACEHOLDER_ANCHOR),
+    date: formatRelativeDate(run.createdAt, PLACEHOLDER_ANCHOR, t),
     status: run.status === "failed" ? "fail" : "success",
   }));
 

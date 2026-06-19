@@ -296,6 +296,29 @@ export const SurveyMenuBar = ({
       // Skip if no changes
       if (isDeepEqual(localSurveyRest, surveyRest)) return;
 
+      // Skip silently while a pattern rule contains a malformed regex — auto-saving
+      // would persist the bad value. The author already sees the red border on the
+      // input; the explicit Save button will surface a toast.
+      const blocksForAutoSave = localSurveyRef.current.blocks ?? [];
+      const hasInvalidRegex = blocksForAutoSave.some((block) =>
+        block.elements.some((element) =>
+          (element.validation?.rules ?? []).some((rule) => {
+            if (rule.type !== "pattern") return false;
+            const params = rule.params as { pattern?: unknown; flags?: unknown };
+            const pattern = typeof params?.pattern === "string" ? params.pattern : "";
+            const flags = typeof params?.flags === "string" ? params.flags : undefined;
+            if (!pattern) return false;
+            try {
+              new RegExp(pattern, flags);
+              return false;
+            } catch {
+              return true;
+            }
+          })
+        )
+      );
+      if (hasInvalidRegex) return;
+
       isAutoSavingRef.current = true;
 
       try {
@@ -332,9 +355,50 @@ export const SurveyMenuBar = ({
     return () => clearInterval(intervalId);
   }, [localSurvey.publishOn, localSurvey.status, setLocalSurvey]);
 
+  // Reject malformed regex patterns on every save path (draft and publish). Draft saves
+  // intentionally skip the full Zod validation, but a malformed regex is never a
+  // legitimate work-in-progress state — it can only persist into the DB and break
+  // response validation later. Mirrors how surveyRefinement reports the same issue at
+  // publish time, but runs unconditionally so draft saves also block.
+  const validatePatternsBeforeSave = (): boolean => {
+    const blocks = localSurvey.blocks ?? [];
+    for (const block of blocks) {
+      for (const element of block.elements) {
+        const rules = element.validation?.rules ?? [];
+        for (const rule of rules) {
+          if (rule.type !== "pattern") continue;
+          const params = rule.params as { pattern?: unknown; flags?: unknown };
+          const pattern = typeof params?.pattern === "string" ? params.pattern : "";
+          const flags = typeof params?.flags === "string" ? params.flags : undefined;
+          if (!pattern) continue;
+          try {
+            new RegExp(pattern, flags);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Invalid regular expression";
+            setInvalidElements((prev) => {
+              const existing = prev ?? [];
+              if (existing.includes(element.id)) return existing;
+              return [...existing, element.id];
+            });
+            toast.error(`Invalid regex pattern: ${message}`, {
+              className: "w-fit !max-w-md",
+            });
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
   // Add new handler after handleSurveySave
   const handleSurveySaveDraft = async (): Promise<boolean> => {
     setIsSurveySaving(true);
+
+    if (!validatePatternsBeforeSave()) {
+      setIsSurveySaving(false);
+      return false;
+    }
 
     try {
       const segment = await handleSegmentUpdate();

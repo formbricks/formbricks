@@ -3,6 +3,7 @@
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 import { GitBranchIcon, type LucideIcon, MailIcon, MoreVerticalIcon, ZapIcon } from "lucide-react";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import type { TWorkflowNodeData, TWorkflowNodeIcon } from "@/modules/workflows/state/editor";
@@ -22,6 +23,7 @@ const CATEGORY_CHIP_CLASS_NAMES: Record<TWorkflowNodeData["category"], string> =
 const HANDLE_CLASS_NAMES = "!h-0 !w-0 !min-h-0 !min-w-0 !border-0 !bg-transparent !opacity-0";
 
 export const WorkflowCanvasNode = memo(({ data, selected }: NodeProps<Node<TWorkflowNodeData>>) => {
+  const { t } = useTranslation();
   const Icon = NODE_ICONS[data.icon];
 
   return (
@@ -46,7 +48,7 @@ export const WorkflowCanvasNode = memo(({ data, selected }: NodeProps<Node<TWork
         type="button"
         variant="ghost"
         size="icon"
-        aria-label="Node actions"
+        aria-label={t("workspace.workflows.node_actions")}
         className="size-6"
         onClick={(event) => event.stopPropagation()}>
         <MoreVerticalIcon />

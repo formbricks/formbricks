@@ -21,13 +21,15 @@ import {
 interface WorkflowInspectorPanelProps {
   workflowId: string;
   isReadOnly: boolean;
-  isEditable: boolean;
+  canEditDefinition: boolean;
+  canEditMetadata: boolean;
 }
 
 export const WorkflowInspectorPanel = ({
   workflowId,
   isReadOnly,
-  isEditable,
+  canEditDefinition,
+  canEditMetadata,
 }: Readonly<WorkflowInspectorPanelProps>) => {
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
@@ -35,7 +37,7 @@ export const WorkflowInspectorPanel = ({
   const isCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const toggleCollapsed = useSetAtom(toggleWorkflowInspectorAtom);
   const settings = workflow ? getPlaceholderWorkflowSettings(workflow.id) : undefined;
-  const history = workflow ? getPlaceholderWorkflowHistory(workflow.id) : undefined;
+  const history = workflow ? getPlaceholderWorkflowHistory(workflow.id, t) : undefined;
 
   if (isCollapsed) {
     return (
@@ -82,7 +84,8 @@ export const WorkflowInspectorPanel = ({
       <SettingsSection
         workflowId={workflowId}
         isReadOnly={isReadOnly}
-        isEditable={isEditable}
+        canEditDefinition={canEditDefinition}
+        canEditMetadata={canEditMetadata}
         settings={settings}
       />
       <HistorySection history={history} />

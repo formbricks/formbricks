@@ -29,6 +29,7 @@ import {
   findLanguageCodesForDuplicateLabels,
   getTextContent,
 } from "@formbricks/types/surveys/validation";
+import { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
@@ -158,6 +159,26 @@ export const validationRules = {
       const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
       if (fieldValue?.[defaultLanguageCode] !== undefined && fieldValue[defaultLanguageCode].trim() !== "") {
         isValid = isValid && isLabelValidForAllLanguages(fieldValue, languages);
+      }
+    }
+
+    // Validation rules: reject pattern rules whose regex cannot be compiled. This is what
+    // surfaces the question as invalid (red card border) while the author is editing,
+    // matching how logic errors are flagged.
+    const rules = (element as unknown as { validation?: { rules?: TValidationRule[] } }).validation?.rules;
+    if (rules) {
+      for (const rule of rules) {
+        if (rule.type !== "pattern") continue;
+        const params = rule.params as { pattern?: unknown; flags?: unknown };
+        const pattern = typeof params?.pattern === "string" ? params.pattern : "";
+        const flags = typeof params?.flags === "string" ? params.flags : undefined;
+        if (!pattern) continue;
+        try {
+          new RegExp(pattern, flags);
+        } catch {
+          isValid = false;
+          break;
+        }
       }
     }
 

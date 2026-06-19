@@ -101,14 +101,14 @@ export const hydrateWorkflowEditorAtom = atom(
   }
 );
 
+// Updates the server-owned workflow snapshot only; leaves the editable draft fields
+// (workflowName, workflowDescription, definition) intact so unsaved edits aren't wiped
+// out by save responses or lifecycle transitions that race with the user's typing.
 export const setWorkflowAtom = atom(null, (get, set, workflow: TWorkflowResource) => {
   set(
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
       draft.workflow = workflow;
-      draft.workflowName = workflow.name;
-      draft.workflowDescription = workflow.description ?? "";
-      draft.definition = workflow.definition;
     })
   );
 });

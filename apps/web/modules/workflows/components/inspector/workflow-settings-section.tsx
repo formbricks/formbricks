@@ -27,14 +27,16 @@ import {
 interface SettingsSectionProps {
   workflowId: string;
   isReadOnly: boolean;
-  isEditable: boolean;
+  canEditDefinition: boolean;
+  canEditMetadata: boolean;
   settings?: TWorkflowOperationalSettings;
 }
 
 export const SettingsSection = ({
   workflowId,
   isReadOnly,
-  isEditable,
+  canEditDefinition,
+  canEditMetadata,
   settings,
 }: Readonly<SettingsSectionProps>) => {
   const { t } = useTranslation();
@@ -70,7 +72,7 @@ export const SettingsSection = ({
           <Input
             id="workflow-settings-name"
             value={workflowName}
-            disabled={!isEditable}
+            disabled={!canEditMetadata}
             className="bg-white"
             onChange={(event) => setWorkflowName(event.target.value)}
           />
@@ -83,7 +85,7 @@ export const SettingsSection = ({
           <Input
             id="workflow-settings-description"
             value={workflowDescription}
-            disabled={!isEditable}
+            disabled={!canEditMetadata}
             className="bg-white"
             placeholder={t("workspace.workflows.workflow_description_placeholder")}
             onChange={(event) => setWorkflowDescription(event.target.value)}
@@ -109,7 +111,7 @@ export const SettingsSection = ({
           <Switch
             id="workflow-settings-cap-runs"
             checked={capRunsEnabled}
-            disabled={!isEditable}
+            disabled={!canEditDefinition}
             onCheckedChange={setCapRunsEnabled}
           />
           <Label htmlFor="workflow-settings-cap-runs" className="text-sm font-medium">
@@ -127,7 +129,7 @@ export const SettingsSection = ({
                 min={1}
                 className="bg-white"
                 value={capRunsLimit}
-                disabled={!isEditable}
+                disabled={!canEditDefinition}
                 onChange={(event) => setCapRunsLimit(event.target.value)}
               />
             </label>
@@ -137,7 +139,7 @@ export const SettingsSection = ({
               </span>
               <Select
                 value={capRunsUnit}
-                disabled={!isEditable}
+                disabled={!canEditDefinition}
                 onValueChange={(value) =>
                   setCapRunsUnit(value as TWorkflowOperationalSettings["capRunsUnit"])
                 }>

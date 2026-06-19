@@ -4,7 +4,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { ZWorkflowDefinition } from "@formbricks/workflows";
+import { type TPatchWorkflowInput, ZWorkflowDefinition } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
   archiveWorkflow,
@@ -101,7 +101,11 @@ export const useWorkflowBuilder = ({
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
-  const canEdit = Boolean(workflow && !isReadOnly && !isEnabled && !isArchived);
+  // Definition edits are blocked by the API while the workflow is enabled or archived
+  // (see workflows.handlers.ts:patch). Metadata (name/description) edits are still allowed
+  // while enabled, so we expose two flags so the inspector/header gate correctly.
+  const canEditDefinition = Boolean(workflow && !isReadOnly && !isEnabled && !isArchived);
+  const canEditMetadata = Boolean(workflow && !isReadOnly && !isArchived);
 
   const save = useCallback(async () => {
     if (!workflow || !definition) return;
@@ -112,11 +116,19 @@ export const useWorkflowBuilder = ({
       return;
     }
 
-    const parsedDefinition = ZWorkflowDefinition.safeParse(definition);
-    if (!parsedDefinition.success) {
-      const issue = parsedDefinition.error.issues[0];
-      toast.error(issue?.message ?? t("workspace.workflows.validation_failed"));
-      return;
+    const trimmedDescription = workflowDescription.trim() || null;
+    const payload: TPatchWorkflowInput = { name: trimmedName, description: trimmedDescription };
+
+    // Only include the definition in the PATCH when the API will accept it. Sending it while
+    // the workflow is enabled would return a 422 — disable first.
+    if (!isEnabled) {
+      const parsedDefinition = ZWorkflowDefinition.safeParse(definition);
+      if (!parsedDefinition.success) {
+        const issue = parsedDefinition.error.issues[0];
+        toast.error(issue?.message ?? t("workspace.workflows.validation_failed"));
+        return;
+      }
+      payload.definition = parsedDefinition.data;
     }
 
     // Placeholder demo path: avoid hitting the API (no DB row); persist to local state instead.
@@ -124,8 +136,8 @@ export const useWorkflowBuilder = ({
       setWorkflow({
         ...workflow,
         name: trimmedName,
-        description: workflowDescription.trim() || null,
-        definition: parsedDefinition.data,
+        description: trimmedDescription,
+        definition: payload.definition ?? workflow.definition,
         updatedAt: new Date().toISOString(),
       });
       toast.success(t("workspace.workflows.save_success"));
@@ -134,11 +146,7 @@ export const useWorkflowBuilder = ({
 
     setIsSaving(true);
     try {
-      const savedWorkflow = await updateWorkflow(workflow.id, {
-        name: trimmedName,
-        description: workflowDescription.trim() || null,
-        definition: parsedDefinition.data,
-      });
+      const savedWorkflow = await updateWorkflow(workflow.id, payload);
       setWorkflow(savedWorkflow);
       toast.success(t("workspace.workflows.save_success"));
     } catch (error) {
@@ -146,7 +154,7 @@ export const useWorkflowBuilder = ({
     } finally {
       setIsSaving(false);
     }
-  }, [workflow, definition, workflowName, workflowDescription, setWorkflow, setIsSaving, t]);
+  }, [workflow, definition, workflowName, workflowDescription, isEnabled, setWorkflow, setIsSaving, t]);
 
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {
@@ -212,7 +220,8 @@ export const useWorkflowBuilder = ({
     loadError,
     isSaving,
     isTransitioning,
-    canEdit,
+    canEditDefinition,
+    canEditMetadata,
     isArchived,
     isEnabled,
     save,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
 import { Input } from "@/modules/ui/components/input";
@@ -11,8 +12,20 @@ interface WorkflowTriggerFormProps {
   onChange: (next: TWorkflowResponseCompletedTriggerNode) => void;
 }
 
+const parseIdList = (raw: string): string[] =>
+  raw
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
 export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<WorkflowTriggerFormProps>) => {
   const { t } = useTranslation();
+  // Hold the raw user input separately from the parsed array so the comma and trailing/empty
+  // tokens survive a render round-trip. Without this, typing a `,` would be filtered out by
+  // `parseIdList` and the controlled input would immediately render the stripped value back to
+  // the user. Seeded once from the node prop; the modal re-mounts this form per node so it
+  // stays in sync with the underlying config.
+  const [endingCardIdsRaw, setEndingCardIdsRaw] = useState(() => node.config.endingCardIds.join(", "));
 
   return (
     <div className="flex flex-col gap-4">
@@ -39,18 +52,15 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
         </Label>
         <Input
           id="workflow-trigger-ending-ids"
-          value={node.config.endingCardIds.join(", ")}
+          value={endingCardIdsRaw}
           disabled={!isEditable}
           placeholder={t("workspace.workflows.trigger_ending_card_ids_placeholder")}
           onChange={(event) => {
-            const endingCardIds = event.target.value
-              .split(",")
-              .map((endingCardId) => endingCardId.trim())
-              .filter(Boolean);
-
+            const raw = event.target.value;
+            setEndingCardIdsRaw(raw);
             onChange({
               ...node,
-              config: { ...node.config, endingCardIds },
+              config: { ...node.config, endingCardIds: parseIdList(raw) },
             });
           }}
         />

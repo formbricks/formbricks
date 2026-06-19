@@ -15,7 +15,10 @@ interface CanvasControlsProps {
 interface ControlDescriptor {
   key: string;
   Icon: LucideIcon;
-  labelKey: string;
+  // Resolved label string — labels are translated via inline `t("…")` calls in the descriptor
+  // list below so `pnpm scan-translations` can statically detect every key. Indirecting through
+  // a variable key (e.g. `t(labelKey)`) silently breaks the scanner.
+  label: string;
   variant: ButtonProps["variant"];
   ariaPressed?: boolean;
   disabled?: boolean;
@@ -35,21 +38,21 @@ export const CanvasControls = ({
     {
       key: "zoom-in",
       Icon: ZoomInIcon,
-      labelKey: "workspace.workflows.zoom_in",
+      label: t("workspace.workflows.zoom_in"),
       variant: "outline",
       onClick: () => zoomIn(),
     },
     {
       key: "zoom-out",
       Icon: ZoomOutIcon,
-      labelKey: "workspace.workflows.zoom_out",
+      label: t("workspace.workflows.zoom_out"),
       variant: "outline",
       onClick: () => zoomOut(),
     },
     {
       key: "pan",
       Icon: HandIcon,
-      labelKey: "workspace.workflows.pan",
+      label: t("workspace.workflows.pan"),
       variant: isPanMode ? "default" : "outline",
       ariaPressed: isPanMode,
       onClick: onTogglePanMode,
@@ -57,7 +60,7 @@ export const CanvasControls = ({
     {
       key: "auto-layout",
       Icon: MousePointerClickIcon,
-      labelKey: "workspace.workflows.auto_layout",
+      label: t("workspace.workflows.auto_layout"),
       variant: "default",
       disabled: !isEditable,
       onClick: onAutoLayout,
@@ -67,23 +70,20 @@ export const CanvasControls = ({
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center">
       <div className="pointer-events-auto flex items-center gap-2">
-        {controls.map(({ key, Icon, labelKey, variant, ariaPressed, disabled, onClick }) => {
-          const label = t(labelKey);
-          return (
-            <Button
-              key={key}
-              type="button"
-              variant={variant}
-              size="icon"
-              aria-label={label}
-              aria-pressed={ariaPressed}
-              title={label}
-              disabled={disabled}
-              onClick={onClick}>
-              <Icon />
-            </Button>
-          );
-        })}
+        {controls.map(({ key, Icon, label, variant, ariaPressed, disabled, onClick }) => (
+          <Button
+            key={key}
+            type="button"
+            variant={variant}
+            size="icon"
+            aria-label={label}
+            aria-pressed={ariaPressed}
+            title={label}
+            disabled={disabled}
+            onClick={onClick}>
+            <Icon />
+          </Button>
+        ))}
       </div>
     </div>
   );

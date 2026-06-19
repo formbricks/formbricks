@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSendEmailActionNode } from "@formbricks/workflows";
 import { Input } from "@/modules/ui/components/input";
@@ -11,8 +12,6 @@ interface WorkflowEmailActionFormProps {
   isEditable: boolean;
   onChange: (next: TWorkflowSendEmailActionNode) => void;
 }
-
-const replyToToString = (replyTo: string[]) => replyTo.join(", ");
 
 const parseReplyTo = (input: string): string[] =>
   input
@@ -26,6 +25,9 @@ export const WorkflowEmailActionForm = ({
   onChange,
 }: Readonly<WorkflowEmailActionFormProps>) => {
   const { t } = useTranslation();
+  // Hold the raw user input separately from the parsed array so the comma and trailing/empty
+  // tokens survive a render round-trip — see workflow-trigger-form.tsx for the same pattern.
+  const [replyToRaw, setReplyToRaw] = useState(() => node.config.replyTo.join(", "));
 
   const updateConfig = (next: Partial<TWorkflowSendEmailActionNode["config"]>) =>
     onChange({ ...node, config: { ...node.config, ...next } });
@@ -59,10 +61,14 @@ export const WorkflowEmailActionForm = ({
         <Label htmlFor="workflow-email-reply-to">{t("workspace.workflows.email_reply_to_label")}</Label>
         <Input
           id="workflow-email-reply-to"
-          value={replyToToString(node.config.replyTo)}
+          value={replyToRaw}
           disabled={!isEditable}
           placeholder={t("workspace.workflows.email_reply_to_placeholder")}
-          onChange={(event) => updateConfig({ replyTo: parseReplyTo(event.target.value) })}
+          onChange={(event) => {
+            const raw = event.target.value;
+            setReplyToRaw(raw);
+            updateConfig({ replyTo: parseReplyTo(raw) });
+          }}
         />
         <p className="text-xs text-slate-500">{t("workspace.workflows.email_reply_to_description")}</p>
       </div>
