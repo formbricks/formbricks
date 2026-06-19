@@ -1,11 +1,19 @@
 import "server-only";
+import { prisma } from "@formbricks/database";
+import type { IdentityProvider } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
+import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
+import { createMembership } from "@/lib/membership/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
-import { getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
+import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
 
 export type TSsoProvisioningDecision =
   | { action: "reject"; reason: string }
@@ -93,4 +101,79 @@ export const gateSsoProvisioning = async ({
     assignToDefaultTeam: Boolean(SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID),
     signupSource,
   };
+};
+
+/**
+ * Provisioning WRITES for a newly created SSO user — mirrors provisionNewSsoUser:404-452. Called from
+ * `databaseHooks.user.create.after` (post-commit), so it CANNOT share Better Auth's user/account
+ * transaction (design doc §13). It runs its own transaction and is idempotent + best-effort:
+ * `createMembership`/`createDefaultTeamMembership` upsert, and a failure is retried once then logged
+ * (for alerting) rather than thrown — throwing here would not roll back the already-committed user and
+ * would surface a confusing mid-sign-in error. Analytics/CRM sync runs regardless (parity).
+ */
+export const provisionSsoUserMemberships = async ({
+  userId,
+  email,
+  provider,
+  organizationId,
+  assignToDefaultTeam,
+  signupSource,
+}: {
+  userId: string;
+  email: string;
+  provider: IdentityProvider;
+  organizationId: string | null;
+  assignToDefaultTeam: boolean;
+  signupSource: "invite" | "direct";
+}): Promise<void> => {
+  if (organizationId) {
+    const MAX_ATTEMPTS = 2;
+    let assigned = false;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS && !assigned; attempt++) {
+      try {
+        await prisma.$transaction(async (tx) => {
+          await createMembership(organizationId, userId, { role: "member", accepted: true }, tx);
+          if (assignToDefaultTeam) {
+            await createDefaultTeamMembership(userId, tx);
+          }
+          const dbUser = await tx.user.findUnique({
+            where: { id: userId },
+            select: { notificationSettings: true },
+          });
+          const current = (dbUser?.notificationSettings ?? {}) as TUserNotificationSettings;
+          await updateUser(
+            userId,
+            {
+              notificationSettings: {
+                ...current,
+                alert: { ...current.alert },
+                unsubscribedOrganizationIds: Array.from(
+                  new Set([...(current.unsubscribedOrganizationIds ?? []), organizationId])
+                ),
+              },
+            },
+            tx
+          );
+        });
+        assigned = true;
+      } catch (error) {
+        // The user + account are already committed by Better Auth; never throw here (it would not
+        // roll them back and would break sign-in). On the final attempt, log an error for alerting:
+        // there is no automatic retry on later sign-ins, so a sustained failure needs manual
+        // reconciliation (the writes are idempotent, so an operational retry is safe).
+        if (attempt === MAX_ATTEMPTS) {
+          logger.error(error, "SSO provisioning: failed to assign new SSO user to its organization");
+        }
+      }
+    }
+  }
+
+  // Best-effort analytics + CRM sync, regardless of org assignment (parity with provisionNewSsoUser).
+  createBrevoCustomer({ id: userId, email });
+  capturePostHogEvent(userId, "user_signed_up", {
+    auth_provider: provider,
+    email_domain: email.split("@")[1],
+    signup_source: signupSource,
+    invite_organization_id: organizationId,
+  });
 };

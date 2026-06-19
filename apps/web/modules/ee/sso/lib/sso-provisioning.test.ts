@@ -1,21 +1,42 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
+import { createMembership } from "@/lib/membership/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
-import { getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
-import { gateSsoProvisioning } from "./sso-provisioning";
+import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
+import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
 
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    $transaction: vi.fn(async (cb: (tx: unknown) => unknown) =>
+      cb({ user: { findUnique: vi.fn().mockResolvedValue({ notificationSettings: {} }) } })
+    ),
+  },
+}));
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn() }));
+vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+vi.mock("@/modules/auth/lib/brevo", () => ({ createBrevoCustomer: vi.fn() }));
+vi.mock("@/modules/auth/lib/user", () => ({ updateUser: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/invite", () => ({ getIsValidInviteToken: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getAccessControlPermission: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
 }));
 vi.mock("@/modules/ee/sso/lib/organization", () => ({ getFirstOrganization: vi.fn() }));
-vi.mock("@/modules/ee/sso/lib/team", () => ({ getOrganizationByTeamId: vi.fn() }));
+vi.mock("@/modules/ee/sso/lib/team", () => ({
+  getOrganizationByTeamId: vi.fn(),
+  createDefaultTeamMembership: vi.fn(),
+}));
 
 const constantsOverrides = vi.hoisted(() => ({
   SKIP_INVITE_FOR_SSO: false as boolean,
@@ -46,6 +67,8 @@ beforeEach(() => {
   vi.mocked(getAccessControlPermission).mockResolvedValue(true);
   vi.mocked(getFirstOrganization).mockResolvedValue(mockOrg);
   vi.mocked(getOrganizationByTeamId).mockResolvedValue(mockOrg);
+  // clearAllMocks keeps implementations, so reset the one tests override with rejections.
+  vi.mocked(createMembership).mockReset();
 });
 
 describe("gateSsoProvisioning — bypass branches", () => {
@@ -171,5 +194,100 @@ describe("gateSsoProvisioning — provisions", () => {
       assignToDefaultTeam: false,
       signupSource: "invite",
     });
+  });
+});
+
+describe("provisionSsoUserMemberships", () => {
+  const baseArgs = {
+    userId: "u1",
+    email: "new@example.com",
+    provider: "google",
+    organizationId: "org-1" as string | null,
+    assignToDefaultTeam: false,
+    signupSource: "direct",
+  } as Parameters<typeof provisionSsoUserMemberships>[0];
+
+  test("assigns the user to the org, unsubscribes from org alerts, and syncs analytics", async () => {
+    await provisionSsoUserMemberships(baseArgs);
+    expect(createMembership).toHaveBeenCalledWith(
+      "org-1",
+      "u1",
+      { role: "member", accepted: true },
+      expect.anything()
+    );
+    expect(createDefaultTeamMembership).not.toHaveBeenCalled();
+    expect(updateUser).toHaveBeenCalledWith(
+      "u1",
+      { notificationSettings: { alert: {}, unsubscribedOrganizationIds: ["org-1"] } },
+      expect.anything()
+    );
+    expect(createBrevoCustomer).toHaveBeenCalledWith({ id: "u1", email: "new@example.com" });
+    expect(capturePostHogEvent).toHaveBeenCalledWith("u1", "user_signed_up", {
+      auth_provider: "google",
+      email_domain: "example.com",
+      signup_source: "direct",
+      invite_organization_id: "org-1",
+    });
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  test("creates a default team membership when requested", async () => {
+    await provisionSsoUserMemberships({ ...baseArgs, assignToDefaultTeam: true });
+    expect(createDefaultTeamMembership).toHaveBeenCalledWith("u1", expect.anything());
+  });
+
+  test("skips org writes when there is no organization but still syncs analytics", async () => {
+    await provisionSsoUserMemberships({ ...baseArgs, organizationId: null });
+    expect(createMembership).not.toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
+    expect(createBrevoCustomer).toHaveBeenCalledWith({ id: "u1", email: "new@example.com" });
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "u1",
+      "user_signed_up",
+      expect.objectContaining({ invite_organization_id: null })
+    );
+  });
+
+  test("logs (does not throw) when assignment fails on every attempt, and still syncs analytics", async () => {
+    vi.mocked(createMembership).mockRejectedValue(new Error("db down"));
+    await expect(provisionSsoUserMemberships(baseArgs)).resolves.toBeUndefined();
+    expect(createMembership).toHaveBeenCalledTimes(2); // initial + one retry
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(createBrevoCustomer).toHaveBeenCalled();
+    expect(capturePostHogEvent).toHaveBeenCalled();
+  });
+
+  test("retries once and succeeds without logging an error", async () => {
+    vi.mocked(createMembership)
+      .mockRejectedValueOnce(new Error("transient"))
+      .mockResolvedValue(undefined as never);
+    await provisionSsoUserMemberships(baseArgs);
+    expect(createMembership).toHaveBeenCalledTimes(2);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  test("preserves existing alert settings and dedups the org in unsubscribedOrganizationIds", async () => {
+    vi.mocked(prisma.$transaction).mockImplementationOnce((async (cb: (tx: unknown) => unknown) =>
+      cb({
+        user: {
+          findUnique: vi.fn().mockResolvedValue({
+            notificationSettings: {
+              alert: { weeklySummary: true },
+              unsubscribedOrganizationIds: ["org-1", "org-2"],
+            },
+          }),
+        },
+      })) as never);
+    await provisionSsoUserMemberships(baseArgs); // baseArgs.organizationId === "org-1"
+    expect(updateUser).toHaveBeenCalledWith(
+      "u1",
+      {
+        notificationSettings: {
+          alert: { weeklySummary: true },
+          unsubscribedOrganizationIds: ["org-1", "org-2"], // org-1 deduped, org-2 + alert preserved
+        },
+      },
+      expect.anything()
+    );
   });
 });
