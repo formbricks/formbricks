@@ -25,4 +25,5 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/modules/email", () => ({
   sendVerificationLinkEmail: vi.fn(async () => undefined),
   sendPasswordResetLinkEmail: vi.fn(async () => undefined),
+  sendDeleteAccountConfirmationEmail: vi.fn(async () => undefined),
 }));
