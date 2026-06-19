@@ -71,7 +71,14 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               scopes: ["openid", "email", "profile"],
               pkce: true,
               requireIssuerValidation: true, // RFC 9207 mix-up defense (design doc §10.3)
-              mapProfileToUser: (profile) => ({ name: profile.name, email: profile.email }),
+              mapProfileToUser: (profile) => ({
+                email: profile.email,
+                // Parity with provisionNewSsoUser (OIDC): name → given+family → preferred_username.
+                name:
+                  profile.name ||
+                  [profile.given_name, profile.family_name].filter(Boolean).join(" ") ||
+                  profile.preferred_username,
+              }),
             } satisfies GenericOAuthConfig,
           ]
         : []),
@@ -90,7 +97,8 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               authorizationUrlParams: { provider: "saml" },
               mapProfileToUser: (profile) => ({
                 email: profile.email,
-                name: [profile.firstName, profile.lastName].filter(Boolean).join(" "),
+                // Parity with provisionNewSsoUser (SAML): name → firstName + lastName.
+                name: profile.name || [profile.firstName, profile.lastName].filter(Boolean).join(" "),
               }),
             } satisfies GenericOAuthConfig,
           ]
