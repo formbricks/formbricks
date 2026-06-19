@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/web",
   "version": "0.0.0",
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@11.7.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next coverage",
@@ -133,7 +133,7 @@
     "stripe": "20.4.1",
     "tailwind-merge": "3.5.0",
     "tailwindcss": "3.4.19",
-    "ua-parser-js": "2.0.9",
+    "ua-parser-js": "2.0.10",
     "undici": "7.24.8",
     "uuid": "14.0.0",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
@@ -159,7 +159,7 @@
     "postcss": "8.5.14",
     "resize-observer-polyfill": "1.5.1",
     "tailwindcss-animate": "1.0.7",
-    "vite": "7.3.3",
+    "vite": "7.3.5",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.6",
     "vitest-mock-extended": "3.1.1"

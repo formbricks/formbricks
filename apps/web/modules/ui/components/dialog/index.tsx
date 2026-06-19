@@ -34,12 +34,14 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 interface DialogContentProps {
   hideCloseButton?: boolean;
   disableCloseOnOutsideClick?: boolean;
-  width?: "default" | "wide" | "narrow";
+  width?: "default" | "wide" | "full" | "narrow";
   unconstrained?: boolean;
 }
 
-const getDialogWidthClass = (width: "default" | "wide" | "narrow"): string => {
+const getDialogWidthClass = (width: "default" | "wide" | "full" | "narrow"): string => {
   switch (width) {
+    case "full":
+      return "w-[90dvw] max-w-[1400px]";
     case "wide":
       return "sm:w-[90dvw] md:w-[720px] lg:w-[960px]";
     case "narrow":

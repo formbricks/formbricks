@@ -180,6 +180,48 @@ jobs:
             fi
           done
 
+      - name: Validate taxonomy service env rendering
+        run: |
+          set -euo pipefail
+
+          values_file="$(mktemp)"
+          trap 'rm -f "$values_file"' EXIT
+
+          cat > "$values_file" <<'YAML'
+          formbricks:
+            webappUrl: https://qa.example.com
+
+          llm:
+            enabled: true
+
+          taxonomy:
+            enabled: true
+          YAML
+
+          rendered="$(helm template qa charts/formbricks \
+            -f "$values_file" \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/taxonomy-secret.yaml \
+            --show-only templates/taxonomy-service.yaml \
+            --show-only templates/taxonomy-deployment.yaml)"
+
+          for expected in \
+            "name: formbricks-taxonomy" \
+            "image: \"ghcr.io/formbricks/taxonomy:v0.1.0\"" \
+            "name: TAXONOMY_SERVICE_URL" \
+            "value: \"http://formbricks-taxonomy:8000\"" \
+            "name: HUB_INTERNAL_API_URL" \
+            "value: \"http://formbricks-hub:8080\"" \
+            "name: TAXONOMY_LLM_BASE_URL" \
+            "value: \"http://qa-router-service:8000/v1\"" \
+            "key: TAXONOMY_SERVICE_TOKEN" \
+            "key: HUB_INTERNAL_API_TOKEN"; do
+            if ! grep -F "$expected" <<< "$rendered" >/dev/null; then
+              echo "Expected Helm render to contain: $expected"
+              exit 1
+            fi
+          done
+
       - name: Package Helm chart
         env:
           VERSION: ${{ env.VERSION }}
