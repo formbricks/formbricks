@@ -1,6 +1,10 @@
 import "server-only";
 import type { BetterAuthOptions } from "better-auth";
+import { getOAuthState } from "better-auth/api";
+import { findMatchingLocale } from "@/lib/utils/locale";
 import { normalizeSsoProvider } from "./provider-normalization";
+import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
+import { getSsoProvisioningDecision, setSsoProvisioningDecision } from "./sso-request-context";
 
 /**
  * Resolve the SSO provider id from a Better Auth callback endpoint context, else null.
@@ -22,18 +26,29 @@ export const getSsoProviderFromContext = (
   return match ? match[1] : null;
 };
 
+/** Fallback display name derived from an email local-part (parity `provisionNewSsoUser`:372-377). */
+const deriveNameFromEmail = (email: string): string =>
+  email
+    .split("@")[0]
+    .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
+    .trim();
+
 /**
- * Better Auth `databaseHooks` re-expressing Formbricks' SSO identity behavior (design doc §13):
- *  - mark SSO sign-ups email-verified at creation (the IdP attests the email) + denormalize
- *    `identityProvider` — parity with `provisionNewSsoUser`;
- *  - denormalize `identityProvider` + `identityProviderAccountId` onto `User` when an SSO `account`
- *    row is created — parity with `syncSsoIdentityForUser`, for legacy SSO lookups
- *    (`findLegacyExactMatch`).
+ * Better Auth `databaseHooks` re-expressing Formbricks' SSO sign-up flow (design doc §13), reusing
+ * the existing logic via `./sso-provisioning`:
+ *  - `user.create.before` — gate the SSO sign-up (`gateSsoProvisioning`; a reject returns `false`,
+ *    which rolls back inside Better Auth's user+account transaction, so no orphan user is created);
+ *    stash the resolved decision for the after-hook; and enrich the insert (email-verified — the IdP
+ *    attests it; `identityProvider`; request-matched `locale`; email-localpart name fallback).
+ *  - `user.create.after` — run the membership/team/notification provisioning (`provisionSsoUserMemberships`).
+ *  - `account.create.after` — denormalize `identityProvider` + `identityProviderAccountId` onto
+ *    `User` for legacy SSO lookups (`findLegacyExactMatch`), parity with `syncSsoIdentityForUser`.
  *
- * SCOPE: field-verification + identity denormalization only. JIT provisioning (org/team/invite/
- * license) and verify-before-link recovery are a separate, security-reviewed increment (design
- * doc §13 increments 2–3). Nothing here runs until the Phase 7 cutover — the `[...all]` route is
- * not mounted, and `emailVerified` stays a `DateTime` column until then.
+ * Nothing here runs until the Phase 7 cutover — the `[...all]` route is not mounted (its handler must
+ * wrap `auth.handler` in `runWithSsoRequestContext` for the before→after carry), and `emailVerified`
+ * stays a `DateTime` column until then. The per-callback license re-check
+ * (`getIsSsoEnabled`/`getIsSamlSsoEnabled`, which must also gate existing-user sign-ins that skip
+ * `user.create`) and the verify-before-link recovery flow are the remaining Phase 5c work.
  */
 export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> = {
   user: {
@@ -42,9 +57,44 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         const provider = getSsoProviderFromContext(context);
         const identityProvider = provider ? normalizeSsoProvider(provider) : null;
         if (!identityProvider) return; // not an SSO sign-up (e.g. email/password) → keep defaults
-        // SSO IdPs attest the user's email, so it's verified at creation; denormalize the provider.
-        // Returned `data` is shallow-merged over the row → a single INSERT, no follow-up UPDATE.
-        return { data: { emailVerified: true, identityProvider } };
+
+        // Provisioning gate — orphan-safe: a reject returns `false`, rolling back the user+account
+        // insert inside Better Auth's transaction (a post-commit after-hook could not reject safely).
+        let callbackUrl = "";
+        try {
+          callbackUrl = (await getOAuthState())?.callbackURL ?? "";
+        } catch {
+          // Non-OAuth context / state unavailable → treat as no callback URL.
+        }
+        const decision = await gateSsoProvisioning({ email: user.email, callbackUrl });
+        if (decision.action === "reject") return false;
+        setSsoProvisioningDecision(decision); // carried to user.create.after (the membership writes)
+
+        // Enrich the row in a single INSERT (shallow-merged): IdP-attested email, denormalized
+        // provider, request-matched locale, and an email-localpart name when the IdP gave none.
+        return {
+          data: {
+            emailVerified: true,
+            identityProvider,
+            locale: await findMatchingLocale(),
+            ...(user.name ? {} : { name: deriveNameFromEmail(user.email) }),
+          },
+        };
+      },
+      after: async (user, context) => {
+        const decision = getSsoProvisioningDecision();
+        if (!decision) return; // not a gated SSO sign-up
+        const provider = getSsoProviderFromContext(context);
+        const identityProvider = provider ? normalizeSsoProvider(provider) : null;
+        if (!identityProvider) return;
+        await provisionSsoUserMemberships({
+          userId: user.id,
+          email: user.email,
+          provider: identityProvider,
+          organizationId: decision.organizationId,
+          assignToDefaultTeam: decision.assignToDefaultTeam,
+          signupSource: decision.signupSource,
+        });
       },
     },
   },
