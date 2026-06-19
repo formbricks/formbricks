@@ -1,0 +1,67 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
+import { resetDb } from "@/integration/reset-db";
+import { auth } from "@/modules/auth/lib/auth";
+
+// Force single-org so the sole-owner guard is deterministic regardless of the test env's license
+// (this is an external input to the deletion logic, not the behavior under test). The rest of the
+// license-check module stays real.
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return { ...actual, getIsMultiOrgEnabled: vi.fn().mockResolvedValue(false) };
+});
+
+/**
+ * Integration coverage for account deletion (ENG-1054, design doc §14) against a real Postgres —
+ * drives Better Auth's native deleteUser through the user.deleteUser config
+ * (better-auth-account-deletion.ts): the sole-owner-org block (beforeDelete) and the real Prisma
+ * cascade (User → Account / Session / Membership) that replaces deleteUserById.
+ */
+const signInCookie = async (email: string, password: string): Promise<string> => {
+  const res = await auth.api.signInEmail({ body: { email, password }, asResponse: true });
+  const cookies = res.headers.getSetCookie();
+  const session = cookies.find((c) => c.includes("session_token")) ?? cookies[0] ?? "";
+  return session.split(";")[0]; // name=value, dropping attributes
+};
+
+const createVerifiedUser = async (email: string, password: string): Promise<string> => {
+  await auth.api.signUpEmail({ body: { email, password, name: "Del" }, asResponse: true });
+  const user = await prisma.user.update({ where: { email }, data: { emailVerified: true } });
+  return user.id;
+};
+
+beforeEach(async () => {
+  await resetDb();
+});
+
+describe("Better Auth account deletion (real Postgres)", () => {
+  test("blocks deletion when the user is the sole owner of an org on a single-org instance", async () => {
+    const userId = await createVerifiedUser("owner@example.com", "Passw0rd!");
+    const org = await prisma.organization.create({ data: { name: "Solo Org" } });
+    await prisma.membership.create({
+      data: { userId, organizationId: org.id, role: "owner", accepted: true },
+    });
+    const cookie = await signInCookie("owner@example.com", "Passw0rd!");
+
+    await expect(
+      auth.api.deleteUser({ body: { password: "Passw0rd!" }, headers: { cookie } })
+    ).rejects.toBeTruthy();
+
+    // both the user and the org survive the blocked deletion
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
+    expect(await prisma.organization.findUnique({ where: { id: org.id } })).not.toBeNull();
+  });
+
+  test("deletes the user and cascades its account + session rows", async () => {
+    const userId = await createVerifiedUser("gone@example.com", "Passw0rd!");
+    const cookie = await signInCookie("gone@example.com", "Passw0rd!");
+    expect(await prisma.session.count()).toBe(1);
+    expect(await prisma.account.count()).toBe(1);
+
+    await auth.api.deleteUser({ body: { password: "Passw0rd!" }, headers: { cookie } });
+
+    expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
+    expect(await prisma.account.count()).toBe(0); // Prisma cascade
+    expect(await prisma.session.count()).toBe(0); // Prisma cascade
+  });
+});
