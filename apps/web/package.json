@@ -15,6 +15,7 @@
     "lint": "eslint . --fix --ext .ts,.js,.tsx,.jsx",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
+    "test:integration": "node integration/gen-boolean-client.mjs && dotenv -e ../../.env -- vitest run --config vitest.integration.config.mts",
     "generate-api-specs": "./scripts/openapi/generate.sh",
     "merge-client-endpoints": "tsx ./scripts/openapi/merge-client-endpoints.ts",
     "generate-and-merge-api-specs": "pnpm run generate-api-specs && pnpm run merge-client-endpoints",
