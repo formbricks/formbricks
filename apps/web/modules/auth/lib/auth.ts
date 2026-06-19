@@ -163,8 +163,17 @@ export const auth = betterAuth({
   },
 
   plugins: [
-    // Full TOTP/backup-code hardening + secret migration from User.twoFactorSecret happen in Phase 4.
-    twoFactor({ issuer: "Formbricks" }),
+    // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
+    // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
+    // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
+    // User.twoFactorSecret|backupCodes into the twoFactor table, and move the login-time TOTP/
+    // backup challenge out of the credentials authorize into Better Auth's flow.
+    twoFactor({
+      issuer: "Formbricks",
+      skipVerificationOnEnable: false, // require a valid TOTP before 2FA is enabled
+      totpOptions: { digits: 6, period: 30 },
+      backupCodeOptions: { amount: 10, length: 10, storeBackupCodes: "encrypted" },
+    }),
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],
