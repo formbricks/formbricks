@@ -3892,10 +3892,6 @@
     "workflows": {
       "active": "Active",
       "add_step": "Add step",
-      "ai_assistant_description": "AI outputs can be wrong",
-      "ai_assistant_placeholder": "How can I help you?",
-      "ai_assistant_send": "Send",
-      "ai_assistant_title": "Formbricks AI assistant",
       "archive_failed": "Could not archive the workflow.",
       "archive_success": "Workflow archived.",
       "auto_layout": "Auto layout",
