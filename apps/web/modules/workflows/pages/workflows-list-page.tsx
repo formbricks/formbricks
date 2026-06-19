@@ -11,7 +11,6 @@ import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
-import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Switch } from "@/modules/ui/components/switch";
 import {
@@ -21,6 +20,7 @@ import {
 import { WorkflowListActions } from "../components/workflow-list-actions";
 import { type TWorkflowSortOption, WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
+import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
 import { useWorkflows } from "../hooks/use-workflows";
 import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
@@ -125,8 +125,16 @@ export const WorkflowsListPage = ({
   });
 
   const showInitialLoading = isLoading && workflows.length === 0;
-  const hasSearchTerm = debouncedSearchValue.trim().length > 0;
   const hasActiveFilters = selectedStatuses.length > 0 || searchValue.length > 0;
+
+  const isListEmpty = !showInitialLoading && !isError && workflows.length === 0;
+  const { workflows: unfilteredWorkflows, isLoading: isProbingWorkflows } = useWorkflows({
+    workspaceId,
+    limit: 1,
+    nameContains: "",
+    enabled: isListEmpty && hasActiveFilters,
+  });
+  const isFilteredNoMatch = hasActiveFilters && (isProbingWorkflows || unfilteredWorkflows.length > 0);
 
   let listContent: React.ReactNode;
 
@@ -142,13 +150,7 @@ export const WorkflowsListPage = ({
       </div>
     );
   } else if (workflows.length === 0) {
-    listContent = (
-      <EmptyState
-        text={
-          hasSearchTerm ? t("common.no_workflows_found") : t("workspace.workflows.no_workflows_description")
-        }
-      />
-    );
+    listContent = <WorkflowsEmptyState filtered={isFilteredNoMatch} />;
   } else {
     listContent = (
       <div>
