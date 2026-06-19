@@ -99,7 +99,7 @@ export const CreateWorkflowDialog = ({
               {descriptionError ? <p className="text-sm text-red-500">{descriptionError}</p> : null}
             </div>
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button
               type="button"
               variant="secondary"
@@ -108,7 +108,7 @@ export const CreateWorkflowDialog = ({
               {t("common.cancel")}
             </Button>
             <Button type="submit" loading={isCreating} disabled={!isValid}>
-              {t("common.create")}
+              {t("common.continue")}
             </Button>
           </DialogFooter>
         </form>

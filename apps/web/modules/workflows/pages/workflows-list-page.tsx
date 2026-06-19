@@ -2,9 +2,10 @@
 
 import { TFunction } from "i18next";
 import { X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
+import { FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
@@ -21,7 +22,7 @@ import { type TWorkflowSortOption, WorkflowSortDropdown } from "../components/wo
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
 import { useWorkflows } from "../hooks/use-workflows";
-import { computeStatusIn } from "../lib/list-filters";
+import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
 import { WorkflowsListBodyLoading } from "../loading";
 
 interface WorkflowsListPageProps {
@@ -58,11 +59,39 @@ export const WorkflowsListPage = ({
   const [selectedStatuses, setSelectedStatuses] = useState<TWorkflowStatus[]>([]);
   const [sortBy, setSortBy] = useState<TWorkflowSortBy>("updatedAt");
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 
   const statusIn = useMemo(
     () => computeStatusIn(selectedStatuses, showArchived),
     [selectedStatuses, showArchived]
   );
+
+  // Hydrate the toolbar filters from localStorage once on mount (mirrors the surveys list). Reading
+  // happens post-mount because localStorage is unavailable during SSR.
+  useEffect(() => {
+    if (typeof globalThis.window === "undefined") return;
+    const stored = globalThis.window.localStorage.getItem(FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS);
+    const parsed = parseStoredWorkflowFilters(stored);
+    if (stored && !parsed) {
+      globalThis.window.localStorage.removeItem(FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS);
+    } else if (parsed) {
+      setSearchValue(parsed.searchValue);
+      setSelectedStatuses(parsed.selectedStatuses);
+      setSortBy(parsed.sortBy);
+      setShowArchived(parsed.showArchived);
+    }
+    setIsFilterInitialized(true);
+  }, []);
+
+  // Persist on change, but only after hydration so the empty defaults don't overwrite the stored
+  // value before it has been read.
+  useEffect(() => {
+    if (!isFilterInitialized || typeof globalThis.window === "undefined") return;
+    globalThis.window.localStorage.setItem(
+      FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS,
+      JSON.stringify({ searchValue, selectedStatuses, sortBy, showArchived })
+    );
+  }, [searchValue, selectedStatuses, sortBy, showArchived, isFilterInitialized]);
 
   const toggleStatus = (value: TWorkflowStatus) => {
     setSelectedStatuses((prev) =>
