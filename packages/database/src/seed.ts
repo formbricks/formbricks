@@ -159,7 +159,7 @@ async function seedDemoWorkflows(workspaceId: string, surveyId: string): Promise
             body: spec.email.body,
             attachResponseData: false,
           },
-          ui: { position: { x: 220, y: 260 } },
+          ui: { position: { x: 220, y: 200 } },
         },
       ],
       edges: [{ id: spec.edgeId, source: spec.triggerId, target: spec.actionId }],

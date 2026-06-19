@@ -8,7 +8,7 @@ export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";
 
 export const WORKFLOW_CANVAS_SNAP_GRID: SnapGrid = [20, 20];
 
-const WORKFLOW_CANVAS_NODE_SPACING = { x: 360, y: 180 };
+const WORKFLOW_CANVAS_NODE_SPACING = { x: 360, y: 120 };
 const WORKFLOW_CANVAS_START_POSITION = { x: 220, y: 80 };
 
 export const workflowDefinitionToFlowNodes = (
@@ -17,7 +17,7 @@ export const workflowDefinitionToFlowNodes = (
 ): Array<Node<TWorkflowNodeData>> =>
   [definition.trigger, ...definition.nodes].map((node, index) => {
     const registryEntry = getNodeRegistryEntry(node);
-    const fallbackPosition = { x: 120, y: 80 + index * 160 };
+    const fallbackPosition = { x: 120, y: 80 + index * 120 };
 
     return {
       id: node.id,
