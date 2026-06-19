@@ -1,0 +1,30 @@
+type: object
+description: >
+  Redirects the respondent to a URL after survey completion. External redirects
+  require the
+
+  organization's external URL permission; otherwise write endpoints return `403
+  Forbidden`.
+required:
+  - id
+  - type
+  - url
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Stable ending id. `jumpToBlock.target` may point to this id.
+  type:
+    type: string
+    enum:
+      - redirectToUrl
+  url:
+    type: string
+    format: uri
+    description: >-
+      External redirect URL. Requires the organization's external URL
+      permission.
+  label:
+    type: string
+    description: Optional internal label for redirect endings.
+additionalProperties: false

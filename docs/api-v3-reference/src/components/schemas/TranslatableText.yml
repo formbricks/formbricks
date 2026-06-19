@@ -1,0 +1,13 @@
+allOf:
+  - $ref: ./TranslatableTextMap.yml
+description: >
+  Survey authoring text. `GET /api/v3/surveys/{surveyId}` always returns maps
+  keyed by the emitted
+
+  `languages[].code` values for this survey. Use `?lang=` to filter which
+  language keys are included.
+
+  The internal storage key `default` is never exposed by v3.
+examples:
+  - en-US: What should we improve?
+    de-DE: Was sollten wir verbessern?

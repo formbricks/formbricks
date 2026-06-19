@@ -1,0 +1,15 @@
+type: object
+description: >
+  Arbitrary JSON survey context for customer- or operation-specific metadata. v3
+  preserves
+
+  arbitrary metadata values as-is. If present, `title` and `description` are
+  treated as
+
+  translatable text maps and returned with real locale-code keys.
+properties:
+  title:
+    $ref: ./TranslatableText.yml
+  description:
+    $ref: ./TranslatableText.yml
+additionalProperties: true

@@ -1,0 +1,19 @@
+type: string
+enum:
+  - de-DE
+  - en-US
+  - es-ES
+  - fr-FR
+  - hu-HU
+  - ja-JP
+  - nl-NL
+  - pt-BR
+  - pt-PT
+  - ro-RO
+  - ru-RU
+  - sv-SE
+  - tr-TR
+  - zh-Hans-CN
+  - zh-Hant-TW
+description: Supported app locale code that AI survey creation can return.
+example: en-US

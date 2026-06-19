@@ -1,0 +1,18 @@
+type: object
+required:
+  - operation
+  - data
+properties:
+  operation:
+    type: string
+    enum:
+      - create
+  data:
+    description: >-
+      Intended create payload. Invalid documents are allowed so the endpoint can
+      return repairable validation errors.
+    anyOf:
+      - $ref: ./CreateSurveyRequest.yml
+      - type: object
+        additionalProperties: true
+additionalProperties: false

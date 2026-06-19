@@ -1,0 +1,26 @@
+type: object
+description: >
+  Text variable. Used by `calculate` logic actions with text operators such as
+  `assign` or `concat`.
+required:
+  - id
+  - name
+  - type
+  - value
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Stable variable id referenced from logic.
+  name:
+    type: string
+    pattern: ^[a-z0-9_]+$
+    description: Unique variable name. Lowercase letters, numbers, and underscores only.
+  type:
+    type: string
+    enum:
+      - text
+  value:
+    type: string
+    description: Default text value.
+additionalProperties: false

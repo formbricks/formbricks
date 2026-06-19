@@ -1,0 +1,412 @@
+get:
+  operationId: getSurveysV3
+  summary: List surveys
+  description: |
+    Returns surveys for the workspace. Session cookie or x-api-key.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: |
+        Workspace identifier. This is the canonical container ID for v3 APIs.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size (max 100)
+    - in: query
+      name: cursor
+      schema:
+        type: string
+      description: >
+        Opaque cursor returned as `meta.nextCursor` from the previous page. Omit
+        on the first request.
+    - in: query
+      name: includeTotalCount
+      schema:
+        type: boolean
+        default: true
+      description: >
+        Whether to calculate `meta.totalCount` for this request. Set to `false`
+        on cursor-pagination follow-up requests to skip the extra count query;
+        in that case `meta.totalCount` is `null`.
+    - in: query
+      name: filter[name][contains]
+      schema:
+        type: string
+        maxLength: 512
+      description: >-
+        Case-insensitive substring match on survey name (same as in-app list
+        filters).
+    - in: query
+      name: filter[status][in]
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - draft
+            - inProgress
+            - paused
+            - completed
+      style: form
+      explode: true
+      description: >
+        Survey status filter. Repeat the parameter
+        (`filter[status][in]=draft&filter[status][in]=inProgress`) or use
+        comma-separated values (`filter[status][in]=draft,inProgress`). Invalid
+        values → **400**.
+    - in: query
+      name: filter[type][in]
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - link
+            - app
+      style: form
+      explode: true
+      description: >-
+        Survey type filter (`link` / `app`). Same repeat-or-comma rules as
+        `filter[status][in]`.
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - createdAt
+          - updatedAt
+          - name
+          - relevance
+      description: >-
+        Sort order. Defaults to `updatedAt`. The `cursor` token is bound to the
+        selected sort order.
+  responses:
+    '200':
+      description: Surveys retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/SurveyListItem.yml
+              meta:
+                type: object
+                required:
+                  - limit
+                  - nextCursor
+                  - totalCount
+                properties:
+                  limit:
+                    type: integer
+                  nextCursor:
+                    type:
+                      - string
+                      - 'null'
+                    description: >-
+                      Opaque cursor for the next page. `null` when there are no
+                      more results.
+                  totalCount:
+                    type:
+                      - integer
+                      - 'null'
+                    minimum: 0
+                    description: >-
+                      Total number of surveys matching the current filters
+                      across all pages. `null` when `includeTotalCount=false`.
+    '400':
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '401':
+      description: Not authenticated (no valid session or API key)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '403':
+      description: >-
+        Forbidden — no access, or workspace does not exist (404 not used; avoids
+        existence leak)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '429':
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the current rate-limit window resets
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '500':
+      description: Internal Server Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+post:
+  operationId: createSurveyV3
+  summary: Create a survey
+  description: >
+    Creates a block-based survey template from one strict survey document. The
+    endpoint accepts
+
+    multilingual authoring maps keyed by real locale codes and converts them to
+    Formbricks'
+
+    internal default-language representation. Non-default locale keys in
+    translated content
+
+    must be declared in `languages`; undeclared locale keys return
+    `unsupported_locale` in
+
+    `invalid_params` instead of silently mutating workspace languages.
+
+
+    `blocks[].id` and `variables[].id` are stable public identifiers. They may
+    be omitted on
+
+    create, in which case the server generates cuid2 ids. If the same create
+    request needs to
+
+    reference a block or variable from logic, provide explicit valid ids and use
+    those references
+
+    consistently.
+
+
+    For normal sequential surveys, omit `logic` and `logicFallback`.
+    `logicFallback` is only valid
+
+    when the same block has at least one `logic` rule; otherwise the API returns
+
+    `invalid_reference`.
+
+
+    This first write surface intentionally stays structure-focused: `type` may
+    be omitted or set
+
+    to `link` or `app`, but in-app survey creation and distribution-channel
+    settings are not part
+
+    of this operation. Unsupported fields are rejected instead of ignored.
+  tags:
+    - V3 Surveys
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateSurveyRequest.yml
+        examples:
+          productFeedback:
+            summary: Create a multilingual block-based survey
+            value:
+              workspaceId: clxx1234567890123456789012
+              name: Product Feedback Survey
+              status: draft
+              defaultLanguage: en-US
+              metadata:
+                cx_operation: enterprise_onboarding
+                title:
+                  en-US: Product Feedback
+                  de-DE: Produktfeedback
+              languages:
+                - code: de-DE
+                  enabled: true
+              welcomeCard:
+                enabled: true
+                headline:
+                  en-US: Welcome
+                  de-DE: Willkommen
+              blocks:
+                - name: Main Block
+                  elements:
+                    - id: satisfaction
+                      type: openText
+                      headline:
+                        en-US: What should we improve?
+                        de-DE: Was sollen wir verbessern?
+                      required: true
+              endings: []
+              hiddenFields:
+                enabled: false
+              variables: []
+          sequentialProductSurvey:
+            summary: Create a richer sequential survey without logicFallback
+            description: >
+              Multi-block survey with generated block and variable ids.
+              Sequential surveys should
+
+              omit `logic` and `logicFallback`; blocks are shown in array order.
+            value:
+              workspaceId: clxx1234567890123456789012
+              name: Sequential Product Survey
+              defaultLanguage: en-US
+              languages:
+                - code: de-DE
+                  enabled: true
+              metadata:
+                cx_operation: product_feedback
+                title:
+                  en-US: Sequential Product Survey
+                  de-DE: Sequenzielle Produktumfrage
+              welcomeCard:
+                enabled: true
+                headline:
+                  en-US: Help us improve the product
+                  de-DE: Hilf uns, das Produkt zu verbessern
+              hiddenFields:
+                enabled: true
+                fieldIds:
+                  - account_id
+                  - plan
+              variables:
+                - name: feedback_score
+                  type: number
+                  value: 0
+              blocks:
+                - name: Satisfaction
+                  elements:
+                    - id: overall_rating
+                      type: rating
+                      headline:
+                        en-US: How satisfied are you with the product?
+                        de-DE: Wie zufrieden bist du mit dem Produkt?
+                      required: true
+                      range: 5
+                      scale: smiley
+                    - id: product_area
+                      type: multipleChoiceSingle
+                      headline:
+                        en-US: Which area should we improve first?
+                        de-DE: Welchen Bereich sollten wir zuerst verbessern?
+                      required: true
+                      choices:
+                        - id: onboarding
+                          label:
+                            en-US: Onboarding
+                            de-DE: Onboarding
+                        - id: analytics
+                          label:
+                            en-US: Analytics
+                            de-DE: Analysen
+                - name: Feedback
+                  elements:
+                    - id: free_text_feedback
+                      type: openText
+                      headline:
+                        en-US: What is one thing we should change?
+                        de-DE: Was sollten wir ändern?
+                      required: false
+                      longAnswer: true
+              endings:
+                - id: cmpsequentialend0000000000
+                  type: endScreen
+                  headline:
+                    en-US: Thanks for your feedback!
+                    de-DE: Danke für dein Feedback!
+  responses:
+    '201':
+      description: Survey created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+          description: Relative URL of the created survey resource.
+          example: /api/v3/surveys/clsv1234567890123456789012
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyResource.yml
+    '400':
+      description: >
+        Bad Request — invalid JSON, unsupported fields, malformed multilingual
+        maps, duplicate
+
+        stable ids, or dangling logic/reference ids.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '401':
+      description: Not authenticated (no valid session or API key)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '403':
+      description: >-
+        Forbidden — no write access, missing external URL permission, or
+        workspace does not exist (404 not used; avoids existence leak)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '429':
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the current rate-limit window resets
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '500':
+      description: Internal Server Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

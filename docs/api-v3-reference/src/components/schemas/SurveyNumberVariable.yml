@@ -1,0 +1,28 @@
+type: object
+description: >
+  Number variable. Used by `calculate` logic actions with numeric operators such
+  as `add`,
+
+  `subtract`, `multiply`, `divide`, or `assign`.
+required:
+  - id
+  - name
+  - type
+  - value
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Stable variable id referenced from logic.
+  name:
+    type: string
+    pattern: ^[a-z0-9_]+$
+    description: Unique variable name. Lowercase letters, numbers, and underscores only.
+  type:
+    type: string
+    enum:
+      - number
+  value:
+    type: number
+    description: Default numeric value.
+additionalProperties: false
