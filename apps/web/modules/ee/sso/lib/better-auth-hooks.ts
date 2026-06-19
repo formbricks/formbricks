@@ -1,7 +1,8 @@
 import "server-only";
 import type { BetterAuthOptions } from "better-auth";
-import { getOAuthState } from "better-auth/api";
+import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { normalizeSsoProvider } from "./provider-normalization";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
 import { getSsoProvisioningDecision, setSsoProvisioningDecision } from "./sso-request-context";
@@ -46,9 +47,8 @@ const deriveNameFromEmail = (email: string): string =>
  *
  * Nothing here runs until the Phase 7 cutover — the `[...all]` route is not mounted (its handler must
  * wrap `auth.handler` in `runWithSsoRequestContext` for the before→after carry), and `emailVerified`
- * stays a `DateTime` column until then. The per-callback license re-check
- * (`getIsSsoEnabled`/`getIsSamlSsoEnabled`, which must also gate existing-user sign-ins that skip
- * `user.create`) and the verify-before-link recovery flow are the remaining Phase 5c work.
+ * stays a `DateTime` column until then. (The per-callback license re-check is `ssoLicenseGateBefore`,
+ * below.) The verify-before-link recovery flow is the remaining Phase 5c work.
  */
 export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> = {
   user: {
@@ -114,3 +114,27 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
     },
   },
 };
+
+/**
+ * Request hook (`hooks.before`) that re-checks the SSO license on every SSO callback — parity with
+ * `handleSsoCallback`'s runtime checks (sso-handlers.ts:492-523). Provider registration is gated by
+ * `ENTERPRISE_LICENSE_KEY` (broad); this verifies the specific `sso`/`saml` feature flags on every
+ * callback. It runs for ALL SSO sign-ins (including existing users, who skip `user.create` and so
+ * aren't seen by the databaseHooks gate) and catches a license that changes at runtime. Blocks with
+ * 403 when disabled.
+ *
+ * NOTE (cutover): on a browser callback this surfaces as a 403; redirecting to the auth error page
+ * (matching NextAuth's behavior) is a Phase 7 refinement.
+ */
+export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
+  const provider = getSsoProviderFromContext(ctx);
+  const identityProvider = provider ? normalizeSsoProvider(provider) : null;
+  if (!identityProvider) return; // not an SSO callback → no license gate
+
+  if (!(await getIsSsoEnabled())) {
+    throw new APIError("FORBIDDEN", { message: "SSO is not enabled for this instance." });
+  }
+  if (identityProvider === "saml" && !(await getIsSamlSsoEnabled())) {
+    throw new APIError("FORBIDDEN", { message: "SAML SSO is not enabled for this instance." });
+  }
+});

@@ -21,7 +21,15 @@ export const runWithSsoRequestContext = <T>(fn: () => T): T => ssoRequestContext
 
 export const setSsoProvisioningDecision = (decision: SsoProvisionDecision): void => {
   const store = ssoRequestContext.getStore();
-  if (store) store.provisioningDecision = decision;
+  if (!store) {
+    // Misconfiguration: the [...all] route must wrap `auth.handler` in `runWithSsoRequestContext`.
+    // Fail loud rather than silently drop the decision — otherwise `user.create.after` would skip
+    // provisioning and create an SSO user with no organization membership and no error.
+    throw new Error(
+      "SSO request context is missing — wrap the Better Auth handler in runWithSsoRequestContext."
+    );
+  }
+  store.provisioningDecision = decision;
 };
 
 export const getSsoProvisioningDecision = (): SsoProvisionDecision | undefined =>

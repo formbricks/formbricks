@@ -12,7 +12,7 @@ import {
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
-import { ssoDatabaseHooks } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { ssoDatabaseHooks, ssoLicenseGateBefore } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -40,7 +40,7 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  *
  * Deferred to later phases (kept out so they don't half-activate against the live NextAuth flows):
  *  - `emailVerified` Date→boolean column conversion (Phase 2/3 — required before requireEmailVerification works at cutover)
- *  - SSO genericOAuth providers (Azure/OIDC + BoxyHQ SAML bridge) + account-linking/verify-before-link (Phase 5 — reviewed pass; Google/GitHub social done)
+ *  - SSO verify-before-link (account-takeover recovery) — remaining Phase 5c work (the providers, JIT provisioning, and per-callback license re-check are done)
  *  - audit-log + Sentry wiring via hooks/onAPIError (Phase 7)
  */
 export const auth = betterAuth({
@@ -152,9 +152,16 @@ export const auth = betterAuth({
     },
   },
 
-  // SSO email-verification + identity denormalization (design doc §13). JIT provisioning
-  // (org/team/invite) and verify-before-link recovery are added in the following increments.
+  // SSO sign-up flow — email-verification, identity denormalization, and JIT provisioning
+  // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
+  // recovery is the remaining Phase 5c work.
   databaseHooks: ssoDatabaseHooks,
+
+  // Request hooks. `ssoLicenseGateBefore` re-checks the SSO/SAML license on every SSO callback —
+  // this covers existing-user sign-ins (which skip user.create), parity with handleSsoCallback.
+  hooks: {
+    before: ssoLicenseGateBefore,
+  },
 
   rateLimit: {
     // Redis-backed so counters are shared across instances (the in-memory default is per-instance

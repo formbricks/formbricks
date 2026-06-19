@@ -1,7 +1,8 @@
 import { getOAuthState } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { findMatchingLocale } from "@/lib/utils/locale";
-import { getSsoProviderFromContext, ssoDatabaseHooks } from "./better-auth-hooks";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getSsoProviderFromContext, ssoDatabaseHooks, ssoLicenseGateBefore } from "./better-auth-hooks";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
 import {
   getSsoProvisioningDecision,
@@ -9,8 +10,23 @@ import {
   setSsoProvisioningDecision,
 } from "./sso-request-context";
 
-vi.mock("better-auth/api", () => ({ getOAuthState: vi.fn() }));
+vi.mock("better-auth/api", () => ({
+  getOAuthState: vi.fn(),
+  // Passthrough so the wrapped hook is testable directly as its inner function.
+  createAuthMiddleware: (fn: unknown) => fn,
+  APIError: class APIError extends Error {
+    status: string;
+    constructor(status: string, body?: { message?: string }) {
+      super(body?.message);
+      this.status = status;
+    }
+  },
+}));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsSsoEnabled: vi.fn(),
+  getIsSamlSsoEnabled: vi.fn(),
+}));
 vi.mock("./sso-provisioning", () => ({
   gateSsoProvisioning: vi.fn(),
   provisionSsoUserMemberships: vi.fn(),
@@ -29,6 +45,8 @@ beforeEach(() => {
   vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
   vi.mocked(getOAuthState).mockResolvedValue({ callbackURL: "/" } as never);
   vi.mocked(gateSsoProvisioning).mockResolvedValue(provisionDecision);
+  vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
+  vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
 });
 
 describe("getSsoProviderFromContext", () => {
@@ -64,6 +82,14 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     );
     expect(result).toBe(false);
     expect(getSsoProvisioningDecision()).toBeUndefined();
+  });
+
+  test("fails loud when the request context is missing (route not wrapped in runWithSsoRequestContext)", async () => {
+    // Without the wrapper a provision decision can't be stashed; fail rather than silently create a
+    // user with no organization membership.
+    await expect(before({ id: "u1", email: "a@b.com" } as never, callbackCtx as never)).rejects.toThrow(
+      "SSO request context is missing"
+    );
   });
 
   test("on provision: verifies email, denormalizes provider, sets locale + name fallback, and stashes the decision", async () => {
@@ -154,5 +180,33 @@ describe("ssoDatabaseHooks.account.create.after", () => {
       ctxWith(updateUser) as never
     );
     expect(updateUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("ssoLicenseGateBefore", () => {
+  const samlCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "saml" } };
+
+  test("ignores non-callback requests without checking the license", async () => {
+    await ssoLicenseGateBefore({ path: "/sign-up/email" } as never);
+    expect(getIsSsoEnabled).not.toHaveBeenCalled();
+  });
+
+  test("allows an SSO callback when SSO is licensed", async () => {
+    await expect(ssoLicenseGateBefore(callbackCtx as never)).resolves.toBeUndefined();
+    expect(getIsSsoEnabled).toHaveBeenCalled();
+  });
+
+  test("blocks an SSO callback when SSO is not licensed", async () => {
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(false);
+    await expect(ssoLicenseGateBefore(callbackCtx as never)).rejects.toThrow("SSO is not enabled");
+  });
+
+  test("blocks a SAML callback when SAML is not licensed (even if SSO is)", async () => {
+    vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
+    await expect(ssoLicenseGateBefore(samlCtx as never)).rejects.toThrow("SAML SSO is not enabled");
+  });
+
+  test("allows a SAML callback when both SSO and SAML are licensed", async () => {
+    await expect(ssoLicenseGateBefore(samlCtx as never)).resolves.toBeUndefined();
   });
 });
