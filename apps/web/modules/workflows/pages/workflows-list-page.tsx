@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ZWorkflowStatus } from "@formbricks/workflows";
 import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { CardTable, CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SearchBar } from "@/modules/ui/components/search-bar";
+import { Switch } from "@/modules/ui/components/switch";
 import { WorkflowListActions } from "../components/workflow-list-actions";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
@@ -30,6 +32,7 @@ export const WorkflowsListPage = ({
 
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearchValue = useDebouncedValue(searchValue, 300);
+  const [showArchived, setShowArchived] = useState(false);
 
   const {
     workflows,
@@ -45,6 +48,7 @@ export const WorkflowsListPage = ({
     workspaceId,
     limit: workflowsPerPage,
     nameContains: debouncedSearchValue.trim(),
+    statusIn: showArchived ? [...ZWorkflowStatus.options] : undefined,
   });
 
   const showInitialLoading = isLoading && workflows.length === 0;
@@ -136,13 +140,17 @@ export const WorkflowsListPage = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between">
+      <div className="flex items-center justify-between gap-4">
         <SearchBar
           value={searchValue}
           onChange={setSearchValue}
           placeholder={t("workspace.workflows.search_by_workflow_name")}
-          className="border-slate-700"
+          className="max-w-xs flex-1 border-slate-700"
         />
+        <div className="flex shrink-0 items-center gap-2">
+          <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+          <span className="text-sm text-slate-500">{t("workspace.workflows.show_archived")}</span>
+        </div>
       </div>
       {listContent}
     </div>
