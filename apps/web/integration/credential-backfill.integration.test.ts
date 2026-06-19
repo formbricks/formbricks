@@ -64,4 +64,72 @@ describe("Credential-account backfill (real Postgres)", () => {
     expect(second.skippedExisting).toBe(1);
     expect(await prisma.account.count({ where: { userId: user.id, provider: "credential" } })).toBe(1);
   });
+
+  test("skips users without a password (no credential account inserted)", async () => {
+    const user = await prisma.user.create({
+      data: { email: "nopw@example.com", name: "NoPw", emailVerified: true }, // SSO-only user, no password
+    });
+
+    const stats = await backfillCredentialAccounts(prisma);
+
+    expect(stats.inserted).toBe(0);
+    expect(await prisma.account.count({ where: { userId: user.id } })).toBe(0);
+  });
+
+  test("does not clobber an existing credential account (ON CONFLICT DO NOTHING)", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "exists@example.com",
+        name: "Exists",
+        emailVerified: true,
+        password: await hashSecret("RealPw1!"),
+      },
+    });
+    // a pre-existing credential account holding a DIFFERENT (sentinel) password
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        type: "credential",
+        provider: "credential",
+        providerAccountId: user.id,
+        password: "SENTINEL-DO-NOT-CLOBBER",
+      },
+    });
+
+    const stats = await backfillCredentialAccounts(prisma);
+    expect(stats.inserted).toBe(0);
+    expect(stats.skippedExisting).toBe(1);
+
+    const account = await prisma.account.findUnique({
+      where: { provider_providerAccountId: { provider: "credential", providerAccountId: user.id } },
+    });
+    expect(account?.password).toBe("SENTINEL-DO-NOT-CLOBBER"); // untouched
+  });
+
+  test("a user with both a password and an SSO account gets a credential account and can sign in", async () => {
+    const password = "BothAuth1!";
+    const user = await prisma.user.create({
+      data: {
+        email: "both@example.com",
+        name: "Both",
+        emailVerified: true,
+        password: await hashSecret(password),
+      },
+    });
+    // a pre-existing SSO (google) account, as the legacy-SSO backfill would have created
+    await prisma.account.create({
+      data: { userId: user.id, type: "oauth", provider: "google", providerAccountId: "google-sub-123" },
+    });
+
+    const stats = await backfillCredentialAccounts(prisma);
+    expect(stats.inserted).toBe(1);
+
+    // both the SSO and the new credential account coexist, and password sign-in works
+    expect(await prisma.account.count({ where: { userId: user.id } })).toBe(2);
+    const res = await auth.api.signInEmail({
+      body: { email: "both@example.com", password },
+      asResponse: true,
+    });
+    expect(res.status).toBe(200);
+  });
 });
