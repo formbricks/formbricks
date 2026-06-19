@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Details inklappen",
       "disable_failed": "Kon de workflow niet uitschakelen.",
       "disable_success": "Workflow uitgeschakeld.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Voeg de antwoordgegevens van de enquête toe aan de e-mailpayload.",
       "email_attach_response_data_label": "Antwoordgegevens toevoegen",
       "email_body_label": "Bericht",

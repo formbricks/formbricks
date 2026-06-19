@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Details einklappen",
       "disable_failed": "Workflow konnte nicht deaktiviert werden.",
       "disable_success": "Workflow deaktiviert.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Füge die auslösende Umfrageantwort zur E-Mail-Payload hinzu.",
       "email_attach_response_data_label": "Antwortdaten anhängen",
       "email_body_label": "Nachricht",

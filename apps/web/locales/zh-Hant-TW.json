@@ -3909,6 +3909,8 @@
       "collapse_inspector": "收合詳細資訊",
       "disable_failed": "無法停用工作流程。",
       "disable_success": "工作流程已停用。",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "在電子郵件內容中包含觸發的調查回應。",
       "email_attach_response_data_label": "附加回應資料",
       "email_body_label": "內容",

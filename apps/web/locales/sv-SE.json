@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Dölj detaljer",
       "disable_failed": "Kunde inte inaktivera arbetsflödet.",
       "disable_success": "Arbetsflödet inaktiverat.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Inkludera det utlösande enkätsvaret tillsammans med e-postinnehållet.",
       "email_attach_response_data_label": "Bifoga svarsdata",
       "email_body_label": "Meddelande",

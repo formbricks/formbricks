@@ -3909,6 +3909,8 @@
       "collapse_inspector": "收起详情",
       "disable_failed": "无法禁用该工作流。",
       "disable_success": "工作流已禁用。",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "在电子邮件负载中包含触发调查的响应数据。",
       "email_attach_response_data_label": "附加响应数据",
       "email_body_label": "正文",

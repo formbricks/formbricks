@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Contraer detalles",
       "disable_failed": "No se pudo desactivar el flujo de trabajo.",
       "disable_success": "Flujo de trabajo desactivado.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Incluye la respuesta de la encuesta que activó el flujo con la carga del correo electrónico.",
       "email_attach_response_data_label": "Adjuntar datos de respuesta",
       "email_body_label": "Cuerpo",

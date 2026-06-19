@@ -3909,6 +3909,8 @@
       "collapse_inspector": "詳細を折りたたむ",
       "disable_failed": "ワークフローを無効化できませんでした。",
       "disable_success": "ワークフローを無効化しました。",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "トリガーとなったアンケート回答をメールペイロードに含めます。",
       "email_attach_response_data_label": "回答データを添付",
       "email_body_label": "本文",

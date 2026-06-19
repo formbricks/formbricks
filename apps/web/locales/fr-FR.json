@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Réduire les détails",
       "disable_failed": "Impossible de désactiver le workflow.",
       "disable_success": "Workflow désactivé.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Inclure la réponse au sondage déclencheur avec la charge utile de l'e-mail.",
       "email_attach_response_data_label": "Joindre les données de réponse",
       "email_body_label": "Corps",

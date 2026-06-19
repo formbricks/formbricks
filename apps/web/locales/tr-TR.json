@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Detayları daralt",
       "disable_failed": "İş akışı devre dışı bırakılamadı.",
       "disable_success": "İş akışı devre dışı bırakıldı.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "E-posta yüküne tetikleyen anket yanıtını ekle.",
       "email_attach_response_data_label": "Yanıt verisini ekle",
       "email_body_label": "Gövde",

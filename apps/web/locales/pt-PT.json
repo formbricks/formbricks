@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Recolher detalhes",
       "disable_failed": "Não foi possível desativar o fluxo de trabalho.",
       "disable_success": "Fluxo de trabalho desativado.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Incluir a resposta do inquérito que desencadeou a ação no corpo do e-mail.",
       "email_attach_response_data_label": "Anexar dados da resposta",
       "email_body_label": "Corpo",

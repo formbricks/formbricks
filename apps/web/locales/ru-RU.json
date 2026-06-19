@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Скрыть детали",
       "disable_failed": "Не удалось отключить рабочий процесс.",
       "disable_success": "Рабочий процесс отключен.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Включить в письмо данные ответа на опрос, который запустил рабочий процесс.",
       "email_attach_response_data_label": "Прикрепить данные ответа",
       "email_body_label": "Текст письма",

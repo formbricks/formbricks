@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Részletek összecsukása",
       "disable_failed": "A munkafolyamat letiltása sikertelen volt.",
       "disable_success": "Munkafolyamat letiltva.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "A kiváltó felmérési válasz csatolása az e-mail adatcsomaghoz.",
       "email_attach_response_data_label": "Válaszadatok csatolása",
       "email_body_label": "Törzs",

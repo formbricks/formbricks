@@ -12,7 +12,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PlayIcon } from "lucide-react";
+import { PencilIcon, PlayIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -33,6 +33,7 @@ import {
   openWorkflowNodeConfigModalAtom,
   setWorkflowDefinitionAtom,
   setWorkflowFlowNodesAtom,
+  workflowAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
 } from "@/modules/workflows/state/editor";
@@ -54,6 +55,7 @@ interface WorkflowCanvasProps {
 
 const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) => {
   const { t } = useTranslation();
+  const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
   const flowNodes = useAtomValue(workflowFlowNodesAtom);
   const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
@@ -62,6 +64,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const { fitView } = useReactFlow();
   const [isPanMode, setIsPanMode] = useState(false);
+  const isEnabled = workflow?.status === "enabled";
 
   const derivedFlowNodes = useMemo(
     () => (definition ? workflowDefinitionToFlowNodes(definition, t) : []),
@@ -117,15 +120,32 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     toast(t("workspace.workflows.test_not_implemented"));
   };
 
+  const handleEdit = () => {
+    // Definition edits aren't accepted by the API while the workflow is enabled — surface that
+    // up front instead of letting the user mutate the canvas and fail on save.
+    if (isEnabled) {
+      toast(t("workspace.workflows.edit_blocked_active"));
+      return;
+    }
+    const triggerId = definition?.trigger.id;
+    if (triggerId) openNodeConfigModal(triggerId);
+  };
+
   return (
     <div
       className={cn(
         "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      <Button variant="secondary" className="absolute right-4 top-4 z-10" onClick={handleRunWorkflow}>
-        <PlayIcon className="size-4" />
-        {t("workspace.workflows.run")}
-      </Button>
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+        <Button variant="secondary" onClick={handleEdit}>
+          <PencilIcon className="size-4" />
+          {t("workspace.workflows.edit")}
+        </Button>
+        <Button variant="secondary" onClick={handleRunWorkflow}>
+          <PlayIcon className="size-4" />
+          {t("workspace.workflows.run")}
+        </Button>
+      </div>
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}

@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Restrânge detaliile",
       "disable_failed": "Workflow-ul nu a putut fi dezactivat.",
       "disable_success": "Workflow dezactivat.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Include răspunsul la sondaj care a declanșat fluxul împreună cu payload-ul emailului.",
       "email_attach_response_data_label": "Atașează datele răspunsului",
       "email_body_label": "Conținut",

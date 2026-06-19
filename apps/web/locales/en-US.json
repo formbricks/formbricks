@@ -3909,6 +3909,8 @@
       "collapse_inspector": "Collapse details",
       "disable_failed": "Could not disable the workflow.",
       "disable_success": "Workflow disabled.",
+      "edit": "Edit",
+      "edit_blocked_active": "Disable the workflow first to edit it.",
       "email_attach_response_data_description": "Include the triggering survey response with the email payload.",
       "email_attach_response_data_label": "Attach response data",
       "email_body_label": "Body",
