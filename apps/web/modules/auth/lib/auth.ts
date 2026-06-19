@@ -12,6 +12,7 @@ import {
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
+import { ssoDatabaseHooks } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -141,6 +142,19 @@ export const auth = betterAuth({
       idToken: "id_token",
     },
   },
+
+  // Existing Prisma columns that Better Auth doesn't know about; declared so the SSO hooks can
+  // write them. `input: false` keeps them server-set only (never settable via the client API).
+  user: {
+    additionalFields: {
+      identityProvider: { type: "string", required: false, input: false },
+      identityProviderAccountId: { type: "string", required: false, input: false },
+    },
+  },
+
+  // SSO email-verification + identity denormalization (design doc §13). JIT provisioning
+  // (org/team/invite) and verify-before-link recovery are added in the following increments.
+  databaseHooks: ssoDatabaseHooks,
 
   rateLimit: {
     // Redis-backed so counters are shared across instances (the in-memory default is per-instance
