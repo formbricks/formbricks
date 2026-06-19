@@ -1,7 +1,6 @@
 "use client";
 
-import { useAtomValue } from "jotai";
-import { useMemo } from "react";
+import { useParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -14,7 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { surveyChoicesAtom } from "@/modules/workflows/state/editor";
+import {
+  useWorkflowSurveyEndings,
+  useWorkflowSurveyOptions,
+} from "@/modules/workflows/list/hooks/use-trigger-survey-picker";
 
 interface WorkflowTriggerFormProps {
   node: TWorkflowResponseCompletedTriggerNode;
@@ -24,12 +26,10 @@ interface WorkflowTriggerFormProps {
 
 export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<WorkflowTriggerFormProps>) => {
   const { t } = useTranslation();
-  const surveyChoices = useAtomValue(surveyChoicesAtom);
-
-  const selectedSurvey = useMemo(
-    () => surveyChoices.find((survey) => survey.id === node.config.surveyId),
-    [surveyChoices, node.config.surveyId]
-  );
+  const params = useParams<{ workspaceId: string }>();
+  const workspaceId = params?.workspaceId ?? "";
+  const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
+  const endingsQuery = useWorkflowSurveyEndings(node.config.surveyId || null);
 
   const handleSurveyChange = (surveyId: string) => {
     // Clear ending selection when survey changes — ids belong to the previous survey's endings.
@@ -46,17 +46,20 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   };
 
   const renderEndingChoices = () => {
-    if (!selectedSurvey) {
+    if (!node.config.surveyId) {
       return (
         <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_pick_survey")}</p>
       );
     }
-    if (selectedSurvey.endings.length === 0) {
+    if (endingsQuery.isLoading) {
+      return <p className="text-xs text-slate-500">{t("common.loading")}</p>;
+    }
+    if (endingsQuery.endings.length === 0) {
       return <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>;
     }
     return (
       <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
-        {selectedSurvey.endings.map((ending) => {
+        {endingsQuery.endings.map((ending) => {
           const checked = node.config.endingCardIds.includes(ending.id);
           return (
             <label
@@ -84,17 +87,19 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
         <Select
           value={node.config.surveyId || undefined}
           onValueChange={handleSurveyChange}
-          disabled={!isEditable}>
+          disabled={!isEditable || surveyOptionsQuery.isLoading}>
           <SelectTrigger id="workflow-trigger-survey" className="bg-white">
             <SelectValue placeholder={t("workspace.workflows.trigger_survey_placeholder")} />
           </SelectTrigger>
           <SelectContent>
-            {surveyChoices.length === 0 ? (
+            {surveyOptionsQuery.options.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-500">
-                {t("workspace.workflows.trigger_survey_empty")}
+                {surveyOptionsQuery.isLoading
+                  ? t("common.loading")
+                  : t("workspace.workflows.trigger_survey_empty")}
               </div>
             ) : (
-              surveyChoices.map((survey) => (
+              surveyOptionsQuery.options.map((survey) => (
                 <SelectItem key={survey.id} value={survey.id}>
                   {survey.name}
                 </SelectItem>

@@ -3,7 +3,6 @@ import { produce } from "immer";
 import { atom } from "jotai";
 import type { SetStateAction } from "react";
 import type { TWorkflowDefinition, TWorkflowResource } from "@formbricks/workflows";
-import type { TWorkflowSurveyChoice } from "@/modules/workflows/types";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
 export type TWorkflowNodeIcon = "trigger" | "ifElse" | "email";
@@ -56,9 +55,6 @@ export const isWorkflowSnapToCanvasEnabledAtom = atom((get) => get(workflowEdito
 export const isWorkflowNodeConfigModalOpenAtom = atom((get) => get(workflowEditorAtom).isNodeConfigModalOpen);
 export const isWorkflowSavingAtom = atom((get) => get(workflowEditorAtom).isSaving);
 export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom).isTransitioning);
-
-// Primitive (not derived) so it can be hydrated synchronously via jotai/utils' useHydrateAtoms.
-export const surveyChoicesAtom = atom<TWorkflowSurveyChoice[]>([]);
 
 // Canvas starts locked so users land in a read-only view; the lock button in the toolbar
 // flips it after we confirm the workflow status allows editing. A successful save also

@@ -10,13 +10,18 @@ import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
 import { isCanvasLockedAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowBuilderPageProps {
+  workspaceId: string;
   workflowId: string;
   isReadOnly: boolean;
 }
 
-export const WorkflowBuilderPage = ({ workflowId, isReadOnly }: Readonly<WorkflowBuilderPageProps>) => {
+export const WorkflowBuilderPage = ({
+  workspaceId,
+  workflowId,
+  isReadOnly,
+}: Readonly<WorkflowBuilderPageProps>) => {
   const { t } = useTranslation();
-  const builder = useWorkflowBuilder({ workflowId, isReadOnly });
+  const builder = useWorkflowBuilder({ workspaceId, workflowId, isReadOnly });
   const isLocked = useAtomValue(isCanvasLockedAtom);
 
   if (builder.isLoading) {

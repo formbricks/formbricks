@@ -32,6 +32,13 @@ interface UseWorkflowBuilderArgs {
   workflowId: string;
   isReadOnly: boolean;
   /**
+   * URL workspace. Used to assert the loaded workflow belongs to the workspace in the URL —
+   * the API authorizes by the workflow's own workspaceId, so without this check a workflow
+   * URL on the wrong workspace would still render. Optional for callers that only need
+   * actions + atom state (e.g. the header CTA passes loadOnMount: false and skips this).
+   */
+  workspaceId?: string;
+  /**
    * When true, the hook fetches the workflow on mount. The page-level builder owns the load;
    * components that only need actions + atom state (e.g. the layout header CTA) pass false.
    */
@@ -39,6 +46,7 @@ interface UseWorkflowBuilderArgs {
 }
 
 export const useWorkflowBuilder = ({
+  workspaceId,
   workflowId,
   isReadOnly,
   loadOnMount = true,
@@ -67,6 +75,14 @@ export const useWorkflowBuilder = ({
 
     getWorkflow(workflowId, controller.signal)
       .then((loadedWorkflow) => {
+        // The API authorizes against the workflow's own workspaceId; reject if the URL
+        // workspace doesn't match so we don't render a workflow under the wrong shell.
+        if (workspaceId && loadedWorkflow.workspaceId !== workspaceId) {
+          const message = t("workspace.workflows.load_failed");
+          setLoadError(message);
+          toast.error(message);
+          return;
+        }
         hydrateEditor({
           workflow: loadedWorkflow,
           flowNodes: workflowDefinitionToFlowNodes(loadedWorkflow.definition, t),
@@ -84,7 +100,7 @@ export const useWorkflowBuilder = ({
       });
 
     return () => controller.abort();
-  }, [workflowId, hydrateEditor, t, loadOnMount]);
+  }, [workspaceId, workflowId, hydrateEditor, t, loadOnMount]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
