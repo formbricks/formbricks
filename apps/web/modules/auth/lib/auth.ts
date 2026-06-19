@@ -20,6 +20,7 @@ import {
   ssoRecoveryAfter,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
+import { betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
@@ -47,7 +48,7 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  * Deferred to later phases (kept out so they don't half-activate against the live NextAuth flows):
  *  - `emailVerified` Date→boolean column conversion (Phase 2/3 — required before requireEmailVerification works at cutover)
  *  - SSO verify-before-link recovery completion + the shared "token" email-signin (Phase 7 cutover; providers, JIT provisioning, license re-check, and recovery-start are done)
- *  - audit-log + Sentry wiring via hooks/onAPIError (Phase 7)
+ *  - failed-login audit (the signedIn-success audit + Sentry/logger forwarding are wired via better-auth-observability.ts)
  */
 export const auth = betterAuth({
   appName: "Formbricks",
@@ -165,8 +166,11 @@ export const auth = betterAuth({
 
   // SSO sign-up flow — email-verification, identity denormalization, and JIT provisioning
   // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
-  // recovery is the remaining Phase 5c work.
-  databaseHooks: ssoDatabaseHooks,
+  // recovery is the remaining Phase 5c work. Plus the Phase 7 `signedIn` audit on session creation.
+  databaseHooks: {
+    ...ssoDatabaseHooks,
+    session: signInAuditDatabaseHook,
+  },
 
   // Request hooks (parity with handleSsoCallback). `before` re-checks the SSO/SAML license on every
   // SSO callback (covers existing-user sign-ins that skip user.create); `after` turns Better Auth's
@@ -201,11 +205,8 @@ export const auth = betterAuth({
     ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
   },
 
-  logger: {
-    level: "warn",
-    disableColors: true,
-    // TODO(Phase 7): forward to @formbricks/logger and capture errors to Sentry via onAPIError.
-  },
+  // Route Better Auth's logs to @formbricks/logger and capture errors to Sentry (Phase 7 parity).
+  logger: betterAuthLogger,
 
   plugins: [
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
