@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -52,6 +52,12 @@ export const SettingsSection = ({
   const [capRunsUnit, setCapRunsUnit] = useState<TWorkflowOperationalSettings["capRunsUnit"]>(
     settings?.capRunsUnit ?? "day"
   );
+
+  useEffect(() => {
+    setCapRunsEnabled(settings?.capRunsEnabled ?? false);
+    setCapRunsLimit(settings?.capRunsLimit ?? "10");
+    setCapRunsUnit(settings?.capRunsUnit ?? "day");
+  }, [settings?.capRunsEnabled, settings?.capRunsLimit, settings?.capRunsUnit]);
 
   const isArchived = workflow?.status === "archived";
   const isActive = workflow?.status === "enabled";

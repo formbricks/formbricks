@@ -37,7 +37,8 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           variant="secondary"
           size="sm"
           onClick={builder.unarchive}
-          loading={builder.isTransitioning}>
+          loading={builder.isTransitioning}
+          disabled={isReadOnly || builder.isTransitioning}>
           <ArchiveRestoreIcon />
           {t("common.unarchive")}
         </Button>
@@ -48,7 +49,8 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             variant="secondary"
             size="sm"
             onClick={builder.archive}
-            loading={builder.isTransitioning}>
+            loading={builder.isTransitioning}
+            disabled={isReadOnly || builder.isTransitioning}>
             <ArchiveIcon />
             {t("common.archive")}
           </Button>

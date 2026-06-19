@@ -12,9 +12,15 @@ const isSameLocalDay = (a: Date, b: Date): boolean =>
  * `t` function localizes the relative tokens; the time and date parts use `Intl` with the user's
  * locale.
  */
-export const formatRelativeDate = (iso: string, anchor: Date, t: TFunction, locale = "en-US"): string => {
+export const formatRelativeDate = (
+  iso: string,
+  anchor: Date,
+  t: TFunction,
+  locale = "en-US",
+  timeZone = "UTC"
+): string => {
   const date = new Date(iso);
-  const time = date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+  const time = date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit", timeZone });
 
   if (isSameLocalDay(date, anchor)) {
     return t("workspace.workflows.relative_today", { time });
@@ -31,6 +37,6 @@ export const formatRelativeDate = (iso: string, anchor: Date, t: TFunction, loca
     return t("workspace.workflows.relative_days_ago", { count: diffDays, time });
   }
 
-  const datePart = date.toLocaleDateString(locale, { month: "short", day: "numeric" });
+  const datePart = date.toLocaleDateString(locale, { month: "short", day: "numeric", timeZone });
   return t("workspace.workflows.relative_date", { date: datePart, time });
 };

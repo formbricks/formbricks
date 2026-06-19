@@ -21,7 +21,7 @@ interface HistorySectionProps {
   history?: TWorkflowHistorySummary;
 }
 
-const HistoryStatCard = ({ label, value }: { label: string; value: string }) => (
+const HistoryStatCard = ({ label, value }: Readonly<{ label: string; value: string }>) => (
   <div className="flex flex-1 flex-col gap-1 rounded-md border border-slate-200 px-3 py-2">
     <span className="text-xs text-slate-500">{label}</span>
     <span className="text-sm font-semibold text-slate-900">{value}</span>
@@ -49,7 +49,7 @@ export const HistorySection = ({ history }: Readonly<HistorySectionProps>) => {
     <InspectorSection title={t("workspace.workflows.history_title")}>
       <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <Select value={historyRange} onValueChange={setHistoryRange}>
+          <Select value={historyRange} onValueChange={setHistoryRange} disabled>
             <SelectTrigger className="w-auto gap-2 bg-white">
               <SelectValue />
             </SelectTrigger>

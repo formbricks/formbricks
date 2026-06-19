@@ -22,7 +22,7 @@ const CATEGORY_CHIP_CLASS_NAMES: Record<TWorkflowNodeData["category"], string> =
 
 const HANDLE_CLASS_NAMES = "!h-0 !w-0 !min-h-0 !min-w-0 !border-0 !bg-transparent !opacity-0";
 
-export const WorkflowCanvasNode = memo(({ data, selected }: NodeProps<Node<TWorkflowNodeData>>) => {
+export const WorkflowCanvasNode = memo(({ data, selected }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
   const { t } = useTranslation();
   const Icon = NODE_ICONS[data.icon];
 

@@ -94,8 +94,12 @@ export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): T
     }
   }
 
+  let nextUnreachableRank = Math.max(0, ...ranks.values()) + 1;
   for (const nodeId of originalNodeOrder) {
-    if (!ranks.has(nodeId)) ranks.set(nodeId, ranks.size);
+    if (!ranks.has(nodeId)) {
+      ranks.set(nodeId, nextUnreachableRank);
+      nextUnreachableRank += 1;
+    }
   }
 
   const nodeIdsByRank = new Map<number, string[]>();
