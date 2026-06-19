@@ -47,7 +47,7 @@ export const WorkflowsListBodyLoading = () => (
 export const WorkspaceWorkflowRunsBodyLoading = () => <RunsTableSkeleton />;
 
 export const WorkflowBuilderBodyLoading = () => (
-  <div className="flex flex-col gap-4 rounded-lg bg-slate-100 p-4">
+  <div className="flex flex-col gap-4">
     <div className="flex min-h-[calc(100vh-220px)] gap-4">
       <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="absolute right-4 top-4 flex items-center gap-2">

@@ -1,12 +1,10 @@
 "use client";
 
-import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
-import { isCanvasLockedAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowBuilderPageProps {
   workspaceId: string;
@@ -21,7 +19,6 @@ export const WorkflowBuilderPage = ({
 }: Readonly<WorkflowBuilderPageProps>) => {
   const { t } = useTranslation();
   const builder = useWorkflowBuilder({ workspaceId, workflowId, isReadOnly });
-  const isLocked = useAtomValue(isCanvasLockedAtom);
 
   if (builder.isLoading) {
     return <WorkflowBuilderBodyLoading />;
@@ -35,18 +32,14 @@ export const WorkflowBuilderPage = ({
     );
   }
 
-  // Inspector inputs honour the canvas lock — when locked, the user can still open a node and
-  // inspect its configuration, but every field is read-only.
-  const canEditNode = builder.canEditDefinition && !isLocked;
-
   return (
-    <div className="flex flex-col gap-4 rounded-lg bg-slate-100 p-4">
+    <div className="flex flex-col gap-4">
       <section className="flex min-h-[calc(100vh-220px)] gap-4">
         <WorkflowCanvas isEditable={builder.canEditDefinition} />
         <WorkflowInspectorPanel
           canEditDefinition={builder.canEditDefinition}
           canEditMetadata={builder.canEditMetadata}
-          isEditingNode={canEditNode}
+          isEditingNode={builder.canEditDefinition}
           onSaveNode={builder.save}
           isSavingNode={builder.isSaving}
         />

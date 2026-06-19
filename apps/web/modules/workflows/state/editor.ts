@@ -1,8 +1,9 @@
+import { createId } from "@paralleldrive/cuid2";
 import { type Node } from "@xyflow/react";
 import { produce } from "immer";
 import { atom } from "jotai";
 import type { SetStateAction } from "react";
-import type { TWorkflowDefinition, TWorkflowResource } from "@formbricks/workflows";
+import { type TWorkflowDefinition, type TWorkflowResource, WORKFLOW_ACTIONS } from "@formbricks/workflows";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
 export type TWorkflowNodeIcon = "trigger" | "ifElse" | "email";
@@ -12,6 +13,7 @@ export type TWorkflowNodeData = {
   icon: TWorkflowNodeIcon;
   title: string;
   summary: string;
+  isLeaf: boolean;
 };
 
 type TWorkflowEditorState = {
@@ -58,8 +60,24 @@ export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom)
 
 // Canvas starts locked so users land in a read-only view; the lock button in the toolbar
 // flips it after we confirm the workflow status allows editing. A successful save also
-// re-locks (see useWorkflowBuilder).
+// re-locks (see useWorkflowBuilder). NOTE: the lock only gates the canvas LAYOUT (drag +
+// auto-layout). Node content edits and add/delete are gated by workflow status, not the lock.
 export const isCanvasLockedAtom = atom<boolean>(true);
+
+// Derived: the workflow's definition is editable when its status allows it (the API rejects
+// definition PATCHes on enabled / archived workflows). The auth-derived `isReadOnly` flag is
+// applied separately by the hook layer; this atom is the status check the canvas + inspector
+// share for hiding/disabling structural controls.
+export const canEditWorkflowDefinitionAtom = atom((get) => {
+  const status = get(workflowEditorAtom).workflow?.status;
+  return status === "draft" || status === "disabled";
+});
+
+// Combined gate for any interactive canvas affordance (add + delete + drag + auto-layout).
+// Both the API-side status check AND the user-driven lock must allow it.
+export const canMutateCanvasAtom = atom(
+  (get) => get(canEditWorkflowDefinitionAtom) && !get(isCanvasLockedAtom)
+);
 
 export const setWorkflowSavingAtom = atom(null, (get, set, isSaving: boolean) => {
   set(
@@ -181,6 +199,9 @@ export const openWorkflowNodeConfigModalAtom = atom(null, (get, set, nodeId: str
     produce(get(workflowEditorAtom), (draft) => {
       draft.selectedNodeId = nodeId;
       draft.isNodeConfigModalOpen = true;
+      // Clicking a node opens the inspector even if the user previously collapsed it —
+      // otherwise the config view stays hidden and the click looks broken.
+      draft.isInspectorCollapsed = false;
     })
   );
 });
@@ -199,6 +220,144 @@ export const toggleWorkflowInspectorAtom = atom(null, (get, set) => {
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
       draft.isInspectorCollapsed = !draft.isInspectorCollapsed;
+    })
+  );
+});
+
+// Drop a node + its incident edges; bridge each incoming edge to each outgoing one so the
+// graph stays connected (preserving the incoming sourceHandle for if_else branches). Refuses
+// to delete the trigger.
+export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      const definition = draft.definition;
+      if (!definition) return;
+      if (definition.trigger.id === nodeId) return;
+
+      const incoming = definition.edges.filter((edge) => edge.target === nodeId);
+      const outgoing = definition.edges.filter((edge) => edge.source === nodeId);
+
+      definition.nodes = definition.nodes.filter((node) => node.id !== nodeId);
+      definition.edges = definition.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId);
+
+      for (const inEdge of incoming) {
+        for (const outEdge of outgoing) {
+          definition.edges.push({
+            id: createId(),
+            source: inEdge.source,
+            target: outEdge.target,
+            ...(inEdge.sourceHandle ? { sourceHandle: inEdge.sourceHandle } : {}),
+          });
+        }
+      }
+
+      if (draft.selectedNodeId === nodeId) {
+        draft.selectedNodeId = definition.trigger.id;
+        draft.isNodeConfigModalOpen = false;
+      }
+    })
+  );
+});
+
+// Append a fresh send_email node after `sourceNodeId` (used when the source has no outgoing
+// edge yet — i.e. the user is starting the chain).
+export const appendSendEmailAfterNodeAtom = atom(null, (get, set, sourceNodeId: string) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      const definition = draft.definition;
+      if (!definition) return;
+
+      const sourcePosition =
+        definition.trigger.id === sourceNodeId
+          ? definition.trigger.ui?.position
+          : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
+      const newPosition = sourcePosition
+        ? { x: sourcePosition.x, y: sourcePosition.y + 120 }
+        : { x: 220, y: 200 };
+
+      const newNodeId = createId();
+      definition.nodes.push({
+        id: newNodeId,
+        type: "action",
+        actionType: WORKFLOW_ACTIONS.SEND_EMAIL,
+        label: "Send email",
+        config: {
+          to: "",
+          from: "team@example.com",
+          replyTo: [],
+          subject: "",
+          body: "",
+          attachResponseData: false,
+        },
+        ui: { position: newPosition },
+      });
+
+      definition.edges.push({ id: createId(), source: sourceNodeId, target: newNodeId });
+
+      draft.selectedNodeId = newNodeId;
+      draft.isNodeConfigModalOpen = true;
+    })
+  );
+});
+
+// Split an existing edge with a fresh send_email node positioned between its endpoints.
+export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      const definition = draft.definition;
+      if (!definition) return;
+      const edgeIndex = definition.edges.findIndex((edge) => edge.id === edgeId);
+      if (edgeIndex < 0) return;
+      const edge = definition.edges[edgeIndex];
+
+      const positionOf = (nodeId: string) => {
+        if (definition.trigger.id === nodeId) return definition.trigger.ui?.position;
+        return definition.nodes.find((node) => node.id === nodeId)?.ui?.position;
+      };
+      const sourcePosition = positionOf(edge.source);
+      const targetPosition = positionOf(edge.target);
+      const midpoint =
+        sourcePosition && targetPosition
+          ? {
+              x: Math.round((sourcePosition.x + targetPosition.x) / 2),
+              y: Math.round((sourcePosition.y + targetPosition.y) / 2),
+            }
+          : { x: 220, y: 200 };
+
+      const newNodeId = createId();
+      definition.nodes.push({
+        id: newNodeId,
+        type: "action",
+        actionType: WORKFLOW_ACTIONS.SEND_EMAIL,
+        label: "Send email",
+        config: {
+          to: "",
+          from: "team@example.com",
+          replyTo: [],
+          subject: "",
+          body: "",
+          attachResponseData: false,
+        },
+        ui: { position: midpoint },
+      });
+
+      definition.edges.splice(
+        edgeIndex,
+        1,
+        {
+          id: createId(),
+          source: edge.source,
+          target: newNodeId,
+          ...(edge.sourceHandle ? { sourceHandle: edge.sourceHandle } : {}),
+        },
+        { id: createId(), source: newNodeId, target: edge.target }
+      );
+
+      draft.selectedNodeId = newNodeId;
+      draft.isNodeConfigModalOpen = true;
     })
   );
 });

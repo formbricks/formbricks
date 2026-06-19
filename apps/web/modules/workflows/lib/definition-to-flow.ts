@@ -14,8 +14,10 @@ const WORKFLOW_CANVAS_START_POSITION = { x: 220, y: 80 };
 export const workflowDefinitionToFlowNodes = (
   definition: TWorkflowDefinition,
   t: TFunction
-): Array<Node<TWorkflowNodeData>> =>
-  [definition.trigger, ...definition.nodes].map((node, index) => {
+): Array<Node<TWorkflowNodeData>> => {
+  const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
+
+  return [definition.trigger, ...definition.nodes].map((node, index) => {
     const registryEntry = getNodeRegistryEntry(node);
     const fallbackPosition = { x: 120, y: 80 + index * 120 };
 
@@ -28,9 +30,11 @@ export const workflowDefinitionToFlowNodes = (
         icon: registryEntry.icon,
         title: registryEntry.title(node, t),
         summary: registryEntry.summary(node, t),
+        isLeaf: !sourcesWithEdges.has(node.id),
       },
     };
   });
+};
 
 export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): Edge[] =>
   definition.edges.map((edge) => ({

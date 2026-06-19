@@ -113,7 +113,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
       <div className="flex flex-col gap-2">
         <Label>{t("workspace.workflows.trigger_ending_cards_label")}</Label>
         {renderEndingChoices()}
-        <Alert variant="info" size="small">
+        <Alert variant="info">
           <AlertDescription>{t("workspace.workflows.trigger_ending_cards_description")}</AlertDescription>
         </Alert>
       </div>

@@ -52,7 +52,7 @@ export const SettingsSection = ({
   }, [settings?.capRunsEnabled, settings?.capRunsLimit, settings?.capRunsUnit]);
 
   return (
-    <InspectorSection title={t("workspace.workflows.settings_title")}>
+    <InspectorSection title={t("workspace.workflows.settings_title")} defaultOpen>
       <div className="flex flex-col gap-4 border-t border-slate-200 px-4 py-3">
         <div className="flex flex-col gap-2">
           <Label htmlFor="workflow-settings-name">{t("workspace.workflows.workflow_name_label")}</Label>
