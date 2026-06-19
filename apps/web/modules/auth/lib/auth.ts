@@ -44,7 +44,7 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  *
  * Deferred to later phases (kept out so they don't half-activate against the live NextAuth flows):
  *  - `emailVerified` Date→boolean column conversion (Phase 2/3 — required before requireEmailVerification works at cutover)
- *  - SSO verify-before-link (account-takeover recovery) — remaining Phase 5c work (the providers, JIT provisioning, and per-callback license re-check are done)
+ *  - SSO verify-before-link recovery completion + the shared "token" email-signin (Phase 7 cutover; providers, JIT provisioning, license re-check, and recovery-start are done)
  *  - audit-log + Sentry wiring via hooks/onAPIError (Phase 7)
  */
 export const auth = betterAuth({

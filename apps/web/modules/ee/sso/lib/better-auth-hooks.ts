@@ -171,7 +171,7 @@ export const ssoRecoveryAfter = createAuthMiddleware(async (ctx) => {
   const identity = getPendingSsoIdentity();
   if (!identity) return; // identity not captured → fall through to the default error redirect
 
-  const existingUser = await prisma.user.findFirst({
+  const existingUser = await prisma.user.findUnique({
     where: { email: identity.email },
     select: LINKED_SSO_LOOKUP_SELECT,
   });

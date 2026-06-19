@@ -30,7 +30,7 @@ vi.mock("better-auth/api", () => ({
     }
   },
 }));
-vi.mock("@formbricks/database", () => ({ prisma: { user: { findFirst: vi.fn() } } }));
+vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSsoEnabled: vi.fn(),
@@ -57,7 +57,7 @@ beforeEach(() => {
   vi.mocked(gateSsoProvisioning).mockResolvedValue(provisionDecision);
   vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
   vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
-  vi.mocked(prisma.user.findFirst).mockResolvedValue({
+  vi.mocked(prisma.user.findUnique).mockResolvedValue({
     id: "u1",
     email: "a@b.com",
     locale: "en-US",
@@ -269,7 +269,7 @@ describe("ssoRecoveryAfter", () => {
   });
 
   test("ignores collisions with no matching existing user", async () => {
-    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     const ctx = makeCtx();
     await runWithSsoRequestContext(async () => {
       captureSsoIdentity({ email: "ghost@b.com", providerAccountId: "sub-1" });
@@ -282,5 +282,26 @@ describe("ssoRecoveryAfter", () => {
     const ctx = makeCtx({ path: "/sign-up/email", params: {} });
     await ssoRecoveryAfter(ctx as never);
     expect(startSsoRecovery).not.toHaveBeenCalled();
+  });
+
+  test("ignores callbacks with no response-redirect headers", async () => {
+    const ctx = makeCtx({ context: {} });
+    await runWithSsoRequestContext(async () => {
+      captureSsoIdentity({ email: "a@b.com", providerAccountId: "sub-1" });
+      await ssoRecoveryAfter(ctx as never);
+    });
+    expect(startSsoRecovery).not.toHaveBeenCalled();
+  });
+
+  test("still recovers (empty callbackUrl) when the OAuth state is unavailable", async () => {
+    vi.mocked(getOAuthState).mockRejectedValue(new Error("no state"));
+    const redirect = vi.fn((url: string) => new Error(`redirect:${url}`));
+    const ctx = makeCtx({ redirect });
+    await runWithSsoRequestContext(async () => {
+      captureSsoIdentity({ email: "a@b.com", providerAccountId: "sub-1" });
+      await expect(ssoRecoveryAfter(ctx as never)).rejects.toBeDefined();
+    });
+    expect(startSsoRecovery).toHaveBeenCalledWith(expect.objectContaining({ callbackUrl: "" }));
+    expect(redirect).toHaveBeenCalled();
   });
 });
