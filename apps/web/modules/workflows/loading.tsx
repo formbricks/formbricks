@@ -50,7 +50,10 @@ export const WorkflowBuilderBodyLoading = () => (
   <div className="flex flex-col gap-4 rounded-lg bg-slate-100 p-4">
     <div className="flex min-h-[calc(100vh-220px)] gap-4">
       <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <Skeleton className="absolute right-4 top-4 h-9 w-20 rounded-md" />
+        <div className="absolute right-4 top-4 flex items-center gap-2">
+          <Skeleton className="h-9 w-20 rounded-md" />
+          <Skeleton className="size-9 rounded-md" />
+        </div>
         <div className="absolute inset-x-0 bottom-4 flex justify-center gap-2">
           <Skeleton className="size-10 rounded-md" />
           <Skeleton className="size-10 rounded-md" />
@@ -59,8 +62,7 @@ export const WorkflowBuilderBodyLoading = () => (
         </div>
       </div>
       <aside className="flex w-[320px] shrink-0 flex-col gap-3">
-        <Skeleton className="size-9 rounded-md" />
-        {[0, 1, 2].map((row) => (
+        {[0, 1].map((row) => (
           <div
             key={row}
             className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
