@@ -20,13 +20,6 @@ interface WorkflowsListPageProps {
   workflowsPerPage: number;
 }
 
-/**
- * Workflows list body (the persistent header/nav/CTA live in the route group layout). All server
- * communication is TanStack Query: an infinite cursor query owns loading/empty/error/retry and
- * load-more, and name search is server-side (`filter[name][contains]`), debounced so a term change
- * refetches from page 1 instead of filtering already-loaded pages. Archived workflows are excluded
- * by default (the API default-excludes them when no status filter is sent).
- */
 export const WorkflowsListPage = ({
   workspaceId,
   isReadOnly,

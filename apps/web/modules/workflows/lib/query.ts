@@ -10,11 +10,6 @@ export interface TWorkflowListKeyInput {
   sortBy?: TWorkflowSortBy;
 }
 
-/**
- * Query-key factory for the workflows list, mirroring `modules/survey/list/lib/query.ts`. The
- * full input (workspace + paging + search/filter) is part of the key so a search-term change is a
- * distinct query that refetches from page 1 rather than filtering already-loaded pages.
- */
 export const workflowKeys = {
   all: ["workflows"] as const,
   lists: () => [...workflowKeys.all, "list"] as const,
@@ -25,7 +20,6 @@ export function flattenWorkflowPages(data?: InfiniteData<TWorkflowListPage>): TW
   return data?.pages.flatMap((page) => page.data) ?? [];
 }
 
-/** Drop a workflow from every loaded page — used for optimistic archive/delete cache updates. */
 export function removeWorkflowFromInfiniteData(
   data: InfiniteData<TWorkflowListPage> | undefined,
   workflowId: string

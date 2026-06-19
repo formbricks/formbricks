@@ -5,10 +5,6 @@ import { deleteWorkflow } from "../lib/api-client";
 import type { TWorkflowListPage } from "../lib/api-client";
 import { removeWorkflowFromInfiniteData, workflowKeys } from "../lib/query";
 
-/**
- * Hard-delete a workflow via `useMutation`, mirroring `use-delete-survey.ts`: optimistically drop
- * the row from the loaded pages, roll back on error, invalidate every list query on settle.
- */
 export const useDeleteWorkflow = ({ queryKey }: { queryKey: ReturnType<typeof workflowKeys.list> }) => {
   const queryClient = useQueryClient();
 

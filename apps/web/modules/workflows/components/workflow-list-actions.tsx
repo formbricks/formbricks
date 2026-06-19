@@ -28,12 +28,6 @@ interface WorkflowListActionsProps {
   queryKey: ReturnType<typeof workflowKeys.list>;
 }
 
-/**
- * Row action menu for a workflow. Open-editor is always available (a link); Duplicate, Archive
- * (the primary destructive action — soft, reversible) and hard Delete are all gated behind
- * `isReadOnly`. Archive and Delete each open their own confirm dialog and run an optimistic
- * `useMutation`; Duplicate fires directly and invalidates the list.
- */
 export const WorkflowListActions = ({
   workflowId,
   workflowName,

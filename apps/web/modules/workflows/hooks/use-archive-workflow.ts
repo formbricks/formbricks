@@ -5,11 +5,6 @@ import { archiveWorkflow } from "../lib/api-client";
 import type { TWorkflowListPage } from "../lib/api-client";
 import { removeWorkflowFromInfiniteData, workflowKeys } from "../lib/query";
 
-/**
- * Archive (soft-delete) a workflow via `useMutation`, mirroring `use-delete-survey.ts`. The list
- * excludes archived workflows by default, so an archive optimistically drops the row from the
- * loaded pages; on error we roll the cache back, and on settle we invalidate every list query.
- */
 export const useArchiveWorkflow = ({ queryKey }: { queryKey: ReturnType<typeof workflowKeys.list> }) => {
   const queryClient = useQueryClient();
 

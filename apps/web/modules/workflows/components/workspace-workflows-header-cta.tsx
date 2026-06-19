@@ -17,12 +17,6 @@ interface WorkspaceWorkflowsHeaderCtaProps {
   isReadOnly: boolean;
 }
 
-/**
- * Header create action for the workflows list. Read-only members never see it; the runs tab never
- * shows it (the create CTA belongs only to the list index segment). Owns the dialog's local
- * `useState` and drives the create mutation: it builds a Scope-1-valid draft definition, validates
- * the full `ZCreateWorkflowInput` before POST, then routes to the editor on success.
- */
 export const WorkspaceWorkflowsHeaderCta = ({
   workspaceId,
   isReadOnly,
@@ -36,8 +30,6 @@ export const WorkspaceWorkflowsHeaderCta = ({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  // The create CTA only belongs to the workflows list tab (the index segment); the runs tab has no
-  // CTA, and read-only members can never create.
   if (segment !== null || isReadOnly) {
     return null;
   }

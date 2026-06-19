@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { TWorkflowListItem } from "@formbricks/workflows";
 import type { TWorkflowListPage } from "../lib/api-client";
 import { workflowKeys } from "../lib/query";
 import { useArchiveWorkflow } from "./use-archive-workflow";
@@ -18,11 +19,24 @@ function createWrapper(queryClient: QueryClient) {
 
 const queryKey = workflowKeys.list({ workspaceId: "ws_1", limit: 12, nameContains: "" });
 
+const workflowListItem = (id: string, name: string): TWorkflowListItem => ({
+  id,
+  workspaceId: "ws_1",
+  name,
+  description: null,
+  status: "draft",
+  triggerType: "response.completed",
+  surveyId: "survey_1",
+  createdBy: null,
+  createdAt: "2026-06-11T09:30:00.000Z",
+  updatedAt: "2026-06-11T09:30:00.000Z",
+  lastRun: null,
+});
+
 const seedData = (): { pages: TWorkflowListPage[]; pageParams: (string | null)[] } => ({
   pages: [
     {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: [{ id: "wf_1", name: "One" } as any, { id: "wf_2", name: "Two" } as any],
+      data: [workflowListItem("wf_1", "One"), workflowListItem("wf_2", "Two")],
       meta: { limit: 12, nextCursor: null },
     },
   ],

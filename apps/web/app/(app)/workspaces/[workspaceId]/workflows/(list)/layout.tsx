@@ -14,8 +14,6 @@ const WorkspaceWorkflowsLayout = async (
   const { isReadOnly } = await getWorkflowsRouteAuth(params.workspaceId);
   const t = await getTranslate();
 
-  // One QueryClient for the whole (list) route group (list tab + runs tab + the header create
-  // dialog), so a create/duplicate/archive/delete invalidation refreshes the shared list cache.
   return (
     <WorkflowsQueryClientProvider>
       <PageContentWrapper>

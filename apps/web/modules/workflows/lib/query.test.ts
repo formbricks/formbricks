@@ -1,23 +1,34 @@
 import type { InfiniteData } from "@tanstack/react-query";
 import { describe, expect, test } from "vitest";
+import type { TWorkflowListItem } from "@formbricks/workflows";
 import type { TWorkflowListPage } from "./api-client";
 import { flattenWorkflowPages, removeWorkflowFromInfiniteData, workflowKeys } from "./query";
+
+const workflowListItem = (id: string, name: string): TWorkflowListItem => ({
+  id,
+  workspaceId: "ws_1",
+  name,
+  description: null,
+  status: "draft",
+  triggerType: "response.completed",
+  surveyId: "survey_1",
+  createdBy: null,
+  createdAt: "2026-06-11T09:30:00.000Z",
+  updatedAt: "2026-06-11T09:30:00.000Z",
+  lastRun: null,
+});
 
 const buildData = (): InfiniteData<TWorkflowListPage> => ({
   pages: [
     {
-      data: [
-        { id: "wf_1", name: "One" },
-        { id: "wf_2", name: "Two" },
-      ],
+      data: [workflowListItem("wf_1", "One"), workflowListItem("wf_2", "Two")],
       meta: { limit: 12, nextCursor: "cursor_1" },
     },
     {
-      data: [{ id: "wf_3", name: "Three" }],
+      data: [workflowListItem("wf_3", "Three")],
       meta: { limit: 12, nextCursor: null },
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ] as any,
+  ],
   pageParams: [null, "cursor_1"],
 });
 

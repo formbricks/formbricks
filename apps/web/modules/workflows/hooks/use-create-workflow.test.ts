@@ -6,6 +6,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TCreateWorkflowInput } from "@formbricks/workflows";
+import { createDefaultWorkflowDefinition } from "../lib/default-workflow";
 import { workflowKeys } from "../lib/query";
 import { useCreateWorkflow } from "./use-create-workflow";
 
@@ -19,14 +20,13 @@ function createWrapper(queryClient: QueryClient) {
 const newQueryClient = () =>
   new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const input = {
+const input: TCreateWorkflowInput = {
   workspaceId: "ws_1",
   name: "New",
   description: null,
   status: "draft",
-  definition: {},
-} as any as TCreateWorkflowInput;
+  definition: createDefaultWorkflowDefinition(),
+};
 
 describe("useCreateWorkflow", () => {
   beforeEach(() => {

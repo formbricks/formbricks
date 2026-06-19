@@ -5,11 +5,6 @@ import type { TCreateWorkflowInput, TWorkflowResource } from "@formbricks/workfl
 import { createWorkflow } from "../lib/api-client";
 import { workflowKeys } from "../lib/query";
 
-/**
- * Create a draft workflow via `useMutation` (mirrors the surveys mutation pattern). On success the
- * caller routes to the editor; we invalidate every workflows list query so the new draft shows up
- * on next view without hand-merging it into each cached page/sort/filter permutation.
- */
 export const useCreateWorkflow = () => {
   const queryClient = useQueryClient();
 

@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { TCreateWorkflowInput } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   archiveWorkflow,
@@ -16,6 +17,7 @@ import {
   unarchiveWorkflow,
   updateWorkflow,
 } from "./api-client";
+import { createDefaultWorkflowDefinition } from "./default-workflow";
 
 const workflow = { id: "wf1", name: "x" };
 const okResponse = (data: unknown) => ({ ok: true, json: async () => ({ data }) }) as unknown as Response;
@@ -166,15 +168,14 @@ describe("workflows api-client requests", () => {
     const resource = { id: "wf_new", name: "New", status: "draft" };
     vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse({ data: resource }, 201));
 
-    const input = {
+    const input: TCreateWorkflowInput = {
       workspaceId: "ws_1",
       name: "New",
       description: null,
       status: "draft" as const,
-      definition: { schemaVersion: 1 },
+      definition: createDefaultWorkflowDefinition(),
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await createWorkflow(input as any);
+    const result = await createWorkflow(input);
 
     expect(result).toEqual(resource);
     const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;

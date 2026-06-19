@@ -12,11 +12,6 @@ export interface CreateWorkflowFormValidation {
   isValid: boolean;
 }
 
-/**
- * Pure client-side validation for the create-workflow form, mirroring the `ZCreateWorkflowInput`
- * bounds (name 1–120 after trim, description ≤500). Kept as a standalone function so the rule is
- * unit-testable without rendering the dialog (the repo covers component interaction via e2e).
- */
 export const validateCreateWorkflowForm = (
   name: string,
   description: string

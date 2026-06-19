@@ -1,20 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 
-/**
- * A Scope-1-valid `ZWorkflowDefinition` used to seed a brand-new draft workflow.
- *
- * The shape mirrors what the editor (ENG-1225) will let the user refine: a single
- * `response.completed` trigger wired by one edge to a single `send_email` action. It is the
- * minimal graph that both `ZWorkflowDefinition` and the create POST handler accept (the handler
- * only parses the *persistable* definition, not the executable one — survey/email verification
- * happens later, at enable time). Consequently the trigger `surveyId` is a generated placeholder
- * cuid2 and the email fields are well-formed placeholders; the editor swaps in real values before
- * the workflow can be enabled.
- *
- * `surveyId` is generated per call so two drafts created in the same session never collide on the
- * placeholder reference.
- */
 export const createDefaultWorkflowDefinition = (): TWorkflowDefinition => {
   const triggerId = "trigger-response-completed";
   const sendEmailId = "action-send-email";

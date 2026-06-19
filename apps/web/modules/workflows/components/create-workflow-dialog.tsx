@@ -31,11 +31,6 @@ interface CreateWorkflowDialogProps {
   isCreating: boolean;
 }
 
-/**
- * Create-workflow dialog. Local UI state (name/description, open) is owned by the parent and
- * threaded in; this component validates name (1–120) and description (≤500) client-side before the
- * submit fires, supports submit-on-enter, and reflects `isCreating` from the create mutation.
- */
 export const CreateWorkflowDialog = ({
   open,
   onOpenChange,

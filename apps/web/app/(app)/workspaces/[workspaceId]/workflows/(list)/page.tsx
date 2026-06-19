@@ -1,7 +1,6 @@
 import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
 import { WorkflowsListPage } from "@/modules/workflows/pages/workflows-list-page";
 
-// One cursor page size for the workflows list (matches the surveys list page size).
 const WORKFLOWS_PER_PAGE = 12;
 
 const WorkflowsPage = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {

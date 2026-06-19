@@ -8,17 +8,6 @@ import type {
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
-/**
- * Typed fetch functions for the v3 Workflows HTTP API. These are the query/mutation functions the
- * TanStack Query hooks call — no React, no client state here. Modeled on
- * `modules/survey/list/lib/v3-surveys-client.ts` + the shared `modules/api/lib/v3-client.ts` error
- * parser. Inputs/outputs are typed against the `@formbricks/workflows` contract shapes; the v3
- * problem+json envelope is parsed into a `V3ApiError` for toast-friendly messages.
- *
- * The HTTP query-param family mirrors the surveys list and the `parse-list-query` handler:
- * `workspaceId`, `limit`, `cursor`, `sortBy`, `filter[name][contains]`, `filter[status][in]`.
- */
-
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 // Bound mutation calls so a stalled request can't leave the editor's save/transition spinner
