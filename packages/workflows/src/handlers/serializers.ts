@@ -40,6 +40,7 @@ export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListIt
     triggerType: trigger.triggerType,
     surveyId: trigger.config.surveyId,
     createdBy: row.createdBy,
+    creator: row.creator ? { name: row.creator.name } : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     lastRun: row.runs[0] ? toWorkflowRunSummary(row.runs[0]) : null,

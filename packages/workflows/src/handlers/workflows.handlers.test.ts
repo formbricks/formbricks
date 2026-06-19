@@ -45,6 +45,7 @@ const makeRow = (overrides: Partial<WorkflowRowWithLastRun> = {}): WorkflowRowWi
   status: "draft",
   workspaceId,
   createdBy: null,
+  creator: null,
   definition,
   runs: [],
   ...overrides,

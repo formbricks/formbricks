@@ -30,9 +30,13 @@ export interface WorkflowUpdateInput {
   definition?: TWorkflowDefinition;
 }
 
-/** Eagerly load the most recent run so the serializer can emit `lastRun` without an N+1. */
+/**
+ * Eagerly load the most recent run and the creating user's name so the serializer can emit
+ * `lastRun` and `creator` without an N+1. Every resource-returning path uses this include.
+ */
 const LAST_RUN_INCLUDE: LastRunInclude = {
   runs: { take: 1, orderBy: { createdAt: "desc" } },
+  creator: { select: { name: true } },
 };
 
 /** Every field a workflow update may set; mirrors the injected delegate's `update` data shape. */

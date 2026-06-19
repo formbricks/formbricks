@@ -136,6 +136,7 @@ describe("workflow resources", () => {
     triggerType: "response.completed",
     surveyId,
     createdBy: userId,
+    creator: { name: "Ada Lovelace" },
     createdAt: "2026-06-11T09:30:00.000Z",
     updatedAt: "2026-06-11T09:30:00.000Z",
     lastRun: null,

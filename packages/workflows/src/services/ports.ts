@@ -24,6 +24,7 @@ export interface WorkflowRow {
   status: TWorkflowStatus;
   workspaceId: string;
   createdBy: string | null;
+  creator?: { name: string } | null;
   definition: TWorkflowDefinition;
 }
 
@@ -49,9 +50,14 @@ export interface WorkflowRunRow {
 /** A workflow row with its most recent run eagerly loaded (for `lastRun`). */
 export type WorkflowRowWithLastRun = WorkflowRow & { runs: WorkflowRunRow[] };
 
-/** Eager-load shape for the most recent run; matches the Prisma `include` the adapter satisfies. */
+/**
+ * Eager-load shape for the most recent run plus the creating user's name; matches the Prisma
+ * `include` the adapter satisfies. The `creator` relation (named in `workflows.prisma`) lets the
+ * list/detail serializers emit `creator` without an extra query.
+ */
 export interface LastRunInclude {
   runs: { take: number; orderBy: { createdAt: "desc" } };
+  creator: { select: { name: true } };
 }
 
 /** Narrow `where` filter the service builds — a deliberately small slice of Prisma's WhereInput. */

@@ -60,6 +60,7 @@ const baseRow: WorkflowRowWithLastRun = {
   status: "draft",
   workspaceId,
   createdBy: "cm9zr52kh000508l8e3q7bw9j",
+  creator: { name: "Ada Lovelace" },
   definition,
   runs: [],
 };
@@ -71,6 +72,12 @@ describe("serializers", () => {
     expect(item.surveyId).toBe(surveyId);
     expect(item.createdAt).toBe("2026-06-11T09:30:00.000Z");
     expect(item.lastRun).toBeNull();
+  });
+
+  test("maps the creator name through and emits null when the creator was deleted", () => {
+    expect(toWorkflowListItem(baseRow).creator).toEqual({ name: "Ada Lovelace" });
+    expect(toWorkflowListItem({ ...baseRow, creator: null }).creator).toBeNull();
+    expect(toWorkflowListItem({ ...baseRow, creator: undefined }).creator).toBeNull();
   });
 
   test("embeds the most recent run as lastRun", () => {
