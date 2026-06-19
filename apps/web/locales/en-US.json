@@ -3881,6 +3881,7 @@
     },
     "workflows": {
       "add_step": "Add step",
+      "alphabetical": "Alphabetical",
       "archive_confirm_body": "Archiving disables this workflow and stops it from running. You can unarchive it again later.",
       "archive_confirm_title": "Archive workflow?",
       "archive_failed": "Failed to archive the workflow. Please try again.",
