@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { ZSurveyEndings } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import type { TWorkflowDefinition, TWorkflowListItem, TWorkflowResource } from "@formbricks/workflows";
 import type { TWorkflowSurveyChoice } from "@/modules/workflows/types";
 
@@ -62,28 +63,12 @@ export async function loadWorkspaceWorkflowList(workspaceId: string): Promise<TW
 }
 
 // Headline cards store the editor's rich-text HTML in the i18n `default` slot. The trigger
-// dropdown renders these as plain text, so strip tags + decode common entities here.
-const HTML_ENTITY_MAP: Record<string, string> = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-};
-
-const stripHtml = (raw: string): string =>
-  raw
-    .replace(/<[^>]*>/g, "")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
-    .replace(/&([a-zA-Z]+);/g, (match, entity: string) => HTML_ENTITY_MAP[entity] ?? match)
-    .replace(/\s+/g, " ")
-    .trim();
-
+// dropdown renders these as plain text, so delegate the strip to the shared `getTextContent`
+// helper (uses node-html-parser, no super-linear regex fallbacks).
 const endingDisplayLabel = (ending: { id: string } & Record<string, unknown>): string => {
   if (ending.type === "endScreen") {
     const headline = ending.headline as { default?: string } | undefined;
-    const text = stripHtml(headline?.default ?? "");
+    const text = getTextContent(headline?.default ?? "");
     if (text) return text;
   } else if (ending.type === "redirectToUrl") {
     const label = (ending.label as string | undefined)?.trim();

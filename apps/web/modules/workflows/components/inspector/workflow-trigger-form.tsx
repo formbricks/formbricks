@@ -45,6 +45,38 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
     onChange({ ...node, config: { ...node.config, endingCardIds: next } });
   };
 
+  const renderEndingChoices = () => {
+    if (!selectedSurvey) {
+      return (
+        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_pick_survey")}</p>
+      );
+    }
+    if (selectedSurvey.endings.length === 0) {
+      return <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>;
+    }
+    return (
+      <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
+        {selectedSurvey.endings.map((ending) => {
+          const checked = node.config.endingCardIds.includes(ending.id);
+          return (
+            <label
+              key={ending.id}
+              className="flex items-center gap-2 text-sm text-slate-700"
+              htmlFor={`workflow-trigger-ending-${ending.id}`}>
+              <Checkbox
+                id={`workflow-trigger-ending-${ending.id}`}
+                checked={checked}
+                disabled={!isEditable}
+                onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
+              />
+              <span className="truncate">{ending.label}</span>
+            </label>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-4 px-1">
       <div className="flex flex-col gap-2">
@@ -75,33 +107,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
 
       <div className="flex flex-col gap-2">
         <Label>{t("workspace.workflows.trigger_ending_cards_label")}</Label>
-        {!selectedSurvey ? (
-          <p className="text-xs text-slate-500">
-            {t("workspace.workflows.trigger_ending_cards_pick_survey")}
-          </p>
-        ) : selectedSurvey.endings.length === 0 ? (
-          <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>
-        ) : (
-          <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
-            {selectedSurvey.endings.map((ending) => {
-              const checked = node.config.endingCardIds.includes(ending.id);
-              return (
-                <label
-                  key={ending.id}
-                  className="flex items-center gap-2 text-sm text-slate-700"
-                  htmlFor={`workflow-trigger-ending-${ending.id}`}>
-                  <Checkbox
-                    id={`workflow-trigger-ending-${ending.id}`}
-                    checked={checked}
-                    disabled={!isEditable}
-                    onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
-                  />
-                  <span className="truncate">{ending.label}</span>
-                </label>
-              );
-            })}
-          </div>
-        )}
+        {renderEndingChoices()}
         <Alert variant="info" size="small">
           <AlertDescription>{t("workspace.workflows.trigger_ending_cards_description")}</AlertDescription>
         </Alert>

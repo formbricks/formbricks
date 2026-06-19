@@ -1,12 +1,6 @@
 import type { TFunction } from "i18next";
 import type { ComponentType } from "react";
-import {
-  type TWorkflowNode,
-  type TWorkflowResponseCompletedTriggerNode,
-  type TWorkflowSendEmailActionNode,
-  WORKFLOW_ACTIONS,
-  WORKFLOW_TRIGGERS,
-} from "@formbricks/workflows";
+import { type TWorkflowNode, WORKFLOW_ACTIONS, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import { WorkflowEmailActionForm } from "@/modules/workflows/components/inspector/workflow-email-action-form";
 import { WorkflowTriggerForm } from "@/modules/workflows/components/inspector/workflow-trigger-form";
 import type { TWorkflowNodeCategory, TWorkflowNodeIcon } from "@/modules/workflows/state/editor";
@@ -44,10 +38,9 @@ const responseCompletedTriggerEntry: TWorkflowNodeRegistryEntry = {
   title: (_node, t) => t("workspace.workflows.response_completed"),
   summary: (node, t) => {
     if (node.type !== "trigger") return "";
-    const triggerNode = node as TWorkflowResponseCompletedTriggerNode;
-    return triggerNode.config.endingCardIds.length > 0
+    return node.config.endingCardIds.length > 0
       ? t("workspace.workflows.trigger_summary_ending_cards", {
-          count: triggerNode.config.endingCardIds.length,
+          count: node.config.endingCardIds.length,
         })
       : t("workspace.workflows.trigger_summary_all_endings");
   },
@@ -61,9 +54,8 @@ const sendEmailActionEntry: TWorkflowNodeRegistryEntry = {
   title: (node, t) => node.label ?? t("workspace.workflows.send_email"),
   summary: (node, t) => {
     if (node.type !== "action" || node.actionType !== WORKFLOW_ACTIONS.SEND_EMAIL) return "";
-    const actionNode = node as TWorkflowSendEmailActionNode;
-    return actionNode.config.to
-      ? t("workspace.workflows.send_email_summary", { to: actionNode.config.to })
+    return node.config.to
+      ? t("workspace.workflows.send_email_summary", { to: node.config.to })
       : t("workspace.workflows.send_email_unconfigured");
   },
   ConfigForm: eraseForm(WorkflowEmailActionForm),

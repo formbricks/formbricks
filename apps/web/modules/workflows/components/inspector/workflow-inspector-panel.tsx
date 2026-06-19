@@ -53,12 +53,10 @@ export const WorkflowInspectorPanel = ({
   const triggerNode = definition?.trigger;
   const hasEndingFilter = triggerNode ? triggerNode.config.endingCardIds.length > 0 : false;
   const description = workflow?.description?.trim();
-  const overviewText =
-    description && description.length > 0
-      ? description
-      : hasEndingFilter
-        ? t("workspace.workflows.overview_trigger_with_endings")
-        : t("workspace.workflows.overview_trigger_any_response");
+  const fallbackOverviewKey = hasEndingFilter
+    ? "workspace.workflows.overview_trigger_with_endings"
+    : "workspace.workflows.overview_trigger_any_response";
+  const overviewText = description && description.length > 0 ? description : t(fallbackOverviewKey);
 
   return (
     <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start">

@@ -17,6 +17,7 @@ import {
 import { workflowDefinitionToFlowNodes } from "@/modules/workflows/lib/definition-to-flow";
 import {
   hydrateWorkflowEditorAtom,
+  isCanvasLockedAtom,
   isWorkflowSavingAtom,
   isWorkflowTransitioningAtom,
   setWorkflowAtom,
@@ -52,6 +53,7 @@ export const useWorkflowBuilder = ({
   const isTransitioning = useAtomValue(isWorkflowTransitioningAtom);
   const setIsSaving = useSetAtom(setWorkflowSavingAtom);
   const setIsTransitioning = useSetAtom(setWorkflowTransitioningAtom);
+  const setCanvasLocked = useSetAtom(isCanvasLockedAtom);
 
   const [isLoading, setIsLoading] = useState(loadOnMount);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -138,42 +140,47 @@ export const useWorkflowBuilder = ({
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {
       if (!workflow) return;
 
-      // Inline literal t() calls per branch so the translation scanner can see every key.
-      const toastSuccess = () => {
-        if (operation === "enable") toast.success(t("workspace.workflows.enable_success"));
-        else if (operation === "disable") toast.success(t("workspace.workflows.disable_success"));
-        else if (operation === "archive") toast.success(t("workspace.workflows.archive_success"));
-        else toast.success(t("workspace.workflows.unarchive_success"));
-      };
-      const toastFailure = (error: unknown) => {
-        if (operation === "enable")
-          toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.enable_failed")));
-        else if (operation === "disable")
-          toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.disable_failed")));
-        else if (operation === "archive")
-          toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.archive_failed")));
-        else toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.unarchive_failed")));
-      };
+      // One dispatch table keeps the API call + i18n keys aligned per operation; the scanner can
+      // still see every literal `t("…")` key because they sit inline in the map below.
+      const lifecycleOps = {
+        enable: {
+          run: enableWorkflow,
+          success: () => t("workspace.workflows.enable_success"),
+          failure: () => t("workspace.workflows.enable_failed"),
+        },
+        disable: {
+          run: disableWorkflow,
+          success: () => t("workspace.workflows.disable_success"),
+          failure: () => t("workspace.workflows.disable_failed"),
+        },
+        archive: {
+          run: archiveWorkflow,
+          success: () => t("workspace.workflows.archive_success"),
+          failure: () => t("workspace.workflows.archive_failed"),
+        },
+        unarchive: {
+          run: unarchiveWorkflow,
+          success: () => t("workspace.workflows.unarchive_success"),
+          failure: () => t("workspace.workflows.unarchive_failed"),
+        },
+      } as const;
+      const op = lifecycleOps[operation];
 
       setIsTransitioning(true);
       try {
-        const transitioned =
-          operation === "enable"
-            ? await enableWorkflow(workflow.id)
-            : operation === "disable"
-              ? await disableWorkflow(workflow.id)
-              : operation === "archive"
-                ? await archiveWorkflow(workflow.id)
-                : await unarchiveWorkflow(workflow.id);
+        const transitioned = await op.run(workflow.id);
         setWorkflow(transitioned);
-        toastSuccess();
+        // Enabling/archiving moves the workflow into a state where the definition is read-only,
+        // so collapse back to a locked canvas on any lifecycle transition.
+        setCanvasLocked(true);
+        toast.success(op.success());
       } catch (error) {
-        toastFailure(error);
+        toast.error(getV3ApiErrorMessage(error, op.failure()));
       } finally {
         setIsTransitioning(false);
       }
     },
-    [workflow, setWorkflow, setIsTransitioning, t]
+    [workflow, setWorkflow, setIsTransitioning, setCanvasLocked, t]
   );
 
   return {

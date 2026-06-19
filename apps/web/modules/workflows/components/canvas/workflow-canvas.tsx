@@ -12,8 +12,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PencilIcon, PlayIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { PlayIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -29,6 +29,7 @@ import {
 } from "@/modules/workflows/lib/definition-to-flow";
 import {
   type TWorkflowNodeData,
+  isCanvasLockedAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
   setWorkflowDefinitionAtom,
@@ -59,12 +60,17 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const definition = useAtomValue(workflowDefinitionAtom);
   const flowNodes = useAtomValue(workflowFlowNodesAtom);
   const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
+  const isLocked = useAtomValue(isCanvasLockedAtom);
+  const setLocked = useSetAtom(isCanvasLockedAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const { fitView } = useReactFlow();
-  const [isPanMode, setIsPanMode] = useState(false);
   const isEnabled = workflow?.status === "enabled";
+  // `isEditable` (canEditDefinition) is the API-side gate. The lock toggle is the user-driven
+  // gate layered on top: even when permissions allow editing, the canvas stays read-only until
+  // the user unlocks it.
+  const canMutate = isEditable && !isLocked;
 
   const derivedFlowNodes = useMemo(
     () => (definition ? workflowDefinitionToFlowNodes(definition, t) : []),
@@ -95,24 +101,24 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
 
   const handleNodeDragStop = useCallback(
     (node: Node<TWorkflowNodeData>) => {
-      if (!isEditable) return;
+      if (!canMutate) return;
 
       const position = isSnapToCanvasEnabled ? snapWorkflowNodePosition(node.position) : node.position;
       setDefinition((currentDefinition) =>
         currentDefinition ? updateNodePosition(currentDefinition, node.id, position) : currentDefinition
       );
     },
-    [isEditable, isSnapToCanvasEnabled, setDefinition]
+    [canMutate, isSnapToCanvasEnabled, setDefinition]
   );
 
   const handleAutoLayout = useCallback(() => {
-    if (!isEditable) return;
+    if (!canMutate) return;
     setDefinition((currentDefinition) =>
       currentDefinition ? reorganizeWorkflowDefinition(currentDefinition) : currentDefinition
     );
     // Defer one frame so the new node positions render before RF recenters the viewport.
     requestAnimationFrame(() => fitView({ padding: 0.25, maxZoom: 0.85, minZoom: 0.4, duration: 300 }));
-  }, [isEditable, setDefinition, fitView]);
+  }, [canMutate, setDefinition, fitView]);
 
   const handleRunWorkflow = () => {
     // Run/test dispatch lands with the test endpoint client wiring (separate ticket); the
@@ -120,15 +126,17 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     toast(t("workspace.workflows.test_not_implemented"));
   };
 
-  const handleEdit = () => {
-    // Definition edits aren't accepted by the API while the workflow is enabled — surface that
-    // up front instead of letting the user mutate the canvas and fail on save.
-    if (isEnabled) {
-      toast(t("workspace.workflows.edit_blocked_active"));
+  const handleToggleLock = () => {
+    if (!isLocked) {
+      setLocked(true);
       return;
     }
-    const triggerId = definition?.trigger.id;
-    if (triggerId) openNodeConfigModal(triggerId);
+    if (isEnabled) {
+      toast.error(t("workspace.workflows.edit_blocked_active"));
+      return;
+    }
+    if (!isEditable) return;
+    setLocked(false);
   };
 
   return (
@@ -136,16 +144,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
       className={cn(
         "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
-        <Button variant="secondary" onClick={handleEdit}>
-          <PencilIcon className="size-4" />
-          {t("workspace.workflows.edit")}
-        </Button>
-        <Button variant="secondary" onClick={handleRunWorkflow}>
-          <PlayIcon className="size-4" />
-          {t("workspace.workflows.run")}
-        </Button>
-      </div>
+      <Button variant="secondary" className="absolute right-4 top-4 z-10" onClick={handleRunWorkflow}>
+        <PlayIcon className="size-4" />
+        {t("workspace.workflows.run")}
+      </Button>
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
@@ -158,7 +160,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         fitView
         fitViewOptions={{ padding: 0.25, maxZoom: 0.85, minZoom: 0.4 }}
         defaultViewport={{ x: 0, y: 0, zoom: 0.85 }}
-        nodesDraggable={isEditable && !isPanMode}
+        nodesDraggable={canMutate}
         nodesConnectable={false}
         snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
         snapToGrid={isSnapToCanvasEnabled}
@@ -166,10 +168,11 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         elementsSelectable
       />
       <CanvasControls
-        isEditable={isEditable}
-        isPanMode={isPanMode}
-        onTogglePanMode={() => setIsPanMode((current) => !current)}
+        canEdit={isEditable}
+        canMutate={canMutate}
+        isLocked={isLocked}
         onAutoLayout={handleAutoLayout}
+        onToggleLock={handleToggleLock}
       />
     </div>
   );

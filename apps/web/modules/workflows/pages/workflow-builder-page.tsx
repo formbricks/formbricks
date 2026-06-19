@@ -1,11 +1,13 @@
 "use client";
 
+import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowNodeConfigModal } from "@/modules/workflows/components/inspector/workflow-node-config-modal";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
+import { isCanvasLockedAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowBuilderPageProps {
   workflowId: string;
@@ -15,6 +17,7 @@ interface WorkflowBuilderPageProps {
 export const WorkflowBuilderPage = ({ workflowId, isReadOnly }: Readonly<WorkflowBuilderPageProps>) => {
   const { t } = useTranslation();
   const builder = useWorkflowBuilder({ workflowId, isReadOnly });
+  const isLocked = useAtomValue(isCanvasLockedAtom);
 
   if (builder.isLoading) {
     return <WorkflowBuilderBodyLoading />;
@@ -28,6 +31,10 @@ export const WorkflowBuilderPage = ({ workflowId, isReadOnly }: Readonly<Workflo
     );
   }
 
+  // Modal inputs honour the canvas lock — when locked, the user can still open a node and
+  // inspect its configuration, but every field is read-only.
+  const canEditNode = builder.canEditDefinition && !isLocked;
+
   return (
     <div className="flex flex-col gap-4 rounded-lg bg-slate-100 p-4">
       <section className="flex min-h-[calc(100vh-220px)] gap-4">
@@ -39,11 +46,7 @@ export const WorkflowBuilderPage = ({ workflowId, isReadOnly }: Readonly<Workflo
           canEditMetadata={builder.canEditMetadata}
         />
       </section>
-      <WorkflowNodeConfigModal
-        isEditable={builder.canEditDefinition}
-        onSave={builder.save}
-        isSaving={builder.isSaving}
-      />
+      <WorkflowNodeConfigModal isEditable={canEditNode} onSave={builder.save} isSaving={builder.isSaving} />
     </div>
   );
 };

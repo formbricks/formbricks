@@ -60,6 +60,11 @@ export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom)
 // Primitive (not derived) so it can be hydrated synchronously via jotai/utils' useHydrateAtoms.
 export const surveyChoicesAtom = atom<TWorkflowSurveyChoice[]>([]);
 
+// Canvas starts locked so users land in a read-only view; the lock button in the toolbar
+// flips it after we confirm the workflow status allows editing. A successful save also
+// re-locks (see useWorkflowBuilder).
+export const isCanvasLockedAtom = atom<boolean>(true);
+
 export const setWorkflowSavingAtom = atom(null, (get, set, isSaving: boolean) => {
   set(
     workflowEditorAtom,
