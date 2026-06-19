@@ -20,6 +20,7 @@ import {
   ssoRecoveryAfter,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
+import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
 import { betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -190,6 +191,7 @@ export const auth = betterAuth({
       "/request-password-reset": { window: 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
       "/two-factor/*": { window: 60, max: 5 },
+      "/sso-recovery/*": { window: 60, max: 5 }, // brute-force defense on the recovery magic-link sign-in
     },
   },
 
@@ -223,6 +225,10 @@ export const auth = betterAuth({
     // SSO via generic OAuth (Azure/OIDC + the BoxyHQ SAML bridge); empty config when no license or
     // providers are configured. The account-linking/provisioning hooks are a separate reviewed pass.
     genericOAuth({ config: ssoGenericOAuthConfig }),
+    // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
+    // path (recovery-scoped, not a general magic-link). Inert until cutover (handler mount + email
+    // repoint). See better-auth-recovery-signin.ts.
+    ssoRecoverySignInPlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],
