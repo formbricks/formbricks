@@ -1,11 +1,37 @@
 import preact from "@preact/preset-vite";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEnv } from "vite";
+import { loadEnv, type Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 import { visualizer } from "rollup-plugin-visualizer";
+
+// Stubs the @formbricks/survey-ui/styles?inline import during vitest runs so that
+// tests do not require packages/survey-ui to be built first. The plugin only
+// activates when VITEST is set, leaving production builds untouched.
+const stubSurveyUiStylesForVitest = (): Plugin => {
+  const stubId = "\0virtual:survey-ui-styles-stub";
+  return {
+    name: "formbricks:stub-survey-ui-styles-in-tests",
+    enforce: "pre",
+    apply() {
+      return process.env.VITEST === "true";
+    },
+    resolveId(source) {
+      if (source === "@formbricks/survey-ui/styles?inline") {
+        return stubId;
+      }
+      return null;
+    },
+    load(id) {
+      if (id === stubId) {
+        return 'export default "";';
+      }
+      return null;
+    },
+  };
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -100,6 +126,7 @@ const config = ({ mode }) => {
     },
     plugins: [
       ...sharedConfig.plugins,
+      stubSurveyUiStylesForVitest(),
       copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
       process.env.ANALYZE === "true" && visualizer({ filename: resolve(__dirname, "stats.html"), open: false, gzipSize: true, brotliSize: true }),
     ],
