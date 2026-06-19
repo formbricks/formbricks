@@ -11,15 +11,11 @@ import {
 } from "@/modules/workflows/state/editor";
 
 interface WorkflowInspectorPanelProps {
-  workflowId: string;
-  isReadOnly: boolean;
   canEditDefinition: boolean;
   canEditMetadata: boolean;
 }
 
 export const WorkflowInspectorPanel = ({
-  workflowId,
-  isReadOnly,
   canEditDefinition,
   canEditMetadata,
 }: Readonly<WorkflowInspectorPanelProps>) => {
@@ -41,12 +37,7 @@ export const WorkflowInspectorPanel = ({
   return (
     <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start">
       <AiAssistantSection overviewText={overviewText} />
-      <SettingsSection
-        workflowId={workflowId}
-        isReadOnly={isReadOnly}
-        canEditDefinition={canEditDefinition}
-        canEditMetadata={canEditMetadata}
-      />
+      <SettingsSection canEditDefinition={canEditDefinition} canEditMetadata={canEditMetadata} />
     </aside>
   );
 };

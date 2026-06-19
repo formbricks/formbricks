@@ -14,38 +14,30 @@ import {
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
-import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import {
   setWorkflowDescriptionAtom,
   setWorkflowNameAtom,
-  workflowAtom,
   workflowDescriptionAtom,
   workflowNameAtom,
 } from "@/modules/workflows/state/editor";
 import type { TWorkflowOperationalSettings } from "@/modules/workflows/types";
 
 interface SettingsSectionProps {
-  workflowId: string;
-  isReadOnly: boolean;
   canEditDefinition: boolean;
   canEditMetadata: boolean;
   settings?: TWorkflowOperationalSettings;
 }
 
 export const SettingsSection = ({
-  workflowId,
-  isReadOnly,
   canEditDefinition,
   canEditMetadata,
   settings,
 }: Readonly<SettingsSectionProps>) => {
   const { t } = useTranslation();
-  const workflow = useAtomValue(workflowAtom);
   const workflowName = useAtomValue(workflowNameAtom);
   const workflowDescription = useAtomValue(workflowDescriptionAtom);
   const setWorkflowName = useSetAtom(setWorkflowNameAtom);
   const setWorkflowDescription = useSetAtom(setWorkflowDescriptionAtom);
-  const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
 
   const [capRunsEnabled, setCapRunsEnabled] = useState(settings?.capRunsEnabled ?? false);
   const [capRunsLimit, setCapRunsLimit] = useState(settings?.capRunsLimit ?? "10");
@@ -58,16 +50,6 @@ export const SettingsSection = ({
     setCapRunsLimit(settings?.capRunsLimit ?? "10");
     setCapRunsUnit(settings?.capRunsUnit ?? "day");
   }, [settings?.capRunsEnabled, settings?.capRunsLimit, settings?.capRunsUnit]);
-
-  const isArchived = workflow?.status === "archived";
-  const isActive = workflow?.status === "enabled";
-
-  const handleActivate = () => {
-    builder.enable();
-  };
-  const handleDeactivate = () => {
-    builder.disable();
-  };
 
   return (
     <InspectorSection title={t("workspace.workflows.settings_title")}>
@@ -94,21 +76,6 @@ export const SettingsSection = ({
             className="bg-white"
             placeholder={t("workspace.workflows.workflow_description_placeholder")}
             onChange={(event) => setWorkflowDescription(event.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2">
-          <div className="flex flex-col">
-            <Label htmlFor="workflow-settings-active" className="text-sm font-medium">
-              {t("workspace.workflows.active_label")}
-            </Label>
-            <span className="text-xs text-slate-500">{t("workspace.workflows.active_description")}</span>
-          </div>
-          <Switch
-            id="workflow-settings-active"
-            checked={isActive}
-            disabled={isReadOnly || isArchived || builder.isTransitioning}
-            onCheckedChange={(checked) => (checked ? handleActivate() : handleDeactivate())}
           />
         </div>
 

@@ -4,10 +4,9 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { ArchiveIcon, ArchiveRestoreIcon } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { Switch } from "@/modules/ui/components/switch";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
-import { getWorkflowStatusBadge } from "@/modules/workflows/lib/display";
 import { isCanvasLockedAtom, workflowAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowHeaderCtaProps {
@@ -29,16 +28,36 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
     setCanvasLocked(true);
   };
 
+  const handleActiveChange = (checked: boolean) => {
+    if (checked) {
+      builder.enable();
+    } else {
+      builder.disable();
+    }
+  };
+
   // Only the edit tab gets the lifecycle controls — the runs tab is read-only.
   if (segment !== null) return null;
   if (!workflow) return null;
 
-  const statusBadge = getWorkflowStatusBadge(workflow.status, t);
   const isArchived = workflow.status === "archived";
+  const isActive = workflow.status === "enabled";
 
   return (
-    <div className="flex items-center gap-2">
-      <Badge text={statusBadge.label} type={statusBadge.type} size="normal" />
+    <div className="flex items-center gap-3">
+      {!isArchived && (
+        <div className="flex items-center gap-2">
+          <Switch
+            id="workflow-header-active"
+            checked={isActive}
+            disabled={isReadOnly || builder.isTransitioning}
+            onCheckedChange={handleActiveChange}
+          />
+          <label htmlFor="workflow-header-active" className="text-sm font-medium text-slate-700">
+            {isActive ? t("workspace.workflows.active") : t("workspace.workflows.inactive")}
+          </label>
+        </div>
+      )}
       {isArchived ? (
         <Button
           type="button"

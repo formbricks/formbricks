@@ -3890,8 +3890,7 @@
       "value_text": "Value (Text)"
     },
     "workflows": {
-      "active_description": "Run this workflow when its trigger fires.",
-      "active_label": "Active",
+      "active": "Active",
       "add_step": "Add step",
       "ai_assistant_description": "AI outputs can be wrong",
       "ai_assistant_placeholder": "How can I help you?",
@@ -3930,6 +3929,7 @@
       "expand_inspector": "Expand details",
       "if_else": "If / Else",
       "if_else_summary": "Branch the workflow based on a condition.",
+      "inactive": "Inactive",
       "inspector_unsupported_node": "This node type doesn't have a configuration form yet.",
       "load_failed": "Could not load the workflow.",
       "lock_canvas": "Lock canvas",
