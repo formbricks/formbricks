@@ -6,8 +6,8 @@ import { sendPasswordResetLinkEmail, sendVerificationLinkEmail } from "@/modules
 
 /**
  * Integration coverage for email verification + password reset (ENG-1054) against a real Postgres.
- * Exercises the Better Auth email callbacks (which reuse the Formbricks mailer — captured here), the
- * hashed-at-rest verification tokens, the bcrypt re-hash on reset, and revokeSessionsOnPasswordReset.
+ * Exercises the Better Auth email callbacks (which reuse the Formbricks mailer — captured here),
+ * single-use token consumption (getAndDelete), the bcrypt re-hash on reset, and revokeSessionsOnPasswordReset.
  */
 
 // Verification links are query-form (/verify-email?token=…); reset links are path-form
@@ -41,6 +41,10 @@ describe("Better Auth email verification (real Postgres)", () => {
     expect((await prisma.user.findUnique({ where: { email: "verify@example.com" } }))?.emailVerified).toBe(
       true
     );
+
+    // re-verifying is idempotent (already-verified → success, no user), not an error
+    const replay = await auth.api.verifyEmail({ query: { token } });
+    expect(replay).toMatchObject({ status: true });
   });
 });
 
@@ -65,6 +69,9 @@ describe("Better Auth password reset (real Postgres)", () => {
     expect(token).toBeTruthy();
 
     await auth.api.resetPassword({ body: { token, newPassword: "NewPassw0rd!" } });
+
+    // the reset token is single-use (consumed via getAndDelete) — replaying it fails
+    await expect(auth.api.resetPassword({ body: { token, newPassword: "Another1!" } })).rejects.toBeTruthy();
 
     // sessions revoked on reset (revokeSessionsOnPasswordReset)
     expect(await prisma.session.count()).toBe(0);
