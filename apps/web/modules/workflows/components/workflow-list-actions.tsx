@@ -1,10 +1,18 @@
 "use client";
 
-import { ArchiveIcon, CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  CopyIcon,
+  MoreVertical,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TWorkflowStatus } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -18,11 +26,13 @@ import {
 import { useArchiveWorkflow } from "../hooks/use-archive-workflow";
 import { useDeleteWorkflow } from "../hooks/use-delete-workflow";
 import { useDuplicateWorkflow } from "../hooks/use-duplicate-workflow";
+import { useUnarchiveWorkflow } from "../hooks/use-unarchive-workflow";
 import type { workflowKeys } from "../lib/query";
 
 interface WorkflowListActionsProps {
   workflowId: string;
   workflowName: string;
+  status: TWorkflowStatus;
   workspaceId: string;
   isReadOnly: boolean;
   queryKey: ReturnType<typeof workflowKeys.list>;
@@ -31,6 +41,7 @@ interface WorkflowListActionsProps {
 export const WorkflowListActions = ({
   workflowId,
   workflowName,
+  status,
   workspaceId,
   isReadOnly,
   queryKey,
@@ -42,6 +53,7 @@ export const WorkflowListActions = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const archiveWorkflowMutation = useArchiveWorkflow({ queryKey });
+  const unarchiveWorkflowMutation = useUnarchiveWorkflow();
   const deleteWorkflowMutation = useDeleteWorkflow({ queryKey });
   const duplicateWorkflowMutation = useDuplicateWorkflow();
 
@@ -72,6 +84,20 @@ export const WorkflowListActions = ({
         },
         onError: (error) => {
           toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.archive_failed")));
+        },
+      }
+    );
+  };
+
+  const handleUnarchive = () => {
+    unarchiveWorkflowMutation.mutate(
+      { workflowId },
+      {
+        onSuccess: () => {
+          toast.success(t("workspace.workflows.unarchive_success"));
+        },
+        onError: (error) => {
+          toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.unarchive_failed")));
         },
       }
     );
@@ -121,15 +147,27 @@ export const WorkflowListActions = ({
               }}>
               {t("common.duplicate")}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              icon={<ArchiveIcon className="size-4" />}
-              disabled={isReadOnly}
-              onSelect={(event) => {
-                event.preventDefault();
-                setIsArchiveDialogOpen(true);
-              }}>
-              {t("common.archive")}
-            </DropdownMenuItem>
+            {status === "archived" ? (
+              <DropdownMenuItem
+                icon={<ArchiveRestoreIcon className="size-4" />}
+                disabled={isReadOnly || unarchiveWorkflowMutation.isPending}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  handleUnarchive();
+                }}>
+                {t("workspace.workflows.unarchive")}
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                icon={<ArchiveIcon className="size-4" />}
+                disabled={isReadOnly}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setIsArchiveDialogOpen(true);
+                }}>
+                {t("common.archive")}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               icon={<TrashIcon className="size-4" />}
               disabled={isReadOnly}

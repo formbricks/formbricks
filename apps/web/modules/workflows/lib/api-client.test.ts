@@ -210,6 +210,18 @@ describe("workflows api-client requests", () => {
     );
   });
 
+  test("unarchiveWorkflow posts to the unarchive endpoint and unwraps the resource", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse({ data: { id: "wf_1", status: "disabled" } }));
+
+    const result = await unarchiveWorkflow("wf_1");
+
+    expect(result).toEqual({ id: "wf_1", status: "disabled" });
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v3/workflows/wf_1/unarchive",
+      expect.objectContaining({ method: "POST", cache: "no-store" })
+    );
+  });
+
   test("deleteWorkflow resolves on a 204 with no body", async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(new Response(null, { status: 204 }));
 

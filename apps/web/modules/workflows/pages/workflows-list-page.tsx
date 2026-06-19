@@ -169,6 +169,7 @@ export const WorkflowsListPage = ({
                 <WorkflowListActions
                   workflowId={workflow.id}
                   workflowName={workflow.name}
+                  status={workflow.status}
                   workspaceId={workspaceId}
                   isReadOnly={isReadOnly}
                   queryKey={queryKey}
