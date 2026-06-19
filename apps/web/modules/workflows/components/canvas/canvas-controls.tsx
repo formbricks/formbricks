@@ -22,11 +22,6 @@ interface ControlDescriptor {
   onClick: () => void;
 }
 
-/**
- * Custom canvas controls matching the Figma design — bottom-center cluster of four buttons:
- * zoom-in, zoom-out, pan tool, and an "auto layout" (magic) trigger. Replaces React Flow's
- * default `<Controls>` so we can match the visual treatment.
- */
 export const CanvasControls = ({
   isEditable,
   isPanMode,

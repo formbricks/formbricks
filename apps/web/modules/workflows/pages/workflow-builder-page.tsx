@@ -12,12 +12,6 @@ interface WorkflowBuilderPageProps {
   isReadOnly: boolean;
 }
 
-/**
- * Workflow detail page content. Owns the canonical load via `useWorkflowBuilder` (the layout
- * header CTA also uses the hook but passes `loadOnMount: false` so only one fetch fires). Name,
- * description, and lifecycle controls have moved into the layout PageHeader CTA and the
- * inspector's Settings section, giving the canvas + inspector the full body real estate.
- */
 export const WorkflowBuilderPage = ({ workflowId, isReadOnly }: Readonly<WorkflowBuilderPageProps>) => {
   const builder = useWorkflowBuilder({ workflowId, isReadOnly });
 

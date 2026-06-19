@@ -31,13 +31,6 @@ interface SettingsSectionProps {
   settings?: TWorkflowOperationalSettings;
 }
 
-/**
- * Workflow-level settings panel. Hosts the workflow name, description, the active toggle
- * (Switch-driven enable / disable), and the cap-runs rate limit. Reads initial cap-runs values
- * from the passed-in settings snapshot; edits live in local state until the persistence API
- * lands. Active toggle dispatches through `useWorkflowBuilder` so the badge and button spinners
- * in the page header CTA stay in sync.
- */
 export const SettingsSection = ({
   workflowId,
   isReadOnly,

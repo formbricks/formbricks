@@ -4,10 +4,6 @@ import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getStraightPath } from "@x
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/modules/ui/components/button";
 
-/**
- * Custom RF edge that renders a `+` button at the midpoint, matching the Figma vertical-stack
- * layout. The button is a visual affordance for now — wiring add-node UX lives in a follow-up.
- */
 export const AddButtonEdge = ({ id, sourceX, sourceY, targetX, targetY, markerEnd, style }: EdgeProps) => {
   const [edgePath, labelX, labelY] = getStraightPath({
     sourceX,

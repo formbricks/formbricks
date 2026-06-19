@@ -50,11 +50,6 @@ const replaceNode = (definition: TWorkflowDefinition, node: TWorkflowNode): TWor
   };
 };
 
-/**
- * Per-node configuration modal matching the Figma canvas-centered popover. Opens when a node is
- * clicked; edits happen on a local draft so the user can cancel without leaving the canvas
- * mutated.
- */
 export const WorkflowNodeConfigModal = ({ isEditable }: Readonly<WorkflowNodeConfigModalProps>) => {
   const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
@@ -66,7 +61,6 @@ export const WorkflowNodeConfigModal = ({ isEditable }: Readonly<WorkflowNodeCon
   const selectedNode = findSelectedNode(definition, selectedNodeId);
   const [draftNode, setDraftNode] = useState<TWorkflowNode | null>(selectedNode);
 
-  // Re-sync the draft whenever the modal opens for a new node so each session starts fresh.
   useEffect(() => {
     if (isOpen) {
       setDraftNode(selectedNode);

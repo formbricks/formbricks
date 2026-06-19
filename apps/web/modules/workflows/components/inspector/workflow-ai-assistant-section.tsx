@@ -10,11 +10,6 @@ interface AiAssistantSectionProps {
   overviewText: string;
 }
 
-/**
- * Formbricks AI assistant section. Visually distinct (brand-toned border) from the standard
- * inspector sections — surfaces the AI-generated overview plus a chat composer for follow-up
- * edits. The composer is a visual placeholder until the AI assistant API lands.
- */
 export const AiAssistantSection = ({ overviewText }: Readonly<AiAssistantSectionProps>) => {
   const { t } = useTranslation();
 

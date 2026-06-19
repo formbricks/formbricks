@@ -14,10 +14,6 @@ interface InspectorSectionProps {
   children: ReactNode;
 }
 
-/**
- * Shared collapsible section shell used by the workflow inspector. Each section keeps its own
- * open state so users can drill into one section without collapsing the others.
- */
 export const InspectorSection = ({
   title,
   description,

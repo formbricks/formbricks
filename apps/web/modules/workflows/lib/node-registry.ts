@@ -11,12 +11,6 @@ import { WorkflowEmailActionForm } from "@/modules/workflows/components/inspecto
 import { WorkflowTriggerForm } from "@/modules/workflows/components/inspector/workflow-trigger-form";
 import type { TWorkflowNodeCategory, TWorkflowNodeIcon } from "@/modules/workflows/state/editor";
 
-/**
- * Registry of node-kind metadata used by the canvas and inspector. Adding a new action type =
- * one entry here; the canvas projection picks up the new icon/title/summary automatically, and
- * the inspector forwards the matching `ConfigForm`.
- */
-
 export type TWorkflowNodeRegistryKind =
   | `trigger:${(typeof WORKFLOW_TRIGGERS)[keyof typeof WORKFLOW_TRIGGERS]}`
   | `action:${(typeof WORKFLOW_ACTIONS)[keyof typeof WORKFLOW_ACTIONS]}`

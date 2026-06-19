@@ -24,11 +24,6 @@ interface WorkflowInspectorPanelProps {
   isEditable: boolean;
 }
 
-/**
- * Right-side inspector for the workflow builder. Composes three workflow-level sections —
- * Formbricks AI assistant, Settings, History — and a collapse/expand toggle. Each section is its
- * own component so they stay small and easy to swap when the real data sources land.
- */
 export const WorkflowInspectorPanel = ({
   workflowId,
   isReadOnly,

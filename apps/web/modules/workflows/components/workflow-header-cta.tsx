@@ -15,12 +15,6 @@ interface WorkflowHeaderCtaProps {
   isReadOnly: boolean;
 }
 
-/**
- * Page-header CTA for the workflow detail layout — renders the live status badge plus the
- * Archive (or Unarchive) and Save buttons. Hidden on the runs tab. Shares state with the builder
- * page through the Jotai store wrapping the layout, so the badge and button spinners stay in
- * sync with edits happening below.
- */
 export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowHeaderCtaProps>) => {
   const { t } = useTranslation();
   const segment = useSelectedLayoutSegment();

@@ -26,11 +26,6 @@ const HistoryStatCard = ({ label, value }: { label: string; value: string }) => 
   </div>
 );
 
-/**
- * Run history section. Shows aggregate stats + a recent-runs table. Data flows in via props
- * (currently from `getPlaceholderWorkflowHistory`) so the component stays unchanged when the
- * real runs API client lands.
- */
 export const HistorySection = ({ history }: Readonly<HistorySectionProps>) => {
   const { t } = useTranslation();
   const [historyRange, setHistoryRange] = useState("last_7_days");
