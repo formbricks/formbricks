@@ -55,7 +55,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
           <SelectTrigger id="workflow-trigger-survey" className="bg-white">
             <SelectValue placeholder={t("workspace.workflows.trigger_survey_placeholder")} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="mx-1">
             {surveyChoices.length === 0 ? (
               <div className="px-3 py-2 text-sm text-slate-500">
                 {t("workspace.workflows.trigger_survey_empty")}
