@@ -7,6 +7,13 @@ import { prisma } from "@formbricks/database";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_VERIFICATION_DISABLED,
+  ENTERPRISE_LICENSE_KEY,
+  GITHUB_ID,
+  GITHUB_OAUTH_ENABLED,
+  GITHUB_SECRET,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_OAUTH_ENABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
   SESSION_MAX_AGE,
 } from "@/lib/constants";
@@ -21,6 +28,23 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
   return (dbUser?.locale ?? "en-US") as TUserLocale;
 };
+
+/**
+ * SSO social providers, gated behind ENTERPRISE_LICENSE_KEY (parity with the NextAuth
+ * getSSOProviders() gate) and each provider's configured credentials. Azure/OIDC + the BoxyHQ SAML
+ * bridge (genericOAuth) and the account-linking / verify-before-link (SSO recovery) flow are the
+ * intricate, security-sensitive parts of Phase 5 (design doc D7) — deferred to a reviewed pass.
+ */
+const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
+  ? {
+      ...(GITHUB_OAUTH_ENABLED
+        ? { github: { clientId: GITHUB_ID ?? "", clientSecret: GITHUB_SECRET ?? "" } }
+        : {}),
+      ...(GOOGLE_OAUTH_ENABLED
+        ? { google: { clientId: GOOGLE_CLIENT_ID ?? "", clientSecret: GOOGLE_CLIENT_SECRET ?? "" } }
+        : {}),
+    }
+  : {};
 
 /**
  * Better Auth server instance (ENG-1054 — NextAuth → Better Auth migration).
@@ -38,7 +62,7 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  *
  * Deferred to later phases (kept out so they don't half-activate against the live NextAuth flows):
  *  - `emailVerified` Date→boolean column conversion (Phase 2/3 — required before requireEmailVerification works at cutover)
- *  - `genericOAuth` providers: Google/GitHub/Azure/OIDC + the BoxyHQ SAML bridge (Phase 5)
+ *  - SSO genericOAuth providers (Azure/OIDC + BoxyHQ SAML bridge) + account-linking/verify-before-link (Phase 5 — reviewed pass; Google/GitHub social done)
  *  - audit-log + Sentry wiring via hooks/onAPIError (Phase 7)
  */
 export const auth = betterAuth({
@@ -54,6 +78,10 @@ export const auth = betterAuth({
   // Sessions, verification records, and rate-limit counters in Redis (existing infra), shared
   // across instances. Sessions also persist to the DB via session.storeSessionInDatabase below.
   secondaryStorage: redisSecondaryStorage,
+
+  // SSO: Google/GitHub now; Azure/OIDC/SAML (genericOAuth) + account-linking are the reviewed
+  // Phase 5 pass (see ssoSocialProviders above).
+  socialProviders: ssoSocialProviders,
 
   emailAndPassword: {
     enabled: true,
