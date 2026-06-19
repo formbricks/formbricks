@@ -49,6 +49,7 @@ export const WorkflowListActions = ({
   const { t } = useTranslation();
   const router = useRouter();
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -119,7 +120,7 @@ export const WorkflowListActions = ({
 
   return (
     <div id={`${workflowId}-workflow-actions`} data-testid="workflow-dropdown-menu">
-      <DropdownMenu>
+      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
           <button
             type="button"
@@ -142,6 +143,7 @@ export const WorkflowListActions = ({
               disabled={isReadOnly || duplicateWorkflowMutation.isPending}
               onSelect={(event) => {
                 event.preventDefault();
+                setIsMenuOpen(false);
                 handleDuplicate();
               }}>
               {t("common.duplicate")}
@@ -152,6 +154,7 @@ export const WorkflowListActions = ({
                 disabled={isReadOnly || unarchiveWorkflowMutation.isPending}
                 onSelect={(event) => {
                   event.preventDefault();
+                  setIsMenuOpen(false);
                   handleUnarchive();
                 }}>
                 {t("workspace.workflows.unarchive")}
@@ -162,6 +165,7 @@ export const WorkflowListActions = ({
                 disabled={isReadOnly}
                 onSelect={(event) => {
                   event.preventDefault();
+                  setIsMenuOpen(false);
                   setIsArchiveDialogOpen(true);
                 }}>
                 {t("common.archive")}
@@ -172,6 +176,7 @@ export const WorkflowListActions = ({
               disabled={isReadOnly}
               onSelect={(event) => {
                 event.preventDefault();
+                setIsMenuOpen(false);
                 setIsDeleteDialogOpen(true);
               }}>
               {t("common.delete")}
