@@ -12,7 +12,11 @@ import {
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
-import { ssoDatabaseHooks, ssoLicenseGateBefore } from "@/modules/ee/sso/lib/better-auth-hooks";
+import {
+  ssoDatabaseHooks,
+  ssoLicenseGateBefore,
+  ssoRecoveryAfter,
+} from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -157,10 +161,12 @@ export const auth = betterAuth({
   // recovery is the remaining Phase 5c work.
   databaseHooks: ssoDatabaseHooks,
 
-  // Request hooks. `ssoLicenseGateBefore` re-checks the SSO/SAML license on every SSO callback —
-  // this covers existing-user sign-ins (which skip user.create), parity with handleSsoCallback.
+  // Request hooks (parity with handleSsoCallback). `before` re-checks the SSO/SAML license on every
+  // SSO callback (covers existing-user sign-ins that skip user.create); `after` turns Better Auth's
+  // "account not linked" collision into the verify-before-link recovery flow.
   hooks: {
     before: ssoLicenseGateBefore,
+    after: ssoRecoveryAfter,
   },
 
   rateLimit: {

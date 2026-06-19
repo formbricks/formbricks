@@ -1,11 +1,19 @@
 import "server-only";
 import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
+import { prisma } from "@formbricks/database";
+import { WEBAPP_URL } from "@/lib/constants";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { normalizeSsoProvider } from "./provider-normalization";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
-import { getSsoProvisioningDecision, setSsoProvisioningDecision } from "./sso-request-context";
+import { startSsoRecovery } from "./sso-recovery";
+import {
+  getPendingSsoIdentity,
+  getSsoProvisioningDecision,
+  setSsoProvisioningDecision,
+} from "./sso-request-context";
 
 /**
  * Resolve the SSO provider id from a Better Auth callback endpoint context, else null.
@@ -137,4 +145,54 @@ export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
   if (identityProvider === "saml" && !(await getIsSamlSsoEnabled())) {
     throw new APIError("FORBIDDEN", { message: "SAML SSO is not enabled for this instance." });
   }
+});
+
+/**
+ * Request hook (`hooks.after`) that turns Better Auth's "account not linked" collision into
+ * Formbricks' verify-before-link SSO recovery (design doc §13). With `accountLinking.enabled:false`,
+ * an SSO sign-in whose email matches an existing account redirects to `?error=account_not_linked`.
+ * We detect that on the callback, read the SSO identity captured in `mapProfileToUser`, and — if the
+ * email maps to an existing user — start recovery (inbox-verification email + redirect to the
+ * "check your email" page) instead of the generic error. Parity with handleSsoCallback's
+ * email-match → startSsoRecovery branch. Inert until cutover (route unmounted + the handler must wrap
+ * `auth.handler` in `runWithSsoRequestContext`).
+ */
+export const ssoRecoveryAfter = createAuthMiddleware(async (ctx) => {
+  const providerId = getSsoProviderFromContext(ctx);
+  const provider = providerId ? normalizeSsoProvider(providerId) : null;
+  if (!provider) return; // not an SSO callback
+
+  // Only act on Better Auth's account-collision redirect (handleOAuthUserInfo returns
+  // "account not linked" → the callback redirects to <errorURL>?error=account_not_linked).
+  const responseHeaders = (ctx.context as { responseHeaders?: { get(name: string): string | null } })
+    .responseHeaders;
+  if (!responseHeaders?.get("location")?.includes("error=account_not_linked")) return;
+
+  const identity = getPendingSsoIdentity();
+  if (!identity) return; // identity not captured → fall through to the default error redirect
+
+  const existingUser = await prisma.user.findFirst({
+    where: { email: identity.email },
+    select: LINKED_SSO_LOOKUP_SELECT,
+  });
+  if (!existingUser) return; // no existing account → genuine error, leave the default redirect
+
+  let callbackUrl = "";
+  try {
+    callbackUrl = ((await getOAuthState()) as { callbackURL?: string } | null)?.callbackURL ?? "";
+  } catch {
+    // No OAuth state available → recovery still works with an empty callback URL.
+  }
+
+  const recoveryPath = await startSsoRecovery({
+    existingUser,
+    provider,
+    account: { provider, providerAccountId: identity.providerAccountId, type: "oauth" } as Parameters<
+      typeof startSsoRecovery
+    >[0]["account"],
+    callbackUrl,
+  });
+
+  // Replace the ?error=account_not_linked redirect with the verify-before-link recovery flow.
+  throw ctx.redirect(new URL(recoveryPath, WEBAPP_URL).toString());
 });

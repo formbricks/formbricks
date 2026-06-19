@@ -1,10 +1,18 @@
 import { getOAuthState } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getSsoProviderFromContext, ssoDatabaseHooks, ssoLicenseGateBefore } from "./better-auth-hooks";
-import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
 import {
+  getSsoProviderFromContext,
+  ssoDatabaseHooks,
+  ssoLicenseGateBefore,
+  ssoRecoveryAfter,
+} from "./better-auth-hooks";
+import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
+import { startSsoRecovery } from "./sso-recovery";
+import {
+  captureSsoIdentity,
   getSsoProvisioningDecision,
   runWithSsoRequestContext,
   setSsoProvisioningDecision,
@@ -22,6 +30,7 @@ vi.mock("better-auth/api", () => ({
     }
   },
 }));
+vi.mock("@formbricks/database", () => ({ prisma: { user: { findFirst: vi.fn() } } }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSsoEnabled: vi.fn(),
@@ -31,6 +40,7 @@ vi.mock("./sso-provisioning", () => ({
   gateSsoProvisioning: vi.fn(),
   provisionSsoUserMemberships: vi.fn(),
 }));
+vi.mock("./sso-recovery", () => ({ startSsoRecovery: vi.fn() }));
 
 const callbackCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "openid" } };
 const provisionDecision = {
@@ -47,6 +57,12 @@ beforeEach(() => {
   vi.mocked(gateSsoProvisioning).mockResolvedValue(provisionDecision);
   vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
   vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+  vi.mocked(prisma.user.findFirst).mockResolvedValue({
+    id: "u1",
+    email: "a@b.com",
+    locale: "en-US",
+  } as never);
+  vi.mocked(startSsoRecovery).mockResolvedValue("/auth/verification-requested?x=1");
 });
 
 describe("getSsoProviderFromContext", () => {
@@ -208,5 +224,63 @@ describe("ssoLicenseGateBefore", () => {
 
   test("allows a SAML callback when both SSO and SAML are licensed", async () => {
     await expect(ssoLicenseGateBefore(samlCtx as never)).resolves.toBeUndefined();
+  });
+});
+
+describe("ssoRecoveryAfter", () => {
+  const collisionLocation = "https://app.test/error?error=account_not_linked";
+  const makeCtx = (overrides: Record<string, unknown> = {}) => ({
+    path: "/oauth2/callback/:providerId",
+    params: { providerId: "openid" },
+    context: { responseHeaders: new Headers({ location: collisionLocation }) },
+    redirect: vi.fn((url: string) => new Error(`redirect:${url}`)),
+    ...overrides,
+  });
+
+  test("starts recovery and redirects on a collision with a captured identity + existing user", async () => {
+    const redirect = vi.fn((url: string) => new Error(`redirect:${url}`));
+    const ctx = makeCtx({ redirect });
+    await runWithSsoRequestContext(async () => {
+      captureSsoIdentity({ email: "a@b.com", providerAccountId: "sub-1" });
+      await expect(ssoRecoveryAfter(ctx as never)).rejects.toBeDefined(); // throws ctx.redirect(...)
+    });
+    expect(startSsoRecovery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "openid",
+        account: expect.objectContaining({ providerAccountId: "sub-1" }),
+      })
+    );
+    expect(redirect).toHaveBeenCalledWith(expect.stringContaining("/auth/verification-requested"));
+  });
+
+  test("ignores callbacks that did not collide", async () => {
+    const ctx = makeCtx({ context: { responseHeaders: new Headers({ location: "https://app.test/ok" }) } });
+    await runWithSsoRequestContext(async () => {
+      captureSsoIdentity({ email: "a@b.com", providerAccountId: "sub-1" });
+      await ssoRecoveryAfter(ctx as never);
+    });
+    expect(startSsoRecovery).not.toHaveBeenCalled();
+  });
+
+  test("ignores collisions with no captured identity", async () => {
+    const ctx = makeCtx();
+    await runWithSsoRequestContext(() => ssoRecoveryAfter(ctx as never));
+    expect(startSsoRecovery).not.toHaveBeenCalled();
+  });
+
+  test("ignores collisions with no matching existing user", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    const ctx = makeCtx();
+    await runWithSsoRequestContext(async () => {
+      captureSsoIdentity({ email: "ghost@b.com", providerAccountId: "sub-1" });
+      await ssoRecoveryAfter(ctx as never);
+    });
+    expect(startSsoRecovery).not.toHaveBeenCalled();
+  });
+
+  test("ignores non-SSO callbacks", async () => {
+    const ctx = makeCtx({ path: "/sign-up/email", params: {} });
+    await ssoRecoveryAfter(ctx as never);
+    expect(startSsoRecovery).not.toHaveBeenCalled();
   });
 });

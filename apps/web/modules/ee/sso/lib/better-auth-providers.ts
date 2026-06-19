@@ -19,6 +19,7 @@ import {
   SAML_OAUTH_ENABLED,
   WEBAPP_URL,
 } from "@/lib/constants";
+import { captureSsoIdentity } from "./sso-request-context";
 
 /**
  * Better Auth SSO providers (ENG-1054), mirroring the NextAuth set in `./providers.ts`. Gated behind
@@ -39,10 +40,30 @@ import {
 export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
   ? {
       ...(GITHUB_OAUTH_ENABLED
-        ? { github: { clientId: GITHUB_ID ?? "", clientSecret: GITHUB_SECRET ?? "" } }
+        ? {
+            github: {
+              clientId: GITHUB_ID ?? "",
+              clientSecret: GITHUB_SECRET ?? "",
+              // Capture the resolved identity for verify-before-link recovery (design doc §13).
+              // ⚠ providerAccountId must equal Better Auth's account.accountId — validate at cutover.
+              mapProfileToUser: (profile) => {
+                captureSsoIdentity({ email: profile.email, providerAccountId: String(profile.id) });
+                return { email: profile.email };
+              },
+            },
+          }
         : {}),
       ...(GOOGLE_OAUTH_ENABLED
-        ? { google: { clientId: GOOGLE_CLIENT_ID ?? "", clientSecret: GOOGLE_CLIENT_SECRET ?? "" } }
+        ? {
+            google: {
+              clientId: GOOGLE_CLIENT_ID ?? "",
+              clientSecret: GOOGLE_CLIENT_SECRET ?? "",
+              mapProfileToUser: (profile) => {
+                captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
+                return { email: profile.email };
+              },
+            },
+          }
         : {}),
     }
   : {};
@@ -58,6 +79,17 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               discoveryUrl: `https://login.microsoftonline.com/${AZUREAD_TENANT_ID || "common"}/v2.0/.well-known/openid-configuration`,
               scopes: ["openid", "email", "profile"],
               pkce: true,
+              mapProfileToUser: (profile) => {
+                // Capture for verify-before-link recovery; name parity with the OIDC mapping.
+                captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
+                return {
+                  email: profile.email,
+                  name:
+                    profile.name ||
+                    [profile.given_name, profile.family_name].filter(Boolean).join(" ") ||
+                    profile.preferred_username,
+                };
+              },
             } satisfies GenericOAuthConfig,
           ]
         : []),
@@ -71,14 +103,17 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               scopes: ["openid", "email", "profile"],
               pkce: true,
               requireIssuerValidation: true, // RFC 9207 mix-up defense (design doc §10.3)
-              mapProfileToUser: (profile) => ({
-                email: profile.email,
-                // Parity with provisionNewSsoUser (OIDC): name → given+family → preferred_username.
-                name:
-                  profile.name ||
-                  [profile.given_name, profile.family_name].filter(Boolean).join(" ") ||
-                  profile.preferred_username,
-              }),
+              mapProfileToUser: (profile) => {
+                captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
+                return {
+                  email: profile.email,
+                  // Parity with provisionNewSsoUser (OIDC): name → given+family → preferred_username.
+                  name:
+                    profile.name ||
+                    [profile.given_name, profile.family_name].filter(Boolean).join(" ") ||
+                    profile.preferred_username,
+                };
+              },
             } satisfies GenericOAuthConfig,
           ]
         : []),
@@ -95,11 +130,15 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               scopes: [],
               pkce: true,
               authorizationUrlParams: { provider: "saml" },
-              mapProfileToUser: (profile) => ({
-                email: profile.email,
-                // Parity with provisionNewSsoUser (SAML): name → firstName + lastName.
-                name: profile.name || [profile.firstName, profile.lastName].filter(Boolean).join(" "),
-              }),
+              mapProfileToUser: (profile) => {
+                // ⚠ BoxyHQ's userinfo id — validate it matches Better Auth's account.accountId at cutover.
+                captureSsoIdentity({ email: profile.email, providerAccountId: String(profile.id) });
+                return {
+                  email: profile.email,
+                  // Parity with provisionNewSsoUser (SAML): name → firstName + lastName.
+                  name: profile.name || [profile.firstName, profile.lastName].filter(Boolean).join(" "),
+                };
+              },
             } satisfies GenericOAuthConfig,
           ]
         : []),
