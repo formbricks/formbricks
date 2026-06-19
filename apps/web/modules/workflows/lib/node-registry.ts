@@ -7,8 +7,8 @@ import {
   WORKFLOW_ACTIONS,
   WORKFLOW_TRIGGERS,
 } from "@formbricks/workflows";
-import { WorkflowEmailActionForm } from "@/modules/workflows/components/workflow-email-action-form";
-import { WorkflowTriggerForm } from "@/modules/workflows/components/workflow-trigger-form";
+import { WorkflowEmailActionForm } from "@/modules/workflows/components/inspector/workflow-email-action-form";
+import { WorkflowTriggerForm } from "@/modules/workflows/components/inspector/workflow-trigger-form";
 import type { TWorkflowNodeCategory, TWorkflowNodeIcon } from "@/modules/workflows/state/editor";
 
 /**

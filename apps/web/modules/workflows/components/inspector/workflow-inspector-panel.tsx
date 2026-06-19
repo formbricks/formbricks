@@ -4,9 +4,9 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
-import { AiAssistantSection } from "@/modules/workflows/components/workflow-ai-assistant-section";
-import { HistorySection } from "@/modules/workflows/components/workflow-history-section";
-import { SettingsSection } from "@/modules/workflows/components/workflow-settings-section";
+import { AiAssistantSection } from "@/modules/workflows/components/inspector/workflow-ai-assistant-section";
+import { HistorySection } from "@/modules/workflows/components/inspector/workflow-history-section";
+import { SettingsSection } from "@/modules/workflows/components/inspector/workflow-settings-section";
 import {
   getPlaceholderWorkflowHistory,
   getPlaceholderWorkflowSettings,

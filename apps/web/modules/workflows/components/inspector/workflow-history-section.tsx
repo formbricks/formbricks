@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { InspectorSection } from "@/modules/workflows/components/workflow-inspector-section";
+import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
 import type { TWorkflowHistorySummary } from "@/modules/workflows/lib/placeholder-data";
 
 interface HistorySectionProps {

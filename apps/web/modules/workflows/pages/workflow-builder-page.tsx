@@ -1,8 +1,8 @@
 "use client";
 
-import { WorkflowCanvas } from "@/modules/workflows/canvas/workflow-canvas";
-import { WorkflowInspectorPanel } from "@/modules/workflows/components/workflow-inspector-panel";
-import { WorkflowNodeConfigModal } from "@/modules/workflows/components/workflow-node-config-modal";
+import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-canvas";
+import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
+import { WorkflowNodeConfigModal } from "@/modules/workflows/components/inspector/workflow-node-config-modal";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
 

@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { getNodeRegistryEntry } from "@/modules/workflows/canvas/node-registry";
+import { getNodeRegistryEntry } from "@/modules/workflows/lib/node-registry";
 import {
   closeWorkflowNodeConfigModalAtom,
   isWorkflowNodeConfigModalOpenAtom,

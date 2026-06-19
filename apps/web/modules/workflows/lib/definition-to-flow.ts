@@ -1,7 +1,7 @@
 import { type Edge, type Node, type SnapGrid } from "@xyflow/react";
 import type { TFunction } from "i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
-import { getNodeRegistryEntry } from "@/modules/workflows/canvas/node-registry";
+import { getNodeRegistryEntry } from "@/modules/workflows/lib/node-registry";
 import type { TWorkflowNodeData } from "@/modules/workflows/state/editor";
 
 export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";

@@ -4,7 +4,7 @@ import { SendIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { InspectorSection } from "@/modules/workflows/components/workflow-inspector-section";
+import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
 
 interface AiAssistantSectionProps {
   overviewText: string;

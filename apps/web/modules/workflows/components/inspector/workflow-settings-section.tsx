@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import { InspectorSection } from "@/modules/workflows/components/workflow-inspector-section";
+import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import type { TWorkflowOperationalSettings } from "@/modules/workflows/lib/placeholder-data";
 import {
