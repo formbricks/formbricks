@@ -35,7 +35,6 @@ interface OrganizationActionsProps {
   isFormbricksCloud: boolean;
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
-  isStorageConfigured: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
   enterpriseLicenseRequestFormUrl: string;
@@ -52,7 +51,6 @@ export const OrganizationActions = ({
   isFormbricksCloud,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
-  isStorageConfigured,
   isTeamAdmin,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
@@ -136,6 +134,7 @@ export const OrganizationActions = ({
         toast.success(
           `${successInvites.length} ${t("workspace.settings.general.member_invited_successfully")}`
         );
+        router.refresh();
       }
     }
   };
@@ -169,7 +168,6 @@ export const OrganizationActions = ({
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
         teams={teams}
-        isStorageConfigured={isStorageConfigured}
         isOwnerOrManager={isOwnerOrManager}
         isTeamAdmin={isTeamAdmin}
         userAdminTeamIds={userAdminTeamIds}

@@ -25,7 +25,6 @@ interface InviteMemberModalProps {
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
-  isStorageConfigured: boolean;
   isOwnerOrManager: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
@@ -40,7 +39,6 @@ export const InviteMemberModal = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   membershipRole,
-  isStorageConfigured,
   isOwnerOrManager,
   isTeamAdmin,
   userAdminTeamIds,
@@ -74,9 +72,9 @@ export const InviteMemberModal = ({
       <BulkInviteTab
         setOpen={setOpen}
         onSubmit={onSubmit}
+        teams={filteredTeams}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
-        isStorageConfigured={isStorageConfigured}
       />
     ),
   };

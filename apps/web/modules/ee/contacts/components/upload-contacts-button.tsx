@@ -10,7 +10,6 @@ import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
-import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
 import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
@@ -20,6 +19,7 @@ import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { CsvTable } from "@/modules/ui/components/csv-table";
 import {
   Dialog,
   DialogBody,
