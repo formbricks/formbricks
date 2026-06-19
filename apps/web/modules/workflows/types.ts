@@ -11,16 +11,3 @@ export interface TWorkflowOperationalSettings {
   capRunsUnit: "hour" | "day" | "week";
   aiOverview?: string;
 }
-
-export interface TWorkflowHistoryRow {
-  id: string;
-  date: string;
-  status: "success" | "fail";
-}
-
-export interface TWorkflowHistorySummary {
-  totalRuns: string;
-  failed: string;
-  avgRunTime: string;
-  rows: TWorkflowHistoryRow[];
-}

@@ -1,15 +1,11 @@
 "use client";
 
-import { useAtomValue, useSetAtom } from "jotai";
-import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
+import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/modules/ui/components/button";
 import { AiAssistantSection } from "@/modules/workflows/components/inspector/workflow-ai-assistant-section";
-import { HistorySection } from "@/modules/workflows/components/inspector/workflow-history-section";
 import { SettingsSection } from "@/modules/workflows/components/inspector/workflow-settings-section";
 import {
   isWorkflowInspectorCollapsedAtom,
-  toggleWorkflowInspectorAtom,
   workflowAtom,
   workflowDefinitionAtom,
 } from "@/modules/workflows/state/editor";
@@ -31,24 +27,8 @@ export const WorkflowInspectorPanel = ({
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
   const isCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
-  const toggleCollapsed = useSetAtom(toggleWorkflowInspectorAtom);
 
-  if (isCollapsed) {
-    return (
-      <aside className="flex w-12 shrink-0 flex-col items-center gap-2 pt-2">
-        <Button
-          aria-label={t("workspace.workflows.expand_inspector")}
-          size="icon"
-          title={t("workspace.workflows.expand_inspector")}
-          type="button"
-          variant="outline"
-          className="bg-white"
-          onClick={toggleCollapsed}>
-          <PanelRightOpenIcon />
-        </Button>
-      </aside>
-    );
-  }
+  if (isCollapsed) return null;
 
   const triggerNode = definition?.trigger;
   const hasEndingFilter = triggerNode ? triggerNode.config.endingCardIds.length > 0 : false;
@@ -60,19 +40,6 @@ export const WorkflowInspectorPanel = ({
 
   return (
     <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start">
-      <div className="flex justify-start">
-        <Button
-          aria-label={t("workspace.workflows.collapse_inspector")}
-          size="icon"
-          title={t("workspace.workflows.collapse_inspector")}
-          variant="outline"
-          className="bg-white"
-          type="button"
-          onClick={toggleCollapsed}>
-          <PanelLeftIcon />
-        </Button>
-      </div>
-
       <AiAssistantSection overviewText={overviewText} />
       <SettingsSection
         workflowId={workflowId}
@@ -80,7 +47,6 @@ export const WorkflowInspectorPanel = ({
         canEditDefinition={canEditDefinition}
         canEditMetadata={canEditMetadata}
       />
-      <HistorySection />
     </aside>
   );
 };

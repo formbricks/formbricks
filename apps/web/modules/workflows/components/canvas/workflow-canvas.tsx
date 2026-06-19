@@ -12,7 +12,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PlayIcon } from "lucide-react";
+import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -30,10 +30,12 @@ import {
 import {
   type TWorkflowNodeData,
   isCanvasLockedAtom,
+  isWorkflowInspectorCollapsedAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
   setWorkflowDefinitionAtom,
   setWorkflowFlowNodesAtom,
+  toggleWorkflowInspectorAtom,
   workflowAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
@@ -62,6 +64,8 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
   const isLocked = useAtomValue(isCanvasLockedAtom);
   const setLocked = useSetAtom(isCanvasLockedAtom);
+  const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
+  const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
@@ -144,10 +148,25 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
       className={cn(
         "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      <Button variant="secondary" className="absolute right-4 top-4 z-10" onClick={handleRunWorkflow}>
-        <PlayIcon className="size-4" />
-        {t("workspace.workflows.run")}
-      </Button>
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+        <Button variant="secondary" onClick={handleRunWorkflow}>
+          <PlayIcon className="size-4" />
+          {t("workspace.workflows.run")}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-white"
+          aria-label={t(
+            isInspectorCollapsed
+              ? "workspace.workflows.expand_inspector"
+              : "workspace.workflows.collapse_inspector"
+          )}
+          aria-pressed={!isInspectorCollapsed}
+          onClick={toggleInspector}>
+          {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
+        </Button>
+      </div>
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
