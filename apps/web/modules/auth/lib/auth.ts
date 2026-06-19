@@ -21,6 +21,7 @@ import {
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
+import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
 import { betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { redisSecondaryStorage } from "./secondary-storage";
 
@@ -110,6 +111,8 @@ export const auth = betterAuth({
         verifyLink: url,
       });
     },
+    // Re-home the "token" provider's Brevo-on-first-verification side effect (better-auth-email-verification.ts).
+    afterEmailVerification: createBrevoCustomerAfterEmailVerification,
   },
 
   // Hash verification/reset token identifiers at rest (BA default is plaintext) — matches the

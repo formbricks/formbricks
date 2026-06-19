@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
+import * as brevo from "@/modules/auth/lib/brevo";
 import { sendPasswordResetLinkEmail, sendVerificationLinkEmail } from "@/modules/email";
+
+// Spy createBrevoCustomer (the afterEmailVerification side effect) without hitting the Brevo API.
+vi.mock("@/modules/auth/lib/brevo", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/auth/lib/brevo")>();
+  return { ...actual, createBrevoCustomer: vi.fn().mockResolvedValue(undefined) };
+});
 
 /**
  * Integration coverage for email verification + password reset (ENG-1054) against a real Postgres.
@@ -39,9 +46,13 @@ describe("Better Auth email verification (real Postgres)", () => {
 
     await auth.api.verifyEmail({ query: { token } });
 
-    expect((await prisma.user.findUnique({ where: { email: "verify@example.com" } }))?.emailVerified).toBe(
-      true
-    );
+    const verifiedUser = await prisma.user.findUnique({ where: { email: "verify@example.com" } });
+    expect(verifiedUser?.emailVerified).toBe(true);
+    // afterEmailVerification re-homes the createBrevoCustomer side effect (fire-and-forget)
+    expect(brevo.createBrevoCustomer).toHaveBeenCalledWith({
+      id: verifiedUser?.id,
+      email: "verify@example.com",
+    });
 
     // verify-email is a stateless signed JWT (no getAndDelete), so re-verifying is idempotent:
     // the already-verified branch returns { status: true, user: null }
