@@ -2,23 +2,17 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { twoFactor } from "better-auth/plugins";
+import { genericOAuth, twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_VERIFICATION_DISABLED,
-  ENTERPRISE_LICENSE_KEY,
-  GITHUB_ID,
-  GITHUB_OAUTH_ENABLED,
-  GITHUB_SECRET,
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
-  GOOGLE_OAUTH_ENABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
   SESSION_MAX_AGE,
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
+import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
@@ -28,23 +22,6 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
   return (dbUser?.locale ?? "en-US") as TUserLocale;
 };
-
-/**
- * SSO social providers, gated behind ENTERPRISE_LICENSE_KEY (parity with the NextAuth
- * getSSOProviders() gate) and each provider's configured credentials. Azure/OIDC + the BoxyHQ SAML
- * bridge (genericOAuth) and the account-linking / verify-before-link (SSO recovery) flow are the
- * intricate, security-sensitive parts of Phase 5 (design doc D7) — deferred to a reviewed pass.
- */
-const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
-  ? {
-      ...(GITHUB_OAUTH_ENABLED
-        ? { github: { clientId: GITHUB_ID ?? "", clientSecret: GITHUB_SECRET ?? "" } }
-        : {}),
-      ...(GOOGLE_OAUTH_ENABLED
-        ? { google: { clientId: GOOGLE_CLIENT_ID ?? "", clientSecret: GOOGLE_CLIENT_SECRET ?? "" } }
-        : {}),
-    }
-  : {};
 
 /**
  * Better Auth server instance (ENG-1054 — NextAuth → Better Auth migration).
@@ -79,8 +56,9 @@ export const auth = betterAuth({
   // across instances. Sessions also persist to the DB via session.storeSessionInDatabase below.
   secondaryStorage: redisSecondaryStorage,
 
-  // SSO: Google/GitHub now; Azure/OIDC/SAML (genericOAuth) + account-linking are the reviewed
-  // Phase 5 pass (see ssoSocialProviders above).
+  // SSO providers (Google/GitHub social + Azure/OIDC/SAML genericOAuth) live in
+  // modules/ee/sso/lib/better-auth-providers.ts. The account-linking / verify-before-link flow is
+  // the security-sensitive Phase 5 work, re-expressed via hooks separately (pending review, D7).
   socialProviders: ssoSocialProviders,
 
   emailAndPassword: {
@@ -202,6 +180,9 @@ export const auth = betterAuth({
       totpOptions: { digits: 6, period: 30 },
       backupCodeOptions: { amount: 10, length: 10, storeBackupCodes: "encrypted" },
     }),
+    // SSO via generic OAuth (Azure/OIDC + the BoxyHQ SAML bridge); empty config when no license or
+    // providers are configured. The account-linking/provisioning hooks are a separate reviewed pass.
+    genericOAuth({ config: ssoGenericOAuthConfig }),
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],
