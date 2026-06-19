@@ -27,7 +27,6 @@ type TWorkflowEditorState = {
   isNodeConfigModalOpen: boolean;
   isSaving: boolean;
   isTransitioning: boolean;
-  surveyChoices: TWorkflowSurveyChoice[];
 };
 
 const initialWorkflowEditorState: TWorkflowEditorState = {
@@ -42,7 +41,6 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   isNodeConfigModalOpen: false,
   isSaving: false,
   isTransitioning: false,
-  surveyChoices: [],
 };
 
 export const workflowEditorAtom = atom<TWorkflowEditorState>(initialWorkflowEditorState);
@@ -58,16 +56,9 @@ export const isWorkflowSnapToCanvasEnabledAtom = atom((get) => get(workflowEdito
 export const isWorkflowNodeConfigModalOpenAtom = atom((get) => get(workflowEditorAtom).isNodeConfigModalOpen);
 export const isWorkflowSavingAtom = atom((get) => get(workflowEditorAtom).isSaving);
 export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom).isTransitioning);
-export const surveyChoicesAtom = atom((get) => get(workflowEditorAtom).surveyChoices);
 
-export const setSurveyChoicesAtom = atom(null, (get, set, choices: TWorkflowSurveyChoice[]) => {
-  set(
-    workflowEditorAtom,
-    produce(get(workflowEditorAtom), (draft) => {
-      draft.surveyChoices = choices;
-    })
-  );
-});
+// Primitive (not derived) so it can be hydrated synchronously via jotai/utils' useHydrateAtoms.
+export const surveyChoicesAtom = atom<TWorkflowSurveyChoice[]>([]);
 
 export const setWorkflowSavingAtom = atom(null, (get, set, isSaving: boolean) => {
   set(

@@ -1,8 +1,9 @@
 "use client";
 
-import { Provider as JotaiProvider, useSetAtom } from "jotai";
-import { type ReactNode, useEffect } from "react";
-import { setSurveyChoicesAtom } from "@/modules/workflows/state/editor";
+import { Provider as JotaiProvider } from "jotai";
+import { useHydrateAtoms } from "jotai/utils";
+import type { ReactNode } from "react";
+import { surveyChoicesAtom } from "@/modules/workflows/state/editor";
 import type { TWorkflowSurveyChoice } from "@/modules/workflows/types";
 
 interface WorkflowEditorProviderProps {
@@ -10,11 +11,10 @@ interface WorkflowEditorProviderProps {
   surveyChoices?: TWorkflowSurveyChoice[];
 }
 
+// Seeds the survey-choices atom before the first child render so dropdowns aren't briefly
+// empty after navigation. useHydrateAtoms only writes on first render.
 const SurveyChoicesHydrator = ({ choices }: Readonly<{ choices: TWorkflowSurveyChoice[] }>) => {
-  const setSurveyChoices = useSetAtom(setSurveyChoicesAtom);
-  useEffect(() => {
-    setSurveyChoices(choices);
-  }, [choices, setSurveyChoices]);
+  useHydrateAtoms([[surveyChoicesAtom, choices]]);
   return null;
 };
 
