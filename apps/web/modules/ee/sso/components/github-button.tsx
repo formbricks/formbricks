@@ -1,8 +1,8 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { authClient } from "@/modules/auth/lib/auth-client";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { GithubIcon } from "@/modules/ui/components/icons";
@@ -21,9 +21,9 @@ export const GithubButton = ({ returnToUrl, lastUsed, source }: GithubButtonProp
     }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    await signIn("github", {
-      redirect: true,
-      callbackUrl: returnToUrlWithSource,
+    await authClient.signIn.social({
+      provider: "github",
+      callbackURL: returnToUrlWithSource,
     });
   };
 

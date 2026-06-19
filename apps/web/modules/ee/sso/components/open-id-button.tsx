@@ -1,9 +1,9 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { authClient } from "@/modules/auth/lib/auth-client";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 
@@ -29,9 +29,9 @@ export const OpenIdButton = ({
     }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    await signIn("openid", {
-      redirect: true,
-      callbackUrl: returnToUrlWithSource,
+    await authClient.signIn.oauth2({
+      providerId: "openid",
+      callbackURL: returnToUrlWithSource,
     });
   }, [returnToUrl, source]);
 

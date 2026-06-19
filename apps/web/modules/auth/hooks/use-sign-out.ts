@@ -1,7 +1,7 @@
-import { signOut } from "next-auth/react";
 import { logger } from "@formbricks/logger";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
 import { logSignOutAction } from "@/modules/auth/actions/sign-out";
+import { authClient } from "@/modules/auth/lib/auth-client";
 
 interface UseSignOutOptions {
   reason?:
@@ -52,11 +52,15 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
     }
 
-    // Call NextAuth signOut
-    return await signOut({
-      redirect: options?.redirect,
-      callbackUrl: options?.callbackUrl,
-    });
+    // Better Auth sign-out clears the BA session; the redirect is manual (BA's signOut doesn't take
+    // redirect/callbackUrl like NextAuth's did). Mirror NextAuth's contract: navigate by default, or
+    // return { url } when the caller passes redirect:false so it can navigate itself.
+    await authClient.signOut();
+    const url = options?.callbackUrl ?? "/auth/login";
+    if (options?.redirect === false) {
+      return { url };
+    }
+    window.location.href = url;
   };
 
   return { signOut: signOutWithAudit };
