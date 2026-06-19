@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import bcryptjs from "bcryptjs";
 import { logger } from "@formbricks/logger";
 import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { type Prisma, PrismaClient } from "./prisma";
 import { createPrismaPgAdapter } from "./prisma-adapter";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
@@ -134,7 +135,7 @@ async function seedDemoWorkflows(workspaceId: string, surveyId: string): Promise
   ];
 
   for (const spec of specs) {
-    const definition: PrismaJson.WorkflowDefinition = {
+    const definition: TWorkflowDefinition = {
       schemaVersion: 1,
       entryNodeId: spec.triggerId,
       trigger: {
