@@ -1,0 +1,19 @@
+type: object
+description: >-
+  Language to connect to the created survey. `default`, if provided, must match
+  `defaultLanguage`.
+required:
+  - code
+properties:
+  code:
+    $ref: ./LocaleCode.yml
+  default:
+    type: boolean
+    description: >-
+      Optional marker for readability; only the `defaultLanguage` entry may set
+      this to true.
+  enabled:
+    type: boolean
+    default: true
+    description: Whether this language is enabled for respondent-facing delivery.
+additionalProperties: false

@@ -1,0 +1,21 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - allowMultipleFiles
+    properties:
+      type:
+        type: string
+        enum:
+          - fileUpload
+      allowMultipleFiles:
+        type: boolean
+      maxSizeInMB:
+        type: number
+      allowedFileExtensions:
+        type: array
+        items:
+          type: string
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

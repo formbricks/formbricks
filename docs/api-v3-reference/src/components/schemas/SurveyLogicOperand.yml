@@ -1,0 +1,19 @@
+oneOf:
+  - type: object
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - static
+      value:
+        oneOf:
+          - type: string
+          - type: number
+          - type: array
+            items:
+              type: string
+    additionalProperties: false
+  - $ref: ./SurveyDynamicReference.yml

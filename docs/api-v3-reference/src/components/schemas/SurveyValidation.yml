@@ -1,0 +1,16 @@
+type: object
+description: Optional element-level validation rules.
+required:
+  - rules
+properties:
+  logic:
+    type: string
+    enum:
+      - and
+      - or
+    default: and
+  rules:
+    type: array
+    items:
+      $ref: ./SurveyValidationRule.yml
+additionalProperties: false

@@ -1,0 +1,15 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - label
+    properties:
+      type:
+        type: string
+        enum:
+          - consent
+      label:
+        $ref: ./TranslatableText.yml
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

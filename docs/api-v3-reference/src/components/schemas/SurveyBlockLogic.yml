@@ -1,0 +1,17 @@
+type: object
+description: Conditional logic rule evaluated at block level.
+required:
+  - id
+  - conditions
+  - actions
+properties:
+  id:
+    type: string
+    format: cuid2
+  conditions:
+    $ref: ./SurveyConditionGroup.yml
+  actions:
+    type: array
+    items:
+      $ref: ./SurveyLogicAction.yml
+additionalProperties: false

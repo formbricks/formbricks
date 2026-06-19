@@ -1,0 +1,55 @@
+type: object
+required:
+  - id
+  - type
+  - params
+properties:
+  id:
+    type: string
+  type:
+    type: string
+    enum:
+      - minLength
+      - maxLength
+      - pattern
+      - email
+      - url
+      - phone
+      - equals
+      - doesNotEqual
+      - contains
+      - doesNotContain
+      - minValue
+      - maxValue
+      - isGreaterThan
+      - isLessThan
+      - minSelections
+      - maxSelections
+      - minRanked
+      - rankAll
+      - minRowsAnswered
+      - answerAllRows
+      - isLaterThan
+      - isEarlierThan
+      - isBetween
+      - isNotBetween
+      - fileExtensionIs
+      - fileExtensionIsNot
+  params:
+    type: object
+    additionalProperties: true
+  field:
+    type: string
+    enum:
+      - addressLine1
+      - addressLine2
+      - city
+      - state
+      - zip
+      - country
+      - firstName
+      - lastName
+      - email
+      - phone
+      - company
+additionalProperties: false
