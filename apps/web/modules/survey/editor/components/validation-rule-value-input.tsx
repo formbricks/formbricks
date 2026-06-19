@@ -123,35 +123,6 @@ export const ValidationRuleValueInput = ({
     );
   }
 
-  // Pattern rule: surface invalid regex via a red input border. The full reason is
-  // toasted on save, and the question card itself is marked invalid (mirrors how logic
-  // errors are surfaced). No inline message — keeps the row layout aligned with the
-  // other rule rows.
-  if (ruleType === "pattern") {
-    const patternValue = typeof currentValue === "string" ? currentValue : "";
-    const isPatternInvalid = (() => {
-      if (!patternValue) return false;
-      try {
-        new RegExp(patternValue);
-        return false;
-      } catch {
-        return true;
-      }
-    })();
-
-    return (
-      <Input
-        type="text"
-        value={patternValue}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={config.valuePlaceholder}
-        className="h-9 min-w-[80px] bg-white"
-        isInvalid={isPatternInvalid}
-        aria-invalid={isPatternInvalid}
-      />
-    );
-  }
-
   // Default text/number input
   return (
     <Input
