@@ -50,7 +50,7 @@ const toResource = (row: WorkflowRow): TWorkflowResource => ({
 
 export async function loadWorkflowResource(workflowId: string): Promise<TWorkflowResource | null> {
   const row = await prisma.workflow.findUnique({ where: { id: workflowId }, select: baseSelect });
-  return row ? toResource(row as WorkflowRow) : null;
+  return row ? toResource(row) : null;
 }
 
 export async function loadWorkspaceWorkflowList(workspaceId: string): Promise<TWorkflowListItem[]> {
@@ -59,7 +59,7 @@ export async function loadWorkspaceWorkflowList(workspaceId: string): Promise<TW
     orderBy: { updatedAt: "desc" },
     select: baseSelect,
   });
-  return rows.map((row) => toListItem(row as WorkflowRow));
+  return rows.map(toListItem);
 }
 
 // Headline cards store the editor's rich-text HTML in the i18n `default` slot. The trigger

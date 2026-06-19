@@ -3948,8 +3948,6 @@
       "lock_canvas": "Lock canvas",
       "name_required": "Numele fluxului de lucru este obligatoriu.",
       "node_actions": "Node actions",
-      "overview_trigger_any_response": "Rulează fluxul de lucru când este primit un răspuns nou.",
-      "overview_trigger_with_endings": "Rulează fluxul de lucru când este primit un răspuns nou și ajunge la una dintre cardurile de încheiere selectate.",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",
       "relative_today": "Today, {time}",

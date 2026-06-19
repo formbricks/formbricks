@@ -22,7 +22,7 @@ const WorkflowDetailLayout = async (
     loadWorkspaceSurveyChoices(params.workspaceId),
   ]);
 
-  if (!workflow || workflow.workspaceId !== params.workspaceId) {
+  if (workflow?.workspaceId !== params.workspaceId) {
     notFound();
   }
 

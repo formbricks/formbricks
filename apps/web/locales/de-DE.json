@@ -3948,8 +3948,6 @@
       "lock_canvas": "Lock canvas",
       "name_required": "Workflow-Name ist erforderlich.",
       "node_actions": "Node actions",
-      "overview_trigger_any_response": "Workflow ausführen, wenn eine neue Antwort eingeht.",
-      "overview_trigger_with_endings": "Workflow ausführen, wenn eine neue Antwort eingeht und eine der ausgewählten Abschlusskarten erreicht.",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",
       "relative_today": "Today, {time}",

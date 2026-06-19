@@ -3948,8 +3948,6 @@
       "lock_canvas": "Lock canvas",
       "name_required": "El nombre del flujo de trabajo es obligatorio.",
       "node_actions": "Node actions",
-      "overview_trigger_any_response": "Ejecutar flujo de trabajo cuando se reciba una nueva respuesta.",
-      "overview_trigger_with_endings": "Ejecutar flujo de trabajo cuando se reciba una nueva respuesta y llegue a una de las tarjetas de finalización seleccionadas.",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",
       "relative_today": "Today, {time}",

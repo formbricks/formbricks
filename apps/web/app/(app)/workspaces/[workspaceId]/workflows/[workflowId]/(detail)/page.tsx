@@ -10,7 +10,7 @@ const WorkflowPage = async (
   const { isReadOnly } = await getWorkflowsRouteAuth(params.workspaceId);
   const workflow = await loadWorkflowResource(params.workflowId);
 
-  if (!workflow || workflow.workspaceId !== params.workspaceId) {
+  if (workflow?.workspaceId !== params.workspaceId) {
     notFound();
   }
 

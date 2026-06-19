@@ -3948,8 +3948,6 @@
       "lock_canvas": "Lock canvas",
       "name_required": "A munkafolyamat neve kötelező.",
       "node_actions": "Node actions",
-      "overview_trigger_any_response": "Munkafolyamat futtatása új válasz beérkezésekor.",
-      "overview_trigger_with_endings": "Munkafolyamat futtatása új válasz beérkezésekor, amennyiben az eléri a kiválasztott záró kártyák egyikét.",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",
       "relative_today": "Today, {time}",

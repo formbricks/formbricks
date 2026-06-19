@@ -62,12 +62,11 @@ export const SettingsSection = ({
   const isArchived = workflow?.status === "archived";
   const isActive = workflow?.status === "enabled";
 
-  const handleActiveChange = (checked: boolean) => {
-    if (checked) {
-      builder.enable();
-    } else {
-      builder.disable();
-    }
+  const handleActivate = () => {
+    builder.enable();
+  };
+  const handleDeactivate = () => {
+    builder.disable();
   };
 
   return (
@@ -109,7 +108,7 @@ export const SettingsSection = ({
             id="workflow-settings-active"
             checked={isActive}
             disabled={isReadOnly || isArchived || builder.isTransitioning}
-            onCheckedChange={handleActiveChange}
+            onCheckedChange={(checked) => (checked ? handleActivate() : handleDeactivate())}
           />
         </div>
 

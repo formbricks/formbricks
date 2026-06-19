@@ -3948,8 +3948,6 @@
       "lock_canvas": "Lock canvas",
       "name_required": "Требуется название workflow.",
       "node_actions": "Node actions",
-      "overview_trigger_any_response": "Запускать workflow при получении нового ответа.",
-      "overview_trigger_with_endings": "Запускать workflow при получении нового ответа и достижении одной из выбранных завершающих карточек.",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",
       "relative_today": "Today, {time}",

@@ -3948,8 +3948,6 @@
       "lock_canvas": "Lock canvas",
       "name_required": "İş akışı adı gerekli.",
       "node_actions": "Node actions",
-      "overview_trigger_any_response": "Yeni bir yanıt alındığında iş akışını çalıştır.",
-      "overview_trigger_with_endings": "Yeni bir yanıt alındığında ve seçili bitiş kartlarından birine ulaşıldığında iş akışını çalıştır.",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",
       "relative_today": "Today, {time}",
