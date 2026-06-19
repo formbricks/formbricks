@@ -4,6 +4,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { WorkflowEditorProvider } from "@/modules/workflows/components/workflow-editor-provider";
 import { WorkflowHeaderCta } from "@/modules/workflows/components/workflow-header-cta";
+import { WorkflowPageTitle } from "@/modules/workflows/components/workflow-page-title";
 import { WorkflowSecondaryNavigation } from "@/modules/workflows/components/workflow-secondary-navigation";
 import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
 import { getPlaceholderWorkflow } from "@/modules/workflows/lib/placeholder-data";
@@ -26,7 +27,7 @@ const WorkflowDetailLayout = async (
     <WorkflowEditorProvider>
       <PageContentWrapper>
         <PageHeader
-          pageTitle={workflow.name}
+          pageTitle={<WorkflowPageTitle fallback={workflow.name} />}
           cta={<WorkflowHeaderCta workflowId={params.workflowId} isReadOnly={isReadOnly} />}>
           <WorkflowSecondaryNavigation workspaceId={params.workspaceId} workflowId={params.workflowId} />
         </PageHeader>

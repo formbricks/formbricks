@@ -14,13 +14,7 @@ const WorkflowPage = async (
     notFound();
   }
 
-  return (
-    <WorkflowBuilderPage
-      workspaceId={params.workspaceId}
-      workflowId={params.workflowId}
-      isReadOnly={isReadOnly}
-    />
-  );
+  return <WorkflowBuilderPage workflowId={params.workflowId} isReadOnly={isReadOnly} />;
 };
 
 export default WorkflowPage;
