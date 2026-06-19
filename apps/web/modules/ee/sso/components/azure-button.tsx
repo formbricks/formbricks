@@ -12,10 +12,17 @@ interface AzureButtonProps {
   returnToUrl?: string;
   directRedirect?: boolean;
   lastUsed?: boolean;
+  variant?: "default" | "secondary";
   source: "signin" | "signup";
 }
 
-export const AzureButton = ({ returnToUrl, directRedirect = false, lastUsed, source }: AzureButtonProps) => {
+export const AzureButton = ({
+  returnToUrl,
+  directRedirect = false,
+  lastUsed,
+  variant = "secondary",
+  source,
+}: AzureButtonProps) => {
   const { t } = useTranslation();
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {
@@ -36,11 +43,7 @@ export const AzureButton = ({ returnToUrl, directRedirect = false, lastUsed, sou
   }, [directRedirect, handleLogin]);
 
   return (
-    <Button
-      type="button"
-      onClick={handleLogin}
-      variant="secondary"
-      className="relative w-full justify-center">
+    <Button type="button" onClick={handleLogin} variant={variant} className="relative w-full justify-center">
       {t("auth.continue_with_azure")}
       <MicrosoftIcon />
       {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}

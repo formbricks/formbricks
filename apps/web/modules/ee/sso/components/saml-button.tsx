@@ -13,12 +13,20 @@ import { Button } from "@/modules/ui/components/button";
 interface SamlButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
+  variant?: "default" | "secondary";
   samlTenant: string;
   samlProduct: string;
   source: "signin" | "signup";
 }
 
-export const SamlButton = ({ returnToUrl, lastUsed, samlTenant, samlProduct, source }: SamlButtonProps) => {
+export const SamlButton = ({
+  returnToUrl,
+  lastUsed,
+  variant = "secondary",
+  samlTenant,
+  samlProduct,
+  source,
+}: SamlButtonProps) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,7 +61,7 @@ export const SamlButton = ({ returnToUrl, lastUsed, samlTenant, samlProduct, sou
     <Button
       type="button"
       onClick={handleLogin}
-      variant="secondary"
+      variant={variant}
       className="relative w-full justify-center"
       loading={isLoading}>
       {t("auth.continue_with_saml")}

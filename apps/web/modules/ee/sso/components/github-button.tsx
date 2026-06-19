@@ -10,10 +10,11 @@ import { GithubIcon } from "@/modules/ui/components/icons";
 interface GithubButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
+  variant?: "default" | "secondary";
   source: "signin" | "signup";
 }
 
-export const GithubButton = ({ returnToUrl, lastUsed, source }: GithubButtonProps) => {
+export const GithubButton = ({ returnToUrl, lastUsed, variant = "secondary", source }: GithubButtonProps) => {
   const { t } = useTranslation();
   const handleLogin = async () => {
     if (typeof window !== "undefined") {
@@ -28,11 +29,7 @@ export const GithubButton = ({ returnToUrl, lastUsed, source }: GithubButtonProp
   };
 
   return (
-    <Button
-      type="button"
-      onClick={handleLogin}
-      variant="secondary"
-      className="relative w-full justify-center">
+    <Button type="button" onClick={handleLogin} variant={variant} className="relative w-full justify-center">
       {t("auth.continue_with_github")}
       <GithubIcon />
       {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
