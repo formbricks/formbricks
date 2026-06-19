@@ -1,0 +1,32 @@
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+const isSameLocalDay = (a: Date, b: Date): boolean =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+/**
+ * Formats `iso` as a short relative timestamp ("Today, 4:23 PM" / "Yesterday, 1:00 PM" /
+ * "2 days ago, 8:15 AM" / "Jan 15, 4:23 PM"). `anchor` is the "now" reference — using a passed-in
+ * anchor (vs. `new Date()`) keeps placeholder data deterministic and avoids SSR/CSR drift.
+ */
+export const formatRelativeDate = (iso: string, anchor: Date, locale = "en-US"): string => {
+  const date = new Date(iso);
+  const time = date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+
+  if (isSameLocalDay(date, anchor)) {
+    return `Today, ${time}`;
+  }
+
+  const yesterday = new Date(anchor);
+  yesterday.setDate(anchor.getDate() - 1);
+  if (isSameLocalDay(date, yesterday)) {
+    return `Yesterday, ${time}`;
+  }
+
+  const diffDays = Math.floor((anchor.getTime() - date.getTime()) / ONE_DAY_MS);
+  if (diffDays >= 2 && diffDays < 7) {
+    return `${diffDays} days ago, ${time}`;
+  }
+
+  const datePart = date.toLocaleDateString(locale, { month: "short", day: "numeric" });
+  return `${datePart}, ${time}`;
+};

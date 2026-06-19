@@ -47,23 +47,45 @@ export const WorkflowsListBodyLoading = () => (
 export const WorkspaceWorkflowRunsBodyLoading = () => <RunsTableSkeleton />;
 
 export const WorkflowBuilderBodyLoading = () => (
-  <div className="flex min-h-[680px] flex-col gap-4 md:flex-row">
-    <div className="relative min-h-[680px] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:18px_18px]">
-      <Skeleton className="absolute right-4 top-4 size-8 rounded-md" />
+  <div className="flex flex-col gap-4 rounded-lg bg-slate-100 p-4">
+    <div className="flex flex-wrap items-end gap-4">
+      <div className="flex min-w-[200px] flex-1 flex-col gap-2">
+        <Skeleton className="h-4 w-16 rounded-md" />
+        <Skeleton className="h-10 w-full rounded-md bg-white" />
+      </div>
+      <div className="flex min-w-[240px] flex-1 flex-col gap-2">
+        <Skeleton className="h-4 w-20 rounded-md" />
+        <Skeleton className="h-10 w-full rounded-md bg-white" />
+      </div>
+      <div className="flex items-center gap-2 pb-0.5">
+        <Skeleton className="h-8 w-20 rounded-md" />
+        <Skeleton className="h-8 w-20 rounded-md" />
+        <Skeleton className="h-8 w-14 rounded-md" />
+      </div>
     </div>
-    <aside className="h-[360px] overflow-hidden md:h-auto md:w-[360px] md:shrink-0">
-      <div className="h-full w-full space-y-6 overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 md:w-[360px]">
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-40 rounded-md" />
-          <Skeleton className="h-4 w-24 rounded-md" />
-        </div>
-        <div className="space-y-6">
-          <Skeleton className="h-16 rounded-md" />
-          <Skeleton className="h-16 rounded-md" />
-          <Skeleton className="h-28 rounded-lg" />
+    <div className="flex min-h-[680px] gap-4">
+      <div className="relative min-h-[680px] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <Skeleton className="absolute right-4 top-4 h-9 w-20 rounded-md" />
+        <div className="absolute inset-x-0 bottom-4 flex justify-center gap-2">
+          <Skeleton className="size-10 rounded-md" />
+          <Skeleton className="size-10 rounded-md" />
+          <Skeleton className="size-10 rounded-md" />
+          <Skeleton className="size-10 rounded-md" />
         </div>
       </div>
-    </aside>
+      <aside className="flex w-[320px] shrink-0 flex-col gap-3">
+        <Skeleton className="size-8 rounded-md" />
+        <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-4">
+          <Skeleton className="h-4 w-24 rounded-md" />
+          <Skeleton className="h-3 w-32 rounded-md" />
+          <Skeleton className="mt-3 h-10 rounded-md" />
+        </div>
+        <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-4">
+          <Skeleton className="h-4 w-20 rounded-md" />
+          <Skeleton className="mt-3 h-6 w-32 rounded-md" />
+        </div>
+      </aside>
+    </div>
   </div>
 );
 

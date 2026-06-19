@@ -1,0 +1,138 @@
+import { type Edge, type Node, type SnapGrid } from "@xyflow/react";
+import type { TFunction } from "i18next";
+import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
+import { getNodeRegistryEntry } from "@/modules/workflows/canvas/node-registry";
+import type { TWorkflowNodeData } from "@/modules/workflows/state/editor";
+
+export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";
+
+export const WORKFLOW_CANVAS_SNAP_GRID: SnapGrid = [20, 20];
+
+const WORKFLOW_CANVAS_NODE_SPACING = { x: 360, y: 180 };
+const WORKFLOW_CANVAS_START_POSITION = { x: 220, y: 80 };
+
+export const workflowDefinitionToFlowNodes = (
+  definition: TWorkflowDefinition,
+  t: TFunction
+): Array<Node<TWorkflowNodeData>> =>
+  [definition.trigger, ...definition.nodes].map((node, index) => {
+    const registryEntry = getNodeRegistryEntry(node);
+    const fallbackPosition = { x: 120, y: 80 + index * 160 };
+
+    return {
+      id: node.id,
+      type: WORKFLOW_CANVAS_NODE_TYPE,
+      position: node.ui?.position ?? fallbackPosition,
+      data: {
+        category: registryEntry.category,
+        icon: registryEntry.icon,
+        title: registryEntry.title(node, t),
+        summary: registryEntry.summary(node, t),
+      },
+    };
+  });
+
+export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): Edge[] =>
+  definition.edges.map((edge) => ({
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    sourceHandle: edge.sourceHandle,
+    targetHandle: edge.targetHandle,
+    label: edge.sourceHandle,
+    type: "addButton",
+  }));
+
+export const snapWorkflowNodePosition = (position: { x: number; y: number }) => ({
+  x: Math.round(position.x / WORKFLOW_CANVAS_SNAP_GRID[0]) * WORKFLOW_CANVAS_SNAP_GRID[0],
+  y: Math.round(position.y / WORKFLOW_CANVAS_SNAP_GRID[1]) * WORKFLOW_CANVAS_SNAP_GRID[1],
+});
+
+export const updateNodePosition = (
+  definition: TWorkflowDefinition,
+  nodeId: string,
+  position: { x: number; y: number }
+): TWorkflowDefinition => {
+  if (definition.trigger.id === nodeId) {
+    return {
+      ...definition,
+      trigger: {
+        ...definition.trigger,
+        ui: { ...definition.trigger.ui, position },
+      },
+    };
+  }
+
+  return {
+    ...definition,
+    nodes: definition.nodes.map((node) =>
+      node.id === nodeId ? { ...node, ui: { ...node.ui, position } } : node
+    ),
+  };
+};
+
+export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
+  const allNodes: TWorkflowNode[] = [definition.trigger, ...definition.nodes];
+  const nodesById = new Map(allNodes.map((node) => [node.id, node]));
+  const originalNodeOrder = allNodes.map((node) => node.id);
+
+  const edgesBySource = new Map<string, string[]>();
+  for (const edge of definition.edges) {
+    edgesBySource.set(edge.source, [...(edgesBySource.get(edge.source) ?? []), edge.target]);
+  }
+
+  // BFS rank from the trigger so reachable nodes share a row, unreachable ones spill below.
+  const ranks = new Map<string, number>([[definition.trigger.id, 0]]);
+  const queue = [definition.trigger.id];
+  while (queue.length > 0) {
+    const nodeId = queue.shift()!;
+    const nextRank = (ranks.get(nodeId) ?? 0) + 1;
+    for (const targetId of edgesBySource.get(nodeId) ?? []) {
+      if (!nodesById.has(targetId) || ranks.has(targetId)) continue;
+      ranks.set(targetId, nextRank);
+      queue.push(targetId);
+    }
+  }
+
+  for (const nodeId of originalNodeOrder) {
+    if (!ranks.has(nodeId)) ranks.set(nodeId, ranks.size);
+  }
+
+  const nodeIdsByRank = new Map<number, string[]>();
+  for (const nodeId of originalNodeOrder) {
+    const rank = ranks.get(nodeId) ?? 0;
+    nodeIdsByRank.set(rank, [...(nodeIdsByRank.get(rank) ?? []), nodeId]);
+  }
+
+  const positionsByNodeId = new Map<string, { x: number; y: number }>();
+  for (const [rank, nodeIds] of nodeIdsByRank) {
+    const rowOffset = ((nodeIds.length - 1) * WORKFLOW_CANVAS_NODE_SPACING.x) / 2;
+    nodeIds.forEach((nodeId, index) => {
+      positionsByNodeId.set(
+        nodeId,
+        snapWorkflowNodePosition({
+          x: WORKFLOW_CANVAS_START_POSITION.x + index * WORKFLOW_CANVAS_NODE_SPACING.x - rowOffset,
+          y: WORKFLOW_CANVAS_START_POSITION.y + rank * WORKFLOW_CANVAS_NODE_SPACING.y,
+        })
+      );
+    });
+  }
+
+  return {
+    ...definition,
+    trigger: {
+      ...definition.trigger,
+      ui: {
+        ...definition.trigger.ui,
+        position: positionsByNodeId.get(definition.trigger.id) ?? definition.trigger.ui?.position,
+      },
+    },
+    nodes: definition.nodes.map((node) => ({
+      ...node,
+      ui: {
+        ...node.ui,
+        position: positionsByNodeId.get(node.id) ?? node.ui?.position,
+      },
+    })),
+  };
+};

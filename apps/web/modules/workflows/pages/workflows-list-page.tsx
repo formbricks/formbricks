@@ -6,8 +6,8 @@ import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 import { CardTable, CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
 import { EmptyState } from "@/modules/ui/components/empty-state";
-import { WorkflowListActions } from "../components/workflow-list-actions";
-import { getWorkflowStatusBadge } from "../lib/display";
+import { WorkflowListActions } from "@/modules/workflows/components/workflow-list-actions";
+import { getWorkflowStatusBadge } from "@/modules/workflows/lib/display";
 
 interface WorkflowsListPageProps {
   workspaceId: string;

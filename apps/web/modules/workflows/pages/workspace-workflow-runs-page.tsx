@@ -1,7 +1,7 @@
 "use client";
 
-import { WorkflowRunsTable } from "../components/workflow-runs-table";
-import { type TWorkflowRunListItem } from "../types";
+import { WorkflowRunsTable } from "@/modules/workflows/components/workflow-runs-table";
+import { type TWorkflowRunListItem } from "@/modules/workflows/types";
 
 interface WorkspaceWorkflowRunsPageProps {
   runs: TWorkflowRunListItem[];
