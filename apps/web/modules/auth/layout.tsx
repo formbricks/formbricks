@@ -1,13 +1,12 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 import { getIsFreshInstance } from "@/lib/instance/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
   const [session, isFreshInstance, isMultiOrgEnabled] = await Promise.all([
-    getServerSession(authOptions),
+    getSession(),
     getIsFreshInstance(),
     getIsMultiOrgEnabled(),
   ]);

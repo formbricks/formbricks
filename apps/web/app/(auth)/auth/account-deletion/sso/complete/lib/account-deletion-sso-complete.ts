@@ -1,5 +1,4 @@
 import "server-only";
-import { getServerSession } from "next-auth";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
@@ -12,7 +11,7 @@ import {
 } from "@/modules/account/constants";
 import { deleteUserWithAccountDeletionAuthorization } from "@/modules/account/lib/account-deletion";
 import { queueAccountDeletionAuditEvent } from "@/modules/account/lib/account-deletion-audit";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 
 type TAccountDeletionSsoCompleteSearchParams = {
   intent?: string | string[];
@@ -60,7 +59,7 @@ export const completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath = 
     const verifiedIntent = verifyAccountDeletionSsoReauthIntent(intentToken);
     targetUserId = verifiedIntent.userId;
     redirectPath = getSafeFailureRedirectPath(verifiedIntent.returnToUrl);
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
     if (!session?.user?.id || !session.user.email || session.user.id !== verifiedIntent.userId) {
       throw new AuthorizationError("Account deletion SSO identity confirmation session mismatch");

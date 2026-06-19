@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { getHasNoOrganizations, getIsFreshInstance } from "@/lib/instance/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 
 export const FreshInstanceLayout = async ({ children }: { children: React.ReactNode }) => {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   const isFreshInstance = await getIsFreshInstance();
 
   if (!isFreshInstance) {
