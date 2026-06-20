@@ -59,7 +59,11 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
     // swallow+log and fall through to the redirect/return.
     const url = options?.callbackUrl ?? "/auth/login";
     try {
-      await authClient.signOut();
+      // The BA client resolves HTTP failures as { error } rather than throwing, so log both shapes.
+      const { error } = await authClient.signOut();
+      if (error) {
+        logger.error(new Error(error.message ?? "signOut returned an error"), "Better Auth signOut failed");
+      }
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), "Better Auth signOut failed");
     }

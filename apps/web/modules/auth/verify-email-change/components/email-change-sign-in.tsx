@@ -39,13 +39,24 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
   useEffect(() => {
     if (status === "success") {
       // Email changed server-side; drop the now-stale session so the user re-authenticates with
-      // their new address. Best-effort — the email change itself already succeeded.
-      authClient.signOut().catch((error) => {
-        logger.error(
-          error instanceof Error ? error : new Error(String(error)),
-          "Email-change signOut failed"
-        );
-      });
+      // their new address. Best-effort — the email change itself already succeeded. The BA client
+      // resolves HTTP failures as { error } rather than throwing, so handle both shapes.
+      authClient
+        .signOut()
+        .then(({ error }) => {
+          if (error) {
+            logger.error(
+              new Error(error.message ?? "signOut returned an error"),
+              "Email-change signOut failed"
+            );
+          }
+        })
+        .catch((error) => {
+          logger.error(
+            error instanceof Error ? error : new Error(String(error)),
+            "Email-change signOut failed"
+          );
+        });
     }
   }, [status]);
 

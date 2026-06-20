@@ -101,6 +101,11 @@ export const auth = betterAuth({
 
   emailVerification: {
     sendOnSignUp: true,
+    // Resend a fresh verification link when an unverified user tries to sign in (the original sign-up
+    // link may have expired). The login form surfaces this as a "check your inbox" message — without
+    // this flag BA would throw EMAIL_NOT_VERIFIED without sending anything, leaving no recovery path
+    // and making that message untrue. (ENG-1054)
+    sendOnSignIn: true,
     autoSignInAfterVerification: false,
     expiresIn: 60 * 60, // 1 hour
     sendVerificationEmail: async ({ user, url }) => {
