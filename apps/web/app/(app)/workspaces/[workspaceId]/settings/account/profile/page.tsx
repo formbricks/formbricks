@@ -4,7 +4,6 @@ import { DeleteAccount } from "@/app/(app)/workspaces/[workspaceId]/settings/acc
 import { EditProfileDetailsForm } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/EditProfileDetailsForm";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
-  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
   EMAIL_VERIFICATION_DISABLED,
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
   IS_FORMBRICKS_CLOUD,
@@ -21,14 +20,10 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-const Page = async (props: {
-  params: Promise<{ workspaceId: string }>;
-  searchParams: Promise<{ accountDeletionError?: string | string[] }>;
-}) => {
+const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const params = await props.params;
-  const searchParams = await props.searchParams;
   const t = await getTranslate();
   const { session } = await getWorkspaceAuth(params.workspaceId);
 
@@ -97,9 +92,7 @@ const Page = async (props: {
               user={user}
               organizationsWithSingleOwner={organizationsWithSingleOwner}
               isMultiOrgEnabled={isMultiOrgEnabled}
-              accountDeletionError={searchParams.accountDeletionError}
               requiresPasswordConfirmation={requiresPasswordConfirmation}
-              isSsoIdentityConfirmationDisabled={DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION}
             />
           </SettingsCard>
           <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />

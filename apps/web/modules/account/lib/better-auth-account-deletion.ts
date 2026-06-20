@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
@@ -22,14 +23,15 @@ type DeleteUserConfig = NonNullable<NonNullable<BetterAuthOptions["user"]>["dele
  * intentionally NOT set in auth.ts — it would email credential users too.
  *
  * The hooks below run for BOTH paths and only get `(user, request)`, so everything is derived from
- * `user.id` / `user.email`. Inert until the Phase 7 cutover: the `[...all]` route is unmounted, so
- * nothing reaches Better Auth's deleteUser endpoint yet, and the existing `deleteUserAction` flow
- * (modules/account/...) stays in charge.
+ * `user.id` / `user.email`. The DeleteAccountModal drives this flow (credential users call
+ * `authClient.deleteUser`; SSO users go through the email-link request action). Note the `[...all]`
+ * route is not mounted on this client-cutover branch, so the endpoint is reachable only once the
+ * coordinated flip lands the server route.
  */
 
 /**
  * Pre-delete steps that do NOT cascade from the `User` row — mirrors `lib/user/service.ts deleteUser`
- * plus the single-org guard in `deleteUserWithAccountDeletionAuthorization`:
+ * plus the single-org guard the prior account-deletion path enforced:
  *  - Block deletion on single-org instances when the user is the sole owner of any organization
  *    (it would be orphaned) — they must transfer ownership first.
  *  - Otherwise delete the organizations they solely own (only reachable in the multi-org case) and
@@ -42,8 +44,7 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
 
   if (soleOwnerOrganizations.length > 0 && !(await getIsMultiOrgEnabled())) {
     throw new APIError("BAD_REQUEST", {
-      message:
-        "You are the only owner of this organization. Please transfer ownership to another member first.",
+      message: ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE,
     });
   }
 
@@ -55,9 +56,9 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
 
 /**
  * Post-delete cleanup (the user row is already gone) — mirrors the tail of the deleteUser service and
- * `deleteUserAction`'s success audit: remove the Brevo contact and emit the account-deletion audit
- * event. A Brevo failure is logged, not thrown: the deletion has already committed, so surfacing an
- * error for a completed delete would be misleading.
+ * the prior success audit: remove the Brevo contact and emit the account-deletion audit event. A Brevo
+ * failure is logged, not thrown: the deletion has already committed, so surfacing an error for a
+ * completed delete would be misleading.
  */
 export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDelete"]> = async (user) => {
   try {
@@ -72,7 +73,7 @@ export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDele
     targetUserId: user.id,
   });
 
-  // Analytics parity with the original deleteUserAction success path (fire-and-forget; self-swallowing).
+  // Analytics parity with the prior account-deletion success path (fire-and-forget; self-swallowing).
   capturePostHogEvent(user.id, "delete_account");
 };
 
