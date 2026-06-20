@@ -1,8 +1,9 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
+import { authClient } from "@/modules/auth/lib/auth-client";
 import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 
 interface EmailChangeSignInProps {
@@ -37,7 +38,14 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
 
   useEffect(() => {
     if (status === "success") {
-      signOut({ redirect: false });
+      // Email changed server-side; drop the now-stale session so the user re-authenticates with
+      // their new address. Best-effort — the email change itself already succeeded.
+      authClient.signOut().catch((error) => {
+        logger.error(
+          error instanceof Error ? error : new Error(String(error)),
+          "Email-change signOut failed"
+        );
+      });
     }
   }, [status]);
 
