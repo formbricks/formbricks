@@ -47,8 +47,6 @@ interface LoginFormProps {
   isMultiOrgEnabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
-  samlTenant: string;
-  samlProduct: string;
   oauthError?: string;
   prefilledEmail?: string;
   inviteToken?: string | null;
@@ -68,8 +66,6 @@ export const LoginForm = ({
   isMultiOrgEnabled,
   isSsoEnabled,
   samlSsoEnabled,
-  samlTenant,
-  samlProduct,
   oauthError,
   prefilledEmail,
   inviteToken,
@@ -284,8 +280,6 @@ export const LoginForm = ({
               oidcOAuthEnabled={oidcOAuthEnabled}
               oidcDisplayName={oidcDisplayName}
               samlSsoEnabled={samlSsoEnabled}
-              samlTenant={samlTenant}
-              samlProduct={samlProduct}
               returnToUrl={resolvedCallbackUrl}
               source="signin"
             />

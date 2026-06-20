@@ -9,8 +9,6 @@ import {
   OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
   SAML_OAUTH_ENABLED,
-  SAML_PRODUCT,
-  SAML_TENANT,
   SIGNUP_ENABLED,
   WEBAPP_URL,
 } from "@/lib/constants";
@@ -74,8 +72,6 @@ export const LoginPage = async ({
           isMultiOrgEnabled={isMultiOrgEnabled}
           isSsoEnabled={isSsoEnabled}
           samlSsoEnabled={samlSsoEnabled}
-          samlTenant={SAML_TENANT}
-          samlProduct={SAML_PRODUCT}
           oauthError={oauthError}
           prefilledEmail={getSearchParamString(searchParams.email)}
           inviteToken={inviteToken}
