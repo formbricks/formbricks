@@ -200,6 +200,11 @@ export const auth = betterAuth({
       "/reset-password": { window: 60, max: 5 },
       "/two-factor/*": { window: 60, max: 5 },
       "/sso-recovery/*": { window: 60, max: 5 }, // brute-force defense on the recovery magic-link sign-in
+      // Account deletion: re-auths the password (credential) / consumes the email token (SSO). Restore
+      // the legacy 5/hour so a stolen session can't brute-force the password against delete-user (BA's
+      // default global limit, ~100/10s, is only a flood guard). The callback gets a modest defensive cap.
+      "/delete-user": { window: 3600, max: 5 },
+      "/delete-user/callback": { window: 60, max: 5 },
     },
   },
 
