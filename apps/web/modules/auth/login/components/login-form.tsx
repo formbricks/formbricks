@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,9 +10,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createEmailTokenAction } from "@/modules/auth/actions";
-import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
+import { authClient } from "@/modules/auth/lib/auth-client";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
@@ -99,44 +96,47 @@ export const LoginForm = ({
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Email");
     }
     try {
-      const signInResponse = await signIn("credentials", {
-        callbackUrl: resolvedCallbackUrl || "/",
+      // Step 2 — the user is answering a two-factor challenge. Better Auth issued a partial
+      // session on the first step; verifying the TOTP or backup code promotes it to a full session.
+      if (totpLogin || totpBackup) {
+        const { error } = totpBackup
+          ? await authClient.twoFactor.verifyBackupCode({ code: data.backupCode ?? "" })
+          : await authClient.twoFactor.verifyTotp({ code: data.totpCode ?? "" });
+
+        if (error) {
+          toast.error(error.message ?? t("common.something_went_wrong"));
+          return;
+        }
+
+        router.push(resolvedCallbackPath || "/");
+        return;
+      }
+
+      // Step 1 — email + password.
+      const { data: signInData, error } = await authClient.signIn.email({
         email: data.email.toLowerCase(),
         password: data.password,
-        ...(totpLogin && { totpCode: data.totpCode }),
-        ...(totpBackup && { backupCode: data.backupCode }),
-        redirect: false,
       });
 
-      if (signInResponse?.error === "second factor required") {
+      if (error) {
+        // Better Auth (re)sends its own verification email for an unverified address, so we only
+        // point the user at their inbox instead of minting a verification token ourselves.
+        if (error.code === "EMAIL_NOT_VERIFIED") {
+          toast.error(t("auth.login.please_verify_your_email_to_continue"));
+          return;
+        }
+        toast.error(error.message ?? t("common.something_went_wrong"));
+        return;
+      }
+
+      // Two-factor is enabled: Better Auth returns `twoFactorRedirect` instead of a session. No
+      // client `twoFactorPage` is configured, so surface the inline TOTP/backup challenge here.
+      if (signInData && "twoFactorRedirect" in signInData && signInData.twoFactorRedirect) {
         setTotpLogin(true);
         return;
       }
 
-      if (signInResponse?.error === "Email Verification is Pending") {
-        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
-        if (emailTokenActionResponse?.data) {
-          router.push(
-            buildVerificationRequestedPath({
-              token: emailTokenActionResponse.data,
-              callbackUrl: resolvedCallbackUrl,
-            })
-          );
-        } else {
-          const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-          toast.error(errorMessage);
-        }
-        return;
-      }
-
-      if (signInResponse?.error) {
-        toast.error(signInResponse.error);
-        return;
-      }
-
-      if (!signInResponse?.error) {
-        router.push(resolvedCallbackPath || "/");
-      }
+      router.push(resolvedCallbackPath || "/");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
     }
