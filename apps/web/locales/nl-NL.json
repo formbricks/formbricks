@@ -2305,11 +2305,13 @@
       "generate_theme_btn": "Genereren",
       "generate_theme_confirmation": "Wil je een passend kleurthema genereren op basis van je merkkleur? Dit overschrijft je huidige kleurinstellingen.",
       "generate_theme_header": "Kleurthema genereren?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Logo succesvol verwijderd",
       "logo_settings_description": "Upload uw bedrijfslogo om enquêtes en linkvoorbeelden te voorzien van uw huisstijl.",
       "logo_updated_successfully": "Logo succesvol bijgewerkt",
       "logo_upload_failed": "Logo uploaden mislukt. Probeer het opnieuw.",
       "placement_updated_successfully": "Plaatsing succesvol bijgewerkt",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Verwijder branding met een hoger abonnement",
       "remove_logo": "Logo verwijderen",
       "remove_logo_confirmation": "Weet u zeker dat u het logo wilt verwijderen?",
@@ -2322,7 +2324,8 @@
       "suggest_colors": "Kleuren voorstellen",
       "suggested_colors_applied_please_save": "Voorgestelde kleuren succesvol gegenereerd. Druk op “Opslaan” om de wijzigingen te behouden.",
       "theme": "Thema",
-      "theme_settings_description": "Maak een stijlthema voor alle enquêtes. Je kunt aangepaste styling inschakelen voor elke enquête."
+      "theme_settings_description": "Maak een stijlthema voor alle enquêtes. Je kunt aangepaste styling inschakelen voor elke enquête.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Voeg hieronder een filter toe",

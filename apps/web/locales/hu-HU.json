@@ -2305,11 +2305,13 @@
       "generate_theme_btn": "Előállítás",
       "generate_theme_confirmation": "Szeretne hozzáillő színtémát előállítani a márkajel színei alapján? Ez felülírja a jelenlegi színbeállításokat.",
       "generate_theme_header": "Előállítja a színtémát?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "A logó sikeresen eltávolítva",
       "logo_settings_description": "Vállalati logo feltöltése a kérdőívek és hivatkozások előnézeteinek márkaépítéséhez.",
       "logo_updated_successfully": "A logó sikeresen frissítve",
       "logo_upload_failed": "A logó feltöltése nem sikerült. Próbálja meg újra.",
       "placement_updated_successfully": "Az elhelyezés sikeresen frissítve",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Márkajel eltávolítása egy magasabb csomaggal",
       "remove_logo": "Logó eltávolítása",
       "remove_logo_confirmation": "Biztosan el szeretné távolítani a logót?",
@@ -2322,7 +2324,8 @@
       "suggest_colors": "Színek ajánlása",
       "suggested_colors_applied_please_save": "Az ajánlott színek sikeresen előállítva. Nyomja meg a „Mentés” gombot a változtatások mentéséhez.",
       "theme": "Téma",
-      "theme_settings_description": "Stílustéma létrehozása az összes kérdőívhez. Egyéni stílust engedélyezhet minden egyes kérdőívhez."
+      "theme_settings_description": "Stílustéma létrehozása az összes kérdőívhez. Egyéni stílust engedélyezhet minden egyes kérdőívhez.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Szűrő hozzáadása lent",

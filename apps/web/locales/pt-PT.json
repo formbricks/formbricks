@@ -2305,11 +2305,13 @@
       "generate_theme_btn": "Gerar",
       "generate_theme_confirmation": "Gostarias de gerar um tema de cores correspondente com base na cor da tua marca? Isto irá substituir as tuas definições de cor atuais.",
       "generate_theme_header": "Gerar tema de cores?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Logótipo removido com sucesso",
       "logo_settings_description": "Carregue o logótipo da sua empresa para personalizar inquéritos e pré-visualizações de links.",
       "logo_updated_successfully": "Logótipo atualizado com sucesso",
       "logo_upload_failed": "Falha no carregamento do logótipo. Por favor, tente novamente.",
       "placement_updated_successfully": "Posicionamento atualizado com sucesso",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Remova a marca com um plano superior",
       "remove_logo": "Remover logótipo",
       "remove_logo_confirmation": "Tem a certeza de que deseja remover o logótipo?",
@@ -2322,7 +2324,8 @@
       "suggest_colors": "Sugerir cores",
       "suggested_colors_applied_please_save": "Cores sugeridas geradas com sucesso. Prima “Guardar” para persistir as alterações.",
       "theme": "Tema",
-      "theme_settings_description": "Crie um tema de estilo para todos os inquéritos. Pode ativar estilos personalizados para cada inquérito."
+      "theme_settings_description": "Crie um tema de estilo para todos os inquéritos. Pode ativar estilos personalizados para cada inquérito.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Adicionar filtro abaixo",

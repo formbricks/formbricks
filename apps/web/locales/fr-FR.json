@@ -2305,11 +2305,13 @@
       "generate_theme_btn": "Générer",
       "generate_theme_confirmation": "Souhaitez-vous générer un thème de couleurs assorti basé sur votre couleur de marque ? Cela écrasera vos paramètres de couleur actuels.",
       "generate_theme_header": "Générer un thème de couleurs ?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Logo supprimé avec succès",
       "logo_settings_description": "Téléchargez le logo de votre entreprise pour personnaliser les enquêtes et les aperçus de liens.",
       "logo_updated_successfully": "Logo mis à jour avec succès",
       "logo_upload_failed": "Échec du téléchargement du logo. Veuillez réessayer.",
       "placement_updated_successfully": "Emplacement mis à jour avec succès",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Supprimer le logo avec un forfait supérieur",
       "remove_logo": "Supprimer le logo",
       "remove_logo_confirmation": "Êtes-vous sûr de vouloir supprimer le logo ?",
@@ -2322,7 +2324,8 @@
       "suggest_colors": "Suggérer des couleurs",
       "suggested_colors_applied_please_save": "Couleurs suggérées générées avec succès. Appuyez sur “Enregistrer” pour conserver les modifications.",
       "theme": "Thème",
-      "theme_settings_description": "Créez un thème de style pour toutes les enquêtes. Vous pouvez activer un style personnalisé pour chaque enquête."
+      "theme_settings_description": "Créez un thème de style pour toutes les enquêtes. Vous pouvez activer un style personnalisé pour chaque enquête.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Ajouter un filtre ci-dessous",
