@@ -14,6 +14,7 @@ interface CardlessPreviewLogoProps {
   surveyLogo?: TLogo | null;
   mountKey?: string | number;
   onLogoClick?: () => void;
+  previewSurvey?: boolean;
 }
 
 export const CardlessPreviewLogo = ({
@@ -22,6 +23,7 @@ export const CardlessPreviewLogo = ({
   surveyLogo,
   mountKey,
   onLogoClick,
+  previewSurvey = true,
 }: Readonly<CardlessPreviewLogoProps>) => {
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
 
@@ -54,7 +56,7 @@ export const CardlessPreviewLogo = ({
         workspaceLogo={workspaceLogo}
         workspaceId={workspaceId}
         surveyLogo={surveyLogo}
-        previewSurvey
+        previewSurvey={previewSurvey}
         position="inline"
         disableLinks
       />
@@ -64,8 +66,9 @@ export const CardlessPreviewLogo = ({
       workspaceLogo={workspaceLogo}
       workspaceId={workspaceId}
       surveyLogo={surveyLogo}
-      previewSurvey
+      previewSurvey={previewSurvey}
       position="inline"
+      disableLinks={!previewSurvey}
     />
   );
 

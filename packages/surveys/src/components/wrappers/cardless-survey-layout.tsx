@@ -29,7 +29,6 @@ export function CardlessSurveyLayout({
   blockId,
   styling,
   showProgressBar,
-  isPreviewMode,
   showCardlessPreviewLogoSlot,
   linkSurveyCardMaxWidth,
 }: Readonly<CardlessSurveyLayoutProps>) {
@@ -38,13 +37,15 @@ export function CardlessSurveyLayout({
   const [isScrollAtTop, setIsScrollAtTop] = useState(true);
   const [isScrollAtBottom, setIsScrollAtBottom] = useState(false);
 
+  const isSolidColorBackground = !styling.background?.bgType || styling.background.bgType === "color";
+
   const fadeColor = useMemo(() => {
-    if (styling.background?.bgType === "color" && styling.background.bg) {
+    if (isSolidColorBackground && styling.background?.bg) {
       return styling.background.bg;
     }
 
     return "#ffffff";
-  }, [styling.background?.bg, styling.background?.bgType]);
+  }, [isSolidColorBackground, styling.background?.bg]);
 
   const checkScroll = useCallback(() => {
     if (!scrollRef.current) return;
@@ -93,7 +94,7 @@ export function CardlessSurveyLayout({
           <ProgressBar survey={survey} blockId={blockId} />
         </div>
       ) : null}
-      {isPreviewMode && showCardlessPreviewLogoSlot ? (
+      {showCardlessPreviewLogoSlot ? (
         <div
           id="formbricks-cardless-preview-logo-slot"
           className="mx-auto w-full shrink-0 px-4 pt-5 pb-2 sm:px-6 sm:pt-6"
@@ -101,7 +102,7 @@ export function CardlessSurveyLayout({
         />
       ) : null}
       <div className="relative min-h-0 flex-1">
-        {!isScrollAtTop && (
+        {isSolidColorBackground && !isScrollAtTop && (
           <div
             className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4"
             style={{ background: `linear-gradient(to bottom, ${fadeColor}, transparent)` }}
@@ -112,7 +113,7 @@ export function CardlessSurveyLayout({
             className={cn(
               // Extra bottom padding keeps the last card clear of the floating scroll-to-bottom button.
               "mx-auto flex w-full flex-col items-center px-4 pb-12 sm:px-6",
-              isPreviewMode && showCardlessPreviewLogoSlot ? "pt-6" : "pt-10 sm:pt-12"
+              showCardlessPreviewLogoSlot ? "pt-6" : "pt-10 sm:pt-12"
             )}
             style={cardMaxWidthStyle}>
             <div className="w-full">{children}</div>
@@ -120,15 +121,23 @@ export function CardlessSurveyLayout({
         </div>
         {!isScrollAtBottom && (
           <>
-            <div
-              className="pointer-events-none absolute right-4 bottom-0 left-4 z-10 h-10"
-              style={{ background: `linear-gradient(to top, ${fadeColor}, transparent)` }}
-            />
+            {isSolidColorBackground && (
+              <div
+                className="pointer-events-none absolute right-4 bottom-0 left-4 z-10 h-10"
+                style={{ background: `linear-gradient(to top, ${fadeColor}, transparent)` }}
+              />
+            )}
             <button
               type="button"
               onClick={scrollToBottom}
-              style={{ transform: "translateX(-50%)", backgroundColor: fadeColor }}
-              className="hover:border-border focus:ring-brand absolute bottom-2 left-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-transparent shadow-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+              style={{
+                transform: "translateX(-50%)",
+                ...(isSolidColorBackground ? { backgroundColor: fadeColor } : undefined),
+              }}
+              className={cn(
+                "hover:border-border focus:ring-brand absolute bottom-2 left-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-transparent shadow-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
+                !isSolidColorBackground && "bg-survey-bg/90 backdrop-blur-sm"
+              )}
               aria-label={t("common.scroll_to_bottom")}>
               <ChevronDownIcon className="text-heading h-5 w-5" />
             </button>

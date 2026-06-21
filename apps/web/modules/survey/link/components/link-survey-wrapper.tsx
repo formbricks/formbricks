@@ -7,6 +7,7 @@ import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { LegalFooter } from "@/modules/survey/link/components/legal-footer";
 import { SurveyLoadingAnimation } from "@/modules/survey/link/components/survey-loading-animation";
+import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -62,6 +63,8 @@ export const LinkSurveyWrapper = ({
   const styling = determineStyling();
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
+  const hasLogo = !styling.isLogoHidden && !!(workspace.logo?.url || styling.logo?.url);
+  const showCardlessLogo = isCardless && hasLogo;
   // Cardless surveys span the full available width; card-based surveys are capped to the configured width.
   const cardMaxWidthStyle = isCardless ? undefined : { maxWidth: linkSurveyCardMaxWidth };
 
@@ -104,7 +107,7 @@ export const LinkSurveyWrapper = ({
               ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden"
               : "max-h-dvh min-h-dvh items-center overflow-clip"
           )}>
-          {!styling.isLogoHidden && (workspace.logo?.url || styling.logo?.url) && (
+          {!showCardlessLogo && hasLogo && (
             <ClientLogo
               workspaceLogo={workspace.logo}
               workspaceId={workspaceId}
@@ -146,6 +149,14 @@ export const LinkSurveyWrapper = ({
           </div>
         </div>
       </MediaBackground>
+      {showCardlessLogo && (
+        <CardlessPreviewLogo
+          workspaceLogo={workspace.logo}
+          workspaceId={workspaceId}
+          surveyLogo={styling.logo}
+          previewSurvey={false}
+        />
+      )}
       {!isCardless && (
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}
