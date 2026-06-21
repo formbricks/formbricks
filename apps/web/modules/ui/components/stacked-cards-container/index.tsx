@@ -12,11 +12,11 @@ interface StackedCardsContainerProps {
   linkSurveyCardWidth?: TLinkSurveyCardWidthOptions | null;
 }
 
-export const StackedCardsContainer: React.FC<StackedCardsContainerProps> = ({
+export const StackedCardsContainer = ({
   children,
   cardArrangement,
   linkSurveyCardWidth,
-}) => {
+}: Readonly<StackedCardsContainerProps>) => {
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(linkSurveyCardWidth);
   switch (cardArrangement) {
     case "casual":

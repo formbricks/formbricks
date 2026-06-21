@@ -222,8 +222,9 @@ export interface TBaseStyling {
   isDarkModeEnabled?: boolean | null;
   roundness?: TDimension;
   cardArrangement?: {
+    // "cardless" is only supported for link surveys.
     linkSurveys: "casual" | "straight" | "simple" | "cardless";
-    appSurveys: "casual" | "straight" | "simple" | "cardless";
+    appSurveys: "casual" | "straight" | "simple";
   } | null;
   linkSurveyCardWidth?: "narrow" | "default" | "wide" | null;
   background?: {

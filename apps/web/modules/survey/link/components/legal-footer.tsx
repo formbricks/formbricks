@@ -25,9 +25,7 @@ export const LegalFooter = ({
   if (!IMPRINT_URL && !PRIVACY_URL && !TERMS_URL && !IS_FORMBRICKS_CLOUD) return null;
 
   return (
-    <div
-      className={cn("z-[1500] w-full", isInFlow ? "shrink-0 py-4" : "absolute bottom-0 h-10")}
-      role="contentinfo">
+    <footer className={cn("z-[1500] w-full", isInFlow ? "shrink-0 py-4" : "absolute bottom-0 h-10")}>
       <div className="mx-auto flex h-full max-w-2xl items-center justify-center p-2 text-center text-xs text-slate-500">
         {IMPRINT_URL && (
           <Link href={IMPRINT_URL} target="_blank" className="hover:underline" tabIndex={-1}>
@@ -57,6 +55,6 @@ export const LegalFooter = ({
           </Link>
         )}
       </div>
-    </div>
+    </footer>
   );
 };

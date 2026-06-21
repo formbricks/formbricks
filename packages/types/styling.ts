@@ -7,12 +7,15 @@ export const ZStylingColor = z.object({
 });
 export type TStylingColor = z.infer<typeof ZStylingColor>;
 
-export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple", "cardless"]);
-export type TCardArrangementOptions = z.infer<typeof ZCardArrangementOptions>;
+// "cardless" is only supported for link surveys; app surveys keep the card-based arrangements.
+export const ZLinkSurveyCardArrangementOptions = z.enum(["casual", "straight", "simple", "cardless"]);
+export const ZAppSurveyCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
+export type TCardArrangementOptions = z.infer<typeof ZLinkSurveyCardArrangementOptions>;
+export type TAppSurveyCardArrangementOptions = z.infer<typeof ZAppSurveyCardArrangementOptions>;
 
 export const ZCardArrangement = z.object({
-  linkSurveys: ZCardArrangementOptions,
-  appSurveys: ZCardArrangementOptions,
+  linkSurveys: ZLinkSurveyCardArrangementOptions,
+  appSurveys: ZAppSurveyCardArrangementOptions,
 });
 
 export const ZLinkSurveyCardWidthOptions = z.enum(["narrow", "default", "wide"]);

@@ -135,6 +135,86 @@ export const ThemeStylingPreviewSurvey = ({
     }
   };
 
+  // Cardless surveys span the full width; card-based surveys are capped to the configured width.
+  const cardMaxWidthStyle = isCardless ? undefined : { maxWidth: linkSurveyCardMaxWidth };
+  const linkPreviewLogoOffsetClass = !workspace.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : "";
+
+  const renderAppPreview = () => (
+    <Modal
+      isOpen
+      placement={placement}
+      clickOutsideClose={clickOutsideClose}
+      overlay={overlay}
+      previewMode="desktop"
+      background={workspace.styling.cardBackgroundColor?.light}
+      borderRadius={workspace.styling.roundness ?? 8}>
+      <Fragment key={surveyKey}>
+        <SurveyInline
+          appUrl={publicDomain}
+          isPreviewMode={true}
+          survey={toJsWorkspaceStateSurvey({ ...survey, type: "app" })}
+          isBrandingEnabled={workspace.inAppSurveyBranding}
+          isRedirectDisabled={true}
+          onFileUpload={async (file) => file.name}
+          styling={styling}
+          isCardBorderVisible={!highlightBorderColor}
+          languageCode="default"
+        />
+      </Fragment>
+    </Modal>
+  );
+
+  const renderLinkPreview = () => (
+    <MediaBackground
+      surveyType={survey.type}
+      styling={styling}
+      ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
+      isEditorView
+      useNaturalHeight={isCardless}>
+      <div
+        className={cn(
+          "flex w-full justify-center",
+          isCardless ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden" : "h-full items-center"
+        )}>
+        {!workspace.styling?.isLogoHidden && !isCardless && (
+          <button type="button" className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
+            <ClientLogo
+              workspaceLogo={workspace.logo ?? null}
+              workspaceId={workspace.id}
+              previewSurvey
+              disableLinks
+            />
+          </button>
+        )}
+        <div
+          className={cn(
+            "w-full",
+            isCardless
+              ? "flex min-h-0 w-full flex-1 flex-col"
+              : cn(linkPreviewLogoOffsetClass, "z-0 mx-auto overflow-hidden rounded-lg p-4")
+          )}
+          style={cardMaxWidthStyle}>
+          <div
+            key={surveyKey}
+            className={cn("flex min-h-0 w-full flex-1 flex-col", !isCardless && "justify-center")}>
+            <SurveyInline
+              appUrl={publicDomain}
+              isPreviewMode={true}
+              survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
+              isBrandingEnabled={workspace.linkSurveyBranding}
+              isRedirectDisabled={true}
+              onFileUpload={async (file) => file.name}
+              responseCount={42}
+              styling={styling}
+              showCardlessPreviewLogoSlot={!workspace.styling?.isLogoHidden}
+              languageCode="default"
+            />
+          </div>
+        </div>
+      </div>
+    </MediaBackground>
+  );
+
   return (
     <MotionConfig reducedMotion="user">
       <div className="flex h-full w-full flex-col items-center justify-items-center overflow-hidden">
@@ -172,83 +252,7 @@ export const ThemeStylingPreviewSurvey = ({
             </div>
           </div>
           <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-b-lg">
-            {isAppSurvey ? (
-              <Modal
-                isOpen
-                placement={placement}
-                clickOutsideClose={clickOutsideClose}
-                overlay={overlay}
-                previewMode="desktop"
-                background={workspace.styling.cardBackgroundColor?.light}
-                borderRadius={workspace.styling.roundness ?? 8}>
-                <Fragment key={surveyKey}>
-                  <SurveyInline
-                    appUrl={publicDomain}
-                    isPreviewMode={true}
-                    survey={toJsWorkspaceStateSurvey({ ...survey, type: "app" })}
-                    isBrandingEnabled={workspace.inAppSurveyBranding}
-                    isRedirectDisabled={true}
-                    onFileUpload={async (file) => file.name}
-                    styling={styling}
-                    isCardBorderVisible={!highlightBorderColor}
-                    languageCode="default"
-                  />
-                </Fragment>
-              </Modal>
-            ) : (
-              <MediaBackground
-                surveyType={survey.type}
-                styling={styling}
-                ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
-                isEditorView
-                useNaturalHeight={isCardless}>
-                <div
-                  className={cn(
-                    "flex w-full justify-center",
-                    isCardless
-                      ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden"
-                      : "h-full items-center"
-                  )}>
-                  {!workspace.styling?.isLogoHidden && !isCardless && (
-                    <button type="button" className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
-                      <ClientLogo
-                        workspaceLogo={workspace.logo ?? null}
-                        workspaceId={workspace.id}
-                        previewSurvey
-                      />
-                    </button>
-                  )}
-                  <div
-                    className={cn(
-                      "w-full",
-                      isCardless
-                        ? "flex min-h-0 w-full flex-1 flex-col"
-                        : cn(
-                            !workspace.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : "",
-                            "z-0 mx-auto overflow-hidden rounded-lg p-4"
-                          )
-                    )}
-                    style={!isCardless ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
-                    <div
-                      key={surveyKey}
-                      className={cn("flex min-h-0 w-full flex-1 flex-col", !isCardless && "justify-center")}>
-                      <SurveyInline
-                        appUrl={publicDomain}
-                        isPreviewMode={true}
-                        survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
-                        isBrandingEnabled={workspace.linkSurveyBranding}
-                        isRedirectDisabled={true}
-                        onFileUpload={async (file) => file.name}
-                        responseCount={42}
-                        styling={styling}
-                        showCardlessPreviewLogoSlot={!workspace.styling?.isLogoHidden}
-                        languageCode="default"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </MediaBackground>
-            )}
+            {isAppSurvey ? renderAppPreview() : renderLinkPreview()}
           </div>
         </motion.div>
 

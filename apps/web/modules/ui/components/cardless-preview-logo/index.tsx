@@ -46,7 +46,20 @@ export const CardlessPreviewLogo = ({
     return null;
   }
 
-  const logo = (
+  // When the logo is clickable, render it inside a button with a non-linked logo variant to avoid
+  // nesting interactive elements and to keep the action keyboard-accessible.
+  const content = onLogoClick ? (
+    <button type="button" onClick={onLogoClick} className="cursor-pointer text-left">
+      <ClientLogo
+        workspaceLogo={workspaceLogo}
+        workspaceId={workspaceId}
+        surveyLogo={surveyLogo}
+        previewSurvey
+        position="inline"
+        disableLinks
+      />
+    </button>
+  ) : (
     <ClientLogo
       workspaceLogo={workspaceLogo}
       workspaceId={workspaceId}
@@ -56,14 +69,5 @@ export const CardlessPreviewLogo = ({
     />
   );
 
-  return createPortal(
-    onLogoClick ? (
-      <div role="presentation" onClick={onLogoClick} className="cursor-pointer text-left">
-        {logo}
-      </div>
-    ) : (
-      logo
-    ),
-    mountNode
-  );
+  return createPortal(content, mountNode);
 };

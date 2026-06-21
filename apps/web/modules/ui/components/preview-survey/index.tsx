@@ -314,7 +314,7 @@ export const PreviewSurvey = ({
                           ? "flex min-h-0 w-full flex-1 flex-col"
                           : "z-10 mx-auto rounded-lg border border-transparent"
                       )}
-                      style={!isCardless ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
+                      style={isCardless ? undefined : { maxWidth: linkSurveyCardMaxWidth }}>
                       <div
                         className={cn(
                           "flex min-h-0 w-full flex-1 flex-col",
@@ -325,6 +325,7 @@ export const PreviewSurvey = ({
                           isPreviewMode={true}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
+                          isRedirectDisabled={true}
                           languageCode={languageCode}
                           responseCount={42}
                           styling={styling}
@@ -455,7 +456,7 @@ export const PreviewSurvey = ({
                           ? "flex min-h-0 w-full flex-1 flex-col"
                           : "z-0 mx-auto rounded-lg border-transparent"
                       )}
-                      style={!isCardless ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
+                      style={isCardless ? undefined : { maxWidth: linkSurveyCardMaxWidth }}>
                       <div
                         className={cn(
                           "flex min-h-0 w-full flex-1 flex-col",

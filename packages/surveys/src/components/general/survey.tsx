@@ -22,8 +22,8 @@ import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
-import { ChevronDownIcon } from "@/components/icons/chevron-down-icon";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
+import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
 import { evaluateLogic, performActions } from "@/lib/logic";
@@ -282,54 +282,6 @@ export function Survey({
   const isCardless = cardArrangement === "cardless";
   const linkSurveyCardMaxWidth =
     localSurvey.type === "link" ? getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth) : undefined;
-  const cardlessScrollRef = useRef<HTMLDivElement>(null);
-  const [isCardlessScrollAtTop, setIsCardlessScrollAtTop] = useState(true);
-  const [isCardlessScrollAtBottom, setIsCardlessScrollAtBottom] = useState(false);
-  const cardlessScrollFadeColor = useMemo(() => {
-    if (styling.background?.bgType === "color" && styling.background.bg) {
-      return styling.background.bg;
-    }
-
-    return "#ffffff";
-  }, [styling.background?.bg, styling.background?.bgType]);
-
-  const checkCardlessScroll = useCallback(() => {
-    if (!cardlessScrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = cardlessScrollRef.current;
-    const tolerance = 1;
-
-    setIsCardlessScrollAtBottom(scrollTop + clientHeight >= scrollHeight - tolerance);
-    setIsCardlessScrollAtTop(scrollTop <= tolerance);
-  }, []);
-
-  const scrollCardlessToBottom = useCallback(() => {
-    if (cardlessScrollRef.current) {
-      cardlessScrollRef.current.scrollTop = cardlessScrollRef.current.scrollHeight;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isCardless) return;
-
-    const element = cardlessScrollRef.current;
-    if (!element) return;
-
-    const handleScroll = () => {
-      checkCardlessScroll();
-    };
-
-    element.addEventListener("scroll", handleScroll);
-    checkCardlessScroll();
-
-    return () => {
-      element.removeEventListener("scroll", handleScroll);
-    };
-  }, [isCardless, checkCardlessScroll, blockId]);
-
-  useEffect(() => {
-    if (!isCardless) return;
-    checkCardlessScroll();
-  }, [isCardless, blockId, checkCardlessScroll]);
 
   // Current block tracking (replaces currentQuestionIndex)
   const currentBlockIndex = localSurvey.blocks.findIndex((b) => b.id === blockId);
@@ -1310,86 +1262,34 @@ export function Survey({
     );
   };
 
-  const showCardlessProgressBar = isCardless && showProgressBar;
-
-  return (
-    <div className={cn("flex w-full flex-col", isCardless && "h-full min-h-0 flex-1")}>
-      {showCardlessProgressBar ? (
-        <div className="cardless-progress-bar z-[100] w-full shrink-0">
-          <ProgressBar survey={localSurvey} blockId={blockId} />
-        </div>
-      ) : null}
-      {isPreviewMode && isCardless && showCardlessPreviewLogoSlot ? (
-        <div
-          id="formbricks-cardless-preview-logo-slot"
-          className="mx-auto w-full shrink-0 px-4 pt-5 pb-2 sm:px-6 sm:pt-6"
-          style={linkSurveyCardMaxWidth ? { maxWidth: linkSurveyCardMaxWidth } : undefined}
-        />
-      ) : null}
-      {isCardless ? (
-        <div className="relative min-h-0 flex-1">
-          {!isCardlessScrollAtTop && (
-            <div
-              className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4"
-              style={{
-                background: `linear-gradient(to bottom, ${cardlessScrollFadeColor}, transparent)`,
-              }}
-            />
-          )}
-          <div ref={cardlessScrollRef} className="h-full min-h-0 overflow-y-auto">
-            <div
-              className={cn(
-                "mx-auto flex w-full flex-col items-center px-4 pb-6 sm:px-6",
-                isPreviewMode && showCardlessPreviewLogoSlot ? "pt-6" : "pt-10 sm:pt-12"
-              )}
-              style={linkSurveyCardMaxWidth ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
-              <div className="w-full">
-                <StackedCardsContainer
-                  cardArrangement={cardArrangement}
-                  currentBlockId={blockId}
-                  getCardContent={getCardContent}
-                  survey={localSurvey}
-                  styling={styling}
-                  setBlockId={setBlockId}
-                  shouldResetBlockId={shouldResetQuestionId}
-                  fullSizeCards={fullSizeCards}
-                  placement={placement}
-                />
-              </div>
-            </div>
-          </div>
-          {!isCardlessScrollAtBottom && (
-            <>
-              <div
-                className="pointer-events-none absolute right-4 bottom-0 left-4 z-10 h-4"
-                style={{
-                  background: `linear-gradient(to top, ${cardlessScrollFadeColor}, transparent)`,
-                }}
-              />
-              <button
-                type="button"
-                onClick={scrollCardlessToBottom}
-                style={{ transform: "translateX(-50%)", backgroundColor: cardlessScrollFadeColor }}
-                className="hover:border-border focus:ring-brand absolute bottom-2 left-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-transparent shadow-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
-                aria-label="Scroll to bottom">
-                <ChevronDownIcon className="text-heading h-5 w-5" />
-              </button>
-            </>
-          )}
-        </div>
-      ) : (
-        <StackedCardsContainer
-          cardArrangement={cardArrangement}
-          currentBlockId={blockId}
-          getCardContent={getCardContent}
-          survey={localSurvey}
-          styling={styling}
-          setBlockId={setBlockId}
-          shouldResetBlockId={shouldResetQuestionId}
-          fullSizeCards={fullSizeCards}
-          placement={placement}
-        />
-      )}
-    </div>
+  const stackedCardsContainer = (
+    <StackedCardsContainer
+      cardArrangement={cardArrangement}
+      currentBlockId={blockId}
+      getCardContent={getCardContent}
+      survey={localSurvey}
+      styling={styling}
+      setBlockId={setBlockId}
+      shouldResetBlockId={shouldResetQuestionId}
+      fullSizeCards={fullSizeCards}
+      placement={placement}
+    />
   );
+
+  if (isCardless) {
+    return (
+      <CardlessSurveyLayout
+        survey={localSurvey}
+        blockId={blockId}
+        styling={styling}
+        showProgressBar={showProgressBar}
+        isPreviewMode={isPreviewMode}
+        showCardlessPreviewLogoSlot={showCardlessPreviewLogoSlot}
+        linkSurveyCardMaxWidth={linkSurveyCardMaxWidth}>
+        {stackedCardsContainer}
+      </CardlessSurveyLayout>
+    );
+  }
+
+  return stackedCardsContainer;
 }

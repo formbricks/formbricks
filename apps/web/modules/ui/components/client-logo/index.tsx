@@ -15,6 +15,11 @@ interface ClientLogoProps {
   previewSurvey?: boolean;
   position?: "overlay" | "inline";
   dir?: "ltr" | "rtl" | "auto";
+  /**
+   * Render the logo without its own interactive links. Use this when the logo is wrapped
+   * in a clickable parent (e.g. a button) to avoid nesting interactive elements.
+   */
+  disableLinks?: boolean;
 }
 
 export const ClientLogo = ({
@@ -24,6 +29,7 @@ export const ClientLogo = ({
   previewSurvey = false,
   position = "overlay",
   dir = "auto",
+  disableLinks = false,
 }: Readonly<ClientLogoProps>) => {
   const { t } = useTranslation();
   const logoToUse = surveyLogo?.url ? surveyLogo : workspaceLogo;
@@ -46,7 +52,7 @@ export const ClientLogo = ({
         "group rounded-lg"
       )}
       style={{ backgroundColor: logoToUse?.bgColor }}>
-      {previewSurvey && (
+      {previewSurvey && !disableLinks && (
         <Link
           href={lookSettingsHref}
           className="group/link absolute h-full w-full hover:cursor-pointer"
@@ -68,6 +74,10 @@ export const ClientLogo = ({
           height={64}
           alt="Company Logo"
         />
+      ) : disableLinks ? (
+        <span className="whitespace-nowrap rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs text-slate-900 opacity-50 backdrop-blur-sm">
+          {t("common.add_logo")}
+        </span>
       ) : (
         <Link
           href={lookSettingsHref}

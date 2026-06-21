@@ -16,7 +16,7 @@ export interface ScrollableContainerHandle {
 
 export const ScrollableContainer = forwardRef<ScrollableContainerHandle, ScrollableContainerProps>(
   (
-    { children, fullSizeCards = false, disableInternalScroll = false }: ScrollableContainerProps,
+    { children, fullSizeCards = false, disableInternalScroll = false }: Readonly<ScrollableContainerProps>,
     ref: Ref<ScrollableContainerHandle>
   ) => {
     const [isAtBottom, setIsAtBottom] = useState(false);

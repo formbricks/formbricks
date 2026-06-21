@@ -151,9 +151,14 @@ export const CardStylingSettings = ({
                     surveyType={isAppSurvey ? "app" : "link"}
                     activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
                     setActiveCardArrangement={(value, type) => {
-                      type === "app"
-                        ? form.setValue("cardArrangement.appSurveys", value)
-                        : form.setValue("cardArrangement.linkSurveys", value);
+                      if (type === "app") {
+                        // "cardless" is not offered for app surveys, so it can be safely excluded here.
+                        if (value !== "cardless") {
+                          form.setValue("cardArrangement.appSurveys", value);
+                        }
+                      } else {
+                        form.setValue("cardArrangement.linkSurveys", value);
+                      }
                     }}
                   />
                 </FormControl>
