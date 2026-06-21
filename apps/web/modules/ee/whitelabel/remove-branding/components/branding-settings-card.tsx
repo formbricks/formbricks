@@ -3,6 +3,7 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
+import { RemoveBrandingLicenseTip } from "@/modules/ee/whitelabel/remove-branding/components/remove-branding-license-tip";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
@@ -10,13 +11,17 @@ interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
   workspace: TWorkspace;
   isReadOnly: boolean;
+  showLiteLicenseTip?: boolean;
+  userEmail?: string;
 }
 
 export const BrandingSettingsCard = async ({
   canRemoveBranding,
   workspace,
   isReadOnly,
-}: BrandingSettingsCardProps) => {
+  showLiteLicenseTip = false,
+  userEmail,
+}: Readonly<BrandingSettingsCardProps>) => {
   const t = await getTranslate();
   const workspaceBasePath = `/workspaces/${workspace.id}`;
 
@@ -36,7 +41,8 @@ export const BrandingSettingsCard = async ({
   return (
     <SettingsCard
       title={t("workspace.look.formbricks_branding")}
-      description={t("workspace.look.formbricks_branding_settings_description")}>
+      description={t("workspace.look.formbricks_branding_settings_description")}
+      noPadding={showLiteLicenseTip}>
       {canRemoveBranding ? (
         <div className="space-y-4">
           <EditBranding
@@ -52,6 +58,11 @@ export const BrandingSettingsCard = async ({
             isReadOnly={isReadOnly}
           />
         </div>
+      ) : showLiteLicenseTip && userEmail ? (
+        <RemoveBrandingLicenseTip
+          userEmail={userEmail}
+          licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
+        />
       ) : (
         <UpgradePrompt
           title={t("workspace.look.remove_branding_with_a_higher_plan")}

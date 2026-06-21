@@ -8,7 +8,6 @@ import {
 } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import {
   getIsAISmartToolsEnabled,
   getIsMultiOrgEnabled,
@@ -26,7 +25,6 @@ import { AISettingsToggle } from "./components/AISettingsToggle";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 import { SecurityListTip } from "./components/SecurityListTip";
-import { SsoLicenseTip } from "./components/SsoLicenseTip";
 
 const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
   const params = await props.params;
@@ -39,19 +37,16 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
 
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
-  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAIPermission, enterpriseLicense] = await Promise.all([
+  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAIPermission] = await Promise.all([
     getIsMultiOrgEnabled(),
     getWhiteLabelPermission(organization.id),
     getIsAISmartToolsEnabled(organization.id),
-    IS_FORMBRICKS_CLOUD ? Promise.resolve(null) : getEnterpriseLicense(),
   ]);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
 
   const isOwnerOrManager = isManager || isOwner;
-  const showSsoLicenseTip =
-    !IS_FORMBRICKS_CLOUD && isOwnerOrManager && enterpriseLicense?.status === "no-license" && !!user?.email;
 
   return (
     <PageContentWrapper>
@@ -64,9 +59,6 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
         </div>
       )}
       {!IS_FORMBRICKS_CLOUD && <SecurityListTip />}
-      {showSsoLicenseTip && user?.email && (
-        <SsoLicenseTip userEmail={user.email} licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL} />
-      )}
       <SettingsCard
         title={t("workspace.settings.general.organization_name")}
         description={t("workspace.settings.general.organization_name_description")}>
