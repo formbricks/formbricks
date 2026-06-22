@@ -29,7 +29,7 @@ export const ActionDetailModal = ({
   hideActivityTab,
   currentSurveyId,
   onActionUpdated,
-}: ActionDetailModalProps) => {
+}: Readonly<ActionDetailModalProps>) => {
   const { t } = useTranslation();
   const tabs = [
     ...(hideActivityTab

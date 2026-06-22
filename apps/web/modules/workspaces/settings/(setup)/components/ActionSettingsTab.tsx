@@ -44,7 +44,7 @@ export const ActionSettingsTab = ({
   hideDelete = false,
   currentSurveyId,
   onActionUpdated,
-}: ActionSettingsTabProps) => {
+}: Readonly<ActionSettingsTabProps>) => {
   const actionDocsHref = "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions";
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();

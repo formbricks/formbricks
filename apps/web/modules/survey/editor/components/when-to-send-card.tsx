@@ -231,6 +231,7 @@ export const WhenToSendCard = ({
                           <Button
                             variant="secondary"
                             size="icon"
+                            aria-label={t("common.edit")}
                             onClick={() => handleEditTriggerEvent(trigger.actionClass)}>
                             <PencilIcon />
                           </Button>
@@ -242,6 +243,7 @@ export const WhenToSendCard = ({
                         variant="outline"
                         className="bg-white"
                         size="icon"
+                        aria-label={t("common.delete")}
                         onClick={() => handleRemoveTriggerEvent(idx)}>
                         <Trash2Icon />
                       </Button>
