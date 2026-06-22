@@ -40,6 +40,12 @@ describe("accountDeletionBeforeDelete", () => {
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
 
     await expect(accountDeletionBeforeDelete(user)).rejects.toBeInstanceOf(APIError);
+    // records the blocked attempt as a failure-path audit before surfacing the error
+    expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      status: "failure",
+      targetUserId: "user-1",
+      oldUser: expect.objectContaining({ id: "user-1" }),
+    });
     // throws before any destructive cleanup
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).not.toHaveBeenCalled();

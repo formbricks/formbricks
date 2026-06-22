@@ -2,6 +2,7 @@ import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth, twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
@@ -18,12 +19,12 @@ import { accountDeletionConfig } from "@/modules/account/lib/better-auth-account
 import {
   ssoDatabaseHooks,
   ssoLicenseGateBefore,
-  ssoRecoveryAfter,
+  ssoRecoveryAfterHandler,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
-import { betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import { auditFailedAuthAfter, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
@@ -52,8 +53,9 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  *  - `emailVerified` Date→boolean production migration (required for requireEmailVerification)
  *  - forward-auth proxy → BA-only validation (proxy-session.ts / session-cookie.ts)
  *  - SSO verify-before-link recovery completion + the shared "token" email-signin (email repoint)
- *  - failed-login audit via `onAPIError.onError` (the signedIn-success audit + Sentry/logger
- *    forwarding are already wired via better-auth-observability.ts)
+ *  - 2FA-challenge failure audit (identity is in the two-factor cookie, not the request body) — the
+ *    credential sign-in + sole-owner-deletion failure audits and the signedIn-success/Sentry/logger
+ *    wiring are already in better-auth-observability.ts
  */
 export const auth = betterAuth({
   appName: "Formbricks",
@@ -188,11 +190,18 @@ export const auth = betterAuth({
   },
 
   // Request hooks (parity with handleSsoCallback). `before` re-checks the SSO/SAML license on every
-  // SSO callback (covers existing-user sign-ins that skip user.create); `after` turns Better Auth's
-  // "account not linked" collision into the verify-before-link recovery flow.
+  // SSO callback (covers existing-user sign-ins that skip user.create). `after` composes two
+  // concerns into the single hook slot: the SSO "account not linked" → verify-before-link recovery
+  // flow, then the failed-login audit (parity with NextAuth's `logAuthAttempt`). We call the plain
+  // handlers directly — wrapping each in its own `createAuthMiddleware` would re-run the middleware
+  // context setup. Recovery runs first; if it redirects (throws) the request is an SSO recovery, not
+  // a credential failure, so skipping the audit is correct.
   hooks: {
     before: ssoLicenseGateBefore,
-    after: ssoRecoveryAfter,
+    after: createAuthMiddleware(async (ctx) => {
+      await ssoRecoveryAfterHandler(ctx);
+      await auditFailedAuthAfter(ctx);
+    }),
   },
 
   rateLimit: {

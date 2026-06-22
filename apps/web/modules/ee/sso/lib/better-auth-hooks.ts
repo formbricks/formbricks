@@ -162,7 +162,16 @@ export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
  * email-match → startSsoRecovery branch. Inert until cutover (route unmounted + the handler must wrap
  * `auth.handler` in `runWithSsoRequestContext`).
  */
-export const ssoRecoveryAfter = createAuthMiddleware(async (ctx) => {
+/** The endpoint context Better Auth passes to a `hooks.after` middleware handler. */
+export type AuthHookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];
+
+/**
+ * Plain-handler form of {@link ssoRecoveryAfter}. Exported so the composition root (auth.ts) can run
+ * it alongside other after-hooks (e.g. the failed-auth audit) in Better Auth's single `hooks.after`
+ * slot — passing the already-built context straight through, rather than calling the wrapped
+ * middleware (which would re-run `createInternalContext` + the middleware `use` chain).
+ */
+export const ssoRecoveryAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   const providerId = getSsoProviderFromContext(ctx);
   const provider = providerId ? normalizeSsoProvider(providerId) : null;
   if (!provider) return; // not an SSO callback
@@ -200,4 +209,6 @@ export const ssoRecoveryAfter = createAuthMiddleware(async (ctx) => {
 
   // Replace the ?error=account_not_linked redirect with the verify-before-link recovery flow.
   throw ctx.redirect(new URL(recoveryPath, WEBAPP_URL).toString());
-});
+};
+
+export const ssoRecoveryAfter = createAuthMiddleware(ssoRecoveryAfterHandler);

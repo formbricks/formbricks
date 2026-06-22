@@ -43,6 +43,13 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
   const soleOwnerOrganizations = await getOrganizationsWhereUserIsSingleOwner(user.id);
 
   if (soleOwnerOrganizations.length > 0 && !(await getIsMultiOrgEnabled())) {
+    // Failure-path audit parity: record the blocked deletion attempt before surfacing the error
+    // (the afterDelete success audit never runs for a blocked deletion).
+    await queueAccountDeletionAuditEvent({
+      status: "failure",
+      targetUserId: user.id,
+      oldUser: user as Record<string, unknown>,
+    });
     throw new APIError("BAD_REQUEST", {
       message: ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE,
     });

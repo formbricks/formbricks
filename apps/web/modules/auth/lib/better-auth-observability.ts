@@ -1,17 +1,25 @@
 import "server-only";
 import * as Sentry from "@sentry/nextjs";
 import type { BetterAuthOptions } from "better-auth";
+import { isAPIError } from "better-auth/api";
 import { logger } from "@formbricks/logger";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 /**
  * Observability parity for the Better Auth cutover (ENG-1054) — re-expresses the audit + Sentry
  * emission the NextAuth `[...nextauth]` route did (its `events.signIn` audit + `Sentry.captureException`)
  * as Better Auth config, so the security audit trail and error reporting survive the flip. The
  * success-path `signedIn` audit below is LIVE now that the handler is mounted; the failure-path audit
- * is still pending (S2 — `onAPIError.onError`).
+ * is `auditFailedAuthAfter` (wired into `hooks.after`).
+ *
+ * Mechanism note: a wrong-password sign-in is a HANDLED failure — Better Auth converts it to an
+ * `APIError` *response* (surfaced on `ctx.context.returned`), not an unexpected throw — so it does NOT
+ * reach `onAPIError.onError` (that fires only for unexpected/internal errors). The failure audit
+ * therefore lives in `hooks.after`, where both the request and the returned error are available.
  */
 
 /**
@@ -40,8 +48,8 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
  * Emit the `signedIn` success audit on session creation — parity with the NextAuth route's
  * `events.signIn`. Guarded to genuine sign-in completions (see getSignInAuthMethod) so non-sign-in
  * session re-issues don't produce spurious events. `autoSignIn` is off, so sign-up/verification don't
- * create a session either. Failures create no session — failed-login auditing is a cutover follow-up
- * (needs response inspection).
+ * create a session either. Failures create no session, so they're audited separately by
+ * `auditFailedAuthAfter` below (which inspects the returned error in `hooks.after`).
  */
 export const signInAuditDatabaseHook: NonNullable<
   NonNullable<BetterAuthOptions["databaseHooks"]>["session"]
@@ -92,4 +100,37 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
       contextLogger.info(message);
     }
   },
+};
+
+/**
+ * Failed-login audit (parity with NextAuth's credentials `authorize` → `logAuthAttempt`), emitted from
+ * `hooks.after` because a rejected sign-in is a handled `APIError` *response*, not a thrown error (see
+ * the header note — it never reaches `onAPIError.onError`). Reusing `logAuthAttempt` +
+ * `shouldLogAuthFailure` preserves full parity: the email is hashed (never stored raw), brute-force
+ * attempts are rate-limited (fail-closed when Redis is down), and the failure is mirrored to Sentry in
+ * production.
+ *
+ * Scope: the credential password sign-in (`/sign-in/email`). A failed 2FA challenge
+ * (`/two-factor/verify-*`) identifies the user via the two-factor cookie rather than the request body,
+ * so it is tracked separately; SSO sign-in failures are redirects (not `APIError`s) and never reach
+ * this branch. Composed with `ssoRecoveryAfter` at the single `hooks.after` slot in auth.ts.
+ */
+export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> => {
+  if (ctx.path !== "/sign-in/email") return;
+
+  // A created session (success) is audited by signInAuditDatabaseHook; only a returned APIError here
+  // represents a rejected attempt.
+  const returned = (ctx.context as { returned?: unknown }).returned;
+  if (!isAPIError(returned)) return;
+
+  const body = ctx.body as { email?: unknown } | undefined;
+  const email = typeof body?.email === "string" ? body.email : undefined;
+  if (!email) return;
+
+  // Throttle audit volume under brute force (fail-closed on Redis outage), matching the NextAuth path.
+  if (!(await shouldLogAuthFailure(email))) return;
+
+  const code = (returned.body as { code?: unknown } | undefined)?.code;
+  const failureReason = (typeof code === "string" ? code : String(returned.status)).toLowerCase();
+  logAuthAttempt(failureReason, "credentials", "password", UNKNOWN_DATA, email);
 };
