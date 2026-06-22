@@ -215,7 +215,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
                 className="h-full cursor-pointer rounded-lg object-cover"
               />
               {image.authorName && (
-                <span className="bg-opacity-75 absolute right-1 bottom-1 hidden rounded-sm bg-black px-2 py-1 text-xs text-white group-hover:block">
+                <span className="absolute right-1 bottom-1 hidden rounded-sm bg-black/75 px-2 py-1 text-xs text-white group-hover:block">
                   {image.authorName}
                 </span>
               )}
