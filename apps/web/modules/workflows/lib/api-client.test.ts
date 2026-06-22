@@ -62,6 +62,7 @@ describe("updateWorkflow", () => {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "new" }),
+      signal: expect.any(AbortSignal),
     });
   });
 });
@@ -80,6 +81,7 @@ describe("lifecycle endpoints", () => {
     expect(fetchMock).toHaveBeenCalledWith(`/api/v3/workflows/wf1/${action}`, {
       method: "POST",
       cache: "no-store",
+      signal: expect.any(AbortSignal),
     });
   });
 });
