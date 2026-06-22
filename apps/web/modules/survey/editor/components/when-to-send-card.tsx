@@ -16,6 +16,7 @@ import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
 import { ActionDetailModal } from "@/modules/workspaces/settings/(setup)/components/ActionDetailModal";
 
@@ -72,9 +73,7 @@ export const WhenToSendCard = ({
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,
       triggers: prevSurvey.triggers.map((trigger) =>
-        trigger.actionClass.id === updatedAction.id
-          ? { ...trigger, actionClass: updatedAction }
-          : trigger
+        trigger.actionClass.id === updatedAction.id ? { ...trigger, actionClass: updatedAction } : trigger
       ),
     }));
   };
@@ -227,20 +226,26 @@ export const WhenToSendCard = ({
                         </div>
                         <ActionClassInfo actionClass={trigger.actionClass} />
                       </div>
+                      {!isReadOnly ? (
+                        <TooltipRenderer tooltipContent={t("common.edit")}>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            onClick={() => handleEditTriggerEvent(trigger.actionClass)}>
+                            <PencilIcon />
+                          </Button>
+                        </TooltipRenderer>
+                      ) : null}
                     </div>
-                    {!isReadOnly ? (
-                      <button
-                        type="button"
-                        className="cursor-pointer text-slate-600"
-                        onClick={() => handleEditTriggerEvent(trigger.actionClass)}
-                        aria-label={t("common.edit")}>
-                        <PencilIcon className="size-4" />
-                      </button>
-                    ) : null}
-                    <Trash2Icon
-                      className="size-4 cursor-pointer text-slate-600"
-                      onClick={() => handleRemoveTriggerEvent(idx)}
-                    />
+                    <TooltipRenderer tooltipContent={t("common.delete")}>
+                      <Button
+                        variant="outline"
+                        className="bg-white"
+                        size="icon"
+                        onClick={() => handleRemoveTriggerEvent(idx)}>
+                        <Trash2Icon />
+                      </Button>
+                    </TooltipRenderer>
                   </div>
                 );
               })}
@@ -373,6 +378,7 @@ export const WhenToSendCard = ({
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}
           hideDelete
+          hideActivityTab
           currentSurveyId={localSurvey.id}
           onActionUpdated={handleActionUpdated}
         />
