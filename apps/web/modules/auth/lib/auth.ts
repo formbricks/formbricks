@@ -103,6 +103,9 @@ export const auth = betterAuth({
   },
 
   emailVerification: {
+    // BA sends the verification email on signup (used by the createUserAction signup flow). When
+    // EMAIL_VERIFICATION_DISABLED the user still receives it but isn't blocked from signing in —
+    // requireEmailVerification (above) gates that.
     sendOnSignUp: true,
     // Resend a fresh verification link when an unverified user tries to sign in (the original sign-up
     // link may have expired). The login form surfaces this as a "check your inbox" message — without
