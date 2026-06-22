@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
+import type { TWorkflowStatus } from "@formbricks/workflows";
 import { ZWorkflowSortBy, ZWorkflowStatus } from "@formbricks/workflows";
 
 /**

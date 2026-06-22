@@ -71,7 +71,7 @@ export const WorkflowsListPage = ({
   // Hydrate the toolbar filters from localStorage once on mount (mirrors the surveys list). Reading
   // happens post-mount because localStorage is unavailable during SSR.
   useEffect(() => {
-    if (typeof globalThis.window === "undefined") return;
+    if (globalThis.window === undefined) return;
     const stored = globalThis.window.localStorage.getItem(FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS);
     const parsed = parseStoredWorkflowFilters(stored);
     if (stored && !parsed) {
@@ -88,7 +88,7 @@ export const WorkflowsListPage = ({
   // Persist on change, but only after hydration so the empty defaults don't overwrite the stored
   // value before it has been read.
   useEffect(() => {
-    if (!isFilterInitialized || typeof globalThis.window === "undefined") return;
+    if (!isFilterInitialized || globalThis.window === undefined) return;
     globalThis.window.localStorage.setItem(
       FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS,
       JSON.stringify({ searchValue, selectedStatuses, sortBy, showArchived })
