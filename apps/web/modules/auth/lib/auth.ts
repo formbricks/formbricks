@@ -9,6 +9,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
+  RATE_LIMITING_DISABLED,
   SESSION_MAX_AGE,
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
@@ -190,6 +191,10 @@ export const auth = betterAuth({
   },
 
   rateLimit: {
+    // Enable explicitly rather than relying on Better Auth's NODE_ENV==="production" default, so the
+    // brute-force limits also apply in staging / self-host. Respects the operator's RATE_LIMITING_DISABLED
+    // (the same app-level toggle the legacy limiter used); the integration harness sets it to skip limits.
+    enabled: !RATE_LIMITING_DISABLED,
     // Redis-backed so counters are shared across instances (the in-memory default is per-instance
     // and resets on deploy — unsuitable for multi-instance prod).
     storage: "secondary-storage",

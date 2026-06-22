@@ -17,6 +17,8 @@ process.env.DATABASE_URL =
 process.env.REDIS_URL = process.env.TEST_REDIS_URL ?? "redis://localhost:6379/15";
 // Better Auth requires a secret; provide a stable test one if the loaded env doesn't carry it.
 process.env.BETTER_AUTH_SECRET ??= "integration-test-better-auth-secret-0123456789abcdef";
+// Disable rate limiting in the harness — counters would accumulate in the shared Redis db across tests.
+process.env.RATE_LIMITING_DISABLED ??= "1";
 
 // server-only is a Next.js build guard; no-op it under vitest.
 vi.mock("server-only", () => ({}));

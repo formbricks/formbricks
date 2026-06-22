@@ -45,12 +45,15 @@ export const LoginPage = async ({
     cookies(),
   ]);
   const oauthError = getSearchParamString(searchParams.error);
+  // Accept both the NextAuth (`OAuthAccountNotLinked`) and Better Auth (`account_not_linked`) slugs.
+  const isOAuthAccountNotLinked =
+    oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
 
   const resolvedCallbackUrl =
     resolveAuthCallbackUrl({
       searchParamCallbackUrl: searchParams.callbackUrl,
       cookieCallbackUrl: getAuthCallbackUrlFromCookies(cookieStore),
-      allowCookieFallback: oauthError === "OAuthAccountNotLinked",
+      allowCookieFallback: isOAuthAccountNotLinked,
       webAppUrl: WEBAPP_URL,
     }) ?? WEBAPP_URL;
   const resolvedCallbackPath = getRelativeCallbackUrl(resolvedCallbackUrl, WEBAPP_URL);

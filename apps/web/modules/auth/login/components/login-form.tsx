@@ -74,7 +74,9 @@ export const LoginForm = ({
 }: LoginFormProps) => {
   const router = useRouter();
   const emailRef = useRef<HTMLInputElement>(null);
-  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked";
+  // Better Auth surfaces the collision as `account_not_linked`; NextAuth used `OAuthAccountNotLinked`.
+  // Accept both so the "not linked" alert survives the cutover.
+  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
   const { t } = useTranslation();
 
   const form = useForm<TLoginForm>({
