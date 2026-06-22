@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Tem a certeza de que pretende eliminar esta equipa? Isto também remove o acesso a todos os espaços de trabalho e inquéritos associados a esta equipa.",
         "billing_role_description": "Apenas tem acesso a informações de faturação.",
         "bulk_invite": "Convite em Massa",
+        "bulk_invite_scale_only_description": "Convidar membros em massa através de CSV está disponível no plano Scale. Faz upgrade para convidares toda a tua equipa de uma só vez.",
+        "bulk_invite_scale_only_title": "Desbloqueia o convite em massa com um plano superior",
         "contributor": "Contribuidor",
         "create": "Criar",
         "create_first_team_message": "Primeiro, precisa de criar uma equipa.",

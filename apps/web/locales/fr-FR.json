@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Êtes-vous sûr de vouloir supprimer cette équipe ? Cela supprime également l'accès à tous les espaces de travail et enquêtes associés à cette équipe.",
         "billing_role_description": "N'ont accès qu'aux informations de facturation.",
         "bulk_invite": "Invitation en masse",
+        "bulk_invite_scale_only_description": "L'invitation de membres en masse via CSV est disponible avec le forfait Scale. Passe à un forfait supérieur pour inviter toute ton équipe en une seule fois.",
+        "bulk_invite_scale_only_title": "Débloque l'invitation en masse avec un forfait supérieur",
         "contributor": "Contributeur",
         "create": "Créer",
         "create_first_team_message": "Vous devez d'abord créer une équipe.",

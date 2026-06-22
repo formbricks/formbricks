@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "¿Estás seguro de que quieres eliminar este equipo? Esto también elimina el acceso a todos los espacios de trabajo y encuestas asociadas con este equipo.",
         "billing_role_description": "Solo tienen acceso a la información de facturación.",
         "bulk_invite": "Invitación masiva",
+        "bulk_invite_scale_only_description": "Invitar miembros de forma masiva mediante CSV está disponible en el plan Scale. Actualiza para invitar a todo tu equipo de una vez.",
+        "bulk_invite_scale_only_title": "Desbloquea la invitación masiva con un plan superior",
         "contributor": "Colaborador",
         "create": "Crear",
         "create_first_team_message": "Necesitas crear un equipo primero.",

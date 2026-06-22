@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Weet je zeker dat je dit team wilt verwijderen? Dit verwijdert ook de toegang tot alle werkruimtes en enquêtes die bij dit team horen.",
         "billing_role_description": "U heeft alleen toegang tot factuurgegevens.",
         "bulk_invite": "Bulk-uitnodiging",
+        "bulk_invite_scale_only_description": "Leden uitnodigen in bulk via CSV is beschikbaar op het Scale-abonnement. Upgrade om je hele team in één keer uit te nodigen.",
+        "bulk_invite_scale_only_title": "Ontgrendel bulk uitnodigingen met een hoger abonnement",
         "contributor": "Bijdrager",
         "create": "Creëren",
         "create_first_team_message": "Je moet eerst een team aanmaken.",
