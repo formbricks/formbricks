@@ -3947,7 +3947,6 @@
       "send_email_summary": "向 {to} 发送邮件。",
       "send_email_unconfigured": "配置邮件收件人。",
       "settings_title": "设置",
-      "show_archived": "显示已归档",
       "test_not_implemented": "测试工作流功能尚未实现。",
       "trigger_ending_cards_description": "Restrict the trigger to specific endings. Leave all unchecked to match any ending.",
       "trigger_ending_cards_label": "Ending cards",

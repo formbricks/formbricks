@@ -1,23 +1,17 @@
 import { describe, expect, test } from "vitest";
-import { ZWorkflowStatus } from "@formbricks/workflows";
 import { computeStatusIn, parseStoredWorkflowFilters } from "./list-filters";
 
 describe("computeStatusIn", () => {
-  test("filter empty + toggle OFF -> undefined (API default excludes archived)", () => {
-    expect(computeStatusIn([], false)).toBeUndefined();
+  test("empty selection -> undefined (API default excludes archived)", () => {
+    expect(computeStatusIn([])).toBeUndefined();
   });
 
-  test("filter empty + toggle ON -> all four statuses including archived", () => {
-    expect(computeStatusIn([], true)).toEqual([...ZWorkflowStatus.options]);
-    expect(computeStatusIn([], true)).toContain("archived");
+  test("non-empty selection -> the selected statuses verbatim", () => {
+    expect(computeStatusIn(["draft", "disabled"])).toEqual(["draft", "disabled"]);
   });
 
-  test("filter non-empty + toggle OFF -> the selected statuses only", () => {
-    expect(computeStatusIn(["draft", "disabled"], false)).toEqual(["draft", "disabled"]);
-  });
-
-  test("filter non-empty + toggle ON -> selected statuses plus archived", () => {
-    expect(computeStatusIn(["enabled"], true)).toEqual(["enabled", "archived"]);
+  test("archived flows through when it is one of the selected statuses", () => {
+    expect(computeStatusIn(["enabled", "archived"])).toEqual(["enabled", "archived"]);
   });
 });
 
@@ -35,23 +29,24 @@ describe("parseStoredWorkflowFilters", () => {
     expect(parseStoredWorkflowFilters(JSON.stringify({ searchValue: 5 }))).toBeNull();
     expect(
       parseStoredWorkflowFilters(
-        JSON.stringify({
-          searchValue: "x",
-          selectedStatuses: ["bogus"],
-          sortBy: "updatedAt",
-          showArchived: false,
-        })
+        JSON.stringify({ searchValue: "x", selectedStatuses: ["bogus"], sortBy: "updatedAt" })
       )
     ).toBeNull();
   });
 
-  test("parses a valid payload", () => {
+  test("parses a valid payload (archived is an allowed status)", () => {
     const stored = {
       searchValue: "foo",
-      selectedStatuses: ["draft", "enabled"],
+      selectedStatuses: ["draft", "archived"],
       sortBy: "name",
-      showArchived: true,
     };
     expect(parseStoredWorkflowFilters(JSON.stringify(stored))).toEqual(stored);
+  });
+
+  test("strips a legacy showArchived field instead of rejecting it", () => {
+    const parsed = parseStoredWorkflowFilters(
+      JSON.stringify({ searchValue: "", selectedStatuses: [], sortBy: "updatedAt", showArchived: true })
+    );
+    expect(parsed).toEqual({ searchValue: "", selectedStatuses: [], sortBy: "updatedAt" });
   });
 });

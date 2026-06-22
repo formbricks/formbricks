@@ -3947,7 +3947,6 @@
       "send_email_summary": "{to}にメールを送信します。",
       "send_email_unconfigured": "メールの送信先を設定してください。",
       "settings_title": "設定",
-      "show_archived": "アーカイブ済みを表示",
       "test_not_implemented": "テストワークフローはまだ実装されていません。",
       "trigger_ending_cards_description": "Restrict the trigger to specific endings. Leave all unchecked to match any ending.",
       "trigger_ending_cards_label": "Ending cards",

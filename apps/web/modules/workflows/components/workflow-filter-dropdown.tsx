@@ -1,18 +1,22 @@
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
+import { Fragment } from "react";
 import type { TWorkflowStatus } from "@formbricks/workflows";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 
 export interface TWorkflowStatusFilterOption {
   label: string;
   value: TWorkflowStatus;
+  /** Render a divider above this option, to set it apart from the ones before it. */
+  separatorBefore?: boolean;
 }
 
 interface WorkflowFilterDropdownProps {
@@ -45,21 +49,23 @@ export const WorkflowFilterDropdown = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-slate-900">
         {options.map((option) => (
-          <DropdownMenuItem
-            key={option.value}
-            className="m-0 p-0"
-            onClick={(e) => {
-              e.preventDefault();
-              onToggleOption(option.value);
-            }}>
-            <div className="flex h-full w-full items-center gap-x-2 px-2 py-1 hover:bg-slate-700">
-              <Checkbox
-                checked={selectedOptions.includes(option.value)}
-                className={`bg-white ${selectedOptions.includes(option.value) ? "border-none bg-brand-dark" : ""}`}
-              />
-              <p className="font-normal text-white">{option.label}</p>
-            </div>
-          </DropdownMenuItem>
+          <Fragment key={option.value}>
+            {option.separatorBefore ? <DropdownMenuSeparator className="bg-slate-700" /> : null}
+            <DropdownMenuItem
+              className="m-0 p-0"
+              onClick={(e) => {
+                e.preventDefault();
+                onToggleOption(option.value);
+              }}>
+              <div className="flex h-full w-full items-center gap-x-2 px-2 py-1 hover:bg-slate-700">
+                <Checkbox
+                  checked={selectedOptions.includes(option.value)}
+                  className={`bg-white ${selectedOptions.includes(option.value) ? "border-none bg-brand-dark" : ""}`}
+                />
+                <p className="font-normal text-white">{option.label}</p>
+              </div>
+            </DropdownMenuItem>
+          </Fragment>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

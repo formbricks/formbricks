@@ -11,9 +11,7 @@ import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
-import { Label } from "@/modules/ui/components/label";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import { Switch } from "@/modules/ui/components/switch";
 import {
   type TWorkflowStatusFilterOption,
   WorkflowFilterDropdown,
@@ -33,12 +31,13 @@ interface WorkflowsListPageProps {
   workflowsPerPage: number;
 }
 
-// Live statuses the status filter exposes. Archived is governed by the Show-archived toggle, so it is
-// intentionally excluded here.
+// Status filter options. Archived is set apart by a divider and unchecked by default, so archived
+// workflows stay hidden until the user explicitly opts in.
 const getStatusFilterOptions = (t: TFunction): TWorkflowStatusFilterOption[] => [
   { label: t("common.draft"), value: "draft" },
   { label: t("common.enabled"), value: "enabled" },
   { label: t("common.disabled"), value: "disabled" },
+  { label: t("common.archived"), value: "archived", separatorBefore: true },
 ];
 
 export const WorkflowsListPage = ({
@@ -52,16 +51,12 @@ export const WorkflowsListPage = ({
 
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearchValue = useDebouncedValue(searchValue, 300);
-  const [showArchived, setShowArchived] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<TWorkflowStatus[]>([]);
   const [sortBy, setSortBy] = useState<TWorkflowSortBy>("updatedAt");
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 
-  const statusIn = useMemo(
-    () => computeStatusIn(selectedStatuses, showArchived),
-    [selectedStatuses, showArchived]
-  );
+  const statusIn = useMemo(() => computeStatusIn(selectedStatuses), [selectedStatuses]);
 
   // Hydrate the toolbar filters from localStorage once on mount (mirrors the surveys list). Reading
   // happens post-mount because localStorage is unavailable during SSR.
@@ -75,7 +70,6 @@ export const WorkflowsListPage = ({
       setSearchValue(parsed.searchValue);
       setSelectedStatuses(parsed.selectedStatuses);
       setSortBy(parsed.sortBy);
-      setShowArchived(parsed.showArchived);
     }
     setIsFilterInitialized(true);
   }, []);
@@ -86,9 +80,9 @@ export const WorkflowsListPage = ({
     if (!isFilterInitialized || globalThis.window === undefined) return;
     globalThis.window.localStorage.setItem(
       FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS,
-      JSON.stringify({ searchValue, selectedStatuses, sortBy, showArchived })
+      JSON.stringify({ searchValue, selectedStatuses, sortBy })
     );
-  }, [searchValue, selectedStatuses, sortBy, showArchived, isFilterInitialized]);
+  }, [searchValue, selectedStatuses, sortBy, isFilterInitialized]);
 
   const toggleStatus = (value: TWorkflowStatus) => {
     setSelectedStatuses((prev) =>
@@ -131,10 +125,10 @@ export const WorkflowsListPage = ({
   });
   const isFilteredNoMatch = hasActiveFilters && (isProbingWorkflows || unfilteredWorkflows.length > 0);
 
-  // Mirror the surveys list: when the workspace has no workflows at all (nothing filtered, archived
-  // hidden), show only the empty state and hide the filter toolbar.
+  // Mirror the surveys list: when the workspace has no workflows yet (and nothing is filtered), show
+  // only the empty state and hide the filter toolbar.
   const isWorkspaceEmpty =
-    !showInitialLoading && !isError && workflows.length === 0 && !hasActiveFilters && !showArchived;
+    !showInitialLoading && !isError && workflows.length === 0 && !hasActiveFilters;
 
   if (isWorkspaceEmpty) {
     return (
@@ -248,15 +242,7 @@ export const WorkflowsListPage = ({
             </Button>
           ) : null}
         </div>
-        <div className="flex shrink-0 items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
-            <Label htmlFor="show-archived" className="cursor-pointer">
-              {t("workspace.workflows.show_archived")}
-            </Label>
-          </div>
-          <WorkflowSortDropdown sortBy={sortBy} onSortChange={setSortBy} />
-        </div>
+        <WorkflowSortDropdown sortBy={sortBy} onSortChange={setSortBy} />
       </div>
       {listContent}
     </div>

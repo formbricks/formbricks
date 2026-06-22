@@ -3947,7 +3947,6 @@
       "send_email_summary": "Trimite un email către {to}.",
       "send_email_unconfigured": "Configurează destinatarul emailului.",
       "settings_title": "Setări",
-      "show_archived": "Afișează arhivate",
       "test_not_implemented": "Testarea fluxului de lucru nu este implementată încă.",
       "trigger_ending_cards_description": "Restrict the trigger to specific endings. Leave all unchecked to match any ending.",
       "trigger_ending_cards_label": "Ending cards",

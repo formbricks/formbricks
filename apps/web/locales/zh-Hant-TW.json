@@ -3947,7 +3947,6 @@
       "send_email_summary": "傳送電子郵件給 {to}。",
       "send_email_unconfigured": "設定電子郵件收件人。",
       "settings_title": "設定",
-      "show_archived": "顯示已封存",
       "test_not_implemented": "測試工作流程尚未實作。",
       "trigger_ending_cards_description": "Restrict the trigger to specific endings. Leave all unchecked to match any ending.",
       "trigger_ending_cards_label": "Ending cards",

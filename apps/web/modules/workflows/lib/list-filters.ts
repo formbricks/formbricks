@@ -2,30 +2,14 @@ import { z } from "zod";
 import type { TWorkflowStatus } from "@formbricks/workflows";
 import { ZWorkflowSortBy, ZWorkflowStatus } from "@formbricks/workflows";
 
-// The status filter only exposes the live statuses; archived is governed solely by the Show-archived
-// toggle, so it is never persisted into `selectedStatuses` (excluded here to reject stale localStorage).
-const ZLiveWorkflowStatus = ZWorkflowStatus.exclude(["archived"]);
-
 /**
- * Combine the status-filter selection with the Show-archived toggle into the `statusIn` the list API
- * expects. The API default-excludes archived when `statusIn` is undefined, so:
- * - filter empty + toggle off  -> undefined (API default excludes archived)
- * - filter empty + toggle on   -> all four statuses (archived included)
- * - filter set   + toggle off  -> the selected statuses
- * - filter set   + toggle on   -> the selected statuses plus archived
- *
- * The filter only exposes the live statuses (draft, enabled, disabled); archived is governed solely
- * by the toggle, so it is never part of `selectedStatuses`.
+ * Map the status-filter selection to the `statusIn` the list API expects. The API default-excludes
+ * archived when `statusIn` is undefined, so an empty selection shows every live workflow and hides
+ * archived. "archived" is just one more option in the filter: when it is selected it flows through
+ * here and archived rows appear alongside any other selected statuses.
  */
-export const computeStatusIn = (
-  selectedStatuses: TWorkflowStatus[],
-  showArchived: boolean
-): TWorkflowStatus[] | undefined => {
-  if (selectedStatuses.length === 0) {
-    return showArchived ? [...ZWorkflowStatus.options] : undefined;
-  }
-  return showArchived ? [...selectedStatuses, "archived"] : selectedStatuses;
-};
+export const computeStatusIn = (selectedStatuses: TWorkflowStatus[]): TWorkflowStatus[] | undefined =>
+  selectedStatuses.length === 0 ? undefined : selectedStatuses;
 
 /**
  * Toolbar filter state persisted to localStorage (mirrors the surveys list). Parsed defensively on
@@ -33,9 +17,8 @@ export const computeStatusIn = (
  */
 const ZStoredWorkflowFilters = z.object({
   searchValue: z.string(),
-  selectedStatuses: z.array(ZLiveWorkflowStatus),
+  selectedStatuses: z.array(ZWorkflowStatus),
   sortBy: ZWorkflowSortBy,
-  showArchived: z.boolean(),
 });
 
 export type TStoredWorkflowFilters = z.infer<typeof ZStoredWorkflowFilters>;

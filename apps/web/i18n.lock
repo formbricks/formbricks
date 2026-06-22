@@ -3789,7 +3789,6 @@ checksums:
     workspace/workflows/send_email_summary: 23c31e7b1539ee670994c0e70cf7fdfe
     workspace/workflows/send_email_unconfigured: 306f5a6768ec08c316c3234ce11f8b32
     workspace/workflows/settings_title: 8df6777277469c1fd88cc18dde2f1cc3
-    workspace/workflows/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
     workspace/workflows/test_not_implemented: 4b6d7b24af9cffed9e5c040e7fc2ef98
     workspace/workflows/trigger_ending_cards_description: 5a125b9ea959073a84a439aaf01b0378
     workspace/workflows/trigger_ending_cards_label: 376d9519a9eb7c4dff7a6c1ab4d7d3ae
