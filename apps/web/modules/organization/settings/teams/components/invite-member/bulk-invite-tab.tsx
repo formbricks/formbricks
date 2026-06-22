@@ -12,6 +12,7 @@ import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
+import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
@@ -104,27 +105,33 @@ export const BulkInviteTab = ({
     onFileInputChange(files);
   };
 
+  if (!isBulkInviteAllowed) {
+    const upgradeButtons: [ModalButton, ModalButton] = [
+      {
+        text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
+        href: isFormbricksCloud
+          ? `${workspaceBasePath}/settings/organization/billing`
+          : enterpriseLicenseRequestFormUrl,
+      },
+      {
+        text: t("common.learn_more"),
+        href: "https://formbricks.com/docs/self-hosting/license",
+      },
+    ];
+
+    return (
+      <UpgradePrompt
+        title={t("workspace.settings.teams.bulk_invite_scale_only_title")}
+        description={t("workspace.settings.teams.bulk_invite_scale_only_description")}
+        buttons={upgradeButtons}
+        feature="bulk-invite"
+      />
+    );
+  }
+
   return (
     <>
       <div className="space-y-4">
-        {!isBulkInviteAllowed && (
-          <Alert variant="warning" className="flex items-start">
-            <AlertDescription className="ml-2">
-              {t("workspace.settings.teams.bulk_invite_scale_only_message")}
-              <Link
-                className="ml-1 underline"
-                target="_blank"
-                href={
-                  isFormbricksCloud
-                    ? `${workspaceBasePath}/settings/organization/billing`
-                    : enterpriseLicenseRequestFormUrl
-                }>
-                {t("common.upgrade_plan")}
-              </Link>
-            </AlertDescription>
-          </Alert>
-        )}
-
         <Uploader
           allowedFileExtensions={["csv"]}
           handleDragOver={handleDragOver}
@@ -133,7 +140,7 @@ export const BulkInviteTab = ({
           id="bulk-invite"
           multiple={false}
           name="bulk-invite"
-          disabled={!isBulkInviteAllowed || csvFile !== undefined}
+          disabled={csvFile !== undefined}
           uploaderClassName="h-20 bg-white border border-slate-200"
           isStorageConfigured={isStorageConfigured}
         />
@@ -179,7 +186,7 @@ export const BulkInviteTab = ({
             }}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={onImport} size="default" disabled={!csvFile || !isBulkInviteAllowed}>
+          <Button onClick={onImport} size="default" disabled={!csvFile}>
             {t("common.import")}
           </Button>
         </div>
