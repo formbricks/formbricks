@@ -1500,6 +1500,8 @@
       "delete_action_text": "Är du säker på att du vill ta bort denna åtgärd? Detta tar även bort denna åtgärd som utlösare från alla dina enkäter.",
       "does_not_contain": "Innehåller inte",
       "does_not_exactly_match": "Matchar inte exakt",
+      "edit_shared_action_warning_description": "Ändringar kommer att uppdatera denna åtgärd för alla enkäter som använder den, inklusive: {{surveys}}",
+      "edit_shared_action_warning_title": "Denna åtgärd används i andra enkäter",
       "eg_clicked_download": "T.ex. Klickade Ladda ner",
       "eg_download_cta_click_on_home": "t.ex. download_cta_click_on_home",
       "eg_install_app": "T.ex. Installera App",

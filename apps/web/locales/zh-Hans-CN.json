@@ -1500,6 +1500,8 @@
       "delete_action_text": "您 确定 要 删除 此 操作 吗？这 也 会 从 您 的 所有 调 查中 移除 此 操作 作为 触发 。",
       "does_not_contain": "不包含",
       "does_not_exactly_match": "不完全匹配",
+      "edit_shared_action_warning_description": "更改将更新所有使用此操作的调查，包括：{{surveys}}",
+      "edit_shared_action_warning_title": "此操作在其他调查中使用",
       "eg_clicked_download": "例如 点击了 下载",
       "eg_download_cta_click_on_home": "例如 download_cta_click_on_home",
       "eg_install_app": "例如 安装 应用程序",

@@ -1500,6 +1500,8 @@
       "delete_action_text": "Weet u zeker dat u deze actie wilt verwijderen? Hiermee wordt deze actie ook als trigger verwijderd uit al uw enquêtes.",
       "does_not_contain": "Bevat niet",
       "does_not_exactly_match": "Komt niet precies overeen",
+      "edit_shared_action_warning_description": "Wijzigingen werken deze actie bij voor alle enquêtes die deze gebruiken, waaronder: {{surveys}}",
+      "edit_shared_action_warning_title": "Deze actie wordt in andere enquêtes gebruikt",
       "eg_clicked_download": "Bijvoorbeeld Klik op Downloaden",
       "eg_download_cta_click_on_home": "bijv. download_cta_click_on_home",
       "eg_install_app": "Bijvoorbeeld Installeer app",

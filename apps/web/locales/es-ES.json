@@ -1500,6 +1500,8 @@
       "delete_action_text": "¿Estás seguro de que quieres eliminar esta acción? Esto también elimina esta acción como disparador de todas tus encuestas.",
       "does_not_contain": "No contiene",
       "does_not_exactly_match": "No coincide exactamente",
+      "edit_shared_action_warning_description": "Los cambios actualizarán esta acción para todas las encuestas que la usan, incluidas: {{surveys}}",
+      "edit_shared_action_warning_title": "Esta acción se usa en otras encuestas",
       "eg_clicked_download": "P. ej. Clic en Descargar",
       "eg_download_cta_click_on_home": "p. ej. download_cta_click_on_home",
       "eg_install_app": "P. ej. Instalar aplicación",

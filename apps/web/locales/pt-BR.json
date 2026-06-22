@@ -1500,6 +1500,8 @@
       "delete_action_text": "Tem certeza de que quer deletar essa ação? Isso também vai remover essa ação como gatilho de todas as suas pesquisas.",
       "does_not_contain": "não contém",
       "does_not_exactly_match": "Não bate exatamente",
+      "edit_shared_action_warning_description": "As alterações atualizarão esta ação para todas as pesquisas que a usam, incluindo: {{surveys}}",
+      "edit_shared_action_warning_title": "Esta ação é usada em outras pesquisas",
       "eg_clicked_download": "Por exemplo, clicou em baixar",
       "eg_download_cta_click_on_home": "e.g. download_cta_click_on_home",
       "eg_install_app": "Ex: Instalar App",

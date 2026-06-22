@@ -1500,6 +1500,8 @@
       "delete_action_text": "Вы уверены, что хотите удалить это действие? Это также удалит это действие как триггер из всех ваших опросов.",
       "does_not_contain": "Не содержит",
       "does_not_exactly_match": "Не совпадает точно",
+      "edit_shared_action_warning_description": "Изменения обновят это действие для всех опросов, которые его используют, включая: {{surveys}}",
+      "edit_shared_action_warning_title": "Это действие используется в других опросах",
       "eg_clicked_download": "Например, клик по кнопке «Скачать»",
       "eg_download_cta_click_on_home": "например, download_cta_click_on_home",
       "eg_install_app": "Например, установка приложения",

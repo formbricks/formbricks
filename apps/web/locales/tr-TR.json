@@ -1500,6 +1500,8 @@
       "delete_action_text": "Bu eylemi silmek istediğinden emin misin? Bu işlem aynı zamanda bu eylemi tüm anketlerinden tetikleyici olarak da kaldırır.",
       "does_not_contain": "İçermez",
       "does_not_exactly_match": "Tam olarak eşleşmez",
+      "edit_shared_action_warning_description": "Değişiklikler, bu eylemi kullanan tüm anketler için güncelleyecektir, şunlar dahil: {{surveys}}",
+      "edit_shared_action_warning_title": "Bu eylem diğer anketlerde kullanılıyor",
       "eg_clicked_download": "Örn. İndirme'ye Tıklandı",
       "eg_download_cta_click_on_home": "örn. download_cta_click_on_home",
       "eg_install_app": "Örn. Uygulamayı Yükle",

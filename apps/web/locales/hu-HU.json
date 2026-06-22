@@ -1500,6 +1500,8 @@
       "delete_action_text": "Biztosan törölni szeretné ezt a műveletet? Ez aktiválóként is eltávolítja ezt a műveletet az összes kérdőívéből.",
       "does_not_contain": "Nem tartalmazza",
       "does_not_exactly_match": "Nem pontosan egyezik",
+      "edit_shared_action_warning_description": "A módosítások frissítik ezt a műveletet az összes olyan kérdőívben, amely használja, beleértve: {{surveys}}",
+      "edit_shared_action_warning_title": "Ez a művelet más kérdőívekben is használatban van",
       "eg_clicked_download": "Például letöltésre kattintva",
       "eg_download_cta_click_on_home": "például download_cta_click_on_home",
       "eg_install_app": "Például alkalmazás telepítése",

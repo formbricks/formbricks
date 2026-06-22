@@ -1500,6 +1500,8 @@
       "delete_action_text": "Bist Du sicher, dass Du diese Aktion löschen möchtest? Dadurch wird diese Aktion auch als Trigger aus all Deinen Umfragen entfernt.",
       "does_not_contain": "Enthält nicht",
       "does_not_exactly_match": "Stimmt nicht exakt überein",
+      "edit_shared_action_warning_description": "Änderungen aktualisieren diese Aktion für alle Umfragen, die sie verwenden, einschließlich: {{surveys}}",
+      "edit_shared_action_warning_title": "Diese Aktion wird in anderen Umfragen verwendet",
       "eg_clicked_download": "Z. B. Download geklickt",
       "eg_download_cta_click_on_home": "z. B. download_cta_click_auf_startseite",
       "eg_install_app": "Z. B. App installieren",
