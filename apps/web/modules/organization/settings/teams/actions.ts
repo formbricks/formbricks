@@ -17,8 +17,7 @@ import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
@@ -30,8 +29,6 @@ import {
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
 
-// Cloud plans allowed to use the CSV bulk-invite flow. Gated to mitigate invite-spam abuse.
-const BULK_INVITE_ALLOWED_PLANS = ["scale", "custom"] as const;
 // Hard cap on a single bulk import to bound payload size and email fan-out.
 const BULK_INVITE_MAX_INVITEES = 500;
 
@@ -387,14 +384,12 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       access: [{ type: "organization", roles: ["owner", "manager"] }],
     });
 
-    // Plan gate (cloud only): bulk invite is a Scale-plan feature. Mitigates the invite-spam
-    // abuse vector by keeping high-volume invites behind a paid plan.
-    if (IS_FORMBRICKS_CLOUD) {
-      const billing = await getOrganizationBillingWithReadThroughSync(organizationId);
-      const plan = billing?.stripe?.plan;
-      if (!plan || !BULK_INVITE_ALLOWED_PLANS.includes(plan as (typeof BULK_INVITE_ALLOWED_PLANS)[number])) {
-        throw new OperationNotAllowedError("Bulk invite is only available on the Scale plan");
-      }
+    // Entitlement gate: bulk invite is a paid feature. Mitigates the invite-spam abuse vector by
+    // keeping high-volume invites behind the bulk-invite entitlement (Stripe on cloud, license
+    // feature on self-hosted) rather than hardcoding plan names.
+    const isBulkInviteAllowed = await getBulkInvitePermission(organizationId);
+    if (!isBulkInviteAllowed) {
+      throw new OperationNotAllowedError("Bulk invite is not available on your current plan");
     }
 
     // Validate roles for the whole batch up front.
