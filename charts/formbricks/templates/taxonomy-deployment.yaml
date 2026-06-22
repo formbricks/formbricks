@@ -3,6 +3,9 @@
 {{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
   {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
 {{- end }}
+{{- if and (eq $provider "vertex-gemini") (or (not .Values.taxonomy.llm.vertex.project) (not .Values.taxonomy.llm.vertex.location)) }}
+  {{- fail "taxonomy.llm.vertex.project and taxonomy.llm.vertex.location are required when taxonomy.llm.provider is 'vertex-gemini'" }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment

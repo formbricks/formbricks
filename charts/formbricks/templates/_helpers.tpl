@@ -304,10 +304,10 @@ Taxonomy service image reference. A configured digest takes precedence over the 
 {{- $secretKey := .Values.taxonomy.llm.vertex.credentialsJsonSecretKey | default "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" }}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
 {{- $secretData := dig "data" dict $secret }}
-{{- if index $secretData $secretKey }}
-    {{- index $secretData $secretKey | b64dec -}}
-{{- else if .Values.taxonomy.llm.vertex.credentialsJson }}
+{{- if .Values.taxonomy.llm.vertex.credentialsJson }}
     {{- .Values.taxonomy.llm.vertex.credentialsJson -}}
+{{- else if index $secretData $secretKey }}
+    {{- index $secretData $secretKey | b64dec -}}
 {{- else }}
     {{- "" -}}
 {{- end -}}
