@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/nextjs";
-import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
@@ -19,6 +18,7 @@ import {
   isExpectedError,
 } from "@formbricks/types/errors";
 import { RequestBodyTooLargeError } from "@/app/lib/api/request-body";
+import { getSession } from "@/modules/auth/lib/session";
 
 // Mock Sentry
 vi.mock("@sentry/nextjs", () => ({
@@ -33,14 +33,9 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-// Mock next-auth
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
-}));
-
-// Mock authOptions
-vi.mock("@/modules/auth/lib/authOptions", () => ({
-  authOptions: {},
+// Mock session DAL
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: vi.fn(),
 }));
 
 // Mock user service
@@ -263,7 +258,7 @@ describe("authenticatedActionClient", () => {
   });
 
   test("throws AuthenticationError when there is no session", async () => {
-    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const action = authenticatedActionClient.action(async () => "ok");
     const result = await action();
@@ -274,7 +269,7 @@ describe("authenticatedActionClient", () => {
   });
 
   test("throws AuthorizationError when user is not found", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } });
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" } });
     vi.mocked(getUser).mockResolvedValue(null as any);
 
     const action = authenticatedActionClient.action(async () => "ok");
@@ -285,7 +280,7 @@ describe("authenticatedActionClient", () => {
   });
 
   test("executes action successfully when session and user exist", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } });
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" } });
     vi.mocked(getUser).mockResolvedValue({ id: "user-1", name: "Test" } as any);
 
     const action = authenticatedActionClient.action(async () => "success");

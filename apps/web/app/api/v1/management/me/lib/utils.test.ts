@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { mockUser } from "@/modules/auth/lib/mock-data";
+import { getSession } from "@/modules/auth/lib/session";
 
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
@@ -12,6 +13,11 @@ vi.mock("next-auth", () => ({
 
 vi.mock("@/modules/auth/lib/authOptions", () => ({
   authOptions: {},
+}));
+
+// The no-req/res path reads the Better Auth session DAL (utils.ts:13), not getServerSession (ENG-1054).
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: vi.fn(),
 }));
 
 describe("getSessionUser", () => {
@@ -32,16 +38,17 @@ describe("getSessionUser", () => {
   });
 
   test("should return the user object when neither req nor res are provided", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({ user: mockUser });
+    vi.mocked(getSession).mockResolvedValue({ user: mockUser } as never);
 
     const user = await getSessionUser();
 
     expect(user).toEqual(mockUser);
-    expect(getServerSession).toHaveBeenCalledWith(authOptions);
+    expect(getSession).toHaveBeenCalled();
+    expect(getServerSession).not.toHaveBeenCalled();
   });
 
   test("should return undefined if no session exists", async () => {
-    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const user = await getSessionUser();
 

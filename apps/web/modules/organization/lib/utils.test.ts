@@ -1,10 +1,10 @@
-import { getServerSession } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
+import { getSession } from "@/modules/auth/lib/session";
 import { getOrganizationAuth } from "./utils";
 
 vi.mock("@/lib/membership/service", () => ({
@@ -21,14 +21,11 @@ vi.mock("@/lib/membership/utils", () => ({
 vi.mock("@/lib/organization/service", () => ({
   getOrganization: vi.fn(),
 }));
-vi.mock("@/modules/auth/lib/authOptions", () => ({
-  authOptions: {},
-}));
 vi.mock("@/lingodotdev/server", () => ({
   getTranslate: vi.fn(() => Promise.resolve((k: string) => k)),
 }));
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: vi.fn(),
 }));
 vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 
@@ -43,7 +40,7 @@ describe("getOrganizationAuth", () => {
   };
 
   test("returns organization auth object on success", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(mockSession);
+    vi.mocked(getSession).mockResolvedValueOnce(mockSession);
 
     vi.mocked(getOrganization).mockResolvedValue(mockOrg);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
@@ -58,19 +55,19 @@ describe("getOrganizationAuth", () => {
   });
 
   test("throws if session is missing", async () => {
-    vi.mocked(getServerSession).mockResolvedValueOnce(null);
+    vi.mocked(getSession).mockResolvedValueOnce(null);
     vi.mocked(getOrganization).mockResolvedValue(mockOrg);
     await expect(getOrganizationAuth("org-1")).rejects.toThrow(AuthenticationError);
   });
 
   test("throws if organization is missing", async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(getOrganization).mockResolvedValue(null);
     await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("throws if membership is missing", async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(getOrganization).mockResolvedValue(mockOrg);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
     await expect(getOrganizationAuth("org-1")).rejects.toThrow(ResourceNotFoundError);

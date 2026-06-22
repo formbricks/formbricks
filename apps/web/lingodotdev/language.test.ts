@@ -1,23 +1,19 @@
-import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { findMatchingLocale } from "@/lib/utils/locale";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getLocale } from "./language";
 
 // Mock dependencies
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: vi.fn(),
 }));
 vi.mock("@/lib/user/service", () => ({
   getUserLocale: vi.fn(),
 }));
 vi.mock("@/lib/utils/locale", () => ({
   findMatchingLocale: vi.fn(),
-}));
-vi.mock("@/modules/auth/lib/authOptions", () => ({
-  authOptions: vi.fn(),
 }));
 
 describe("lingodotdev getLocale", () => {
@@ -33,12 +29,12 @@ describe("lingodotdev getLocale", () => {
     };
     const userLocale = "de-DE";
 
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(getUserLocale).mockResolvedValue(userLocale);
 
     const result = await getLocale();
 
-    expect(getServerSession).toHaveBeenCalledWith(authOptions);
+    expect(getSession).toHaveBeenCalled();
     expect(getUserLocale).toHaveBeenCalledWith("user-123");
     expect(findMatchingLocale).not.toHaveBeenCalled();
     expect(result).toBe(userLocale);
@@ -47,12 +43,12 @@ describe("lingodotdev getLocale", () => {
   test("should use findMatchingLocale when no session exists", async () => {
     const matchingLocale = "fr-FR";
 
-    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
     vi.mocked(findMatchingLocale).mockResolvedValue(matchingLocale);
 
     const result = await getLocale();
 
-    expect(getServerSession).toHaveBeenCalledWith(authOptions);
+    expect(getSession).toHaveBeenCalled();
     expect(getUserLocale).not.toHaveBeenCalled();
     expect(findMatchingLocale).toHaveBeenCalled();
     expect(result).toBe(matchingLocale);
@@ -65,12 +61,12 @@ describe("lingodotdev getLocale", () => {
       },
     };
 
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(getSession).mockResolvedValue(mockSession);
     vi.mocked(getUserLocale).mockResolvedValue(undefined);
 
     const result = await getLocale();
 
-    expect(getServerSession).toHaveBeenCalledWith(authOptions);
+    expect(getSession).toHaveBeenCalled();
     expect(getUserLocale).toHaveBeenCalledWith("user-123");
     expect(result).toBe(DEFAULT_LOCALE);
   });
