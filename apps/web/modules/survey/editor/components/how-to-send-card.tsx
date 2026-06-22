@@ -182,7 +182,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
                           </AlertDescription>
                           <AlertButton
                             onClick={() =>
-                              window.open(`${workspaceBasePath}/${option.id}-connection`, "_blank")
+                              window.open(`${workspaceBasePath}/settings/workspace/app-connection`, "_blank")
                             }>
                             {t("common.connect_formbricks")}
                           </AlertButton>

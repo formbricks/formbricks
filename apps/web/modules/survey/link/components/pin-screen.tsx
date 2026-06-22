@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
+import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
@@ -61,6 +62,8 @@ export const PinScreen = (props: PinScreenProps) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
+  const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
 
   const resetState = useCallback(() => {
     setError("");
@@ -101,7 +104,12 @@ export const PinScreen = (props: PinScreenProps) => {
 
   if (!survey) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
+      <div
+        className={cn(
+          "mx-auto flex h-full w-full items-center justify-center",
+          isCardless && "px-4 py-12 sm:px-6"
+        )}
+        style={{ maxWidth: linkSurveyCardMaxWidth }}>
         <div className="flex flex-col items-center justify-center">
           <div className="my-4 font-semibold">
             <h4>{t("s.enter_pin")}</h4>

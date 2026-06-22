@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { SurveyType } from "@formbricks/database/prisma-browser";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { cn } from "@/lib/cn";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ interface MediaBackgroundProps {
   isMobilePreview?: boolean;
   ContentRef?: React.RefObject<HTMLDivElement> | null;
   onBackgroundLoaded?: (isLoaded: boolean) => void;
+  useNaturalHeight?: boolean;
 }
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
@@ -26,6 +28,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   isMobilePreview = false,
   ContentRef,
   onBackgroundLoaded,
+  useNaturalHeight = false,
 }) => {
   const { t } = useTranslation();
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
@@ -157,7 +160,13 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   };
 
   const renderContent = () => (
-    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center overflow-hidden">
+    <div
+      className={cn(
+        "no-scrollbar absolute flex h-full w-full overflow-hidden",
+        useNaturalHeight
+          ? "flex-col items-stretch overflow-hidden"
+          : "items-center justify-center overflow-hidden"
+      )}>
       {children}
     </div>
   );
@@ -176,18 +185,40 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else if (isEditorView) {
     return (
-      <div ref={ContentRef} className="flex flex-grow flex-col rounded-b-lg">
-        <div className="relative flex w-full flex-grow flex-col items-center justify-center p-4 py-6">
+      <div
+        ref={ContentRef}
+        className={cn("flex flex-col rounded-b-lg", useNaturalHeight ? "min-h-0 flex-1" : "flex-grow")}>
+        <div
+          className={cn(
+            "relative flex w-full flex-col",
+            useNaturalHeight
+              ? "min-h-0 flex-1 items-stretch overflow-hidden pb-4 pt-0"
+              : "flex-grow items-center justify-center p-4 py-6"
+          )}>
           {renderBackground()}
-          <div className="flex h-full w-full items-center justify-center">{children}</div>
+          <div
+            className={cn(
+              "flex w-full",
+              useNaturalHeight
+                ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden"
+                : "h-full items-center justify-center"
+            )}>
+            {children}
+          </div>
         </div>
       </div>
     );
   } else {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center">
+      <div
+        className={cn(
+          "relative flex flex-col overflow-hidden",
+          useNaturalHeight ? "h-dvh items-stretch" : "min-h-dvh items-center justify-center"
+        )}>
         {renderBackground()}
-        <div className="relative w-full">{children}</div>
+        <div className={cn("relative w-full", useNaturalHeight && "flex min-h-0 flex-1 flex-col")}>
+          {children}
+        </div>
       </div>
     );
   }

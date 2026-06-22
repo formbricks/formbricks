@@ -99,6 +99,7 @@ export const STYLE_DEFAULTS: TWorkspaceStyling = {
   isDarkModeEnabled: false,
   roundness: 8,
   cardArrangement: { linkSurveys: "simple", appSurveys: "simple" },
+  linkSurveyCardWidth: "default",
 
   // Headlines & Descriptions
   elementHeadlineColor: { light: _colors["elementHeadlineColor.light"] },
