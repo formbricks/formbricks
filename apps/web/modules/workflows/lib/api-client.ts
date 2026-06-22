@@ -3,6 +3,10 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
+// Bound mutation calls so a stalled request can't leave the editor's save/transition spinner
+// stuck indefinitely; the rejection surfaces as the normal save/lifecycle error toast.
+const MUTATION_TIMEOUT_MS = 15_000;
+
 async function readWorkflowResponse(response: Response): Promise<TWorkflowResource> {
   if (!response.ok) {
     throw await parseV3ApiError(response);
@@ -31,6 +35,7 @@ export async function updateWorkflow(
     cache: "no-store",
     headers: JSON_HEADERS,
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
 
   return readWorkflowResponse(response);
@@ -40,6 +45,7 @@ async function postLifecycle(workflowId: string, action: string): Promise<TWorkf
   const response = await fetch(`/api/v3/workflows/${workflowId}/${action}`, {
     method: "POST",
     cache: "no-store",
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
 
   return readWorkflowResponse(response);

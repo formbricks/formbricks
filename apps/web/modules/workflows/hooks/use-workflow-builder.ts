@@ -75,6 +75,10 @@ export const useWorkflowBuilder = ({
 
     getWorkflow(workflowId, controller.signal)
       .then((loadedWorkflow) => {
+        // A fetch that resolved just before the effect aborted (fast workflowId nav) would
+        // otherwise hydrate the stale workflow over the one now loading. .catch/.finally
+        // already guard on aborted; mirror that here.
+        if (controller.signal.aborted) return;
         // The API authorizes against the workflow's own workspaceId; reject if the URL
         // workspace doesn't match so we don't render a workflow under the wrong shell.
         if (workspaceId && loadedWorkflow.workspaceId !== workspaceId) {
@@ -114,6 +118,10 @@ export const useWorkflowBuilder = ({
   // setDefinition write — useCallback closures otherwise pin the stale definition until the
   // next render, which would drop the just-edited node from the PATCH payload.
   const save = useCallback(async () => {
+    // Don't overlap with an in-flight save or lifecycle transition — a save landing during an
+    // enable/disable can clobber the transitioned status (and vice versa).
+    if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return;
+
     const state = store.get(workflowEditorAtom);
     const currentWorkflow = state.workflow;
     const currentDefinition = state.definition;
@@ -155,6 +163,9 @@ export const useWorkflowBuilder = ({
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {
       if (!workflow) return;
+      // Serialize against a save or another transition in flight — overlapping lifecycle writes
+      // race and the last response to land wins, desyncing the displayed status from the server.
+      if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return;
 
       // One dispatch table keeps the API call + i18n keys aligned per operation; the scanner can
       // still see every literal `t("…")` key because they sit inline in the map below.
@@ -196,7 +207,7 @@ export const useWorkflowBuilder = ({
         setIsTransitioning(false);
       }
     },
-    [workflow, setWorkflow, setIsTransitioning, setCanvasLocked, t]
+    [store, workflow, setWorkflow, setIsTransitioning, setCanvasLocked, t]
   );
 
   return {

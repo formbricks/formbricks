@@ -1,18 +1,9 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
-import { Switch } from "@/modules/ui/components/switch";
 import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
 import {
   setWorkflowDescriptionAtom,
@@ -20,36 +11,17 @@ import {
   workflowDescriptionAtom,
   workflowNameAtom,
 } from "@/modules/workflows/state/editor";
-import type { TWorkflowOperationalSettings } from "@/modules/workflows/types";
 
 interface SettingsSectionProps {
-  canEditDefinition: boolean;
   canEditMetadata: boolean;
-  settings?: TWorkflowOperationalSettings;
 }
 
-export const SettingsSection = ({
-  canEditDefinition,
-  canEditMetadata,
-  settings,
-}: Readonly<SettingsSectionProps>) => {
+export const SettingsSection = ({ canEditMetadata }: Readonly<SettingsSectionProps>) => {
   const { t } = useTranslation();
   const workflowName = useAtomValue(workflowNameAtom);
   const workflowDescription = useAtomValue(workflowDescriptionAtom);
   const setWorkflowName = useSetAtom(setWorkflowNameAtom);
   const setWorkflowDescription = useSetAtom(setWorkflowDescriptionAtom);
-
-  const [capRunsEnabled, setCapRunsEnabled] = useState(settings?.capRunsEnabled ?? false);
-  const [capRunsLimit, setCapRunsLimit] = useState(settings?.capRunsLimit ?? "10");
-  const [capRunsUnit, setCapRunsUnit] = useState<TWorkflowOperationalSettings["capRunsUnit"]>(
-    settings?.capRunsUnit ?? "day"
-  );
-
-  useEffect(() => {
-    setCapRunsEnabled(settings?.capRunsEnabled ?? false);
-    setCapRunsLimit(settings?.capRunsLimit ?? "10");
-    setCapRunsUnit(settings?.capRunsUnit ?? "day");
-  }, [settings?.capRunsEnabled, settings?.capRunsLimit, settings?.capRunsUnit]);
 
   return (
     <InspectorSection title={t("workspace.workflows.settings_title")} defaultOpen>
@@ -78,55 +50,6 @@ export const SettingsSection = ({
             onChange={(event) => setWorkflowDescription(event.target.value)}
           />
         </div>
-
-        <div className="flex items-center gap-2">
-          <Switch
-            id="workflow-settings-cap-runs"
-            checked={capRunsEnabled}
-            disabled={!canEditDefinition}
-            onCheckedChange={setCapRunsEnabled}
-          />
-          <Label htmlFor="workflow-settings-cap-runs" className="text-sm font-medium">
-            {t("workspace.workflows.cap_runs_label")}
-          </Label>
-        </div>
-        {capRunsEnabled ? (
-          <div className="grid grid-cols-2 gap-2 rounded-md border border-slate-200 bg-slate-50 p-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-slate-600">
-                {t("workspace.workflows.cap_runs_at_label")}
-              </span>
-              <Input
-                type="number"
-                min={1}
-                className="bg-white"
-                value={capRunsLimit}
-                disabled={!canEditDefinition}
-                onChange={(event) => setCapRunsLimit(event.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-slate-600">
-                {t("workspace.workflows.cap_runs_per_label")}
-              </span>
-              <Select
-                value={capRunsUnit}
-                disabled={!canEditDefinition}
-                onValueChange={(value) =>
-                  setCapRunsUnit(value as TWorkflowOperationalSettings["capRunsUnit"])
-                }>
-                <SelectTrigger className="bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hour">{t("workspace.workflows.cap_runs_unit_hour")}</SelectItem>
-                  <SelectItem value="day">{t("workspace.workflows.cap_runs_unit_day")}</SelectItem>
-                  <SelectItem value="week">{t("workspace.workflows.cap_runs_unit_week")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
-          </div>
-        ) : null}
       </div>
     </InspectorSection>
   );

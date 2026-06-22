@@ -9,7 +9,6 @@ import {
 } from "@/modules/workflows/state/editor";
 
 interface WorkflowInspectorPanelProps {
-  canEditDefinition: boolean;
   canEditMetadata: boolean;
   isEditingNode: boolean;
   onSaveNode?: () => Promise<void> | void;
@@ -17,7 +16,6 @@ interface WorkflowInspectorPanelProps {
 }
 
 export const WorkflowInspectorPanel = ({
-  canEditDefinition,
   canEditMetadata,
   isEditingNode,
   onSaveNode,
@@ -34,7 +32,7 @@ export const WorkflowInspectorPanel = ({
 
   return (
     <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start">
-      <SettingsSection canEditDefinition={canEditDefinition} canEditMetadata={canEditMetadata} />
+      <SettingsSection canEditMetadata={canEditMetadata} />
     </aside>
   );
 };

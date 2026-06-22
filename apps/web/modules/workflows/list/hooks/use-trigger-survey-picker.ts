@@ -10,6 +10,10 @@ import { listSurveys } from "@/modules/survey/list/lib/v3-surveys-client";
 // cursor-paginated list until exhausted. A typeahead-driven endpoint would scale better for
 // huge workspaces — track that as a follow-up.
 const SURVEY_LIST_PAGE_SIZE = 100;
+// Hard ceiling so a runaway/looping cursor can't spin forever (and to bound first-open latency
+// for very large workspaces). At 100/page this covers 2,000 surveys; beyond that the picker is
+// truncated — the typeahead-endpoint follow-up is the real fix.
+const SURVEY_LIST_MAX_PAGES = 20;
 
 interface TWorkflowSurveyOption {
   id: string;
@@ -68,6 +72,7 @@ export const useWorkflowSurveyOptions = (workspaceId: string) => {
     queryFn: async ({ signal }) => {
       const options: TWorkflowSurveyOption[] = [];
       let cursor: string | null = null;
+      let pages = 0;
       do {
         const page = await listSurveys({
           workspaceId,
@@ -80,6 +85,14 @@ export const useWorkflowSurveyOptions = (workspaceId: string) => {
           options.push({ id: survey.id, name: survey.name });
         }
         cursor = page.meta.nextCursor;
+        pages += 1;
+        if (pages >= SURVEY_LIST_MAX_PAGES && cursor) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `Workflow trigger survey picker truncated at ${SURVEY_LIST_MAX_PAGES * SURVEY_LIST_PAGE_SIZE} surveys.`
+          );
+          break;
+        }
       } while (cursor);
       return options;
     },

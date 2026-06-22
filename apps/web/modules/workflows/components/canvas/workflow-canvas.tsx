@@ -157,11 +157,11 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
           variant="outline"
           size="icon"
           className="bg-white"
-          aria-label={t(
+          aria-label={
             isInspectorCollapsed
-              ? "workspace.workflows.expand_inspector"
-              : "workspace.workflows.collapse_inspector"
-          )}
+              ? t("workspace.workflows.expand_inspector")
+              : t("workspace.workflows.collapse_inspector")
+          }
           aria-pressed={!isInspectorCollapsed}
           onClick={toggleInspector}>
           {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}

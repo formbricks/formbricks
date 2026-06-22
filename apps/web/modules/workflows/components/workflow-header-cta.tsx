@@ -50,7 +50,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           <Switch
             id="workflow-header-active"
             checked={isActive}
-            disabled={isReadOnly || builder.isTransitioning}
+            disabled={isReadOnly || builder.isTransitioning || builder.isSaving}
             onCheckedChange={handleActiveChange}
           />
           <label htmlFor="workflow-header-active" className="text-sm font-medium text-slate-700">
@@ -77,7 +77,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             size="sm"
             onClick={builder.archive}
             loading={builder.isTransitioning}
-            disabled={isReadOnly || builder.isTransitioning}>
+            disabled={isReadOnly || builder.isTransitioning || builder.isSaving}>
             <ArchiveIcon />
             {t("common.archive")}
           </Button>
@@ -86,7 +86,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             size="sm"
             onClick={handleSave}
             loading={builder.isSaving}
-            disabled={!builder.canEditMetadata}>
+            disabled={!builder.canEditMetadata || builder.isTransitioning}>
             {t("common.save")}
           </Button>
         </>

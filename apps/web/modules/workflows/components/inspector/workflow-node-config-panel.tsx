@@ -2,7 +2,7 @@
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { ArrowLeftIcon } from "lucide-react";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -67,37 +67,48 @@ const NodeConfigEditor = ({
 
   const registryEntry = getNodeRegistryEntry(draftNode);
   const ConfigForm = registryEntry.ConfigForm;
+  const canSave = isEditable && Boolean(ConfigForm) && !isSaving;
+
+  // Submitting the form (Save click or Enter in a single-line field) commits the draft. Enter in
+  // the Body textarea still inserts a newline — textareas don't submit forms on Enter.
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!canSave) return;
+    onSave(draftNode);
+  };
 
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start rounded-lg border border-slate-200 bg-white">
-      <header className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="ghost" size="icon" aria-label={t("common.back")} onClick={onCancel}>
-            <ArrowLeftIcon className="size-4" />
+    <aside className="w-[320px] shrink-0 self-start rounded-lg border border-slate-200 bg-white">
+      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+        <header className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("common.back")}
+              onClick={onCancel}>
+              <ArrowLeftIcon className="size-4" />
+            </Button>
+            <span className="text-sm font-semibold text-slate-900">{registryEntry.title(draftNode, t)}</span>
+          </div>
+          <Button type="submit" size="sm" loading={isSaving} disabled={!canSave}>
+            {t("common.save")}
           </Button>
-          <span className="text-sm font-semibold text-slate-900">{registryEntry.title(draftNode, t)}</span>
+        </header>
+        <div className="flex flex-col gap-3 px-3 pb-4">
+          {!isEditable && (
+            <Alert variant="info" size="small">
+              <AlertDescription>{t("workspace.workflows.edit_blocked_active")}</AlertDescription>
+            </Alert>
+          )}
+          {ConfigForm ? (
+            <ConfigForm node={draftNode} isEditable={isEditable} onChange={setDraftNode} />
+          ) : (
+            <p className="text-sm text-slate-500">{t("workspace.workflows.inspector_unsupported_node")}</p>
+          )}
         </div>
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => onSave(draftNode)}
-          loading={isSaving}
-          disabled={!isEditable || !ConfigForm || isSaving}>
-          {t("common.save")}
-        </Button>
-      </header>
-      <div className="flex flex-col gap-3 px-3 pb-4">
-        {!isEditable && (
-          <Alert variant="info" size="small">
-            <AlertDescription>{t("workspace.workflows.edit_blocked_active")}</AlertDescription>
-          </Alert>
-        )}
-        {ConfigForm ? (
-          <ConfigForm node={draftNode} isEditable={isEditable} onChange={setDraftNode} />
-        ) : (
-          <p className="text-sm text-slate-500">{t("workspace.workflows.inspector_unsupported_node")}</p>
-        )}
-      </div>
+      </form>
     </aside>
   );
 };
@@ -119,8 +130,10 @@ export const WorkflowNodeConfigPanel = ({
   if (!selectedNode || !definition) return null;
 
   const handleSave = async (draftNode: TWorkflowNode) => {
+    // Stay on the node-config view after saving — closing here dropped the user back to the
+    // workflow settings view. Only the Back arrow (onCancel) returns to that view. Keeping the
+    // panel open also lets the Save button's spinner and any error toast land on this view.
     setDefinition(replaceNode(definition, draftNode));
-    closePanel();
     await onSave?.();
   };
 
