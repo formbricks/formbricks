@@ -8,6 +8,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
 
 type DeleteUserConfig = NonNullable<NonNullable<BetterAuthOptions["user"]>["deleteUser"]>;
@@ -89,3 +90,24 @@ export const accountDeletionConfig = {
   beforeDelete: accountDeletionBeforeDelete,
   afterDelete: accountDeletionAfterDelete,
 } satisfies DeleteUserConfig;
+
+/**
+ * `hooks.before` guard for `POST /delete-user` (ENG-1054, S1). Better Auth verifies the password only
+ * when one is sent; otherwise it allows deletion on session freshness alone (the `freshAge` window), so
+ * a credential user with a recent session could delete their account without re-confirming the
+ * password. We require an explicit confirmation factor — the password (credential users) or a deletion
+ * token — on the POST entry point. The credential DeleteAccountModal always sends the password and SSO
+ * users delete via the emailed `GET /delete-user/callback` (which carries its own token), so a real
+ * client never trips this; it's defense in depth against a direct API call. Better Auth still verifies
+ * whichever factor is supplied.
+ */
+export const requireDeletionConfirmationBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
+  if (ctx.path !== "/delete-user") return;
+
+  const body = ctx.body as { password?: unknown; token?: unknown } | undefined;
+  if (body?.password || body?.token) return; // Better Auth verifies the supplied factor
+
+  throw new APIError("BAD_REQUEST", {
+    message: "Password confirmation is required to delete your account.",
+  });
+};

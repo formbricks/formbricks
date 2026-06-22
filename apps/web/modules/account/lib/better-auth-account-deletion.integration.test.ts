@@ -117,4 +117,16 @@ describe("Better Auth account deletion (real Postgres)", () => {
     // deleted via the email-link path — no password supplied (the SSO half of §14)
     expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
   });
+
+  test("blocks a password-less POST /delete-user, closing Better Auth's freshAge bypass (S1)", async () => {
+    const userId = await createVerifiedUser("noconfirm@example.com", "Passw0rd!");
+    const cookie = await signInCookie("noconfirm@example.com", "Passw0rd!");
+
+    // No password and no token. Better Auth would otherwise permit this on a fresh session (freshAge),
+    // but the hooks.before guard requires an explicit confirmation factor on the POST entry point.
+    await expect(auth.api.deleteUser({ body: {}, headers: { cookie } })).rejects.toThrow(
+      "Password confirmation is required"
+    );
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
+  });
 });

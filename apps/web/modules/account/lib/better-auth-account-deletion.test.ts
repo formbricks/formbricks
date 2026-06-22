@@ -11,6 +11,7 @@ import {
   accountDeletionAfterDelete,
   accountDeletionBeforeDelete,
   accountDeletionConfig,
+  requireDeletionConfirmationBeforeHandler,
 } from "./better-auth-account-deletion";
 
 vi.mock("@formbricks/database", () => ({ prisma: { invite: { deleteMany: vi.fn() } } }));
@@ -114,5 +115,45 @@ describe("accountDeletionConfig", () => {
     expect(accountDeletionConfig.beforeDelete).toBe(accountDeletionBeforeDelete);
     expect(accountDeletionConfig.afterDelete).toBe(accountDeletionAfterDelete);
     expect("sendDeleteAccountVerification" in accountDeletionConfig).toBe(false);
+  });
+});
+
+const makeDeleteCtx = (overrides: {
+  path?: string;
+  body?: unknown;
+}): Parameters<typeof requireDeletionConfirmationBeforeHandler>[0] =>
+  ({ path: overrides.path ?? "/delete-user", body: overrides.body }) as unknown as Parameters<
+    typeof requireDeletionConfirmationBeforeHandler
+  >[0];
+
+describe("requireDeletionConfirmationBeforeHandler (delete-user freshAge guard)", () => {
+  test("allows the request when a password is supplied", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: { password: "pw" } }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("allows the request when a deletion token is supplied", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: { token: "tok" } }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("blocks a confirmation-less delete (closes the freshAge password bypass)", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: {} }))
+    ).rejects.toBeInstanceOf(APIError);
+  });
+
+  test("blocks when the request has no body", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: undefined }))
+    ).rejects.toBeInstanceOf(APIError);
+  });
+
+  test("ignores non-delete-user paths", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ path: "/sign-out", body: {} }))
+    ).resolves.toBeUndefined();
   });
 });

@@ -15,10 +15,13 @@ import {
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
-import { accountDeletionConfig } from "@/modules/account/lib/better-auth-account-deletion";
+import {
+  accountDeletionConfig,
+  requireDeletionConfirmationBeforeHandler,
+} from "@/modules/account/lib/better-auth-account-deletion";
 import {
   ssoDatabaseHooks,
-  ssoLicenseGateBefore,
+  ssoLicenseGateBeforeHandler,
   ssoRecoveryAfterHandler,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
@@ -189,15 +192,19 @@ export const auth = betterAuth({
     session: signInAuditDatabaseHook,
   },
 
-  // Request hooks (parity with handleSsoCallback). `before` re-checks the SSO/SAML license on every
-  // SSO callback (covers existing-user sign-ins that skip user.create). `after` composes two
-  // concerns into the single hook slot: the SSO "account not linked" → verify-before-link recovery
-  // flow, then the failed-login audit (parity with NextAuth's `logAuthAttempt`). We call the plain
-  // handlers directly — wrapping each in its own `createAuthMiddleware` would re-run the middleware
-  // context setup. Recovery runs first; if it redirects (throws) the request is an SSO recovery, not
-  // a credential failure, so skipping the audit is correct.
+  // Request hooks (parity with handleSsoCallback). Each slot is a single middleware, so related
+  // concerns are composed as plain handlers (calling a wrapped middleware would re-run the per-request
+  // context setup). `before`: re-check the SSO/SAML license on every SSO callback (covers existing-user
+  // sign-ins that skip user.create), then require an explicit confirmation factor on POST /delete-user
+  // (closes Better Auth's freshAge password bypass). `after`: turn an SSO "account not linked"
+  // collision into the verify-before-link recovery flow, then emit the failed-login audit (parity with
+  // NextAuth's `logAuthAttempt`). Recovery runs first; if it redirects (throws), the request is an SSO
+  // recovery rather than a credential failure, so skipping the audit is correct.
   hooks: {
-    before: ssoLicenseGateBefore,
+    before: createAuthMiddleware(async (ctx) => {
+      await ssoLicenseGateBeforeHandler(ctx);
+      await requireDeletionConfirmationBeforeHandler(ctx);
+    }),
     after: createAuthMiddleware(async (ctx) => {
       await ssoRecoveryAfterHandler(ctx);
       await auditFailedAuthAfter(ctx);

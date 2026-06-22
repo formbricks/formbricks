@@ -139,7 +139,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
  * NOTE (cutover): on a browser callback this surfaces as a 403; redirecting to the auth error page
  * (matching NextAuth's behavior) is a Phase 7 refinement.
  */
-export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
+export const ssoLicenseGateBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   const provider = getSsoProviderFromContext(ctx);
   const identityProvider = provider ? normalizeSsoProvider(provider) : null;
   if (!identityProvider) return; // not an SSO callback → no license gate
@@ -150,7 +150,9 @@ export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
   if (identityProvider === "saml" && !(await getIsSamlSsoEnabled())) {
     throw new APIError("FORBIDDEN", { message: "SAML SSO is not enabled for this instance." });
   }
-});
+};
+
+export const ssoLicenseGateBefore = createAuthMiddleware(ssoLicenseGateBeforeHandler);
 
 /**
  * Request hook (`hooks.after`) that turns Better Auth's "account not linked" collision into
@@ -162,7 +164,7 @@ export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
  * email-match → startSsoRecovery branch. Inert until cutover (route unmounted + the handler must wrap
  * `auth.handler` in `runWithSsoRequestContext`).
  */
-/** The endpoint context Better Auth passes to a `hooks.after` middleware handler. */
+/** The endpoint context Better Auth passes to a `hooks.before`/`hooks.after` middleware handler. */
 export type AuthHookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];
 
 /**
