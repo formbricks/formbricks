@@ -43,6 +43,7 @@ interface OrganizationActionsProps {
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
   enterpriseLicenseRequestFormUrl: string;
+  isBulkInviteAllowed: boolean;
 }
 
 export const OrganizationActions = ({
@@ -60,6 +61,7 @@ export const OrganizationActions = ({
   isTeamAdmin,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
+  isBulkInviteAllowed,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -71,10 +73,6 @@ export const OrganizationActions = ({
   const isOwnerOrManager = isOwner || isManager;
 
   const canInvite = isOwnerOrManager || (isAccessControlAllowed && isTeamAdmin);
-
-  // Bulk invite is a Scale-plan feature on Formbricks Cloud; self-hosted keeps it available.
-  const currentPlan = organization.billing?.stripe?.plan;
-  const isBulkInviteAllowed = !isFormbricksCloud || currentPlan === "scale" || currentPlan === "custom";
 
   const handleLeaveOrganization = async () => {
     setLoading(true);
