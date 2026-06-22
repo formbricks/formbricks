@@ -61,7 +61,7 @@ describe("verification link helpers", () => {
     });
   });
 
-  test("preserves SSO recovery purpose on the verification requested email link", () => {
+  test("routes the SSO recovery verify link to the Better Auth sign-in endpoint", () => {
     expect(
       buildVerificationLinks({
         token: "abc123",
@@ -73,8 +73,9 @@ describe("verification link helpers", () => {
     ).toEqual({
       verificationRequestLink:
         "http://localhost:3000/auth/verification-requested?token=email-token&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar&purpose=sso_recovery",
+      // SSO recovery resolves at Better Auth's endpoint; email verification still uses /auth/verify.
       verifyLink:
-        "http://localhost:3000/auth/verify?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar",
+        "http://localhost:3000/api/auth/sso-recovery/sign-in?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar",
     });
   });
 });

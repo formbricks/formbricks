@@ -42,7 +42,14 @@ export const buildVerificationLinks = ({
   verificationRequestToken?: string;
 }): { verificationRequestLink: string; verifyLink: string } => {
   const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, webAppUrl);
-  const verifyLink = new URL("/auth/verify", webAppUrl);
+  // SSO-recovery magic links resolve at Better Auth's /sso-recovery/sign-in endpoint, which verifies
+  // this same JWT, establishes the session, and redirects to callbackUrl (the recovery completion
+  // route). Email verification still lands on the /auth/verify page pending its own move to Better
+  // Auth's native verification (ENG-1054 decommission).
+  const verifyLink = new URL(
+    purpose === "sso_recovery" ? "/api/auth/sso-recovery/sign-in" : "/auth/verify",
+    webAppUrl
+  );
   verifyLink.searchParams.set("token", token);
 
   const verificationRequestLink = new URL("/auth/verification-requested", webAppUrl);
