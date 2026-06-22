@@ -2638,6 +2638,8 @@
         "are_you_sure_you_want_to_delete_this_team": "你确定要删除这个团队吗?这也会移除对与此团队关联的所有工作空间和调查的访问权限。",
         "billing_role_description": "仅 能 访问 账单 信息。",
         "bulk_invite": "批量 邀请",
+        "bulk_invite_scale_only_description": "通过 CSV 批量邀请成员功能仅在 Scale 套餐中提供。升级后即可一次性邀请整个团队。",
+        "bulk_invite_scale_only_title": "升级到更高套餐以解锁批量邀请功能",
         "contributor": "贡献者",
         "create": "创建",
         "create_first_team_message": "您 需要 先 创建 一个 团队。",

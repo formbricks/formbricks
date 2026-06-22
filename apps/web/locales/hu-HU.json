@@ -2638,6 +2638,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Biztosan törölni szeretné ezt a csapatot? Ez eltávolítja a csapathoz hozzárendelt összes munkaterülethez és kérdőívhez való hozzáférést is.",
         "billing_role_description": "Csak a számlázási információkhoz van hozzáférése.",
         "bulk_invite": "Tömeges meghívás",
+        "bulk_invite_scale_only_description": "A tagok CSV-fájlon keresztül történő tömeges meghívása a Scale csomag részeként érhető el. Frissítsen csomagot, hogy egyszerre hívhassa meg a teljes csapatát.",
+        "bulk_invite_scale_only_title": "Oldja fel a tömeges meghívást magasabb csomag választásával",
         "contributor": "Közreműködő",
         "create": "Létrehozás",
         "create_first_team_message": "Először létre kell hoznia egy csapatot.",
