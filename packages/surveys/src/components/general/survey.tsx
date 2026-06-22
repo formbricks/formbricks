@@ -70,7 +70,10 @@ interface VariableStackEntry {
 
 export function Survey({
   appUrl,
-  workspaceId,
+  workspaceId: workspaceIdProp,
+  // Legacy SDKs (e.g. Android ≤ v1.2.0) pass `environmentId` instead of
+  // `workspaceId`. Accept it as a fallback so their response submission works.
+  environmentId,
   isPreviewMode = false,
   userId,
   contactId,
@@ -112,6 +115,7 @@ export function Survey({
   offlineSupport = false,
   onOfflineStatusChange,
 }: SurveyContainerProps) {
+  const workspaceId = workspaceIdProp ?? environmentId;
   let apiClient: ApiClient | null = null;
 
   if (appUrl && workspaceId) {
