@@ -3901,6 +3901,7 @@ components:
         - triggerType
         - surveyId
         - createdBy
+        - creator
         - createdAt
         - updatedAt
         - lastRun
@@ -3934,6 +3935,16 @@ components:
             - 'null'
           format: cuid2
           description: User id that created the workflow. `null` when the creating user was deleted.
+        creator:
+          type:
+            - object
+            - 'null'
+          required:
+            - name
+          properties:
+            name:
+              type: string
+          description: Creating user's name. `null` when the creating user was deleted.
         createdAt:
           type: string
           format: date-time
