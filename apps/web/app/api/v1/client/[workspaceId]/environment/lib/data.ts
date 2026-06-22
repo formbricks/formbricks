@@ -182,8 +182,18 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         : null;
 
       const { segment: _segment, ...surveyWithoutSegment } = survey;
+
+      // Older SDKs (e.g. Android ≤ v1.2.0) decode `language.projectId` as a
+      // required field. The column was renamed to `workspaceId` in v5, so
+      // mirror its value under `projectId` to keep those clients deserializing.
+      const languagesWithProjectId = surveyWithoutSegment.languages?.map((sl) => ({
+        ...sl,
+        language: { ...sl.language, projectId: sl.language.workspaceId },
+      }));
+
       const transformed = transformPrismaSurvey<TJsWorkspaceStateSurvey>({
         ...surveyWithoutSegment,
+        languages: languagesWithProjectId,
         segment: null,
       });
 

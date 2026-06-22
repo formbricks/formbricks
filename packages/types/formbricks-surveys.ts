@@ -47,6 +47,8 @@ export interface SurveyModalProps extends SurveyBaseProps {
 export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
   appUrl?: string;
   workspaceId?: string;
+  /** Legacy alias for `workspaceId`, sent by old SDKs (e.g. Android ≤ v1.2.0). */
+  environmentId?: string;
   isPreviewMode?: boolean;
   userId?: string;
   contactId?: string;
