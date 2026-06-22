@@ -28,6 +28,7 @@ overrides:
   '@opentelemetry/core': 2.8.0
   dompurify: 3.4.9
   esbuild: 0.28.1
+  form-data@4: 4.0.5
 
 patchedDependencies:
   next-auth@4.24.13: 6b21102fce2caaca35f5e4e93ea07a0b4ff486cbf3d3b09a4173ad45977d5798
@@ -7999,10 +8000,6 @@ packages:
   foreground-child@3.3.1:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
-
-  form-data@4.0.0:
-    resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}
-    engines: {node: '>= 6'}
 
   form-data@4.0.5:
     resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
@@ -16762,7 +16759,7 @@ snapshots:
       concat-stream: 2.0.0
       cookie: 0.7.2
       dotenv: 16.4.5
-      form-data: 4.0.0
+      form-data: 4.0.5
       jest-diff: 29.7.0
       jest-matcher-utils: 29.7.0
       js-yaml: 4.1.0
@@ -20822,12 +20819,6 @@ snapshots:
     dependencies:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
-
-  form-data@4.0.0:
-    dependencies:
-      asynckit: 0.4.0
-      combined-stream: 1.0.8
-      mime-types: 2.1.35
 
   form-data@4.0.5:
     dependencies:

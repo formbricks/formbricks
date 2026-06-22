@@ -59,6 +59,9 @@ overrides:
   "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf
   dompurify: 3.4.9 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9)
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
+  # ENG-1513 / GHSA-fjxv-7rqg-78g4: form-data <4.0.4 uses an unsafe random function for the
+  # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
+  form-data@4: 4.0.5
 
 patchedDependencies:
   next-auth@4.24.13: patches/next-auth@4.24.13.patch
