@@ -853,7 +853,7 @@ export const PricingTable = ({
                     <div
                       key={`${planCard.plan}-${planCard.interval}`}
                       className={cn(
-                        "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-sm",
+                        "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-xs",
                         planCard.plan === "pro" ? "border-slate-900/20" : "border-slate-200"
                       )}>
                       <div className="mb-4 flex min-h-7 items-start gap-2">
@@ -881,7 +881,7 @@ export const PricingTable = ({
                         <p className="mt-3 text-sm leading-6 text-slate-500">{planCard.description}</p>
                       </div>
 
-                      <div className="mt-4 flex min-h-[3rem] items-end gap-2">
+                      <div className="mt-4 flex min-h-12 items-end gap-2">
                         <span className="text-3xl font-normal tracking-tight text-slate-900">
                           {planCard.amount}
                         </span>

@@ -254,14 +254,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         <DropdownMenuContent
           side="bottom"
           align="start"
-          className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-52"
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-52"
           data-testid="dropdown-menu-content">
           <Command className="h-full max-h-[400px] overflow-y-auto">
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput
                   placeholder={resolvedSearchPlaceholder}
-                  className="h-8 border-none placeholder-slate-300 outline-none"
+                  className="h-8 border-none placeholder-slate-300 outline-hidden"
                   autoFocus
                   ref={searchRef}
                 />

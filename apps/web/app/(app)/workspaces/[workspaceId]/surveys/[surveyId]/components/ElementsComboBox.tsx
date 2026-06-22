@@ -174,7 +174,7 @@ export const SelectedCommandItem = ({ label, elementType, type }: Partial<Elemen
     <div className="flex h-full min-w-0 items-center gap-2">
       <span
         className={clsx(
-          "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-white",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white",
           getIconBackground(type ?? "")
         )}>
         {getDisplayIcon()}
@@ -218,7 +218,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={open ? `${t("common.search")}...` : t("common.select_filter")}
-            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none outline-none ring-offset-transparent focus:border-none focus:shadow-none focus:outline-none focus:ring-offset-0"
+            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none ring-offset-transparent outline-hidden focus:border-none focus:shadow-none focus:ring-offset-0 focus:outline-hidden"
           />
         )}
         <Button
@@ -228,7 +228,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
           }}
           variant="secondary"
           size="icon"
-          className="flex-shrink-0"
+          className="shrink-0"
           aria-expanded={open}
           aria-label={t("common.select")}>
           <ChevronIcon className="size-4 opacity-50" />
@@ -236,7 +236,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
       </div>
 
       {open && (
-        <div className="absolute top-full z-10 mt-1 w-full overflow-auto rounded-md shadow-md outline-none animate-in">
+        <div className="absolute top-full z-10 mt-1 w-full overflow-auto rounded-md shadow-md outline-hidden animate-in">
           <CommandList className="max-h-[600px]">
             <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
             {options?.map((data) => (

@@ -62,7 +62,7 @@ export const EditAlerts = ({
                   <TooltipTrigger>
                     <div className="col-span-1 flex cursor-default items-center justify-center gap-x-2">
                       <span>{t("workspace.settings.notifications.every_response")}</span>
-                      <HelpCircleIcon className="size-4 flex-shrink-0 text-slate-500" />
+                      <HelpCircleIcon className="size-4 shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -99,7 +99,7 @@ export const EditAlerts = ({
                 ))}
               </div>
             ) : (
-              <div className="m-2 flex h-16 items-center justify-center rounded bg-slate-50 text-sm text-slate-500">
+              <div className="m-2 flex h-16 items-center justify-center rounded-sm bg-slate-50 text-sm text-slate-500">
                 <p>{t("common.no_surveys_found")}</p>
               </div>
             )}

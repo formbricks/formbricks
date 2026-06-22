@@ -152,7 +152,7 @@ export const WorkspaceBreadcrumb = ({
   return (
     <BreadcrumbItem isActive={isWorkspaceDropdownOpen}>
       <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
-        <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 outline-none" asChild>
+        <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 outline-hidden" asChild>
           <div className="flex items-center gap-1">
             <FoldersIcon className="size-3" strokeWidth={1.5} />
             <span>{workspaceName}</span>
@@ -210,7 +210,7 @@ export const WorkspaceBreadcrumb = ({
                     <button
                       type="button"
                       aria-disabled="true"
-                      className="relative flex w-full cursor-not-allowed select-none items-center justify-between rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                      className="relative flex w-full cursor-not-allowed items-center justify-between rounded-lg py-1.5 pr-2 pl-8 text-sm font-medium text-slate-400 select-none">
                       <span>{t("common.add_new_workspace")}</span>
                       <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
                     </button>

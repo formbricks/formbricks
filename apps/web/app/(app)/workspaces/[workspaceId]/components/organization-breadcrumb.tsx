@@ -111,7 +111,7 @@ export const OrganizationBreadcrumb = ({
     <BreadcrumbItem isActive={isOrganizationDropdownOpen}>
       <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
         <DropdownMenuTrigger
-          className="flex cursor-pointer items-center gap-1 outline-none"
+          className="flex cursor-pointer items-center gap-1 outline-hidden"
           id="organizationDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">

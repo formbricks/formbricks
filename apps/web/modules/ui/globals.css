@@ -1,53 +1,264 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  /* Brand Colors */
-  --formbricks-brand: #038178;
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
 
-  /* Fill Colors */
-  --formbricks-fill-primary: #fefefe;
-  --formbricks-fill-secondary: #0f172a;
-  --formbricks-fill-disabled: #e0e0e0;
+/* v3 darkMode: "class" */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Label Colors */
-  --formbricks-label-primary: #0f172a;
-  --formbricks-label-secondary: #384258;
-  --formbricks-label-disabled: #bdbdbd;
+/* v3 safelist: { pattern: /max-w-./, variants: "sm" } */
+@source inline("{,sm:}max-w-{xs,sm,md,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,full}");
 
-  /* Border Colors */
-  --formbricks-border-primary: #e0e0e0;
-  --formbricks-border-secondary: #0f172a;
-  --formbricks-border-disabled: #ececec;
+@theme {
+  /* Brand */
+  --color-brand: #00e6ca;
+  --color-brand-light: #00e6ca;
+  --color-brand-dark: #00c4b8;
 
-  /* Functional Colors */
-  --formbricks-focus: #1982fc;
-  --formbricks-error: #d13a3a;
+  --color-focus: var(--formbricks-focus, #1982fc);
+  --color-brandnew: var(--formbricks-brand, #038178);
+
+  --color-primary: #0f172a;
+  --color-primary-foreground: #fefefe;
+
+  --color-destructive: #ff6b6b;
+  --color-destructive-foreground: #fff5f5;
+
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0f172a;
+
+  --color-accent: #f4f6f8;
+  --color-accent-foreground: #0f172a;
+
+  /* info — Tailwind v3 blue palette */
+  --color-info: #2563eb;
+  --color-info-foreground: #1e3a8a;
+  --color-info-muted: #1d4ed8;
+  --color-info-background: #eff6ff;
+  --color-info-background-muted: #dbeafe;
+
+  /* warning — Tailwind v3 amber palette */
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #78350f;
+  --color-warning-muted: #b45309;
+  --color-warning-background: #fffbeb;
+  --color-warning-background-muted: #fef3c7;
+
+  /* success — Tailwind v3 green palette */
+  --color-success: #16a34a;
+  --color-success-foreground: #14532d;
+  --color-success-muted: #15803d;
+  --color-success-background: #f0fdf4;
+  --color-success-background-muted: #dcfce7;
+
+  /* error — Tailwind v3 red palette */
+  --color-error: #dc2626;
+  --color-error-foreground: #7f1d1d;
+  --color-error-muted: #b91c1c;
+  --color-error-background: #fef2f2;
+  --color-error-background-muted: #fee2e2;
+
+  /* Blur */
+  --blur-xxs: 0.33px;
+  --blur-xs: 2px;
+
+  /* Box shadows */
+  --shadow-card-sm: 0px 0.5px 12px -5px rgba(30, 41, 59, 0.2);
+  --shadow-card-md: 0px 1px 25px -10px rgba(30, 41, 59, 0.3);
+  --shadow-card-lg: 0px 2px 51px -19px rgba(30, 41, 59, 0.4);
+  --shadow-card-xl: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Breakpoints */
+  --breakpoint-xs: 430px;
+
+  /* max-w-8xl reads from the container scale */
+  --container-8xl: 88rem;
+
+  /* Animations */
+  --animate-ping-slow: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-shake: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fadeIn: fadeIn 0.2s ease-out;
+  --animate-fadeOut: fadeOut 0.2s ease-out;
+  --animate-surveyLoading: surveyLoadingAnimation 0.5s ease-out forwards;
+  --animate-surveyExit: surveyExitAnimation 0.5s ease-out forwards;
+  --animate-logo-scroll: logo-scroll 20s linear infinite;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes fadeOut {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes shake {
+    10%,
+    90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+    20%,
+    80% {
+      transform: translate3d(2px, 0, 0);
+    }
+    30%,
+    50%,
+    70% {
+      transform: translate3d(-4px, 0, 0);
+    }
+    40%,
+    60% {
+      transform: translate3d(4px, 0, 0);
+    }
+  }
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes surveyLoadingAnimation {
+    0% {
+      transform: translateY(50px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes surveyExitAnimation {
+    0% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-50px);
+      opacity: 0;
+    }
+  }
+  @keyframes logo-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
 }
 
-.dark {
-  /* Brand Colors */
-  --formbricks-brand: #038178;
+/* Named width utilities (v3 theme.extend.width) */
+@utility w-sidebar-expanded {
+  width: 4rem;
+}
+@utility w-sidebar-collapsed {
+  width: 14rem;
+}
 
-  /* Fill Colors */
-  --formbricks-fill-primary: #0f172a;
-  --formbricks-fill-secondary: #e0e0e0;
-  --formbricks-fill-disabled: #394258;
+/* v3 backgroundImage.gradient-radial */
+@utility bg-gradient-radial {
+  background-image: radial-gradient(var(--tw-gradient-stops));
+}
 
-  /* Label Colors */
-  --formbricks-label-primary: #fefefe;
-  --formbricks-label-secondary: #f2f2f2;
-  --formbricks-label-disabled: #bdbdbd;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
-  /* Border Colors */
-  --formbricks-border-primary: #394258;
-  --formbricks-border-secondary: #e0e0e0;
-  --formbricks-border-disabled: #394258;
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
-  /* Functional Colors */
-  --formbricks-focus: #1982fc;
-  --formbricks-error: #d13a3a;
+@utility no-scrollbar {
+  @layer responsive {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Hide scrollbar for IE, Edge and Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+@layer utilities {
+  :root {
+    /* Brand Colors */
+    --formbricks-brand: #038178;
+
+    /* Fill Colors */
+    --formbricks-fill-primary: #fefefe;
+    --formbricks-fill-secondary: #0f172a;
+    --formbricks-fill-disabled: #e0e0e0;
+
+    /* Label Colors */
+    --formbricks-label-primary: #0f172a;
+    --formbricks-label-secondary: #384258;
+    --formbricks-label-disabled: #bdbdbd;
+
+    /* Border Colors */
+    --formbricks-border-primary: #e0e0e0;
+    --formbricks-border-secondary: #0f172a;
+    --formbricks-border-disabled: #ececec;
+
+    /* Functional Colors */
+    --formbricks-focus: #1982fc;
+    --formbricks-error: #d13a3a;
+  }
+
+  .dark {
+    /* Brand Colors */
+    --formbricks-brand: #038178;
+
+    /* Fill Colors */
+    --formbricks-fill-primary: #0f172a;
+    --formbricks-fill-secondary: #e0e0e0;
+    --formbricks-fill-disabled: #394258;
+
+    /* Label Colors */
+    --formbricks-label-primary: #fefefe;
+    --formbricks-label-secondary: #f2f2f2;
+    --formbricks-label-disabled: #bdbdbd;
+
+    /* Border Colors */
+    --formbricks-border-primary: #394258;
+    --formbricks-border-secondary: #e0e0e0;
+    --formbricks-border-disabled: #394258;
+
+    /* Functional Colors */
+    --formbricks-focus: #1982fc;
+    --formbricks-error: #d13a3a;
+  }
 }
 
 @layer base {
@@ -56,54 +267,41 @@
   }
 }
 
-/* Chrome, Edge, and Safari */
-*::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-
-*::-webkit-scrollbar-track {
-  background: #e2e8f0;
-  border-radius: 10px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-}
-
-.filter-scrollbar::-webkit-scrollbar {
-  height: 7px;
-}
-
-.filter-scrollbar::-webkit-scrollbar-thumb {
-  border-radius: 8px;
-}
-
-.filter-scrollbar::-webkit-scrollbar-track {
-  border-radius: 8px;
-}
-
-input:focus {
-  --tw-ring-color: none;
-  --tw-ring-offset-color: none;
-  --tw-ring-shadow: 0 0 #000 !important;
-  box-shadow: none;
-}
-
 @layer utilities {
-  @layer responsive {
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
+  /* Chrome, Edge, and Safari */
+  *::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
 
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-      -ms-overflow-style: none; /* IE and Edge */
-      scrollbar-width: none; /* Firefox */
-    }
+  *::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar {
+    height: 7px;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar-track {
+    border-radius: 8px;
+  }
+
+  input:focus {
+    --tw-ring-color: none;
+    --tw-ring-offset-color: none;
+    --tw-ring-shadow: 0 0 #000 !important;
+    box-shadow: none;
   }
 }
 

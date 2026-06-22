@@ -11,7 +11,7 @@ const Loading = () => {
     {
       title: t("workspace.settings.notifications.email_alerts_surveys"),
       description: t("workspace.settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses"),
-      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
+      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-lg" }, { classes: "h-10 w-lg" }],
     },
   ];
 

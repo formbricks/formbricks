@@ -105,7 +105,7 @@ export const SummaryImpressions = ({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-xs">
         <div className="flex items-center justify-center">
           <div className="h-6 w-32 animate-pulse rounded-full bg-slate-200"></div>
         </div>
@@ -114,7 +114,7 @@ export const SummaryImpressions = ({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="flex items-center gap-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
         <InfoIcon className="size-4 shrink-0" />
         <span>{t("workspace.surveys.summary.impressions_identified_only")}</span>

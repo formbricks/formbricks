@@ -105,7 +105,7 @@ export function AIQuerySection({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
       <div className="flex flex-col items-center gap-2 text-center">
         <div className="flex size-8 items-center justify-center rounded-full bg-brand-dark/10">
           <ActivityIcon className="size-5 text-brand-dark" />
