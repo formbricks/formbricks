@@ -37,21 +37,23 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
 /**
  * Better Auth server instance (ENG-1054 — NextAuth → Better Auth migration).
  *
- * PHASE 1 (additive foundation): this instance exists and is usable server-side via `auth.api.*`,
- * but NextAuth still owns sessions and the HTTP handler is intentionally NOT mounted at
- * /api/auth/[...all] yet — it would collide with the NextAuth [...nextauth] catch-all. The
- * handler + cutover land in Phase 7.
+ * CUTOVER (the ENG-1054 flip): Better Auth owns sessions. Its HTTP handler is mounted at
+ * /api/auth/[...all] (wrapped in `runWithSsoRequestContext`), the NextAuth [...nextauth] route is
+ * removed, and the session DAL (`session.ts`) reads Better Auth only — no dual-read, so the flip is
+ * a one-time forced re-login.
  *
  * Field mappings target the EXISTING Prisma columns (packages/database/schema.prisma), verified
  * against better-auth@1.6.18 `getAuthTables` (design doc §11). With Redis `secondaryStorage`
  * configured, BA skips the DB session/verification tables unless told otherwise — so
- * `session.storeSessionInDatabase` is set (the forward-auth proxies + dual-read need DB sessions);
- * verification stays Redis-only (ephemeral; no Verification Prisma model needed).
+ * `session.storeSessionInDatabase` is set (the forward-auth proxies need DB sessions); verification
+ * stays Redis-only (ephemeral; no Verification Prisma model needed).
  *
- * Deferred to later phases (kept out so they don't half-activate against the live NextAuth flows):
- *  - `emailVerified` Date→boolean column conversion (Phase 2/3 — required before requireEmailVerification works at cutover)
- *  - SSO verify-before-link recovery completion + the shared "token" email-signin (Phase 7 cutover; providers, JIT provisioning, license re-check, and recovery-start are done)
- *  - failed-login audit (the signedIn-success audit + Sentry/logger forwarding are wired via better-auth-observability.ts)
+ * Still pending on the flip branch:
+ *  - `emailVerified` Date→boolean production migration (required for requireEmailVerification)
+ *  - forward-auth proxy → BA-only validation (proxy-session.ts / session-cookie.ts)
+ *  - SSO verify-before-link recovery completion + the shared "token" email-signin (email repoint)
+ *  - failed-login audit via `onAPIError.onError` (the signedIn-success audit + Sentry/logger
+ *    forwarding are already wired via better-auth-observability.ts)
  */
 export const auth = betterAuth({
   appName: "Formbricks",
@@ -128,11 +130,11 @@ export const auth = betterAuth({
   },
 
   session: {
-    expiresIn: SESSION_MAX_AGE, // keep the current 1-day TTL; bounds the dual-read window (D3)
+    expiresIn: SESSION_MAX_AGE, // keep the current 1-day session TTL (parity with the legacy SESSION_MAX_AGE)
     updateAge: DAY_IN_SECONDS,
     freshAge: DAY_IN_SECONDS, // require recent auth for sensitive ops; never 0
     // REQUIRED with secondaryStorage — otherwise no `session` DB rows, which the forward-auth
-    // proxies (getProxySession) and the dual-read cutover both depend on (design doc §11).
+    // proxies (getProxySession) depend on (design doc §11).
     storeSessionInDatabase: true,
     cookieCache: { enabled: true, maxAge: 5 * 60 },
     // Map BA's logical fields onto the existing Prisma columns.

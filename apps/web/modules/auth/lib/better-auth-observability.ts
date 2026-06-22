@@ -7,10 +7,11 @@ import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
 /**
- * Observability parity for the Better Auth cutover (ENG-1054, Phase 7) — re-expresses the audit + Sentry
+ * Observability parity for the Better Auth cutover (ENG-1054) — re-expresses the audit + Sentry
  * emission the NextAuth `[...nextauth]` route did (its `events.signIn` audit + `Sentry.captureException`)
- * as Better Auth config, so the security audit trail and error reporting survive the flip. Additive:
- * inert until the Better Auth handler is mounted at cutover.
+ * as Better Auth config, so the security audit trail and error reporting survive the flip. The
+ * success-path `signedIn` audit below is LIVE now that the handler is mounted; the failure-path audit
+ * is still pending (S2 — `onAPIError.onError`).
  */
 
 /**
