@@ -2115,7 +2115,7 @@ components:
       description: Multilingual text map keyed by the emitted `languages[].code` values for this survey.
       propertyNames:
         type: string
-        description: Survey language code/tag, for example `en-US`, `de-DE`, `vi`, or `zh-Hans`.
+        description: Survey language code/tag, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
       additionalProperties:
         type: string
     TranslatableText:
@@ -2467,6 +2467,16 @@ components:
               type: string
             ctaButtonLabel:
               $ref: '#/components/schemas/TranslatableText'
+        - if:
+            required:
+              - buttonExternal
+            properties:
+              buttonExternal:
+                const: true
+          then:
+            required:
+              - buttonUrl
+              - ctaButtonLabel
       unevaluatedProperties: false
     SurveyRatingElement:
       allOf:
@@ -3126,6 +3136,7 @@ components:
             - redirectToUrl
         url:
           type: string
+          format: uri
           description: External redirect URL. Requires the organization's external URL permission.
         label:
           type: string

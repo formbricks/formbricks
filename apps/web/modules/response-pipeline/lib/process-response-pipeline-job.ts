@@ -460,7 +460,7 @@ const handleFollowUpsSafely = async ({
   }
 
   try {
-    const followUpsResult = await sendFollowUpsForResponse(data.response.id);
+    const followUpsResult = await sendFollowUpsForResponse(data.response.id, data.locale);
     if (!followUpsResult.ok && followUpsResult.error.code !== FollowUpSendError.FOLLOW_UP_NOT_ALLOWED) {
       logger.error(
         {
