@@ -231,7 +231,7 @@ export const WorkflowsListPage = ({
             selectedOptions={selectedStatuses}
             onToggleOption={toggleStatus}
             isOpen={isStatusDropdownOpen}
-            toggleDropdown={() => setIsStatusDropdownOpen((prev) => !prev)}
+            onOpenChange={setIsStatusDropdownOpen}
           />
           {hasActiveFilters ? (
             <Button size="sm" className="h-8" onClick={clearFilters}>

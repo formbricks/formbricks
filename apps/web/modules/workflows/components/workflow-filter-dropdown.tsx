@@ -21,7 +21,7 @@ interface WorkflowFilterDropdownProps {
   selectedOptions: TWorkflowStatus[];
   onToggleOption: (value: TWorkflowStatus) => void;
   isOpen: boolean;
-  toggleDropdown: () => void;
+  onOpenChange: (open: boolean) => void;
 }
 
 export const WorkflowFilterDropdown = ({
@@ -30,18 +30,18 @@ export const WorkflowFilterDropdown = ({
   selectedOptions,
   onToggleOption,
   isOpen,
-  toggleDropdown,
+  onOpenChange,
 }: Readonly<WorkflowFilterDropdownProps>) => {
   const triggerClasses = `workflowFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none
     ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900 hover:text-white"}`;
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={toggleDropdown}>
+    <DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild className={triggerClasses}>
-        <div className="flex items-center">
+        <button type="button" className="flex items-center" aria-label={title}>
           <span className="text-sm">{title}</span>
           <ChevronDownIcon className="ml-2 size-4" />
-        </div>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-slate-900">
         {options.map((option) => (

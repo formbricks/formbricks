@@ -246,6 +246,16 @@ describe("duplicateWorkflow", () => {
     ).rejects.toBe(conflict);
     expect(create).toHaveBeenCalledTimes(1);
   });
+
+  test("throws a conflict after exhausting all copy-name retries", async () => {
+    // Every attempt collides, so the bounded retry loop gives up and surfaces a clean conflict.
+    create.mockRejectedValue(uniqueViolation());
+
+    await expect(
+      service.duplicateWorkflow(makeRow({ name: "Original" }), { createdBy: null })
+    ).rejects.toThrow("Could not find an available copy name for this workflow.");
+    expect(create).toHaveBeenCalledTimes(50);
+  });
 });
 
 describe("deleteWorkflow", () => {

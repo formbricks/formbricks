@@ -2,6 +2,10 @@ import { z } from "zod";
 import type { TWorkflowStatus } from "@formbricks/workflows";
 import { ZWorkflowSortBy, ZWorkflowStatus } from "@formbricks/workflows";
 
+// The status filter only exposes the live statuses; archived is governed solely by the Show-archived
+// toggle, so it is never persisted into `selectedStatuses` (excluded here to reject stale localStorage).
+const ZLiveWorkflowStatus = ZWorkflowStatus.exclude(["archived"]);
+
 /**
  * Combine the status-filter selection with the Show-archived toggle into the `statusIn` the list API
  * expects. The API default-excludes archived when `statusIn` is undefined, so:
@@ -29,7 +33,7 @@ export const computeStatusIn = (
  */
 const ZStoredWorkflowFilters = z.object({
   searchValue: z.string(),
-  selectedStatuses: z.array(ZWorkflowStatus),
+  selectedStatuses: z.array(ZLiveWorkflowStatus),
   sortBy: ZWorkflowSortBy,
   showArchived: z.boolean(),
 });
