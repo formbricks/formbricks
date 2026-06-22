@@ -81,8 +81,8 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -127,8 +127,8 @@ export default App;
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -238,8 +238,8 @@ export default function App({ Component, pageProps }: AppProps) {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 First, initialize the Formbricks SDK to run only on the client side. To track page changes, register the route change event with the Next.js router.
 
@@ -295,8 +295,8 @@ router.afterEach((to, from) => {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -341,8 +341,8 @@ export default function App() {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -427,8 +427,8 @@ Formbricks.cleanup(waitForOperations: true) {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -501,8 +501,8 @@ Formbricks.logout()
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 ## Flutter
 
@@ -588,8 +588,8 @@ Attribute keys must be lowercase letters, numbers, and underscores, and start wi
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 <Note>
   Surveys render by loading `{appUrl}/js/surveys.umd.cjs` in a WebView, so that URL must be reachable from the device. Formbricks Cloud and standard self-hosted instances serve this script automatically. Config is persisted with `shared_preferences` and is **not encrypted at rest** — avoid putting sensitive PII in attribute values.
