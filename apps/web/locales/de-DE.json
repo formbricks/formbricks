@@ -2638,6 +2638,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Bist du sicher, dass du dieses Team löschen möchtest? Dadurch wird auch der Zugriff auf alle Arbeitsbereiche und Umfragen entfernt, die mit diesem Team verbunden sind.",
         "billing_role_description": "Haben nur Zugriff auf Abrechnungsinformationen.",
         "bulk_invite": "Massen-Einladung",
+        "bulk_invite_scale_only_description": "Das Einladen von Mitgliedern per CSV ist im Scale-Tarif verfügbar. Upgraden, um dein ganzes Team auf einmal einzuladen.",
+        "bulk_invite_scale_only_title": "Schalte Masseneinladungen mit einem höheren Tarif frei",
         "contributor": "Mitwirkender",
         "create": "Erstellen",
         "create_first_team_message": "Du musst zuerst ein Team erstellen.",

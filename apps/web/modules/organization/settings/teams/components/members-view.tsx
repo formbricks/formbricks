@@ -9,7 +9,7 @@ import {
   IS_STORAGE_CONFIGURED,
 } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
@@ -48,6 +48,7 @@ export const MembersView = async ({
   const isLeaveOrganizationDisabled = userMemberships.length <= 1;
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const isBulkInviteAllowed = await getBulkInvitePermission(organization.id);
 
   // Fetch admin teams if they're a team admin
   const userAdminTeamIds = await getTeamsWhereUserIsAdmin(currentUserId, organization.id);
@@ -79,6 +80,7 @@ export const MembersView = async ({
           isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
           isTeamAdmin={isTeamAdminUser}
           userAdminTeamIds={userAdminTeamIds}
+          isBulkInviteAllowed={isBulkInviteAllowed}
         />
       )}
 

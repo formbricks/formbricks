@@ -2638,6 +2638,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Bu ekibi silmek istediğinden emin misin? Bu işlem, ekiple ilişkili tüm çalışma alanlarına ve anketlere erişimi de kaldıracak.",
         "billing_role_description": "Sadece fatura bilgilerine erişim.",
         "bulk_invite": "Toplu Davet",
+        "bulk_invite_scale_only_description": "CSV ile toplu üye davetleri Scale planında mevcut. Tüm ekibini aynı anda davet etmek için yükselt.",
+        "bulk_invite_scale_only_title": "Daha yüksek bir planla toplu daveti kullan",
         "contributor": "Katkıda Bulunan",
         "create": "Oluştur",
         "create_first_team_message": "Önce bir ekip oluşturman gerekiyor.",

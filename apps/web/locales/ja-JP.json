@@ -2638,6 +2638,8 @@
         "are_you_sure_you_want_to_delete_this_team": "このチームを削除してもよろしいですか？このチームに関連付けられたすべてのワークスペースとサーベイへのアクセスも削除されます。",
         "billing_role_description": "請求情報へのアクセスのみ。",
         "bulk_invite": "一括招待",
+        "bulk_invite_scale_only_description": "CSVによる一括メンバー招待は、Scaleプランでご利用いただけます。アップグレードして、チーム全員を一度に招待しましょう。",
+        "bulk_invite_scale_only_title": "上位プランで一括招待機能を利用する",
         "contributor": "貢献者",
         "create": "作成",
         "create_first_team_message": "まず、チームを作成する必要があります。",

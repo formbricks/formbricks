@@ -2638,6 +2638,8 @@
         "are_you_sure_you_want_to_delete_this_team": "確定要刪除這個團隊嗎?這也會移除與此團隊相關的所有工作區和調查問卷的存取權限。",
         "billing_role_description": "只能存取帳單資訊。",
         "bulk_invite": "大量邀請",
+        "bulk_invite_scale_only_description": "透過 CSV 批量邀請成員功能僅適用於 Scale 方案。升級即可一次邀請整個團隊。",
+        "bulk_invite_scale_only_title": "升級至更高方案以解鎖批量邀請功能",
         "contributor": "投稿人",
         "create": "建立",
         "create_first_team_message": "您必須先建立團隊。",

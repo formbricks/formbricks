@@ -2530,6 +2530,8 @@ checksums:
     workspace/settings/teams/are_you_sure_you_want_to_delete_this_team: 9cf027aeee8059e692948f2da4302163
     workspace/settings/teams/billing_role_description: dfcfc3730c3dff59b983c5d9c3d6df12
     workspace/settings/teams/bulk_invite: 9c237edb8782df589c25ae1723942bf7
+    workspace/settings/teams/bulk_invite_scale_only_description: a585bbc877bf36694c042d32120b6d8c
+    workspace/settings/teams/bulk_invite_scale_only_title: adb045124f40b9aede90c609f5d13a21
     workspace/settings/teams/contributor: 84febfd6836ddde20b1bd7b0661cc848
     workspace/settings/teams/create: 757ccd28dd533ff3a933355273c1e32a
     workspace/settings/teams/create_first_team_message: 0b76c0173691938561868c4bcaa7dee6

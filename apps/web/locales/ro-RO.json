@@ -2638,6 +2638,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Sigur doriți să ștergeți această echipă? Aceasta va elimina și accesul la toate spațiile de lucru și sondajele asociate cu această echipă.",
         "billing_role_description": "Au acces doar la informațiile de facturare.",
         "bulk_invite": "Invitație în masă",
+        "bulk_invite_scale_only_description": "Invitarea membrilor în masă prin CSV este disponibilă în planul Scale.升级ează-te pentru a-ți invita întreaga echipă deodată.",
+        "bulk_invite_scale_only_title": "Deblochează invitarea în masă cu un plan superior",
         "contributor": "Contribuitor",
         "create": "Creează",
         "create_first_team_message": "Trebuie să creezi mai întâi o echipă.",
