@@ -110,6 +110,16 @@ AWS_REGION=eu-north-1
 AWS_BEARER_TOKEN_BEDROCK=<bedrock-api-key>
 ```
 
+To use Gemini on Vertex AI instead, set:
+
+```bash
+TAXONOMY_LLM_PROVIDER=vertex-gemini
+TAXONOMY_LLM_MODEL=gemini-2.5-flash
+TAXONOMY_VERTEX_PROJECT=<google-cloud-project>
+TAXONOMY_VERTEX_LOCATION=<vertex-location>
+TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON=<service-account-json>
+```
+
 Then start the stack with the selected profile set:
 
 ```bash

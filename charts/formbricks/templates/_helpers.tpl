@@ -239,6 +239,10 @@ Taxonomy service image reference. A configured digest takes precedence over the 
 {{- default (include "formbricks.taxonomyManagedSecretName" .) .Values.taxonomy.llm.existingSecret -}}
 {{- end }}
 
+{{- define "formbricks.taxonomyVertexSecretName" -}}
+{{- default (include "formbricks.taxonomyManagedSecretName" .) .Values.taxonomy.llm.vertex.existingSecret -}}
+{{- end }}
+
 {{- define "formbricks.taxonomyServiceUrl" -}}
 {{- printf "http://%s:%v" (include "formbricks.taxonomyName" .) (.Values.taxonomy.service.port | default .Values.taxonomy.port) -}}
 {{- end }}
@@ -295,6 +299,20 @@ Taxonomy service image reference. A configured digest takes precedence over the 
 {{- end -}}
 {{- end }}
 
+{{- define "formbricks.taxonomyVertexCredentialsJson" -}}
+{{- $secretName := include "formbricks.taxonomyManagedSecretName" . }}
+{{- $secretKey := .Values.taxonomy.llm.vertex.credentialsJsonSecretKey | default "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData $secretKey }}
+    {{- index $secretData $secretKey | b64dec -}}
+{{- else if .Values.taxonomy.llm.vertex.credentialsJson }}
+    {{- .Values.taxonomy.llm.vertex.credentialsJson -}}
+{{- else }}
+    {{- "" -}}
+{{- end -}}
+{{- end }}
+
 {{/*
 Hub env managed by taxonomy when the optional taxonomy service is enabled.
 */}}
@@ -331,7 +349,7 @@ Returns true when an env var is managed by the taxonomy deployment and should no
 */}}
 {{- define "formbricks.taxonomyEnvManaged" -}}
 {{- $key := .key -}}
-{{- if has $key (list "APP_ENV" "HUB_INTERNAL_API_URL" "HUB_INTERNAL_API_TOKEN" "TAXONOMY_SERVICE_TOKEN" "TAXONOMY_LLM_PROVIDER" "TAXONOMY_LLM_MODEL" "TAXONOMY_LLM_BASE_URL" "TAXONOMY_LLM_API_KEY" "TAXONOMY_LLM_TEMPERATURE" "TAXONOMY_LLM_MAX_ATTEMPTS" "TAXONOMY_LLM_TIMEOUT_SECONDS" "HUB_CLIENT_TIMEOUT_SECONDS" "TAXONOMY_EMBEDDING_DIMENSION" "TAXONOMY_MIN_EMBEDDED_RECORDS" "TAXONOMY_MAX_RECORDS" "TAXONOMY_MAX_CLUSTERS" "TAXONOMY_RANDOM_SEED") -}}
+{{- if has $key (list "APP_ENV" "HUB_INTERNAL_API_URL" "HUB_INTERNAL_API_TOKEN" "TAXONOMY_SERVICE_TOKEN" "TAXONOMY_LLM_PROVIDER" "TAXONOMY_LLM_MODEL" "TAXONOMY_LLM_BASE_URL" "TAXONOMY_LLM_API_KEY" "TAXONOMY_VERTEX_PROJECT" "TAXONOMY_VERTEX_LOCATION" "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" "TAXONOMY_LLM_TEMPERATURE" "TAXONOMY_LLM_MAX_ATTEMPTS" "TAXONOMY_LLM_TIMEOUT_SECONDS" "HUB_CLIENT_TIMEOUT_SECONDS" "TAXONOMY_EMBEDDING_DIMENSION" "TAXONOMY_MIN_EMBEDDED_RECORDS" "TAXONOMY_MAX_RECORDS" "TAXONOMY_MAX_CLUSTERS" "TAXONOMY_RANDOM_SEED") -}}
 true
 {{- end -}}
 {{- end }}
