@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -72,8 +71,6 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
     }
   };
 
-  const [parent] = useAutoAnimate();
-
   return (
     <Collapsible.Root
       open={open}
@@ -87,7 +84,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -101,7 +98,8 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className={`flex ${open && "pb-3"}`} ref={parent}>
+      <Collapsible.CollapsibleContent
+        className={`flex ${open && "pb-3"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
         <hr className="py-1 text-slate-600" />
         <div className="p-6">
           <div className="flex flex-col gap-4">
@@ -143,7 +141,11 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
                   i18nKey="workspace.surveys.edit.set_global_placement_in_look_feel_settings_hint"
                   components={{
                     lookFeelLink: (
-                      <Link href={`${workspaceBasePath}/look`} target="_blank" className="underline" />
+                      <Link
+                        href={`${workspaceBasePath}/settings/workspace/look`}
+                        target="_blank"
+                        className="underline"
+                      />
                     ),
                   }}
                 />

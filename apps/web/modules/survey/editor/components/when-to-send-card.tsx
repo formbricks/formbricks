@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -131,7 +130,6 @@ export const WhenToSendCard = ({
   }, [localSurvey.type]);
 
   // Auto animate
-  const [parent] = useAutoAnimate();
 
   const containsEmptyTriggers = useMemo(() => {
     return !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
@@ -156,7 +154,7 @@ export const WhenToSendCard = ({
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
           id="whenToSendCardTrigger">
           <div className="inline-flex px-4 py-4">
-            <div className="flex items-center pl-2 pr-5">
+            <div className="flex items-center pr-5 pl-2">
               {containsEmptyTriggers ? (
                 <div className="size-7 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
@@ -176,10 +174,10 @@ export const WhenToSendCard = ({
           </div>
         </Collapsible.CollapsibleTrigger>
 
-        <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
+        <Collapsible.CollapsibleContent className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
           <hr className="py-1 text-slate-600" />
 
-          <div className="px-3 pb-3 pt-1">
+          <div className="px-3 pt-1 pb-3">
             <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-800">
                 {t("workspace.surveys.edit.trigger_survey_when_one_of_the_actions_is_fired")}
@@ -225,7 +223,7 @@ export const WhenToSendCard = ({
             </div>
 
             {/* Survey Display Settings */}
-            <div className="mb-4 mt-8 space-y-1 px-4">
+            <div className="mt-8 mb-4 space-y-1 px-4">
               <h3 className="font-semibold text-slate-800">
                 {t("workspace.surveys.edit.survey_display_settings")}
               </h3>
@@ -255,7 +253,7 @@ export const WhenToSendCard = ({
                             id="triggerDelay"
                             value={localSurvey.delay.toString()}
                             onChange={(e) => handleTriggerDelay(e)}
-                            className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                            className="mr-2 ml-2 inline w-16 bg-white text-center text-sm"
                           />
                         ),
                       }}

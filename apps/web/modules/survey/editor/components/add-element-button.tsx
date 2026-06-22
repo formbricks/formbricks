@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
@@ -26,7 +25,6 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
   const [open, setOpen] = useState(false);
   const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
   const availableElementTypes = isCxMode ? getCXElementTypes(t) : getElementTypes(t);
-  const [parent] = useAutoAnimate();
 
   return (
     <Collapsible.Root
@@ -49,7 +47,7 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="justify-left flex flex-col" ref={parent}>
+      <Collapsible.CollapsibleContent className="justify-left flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         {availableElementTypes.map((elementType) => (
           <button
             type="button"

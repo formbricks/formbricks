@@ -80,6 +80,8 @@
   --animate-shake: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-collapsible-up: collapsible-up 0.2s ease-out;
   --animate-fadeIn: fadeIn 0.2s ease-out;
   --animate-fadeOut: fadeOut 0.2s ease-out;
   --animate-surveyLoading: surveyLoadingAnimation 0.5s ease-out forwards;
@@ -132,6 +134,22 @@
   @keyframes accordion-up {
     from {
       height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
     }
     to {
       height: 0;
