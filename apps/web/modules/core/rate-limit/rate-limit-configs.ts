@@ -46,6 +46,12 @@ export const rateLimitConfigs = {
       namespace: "action:validate-survey-pin",
     }, // 10 per minute — prevents brute-force PIN guessing
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
+    inviteMember: { interval: 3600, allowedPerInterval: 30, namespace: "action:invite-member" }, // 30 per hour per org — bounds invite-spam abuse
+    bulkInviteMembers: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "action:bulk-invite-members",
+    }, // 10 bulk imports per hour per org
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,

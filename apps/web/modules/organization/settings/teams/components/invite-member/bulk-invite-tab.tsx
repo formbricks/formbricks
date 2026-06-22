@@ -7,6 +7,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -18,6 +19,8 @@ interface BulkInviteTabProps {
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
+  isBulkInviteAllowed: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const BulkInviteTab = ({
@@ -26,8 +29,12 @@ export const BulkInviteTab = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   isStorageConfigured,
+  isBulkInviteAllowed,
+  enterpriseLicenseRequestFormUrl,
 }: BulkInviteTabProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [csvFile, setCSVFile] = useState<File>();
 
   const onFileInputChange = (files: File[]) => {
@@ -36,7 +43,7 @@ export const BulkInviteTab = ({
   };
 
   const onImport = () => {
-    if (!csvFile) {
+    if (!csvFile || !isBulkInviteAllowed) {
       return;
     }
     Papa.parse(csvFile, {
@@ -100,6 +107,24 @@ export const BulkInviteTab = ({
   return (
     <>
       <div className="space-y-4">
+        {!isBulkInviteAllowed && (
+          <Alert variant="warning" className="flex items-start">
+            <AlertDescription className="ml-2">
+              {t("workspace.settings.teams.bulk_invite_scale_only_message")}
+              <Link
+                className="ml-1 underline"
+                target="_blank"
+                href={
+                  isFormbricksCloud
+                    ? `${workspaceBasePath}/settings/organization/billing`
+                    : enterpriseLicenseRequestFormUrl
+                }>
+                {t("common.upgrade_plan")}
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Uploader
           allowedFileExtensions={["csv"]}
           handleDragOver={handleDragOver}
@@ -108,7 +133,7 @@ export const BulkInviteTab = ({
           id="bulk-invite"
           multiple={false}
           name="bulk-invite"
-          disabled={csvFile !== undefined}
+          disabled={!isBulkInviteAllowed || csvFile !== undefined}
           uploaderClassName="h-20 bg-white border border-slate-200"
           isStorageConfigured={isStorageConfigured}
         />
@@ -154,7 +179,7 @@ export const BulkInviteTab = ({
             }}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={onImport} size="default" disabled={!csvFile}>
+          <Button onClick={onImport} size="default" disabled={!csvFile || !isBulkInviteAllowed}>
             {t("common.import")}
           </Button>
         </div>
