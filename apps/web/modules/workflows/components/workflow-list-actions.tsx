@@ -58,6 +58,13 @@ export const WorkflowListActions = ({
   const deleteWorkflowMutation = useDeleteWorkflow({ queryKey });
   const duplicateWorkflowMutation = useDuplicateWorkflow();
 
+  // Every action in this menu mutates the workflow, so read-only users get no menu at all (they can
+  // still open the workflow by clicking the row).
+  if (isReadOnly) {
+    return null;
+  }
+
+  const isArchived = status === "archived";
   const editHref = `/workspaces/${workspaceId}/workflows/${workflowId}`;
 
   const handleDuplicate = () => {
@@ -140,7 +147,7 @@ export const WorkflowListActions = ({
             </DropdownMenuItem>
             <DropdownMenuItem
               icon={<CopyIcon className="size-4" />}
-              disabled={isReadOnly || duplicateWorkflowMutation.isPending}
+              disabled={duplicateWorkflowMutation.isPending}
               onSelect={(event) => {
                 event.preventDefault();
                 setIsMenuOpen(false);
@@ -148,10 +155,10 @@ export const WorkflowListActions = ({
               }}>
               {t("common.duplicate")}
             </DropdownMenuItem>
-            {status === "archived" ? (
+            {isArchived ? (
               <DropdownMenuItem
                 icon={<ArchiveRestoreIcon className="size-4" />}
-                disabled={isReadOnly || unarchiveWorkflowMutation.isPending}
+                disabled={unarchiveWorkflowMutation.isPending}
                 onSelect={(event) => {
                   event.preventDefault();
                   setIsMenuOpen(false);
@@ -162,7 +169,6 @@ export const WorkflowListActions = ({
             ) : (
               <DropdownMenuItem
                 icon={<ArchiveIcon className="size-4" />}
-                disabled={isReadOnly}
                 onSelect={(event) => {
                   event.preventDefault();
                   setIsMenuOpen(false);
@@ -171,43 +177,42 @@ export const WorkflowListActions = ({
                 {t("common.archive")}
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem
-              icon={<TrashIcon className="size-4" />}
-              disabled={isReadOnly}
-              onSelect={(event) => {
-                event.preventDefault();
-                setIsMenuOpen(false);
-                setIsDeleteDialogOpen(true);
-              }}>
-              {t("common.delete")}
-            </DropdownMenuItem>
+            {/* Delete is gated behind archiving: a workflow must be archived first, an extra guard against
+                accidental hard deletes. */}
+            {isArchived ? (
+              <DropdownMenuItem
+                icon={<TrashIcon className="size-4" />}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setIsMenuOpen(false);
+                  setIsDeleteDialogOpen(true);
+                }}>
+                {t("common.delete")}
+              </DropdownMenuItem>
+            ) : null}
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {!isReadOnly ? (
-        <>
-          <ConfirmationModal
-            open={isArchiveDialogOpen}
-            setOpen={setIsArchiveDialogOpen}
-            title={t("workspace.workflows.archive_workflow")}
-            description={t("workspace.workflows.archive_workflow_description")}
-            body={t("workspace.workflows.archive_workflow_confirmation", { name: workflowName })}
-            buttonText={t("common.archive")}
-            onConfirm={handleArchive}
-            buttonLoading={archiveWorkflowMutation.isPending}
-            Icon={ArchiveIcon}
-          />
-          <DeleteDialog
-            open={isDeleteDialogOpen}
-            setOpen={setIsDeleteDialogOpen}
-            deleteWhat={workflowName}
-            onDelete={handleDelete}
-            isDeleting={deleteWorkflowMutation.isPending}
-            text={t("workspace.workflows.delete_workflow_confirmation", { name: workflowName })}
-          />
-        </>
-      ) : null}
+      <ConfirmationModal
+        open={isArchiveDialogOpen}
+        setOpen={setIsArchiveDialogOpen}
+        title={t("workspace.workflows.archive_workflow")}
+        description={t("workspace.workflows.archive_workflow_description")}
+        body={t("workspace.workflows.archive_workflow_confirmation", { name: workflowName })}
+        buttonText={t("common.archive")}
+        onConfirm={handleArchive}
+        buttonLoading={archiveWorkflowMutation.isPending}
+        Icon={ArchiveIcon}
+      />
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        setOpen={setIsDeleteDialogOpen}
+        deleteWhat={workflowName}
+        onDelete={handleDelete}
+        isDeleting={deleteWorkflowMutation.isPending}
+        text={t("workspace.workflows.delete_workflow_confirmation", { name: workflowName })}
+      />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
+import { Label } from "@/modules/ui/components/label";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Switch } from "@/modules/ui/components/switch";
 import {
@@ -18,7 +19,7 @@ import {
   WorkflowFilterDropdown,
 } from "../components/workflow-filter-dropdown";
 import { WorkflowListActions } from "../components/workflow-list-actions";
-import { type TWorkflowSortOption, WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
+import { WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
@@ -38,12 +39,6 @@ const getStatusFilterOptions = (t: TFunction): TWorkflowStatusFilterOption[] => 
   { label: t("common.draft"), value: "draft" },
   { label: t("common.enabled"), value: "enabled" },
   { label: t("common.disabled"), value: "disabled" },
-];
-
-const getSortOptions = (t: TFunction): TWorkflowSortOption[] => [
-  { label: t("common.updated_at"), value: "updatedAt" },
-  { label: t("common.created_at"), value: "createdAt" },
-  { label: t("workspace.workflows.alphabetical"), value: "name" },
 ];
 
 export const WorkflowsListPage = ({
@@ -135,6 +130,19 @@ export const WorkflowsListPage = ({
     enabled: isListEmpty && hasActiveFilters,
   });
   const isFilteredNoMatch = hasActiveFilters && (isProbingWorkflows || unfilteredWorkflows.length > 0);
+
+  // Mirror the surveys list: when the workspace has no workflows at all (nothing filtered, archived
+  // hidden), show only the empty state and hide the filter toolbar.
+  const isWorkspaceEmpty =
+    !showInitialLoading && !isError && workflows.length === 0 && !hasActiveFilters && !showArchived;
+
+  if (isWorkspaceEmpty) {
+    return (
+      <div className="space-y-6">
+        <WorkflowsEmptyState filtered={false} />
+      </div>
+    );
+  }
 
   let listContent: React.ReactNode;
 
@@ -243,11 +251,11 @@ export const WorkflowsListPage = ({
         <div className="flex shrink-0 items-center gap-4">
           <div className="flex items-center gap-2">
             <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
-            <label htmlFor="show-archived" className="cursor-pointer text-sm text-slate-500">
+            <Label htmlFor="show-archived" className="cursor-pointer">
               {t("workspace.workflows.show_archived")}
-            </label>
+            </Label>
           </div>
-          <WorkflowSortDropdown options={getSortOptions(t)} sortBy={sortBy} onSortChange={setSortBy} />
+          <WorkflowSortDropdown sortBy={sortBy} onSortChange={setSortBy} />
         </div>
       </div>
       {listContent}

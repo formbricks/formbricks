@@ -10,6 +10,7 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { useCreateWorkflow } from "../hooks/use-create-workflow";
 import { createDefaultWorkflowDefinition } from "../lib/default-workflow";
+import type { TCreateWorkflowFormData } from "../lib/validate-create-workflow";
 import { CreateWorkflowDialog } from "./create-workflow-dialog";
 
 interface WorkspaceWorkflowsHeaderCtaProps {
@@ -27,26 +28,16 @@ export const WorkspaceWorkflowsHeaderCta = ({
   const createWorkflowMutation = useCreateWorkflow();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
 
   if (segment !== null || isReadOnly) {
     return null;
   }
 
-  const handleOpenChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open) {
-      setName("");
-      setDescription("");
-    }
-  };
-
-  const handleCreate = () => {
+  const handleCreate = (data: TCreateWorkflowFormData) => {
     const parsed = ZCreateWorkflowInput.safeParse({
       workspaceId,
-      name: name.trim(),
-      description: description.trim() || null,
+      name: data.name.trim(),
+      description: data.description.trim() || null,
       status: "draft",
       definition: createDefaultWorkflowDefinition(),
     });
@@ -59,7 +50,7 @@ export const WorkspaceWorkflowsHeaderCta = ({
     createWorkflowMutation.mutate(parsed.data, {
       onSuccess: (workflow) => {
         toast.success(t("workspace.workflows.create_success"));
-        handleOpenChange(false);
+        setIsDialogOpen(false);
         router.push(`/workspaces/${workspaceId}/workflows/${workflow.id}`);
       },
       onError: (error) => {
@@ -76,11 +67,7 @@ export const WorkspaceWorkflowsHeaderCta = ({
       </Button>
       <CreateWorkflowDialog
         open={isDialogOpen}
-        onOpenChange={handleOpenChange}
-        name={name}
-        description={description}
-        onNameChange={setName}
-        onDescriptionChange={setDescription}
+        onOpenChange={setIsDialogOpen}
         onSubmit={handleCreate}
         isCreating={createWorkflowMutation.isPending}
       />

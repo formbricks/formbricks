@@ -1,5 +1,8 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -12,44 +15,50 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
 import {
-  WORKFLOW_DESCRIPTION_MAX_LENGTH,
-  WORKFLOW_NAME_MAX_LENGTH,
-  validateCreateWorkflowForm,
-} from "../lib/validate-create-workflow";
+  FormControl,
+  FormError,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { type TCreateWorkflowFormData, getCreateWorkflowFormSchema } from "../lib/validate-create-workflow";
 
 interface CreateWorkflowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  name: string;
-  description: string;
-  onNameChange: (name: string) => void;
-  onDescriptionChange: (description: string) => void;
-  onSubmit: () => void;
+  onSubmit: (data: TCreateWorkflowFormData) => void;
   isCreating: boolean;
 }
 
 export const CreateWorkflowDialog = ({
   open,
   onOpenChange,
-  name,
-  description,
-  onNameChange,
-  onDescriptionChange,
   onSubmit,
   isCreating,
 }: Readonly<CreateWorkflowDialogProps>) => {
   const { t } = useTranslation();
 
-  const { errors, isValid } = validateCreateWorkflowForm(name, description);
-  const nameError = errors.nameTooLong
-    ? t("workspace.workflows.name_too_long", { max: WORKFLOW_NAME_MAX_LENGTH })
-    : null;
-  const descriptionError = errors.descriptionTooLong
-    ? t("workspace.workflows.description_too_long", { max: WORKFLOW_DESCRIPTION_MAX_LENGTH })
-    : null;
+  const form = useForm<TCreateWorkflowFormData>({
+    resolver: zodResolver(getCreateWorkflowFormSchema(t)),
+    mode: "onChange",
+    defaultValues: { name: "", description: "" },
+  });
+
+  // Start each open with a clean form.
+  useEffect(() => {
+    if (open) {
+      form.reset({ name: "", description: "" });
+    }
+  }, [open, form]);
+
+  const handleValidSubmit = (data: TCreateWorkflowFormData) => {
+    if (!isCreating) {
+      onSubmit(data);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,59 +68,63 @@ export const CreateWorkflowDialog = ({
           <DialogDescription>{t("workspace.workflows.create_workflow_description")}</DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (isValid && !isCreating) {
-              onSubmit();
-            }
-          }}>
-          <DialogBody className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="workflow-name">{t("common.workflow_name")}</Label>
-              <Input
-                id="workflow-name"
-                name="workflow-name"
-                placeholder={t("workspace.workflows.workflow_name_placeholder")}
-                value={name}
-                isInvalid={Boolean(nameError)}
-                onChange={(event) => onNameChange(event.target.value)}
-                autoFocus
-              />
-              {nameError ? <p className="text-sm text-red-500">{nameError}</p> : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="workflow-description">
-                {t("workspace.workflows.workflow_description_optional")}
-              </Label>
-              <textarea
-                id="workflow-description"
-                name="workflow-description"
-                rows={3}
-                placeholder={t("workspace.workflows.workflow_description_placeholder")}
-                value={description}
-                onChange={(event) => onDescriptionChange(event.target.value)}
-                className={cn(
-                  "flex min-h-20 w-full resize-none rounded-md border bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-50",
-                  descriptionError ? "border-red-500" : "border-slate-300"
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleValidSubmit)}>
+            <DialogBody unconstrained className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>{t("common.workflow_name")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder={t("workspace.workflows.workflow_name_placeholder")}
+                        isInvalid={Boolean(fieldState.error)}
+                        autoFocus
+                      />
+                    </FormControl>
+                    <FormError />
+                  </FormItem>
                 )}
               />
-              {descriptionError ? <p className="text-sm text-red-500">{descriptionError}</p> : null}
-            </div>
-          </DialogBody>
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => onOpenChange(false)}
-              disabled={isCreating}>
-              {t("common.cancel")}
-            </Button>
-            <Button type="submit" loading={isCreating} disabled={!isValid}>
-              {t("common.continue")}
-            </Button>
-          </DialogFooter>
-        </form>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel>{t("workspace.workflows.workflow_description_optional")}</FormLabel>
+                    <FormControl>
+                      <textarea
+                        {...field}
+                        rows={3}
+                        placeholder={t("workspace.workflows.workflow_description_placeholder")}
+                        className={cn(
+                          "flex min-h-20 w-full resize-none rounded-md border bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-50",
+                          fieldState.error ? "border-red-500" : "border-slate-300"
+                        )}
+                      />
+                    </FormControl>
+                    <FormError />
+                  </FormItem>
+                )}
+              />
+            </DialogBody>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => onOpenChange(false)}
+                disabled={isCreating}>
+                {t("common.cancel")}
+              </Button>
+              <Button type="submit" loading={isCreating} disabled={isCreating || !form.formState.isValid}>
+                {t("common.continue")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   );
