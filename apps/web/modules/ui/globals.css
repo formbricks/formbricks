@@ -196,6 +196,15 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  /*
+    Tailwind CSS v4 removed the default `cursor: pointer` on buttons from
+    Preflight. Restore the v3 behaviour for enabled buttons.
+  */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @utility no-scrollbar {
