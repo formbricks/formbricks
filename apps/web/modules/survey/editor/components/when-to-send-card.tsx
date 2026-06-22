@@ -2,10 +2,11 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { CheckIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { ActionClass, OrganizationRole } from "@formbricks/database/prisma-browser";
+import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -16,6 +17,7 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
+import { ActionDetailModal } from "@/modules/workspaces/settings/(setup)/components/ActionDetailModal";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -37,6 +39,8 @@ export const WhenToSendCard = ({
   const { t } = useTranslation();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
+  const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
+  const [editingActionClass, setEditingActionClass] = useState<TActionClass | null>(null);
   const [actionClasses, setActionClasses] = useState<ActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
@@ -52,6 +56,27 @@ export const WhenToSendCard = ({
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
     setLocalSurvey(updatedSurvey);
+  };
+
+  const handleEditTriggerEvent = (actionClass: TActionClass) => {
+    setEditingActionClass(actionClass);
+    setEditActionModalOpen(true);
+  };
+
+  const handleActionUpdated = (updatedAction: TActionClass) => {
+    setActionClasses((prevActionClasses) =>
+      prevActionClasses.map((actionClass) =>
+        actionClass.id === updatedAction.id ? updatedAction : actionClass
+      )
+    );
+    setLocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      triggers: prevSurvey.triggers.map((trigger) =>
+        trigger.actionClass.id === updatedAction.id
+          ? { ...trigger, actionClass: updatedAction }
+          : trigger
+      ),
+    }));
   };
 
   const handleAutoCloseToggle = () => {
@@ -203,6 +228,15 @@ export const WhenToSendCard = ({
                         <ActionClassInfo actionClass={trigger.actionClass} />
                       </div>
                     </div>
+                    {!isReadOnly ? (
+                      <button
+                        type="button"
+                        className="cursor-pointer text-slate-600"
+                        onClick={() => handleEditTriggerEvent(trigger.actionClass)}
+                        aria-label={t("common.edit")}>
+                        <PencilIcon className="size-4" />
+                      </button>
+                    ) : null}
                     <Trash2Icon
                       className="size-4 cursor-pointer text-slate-600"
                       onClick={() => handleRemoveTriggerEvent(idx)}
@@ -331,6 +365,18 @@ export const WhenToSendCard = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
       />
+      {editingActionClass ? (
+        <ActionDetailModal
+          open={isEditActionModalOpen}
+          setOpen={setEditActionModalOpen}
+          actionClass={editingActionClass}
+          actionClasses={actionClasses}
+          isReadOnly={isReadOnly}
+          hideDelete
+          currentSurveyId={localSurvey.id}
+          onActionUpdated={handleActionUpdated}
+        />
+      ) : null}
     </>
   );
 };

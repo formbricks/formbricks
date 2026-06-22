@@ -1498,6 +1498,8 @@
       "create_action": "Create action",
       "css_selector": "CSS Selector",
       "delete_action_text": "Are you sure you want to delete this action? This also removes this action as a trigger from all your surveys.",
+      "edit_shared_action_warning_description": "Changes will update this action for all surveys that use it, including: {{surveys}}",
+      "edit_shared_action_warning_title": "This action is used in other surveys",
       "does_not_contain": "Does not contain",
       "does_not_exactly_match": "Does not exactly match",
       "eg_clicked_download": "E.g. Clicked Download",

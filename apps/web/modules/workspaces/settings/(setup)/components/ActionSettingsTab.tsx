@@ -24,12 +24,16 @@ import {
   deleteActionClassAction,
   updateActionClassAction,
 } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
+import { ActionSharedSurveysWarning } from "./ActionSharedSurveysWarning";
 
 interface ActionSettingsTabProps {
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
+  hideDelete?: boolean;
+  currentSurveyId?: string;
+  onActionUpdated?: (updatedAction: TActionClass) => void;
 }
 
 export const ActionSettingsTab = ({
@@ -37,6 +41,9 @@ export const ActionSettingsTab = ({
   actionClasses,
   setOpen,
   isReadOnly,
+  hideDelete = false,
+  currentSurveyId,
+  onActionUpdated,
 }: ActionSettingsTabProps) => {
   const actionDocsHref = "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions";
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
@@ -95,8 +102,13 @@ export const ActionSettingsTab = ({
         toast.error(getFormattedErrorMessage(result));
         return;
       }
+      if (result?.data) {
+        onActionUpdated?.(result.data);
+      }
       setOpen(false);
-      router.refresh();
+      if (!onActionUpdated) {
+        router.refresh();
+      }
       toast.success(t("workspace.actions.action_updated_successfully"));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
@@ -128,6 +140,13 @@ export const ActionSettingsTab = ({
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
+            {currentSurveyId ? (
+              <ActionSharedSurveysWarning
+                actionClassId={actionClass.id}
+                currentSurveyId={currentSurveyId}
+              />
+            ) : null}
+
             <ActionNameDescriptionFields
               control={control}
               isReadOnly={isReadOnly}
@@ -140,7 +159,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between gap-x-2 border-slate-200 pt-4">
             <div className="flex items-center gap-x-2">
-              {isReadOnly ? null : (
+              {isReadOnly || hideDelete ? null : (
                 <Button
                   type="button"
                   variant="destructive"

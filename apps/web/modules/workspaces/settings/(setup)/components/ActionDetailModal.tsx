@@ -13,6 +13,9 @@ interface ActionDetailModalProps {
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
+  hideDelete?: boolean;
+  currentSurveyId?: string;
+  onActionUpdated?: (updatedAction: TActionClass) => void;
 }
 
 export const ActionDetailModal = ({
@@ -21,6 +24,9 @@ export const ActionDetailModal = ({
   actionClass,
   actionClasses,
   isReadOnly,
+  hideDelete,
+  currentSurveyId,
+  onActionUpdated,
 }: ActionDetailModalProps) => {
   const { t } = useTranslation();
   const tabs = [
@@ -36,6 +42,9 @@ export const ActionDetailModal = ({
           actionClasses={actionClasses}
           setOpen={setOpen}
           isReadOnly={isReadOnly}
+          hideDelete={hideDelete}
+          currentSurveyId={currentSurveyId}
+          onActionUpdated={onActionUpdated}
         />
       ),
     },
