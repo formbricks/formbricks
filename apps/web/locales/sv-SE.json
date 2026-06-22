@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Är du säker på att du vill ta bort det här teamet? Detta tar även bort åtkomsten till alla arbetsytor och undersökningar som är kopplade till teamet.",
         "billing_role_description": "Har endast åtkomst till faktureringsinformation.",
         "bulk_invite": "Massinbjudning",
+        "bulk_invite_scale_only_description": "Att bjuda in medlemmar i bulk via CSV är tillgängligt på Scale-planen. Uppgradera för att bjuda in hela ditt team på en gång.",
+        "bulk_invite_scale_only_title": "Lås upp bulkinbjudan med en högre plan",
         "contributor": "Bidragsgivare",
         "create": "Skapa",
         "create_first_team_message": "Du måste skapa ett team först.",
