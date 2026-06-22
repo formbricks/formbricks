@@ -824,7 +824,7 @@ model Account {
   updatedAt         DateTime @updatedAt @map(name: "updated_at")
   user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId            String
-  type              String
+  type              String?
   provider          String
   providerAccountId String
   access_token      String?  @db.Text
@@ -915,12 +915,12 @@ model PasswordResetToken {
 /// @property memberships - Organizations the user belongs to
 /// @property notificationSettings - User's notification preferences
 model User {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @updatedAt @map(name: "updated_at")
   name          String
-  email         String    @unique
-  emailVerified DateTime? @map(name: "email_verified")
+  email         String   @unique
+  emailVerified Boolean  @default(false) @map(name: "email_verified")
 
   twoFactorSecret           String?
   twoFactorEnabled          Boolean             @default(false)

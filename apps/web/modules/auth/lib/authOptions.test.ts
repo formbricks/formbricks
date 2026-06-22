@@ -392,7 +392,7 @@ describe("authOptions", () => {
 
       const result = await tokenProvider.options.authorize({ token: "verify-token" }, {});
 
-      expect(updateUser).toHaveBeenCalledWith(mockUser.id, { emailVerified: expect.any(Date) });
+      expect(updateUser).toHaveBeenCalledWith(mockUser.id, { emailVerified: true });
       expect(createBrevoCustomer).toHaveBeenCalledWith({ id: mockUser.id, email: mockUser.email });
       expect(result).toEqual(
         expect.objectContaining({

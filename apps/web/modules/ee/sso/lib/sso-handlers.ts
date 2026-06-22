@@ -375,7 +375,7 @@ const provisionNewSsoUser = async ({
             .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
             .trim(),
         email: user.email,
-        emailVerified: new Date(Date.now()),
+        emailVerified: true,
         identityProvider: provider,
         identityProviderAccountId: account.providerAccountId,
         locale: matchedLocale,

@@ -380,7 +380,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!user.emailVerified && !isSsoRecovery) {
-          const updatedUser = await updateUser(user.id, { emailVerified: new Date() });
+          const updatedUser = await updateUser(user.id, { emailVerified: true });
           user = {
             ...updatedUser,
             authFlowPurpose,

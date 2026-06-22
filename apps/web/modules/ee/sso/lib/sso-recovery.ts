@@ -92,7 +92,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     },
     data: {
       backupCodes: null,
-      emailVerified: new Date(),
+      emailVerified: true,
       password: null,
       twoFactorEnabled: false,
       twoFactorSecret: null,

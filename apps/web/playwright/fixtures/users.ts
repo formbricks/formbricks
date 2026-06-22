@@ -78,7 +78,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
           name: uname,
           email: userEmail,
           password: hashedPassword,
-          emailVerified: new Date(),
+          emailVerified: true,
           locale: "en-US",
           memberships: {
             create: {

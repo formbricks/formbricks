@@ -206,7 +206,7 @@ describe("sso-recovery", () => {
       },
       data: {
         backupCodes: null,
-        emailVerified: expect.any(Date),
+        emailVerified: true,
         password: null,
         twoFactorEnabled: false,
         twoFactorSecret: null,
