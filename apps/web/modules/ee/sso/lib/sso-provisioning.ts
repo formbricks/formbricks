@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
-import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
+import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -67,7 +67,9 @@ export const gateSsoProvisioning = async ({
   if (!SKIP_INVITE_FOR_SSO) {
     if (!callbackUrl) return { action: "reject", reason: "missing_callback_url" };
     try {
-      const url = new URL(callbackUrl);
+      // Resolve against WEBAPP_URL so a root-relative callback (e.g. `/auth/signup?token=…`) parses
+      // instead of throwing — a bare `new URL()` would reject it as invite_token_validation_error.
+      const url = new URL(callbackUrl, WEBAPP_URL);
       const inviteToken = url.searchParams.get("token") || "";
       const source = url.searchParams.get("source") || "";
       if (source === "signin" && !inviteToken) {
