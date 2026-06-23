@@ -25,9 +25,8 @@ type DeleteUserConfig = NonNullable<NonNullable<BetterAuthOptions["user"]>["dele
  *
  * The hooks below run for BOTH paths and only get `(user, request)`, so everything is derived from
  * `user.id` / `user.email`. The DeleteAccountModal drives this flow (credential users call
- * `authClient.deleteUser`; SSO users go through the email-link request action). Note the `[...all]`
- * route is not mounted on this client-cutover branch, so the endpoint is reachable only once the
- * coordinated flip lands the server route.
+ * `authClient.deleteUser`; SSO users go through the email-link request action). The `[...all]` route is
+ * mounted, so the deletion endpoints are live.
  */
 
 /**

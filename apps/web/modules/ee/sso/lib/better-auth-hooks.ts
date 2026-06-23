@@ -53,10 +53,10 @@ const deriveNameFromEmail = (email: string): string =>
  *  - `account.create.after` — denormalize `identityProvider` + `identityProviderAccountId` onto
  *    `User` for legacy SSO lookups (`findLegacyExactMatch`), parity with `syncSsoIdentityForUser`.
  *
- * Nothing here runs until the Phase 7 cutover — the `[...all]` route is not mounted (its handler must
- * wrap `auth.handler` in `runWithSsoRequestContext` for the before→after carry), and `emailVerified`
- * stays a `DateTime` column until then. (The per-callback license re-check is `ssoLicenseGateBefore`,
- * below.) The verify-before-link recovery flow is the remaining Phase 5c work.
+ * These hooks are LIVE: the `[...all]` route is mounted (its handler wraps `auth.handler` in
+ * `runWithSsoRequestContext` for the before→after carry) and `emailVerified` is a boolean column. The
+ * per-callback license re-check is `ssoLicenseGateBefore`, below; the verify-before-link recovery flow
+ * is wired via `ssoRecoveryAfter` + the `/sso-recovery/sign-in` plugin.
  */
 export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> = {
   user: {
@@ -161,8 +161,8 @@ export const ssoLicenseGateBefore = createAuthMiddleware(ssoLicenseGateBeforeHan
  * We detect that on the callback, read the SSO identity captured in `mapProfileToUser`, and — if the
  * email maps to an existing user — start recovery (inbox-verification email + redirect to the
  * "check your email" page) instead of the generic error. Parity with handleSsoCallback's
- * email-match → startSsoRecovery branch. Inert until cutover (route unmounted + the handler must wrap
- * `auth.handler` in `runWithSsoRequestContext`).
+ * email-match → startSsoRecovery branch. Live now that the `[...all]` route is mounted (its handler
+ * wraps `auth.handler` in `runWithSsoRequestContext`).
  */
 /** The endpoint context Better Auth passes to a `hooks.before`/`hooks.after` middleware handler. */
 export type AuthHookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];

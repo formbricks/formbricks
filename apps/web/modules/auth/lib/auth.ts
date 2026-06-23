@@ -39,7 +39,7 @@ import { redisSecondaryStorage } from "./secondary-storage";
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
 /** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
-const getUserLocale = async (userId: string): Promise<TUserLocale> => {
+export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
   return (dbUser?.locale ?? "en-US") as TUserLocale;
 };
@@ -58,13 +58,10 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  * `session.storeSessionInDatabase` is set (the forward-auth proxies need DB sessions); verification
  * stays Redis-only (ephemeral; no Verification Prisma model needed).
  *
- * Still pending on the flip branch:
- *  - `emailVerified` Date→boolean production migration (required for requireEmailVerification)
- *  - forward-auth proxy → BA-only validation (proxy-session.ts / session-cookie.ts)
- *  - SSO verify-before-link recovery completion + the shared "token" email-signin (email repoint)
- *  - 2FA-challenge failure audit (identity is in the two-factor cookie, not the request body) — the
- *    credential sign-in + sole-owner-deletion failure audits and the signedIn-success/Sentry/logger
- *    wiring are already in better-auth-observability.ts
+ * Known deferral (not blocking): the 2FA-challenge failure audit (`/two-factor/verify-*`) — the user
+ * identity lives in the two-factor cookie, not the request body, so it is tracked separately. The
+ * credential sign-in + sole-owner-deletion failure audits and the signedIn-success / lastLoginAt /
+ * analytics / Sentry / logger wiring are all live in better-auth-observability.ts.
  */
 export const auth = betterAuth({
   appName: "Formbricks",
@@ -283,8 +280,7 @@ export const auth = betterAuth({
     // providers are configured. The account-linking/provisioning hooks are a separate reviewed pass.
     genericOAuth({ config: ssoGenericOAuthConfig }),
     // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
-    // path (recovery-scoped, not a general magic-link). Inert until cutover (handler mount + email
-    // repoint). See better-auth-recovery-signin.ts.
+    // path (recovery-scoped, not a general magic-link). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),

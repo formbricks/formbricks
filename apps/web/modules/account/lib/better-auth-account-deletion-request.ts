@@ -1,10 +1,8 @@
 import "server-only";
 import crypto from "node:crypto";
-import { prisma } from "@formbricks/database";
 import { AuthenticationError } from "@formbricks/types/errors";
-import type { TUserLocale } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
-import { auth } from "@/modules/auth/lib/auth";
+import { auth, getUserLocale } from "@/modules/auth/lib/auth";
 import { getSession } from "@/modules/auth/lib/session";
 import { sendDeleteAccountConfirmationEmail } from "@/modules/email";
 
@@ -18,8 +16,8 @@ import { sendDeleteAccountConfirmationEmail } from "@/modules/email";
  * value === the session user's id) — and emails the callback link.
  *
  * The global `sendDeleteAccountVerification` is intentionally NOT configured in auth.ts (it would
- * email credential deletions too), so the verification value is minted manually here. Server-only and
- * inert until the Phase 7 cutover wires the DeleteAccountModal to call it.
+ * email credential deletions too), so the verification value is minted manually here. Server-only; the
+ * DeleteAccountModal calls this for SSO users.
  */
 
 // Matches the manual mint in better-auth-account-deletion.integration.test.ts: a 1-hour window.
@@ -50,8 +48,7 @@ export const requestSsoAccountDeletionEmail = async (): Promise<void> => {
 
   // Better Auth's callback user omits the locale, and the session may not carry it either, so resolve
   // it from the database (defaulting to en-US) to localize the transactional email.
-  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
-  const locale = (dbUser?.locale ?? "en-US") as TUserLocale;
+  const locale = await getUserLocale(userId);
 
   await sendDeleteAccountConfirmationEmail({
     email,

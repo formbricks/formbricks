@@ -17,9 +17,8 @@ import { getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/sso-recov
  * links the SSO account — already BA-compatible).
  *
  * Deliberately recovery-SCOPED — not BA's general `magicLink` plugin, which would introduce a new
- * passwordless auth method (out of scope for the like-for-like migration). Additive: registered in the
- * instance but only reachable once the `[...all]` handler mounts AND the recovery email is repointed
- * here from `/verify` (both at cutover). Harness-testable today via `auth.api.ssoRecoverySignIn`.
+ * passwordless auth method (out of scope for the like-for-like migration). Live: the `[...all]` handler
+ * is mounted and the recovery email points here. Also harness-testable via `auth.api.ssoRecoverySignIn`.
  *
  * Failures (invalid/expired token, inactive user) are logged and redirected to the recovery failure
  * page; the security-critical outcome — the account link — is audited by `completeSsoRecovery`, and
