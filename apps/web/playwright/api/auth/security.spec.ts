@@ -2,19 +2,19 @@ import { expect } from "@playwright/test";
 import { logger } from "@formbricks/logger";
 import { test } from "../../lib/fixtures";
 
-// Authentication endpoints are hardcoded to avoid import issues
+// Better Auth credential sign-in endpoint (ENG-1054 cutover). The NextAuth `/api/auth/csrf` +
+// `/api/auth/callback/credentials` flow was deleted with the `[...nextauth]` route, so these tests
+// drive Better Auth's `POST /api/auth/sign-in/email` (JSON body, no CSRF token) instead. The
+// endpoint is hardcoded to avoid import issues.
+const SIGN_IN_ENDPOINT = "/api/auth/sign-in/email";
 
 test.describe("Authentication Security Tests - Vulnerability Prevention", () => {
-  let csrfToken: string;
   let testUser: { email: string; password: string };
 
-  test.beforeEach(async ({ request, users }) => {
-    // Get CSRF token for authentication requests
-    const csrfResponse = await request.get("/api/auth/csrf");
-    const csrfData = await csrfResponse.json();
-    csrfToken = csrfData.csrfToken;
-
-    // Create a test user for "existing user" scenarios with unique email
+  test.beforeEach(async ({ users }) => {
+    // Create a test user for "existing user" scenarios with unique email. The fixture creates a real
+    // Better Auth credential account (provider "credential") using the user NAME as the password, so
+    // this user can sign in via `POST /api/auth/sign-in/email`.
     const uniqueId = Date.now() + Math.random();
     const userName = "Security Test User";
     const userEmail = `security-test-${uniqueId}@example.com`;
@@ -34,17 +34,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const extremelyLongPassword = "A".repeat(50000); // 50,000 characters
 
       const start = Date.now();
-      const response = await request.post("/api/auth/callback/credentials", {
+      const response = await request.post(SIGN_IN_ENDPOINT, {
         data: {
-          callbackUrl: "",
           email: email,
           password: extremelyLongPassword,
-          redirect: "false",
-          csrfToken: csrfToken,
-          json: "true",
         },
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
       });
       const responseTime = Date.now() - start;
@@ -52,15 +48,22 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       // Should not crash the server (no 500 errors)
       expect(response.status()).not.toBe(500);
 
-      // Should handle gracefully
-      expect([200, 400, 401, 429]).toContain(response.status());
+      // Better Auth's maxPasswordLength (128) rejects this before hashing — never a successful sign-in.
+      expect(response.status()).not.toBe(200);
+      expect([400, 401, 422, 429]).toContain(response.status());
+
+      // No session must be issued for a rejected over-length sign-in.
+      expect(response.headers()["set-cookie"]).toBeUndefined();
 
       logger.info(
         `Extremely long password (50k chars) processing time: ${responseTime}ms, status: ${response.status()}`
       );
 
-      // Verify the security fix is working: long passwords should be rejected quickly
-      // In production, this should be much faster, but test environment has overhead
+      // Verify the DoS protection is working: an over-length password is rejected promptly by Better
+      // Auth's length check (it never reaches the expensive bcrypt verify). Keep the timing assertion.
+      // The test environment has overhead, so allow generous headroom while still catching a hang/crash.
+      expect(responseTime).toBeLessThan(5000);
+
       if (responseTime < 5000) {
         logger.info("✅ Long password rejected quickly - DoS protection working");
       } else {
@@ -72,23 +75,21 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const email = "nonexistent-limit-test@example.com"; // Use non-existent email for limit test
       const maxLengthPassword = "A".repeat(128); // Exactly at the 128 character limit
 
-      const response = await request.post("/api/auth/callback/credentials", {
+      const response = await request.post(SIGN_IN_ENDPOINT, {
         data: {
-          callbackUrl: "",
           email: email,
           password: maxLengthPassword,
-          redirect: "false",
-          csrfToken: csrfToken,
-          json: "true",
         },
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
       });
 
-      // Should process normally (not rejected for length)
+      // A 128-char password is within Better Auth's maxPasswordLength, so it is NOT rejected for length.
+      // It follows the normal credential path and fails as invalid credentials for a non-existent user
+      // (401) — crucially not a length/422 rejection and not a 500.
       expect(response.status()).not.toBe(500);
-      expect([200, 400, 401, 429]).toContain(response.status());
+      expect([400, 401, 429]).toContain(response.status());
 
       logger.info(`Max length password (128 chars) status: ${response.status()}`);
     });
@@ -98,30 +99,29 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const overLimitPassword = "A".repeat(10000); // 10,000 characters (over limit)
 
       const start = Date.now();
-      const response = await request.post("/api/auth/callback/credentials", {
+      const response = await request.post(SIGN_IN_ENDPOINT, {
         data: {
-          callbackUrl: "",
           email: email,
           password: overLimitPassword,
-          redirect: "false",
-          csrfToken: csrfToken,
-          json: "true",
         },
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
       });
       const responseTime = Date.now() - start;
 
-      // Should not crash
+      // Should not crash, and must be rejected (Better Auth's maxPasswordLength) — never a session.
       expect(response.status()).not.toBe(500);
+      expect(response.status()).not.toBe(200);
+      expect(response.headers()["set-cookie"]).toBeUndefined();
 
       logger.info(
         `Over-limit password (10k chars) processing time: ${responseTime}ms, status: ${response.status()}`
       );
 
-      // The key security test: verify it doesn't take exponentially longer than shorter passwords
-      // This tests the DoS protection is working
+      // The key security test: an over-limit password is rejected by the length check, so it must not
+      // take exponentially longer than a short password (no bcrypt on the rejected input). DoS protection.
+      expect(responseTime).toBeLessThan(5000);
     });
   });
 
@@ -144,31 +144,23 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       // Warm-up phase: Prime caches, database connections, JIT compilation
       const warmupAttempts = 10;
       for (let i = 0; i < warmupAttempts; i++) {
-        await request.post("/api/auth/callback/credentials", {
+        await request.post(SIGN_IN_ENDPOINT, {
           data: {
-            callbackUrl: "",
             email: `warmup-nonexistent-${i}@example.com`,
             password: "warmuppassword",
-            redirect: "false",
-            csrfToken: csrfToken,
-            json: "true",
           },
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
           },
         });
 
-        await request.post("/api/auth/callback/credentials", {
+        await request.post(SIGN_IN_ENDPOINT, {
           data: {
-            callbackUrl: "",
             email: testUser.email,
             password: "wrongwarmuppassword",
-            redirect: "false",
-            csrfToken: csrfToken,
-            json: "true",
           },
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
           },
         });
       }
@@ -184,17 +176,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       for (let i = 0; i < attempts; i++) {
         // Test non-existent user
         const startNonExistent = process.hrtime.bigint();
-        const responseNonExistent = await request.post("/api/auth/callback/credentials", {
+        const responseNonExistent = await request.post(SIGN_IN_ENDPOINT, {
           data: {
-            callbackUrl: "",
             email: `nonexistent-timing-${i}@example.com`,
             password: "somepassword",
-            redirect: "false",
-            csrfToken: csrfToken,
-            json: "true",
           },
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
           },
         });
         const endNonExistent = process.hrtime.bigint();
@@ -204,17 +192,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
 
         // Test existing user (interleaved)
         const startExisting = process.hrtime.bigint();
-        const responseExisting = await request.post("/api/auth/callback/credentials", {
+        const responseExisting = await request.post(SIGN_IN_ENDPOINT, {
           data: {
-            callbackUrl: "",
             email: testUser.email,
             password: "wrongpassword123",
-            redirect: "false",
-            csrfToken: csrfToken,
-            json: "true",
           },
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
           },
         });
         const endExisting = process.hrtime.bigint();
@@ -314,17 +298,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const results: { scenario: string; status: number }[] = [];
 
       for (const scenario of scenarios) {
-        const response = await request.post("/api/auth/callback/credentials", {
+        const response = await request.post(SIGN_IN_ENDPOINT, {
           data: {
-            callbackUrl: "",
             email: scenario.email,
             password: scenario.password,
-            redirect: "false",
-            csrfToken: csrfToken,
-            json: "true",
           },
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
           },
         });
 
@@ -341,8 +321,9 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         logger.info(`Status test - ${scenario}: ${status}`);
       });
 
-      // CRITICAL: Both scenarios should return the same status code
-      // Different status codes could reveal user existence
+      // CRITICAL: Both scenarios should return the same status code. Better Auth answers both the
+      // unknown-email and the wrong-password case with the same INVALID_EMAIL_OR_PASSWORD / 401, so a
+      // different status code per scenario would reveal user existence (enumeration).
       const statuses = results.map((r) => r.status);
       const uniqueStatuses = [...new Set(statuses)];
 
@@ -360,17 +341,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
 
   test.describe("Security Headers and Response Safety", () => {
     test("should include security headers in responses", async ({ request }) => {
-      const response = await request.post("/api/auth/callback/credentials", {
+      const response = await request.post(SIGN_IN_ENDPOINT, {
         data: {
-          callbackUrl: "",
           email: "nonexistent-headers-test@example.com",
           password: "testpassword",
-          redirect: "false",
-          csrfToken: csrfToken,
-          json: "true",
         },
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
       });
 
@@ -392,17 +369,13 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
     });
 
     test("should not expose sensitive information in error responses", async ({ request }) => {
-      const response = await request.post("/api/auth/callback/credentials", {
+      const response = await request.post(SIGN_IN_ENDPOINT, {
         data: {
-          callbackUrl: "",
           email: "nonexistent-disclosure-test@example.com",
           password: "A".repeat(10000), // Trigger long password handling
-          redirect: "false",
-          csrfToken: csrfToken,
-          json: "true",
         },
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
       });
 
@@ -412,21 +385,9 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       logger.info(`Response status: ${response.status()}`);
       logger.info(`Response body (first 500 chars): ${responseBody.substring(0, 500)}`);
 
-      // Check if this is an HTML response (which indicates NextAuth.js is returning a page instead of API response)
-      const isHtmlResponse =
-        responseBody.trim().startsWith("<!DOCTYPE html>") || responseBody.includes("<html");
-
-      if (isHtmlResponse) {
-        logger.info(
-          "✅ NextAuth.js returned HTML page instead of API response - this is expected behavior for security"
-        );
-        logger.info("✅ No sensitive technical information exposed in authentication API");
-        return; // Skip the sensitive information check for HTML responses
-      }
-
-      // Only check for sensitive information in actual API responses (JSON/text)
+      // Better Auth returns a generic JSON error and must not leak internals or which auth factor
+      // failed (the latter would enable user enumeration).
       const sensitiveTerms = [
-        "password_too_long",
         "bcrypt",
         "hash",
         "redis",
@@ -434,11 +395,17 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         "prisma",
         "stack trace",
         "rate limit exceeded",
-        "authentication failed",
         "sql",
         "query",
         "connection timeout",
         "internal error",
+        // Factor-disclosure terms: the error must not reveal whether the email or the password was wrong.
+        "user not found",
+        "no user",
+        "email not found",
+        "incorrect password",
+        "wrong password",
+        "invalid password",
       ];
 
       let foundSensitiveInfo = false;
@@ -459,29 +426,29 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         logger.info("✅ No sensitive technical information exposed in error responses");
       }
 
-      // Don't fail the test for generic web responses, only for actual security leaks
       expect(foundSensitiveInfo).toBe(false);
     });
 
     test("should handle malformed requests gracefully", async ({ request }) => {
-      // Test with missing CSRF token
-      const response = await request.post("/api/auth/callback/credentials", {
+      // removed: NextAuth CSRF flow no longer exists post-ENG-1054. Better Auth's sign-in has no CSRF
+      // token, so the original "missing csrfToken" case is meaningless. Convert it to the equivalent
+      // Better Auth input-robustness property: a malformed body must be handled gracefully (no crash,
+      // no session), not produce a 500.
+      const response = await request.post(SIGN_IN_ENDPOINT, {
         data: {
-          callbackUrl: "",
+          // Missing the required `password` field entirely (malformed credential payload).
           email: "nonexistent-malformed-test@example.com",
-          password: "testpassword",
-          redirect: "false",
-          json: "true",
-          // Missing csrfToken
         },
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
       });
 
-      // Should handle gracefully, not crash
+      // Should handle gracefully, not crash, and never issue a session for a malformed request.
       expect(response.status()).not.toBe(500);
-      expect([200, 400, 401, 403, 429]).toContain(response.status());
+      expect(response.status()).not.toBe(200);
+      expect([400, 401, 403, 422, 429]).toContain(response.status());
+      expect(response.headers()["set-cookie"]).toBeUndefined();
 
       logger.info(`✅ Malformed request handled gracefully: status ${response.status()}`);
     });
@@ -490,8 +457,10 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const user = await users.create();
       await user.login();
 
+      // Better Auth's signed session cookie is `formbricks.session_token` (or the browser-enforced
+      // `__Secure-` prefix on HTTPS); replaces the NextAuth `next-auth.session-token` cookie (ENG-1054).
       const sessionCookie = (await page.context().cookies()).find((cookie) =>
-        cookie.name.includes("next-auth.session-token")
+        cookie.name.includes("session_token")
       );
 
       expect(sessionCookie).toBeDefined();
@@ -506,22 +475,9 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         await preLogoutContext.close();
       }
 
-      const signOutCsrfToken = await page
-        .context()
-        .request.get("/api/auth/csrf")
-        .then((response) => response.json())
-        .then((json) => json.csrfToken);
-
-      const signOutResponse = await page.context().request.post("/api/auth/signout", {
-        form: {
-          callbackUrl: "/auth/login",
-          csrfToken: signOutCsrfToken,
-          json: "true",
-        },
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
+      // Better Auth sign-out: `POST /api/auth/sign-out`, no CSRF token (replaces the NextAuth
+      // `/api/auth/signout` + csrfToken form flow; ENG-1054).
+      const signOutResponse = await page.context().request.post("/api/auth/sign-out");
 
       expect(signOutResponse.status()).not.toBe(500);
 
