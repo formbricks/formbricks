@@ -51,13 +51,17 @@ AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
 AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
 ```
 
-Then start the stack with the profile:
+Then start the stack after updating `.env`:
 
 ```bash
-COMPOSE_PROFILES=qwen docker compose up -d
-docker compose --profile qwen ps
+docker compose up -d
+docker compose ps
 docker compose logs vllm formbricks
+curl -fsS "http://127.0.0.1:${QWEN_VLLM_PORT:-8000}/health"
 ```
+
+If you set `QWEN_VLLM_PORT` only in `.env`, replace the port in the health check with that value or export it
+in your shell first.
 
 The vLLM service requires a GPU-capable Docker host with the NVIDIA Container Toolkit installed. It stores downloaded model files in the `qwen-model-cache` Docker volume and binds the OpenAI-compatible endpoint to `127.0.0.1:8000` by default for local checks.
 
@@ -120,25 +124,27 @@ TAXONOMY_VERTEX_LOCATION=<vertex-location>
 TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON=<service-account-json>
 ```
 
-Then start the stack with the selected profile set:
+Then start the stack after updating `.env`:
 
 ```bash
-COMPOSE_PROFILES=qwen,taxonomy docker compose up -d
-docker compose --profile qwen --profile taxonomy ps
-docker compose logs vllm taxonomy hub
+docker compose up -d
+docker compose ps
+docker compose logs taxonomy hub
 ```
+
+If you enabled the bundled Qwen profile, also check `docker compose logs vllm`.
 
 Run the authenticated preflight after startup to verify Hub internal auth and LLM reachability:
 
 ```bash
-docker compose --profile taxonomy exec taxonomy python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
+docker compose --profile taxonomy exec -T taxonomy python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
 ```
 
 The taxonomy service remains internal to the compose network by default. For production workloads, `TAXONOMY_MAX_RECORDS` defaults to `50000`. Override it only as an advanced safety limit after sizing CPU, memory, and LLM capacity.
 
-For local unreleased taxonomy testing, build the taxonomy image as `ghcr.io/formbricks/taxonomy:local`, set `TAXONOMY_IMAGE_REF=:local`, and start the stack with `COMPOSE_PROFILES=taxonomy`.
+For local unreleased taxonomy testing, build the taxonomy image as `ghcr.io/formbricks/taxonomy:local`, set `TAXONOMY_IMAGE_REF=:local` and `COMPOSE_PROFILES=taxonomy` in `.env`, and start the stack.
 
-The one-click installer does not prompt for taxonomy settings. One-click users can enable the beta later by editing `./formbricks/.env`, adding the variables above, and restarting with `COMPOSE_PROFILES=taxonomy docker compose up -d`.
+The one-click installer does not prompt for taxonomy settings. One-click users can enable the beta later by editing `./formbricks/.env`, adding the variables above, and restarting with `docker compose up -d`.
 
 In development, Hub is exposed locally on port **8080** and Cube on **4000** (with the Cube playground on **4001**). In production Docker Compose, both stay internal to the compose network at `http://hub:8080` and `http://cube:4000`.
 
