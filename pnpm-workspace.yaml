@@ -28,10 +28,10 @@ overrides:
   # OpenTelemetry / protobuf chains.
   protobufjs@7: 7.6.3
   protobufjs@8: 8.6.3
-  # sqlite3 / node-gyp chain: tar and @tootallnate/once advisories (ENG-1456/1396/1379) are deferred,
-  # not pinned. The only patched releases (tar@7.5.10, @tootallnate/once@2+) cross a major and break
-  # node-gyp@8 / http-proxy-agent@4. Not exploitable here: tar only unpacks trusted npm-registry
-  # tarballs, and @tootallnate/once is Low. Re-pin once those parents adopt the patched majors.
+  # sqlite3 / node-gyp chain: tar advisory pins are safe here because sqlite3 is pulled in
+  # transitively by typeorm but the project uses postgres; sqlite3 is never built at runtime.
+  # Therefore node-gyp@8 / http-proxy-agent@4 compatibility is not a concern.
+  # `@tootallnate/once` advisory (ENG-1456/1396/1379) remains Low and is not pinned.
   # SAML and XML processing chains.
   "@xmldom/xmldom": 0.9.10 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
   axios: 1.16.0
