@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Aktif",
       "add_step": "Add step",
+      "archive_confirm_body": "Arşivleme bu iş akışını devre dışı bırakır ve çalışmasını durdurur. Daha sonra tekrar arşivden çıkarabilirsin.",
+      "archive_confirm_title": "İş akışı arşivlensin mi?",
       "archive_failed": "İş akışı arşivlenemedi.",
       "archive_success": "İş akışı arşivlendi.",
       "auto_layout": "Otomatik düzen",

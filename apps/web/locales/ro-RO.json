@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Activ",
       "add_step": "Add step",
+      "archive_confirm_body": "Arhivarea dezactivează acest flux de lucru și îl oprește din rulare. Îl poți dezarhiva mai târziu.",
+      "archive_confirm_title": "Arhivezi fluxul de lucru?",
       "archive_failed": "Workflow-ul nu a putut fi arhivat.",
       "archive_success": "Workflow arhivat.",
       "auto_layout": "Aranjare automată",

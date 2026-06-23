@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Aktív",
       "add_step": "Add step",
+      "archive_confirm_body": "Az archiválás letiltja ezt a munkafolyamatot és leállítja annak futtatását. Később bármikor visszaállíthatja az archívumból.",
+      "archive_confirm_title": "Archiválja a munkafolyamatot?",
       "archive_failed": "A munkafolyamat archiválása sikertelen volt.",
       "archive_success": "Munkafolyamat archiválva.",
       "auto_layout": "Automatikus elrendezés",

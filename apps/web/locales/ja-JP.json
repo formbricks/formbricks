@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "有効",
       "add_step": "Add step",
+      "archive_confirm_body": "アーカイブすると、このワークフローが無効化され、実行されなくなります。後で再度アーカイブ解除できます。",
+      "archive_confirm_title": "ワークフローをアーカイブしますか？",
       "archive_failed": "ワークフローをアーカイブできませんでした。",
       "archive_success": "ワークフローをアーカイブしました。",
       "auto_layout": "自動レイアウト",

@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Aktiv",
       "add_step": "Add step",
+      "archive_confirm_body": "Durch das Archivieren wird dieser Workflow deaktiviert und die Ausführung gestoppt. Du kannst ihn später wieder aus dem Archiv holen.",
+      "archive_confirm_title": "Workflow archivieren?",
       "archive_failed": "Workflow konnte nicht archiviert werden.",
       "archive_success": "Workflow archiviert.",
       "auto_layout": "Auto-Layout",

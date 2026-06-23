@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Actief",
       "add_step": "Add step",
+      "archive_confirm_body": "Archiveren schakelt deze workflow uit en stopt de uitvoering ervan. Je kunt het later weer uit het archief halen.",
+      "archive_confirm_title": "Workflow archiveren?",
       "archive_failed": "Kon de workflow niet archiveren.",
       "archive_success": "Workflow gearchiveerd.",
       "auto_layout": "Automatische indeling",

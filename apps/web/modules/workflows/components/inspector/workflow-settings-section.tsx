@@ -2,6 +2,7 @@
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
@@ -41,11 +42,14 @@ export const SettingsSection = ({ canEditMetadata }: Readonly<SettingsSectionPro
           <Label htmlFor="workflow-settings-description">
             {t("workspace.workflows.workflow_description_label")}
           </Label>
-          <Input
+          <textarea
             id="workflow-settings-description"
             value={workflowDescription}
             disabled={!canEditMetadata}
-            className="bg-white"
+            rows={3}
+            className={cn(
+              "flex w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
+            )}
             placeholder={t("workspace.workflows.workflow_description_placeholder")}
             onChange={(event) => setWorkflowDescription(event.target.value)}
           />

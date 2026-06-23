@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Activo",
       "add_step": "Add step",
+      "archive_confirm_body": "Archivar desactiva este flujo de trabajo y evita que se ejecute. Puedes desarchivarlo más adelante.",
+      "archive_confirm_title": "¿Archivar flujo de trabajo?",
       "archive_failed": "No se pudo archivar el flujo de trabajo.",
       "archive_success": "Flujo de trabajo archivado.",
       "auto_layout": "Diseño automático",

@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Aktiv",
       "add_step": "Add step",
+      "archive_confirm_body": "Arkivering inaktiverar det här arbetsflödet och stoppar det från att köras. Du kan återställa det senare.",
+      "archive_confirm_title": "Arkivera arbetsflöde?",
       "archive_failed": "Kunde inte arkivera arbetsflödet.",
       "archive_success": "Arbetsflödet arkiverat.",
       "auto_layout": "Automatisk layout",

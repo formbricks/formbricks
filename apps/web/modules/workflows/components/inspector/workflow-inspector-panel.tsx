@@ -1,6 +1,7 @@
 "use client";
 
 import { useAtomValue } from "jotai";
+import { cn } from "@/lib/cn";
 import { WorkflowNodeConfigPanel } from "@/modules/workflows/components/inspector/workflow-node-config-panel";
 import { SettingsSection } from "@/modules/workflows/components/inspector/workflow-settings-section";
 import {
@@ -24,15 +25,20 @@ export const WorkflowInspectorPanel = ({
   const isCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
 
-  if (isCollapsed) return null;
-
-  if (isNodeConfigOpen) {
-    return <WorkflowNodeConfigPanel isEditable={isEditingNode} onSave={onSaveNode} isSaving={isSavingNode} />;
-  }
-
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col gap-3 self-start">
-      <SettingsSection canEditMetadata={canEditMetadata} />
-    </aside>
+    <div
+      aria-hidden={isCollapsed}
+      className={cn(
+        "shrink-0 self-stretch overflow-hidden transition-[width,opacity] duration-300 ease-in-out",
+        isCollapsed ? "w-0 opacity-0" : "w-[320px] opacity-100"
+      )}>
+      <div className="flex w-[320px] flex-col gap-3 self-start">
+        {isNodeConfigOpen ? (
+          <WorkflowNodeConfigPanel isEditable={isEditingNode} onSave={onSaveNode} isSaving={isSavingNode} />
+        ) : (
+          <SettingsSection canEditMetadata={canEditMetadata} />
+        )}
+      </div>
+    </div>
   );
 };

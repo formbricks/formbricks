@@ -1,11 +1,12 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { ArchiveIcon, ArchiveRestoreIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, Loader2Icon, PlayIcon, PowerOffIcon, SaveIcon } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
-import { Switch } from "@/modules/ui/components/switch";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { isCanvasLockedAtom, workflowAtom } from "@/modules/workflows/state/editor";
 
@@ -20,6 +21,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const workflow = useAtomValue(workflowAtom);
   const setCanvasLocked = useSetAtom(isCanvasLockedAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
   // Header Save is the "end this editing session" action — persist, then re-lock the canvas so
   // the user explicitly opts back into edit mode. Per-node modal Save just persists.
@@ -28,12 +30,17 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
     setCanvasLocked(true);
   };
 
-  const handleActiveChange = (checked: boolean) => {
-    if (checked) {
-      builder.enable();
-    } else {
+  const handleActiveChange = () => {
+    if (isActive) {
       builder.disable();
+    } else {
+      builder.enable();
     }
+  };
+
+  const handleArchiveConfirm = async () => {
+    await builder.archive();
+    setIsArchiveModalOpen(false);
   };
 
   // Only the edit tab gets the lifecycle controls — the runs tab is read-only.
@@ -45,19 +52,6 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
 
   return (
     <div className="flex items-center gap-3">
-      {!isArchived && (
-        <div className="flex items-center gap-2">
-          <Switch
-            id="workflow-header-active"
-            checked={isActive}
-            disabled={isReadOnly || builder.isTransitioning || builder.isSaving}
-            onCheckedChange={handleActiveChange}
-          />
-          <label htmlFor="workflow-header-active" className="text-sm font-medium text-slate-700">
-            {isActive ? t("workspace.workflows.active") : t("workspace.workflows.inactive")}
-          </label>
-        </div>
-      )}
       {isArchived ? (
         <Button
           type="button"
@@ -71,26 +65,61 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         </Button>
       ) : (
         <>
+          {/* Archive first — opens a confirmation modal before the destructive transition. The
+              spinner lives on the modal's confirm button, so this one only disables (no spinner)
+              while another lifecycle action runs. */}
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            onClick={builder.archive}
-            loading={builder.isTransitioning}
+            onClick={() => setIsArchiveModalOpen(true)}
             disabled={isReadOnly || builder.isTransitioning || builder.isSaving}>
             <ArchiveIcon />
             {t("common.archive")}
           </Button>
+          {/* Save sits second as a secondary action — where users instinctively look for it. The
+              leading Save icon turns into the spinner while saving (single icon slot, never both),
+              so the label never shifts. */}
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={handleSave}
+            disabled={!builder.canEditMetadata || builder.isTransitioning || builder.isSaving}
+            className="min-w-[6rem] justify-center">
+            {builder.isSaving ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
+            {t("common.save")}
+          </Button>
           <Button
             type="button"
             size="sm"
-            onClick={handleSave}
-            loading={builder.isSaving}
-            disabled={!builder.canEditMetadata || builder.isTransitioning}>
-            {t("common.save")}
+            onClick={handleActiveChange}
+            disabled={isReadOnly || builder.isTransitioning || builder.isSaving}
+            className="min-w-[6rem] justify-center">
+            {builder.isTransitioning ? (
+              <Loader2Icon className="animate-spin" />
+            ) : isActive ? (
+              <PowerOffIcon />
+            ) : (
+              <PlayIcon />
+            )}
+            {isActive ? t("common.disable") : t("common.enable")}
           </Button>
         </>
       )}
+
+      <ConfirmationModal
+        open={isArchiveModalOpen}
+        setOpen={setIsArchiveModalOpen}
+        title={t("workspace.workflows.archive_confirm_title")}
+        body={t("workspace.workflows.archive_confirm_body")}
+        buttonText={t("common.archive")}
+        buttonVariant="destructive"
+        buttonLoading={builder.isTransitioning}
+        isButtonDisabled={isReadOnly || builder.isTransitioning}
+        onConfirm={handleArchiveConfirm}
+        Icon={ArchiveIcon}
+      />
     </div>
   );
 };

@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "活跃",
       "add_step": "Add step",
+      "archive_confirm_body": "归档后将禁用此工作流程并停止运行。你可以稍后再取消归档。",
+      "archive_confirm_title": "归档工作流程?",
       "archive_failed": "无法归档该工作流。",
       "archive_success": "工作流已归档。",
       "auto_layout": "自动布局",

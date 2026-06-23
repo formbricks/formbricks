@@ -3882,6 +3882,8 @@
     "workflows": {
       "active": "Actif",
       "add_step": "Add step",
+      "archive_confirm_body": "L'archivage désactive ce workflow et l'empêche de s'exécuter. Tu pourras le restaurer plus tard.",
+      "archive_confirm_title": "Archiver le workflow ?",
       "archive_failed": "Impossible d'archiver le workflow.",
       "archive_success": "Workflow archivé.",
       "auto_layout": "Disposition automatique",
