@@ -65,7 +65,7 @@
       "new_to_formbricks": "Neu bei Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
-      "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
+      "please_verify_your_email_to_continue": "Bitte bestätige deine E-Mail-Adresse. Wir haben dir einen Bestätigungslink gesendet.",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
     "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
@@ -2599,7 +2599,7 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Folgen der Kontolöschung",
-        "account_deletion_email_sent": "Check your email to confirm account deletion. We sent a link to {email} — your account will be deleted once you click it.",
+        "account_deletion_email_sent": "Überprüfe deine E-Mails, um die Kontolöschung zu bestätigen. Wir haben einen Link an {email} gesendet – dein Konto wird gelöscht, sobald du darauf klickst.",
         "backup_code": "Backup-Code",
         "confirm_delete_account": "Lösche dein Konto mit allen persönlichen Informationen und Daten",
         "confirm_delete_my_account": "Mein Konto löschen",
