@@ -11,11 +11,7 @@ import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./lan
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3CreateSurveyBody } from "./schemas";
-import {
-  V3_CONTACTS_NOT_ENABLED_MESSAGE,
-  resolveV3ContactsEntitlement,
-  setV3SurveySegmentFilters,
-} from "./targeting";
+import { V3_CONTACTS_NOT_ENABLED_MESSAGE, resolveV3ContactsEntitlement } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
 
@@ -132,29 +128,18 @@ async function buildV3AppSurveyCreateFields(
 }
 
 /**
- * Finalize a freshly created app survey: re-read it so the response includes the auto-created segment
- * and numeric display fields, then persist any contact targeting filters onto that segment. Empty or
- * absent targeting is a no-op (the empty segment means "show everyone").
+ * Finalize a freshly created app survey by re-reading it. `createSurvey` returns the survey BEFORE
+ * its private segment is connected (the segment is linked in a separate, un-selected update) and
+ * without the Decimal→number transform for displayPercentage, so the re-read makes the response carry
+ * the connected segment — including any targeting filters, which `createSurvey` writes atomically at
+ * creation time — and the numeric display fields.
  */
 async function finalizeV3AppSurveyCreate(survey: TSurvey, input: TV3CreateSurveyBody): Promise<TSurvey> {
   if (input.type !== "app") {
     return survey;
   }
 
-  // `createSurvey` returns the survey BEFORE its auto-created private segment is connected (the
-  // segment is linked in a separate, un-selected update) and without the Decimal→number transform
-  // for displayPercentage. Re-read so the response carries the segment id + numeric display fields.
-  const persistedSurvey = (await getSurvey(survey.id)) ?? survey;
-
-  const filters = input.targeting?.filters;
-  if (!filters || filters.length === 0 || !persistedSurvey.segment?.id) {
-    return persistedSurvey;
-  }
-
-  await setV3SurveySegmentFilters(persistedSurvey.segment.id, filters);
-  // getSurvey is request-memoized (React cache), so a second read would return the pre-write value;
-  // splice the just-written filters onto the already-read survey instead of re-reading.
-  return { ...persistedSurvey, segment: { ...persistedSurvey.segment, filters } };
+  return (await getSurvey(survey.id)) ?? survey;
 }
 
 export async function executeV3SurveyCreate(params: {
@@ -191,7 +176,10 @@ export async function executeV3SurveyCreate(params: {
     ...surveyCreateInputOverrides,
   };
 
-  const survey = await createSurvey(input.workspaceId, surveyCreateInput);
+  // App targeting filters are created atomically with the survey's private segment inside
+  // `createSurvey` (a single transaction), so a failed targeting write can't leave a partial survey.
+  const privateSegmentFilters = input.type === "app" ? (input.targeting?.filters ?? []) : [];
+  const survey = await createSurvey(input.workspaceId, surveyCreateInput, privateSegmentFilters);
 
   return await finalizeV3AppSurveyCreate(survey, input);
 }

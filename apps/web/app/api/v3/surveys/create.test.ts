@@ -8,7 +8,7 @@ import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, createV3Survey } from "./create";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
-import { resolveV3ContactsEntitlement, setV3SurveySegmentFilters } from "./targeting";
+import { resolveV3ContactsEntitlement } from "./targeting";
 
 vi.mock("server-only", () => ({}));
 
@@ -30,7 +30,6 @@ vi.mock("@/lib/actionClass/service", () => ({
 }));
 
 vi.mock("./targeting", () => ({
-  setV3SurveySegmentFilters: vi.fn(),
   resolveV3ContactsEntitlement: vi.fn(),
   V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
 }));
@@ -199,7 +198,8 @@ describe("createV3Survey", () => {
           expect.objectContaining({ default: true, enabled: true }),
           expect.objectContaining({ default: false, enabled: true }),
         ],
-      })
+      }),
+      []
     );
     expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
@@ -254,7 +254,8 @@ describe("createV3Survey", () => {
         languages: expect.arrayContaining([
           expect.objectContaining({ language: expect.objectContaining({ code: "fr-FR" }), enabled: false }),
         ]),
-      })
+      }),
+      []
     );
   });
 
@@ -517,34 +518,42 @@ describe("createV3Survey", () => {
           recontactDays: 7,
           delay: 5,
           triggers: [{ actionClass }],
-        })
+        }),
+        []
       );
-      // No targeting filters → no segment write, no entitlement check.
-      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      // No targeting filters → empty private segment, no entitlement check.
       expect(resolveV3ContactsEntitlement).not.toHaveBeenCalled();
     });
 
-    test("re-reads the created survey and applies targeting filters to its segment", async () => {
-      // Regression guard: createSurvey returns segment:null, so the segment must be obtained via the
-      // re-read. Without it, setV3SurveySegmentFilters is never called and targeting is silently dropped.
+    test("passes targeting filters into createSurvey and returns the re-read survey", async () => {
+      // Targeting is created atomically with the survey's private segment inside createSurvey (one
+      // transaction); the re-read then surfaces the connected segment + numeric display fields.
+      vi.mocked(getSurvey).mockResolvedValueOnce({
+        ...appSurveyWithSegment,
+        segment: { ...appSegment, filters: attributeFilters },
+      } as unknown as TSurvey);
       const body = buildAppBody({ targeting: { filters: attributeFilters } });
 
       const result = await createV3Survey(body, null, "req_app_2", "org_1");
 
       expect(resolveV3ContactsEntitlement).toHaveBeenCalledWith(workspaceId, "org_1");
+      expect(createSurvey).toHaveBeenCalledWith(
+        workspaceId,
+        expect.objectContaining({ type: "app" }),
+        attributeFilters
+      );
       expect(getSurvey).toHaveBeenCalledWith(appSurveyId);
-      expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(appSegment.id, attributeFilters);
       expect(result.segment?.filters).toEqual(attributeFilters);
     });
 
-    test("surfaces an error when post-create targeting persistence fails", async () => {
-      // createSurvey succeeds but the segment write fails; the request must reject (failure surfaced)
-      // rather than silently return a survey whose targeting was never persisted.
-      vi.mocked(setV3SurveySegmentFilters).mockRejectedValueOnce(new Error("segment write failed"));
+    test("rolls back atomically when createSurvey fails (no partial survey)", async () => {
+      // Targeting is written inside createSurvey's transaction, so a failed segment/targeting write
+      // rolls the whole create back and surfaces an error instead of leaving a survey behind.
+      vi.mocked(createSurvey).mockRejectedValueOnce(new Error("segment write failed"));
       const body = buildAppBody({ targeting: { filters: attributeFilters } });
 
       await expect(createV3Survey(body, null, "req_app_targeting_fail", "org_1")).rejects.toThrow();
-      expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(appSegment.id, attributeFilters);
+      expect(getSurvey).not.toHaveBeenCalled();
     });
 
     test("rejects targeting when contacts are not enabled, before any write", async () => {
@@ -558,7 +567,6 @@ describe("createV3Survey", () => {
         V3SurveyCreatePermissionError
       );
       expect(createSurvey).not.toHaveBeenCalled();
-      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
     });
 
     test("rejects unknown trigger action class ids", async () => {
