@@ -44,7 +44,7 @@ describe("verification link helpers", () => {
       verificationRequestLink:
         "http://localhost:3000/auth/verification-requested?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar",
       verifyLink:
-        "http://localhost:3000/auth/verify?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar",
+        "http://localhost:3000/api/auth/sso-recovery/sign-in?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar",
     });
   });
 
@@ -57,7 +57,7 @@ describe("verification link helpers", () => {
       })
     ).toEqual({
       verificationRequestLink: "http://localhost:3000/auth/verification-requested?token=abc123",
-      verifyLink: "http://localhost:3000/auth/verify?token=abc123",
+      verifyLink: "http://localhost:3000/api/auth/sso-recovery/sign-in?token=abc123",
     });
   });
 
@@ -73,7 +73,8 @@ describe("verification link helpers", () => {
     ).toEqual({
       verificationRequestLink:
         "http://localhost:3000/auth/verification-requested?token=email-token&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar&purpose=sso_recovery",
-      // SSO recovery resolves at Better Auth's endpoint; email verification still uses /auth/verify.
+      // The verify link always resolves at Better Auth's SSO-recovery endpoint now (email verification
+      // is Better Auth-native — the legacy /auth/verify page is gone).
       verifyLink:
         "http://localhost:3000/api/auth/sso-recovery/sign-in?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar",
     });

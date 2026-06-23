@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { verifySsoRelinkIntent } from "@/lib/jwt";
+import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -28,6 +29,15 @@ vi.mock("@/modules/auth/lib/user", () => ({
 
 vi.mock("@/modules/email", () => ({
   sendVerificationEmail: vi.fn(),
+}));
+
+// Email verification resends now go through Better Auth's native endpoint (ENG-1054).
+vi.mock("@/modules/auth/lib/auth", () => ({
+  auth: { api: { sendVerificationEmail: vi.fn() } },
+}));
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
 vi.mock("@/lib/jwt", () => ({
@@ -159,11 +169,11 @@ describe("resendVerificationEmailAction", () => {
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
-      expect(sendVerificationEmail).toHaveBeenCalledWith({
-        ...mockUser,
-        callbackUrl: undefined,
-        purpose: "email_verification",
+      expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
+        body: { email: mockUser.email, callbackURL: undefined },
+        headers: expect.any(Headers),
       });
+      expect(sendVerificationEmail).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
 
@@ -179,10 +189,9 @@ describe("resendVerificationEmailAction", () => {
         },
       } as any);
 
-      expect(sendVerificationEmail).toHaveBeenCalledWith({
-        ...mockUser,
-        callbackUrl: "http://localhost:3000/invite?token=invite-token",
-        purpose: "email_verification",
+      expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
+        body: { email: mockUser.email, callbackURL: "http://localhost:3000/invite?token=invite-token" },
+        headers: expect.any(Headers),
       });
     });
 
@@ -198,10 +207,9 @@ describe("resendVerificationEmailAction", () => {
         },
       } as any);
 
-      expect(sendVerificationEmail).toHaveBeenCalledWith({
-        ...mockUser,
-        callbackUrl: undefined,
-        purpose: "email_verification",
+      expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
+        body: { email: mockUser.email, callbackURL: undefined },
+        headers: expect.any(Headers),
       });
     });
 
@@ -224,7 +232,10 @@ describe("resendVerificationEmailAction", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       const verifiedUserWithLocale: NonNullable<Awaited<ReturnType<typeof getUserByEmail>>> = {
         ...mockVerifiedUser,
+        emailVerified: true,
         locale: "en-US",
+        identityProvider: "email",
+        isActive: true,
       };
       vi.mocked(getUserByEmail).mockResolvedValue(verifiedUserWithLocale);
       vi.mocked(verifySsoRelinkIntent).mockReturnValue({
@@ -257,7 +268,10 @@ describe("resendVerificationEmailAction", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       const verifiedUserWithLocale: NonNullable<Awaited<ReturnType<typeof getUserByEmail>>> = {
         ...mockVerifiedUser,
+        emailVerified: true,
         locale: "en-US",
+        identityProvider: "email",
+        isActive: true,
       };
       vi.mocked(getUserByEmail).mockResolvedValue(verifiedUserWithLocale);
 
@@ -292,10 +306,12 @@ describe("resendVerificationEmailAction", () => {
         },
       } as any);
 
-      expect(sendVerificationEmail).toHaveBeenCalledWith({
-        ...mockUser,
-        callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
-        purpose: "email_verification",
+      expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
+        body: {
+          email: mockUser.email,
+          callbackURL: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
+        },
+        headers: expect.any(Headers),
       });
       expect(result).toEqual({ success: true });
     });
@@ -395,7 +411,7 @@ describe("resendVerificationEmailAction", () => {
     test("should handle email sending errors after rate limiting", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
-      vi.mocked(sendVerificationEmail).mockRejectedValue(new Error("Email service error"));
+      vi.mocked(auth.api.sendVerificationEmail).mockRejectedValue(new Error("Email service error"));
 
       await expect(
         resendVerificationEmailAction({
