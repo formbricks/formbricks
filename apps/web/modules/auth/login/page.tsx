@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { cookies } from "next/headers";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -14,7 +13,6 @@ import {
 } from "@/lib/constants";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import {
-  getAuthCallbackUrlFromCookies,
   getInviteTokenFromCallbackUrl,
   getRelativeCallbackUrl,
   getSearchParamString,
@@ -37,23 +35,17 @@ export const LoginPage = async ({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) => {
-  const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled, searchParams, cookieStore] = await Promise.all([
+  const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled, searchParams] = await Promise.all([
     getIsMultiOrgEnabled(),
     getIsSsoEnabled(),
     getIsSamlSsoEnabled(),
     searchParamsProps,
-    cookies(),
   ]);
   const oauthError = getSearchParamString(searchParams.error);
-  // Accept both the NextAuth (`OAuthAccountNotLinked`) and Better Auth (`account_not_linked`) slugs.
-  const isOAuthAccountNotLinked =
-    oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
 
   const resolvedCallbackUrl =
     resolveAuthCallbackUrl({
       searchParamCallbackUrl: searchParams.callbackUrl,
-      cookieCallbackUrl: getAuthCallbackUrlFromCookies(cookieStore),
-      allowCookieFallback: isOAuthAccountNotLinked,
       webAppUrl: WEBAPP_URL,
     }) ?? WEBAPP_URL;
   const resolvedCallbackPath = getRelativeCallbackUrl(resolvedCallbackUrl, WEBAPP_URL);
