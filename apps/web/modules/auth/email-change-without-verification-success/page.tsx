@@ -1,5 +1,5 @@
-import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
+import type { Session } from "@formbricks/types/auth";
 import { getTranslate } from "@/lingodotdev/server";
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";

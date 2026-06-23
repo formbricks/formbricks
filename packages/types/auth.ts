@@ -27,3 +27,36 @@ export const ZAuthenticationApiKey = z.object({
 
 export type TAuthSession = z.infer<typeof ZAuthSession>;
 export type TAuthenticationApiKey = z.infer<typeof ZAuthenticationApiKey>;
+
+/**
+ * Application session shape — formerly the `next-auth` `Session` module augmentation
+ * (packages/types/next-auth.d.ts), removed in the ENG-1054 Better Auth migration. The session DAL
+ * (apps/web/modules/auth/lib/session.ts) maps Better Auth's session onto this shape, and consumers
+ * read it. Structurally identical to the old augmented type, so it is a drop-in replacement.
+ */
+export interface Session {
+  user: {
+    id: string;
+    isActive?: boolean;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+  expires: string;
+}
+
+/**
+ * OAuth account shape for the SSO account-linking flow — formerly `next-auth`'s `Account`. Mirrors the
+ * provider/token fields the linking code reads (apps/web/modules/ee/sso/lib/account-linking.ts).
+ */
+export interface Account {
+  provider: string;
+  type: string;
+  providerAccountId: string;
+  access_token?: string;
+  refresh_token?: string;
+  expires_at?: number;
+  scope?: string;
+  token_type?: string;
+  id_token?: string;
+}

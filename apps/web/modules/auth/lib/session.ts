@@ -1,7 +1,7 @@
 import "server-only";
-import type { Session } from "next-auth";
 import { headers } from "next/headers";
 import { cache } from "react";
+import type { Session } from "@formbricks/types/auth";
 import { auth } from "@/modules/auth/lib/auth";
 
 /**
@@ -14,14 +14,10 @@ import { auth } from "@/modules/auth/lib/auth";
  * dual-read. Centralizing every read here keeps the flip a single-file change rather than a sweep of
  * the ~33 former `getServerSession` call sites.
  *
- * Returns the same augmented NextAuth `Session` shape those call sites already consume
- * (`session.user.id` + `session.user.email`; see packages/types/next-auth.d.ts) so it stays a
- * drop-in. A 2FA-pending login resolves to `null`: Better Auth deletes the credential session and
- * issues a short-lived two-factor cookie until the code is verified, so no authenticated session
- * exists yet.
- *
- * PR3 (decommission): replace the `next-auth` `Session` type with a local equivalent once next-auth
- * is removed.
+ * Returns the same `Session` shape those call sites already consume (`session.user.id` +
+ * `session.user.email`; see packages/types/auth.ts) so it stays a drop-in. A 2FA-pending login
+ * resolves to `null`: Better Auth deletes the credential session and issues a short-lived
+ * two-factor cookie until the code is verified, so no authenticated session exists yet.
  */
 export const getSession = cache(async (): Promise<Session | null> => {
   const result = await auth.api.getSession({ headers: await headers() });
