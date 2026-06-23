@@ -197,6 +197,23 @@ kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
   python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
 ```
 
+To use Gemini on Vertex AI instead of an OpenAI-compatible endpoint:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    provider: vertex-gemini
+    model: gemini-2.5-flash
+    vertex:
+      project: formbricks-cloud
+      location: europe-west3
+      existingSecret: taxonomy-vertex-secret
+```
+
+The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
+JSON that can call Vertex AI.
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |
@@ -461,4 +478,9 @@ kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
 | taxonomy.llm.existingSecret                                        | string | `""`                                                                        | Existing secret containing `TAXONOMY_LLM_API_KEY`.        |
 | taxonomy.llm.model                                                 | string | `"qwen3-14b-awq"`                                                           | LLM model used by taxonomy labeling and tree generation.  |
 | taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Taxonomy LLM provider.                                    |
+| taxonomy.llm.vertex.credentialsJson                                | string | `""`                                                                        | Inline Vertex service-account JSON used only when no existing secret is set. |
+| taxonomy.llm.vertex.credentialsJsonSecretKey                       | string | `"TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON"`                                  | Secret key containing Vertex service-account JSON.        |
+| taxonomy.llm.vertex.existingSecret                                 | string | `""`                                                                        | Existing secret containing Vertex service-account JSON.   |
+| taxonomy.llm.vertex.location                                       | string | `""`                                                                        | Vertex AI location for Gemini taxonomy calls.             |
+| taxonomy.llm.vertex.project                                        | string | `""`                                                                        | Google Cloud project for Gemini taxonomy calls.           |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |

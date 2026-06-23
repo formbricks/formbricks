@@ -11,6 +11,7 @@ import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
+import { CardWidthTabs } from "@/modules/ui/components/card-width-tabs";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { ColorField, DimensionInput } from "@/modules/ui/components/styling-fields";
@@ -39,6 +40,7 @@ export const CardStylingSettings = ({
 
   const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "straight";
   const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "straight";
+  const linkSurveyCardWidth = form.watch("linkSurveyCardWidth") ?? "default";
   const hideProgressBar = form.watch("hideProgressBar");
 
   const [parent] = useAutoAnimate();
@@ -149,15 +151,42 @@ export const CardStylingSettings = ({
                     surveyType={isAppSurvey ? "app" : "link"}
                     activeCardArrangement={isAppSurvey ? appCardArrangement : linkCardArrangement}
                     setActiveCardArrangement={(value, type) => {
-                      type === "app"
-                        ? form.setValue("cardArrangement.appSurveys", value)
-                        : form.setValue("cardArrangement.linkSurveys", value);
+                      if (type === "app") {
+                        // "cardless" is not offered for app surveys, so it can be safely excluded here.
+                        if (value !== "cardless") {
+                          form.setValue("cardArrangement.appSurveys", value);
+                        }
+                      } else {
+                        form.setValue("cardArrangement.linkSurveys", value);
+                      }
                     }}
                   />
                 </FormControl>
               </FormItem>
             )}
           />
+
+          {!isAppSurvey && (
+            <FormField
+              control={form.control}
+              name="linkSurveyCardWidth"
+              render={() => (
+                <FormItem className="col-span-2">
+                  <div>
+                    <FormLabel>{t("workspace.surveys.edit.card_width_for_link_surveys")}</FormLabel>
+                  </div>
+                  <FormControl>
+                    <CardWidthTabs
+                      activeCardWidth={linkSurveyCardWidth}
+                      setActiveCardWidth={(value) => {
+                        form.setValue("linkSurveyCardWidth", value);
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         {/* Highlight Border Section */}

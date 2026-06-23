@@ -420,6 +420,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
     );
   }
 
+  addRule("html body #fbjs .cardless-progress-bar div.progress-track", "  border-radius: 0 !important;\n");
+
   // Set the innerHTML of the style element
   styleElement.innerHTML = cssVariables;
 };

@@ -7,10 +7,12 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
+import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
@@ -18,6 +20,8 @@ interface BulkInviteTabProps {
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
+  isBulkInviteAllowed: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const BulkInviteTab = ({
@@ -26,8 +30,12 @@ export const BulkInviteTab = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   isStorageConfigured,
+  isBulkInviteAllowed,
+  enterpriseLicenseRequestFormUrl,
 }: BulkInviteTabProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [csvFile, setCSVFile] = useState<File>();
 
   const onFileInputChange = (files: File[]) => {
@@ -36,7 +44,7 @@ export const BulkInviteTab = ({
   };
 
   const onImport = () => {
-    if (!csvFile) {
+    if (!csvFile || !isBulkInviteAllowed) {
       return;
     }
     Papa.parse(csvFile, {
@@ -96,6 +104,30 @@ export const BulkInviteTab = ({
 
     onFileInputChange(files);
   };
+
+  if (!isBulkInviteAllowed) {
+    const upgradeButtons: [ModalButton, ModalButton] = [
+      {
+        text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
+        href: isFormbricksCloud
+          ? `${workspaceBasePath}/settings/organization/billing`
+          : enterpriseLicenseRequestFormUrl,
+      },
+      {
+        text: t("common.learn_more"),
+        href: "https://formbricks.com/docs/self-hosting/license",
+      },
+    ];
+
+    return (
+      <UpgradePrompt
+        title={t("workspace.settings.teams.bulk_invite_scale_only_title")}
+        description={t("workspace.settings.teams.bulk_invite_scale_only_description")}
+        buttons={upgradeButtons}
+        feature="bulk-invite"
+      />
+    );
+  }
 
   return (
     <>

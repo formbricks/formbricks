@@ -159,6 +159,19 @@ export const getIsDashboardsEnabled = async (organizationId: string): Promise<bo
   return getCustomPlanFeaturePermission(organizationId, "dashboards");
 };
 
+export const getBulkInvitePermission = async (organizationId: string): Promise<boolean> => {
+  // Bulk invite is gated only on Formbricks Cloud (anti-spam, multi-tenant concern). Self-hosted
+  // keeps the original unrestricted behavior for every tier, including community.
+  if (!IS_FORMBRICKS_CLOUD) {
+    return true;
+  }
+
+  return hasOrganizationEntitlementWithLicenseGuard(
+    organizationId,
+    CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.BULK_INVITE
+  );
+};
+
 export const getOrganizationWorkspacesLimit = async (organizationId: string): Promise<number> => {
   const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 

@@ -11,6 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -70,6 +71,11 @@ export const VerifyEmail = ({
   }, [survey]);
 
   const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const cardArrangement =
+    localSurvey.styling?.cardArrangement?.linkSurveys ?? styling.cardArrangement?.linkSurveys ?? "straight";
+  const isCardless = cardArrangement === "cardless";
+  const linkSurveyCardWidth =
+    localSurvey.styling?.linkSurveyCardWidth ?? styling.linkSurveyCardWidth ?? "default";
 
   const { isSubmitting } = form.formState;
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
@@ -131,14 +137,13 @@ export const VerifyEmail = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center">
+    <div
+      className={cn(
+        "flex h-full w-full flex-col items-center justify-center text-center",
+        isCardless ? "px-4 py-12 sm:px-6" : "p-2"
+      )}>
       <Toaster />
-      <StackedCardsContainer
-        cardArrangement={
-          localSurvey.styling?.cardArrangement?.linkSurveys ??
-          styling.cardArrangement?.linkSurveys ??
-          "straight"
-        }>
+      <StackedCardsContainer cardArrangement={cardArrangement} linkSurveyCardWidth={linkSurveyCardWidth}>
         <FormProvider {...form}>
           <form
             onSubmit={async (e) => {
