@@ -65,6 +65,7 @@
       "new_to_formbricks": "Ny på Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
       "use_a_backup_code": "Använd en reservkod"
     },
     "saml_connection_error": "Något gick fel. Kontrollera din appkonsol för mer information.",
@@ -2598,6 +2599,7 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Konsekvenser av kontoborttagning",
+        "account_deletion_email_sent": "Check your email to confirm account deletion. We sent a link to {email} — your account will be deleted once you click it.",
         "backup_code": "Reservkod",
         "confirm_delete_account": "Ta bort ditt konto med all din personliga information och data",
         "confirm_delete_my_account": "Ta bort mitt konto",

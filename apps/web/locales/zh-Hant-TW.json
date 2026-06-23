@@ -65,6 +65,7 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "oauth_account_not_linked_description": "此 SSO 供應商尚未連結到既有的 Formbricks 帳戶。請改用你最初註冊時的登入方式；若是電子郵件加密碼，遇到提示時請先完成電子郵件驗證。",
       "oauth_account_not_linked_title": "無法連結此 SSO 登入",
+      "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
       "use_a_backup_code": "使用備份碼"
     },
     "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
@@ -2598,6 +2599,7 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "帳戶刪除後果",
+        "account_deletion_email_sent": "Check your email to confirm account deletion. We sent a link to {email} — your account will be deleted once you click it.",
         "backup_code": "備份碼",
         "confirm_delete_account": "刪除您的帳戶以及您的所有個人資訊和資料",
         "confirm_delete_my_account": "刪除我的帳戶",

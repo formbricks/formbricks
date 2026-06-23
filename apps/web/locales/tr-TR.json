@@ -65,6 +65,7 @@
       "new_to_formbricks": "Formbricks'te yeni misiniz?",
       "oauth_account_not_linked_description": "Bu SSO sağlayıcı mevcut bir Formbricks hesabına bağlı değil. Lütfen başlangıçta kullandığınız yöntemle giriş yap. E-posta ve şifre kullandıysan, istenirse önce e-posta doğrulamasını tamamla.",
       "oauth_account_not_linked_title": "Bu SSO girişi bağlanamadı",
+      "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
       "use_a_backup_code": "Yedek kod kullan"
     },
     "saml_connection_error": "Bir sorun oluştu. Daha fazla bilgi için uygulama konsolunuzu kontrol edin.",
@@ -2598,6 +2599,7 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Hesap silme sonuçları",
+        "account_deletion_email_sent": "Check your email to confirm account deletion. We sent a link to {email} — your account will be deleted once you click it.",
         "backup_code": "Yedek Kod",
         "confirm_delete_account": "Tüm kişisel bilgilerin ve verilerin ile birlikte hesabını sil",
         "confirm_delete_my_account": "Hesabımı Sil",

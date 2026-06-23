@@ -65,6 +65,7 @@
       "new_to_formbricks": "Új a Formbicksen?",
       "oauth_account_not_linked_description": "Ez az SSO-szolgáltató nincs összekapcsolva egy meglévő Formbricks-fiókkal. Jelentkezzen be az eredetileg használt módszerrel. Ha ez e-mail és jelszó páros volt, akkor először végezze el az e-mail-ellenőrzést, ha a rendszer erre kéri.",
       "oauth_account_not_linked_title": "Ezt az SSO-bejelentkezést nem sikerült összekapcsolni",
+      "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
       "use_a_backup_code": "Visszaszerzési kód használata"
     },
     "saml_connection_error": "Valami probléma történt. A további részletekért nézze meg az alkalmazás konzolját.",
@@ -2598,6 +2599,7 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Fiók törlésének következményei",
+        "account_deletion_email_sent": "Check your email to confirm account deletion. We sent a link to {email} — your account will be deleted once you click it.",
         "backup_code": "Visszaszerzési kód",
         "confirm_delete_account": "A fiókja törlése az összes személyes információjával és adatával együtt",
         "confirm_delete_my_account": "Saját fiók törlése",
