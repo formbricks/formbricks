@@ -39,6 +39,7 @@
     },
     "@formbricks/database#build": {
       "dependsOn": ["^build"],
+      "env": ["DATABASE_URL"],
       "outputs": ["dist/**", "generated/prisma/**"]
     },
     "@formbricks/database#lint": {
