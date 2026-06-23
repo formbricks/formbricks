@@ -1,5 +1,6 @@
 import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
@@ -8,10 +9,19 @@ import {
   getSignInAuthMethod,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
+import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: vi.fn(),
+}));
+
+vi.mock("@formbricks/database", () => ({
+  prisma: { user: { findUnique: vi.fn() } },
+}));
+
+vi.mock("./sign-in-tracking", () => ({
+  finalizeSuccessfulSignIn: vi.fn(),
 }));
 
 vi.mock("./utils", () => ({
@@ -156,6 +166,7 @@ describe("signInAuditDatabaseHook (signedIn success audit)", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: "ada@example.com" } as never);
   });
 
   test("queues a signedIn audit for a genuine sign-in completion", async () => {
@@ -174,10 +185,36 @@ describe("signInAuditDatabaseHook (signedIn success audit)", () => {
     );
   });
 
-  test("does not audit a session re-issue that is not a sign-in", async () => {
+  test("does not audit or track a session re-issue that is not a sign-in", async () => {
     await runSessionCreateAfter(session, ctxFor("/two-factor/disable"));
 
     expect(queueAuditEventBackground).not.toHaveBeenCalled();
+    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
+  });
+
+  test("refreshes lastLoginAt and captures the sign-in event for a genuine sign-in", async () => {
+    await runSessionCreateAfter(session, ctxFor("/sign-in/email"));
+
+    expect(finalizeSuccessfulSignIn).toHaveBeenCalledWith({
+      userId: "user-1",
+      email: "ada@example.com",
+      provider: "password",
+    });
+  });
+
+  test("never throws when sign-in tracking fails", async () => {
+    vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error("db down"));
+
+    await expect(runSessionCreateAfter(session, ctxFor("/sign-in/email"))).resolves.toBeUndefined();
+    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
+  });
+
+  test("skips tracking when the user record is missing", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
+
+    await runSessionCreateAfter(session, ctxFor("/sign-in/email"));
+
+    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
   });
 
   test("never throws when the audit queue fails", async () => {

@@ -2,11 +2,13 @@ import "server-only";
 import * as Sentry from "@sentry/nextjs";
 import type { BetterAuthOptions } from "better-auth";
 import { isAPIError } from "better-auth/api";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 /**
@@ -72,6 +74,23 @@ export const signInAuditDatabaseHook: NonNullable<
       } catch {
         // Auditing must never block a sign-in (parity with the route's try/catch around emission).
         logger.withContext({ source: "better-auth" }).error("Failed to queue signedIn audit event");
+      }
+
+      // Parity with the NextAuth route's per-sign-in finalize (events.signIn → finalizeSuccessfulSignIn):
+      // refresh User.lastLoginAt + emit the `user_signed_in` analytics event on every genuine sign-in.
+      // The session record carries only userId, so resolve the email that updateUserLastLoginAt needs.
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: session.userId },
+          select: { email: true },
+        });
+        if (user?.email) {
+          await finalizeSuccessfulSignIn({ userId: session.userId, email: user.email, provider: authMethod });
+        }
+      } catch {
+        logger
+          .withContext({ source: "better-auth" })
+          .error("Failed to record successful sign-in (lastLoginAt / analytics)");
       }
     },
   },
