@@ -3880,7 +3880,6 @@
       "value_text": "Value (Text)"
     },
     "workflows": {
-      "active": "Active",
       "add_step": "Add step",
       "archive_confirm_body": "Archiving disables this workflow and stops it from running. You can unarchive it again later.",
       "archive_confirm_title": "Archive workflow?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Expand inspector",
       "if_else": "If / Else",
       "if_else_summary": "Branch the workflow based on a condition.",
-      "inactive": "Inactive",
       "inspector_unsupported_node": "This node type doesn't have a configuration form yet.",
       "load_failed": "Could not load the workflow.",
       "lock_canvas": "Lock canvas",

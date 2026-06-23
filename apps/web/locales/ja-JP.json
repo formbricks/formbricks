@@ -3880,7 +3880,6 @@
       "value_text": "値 (テキスト)"
     },
     "workflows": {
-      "active": "有効",
       "add_step": "Add step",
       "archive_confirm_body": "アーカイブすると、このワークフローが無効化され、実行されなくなります。後で再度アーカイブ解除できます。",
       "archive_confirm_title": "ワークフローをアーカイブしますか？",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "インスペクターを展開する",
       "if_else": "条件分岐",
       "if_else_summary": "条件に基づいてワークフローを分岐します。",
-      "inactive": "無効",
       "inspector_unsupported_node": "このノードタイプにはまだ設定フォームがありません。",
       "load_failed": "ワークフローを読み込めませんでした。",
       "lock_canvas": "Lock canvas",

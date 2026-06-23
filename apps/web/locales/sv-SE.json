@@ -3880,7 +3880,6 @@
       "value_text": "Värde (text)"
     },
     "workflows": {
-      "active": "Aktiv",
       "add_step": "Add step",
       "archive_confirm_body": "Arkivering inaktiverar det här arbetsflödet och stoppar det från att köras. Du kan återställa det senare.",
       "archive_confirm_title": "Arkivera arbetsflöde?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Visa inspektör",
       "if_else": "Om / Annars",
       "if_else_summary": "Förgrena arbetsflödet baserat på ett villkor.",
-      "inactive": "Inaktiv",
       "inspector_unsupported_node": "Den här nodtypen har inte något konfigurationsformulär än.",
       "load_failed": "Kunde inte ladda arbetsflödet.",
       "lock_canvas": "Lock canvas",

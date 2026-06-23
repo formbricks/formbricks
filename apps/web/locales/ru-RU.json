@@ -3880,7 +3880,6 @@
       "value_text": "Значение (текст)"
     },
     "workflows": {
-      "active": "Активный",
       "add_step": "Add step",
       "archive_confirm_body": "Архивирование отключает этот рабочий процесс и останавливает его выполнение. Вы сможете восстановить его позже.",
       "archive_confirm_title": "Архивировать рабочий процесс?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Развернуть инспектор",
       "if_else": "Если / Иначе",
       "if_else_summary": "Разветвить workflow на основе условия.",
-      "inactive": "Неактивный",
       "inspector_unsupported_node": "Для этого типа узла пока нет формы настройки.",
       "load_failed": "Не удалось загрузить workflow.",
       "lock_canvas": "Lock canvas",

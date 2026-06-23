@@ -3880,7 +3880,6 @@
       "value_text": "值（文字）"
     },
     "workflows": {
-      "active": "啟用",
       "add_step": "Add step",
       "archive_confirm_body": "封存會停用此工作流程並停止執行。你可以稍後再解除封存。",
       "archive_confirm_title": "封存工作流程？",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "展開檢查器",
       "if_else": "如果 / 否則",
       "if_else_summary": "根據條件分支工作流程。",
-      "inactive": "停用",
       "inspector_unsupported_node": "此節點類型尚未提供設定表單。",
       "load_failed": "無法載入工作流程。",
       "lock_canvas": "Lock canvas",

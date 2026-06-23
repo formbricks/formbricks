@@ -3880,7 +3880,6 @@
       "value_text": "Valoare (Text)"
     },
     "workflows": {
-      "active": "Activ",
       "add_step": "Add step",
       "archive_confirm_body": "Arhivarea dezactivează acest flux de lucru și îl oprește din rulare. Îl poți dezarhiva mai târziu.",
       "archive_confirm_title": "Arhivezi fluxul de lucru?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Extinde inspectorul",
       "if_else": "Dacă / Altfel",
       "if_else_summary": "Ramifică fluxul de lucru pe baza unei condiții.",
-      "inactive": "Inactiv",
       "inspector_unsupported_node": "Acest tip de nod nu are încă un formular de configurare.",
       "load_failed": "Nu am putut încărca fluxul de lucru.",
       "lock_canvas": "Lock canvas",

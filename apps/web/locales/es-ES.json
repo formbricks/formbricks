@@ -3880,7 +3880,6 @@
       "value_text": "Valor (Texto)"
     },
     "workflows": {
-      "active": "Activo",
       "add_step": "Add step",
       "archive_confirm_body": "Archivar desactiva este flujo de trabajo y evita que se ejecute. Puedes desarchivarlo más adelante.",
       "archive_confirm_title": "¿Archivar flujo de trabajo?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Expandir inspector",
       "if_else": "Si / Sino",
       "if_else_summary": "Ramifica el flujo de trabajo según una condición.",
-      "inactive": "Inactivo",
       "inspector_unsupported_node": "Este tipo de nodo aún no tiene un formulario de configuración.",
       "load_failed": "No se pudo cargar el flujo de trabajo.",
       "lock_canvas": "Lock canvas",

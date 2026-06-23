@@ -3880,7 +3880,6 @@
       "value_text": "Wert (Text)"
     },
     "workflows": {
-      "active": "Aktiv",
       "add_step": "Add step",
       "archive_confirm_body": "Durch das Archivieren wird dieser Workflow deaktiviert und die Ausführung gestoppt. Du kannst ihn später wieder aus dem Archiv holen.",
       "archive_confirm_title": "Workflow archivieren?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Inspektor ausklappen",
       "if_else": "Wenn / Sonst",
       "if_else_summary": "Verzweige den Workflow basierend auf einer Bedingung.",
-      "inactive": "Inaktiv",
       "inspector_unsupported_node": "Dieser Knotentyp hat noch kein Konfigurationsformular.",
       "load_failed": "Workflow konnte nicht geladen werden.",
       "lock_canvas": "Lock canvas",

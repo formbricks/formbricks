@@ -3880,7 +3880,6 @@
       "value_text": "Érték (szöveg)"
     },
     "workflows": {
-      "active": "Aktív",
       "add_step": "Add step",
       "archive_confirm_body": "Az archiválás letiltja ezt a munkafolyamatot és leállítja annak futtatását. Később bármikor visszaállíthatja az archívumból.",
       "archive_confirm_title": "Archiválja a munkafolyamatot?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Vizsgáló kibontása",
       "if_else": "Ha / Egyébként",
       "if_else_summary": "A munkafolyamat elágaztatása egy feltétel alapján.",
-      "inactive": "Inaktív",
       "inspector_unsupported_node": "Ez a csomóponttípus még nem rendelkezik konfigurációs űrlappal.",
       "load_failed": "A munkafolyamat betöltése sikertelen volt.",
       "lock_canvas": "Lock canvas",

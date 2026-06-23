@@ -3880,7 +3880,6 @@
       "value_text": "Waarde (tekst)"
     },
     "workflows": {
-      "active": "Actief",
       "add_step": "Add step",
       "archive_confirm_body": "Archiveren schakelt deze workflow uit en stopt de uitvoering ervan. Je kunt het later weer uit het archief halen.",
       "archive_confirm_title": "Workflow archiveren?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Inspector uitklappen",
       "if_else": "Als / Anders",
       "if_else_summary": "Splits de workflow op basis van een voorwaarde.",
-      "inactive": "Inactief",
       "inspector_unsupported_node": "Dit type node heeft nog geen configuratieformulier.",
       "load_failed": "Kon de workflow niet laden.",
       "lock_canvas": "Lock canvas",

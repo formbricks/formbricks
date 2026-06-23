@@ -3880,7 +3880,6 @@
       "value_text": "值（文本）"
     },
     "workflows": {
-      "active": "活跃",
       "add_step": "Add step",
       "archive_confirm_body": "归档后将禁用此工作流程并停止运行。你可以稍后再取消归档。",
       "archive_confirm_title": "归档工作流程?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "展开检查器",
       "if_else": "条件分支",
       "if_else_summary": "根据条件分支工作流。",
-      "inactive": "未激活",
       "inspector_unsupported_node": "此节点类型暂无配置表单。",
       "load_failed": "无法加载工作流。",
       "lock_canvas": "Lock canvas",

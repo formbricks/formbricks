@@ -3880,7 +3880,6 @@
       "value_text": "Değer (Metin)"
     },
     "workflows": {
-      "active": "Aktif",
       "add_step": "Add step",
       "archive_confirm_body": "Arşivleme bu iş akışını devre dışı bırakır ve çalışmasını durdurur. Daha sonra tekrar arşivden çıkarabilirsin.",
       "archive_confirm_title": "İş akışı arşivlensin mi?",
@@ -3911,7 +3910,6 @@
       "expand_inspector": "Denetçiyi genişlet",
       "if_else": "Eğer / Değilse",
       "if_else_summary": "İş akışını bir koşula göre dallandır.",
-      "inactive": "Pasif",
       "inspector_unsupported_node": "Bu düğüm türü henüz bir yapılandırma formuna sahip değil.",
       "load_failed": "İş akışı yüklenemedi.",
       "lock_canvas": "Lock canvas",
