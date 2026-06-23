@@ -3,8 +3,8 @@ packages:
   - "packages/*"
 
 allowBuilds:
-  '@prisma/engines': true
-  '@sentry/cli': true
+  "@prisma/engines": true
+  "@sentry/cli": true
   better-sqlite3: true
   core-js: true
   esbuild: true
@@ -14,7 +14,7 @@ allowBuilds:
   sharp: true
   sqlite3: true
   unrs-resolver: true
-  '@prisma/client': true
+  "@prisma/client": true
 
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
@@ -64,7 +64,8 @@ overrides:
   undici@7: 7.28.0
   # ENG-1513 / GHSA-fjxv-7rqg-78g4: form-data <4.0.4 uses an unsafe random function for the
   # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
-  form-data@4: 4.0.5
+  form-data@4: 4.0.6
+  tar: 7.5.16
 
 patchedDependencies:
   next-auth@4.24.13: patches/next-auth@4.24.13.patch
