@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -24,6 +23,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
+import { Textarea } from "@/modules/ui/components/textarea";
 import { type TCreateWorkflowFormData, getCreateWorkflowFormSchema } from "../lib/validate-create-workflow";
 
 interface CreateWorkflowDialogProps {
@@ -96,14 +96,11 @@ export const CreateWorkflowDialog = ({
                   <FormItem>
                     <FormLabel>{t("workspace.workflows.workflow_description_optional")}</FormLabel>
                     <FormControl>
-                      <textarea
+                      <Textarea
                         {...field}
                         rows={3}
                         placeholder={t("workspace.workflows.workflow_description_placeholder")}
-                        className={cn(
-                          "flex min-h-20 w-full resize-none rounded-md border bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-50",
-                          fieldState.error ? "border-red-500" : "border-slate-300"
-                        )}
+                        isInvalid={Boolean(fieldState.error)}
                       />
                     </FormControl>
                     <FormError />
