@@ -151,6 +151,8 @@ export const SurveyClientWrapper = ({
     setResponseData({});
   };
   const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(survey), [survey]);
+  const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const hasLogo = !styling.isLogoHidden && !!(styling.logo?.url || workspace.logo?.url);
 
   // Determine text direction based on language code for logo positioning only
   // which checks both language code and survey content. This is only for logo UI positioning.
@@ -219,6 +221,7 @@ export const SurveyClientWrapper = ({
           isSpamProtectionEnabled={isSpamProtectionEnabled}
           offlineSupport={offlineSupport}
           onOfflineStatusChange={offlineSupport ? handleOfflineStatusChange : undefined}
+          showCardlessPreviewLogoSlot={isCardless && hasLogo}
         />
       </LinkSurveyWrapper>
       {offlineSupport && !isEmbed && (

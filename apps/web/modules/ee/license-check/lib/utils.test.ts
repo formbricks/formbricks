@@ -9,6 +9,7 @@ import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 import {
   getAccessControlPermission,
   getBiggerUploadFileSizePermission,
+  getBulkInvitePermission,
   getIsAISmartToolsEnabled,
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
@@ -151,6 +152,39 @@ describe("License Utils", () => {
         "org_1",
         CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.HIDE_BRANDING
       );
+    });
+  });
+
+  describe("getBulkInvitePermission", () => {
+    test("returns true on self-hosted without checking entitlements", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+
+      const result = await getBulkInvitePermission("org_1");
+
+      expect(result).toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
+    });
+
+    test("uses the cloud bulk-invite entitlement when entitled", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
+
+      const result = await getBulkInvitePermission("org_1");
+
+      expect(result).toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
+        "org_1",
+        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.BULK_INVITE
+      );
+    });
+
+    test("returns false on cloud when the bulk-invite entitlement is missing", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(false);
+
+      const result = await getBulkInvitePermission("org_1");
+
+      expect(result).toBe(false);
     });
   });
 
