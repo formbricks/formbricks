@@ -58,8 +58,12 @@ RUN touch apps/web/.env
 # Install the dependencies
 RUN pnpm install --ignore-scripts --frozen-lockfile
 
-# Build the database package first
-RUN pnpm build --filter=@formbricks/database
+# Build the database package first. `pnpm generate` loads prisma.config.ts, which
+# resolves DATABASE_URL via Prisma's env() helper and throws when it is unset. Mount
+# the secret and run through the secret reader so a build-time fallback is supplied
+# (mirrors the web build below); prisma generate never connects to the database.
+RUN --mount=type=secret,id=database_url \
+    /tmp/read-secrets.sh pnpm build --filter=@formbricks/database
 
 # Build the project using our secret reader script
 # This mounts the secrets only during this build step without storing them in layers
