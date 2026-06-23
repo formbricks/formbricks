@@ -60,9 +60,6 @@ overrides:
   dompurify: 3.4.9 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9)
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
 
-patchedDependencies:
-  next-auth@4.24.13: patches/next-auth@4.24.13.patch
-
 autoInstallPeers: true
 linkWorkspacePackages: true
 shamefullyHoist: true
