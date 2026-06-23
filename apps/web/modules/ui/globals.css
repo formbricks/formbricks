@@ -85,7 +85,8 @@
   border-radius: 8px;
 }
 
-input:focus {
+input:focus,
+textarea:focus {
   --tw-ring-color: none;
   --tw-ring-offset-color: none;
   --tw-ring-shadow: 0 0 #000 !important;

@@ -28,6 +28,20 @@ export interface WorkflowInvalidParam {
 
 const PROBLEM_JSON = "application/problem+json";
 
+// Prisma's unique-constraint violation code, mirroring `PrismaErrorType.UniqueConstraintViolation` in
+// `@formbricks/database` — which this leaf package can't import without recreating a build cycle.
+const PRISMA_UNIQUE_CONSTRAINT_VIOLATION = "P2002";
+
+/**
+ * Duck-typed P2002 detection — keeps the package free of a `@prisma/client` dependency. Exported as
+ * the single source of truth: the service uses it to retry copy names / map the enable version-race,
+ * and the mapper below turns any unmapped P2002 (duplicate name on create/update/unarchive) into a 409.
+ */
+export const isUniqueConstraintViolation = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  (error as { code?: unknown }).code === PRISMA_UNIQUE_CONSTRAINT_VIOLATION;
+
 const TITLE_BY_STATUS: Record<number, string> = {
   400: "Bad Request",
   403: "Forbidden",
@@ -206,6 +220,18 @@ export const toProblemResponse = (error: unknown, ctx: ProblemContext): Response
       code: error.code,
       instance: ctx.instance,
       invalidParams: error.invalidParams,
+    });
+  }
+
+  // An unmapped Prisma P2002 reaching here is always a workspace-unique name collision
+  // (`Workflow_workspaceId_name_not_archived_key`): create/update/unarchive into a taken name, or an
+  // explicit-name duplicate. Surface a clean 409 (not a 500) uniformly — logged as a 4xx warning.
+  if (isUniqueConstraintViolation(error)) {
+    ctx.logger.warn({ statusCode: 409, code: "conflict" }, "Workflow name conflict");
+    return problemResponse(409, "A workflow with this name already exists.", {
+      requestId: ctx.requestId,
+      code: "conflict",
+      instance: ctx.instance,
     });
   }
 

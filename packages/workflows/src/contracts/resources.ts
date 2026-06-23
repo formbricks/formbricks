@@ -77,6 +77,10 @@ export const ZWorkflowListItem = z
     triggerType: ZWorkflowTriggerType.describe("Derived from definition.trigger.triggerType."),
     surveyId: z.cuid2().describe("Derived from definition.trigger.config.surveyId."),
     createdBy: z.cuid2().nullable().describe("Null when the creating user was deleted."),
+    creator: z
+      .object({ name: z.string() })
+      .nullable()
+      .describe("Creating user's name; null when the creator was deleted."),
     createdAt: ZIsoDateTime,
     updatedAt: ZIsoDateTime,
     lastRun: ZWorkflowRunSummary.nullable().describe(
