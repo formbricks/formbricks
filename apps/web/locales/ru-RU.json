@@ -65,6 +65,7 @@
       "new_to_formbricks": "Впервые на Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
       "use_a_backup_code": "Использовать резервный код"
     },
     "saml_connection_error": "Что-то пошло не так. Пожалуйста, проверьте консоль приложения для получения подробностей.",
@@ -523,6 +524,13 @@
   "emails": {
     "accept": "Принять",
     "click_or_drag_to_upload_files": "Нажмите или перетащите для загрузки файлов.",
+    "delete_account_email_confirm_deletion": "Confirm account deletion",
+    "delete_account_email_did_not_request": "If you did not request this, please ignore this email and your account will remain active.",
+    "delete_account_email_heading": "Confirm your account deletion",
+    "delete_account_email_link_valid_for_minutes": "The link is valid for {minutes} minutes.",
+    "delete_account_email_subject": "Confirm your Formbricks account deletion",
+    "delete_account_email_text": "You have requested to delete your Formbricks account. To confirm, please click the button below:",
+    "delete_account_email_warning": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "email_customization_preview_email_heading": "Привет, {userName}",
     "email_customization_preview_email_subject": "Предпросмотр настройки электронной почты Formbricks",
     "email_customization_preview_email_text": "Это предварительный просмотр письма, чтобы показать, какой логотип будет отображаться в письмах.",
@@ -2591,6 +2599,7 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Последствия удаления аккаунта",
+        "account_deletion_email_sent": "Check your email to confirm account deletion. We sent a link to {email} — your account will be deleted once you click it.",
         "backup_code": "Резервный код",
         "confirm_delete_account": "Удалите свой аккаунт со всеми личными данными и информацией",
         "confirm_delete_my_account": "Удалить мой аккаунт",
