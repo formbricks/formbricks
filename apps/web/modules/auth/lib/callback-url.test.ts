@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   getInviteTokenFromCallbackUrl,
   getRelativeCallbackUrl,
+  getSearchParamString,
   resolveAuthCallbackUrl,
 } from "./callback-url";
 
@@ -51,5 +52,41 @@ describe("auth callback URL helpers", () => {
     );
 
     expect(result).toBe("abc123");
+  });
+
+  test("uses the first value when the callback URL search param is repeated", () => {
+    const result = resolveAuthCallbackUrl({
+      searchParamCallbackUrl: ["http://localhost:3000/invite?token=first", "http://localhost:3000/second"],
+      webAppUrl: WEBAPP_URL,
+    });
+
+    expect(result).toBe("http://localhost:3000/invite?token=first");
+  });
+
+  test("returns null when the callback URL search param is an empty array", () => {
+    const result = resolveAuthCallbackUrl({
+      searchParamCallbackUrl: [],
+      webAppUrl: WEBAPP_URL,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  test("falls back to '/' when the relative callback URL is missing or invalid", () => {
+    expect(getRelativeCallbackUrl(undefined, WEBAPP_URL)).toBe("/");
+    expect(getRelativeCallbackUrl("https://evil.example/x", WEBAPP_URL)).toBe("/");
+  });
+
+  test("returns null invite token when the callback URL is invalid or has no token", () => {
+    expect(getInviteTokenFromCallbackUrl("https://evil.example/invite?token=bad", WEBAPP_URL)).toBeNull();
+    expect(
+      getInviteTokenFromCallbackUrl("http://localhost:3000/invite?source=signin", WEBAPP_URL)
+    ).toBeNull();
+  });
+
+  test("getSearchParamString normalizes strings, arrays, and missing values", () => {
+    expect(getSearchParamString("plain")).toBe("plain");
+    expect(getSearchParamString(["first", "second"])).toBe("first");
+    expect(getSearchParamString(undefined)).toBe("");
   });
 });

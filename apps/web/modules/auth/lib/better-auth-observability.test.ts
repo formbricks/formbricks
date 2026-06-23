@@ -2,7 +2,12 @@ import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { auditFailedAuthAfter, auditPasswordReset, getSignInAuthMethod } from "./better-auth-observability";
+import {
+  auditFailedAuthAfter,
+  auditPasswordReset,
+  getSignInAuthMethod,
+  signInAuditDatabaseHook,
+} from "./better-auth-observability";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -117,6 +122,69 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
     expect(shouldLogAuthFailure).not.toHaveBeenCalled();
     expect(logAuthAttempt).not.toHaveBeenCalled();
   });
+
+  test("falls back to the HTTP status when the returned APIError carries no code", async () => {
+    await auditFailedAuthAfter(
+      makeCtx({
+        path: "/sign-in/email",
+        body: { email: "ada@example.com" },
+        returned: new APIError("UNAUTHORIZED", { message: "no code field" }),
+      })
+    );
+
+    // No `code` on the error body → reason derived from the status, still lower-cased and non-empty.
+    const reason = vi.mocked(logAuthAttempt).mock.calls[0][0];
+    expect(reason).toEqual(expect.any(String));
+    expect(reason).toBe(reason.toLowerCase());
+    expect(logAuthAttempt).toHaveBeenCalledWith(
+      reason,
+      "credentials",
+      "password",
+      UNKNOWN_DATA,
+      "ada@example.com"
+    );
+  });
+});
+
+describe("signInAuditDatabaseHook (signedIn success audit)", () => {
+  // Resolve the optional create.after hook once so the arg casts below stay readable.
+  const runSessionCreateAfter = signInAuditDatabaseHook.create!.after!;
+  type Session = Parameters<typeof runSessionCreateAfter>[0];
+  type Context = Parameters<typeof runSessionCreateAfter>[1];
+  const session = { userId: "user-1" } as unknown as Session;
+  const ctxFor = (path: string): Context => ({ path }) as unknown as Context;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("queues a signedIn audit for a genuine sign-in completion", async () => {
+    await runSessionCreateAfter(session, ctxFor("/sign-in/email"));
+
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "signedIn",
+        targetType: "user",
+        userId: "user-1",
+        targetId: "user-1",
+        status: "success",
+        userType: "user",
+        newObject: { authMethod: "password", sessionStrategy: "database" },
+      })
+    );
+  });
+
+  test("does not audit a session re-issue that is not a sign-in", async () => {
+    await runSessionCreateAfter(session, ctxFor("/two-factor/disable"));
+
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
+  });
+
+  test("never throws when the audit queue fails", async () => {
+    vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("redis down"));
+
+    await expect(runSessionCreateAfter(session, ctxFor("/sign-in/email"))).resolves.toBeUndefined();
+  });
 });
 
 describe("auditPasswordReset (onPasswordReset audit)", () => {
@@ -138,5 +206,11 @@ describe("auditPasswordReset (onPasswordReset audit)", () => {
         newObject: { passwordResetMarker: true },
       })
     );
+  });
+
+  test("never throws when the audit queue fails", async () => {
+    vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("redis down"));
+
+    await expect(auditPasswordReset("user-1")).resolves.toBeUndefined();
   });
 });

@@ -95,12 +95,24 @@ export default defineConfig({
 
         // Specific components
         "modules/auth/lib/mock-data.ts", // Mock data for authentication
+        // Better Auth instance + wiring — exercised by the integration suite (real Postgres), not unit
+        // tests, so they are excluded from the unit-coverage gate below (ENG-1054).
+        "modules/auth/lib/auth.ts",
+        "modules/auth/lib/auth-client.ts",
+        "modules/auth/lib/secondary-storage.ts",
+        "modules/auth/lib/better-auth-email-verification.ts",
         "packages/js-core/src/index.ts", // JS Core index file
 
         // Other
         "**/scripts/**", // Utility scripts
+        "modules/auth/lib/cutover/**", // One-time ENG-1054 cutover migration scripts (run once, not app runtime)
         "**/*.mjs", // ES modules
       ],
+      thresholds: {
+        // ENG-1054: keep the new Better Auth code well-tested. Glob aggregate (not perFile) so a single
+        // thin file can't trip the gate; the integration-only BA instance/wiring is excluded above.
+        "modules/auth/lib/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
+      },
     },
   },
   plugins: [tsconfigPaths(), react() as PluginOption],
