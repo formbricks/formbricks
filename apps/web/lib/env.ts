@@ -284,8 +284,9 @@ const parsedEnv = createEnv({
     NEXTAUTH_URL: z.url().optional(),
     NEXTAUTH_SECRET: z.string().optional(),
     // Better Auth (ENG-1054). Optional during the additive migration; BA requires a strong
-    // (>=32 char) secret in production and throws if unset there.
-    BETTER_AUTH_SECRET: z.string().optional(),
+    // (>=32 char) secret in production and throws if unset there. Enforce the floor when set so a
+    // weak secret can't silently ship (it stays optional for the pre-cutover rollout).
+    BETTER_AUTH_SECRET: z.string().min(32).optional(),
     BETTER_AUTH_URL: z.url().optional(),
     MAIL_FROM_NAME: z.string().optional(),
     NOTION_OAUTH_CLIENT_ID: z.string().optional(),
