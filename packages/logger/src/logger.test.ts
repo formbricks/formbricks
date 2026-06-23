@@ -14,6 +14,15 @@ const originalOtelServiceName = process.env.OTEL_SERVICE_NAME;
 const originalNpmPackageVersion = process.env.npm_package_version;
 const originalEnvironment = process.env.ENVIRONMENT;
 
+const restoreEnv = (key: string, value: string | undefined): void => {
+  if (value === undefined) {
+    Reflect.deleteProperty(process.env, key);
+    return;
+  }
+
+  process.env[key] = value;
+};
+
 function createMockLogger(): Pino.Logger {
   return {
     debug: vi.fn().mockReturnThis(),
@@ -103,15 +112,14 @@ describe("Logger", () => {
   });
 
   afterEach(() => {
-    // Restore process.env
-    process.env.NODE_ENV = originalNodeEnv;
-    process.env.LOG_LEVEL = originalLogLevel;
-    process.env.NEXT_RUNTIME = originalNextRuntime;
-    process.env.OTEL_EXPORTER_OTLP_ENDPOINT = originalOtelEndpoint;
-    process.env.OTEL_LOGS_ENABLED = originalOtelLogsEnabled;
-    process.env.OTEL_SERVICE_NAME = originalOtelServiceName;
-    process.env.npm_package_version = originalNpmPackageVersion;
-    process.env.ENVIRONMENT = originalEnvironment;
+    restoreEnv("NODE_ENV", originalNodeEnv);
+    restoreEnv("LOG_LEVEL", originalLogLevel);
+    restoreEnv("NEXT_RUNTIME", originalNextRuntime);
+    restoreEnv("OTEL_EXPORTER_OTLP_ENDPOINT", originalOtelEndpoint);
+    restoreEnv("OTEL_LOGS_ENABLED", originalOtelLogsEnabled);
+    restoreEnv("OTEL_SERVICE_NAME", originalOtelServiceName);
+    restoreEnv("npm_package_version", originalNpmPackageVersion);
+    restoreEnv("ENVIRONMENT", originalEnvironment);
   });
 
   test("logger is created with development config when NODE_ENV is not production", async () => {
