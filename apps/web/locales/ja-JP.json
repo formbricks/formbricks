@@ -523,6 +523,13 @@
   "emails": {
     "accept": "承認",
     "click_or_drag_to_upload_files": "クリックまたはドラッグしてファイルをアップロードしてください。",
+    "delete_account_email_confirm_deletion": "Confirm account deletion",
+    "delete_account_email_did_not_request": "If you did not request this, please ignore this email and your account will remain active.",
+    "delete_account_email_heading": "Confirm your account deletion",
+    "delete_account_email_link_valid_for_minutes": "The link is valid for {minutes} minutes.",
+    "delete_account_email_subject": "Confirm your Formbricks account deletion",
+    "delete_account_email_text": "You have requested to delete your Formbricks account. To confirm, please click the button below:",
+    "delete_account_email_warning": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "email_customization_preview_email_heading": "こんにちは、{userName}さん",
     "email_customization_preview_email_subject": "Formbricks メールカスタマイズプレビュー",
     "email_customization_preview_email_text": "これは、メールに表示されるロゴを確認するためのプレビューメールです。",
