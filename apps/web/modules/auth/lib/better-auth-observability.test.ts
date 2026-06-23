@@ -1,8 +1,13 @@
 import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
-import { auditFailedAuthAfter, getSignInAuthMethod } from "./better-auth-observability";
+import { auditFailedAuthAfter, auditPasswordReset, getSignInAuthMethod } from "./better-auth-observability";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
+
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEventBackground: vi.fn(),
+}));
 
 vi.mock("./utils", () => ({
   logAuthAttempt: vi.fn(),
@@ -111,5 +116,27 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
 
     expect(shouldLogAuthFailure).not.toHaveBeenCalled();
     expect(logAuthAttempt).not.toHaveBeenCalled();
+  });
+});
+
+describe("auditPasswordReset (onPasswordReset audit)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("queues an updated/user audit carrying the password-reset marker", async () => {
+    await auditPasswordReset("user-1");
+
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "updated",
+        targetType: "user",
+        userId: "user-1",
+        targetId: "user-1",
+        status: "success",
+        userType: "user",
+        newObject: { passwordResetMarker: true },
+      })
+    );
   });
 });

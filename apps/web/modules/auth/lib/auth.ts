@@ -6,6 +6,7 @@ import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth, twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_VERIFICATION_DISABLED,
@@ -27,7 +28,12 @@ import {
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
-import { auditFailedAuthAfter, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import {
+  auditFailedAuthAfter,
+  auditPasswordReset,
+  betterAuthLogger,
+  signInAuditDatabaseHook,
+} from "./better-auth-observability";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
@@ -104,6 +110,18 @@ export const auth = betterAuth({
         verifyLink: url,
         linkValidityInMinutes: PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
       });
+    },
+    // After a successful reset, send the security notification (parity with the retired
+    // completePasswordReset) and audit it. Better Auth already revoked sessions
+    // (revokeSessionsOnPasswordReset above). Both are best-effort — never fail the completed reset.
+    onPasswordReset: async ({ user }) => {
+      try {
+        const { sendPasswordResetNotifyEmail } = await import("@/modules/email");
+        await sendPasswordResetNotifyEmail({ email: user.email, locale: await getUserLocale(user.id) });
+      } catch (error) {
+        logger.error({ error, userId: user.id }, "Failed to send password-reset notification email");
+      }
+      await auditPasswordReset(user.id);
     },
   },
 

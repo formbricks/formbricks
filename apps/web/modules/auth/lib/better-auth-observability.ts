@@ -134,3 +134,27 @@ export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> 
   const failureReason = (typeof code === "string" ? code : String(returned.status)).toLowerCase();
   logAuthAttempt(failureReason, "credentials", "password", UNKNOWN_DATA, email);
 };
+
+/**
+ * Audit a completed password reset — parity with the retired `completePasswordReset` action audit
+ * (`updated`/`user`). Wired into Better Auth's `emailAndPassword.onPasswordReset` callback (auth.ts),
+ * which fires once per successful reset with the user. The prior audit's old/new snapshots only
+ * captured `{id,email,locale,emailVerified}` — none of which change on a reset — so the meaningful
+ * signal is just "this user's password was reset", recorded via the marker.
+ */
+export const auditPasswordReset = async (userId: string): Promise<void> => {
+  try {
+    await queueAuditEventBackground({
+      action: "updated",
+      targetType: "user",
+      userId,
+      targetId: userId,
+      organizationId: UNKNOWN_DATA,
+      status: "success",
+      userType: "user",
+      newObject: { passwordResetMarker: true },
+    });
+  } catch {
+    logger.withContext({ source: "better-auth" }).error("Failed to queue password-reset audit event");
+  }
+};

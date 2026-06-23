@@ -3,7 +3,11 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import * as brevo from "@/modules/auth/lib/brevo";
-import { sendPasswordResetLinkEmail, sendVerificationLinkEmail } from "@/modules/email";
+import {
+  sendPasswordResetLinkEmail,
+  sendPasswordResetNotifyEmail,
+  sendVerificationLinkEmail,
+} from "@/modules/email";
 
 // Spy createBrevoCustomer (the afterEmailVerification side effect) without hitting the Brevo API.
 vi.mock("@/modules/auth/lib/brevo", async (importOriginal) => {
@@ -82,6 +86,10 @@ describe("Better Auth password reset (real Postgres)", () => {
     expect(token).toBeTruthy();
 
     await auth.api.resetPassword({ body: { token, newPassword: "NewPassw0rd!" } });
+
+    // onPasswordReset side effect (ENG-1054): the user gets the "password changed" security
+    // notification. (The audit event from the same hook is unit-tested in better-auth-observability.)
+    expect(sendPasswordResetNotifyEmail).toHaveBeenCalledTimes(1);
 
     // the reset token is single-use (consumed via getAndDelete) — replaying it fails
     await expect(auth.api.resetPassword({ body: { token, newPassword: "Another1!" } })).rejects.toBeTruthy();
