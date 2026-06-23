@@ -106,7 +106,7 @@ const createWorkspaceIdSchema = z.object({
   workspaceId: z.cuid2(),
 });
 
-function getSessionUserId(authentication: TV3Authentication): string | null {
+export function getSessionUserId(authentication: TV3Authentication): string | null {
   if (authentication && "user" in authentication && authentication.user?.id) {
     return authentication.user.id;
   }
