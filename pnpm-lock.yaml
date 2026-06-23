@@ -28,6 +28,7 @@ overrides:
   '@opentelemetry/core': 2.8.0
   dompurify: 3.4.9
   esbuild: 0.28.1
+  undici@7: 7.28.0
   form-data@4: 4.0.5
 
 patchedDependencies:
@@ -462,8 +463,8 @@ importers:
         specifier: 2.0.10
         version: 2.0.10
       undici:
-        specifier: 7.24.8
-        version: 7.24.8
+        specifier: 7.28.0
+        version: 7.28.0
       uuid:
         specifier: 14.0.0
         version: 14.0.0
@@ -11617,12 +11618,8 @@ packages:
     resolution: {integrity: sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==}
     engines: {node: '>=18.17'}
 
-  undici@7.24.8:
-    resolution: {integrity: sha512-6KQ/+QxK49Z/p3HO6E5ZCZWNnCasyZLa5ExaVYyvPxUwKtbCPMKELJOqh7EqOle0t9cH/7d2TaaTRRa6Nhs4YQ==}
-    engines: {node: '>=20.18.1'}
-
-  undici@7.25.0:
-    resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
+  undici@7.28.0:
+    resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
     engines: {node: '>=20.18.1'}
 
   unique-filename@1.1.1:
@@ -21631,7 +21628,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.1
-      undici: 7.25.0
+      undici: 7.28.0
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -24718,9 +24715,7 @@ snapshots:
 
   undici@6.27.0: {}
 
-  undici@7.24.8: {}
-
-  undici@7.25.0: {}
+  undici@7.28.0: {}
 
   unique-filename@1.1.1:
     dependencies:
