@@ -1,13 +1,6 @@
-import { getPlaceholderWorkflow, getPlaceholderWorkflowRuns } from "@/modules/workflows/lib/placeholder-data";
 import { WorkspaceWorkflowRunsPage } from "@/modules/workflows/pages/workspace-workflow-runs-page";
 
-const WorkflowRunsPage = () => {
-  const runs = getPlaceholderWorkflowRuns().map((run) => ({
-    ...run,
-    workflowName: getPlaceholderWorkflow(run.workflowId)?.name ?? run.workflowId,
-  }));
-
-  return <WorkspaceWorkflowRunsPage runs={runs} />;
-};
+// Real runs API client lands with ENG-1226 — until then the runs tab renders the empty state.
+const WorkflowRunsPage = () => <WorkspaceWorkflowRunsPage runs={[]} />;
 
 export default WorkflowRunsPage;

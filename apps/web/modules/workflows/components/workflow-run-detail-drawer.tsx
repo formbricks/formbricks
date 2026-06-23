@@ -12,8 +12,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/modules/ui/components/sheet";
-import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "../lib/display";
-import { type TWorkflowRunListItem } from "../types";
+import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/modules/workflows/lib/display";
+import { type TWorkflowRunListItem } from "@/modules/workflows/types";
 
 interface WorkflowRunDetailDrawerProps {
   run: TWorkflowRunListItem | null;

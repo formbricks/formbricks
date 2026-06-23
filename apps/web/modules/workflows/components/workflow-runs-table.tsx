@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "../lib/display";
-import { type TWorkflowRunListItem } from "../types";
+import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/modules/workflows/lib/display";
+import { type TWorkflowRunListItem } from "@/modules/workflows/types";
 import { WorkflowRunDetailDrawer } from "./workflow-run-detail-drawer";
 
 interface WorkflowRunsTableProps {

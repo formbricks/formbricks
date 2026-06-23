@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import bcryptjs from "bcryptjs";
 import { logger } from "@formbricks/logger";
 import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { type Prisma, PrismaClient } from "./prisma";
 import { createPrismaPgAdapter } from "./prisma-adapter";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
@@ -71,6 +72,117 @@ interface SurveyQuestion {
   company?: { show: boolean; required: boolean; placeholder: { default: string } };
   allowMultipleFiles?: boolean;
   maxSizeInMB?: number;
+}
+
+interface WorkflowSeedSpec {
+  id: string;
+  name: string;
+  description: string;
+  status: "draft" | "enabled" | "disabled";
+  triggerId: string;
+  actionId: string;
+  edgeId: string;
+  endingCardIds?: string[];
+  email: { to: string; subject: string; body: string };
+}
+
+async function seedDemoWorkflows(workspaceId: string, surveyId: string): Promise<void> {
+  logger.info("Seeding demo workflows...");
+
+  const specs: WorkflowSeedSpec[] = [
+    {
+      id: SEED_IDS.WORKFLOW_RESPONSE_FOLLOW_UP,
+      name: "Response follow-up",
+      description: "Email respondents after they complete the survey.",
+      status: "enabled",
+      triggerId: "trigresponsefollowupseed",
+      actionId: "actresponsefollowupseed1",
+      edgeId: "edgresponsefollowupseed1",
+      email: {
+        to: "respondent@example.com",
+        subject: "Thanks for your answers!",
+        body: "Hi there, thanks for completing the survey.",
+      },
+    },
+    {
+      id: SEED_IDS.WORKFLOW_ENDING_CARD_FOLLOW_UP,
+      name: "Ending card follow-up",
+      description: "Notify the team when a specific ending card is reached.",
+      status: "draft",
+      triggerId: "trigendingfollowupseed01",
+      actionId: "actendingfollowupseed001",
+      edgeId: "edgendcardfollowupseed01",
+      email: {
+        to: "team@example.com",
+        subject: "Respondent reached a key ending",
+        body: "A respondent reached a tracked ending card.",
+      },
+    },
+    {
+      id: SEED_IDS.WORKFLOW_TEAM_NOTIFICATION,
+      name: "Team notification",
+      description: "Send an internal notification for every completed response.",
+      status: "disabled",
+      triggerId: "trigteamnotificationseed",
+      actionId: "actteamnotificationseed1",
+      edgeId: "edgteamnotificationseed1",
+      email: {
+        to: "team@example.com",
+        subject: "New survey response received",
+        body: "A new response was completed. Check Formbricks for details.",
+      },
+    },
+  ];
+
+  for (const spec of specs) {
+    const definition: TWorkflowDefinition = {
+      schemaVersion: 1,
+      entryNodeId: spec.triggerId,
+      trigger: {
+        id: spec.triggerId,
+        type: "trigger",
+        triggerType: "response.completed",
+        config: { surveyId, endingCardIds: spec.endingCardIds ?? [] },
+        ui: { position: { x: 220, y: 80 } },
+      },
+      nodes: [
+        {
+          id: spec.actionId,
+          type: "action",
+          actionType: "send_email",
+          label: "Send email",
+          config: {
+            to: spec.email.to,
+            from: "team@example.com",
+            replyTo: [],
+            subject: spec.email.subject,
+            body: spec.email.body,
+            attachResponseData: false,
+          },
+          ui: { position: { x: 220, y: 200 } },
+        },
+      ],
+      edges: [{ id: spec.edgeId, source: spec.triggerId, target: spec.actionId }],
+    };
+
+    await prisma.workflow.upsert({
+      where: { id: spec.id },
+      update: {
+        name: spec.name,
+        description: spec.description,
+        status: spec.status,
+        definition,
+      },
+      create: {
+        id: spec.id,
+        workspaceId,
+        name: spec.name,
+        description: spec.description,
+        status: spec.status,
+        definition,
+      },
+    });
+  }
 }
 
 async function deleteData(): Promise<void> {
@@ -558,6 +670,8 @@ async function main(): Promise<void> {
   await generateResponses(SEED_IDS.SURVEY_KITCHEN_SINK, 50);
   await generateResponses(SEED_IDS.SURVEY_CSAT, 50);
   await generateResponses(SEED_IDS.SURVEY_COMPLETED, 50);
+
+  await seedDemoWorkflows(workspace.id, SEED_IDS.SURVEY_KITCHEN_SINK);
 
   logger.info(`\n${"=".repeat(50)}`);
   logger.info("SEEDING COMPLETED SUCCESSFULLY");
