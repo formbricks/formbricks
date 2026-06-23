@@ -4,16 +4,16 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-export const TeamsPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const TeamsPage = async (props: { params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, currentUserMembership, organization } = await getWorkspaceAuth(params.workspaceId);
+  const { session, currentUserMembership, organization } = await getOrganizationAuth(params.organizationId);
 
   const isAccessControlAllowed = await getAccessControlPermission(organization.id);
 
@@ -46,7 +46,6 @@ export const TeamsPage = async (props: { params: Promise<{ workspaceId: string }
         membershipRole={currentUserMembership?.role}
         currentUserId={session.user.id}
         isAccessControlAllowed={isAccessControlAllowed}
-        workspaceId={params.workspaceId}
       />
     </PageContentWrapper>
   );

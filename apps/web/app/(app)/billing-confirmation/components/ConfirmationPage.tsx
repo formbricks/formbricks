@@ -6,12 +6,12 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 
-const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
+const BILLING_CONFIRMATION_ORGANIZATION_ID_KEY = "billingConfirmationOrganizationId";
 
 export const ConfirmationPage = () => {
   const { t } = useTranslation();
   const [showConfetti, setShowConfetti] = useState(false);
-  const [resolvedWorkspaceId, setResolvedWorkspaceId] = useState<string | null>(null);
+  const [resolvedOrganizationId, setResolvedOrganizationId] = useState<string | null>(null);
 
   useEffect(() => {
     setShowConfetti(true);
@@ -20,9 +20,11 @@ export const ConfirmationPage = () => {
       return;
     }
 
-    const storedWorkspaceId = globalThis.window.sessionStorage.getItem(BILLING_CONFIRMATION_WORKSPACE_ID_KEY);
-    if (storedWorkspaceId) {
-      setResolvedWorkspaceId(storedWorkspaceId);
+    const storedOrganizationId = globalThis.window.sessionStorage.getItem(
+      BILLING_CONFIRMATION_ORGANIZATION_ID_KEY
+    );
+    if (storedOrganizationId) {
+      setResolvedOrganizationId(storedOrganizationId);
     }
   }, []);
 
@@ -40,9 +42,7 @@ export const ConfirmationPage = () => {
         </div>
         <Button asChild className="w-full justify-center">
           <Link
-            href={
-              resolvedWorkspaceId ? `/workspaces/${resolvedWorkspaceId}/settings/organization/billing` : "/"
-            }>
+            href={resolvedOrganizationId ? `/organizations/${resolvedOrganizationId}/settings/billing` : "/"}>
             {t("billing_confirmation.back_to_billing_overview")}
           </Link>
         </Button>

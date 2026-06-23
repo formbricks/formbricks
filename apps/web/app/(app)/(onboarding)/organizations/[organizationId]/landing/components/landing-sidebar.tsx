@@ -4,6 +4,7 @@ import {
   ArrowUpRightIcon,
   Building2Icon,
   ChevronRightIcon,
+  CogIcon,
   Loader2,
   LogOutIcon,
   PlusIcon,
@@ -179,6 +180,20 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Organization settings — reachable without a workspace; per-item access is role-gated inside. */}
+        <Link href={`/organizations/${organization.id}/settings/general`} className={switcherTriggerClasses}>
+          <div className="flex w-full items-center gap-3">
+            <span className={switcherIconClasses}>
+              <CogIcon className="size-4" strokeWidth={1.5} />
+            </span>
+            <div className="grow overflow-hidden">
+              <p className="truncate text-sm font-bold text-slate-700">{t("common.settings")}</p>
+              <p className="text-sm text-slate-500">{t("common.organization")}</p>
+            </div>
+            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+          </div>
+        </Link>
 
         {/* User Dropdown */}
         <DropdownMenu>

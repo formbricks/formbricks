@@ -30,7 +30,7 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   const firstWorkspace = workspaces[0];
 
   if (isBilling) {
-    return redirect(`/workspaces/${firstWorkspace.id}/settings/organization/billing`);
+    return redirect(`/organizations/${organizationId}/settings/billing`);
   }
 
   return redirect(`/workspaces/${firstWorkspace.id}/`);

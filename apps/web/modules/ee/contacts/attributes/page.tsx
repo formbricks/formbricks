@@ -26,6 +26,7 @@ export const AttributesPage = async ({
       pageTitle={t("common.contacts")}
       activeId="attributes"
       workspaceId={params.workspaceId}
+      organizationId={organization.id}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
       cta={<CreateAttributeModal workspaceId={workspace.id} />}>

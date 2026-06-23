@@ -4,14 +4,14 @@ import { getAIUnavailableAction } from "./ai-availability";
 describe("ai availability helpers", () => {
   test("returns the organization settings action when AI is not enabled", () => {
     expect(getAIUnavailableAction("not_enabled", "workspace-1")).toEqual({
-      href: "/workspaces/workspace-1/settings/organization/general",
+      href: "/organizations/workspace-1/settings/general",
       type: "enable_ai",
     });
   });
 
   test("returns the billing action when AI is not in the plan", () => {
     expect(getAIUnavailableAction("not_in_plan", "workspace-1")).toEqual({
-      href: "/workspaces/workspace-1/settings/organization/billing",
+      href: "/organizations/workspace-1/settings/billing",
       type: "upgrade_plan",
     });
   });

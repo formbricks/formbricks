@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import {
   AdvancedChartBuilder,
@@ -56,6 +57,7 @@ export function CreateChartView({
   aiUnavailableReason,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
   const isEditing = !!chartId;
 
   const {
@@ -230,7 +232,7 @@ export function CreateChartView({
                   <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
                   <Link
                     className="mt-1 inline-block font-medium underline"
-                    href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
+                    href={`/organizations/${workspace?.organizationId}/settings/feedback-directories`}>
                     {t("workspace.analysis.charts.go_to_feedback_directories")}
                   </Link>
                 </div>

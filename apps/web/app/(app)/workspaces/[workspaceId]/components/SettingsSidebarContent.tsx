@@ -45,6 +45,8 @@ interface SettingsSidebarContentProps {
   isFormbricksCloud: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
+  // Hidden when the user has no workspace (org/account settings still render).
+  hideWorkspaceSection?: boolean;
   // Workspace switcher
   workspaces: { id: string; name: string }[];
   isLoadingWorkspaces: boolean;
@@ -228,6 +230,7 @@ export const SettingsSidebarContent = ({
   isFormbricksCloud,
   isCollapsed,
   isTextVisible,
+  hideWorkspaceSection = false,
   workspaces,
   isLoadingWorkspaces,
   onWorkspaceChange,
@@ -243,7 +246,11 @@ export const SettingsSidebarContent = ({
   const isOwnerOrManager = isOwner || isManager;
   const iconClassName = "h-4 w-4 shrink-0";
 
+  // Workspace items stay nested under the workspace; organization and account settings are now
+  // scoped to their own top-level routes so they work with or without a current workspace.
   const basePath = `/workspaces/${workspaceId}/settings`;
+  const organizationBasePath = `/organizations/${organizationId}/settings`;
+  const accountBasePath = `/account/settings`;
 
   const workspaceItems: NavItem[] = [
     {
@@ -315,21 +322,21 @@ export const SettingsSidebarContent = ({
     {
       id: "org-general",
       label: t("common.general"),
-      href: `${basePath}/organization/general`,
+      href: `${organizationBasePath}/general`,
       icon: <Building2Icon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "org-teams",
       label: t("common.teams"),
-      href: `${basePath}/organization/teams`,
+      href: `${organizationBasePath}/teams`,
       icon: <UsersIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "org-feedback-directories",
       label: t("workspace.settings.feedback_directories.nav_label"),
-      href: `${basePath}/organization/feedback-directories`,
+      href: `${organizationBasePath}/feedback-directories`,
       icon: <FoldersIcon className={iconClassName} />,
       hidden: isMember,
       disabled: !isOwnerOrManager,
@@ -337,28 +344,28 @@ export const SettingsSidebarContent = ({
     {
       id: "org-api-keys",
       label: t("common.api_keys"),
-      href: `${basePath}/organization/api-keys`,
+      href: `${organizationBasePath}/api-keys`,
       icon: <KeyIcon className={iconClassName} />,
       hidden: !isOwnerOrManager,
     },
     {
       id: "org-domain",
       label: t("common.domain"),
-      href: `${basePath}/organization/domain`,
+      href: `${organizationBasePath}/domain`,
       icon: <GlobeIcon className={iconClassName} />,
       hidden: isFormbricksCloud,
     },
     {
       id: "org-billing",
       label: t("common.billing"),
-      href: `${basePath}/organization/billing`,
+      href: `${organizationBasePath}/billing`,
       icon: <CreditCardIcon className={iconClassName} />,
       hidden: !isFormbricksCloud,
     },
     {
       id: "org-enterprise",
       label: t("common.enterprise_license"),
-      href: `${basePath}/organization/enterprise`,
+      href: `${organizationBasePath}/enterprise`,
       icon: <ShieldIcon className={iconClassName} />,
       hidden: isFormbricksCloud,
       disabled: isMember || isBilling,
@@ -369,13 +376,13 @@ export const SettingsSidebarContent = ({
     {
       id: "profile",
       label: t("common.your_profile"),
-      href: `${basePath}/account/profile`,
+      href: `${accountBasePath}/profile`,
       icon: <UserCircleIcon className={iconClassName} />,
     },
     {
       id: "notifications",
       label: t("common.notifications"),
-      href: `${basePath}/account/notifications`,
+      href: `${accountBasePath}/notifications`,
       icon: <BellIcon className={iconClassName} />,
       disabled: isBilling,
     },
@@ -403,20 +410,22 @@ export const SettingsSidebarContent = ({
 
   return (
     <div className="flex flex-col overflow-y-auto">
-      <div>
-        <SectionHeader
-          label={t("common.workspace")}
-          isCollapsed={isCollapsed}
-          isTextVisible={isTextVisible}
-          switcherName={workspaceName}
-          switcherItems={workspaces}
-          isLoadingSwitcher={isLoadingWorkspaces}
-          currentId={workspaceId}
-          onSwitcherChange={onWorkspaceChange}
-          onSwitcherOpen={onWorkspaceDropdownOpen}
-        />
-        {renderSection(workspaceItems)}
-      </div>
+      {!hideWorkspaceSection && (
+        <div>
+          <SectionHeader
+            label={t("common.workspace")}
+            isCollapsed={isCollapsed}
+            isTextVisible={isTextVisible}
+            switcherName={workspaceName}
+            switcherItems={workspaces}
+            isLoadingSwitcher={isLoadingWorkspaces}
+            currentId={workspaceId}
+            onSwitcherChange={onWorkspaceChange}
+            onSwitcherOpen={onWorkspaceDropdownOpen}
+          />
+          {renderSection(workspaceItems)}
+        </div>
+      )}
 
       <div>
         <SectionHeader

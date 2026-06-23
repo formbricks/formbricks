@@ -10,6 +10,7 @@ import {
   TFeedbackSourceWithMappings,
   THubTargetField,
 } from "@formbricks/types/feedback-source";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
   createFeedbackSourceWithMappingsAction,
@@ -43,6 +44,7 @@ export function FeedbackSourcesSection({
   isReadOnly,
 }: Readonly<FeedbackSourcesSectionProps>) {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingFeedbackSource, setEditingFeedbackSource] = useState<TFeedbackSourceWithMappings | null>(
@@ -206,7 +208,7 @@ export function FeedbackSourcesSection({
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
             {!isReadOnly && (
               <AlertButton asChild>
-                <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
+                <Link href={`/organizations/${workspace?.organizationId}/settings/feedback-directories`}>
                   {t("workspace.unify.manage_directories")}
                 </Link>
               </AlertButton>

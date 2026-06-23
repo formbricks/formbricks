@@ -35,7 +35,7 @@ export const BulkInviteTab = ({
 }: BulkInviteTabProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const organizationSettingsBasePath = `/organizations/${workspace?.organizationId}/settings`;
   const [csvFile, setCSVFile] = useState<File>();
 
   const onFileInputChange = (files: File[]) => {
@@ -109,9 +109,7 @@ export const BulkInviteTab = ({
     const upgradeButtons: [ModalButton, ModalButton] = [
       {
         text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
-        href: isFormbricksCloud
-          ? `${workspaceBasePath}/settings/organization/billing`
-          : enterpriseLicenseRequestFormUrl,
+        href: isFormbricksCloud ? `${organizationSettingsBasePath}/billing` : enterpriseLicenseRequestFormUrl,
       },
       {
         text: t("common.learn_more"),

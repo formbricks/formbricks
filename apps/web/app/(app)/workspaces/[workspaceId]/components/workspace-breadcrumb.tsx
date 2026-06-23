@@ -126,7 +126,7 @@ export const WorkspaceBreadcrumb = ({
       return [
         {
           text: t("workspace.settings.billing.upgrade"),
-          href: `${workspaceBasePath}/settings/organization/billing`,
+          href: `/organizations/${currentOrganizationId}/settings/billing`,
         },
         {
           text: t("common.cancel"),
@@ -139,7 +139,7 @@ export const WorkspaceBreadcrumb = ({
       {
         text: t("workspace.settings.billing.upgrade"),
         href: isLicenseActive
-          ? `${workspaceBasePath}/settings/organization/enterprise`
+          ? `/organizations/${currentOrganizationId}/settings/enterprise`
           : "https://formbricks.com/upgrade-self-hosted-license",
       },
       {

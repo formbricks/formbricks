@@ -6,7 +6,6 @@ import { EditAlerts } from "@/app/(app)/workspaces/[workspaceId]/settings/accoun
 import { IntegrationsTip } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/components/IntegrationsTip";
 import type { Membership } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/types";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { redirectBillingRoleFromRestrictedSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/lib/redirect-billing-role";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -23,7 +22,6 @@ const setCompleteNotificationSettings = (
   };
   for (const membership of memberships) {
     for (const workspace of membership.organization.workspaces) {
-      // set default values for alerts
       for (const survey of workspace.surveys) {
         newNotificationSettings.alert[survey.id] =
           (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
@@ -45,13 +43,11 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
       },
       OR: [
         {
-          // Fetch all workspaces if user role is owner or manager
           role: {
             in: ["owner", "manager"],
           },
         },
         {
-          // Filter workspaces based on team membership if user is not owner or manager
           organization: {
             workspaces: {
               some: {
@@ -78,11 +74,9 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
           id: true,
           name: true,
           workspaces: {
-            // Apply conditional filtering based on user's role
             where: {
               OR: [
                 {
-                  // Fetch all workspaces if user is owner or manager
                   organization: {
                     memberships: {
                       some: {
@@ -95,7 +89,6 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
                   },
                 },
                 {
-                  // Only include workspaces accessible through teams if user is not owner or manager
                   workspaceTeams: {
                     some: {
                       team: {
@@ -128,13 +121,7 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   return memberships;
 };
 
-const Page = async (props: {
-  params: Promise<{ workspaceId: string }>;
-  searchParams: Promise<Record<string, string>>;
-}) => {
-  const params = await props.params;
-  await redirectBillingRoleFromRestrictedSettings(params.workspaceId);
-
+const Page = async (props: { searchParams: Promise<Record<string, string>> }) => {
   const searchParams = await props.searchParams;
   const t = await getTranslate();
   const session = await getServerSession(authOptions);

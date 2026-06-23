@@ -43,7 +43,7 @@ export const IndividualInviteTab = ({
   enterpriseLicenseRequestFormUrl,
 }: IndividualInviteTabProps) => {
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const organizationSettingsBasePath = `/organizations/${workspace?.organizationId}/settings`;
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z
@@ -193,7 +193,7 @@ export const IndividualInviteTab = ({
                 target="_blank"
                 href={
                   isFormbricksCloud
-                    ? `${workspaceBasePath}/settings/organization/billing`
+                    ? `${organizationSettingsBasePath}/billing`
                     : enterpriseLicenseRequestFormUrl
                 }>
                 {t("common.upgrade_plan")}

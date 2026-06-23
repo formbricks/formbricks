@@ -169,13 +169,13 @@ export const PersonalLinksTab = ({
           {
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
             href: isFormbricksCloud
-              ? `/workspaces/${workspace?.id}/settings/organization/billing`
+              ? `/organizations/${workspace?.organizationId}/settings/billing`
               : enterpriseLicenseRequestFormUrl,
           },
           {
             text: t("common.learn_more"),
             href: isFormbricksCloud
-              ? `/workspaces/${workspace?.id}/settings/organization/billing`
+              ? `/organizations/${workspace?.organizationId}/settings/billing`
               : "https://formbricks.com/learn-more-self-hosting-license",
           },
         ]}

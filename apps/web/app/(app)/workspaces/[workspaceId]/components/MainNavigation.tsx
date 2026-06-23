@@ -202,7 +202,7 @@ export const MainNavigation = ({
   const dropdownNavigation = [
     {
       label: t("common.account"),
-      href: `/workspaces/${workspace.id}/settings/account/profile`,
+      href: `/account/settings/profile`,
       icon: UserCircleIcon,
     },
     {
@@ -353,7 +353,7 @@ export const MainNavigation = ({
   ]);
 
   const mainNavigationLink = isBilling
-    ? getBillingFallbackPath(workspace.id, isFormbricksCloud)
+    ? getBillingFallbackPath(organization.id, isFormbricksCloud)
     : `/workspaces/${workspace.id}/surveys/`;
 
   const handleWorkspaceChange = (workspaceId: string) => {
@@ -368,7 +368,7 @@ export const MainNavigation = ({
   const handleOrganizationChange = (organizationId: string) => {
     const targetPath =
       organizationId === organization.id
-        ? `/workspaces/${workspace.id}/settings/organization/general`
+        ? `/organizations/${organization.id}/settings/general`
         : `/organizations/${organizationId}/`;
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
@@ -400,7 +400,7 @@ export const MainNavigation = ({
       return [
         {
           text: t("workspace.settings.billing.upgrade"),
-          href: `/workspaces/${workspace.id}/settings/organization/billing`,
+          href: `/organizations/${organization.id}/settings/billing`,
         },
         {
           text: t("common.cancel"),
@@ -413,7 +413,7 @@ export const MainNavigation = ({
       {
         text: t("workspace.settings.billing.upgrade"),
         href: isLicenseActive
-          ? `/workspaces/${workspace.id}/settings/organization/enterprise`
+          ? `/organizations/${organization.id}/settings/enterprise`
           : "https://formbricks.com/upgrade-self-hosted-license",
       },
       {
@@ -436,7 +436,7 @@ export const MainNavigation = ({
     (id: string) => {
       startTransition(() => {
         if (id === organization.id) {
-          router.push(`/workspaces/${workspace.id}/settings/organization/general`);
+          router.push(`/organizations/${organization.id}/settings/general`);
         } else {
           router.push(`/organizations/${id}/`);
         }
@@ -602,12 +602,10 @@ export const MainNavigation = ({
                       responseCount={responseCount}
                       responseLimit={organization.billing.limits.monthly.responses}
                       baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
-                      billingHref={`/workspaces/${workspace.id}/settings/organization/billing`}
+                      billingHref={`/organizations/${organization.id}/settings/billing`}
                     />
                   ) : (
-                    <Link
-                      href={`/workspaces/${workspace.id}/settings/organization/billing`}
-                      className="m-2 block">
+                    <Link href={`/organizations/${organization.id}/settings/billing`} className="m-2 block">
                       <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
                     </Link>
                   ))}
@@ -761,7 +759,7 @@ export const MainNavigation = ({
                       <DropdownMenuSeparator />
                       <DropdownMenuCheckboxItem
                         onClick={() =>
-                          handleSettingNavigation(`/workspaces/${workspace.id}/settings/organization/general`)
+                          handleSettingNavigation(`/organizations/${organization.id}/settings/general`)
                         }
                         className="cursor-pointer">
                         <SettingsIcon className="mr-2 size-4" strokeWidth={1.5} />

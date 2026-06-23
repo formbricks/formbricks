@@ -107,7 +107,7 @@ export const EditAlerts = ({
               {t("workspace.settings.notifications.want_to_loop_in_organization_mates")}{" "}
               <Link
                 className="font-semibold"
-                href={`/workspaces/${currentWorkspace?.id}/settings/organization/general`}>
+                href={`/organizations/${currentWorkspace?.organizationId}/settings/teams`}>
                 {t("common.invite_them")}
               </Link>
             </p>

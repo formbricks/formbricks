@@ -9,18 +9,18 @@ export type TAIUnavailableAction = {
 
 export const getAIUnavailableAction = (
   reason: TAIUnavailableReason | undefined,
-  workspaceId: string
+  organizationId: string
 ): TAIUnavailableAction | undefined => {
   if (reason === "not_enabled") {
     return {
-      href: `/workspaces/${workspaceId}/settings/organization/general`,
+      href: `/organizations/${organizationId}/settings/general`,
       type: "enable_ai",
     };
   }
 
   if (reason === "not_in_plan") {
     return {
-      href: `/workspaces/${workspaceId}/settings/organization/billing`,
+      href: `/organizations/${organizationId}/settings/billing`,
       type: "upgrade_plan",
     };
   }

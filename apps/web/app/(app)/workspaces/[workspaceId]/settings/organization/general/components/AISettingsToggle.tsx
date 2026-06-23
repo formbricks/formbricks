@@ -33,7 +33,7 @@ export const AISettingsToggle = ({
   enterpriseLicenseRequestFormUrl,
 }: Readonly<AISettingsToggleProps>) => {
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const organizationBillingPath = `/organizations/${workspace?.organizationId}/settings/billing`;
   const [loadingField, setLoadingField] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
@@ -80,9 +80,7 @@ export const AISettingsToggle = ({
   const upgradeButtons: [ModalButton, ModalButton] = [
     {
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
-      href: isFormbricksCloud
-        ? `${workspaceBasePath}/settings/organization/billing`
-        : enterpriseLicenseRequestFormUrl,
+      href: isFormbricksCloud ? organizationBillingPath : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),

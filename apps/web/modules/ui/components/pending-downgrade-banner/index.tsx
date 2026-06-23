@@ -25,7 +25,7 @@ export const PendingDowngradeBanner = ({
   status,
 }: PendingDowngradeBannerProps) => {
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const organizationSettingsBasePath = `/organizations/${workspace?.organizationId}/settings`;
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
   const { t } = useTranslation();
   const isLastCheckedWithin72Hours = lastChecked
@@ -87,7 +87,7 @@ export const PendingDowngradeBanner = ({
                     </p>
                     <p className="mt-1 text-sm text-slate-500">{getDescription()}</p>
 
-                    <Link href={`${workspaceBasePath}/settings/organization/enterprise`}>
+                    <Link href={`${organizationSettingsBasePath}/enterprise`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>
