@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "验证 电子邮件 已 发送！请 检查 您的 收件箱。",
       "verification_email_successfully_sent_info": "如果有一个 账户 与 {email} 相关 联，我们已将 验证 链接 发送到该 地址 。请查看您的 收件箱 以完成 注册 。",
       "you_didnt_receive_an_email_or_your_link_expired": "您 没 有 收 到 电 子 邮 件 或者 链接 已 过 期 ?"
-    },
-    "verify": {
-      "no_token_provided": "未提供 Token",
-      "verifying": "验证 ..."
     }
   },
   "billing_confirmation": {
@@ -2605,12 +2601,10 @@
         "confirm_delete_my_account": "删除我的账户",
         "confirm_your_current_password_to_get_started": "确认 您 的 当前 密码 以 开始。",
         "delete_account": "删除账号",
-        "delete_account_confirmation_required": "Email confirmation is required to delete your account.",
         "disable_two_factor_authentication": "禁用 双因素 认证",
         "disable_two_factor_authentication_description": "如果你需要禁用 2FA ，我们建议尽快重新启用。",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "每个备用代码只能使用一次，以在没有您的身份验证器的情况下授予访问权限。",
         "email_change_initiated": "您的 邮箱 更改 请求 已启动。",
-        "email_confirmation_does_not_match": "Email confirmation does not match.",
         "enable_two_factor_authentication": "启用 双因素 认证",
         "enter_the_code_from_your_authenticator_app_below": "从 你的 身份验证 应用 中 输入 代码 。",
         "lost_access": "失去访问",
@@ -2623,8 +2617,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "请 将 以下 备份 代码 保存在 安全地 方。",
         "scan_the_qr_code_below_with_your_authenticator_app": "用 你的 身份验证 应用 扫描 下方 的 二维码。",
         "security_description": "管理你的密码和其他安全设置，如双因素认证 (2FA)。",
-        "sso_identity_confirmation_failed": "SSO 身份确认失败。请尝试再次删除您的账户。",
-        "sso_identity_confirmation_may_be_required_for_deletion": "对于 SSO 账户，选择删除可能会将您重定向到身份提供商以确认此账户。如果确认的是同一账户，删除将自动继续。",
         "two_factor_authentication": "双因素 认证",
         "two_factor_authentication_description": "为你的账户增加额外的安全层，以防密码被盗。",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "双因素 认证 已启用 。 请输入 从 你的 身份验证 应用 中 的 六 位 数 字 代码 。",

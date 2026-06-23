@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Verificatie-e-mail verzonden! Controleer uw inbox.",
       "verification_email_successfully_sent_info": "Als er een account is gekoppeld aan {email}, hebben we een verificatielink naar dat adres gestuurd. Controleer uw inbox om de aanmelding te voltooien.",
       "you_didnt_receive_an_email_or_your_link_expired": "Heeft u geen e-mail ontvangen of is uw link verlopen?"
-    },
-    "verify": {
-      "no_token_provided": "Geen token verstrekt",
-      "verifying": "Verifiëren..."
     }
   },
   "billing_confirmation": {
@@ -2605,12 +2601,10 @@
         "confirm_delete_my_account": "Verwijder mijn account",
         "confirm_your_current_password_to_get_started": "Bevestig uw huidige wachtwoord om aan de slag te gaan.",
         "delete_account": "Account verwijderen",
-        "delete_account_confirmation_required": "Email confirmation is required to delete your account.",
         "disable_two_factor_authentication": "Schakel tweefactorauthenticatie uit",
         "disable_two_factor_authentication_description": "Als u 2FA moet uitschakelen, raden wij u aan dit zo snel mogelijk opnieuw in te schakelen.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Elke back-upcode kan precies één keer worden gebruikt om toegang te verlenen zonder uw authenticator.",
         "email_change_initiated": "Uw verzoek tot wijziging van het e-mailadres is ingediend.",
-        "email_confirmation_does_not_match": "Email confirmation does not match.",
         "enable_two_factor_authentication": "Schakel tweefactorauthenticatie in",
         "enter_the_code_from_your_authenticator_app_below": "Voer hieronder de code uit uw authenticator-app in.",
         "lost_access": "Toegang verloren",
@@ -2623,8 +2617,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "Bewaar de volgende back-upcodes op een veilige plaats.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Scan onderstaande QR-code met uw authenticator-app.",
         "security_description": "Beheer uw wachtwoord en andere beveiligingsinstellingen zoals tweefactorauthenticatie (2FA).",
-        "sso_identity_confirmation_failed": "SSO-identiteitsbevestiging mislukt. Probeer je account opnieuw te verwijderen.",
-        "sso_identity_confirmation_may_be_required_for_deletion": "Voor SSO-accounts kan het zijn dat je bij het selecteren van Verwijderen wordt doorgestuurd naar je identiteitsprovider om dit account te bevestigen. Als hetzelfde account wordt bevestigd, gaat het verwijderen automatisch door.",
         "two_factor_authentication": "Tweefactorauthenticatie",
         "two_factor_authentication_description": "Voeg een extra beveiligingslaag toe aan uw account voor het geval uw wachtwoord wordt gestolen.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Tweefactorauthenticatie ingeschakeld. Voer de zescijferige code van uw authenticator-app in.",
