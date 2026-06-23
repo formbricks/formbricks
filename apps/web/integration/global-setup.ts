@@ -14,11 +14,29 @@ import { execSync } from "node:child_process";
  * engine. A schema-only dump+restore is exact and engine-agnostic. Container/db names are overridable
  * via env so CI can point at its own services.
  */
-const CONTAINER = process.env.TEST_DB_CONTAINER ?? "formbricks-postgres-1";
-const SOURCE_DB = process.env.TEST_DB_SOURCE ?? "formbricks";
-const TEST_DB = process.env.TEST_DB_NAME ?? "formbricks_ba_test";
-const REDIS_CONTAINER = process.env.TEST_REDIS_CONTAINER ?? "formbricks-valkey-1";
-const REDIS_TEST_DB = process.env.TEST_REDIS_DB ?? "15";
+// These overrides are interpolated into shell commands below, so validate them — a hostile value
+// (e.g. TEST_DB_CONTAINER="x; rm -rf /") must not be able to inject commands. Container/db names are
+// alphanumerics + _ . - ; the Redis DB index is digits. Anything else aborts the harness loudly.
+const safeEnv = (value: string, pattern: RegExp, name: string): string => {
+  if (!pattern.test(value)) {
+    throw new Error(`Unsafe ${name} for the integration harness: ${JSON.stringify(value)}`);
+  }
+  return value;
+};
+const NAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
+const CONTAINER = safeEnv(
+  process.env.TEST_DB_CONTAINER ?? "formbricks-postgres-1",
+  NAME_PATTERN,
+  "TEST_DB_CONTAINER"
+);
+const SOURCE_DB = safeEnv(process.env.TEST_DB_SOURCE ?? "formbricks", NAME_PATTERN, "TEST_DB_SOURCE");
+const TEST_DB = safeEnv(process.env.TEST_DB_NAME ?? "formbricks_ba_test", NAME_PATTERN, "TEST_DB_NAME");
+const REDIS_CONTAINER = safeEnv(
+  process.env.TEST_REDIS_CONTAINER ?? "formbricks-valkey-1",
+  NAME_PATTERN,
+  "TEST_REDIS_CONTAINER"
+);
+const REDIS_TEST_DB = safeEnv(process.env.TEST_REDIS_DB ?? "15", /^\d+$/, "TEST_REDIS_DB");
 
 const sh = (cmd: string): string => execSync(cmd, { stdio: "pipe" }).toString();
 

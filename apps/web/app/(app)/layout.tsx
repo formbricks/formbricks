@@ -12,7 +12,7 @@ import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
-const AppLayout = async ({ children }: { children: React.ReactNode }) => {
+const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) => {
   const session = await getSession();
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 

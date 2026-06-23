@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getHasNoOrganizations, getIsFreshInstance } from "@/lib/instance/service";
 import { getSession } from "@/modules/auth/lib/session";
 
-export const FreshInstanceLayout = async ({ children }: { children: React.ReactNode }) => {
+export const FreshInstanceLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) => {
   const session = await getSession();
   const isFreshInstance = await getIsFreshInstance();
 

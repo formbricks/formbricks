@@ -4,7 +4,7 @@ import { getIsFreshInstance } from "@/lib/instance/service";
 import { getSession } from "@/modules/auth/lib/session";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
-export const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
+export const AuthLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) => {
   const [session, isFreshInstance, isMultiOrgEnabled] = await Promise.all([
     getSession(),
     getIsFreshInstance(),
