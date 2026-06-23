@@ -137,7 +137,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should accept custom options", () => {
-      const customOptions = { expiresIn: "1h" };
+      const customOptions = { expiresIn: "1h" as const };
       const token = createToken(mockUser.id, customOptions);
       expect(token).toBeDefined();
 

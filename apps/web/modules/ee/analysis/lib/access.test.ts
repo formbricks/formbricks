@@ -36,7 +36,7 @@ const accessInput = {
   organizationId: "organization-1",
   workspaceId: "workspace-1",
   userId: "user-1",
-  source: "charts.executeQueryAction",
+  source: "charts.executeQueryAction" as const,
 };
 
 const workspaceAccessInput = {

@@ -30,7 +30,7 @@ vi.mock("@/modules/auth/lib/session", () => ({
 vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 
 describe("getOrganizationAuth", () => {
-  const mockSession = { user: { id: "user-1" } };
+  const mockSession = { user: { id: "user-1" }, expires: new Date().toISOString() };
   const mockOrg = { id: "org-1" } as TOrganization;
   const mockMembership: TMembership = {
     role: "member",

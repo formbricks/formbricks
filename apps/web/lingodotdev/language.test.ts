@@ -26,6 +26,7 @@ describe("lingodotdev getLocale", () => {
       user: {
         id: "user-123",
       },
+      expires: "2999-01-01T00:00:00.000Z",
     };
     const userLocale = "de-DE";
 
@@ -59,6 +60,7 @@ describe("lingodotdev getLocale", () => {
       user: {
         id: "user-123",
       },
+      expires: "2999-01-01T00:00:00.000Z",
     };
 
     vi.mocked(getSession).mockResolvedValue(mockSession);

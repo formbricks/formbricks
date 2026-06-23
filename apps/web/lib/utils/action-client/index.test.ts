@@ -269,7 +269,7 @@ describe("authenticatedActionClient", () => {
   });
 
   test("throws AuthorizationError when user is not found", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" } });
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" }, expires: "2999-01-01T00:00:00.000Z" });
     vi.mocked(getUser).mockResolvedValue(null as any);
 
     const action = authenticatedActionClient.action(async () => "ok");
@@ -280,7 +280,7 @@ describe("authenticatedActionClient", () => {
   });
 
   test("executes action successfully when session and user exist", async () => {
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" } });
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" }, expires: "2999-01-01T00:00:00.000Z" });
     vi.mocked(getUser).mockResolvedValue({ id: "user-1", name: "Test" } as any);
 
     const action = authenticatedActionClient.action(async () => "success");

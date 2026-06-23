@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendVerificationEmail } from "@/modules/email";
@@ -90,7 +91,8 @@ describe("sso-recovery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(prisma.$transaction).mockImplementation(
-      async (callback: (tx: typeof tx) => Promise<unknown>) => await callback(tx)
+      async (callback: (txClient: Prisma.TransactionClient) => Promise<unknown>) =>
+        await callback(tx as unknown as Prisma.TransactionClient)
     );
     vi.mocked(buildVerificationRequestedPath).mockReturnValue(
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
@@ -114,7 +116,7 @@ describe("sso-recovery", () => {
         id: "user_1",
         email: "john.doe@example.com",
         locale: "en-US",
-        emailVerified: null,
+        emailVerified: false,
         isActive: true,
         identityProvider: "email",
         identityProviderAccountId: null,
@@ -152,7 +154,7 @@ describe("sso-recovery", () => {
           id: "user_1",
           email: "john.doe@example.com",
           locale: "en-US",
-          emailVerified: null,
+          emailVerified: false,
           isActive: true,
           identityProvider: "email",
           identityProviderAccountId: null,
