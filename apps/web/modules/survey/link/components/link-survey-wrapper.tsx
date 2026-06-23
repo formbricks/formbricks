@@ -1,11 +1,13 @@
 import { type JSX, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SurveyType, Workspace } from "@formbricks/database/prisma-browser";
+import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { LegalFooter } from "@/modules/survey/link/components/legal-footer";
 import { SurveyLoadingAnimation } from "@/modules/survey/link/components/survey-loading-animation";
+import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
@@ -48,7 +50,7 @@ export const LinkSurveyWrapper = ({
   publicDomain,
   isBrandingEnabled,
   dir = "auto",
-}: LinkSurveyWrapperProps) => {
+}: Readonly<LinkSurveyWrapperProps>) => {
   const { t } = useTranslation();
   //for embedded survey strip away all surrounding css
   const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false);
@@ -59,54 +61,103 @@ export const LinkSurveyWrapper = ({
     }
   };
   const styling = determineStyling();
-  if (isEmbed)
-    return (
+  const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
+  const hasLogo = !styling.isLogoHidden && !!(workspace.logo?.url || styling.logo?.url);
+  const showCardlessLogo = isCardless && hasLogo;
+  // Cardless surveys span the full available width; card-based surveys are capped to the configured width.
+  const cardMaxWidthStyle = isCardless ? undefined : { maxWidth: linkSurveyCardMaxWidth };
+
+  const renderEmbeddedLayout = () => (
+    <div className={cn("h-full w-full overflow-auto", !isCardless && "overflow-clip")}>
+      <SurveyLoadingAnimation
+        isWelcomeCardEnabled={isWelcomeCardEnabled}
+        isBrandingEnabled={isBrandingEnabled}
+      />
       <div
         className={cn(
-          "h-full w-full overflow-clip",
+          "flex h-full w-full flex-col",
+          isCardless && "overflow-hidden",
+          !isCardless && "mx-auto",
           styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
-        )}>
-        <SurveyLoadingAnimation
-          isWelcomeCardEnabled={isWelcomeCardEnabled}
-          isBrandingEnabled={isBrandingEnabled}
-        />
+        )}
+        style={cardMaxWidthStyle}>
         {children}
       </div>
-    );
-  else
-    return (
-      <div>
-        <SurveyLoadingAnimation
-          isWelcomeCardEnabled={isWelcomeCardEnabled}
-          isBackgroundLoaded={isBackgroundLoaded}
-          isBrandingEnabled={isBrandingEnabled}
-        />
-        <MediaBackground
-          surveyType={surveyType}
-          styling={styling}
-          onBackgroundLoaded={handleBackgroundLoaded}>
-          <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-clip">
-            {!styling.isLogoHidden && (workspace.logo?.url || styling.logo?.url) && (
-              <ClientLogo
-                workspaceLogo={workspace.logo}
-                workspaceId={workspaceId}
-                surveyLogo={styling.logo}
-                dir={dir}
-              />
+    </div>
+  );
+
+  const renderStandardLayout = () => (
+    <div>
+      <SurveyLoadingAnimation
+        isWelcomeCardEnabled={isWelcomeCardEnabled}
+        isBackgroundLoaded={isBackgroundLoaded}
+        isBrandingEnabled={isBrandingEnabled}
+      />
+      <MediaBackground
+        surveyType={surveyType}
+        styling={styling}
+        onBackgroundLoaded={handleBackgroundLoaded}
+        useNaturalHeight={isCardless}>
+        <div
+          className={cn(
+            "flex w-full justify-center",
+            isCardless
+              ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden"
+              : "max-h-dvh min-h-dvh items-center overflow-clip"
+          )}>
+          {!showCardlessLogo && hasLogo && (
+            <ClientLogo
+              workspaceLogo={workspace.logo}
+              workspaceId={workspaceId}
+              surveyLogo={styling.logo}
+              dir={dir}
+            />
+          )}
+          <div
+            className={cn(
+              "w-full",
+              isCardless ? "flex min-h-0 w-full flex-1 flex-col" : "mx-auto h-full space-y-6 px-1.5"
             )}
-            <div className="h-full w-full max-w-4xl space-y-6 px-1.5">
-              {isPreview && (
-                <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
-                  <div />
-                  {t("workspace.surveys.edit.survey_preview")}
-                  <ResetProgressButton onClick={handleResetSurvey} />
-                </div>
-              )}
+            style={cardMaxWidthStyle}>
+            {isPreview && (
+              <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
+                <div />
+                {t("workspace.surveys.edit.survey_preview")}
+                <ResetProgressButton onClick={handleResetSurvey} />
+              </div>
+            )}
+            <div
+              className={cn(
+                "flex min-h-0 w-full flex-1 flex-col",
+                isPreview && isCardless && "pt-8",
+                !isCardless && "justify-center"
+              )}>
               {children}
             </div>
+            {isCardless && (
+              <LegalFooter
+                IMPRINT_URL={IMPRINT_URL}
+                PRIVACY_URL={PRIVACY_URL}
+                TERMS_URL={TERMS_URL}
+                IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+                surveyUrl={publicDomain + "/s/" + surveyId}
+                isInFlow
+              />
+            )}
           </div>
-        </MediaBackground>
+        </div>
+      </MediaBackground>
+      {showCardlessLogo && (
+        <CardlessPreviewLogo
+          workspaceLogo={workspace.logo}
+          workspaceId={workspaceId}
+          surveyLogo={styling.logo}
+          previewSurvey={false}
+        />
+      )}
+      {!isCardless && (
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
@@ -114,6 +165,9 @@ export const LinkSurveyWrapper = ({
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
           surveyUrl={publicDomain + "/s/" + surveyId}
         />
-      </div>
-    );
+      )}
+    </div>
+  );
+
+  return isEmbed ? renderEmbeddedLayout() : renderStandardLayout();
 };

@@ -9,6 +9,7 @@ import type {
   TResponseVariables,
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { BlockConditional } from "@/components/general/block-conditional";
@@ -22,6 +23,7 @@ import { ResponseErrorComponent } from "@/components/general/response-error-comp
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
+import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
 import { evaluateLogic, performActions } from "@/lib/logic";
@@ -70,7 +72,10 @@ interface VariableStackEntry {
 
 export function Survey({
   appUrl,
-  workspaceId,
+  workspaceId: workspaceIdProp,
+  // Legacy SDKs (e.g. Android ≤ v1.2.0) pass `environmentId` instead of
+  // `workspaceId`. Accept it as a fallback so their response submission works.
+  environmentId,
   isPreviewMode = false,
   userId,
   contactId,
@@ -111,7 +116,9 @@ export function Survey({
   placement,
   offlineSupport = false,
   onOfflineStatusChange,
+  showCardlessPreviewLogoSlot = false,
 }: SurveyContainerProps) {
+  const workspaceId = workspaceIdProp ?? environmentId;
   let apiClient: ApiClient | null = null;
 
   if (appUrl && workspaceId) {
@@ -276,6 +283,9 @@ export function Survey({
     }
     return styling.cardArrangement?.appSurveys ?? "straight";
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
+  const isCardless = cardArrangement === "cardless";
+  const linkSurveyCardMaxWidth =
+    localSurvey.type === "link" ? getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth) : undefined;
 
   // Current block tracking (replaces currentQuestionIndex)
   const currentBlockIndex = localSurvey.blocks.findIndex((b) => b.id === blockId);
@@ -1110,6 +1120,7 @@ export function Survey({
             variablesData={currentVariables}
             isPreviewMode={isPreviewMode}
             fullSizeCards={fullSizeCards}
+            isCardless={isCardless}
           />
         );
       } else if (blockIdx >= localSurvey.blocks.length) {
@@ -1131,6 +1142,7 @@ export function Survey({
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
               fullSizeCards={fullSizeCards}
+              isCardless={isCardless}
               isOfflineWithPending={offlinePersistEnabled && !isOnline && isSurveyFinished}
             />
           );
@@ -1167,6 +1179,7 @@ export function Survey({
               onOpenExternalURL={onOpenExternalURL}
               dir={dir}
               fullSizeCards={fullSizeCards}
+              isCardless={isCardless}
             />
           )
         );
@@ -1185,44 +1198,51 @@ export function Survey({
         setHasInteracted={setHasInteracted}>
         <div
           className={cn(
-            "no-scrollbar bg-survey-bg flex h-full w-full flex-col justify-between overflow-hidden transition-opacity duration-1000 ease-in-out",
-            offset === 0 || cardArrangement === "simple" ? "opacity-100" : "opacity-0"
+            "no-scrollbar flex w-full flex-col justify-between transition-opacity duration-1000 ease-in-out",
+            isCardless ? "" : "bg-survey-bg h-full overflow-hidden",
+            offset === 0 || cardArrangement === "simple" || isCardless ? "opacity-100" : "opacity-0"
           )}>
           <div className={cn("relative")}>
-            <div className="flex w-full flex-col items-end">
-              {showProgressBar ? <ProgressBar survey={localSurvey} blockId={blockId} /> : null}
+            {(!isCardless && showProgressBar) || isLanguageSwitchVisible || isCloseButtonVisible ? (
+              <div className="flex w-full flex-col items-end">
+                {!isCardless && showProgressBar ? (
+                  <ProgressBar survey={localSurvey} blockId={blockId} />
+                ) : null}
 
-              <div
-                className={cn(
-                  "relative w-full",
-                  isCloseButtonVisible || isLanguageSwitchVisible ? "h-8" : "h-5"
-                )}>
-                <div className={cn("flex w-full items-center justify-end")}>
-                  {isLanguageSwitchVisible && (
-                    <LanguageSwitch
-                      survey={localSurvey}
-                      surveyLanguages={localSurvey.languages}
-                      setSelectedLanguageCode={setSelectedLanguage}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
-                      borderRadius={styling.roundness ?? 8}
-                      setDir={setDir}
-                      dir={dir}
-                    />
-                  )}
-                  {isLanguageSwitchVisible && isCloseButtonVisible && (
-                    <div aria-hidden="true" className="z-1001 h-5 w-px bg-slate-200" />
-                  )}
+                {isCloseButtonVisible || isLanguageSwitchVisible ? (
+                  <div
+                    className={cn(
+                      "relative w-full",
+                      isCloseButtonVisible || isLanguageSwitchVisible ? "h-8" : "h-5"
+                    )}>
+                    <div className={cn("flex w-full items-center justify-end")}>
+                      {isLanguageSwitchVisible && (
+                        <LanguageSwitch
+                          survey={localSurvey}
+                          surveyLanguages={localSurvey.languages}
+                          setSelectedLanguageCode={setSelectedLanguage}
+                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          borderRadius={styling.roundness ?? 8}
+                          setDir={setDir}
+                          dir={dir}
+                        />
+                      )}
+                      {isLanguageSwitchVisible && isCloseButtonVisible && (
+                        <div aria-hidden="true" className="z-1001 h-5 w-px bg-slate-200" />
+                      )}
 
-                  {isCloseButtonVisible && (
-                    <SurveyCloseButton
-                      onClose={onClose}
-                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
-                      borderRadius={styling.roundness ?? 8}
-                    />
-                  )}
-                </div>
+                      {isCloseButtonVisible && (
+                        <SurveyCloseButton
+                          onClose={onClose}
+                          hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                          borderRadius={styling.roundness ?? 8}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            </div>
+            ) : null}
             <div
               ref={contentRef}
               className={cn(
@@ -1246,7 +1266,7 @@ export function Survey({
     );
   };
 
-  return (
+  const stackedCardsContainer = (
     <StackedCardsContainer
       cardArrangement={cardArrangement}
       currentBlockId={blockId}
@@ -1259,4 +1279,21 @@ export function Survey({
       placement={placement}
     />
   );
+
+  if (isCardless) {
+    return (
+      <CardlessSurveyLayout
+        survey={localSurvey}
+        blockId={blockId}
+        styling={styling}
+        showProgressBar={showProgressBar}
+        isPreviewMode={isPreviewMode}
+        showCardlessPreviewLogoSlot={showCardlessPreviewLogoSlot}
+        linkSurveyCardMaxWidth={linkSurveyCardMaxWidth}>
+        {stackedCardsContainer}
+      </CardlessSurveyLayout>
+    );
+  }
+
+  return stackedCardsContainer;
 }

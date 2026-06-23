@@ -353,6 +353,13 @@ taxonomy:
     temperature: "0.1"
     maxAttempts: "4"
     timeoutSeconds: "60"
+    vertex:
+      project: ""
+      location: ""
+      # Existing secret must contain credentialsJsonSecretKey.
+      existingSecret: ""
+      credentialsJsonSecretKey: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON
+      credentialsJson: ""
 
   embeddingDimension: "768"
   minEmbeddedRecords: "20"

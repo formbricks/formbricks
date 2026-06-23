@@ -12,4 +12,5 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   AI_SMART_TOOLS: "ai-smart-tools",
   FEEDBACK_DIRECTORIES: "feedback-directories",
   DASHBOARDS: "dashboards",
+  BULK_INVITE: "bulk-invite",
 } as const;
