@@ -57,8 +57,11 @@ Then start the stack after updating `.env`:
 docker compose up -d
 docker compose ps
 docker compose logs vllm formbricks
-curl -fsS http://127.0.0.1:8000/health
+curl -fsS "http://127.0.0.1:${QWEN_VLLM_PORT:-8000}/health"
 ```
+
+If you set `QWEN_VLLM_PORT` only in `.env`, replace the port in the health check with that value or export it
+in your shell first.
 
 The vLLM service requires a GPU-capable Docker host with the NVIDIA Container Toolkit installed. It stores downloaded model files in the `qwen-model-cache` Docker volume and binds the OpenAI-compatible endpoint to `127.0.0.1:8000` by default for local checks.
 
