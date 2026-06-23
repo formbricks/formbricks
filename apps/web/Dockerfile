@@ -280,9 +280,8 @@ COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
 
 COPY --from=installer /app/node_modules/@opentelemetry/sdk-logs ./node_modules/@opentelemetry/sdk-logs
-RUN chmod -R 755 ./node_modules/@opentelemetry/sdk-logs
-
-RUN OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=console node -e "\
+RUN chmod -R 755 ./node_modules/@opentelemetry/sdk-logs \
+    && OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=console node -e "\
       const pino = require('pino'); \
       const target = process.cwd() + '/node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js'; \
       process.on('uncaughtException', (error) => { console.error(error); process.exit(1); }); \
