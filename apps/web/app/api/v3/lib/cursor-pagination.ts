@@ -15,11 +15,18 @@ const encodeIdCursor = (id: string): string => Buffer.from(id, "utf8").toString(
  * cursor contract) instead of silently hiding data behind a 200.
  */
 const decodeIdCursor = (cursor: string): string => {
-  const decoded = Buffer.from(cursor, "base64url").toString("utf8");
-  if (decoded.length === 0 || encodeIdCursor(decoded) !== cursor) {
-    throw new InvalidInputError("Invalid pagination cursor");
+  try {
+    const decoded = Buffer.from(cursor, "base64url").toString("utf8");
+    if (decoded.length === 0 || encodeIdCursor(decoded) !== cursor) {
+      throw new InvalidInputError("Invalid pagination cursor");
+    }
+    return decoded;
+  } catch (error) {
+    // Any failure decoding or round-tripping a client-supplied cursor is a bad cursor, not a server
+    // fault — always surface it as InvalidInputError (→ 400) rather than letting an unexpected throw
+    // escape as a 500.
+    throw error instanceof InvalidInputError ? error : new InvalidInputError("Invalid pagination cursor");
   }
-  return decoded;
 };
 
 /**

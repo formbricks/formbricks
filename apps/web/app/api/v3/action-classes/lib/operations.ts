@@ -39,6 +39,9 @@ export async function listV3ActionClasses({
       return authResult;
     }
 
+    // getActionClasses returns the workspace's full action-class list (request-deduped via React
+    // cache), so we paginate in memory here instead of at the DB — it's a bounded reference
+    // collection the codebase already reads as a whole (see paginateByIdCursor).
     const actionClasses = await getActionClasses(authResult.workspaceId);
     const { page, nextCursor } = paginateByIdCursor(actionClasses, { limit, cursor });
 

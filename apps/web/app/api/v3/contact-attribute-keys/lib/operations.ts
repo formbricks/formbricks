@@ -3,9 +3,16 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { paginateByIdCursor } from "@/app/api/v3/lib/cursor-pagination";
-import { problemBadRequest, problemInternalError, successListResponse } from "@/app/api/v3/lib/response";
+import {
+  problemBadRequest,
+  problemForbidden,
+  problemInternalError,
+  successListResponse,
+} from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { serializeV3ContactAttributeKey } from "../serializers";
 
 type TListV3ContactAttributeKeysParams = {
@@ -39,6 +46,21 @@ export async function listV3ContactAttributeKeys({
       return authResult;
     }
 
+    // Contact attribute keys belong to the enterprise Contacts feature. Gate the list the same way
+    // the UI and management API do, so an organization without the entitlement can't enumerate them
+    // through v3.
+    const organization = await getOrganizationByWorkspaceId(authResult.workspaceId);
+    if (!organization || !(await getIsContactsEnabled(organization.id))) {
+      return problemForbidden(
+        requestId,
+        "The contacts feature is not enabled for this organization.",
+        instance
+      );
+    }
+
+    // getContactAttributeKeys returns the workspace's full key list (request-deduped via React
+    // cache), so we paginate in memory here instead of at the DB — a bounded reference collection
+    // (see paginateByIdCursor).
     const attributeKeys = await getContactAttributeKeys(authResult.workspaceId);
     const { page, nextCursor } = paginateByIdCursor(attributeKeys, { limit, cursor });
 

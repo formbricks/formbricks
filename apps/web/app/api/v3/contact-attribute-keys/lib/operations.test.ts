@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listV3ContactAttributeKeys } from "./operations";
 
 vi.mock("server-only", () => ({}));
@@ -10,8 +12,16 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
 }));
 
+vi.mock("@/lib/organization/service", () => ({
+  getOrganizationByWorkspaceId: vi.fn(),
+}));
+
 vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
   getContactAttributeKeys: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsContactsEnabled: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -49,6 +59,10 @@ const params = {
 describe("listV3ContactAttributeKeys", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({
+      id: "org_1",
+    } as Awaited<ReturnType<typeof getOrganizationByWorkspaceId>>);
+    vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
   });
 
   test("returns the public attribute-key shape for an authorized workspace", async () => {
@@ -122,6 +136,18 @@ describe("listV3ContactAttributeKeys", () => {
     const response = await listV3ContactAttributeKeys(params);
 
     expect(response).toBe(denied);
+    expect(getContactAttributeKeys).not.toHaveBeenCalled();
+  });
+
+  test("returns 403 when the contacts feature is not enabled for the organization", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
+      workspaceId,
+    } as Awaited<ReturnType<typeof requireV3WorkspaceAccess>>);
+    vi.mocked(getIsContactsEnabled).mockResolvedValue(false);
+
+    const response = await listV3ContactAttributeKeys(params);
+
+    expect(response.status).toBe(403);
     expect(getContactAttributeKeys).not.toHaveBeenCalled();
   });
 

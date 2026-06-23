@@ -4,13 +4,13 @@
  * action-class ids referenced by app-survey triggers (`distribution.triggers[].actionClassId`).
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ZV3WorkspaceListQuery } from "@/app/api/v3/lib/schemas";
 import { listV3ActionClasses } from "./lib/operations";
-import { ZV3ActionClassListQuery } from "./schemas";
 
 export const GET = withV3ApiWrapper({
   auth: "both",
   schemas: {
-    query: ZV3ActionClassListQuery,
+    query: ZV3WorkspaceListQuery,
   },
   handler: async ({ authentication, parsedInput, requestId, instance }) => {
     return await listV3ActionClasses({
