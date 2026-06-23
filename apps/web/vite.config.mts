@@ -8,7 +8,9 @@ export default defineConfig({
   test: {
     environment: "node",
     environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
-    exclude: ["playwright/**", "node_modules/**", ".next/**"],
+    // Integration tests run only via `pnpm test:integration` (vitest.integration.config.mts) against a
+    // real Postgres + Redis; the unit config mocks the DB, so they must be excluded here (ENG-1054).
+    exclude: ["playwright/**", "node_modules/**", ".next/**", "**/*.integration.test.ts"],
     setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
     coverage: {
