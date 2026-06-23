@@ -1,5 +1,5 @@
 import { authenticator } from "otplib";
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { ENCRYPTION_KEY } from "@/lib/constants";
@@ -22,8 +22,16 @@ const allCookies = (res: Response): string =>
     .map((c) => c.split(";")[0])
     .join("; ");
 
+// authenticator.options is process-global; a test that mutates it must restore the defaults so it
+// can't make later tests order-dependent.
+const defaultAuthenticatorOptions = { ...authenticator.options };
+
 beforeEach(async () => {
   await resetDb();
+});
+
+afterEach(() => {
+  authenticator.options = defaultAuthenticatorOptions;
 });
 
 describe("2FA secret re-encode (real Postgres)", () => {
