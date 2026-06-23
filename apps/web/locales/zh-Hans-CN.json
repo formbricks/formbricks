@@ -65,6 +65,7 @@
       "new_to_formbricks": "新用户 Formbricks ?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "please_verify_your_email_to_continue": "Please verify your email address. We've sent you a verification link.",
       "use_a_backup_code": "使用 备用代码"
     },
     "saml_connection_error": "出了问题。请查看应用 控制台 以获取更多详情。",
@@ -523,6 +524,13 @@
   "emails": {
     "accept": "接受",
     "click_or_drag_to_upload_files": "点击 或 拖动 上传 文件",
+    "delete_account_email_confirm_deletion": "Confirm account deletion",
+    "delete_account_email_did_not_request": "If you did not request this, please ignore this email and your account will remain active.",
+    "delete_account_email_heading": "Confirm your account deletion",
+    "delete_account_email_link_valid_for_minutes": "The link is valid for {minutes} minutes.",
+    "delete_account_email_subject": "Confirm your Formbricks account deletion",
+    "delete_account_email_text": "You have requested to delete your Formbricks account. To confirm, please click the button below:",
+    "delete_account_email_warning": "This will permanently delete your account and all associated data. This action cannot be undone.",
     "email_customization_preview_email_heading": "嘿 {userName}",
     "email_customization_preview_email_subject": "Formbricks 电子邮件自定义预览",
     "email_customization_preview_email_text": "这 是 一封 电子邮件 预览，展示 哪个 徽标 将在 电子邮件 中 渲染。",
@@ -2591,6 +2599,7 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "帐户 删除 后果",
+        "account_deletion_email_sent": "Check your email to confirm account deletion. We sent a link to {email} — your account will be deleted once you click it.",
         "backup_code": "备用代码",
         "confirm_delete_account": "删除您的账户以及所有个人信息和数据",
         "confirm_delete_my_account": "删除我的账户",
