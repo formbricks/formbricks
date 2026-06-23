@@ -67,7 +67,7 @@ export const createApiKeyAction = authenticatedActionClient.inputSchema(ZCreateA
     capturePostHogEvent(
       ctx.user.id,
       "api_key_created",
-      { label: parsedInput.apiKeyData.label },
+      { api_key_id: result.id },
       { organizationId: parsedInput.organizationId }
     );
     return result;

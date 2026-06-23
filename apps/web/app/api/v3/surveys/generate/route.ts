@@ -62,7 +62,7 @@ export const POST = withV3ApiWrapper({
         capturePostHogEvent(
           userId,
           "survey_created",
-          { created_from: "ai", prompt: body.prompt },
+          { created_from: "ai", prompt_length: body.prompt.length },
           { organizationId: workspaceAccess.organizationId, workspaceId: workspaceAccess.workspaceId }
         );
       }
