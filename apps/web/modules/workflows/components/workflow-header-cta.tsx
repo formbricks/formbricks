@@ -50,6 +50,13 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const isArchived = workflow.status === "archived";
   const isActive = workflow.status === "enabled";
 
+  let lifecycleIcon = <PlayIcon />;
+  if (builder.isTransitioning) {
+    lifecycleIcon = <Loader2Icon className="animate-spin" />;
+  } else if (isActive) {
+    lifecycleIcon = <PowerOffIcon />;
+  }
+
   return (
     <div className="flex items-center gap-3">
       {isArchived ? (
@@ -96,13 +103,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             onClick={handleActiveChange}
             disabled={isReadOnly || builder.isTransitioning || builder.isSaving}
             className="min-w-[6rem] justify-center">
-            {builder.isTransitioning ? (
-              <Loader2Icon className="animate-spin" />
-            ) : isActive ? (
-              <PowerOffIcon />
-            ) : (
-              <PlayIcon />
-            )}
+            {lifecycleIcon}
             {isActive ? t("common.disable") : t("common.enable")}
           </Button>
         </>

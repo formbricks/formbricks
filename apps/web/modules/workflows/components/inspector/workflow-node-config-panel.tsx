@@ -2,7 +2,7 @@
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { ArrowLeftIcon } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type SyntheticEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -71,7 +71,7 @@ const NodeConfigEditor = ({
 
   // Submitting the form (Save click or Enter in a single-line field) commits the draft. Enter in
   // the Body textarea still inserts a newline — textareas don't submit forms on Enter.
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canSave) return;
     onSave(draftNode);
