@@ -53,28 +53,7 @@ const ROLE_COLORS: Record<TTemplateRole, string> = {
   peopleManager: "text-pink-500",
 };
 
-type TDefaultTemplate = { id: string; icon: LucideIcon; titleKey: string; descriptionKey: string };
-
-const DEFAULT_TEMPLATES: TDefaultTemplate[] = [
-  {
-    id: "nps",
-    icon: SmileIcon,
-    titleKey: "workspace.surveys.featured_templates.nps_title",
-    descriptionKey: "workspace.surveys.featured_templates.nps_description",
-  },
-  {
-    id: "csat",
-    icon: ThumbsUpIcon,
-    titleKey: "workspace.surveys.featured_templates.csat_title",
-    descriptionKey: "workspace.surveys.featured_templates.csat_description",
-  },
-  {
-    id: "churn-survey",
-    icon: LogOutIcon,
-    titleKey: "workspace.surveys.featured_templates.churn_title",
-    descriptionKey: "workspace.surveys.featured_templates.churn_description",
-  },
-];
+type TDefaultTemplate = { id: string; icon: LucideIcon; title: string; description: string };
 
 interface FeaturedTemplatesProps {
   workspace: Workspace;
@@ -90,6 +69,28 @@ export const FeaturedTemplates = ({
   aiUnavailableReason,
 }: Readonly<FeaturedTemplatesProps>) => {
   const { t } = useTranslation();
+
+  const defaultTemplates: TDefaultTemplate[] = [
+    {
+      id: "nps",
+      icon: SmileIcon,
+      title: t("workspace.surveys.featured_templates.nps_title"),
+      description: t("workspace.surveys.featured_templates.nps_description"),
+    },
+    {
+      id: "csat",
+      icon: ThumbsUpIcon,
+      title: t("workspace.surveys.featured_templates.csat_title"),
+      description: t("workspace.surveys.featured_templates.csat_description"),
+    },
+    {
+      id: "churn-survey",
+      icon: LogOutIcon,
+      title: t("workspace.surveys.featured_templates.churn_title"),
+      description: t("workspace.surveys.featured_templates.churn_description"),
+    },
+  ];
+
   const router = useRouter();
   const createSurveyMutation = useCreateSurveyFromTemplate();
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -217,7 +218,7 @@ export const FeaturedTemplates = ({
                 </button>
               );
             })
-          : DEFAULT_TEMPLATES.map(({ id, icon: Icon, titleKey, descriptionKey }) => {
+          : defaultTemplates.map(({ id, icon: Icon, title, description }) => {
               const isLoading = loadingId === id;
               return (
                 <button
@@ -234,8 +235,8 @@ export const FeaturedTemplates = ({
                     <Icon className="size-12 text-slate-600" strokeWidth={1} absoluteStrokeWidth />
                   )}
                   <div>
-                    <p className="text-sm font-medium text-slate-800">{t(titleKey)}</p>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{t(descriptionKey)}</p>
+                    <p className="text-sm font-medium text-slate-800">{title}</p>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{description}</p>
                   </div>
                 </button>
               );
