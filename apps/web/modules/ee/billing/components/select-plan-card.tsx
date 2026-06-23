@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckIcon, GiftIcon } from "lucide-react";
+import { CheckIcon, GiftIcon, XCircleIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import calLogo from "@/images/customer-logos/cal-logo-light.svg";
@@ -11,8 +11,17 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
+import { getPostHogClientFeatureFlag } from "@/lib/posthog/client";
 import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 
 interface SelectPlanCardProps {
   nextUrl: string;
@@ -38,6 +47,12 @@ export const SelectPlanCard = ({
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
+  const [showHobbyConfirm, setShowHobbyConfirm] = useState(false);
+  const [hobbyConfirmEnabled, setHobbyConfirmEnabled] = useState(false);
+
+  useEffect(() => {
+    setHobbyConfirmEnabled(getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test");
+  }, []);
   const { t } = useTranslation();
   let ctaCopy: string;
   if (ctaVariant === "variant_b") {
@@ -159,11 +174,52 @@ export const SelectPlanCard = ({
 
       <button
         type="button"
-        onClick={handleContinueHobby}
+        onClick={() => (hobbyConfirmEnabled ? setShowHobbyConfirm(true) : void handleContinueHobby())}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {isStartingHobby ? t("common.loading") : copy.skip}
+        {isStartingHobby && !hobbyConfirmEnabled ? t("common.loading") : copy.skip}
       </button>
+
+      <Dialog open={showHobbyConfirm} onOpenChange={setShowHobbyConfirm}>
+        <DialogContent width="narrow" hideCloseButton>
+          <DialogHeader>
+            <DialogTitle>{t("workspace.settings.billing.hobby_confirm_title")}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <p className="text-slate-500">{t("workspace.settings.billing.hobby_confirm_description")}</p>
+            <ul className="mt-4 space-y-1.5">
+              {[
+                t("workspace.settings.billing.hobby_confirm_feature_responses"),
+                t("workspace.settings.billing.hobby_confirm_feature_branding"),
+                t("workspace.settings.billing.hobby_confirm_feature_contacts"),
+                t("workspace.settings.billing.hobby_confirm_feature_ai"),
+                t("workspace.settings.billing.hobby_confirm_feature_seats"),
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                  <XCircleIcon className="size-3.5 shrink-0 text-red-400" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowHobbyConfirm(false);
+                void handleStartTrial();
+              }}>
+              {t("workspace.settings.billing.hobby_confirm_start_trial")}
+            </Button>
+            <Button
+              variant="destructive"
+              loading={isStartingHobby}
+              onClick={() => void handleContinueHobby()}>
+              {t("workspace.settings.billing.hobby_confirm_downgrade")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

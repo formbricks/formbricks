@@ -35,6 +35,7 @@ import {
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { FeaturedTemplates } from "./featured-templates";
 import { SurveyCard } from "./survey-card";
 import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
@@ -48,6 +49,7 @@ interface SurveysListProps {
   locale: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
+  showFeaturedTemplates?: boolean;
 }
 
 type NewSurveyMenuProps = {
@@ -144,6 +146,7 @@ export const SurveysList = ({
   locale,
   isAIAvailable,
   aiUnavailableReason,
+  showFeaturedTemplates = false,
 }: SurveysListProps) => {
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
@@ -327,6 +330,17 @@ export const SurveysList = ({
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
       <div className="space-y-6">
+        {!isReadOnly && showFeaturedTemplates && (
+          <>
+            <FeaturedTemplates
+              workspace={workspace}
+              locale={locale}
+              isAIAvailable={isAIAvailable}
+              aiUnavailableReason={aiUnavailableReason}
+            />
+            <hr className="border-slate-200" />
+          </>
+        )}
         <SurveyFilters
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}

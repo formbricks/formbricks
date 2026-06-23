@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
@@ -6,6 +7,7 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
+import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -37,14 +39,35 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
   const { features, lastChecked, isPendingDowngrade, active, status } = license;
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
-  const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
-  const newTrialBannerVariant = await getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner");
+  const isTrialing = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.subscriptionStatus === "trialing";
+
+  const [organizationWorkspacesLimit, newTrialBannerVariant, trialWarningVariant, cookieStore] =
+    await Promise.all([
+      getOrganizationWorkspacesLimit(organization.id),
+      getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner"),
+      isTrialing
+        ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning")
+        : Promise.resolve(null),
+      isTrialing ? cookies() : Promise.resolve(null),
+    ]);
+
   const isOwnerOrManager = isOwner || isManager;
 
   // Validate that workspace permission exists for members
   if (isMember && !workspacePermission) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
+
+  let trialWarningThreshold: "200" | "250" | null = null;
+  if (isTrialing && trialWarningVariant === "test" && cookieStore) {
+    if (responseCount >= 250 && !cookieStore.get("trial_warning_shown_250")) {
+      trialWarningThreshold = "250";
+    } else if (responseCount >= 200 && !cookieStore.get("trial_warning_shown_200")) {
+      trialWarningThreshold = "200";
+    }
+  }
+
+  const billingHref = `/workspaces/${workspace.id}/settings/organization/billing`;
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -59,6 +82,14 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
         locale={user.locale}
         status={status}
       />
+
+      {trialWarningThreshold && (
+        <TrialResponseWarningModal
+          threshold={trialWarningThreshold}
+          billingHref={billingHref}
+          responseCount={responseCount}
+        />
+      )}
 
       <div className="flex h-full">
         <MainNavigation

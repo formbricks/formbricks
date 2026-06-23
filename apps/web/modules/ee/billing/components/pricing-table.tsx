@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, XCircleIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -14,10 +14,19 @@ import {
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
+import { getPostHogClientFeatureFlag } from "@/lib/posthog/client";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import {
   changeBillingPlanAction,
   createPlanCheckoutAction,
@@ -214,6 +223,12 @@ export const PricingTable = ({
   const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
+  const [showHobbyDowngradeConfirm, setShowHobbyDowngradeConfirm] = useState(false);
+  const [hobbyConfirmEnabled, setHobbyConfirmEnabled] = useState(false);
+
+  useEffect(() => {
+    setHobbyConfirmEnabled(getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test");
+  }, []);
   const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
     currentBillingInterval ?? "monthly"
   );
@@ -518,7 +533,16 @@ export const PricingTable = ({
     toast.error(t("common.something_went_wrong_please_try_again"));
   };
 
-  const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+  const handlePlanAction = async (
+    plan: TStandardPlan,
+    interval: TCloudBillingInterval,
+    confirmed = false
+  ) => {
+    if (hobbyConfirmEnabled && isTrialing && plan === "hobby" && !confirmed) {
+      setShowHobbyDowngradeConfirm(true);
+      return;
+    }
+
     const actionKey = `${plan}-${interval}`;
     setIsPlanActionPending(actionKey);
 
@@ -933,6 +957,46 @@ export const PricingTable = ({
           </SettingsCard>
         )}
       </div>
+      <Dialog open={showHobbyDowngradeConfirm} onOpenChange={setShowHobbyDowngradeConfirm}>
+        <DialogContent width="narrow" hideCloseButton>
+          <DialogHeader>
+            <DialogTitle>{t("workspace.settings.billing.hobby_downgrade_confirm_title")}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <p className="text-slate-500">
+              {t("workspace.settings.billing.hobby_downgrade_confirm_description")}
+            </p>
+            <ul className="mt-3 space-y-1.5">
+              {[
+                t("workspace.settings.billing.hobby_downgrade_feature_responses"),
+                t("workspace.settings.billing.hobby_confirm_feature_branding"),
+                t("workspace.settings.billing.hobby_confirm_feature_contacts"),
+                t("workspace.settings.billing.hobby_confirm_feature_ai"),
+                t("workspace.settings.billing.hobby_confirm_feature_seats"),
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                  <XCircleIcon className="size-3.5 shrink-0 text-red-400" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowHobbyDowngradeConfirm(false)}>
+              {t("workspace.settings.billing.hobby_downgrade_keep_trial")}
+            </Button>
+            <Button
+              variant="destructive"
+              loading={isPlanActionPending === "hobby-monthly"}
+              onClick={() => {
+                setShowHobbyDowngradeConfirm(false);
+                void handlePlanAction("hobby", "monthly", true);
+              }}>
+              {t("workspace.settings.billing.hobby_confirm_downgrade")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 };
