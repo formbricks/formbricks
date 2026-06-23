@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
+import { ZWorkflowStatus } from "@formbricks/workflows";
 import { FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -117,18 +118,20 @@ export const WorkflowsListPage = ({
   const hasActiveFilters = selectedStatuses.length > 0 || searchValue.length > 0;
 
   const isListEmpty = !showInitialLoading && !isError && workflows.length === 0;
-  const { workflows: unfilteredWorkflows, isLoading: isProbingWorkflows } = useWorkflows({
+
+  // Probe for ANY workflow including archived (the default query excludes archived) so an all-archived
+  // workspace isn't mistaken for an empty one — which would hide the toolbar and with it the archived filter.
+  const { workflows: anyWorkflows, isLoading: isProbingAnyWorkflows } = useWorkflows({
     workspaceId,
     limit: 1,
     nameContains: "",
-    enabled: isListEmpty && hasActiveFilters,
+    statusIn: [...ZWorkflowStatus.options],
+    enabled: isListEmpty,
   });
-  const isFilteredNoMatch = hasActiveFilters && (isProbingWorkflows || unfilteredWorkflows.length > 0);
 
-  // Mirror the surveys list: when the workspace has no workflows yet (and nothing is filtered), show
-  // only the empty state and hide the filter toolbar.
-  const isWorkspaceEmpty =
-    !showInitialLoading && !isError && workflows.length === 0 && !hasActiveFilters;
+  // Mirror the surveys list: only a genuinely empty workspace hides the toolbar. If any workflow exists
+  // (even only archived ones), keep the toolbar so the filters stay reachable.
+  const isWorkspaceEmpty = isListEmpty && !isProbingAnyWorkflows && anyWorkflows.length === 0;
 
   if (isWorkspaceEmpty) {
     return (
@@ -152,7 +155,8 @@ export const WorkflowsListPage = ({
       </div>
     );
   } else if (workflows.length === 0) {
-    listContent = <WorkflowsEmptyState filtered={isFilteredNoMatch} />;
+    // Workspace has workflows but the active filters match none (a truly empty workspace exits early).
+    listContent = <WorkflowsEmptyState filtered={true} />;
   } else {
     listContent = (
       <div>
