@@ -3321,6 +3321,16 @@
         "zip": "邮编"
       },
       "error_deleting_survey": "删除问卷时发生错误",
+      "featured_templates": {
+        "churn_description": "了解用户取消订阅的原因。",
+        "churn_title": "流失调查",
+        "csat_description": "衡量客户满意度评分（1-5 分）",
+        "csat_title": "客户满意度调查",
+        "nps_description": "衡量净推荐值（0-10 分）",
+        "nps_title": "NPS 调查",
+        "see_all_templates": "查看所有模板",
+        "templates_for": "模板适用于"
+      },
       "filter": {
         "complete_and_partial_responses": "完整 和 部分 反馈",
         "complete_responses": "完整反馈",

@@ -62,7 +62,11 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   if (isTrialing && trialWarningVariant === "test" && cookieStore) {
     if (responseCount >= 250 && !cookieStore.get("trial_warning_shown_250")) {
       trialWarningThreshold = "250";
-    } else if (responseCount >= 200 && !cookieStore.get("trial_warning_shown_200")) {
+    } else if (
+      responseCount >= 200 &&
+      !cookieStore.get("trial_warning_shown_200") &&
+      !cookieStore.get("trial_warning_shown_250")
+    ) {
       trialWarningThreshold = "200";
     }
   }

@@ -53,16 +53,26 @@ const ROLE_COLORS: Record<TTemplateRole, string> = {
   peopleManager: "text-pink-500",
 };
 
-type TDefaultTemplate = { id: string; icon: LucideIcon; title: string; description: string };
+type TDefaultTemplate = { id: string; icon: LucideIcon; titleKey: string; descriptionKey: string };
 
 const DEFAULT_TEMPLATES: TDefaultTemplate[] = [
-  { id: "nps", icon: SmileIcon, title: "NPS Survey", description: "Measure Net-Promoter-Score (0-10)" },
-  { id: "csat", icon: ThumbsUpIcon, title: "CSAT", description: "Measure Customer Satisfaction Score (1-5)" },
+  {
+    id: "nps",
+    icon: SmileIcon,
+    titleKey: "workspace.surveys.featured_templates.nps_title",
+    descriptionKey: "workspace.surveys.featured_templates.nps_description",
+  },
+  {
+    id: "csat",
+    icon: ThumbsUpIcon,
+    titleKey: "workspace.surveys.featured_templates.csat_title",
+    descriptionKey: "workspace.surveys.featured_templates.csat_description",
+  },
   {
     id: "churn-survey",
     icon: LogOutIcon,
-    title: "Churn Survey",
-    description: "Find out why people cancel their subscriptions.",
+    titleKey: "workspace.surveys.featured_templates.churn_title",
+    descriptionKey: "workspace.surveys.featured_templates.churn_description",
   },
 ];
 
@@ -78,7 +88,7 @@ export const FeaturedTemplates = ({
   locale,
   isAIAvailable,
   aiUnavailableReason,
-}: FeaturedTemplatesProps) => {
+}: Readonly<FeaturedTemplatesProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const createSurveyMutation = useCreateSurveyFromTemplate();
@@ -130,7 +140,9 @@ export const FeaturedTemplates = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-1.5">
-        <span className="text-sm text-slate-500">Templates for</span>
+        <span className="text-sm text-slate-500">
+          {t("workspace.surveys.featured_templates.templates_for")}
+        </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1 text-sm font-medium text-slate-700 hover:text-slate-900">
@@ -205,7 +217,7 @@ export const FeaturedTemplates = ({
                 </button>
               );
             })
-          : DEFAULT_TEMPLATES.map(({ id, icon: Icon, title, description }) => {
+          : DEFAULT_TEMPLATES.map(({ id, icon: Icon, titleKey, descriptionKey }) => {
               const isLoading = loadingId === id;
               return (
                 <button
@@ -222,8 +234,8 @@ export const FeaturedTemplates = ({
                     <Icon className="size-12 text-slate-600" strokeWidth={1} absoluteStrokeWidth />
                   )}
                   <div>
-                    <p className="text-sm font-medium text-slate-800">{title}</p>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{description}</p>
+                    <p className="text-sm font-medium text-slate-800">{t(titleKey)}</p>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{t(descriptionKey)}</p>
                   </div>
                 </button>
               );
@@ -234,7 +246,9 @@ export const FeaturedTemplates = ({
           onClick={() => router.push(browseAllHref)}
           className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white p-5 text-center shadow-sm transition-transform duration-150 hover:scale-[1.02] hover:border-slate-400">
           <LayoutTemplateIcon className="size-12 text-slate-400" strokeWidth={1} absoluteStrokeWidth />
-          <p className="text-sm font-medium text-slate-500">See all templates</p>
+          <p className="text-sm font-medium text-slate-500">
+            {t("workspace.surveys.featured_templates.see_all_templates")}
+          </p>
         </button>
       </div>
 

@@ -3321,6 +3321,16 @@
         "zip": "Irányítószám"
       },
       "error_deleting_survey": "Hiba történt a kérdőív törlése során",
+      "featured_templates": {
+        "churn_description": "Tudja meg, miért mondják le az emberek az előfizetésüket.",
+        "churn_title": "Lemorzsolódási felmérés",
+        "csat_description": "Az ügyfél-elégedettségi mutató mérése (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "A Net-Promoter-Score mérése (0-10)",
+        "nps_title": "NPS felmérés",
+        "see_all_templates": "Összes sablon megtekintése",
+        "templates_for": "Sablonok a következőhöz:"
+      },
       "filter": {
         "complete_and_partial_responses": "Teljes és részleges válaszok",
         "complete_responses": "Teljes válaszok",

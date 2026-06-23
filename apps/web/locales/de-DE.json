@@ -3321,6 +3321,16 @@
         "zip": "PLZ"
       },
       "error_deleting_survey": "Beim Löschen der Umfrage ist ein Fehler aufgetreten",
+      "featured_templates": {
+        "churn_description": "Finde heraus, warum Leute ihre Abos kündigen.",
+        "churn_title": "Churn-Umfrage",
+        "csat_description": "Miss den Customer Satisfaction Score (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Miss den Net-Promoter-Score (0-10)",
+        "nps_title": "NPS-Umfrage",
+        "see_all_templates": "Alle Vorlagen ansehen",
+        "templates_for": "Vorlagen für"
+      },
       "filter": {
         "complete_and_partial_responses": "Vollständige und teilweise Antworten",
         "complete_responses": "Vollständige Antworten",

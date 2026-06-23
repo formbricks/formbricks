@@ -3321,6 +3321,16 @@
         "zip": "Posta Kodu"
       },
       "error_deleting_survey": "Anket silinirken bir hata oluştu",
+      "featured_templates": {
+        "churn_description": "İnsanların aboneliklerini neden iptal ettiğini öğren.",
+        "churn_title": "Kayıp Anketi",
+        "csat_description": "Müşteri Memnuniyeti Puanını Ölç (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Net Promoter Puanını Ölç (0-10)",
+        "nps_title": "NPS Anketi",
+        "see_all_templates": "Tüm şablonları gör",
+        "templates_for": "Şunun için şablonlar:"
+      },
       "filter": {
         "complete_and_partial_responses": "Tamamlanmış ve yarım yanıtlar",
         "complete_responses": "Tamamlanmış yanıtlar",

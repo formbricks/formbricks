@@ -3,7 +3,7 @@
 import { CheckIcon, GiftIcon, XCircleIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import calLogo from "@/images/customer-logos/cal-logo-light.svg";
@@ -48,11 +48,9 @@ export const SelectPlanCard = ({
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const [showHobbyConfirm, setShowHobbyConfirm] = useState(false);
-  const [hobbyConfirmEnabled, setHobbyConfirmEnabled] = useState(false);
-
-  useEffect(() => {
-    setHobbyConfirmEnabled(getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test");
-  }, []);
+  const [hobbyConfirmEnabled] = useState(
+    () => getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test"
+  );
   const { t } = useTranslation();
   let ctaCopy: string;
   if (ctaVariant === "variant_b") {

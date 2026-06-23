@@ -3321,6 +3321,16 @@
         "zip": "郵遞區號"
       },
       "error_deleting_survey": "刪除問卷時發生錯誤",
+      "featured_templates": {
+        "churn_description": "了解用戶取消訂閱的原因。",
+        "churn_title": "流失調查",
+        "csat_description": "衡量顧客滿意度分數 (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "衡量淨推薦值 (0-10)",
+        "nps_title": "NPS 調查",
+        "see_all_templates": "查看所有範本",
+        "templates_for": "範本類別"
+      },
       "filter": {
         "complete_and_partial_responses": "完整與部分回應",
         "complete_responses": "完整回應",

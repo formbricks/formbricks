@@ -21,8 +21,9 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
     "https://formbricks.com/docs/surveys/website-app-surveys/workspace-id-migration";
 
   const { workspace, session } = await getWorkspaceAuth(workspaceId);
-  const aiPromptVariant = await getPostHogFeatureFlag(session?.user.id ?? "", "a-b_app-connection_ai-prompt");
-  const showAIPrompt = aiPromptVariant === "test";
+  const showAIPrompt = session?.user.id
+    ? (await getPostHogFeatureFlag(session.user.id, "a-b_app-connection_ai-prompt")) === "test"
+    : false;
 
   const aiPrompt = `Integrate Formbricks into my app. 
   

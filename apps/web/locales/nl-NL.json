@@ -3321,6 +3321,16 @@
         "zip": "Ritssluiting"
       },
       "error_deleting_survey": "Er is een fout opgetreden bij het verwijderen van de enquête",
+      "featured_templates": {
+        "churn_description": "Ontdek waarom mensen hun abonnementen opzeggen.",
+        "churn_title": "Churn-enquête",
+        "csat_description": "Meet de klanttevredenheidsscore (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Meet de Net Promoter Score (0-10)",
+        "nps_title": "NPS-enquête",
+        "see_all_templates": "Bekijk alle sjablonen",
+        "templates_for": "Sjablonen voor"
+      },
       "filter": {
         "complete_and_partial_responses": "Volledige en gedeeltelijke antwoorden",
         "complete_responses": "Volledige reacties",

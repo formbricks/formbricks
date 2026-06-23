@@ -3201,6 +3201,14 @@ checksums:
     workspace/surveys/edit/your_web_app: 07234bed03a33330dc50ae9fcf0174f3
     workspace/surveys/edit/zip: 228fedb7d75304d2a3fcd9f1d1aaccee
     workspace/surveys/error_deleting_survey: 5a113f1cc0a430b54b21dd1fd4e65e00
+    workspace/surveys/featured_templates/churn_description: 095b315526140f3633b3da354b766ed4
+    workspace/surveys/featured_templates/churn_title: 5ecbb56a7bc54e945fff08fed017a545
+    workspace/surveys/featured_templates/csat_description: 0e64d5594f961e5070a95f715594549e
+    workspace/surveys/featured_templates/csat_title: fdfc1dc6214cce661dcdc32a71d80337
+    workspace/surveys/featured_templates/nps_description: a0967386c2e53a3df5a165ff16a8fbda
+    workspace/surveys/featured_templates/nps_title: 94ef35c2e6ed7061f8a533c9e61b155b
+    workspace/surveys/featured_templates/see_all_templates: 33e04d0dca427418ed386bb9b38a6443
+    workspace/surveys/featured_templates/templates_for: 9eb1a1e51222f809c980910dfe7424ef
     workspace/surveys/filter/complete_and_partial_responses: 3c272e4b148421da0027c35562b969db
     workspace/surveys/filter/complete_responses: cd495765bf63f5bfdb341eadc4f60ac7
     workspace/surveys/filter/partial_responses: cc88893d0defaf64f46f17a1cb8c886d

@@ -3321,6 +3321,16 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "Une erreur s'est produite lors de la suppression du sondage",
+      "featured_templates": {
+        "churn_description": "Découvrez pourquoi les utilisateurs annulent leur abonnement.",
+        "churn_title": "Enquête de désabonnement",
+        "csat_description": "Mesurez le score de satisfaction client (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Mesurez le Net Promoter Score (0-10)",
+        "nps_title": "Enquête NPS",
+        "see_all_templates": "Voir tous les modèles",
+        "templates_for": "Modèles pour"
+      },
       "filter": {
         "complete_and_partial_responses": "Réponses complètes et partielles",
         "complete_responses": "Réponses complètes",

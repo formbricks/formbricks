@@ -3321,6 +3321,16 @@
         "zip": "郵便番号"
       },
       "error_deleting_survey": "アンケートの削除中にエラーが発生しました",
+      "featured_templates": {
+        "churn_description": "サブスクリプションをキャンセルする理由を把握できます。",
+        "churn_title": "解約調査",
+        "csat_description": "顧客満足度スコア(1-5)を測定",
+        "csat_title": "CSAT",
+        "nps_description": "ネット・プロモーター・スコア(0-10)を測定",
+        "nps_title": "NPSアンケート",
+        "see_all_templates": "すべてのテンプレートを見る",
+        "templates_for": "テンプレート："
+      },
       "filter": {
         "complete_and_partial_responses": "完了および部分的な回答",
         "complete_responses": "完了した回答",

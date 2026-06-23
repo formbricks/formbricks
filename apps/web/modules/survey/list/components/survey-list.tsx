@@ -147,7 +147,7 @@ export const SurveysList = ({
   isAIAvailable,
   aiUnavailableReason,
   showFeaturedTemplates = false,
-}: SurveysListProps) => {
+}: Readonly<SurveysListProps>) => {
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);

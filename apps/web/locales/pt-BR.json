@@ -3321,6 +3321,16 @@
         "zip": "Fecho éclair"
       },
       "error_deleting_survey": "Ocorreu um erro ao excluir a pesquisa",
+      "featured_templates": {
+        "churn_description": "Descubra por que as pessoas cancelam suas assinaturas.",
+        "churn_title": "Pesquisa de Churn",
+        "csat_description": "Meça o Índice de Satisfação do Cliente (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Meça o Net Promoter Score (0-10)",
+        "nps_title": "Pesquisa NPS",
+        "see_all_templates": "Ver todos os modelos",
+        "templates_for": "Modelos para"
+      },
       "filter": {
         "complete_and_partial_responses": "Respostas completas e parciais",
         "complete_responses": "Respostas completas",

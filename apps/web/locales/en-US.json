@@ -3321,6 +3321,16 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "An error occurred while deleting survey",
+      "featured_templates": {
+        "churn_description": "Find out why people cancel their subscriptions.",
+        "churn_title": "Churn Survey",
+        "csat_description": "Measure Customer Satisfaction Score (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Measure Net-Promoter-Score (0-10)",
+        "nps_title": "NPS Survey",
+        "see_all_templates": "See all templates",
+        "templates_for": "Templates for"
+      },
       "filter": {
         "complete_and_partial_responses": "Complete and partial responses",
         "complete_responses": "Complete responses",

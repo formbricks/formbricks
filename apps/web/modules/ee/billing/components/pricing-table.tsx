@@ -224,11 +224,9 @@ export const PricingTable = ({
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
   const [showHobbyDowngradeConfirm, setShowHobbyDowngradeConfirm] = useState(false);
-  const [hobbyConfirmEnabled, setHobbyConfirmEnabled] = useState(false);
-
-  useEffect(() => {
-    setHobbyConfirmEnabled(getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test");
-  }, []);
+  const [hobbyConfirmEnabled] = useState(
+    () => getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test"
+  );
   const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
     currentBillingInterval ?? "monthly"
   );

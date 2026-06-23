@@ -3321,6 +3321,16 @@
         "zip": "Postnummer"
       },
       "error_deleting_survey": "Ett fel uppstod vid borttagning av enkät",
+      "featured_templates": {
+        "churn_description": "Ta reda på varför människor avslutar sina prenumerationer.",
+        "churn_title": "Churn-undersökning",
+        "csat_description": "Mät kundnöjdhet (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Mät Net Promoter Score (0-10)",
+        "nps_title": "NPS-undersökning",
+        "see_all_templates": "Se alla mallar",
+        "templates_for": "Mallar för"
+      },
       "filter": {
         "complete_and_partial_responses": "Kompletta och delvisa svar",
         "complete_responses": "Kompletta svar",

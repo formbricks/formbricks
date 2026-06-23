@@ -3321,6 +3321,16 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "Произошла ошибка при удалении опроса",
+      "featured_templates": {
+        "churn_description": "Узнайте, почему люди отменяют свои подписки.",
+        "churn_title": "Опрос об оттоке",
+        "csat_description": "Измерьте индекс удовлетворённости клиентов (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Измерьте индекс Net Promoter Score (0-10)",
+        "nps_title": "NPS-опрос",
+        "see_all_templates": "Посмотреть все шаблоны",
+        "templates_for": "Шаблоны для"
+      },
       "filter": {
         "complete_and_partial_responses": "Полные и частичные ответы",
         "complete_responses": "Полные ответы",

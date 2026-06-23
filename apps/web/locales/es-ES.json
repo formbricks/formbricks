@@ -3321,6 +3321,16 @@
         "zip": "Código postal"
       },
       "error_deleting_survey": "Se produjo un error al eliminar la encuesta",
+      "featured_templates": {
+        "churn_description": "Descubre por qué la gente cancela sus suscripciones.",
+        "churn_title": "Encuesta de Cancelación",
+        "csat_description": "Mide el Índice de Satisfacción del Cliente (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Mide el Net Promoter Score (0-10)",
+        "nps_title": "Encuesta NPS",
+        "see_all_templates": "Ver todas las plantillas",
+        "templates_for": "Plantillas para"
+      },
       "filter": {
         "complete_and_partial_responses": "Respuestas completas y parciales",
         "complete_responses": "Respuestas completas",

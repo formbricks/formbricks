@@ -3321,6 +3321,16 @@
         "zip": "Comprimir"
       },
       "error_deleting_survey": "Ocorreu um erro ao eliminar o inquérito",
+      "featured_templates": {
+        "churn_description": "Descobre porque é que as pessoas cancelam as suas subscrições.",
+        "churn_title": "Inquérito de Cancelamento",
+        "csat_description": "Mede a Pontuação de Satisfação do Cliente (1-5)",
+        "csat_title": "CSAT",
+        "nps_description": "Mede o Net Promoter Score (0-10)",
+        "nps_title": "Inquérito NPS",
+        "see_all_templates": "Ver todos os modelos",
+        "templates_for": "Modelos para"
+      },
       "filter": {
         "complete_and_partial_responses": "Respostas completas e parciais",
         "complete_responses": "Respostas completas",
