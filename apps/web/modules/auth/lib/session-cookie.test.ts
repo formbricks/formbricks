@@ -19,6 +19,10 @@ const storeWith = (name: string, value: string) => ({
   get: (n: string) => (n === name ? { value } : undefined),
 });
 
+const storeWithMany = (cookies: Record<string, string>) => ({
+  get: (n: string) => (n in cookies ? { value: cookies[n] } : undefined),
+});
+
 beforeEach(() => {
   mockEnv.BETTER_AUTH_SECRET = undefined;
   mockEnv.NEXTAUTH_SECRET = undefined;
@@ -47,6 +51,18 @@ describe("Better Auth session-cookie verification", () => {
     expect(getSessionTokenFromCookieStore(storeWith(BA_COOKIE, sign(token, BA_SECRET)))).toBe(token);
     // A cookie signed with only the fallback must NOT verify while the primary secret is set.
     expect(getSessionTokenFromCookieStore(storeWith(BA_COOKIE, sign(token, NEXTAUTH)))).toBeNull();
+  });
+
+  test("falls through a present-but-invalid cookie to a valid one under another name", () => {
+    // Repro of the residual loop: a stale `__Secure-` cookie (signed with an old/default secret) sits
+    // alongside a valid non-secure cookie. The proxy checks `__Secure-` first; it must skip the invalid
+    // one and accept the valid `formbricks.session_token` rather than wedge the session.
+    mockEnv.BETTER_AUTH_SECRET = BA_SECRET;
+    const stale = `${token}.${createHmac("sha256", "old-default-secret").update(token).digest("base64")}`;
+    const valid = sign(token, BA_SECRET);
+    expect(getSessionTokenFromCookieStore(storeWithMany({ [BA_COOKIE]: stale, [DEV_COOKIE]: valid }))).toBe(
+      token
+    );
   });
 
   test("fails closed when neither secret is set", () => {

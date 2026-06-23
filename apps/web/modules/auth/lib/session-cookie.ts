@@ -79,11 +79,14 @@ const getSignedCookieValueFromHeader = (cookieHeader: string, cookieName: string
 
 /** The verified, unsigned Better Auth session token from a cookie store, or null. */
 export const getSessionTokenFromCookieStore = (cookieStore: TCookieStore): string | null => {
+  // Try every known cookie name and return the first that VERIFIES — don't bail on a present-but-invalid
+  // one (e.g. a stale `__Secure-` cookie from a prior secret/scheme sitting alongside a valid cookie),
+  // which would otherwise wedge the session into a redirect loop.
   for (const cookieName of BETTER_AUTH_SESSION_COOKIE_NAMES) {
     const cookie = cookieStore.get(cookieName);
-    if (cookie?.value) {
-      return verifyAndExtractSessionToken(decode(cookie.value));
-    }
+    if (!cookie?.value) continue;
+    const token = verifyAndExtractSessionToken(decode(cookie.value));
+    if (token) return token;
   }
 
   return null;
@@ -97,9 +100,9 @@ export const getSessionTokenFromCookieHeader = (cookieHeader: string | null): st
 
   for (const cookieName of BETTER_AUTH_SESSION_COOKIE_NAMES) {
     const signedValue = getSignedCookieValueFromHeader(cookieHeader, cookieName);
-    if (signedValue) {
-      return verifyAndExtractSessionToken(signedValue);
-    }
+    if (!signedValue) continue;
+    const token = verifyAndExtractSessionToken(signedValue);
+    if (token) return token;
   }
 
   return null;
