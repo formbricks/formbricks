@@ -38,6 +38,11 @@ import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
+// `__Secure-`/Secure cookies require HTTPS — on http://localhost the browser drops them and the
+// session can't persist. Gate on the configured URL scheme (parity with NextAuth's URL-based
+// useSecureCookies default) instead of hardcoding true, so local/dev over http works.
+const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? "").startsWith("https://");
+
 /** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
 export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
@@ -65,8 +70,12 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  */
 export const auth = betterAuth({
   appName: "Formbricks",
-  // ENG-1054: BA throws in production if this is unset; keep NEXTAUTH_SECRET for app JWTs (lib/jwt.ts).
-  secret: env.BETTER_AUTH_SECRET,
+  // ENG-1054: fall back to NEXTAUTH_SECRET (which already signed NextAuth's session cookies) when
+  // BETTER_AUTH_SECRET is unset. This keeps existing envs working AND guarantees BA's cookie signing
+  // uses the same secret the forward-auth proxy verifies with (session-cookie.ts) — a mismatch makes
+  // the proxy reject every session and bounce users between / and /auth/login. NEXTAUTH_SECRET also
+  // still signs app JWTs (lib/jwt.ts).
+  secret: env.BETTER_AUTH_SECRET ?? env.NEXTAUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL,
   trustedOrigins: [env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url)),
   telemetry: { enabled: false },
@@ -250,14 +259,14 @@ export const auth = betterAuth({
   },
 
   advanced: {
-    useSecureCookies: true, // also yields the browser-enforced "__Secure-" cookie name prefix
+    useSecureCookies: USE_SECURE_COOKIES, // "__Secure-" prefix on HTTPS; relaxed on http (local/dev)
     cookiePrefix: "formbricks",
     // Formbricks ids are cuid2 (Prisma `@default(cuid())` + the `ZId = z.cuid2()` validators in the
     // service layer). Better Auth's default id format is NOT cuid2, so without this every Formbricks
     // service that validates a user id via ZId (e.g. updateUser, called from the SSO provisioning
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
-    defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: true, path: "/" },
+    defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
     ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
   },
 

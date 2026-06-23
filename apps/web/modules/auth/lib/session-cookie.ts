@@ -34,7 +34,11 @@ const decode = (value: string): string | null => {
  * Fails closed: a missing secret or an invalid signature returns `null`.
  */
 const verifyAndExtractSessionToken = (signedValue: string | null): string | null => {
-  if (!signedValue || !env.BETTER_AUTH_SECRET) {
+  // Must match auth.ts's secret resolution (BETTER_AUTH_SECRET, else NEXTAUTH_SECRET) so this verifies
+  // the cookies Better Auth actually signs — a mismatch rejects every session and loops the user
+  // between / and /auth/login. Fails closed when neither secret is set.
+  const secret = env.BETTER_AUTH_SECRET ?? env.NEXTAUTH_SECRET;
+  if (!signedValue || !secret) {
     return null;
   }
 
@@ -47,7 +51,7 @@ const verifyAndExtractSessionToken = (signedValue: string | null): string | null
 
   const token = signedValue.slice(0, lastDot);
   const signature = signedValue.slice(lastDot + 1);
-  const expected = createHmac("sha256", env.BETTER_AUTH_SECRET).update(token).digest("base64");
+  const expected = createHmac("sha256", secret).update(token).digest("base64");
 
   const expectedBuf = Buffer.from(expected);
   const signatureBuf = Buffer.from(signature);
