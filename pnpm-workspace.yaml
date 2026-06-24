@@ -3,8 +3,8 @@ packages:
   - "packages/*"
 
 allowBuilds:
-  '@prisma/engines': true
-  '@sentry/cli': true
+  "@prisma/engines": true
+  "@sentry/cli": true
   better-sqlite3: true
   core-js: true
   esbuild: true
@@ -14,7 +14,7 @@ allowBuilds:
   sharp: true
   sqlite3: true
   unrs-resolver: true
-  '@prisma/client': true
+  "@prisma/client": true
 
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
@@ -28,10 +28,10 @@ overrides:
   # OpenTelemetry / protobuf chains.
   protobufjs@7: 7.6.3
   protobufjs@8: 8.6.3
-  # sqlite3 / node-gyp chain: tar and @tootallnate/once advisories (ENG-1456/1396/1379) are deferred,
-  # not pinned. The only patched releases (tar@7.5.10, @tootallnate/once@2+) cross a major and break
-  # node-gyp@8 / http-proxy-agent@4. Not exploitable here: tar only unpacks trusted npm-registry
-  # tarballs, and @tootallnate/once is Low. Re-pin once those parents adopt the patched majors.
+  # sqlite3 / node-gyp chain: tar advisory pins are safe here because sqlite3 is pulled in
+  # transitively by typeorm but the project uses postgres; sqlite3 is never built at runtime.
+  # Therefore node-gyp@8 / http-proxy-agent@4 compatibility is not a concern.
+  # `@tootallnate/once` advisory (ENG-1456/1396/1379) remains Low and is not pinned.
   # SAML and XML processing chains.
   "@xmldom/xmldom": 0.9.10 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
   axios: 1.16.0
@@ -66,7 +66,8 @@ overrides:
   undici@7: 7.28.0
   # ENG-1513 / GHSA-fjxv-7rqg-78g4: form-data <4.0.4 uses an unsafe random function for the
   # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
-  form-data@4: 4.0.5
+  form-data@4: 4.0.6
+  tar: 7.5.16
 
 patchedDependencies:
   next-auth@4.24.13: patches/next-auth@4.24.13.patch
