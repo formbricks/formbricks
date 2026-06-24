@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -110,6 +111,12 @@ export const FeaturedTemplates = ({
     workspace.config.channel === "website" ? "app" : (workspace.config.channel ?? "link");
 
   const handleUse = async (templateId: string) => {
+    posthog.capture("featured_template_used", {
+      template_id: templateId,
+      role_filter: selectedRole,
+      survey_type: surveyType,
+      source: selectedRole ? "role_filtered" : "default",
+    });
     setLoadingId(templateId);
     try {
       const survey = await createSurveyMutation.mutateAsync({

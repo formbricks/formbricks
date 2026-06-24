@@ -2,6 +2,7 @@
 
 import { AlertTriangleIcon, ZapIcon } from "lucide-react";
 import Link from "next/link";
+import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
@@ -26,6 +27,7 @@ export const TrialResponseWarningModal = ({
   useEffect(() => {
     document.cookie = `trial_warning_shown_${threshold}=true; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
     setOpen(true);
+    posthog.capture("trial_response_warning_shown", { threshold, response_count: responseCount });
   }, [threshold]);
 
   const handleDismiss = () => {
@@ -68,12 +70,28 @@ export const TrialResponseWarningModal = ({
           </div>
 
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button asChild onClick={handleDismiss}>
+            <Button
+              asChild
+              onClick={() => {
+                posthog.capture("trial_response_warning_cta_clicked", {
+                  threshold,
+                  cta: "add_billing_method",
+                });
+                handleDismiss();
+              }}>
               <Link href={billingHref}>
                 {t("workspace.settings.billing.trial_warning_add_billing_method")}
               </Link>
             </Button>
-            <Button variant="secondary" onClick={handleDismiss}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                posthog.capture("trial_response_warning_cta_clicked", {
+                  threshold,
+                  cta: "remind_me_later",
+                });
+                handleDismiss();
+              }}>
               {t("workspace.settings.billing.trial_warning_remind_me_later")}
             </Button>
           </div>

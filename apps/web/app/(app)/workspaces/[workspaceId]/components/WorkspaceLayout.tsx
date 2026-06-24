@@ -75,7 +75,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
-      {IS_FORMBRICKS_CLOUD && (
+      {IS_FORMBRICKS_CLOUD && !isTrialing && (
         <LimitsReachedBanner organization={organization} responseCount={responseCount} />
       )}
 

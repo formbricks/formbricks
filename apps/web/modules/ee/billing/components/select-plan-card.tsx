@@ -3,7 +3,8 @@
 import { CheckIcon, GiftIcon, XCircleIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import posthog from "posthog-js";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import calLogo from "@/images/customer-logos/cal-logo-light.svg";
@@ -48,9 +49,12 @@ export const SelectPlanCard = ({
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const [showHobbyConfirm, setShowHobbyConfirm] = useState(false);
-  const [hobbyConfirmEnabled] = useState(
-    () => getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test"
-  );
+  const [hobbyConfirmEnabled, setHobbyConfirmEnabled] = useState(false);
+  useEffect(() => {
+    return posthog.onFeatureFlags(() => {
+      setHobbyConfirmEnabled(getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test");
+    });
+  }, []);
   const { t } = useTranslation();
   let ctaCopy: string;
   if (ctaVariant === "variant_b") {
@@ -204,6 +208,7 @@ export const SelectPlanCard = ({
             <Button
               variant="ghost"
               onClick={() => {
+                posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "start_trial" });
                 setShowHobbyConfirm(false);
                 void handleStartTrial();
               }}>
@@ -212,7 +217,10 @@ export const SelectPlanCard = ({
             <Button
               variant="destructive"
               loading={isStartingHobby}
-              onClick={() => void handleContinueHobby()}>
+              onClick={() => {
+                posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "downgrade_hobby" });
+                void handleContinueHobby();
+              }}>
               {t("workspace.settings.billing.hobby_confirm_downgrade")}
             </Button>
           </DialogFooter>
