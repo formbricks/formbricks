@@ -17,7 +17,11 @@ import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./lan
 import { prepareV3SurveyPatchInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
-import { areV3SurveyTargetingFiltersEqual, setV3SurveySegmentFilters } from "./targeting";
+import {
+  areV3SurveyTargetingFiltersEqual,
+  assertV3SurveyTargetingFilterReferences,
+  setV3SurveySegmentFilters,
+} from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
 import { assertV3SurveyTargetingWritePermission, assertV3SurveyWritePermissions } from "./write-permissions";
@@ -151,6 +155,10 @@ async function buildV3AppSurveyPatchWrites(params: {
       },
     ]);
   }
+
+  // Validate attribute-key references on the changed filters before the write (mirrors trigger ids).
+  await assertV3SurveyTargetingFilterReferences(currentSurvey.workspaceId, nextFilters);
+
   return { segmentId, filters: nextFilters };
 }
 

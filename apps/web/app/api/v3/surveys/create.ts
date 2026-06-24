@@ -11,7 +11,11 @@ import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./lan
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3CreateSurveyBody } from "./schemas";
-import { V3_CONTACTS_NOT_ENABLED_MESSAGE, resolveV3ContactsEntitlement } from "./targeting";
+import {
+  V3_CONTACTS_NOT_ENABLED_MESSAGE,
+  assertV3SurveyTargetingFilterReferences,
+  resolveV3ContactsEntitlement,
+} from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
 
@@ -155,8 +159,12 @@ export async function executeV3SurveyCreate(params: {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
   }
 
-  // Resolve/validate app distribution (incl. trigger ids) before any DB write.
+  // Resolve/validate app distribution (incl. trigger ids) and targeting attribute-key references
+  // before any DB write, so an invalid reference fails with a 422 instead of a partial write.
   const appCreateFields = input.type === "app" ? await buildV3AppSurveyCreateFields(input) : {};
+  if (input.type === "app") {
+    await assertV3SurveyTargetingFilterReferences(input.workspaceId, input.targeting?.filters ?? []);
+  }
 
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
   const surveyCreateInput: TSurveyCreateInput = {

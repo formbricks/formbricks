@@ -54,6 +54,7 @@ vi.mock("@/lib/actionClass/service", () => ({
 vi.mock("./targeting", () => ({
   setV3SurveySegmentFilters: vi.fn(),
   areV3SurveyTargetingFiltersEqual: vi.fn(),
+  assertV3SurveyTargetingFilterReferences: vi.fn(),
   resolveV3ContactsEntitlement: vi.fn(),
   V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
 }));
