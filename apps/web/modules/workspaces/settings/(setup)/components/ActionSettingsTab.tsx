@@ -70,7 +70,11 @@ export const ActionSettingsTab = ({
     mode: "onChange",
   });
 
-  const { handleSubmit, control } = form;
+  const {
+    handleSubmit,
+    control,
+    formState: { isDirty },
+  } = form;
 
   const renderActionForm = () => {
     if (actionClass.type === "code") {
@@ -141,10 +145,7 @@ export const ActionSettingsTab = ({
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
             {currentSurveyId ? (
-              <ActionSharedSurveysWarning
-                actionClassId={actionClass.id}
-                currentSurveyId={currentSurveyId}
-              />
+              <ActionSharedSurveysWarning actionClassId={actionClass.id} currentSurveyId={currentSurveyId} />
             ) : null}
 
             <ActionNameDescriptionFields
@@ -179,7 +180,7 @@ export const ActionSettingsTab = ({
 
             {isReadOnly ? null : (
               <div className="flex gap-x-2">
-                <Button type="submit" loading={isUpdatingAction}>
+                <Button type="submit" loading={isUpdatingAction} disabled={!isDirty}>
                   {t("common.save_changes")}
                 </Button>
               </div>
