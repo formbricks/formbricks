@@ -3,21 +3,25 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
+import type { TUser } from "@formbricks/types/user";
 import {
   getOrganizationsForSwitcherAction,
   getWorkspacesForSwitcherAction,
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 
 interface SettingsNavigationProps {
+  user: TUser;
   workspaceId: string;
   workspaceName: string;
   organizationId: string;
   organizationName: string;
   membershipRole?: TOrganizationRole;
   isFormbricksCloud: boolean;
+  publicDomain: string;
   // Where the back arrow returns to (the surveys list of the current workspace).
   backUrl: string;
 }
@@ -26,12 +30,14 @@ interface SettingsNavigationProps {
 // (MainNavigation) and on the standalone /organizations/[id]/settings and /account/settings routes —
 // one component, identical UI, regardless of which scoped route is active.
 export const SettingsNavigation = ({
+  user,
   workspaceId,
   workspaceName,
   organizationId,
   organizationName,
   membershipRole,
   isFormbricksCloud,
+  publicDomain,
   backUrl,
 }: Readonly<SettingsNavigationProps>) => {
   const router = useRouter();
@@ -118,6 +124,7 @@ export const SettingsNavigation = ({
           onOrganizationDropdownOpen={loadOrganizations}
         />
       </div>
+      <UserDropdown user={user} organizationId={organizationId} publicDomain={publicDomain} />
     </aside>
   );
 };

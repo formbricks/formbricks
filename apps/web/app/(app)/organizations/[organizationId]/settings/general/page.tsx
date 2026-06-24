@@ -21,6 +21,7 @@ import {
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -30,6 +31,8 @@ import packageJson from "@/package.json";
 const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const params = await props.params;
   const t = await getTranslate();
+
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
 
   const { session, currentUserMembership, organization, isOwner, isManager } = await getOrganizationAuth(
     params.organizationId

@@ -24,7 +24,9 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
-const Page = async (props: { searchParams: Promise<{ accountDeletionError?: string | string[] }> }) => {
+const Page = async (
+  props: Readonly<{ searchParams: Promise<{ accountDeletionError?: string | string[] }> }>
+) => {
   const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const searchParams = await props.searchParams;

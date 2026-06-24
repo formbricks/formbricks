@@ -4,6 +4,7 @@ import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { ApiKeyList } from "./components/api-key-list";
@@ -11,6 +12,8 @@ import { ApiKeyList } from "./components/api-key-list";
 export const APIKeysPage = async (props: { params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
+
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
 
   const { currentUserMembership, organization, session } = await getOrganizationAuth(params.organizationId);
 

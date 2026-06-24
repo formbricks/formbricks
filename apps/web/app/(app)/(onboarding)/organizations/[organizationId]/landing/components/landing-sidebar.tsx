@@ -4,10 +4,10 @@ import {
   ArrowUpRightIcon,
   Building2Icon,
   ChevronRightIcon,
-  CogIcon,
   Loader2,
   LogOutIcon,
-  PlusIcon,
+  SettingsIcon,
+  UserCircleIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,6 +29,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 
@@ -38,7 +39,7 @@ interface LandingSidebarProps {
   isMultiOrgEnabled: boolean;
 }
 
-export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: LandingSidebarProps) => {
+export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
@@ -94,10 +95,27 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
     });
   };
 
+  const handleSettingNavigation = (href: string) => {
+    startTransition(() => {
+      router.push(href);
+    });
+  };
+
   const dropdownNavigation = [
+    {
+      label: t("common.account"),
+      href: "/account/settings/profile",
+      icon: UserCircleIcon,
+    },
     {
       label: t("common.documentation"),
       href: "https://formbricks.com/docs",
+      target: "_blank",
+      icon: ArrowUpRightIcon,
+    },
+    {
+      label: t("common.share_feedback"),
+      href: "https://github.com/formbricks/formbricks/issues",
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
@@ -168,32 +186,19 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
                     </DropdownMenuCheckboxItem>
                   ))}
                 </DropdownMenuGroup>
-                {isMultiOrgEnabled && (
-                  <DropdownMenuCheckboxItem
-                    onClick={() => setOpenCreateOrganizationModal(true)}
-                    className="w-full cursor-pointer justify-between">
-                    <span>{t("common.create_new_organization")}</span>
-                    <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
-                  </DropdownMenuCheckboxItem>
-                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  onClick={() =>
+                    handleSettingNavigation(`/organizations/${organization.id}/settings/general`)
+                  }
+                  className="cursor-pointer">
+                  <SettingsIcon className="mr-2 size-4" strokeWidth={1.5} />
+                  {t("common.settings")}
+                </DropdownMenuCheckboxItem>
               </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Organization settings — reachable without a workspace; per-item access is role-gated inside. */}
-        <Link href={`/organizations/${organization.id}/settings/general`} className={switcherTriggerClasses}>
-          <div className="flex w-full items-center gap-3">
-            <span className={switcherIconClasses}>
-              <CogIcon className="size-4" strokeWidth={1.5} />
-            </span>
-            <div className="grow overflow-hidden">
-              <p className="truncate text-sm font-bold text-slate-700">{t("common.settings")}</p>
-              <p className="text-sm text-slate-500">{t("common.organization")}</p>
-            </div>
-            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-          </div>
-        </Link>
 
         {/* User Dropdown */}
         <DropdownMenu>

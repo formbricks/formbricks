@@ -6,12 +6,15 @@ import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
 export const TeamsPage = async (props: { params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
+
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
 
   const { session, currentUserMembership, organization } = await getOrganizationAuth(params.organizationId);
 

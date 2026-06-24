@@ -18,6 +18,11 @@ export const getOrganizationsByUserId = reactCache(
             },
           },
         },
+        // Deterministic order so callers that take organizations[0] (e.g. account settings'
+        // default org) always resolve the same organization for a given user.
+        orderBy: {
+          createdAt: "asc",
+        },
         select: {
           id: true,
           name: true,

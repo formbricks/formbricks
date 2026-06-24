@@ -32,6 +32,9 @@ describe("Organization", () => {
             },
           },
         },
+        orderBy: {
+          createdAt: "asc",
+        },
         select: {
           id: true,
           name: true,

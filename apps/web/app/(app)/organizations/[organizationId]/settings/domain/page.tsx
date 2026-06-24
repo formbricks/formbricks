@@ -8,6 +8,7 @@ import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { FaviconCustomizationSettings } from "@/modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { getSurveysWithSlugsByOrganizationId } from "@/modules/survey/lib/slug";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -20,6 +21,8 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
   if (IS_FORMBRICKS_CLOUD) {
     return notFound();
   }
+
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
 
   const { session, organization, isOwner, isManager } = await getOrganizationAuth(params.organizationId);
   if (!session) {

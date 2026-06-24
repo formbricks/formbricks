@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { hasOrganizationAccess } from "@/lib/auth";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 
 export const GET = async (_: Request, context: { params: Promise<{ organizationId: string }> }) => {
   const params = await context?.params;
@@ -30,7 +32,7 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   const firstWorkspace = workspaces[0];
 
   if (isBilling) {
-    return redirect(`/organizations/${organizationId}/settings/billing`);
+    return redirect(getOrganizationBillingPath(organizationId, IS_FORMBRICKS_CLOUD));
   }
 
   return redirect(`/workspaces/${firstWorkspace.id}/`);

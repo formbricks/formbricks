@@ -41,12 +41,14 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
 
       <div className="flex h-full">
         <SettingsNavigation
+          user={data.user}
           workspaceId={data.currentWorkspace?.id ?? ""}
           workspaceName={data.currentWorkspace?.name ?? ""}
           organizationId={data.organization.id}
           organizationName={data.organization.name}
           membershipRole={data.membershipRole}
           isFormbricksCloud={data.isFormbricksCloud}
+          publicDomain={data.publicDomain}
           backUrl={data.backUrl}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
