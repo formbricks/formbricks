@@ -32,8 +32,10 @@ const parseBooleanParam = (value: string | null): boolean | string | undefined =
 };
 
 /**
- * Map the HTTP query family to the contract's `ZListWorkflowsInput` shape, then validate. Validation
- * (unknown params, bad enum/limit) throws a `ZodError` the handler maps to a 400.
+ * Map the HTTP query family to the contract's `ZListWorkflowsInput` shape, then validate. Only the
+ * recognized keys are read; unrecognized query params are ignored (lenient, matching the v3 survey
+ * list, so third-party callers can append their own params). A bad value (enum/limit/cursor) throws
+ * a `ZodError` the handler maps to a 400.
  */
 export const parseListWorkflowsQuery = (searchParams: URLSearchParams): TListWorkflowsInput => {
   const raw: Record<string, unknown> = {
@@ -54,7 +56,8 @@ export const parseListWorkflowsQuery = (searchParams: URLSearchParams): TListWor
 /**
  * Map the HTTP query family to the contract's `ZListWorkflowRunsInput` shape, then validate. Runs are
  * always newest-first (no `sortBy`); the supported filters are `workflowId`, `responseId`,
- * `filter[status][in]`, and `filter[isDryRun][eq]`. A bad value throws a `ZodError` (→ 400).
+ * `filter[status][in]`, and `filter[isDryRun][eq]`. Unrecognized query params are ignored (lenient,
+ * as above); a bad value throws a `ZodError` (→ 400).
  */
 export const parseListWorkflowRunsQuery = (searchParams: URLSearchParams): TListWorkflowRunsInput => {
   const raw: Record<string, unknown> = {

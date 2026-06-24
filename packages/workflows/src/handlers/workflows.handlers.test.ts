@@ -14,6 +14,7 @@ import { createWorkflowsHandlers } from "./workflows.handlers";
 const surveyId = "cm9zr4q7i000108l84gozfggr";
 const workspaceId = "cm9zr4mps000008l8btfy1vtz";
 const workflowId = "cm9zr4t2b000208l8h2m1aq3c";
+const responseId = "cm9zr4rsp000708l8bqccpfrx";
 
 const definition = {
   schemaVersion: 1 as const,
@@ -671,7 +672,7 @@ describe("listRuns", () => {
 
     await handlers.listRuns({
       req: runsRequest(
-        `workspaceId=${workspaceId}&workflowId=${workflowId}&filter[status][in]=failed,completed&filter[isDryRun][eq]=true`
+        `workspaceId=${workspaceId}&workflowId=${workflowId}&responseId=${responseId}&filter[status][in]=failed,completed&filter[isDryRun][eq]=true`
       ),
       ctx: makeCtx(),
     });
@@ -680,6 +681,7 @@ describe("listRuns", () => {
       expect.objectContaining({
         workspaceId,
         workflowId,
+        responseId,
         statusIn: ["failed", "completed"],
         isDryRun: true,
       })
