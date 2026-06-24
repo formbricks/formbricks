@@ -488,16 +488,23 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         await preLogoutContext.close();
       }
 
-      // Better Auth sign-out: `POST /api/auth/sign-out`, no CSRF token (replaces the NextAuth
-      // `/api/auth/signout` + csrfToken form flow; ENG-1054). Two things are load-bearing:
-      //  - `data: {}` — the Next.js route handler (toNextJsHandler) rejects a body-less POST with 415
-      //    Unsupported Media Type; an object body makes Playwright send `content-type: application/json`
-      //    (same as the sign-in call above). Without it the sign-out 415s and the session stays alive.
+      // Better Auth sign-out: `POST /api/auth/sign-out` (replaces the NextAuth `/api/auth/signout` +
+      // csrfToken form flow; ENG-1054). Three things are load-bearing — confirmed from the failing-run
+      // trace + the BA source:
       //  - explicit `cookie` header — the login fixture sets the session via the APIRequestContext, and
       //    in Playwright service mode that cookie isn't mirrored into the remote browser's jar, so we
       //    attach the captured cookie directly. Deterministic in both local and service mode.
+      //  - `data: {}` — the Next.js route handler (toNextJsHandler) rejects a body-less POST with 415
+      //    Unsupported Media Type; an object body makes Playwright send `content-type: application/json`
+      //    (same as the sign-in call above).
+      //  - `origin` header — BA's CSRF guard (origin-check.mjs) validates Origin on any auth request
+      //    that carries a cookie; without it the (cookie-bearing) sign-out is 403. The app origin is a
+      //    trusted origin (auth.ts `trustedOrigins` = BETTER_AUTH_URL/NEXTAUTH_URL = the baseURL).
       const signOutResponse = await request.post("/api/auth/sign-out", {
-        headers: { cookie: `${sessionCookie!.name}=${sessionCookie!.value}` },
+        headers: {
+          cookie: `${sessionCookie!.name}=${sessionCookie!.value}`,
+          origin: "http://localhost:3000",
+        },
         data: {},
       });
 
