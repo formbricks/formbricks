@@ -2224,13 +2224,9 @@ checksums:
     workspace/settings/billing/hobby_confirm_feature_branding: ba7b088be582865979b8221012825385
     workspace/settings/billing/hobby_confirm_feature_contacts: 998ffee7602a26d9bb45577fb34bc728
     workspace/settings/billing/hobby_confirm_feature_responses: 2b51e95b0962ccfb337f826a313d8867
-    workspace/settings/billing/hobby_confirm_feature_seats: a74a24b67bb1adc3cdbff560aea58919
+    workspace/settings/billing/hobby_confirm_feature_seats: 478092018a27a4e588cb5c70968ef11a
     workspace/settings/billing/hobby_confirm_start_trial: e4c13fee92f29666eb91ac2192c1a65c
     workspace/settings/billing/hobby_confirm_title: 7c0a11e4ad80bde83f7fa3125daff7eb
-    workspace/settings/billing/hobby_downgrade_confirm_description: 6fdac963faf12536fc2cae94c3ba8e27
-    workspace/settings/billing/hobby_downgrade_confirm_title: 55cd6d398a379f8ce9c674834e661956
-    workspace/settings/billing/hobby_downgrade_feature_responses: 3ff609fdb739d0e38698adb62914972d
-    workspace/settings/billing/hobby_downgrade_keep_trial: 7c1aa6735897c9c0d6057af9cb9d0047
     workspace/settings/billing/keep_current_plan: 57ac15ffa2c29ac364dd405669eeb7f6
     workspace/settings/billing/manage_billing_details: 40448f0b5ed4b3bb1d864ba6e1bb6a3b
     workspace/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
