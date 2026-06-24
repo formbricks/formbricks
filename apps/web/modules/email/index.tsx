@@ -225,8 +225,9 @@ export const sendVerificationLinkEmail = async (data: {
 }): Promise<boolean> => {
   const t = await getTranslate(data.locale);
   const html = await renderVerificationEmail({
-    // Better Auth supplies a single verification link; reuse it for the resend CTA for now.
-    // TODO(ENG-1054 cutover): point verificationRequestLink at Better Auth's resend flow.
+    // Better Auth supplies a single verification link; the resend CTA reuses it. Wiring
+    // verificationRequestLink to a dedicated Better Auth resend endpoint is a post-cutover
+    // refinement tracked in the ENG-1054 runbook, not a blocker for this flow.
     verificationRequestLink: data.verifyLink,
     verifyLink: data.verifyLink,
     t,
