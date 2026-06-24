@@ -489,18 +489,21 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       }
 
       // Better Auth sign-out: `POST /api/auth/sign-out`, no CSRF token (replaces the NextAuth
-      // `/api/auth/signout` + csrfToken form flow; ENG-1054). Attach the captured session cookie to
-      // the request explicitly. The login fixture establishes the session through the APIRequestContext,
-      // and under Playwright service mode that cookie isn't mirrored into the remote browser's jar — so
-      // neither an in-page fetch() nor the browser context's own jar reliably carries it. Sending it on
-      // the request header is deterministic in both local and service mode; BA verifies it and deletes
-      // the session (Redis + DB), which the replay below then proves. (The `request` fixture issues from
-      // the test runner straight to the app, the same path the sibling tests in this file rely on.)
+      // `/api/auth/signout` + csrfToken form flow; ENG-1054). Two things are load-bearing:
+      //  - `data: {}` — the Next.js route handler (toNextJsHandler) rejects a body-less POST with 415
+      //    Unsupported Media Type; an object body makes Playwright send `content-type: application/json`
+      //    (same as the sign-in call above). Without it the sign-out 415s and the session stays alive.
+      //  - explicit `cookie` header — the login fixture sets the session via the APIRequestContext, and
+      //    in Playwright service mode that cookie isn't mirrored into the remote browser's jar, so we
+      //    attach the captured cookie directly. Deterministic in both local and service mode.
       const signOutResponse = await request.post("/api/auth/sign-out", {
         headers: { cookie: `${sessionCookie!.name}=${sessionCookie!.value}` },
+        data: {},
       });
 
-      expect(signOutResponse.status()).not.toBe(500);
+      // Require 2xx, not merely "not 500": a 415/4xx here means the sign-out never ran — which a weaker
+      // check silently passes while the session (and the replay below) stays valid.
+      expect(signOutResponse.ok()).toBeTruthy();
 
       const replayContext = await browser.newContext();
       try {
