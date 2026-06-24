@@ -323,9 +323,11 @@ patch:
         Unprocessable Content — the patched document passed schema validation but failed a
         cross-reference check that requires stored state to detect: an undeclared locale key used in
         content, a duplicate stable id, an immutable element-id change on a published survey, a
-        dangling logic/jump reference, an invalid media URL, or a
+        dangling logic/jump reference, an invalid media URL, a
         `distribution.triggers[].actionClassId` referencing an action class that does not exist in
-        the workspace (discover valid ids via `GET /api/v3/action-classes`). The `invalid_params`
+        the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters`
+        entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an
+        unsupported person identifier, or an unknown device value. The `invalid_params`
         array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
       content:
         application/problem+json:

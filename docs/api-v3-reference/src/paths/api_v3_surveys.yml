@@ -193,7 +193,9 @@ post:
     `type` may be omitted or set to `link` or `app`. App surveys additionally accept the
     `distribution` (display options + triggers) and `targeting` (contact segment filters) objects;
     both are rejected for link surveys. Trigger ids must reference existing workspace action classes
-    (discover them via `GET /api/v3/action-classes`). Unsupported fields are rejected instead of ignored.
+    (discover them via `GET /api/v3/action-classes`), and `targeting.filters` references
+    (contact-attribute keys and segments) must exist in the workspace. Unsupported fields are
+    rejected instead of ignored.
   tags:
     - V3 Surveys
   requestBody:
@@ -438,9 +440,11 @@ post:
       description: >-
         Unprocessable Content — the document passed schema validation but failed a cross-reference
         check that requires stored state to detect: duplicate stable ids, dangling logic/jump
-        references, undeclared locale keys used in content, invalid media URLs, or a
+        references, undeclared locale keys used in content, invalid media URLs, a
         `distribution.triggers[].actionClassId` referencing an action class that does not exist in
-        the workspace (discover valid ids via `GET /api/v3/action-classes`). The `invalid_params`
+        the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters`
+        entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an
+        unsupported person identifier, or an unknown device value. The `invalid_params`
         array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
       content:
         application/problem+json:
