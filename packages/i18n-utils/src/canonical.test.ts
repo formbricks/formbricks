@@ -37,6 +37,16 @@ describe("normalizeLanguageCode", () => {
     expect(normalizeLanguageCode("  de  ")).toBe("de-DE");
   });
 
+  test("remaps aliases regardless of input casing", () => {
+    // Alias remaps (tl->fil, tw->ak) must hold even when the input casing misses the static map and
+    // resolution falls through to CLDR.
+    expect(normalizeLanguageCode("tl")).toBe("fil-PH");
+    expect(normalizeLanguageCode("TL")).toBe("fil-PH");
+    expect(normalizeLanguageCode("Tl")).toBe("fil-PH");
+    expect(normalizeLanguageCode("tw")).toBe("ak-GH");
+    expect(normalizeLanguageCode("TW")).toBe("ak-GH");
+  });
+
   test("falls back to CLDR for codes outside the static map", () => {
     // not in the catalog/prod map, but resolvable via likely-subtags
     expect(normalizeLanguageCode("nso")).toBe("nso-ZA");
