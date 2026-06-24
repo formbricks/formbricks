@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useTransition } from "react";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TUser } from "@formbricks/types/user";
 import {
@@ -9,8 +9,8 @@ import {
   getWorkspacesForSwitcherAction,
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
+import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 
 interface SettingsNavigationProps {
@@ -43,40 +43,14 @@ export const SettingsNavigation = ({
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
-  const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
-  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
-  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
-
-  const loadWorkspaces = useCallback(async () => {
-    if (workspaces.length > 0 || isLoadingWorkspaces) return;
-    setIsLoadingWorkspaces(true);
-    try {
-      const result = await getWorkspacesForSwitcherAction({ organizationId });
-      if (result?.data) {
-        setWorkspaces([...result.data].sort((a, b) => a.name.localeCompare(b.name)));
-      } else {
-        getFormattedErrorMessage(result);
-      }
-    } finally {
-      setIsLoadingWorkspaces(false);
-    }
-  }, [organizationId, workspaces.length, isLoadingWorkspaces]);
-
-  const loadOrganizations = useCallback(async () => {
-    if (organizations.length > 0 || isLoadingOrganizations) return;
-    setIsLoadingOrganizations(true);
-    try {
-      const result = await getOrganizationsForSwitcherAction({ organizationId });
-      if (result?.data) {
-        setOrganizations([...result.data].sort((a, b) => a.name.localeCompare(b.name)));
-      } else {
-        getFormattedErrorMessage(result);
-      }
-    } finally {
-      setIsLoadingOrganizations(false);
-    }
-  }, [organizationId, organizations.length, isLoadingOrganizations]);
+  const workspaceSwitcher = useSwitcherData(
+    () => getWorkspacesForSwitcherAction({ organizationId }),
+    "common.failed_to_load_workspaces"
+  );
+  const organizationSwitcher = useSwitcherData(
+    () => getOrganizationsForSwitcherAction({ organizationId }),
+    "common.failed_to_load_organizations"
+  );
 
   const handleWorkspaceChange = useCallback(
     (id: string) => {
@@ -114,14 +88,14 @@ export const SettingsNavigation = ({
           isCollapsed={false}
           isTextVisible={false}
           hideWorkspaceSection={!workspaceId}
-          workspaces={workspaces}
-          isLoadingWorkspaces={isLoadingWorkspaces}
+          workspaces={workspaceSwitcher.items}
+          isLoadingWorkspaces={workspaceSwitcher.isLoading}
           onWorkspaceChange={handleWorkspaceChange}
-          onWorkspaceDropdownOpen={loadWorkspaces}
-          organizations={organizations}
-          isLoadingOrganizations={isLoadingOrganizations}
+          onWorkspaceDropdownOpen={() => workspaceSwitcher.load()}
+          organizations={organizationSwitcher.items}
+          isLoadingOrganizations={organizationSwitcher.isLoading}
           onOrganizationChange={handleOrganizationChange}
-          onOrganizationDropdownOpen={loadOrganizations}
+          onOrganizationDropdownOpen={() => organizationSwitcher.load()}
         />
       </div>
       <UserDropdown user={user} organizationId={organizationId} publicDomain={publicDomain} />

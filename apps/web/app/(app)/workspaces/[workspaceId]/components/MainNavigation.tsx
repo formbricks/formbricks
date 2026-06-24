@@ -35,10 +35,10 @@ import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
+import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -195,13 +195,16 @@ export const MainNavigation = ({
 
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
-  const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
-  const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
-  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
-  const [hasInitializedWorkspaces, setHasInitializedWorkspaces] = useState(false);
-  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
-  const [workspaceLoadError, setWorkspaceLoadError] = useState<string | null>(null);
-  const [organizationLoadError, setOrganizationLoadError] = useState<string | null>(null);
+  const workspaceSwitcher = useSwitcherData(
+    () => getWorkspacesForSwitcherAction({ organizationId: organization.id }),
+    "common.failed_to_load_workspaces"
+  );
+  const organizationSwitcher = useSwitcherData(
+    () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
+    "common.failed_to_load_organizations"
+  );
+  const { load: loadWorkspaces } = workspaceSwitcher;
+  const { load: loadOrganizations } = organizationSwitcher;
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = useState(false);
   const [openWorkspaceLimitModal, setOpenWorkspaceLimitModal] = useState(false);
 
@@ -217,85 +220,18 @@ export const MainNavigation = ({
     </div>
   );
 
-  const loadWorkspaces = useCallback(async () => {
-    setIsLoadingWorkspaces(true);
-    setWorkspaceLoadError(null);
-
-    try {
-      const result = await getWorkspacesForSwitcherAction({ organizationId: organization.id });
-      if (result?.data) {
-        const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
-        setWorkspaces(sorted);
-      } else {
-        setWorkspaceLoadError(getFormattedErrorMessage(result) || t("common.failed_to_load_workspaces"));
-      }
-    } catch (error) {
-      const formattedError =
-        typeof error === "object" && error !== null
-          ? getFormattedErrorMessage(error as { serverError?: string; validationErrors?: unknown })
-          : "";
-      setWorkspaceLoadError(
-        formattedError || (error instanceof Error ? error.message : t("common.failed_to_load_workspaces"))
-      );
-    } finally {
-      setIsLoadingWorkspaces(false);
-      setHasInitializedWorkspaces(true);
+  useEffect(() => {
+    // The hook guards against duplicate/looping loads internally.
+    if (isWorkspaceDropdownOpen) {
+      void loadWorkspaces();
     }
-  }, [organization.id, t]);
+  }, [isWorkspaceDropdownOpen, loadWorkspaces]);
 
   useEffect(() => {
-    if (!isWorkspaceDropdownOpen || workspaces.length > 0 || isLoadingWorkspaces || workspaceLoadError) {
-      return;
+    if (isOrganizationDropdownOpen) {
+      void loadOrganizations();
     }
-
-    loadWorkspaces();
-  }, [isWorkspaceDropdownOpen, workspaces.length, isLoadingWorkspaces, workspaceLoadError, loadWorkspaces]);
-
-  const loadOrganizations = useCallback(async () => {
-    setIsLoadingOrganizations(true);
-    setOrganizationLoadError(null);
-
-    try {
-      const result = await getOrganizationsForSwitcherAction({ organizationId: organization.id });
-      if (result?.data) {
-        const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
-        setOrganizations(sorted);
-      } else {
-        setOrganizationLoadError(
-          getFormattedErrorMessage(result) || t("common.failed_to_load_organizations")
-        );
-      }
-    } catch (error) {
-      const formattedError =
-        typeof error === "object" && error !== null
-          ? getFormattedErrorMessage(error as { serverError?: string; validationErrors?: unknown })
-          : "";
-      setOrganizationLoadError(
-        formattedError || (error instanceof Error ? error.message : t("common.failed_to_load_organizations"))
-      );
-    } finally {
-      setIsLoadingOrganizations(false);
-    }
-  }, [organization.id, t]);
-
-  useEffect(() => {
-    if (
-      !isOrganizationDropdownOpen ||
-      organizations.length > 0 ||
-      isLoadingOrganizations ||
-      organizationLoadError
-    ) {
-      return;
-    }
-
-    loadOrganizations();
-  }, [
-    isOrganizationDropdownOpen,
-    organizations.length,
-    isLoadingOrganizations,
-    organizationLoadError,
-    loadOrganizations,
-  ]);
+  }, [isOrganizationDropdownOpen, loadOrganizations]);
 
   useEffect(() => {
     async function loadReleases() {
@@ -357,11 +293,11 @@ export const MainNavigation = ({
   };
 
   const handleWorkspaceCreate = () => {
-    if (!hasInitializedWorkspaces || isLoadingWorkspaces) {
+    if (!workspaceSwitcher.hasLoaded || workspaceSwitcher.isLoading) {
       return;
     }
 
-    if (workspaces.length >= organizationWorkspacesLimit) {
+    if (workspaceSwitcher.items.length >= organizationWorkspacesLimit) {
       setOpenWorkspaceLimitModal(true);
       return;
     }
@@ -428,7 +364,7 @@ export const MainNavigation = ({
     "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600";
   const mainNavIconClassName = "h-4 w-4 shrink-0";
   const isInitialWorkspacesLoading =
-    isWorkspaceDropdownOpen && !hasInitializedWorkspaces && !workspaceLoadError;
+    isWorkspaceDropdownOpen && !workspaceSwitcher.hasLoaded && !workspaceSwitcher.error;
 
   return (
     <>
@@ -454,14 +390,14 @@ export const MainNavigation = ({
                 isFormbricksCloud={isFormbricksCloud}
                 isCollapsed={false}
                 isTextVisible={false}
-                workspaces={workspaces}
-                isLoadingWorkspaces={isLoadingWorkspaces}
+                workspaces={workspaceSwitcher.items}
+                isLoadingWorkspaces={workspaceSwitcher.isLoading}
                 onWorkspaceChange={handleSettingsWorkspaceChange}
-                onWorkspaceDropdownOpen={loadWorkspaces}
-                organizations={organizations}
-                isLoadingOrganizations={isLoadingOrganizations}
+                onWorkspaceDropdownOpen={() => workspaceSwitcher.load()}
+                organizations={organizationSwitcher.items}
+                isLoadingOrganizations={organizationSwitcher.isLoading}
                 onOrganizationChange={handleSettingsOrganizationChange}
-                onOrganizationDropdownOpen={loadOrganizations}
+                onOrganizationDropdownOpen={() => organizationSwitcher.load()}
               />
             </div>
           ) : (
@@ -620,45 +556,44 @@ export const MainNavigation = ({
                         <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
                         {t("common.change_workspace")}
                       </div>
-                      {(isLoadingWorkspaces || isInitialWorkspacesLoading) && (
+                      {(workspaceSwitcher.isLoading || isInitialWorkspacesLoading) && (
                         <div className="flex items-center justify-center py-2">
                           <Loader2 className="size-4 animate-spin" />
                         </div>
                       )}
-                      {!isLoadingWorkspaces &&
+                      {!workspaceSwitcher.isLoading &&
                         !isInitialWorkspacesLoading &&
-                        workspaceLoadError &&
+                        workspaceSwitcher.error &&
                         renderSwitcherError(
-                          workspaceLoadError,
-                          () => {
-                            setWorkspaceLoadError(null);
-                            setWorkspaces([]);
-                          },
+                          workspaceSwitcher.error,
+                          workspaceSwitcher.retry,
                           t("common.try_again")
                         )}
-                      {!isLoadingWorkspaces && !isInitialWorkspacesLoading && !workspaceLoadError && (
-                        <>
-                          <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                            {workspaces.map((proj) => (
+                      {!workspaceSwitcher.isLoading &&
+                        !isInitialWorkspacesLoading &&
+                        !workspaceSwitcher.error && (
+                          <>
+                            <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                              {workspaceSwitcher.items.map((proj) => (
+                                <DropdownMenuCheckboxItem
+                                  key={proj.id}
+                                  checked={proj.id === workspace.id}
+                                  onClick={() => handleWorkspaceChange(proj.id)}
+                                  className="cursor-pointer">
+                                  {proj.name}
+                                </DropdownMenuCheckboxItem>
+                              ))}
+                            </DropdownMenuGroup>
+                            {isOwnerOrManager && (
                               <DropdownMenuCheckboxItem
-                                key={proj.id}
-                                checked={proj.id === workspace.id}
-                                onClick={() => handleWorkspaceChange(proj.id)}
-                                className="cursor-pointer">
-                                {proj.name}
+                                onClick={handleWorkspaceCreate}
+                                className="w-full cursor-pointer justify-between">
+                                <span>{t("common.add_new_workspace")}</span>
+                                <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
                               </DropdownMenuCheckboxItem>
-                            ))}
-                          </DropdownMenuGroup>
-                          {isOwnerOrManager && (
-                            <DropdownMenuCheckboxItem
-                              onClick={handleWorkspaceCreate}
-                              className="w-full cursor-pointer justify-between">
-                              <span>{t("common.add_new_workspace")}</span>
-                              <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
-                            </DropdownMenuCheckboxItem>
-                          )}
-                        </>
-                      )}
+                            )}
+                          </>
+                        )}
                       <DropdownMenuSeparator />
                       <DropdownMenuCheckboxItem
                         onClick={() =>
@@ -702,24 +637,21 @@ export const MainNavigation = ({
                         <Building2Icon className="mr-2 inline size-4" strokeWidth={1.5} />
                         {t("common.change_organization")}
                       </div>
-                      {isLoadingOrganizations && (
+                      {organizationSwitcher.isLoading && (
                         <div className="flex items-center justify-center py-2">
                           <Loader2 className="size-4 animate-spin" />
                         </div>
                       )}
-                      {!isLoadingOrganizations &&
-                        organizationLoadError &&
+                      {!organizationSwitcher.isLoading &&
+                        organizationSwitcher.error &&
                         renderSwitcherError(
-                          organizationLoadError,
-                          () => {
-                            setOrganizationLoadError(null);
-                            setOrganizations([]);
-                          },
+                          organizationSwitcher.error,
+                          organizationSwitcher.retry,
                           t("common.try_again")
                         )}
-                      {!isLoadingOrganizations && !organizationLoadError && (
+                      {!organizationSwitcher.isLoading && !organizationSwitcher.error && (
                         <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                          {organizations.map((org) => (
+                          {organizationSwitcher.items.map((org) => (
                             <DropdownMenuCheckboxItem
                               key={org.id}
                               checked={org.id === organization.id}

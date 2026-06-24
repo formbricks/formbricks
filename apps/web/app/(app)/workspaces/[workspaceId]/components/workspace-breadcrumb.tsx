@@ -7,7 +7,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getWorkspacesForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
@@ -53,10 +53,18 @@ export const WorkspaceBreadcrumb = ({
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = useState(false);
   const [openLimitModal, setOpenLimitModal] = useState(false);
   const router = useRouter();
-  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(false);
-  const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const workspaceSwitcher = useSwitcherData(
+    () => getWorkspacesForSwitcherAction({ organizationId: currentOrganizationId }),
+    "common.failed_to_load_workspaces",
+    (message) => {
+      const error = new Error(message);
+      logger.error(error, "Failed to load workspaces");
+      Sentry.captureException(error);
+    }
+  );
+  const { load: loadWorkspaces } = workspaceSwitcher;
 
   // Get current workspace name from context OR prop
   // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
@@ -65,29 +73,12 @@ export const WorkspaceBreadcrumb = ({
 
   const workspaceBasePath = `/workspaces/${currentWorkspace?.id}`;
 
-  // Lazy-load workspaces when dropdown opens
+  // Lazy-load workspaces when dropdown opens (the hook guards against duplicate/looping loads).
   useEffect(() => {
-    // Only fetch when dropdown opened for first time (and no error state)
-    if (isWorkspaceDropdownOpen && workspaces.length === 0 && !isLoadingWorkspaces && !loadError) {
-      setIsLoadingWorkspaces(true);
-      setLoadError(null); // Clear any previous errors
-      getWorkspacesForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
-        if (result?.data) {
-          // Sort workspaces by name
-          const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
-          setWorkspaces(sorted);
-        } else {
-          // Handle server errors or validation errors
-          const errorMessage = getFormattedErrorMessage(result);
-          const error = new Error(errorMessage);
-          logger.error(error, "Failed to load workspaces");
-          Sentry.captureException(error);
-          setLoadError(errorMessage || t("common.failed_to_load_workspaces"));
-        }
-        setIsLoadingWorkspaces(false);
-      });
+    if (isWorkspaceDropdownOpen) {
+      void loadWorkspaces();
     }
-  }, [isWorkspaceDropdownOpen, currentOrganizationId, workspaces.length, isLoadingWorkspaces, loadError, t]);
+  }, [isWorkspaceDropdownOpen, loadWorkspaces]);
 
   if (!currentWorkspace) {
     const errorMessage = `Workspace not found for workspace id: ${currentWorkspaceId}`;
@@ -108,7 +99,7 @@ export const WorkspaceBreadcrumb = ({
   };
 
   const handleAddWorkspace = () => {
-    if (workspaces.length >= organizationWorkspacesLimit) {
+    if (workspaceSwitcher.items.length >= organizationWorkspacesLimit) {
       setOpenLimitModal(true);
       return;
     }
@@ -170,29 +161,26 @@ export const WorkspaceBreadcrumb = ({
             <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
             {t("common.choose_workspace")}
           </div>
-          {isLoadingWorkspaces && (
+          {workspaceSwitcher.isLoading && (
             <div className="flex items-center justify-center py-2">
               <Loader2 className="size-4 animate-spin" />
             </div>
           )}
-          {!isLoadingWorkspaces && loadError && (
+          {!workspaceSwitcher.isLoading && workspaceSwitcher.error && (
             <div className="px-2 py-4">
-              <p className="mb-2 text-sm text-red-600">{loadError}</p>
+              <p className="mb-2 text-sm text-red-600">{workspaceSwitcher.error}</p>
               <button
                 type="button"
-                onClick={() => {
-                  setLoadError(null);
-                  setWorkspaces([]);
-                }}
+                onClick={workspaceSwitcher.retry}
                 className="text-xs text-slate-600 underline hover:text-slate-800">
                 {t("common.try_again")}
               </button>
             </div>
           )}
-          {!isLoadingWorkspaces && !loadError && (
+          {!workspaceSwitcher.isLoading && !workspaceSwitcher.error && (
             <>
               <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                {workspaces.map((ws) => (
+                {workspaceSwitcher.items.map((ws) => (
                   <DropdownMenuCheckboxItem
                     key={ws.id}
                     checked={ws.id === currentWorkspaceId}
