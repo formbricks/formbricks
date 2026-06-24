@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2Icon, ChevronRightIcon, Loader2, SettingsIcon } from "lucide-react";
+import { Building2Icon, ChevronRightIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -10,14 +10,12 @@ import { TUser } from "@formbricks/types/user";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
+import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 
@@ -54,11 +52,6 @@ export const LandingSidebar = ({ user, organization, publicDomain }: Readonly<La
     });
   };
 
-  const handleSettingNavigation = (href: string) => {
-    startTransition(() => {
-      router.push(href);
-    });
-  };
 
   const switcherTriggerClasses =
     "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset";
@@ -89,50 +82,15 @@ export const LandingSidebar = ({ user, organization, publicDomain }: Readonly<La
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
-            <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-              <Building2Icon className="mr-2 inline size-4" strokeWidth={1.5} />
-              {t("common.change_organization")}
-            </div>
-            {organizationSwitcher.isLoading && (
-              <div className="flex items-center justify-center py-2">
-                <Loader2 className="size-4 animate-spin" />
-              </div>
-            )}
-            {!organizationSwitcher.isLoading && organizationSwitcher.error && (
-              <div className="px-2 py-4">
-                <p className="mb-2 text-sm text-red-600">{organizationSwitcher.error}</p>
-                <button
-                  type="button"
-                  onClick={organizationSwitcher.retry}
-                  className="text-xs text-slate-600 underline hover:text-slate-800">
-                  {t("common.try_again")}
-                </button>
-              </div>
-            )}
-            {!organizationSwitcher.isLoading && !organizationSwitcher.error && (
-              <>
-                <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                  {organizationSwitcher.items.map((org) => (
-                    <DropdownMenuCheckboxItem
-                      key={org.id}
-                      checked={org.id === organization.id}
-                      onClick={() => handleOrganizationChange(org.id)}
-                      className="cursor-pointer">
-                      {org.name}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem
-                  onClick={() =>
-                    handleSettingNavigation(`/organizations/${organization.id}/settings/general`)
-                  }
-                  className="cursor-pointer">
-                  <SettingsIcon className="mr-2 size-4" strokeWidth={1.5} />
-                  {t("common.settings")}
-                </DropdownMenuCheckboxItem>
-              </>
-            )}
+            <SwitcherDropdownBody
+              type="organization"
+              isLoading={organizationSwitcher.isLoading}
+              error={organizationSwitcher.error}
+              onRetry={organizationSwitcher.retry}
+              items={organizationSwitcher.items}
+              selectedId={organization.id}
+              onSelect={handleOrganizationChange}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
 

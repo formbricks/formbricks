@@ -7,13 +7,13 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
+import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
@@ -108,41 +108,16 @@ export const OrganizationBreadcrumb = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="mt-2">
           {showOrganizationDropdown && (
-            <>
-              <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <Building2Icon className="mr-2 inline size-4" />
-                {t("common.choose_organization")}
-              </div>
-              {organizationSwitcher.isLoading && (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="size-4 animate-spin" />
-                </div>
-              )}
-              {!organizationSwitcher.isLoading && organizationSwitcher.error && (
-                <div className="px-2 py-4">
-                  <p className="mb-2 text-sm text-red-600">{organizationSwitcher.error}</p>
-                  <button
-                    type="button"
-                    onClick={organizationSwitcher.retry}
-                    className="text-xs text-slate-600 underline hover:text-slate-800">
-                    {t("common.try_again")}
-                  </button>
-                </div>
-              )}
-              {!organizationSwitcher.isLoading && !organizationSwitcher.error && (
-                <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                  {organizationSwitcher.items.map((org) => (
-                    <DropdownMenuCheckboxItem
-                      key={org.id}
-                      checked={org.id === currentOrganizationId}
-                      onClick={() => handleOrganizationChange(org.id)}
-                      className="cursor-pointer">
-                      {org.name}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuGroup>
-              )}
-            </>
+            <SwitcherDropdownBody
+              type="organization"
+              isLoading={organizationSwitcher.isLoading}
+              error={organizationSwitcher.error}
+              onRetry={organizationSwitcher.retry}
+              items={organizationSwitcher.items}
+              selectedId={currentOrganizationId}
+              onSelect={handleOrganizationChange}
+              showSettings={false}
+            />
           )}
           {currentWorkspaceId && (
             <>

@@ -4,7 +4,6 @@ import {
   BarChart3Icon,
   Building2Icon,
   ChevronRightIcon,
-  Cog,
   FoldersIcon,
   Loader2,
   MessageCircle,
@@ -37,6 +36,7 @@ import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
+import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { Badge } from "@/modules/ui/components/badge";
@@ -45,8 +45,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -208,18 +206,6 @@ export const MainNavigation = ({
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = useState(false);
   const [openWorkspaceLimitModal, setOpenWorkspaceLimitModal] = useState(false);
 
-  const renderSwitcherError = (error: string, onRetry: () => void, retryLabel: string) => (
-    <div className="px-2 py-4">
-      <p className="mb-2 text-sm text-red-600">{error}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-xs text-slate-600 underline hover:text-slate-800">
-        {retryLabel}
-      </button>
-    </div>
-  );
-
   useEffect(() => {
     // The hook guards against duplicate/looping loads internally.
     if (isWorkspaceDropdownOpen) {
@@ -283,12 +269,6 @@ export const MainNavigation = ({
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
       router.push(targetPath);
-    });
-  };
-
-  const handleSettingNavigation = (href: string) => {
-    startTransition(() => {
-      router.push(href);
     });
   };
 
@@ -552,57 +532,23 @@ export const MainNavigation = ({
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
-                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                        <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
-                        {t("common.change_workspace")}
-                      </div>
-                      {(workspaceSwitcher.isLoading || isInitialWorkspacesLoading) && (
-                        <div className="flex items-center justify-center py-2">
-                          <Loader2 className="size-4 animate-spin" />
-                        </div>
-                      )}
-                      {!workspaceSwitcher.isLoading &&
-                        !isInitialWorkspacesLoading &&
-                        workspaceSwitcher.error &&
-                        renderSwitcherError(
-                          workspaceSwitcher.error,
-                          workspaceSwitcher.retry,
-                          t("common.try_again")
+                      <SwitcherDropdownBody
+                        type="workspace"
+                        isLoading={workspaceSwitcher.isLoading || isInitialWorkspacesLoading}
+                        error={workspaceSwitcher.error}
+                        onRetry={workspaceSwitcher.retry}
+                        items={workspaceSwitcher.items}
+                        selectedId={workspace.id}
+                        onSelect={handleWorkspaceChange}>
+                        {isOwnerOrManager && (
+                          <DropdownMenuCheckboxItem
+                            onClick={handleWorkspaceCreate}
+                            className="w-full cursor-pointer justify-between">
+                            <span>{t("common.add_new_workspace")}</span>
+                            <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
+                          </DropdownMenuCheckboxItem>
                         )}
-                      {!workspaceSwitcher.isLoading &&
-                        !isInitialWorkspacesLoading &&
-                        !workspaceSwitcher.error && (
-                          <>
-                            <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                              {workspaceSwitcher.items.map((proj) => (
-                                <DropdownMenuCheckboxItem
-                                  key={proj.id}
-                                  checked={proj.id === workspace.id}
-                                  onClick={() => handleWorkspaceChange(proj.id)}
-                                  className="cursor-pointer">
-                                  {proj.name}
-                                </DropdownMenuCheckboxItem>
-                              ))}
-                            </DropdownMenuGroup>
-                            {isOwnerOrManager && (
-                              <DropdownMenuCheckboxItem
-                                onClick={handleWorkspaceCreate}
-                                className="w-full cursor-pointer justify-between">
-                                <span>{t("common.add_new_workspace")}</span>
-                                <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
-                              </DropdownMenuCheckboxItem>
-                            )}
-                          </>
-                        )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuCheckboxItem
-                        onClick={() =>
-                          handleSettingNavigation(`/workspaces/${workspace.id}/settings/workspace/general`)
-                        }
-                        className="cursor-pointer">
-                        <Cog className="mr-2 size-4" strokeWidth={1.5} />
-                        {t("common.settings")}
-                      </DropdownMenuCheckboxItem>
+                      </SwitcherDropdownBody>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
@@ -633,44 +579,15 @@ export const MainNavigation = ({
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
-                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                        <Building2Icon className="mr-2 inline size-4" strokeWidth={1.5} />
-                        {t("common.change_organization")}
-                      </div>
-                      {organizationSwitcher.isLoading && (
-                        <div className="flex items-center justify-center py-2">
-                          <Loader2 className="size-4 animate-spin" />
-                        </div>
-                      )}
-                      {!organizationSwitcher.isLoading &&
-                        organizationSwitcher.error &&
-                        renderSwitcherError(
-                          organizationSwitcher.error,
-                          organizationSwitcher.retry,
-                          t("common.try_again")
-                        )}
-                      {!organizationSwitcher.isLoading && !organizationSwitcher.error && (
-                        <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                          {organizationSwitcher.items.map((org) => (
-                            <DropdownMenuCheckboxItem
-                              key={org.id}
-                              checked={org.id === organization.id}
-                              onClick={() => handleOrganizationChange(org.id)}
-                              className="cursor-pointer">
-                              {org.name}
-                            </DropdownMenuCheckboxItem>
-                          ))}
-                        </DropdownMenuGroup>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuCheckboxItem
-                        onClick={() =>
-                          handleSettingNavigation(`/organizations/${organization.id}/settings/general`)
-                        }
-                        className="cursor-pointer">
-                        <SettingsIcon className="mr-2 size-4" strokeWidth={1.5} />
-                        {t("common.settings")}
-                      </DropdownMenuCheckboxItem>
+                      <SwitcherDropdownBody
+                        type="organization"
+                        isLoading={organizationSwitcher.isLoading}
+                        error={organizationSwitcher.error}
+                        onRetry={organizationSwitcher.retry}
+                        items={organizationSwitcher.items}
+                        selectedId={organization.id}
+                        onSelect={handleOrganizationChange}
+                      />
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </>

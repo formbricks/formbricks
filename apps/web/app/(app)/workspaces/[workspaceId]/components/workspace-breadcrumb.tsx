@@ -1,20 +1,19 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { ChevronDownIcon, ChevronRightIcon, CogIcon, FoldersIcon, Loader2, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, FoldersIcon, Loader2, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getWorkspacesForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
+import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
@@ -71,8 +70,6 @@ export const WorkspaceBreadcrumb = ({
   const { workspace: currentWorkspace } = useWorkspace();
   const workspaceName = currentWorkspace?.name || currentWorkspaceName || "";
 
-  const workspaceBasePath = `/workspaces/${currentWorkspace?.id}`;
-
   // Lazy-load workspaces when dropdown opens (the hook guards against duplicate/looping loads).
   useEffect(() => {
     if (isWorkspaceDropdownOpen) {
@@ -106,12 +103,6 @@ export const WorkspaceBreadcrumb = ({
     setOpenCreateWorkspaceModal(true);
   };
 
-  const handleWorkspaceSettingsNavigation = (href: string) => {
-    startTransition(() => {
-      router.push(href);
-    });
-  };
-
   const getLimitModalButtons = (): [ModalButton, ModalButton] => {
     if (isFormbricksCloud) {
       return [
@@ -143,7 +134,7 @@ export const WorkspaceBreadcrumb = ({
   return (
     <BreadcrumbItem isActive={isWorkspaceDropdownOpen}>
       <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
-        <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 outline-hidden" asChild>
+        <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 outline-none" asChild>
           <div className="flex items-center gap-1">
             <FoldersIcon className="size-3" strokeWidth={1.5} />
             <span>{workspaceName}</span>
@@ -157,77 +148,40 @@ export const WorkspaceBreadcrumb = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" className="mt-2">
-          <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-            <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
-            {t("common.choose_workspace")}
-          </div>
-          {workspaceSwitcher.isLoading && (
-            <div className="flex items-center justify-center py-2">
-              <Loader2 className="size-4 animate-spin" />
-            </div>
-          )}
-          {!workspaceSwitcher.isLoading && workspaceSwitcher.error && (
-            <div className="px-2 py-4">
-              <p className="mb-2 text-sm text-red-600">{workspaceSwitcher.error}</p>
-              <button
-                type="button"
-                onClick={workspaceSwitcher.retry}
-                className="text-xs text-slate-600 underline hover:text-slate-800">
-                {t("common.try_again")}
-              </button>
-            </div>
-          )}
-          {!workspaceSwitcher.isLoading && !workspaceSwitcher.error && (
-            <>
-              <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                {workspaceSwitcher.items.map((ws) => (
-                  <DropdownMenuCheckboxItem
-                    key={ws.id}
-                    checked={ws.id === currentWorkspaceId}
-                    onClick={() => handleWorkspaceChange(ws.id)}
-                    className="cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <span>{ws.name}</span>
-                    </div>
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuGroup>
-              {isMembershipPending || !isOwnerOrManager ? (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-disabled="true"
-                      className="relative flex w-full cursor-not-allowed items-center justify-between rounded-lg py-1.5 pr-2 pl-8 text-sm font-medium text-slate-400 select-none">
-                      <span>{t("common.add_new_workspace")}</span>
-                      <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
-                    {isMembershipPending
-                      ? t("common.loading")
-                      : t("common.you_are_not_authorized_to_perform_this_action")}
-                  </PopoverContent>
-                </Popover>
-              ) : (
-                <DropdownMenuCheckboxItem
-                  onClick={handleAddWorkspace}
-                  className="w-full cursor-pointer justify-between">
-                  <span>{t("common.add_new_workspace")}</span>
-                  <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
-                </DropdownMenuCheckboxItem>
-              )}
-            </>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            onClick={() =>
-              handleWorkspaceSettingsNavigation(`${workspaceBasePath}/settings/workspace/general`)
-            }
-            className="cursor-pointer">
-            <CogIcon className="mr-2 size-4" strokeWidth={1.5} />
-            {t("common.settings")}
-          </DropdownMenuCheckboxItem>
+          <SwitcherDropdownBody
+            type="workspace"
+            isLoading={workspaceSwitcher.isLoading}
+            error={workspaceSwitcher.error}
+            onRetry={workspaceSwitcher.retry}
+            items={workspaceSwitcher.items}
+            selectedId={currentWorkspaceId}
+            onSelect={handleWorkspaceChange}>
+            {isMembershipPending || !isOwnerOrManager ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-disabled="true"
+                    className="relative flex w-full cursor-not-allowed select-none items-center justify-between rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                    <span>{t("common.add_new_workspace")}</span>
+                    <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                  {isMembershipPending
+                    ? t("common.loading")
+                    : t("common.you_are_not_authorized_to_perform_this_action")}
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <DropdownMenuCheckboxItem
+                onClick={handleAddWorkspace}
+                className="w-full cursor-pointer justify-between">
+                <span>{t("common.add_new_workspace")}</span>
+                <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
+              </DropdownMenuCheckboxItem>
+            )}
+          </SwitcherDropdownBody>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Modals */}
