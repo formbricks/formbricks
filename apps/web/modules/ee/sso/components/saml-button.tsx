@@ -62,12 +62,12 @@ export const SamlButton = ({
       type="button"
       onClick={handleLogin}
       variant={variant}
-      className="relative w-full justify-center"
+      className="w-full justify-center"
       loading={isLoading}>
       {t("auth.continue_with_saml")}
 
       <LockIcon />
-      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
+      {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
 };

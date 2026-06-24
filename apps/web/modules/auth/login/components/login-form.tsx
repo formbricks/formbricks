@@ -242,12 +242,10 @@ export const LoginForm = ({
                   }
             }
             variant={variant}
-            className="relative w-full justify-center"
+            className="w-full justify-center"
             loading={form.formState.isSubmitting}>
             {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
-            {isLastUsed ? (
-              <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>
-            ) : null}
+            {isLastUsed ? <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span> : null}
           </Button>
         );
       case "Google":
