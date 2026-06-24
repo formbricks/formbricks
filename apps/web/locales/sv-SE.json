@@ -2682,6 +2682,7 @@
         "ai_not_available": "AI-enkätskapande är inte tillgängligt.",
         "ai_not_enabled": "AI-smarta verktyg är inaktiverade för den här organisationen.",
         "ai_not_in_plan": "AI-enkätskapande är inte tillgängligt i din nuvarande plan.",
+        "app_survey": "App-enkät",
         "card_description": "Beskriv vad du vill lära dig och skapa ett utkast till enkät.",
         "card_title": "Skapa med AI",
         "characters": "{count}/{max}",
@@ -2694,7 +2695,6 @@
         "enable_ai_in_settings": "Aktivera i inställningar",
         "generated_payload_invalid": "Enkätutkastet kunde inte valideras. Försök lägga till mer detaljer.",
         "link_survey": "Länk-enkät",
-        "only_link_supported": "Endast Länk-enkät kan skapas just nu.",
         "opening_editor": "Öppnar redigeraren...",
         "prompt_helper_churn": "Förstå varför aktiva kunder kan försvinna och vad som skulle hålla dem engagerade",
         "prompt_helper_churn_label": "Churnrisk",
@@ -2708,6 +2708,7 @@
         "prompt_placeholder": "t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra installationen",
         "shortcut_hint": "⌘/Ctrl + Enter för att skapa",
         "start_from_scratch": "Börja från början",
+        "survey_type_help": "Du kan slutföra konfigurationen i redigeraren efter att utkastet har skapats.",
         "survey_type_label": "Undersökningstyp",
         "try_prompt": "Se exempelprompt",
         "upgrade_plan": "Uppgradera abonnemang"

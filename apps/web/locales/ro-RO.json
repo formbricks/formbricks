@@ -2682,6 +2682,7 @@
         "ai_not_available": "Crearea de chestionare cu AI nu este disponibilă.",
         "ai_not_enabled": "Instrumentele inteligente AI sunt dezactivate pentru această organizație.",
         "ai_not_in_plan": "Crearea de chestionare cu AI nu este disponibilă în planul tău actual.",
+        "app_survey": "Sondaj aplicație",
         "card_description": "Descrie ce vrei să afli și creează o ciornă de chestionar.",
         "card_title": "Creează cu AI",
         "characters": "{count}/{max}",
@@ -2694,7 +2695,6 @@
         "enable_ai_in_settings": "Activează în setări",
         "generated_payload_invalid": "Schița chestionarului nu a putut fi validată. Încearcă să adaugi mai multe detalii.",
         "link_survey": "Chestionar prin Link",
-        "only_link_supported": "Doar Chestionarul prin Link poate fi creat momentan.",
         "opening_editor": "Se deschide editorul...",
         "prompt_helper_churn": "Înțelege de ce clienții activi ar putea pleca și ce i-ar menține implicați",
         "prompt_helper_churn_label": "Risc de abandon",
@@ -2708,6 +2708,7 @@
         "prompt_placeholder": "ex. Înțelege de ce utilizatorii noi renunță în timpul procesului de onboarding și ce i-ar ajuta să finalizeze configurarea",
         "shortcut_hint": "⌘/Ctrl + Enter pentru a crea",
         "start_from_scratch": "Începe de la zero",
+        "survey_type_help": "Puteți finaliza configurarea în editor după ce este creată ciorna.",
         "survey_type_label": "Tip de sondaj",
         "try_prompt": "Vezi exemplu de solicitare",
         "upgrade_plan": "Actualizează planul"

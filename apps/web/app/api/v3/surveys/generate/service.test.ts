@@ -195,6 +195,56 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     });
   });
 
+  test("seeds a default app distribution when generating an app survey", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "en-US",
+        name: "In-App Onboarding Feedback",
+        description: null,
+        welcomeCard: { enabled: false, headline: null, subheader: null, buttonLabel: null },
+        blocks: [
+          {
+            name: "Onboarding",
+            questions: [
+              {
+                type: "openText",
+                headline: "How was your setup experience?",
+                subheader: null,
+                required: false,
+                placeholder: null,
+                longAnswer: true,
+                choices: null,
+                lowerLabel: null,
+                upperLabel: null,
+                scale: null,
+                range: null,
+              },
+            ],
+          },
+        ],
+        ending: { headline: "Thanks for the feedback", subheader: null },
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      input: {
+        workspaceId,
+        type: "app",
+        prompt: "Create an in-app onboarding feedback survey for brand new users.",
+      },
+    });
+
+    const generationOptions = vi.mocked(generateOrganizationAIObject).mock.calls[0][0];
+    expect(generationOptions.system).toContain("app survey draft");
+
+    expect(result.payload.type).toBe("app");
+    expect(result.payload.distribution).toMatchObject({ displayOption: "displayOnce", triggers: [] });
+    expect(result.payload).not.toHaveProperty("targeting");
+    expect(result.validation.valid).toBe(true);
+    expect(prepareV3SurveyCreateInput(result.payload).ok).toBe(true);
+  });
+
   test("maps generated blocks to separate v3 create blocks", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {

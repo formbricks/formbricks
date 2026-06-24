@@ -2682,6 +2682,7 @@
         "ai_not_available": "La creación de encuestas con IA no está disponible.",
         "ai_not_enabled": "Las herramientas inteligentes de IA están desactivadas para esta organización.",
         "ai_not_in_plan": "La creación de encuestas con IA no está disponible en tu plan actual.",
+        "app_survey": "Encuesta de aplicación",
         "card_description": "Describe lo que quieres aprender y crea un borrador de encuesta.",
         "card_title": "Crear con IA",
         "characters": "{count}/{max}",
@@ -2694,7 +2695,6 @@
         "enable_ai_in_settings": "Activar en ajustes",
         "generated_payload_invalid": "El borrador de la encuesta no pudo validarse. Intenta añadir más detalles.",
         "link_survey": "Encuesta por Enlace",
-        "only_link_supported": "Solo se puede crear Encuesta por Enlace por ahora.",
         "opening_editor": "Abriendo editor...",
         "prompt_helper_churn": "Entiende por qué los clientes activos podrían abandonar y qué les mantendría comprometidos",
         "prompt_helper_churn_label": "Riesgo de abandono",
@@ -2708,6 +2708,7 @@
         "prompt_placeholder": "p. ej. Entender por qué los nuevos usuarios abandonan durante el onboarding y qué les ayudaría a completar la configuración",
         "shortcut_hint": "⌘/Ctrl + Enter para crear",
         "start_from_scratch": "Empezar desde cero",
+        "survey_type_help": "Puedes terminar la configuración en el editor después de crear el borrador.",
         "survey_type_label": "Tipo de encuesta",
         "try_prompt": "Ver ejemplo de instrucción",
         "upgrade_plan": "Mejorar plan"

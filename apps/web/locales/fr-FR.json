@@ -2682,6 +2682,7 @@
         "ai_not_available": "La création de questionnaires par IA n'est pas disponible.",
         "ai_not_enabled": "Les outils intelligents IA sont désactivés pour cette organisation.",
         "ai_not_in_plan": "La création de questionnaires par IA n'est pas disponible avec ton forfait actuel.",
+        "app_survey": "Sondage d'application",
         "card_description": "Décris ce que tu veux apprendre et crée un brouillon de questionnaire.",
         "card_title": "Créer avec l'IA",
         "characters": "{count}/{max}",
@@ -2694,7 +2695,6 @@
         "enable_ai_in_settings": "Activer dans les paramètres",
         "generated_payload_invalid": "Le brouillon du questionnaire n'a pas pu être validé. Essaie d'ajouter plus de détails.",
         "link_survey": "Questionnaire par lien",
-        "only_link_supported": "Seuls les questionnaires par lien peuvent être créés pour le moment.",
         "opening_editor": "Ouverture de l'éditeur...",
         "prompt_helper_churn": "Comprendre pourquoi les clients actifs pourraient partir et ce qui les maintiendrait engagés",
         "prompt_helper_churn_label": "Risque d'attrition",
@@ -2708,6 +2708,7 @@
         "prompt_placeholder": "ex. Comprendre pourquoi les nouveaux utilisateurs abandonnent pendant l'onboarding et ce qui les aiderait à terminer la configuration",
         "shortcut_hint": "⌘/Ctrl + Entrée pour créer",
         "start_from_scratch": "Partir de zéro",
+        "survey_type_help": "Tu peux terminer la configuration dans l'éditeur après la création du brouillon.",
         "survey_type_label": "Type de sondage",
         "try_prompt": "Voir un exemple d'instruction",
         "upgrade_plan": "Mettre à niveau l'abonnement"

@@ -2682,6 +2682,7 @@
         "ai_not_available": "AI 问卷创建功能不可用。",
         "ai_not_enabled": "此组织已禁用 AI 智能工具。",
         "ai_not_in_plan": "你当前的套餐不支持 AI 问卷创建功能。",
+        "app_survey": "应用 程序 调查",
         "card_description": "描述你想了解的内容,创建问卷草稿。",
         "card_title": "使用 AI 创建",
         "characters": "{count}/{max}",
@@ -2694,7 +2695,6 @@
         "enable_ai_in_settings": "在设置中启用",
         "generated_payload_invalid": "问卷草稿无法验证。请尝试添加更多详细信息。",
         "link_survey": "链接问卷",
-        "only_link_supported": "目前仅支持创建链接问卷。",
         "opening_editor": "正在打开编辑器...",
         "prompt_helper_churn": "了解活跃客户可能流失的原因以及什么能让他们保持参与",
         "prompt_helper_churn_label": "流失风险",
@@ -2708,6 +2708,7 @@
         "prompt_placeholder": "例如：了解新用户为什么在引导过程中流失，以及哪些帮助能让他们完成设置",
         "shortcut_hint": "⌘/Ctrl + Enter 创建",
         "start_from_scratch": "从头开始",
+        "survey_type_help": "创建草稿后，您可以在编辑器中完成设置。",
         "survey_type_label": "调查类型",
         "try_prompt": "查看示例提示",
         "upgrade_plan": "升级套餐"

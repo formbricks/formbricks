@@ -1,9 +1,15 @@
 import "server-only";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import type { TSurveyEnding } from "@formbricks/types/surveys/types";
+import type { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
+import type { TV3SurveyDocument } from "./schemas";
+import {
+  V3_CONTACTS_NOT_ENABLED_MESSAGE,
+  areV3SurveyTargetingFiltersEqual,
+  resolveV3ContactsEntitlement,
+} from "./targeting";
 
 type TV3SurveyWritePermissionInput = {
   workspaceId: string;
@@ -88,5 +94,38 @@ export async function assertV3SurveyWritePermissions(
     throw new V3SurveyWritePermissionError(
       "External URLs are not enabled for this organization. Upgrade to use external survey links."
     );
+  }
+}
+
+/**
+ * Contact targeting (segment filters) is an enterprise feature. Only gate when the patch actually
+ * changes the stored filters, so an unentitled organization can still patch other app-survey fields.
+ */
+export async function assertV3SurveyTargetingWritePermission(
+  currentSurvey: TSurvey,
+  document: TV3SurveyDocument,
+  organizationId?: string
+): Promise<void> {
+  if (currentSurvey.type !== "app") {
+    return;
+  }
+
+  const currentFilters = currentSurvey.segment?.filters ?? [];
+  const nextFilters = document.targeting?.filters ?? [];
+  if (areV3SurveyTargetingFiltersEqual(currentFilters, nextFilters)) {
+    return;
+  }
+
+  const { resolvedOrganizationId, isContactsEnabled } = await resolveV3ContactsEntitlement(
+    currentSurvey.workspaceId,
+    organizationId
+  );
+  if (!resolvedOrganizationId) {
+    throw new V3SurveyWritePermissionError(
+      `Unable to verify contact targeting permissions for workspaceId: ${currentSurvey.workspaceId}`
+    );
+  }
+  if (!isContactsEnabled) {
+    throw new V3SurveyWritePermissionError(V3_CONTACTS_NOT_ENABLED_MESSAGE);
   }
 }

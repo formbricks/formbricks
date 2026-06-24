@@ -6,13 +6,11 @@ description: >
   metadata, languages, welcome card, blocks/elements/logic, endings, hidden
   fields, and variables.
 
-  It rejects legacy `questions` and out-of-scope settings such as styling,
-  targeting, segments,
+  App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and
+  `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
 
-  follow-ups, recaptcha, single-use/email verification, slug, custom scripts,
-  analytics fields,
-
-  timestamps, and `createdBy`.
+  It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha,
+  single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
 
   Translatable fields use real locale-code maps. The map must include the
@@ -60,11 +58,9 @@ properties:
       - app
     default: link
     description: >
-      Optional compatibility field. `link` and `app` survey types are accepted
-      here; app/in-app
-
-      survey distribution settings remain outside this structure-focused create
-      endpoint.
+      Survey type. `link` surveys are distributed by URL; `app` surveys are shown in-app and configure
+      their runtime behavior via the `distribution` and `targeting` objects. `type` is immutable after
+      creation (it cannot be changed via PATCH).
   status:
     type: string
     enum:
@@ -117,4 +113,12 @@ properties:
     default: []
     items:
       $ref: ./CreateSurveyVariable.yml
+  distribution:
+    allOf:
+      - $ref: ./SurveyDistribution.yml
+    description: App-survey runtime/display settings. Only valid when `type` is `app`.
+  targeting:
+    allOf:
+      - $ref: ./SurveyTargeting.yml
+    description: App-survey contact targeting. Only valid when `type` is `app`.
 additionalProperties: false
