@@ -26,6 +26,30 @@ export type TSsoProvisioningDecision =
     };
 
 /**
+ * Validates the invite token carried on an SSO callback URL (only consulted when invites aren't
+ * skipped). Returns a rejection reason, or null when the invite is valid. Extracted from
+ * gateSsoProvisioning so that gate stays under the cognitive-complexity budget — the parity logic
+ * (pinned by sso-handlers.test.ts) is unchanged.
+ */
+const validateSsoInviteToken = async (email: string, callbackUrl: string): Promise<string | null> => {
+  if (!callbackUrl) return "missing_callback_url";
+  try {
+    // Resolve against WEBAPP_URL so a root-relative callback (e.g. `/auth/signup?token=…`) parses
+    // instead of throwing — a bare `new URL()` would reject it as invite_token_validation_error.
+    const url = new URL(callbackUrl, WEBAPP_URL);
+    const inviteToken = url.searchParams.get("token") || "";
+    const source = url.searchParams.get("source") || "";
+    if (source === "signin" && !inviteToken) return "signin_without_invite_token";
+    const { email: inviteEmail, inviteId } = verifyInviteToken(inviteToken);
+    if (inviteEmail !== email) return "invite_email_mismatch";
+    if (!(await getIsValidInviteToken(inviteId))) return "invalid_invite_token";
+    return null;
+  } catch {
+    return "invite_token_validation_error";
+  }
+};
+
+/**
  * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic mirrored
  * from `provisionNewSsoUser` (sso-handlers.ts:254-363).
  *
@@ -65,24 +89,8 @@ export const gateSsoProvisioning = async ({
 
   // When not skipping invites, require a valid invite token whose email matches the user's.
   if (!SKIP_INVITE_FOR_SSO) {
-    if (!callbackUrl) return { action: "reject", reason: "missing_callback_url" };
-    try {
-      // Resolve against WEBAPP_URL so a root-relative callback (e.g. `/auth/signup?token=…`) parses
-      // instead of throwing — a bare `new URL()` would reject it as invite_token_validation_error.
-      const url = new URL(callbackUrl, WEBAPP_URL);
-      const inviteToken = url.searchParams.get("token") || "";
-      const source = url.searchParams.get("source") || "";
-      if (source === "signin" && !inviteToken) {
-        return { action: "reject", reason: "signin_without_invite_token" };
-      }
-      const { email: inviteEmail, inviteId } = verifyInviteToken(inviteToken);
-      if (inviteEmail !== email) return { action: "reject", reason: "invite_email_mismatch" };
-      if (!(await getIsValidInviteToken(inviteId))) {
-        return { action: "reject", reason: "invalid_invite_token" };
-      }
-    } catch {
-      return { action: "reject", reason: "invite_token_validation_error" };
-    }
+    const rejectionReason = await validateSsoInviteToken(email, callbackUrl);
+    if (rejectionReason) return { action: "reject", reason: rejectionReason };
   }
 
   // Resolve the organization to assign the new member to.
