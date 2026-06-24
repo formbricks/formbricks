@@ -489,7 +489,7 @@ describe("listWorkflowRuns", () => {
     expect(page.runs).toHaveLength(1);
     expect(page.runs[0].id).toBe(newest.id);
     expect(page.nextCursor).not.toBeNull();
-    const decoded = JSON.parse(Buffer.from(page.nextCursor!, "base64url").toString("utf8")) as {
+    const decoded = JSON.parse(Buffer.from(String(page.nextCursor), "base64url").toString("utf8")) as {
       value: string;
       id: string;
     };
@@ -510,7 +510,7 @@ describe("listWorkflowRuns", () => {
     expect(page.runs).toHaveLength(2);
     expect(page.runs.map((r) => r.id)).toEqual([rows[0].id, rows[1].id]);
     expect(page.nextCursor).not.toBeNull();
-    const decoded = JSON.parse(Buffer.from(page.nextCursor!, "base64url").toString("utf8")) as {
+    const decoded = JSON.parse(Buffer.from(String(page.nextCursor), "base64url").toString("utf8")) as {
       value: string;
       id: string;
     };
