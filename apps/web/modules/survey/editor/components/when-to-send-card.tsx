@@ -226,7 +226,7 @@ export const WhenToSendCard = ({
                         </div>
                         <ActionClassInfo actionClass={trigger.actionClass} />
                       </div>
-                      {!isReadOnly ? (
+                      {isReadOnly ? null : (
                         <TooltipRenderer tooltipContent={t("common.edit")}>
                           <Button
                             variant="secondary"
@@ -236,7 +236,7 @@ export const WhenToSendCard = ({
                             <PencilIcon />
                           </Button>
                         </TooltipRenderer>
-                      ) : null}
+                      )}
                     </div>
                     <TooltipRenderer tooltipContent={t("common.delete")}>
                       <Button
