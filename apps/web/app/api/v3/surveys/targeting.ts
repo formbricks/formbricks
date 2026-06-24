@@ -176,8 +176,10 @@ function collectV3TargetingFilterReferences(
         // keeps the two in sync). Validate BOTH against the known devices so neither can hold garbage.
         // value can be a number/tuple via the shared schema; stringify for the message.
         const deviceFilter = resource as TSegmentDeviceFilter;
+        // Widen to unknown[] so includes() accepts the unknown candidate (value may be a number/tuple);
+        // a non-matching candidate just returns false, same as the prior per-element === check.
         const isKnownDevice = (candidate: unknown): boolean =>
-          V3_TARGETING_DEVICE_VALUES.some((device) => device === candidate);
+          (V3_TARGETING_DEVICE_VALUES as readonly unknown[]).includes(candidate);
         const deviceIssues: (TV3TargetingFilterReference | null)[] = [
           isKnownDevice(deviceFilter.value)
             ? null
