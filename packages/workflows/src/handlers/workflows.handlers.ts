@@ -1,10 +1,13 @@
 import {
   type TWorkflowIdInput,
+  type TWorkflowRunIdInput,
   ZCreateWorkflowInput,
   ZDuplicateWorkflowInput,
   ZPatchWorkflowInput,
   ZWorkflowListItem,
   ZWorkflowResource,
+  ZWorkflowRunResource,
+  ZWorkflowRunSummary,
   zCursorPage,
 } from "../contracts";
 import {
@@ -21,13 +24,19 @@ import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
 import { ZWorkflowExecutableDefinition } from "../types/document";
 import type { TriggerSurveyCheck, WorkflowApiAccess, WorkflowApiContext } from "./context";
-import { parseListWorkflowsQuery } from "./parse-list-query";
-import { toWorkflowListItem, toWorkflowResource } from "./serializers";
+import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-list-query";
+import {
+  toWorkflowListItem,
+  toWorkflowResource,
+  toWorkflowRunResource,
+  toWorkflowRunSummary,
+} from "./serializers";
 
 // Matches the v3 API's default request-body limit (apps/web `request-body.ts`) for consistency.
 const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
 
 const ZWorkflowListPage = zCursorPage(ZWorkflowListItem);
+const ZWorkflowRunListPage = zCursorPage(ZWorkflowRunSummary);
 
 const readJsonBody = async (req: Request, options?: { allowEmpty?: boolean }): Promise<unknown> => {
   // Reject oversized payloads up front via Content-Length so we never buffer them into memory.
@@ -111,6 +120,10 @@ interface WorkflowResourceArgs {
 interface WorkflowResourceBodyArgs extends WorkflowResourceArgs {
   req: Request;
 }
+interface WorkflowRunResourceArgs {
+  ctx: WorkflowApiContext;
+  params: TWorkflowRunIdInput;
+}
 
 export interface WorkflowsHandlers {
   list: (args: WorkflowRequestArgs) => Promise<Response>;
@@ -123,6 +136,8 @@ export interface WorkflowsHandlers {
   unarchive: (args: WorkflowResourceArgs) => Promise<Response>;
   enable: (args: WorkflowResourceArgs) => Promise<Response>;
   disable: (args: WorkflowResourceArgs) => Promise<Response>;
+  listRuns: (args: WorkflowRequestArgs) => Promise<Response>;
+  getRun: (args: WorkflowRunResourceArgs) => Promise<Response>;
 }
 
 /**
@@ -323,6 +338,43 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async listRuns({ req, ctx }) {
+    try {
+      const input = parseListWorkflowRunsQuery(new URL(req.url).searchParams);
+
+      const authorized = await ctx.authorize(input.workspaceId, "read");
+      if (authorized instanceof Response) return authorized;
+
+      const runPage = await service.listWorkflowRuns({ ...input, workspaceId: authorized.workspaceId });
+
+      const page = validateOutput(ZWorkflowRunListPage, {
+        data: runPage.runs.map(toWorkflowRunSummary),
+        meta: { limit: input.limit, nextCursor: runPage.nextCursor },
+      });
+
+      return listResponse(page.data, page.meta, ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  async getRun({ ctx, params }) {
+    try {
+      // Load by id, then authorize against the run's workspace — an unknown / cross-workspace runId
+      // is rejected with 403 (never 404), matching the by-id workflow handlers and never leaking
+      // existence. The detail read carries the full run + ordered step logs.
+      const run = await service.getWorkflowRun(params.runId);
+      if (!run) throw new WorkflowForbiddenError();
+
+      const authorized = await ctx.authorize(run.workspaceId, "read");
+      if (authorized instanceof Response) return authorized;
+
+      return dataResponse(validateOutput(ZWorkflowRunResource, toWorkflowRunResource(run)), ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
     }

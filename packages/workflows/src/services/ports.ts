@@ -1,6 +1,13 @@
 import type { TWorkflowStatus } from "../types/common";
 import type { TWorkflowDefinition, TWorkflowExecutableDefinition } from "../types/document";
-import type { TWorkflowRunStatus } from "../types/runs";
+import type {
+  TWorkflowRunData,
+  TWorkflowRunLogInput,
+  TWorkflowRunLogOutput,
+  TWorkflowRunLogStatus,
+  TWorkflowRunStatus,
+  TWorkflowTriggerRunPayload,
+} from "../types/runs";
 
 /**
  * Runtime ports the workflow server code depends on. They are injected by the adapter
@@ -38,6 +45,11 @@ export interface WorkflowRunRow {
   workflowVersionId: string | null;
   responseId: string | null;
   status: TWorkflowRunStatus;
+  // `triggerType` is a free-form `String` column in Prisma (unlike `status`, which is a
+  // `WorkflowRunStatus` enum), so the port mirrors it as `string`. Do NOT narrow this to the
+  // `ZWorkflowTriggerType` union here: the real Prisma row yields `string`, which would then fail
+  // to satisfy this port and break the adapter's structural wiring. The serializer narrows it and
+  // `validateOutput` enforces the union at the response boundary instead.
   triggerType: string;
   surveyId: string | null;
   isDryRun: boolean;
@@ -163,9 +175,78 @@ export interface WorkflowsTransaction {
   workflowVersion: WorkflowVersionDelegate;
 }
 
+/** A persisted `WorkflowRunLog` step trace row, matching `packages/database/schema/workflows.prisma`. */
+export interface WorkflowRunLogRow {
+  id: string;
+  runId: string;
+  sequence: number;
+  stepId: string;
+  stepType: string;
+  status: TWorkflowRunLogStatus;
+  input: TWorkflowRunLogInput;
+  output: TWorkflowRunLogOutput;
+  error: string | null;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+}
+
+/**
+ * The full `WorkflowRun` row plus its ordered step logs, returned by the run-detail read. Extends the
+ * slim `WorkflowRunRow` (the list/lastRun shape) with the debug-oriented fields the detail resource
+ * exposes. The JSON columns (`triggerPayload`, `data`) are typed via the schema's
+ * prisma-json-types-generator annotations, so the real Prisma row satisfies this without a cast.
+ */
+export interface WorkflowRunWithLogsRow extends WorkflowRunRow {
+  triggerPayload: TWorkflowTriggerRunPayload;
+  data: TWorkflowRunData;
+  idempotencyKey: string | null;
+  nextAttemptAt: Date | null;
+  lastErrorAt: Date | null;
+  logs: WorkflowRunLogRow[];
+}
+
+/** Narrow `where` filter the run list builds — a deliberately small slice of Prisma's WhereInput. */
+export interface WorkflowRunWhereInput {
+  workspaceId?: string;
+  workflowId?: string;
+  responseId?: string;
+  status?: { in: TWorkflowRunStatus[] };
+  isDryRun?: boolean;
+  createdAt?: { lt: Date } | Date;
+  id?: { lt: string };
+  OR?: WorkflowRunWhereInput[];
+}
+
+export interface WorkflowRunOrderByInput {
+  createdAt?: "asc" | "desc";
+  id?: "asc" | "desc";
+}
+
+/** Eager-load shape for a run's step logs, ordered by sequence; matches the Prisma `include`. */
+export interface WorkflowRunLogInclude {
+  logs: { orderBy: { sequence: "asc" } };
+}
+
+/**
+ * The slice of `prisma.workflowRun` the runs read API calls. `findMany` returns slim summary rows
+ * (newest-first, keyset-paginated); `findUnique` returns the full row with ordered logs for detail.
+ */
+export interface WorkflowRunDelegate {
+  findMany: (args: {
+    where: WorkflowRunWhereInput;
+    orderBy: WorkflowRunOrderByInput[];
+    take: number;
+  }) => Promise<WorkflowRunRow[]>;
+  findUnique: (args: {
+    where: { id: string };
+    include: WorkflowRunLogInclude;
+  }) => Promise<WorkflowRunWithLogsRow | null>;
+}
+
 export interface WorkflowsDb {
   workflow: WorkflowDelegate;
   workflowVersion: WorkflowVersionDelegate;
+  workflowRun: WorkflowRunDelegate;
   /** Interactive transaction; the real Prisma client's `$transaction` satisfies this structurally. */
   $transaction: <R>(fn: (tx: WorkflowsTransaction) => Promise<R>) => Promise<R>;
 }
