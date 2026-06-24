@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TUser } from "@formbricks/types/user";
 import {
@@ -41,15 +42,16 @@ export const SettingsNavigation = ({
   backUrl,
 }: Readonly<SettingsNavigationProps>) => {
   const router = useRouter();
+  const { t } = useTranslation();
   const [, startTransition] = useTransition();
 
   const workspaceSwitcher = useSwitcherData(
     () => getWorkspacesForSwitcherAction({ organizationId }),
-    "common.failed_to_load_workspaces"
+    t("common.failed_to_load_workspaces")
   );
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId }),
-    "common.failed_to_load_organizations"
+    t("common.failed_to_load_organizations")
   );
 
   const handleWorkspaceChange = useCallback(

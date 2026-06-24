@@ -34,7 +34,7 @@ export const LandingSidebar = ({ user, organization, publicDomain }: Readonly<La
 
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
-    "common.failed_to_load_organizations"
+    t("common.failed_to_load_organizations")
   );
   const { load: loadOrganizations } = organizationSwitcher;
 
@@ -51,7 +51,6 @@ export const LandingSidebar = ({ user, organization, publicDomain }: Readonly<La
       router.push(`/organizations/${orgId}/`);
     });
   };
-
 
   const switcherTriggerClasses =
     "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset";

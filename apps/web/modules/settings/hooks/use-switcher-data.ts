@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 
 export interface SwitcherItem {
@@ -22,11 +21,11 @@ interface SwitcherActionResult {
 // concern is shared here.
 export const useSwitcherData = (
   loader: () => Promise<SwitcherActionResult | undefined>,
-  fallbackErrorKey: string,
+  // Already-translated fallback message shown when the action returns no usable error.
+  fallbackError: string,
   // Optional hook for consumers that want to log/report load failures (e.g. Sentry).
   onError?: (message: string) => void
 ) => {
-  const { t } = useTranslation();
   const [items, setItems] = useState<SwitcherItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,12 +52,12 @@ export const useSwitcherData = (
         if (result?.data) {
           setItems([...result.data].sort((a, b) => a.name.localeCompare(b.name)));
         } else {
-          const message = (result ? getFormattedErrorMessage(result) : "") || t(fallbackErrorKey);
+          const message = (result ? getFormattedErrorMessage(result) : "") || fallbackError;
           setError(message);
           onErrorRef.current?.(message);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : t(fallbackErrorKey);
+        const message = err instanceof Error ? err.message : fallbackError;
         setError(message);
         onErrorRef.current?.(message);
       } finally {
@@ -66,7 +65,7 @@ export const useSwitcherData = (
         setHasLoaded(true);
       }
     },
-    [items.length, isLoading, error, fallbackErrorKey, t]
+    [items.length, isLoading, error, fallbackError]
   );
 
   const retry = useCallback(() => {
