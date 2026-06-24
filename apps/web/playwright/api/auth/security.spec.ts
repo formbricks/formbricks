@@ -127,6 +127,14 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
 
   test.describe("Timing Attack Prevention - User Enumeration Protection", () => {
     test("should not reveal user existence through response timing differences", async ({ request }) => {
+      // Sub-100ms enumeration-timing differences can't be measured meaningfully through Playwright
+      // service mode's remote-browser tunnel — tunnel network jitter dwarfs the signal and makes the
+      // assertion flaky. Keep it running in local mode, where the measurement is valid.
+      // (PLAYWRIGHT_SERVICE_URL is the Azure Playwright service endpoint — present only in service mode.)
+      test.skip(
+        Boolean(process.env.PLAYWRIGHT_SERVICE_URL),
+        "Timing-attack measurement is unreliable through the service-mode remote-browser tunnel."
+      );
       // Helper functions for statistical analysis
       const calculateMedian = (values: number[]): number => {
         const sorted = [...values].sort((a, b) => a - b);
@@ -476,10 +484,17 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       }
 
       // Better Auth sign-out: `POST /api/auth/sign-out`, no CSRF token (replaces the NextAuth
-      // `/api/auth/signout` + csrfToken form flow; ENG-1054).
-      const signOutResponse = await page.context().request.post("/api/auth/sign-out");
+      // `/api/auth/signout` + csrfToken form flow; ENG-1054). Issue it from INSIDE the browser via
+      // fetch() rather than page.context().request: the latter is a separate APIRequestContext whose
+      // cookie jar isn't shared with the remote browser under Playwright service mode, so the request
+      // would carry no session cookie and the sign-out would silently no-op. fetch() runs in the page
+      // origin and sends the session cookie in both local and service mode.
+      const signOutStatus = await page.evaluate(async () => {
+        const res = await fetch("/api/auth/sign-out", { method: "POST" });
+        return res.status;
+      });
 
-      expect(signOutResponse.status()).not.toBe(500);
+      expect(signOutStatus).not.toBe(500);
 
       const replayContext = await browser.newContext();
       try {
