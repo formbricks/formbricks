@@ -230,11 +230,13 @@ export function CreateChartView({
               <Alert variant="error" size="small">
                 <div>
                   <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
-                  <Link
-                    className="mt-1 inline-block font-medium underline"
-                    href={`/organizations/${workspace?.organizationId}/settings/feedback-directories`}>
-                    {t("workspace.analysis.charts.go_to_feedback_directories")}
-                  </Link>
+                  {workspace?.organizationId && (
+                    <Link
+                      className="mt-1 inline-block font-medium underline"
+                      href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
+                      {t("workspace.analysis.charts.go_to_feedback_directories")}
+                    </Link>
+                  )}
                 </div>
               </Alert>
             )}

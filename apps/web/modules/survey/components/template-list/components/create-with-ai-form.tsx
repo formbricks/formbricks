@@ -77,7 +77,9 @@ export const CreateWithAIForm = ({
     onSuccess,
   });
 
-  const unavailableAction = getAIUnavailableAction(aiUnavailableReason, workspace?.organizationId ?? "");
+  const unavailableAction = workspace?.organizationId
+    ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
+    : undefined;
   let unavailableActionLabel: string | undefined;
   if (unavailableAction?.type === "enable_ai") {
     unavailableActionLabel = t("workspace.surveys.ai_create.enable_ai_in_settings");

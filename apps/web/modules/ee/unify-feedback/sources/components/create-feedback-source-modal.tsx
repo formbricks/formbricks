@@ -709,11 +709,13 @@ const NoFeedbackDirectoryAlert = ({ organizationId, t }: NoFeedbackDirectoryAler
     <Alert variant="error" size="small">
       <div>
         <p>{t("workspace.unify.no_feedback_directory_available")}</p>
-        <a
-          className="mt-1 inline-block font-medium underline"
-          href={`/organizations/${organizationId}/settings/feedback-directories`}>
-          {t("workspace.unify.go_to_feedback_directories")}
-        </a>
+        {organizationId && (
+          <a
+            className="mt-1 inline-block font-medium underline"
+            href={`/organizations/${organizationId}/settings/feedback-directories`}>
+            {t("workspace.unify.go_to_feedback_directories")}
+          </a>
+        )}
       </div>
     </Alert>
   );

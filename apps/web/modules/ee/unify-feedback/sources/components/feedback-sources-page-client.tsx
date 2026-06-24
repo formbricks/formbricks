@@ -206,9 +206,9 @@ export function FeedbackSourcesSection({
         {directories.length > 0 && (
           <Alert size="small" className="mt-4">
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
-            {!isReadOnly && (
+            {!isReadOnly && workspace?.organizationId && (
               <AlertButton asChild>
-                <Link href={`/organizations/${workspace?.organizationId}/settings/feedback-directories`}>
+                <Link href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
                   {t("workspace.unify.manage_directories")}
                 </Link>
               </AlertButton>

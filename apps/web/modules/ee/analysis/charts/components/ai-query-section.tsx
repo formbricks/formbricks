@@ -62,7 +62,9 @@ export function AIQuerySection({
   };
 
   const aiUnavailableMessage = translateAIUnavailableMessage(aiUnavailableReason);
-  const aiUnavailableAction = getAIUnavailableAction(aiUnavailableReason, workspace?.organizationId ?? "");
+  const aiUnavailableAction = workspace?.organizationId
+    ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
+    : undefined;
 
   if (!isAIAvailable) {
     return (
