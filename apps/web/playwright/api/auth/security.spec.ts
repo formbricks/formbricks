@@ -461,7 +461,12 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       logger.info(`✅ Malformed request handled gracefully: status ${response.status()}`);
     });
 
-    test("should invalidate a copied session cookie after logout", async ({ page, browser, users }) => {
+    test("should invalidate a copied session cookie after logout", async ({
+      page,
+      browser,
+      request,
+      users,
+    }) => {
       const user = await users.create();
       await user.login();
 
@@ -484,17 +489,18 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       }
 
       // Better Auth sign-out: `POST /api/auth/sign-out`, no CSRF token (replaces the NextAuth
-      // `/api/auth/signout` + csrfToken form flow; ENG-1054). Issue it from INSIDE the browser via
-      // fetch() rather than page.context().request: the latter is a separate APIRequestContext whose
-      // cookie jar isn't shared with the remote browser under Playwright service mode, so the request
-      // would carry no session cookie and the sign-out would silently no-op. fetch() runs in the page
-      // origin and sends the session cookie in both local and service mode.
-      const signOutStatus = await page.evaluate(async () => {
-        const res = await fetch("/api/auth/sign-out", { method: "POST" });
-        return res.status;
+      // `/api/auth/signout` + csrfToken form flow; ENG-1054). Attach the captured session cookie to
+      // the request explicitly. The login fixture establishes the session through the APIRequestContext,
+      // and under Playwright service mode that cookie isn't mirrored into the remote browser's jar — so
+      // neither an in-page fetch() nor the browser context's own jar reliably carries it. Sending it on
+      // the request header is deterministic in both local and service mode; BA verifies it and deletes
+      // the session (Redis + DB), which the replay below then proves. (The `request` fixture issues from
+      // the test runner straight to the app, the same path the sibling tests in this file rely on.)
+      const signOutResponse = await request.post("/api/auth/sign-out", {
+        headers: { cookie: `${sessionCookie!.name}=${sessionCookie!.value}` },
       });
 
-      expect(signOutStatus).not.toBe(500);
+      expect(signOutResponse.status()).not.toBe(500);
 
       const replayContext = await browser.newContext();
       try {
