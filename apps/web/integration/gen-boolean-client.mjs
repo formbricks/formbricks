@@ -23,10 +23,20 @@ schema = schema.replace(
   'emailVerified DateTime? @map(name: "email_verified")',
   'emailVerified Boolean @default(false) @map(name: "email_verified")'
 );
-// 3. Account.type optional (BA creates accounts without a `type`), scoped to the Account model
-// `[^}]*?` (not `[\s\S]*?`) bounds the match inside the Account model block — it can't cross the
-// model's closing brace — which avoids the super-linear backtracking of an unbounded lazy match.
-schema = schema.replace(/(model Account \{[^}]*?\n\s*type\s+String)(\s)/, "$1?$2");
+// 3. Account.type optional (BA creates accounts without a `type`), scoped to the Account model.
+// Locate the block by index (no schema-spanning regex) and patch only its `type` field. The
+// intra-line whitespace classes are `[ \t]` (never `\n`), so the match can't run across lines —
+// that's what keeps it linear; a `[\s\S]*?`/`\s*` pattern backtracks super-linearly because those
+// classes also match newlines. No-ops cleanly if `type` is already `String?`.
+const accountStart = schema.indexOf("model Account {");
+const accountEnd = accountStart === -1 ? -1 : schema.indexOf("}", accountStart);
+if (accountStart === -1 || accountEnd === -1) {
+  throw new Error("gen-boolean-client: Account model block not found — schema.prisma shape changed; update this script.");
+}
+schema =
+  schema.slice(0, accountStart) +
+  schema.slice(accountStart, accountEnd).replace(/\n([ \t]*)type([ \t]+)String(\s)/, "\n$1type$2String?$3") +
+  schema.slice(accountEnd);
 
 if (schema === before) {
   throw new Error("gen-boolean-client: no replacements applied — schema.prisma shape changed; update this script.");
