@@ -2715,6 +2715,7 @@
       },
       "all_set_time_to_create_first_survey": "Vous êtes prêt ! Il est temps de créer votre première enquête.",
       "alphabetical": "Alphabétique",
+      "change_status": "Changer le statut",
       "copy_survey": "Copier l'enquête",
       "copy_survey_description": "Choisis un espace de travail vers lequel copier cette enquête.",
       "copy_survey_error": "Échec de la copie de l'enquête",
@@ -3299,6 +3300,7 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "Une erreur s'est produite lors de la suppression du sondage",
+      "error_updating_status": "Une erreur s'est produite lors de la mise à jour du statut de l'enquête",
       "filter": {
         "complete_and_partial_responses": "Réponses complètes et partielles",
         "complete_responses": "Réponses complètes",
@@ -3475,6 +3477,8 @@
           "title": "Médias sociaux"
         }
       },
+      "status_updated_successfully": "Le statut de l'enquête a été mis à jour avec succès",
+      "status_updating": "Mise à jour du statut de l'enquête...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtre ajouté pour les réponses où la réponse à la question {questionIdx} est {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est ignorée",

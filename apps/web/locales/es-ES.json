@@ -2715,6 +2715,7 @@
       },
       "all_set_time_to_create_first_survey": "¡Todo listo! Es hora de crear tu primera encuesta",
       "alphabetical": "Alfabético",
+      "change_status": "Cambiar estado",
       "copy_survey": "Copiar encuesta",
       "copy_survey_description": "Elige un espacio de trabajo para copiar esta encuesta.",
       "copy_survey_error": "Error al copiar la encuesta",
@@ -3299,6 +3300,7 @@
         "zip": "Código postal"
       },
       "error_deleting_survey": "Se produjo un error al eliminar la encuesta",
+      "error_updating_status": "Se produjo un error al actualizar el estado de la encuesta",
       "filter": {
         "complete_and_partial_responses": "Respuestas completas y parciales",
         "complete_responses": "Respuestas completas",
@@ -3475,6 +3477,8 @@
           "title": "Redes sociales"
         }
       },
+      "status_updated_successfully": "Estado de la encuesta actualizado correctamente",
+      "status_updating": "Actualizando estado de la encuesta...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Se ha añadido un filtro para las respuestas donde la respuesta a la pregunta {questionIdx} es {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtro añadido para respuestas donde la respuesta a la pregunta {questionIdx} se ha omitido",

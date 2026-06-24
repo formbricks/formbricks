@@ -2715,6 +2715,7 @@
       },
       "all_set_time_to_create_first_survey": "Está tudo pronto! Hora de criar o seu primeiro inquérito",
       "alphabetical": "Alfabética",
+      "change_status": "Alterar estado",
       "copy_survey": "Copiar inquérito",
       "copy_survey_description": "Escolhe um espaço de trabalho para copiar este inquérito.",
       "copy_survey_error": "Falha ao copiar inquérito",
@@ -3299,6 +3300,7 @@
         "zip": "Comprimir"
       },
       "error_deleting_survey": "Ocorreu um erro ao eliminar o inquérito",
+      "error_updating_status": "Ocorreu um erro ao atualizar o estado do inquérito",
       "filter": {
         "complete_and_partial_responses": "Respostas completas e parciais",
         "complete_responses": "Respostas completas",
@@ -3475,6 +3477,8 @@
           "title": "Redes Sociais"
         }
       },
+      "status_updated_successfully": "Estado do inquérito atualizado com sucesso",
+      "status_updating": "A atualizar o estado do inquérito...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Foi adicionado um filtro para respostas em que a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é ignorada",

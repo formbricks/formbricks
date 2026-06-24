@@ -1,6 +1,6 @@
 import type { InfiniteData } from "@tanstack/react-query";
 import { describe, expect, test } from "vitest";
-import { flattenSurveyPages, removeSurveyFromInfiniteData } from "./query";
+import { flattenSurveyPages, removeSurveyFromInfiniteData, updateSurveyInInfiniteData } from "./query";
 import { TSurveyListPage } from "./v3-surveys-client";
 
 const surveyA = {
@@ -9,6 +9,7 @@ const surveyA = {
   workspaceId: "env_1",
   type: "link" as const,
   status: "draft" as const,
+  publishOn: null,
   createdAt: new Date("2026-04-15T10:00:00.000Z"),
   updatedAt: new Date("2026-04-15T10:00:00.000Z"),
   responseCount: 0,
@@ -83,5 +84,31 @@ describe("removeSurveyFromInfiniteData", () => {
 
     expect(nextData?.pages[0]?.meta.totalCount).toBe(1);
     expect(nextData?.pages[1]?.meta.totalCount).toBeNull();
+  });
+});
+
+describe("updateSurveyInInfiniteData", () => {
+  test("applies the patch to the matching survey and leaves others untouched", () => {
+    const nextData = updateSurveyInInfiniteData(baseData, "survey_a", { status: "inProgress" });
+
+    expect(nextData?.pages[0]?.data[0]?.status).toBe("inProgress");
+    // survey_b lives on page 1 and must remain unchanged
+    expect(nextData?.pages[1]?.data[0]).toEqual(surveyB);
+  });
+
+  test("returns the original reference when the surveyId is not present", () => {
+    const result = updateSurveyInInfiniteData(baseData, "missing_survey", { status: "inProgress" });
+    expect(result).toBe(baseData);
+  });
+
+  test("returns undefined when called with undefined data", () => {
+    expect(updateSurveyInInfiniteData(undefined, "survey_a", { status: "inProgress" })).toBeUndefined();
+  });
+
+  test("does not mutate the original data object", () => {
+    const originalPage0Survey = baseData.pages[0]?.data[0];
+    updateSurveyInInfiniteData(baseData, "survey_a", { status: "completed" });
+    // Original fixture must be unmodified
+    expect(originalPage0Survey?.status).toBe("draft");
   });
 });

@@ -2715,6 +2715,7 @@
       },
       "all_set_time_to_create_first_survey": "Allt klart! Dags att skapa din första enkät",
       "alphabetical": "Alfabetisk",
+      "change_status": "Ändra status",
       "copy_survey": "Kopiera undersökning",
       "copy_survey_description": "Välj en arbetsyta att kopiera den här undersökningen till.",
       "copy_survey_error": "Kunde inte kopiera undersökningen",
@@ -3299,6 +3300,7 @@
         "zip": "Postnummer"
       },
       "error_deleting_survey": "Ett fel uppstod vid borttagning av enkät",
+      "error_updating_status": "Ett fel uppstod när undersökningens status uppdaterades",
       "filter": {
         "complete_and_partial_responses": "Kompletta och delvisa svar",
         "complete_responses": "Kompletta svar",
@@ -3475,6 +3477,8 @@
           "title": "Sociala medier"
         }
       },
+      "status_updated_successfully": "Undersökningens status har uppdaterats",
+      "status_updating": "Uppdaterar undersökningens status...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter har lagts till för svar där svaret på fråga {questionIdx} är {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Lade till filter för svar där svar på fråga {questionIdx} är överhoppad",

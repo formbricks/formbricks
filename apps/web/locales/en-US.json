@@ -2715,6 +2715,7 @@
       },
       "all_set_time_to_create_first_survey": "You are all set! Time to create your first survey",
       "alphabetical": "Alphabetical",
+      "change_status": "Change status",
       "copy_survey": "Copy survey",
       "copy_survey_description": "Choose a workspace to copy this survey to.",
       "copy_survey_error": "Failed to copy survey",
@@ -3299,6 +3300,7 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "An error occurred while deleting survey",
+      "error_updating_status": "An error occurred while updating survey status",
       "filter": {
         "complete_and_partial_responses": "Complete and partial responses",
         "complete_responses": "Complete responses",
@@ -3475,6 +3477,8 @@
           "title": "Social media"
         }
       },
+      "status_updated_successfully": "Survey status updated successfully",
+      "status_updating": "Updating survey status...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Added filter for responses where answer to question {questionIdx} is skipped",

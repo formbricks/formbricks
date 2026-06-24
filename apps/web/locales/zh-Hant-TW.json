@@ -2715,6 +2715,7 @@
       },
       "all_set_time_to_create_first_survey": "您已準備就緒！是時候建立您的第一個問卷",
       "alphabetical": "依字母順序",
+      "change_status": "變更狀態",
       "copy_survey": "複製問卷",
       "copy_survey_description": "選擇要將此問卷複製到的工作區。",
       "copy_survey_error": "複製問卷失敗",
@@ -3299,6 +3300,7 @@
         "zip": "郵遞區號"
       },
       "error_deleting_survey": "刪除問卷時發生錯誤",
+      "error_updating_status": "更新問卷狀態時發生錯誤",
       "filter": {
         "complete_and_partial_responses": "完整與部分回應",
         "complete_responses": "完整回應",
@@ -3475,6 +3477,8 @@
           "title": "社群媒體"
         }
       },
+      "status_updated_successfully": "問卷狀態已成功更新",
+      "status_updating": "正在更新問卷狀態...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已新增回答第 {questionIdx} 題為 {filterComboBoxValue} - {filterValue} 的回覆篩選器",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "已新增回應的篩選器，其中問題 {questionIdx} 的答案被跳過",

@@ -2715,6 +2715,7 @@
       },
       "all_set_time_to_create_first_survey": "Her şey hazır! İlk anketini oluşturma zamanı",
       "alphabetical": "Alfabetik",
+      "change_status": "Durumu değiştir",
       "copy_survey": "Anketi kopyala",
       "copy_survey_description": "Bu anketi kopyalamak için bir çalışma alanı seç.",
       "copy_survey_error": "Anket kopyalanamadı",
@@ -3299,6 +3300,7 @@
         "zip": "Posta Kodu"
       },
       "error_deleting_survey": "Anket silinirken bir hata oluştu",
+      "error_updating_status": "Anket durumu güncellenirken bir hata oluştu",
       "filter": {
         "complete_and_partial_responses": "Tamamlanmış ve yarım yanıtlar",
         "complete_responses": "Tamamlanmış yanıtlar",
@@ -3475,6 +3477,8 @@
           "title": "Sosyal medya"
         }
       },
+      "status_updated_successfully": "Anket durumu başarıyla güncellendi",
+      "status_updating": "Anket durumu güncelleniyor...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Soru {questionIdx}'ye verilen yanıtın {filterComboBoxValue} - {filterValue} olduğu yanıtlar için filtre eklendi",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Soru {questionIdx}'ye verilen yanıtın atlandığı yanıtlar için filtre eklendi",
