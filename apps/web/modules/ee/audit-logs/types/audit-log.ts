@@ -6,6 +6,7 @@ export const UNKNOWN_DATA = "unknown";
 export const ZAuditTarget = z.enum([
   "segment",
   "survey",
+  "workflow",
   "webhook",
   "user",
   "contactAttributeKey",

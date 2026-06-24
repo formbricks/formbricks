@@ -1,0 +1,79 @@
+type: object
+description: >
+  Slim workflow shape returned by `GET /api/v3/workflows`. `triggerType` and
+  `surveyId` are
+
+  derived read-only projections of `definition.trigger`, so list consumers can
+  render and
+
+  filter without loading full definitions. Serialized dates are ISO 8601
+  strings.
+required:
+  - id
+  - workspaceId
+  - name
+  - description
+  - status
+  - triggerType
+  - surveyId
+  - createdBy
+  - creator
+  - createdAt
+  - updatedAt
+  - lastRun
+properties:
+  id:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  name:
+    type: string
+  description:
+    type:
+      - string
+      - 'null'
+  status:
+    $ref: ./WorkflowStatus.yml
+  triggerType:
+    type: string
+    enum:
+      - response.completed
+    description: Derived from `definition.trigger.triggerType`.
+  surveyId:
+    type: string
+    format: cuid2
+    description: Derived from `definition.trigger.config.surveyId`.
+  createdBy:
+    type:
+      - string
+      - 'null'
+    format: cuid2
+    description: >-
+      User id that created the workflow. `null` when the creating user was
+      deleted.
+  creator:
+    type:
+      - object
+      - 'null'
+    required:
+      - name
+    properties:
+      name:
+        type: string
+    description: >-
+      Creating user's name. `null` when the creating user was deleted.
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  lastRun:
+    anyOf:
+      - $ref: ./WorkflowRunSummary.yml
+      - type: 'null'
+    description: >-
+      Most recent run summary (dry runs included). `null` when the workflow has
+      never run.

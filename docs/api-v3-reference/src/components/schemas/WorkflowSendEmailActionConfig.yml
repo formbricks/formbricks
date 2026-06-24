@@ -1,0 +1,46 @@
+type: object
+description: >-
+  Send-email action with 1:1 field parity to survey Follow-ups
+  (`ZSurveyFollowUpAction`).
+required:
+  - to
+  - from
+  - replyTo
+  - subject
+  - body
+  - attachResponseData
+properties:
+  to:
+    type: string
+    minLength: 1
+    description: >
+      Recipient: either a literal email address (e.g. a teammate) or the element
+      id of a
+
+      survey question whose answer contains the respondent's email address — the
+      same
+
+      semantics as the Follow-ups `to` field.
+  from:
+    type: string
+    format: email
+  replyTo:
+    type: array
+    items:
+      type: string
+      format: email
+  subject:
+    type: string
+    minLength: 1
+  body:
+    type: string
+    minLength: 1
+  attachResponseData:
+    type: boolean
+  includeVariables:
+    type: boolean
+    default: false
+  includeHiddenFields:
+    type: boolean
+    default: false
+additionalProperties: false

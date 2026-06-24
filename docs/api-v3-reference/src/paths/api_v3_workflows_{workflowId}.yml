@@ -1,0 +1,166 @@
+get:
+  operationId: getWorkflowV3
+  summary: Retrieve a workflow
+  description: >
+    Returns one workflow definition by id. Unknown or inaccessible workflow ids
+    return `403`
+
+    rather than `404` to avoid leaking cross-workspace resource existence.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  responses:
+    '200':
+      description: Workflow retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowResource.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+patch:
+  operationId: patchWorkflowV3
+  summary: Update a workflow
+  description: >
+    Updates human-facing workflow metadata and/or the workflow definition.
+    Status changes are
+
+    handled by lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`)
+    so the state
+
+    machine remains explicit. Provided fields replace the corresponding stored
+    fields; this
+
+    endpoint does not implement JSON Patch.
+
+
+    `name` and `description` can be updated in any state except `archived`. The
+    `definition`
+
+    can only be updated while the workflow is `draft` or `disabled`: the live
+    version of an
+
+    `enabled` workflow is an immutable snapshot, so definition changes require
+    disabling (or
+
+    moving to draft) first and re-enabling afterwards. Violations return **422**
+    with code
+
+    `invalid_workflow_state`. A structurally invalid definition returns **400**
+    with structured `invalid_params`; the referenced survey and ending cards are
+    not verified here — that existence check runs when the workflow is enabled.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchWorkflowRequest.yml
+  responses:
+    '200':
+      description: Workflow updated successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowResource.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '422':
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+delete:
+  operationId: deleteWorkflowV3
+  summary: Delete a workflow
+  description: >
+    Permanently deletes a workflow by id. Deletion cascades to the workflow's
+    versions, runs,
+
+    and run logs so no response-derived data is left behind (GDPR requirement).
+    This is
+
+    irreversible; use `POST /api/v3/workflows/{workflowId}/archive` for a
+    reversible
+
+    soft-delete that keeps history. Returns `204 No Content`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  responses:
+    '204':
+      description: Workflow deleted successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

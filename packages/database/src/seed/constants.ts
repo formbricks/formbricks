@@ -9,6 +9,9 @@ export const SEED_IDS = {
   SURVEY_CSAT: "clseedsurveycsat000000",
   SURVEY_DRAFT: "clseedsurveydraft00000",
   SURVEY_COMPLETED: "clseedsurveycomplete00",
+  WORKFLOW_RESPONSE_FOLLOW_UP: "clseedwfresponsefup001",
+  WORKFLOW_ENDING_CARD_FOLLOW_UP: "clseedwfendingfup00001",
+  WORKFLOW_TEAM_NOTIFICATION: "clseedwfteamnotice0001",
 } as const;
 
 export const SEED_CREDENTIALS = {

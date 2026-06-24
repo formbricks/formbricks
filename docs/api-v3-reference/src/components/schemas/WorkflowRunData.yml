@@ -1,0 +1,20 @@
+type: object
+description: >
+  Run execution data persisted with the run, mirroring `ZWorkflowRunData`. Scope
+  1 exposes
+
+  this as a debug-oriented JSON dump. Additional runner keys may be present.
+required:
+  - steps
+properties:
+  trigger:
+    allOf:
+      - $ref: ./WorkflowTriggerPayload.yml
+    description: >-
+      Optional duplicate of the trigger payload snapshot kept inside the run
+      data document.
+  steps:
+    type: array
+    items:
+      $ref: ./WorkflowRunStepResult.yml
+additionalProperties: true

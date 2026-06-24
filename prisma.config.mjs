@@ -14,7 +14,7 @@ import "dotenv/config";
 // CLI at all.
 
 export default {
-  schema: "packages/database/schema.prisma",
+  schema: "packages/database/schema",
   migrations: {
     path: "packages/database/migrations",
     seed: "tsx packages/database/src/seed.ts",

@@ -10,7 +10,8 @@
   "files": [
     "dist",
     "generated",
-    "schema.prisma"
+    "schema",
+    "prisma.config.ts"
   ],
   "exports": {
     ".": {
@@ -50,13 +51,13 @@
     "db:migrate:dev": "pnpm build && dotenv -e ../../.env -- sh -c \"pnpm generate && node ./dist/scripts/apply-migrations.js\"",
     "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" node ./dist/scripts/create-saml-database.js",
     "db:create-saml-database:dev": "dotenv -e ../../.env -- node ./dist/scripts/create-saml-database.js",
-    "db:push": "prisma db push --accept-data-loss",
+    "db:push": "prisma db push --accept-data-loss --config ./prisma.config.ts",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed.ts",
     "db:seed:clear": "dotenv -e ../../.env -- tsx src/seed.ts --clear",
     "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
     "db:start": "pnpm db:setup",
-    "format": "prisma format",
-    "generate": "node ./src/scripts/clean-generated-prisma.mjs && prisma generate",
+    "format": "prisma format --config ./prisma.config.ts",
+    "generate": "node ./src/scripts/clean-generated-prisma.mjs && prisma generate --config ./prisma.config.ts",
     "lint": "eslint ./src --fix",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
     "typecheck": "tsc --noEmit",
@@ -65,6 +66,7 @@
   "dependencies": {
     "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@formbricks/workflows": "workspace:*",
     "@paralleldrive/cuid2": "2.3.1",
     "@prisma/adapter-pg": "7.8.0",
     "@prisma/client": "7.8.0",
@@ -78,6 +80,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@types/pg": "8.16.0",
+    "dotenv": "17.3.1",
     "dotenv-cli": "11.0.0",
     "glob": "13.0.6",
     "prisma": "7.8.0",

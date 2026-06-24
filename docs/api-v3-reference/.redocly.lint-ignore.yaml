@@ -1,0 +1,10 @@
+# This file instructs Redocly's linter to ignore the rules contained for specific parts of your API.
+# See https://redocly.com/docs/cli/ for more information.
+src/openapi.yml:
+  no-ambiguous-paths:
+    - '#/paths/~1api~1v3~1workflows~1{workflowId}~1duplicate'
+    - '#/paths/~1api~1v3~1workflows~1{workflowId}~1enable'
+    - '#/paths/~1api~1v3~1workflows~1{workflowId}~1disable'
+    - '#/paths/~1api~1v3~1workflows~1{workflowId}~1archive'
+    - '#/paths/~1api~1v3~1workflows~1{workflowId}~1unarchive'
+    - '#/paths/~1api~1v3~1workflows~1{workflowId}~1test'

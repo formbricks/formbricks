@@ -8,7 +8,7 @@ datasource db {
 
 generator client {
   provider        = "prisma-client"
-  output          = "./generated/prisma"
+  output          = "../generated/prisma"
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -182,6 +182,7 @@ model Response {
   language          String?
   displayId         String?             @unique
   display           Display?            @relation(fields: [displayId], references: [id])
+  workflowRuns      WorkflowRun[]
 
   @@unique([surveyId, singleUseId])
   @@index([createdAt])
@@ -633,6 +634,8 @@ model Workspace {
   integrations         Integration[]
   apiKeyWorkspaces     ApiKeyWorkspace[]
   feedbackSources      FeedbackSource[]
+  workflows            Workflow[]
+  workflowRuns         WorkflowRun[]
 
   @@unique([organizationId, name])
 }
@@ -919,6 +922,8 @@ model User {
   dashboards                Dashboard[]         @relation("dashboardCreatedBy")
   feedbackSources           FeedbackSource[]
   teamUsers                 TeamUser[]
+  workflows                 Workflow[]          @relation("workflowCreatedBy")
+  workflowVersionsPublished WorkflowVersion[]   @relation("workflowVersionPublishedBy")
   lastLoginAt               DateTime?
   isActive                  Boolean             @default(true)
 }

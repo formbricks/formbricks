@@ -1,0 +1,7 @@
+in: path
+name: workflowId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Workflow identifier.
