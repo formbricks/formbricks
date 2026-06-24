@@ -43,6 +43,8 @@ overrides:
   postcss: 8.5.14
   # SDK and runtime transitive security pins.
   fast-xml-parser: 5.7.0 # load-bearing: <5.7.0 vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
+  typeorm: 0.3.29
   # js-cookie / uuid: load-bearing security pins that are also MAJOR coercions on transitive consumers
   # (react-use@17 js-cookie v2->v3; @azure/msal-node + next-auth uuid v8/9->v11). Natural versions are
   # vulnerable (GHSA-qjx8-664m-686j / GHSA-w5hq-g745-h8pq), so the pins stay; runtime verified in build+tests.
