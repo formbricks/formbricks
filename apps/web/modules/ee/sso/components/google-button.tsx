@@ -14,7 +14,12 @@ interface GoogleButtonProps {
   source: "signin" | "signup";
 }
 
-export const GoogleButton = ({ returnToUrl, lastUsed, variant = "secondary", source }: GoogleButtonProps) => {
+export const GoogleButton = ({
+  returnToUrl,
+  lastUsed,
+  variant = "secondary",
+  source,
+}: Readonly<GoogleButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = async () => {
     if (typeof window !== "undefined") {

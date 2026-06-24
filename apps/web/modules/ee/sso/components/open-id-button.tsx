@@ -23,7 +23,7 @@ export const OpenIdButton = ({
   directRedirect = false,
   text,
   source,
-}: OpenIdButtonProps) => {
+}: Readonly<OpenIdButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {

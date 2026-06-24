@@ -22,7 +22,7 @@ export const AzureButton = ({
   lastUsed,
   variant = "secondary",
   source,
-}: AzureButtonProps) => {
+}: Readonly<AzureButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {

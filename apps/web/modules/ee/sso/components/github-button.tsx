@@ -14,7 +14,12 @@ interface GithubButtonProps {
   source: "signin" | "signup";
 }
 
-export const GithubButton = ({ returnToUrl, lastUsed, variant = "secondary", source }: GithubButtonProps) => {
+export const GithubButton = ({
+  returnToUrl,
+  lastUsed,
+  variant = "secondary",
+  source,
+}: Readonly<GithubButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = async () => {
     if (typeof window !== "undefined") {

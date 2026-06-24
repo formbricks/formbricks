@@ -26,7 +26,7 @@ export const SamlButton = ({
   samlTenant,
   samlProduct,
   source,
-}: SamlButtonProps) => {
+}: Readonly<SamlButtonProps>) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
