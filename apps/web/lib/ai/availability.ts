@@ -1,6 +1,5 @@
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getOrganizationBillingPath, organizationSettingsPath } from "@/modules/settings/lib/routes";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 
 export type TAIUnavailableActionType = "enable_ai" | "upgrade_plan";
 
@@ -21,8 +20,12 @@ export const getAIUnavailableAction = (
   }
 
   if (reason === "not_in_plan") {
+    // NOTE: this helper runs in client components, so it can't read the server-only
+    // IS_FORMBRICKS_CLOUD. The cloud-vs-enterprise upgrade target is therefore not resolved here;
+    // billing is the cloud destination. Self-hosted enterprise routing needs the cloud flag threaded
+    // in as a prop (follow-up).
     return {
-      href: getOrganizationBillingPath(organizationId, IS_FORMBRICKS_CLOUD),
+      href: organizationSettingsPath(organizationId, "billing"),
       type: "upgrade_plan",
     };
   }

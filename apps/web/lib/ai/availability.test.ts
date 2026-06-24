@@ -10,10 +10,8 @@ describe("getAIUnavailableAction", () => {
   });
 
   test("returns the upgrade action when AI is not in the plan", () => {
-    // Test env is self-hosted (IS_FORMBRICKS_CLOUD=false), so the upgrade target is the
-    // enterprise page; on cloud getOrganizationBillingPath resolves to /settings/billing.
     expect(getAIUnavailableAction("not_in_plan", "workspace-1")).toEqual({
-      href: "/organizations/workspace-1/settings/enterprise",
+      href: "/organizations/workspace-1/settings/billing",
       type: "upgrade_plan",
     });
   });
