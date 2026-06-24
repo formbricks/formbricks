@@ -70,7 +70,7 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
     if (options?.redirect === false) {
       return { url };
     }
-    window.location.href = url;
+    globalThis.location.href = url;
   };
 
   return { signOut: signOutWithAudit };
