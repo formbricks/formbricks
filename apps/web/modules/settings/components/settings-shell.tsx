@@ -32,6 +32,7 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
       )}
 
       <PendingDowngradeBanner
+        organizationId={data.organization.id}
         lastChecked={lastChecked}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}

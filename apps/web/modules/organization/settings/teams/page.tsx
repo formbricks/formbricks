@@ -10,7 +10,7 @@ import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-export const TeamsPage = async (props: { params: Promise<{ organizationId: string }> }) => {
+export const TeamsPage = async (props: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const params = await props.params;
   const t = await getTranslate();
 

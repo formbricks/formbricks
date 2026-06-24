@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 
 interface PendingDowngradeBannerProps {
+  organizationId: string;
   lastChecked: Date;
   active: boolean;
   isPendingDowngrade: boolean;
@@ -18,14 +19,13 @@ interface PendingDowngradeBannerProps {
 }
 
 export const PendingDowngradeBanner = ({
+  organizationId,
   lastChecked,
   active,
   isPendingDowngrade,
   locale,
   status,
-}: PendingDowngradeBannerProps) => {
-  const { workspace } = useWorkspace();
-  const organizationSettingsBasePath = `/organizations/${workspace?.organizationId}/settings`;
+}: Readonly<PendingDowngradeBannerProps>) => {
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
   const { t } = useTranslation();
   const isLastCheckedWithin72Hours = lastChecked
@@ -87,7 +87,7 @@ export const PendingDowngradeBanner = ({
                     </p>
                     <p className="mt-1 text-sm text-slate-500">{getDescription()}</p>
 
-                    <Link href={`${organizationSettingsBasePath}/enterprise`}>
+                    <Link href={organizationSettingsPath(organizationId, "enterprise")}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>

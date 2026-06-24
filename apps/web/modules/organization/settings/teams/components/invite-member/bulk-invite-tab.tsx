@@ -34,7 +34,7 @@ export const BulkInviteTab = ({
   isStorageConfigured,
   isBulkInviteAllowed,
   enterpriseLicenseRequestFormUrl,
-}: BulkInviteTabProps) => {
+}: Readonly<BulkInviteTabProps>) => {
   const { t } = useTranslation();
   const [csvFile, setCSVFile] = useState<File>();
 

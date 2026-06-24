@@ -27,6 +27,11 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
+  accountSettingsPath,
+  organizationSettingsPath,
+  workspaceSettingsPath,
+} from "@/modules/settings/lib/routes";
+import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -247,72 +252,69 @@ export const SettingsSidebarContent = ({
   const iconClassName = "h-4 w-4 shrink-0";
 
   // Workspace items stay nested under the workspace; organization and account settings are now
-  // scoped to their own top-level routes so they work with or without a current workspace.
-  const basePath = `/workspaces/${workspaceId}/settings`;
-  const organizationBasePath = `/organizations/${organizationId}/settings`;
-  const accountBasePath = `/account/settings`;
-
+  // scoped to their own top-level routes so they work with or without a current workspace. Paths
+  // come from the shared route helpers so they can't drift from redirects/other navigation.
   const workspaceItems: NavItem[] = [
     {
       id: "general",
       label: t("common.general"),
-      href: `${basePath}/workspace/general`,
+      href: workspaceSettingsPath(workspaceId, "general"),
       icon: <FoldersIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "teams",
       label: t("common.team_access"),
-      href: `${basePath}/workspace/teams`,
+      href: workspaceSettingsPath(workspaceId, "teams"),
       icon: <UsersIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "languages",
       label: t("common.survey_languages"),
-      href: `${basePath}/workspace/languages`,
+      href: workspaceSettingsPath(workspaceId, "languages"),
       icon: <LanguagesIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "app-connection",
       label: t("common.connect_your_app"),
-      href: `${basePath}/workspace/app-connection`,
+      href: workspaceSettingsPath(workspaceId, "app-connection"),
       icon: <UnplugIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "feedback-sources",
       label: t("workspace.unify.feedback_sources"),
-      href: `${basePath}/workspace/feedback-sources`,
+      href: workspaceSettingsPath(workspaceId, "feedback-sources"),
       icon: <ShapesIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "integrations",
       label: t("common.integrations"),
-      href: `${basePath}/workspace/integrations`,
+      href: workspaceSettingsPath(workspaceId, "integrations"),
       icon: <BlocksIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "look",
       label: t("common.appearance"),
-      href: `${basePath}/workspace/look`,
+      href: workspaceSettingsPath(workspaceId, "look"),
       icon: <BrushIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "user-actions",
       label: t("common.user_actions"),
-      href: `${basePath}/workspace/user-actions`,
+      href: workspaceSettingsPath(workspaceId, "user-actions"),
       icon: <ListChecksIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "tags",
       label: t("common.tags"),
-      href: `${basePath}/workspace/tags`,
+      href: workspaceSettingsPath(workspaceId, "tags"),
       icon: <TagIcon className={iconClassName} />,
       disabled: isBilling,
     },
@@ -322,21 +324,21 @@ export const SettingsSidebarContent = ({
     {
       id: "org-general",
       label: t("common.general"),
-      href: `${organizationBasePath}/general`,
+      href: organizationSettingsPath(organizationId, "general"),
       icon: <Building2Icon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "org-teams",
       label: t("common.teams"),
-      href: `${organizationBasePath}/teams`,
+      href: organizationSettingsPath(organizationId, "teams"),
       icon: <UsersIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "org-feedback-directories",
       label: t("workspace.settings.feedback_directories.nav_label"),
-      href: `${organizationBasePath}/feedback-directories`,
+      href: organizationSettingsPath(organizationId, "feedback-directories"),
       icon: <FoldersIcon className={iconClassName} />,
       hidden: isMember,
       disabled: !isOwnerOrManager,
@@ -344,28 +346,28 @@ export const SettingsSidebarContent = ({
     {
       id: "org-api-keys",
       label: t("common.api_keys"),
-      href: `${organizationBasePath}/api-keys`,
+      href: organizationSettingsPath(organizationId, "api-keys"),
       icon: <KeyIcon className={iconClassName} />,
       hidden: !isOwnerOrManager,
     },
     {
       id: "org-domain",
       label: t("common.domain"),
-      href: `${organizationBasePath}/domain`,
+      href: organizationSettingsPath(organizationId, "domain"),
       icon: <GlobeIcon className={iconClassName} />,
       hidden: isFormbricksCloud,
     },
     {
       id: "org-billing",
       label: t("common.billing"),
-      href: `${organizationBasePath}/billing`,
+      href: organizationSettingsPath(organizationId, "billing"),
       icon: <CreditCardIcon className={iconClassName} />,
       hidden: !isFormbricksCloud,
     },
     {
       id: "org-enterprise",
       label: t("common.enterprise_license"),
-      href: `${organizationBasePath}/enterprise`,
+      href: organizationSettingsPath(organizationId, "enterprise"),
       icon: <ShieldIcon className={iconClassName} />,
       hidden: isFormbricksCloud,
       disabled: isMember || isBilling,
@@ -376,13 +378,13 @@ export const SettingsSidebarContent = ({
     {
       id: "profile",
       label: t("common.your_profile"),
-      href: `${accountBasePath}/profile`,
+      href: accountSettingsPath("profile"),
       icon: <UserCircleIcon className={iconClassName} />,
     },
     {
       id: "notifications",
       label: t("common.notifications"),
-      href: `${accountBasePath}/notifications`,
+      href: accountSettingsPath("notifications"),
       icon: <BellIcon className={iconClassName} />,
       disabled: isBilling,
     },

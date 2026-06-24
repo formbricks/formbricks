@@ -20,11 +20,15 @@ export const ConfirmationPage = () => {
       return;
     }
 
+    // Prefer the organizationId Stripe appends to the return URL so the back link survives a
+    // fresh tab / cleared session storage; fall back to session storage otherwise.
+    const urlOrganizationId = new URLSearchParams(globalThis.window.location.search).get("organizationId");
     const storedOrganizationId = globalThis.window.sessionStorage.getItem(
       BILLING_CONFIRMATION_ORGANIZATION_ID_KEY
     );
-    if (storedOrganizationId) {
-      setResolvedOrganizationId(storedOrganizationId);
+    const organizationId = urlOrganizationId || storedOrganizationId;
+    if (organizationId) {
+      setResolvedOrganizationId(organizationId);
     }
   }, []);
 

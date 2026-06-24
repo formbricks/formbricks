@@ -29,7 +29,7 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-row">
-      <LandingSidebar user={user} organization={organization} isMultiOrgEnabled={isMultiOrgEnabled} />
+      <LandingSidebar user={user} organization={organization} />
       <div className="flex-1">
         <div className="flex h-full flex-col">
           <div className="p-6">

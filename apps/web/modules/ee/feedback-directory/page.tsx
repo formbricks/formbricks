@@ -6,6 +6,7 @@ import { FeedbackDirectoryView } from "@/modules/ee/feedback-directory/component
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
+import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -38,13 +39,13 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ organiz
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/organizations/${params.organizationId}/settings/billing`
+                  ? getOrganizationBillingPath(params.organizationId, IS_FORMBRICKS_CLOUD)
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/organizations/${params.organizationId}/settings/billing`
+                  ? getOrganizationBillingPath(params.organizationId, IS_FORMBRICKS_CLOUD)
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}

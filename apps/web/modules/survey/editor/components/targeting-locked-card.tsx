@@ -15,7 +15,7 @@ interface TargetingLockedCardProps {
 export const TargetingLockedCard = ({
   isFormbricksCloud,
   enterpriseLicenseRequestFormUrl,
-}: TargetingLockedCardProps) => {
+}: Readonly<TargetingLockedCardProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const [open, setOpen] = useState(false);

@@ -36,10 +36,9 @@ import {
 interface LandingSidebarProps {
   user: TUser;
   organization: TOrganization;
-  isMultiOrgEnabled: boolean;
 }
 
-export const LandingSidebar = ({ user, organization }: LandingSidebarProps) => {
+export const LandingSidebar = ({ user, organization }: Readonly<LandingSidebarProps>) => {
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
