@@ -107,7 +107,9 @@ export const reencodeAllTwoFactorSecrets = async (
       });
       stats.migrated += 1;
     }
-    lastUserId = users[users.length - 1].id;
+    const lastUser = users.at(-1);
+    if (!lastUser) break; // unreachable (users is non-empty here) — keeps the keyset cursor type-safe
+    lastUserId = lastUser.id;
   }
 
   return stats;

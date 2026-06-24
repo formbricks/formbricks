@@ -24,7 +24,9 @@ schema = schema.replace(
   'emailVerified Boolean @default(false) @map(name: "email_verified")'
 );
 // 3. Account.type optional (BA creates accounts without a `type`), scoped to the Account model
-schema = schema.replace(/(model Account \{[\s\S]*?\n\s*type\s+String)(\s)/, "$1?$2");
+// `[^}]*?` (not `[\s\S]*?`) bounds the match inside the Account model block — it can't cross the
+// model's closing brace — which avoids the super-linear backtracking of an unbounded lazy match.
+schema = schema.replace(/(model Account \{[^}]*?\n\s*type\s+String)(\s)/, "$1?$2");
 
 if (schema === before) {
   throw new Error("gen-boolean-client: no replacements applied — schema.prisma shape changed; update this script.");

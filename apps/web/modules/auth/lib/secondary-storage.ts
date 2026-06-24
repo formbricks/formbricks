@@ -39,10 +39,10 @@ export const redisSecondaryStorage = {
   },
   set: async (key: string, value: string, ttl?: number): Promise<void> => {
     const client = await getClient();
-    if (ttl !== undefined) {
-      await client.set(key, value, { EX: ttl });
-    } else {
+    if (ttl === undefined) {
       await client.set(key, value);
+    } else {
+      await client.set(key, value, { EX: ttl });
     }
   },
   delete: async (key: string): Promise<void> => {

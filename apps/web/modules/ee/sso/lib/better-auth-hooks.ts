@@ -28,7 +28,7 @@ export const getSsoProviderFromContext = (
   context: { path?: string; params?: Record<string, string | undefined> } | null | undefined
 ): string | null => {
   const path = context?.path;
-  if (!path || !path.includes("/callback")) return null;
+  if (!path?.includes("/callback")) return null;
   const fromParams = context?.params?.providerId ?? context?.params?.id;
   if (fromParams && !fromParams.startsWith(":")) return fromParams;
   const match = /\/callback\/([^/?:]+)$/.exec(path);
