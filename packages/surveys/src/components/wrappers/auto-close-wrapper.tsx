@@ -74,13 +74,17 @@ export function AutoCloseWrapper({
       stopCountdown();
     };
     const passive: AddEventListenerOptions = { passive: true };
+    // click is included alongside pointerdown because assistive tech, switch, and
+    // voice control can synthesize a click without a preceding pointer/key event.
     node.addEventListener("pointerdown", handleInteraction, passive);
+    node.addEventListener("click", handleInteraction, passive);
     node.addEventListener("mouseover", handleInteraction, passive);
     node.addEventListener("touchstart", handleInteraction, passive);
     node.addEventListener("keydown", handleInteraction, passive);
 
     return () => {
       node.removeEventListener("pointerdown", handleInteraction);
+      node.removeEventListener("click", handleInteraction);
       node.removeEventListener("mouseover", handleInteraction);
       node.removeEventListener("touchstart", handleInteraction);
       node.removeEventListener("keydown", handleInteraction);

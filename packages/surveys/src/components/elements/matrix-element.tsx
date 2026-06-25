@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Matrix, type MatrixOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMatrixElement } from "@formbricks/types/surveys/elements";
+import { htmlToPlainText } from "@/lib/html-utils";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
@@ -134,7 +135,7 @@ export function MatrixElement({
       key={element.id}
       onSubmit={handleSubmit}
       className="w-full"
-      aria-label={getLocalizedValue(element.headline, languageCode)}>
+      aria-label={htmlToPlainText(getLocalizedValue(element.headline, languageCode))}>
       <Matrix
         dir={dir}
         elementId={element.id}

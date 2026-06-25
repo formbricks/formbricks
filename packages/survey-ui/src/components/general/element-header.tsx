@@ -36,7 +36,7 @@ function ElementHeader({
   as = "div",
   ...props
 }: Readonly<ElementHeaderProps>): React.JSX.Element {
-  const isMediaAvailable = imageUrl ?? videoUrl;
+  const isMediaAvailable = Boolean(imageUrl) || Boolean(videoUrl);
   const isLegend = as === "legend";
 
   // In legend mode the surrounding <fieldset> takes its accessible name from the legend text,

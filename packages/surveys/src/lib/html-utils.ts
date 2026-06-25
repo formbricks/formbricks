@@ -50,3 +50,19 @@ export const isValidHTML = (str: string): boolean => {
     return false;
   }
 };
+
+/**
+ * Extracts readable plain text from a possibly-HTML string, e.g. for an aria-label
+ * where raw markup would otherwise leak into the accessible name.
+ * @param value - The string (plain or HTML) to flatten
+ * @returns The text content; falls back to the original value outside the browser or on error
+ */
+export const htmlToPlainText = (value: string): string => {
+  if (!value || typeof globalThis?.window === "undefined") return value;
+
+  try {
+    return new DOMParser().parseFromString(value, "text/html").body.textContent?.trim() ?? value;
+  } catch {
+    return value;
+  }
+};

@@ -66,14 +66,22 @@ export const SurveyClientWrapper = ({
   const searchParams = useSearchParams();
   const { i18n } = useTranslation();
 
+  // The survey's active language: starts at the server-provided code, then follows the
+  // in-survey language switch (via onLanguageChange). The whole shell (i18n strings, logo
+  // direction, page lang/dir) keys off this so it stays in sync, not just the document.
+  const [currentLanguageCode, setCurrentLanguageCode] = useState(languageCode);
   useEffect(() => {
-    const webAppLocale = getWebAppLocale(languageCode, survey);
+    setCurrentLanguageCode(languageCode);
+  }, [languageCode]);
+
+  useEffect(() => {
+    const webAppLocale = getWebAppLocale(currentLanguageCode, survey);
     if (i18n.language !== webAppLocale) {
       i18n.changeLanguage(webAppLocale).catch(() => {
         i18n.changeLanguage("en-US");
       });
     }
-  }, [languageCode, survey, i18n]);
+  }, [currentLanguageCode, survey, i18n]);
 
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const offlineSupport = searchParams.get("offlineSupport") === "true";
@@ -157,16 +165,10 @@ export const SurveyClientWrapper = ({
   // Determine text direction based on language code for logo positioning only
   // which checks both language code and survey content. This is only for logo UI positioning.
   const logoDir = useMemo(() => {
-    return isRTLLanguage(jsSurvey, languageCode) ? "rtl" : "auto";
-  }, [languageCode, jsSurvey]);
+    return isRTLLanguage(jsSurvey, currentLanguageCode) ? "rtl" : "auto";
+  }, [currentLanguageCode, jsSurvey]);
 
-  // Track the survey's active language (updated by the in-survey language switch).
-  const [currentLanguageCode, setCurrentLanguageCode] = useState(languageCode);
-  useEffect(() => {
-    setCurrentLanguageCode(languageCode);
-  }, [languageCode]);
-
-  // Keep <html lang>/<dir> aligned with the survey's active language so the browser
+  // Keep the page lang/dir aligned with the survey's active language so the browser
   // and screen readers announce content in the right language, and RTL languages flip
   // direction (WCAG 3.1.1 / 1.3.2). Link surveys own their document; the embedded JS
   // widget never reaches this component, so host pages are never mutated.

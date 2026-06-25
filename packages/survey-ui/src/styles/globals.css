@@ -267,9 +267,11 @@
         var(--fb-focus-ring-outer-color) !important;
   }
 
-  /* The hidden input is 1px and clipped; its visible label paints the ring instead. */
+  /* The hidden input is 1px and clipped; its visible label paints the ring instead.
+     outline:none also prevents a stray Highlight ring on it under forced-colors. */
   #fbjs input.sr-only:focus-visible {
     box-shadow: none !important;
+    outline: none !important;
   }
 
   @media (forced-colors: active) {

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { MultiSelect, type MultiSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceElement } from "@formbricks/types/surveys/elements";
+import { htmlToPlainText } from "@/lib/html-utils";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledChoicesIds } from "@/lib/utils";
@@ -243,7 +244,7 @@ export function MultipleChoiceMultiElement({
       key={element.id}
       onSubmit={handleSubmit}
       className="w-full"
-      aria-label={getLocalizedValue(element.headline, languageCode)}>
+      aria-label={htmlToPlainText(getLocalizedValue(element.headline, languageCode))}>
       <MultiSelect
         elementId={element.id}
         inputId={element.id}

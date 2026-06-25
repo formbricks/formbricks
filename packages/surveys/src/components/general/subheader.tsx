@@ -25,9 +25,12 @@ export function Subheader({ subheader }: SubheaderProps) {
   const className = "text-subheading label-description block text-sm leading-6 font-normal wrap-break-word";
 
   return isHtml ? (
-    <div className={className} data-testid="subheader" dir="auto">
-      <span className="htmlbody" dangerouslySetInnerHTML={{ __html: safeHtml }} />
-    </div>
+    <div
+      className={`${className} htmlbody`}
+      data-testid="subheader"
+      dir="auto"
+      dangerouslySetInnerHTML={{ __html: safeHtml }}
+    />
   ) : (
     <p className={className} data-testid="subheader" dir="auto">
       {subheader}

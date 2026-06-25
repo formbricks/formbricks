@@ -441,12 +441,11 @@ export function Survey({
   }, [languageCode]);
 
   // Report the active language (initial value + every switch) so a link-survey
-  // host can keep <html lang>/<dir> in sync (WCAG 3.1.1). Embedded widgets pass
+  // host can keep the page lang/dir in sync (WCAG 3.1.1). Embedded widgets pass
   // no callback, so the host page is never touched.
   useEffect(() => {
     onLanguageChange?.(selectedLanguage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- onLanguageChange is a stable setter
-  }, [selectedLanguage]);
+  }, [selectedLanguage, onLanguageChange]);
 
   // --- Offline support: restore progress from IndexedDB on mount ---
   useEffect(() => {
