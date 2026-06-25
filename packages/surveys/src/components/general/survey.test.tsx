@@ -32,8 +32,11 @@ vi.mock("@/lib/api-client", () => ({
 vi.mock("@/lib/offline-storage", () => ({
   addPendingResponse: offlineStorageMocks.addPendingResponse,
   countPendingResponses: offlineStorageMocks.countPendingResponses,
+  countPendingResponsesStrict: offlineStorageMocks.countPendingResponses,
   getPendingResponses: offlineStorageMocks.getPendingResponses,
+  getPendingResponsesStrict: offlineStorageMocks.getPendingResponses,
   removePendingResponse: offlineStorageMocks.removePendingResponse,
+  removePendingResponseStrict: offlineStorageMocks.removePendingResponse,
   clearSurveyProgress: offlineStorageMocks.clearSurveyProgress,
   getSurveyProgress: offlineStorageMocks.getSurveyProgress,
   patchSurveyProgressSnapshot: offlineStorageMocks.patchSurveyProgressSnapshot,

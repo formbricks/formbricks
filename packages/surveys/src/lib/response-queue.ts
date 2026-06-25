@@ -8,9 +8,9 @@ import { ApiClient } from "./api-client";
 import {
   type SerializedSurveyState,
   addPendingResponse,
-  countPendingResponses,
-  getPendingResponses,
-  removePendingResponse,
+  countPendingResponsesStrict,
+  getPendingResponsesStrict,
+  removePendingResponseStrict,
 } from "./offline-storage";
 import { SurveyState } from "./survey-state";
 
@@ -130,7 +130,7 @@ export class ResponseQueue {
     if (!this.config.surveyId) return 0;
 
     try {
-      const pendingCount = await countPendingResponses(this.config.surveyId);
+      const pendingCount = await countPendingResponsesStrict(this.config.surveyId);
       return Math.max(0, pendingCount - this.getProcessedDbIdsPendingRemoval().size);
     } catch (error) {
       this.logOfflinePersistenceError("Failed to count pending responses in IndexedDB", error);
@@ -158,11 +158,17 @@ export class ResponseQueue {
     }
   }
 
-  private async removePendingResponseFromIndexedDB(dbId: number, context: string): Promise<boolean> {
+  private async removePendingResponseFromIndexedDB(
+    dbId: number,
+    context: string,
+    options: { removeTrackedDbIdOnSuccess?: boolean } = {}
+  ): Promise<boolean> {
     try {
-      await removePendingResponse(dbId);
+      await removePendingResponseStrict(dbId);
       this.getProcessedDbIdsPendingRemoval().delete(dbId);
-      this.removePendingDbId(dbId);
+      if (options.removeTrackedDbIdOnSuccess ?? true) {
+        this.removePendingDbId(dbId);
+      }
       return true;
     } catch (error) {
       this.getProcessedDbIdsPendingRemoval().add(dbId);
@@ -180,11 +186,27 @@ export class ResponseQueue {
     }
   }
 
-  private removeProcessedQueueItems(processedCount: number) {
-    const removed = this.queue.splice(0, processedCount);
-    for (const item of removed) {
-      this.pendingDbIds.delete(item);
+  private removeProcessedQueueItemsByDbId(processedDbIds: Set<number>) {
+    if (processedDbIds.size === 0) return;
+
+    for (let index = this.queue.length - 1; index >= 0; index--) {
+      const item = this.queue[index];
+      const pendingDbId = this.pendingDbIds.get(item);
+
+      if (pendingDbId !== undefined && processedDbIds.has(pendingDbId)) {
+        this.queue.splice(index, 1);
+      }
     }
+
+    for (const [item, pendingDbId] of this.pendingDbIds.entries()) {
+      if (processedDbIds.has(pendingDbId)) {
+        this.pendingDbIds.delete(item);
+      }
+    }
+  }
+
+  private isTerminalStaleResponseError(error: ApiErrorResponse): boolean {
+    return error.status === 409;
   }
 
   add(responseUpdate: TResponseUpdate) {
@@ -322,15 +344,13 @@ export class ResponseQueue {
 
     try {
       await this.retryProcessedDbIdCleanup();
-      const entries = await getPendingResponses(this.config.surveyId);
+      const entries = await getPendingResponsesStrict(this.config.surveyId);
       const entriesToSync = entries.filter((entry) => {
         return entry.id === undefined || !this.getProcessedDbIdsPendingRemoval().has(entry.id);
       });
       if (entriesToSync.length === 0) return { success: true, syncedCount: 0 };
 
-      // Snapshot queue length before sync — entries added during async sync must be preserved.
-      const queueLengthBeforeSync = this.queue.length;
-      let processedQueueEntries = 0;
+      const processedDbIds = new Set<number>();
 
       for (const entry of entriesToSync) {
         // Only restore responseId from snapshot when it was set at capture time.
@@ -356,39 +376,34 @@ export class ResponseQueue {
           if (entry.id !== undefined) {
             const removed = await this.removePendingResponseFromIndexedDB(
               entry.id,
-              "Failed to remove synced response from IndexedDB"
+              "Failed to remove synced response from IndexedDB",
+              { removeTrackedDbIdOnSuccess: false }
             );
-            processedQueueEntries++;
+            processedDbIds.add(entry.id);
             if (!removed) {
-              this.removeProcessedQueueItems(Math.min(processedQueueEntries, queueLengthBeforeSync));
+              this.removeProcessedQueueItemsByDbId(processedDbIds);
               return { success: false, syncedCount };
             }
-          } else {
-            processedQueueEntries++;
           }
         } else {
-          if (
-            entry.id !== undefined &&
-            result.error &&
-            result.error.status >= 400 &&
-            result.error.status < 500
-          ) {
+          if (entry.id !== undefined && result.error && this.isTerminalStaleResponseError(result.error)) {
             // Client error (e.g., 409 "already completed") —
             // this entry is stale, remove it and continue with the next one.
             const removed = await this.removePendingResponseFromIndexedDB(
               entry.id,
-              "Failed to remove stale response from IndexedDB"
+              "Failed to remove stale response from IndexedDB",
+              { removeTrackedDbIdOnSuccess: false }
             );
-            processedQueueEntries++;
+            processedDbIds.add(entry.id);
             if (!removed) {
-              this.removeProcessedQueueItems(Math.min(processedQueueEntries, queueLengthBeforeSync));
+              this.removeProcessedQueueItemsByDbId(processedDbIds);
               return { success: false, syncedCount };
             }
             continue;
           }
 
           // Server/network error — stop syncing, remaining entries stay for next attempt
-          this.removeProcessedQueueItems(Math.min(processedQueueEntries, queueLengthBeforeSync));
+          this.removeProcessedQueueItemsByDbId(processedDbIds);
           return { success: false, syncedCount };
         }
 
@@ -396,9 +411,7 @@ export class ResponseQueue {
         onProgress?.(syncedCount, entriesToSync.length);
       }
 
-      // Only remove pre-sync entries from the in-memory queue.
-      // Entries added by add() during the async sync loop must be preserved.
-      this.removeProcessedQueueItems(Math.min(processedQueueEntries, queueLengthBeforeSync));
+      this.removeProcessedQueueItemsByDbId(processedDbIds);
 
       // Kick off processQueue for any entries added during sync
       if (this.queue.length > 0) {
