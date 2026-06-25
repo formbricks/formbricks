@@ -545,11 +545,13 @@ function OtherOptionLabel({
   const otherTextId = `${optionId}-input`;
 
   return (
-    <label
-      htmlFor={optionId}
+    // The free-text input must NOT live inside the option <label>: a label may own only one
+    // labelable control, and label-area clicks would forward to the radio and deselect "Other".
+    // The bordered box is a plain container; only the option row is the radio's label.
+    <div
       dir={dir}
       className={cn(getOptionContainerClassName(isOtherSelected, disabled), isOtherSelected && "z-10")}>
-      <span className="flex items-center">
+      <label htmlFor={optionId} className="flex cursor-pointer items-center">
         <input
           type="radio"
           id={optionId}
@@ -569,7 +571,7 @@ function OtherOptionLabel({
         />
         <RadioIndicator />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
-      </span>
+      </label>
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -586,7 +588,7 @@ function OtherOptionLabel({
           className="mt-2 w-full"
         />
       ) : null}
-    </label>
+    </div>
   );
 }
 

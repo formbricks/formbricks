@@ -274,48 +274,51 @@ function Rating({
     const isActive = number <= activeValue;
 
     return (
-      <label
-        key={number}
-        className={cn(
-          "flex min-h-[48px] flex-1 cursor-pointer items-center justify-center transition-opacity",
-          disabled && "cursor-not-allowed opacity-50"
-        )}
-        onMouseEnter={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onMouseLeave={() => {
-          setHoveredValue(null);
-        }}
-        onFocus={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onBlur={() => {
-          setHoveredValue(null);
-        }}>
-        <input
-          type="radio"
-          name={inputId}
-          value={number}
-          checked={isSelected}
-          onChange={() => {
-            handleSelect(number);
-          }}
-          disabled={disabled}
-          className="sr-only"
-          aria-label={`Rate ${String(number)} out of ${String(range)} stars`}
-        />
-        <div className="pointer-events-none flex w-full max-w-[74px] items-center justify-center">
-          {isActive ? (
-            <Star className="h-full w-full fill-yellow-400 text-yellow-400 transition-colors" />
-          ) : (
-            <Star className="h-full w-full fill-slate-300 text-slate-300 transition-colors" />
+      // The flex-1 wrapper keeps the even column layout; the label is sized to the icon so the
+      // global focus ring hugs the star (matching the design) instead of spanning the whole cell.
+      <div key={number} className="flex flex-1 items-center justify-center">
+        <label
+          className={cn(
+            "flex min-h-[48px] w-full max-w-[74px] cursor-pointer items-center justify-center transition-opacity",
+            disabled && "cursor-not-allowed opacity-50"
           )}
-        </div>
-      </label>
+          onMouseEnter={() => {
+            if (!disabled) {
+              setHoveredValue(number);
+            }
+          }}
+          onMouseLeave={() => {
+            setHoveredValue(null);
+          }}
+          onFocus={() => {
+            if (!disabled) {
+              setHoveredValue(number);
+            }
+          }}
+          onBlur={() => {
+            setHoveredValue(null);
+          }}>
+          <input
+            type="radio"
+            name={inputId}
+            value={number}
+            checked={isSelected}
+            onChange={() => {
+              handleSelect(number);
+            }}
+            disabled={disabled}
+            className="sr-only"
+            aria-label={`Rate ${String(number)} out of ${String(range)} stars`}
+          />
+          <div className="pointer-events-none flex w-full items-center justify-center">
+            {isActive ? (
+              <Star className="h-full w-full fill-yellow-400 text-yellow-400 transition-colors" />
+            ) : (
+              <Star className="h-full w-full fill-slate-300 text-slate-300 transition-colors" />
+            )}
+          </div>
+        </label>
+      </div>
     );
   };
 
@@ -326,45 +329,48 @@ function Rating({
     const isActive = isSelected || isHovered;
 
     return (
-      <label
-        key={number}
-        className={cn(
-          "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center transition-colors",
-          isActive ? "stroke-brand text-brand" : "stroke-muted-foreground text-muted-foreground",
-          disabled && "cursor-not-allowed opacity-50"
-        )}
-        onMouseEnter={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onMouseLeave={() => {
-          setHoveredValue(null);
-        }}
-        onFocus={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onBlur={() => {
-          setHoveredValue(null);
-        }}>
-        <input
-          type="radio"
-          name={inputId}
-          value={number}
-          checked={isSelected}
-          onChange={() => {
-            handleSelect(number);
+      // The flex-1 wrapper keeps the even column layout; the label is sized to the icon so the
+      // global focus ring hugs the smiley (matching the design) instead of spanning the whole cell.
+      <div key={number} className="flex flex-1 items-center justify-center">
+        <label
+          className={cn(
+            "relative flex max-h-16 min-h-9 w-full max-w-[74px] cursor-pointer justify-center transition-colors",
+            isActive ? "stroke-brand text-brand" : "stroke-muted-foreground text-muted-foreground",
+            disabled && "cursor-not-allowed opacity-50"
+          )}
+          onMouseEnter={() => {
+            if (!disabled) {
+              setHoveredValue(number);
+            }
           }}
-          disabled={disabled}
-          className="sr-only"
-          aria-label={`Rate ${String(number)} out of ${String(range)}`}
-        />
-        <div className="text-input-text pointer-events-none h-full w-full max-w-[74px] object-contain">
-          <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />
-        </div>
-      </label>
+          onMouseLeave={() => {
+            setHoveredValue(null);
+          }}
+          onFocus={() => {
+            if (!disabled) {
+              setHoveredValue(number);
+            }
+          }}
+          onBlur={() => {
+            setHoveredValue(null);
+          }}>
+          <input
+            type="radio"
+            name={inputId}
+            value={number}
+            checked={isSelected}
+            onChange={() => {
+              handleSelect(number);
+            }}
+            disabled={disabled}
+            className="sr-only"
+            aria-label={`Rate ${String(number)} out of ${String(range)}`}
+          />
+          <div className="text-input-text pointer-events-none h-full w-full object-contain">
+            <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />
+          </div>
+        </label>
+      </div>
     );
   };
 

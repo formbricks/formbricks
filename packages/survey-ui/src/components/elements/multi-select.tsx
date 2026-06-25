@@ -423,51 +423,51 @@ function ListVariant({
       <div className="space-y-2">
         {options.filter((option) => option.id !== "none").map(renderOption)}
         {hasOtherOption && otherOptionId ? (
-          <div className="space-y-2">
-            <label
-              htmlFor={`${inputId}-${otherOptionId}`}
-              className={cn(
-                getOptionContainerClassName(isOtherSelected, disabled || isNoneSelected),
-                isOtherSelected && "z-10"
-              )}>
-              <span className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`${inputId}-${otherOptionId}`}
-                  name={inputId}
-                  value={otherOptionId}
-                  checked={isOtherSelected}
-                  disabled={disabled || isNoneSelected}
-                  aria-invalid={Boolean(errorMessage)}
-                  className="peer sr-only"
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleOptionAdd(otherOptionId);
-                    } else {
-                      handleOptionRemove(otherOptionId);
-                    }
-                  }}
-                />
-                <CheckboxIndicator />
-                <span className={cn("mx-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
-              </span>
-              {isOtherSelected ? (
-                <Input
-                  type="text"
-                  id={otherTextId}
-                  value={otherValue}
-                  onChange={handleOtherInputChange}
-                  placeholder={otherOptionPlaceholder}
-                  disabled={disabled}
-                  aria-required
-                  aria-label={otherOptionLabel}
-                  aria-invalid={Boolean(errorMessage)}
-                  dir={dir}
-                  className="mt-2 w-full"
-                  ref={otherInputRef}
-                />
-              ) : null}
+          // The free-text input must NOT live inside the option <label>: a label may own only one
+          // labelable control, and label-area clicks would forward to the checkbox and toggle "Other"
+          // off. The bordered box is a plain container; only the option row is the checkbox's label.
+          <div
+            className={cn(
+              getOptionContainerClassName(isOtherSelected, disabled || isNoneSelected),
+              isOtherSelected && "z-10"
+            )}>
+            <label htmlFor={`${inputId}-${otherOptionId}`} className="flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                id={`${inputId}-${otherOptionId}`}
+                name={inputId}
+                value={otherOptionId}
+                checked={isOtherSelected}
+                disabled={disabled || isNoneSelected}
+                aria-invalid={Boolean(errorMessage)}
+                className="peer sr-only"
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    handleOptionAdd(otherOptionId);
+                  } else {
+                    handleOptionRemove(otherOptionId);
+                  }
+                }}
+              />
+              <CheckboxIndicator />
+              <span className={cn("mx-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
             </label>
+            {isOtherSelected ? (
+              <Input
+                type="text"
+                id={otherTextId}
+                value={otherValue}
+                onChange={handleOtherInputChange}
+                placeholder={otherOptionPlaceholder}
+                disabled={disabled}
+                aria-required
+                aria-label={otherOptionLabel}
+                aria-invalid={Boolean(errorMessage)}
+                dir={dir}
+                className="mt-2 w-full"
+                ref={otherInputRef}
+              />
+            ) : null}
           </div>
         ) : null}
         {options.filter((option) => option.id === "none").map(renderOption)}
