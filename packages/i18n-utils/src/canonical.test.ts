@@ -34,12 +34,15 @@ describe("normalizeLanguageCode", () => {
   test("tolerates mixed case and underscore separators", () => {
     expect(normalizeLanguageCode("en-us")).toBe("en-US");
     expect(normalizeLanguageCode("PT_br")).toBe("pt-BR");
+    // Mixed-case region tag resolves via the static map (case-insensitive), not the CLDR fallback.
+    expect(normalizeLanguageCode("PT-BR")).toBe("pt-BR");
+    expect(normalizeLanguageCode("ZH-hans-cn")).toBe("zh-Hans-CN");
     expect(normalizeLanguageCode("  de  ")).toBe("de-DE");
   });
 
   test("remaps aliases regardless of input casing", () => {
-    // Alias remaps (tl->fil, tw->ak) must hold even when the input casing misses the static map and
-    // resolution falls through to CLDR.
+    // Alias remaps (tl->fil, tw->ak) hold for any casing — the case-insensitive static-map lookup keeps
+    // them deterministic instead of depending on the runtime's ICU/CLDR data.
     expect(normalizeLanguageCode("tl")).toBe("fil-PH");
     expect(normalizeLanguageCode("TL")).toBe("fil-PH");
     expect(normalizeLanguageCode("Tl")).toBe("fil-PH");
