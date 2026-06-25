@@ -138,6 +138,22 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
     expect(error).not.toHaveBeenCalled();
   });
 
+  test("on a unique violation with no findable existing run, neither dispatches nor throws", async () => {
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
+    create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+      })
+    );
+    findUnique.mockResolvedValue(null);
+
+    await expect(run()).resolves.toBeUndefined();
+
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+  });
+
   test("isolates a non-unique create failure (logs, does not throw, continues fan-out)", async () => {
     findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1"), enabledWorkflow("wf_2", "ver_2")]);
     create.mockRejectedValueOnce(new Error("db down")).mockResolvedValueOnce({ id: "run_2" });
