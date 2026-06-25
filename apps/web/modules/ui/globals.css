@@ -59,10 +59,6 @@
   --color-error-background: #fef2f2;
   --color-error-background-muted: #fee2e2;
 
-  /* Blur */
-  --blur-xxs: 0.33px;
-  --blur-xs: 2px;
-
   /* Box shadows */
   --shadow-card-sm: 0px 0.5px 12px -5px rgba(30, 41, 59, 0.2);
   --shadow-card-md: 0px 1px 25px -10px rgba(30, 41, 59, 0.3);
