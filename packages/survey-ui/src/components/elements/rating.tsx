@@ -183,19 +183,9 @@ function Rating({
     }
   };
 
-  // Handle keyboard navigation
-  const handleKeyDown = (ratingValue: number) => (e: React.KeyboardEvent) => {
-    if (disabled) return;
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleSelect(ratingValue);
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      e.preventDefault();
-      const direction = e.key === "ArrowLeft" ? -1 : 1;
-      const newValue = Math.max(1, Math.min(range, (currentValue ?? 1) + direction));
-      handleSelect(newValue);
-    }
-  };
+  // Keyboard navigation is handled natively: the options share a radio group
+  // name, so arrow keys move and select, and Space selects. No manual handler
+  // is needed, and the focusable control is the native <input>, not the label.
 
   // Get number option color for color coding
   const getRatingNumberOptionColor = (ratingRange: number, idx: number): string => {
@@ -225,13 +215,10 @@ function Rating({
     const { borderRadiusClasses, borderClasses } = getRTLScaleOptionClasses(isFirst, isLast);
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={handleKeyDown(number)}
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors focus:outline-none",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
           borderClasses,
           isSelected
             ? "bg-brand-20 border-brand z-10 -ml-[1px] border-2 first:ml-0"
@@ -239,8 +226,7 @@ function Rating({
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
-          disabled && "cursor-not-allowed opacity-50",
-          "focus:border-brand focus:border-2"
+          disabled && "cursor-not-allowed opacity-50"
         )}
         onMouseEnter={() => {
           if (!disabled) {
@@ -288,7 +274,6 @@ function Rating({
     const isActive = number <= activeValue;
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
         className={cn(
@@ -310,9 +295,7 @@ function Rating({
         }}
         onBlur={() => {
           setHoveredValue(null);
-        }}
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={handleKeyDown(number)}>
+        }}>
         <input
           type="radio"
           name={inputId}
@@ -343,16 +326,11 @@ function Rating({
     const isActive = isSelected || isHovered;
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={handleKeyDown(number)}
         className={cn(
-          "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center transition-colors focus:outline-none",
-          isActive
-            ? "stroke-brand text-brand"
-            : "stroke-muted-foreground text-muted-foreground focus:border-accent focus:border-2",
+          "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center transition-colors",
+          isActive ? "stroke-brand text-brand" : "stroke-muted-foreground text-muted-foreground",
           disabled && "cursor-not-allowed opacity-50"
         )}
         onMouseEnter={() => {
@@ -395,22 +373,28 @@ function Rating({
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
-      {/* Headline */}
-      <ElementHeader
-        headline={headline}
-        description={description}
-        required={required}
-        requiredLabel={requiredLabel}
-        htmlFor={inputId}
-        imageUrl={imageUrl}
-        videoUrl={videoUrl}
-      />
+      {/* The whole scale is one radio group, named by its headline legend. This replaces a
+          dangling <label htmlFor> (the headline pointed at a non-input) and the generic
+          sr-only "Rating options" legend. role="radiogroup" keeps aria-required valid. */}
+      <fieldset
+        className="w-full space-y-4"
+        role="radiogroup"
+        aria-required={required}
+        aria-invalid={Boolean(errorMessage)}
+        dir={dir}>
+        <ElementHeader
+          as="legend"
+          headline={headline}
+          description={description}
+          required={required}
+          requiredLabel={requiredLabel}
+          imageUrl={imageUrl}
+          videoUrl={videoUrl}
+        />
 
-      {/* Rating Options */}
-      <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full" dir={dir}>
-          <legend className="sr-only">Rating options</legend>
+        {/* Rating Options */}
+        <div className="relative" data-element-input>
+          <ElementError errorMessage={errorMessage} dir={dir} />
           <div className="flex w-full px-[2px]">
             {ratingOptions.map((number, index) => {
               if (scale === "number") {
@@ -437,8 +421,8 @@ function Rating({
               ) : null}
             </div>
           ) : null}
-        </fieldset>
-      </div>
+        </div>
+      </fieldset>
     </div>
   );
 }
