@@ -59,7 +59,7 @@ overrides:
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
   "@babel/core": 7.29.6 # ENG-1376 / GHSA-4x5r-pxfx-6jf8
   "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf
-  dompurify: 3.4.9 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9)
+  dompurify: 3.4.11 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9); ENG-1527-batch / GHSA-cmwh-pvxp-8882 raises the pin to >=3.4.11 (3.4.9/3.4.10 vulnerable to clobbered-root / cross-realm / hook-pollution XSS)
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
   # ENG-1509 / ENG-1505 / GHSA-vmh5-mc38-953g: undici 7.x TLS certificate
   # validation bypass, patched in 7.28.0 (covers the jsdom transitive 7.25.0).
@@ -68,6 +68,10 @@ overrides:
   # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
   form-data@4: 4.0.6
   tar: 7.5.16
+  # ENG-1527-batch / GHSA-mh29-5h37-fv8m + GHSA-h67p-54hq-rp68: js-yaml <4.1.2 quadratic-complexity
+  # DoS via merge keys / repeated aliases (dev-only, via @redocly/cli). No 4.1.2 published; 4.2.0 is the
+  # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
+  js-yaml@4: 4.2.0
 
 patchedDependencies:
   next-auth@4.24.13: patches/next-auth@4.24.13.patch
