@@ -7,8 +7,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
@@ -17,6 +17,7 @@ import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prom
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]) => void;
+  organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
@@ -27,15 +28,14 @@ interface BulkInviteTabProps {
 export const BulkInviteTab = ({
   setOpen,
   onSubmit,
+  organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
   isStorageConfigured,
   isBulkInviteAllowed,
   enterpriseLicenseRequestFormUrl,
-}: BulkInviteTabProps) => {
+}: Readonly<BulkInviteTabProps>) => {
   const { t } = useTranslation();
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [csvFile, setCSVFile] = useState<File>();
 
   const onFileInputChange = (files: File[]) => {
@@ -110,7 +110,7 @@ export const BulkInviteTab = ({
       {
         text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
         href: isFormbricksCloud
-          ? `${workspaceBasePath}/settings/organization/billing`
+          ? organizationSettingsPath(organizationId, "billing")
           : enterpriseLicenseRequestFormUrl,
       },
       {

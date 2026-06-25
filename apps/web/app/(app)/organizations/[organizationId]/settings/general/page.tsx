@@ -1,4 +1,9 @@
-import { redirectBillingRoleFromRestrictedSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/lib/redirect-billing-role";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { AISettingsToggle } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/AISettingsToggle";
+import { CreateOrganizationCard } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/CreateOrganizationCard";
+import { DeleteOrganization } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/DeleteOrganization";
+import { EditOrganizationNameForm } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/EditOrganizationNameForm";
+import { SecurityListTip } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/SecurityListTip";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
 import {
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
@@ -14,39 +19,36 @@ import {
   getWhiteLabelPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import packageJson from "@/package.json";
-import { SettingsCard } from "../../components/SettingsCard";
-import { AISettingsToggle } from "./components/AISettingsToggle";
-import { CreateOrganizationCard } from "./components/CreateOrganizationCard";
-import { DeleteOrganization } from "./components/DeleteOrganization";
-import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
-import { SecurityListTip } from "./components/SecurityListTip";
 
-const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
+const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const params = await props.params;
-  await redirectBillingRoleFromRestrictedSettings(params.workspaceId);
   const t = await getTranslate();
 
-  const { session, currentUserMembership, organization, isOwner, isManager } = await getWorkspaceAuth(
-    params.workspaceId
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
+
+  const { session, currentUserMembership, organization, isOwner, isManager } = await getOrganizationAuth(
+    params.organizationId
   );
 
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
-  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAIPermission] = await Promise.all([
+  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAIPermission, layoutData] = await Promise.all([
     getIsMultiOrgEnabled(),
     getWhiteLabelPermission(organization.id),
     getIsAISmartToolsEnabled(organization.id),
+    getSettingsLayoutData(session.user.id, organization.id),
   ]);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
-
   const isOwnerOrManager = isManager || isOwner;
 
   return (
@@ -63,14 +65,14 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
       <SettingsCard
         title={t("workspace.settings.general.organization_name")}
         description={t("workspace.settings.general.organization_name_description")}>
-        <EditOrganizationNameForm organization={organization} membershipRole={currentUserMembership?.role} />
+        <EditOrganizationNameForm organization={organization} membershipRole={currentUserRole} />
       </SettingsCard>
       <SettingsCard
         title={t("workspace.settings.general.ai_enabled")}
         description={t("workspace.settings.general.ai_enabled_description")}>
         <AISettingsToggle
           organization={organization}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={currentUserRole}
           isInstanceAIConfigured={isInstanceAIConfigured()}
           hasAIPermission={hasAIPermission}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
@@ -80,7 +82,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
       <EmailCustomizationSettings
         organization={organization}
         hasWhiteLabelPermission={hasWhiteLabelPermission}
-        workspaceId={params.workspaceId}
+        workspaceId={layoutData?.currentWorkspace?.id ?? ""}
         isReadOnly={!isOwnerOrManager}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         fbLogoUrl={FB_LOGO_URL}

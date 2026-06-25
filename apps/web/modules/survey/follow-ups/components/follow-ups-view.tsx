@@ -39,7 +39,6 @@ export const FollowUpsView = ({
   enterpriseLicenseRequestFormUrl,
 }: FollowUpsViewProps) => {
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
@@ -58,7 +57,7 @@ export const FollowUpsView = ({
                 ? t("workspace.settings.billing.upgrade")
                 : t("common.request_trial_license"),
               href: isFormbricksCloud
-                ? `${workspaceBasePath}/settings/organization/billing`
+                ? `/organizations/${workspace?.organizationId}/settings/billing`
                 : enterpriseLicenseRequestFormUrl,
             },
             {
