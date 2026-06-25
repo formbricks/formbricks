@@ -1,3 +1,4 @@
+import { LANGUAGE_CANONICAL_MAP, normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 
 export type TV3SurveyResolverLanguage = {
@@ -23,30 +24,43 @@ type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { o
 
 const V3_SURVEY_LANGUAGE_TAG_REGEX = /^[a-z]{2}(?:-[A-Z]{2}|-[A-Z][a-z]{3}(?:-[A-Z]{2})?)$/;
 const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/;
-const V3_LEGACY_LANGUAGE_CODE_MAP: Record<string, string> = {
-  ar: "ar-SA",
-  cs: "cs-CZ",
-  da: "da-DK",
-  de: "de-DE",
-  en: "en-US",
-  es: "es-ES",
-  fi: "fi-FI",
-  fr: "fr-FR",
-  he: "he-IL",
-  hi: "hi-IN",
-  hu: "hu-HU",
-  it: "it-IT",
-  ja: "ja-JP",
-  ko: "ko-KR",
-  nb: "nb-NO",
-  nl: "nl-NL",
-  no: "nb-NO",
-  pl: "pl-PL",
-  ro: "ro-RO",
-  ru: "ru-RU",
-  sv: "sv-SE",
-  tr: "tr-TR",
-};
+
+// Bare legacy codes v3 canonicalizes on read, with values sourced from the shared canonical map so v3
+// can't drift from the picker/DB/migration (this fixes the old `ar -> ar-SA` and adds `pt -> pt-BR`).
+// Codes OUTSIDE this set are deliberately preserved as-stored: an unrelated patch must not silently
+// migrate a survey's language (which would orphan its content keys). The ENG-1067 data migration
+// canonicalizes those remaining codes in one controlled pass.
+const V3_CANONICALIZABLE_BARE_CODES = [
+  "ar",
+  "cs",
+  "da",
+  "de",
+  "en",
+  "es",
+  "fi",
+  "fr",
+  "he",
+  "hi",
+  "hu",
+  "it",
+  "ja",
+  "ko",
+  "nb",
+  "nl",
+  "no",
+  "pl",
+  "pt",
+  "ro",
+  "ru",
+  "sv",
+  "tr",
+] as const;
+const V3_LEGACY_LANGUAGE_CODE_MAP: Record<string, string> = Object.fromEntries(
+  V3_CANONICALIZABLE_BARE_CODES.flatMap((code) => {
+    const canonicalCode = LANGUAGE_CANONICAL_MAP[code];
+    return canonicalCode ? [[code, canonicalCode]] : [];
+  })
+);
 
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
   return normalizeV3SurveyLanguageCode(value, V3_SURVEY_LANGUAGE_TAG_REGEX);
@@ -72,6 +86,8 @@ function normalizeV3SurveyLanguageCode(value: string, pattern: RegExp): string |
 }
 
 export function normalizeV3SurveyLanguageIdentifier(value: string): string | null {
+  // Already region/script-qualified tag wins as-is; otherwise canonicalize a bare code via the curated
+  // map (values from the shared source). Un-mapped codes return null so callers preserve them as-stored.
   return (
     normalizeV3SurveyLanguageTag(value) ?? V3_LEGACY_LANGUAGE_CODE_MAP[value.trim().toLowerCase()] ?? null
   );
@@ -92,18 +108,28 @@ export function normalizeV3SurveyWriteLanguageCode(
 
   const requestedKey = value.trim().toLowerCase();
   const requestedIdentifier = normalizeV3SurveyLanguageIdentifier(value)?.toLowerCase() ?? null;
+  // Full CLDR canonical form of the request, covering codes outside the curated map (e.g. `gu`). This
+  // is the inbound back-compat path: once the data migration flips a stored code to its canonical tag
+  // (`gu` -> `gu-IN`), a client still sending the legacy `gu` keeps matching the now-canonical survey
+  // language instead of being rejected.
+  const requestedCanonical = normalizeLanguageCode(value)?.toLowerCase() ?? null;
 
   for (const allowedLanguageCode of allowedLanguageCodes) {
     const allowedKey = allowedLanguageCode.toLowerCase();
     const normalizedAllowedLanguageCode = normalizeV3SurveyLanguageIdentifier(allowedLanguageCode);
     const allowedIdentifier = normalizedAllowedLanguageCode?.toLowerCase() ?? null;
+    const allowedCanonical = normalizeLanguageCode(allowedLanguageCode)?.toLowerCase() ?? null;
 
     if (
       requestedKey === allowedKey ||
       (requestedIdentifier && requestedIdentifier === allowedKey) ||
-      (allowedIdentifier && (requestedKey === allowedIdentifier || requestedIdentifier === allowedIdentifier))
+      (allowedIdentifier &&
+        (requestedKey === allowedIdentifier || requestedIdentifier === allowedIdentifier)) ||
+      (requestedCanonical && requestedCanonical === allowedCanonical)
     ) {
-      // PATCH-only compatibility: preserve legacy stored codes that are not safely canonicalizable.
+      // PATCH-only compatibility: write to the survey's existing stored code as-is, falling back to its
+      // canonical form. Pre-migration this preserves a legacy code; post-migration it resolves to the
+      // canonical one the survey now stores.
       return normalizedAllowedLanguageCode ?? allowedLanguageCode;
     }
   }
