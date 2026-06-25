@@ -280,8 +280,11 @@ COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
 
 COPY --from=installer /app/node_modules/@opentelemetry/sdk-logs ./node_modules/@opentelemetry/sdk-logs
-RUN chmod -R 755 ./node_modules/@opentelemetry/sdk-logs \
-    && OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=console node -e "\
+COPY --from=installer /app/node_modules/@opentelemetry/exporter-logs-otlp-proto ./node_modules/@opentelemetry/exporter-logs-otlp-proto
+RUN chmod -R 755 \
+      ./node_modules/@opentelemetry/sdk-logs \
+      ./node_modules/@opentelemetry/exporter-logs-otlp-proto \
+    && OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 node -e "\
       const pino = require('pino'); \
       const target = process.cwd() + '/node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js'; \
       process.on('uncaughtException', (error) => { console.error(error); process.exit(1); }); \
@@ -292,10 +295,6 @@ RUN chmod -R 755 ./node_modules/@opentelemetry/sdk-logs \
           options: { \
             loggerName: 'formbricks-build-smoke', \
             serviceVersion: '0.0.0', \
-            logRecordProcessorOptions: { \
-              recordProcessorType: 'simple', \
-              exporterOptions: { protocol: 'console' } \
-            }, \
             resourceAttributes: { \
               'service.name': 'formbricks-build-smoke', \
               'service.version': '0.0.0' \
@@ -303,6 +302,7 @@ RUN chmod -R 755 ./node_modules/@opentelemetry/sdk-logs \
           } \
         } \
       }); \
+      logger[pino.symbols.streamSym]?.on?.('error', (error) => { console.error(error); process.exit(1); }); \
       logger.info('pino otel transport smoke check'); \
       setTimeout(() => process.exit(0), 1000); \
     "
