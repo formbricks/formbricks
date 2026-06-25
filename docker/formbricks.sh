@@ -167,9 +167,10 @@ add_formbricks_traefik_labels() {
   local compose_file="${1:-docker-compose.yml}"
   local formbricks_domain_name="$2"
   local formbricks_hsts_enabled="$3"
+  local formbricks_https_setup="$4"
   local tmp_file="${compose_file}.tmp"
 
-  if ! awk -v domain_name="$formbricks_domain_name" -v hsts_enabled="$formbricks_hsts_enabled" '
+  if ! awk -v domain_name="$formbricks_domain_name" -v hsts_enabled="$formbricks_hsts_enabled" -v https_setup="$formbricks_https_setup" '
 BEGIN { in_formbricks = 0; inserted = 0 }
 /^  formbricks:$/ { in_formbricks = 1 }
 in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 }
@@ -180,12 +181,16 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
         print "      - \"traefik.http.routers.formbricks.rule=Host(`" domain_name "`)\""
         print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\""
         print "      - \"traefik.http.routers.formbricks.tls=true\""
-        print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\""
+        if (https_setup == "y") {
+            print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\""
+        }
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\""
         print "      - \"traefik.http.routers.feedback-records-token.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
         print "      - \"traefik.http.routers.feedback-records-token.entrypoints=websecure\""
         print "      - \"traefik.http.routers.feedback-records-token.tls=true\""
-        print "      - \"traefik.http.routers.feedback-records-token.tls.certresolver=default\""
+        if (https_setup == "y") {
+            print "      - \"traefik.http.routers.feedback-records-token.tls.certresolver=default\""
+        }
         print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
         print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
         if (hsts_enabled == "y") {
@@ -634,10 +639,12 @@ EOF
   fi
 
   # Step 1: Add Traefik labels to formbricks service
-  add_formbricks_traefik_labels "docker-compose.yml" "$domain_name" "$hsts_enabled"
+  if ! add_formbricks_traefik_labels "docker-compose.yml" "$domain_name" "$hsts_enabled" "$https_setup"; then
+    exit 1
+  fi
 
   # Step 1b: Add FeedbackRecords gateway labels to the Hub service.
-  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
+  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" -v https_setup="$https_setup" '
 BEGIN { in_hub = 0; inserted = 0 }
 /^  hub:/ { in_hub = 1 }
 in_hub && /^  [A-Za-z0-9_-]+:/ && !/^  hub:/ { in_hub = 0 }
@@ -649,14 +656,18 @@ in_hub && /^  [A-Za-z0-9_-]+:/ && !/^  hub:/ { in_hub = 0 }
         print "      - \"traefik.http.routers.feedback-records-v3.rule=Host(`" domain_name "`) && PathPrefix(`/api/v3/feedbackRecords`)\""
         print "      - \"traefik.http.routers.feedback-records-v3.entrypoints=websecure\""
         print "      - \"traefik.http.routers.feedback-records-v3.tls=true\""
-        print "      - \"traefik.http.routers.feedback-records-v3.tls.certresolver=default\""
+        if (https_setup == "y") {
+            print "      - \"traefik.http.routers.feedback-records-v3.tls.certresolver=default\""
+        }
         print "      - \"traefik.http.routers.feedback-records-v3.service=feedback-records-hub\""
         print "      - \"traefik.http.routers.feedback-records-v3.priority=100\""
         print "      - \"traefik.http.routers.feedback-records-v3.middlewares=feedback-records-auth,feedback-records-v3-rewrite,feedback-records-hub-headers\""
         print "      - \"traefik.http.routers.feedback-records-sdk.rule=Host(`" domain_name "`) && PathPrefix(`/v1/feedback-records`)\""
         print "      - \"traefik.http.routers.feedback-records-sdk.entrypoints=websecure\""
         print "      - \"traefik.http.routers.feedback-records-sdk.tls=true\""
-        print "      - \"traefik.http.routers.feedback-records-sdk.tls.certresolver=default\""
+        if (https_setup == "y") {
+            print "      - \"traefik.http.routers.feedback-records-sdk.tls.certresolver=default\""
+        }
         print "      - \"traefik.http.routers.feedback-records-sdk.service=feedback-records-hub\""
         print "      - \"traefik.http.routers.feedback-records-sdk.priority=100\""
         print "      - \"traefik.http.routers.feedback-records-sdk.middlewares=feedback-records-auth,feedback-records-hub-headers\""
