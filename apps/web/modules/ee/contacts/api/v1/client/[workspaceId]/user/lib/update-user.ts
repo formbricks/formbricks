@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
@@ -156,24 +157,34 @@ export const updateUser = async (
   let errors: string[] = [];
   let language = contactAttributes.language;
 
+  // Standardize the contact's `language` attribute to its canonical BCP-47 tag on write (ENG-1067), so
+  // a legacy SDK `setLanguage("de")` lands as `de-DE` instead of re-introducing legacy codes. The
+  // canonical value is also what we echo back in the response state below, so the SDK self-heals its
+  // cached copy. Unresolvable values are left untouched.
+  const canonicalLanguage = attributes?.language ? normalizeLanguageCode(String(attributes.language)) : null;
+  const normalizedAttributes =
+    canonicalLanguage && attributes ? { ...attributes, language: canonicalLanguage } : attributes;
+
   // Handle attribute updates efficiently
-  if (attributes && Object.keys(attributes).length > 0) {
+  if (normalizedAttributes && Object.keys(normalizedAttributes).length > 0) {
     // Single pass comparison - check if any attribute has changed
-    const hasChanges = Object.entries(attributes).some(([key, value]) => value !== contactAttributes[key]);
+    const hasChanges = Object.entries(normalizedAttributes).some(
+      ([key, value]) => value !== contactAttributes[key]
+    );
 
     if (hasChanges) {
       const {
         success,
         messages: updateAttrMessages,
         errors: updateAttrErrors,
-      } = await updateAttributes(contactData.id, userId, workspaceId, attributes);
+      } = await updateAttributes(contactData.id, userId, workspaceId, normalizedAttributes);
 
       messages = updateAttrMessages?.map(formatAttributeMessage) ?? [];
       errors = updateAttrErrors?.map(formatAttributeMessage) ?? [];
 
       // Update language if provided (used in response state)
-      if (success && attributes.language) {
-        language = String(attributes.language);
+      if (success && normalizedAttributes.language) {
+        language = String(normalizedAttributes.language);
       }
     }
   }
