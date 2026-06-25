@@ -27,7 +27,7 @@ CREATE TABLE "public"."TwoFactor" (
 );
 
 -- CreateIndex
-CREATE INDEX "TwoFactor_userId_idx" ON "public"."TwoFactor"("userId");
+CREATE UNIQUE INDEX "TwoFactor_userId_key" ON "public"."TwoFactor"("userId");
 
 -- AddForeignKey
 ALTER TABLE "public"."TwoFactor" ADD CONSTRAINT "TwoFactor_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

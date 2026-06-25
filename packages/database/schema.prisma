@@ -861,7 +861,7 @@ model Session {
   userId       String
   expires      DateTime
 
-  // Better Auth (ENG-1054): BA maps token←sessionToken, expiresAt←expires via session.fields.
+  // Better Auth (ENG-1054): token←sessionToken, expiresAt←expires (mapped via session.fields); ipAddress + userAgent below are new BA columns.
   ipAddress String?
   userAgent String?
 
@@ -888,7 +888,7 @@ model TwoFactor {
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   verified    Boolean @default(true)
 
-  @@index([userId])
+  @@unique([userId])
 }
 
 /// Stores the active password reset token for a user.
@@ -931,7 +931,7 @@ model User {
   memberships               Membership[]
   accounts                  Account[]
   sessions                  Session[]
-  twoFactors                TwoFactor[]
+  twoFactor                 TwoFactor?
   passwordResetToken        PasswordResetToken?
   groupId                   String?
   invitesCreated            Invite[]            @relation("inviteCreatedBy")
