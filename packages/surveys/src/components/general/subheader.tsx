@@ -6,7 +6,7 @@ interface SubheaderProps {
   elementId: string;
 }
 
-export function Subheader({ subheader, elementId }: SubheaderProps) {
+export function Subheader({ subheader }: SubheaderProps) {
   // Strip inline styles BEFORE parsing to avoid CSP violations
   const strippedSubheader = subheader ? stripInlineStyles(subheader) : "";
   const isHtml = strippedSubheader ? isValidHTML(strippedSubheader) : false;
@@ -20,17 +20,17 @@ export function Subheader({ subheader, elementId }: SubheaderProps) {
 
   if (!subheader) return null;
 
-  return (
-    <label
-      htmlFor={elementId}
-      className="text-subheading label-description block text-sm leading-6 font-normal wrap-break-word"
-      data-testid="subheader"
-      dir="auto">
-      {isHtml ? (
-        <span className="htmlbody" dangerouslySetInnerHTML={{ __html: safeHtml }} />
-      ) : (
-        <span>{subheader}</span>
-      )}
-    </label>
+  // Description text, not a form label: a paragraph for plain text, and a div
+  // for rich text (which may contain block elements that can't nest in a <p>).
+  const className = "text-subheading label-description block text-sm leading-6 font-normal wrap-break-word";
+
+  return isHtml ? (
+    <div className={className} data-testid="subheader" dir="auto">
+      <span className="htmlbody" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+    </div>
+  ) : (
+    <p className={className} data-testid="subheader" dir="auto">
+      {subheader}
+    </p>
   );
 }
