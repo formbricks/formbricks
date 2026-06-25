@@ -158,7 +158,6 @@ export function EndingCard({
                       variablesData,
                       languageCode
                     )}
-                    elementId="EndingCard"
                   />
                   {endingCard.buttonLabel ? (
                     <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
@@ -188,10 +187,7 @@ export function EndingCard({
                       headline={t("common.respondents_will_not_see_this_card")}
                       elementId="EndingCard"
                     />
-                    <Subheader
-                      subheader={t("common.they_will_be_redirected_immediately")}
-                      elementId="EndingCard"
-                    />
+                    <Subheader subheader={t("common.they_will_be_redirected_immediately")} />
                   </div>
                 ) : (
                   <div className="my-3">

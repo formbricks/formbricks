@@ -58,7 +58,8 @@ export const isValidHTML = (str: string): boolean => {
  * @returns The text content; falls back to the original value outside the browser or on error
  */
 export const htmlToPlainText = (value: string): string => {
-  if (!value || typeof globalThis?.window === "undefined") return value;
+  // DOMParser is unavailable outside the browser (e.g. SSR); return the raw value there.
+  if (!value || !("DOMParser" in globalThis)) return value;
 
   try {
     return new DOMParser().parseFromString(value, "text/html").body.textContent?.trim() ?? value;

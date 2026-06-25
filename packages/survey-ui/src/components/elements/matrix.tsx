@@ -124,9 +124,9 @@ function Matrix({
               {/* Column headers */}
               <thead>
                 <tr>
-                  {/* Empty top-left corner: hidden from assistive tech so it is not announced as a
-                      silent header. Each cell radio is named by its row + column header instead. */}
-                  <th className="p-2 text-start" aria-hidden="true" />
+                  {/* Empty top-left corner: a plain data cell (not a header), so it is neither an
+                      empty <th> nor announced. Each cell radio is named by its row + column header. */}
+                  <td className="p-2" />
                   {columns.map((column) => {
                     const columnHeaderId = `${inputId}-col-${column.id}`;
                     return (

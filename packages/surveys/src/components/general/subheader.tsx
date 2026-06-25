@@ -3,7 +3,6 @@ import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
 
 interface SubheaderProps {
   subheader?: string;
-  elementId: string;
 }
 
 export function Subheader({ subheader }: SubheaderProps) {
