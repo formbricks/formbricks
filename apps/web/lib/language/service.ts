@@ -1,6 +1,7 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
@@ -58,9 +59,17 @@ export const createLanguage = async (
       throw new ValidationError("Language code is required");
     }
 
+    // Standardize on a canonical BCP-47 tag (ENG-1067). Normalizing also rejects malformed/unparseable
+    // codes server-side, so the column can't accumulate arbitrary strings regardless of the caller.
+    const canonicalCode = normalizeLanguageCode(languageInput.code);
+    if (!canonicalCode) {
+      throw new ValidationError(`Invalid language code: '${languageInput.code}'`);
+    }
+
     const language = await prisma.language.create({
       data: {
         ...languageInput,
+        code: canonicalCode,
         workspace: {
           connect: { id: workspaceId },
         },

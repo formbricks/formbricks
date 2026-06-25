@@ -640,14 +640,29 @@ function canonicalizeViaCldr(code: string): string | null {
 }
 
 /**
+ * Case-insensitive index over {@link LANGUAGE_CANONICAL_MAP}. The map keys keep canonical BCP-47 casing
+ * (`pt-BR`, `zh-Hans-CN`, `tl`), so a case-variant input (`TL`, `PT-br`) would miss the exact lookup and
+ * leak to the CLDR fallback. Lowercasing both sides lets every casing resolve from the static map
+ * deterministically, regardless of the runtime's ICU/CLDR data.
+ */
+const LANGUAGE_CANONICAL_MAP_BY_LOWERCASE = new Map<string, string>();
+for (const [code, canonicalCode] of Object.entries(LANGUAGE_CANONICAL_MAP)) {
+  LANGUAGE_CANONICAL_MAP_BY_LOWERCASE.set(code.toLowerCase(), canonicalCode);
+}
+
+/**
  * Normalize any incoming language code — a legacy bare code, mixed case, `_` separators, a URL
  * `?lang=` value, or an SDK-persisted value — to its canonical region-tagged BCP-47 tag. Returns null when the
- * input can't be resolved. The static map is consulted first (deterministic and version-independent).
- * CLDR is the fallback for anything unrecognized.
+ * input can't be resolved. The static map is consulted first (deterministic and version-independent),
+ * case-insensitively; CLDR is the fallback for anything unrecognized.
  */
 export function normalizeLanguageCode(input: string | null | undefined): string | null {
   if (!input) return null;
   const cleaned = input.trim().replace(/_/g, "-");
   if (cleaned.length === 0) return null;
-  return LANGUAGE_CANONICAL_MAP[cleaned] ?? canonicalizeViaCldr(cleaned);
+  const exactMatch = LANGUAGE_CANONICAL_MAP[cleaned];
+  if (exactMatch) return exactMatch;
+  const caseInsensitiveMatch = LANGUAGE_CANONICAL_MAP_BY_LOWERCASE.get(cleaned.toLowerCase());
+  if (caseInsensitiveMatch) return caseInsensitiveMatch;
+  return canonicalizeViaCldr(cleaned);
 }

@@ -53,8 +53,23 @@ describe("createLanguage", () => {
     expect(result).toEqual(mockLanguage);
   });
 
+  test("stores the canonical BCP-47 tag, normalizing a legacy code", async () => {
+    vi.mocked(prisma.language.create).mockResolvedValue(mockLanguage);
+    await createLanguage(mockWorkspaceId, { code: "de", alias: null });
+    expect(prisma.language.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ code: "de-DE" }) })
+    );
+  });
+
   describe("sad path", () => {
     testInputValidation(createLanguage, "bad-id", {});
+
+    test("throws ValidationError on a malformed/unparseable code", async () => {
+      await expect(createLanguage(mockWorkspaceId, { code: "not a language", alias: null })).rejects.toThrow(
+        ValidationError
+      );
+      expect(prisma.language.create).not.toHaveBeenCalled();
+    });
 
     test("throws DatabaseError when PrismaKnownRequestError", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
