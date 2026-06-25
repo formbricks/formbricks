@@ -310,13 +310,7 @@ export class ResponseQueue {
    * Does NOT populate the in-memory queue — syncPersistedResponses reads directly from IndexedDB.
    */
   async loadPersistedQueue(): Promise<number> {
-    if (!this.config.persistOffline || !this.config.surveyId) return 0;
-    try {
-      await this.retryProcessedDbIdCleanup();
-      return await this.countPersistedResponses();
-    } catch {
-      return 0;
-    }
+    return this.getPendingCount();
   }
 
   async getPendingCount(): Promise<number> {
