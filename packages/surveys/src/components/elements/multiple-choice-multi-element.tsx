@@ -239,7 +239,11 @@ export function MultipleChoiceMultiElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="w-full">
+    <form
+      key={element.id}
+      onSubmit={handleSubmit}
+      className="w-full"
+      aria-label={getLocalizedValue(element.headline, languageCode)}>
       <MultiSelect
         elementId={element.id}
         inputId={element.id}

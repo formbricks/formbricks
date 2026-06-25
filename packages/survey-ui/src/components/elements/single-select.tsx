@@ -16,7 +16,6 @@ import {
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
-import { RadioGroup, RadioGroupItem } from "@/components/general/radio-group";
 import { cn } from "@/lib/utils";
 
 type Direction = "ltr" | "rtl" | "auto";
@@ -361,6 +360,80 @@ function getOptionContainerClassName(isSelected: boolean, disabled: boolean): st
   );
 }
 
+/**
+ * Custom radio indicator driven by the sibling native input's :checked state via the Tailwind
+ * `peer` utility. The native <input type="radio"> is visually hidden (sr-only) but stays in the
+ * DOM as the real, focusable control; this span only paints the dot.
+ */
+function RadioIndicator(): React.JSX.Element {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "border-input-border relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
+        "peer-checked:border-brand",
+        "after:size-2 after:rounded-full after:bg-transparent after:transition-colors after:content-['']",
+        "peer-checked:after:bg-brand"
+      )}
+    />
+  );
+}
+
+interface SingleSelectOptionItemProps {
+  inputId: string;
+  option: SingleSelectOption;
+  isSelected: boolean;
+  disabled: boolean;
+  required: boolean;
+  dir: Direction;
+  onSelect: (optionId: string) => void;
+  onDeselect: (optionId: string) => void;
+}
+
+function SingleSelectOptionItem({
+  inputId,
+  option,
+  isSelected,
+  disabled,
+  required,
+  dir,
+  onSelect,
+  onDeselect,
+}: Readonly<SingleSelectOptionItemProps>): React.JSX.Element {
+  const optionId = `${inputId}-${option.id}`;
+
+  return (
+    <label
+      key={option.id}
+      dir={dir}
+      htmlFor={optionId}
+      className={cn(getOptionContainerClassName(isSelected, disabled), isSelected && "z-10")}>
+      <span className="flex items-center">
+        <input
+          type="radio"
+          id={optionId}
+          name={inputId}
+          value={option.id}
+          checked={isSelected}
+          disabled={disabled}
+          className="peer sr-only"
+          onChange={() => {
+            onSelect(option.id);
+          }}
+          onClick={() => {
+            // Native radios cannot be unchecked by re-clicking; allow deselect when not required.
+            if (!required && isSelected) {
+              onDeselect(option.id);
+            }
+          }}
+        />
+        <RadioIndicator />
+        <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
+      </span>
+    </label>
+  );
+}
+
 function SingleSelectListVariant({
   inputId,
   dir,
@@ -382,50 +455,35 @@ function SingleSelectListVariant({
   const regularOptions = options.filter((option) => option.id !== "none");
   const noneOptions = options.filter((option) => option.id === "none");
 
-  const handleSelectedOptionClick = (optionId: string, event: React.MouseEvent<HTMLButtonElement>): void => {
-    if (required || selectedValue !== optionId) {
-      return;
-    }
-
-    event.preventDefault();
-    onChange(undefined);
+  const handleSelect = (optionId: string): void => {
+    onChange(optionId);
   };
+
+  const handleDeselect = (optionId: string): void => {
+    if (selectedValue === optionId) {
+      onChange(undefined);
+    }
+  };
+
+  const renderOption = (option: SingleSelectOption): React.JSX.Element => (
+    <SingleSelectOptionItem
+      key={option.id}
+      inputId={inputId}
+      option={option}
+      isSelected={selectedValue === option.id}
+      disabled={disabled}
+      required={required}
+      dir={dir}
+      onSelect={handleSelect}
+      onDeselect={handleDeselect}
+    />
+  );
 
   return (
     <div className="relative" data-element-input>
       <ElementError errorMessage={errorMessage} dir={dir} />
-      <RadioGroup
-        name={inputId}
-        value={selectedValue}
-        onValueChange={onChange}
-        disabled={disabled}
-        errorMessage={errorMessage}
-        className="w-full gap-0 space-y-2">
-        {regularOptions.map((option) => {
-          const optionId = `${inputId}-${option.id}`;
-          const isSelected = selectedValue === option.id;
-
-          return (
-            <label
-              key={option.id}
-              dir={dir}
-              htmlFor={optionId}
-              className={cn(getOptionContainerClassName(isSelected, disabled), isSelected && "z-10")}>
-              <span className="flex items-center">
-                <RadioGroupItem
-                  value={option.id}
-                  id={optionId}
-                  disabled={disabled}
-                  aria-required={required}
-                  onClick={(event) => {
-                    handleSelectedOptionClick(option.id, event);
-                  }}
-                />
-                <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
-              </span>
-            </label>
-          );
-        })}
+      <div className="w-full space-y-2">
+        {regularOptions.map(renderOption)}
         {hasOtherOption && otherOptionId ? (
           <OtherOptionLabel
             inputId={inputId}
@@ -436,39 +494,16 @@ function SingleSelectListVariant({
             isOtherSelected={isOtherSelected}
             otherInputRef={otherInputRef}
             handleOtherInputChange={handleOtherInputChange}
-            handleSelectedOptionClick={handleSelectedOptionClick}
+            onSelect={handleSelect}
+            onDeselect={handleDeselect}
             dir={dir}
             disabled={disabled}
             required={required}
             errorMessage={errorMessage}
           />
         ) : null}
-        {noneOptions.map((option) => {
-          const optionId = `${inputId}-${option.id}`;
-          const isSelected = selectedValue === option.id;
-
-          return (
-            <label
-              key={option.id}
-              htmlFor={optionId}
-              dir={dir}
-              className={cn(getOptionContainerClassName(isSelected, disabled), isSelected && "z-10")}>
-              <span className="flex items-center">
-                <RadioGroupItem
-                  value={option.id}
-                  id={optionId}
-                  disabled={disabled}
-                  aria-required={required}
-                  onClick={(event) => {
-                    handleSelectedOptionClick(option.id, event);
-                  }}
-                />
-                <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
-              </span>
-            </label>
-          );
-        })}
-      </RadioGroup>
+        {noneOptions.map(renderOption)}
+      </div>
     </div>
   );
 }
@@ -482,7 +517,8 @@ interface OtherOptionLabelProps {
   isOtherSelected: boolean;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
   handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSelectedOptionClick: (optionId: string, event: React.MouseEvent<HTMLButtonElement>) => void;
+  onSelect: (optionId: string) => void;
+  onDeselect: (optionId: string) => void;
   dir: Direction;
   disabled: boolean;
   required: boolean;
@@ -498,38 +534,53 @@ function OtherOptionLabel({
   isOtherSelected,
   otherInputRef,
   handleOtherInputChange,
-  handleSelectedOptionClick,
+  onSelect,
+  onDeselect,
   dir,
   disabled,
   required,
   errorMessage,
 }: Readonly<OtherOptionLabelProps>): React.JSX.Element {
+  const optionId = `${inputId}-${otherOptionId}`;
+  const otherTextId = `${optionId}-input`;
+
   return (
     <label
-      htmlFor={`${inputId}-${otherOptionId}`}
+      htmlFor={optionId}
       dir={dir}
       className={cn(getOptionContainerClassName(isOtherSelected, disabled), isOtherSelected && "z-10")}>
       <span className="flex items-center">
-        <RadioGroupItem
+        <input
+          type="radio"
+          id={optionId}
+          name={inputId}
           value={otherOptionId}
-          id={`${inputId}-${otherOptionId}`}
+          checked={isOtherSelected}
           disabled={disabled}
-          aria-required={required}
-          onClick={(event) => {
-            handleSelectedOptionClick(otherOptionId, event);
+          className="peer sr-only"
+          onChange={() => {
+            onSelect(otherOptionId);
+          }}
+          onClick={() => {
+            if (!required && isOtherSelected) {
+              onDeselect(otherOptionId);
+            }
           }}
         />
+        <RadioIndicator />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
       </span>
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
+          id={otherTextId}
           type="text"
           value={otherValue}
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
           aria-required
+          aria-label={otherOptionLabel}
           aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
@@ -603,7 +654,7 @@ function SingleSelect({
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
 
-    // Delay focus to win against Radix focus restoration when dropdown closes / radio item receives focus.
+    // Delay focus to win against focus restoration when dropdown closes / radio receives focus.
     const timeoutId = globalThis.setTimeout(() => {
       globalThis.requestAnimationFrame(() => {
         otherInputRef.current?.focus();
@@ -619,55 +670,29 @@ function SingleSelect({
     onOtherValueChange?.(e.target.value);
   };
 
+  // The list variant groups options in a native <fieldset>/<legend>; the dropdown variant keeps a
+  // standard headline -> trigger association via ElementHeader's default rendering.
+  const isListVariant = variant === "list";
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
-      <ElementHeader
-        headline={headline}
-        description={description}
-        required={required}
-        requiredLabel={requiredLabel}
-        htmlFor={inputId}
-        imageUrl={imageUrl}
-        videoUrl={videoUrl}
-      />
-
-      <div data-element-input>
-        {variant === "dropdown" ? (
-          <SingleSelectDropdownVariant
-            inputId={inputId}
+      {isListVariant ? (
+        // role="radiogroup" makes aria-required/aria-invalid valid on the group (a bare
+        // <fieldset> is role="group", which supports neither).
+        <fieldset
+          className="w-full space-y-4"
+          role="radiogroup"
+          aria-required={required}
+          aria-invalid={Boolean(errorMessage)}>
+          <ElementHeader
+            as="legend"
             headline={headline}
-            dir={dir}
-            disabled={disabled}
-            errorMessage={errorMessage}
-            placeholder={placeholder}
-            selectedValue={selectedValue}
-            effectiveSelectedValue={effectiveSelectedValue}
-            setPendingDropdownValue={setPendingDropdownValue}
-            setHasPendingDropdownChange={setHasPendingDropdownChange}
-            handleDropdownOpenChange={handleDropdownOpenChange}
-            contentRef={contentRef}
-            lockedSide={lockedSide}
-            showSearch={showSearch}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            searchInputRef={searchInputRef}
-            searchPlaceholder={searchPlaceholder}
-            searchNoResultsText={searchNoResultsText}
-            filteredRegularOptions={filteredRegularOptions}
-            otherMatchesSearch={otherMatchesSearch}
-            otherOptionId={otherOptionId}
-            otherOptionLabel={otherOptionLabel}
-            otherOptionPlaceholder={otherOptionPlaceholder}
-            otherValue={otherValue}
-            isOtherSelected={isOtherSelected}
-            otherInputRef={otherInputRef}
-            handleOtherInputChange={handleOtherInputChange}
-            noneOption={noneOption}
-            noneMatchesSearch={noneMatchesSearch}
-            hasNoResults={hasNoResults}
-            options={options}
+            description={description}
+            required={required}
+            requiredLabel={requiredLabel}
+            imageUrl={imageUrl}
+            videoUrl={videoUrl}
           />
-        ) : (
           <SingleSelectListVariant
             inputId={inputId}
             dir={dir}
@@ -686,8 +711,57 @@ function SingleSelect({
             otherInputRef={otherInputRef}
             handleOtherInputChange={handleOtherInputChange}
           />
-        )}
-      </div>
+        </fieldset>
+      ) : (
+        <>
+          {/* Dropdown trigger is a Radix menu button that names itself via aria-label={headline};
+              the headline is a plain label here (no htmlFor) to avoid pointing at a non-input. */}
+          <ElementHeader
+            headline={headline}
+            description={description}
+            required={required}
+            requiredLabel={requiredLabel}
+            imageUrl={imageUrl}
+            videoUrl={videoUrl}
+          />
+          <div data-element-input>
+            <SingleSelectDropdownVariant
+              inputId={inputId}
+              headline={headline}
+              dir={dir}
+              disabled={disabled}
+              errorMessage={errorMessage}
+              placeholder={placeholder}
+              selectedValue={selectedValue}
+              effectiveSelectedValue={effectiveSelectedValue}
+              setPendingDropdownValue={setPendingDropdownValue}
+              setHasPendingDropdownChange={setHasPendingDropdownChange}
+              handleDropdownOpenChange={handleDropdownOpenChange}
+              contentRef={contentRef}
+              lockedSide={lockedSide}
+              showSearch={showSearch}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              searchInputRef={searchInputRef}
+              searchPlaceholder={searchPlaceholder}
+              searchNoResultsText={searchNoResultsText}
+              filteredRegularOptions={filteredRegularOptions}
+              otherMatchesSearch={otherMatchesSearch}
+              otherOptionId={otherOptionId}
+              otherOptionLabel={otherOptionLabel}
+              otherOptionPlaceholder={otherOptionPlaceholder}
+              otherValue={otherValue}
+              isOtherSelected={isOtherSelected}
+              otherInputRef={otherInputRef}
+              handleOtherInputChange={handleOtherInputChange}
+              noneOption={noneOption}
+              noneMatchesSearch={noneMatchesSearch}
+              hasNoResults={hasNoResults}
+              options={options}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

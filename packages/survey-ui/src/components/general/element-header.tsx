@@ -1,8 +1,7 @@
-import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
 import { ElementMedia } from "@/components/general/element-media";
 import { Label } from "@/components/general/label";
-import { cn, stripInlineStyles } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface ElementHeaderProps extends React.ComponentProps<"div"> {
   headline: string;
@@ -15,32 +14,13 @@ interface ElementHeaderProps extends React.ComponentProps<"div"> {
   imageUrl?: string;
   videoUrl?: string;
   imageAltText?: string;
+  /**
+   * Element used to wrap the header. Use "legend" for grouped questions (radio/checkbox/matrix)
+   * so the headline names the surrounding native fieldset instead of dangling on a non-input
+   * via htmlFor. Defaults to "div" for questions that keep a normal label-to-input association.
+   */
+  as?: "div" | "legend";
 }
-
-/**
- * Checks if a string contains valid HTML markup
- * @param str - The input string to test
- * @returns true if the string contains valid HTML elements, false otherwise
- */
-const isValidHTML = (str: string): boolean => {
-  if (!str) return false;
-
-  try {
-    const doc = new DOMParser().parseFromString(str, "text/html");
-    const errorNode = doc.querySelector("parsererror");
-    if (errorNode) return false;
-    return Array.from(doc.body.childNodes).some((node) => node.nodeType === 1);
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Strips inline style attributes to prevent CSP violations
- * Uses a safe regex pattern to avoid ReDoS (Regular Expression Denial of Service) vulnerabilities
- * @param html - The HTML string to clean
- * @returns HTML string without inline style attributes
- */
 
 function ElementHeader({
   headline,
@@ -53,23 +33,19 @@ function ElementHeader({
   imageUrl,
   videoUrl,
   imageAltText,
+  as = "div",
   ...props
 }: Readonly<ElementHeaderProps>): React.JSX.Element {
   const isMediaAvailable = imageUrl ?? videoUrl;
+  const isLegend = as === "legend";
 
-  // Check if headline is HTML
-  const strippedHeadline = stripInlineStyles(headline);
-  const isHeadlineHtml = isValidHTML(strippedHeadline);
-  const safeHeadlineHtml =
-    isHeadlineHtml && strippedHeadline
-      ? DOMPurify.sanitize(strippedHeadline, {
-          ADD_ATTR: ["target"],
-          FORBID_ATTR: ["style"],
-        })
-      : "";
+  // In legend mode the surrounding <fieldset> takes its accessible name from the legend text,
+  // so the headline must not point at a non-input control via htmlFor. The Label component
+  // sanitizes any HTML headline internally, so no extra processing is needed here.
+  const headlineHtmlFor = isLegend ? undefined : htmlFor;
 
-  return (
-    <div className={cn("space-y-2", className)} {...props}>
+  const headerContent = (
+    <>
       {/* Media (Image or Video) */}
       {isMediaAvailable ? (
         <ElementMedia imgUrl={imageUrl} videoUrl={videoUrl} altText={imageAltText} />
@@ -79,15 +55,9 @@ function ElementHeader({
       <div>
         <div>{required ? <span className="label-card mb-[3px]">{requiredLabel}</span> : null}</div>
         <div className="flex">
-          {isHeadlineHtml && safeHeadlineHtml ? (
-            <Label htmlFor={htmlFor} variant="headline">
-              {headline}
-            </Label>
-          ) : (
-            <Label htmlFor={htmlFor} variant="headline">
-              {headline}
-            </Label>
-          )}
+          <Label htmlFor={headlineHtmlFor} variant="headline">
+            {headline}
+          </Label>
         </div>
       </div>
 
@@ -97,6 +67,22 @@ function ElementHeader({
           {description}
         </Label>
       ) : null}
+    </>
+  );
+
+  if (isLegend) {
+    // The public props are div-shaped; drop the div-typed ref when rendering as a <legend>.
+    const { ref: _ref, ...legendProps } = props;
+    return (
+      <legend className={cn("w-full space-y-2", className)} {...legendProps}>
+        {headerContent}
+      </legend>
+    );
+  }
+
+  return (
+    <div className={cn("space-y-2", className)} {...props}>
+      {headerContent}
     </div>
   );
 }

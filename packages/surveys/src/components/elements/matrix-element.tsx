@@ -130,7 +130,11 @@ export function MatrixElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="w-full">
+    <form
+      key={element.id}
+      onSubmit={handleSubmit}
+      className="w-full"
+      aria-label={getLocalizedValue(element.headline, languageCode)}>
       <Matrix
         dir={dir}
         elementId={element.id}

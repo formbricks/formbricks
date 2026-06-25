@@ -164,7 +164,11 @@ export function MultipleChoiceSingleElement({
   };
 
   return (
-    <form key={element.id} onSubmit={handleSubmit} className="w-full">
+    <form
+      key={element.id}
+      onSubmit={handleSubmit}
+      className="w-full"
+      aria-label={getLocalizedValue(element.headline, languageCode)}>
       <SingleSelect
         elementId={element.id}
         inputId={element.id}
