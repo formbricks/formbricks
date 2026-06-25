@@ -218,6 +218,72 @@
   border-radius: var(--fb-progress-indicator-border-radius);
 }
 
+/* =============================================================================
+   Focus Visibility (WCAG 2.4.7)
+
+   One uniform, high-visibility focus indicator for every focusable element in
+   the survey: a black + bright-yellow double ring. Keeping both colors means
+   the indicator stays visible on any background (the black ring carries light
+   themes, the yellow ring carries dark themes), so it works without per-theme
+   overrides.
+
+   This lives in the `components` layer with !important on purpose: the
+   per-component Tailwind `focus-visible:ring-*` utilities are emitted in the
+   later `utilities` layer as !important, and for important declarations an
+   earlier layer wins the cascade. That lets this single rule replace every
+   ad-hoc focus style uniformly.
+
+   Colors are exposed as tokens so a consumer can re-theme the ring if needed.
+   ============================================================================= */
+@layer components {
+  #fbjs {
+    --fb-focus-ring-inner-color: #000000;
+    --fb-focus-ring-outer-color: #fde047;
+    --fb-focus-ring-inner-width: 2px;
+    --fb-focus-ring-outer-width: 2px;
+  }
+
+  #fbjs a:focus-visible,
+  #fbjs button:focus-visible,
+  #fbjs input:focus-visible,
+  #fbjs select:focus-visible,
+  #fbjs textarea:focus-visible,
+  #fbjs summary:focus-visible,
+  #fbjs [tabindex]:focus-visible,
+  /* A visually-hidden radio/checkbox drives a visible label: paint the ring on the label. */
+  #fbjs label:has(input[type="radio"]:focus-visible),
+  #fbjs label:has(input[type="checkbox"]:focus-visible),
+  #fbjs [data-fb-focus-ring]:has(:focus-visible) {
+    /* Transparent outline is upgraded to the system focus color under forced-colors. */
+    outline: 2px solid transparent !important;
+    outline-offset: 2px !important;
+    box-shadow:
+      0 0 0 var(--fb-focus-ring-inner-width) var(--fb-focus-ring-inner-color),
+      0 0 0 calc(var(--fb-focus-ring-inner-width) + var(--fb-focus-ring-outer-width))
+        var(--fb-focus-ring-outer-color) !important;
+  }
+
+  /* The hidden input is 1px and clipped; its visible label paints the ring instead. */
+  #fbjs input.sr-only:focus-visible {
+    box-shadow: none !important;
+  }
+
+  @media (forced-colors: active) {
+    #fbjs a:focus-visible,
+    #fbjs button:focus-visible,
+    #fbjs input:focus-visible,
+    #fbjs select:focus-visible,
+    #fbjs textarea:focus-visible,
+    #fbjs summary:focus-visible,
+    #fbjs [tabindex]:focus-visible,
+    #fbjs label:has(input[type="radio"]:focus-visible),
+    #fbjs label:has(input[type="checkbox"]:focus-visible),
+    #fbjs [data-fb-focus-ring]:has(:focus-visible) {
+      outline-color: Highlight !important;
+    }
+  }
+}
+
 /* ---------------------------------------------------------------------------
    Textarea Scrollbar Styling
    Smaller, more subtle scrollbars for textarea elements.
