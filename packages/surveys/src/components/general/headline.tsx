@@ -48,7 +48,7 @@ export function Headline({
         dir="auto">
         {isHeadlineHtml ? (
           // Rich-text headlines can contain block elements, so they can't live
-          // inside a real heading tag — expose the heading semantics via ARIA.
+          // inside a real heading tag; expose the heading semantics via ARIA.
           <div
             role="heading"
             aria-level={headingLevel}
