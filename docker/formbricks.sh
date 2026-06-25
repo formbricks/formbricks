@@ -163,6 +163,62 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
+add_formbricks_traefik_labels() {
+  local compose_file="${1:-docker-compose.yml}"
+  local formbricks_domain_name="$2"
+  local formbricks_hsts_enabled="$3"
+  local tmp_file="${compose_file}.tmp"
+
+  if ! awk -v domain_name="$formbricks_domain_name" -v hsts_enabled="$formbricks_hsts_enabled" '
+BEGIN { in_formbricks = 0; inserted = 0 }
+/^  formbricks:$/ { in_formbricks = 1 }
+in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 }
+{
+    if (in_formbricks && !inserted && $0 ~ /^    environment:$/) {
+        print "    labels:"
+        print "      - \"traefik.enable=true\""
+        print "      - \"traefik.http.routers.formbricks.rule=Host(`" domain_name "`)\""
+        print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.formbricks.tls=true\""
+        print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\""
+        print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\""
+        print "      - \"traefik.http.routers.feedback-records-token.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
+        print "      - \"traefik.http.routers.feedback-records-token.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.feedback-records-token.tls=true\""
+        print "      - \"traefik.http.routers.feedback-records-token.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
+        print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
+        if (hsts_enabled == "y") {
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\""
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\""
+            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsIncludeSubdomains=true\""
+        } else {
+            print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\""
+            print "      - \"traefik.http.routers.formbricks_http.rule=Host(`" domain_name "`)\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.service=formbricks\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.priority=200\""
+        }
+        inserted = 1
+    }
+    print
+}
+END {
+    if (!inserted) {
+        exit 1
+    }
+}
+' "$compose_file" >"$tmp_file"; then
+    rm -f "$tmp_file"
+    echo "❌ Failed to add Traefik labels to the formbricks service."
+    return 1
+  fi
+
+  mv "$tmp_file" "$compose_file"
+}
+
 install_formbricks() {
   # Friendly welcome
   echo "🧱 Welcome to the Formbricks Setup Script"
@@ -577,46 +633,8 @@ EOF
     echo "🚗 RustFS S3 configuration updated successfully!"
   fi
 
-  # SUPER SIMPLE: Use multiple simple operations instead of complex AWK
-
   # Step 1: Add Traefik labels to formbricks service
-  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
-/formbricks:/,/^ *$/ {
-    if ($0 ~ /<<: \*environment$/) {
-        print "    labels:"
-        print "      - \"traefik.enable=true\""
-        print "      - \"traefik.http.routers.formbricks.rule=Host(`" domain_name "`)\""
-        print "      - \"traefik.http.routers.formbricks.entrypoints=websecure\""
-        print "      - \"traefik.http.routers.formbricks.tls=true\""
-        print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\""
-        print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\""
-        print "      - \"traefik.http.routers.feedback-records-token.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
-        print "      - \"traefik.http.routers.feedback-records-token.entrypoints=websecure\""
-        print "      - \"traefik.http.routers.feedback-records-token.tls=true\""
-        print "      - \"traefik.http.routers.feedback-records-token.tls.certresolver=default\""
-        print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
-        print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
-        if (hsts_enabled == "y") {
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\""
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsPreload=true\""
-            print "      - \"traefik.http.middlewares.hstsHeader.headers.stsIncludeSubdomains=true\""
-        } else {
-            print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\""
-            print "      - \"traefik.http.routers.formbricks_http.rule=Host(`" domain_name "`)\""
-            print "      - \"traefik.http.routers.feedback-records-token-http.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
-            print "      - \"traefik.http.routers.feedback-records-token-http.entrypoints=web\""
-            print "      - \"traefik.http.routers.feedback-records-token-http.service=formbricks\""
-            print "      - \"traefik.http.routers.feedback-records-token-http.priority=200\""
-        }
-        print $0
-    } else {
-        print $0
-    }
-    next
-}
-{ print }
-' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
+  add_formbricks_traefik_labels "docker-compose.yml" "$domain_name" "$hsts_enabled"
 
   # Step 1b: Add FeedbackRecords gateway labels to the Hub service.
   awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
