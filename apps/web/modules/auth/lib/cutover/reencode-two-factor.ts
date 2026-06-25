@@ -71,8 +71,8 @@ export const reencodeAllTwoFactorSecrets = async (
   const BATCH_SIZE = 500;
 
   // Keyset pagination via raw SQL (avoids Prisma's relation-select inference quirk). Idempotency is a
-  // per-user findFirst since TwoFactor has no unique key to ON CONFLICT on — safe for this one-shot,
-  // single-process cutover migration (NOT concurrency-safe; don't run alongside live BA enrollment).
+  // per-user findUnique on TwoFactor.userId (now `@@unique`) — safe for this one-shot, single-process
+  // cutover migration (NOT concurrency-safe; don't run alongside live BA enrollment).
   const fetchBatch = (afterUserId: string | null): Promise<TwoFactorUserRow[]> =>
     afterUserId
       ? prisma.$queryRaw<TwoFactorUserRow[]>`
