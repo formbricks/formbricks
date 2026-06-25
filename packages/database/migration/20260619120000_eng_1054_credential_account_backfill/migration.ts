@@ -1,4 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
+import { logger } from "@formbricks/logger";
+import { Prisma } from "../../src/prisma";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export interface TCredentialBackfillStats {
@@ -60,30 +62,27 @@ export const backfillCredentialAccounts = async (tx: TMigrationTx): Promise<TCre
     }
     stats.scanned += users.length;
 
-    for (const user of users) {
-      // Better Auth's credential account: provider "credential", providerAccountId = the user id.
-      const affected = await tx.$executeRaw`
-        INSERT INTO "Account" ("id", "created_at", "updated_at", "userId", "type", "provider", "providerAccountId", "password")
-        VALUES (${createId()}, NOW(), NOW(), ${user.id}, 'credential', 'credential', ${user.id}, ${user.password})
-        ON CONFLICT ("provider", "providerAccountId") DO NOTHING
-      `;
-      if (affected > 0) {
-        stats.inserted += 1;
-      } else {
-        stats.skippedExisting += 1;
-      }
-    }
+    // Better Auth's credential account: provider "credential", providerAccountId = the user id.
+    // One multi-row INSERT per batch (not one statement per user) → far fewer round-trips and a
+    // shorter lock window. ON CONFLICT keeps it idempotent; the affected-row count is the number
+    // actually inserted, so the rest of the batch already existed.
+    const rows = users.map(
+      (user) =>
+        Prisma.sql`(${createId()}, NOW(), NOW(), ${user.id}, 'credential', 'credential', ${user.id}, ${user.password})`
+    );
+    const inserted = await tx.$executeRaw`
+      INSERT INTO "Account" ("id", "created_at", "updated_at", "userId", "type", "provider", "providerAccountId", "password")
+      VALUES ${Prisma.join(rows)}
+      ON CONFLICT ("provider", "providerAccountId") DO NOTHING
+    `;
+    stats.inserted += inserted;
+    stats.skippedExisting += users.length - inserted;
 
     lastProcessedUserId = users[users.length - 1].id;
   }
 
-  console.log(
-    [
-      "Credential account backfill completed.",
-      `scanned=${String(stats.scanned)}`,
-      `inserted=${String(stats.inserted)}`,
-      `skippedExisting=${String(stats.skippedExisting)}`,
-    ].join(" ")
+  logger.info(
+    `Credential account backfill completed. scanned=${stats.scanned} inserted=${stats.inserted} skippedExisting=${stats.skippedExisting}`
   );
 
   return stats;
