@@ -91,7 +91,10 @@ export const reencodeAllTwoFactorSecrets = async (
     stats.scanned += users.length;
 
     for (const user of users) {
-      const existing = await prisma.twoFactor.findFirst({ where: { userId: user.id }, select: { id: true } });
+      const existing = await prisma.twoFactor.findUnique({
+        where: { userId: user.id },
+        select: { id: true },
+      });
       if (existing) {
         stats.skipped += 1; // already migrated (idempotent re-run)
         continue;
