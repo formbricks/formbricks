@@ -134,7 +134,7 @@ export class ResponseQueue {
       return Math.max(0, pendingCount - this.getProcessedDbIdsPendingRemoval().size);
     } catch (error) {
       this.logOfflinePersistenceError("Failed to count pending responses in IndexedDB", error);
-      return 0;
+      throw error;
     }
   }
 
@@ -262,8 +262,13 @@ export class ResponseQueue {
     // This prevents processQueue and syncPersistedResponses from racing to
     // create the same response concurrently (duplicate POSTs).
     if (this.config.persistOffline && this.config.surveyId) {
-      await this.retryProcessedDbIdCleanup();
-      const pendingCount = await this.countPersistedResponses();
+      let pendingCount: number;
+      try {
+        await this.retryProcessedDbIdCleanup();
+        pendingCount = await this.countPersistedResponses();
+      } catch {
+        return { success: false };
+      }
 
       // Re-check after await — another processQueue/sync may have started during the yield
       if (this.isSyncing || this.isRequestInProgress || this.queue.length === 0) {
@@ -306,14 +311,22 @@ export class ResponseQueue {
    */
   async loadPersistedQueue(): Promise<number> {
     if (!this.config.persistOffline || !this.config.surveyId) return 0;
-    await this.retryProcessedDbIdCleanup();
-    return this.countPersistedResponses();
+    try {
+      await this.retryProcessedDbIdCleanup();
+      return await this.countPersistedResponses();
+    } catch {
+      return 0;
+    }
   }
 
   async getPendingCount(): Promise<number> {
     if (!this.config.persistOffline || !this.config.surveyId) return 0;
-    await this.retryProcessedDbIdCleanup();
-    return this.countPersistedResponses();
+    try {
+      await this.retryProcessedDbIdCleanup();
+      return await this.countPersistedResponses();
+    } catch {
+      return 0;
+    }
   }
 
   /**

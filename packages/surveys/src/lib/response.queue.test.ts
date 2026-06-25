@@ -410,7 +410,7 @@ describe("ResponseQueue", () => {
     expect(result.success).toBe(false);
   });
 
-  test("processQueue sends from memory when counting IndexedDB entries rejects", async () => {
+  test("processQueue bails out when counting IndexedDB entries rejects", async () => {
     const { countPendingResponsesStrict } = await import("./offline-storage");
     const error = new Error("count failed");
     vi.mocked(countPendingResponsesStrict).mockRejectedValueOnce(error);
@@ -420,11 +420,12 @@ describe("ResponseQueue", () => {
       getSurveyState()
     );
     offlineQueue.queue.push(responseUpdate);
-    vi.spyOn(offlineQueue, "sendResponse").mockResolvedValue(ok(true));
+    const sendSpy = vi.spyOn(offlineQueue, "sendResponse").mockResolvedValue(ok(true));
 
     const result = await offlineQueue.processQueue();
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+    expect(sendSpy).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
       "Formbricks: Failed to count pending responses in IndexedDB",
       expect.objectContaining({ error, surveyId: "s1" })
