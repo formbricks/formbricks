@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { type Response } from "@formbricks/database/prisma-browser";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -211,11 +212,16 @@ function computeStyling(
 function getLanguageCode(langParam: string | undefined, survey: TSurvey): string {
   if (!langParam) return "default";
 
+  // Match the URL `?lang=` value against the survey's languages by canonical equivalence, so a shared
+  // link with a legacy code (`?lang=pt`) still resolves to a migrated survey language (`pt-BR`), and a
+  // canonical link resolves a not-yet-migrated survey. Returns the survey's stored code so it lines up
+  // with the survey's i18n content keys.
+  const langParamCanonical = normalizeLanguageCode(langParam);
   const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    return (
-      surveyLanguage.language.code.toLowerCase() === langParam.toLowerCase() ||
-      surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
-    );
+    const surveyCode = surveyLanguage.language.code;
+    if (surveyCode.toLowerCase() === langParam.toLowerCase()) return true;
+    if (surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()) return true;
+    return Boolean(langParamCanonical) && langParamCanonical === normalizeLanguageCode(surveyCode);
   });
 
   if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
