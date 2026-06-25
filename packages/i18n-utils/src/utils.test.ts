@@ -47,8 +47,11 @@ describe("supportedLanguages", () => {
     expect(byCode.has("zh-Hant-HK")).toBe(true);
   });
 
-  test("an exact-code label wins over the bare source (pt-BR keeps its Brazil label)", () => {
-    expect(byCode.get("pt-BR")?.label["en-US"]).toBe("Portuguese (Brazil)");
+  test("a bare-language source label wins over the region source's wordier label", () => {
+    // `de` -> "German" beats `de-DE` -> "German (Germany)"; `en` -> "English" beats `en-US` -> "English (US)".
+    expect(byCode.get("de-DE")?.label["en-US"]).toBe("German");
+    expect(byCode.get("en-US")?.label["en-US"]).toBe("English");
+    expect(byCode.get("pt-BR")?.label["en-US"]).toBe("Portuguese");
   });
 });
 

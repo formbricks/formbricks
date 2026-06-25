@@ -4302,18 +4302,22 @@ export type Iso639Code = (typeof iso639Languages)[number]["code"];
  * by collapsing every entry onto its canonical BCP-47 tag (see `normalizeLanguageCode`), so the picker
  * is free of the legacy bare/region/script format mixing and offers one entry per language.
  *
- * Label selection per canonical tag: keep the first source entry seen, but let an exact code match win
- * (e.g. `pt-BR`'s own "Portuguese (Brazil)" label beats bare `pt`'s "Portuguese"). For codes with no
- * exact entry (e.g. `zh-Hans-CN`), the first contributing source wins — catalog order puts the script
- * entry first, so Simplified/Traditional keep their script labels rather than a region label.
+ * Label selection per canonical tag: keep the first source entry seen, but let a **bare-language**
+ * source override it — so `de`'s clean "German" wins over `de-DE`'s wordier "German (Germany)" for the
+ * canonical `de-DE` entry. Canonicals with no bare source (e.g. Chinese: `zh-Hans`/`zh-CN` → `zh-Hans-CN`)
+ * keep the first contributing source's label — catalog order puts the script entry first, so
+ * Simplified/Traditional retain their script labels rather than a region label.
  */
 const supportedLanguagesByCanonicalCode = new Map<string, TIso639Language>();
+const canonicalCodesWithBareLabel = new Set<string>();
 for (const language of iso639Languages) {
   const canonicalCode = normalizeLanguageCode(language.code);
   if (!canonicalCode) continue;
+  const isBareSource = !language.code.includes("-");
   const existing = supportedLanguagesByCanonicalCode.get(canonicalCode);
-  if (!existing || language.code === canonicalCode) {
+  if (!existing || (isBareSource && !canonicalCodesWithBareLabel.has(canonicalCode))) {
     supportedLanguagesByCanonicalCode.set(canonicalCode, { code: canonicalCode, label: language.label });
+    if (isBareSource) canonicalCodesWithBareLabel.add(canonicalCode);
   }
 }
 
