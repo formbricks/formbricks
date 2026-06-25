@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Are you sure you want to delete this team? This also removes the access to all the workspaces and surveys associated with this team.",
         "billing_role_description": "Only have access to billing info.",
         "bulk_invite": "Bulk Invite",
+        "bulk_invite_scale_only_description": "Inviting members in bulk via CSV is available on the Scale plan. Upgrade to invite your whole team at once.",
+        "bulk_invite_scale_only_title": "Unlock bulk invite with a higher plan",
         "contributor": "Contributor",
         "create": "Create",
         "create_first_team_message": "You need to create a team first.",
@@ -2680,6 +2682,7 @@
         "ai_not_available": "AI survey creation is not available.",
         "ai_not_enabled": "AI smart tools are disabled for this organization.",
         "ai_not_in_plan": "AI survey creation is not available on your current plan.",
+        "app_survey": "App Survey",
         "card_description": "Describe what you want to learn and create a draft survey.",
         "card_title": "Create with AI",
         "characters": "{count}/{max}",
@@ -2692,7 +2695,6 @@
         "enable_ai_in_settings": "Enable in settings",
         "generated_payload_invalid": "The survey draft could not be validated. Try adding more detail.",
         "link_survey": "Link Survey",
-        "only_link_supported": "Only Link surveys are currently supported.",
         "opening_editor": "Opening editor...",
         "prompt_helper_churn": "Understand why active customers may churn and what would keep them engaged",
         "prompt_helper_churn_label": "Churn risk",
@@ -2706,12 +2708,14 @@
         "prompt_placeholder": "e.g. Understand why new users stop during onboarding and what would help them finish setup",
         "shortcut_hint": "⌘/Ctrl + Enter to create",
         "start_from_scratch": "Start from scratch",
+        "survey_type_help": "You can finish setup in the editor after the draft is created.",
         "survey_type_label": "Survey type",
         "try_prompt": "See example prompt",
         "upgrade_plan": "Upgrade plan"
       },
       "all_set_time_to_create_first_survey": "You are all set! Time to create your first survey",
       "alphabetical": "Alphabetical",
+      "change_status": "Change status",
       "copy_survey": "Copy survey",
       "copy_survey_description": "Choose a workspace to copy this survey to.",
       "copy_survey_error": "Failed to copy survey",
@@ -3296,6 +3300,7 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "An error occurred while deleting survey",
+      "error_updating_status": "An error occurred while updating survey status",
       "filter": {
         "complete_and_partial_responses": "Complete and partial responses",
         "complete_responses": "Complete responses",
@@ -3472,6 +3477,8 @@
           "title": "Social media"
         }
       },
+      "status_updated_successfully": "Survey status updated successfully",
+      "status_updating": "Updating survey status...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Added filter for responses where answer to question {questionIdx} is skipped",

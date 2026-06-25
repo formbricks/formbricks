@@ -79,10 +79,10 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-# Upgrade Alpine system packages to pick up security patches, update npm to latest, then create user
-# Note: npm's bundled tar has a known vulnerability but npm is only used during build, not at runtime
+# Upgrade Alpine system packages to pick up security patches, update npm to the patched 11.x line, then create user
+# Note: npm is updated in the runtime image so any bundled transitive packages scanned from the base image are patched
 RUN apk update && apk upgrade --no-cache \
-    && npm install --ignore-scripts -g npm@11.15.0 \
+    && npm install --ignore-scripts -g npm@11.17.0 \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 

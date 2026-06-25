@@ -1,11 +1,13 @@
 import { notFound, redirect } from "next/navigation";
+import { CreateFirstWorkspaceButton } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/create-first-workspace-button";
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
 import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 
@@ -26,6 +28,9 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   const isMembershipPending = membership?.role === undefined;
+  const { isOwner, isManager } = getAccessFlags(membership?.role);
+  const isOwnerOrManager = isOwner || isManager;
+  const isAccessControlAllowed = isOwnerOrManager ? await getAccessControlPermission(organization.id) : false;
 
   return (
     <div className="flex min-h-full min-w-full flex-row">
@@ -51,6 +56,12 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               title={t("organizations.landing.no_workspaces_warning_title")}
               subtitle={t("organizations.landing.no_workspaces_warning_subtitle")}
             />
+            {isOwnerOrManager && (
+              <CreateFirstWorkspaceButton
+                organizationId={organization.id}
+                isAccessControlAllowed={isAccessControlAllowed}
+              />
+            )}
           </div>
         </div>
       </div>

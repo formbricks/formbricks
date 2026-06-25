@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "確定要刪除這個團隊嗎?這也會移除與此團隊相關的所有工作區和調查問卷的存取權限。",
         "billing_role_description": "只能存取帳單資訊。",
         "bulk_invite": "大量邀請",
+        "bulk_invite_scale_only_description": "透過 CSV 批量邀請成員功能僅適用於 Scale 方案。升級即可一次邀請整個團隊。",
+        "bulk_invite_scale_only_title": "升級至更高方案以解鎖批量邀請功能",
         "contributor": "投稿人",
         "create": "建立",
         "create_first_team_message": "您必須先建立團隊。",
@@ -2680,6 +2682,7 @@
         "ai_not_available": "AI 問卷建立功能目前無法使用。",
         "ai_not_enabled": "此組織已停用 AI 智慧工具。",
         "ai_not_in_plan": "你目前的方案不包含 AI 問卷建立功能。",
+        "app_survey": "應用程式問卷",
         "card_description": "描述你想了解的內容,即可建立問卷草稿。",
         "card_title": "使用 AI 建立",
         "characters": "{count}/{max}",
@@ -2692,7 +2695,6 @@
         "enable_ai_in_settings": "在設定中啟用",
         "generated_payload_invalid": "問卷草稿無法驗證。請嘗試新增更多細節。",
         "link_survey": "連結問卷",
-        "only_link_supported": "目前只能建立連結問卷。",
         "opening_editor": "正在開啟編輯器...",
         "prompt_helper_churn": "了解活躍客戶可能流失的原因,以及如何讓他們保持參與度",
         "prompt_helper_churn_label": "流失風險",
@@ -2706,12 +2708,14 @@
         "prompt_placeholder": "例如：了解新用戶為何在引導過程中停止，以及什麼能幫助他們完成設定",
         "shortcut_hint": "⌘/Ctrl + Enter 建立",
         "start_from_scratch": "從零開始",
+        "survey_type_help": "建立草稿後，您可以在編輯器中完成設定。",
         "survey_type_label": "問卷類型",
         "try_prompt": "查看範例提示",
         "upgrade_plan": "升級方案"
       },
       "all_set_time_to_create_first_survey": "您已準備就緒！是時候建立您的第一個問卷",
       "alphabetical": "依字母順序",
+      "change_status": "變更狀態",
       "copy_survey": "複製問卷",
       "copy_survey_description": "選擇要將此問卷複製到的工作區。",
       "copy_survey_error": "複製問卷失敗",
@@ -3296,6 +3300,7 @@
         "zip": "郵遞區號"
       },
       "error_deleting_survey": "刪除問卷時發生錯誤",
+      "error_updating_status": "更新問卷狀態時發生錯誤",
       "filter": {
         "complete_and_partial_responses": "完整與部分回應",
         "complete_responses": "完整回應",
@@ -3472,6 +3477,8 @@
           "title": "社群媒體"
         }
       },
+      "status_updated_successfully": "問卷狀態已成功更新",
+      "status_updating": "正在更新問卷狀態...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已新增回答第 {questionIdx} 題為 {filterComboBoxValue} - {filterValue} 的回覆篩選器",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "已新增回應的篩選器，其中問題 {questionIdx} 的答案被跳過",

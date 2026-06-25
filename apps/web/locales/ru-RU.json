@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Вы уверены, что хотите удалить эту команду? Это также удалит доступ ко всем рабочим пространствам и опросам, связанным с этой командой.",
         "billing_role_description": "Доступ только к платёжной информации.",
         "bulk_invite": "Массовое приглашение",
+        "bulk_invite_scale_only_description": "Массовое приглашение участников через CSV доступно на тарифе Scale. Перейдите на этот тариф, чтобы пригласить всю команду за раз.",
+        "bulk_invite_scale_only_title": "Получите доступ к массовому приглашению на более высоком тарифе",
         "contributor": "Участник",
         "create": "Создать",
         "create_first_team_message": "Сначала необходимо создать команду.",
@@ -2680,6 +2682,7 @@
         "ai_not_available": "Создание опросов с помощью ИИ недоступно.",
         "ai_not_enabled": "Умные инструменты ИИ отключены для этой организации.",
         "ai_not_in_plan": "Создание опросов с помощью ИИ недоступно в твоём текущем тарифе.",
+        "app_survey": "Опрос о приложении",
         "card_description": "Опиши, что ты хочешь узнать, и создай черновик опроса.",
         "card_title": "Создать с помощью ИИ",
         "characters": "{count}/{max}",
@@ -2692,7 +2695,6 @@
         "enable_ai_in_settings": "Включи в настройках",
         "generated_payload_invalid": "Черновик опроса не удалось проверить. Попробуй добавить больше деталей.",
         "link_survey": "Опрос по ссылке",
-        "only_link_supported": "Сейчас можно создать только опрос по ссылке.",
         "opening_editor": "Открываем редактор...",
         "prompt_helper_churn": "Узнай, почему активные клиенты могут уйти и что удержит их вовлечёнными",
         "prompt_helper_churn_label": "Риск оттока",
@@ -2706,12 +2708,14 @@
         "prompt_placeholder": "например, Понять, почему новые пользователи прекращают онбординг и что помогло бы им завершить настройку",
         "shortcut_hint": "⌘/Ctrl + Enter для создания",
         "start_from_scratch": "Начать с нуля",
+        "survey_type_help": "Вы можете завершить настройку в редакторе после создания черновика.",
         "survey_type_label": "Тип опроса",
         "try_prompt": "Посмотреть пример запроса",
         "upgrade_plan": "Обновить план"
       },
       "all_set_time_to_create_first_survey": "Всё готово! Пора создать первый опрос",
       "alphabetical": "По алфавиту",
+      "change_status": "Изменить статус",
       "copy_survey": "Копировать опрос",
       "copy_survey_description": "Выбери рабочее пространство, в которое хочешь скопировать этот опрос.",
       "copy_survey_error": "Не удалось скопировать опрос",
@@ -3296,6 +3300,7 @@
         "zip": "Zip"
       },
       "error_deleting_survey": "Произошла ошибка при удалении опроса",
+      "error_updating_status": "Произошла ошибка при обновлении статуса опроса",
       "filter": {
         "complete_and_partial_responses": "Полные и частичные ответы",
         "complete_responses": "Полные ответы",
@@ -3472,6 +3477,8 @@
           "title": "Социальные сети"
         }
       },
+      "status_updated_successfully": "Статус опроса успешно обновлен",
+      "status_updating": "Обновление статуса опроса...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Добавлен фильтр для ответов, где ответ на вопрос {questionIdx} — {filterComboBoxValue} — {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Добавлен фильтр для ответов, где вопрос {questionIdx} был пропущен",

@@ -30,6 +30,7 @@ interface InviteMemberModalProps {
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
   enterpriseLicenseRequestFormUrl: string;
+  isBulkInviteAllowed: boolean;
 }
 
 export const InviteMemberModal = ({
@@ -45,6 +46,7 @@ export const InviteMemberModal = ({
   isTeamAdmin,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
+  isBulkInviteAllowed,
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
@@ -77,6 +79,8 @@ export const InviteMemberModal = ({
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
         isStorageConfigured={isStorageConfigured}
+        isBulkInviteAllowed={isBulkInviteAllowed}
+        enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />
     ),
   };

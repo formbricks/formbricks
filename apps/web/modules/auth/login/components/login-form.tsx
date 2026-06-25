@@ -13,8 +13,17 @@ import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
+import {
+  type AuthMethodId,
+  getAuthMethodButtonVariant,
+  sortAuthMethodsByLastUsed,
+} from "@/modules/auth/lib/sort-auth-methods";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
-import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
+import { AzureButton } from "@/modules/ee/sso/components/azure-button";
+import { GithubButton } from "@/modules/ee/sso/components/github-button";
+import { GoogleButton } from "@/modules/ee/sso/components/google-button";
+import { OpenIdButton } from "@/modules/ee/sso/components/open-id-button";
+import { SamlButton } from "@/modules/ee/sso/components/saml-button";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -177,6 +186,126 @@ export const LoginForm = ({
     return null;
   }, [form, totpBackup, totpLogin]);
 
+  const enabledAuthMethods = useMemo(() => {
+    const methods: AuthMethodId[] = [];
+
+    if (emailAuthEnabled) {
+      methods.push("Email");
+    }
+
+    if (isSsoEnabled) {
+      if (googleOAuthEnabled) {
+        methods.push("Google");
+      }
+      if (githubOAuthEnabled) {
+        methods.push("Github");
+      }
+      if (azureOAuthEnabled) {
+        methods.push("Azure");
+      }
+      if (oidcOAuthEnabled) {
+        methods.push("OpenID");
+      }
+      if (samlSsoEnabled) {
+        methods.push("Saml");
+      }
+    }
+
+    return sortAuthMethodsByLastUsed(methods, lastLoggedInWith);
+  }, [
+    emailAuthEnabled,
+    isSsoEnabled,
+    googleOAuthEnabled,
+    githubOAuthEnabled,
+    azureOAuthEnabled,
+    oidcOAuthEnabled,
+    samlSsoEnabled,
+    lastLoggedInWith,
+  ]);
+
+  const renderAuthMethodButton = (method: AuthMethodId) => {
+    const isLastUsed = lastLoggedInWith === method;
+    const variant = getAuthMethodButtonVariant(method, lastLoggedInWith);
+
+    switch (method) {
+      case "Email":
+        return (
+          <Button
+            key="Email"
+            type={showLogin ? "submit" : "button"}
+            onClick={
+              showLogin
+                ? undefined
+                : () => {
+                    setShowLogin(true);
+                    setTimeout(() => emailRef.current?.focus(), 100);
+                  }
+            }
+            variant={variant}
+            className="w-full justify-center"
+            loading={form.formState.isSubmitting}>
+            {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
+            {isLastUsed ? <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span> : null}
+          </Button>
+        );
+      case "Google":
+        return (
+          <GoogleButton
+            key="Google"
+            returnToUrl={resolvedCallbackUrl}
+            lastUsed={isLastUsed}
+            variant={variant}
+            source="signin"
+          />
+        );
+      case "Github":
+        return (
+          <GithubButton
+            key="Github"
+            returnToUrl={resolvedCallbackUrl}
+            lastUsed={isLastUsed}
+            variant={variant}
+            source="signin"
+          />
+        );
+      case "Azure":
+        return (
+          <AzureButton
+            key="Azure"
+            returnToUrl={resolvedCallbackUrl}
+            lastUsed={isLastUsed}
+            variant={variant}
+            source="signin"
+          />
+        );
+      case "OpenID":
+        return (
+          <OpenIdButton
+            key="OpenID"
+            returnToUrl={resolvedCallbackUrl}
+            lastUsed={isLastUsed}
+            variant={variant}
+            text={t("auth.continue_with_oidc", { oidcDisplayName })}
+            source="signin"
+          />
+        );
+      case "Saml":
+        return (
+          <SamlButton
+            key="Saml"
+            returnToUrl={resolvedCallbackUrl}
+            lastUsed={isLastUsed}
+            variant={variant}
+            samlTenant={samlTenant}
+            samlProduct={samlProduct}
+            source="signin"
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <FormProvider {...form}>
       <div className="text-center">
@@ -255,41 +384,8 @@ export const LoginForm = ({
                 )}
               </div>
             )}
-            {emailAuthEnabled && (
-              <Button
-                type={showLogin ? "submit" : "button"}
-                onClick={
-                  showLogin
-                    ? undefined
-                    : () => {
-                        setShowLogin(true);
-                        // Add a slight delay before focusing the input field to ensure it's visible
-                        setTimeout(() => emailRef.current?.focus(), 100);
-                      }
-                }
-                className="relative w-full justify-center"
-                loading={form.formState.isSubmitting}>
-                {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
-                {lastLoggedInWith && lastLoggedInWith === "Email" ? (
-                  <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>
-                ) : null}
-              </Button>
-            )}
+            {enabledAuthMethods.map(renderAuthMethodButton)}
           </form>
-          {isSsoEnabled && (
-            <SSOOptions
-              googleOAuthEnabled={googleOAuthEnabled}
-              githubOAuthEnabled={githubOAuthEnabled}
-              azureOAuthEnabled={azureOAuthEnabled}
-              oidcOAuthEnabled={oidcOAuthEnabled}
-              oidcDisplayName={oidcDisplayName}
-              samlSsoEnabled={samlSsoEnabled}
-              samlTenant={samlTenant}
-              samlProduct={samlProduct}
-              returnToUrl={resolvedCallbackUrl}
-              source="signin"
-            />
-          )}
         </div>
 
         {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (

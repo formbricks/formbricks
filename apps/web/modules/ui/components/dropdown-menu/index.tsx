@@ -1,7 +1,7 @@
 "use client";
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { Check, ChevronRight, Circle } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
@@ -22,23 +22,30 @@ const DropdownMenuSub: React.ComponentType<DropdownMenuPrimitive.DropdownMenuSub
 const DropdownMenuRadioGroup: React.ComponentType<DropdownMenuPrimitive.DropdownMenuRadioGroupProps> =
   DropdownMenuPrimitive.RadioGroup;
 
+type DropdownMenuSubTriggerExtraProps = {
+  inset?: boolean;
+  chevronSide?: "left" | "right";
+};
+
 const DropdownMenuSubTrigger: React.ComponentType<
-  DropdownMenuPrimitive.DropdownMenuSubTriggerProps & { inset?: boolean }
-> = React.forwardRef<HTMLDivElement, DropdownMenuPrimitive.DropdownMenuSubTriggerProps & { inset?: boolean }>(
-  ({ className, inset, children, ...props }, ref) => (
-    <DropdownMenuPrimitive.SubTrigger
-      ref={ref as any}
-      className={cn(
-        "flex cursor-default items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-hidden select-none hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
-        inset && "pl-8",
-        className
-      )}
-      {...props}>
-      {children}
-      <ChevronRight className="ml-auto size-4" />
-    </DropdownMenuPrimitive.SubTrigger>
-  )
-);
+  Readonly<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps>
+> = React.forwardRef<
+  HTMLDivElement,
+  Readonly<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps>
+>(({ className, inset, chevronSide = "right", children, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubTrigger
+    ref={ref as any}
+    className={cn(
+      "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-hidden hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
+      inset && "pl-8",
+      className
+    )}
+    {...props}>
+    {chevronSide === "left" && <ChevronLeft className="mr-2 size-4" />}
+    {children}
+    {chevronSide === "right" && <ChevronRight className="ml-auto size-4" />}
+  </DropdownMenuPrimitive.SubTrigger>
+));
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
 
 const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.DropdownMenuSubContentProps> =

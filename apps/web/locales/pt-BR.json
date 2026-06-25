@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Tem certeza de que deseja excluir esta equipe? Isso também remove o acesso a todos os espaços de trabalho e pesquisas associados a esta equipe.",
         "billing_role_description": "Apenas têm acesso às informações de faturamento.",
         "bulk_invite": "Convite em Massa",
+        "bulk_invite_scale_only_description": "Convidar membros em massa via CSV está disponível no plano Scale. Faça upgrade para convidar toda a sua equipe de uma vez.",
+        "bulk_invite_scale_only_title": "Desbloqueie convites em massa com um plano superior",
         "contributor": "Contribuinte",
         "create": "Criar",
         "create_first_team_message": "Você precisa criar uma equipe primeiro.",
@@ -2680,6 +2682,7 @@
         "ai_not_available": "A criação de pesquisas com IA não está disponível.",
         "ai_not_enabled": "As ferramentas inteligentes de IA estão desabilitadas para esta organização.",
         "ai_not_in_plan": "A criação de pesquisas com IA não está disponível no seu plano atual.",
+        "app_survey": "Pesquisa de App",
         "card_description": "Descreva o que você quer aprender e crie um rascunho de pesquisa.",
         "card_title": "Criar com IA",
         "characters": "{count}/{max}",
@@ -2692,7 +2695,6 @@
         "enable_ai_in_settings": "Habilitar nas configurações",
         "generated_payload_invalid": "O rascunho da pesquisa não pôde ser validado. Tente adicionar mais detalhes.",
         "link_survey": "Pesquisa de Link",
-        "only_link_supported": "Apenas a Pesquisa de Link pode ser criada no momento.",
         "opening_editor": "Abrindo o editor...",
         "prompt_helper_churn": "Entenda por que clientes ativos podem cancelar e o que os manteria engajados",
         "prompt_helper_churn_label": "Risco de cancelamento",
@@ -2706,12 +2708,14 @@
         "prompt_placeholder": "ex: Entender por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",
         "shortcut_hint": "⌘/Ctrl + Enter para criar",
         "start_from_scratch": "Começar do zero",
+        "survey_type_help": "Você pode concluir a configuração no editor após criar o rascunho.",
         "survey_type_label": "Tipo de pesquisa",
         "try_prompt": "Ver exemplo de prompt",
         "upgrade_plan": "Fazer upgrade do plano"
       },
       "all_set_time_to_create_first_survey": "Tá tudo pronto! Hora de criar sua primeira pesquisa",
       "alphabetical": "alfabético",
+      "change_status": "Alterar status",
       "copy_survey": "Copiar pesquisa",
       "copy_survey_description": "Escolha um espaço de trabalho para copiar esta pesquisa.",
       "copy_survey_error": "Falha ao copiar pesquisa",
@@ -3296,6 +3300,7 @@
         "zip": "Fecho éclair"
       },
       "error_deleting_survey": "Ocorreu um erro ao excluir a pesquisa",
+      "error_updating_status": "Ocorreu um erro ao atualizar o status da pesquisa",
       "filter": {
         "complete_and_partial_responses": "Respostas completas e parciais",
         "complete_responses": "Respostas completas",
@@ -3472,6 +3477,8 @@
           "title": "Mídia Social"
         }
       },
+      "status_updated_successfully": "Status da pesquisa atualizado com sucesso",
+      "status_updating": "Atualizando status da pesquisa...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtro adicionado para respostas onde a resposta da pergunta {questionIdx} é {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} foi pulada",

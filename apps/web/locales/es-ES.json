@@ -2634,6 +2634,8 @@
         "are_you_sure_you_want_to_delete_this_team": "¿Estás seguro de que quieres eliminar este equipo? Esto también elimina el acceso a todos los espacios de trabajo y encuestas asociadas con este equipo.",
         "billing_role_description": "Solo tienen acceso a la información de facturación.",
         "bulk_invite": "Invitación masiva",
+        "bulk_invite_scale_only_description": "Invitar miembros de forma masiva mediante CSV está disponible en el plan Scale. Actualiza para invitar a todo tu equipo de una vez.",
+        "bulk_invite_scale_only_title": "Desbloquea la invitación masiva con un plan superior",
         "contributor": "Colaborador",
         "create": "Crear",
         "create_first_team_message": "Necesitas crear un equipo primero.",
@@ -2680,6 +2682,7 @@
         "ai_not_available": "La creación de encuestas con IA no está disponible.",
         "ai_not_enabled": "Las herramientas inteligentes de IA están desactivadas para esta organización.",
         "ai_not_in_plan": "La creación de encuestas con IA no está disponible en tu plan actual.",
+        "app_survey": "Encuesta de aplicación",
         "card_description": "Describe lo que quieres aprender y crea un borrador de encuesta.",
         "card_title": "Crear con IA",
         "characters": "{count}/{max}",
@@ -2692,7 +2695,6 @@
         "enable_ai_in_settings": "Activar en ajustes",
         "generated_payload_invalid": "El borrador de la encuesta no pudo validarse. Intenta añadir más detalles.",
         "link_survey": "Encuesta por Enlace",
-        "only_link_supported": "Solo se puede crear Encuesta por Enlace por ahora.",
         "opening_editor": "Abriendo editor...",
         "prompt_helper_churn": "Entiende por qué los clientes activos podrían abandonar y qué les mantendría comprometidos",
         "prompt_helper_churn_label": "Riesgo de abandono",
@@ -2706,12 +2708,14 @@
         "prompt_placeholder": "p. ej. Entender por qué los nuevos usuarios abandonan durante el onboarding y qué les ayudaría a completar la configuración",
         "shortcut_hint": "⌘/Ctrl + Enter para crear",
         "start_from_scratch": "Empezar desde cero",
+        "survey_type_help": "Puedes terminar la configuración en el editor después de crear el borrador.",
         "survey_type_label": "Tipo de encuesta",
         "try_prompt": "Ver ejemplo de instrucción",
         "upgrade_plan": "Mejorar plan"
       },
       "all_set_time_to_create_first_survey": "¡Todo listo! Es hora de crear tu primera encuesta",
       "alphabetical": "Alfabético",
+      "change_status": "Cambiar estado",
       "copy_survey": "Copiar encuesta",
       "copy_survey_description": "Elige un espacio de trabajo para copiar esta encuesta.",
       "copy_survey_error": "Error al copiar la encuesta",
@@ -3296,6 +3300,7 @@
         "zip": "Código postal"
       },
       "error_deleting_survey": "Se produjo un error al eliminar la encuesta",
+      "error_updating_status": "Se produjo un error al actualizar el estado de la encuesta",
       "filter": {
         "complete_and_partial_responses": "Respuestas completas y parciales",
         "complete_responses": "Respuestas completas",
@@ -3472,6 +3477,8 @@
           "title": "Redes sociales"
         }
       },
+      "status_updated_successfully": "Estado de la encuesta actualizado correctamente",
+      "status_updating": "Actualizando estado de la encuesta...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Se ha añadido un filtro para las respuestas donde la respuesta a la pregunta {questionIdx} es {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtro añadido para respuestas donde la respuesta a la pregunta {questionIdx} se ha omitido",

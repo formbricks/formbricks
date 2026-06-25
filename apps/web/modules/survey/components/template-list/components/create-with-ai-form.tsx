@@ -144,12 +144,14 @@ export const CreateWithAIForm = ({
             <SelectContent>
               {SURVEY_TYPE_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {t("workspace.surveys.ai_create.link_survey")}
+                  {option.value === "app"
+                    ? t("workspace.surveys.ai_create.app_survey")
+                    : t("workspace.surveys.ai_create.link_survey")}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-slate-500">{t("workspace.surveys.ai_create.only_link_supported")}</p>
+          <p className="text-xs text-slate-500">{t("workspace.surveys.ai_create.survey_type_help")}</p>
         </div>
       )}
 
