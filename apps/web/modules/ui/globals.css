@@ -225,11 +225,13 @@
   /* Hide scrollbar for IE, Edge and Firefox */
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+}
 
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  &::-webkit-scrollbar {
-    display: none;
-  }
+/* Hide scrollbar for Chrome, Safari and Opera. Kept as a standalone selector rather than a nested
+   `&::-webkit-scrollbar` inside the @utility: the nested form trips SonarCloud's "missing scoping
+   root" on the bare `&`, and this is equivalent — both target elements carrying `.no-scrollbar`. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @layer utilities {
