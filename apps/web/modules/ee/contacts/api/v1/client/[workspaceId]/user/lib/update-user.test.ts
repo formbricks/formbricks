@@ -112,15 +112,45 @@ describe("updateUser", () => {
     expect(result.messages).toBeUndefined();
   });
 
-  test("should update existing contact attributes", async () => {
+  test("should update existing contact attributes and canonicalize the language", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { email: "new@example.com", language: "en" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
-    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, newAttributes);
-    expect(result.state.data?.language).toBe("en");
+    // Legacy `en` is stored as its canonical BCP-47 tag `en-US` and echoed back so the SDK self-heals.
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+      language: "en-US",
+    });
+    expect(result.state.data?.language).toBe("en-US");
     expect(result.messages).toBeUndefined();
+  });
+
+  test("should leave an already-canonical language untouched", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    const newAttributes = { email: "new@example.com", language: "de-DE" };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+      language: "de-DE",
+    });
+    expect(result.state.data?.language).toBe("de-DE");
+  });
+
+  test("should preserve an unresolvable language value as-is", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    const newAttributes = { email: "new@example.com", language: "123" };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+      language: "123",
+    });
+    expect(result.state.data?.language).toBe("123");
   });
 
   test("should not update attributes if they are the same", async () => {
