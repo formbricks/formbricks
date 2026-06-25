@@ -10,7 +10,6 @@ import {
   IS_FORMBRICKS_CLOUD,
   IS_TURNSTILE_CONFIGURED,
   TURNSTILE_SECRET_KEY,
-  WEBAPP_URL,
 } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -228,19 +227,14 @@ async function handlePostUserCreation(
   }
 
   if (!EMAIL_VERIFICATION_DISABLED) {
-    let inviteCallbackUrl: string | undefined;
-
-    if (inviteToken) {
-      const inviteUrl = new URL("/invite", WEBAPP_URL);
-      inviteUrl.searchParams.set("token", inviteToken);
-      inviteCallbackUrl = inviteUrl.toString();
-    }
-
+    // Do NOT point the post-verification callback back at /invite for invite signups: the invite is
+    // already accepted and deleted in handleInviteAcceptance above, so /invite would render
+    // "Invite Not Found" (ENG-1527). Leaving callbackUrl undefined lands the freshly verified —
+    // and already provisioned — user on the app home instead.
     await sendVerificationEmail({
       id: user.id,
       email: user.email,
       locale: user.locale,
-      callbackUrl: inviteCallbackUrl,
     });
   }
 }
