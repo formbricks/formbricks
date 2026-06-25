@@ -1,14 +1,12 @@
 "use client";
 
 import {
-  ArrowUpRightIcon,
   BarChart3Icon,
   Building2Icon,
   ChevronRightIcon,
   Cog,
   FoldersIcon,
   Loader2,
-  LogOutIcon,
   MessageCircle,
   MessageSquareTextIcon,
   PanelLeftCloseIcon,
@@ -16,7 +14,6 @@ import {
   PlusIcon,
   RocketIcon,
   SettingsIcon,
-  UserCircleIcon,
   UserIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -39,10 +36,9 @@ import { cn } from "@/lib/cn";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
-import { ProfileAvatar } from "@/modules/ui/components/avatars";
+import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -50,7 +46,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
@@ -96,7 +91,6 @@ export const MainNavigation = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
-  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const [isPending, startTransition] = useTransition();
   const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
@@ -198,26 +192,6 @@ export const MainNavigation = ({
     }),
     [t, workspace.id, isSettingsMode, isMembershipPending, isBilling]
   );
-
-  const dropdownNavigation = [
-    {
-      label: t("common.account"),
-      href: `/account/settings/profile`,
-      icon: UserCircleIcon,
-    },
-    {
-      label: t("common.documentation"),
-      href: "https://formbricks.com/docs",
-      target: "_blank",
-      icon: ArrowUpRightIcon,
-    },
-    {
-      label: t("common.share_feedback"),
-      href: "https://github.com/formbricks/formbricks/issues",
-      target: "_blank",
-      icon: ArrowUpRightIcon,
-    },
-  ];
 
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
@@ -770,71 +744,14 @@ export const MainNavigation = ({
                 </>
               )}
 
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  asChild
-                  id="userDropdownTrigger"
-                  className={cn(switcherTriggerClasses, "rounded-br-xl")}>
-                  <button
-                    type="button"
-                    aria-label={isCollapsed ? t("common.account_settings") : undefined}
-                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
-                    <span className={switcherIconClasses}>
-                      <ProfileAvatar userId={user.id} />
-                    </span>
-                    {!isCollapsed && !isTextVisible && (
-                      <>
-                        <div className="grow overflow-hidden">
-                          <p
-                            title={user?.email}
-                            className="ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700">
-                            {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
-                          </p>
-                          <p className="text-sm text-slate-500">{t("common.account")}</p>
-                        </div>
-                        <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                      </>
-                    )}
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-                  id="userDropdownInnerContentWrapper"
-                  side="right"
-                  sideOffset={10}
-                  alignOffset={5}
-                  align="end">
-                  {dropdownNavigation.map((link) => (
-                    <Link
-                      href={link.href}
-                      target={link.target}
-                      className="flex w-full items-center"
-                      key={link.label}
-                      rel={link.target === "_blank" ? "noopener noreferrer" : undefined}>
-                      <DropdownMenuItem>
-                        <link.icon className="mr-2 size-4" strokeWidth={1.5} />
-                        {link.label}
-                      </DropdownMenuItem>
-                    </Link>
-                  ))}
-                  <DropdownMenuItem
-                    onClick={async () => {
-                      const loginUrl = `${publicDomain}/auth/login`;
-                      const route = await signOutWithAudit({
-                        reason: "user_initiated",
-                        redirectUrl: loginUrl,
-                        organizationId: organization.id,
-                        redirect: false,
-                        callbackUrl: loginUrl,
-                        clearWorkspaceId: true,
-                      });
-                      router.push(route?.url || loginUrl);
-                    }}
-                    icon={<LogOutIcon className="mr-2 size-4" strokeWidth={1.5} />}>
-                    {t("common.logout")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserDropdown
+                user={user}
+                organizationId={organization.id}
+                publicDomain={publicDomain}
+                isCollapsed={isCollapsed}
+                isTextVisible={isTextVisible}
+                className="rounded-br-xl"
+              />
             </div>
           </div>
         </aside>

@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getWorkspace } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
@@ -15,12 +16,17 @@ export const GET = async (
   const { workspaceId, path } = await context.params;
 
   const session = await getServerSession(authOptions);
-  if (!session) return redirect("/auth/login");
+  if (!session?.user) return redirect("/auth/login");
 
   const workspace = await getWorkspace(workspaceId);
   if (!workspace) return notFound();
 
+  // Resolve workspaceId -> organizationId only for org members. Non-members get the same notFound()
+  // the old getWorkspaceAuth page returned, so the redirect never leaks the organizationId (or the
+  // workspace's existence) to a user who has no access at the destination anyway.
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, workspace.organizationId);
+  if (!membership) return notFound();
+
   const slug = path?.join("/") ?? "";
-  // Destination layout enforces org membership, so no authz check is needed here.
   return redirect(organizationSettingsPath(workspace.organizationId, slug));
 };

@@ -21,6 +21,7 @@ interface UserDropdownProps {
   publicDomain: string;
   isCollapsed?: boolean;
   isTextVisible?: boolean;
+  className?: string;
 }
 
 // The avatar/account trigger + menu (Account, Documentation, Share feedback, Log out) shown at the
@@ -33,6 +34,7 @@ export const UserDropdown = ({
   publicDomain,
   isCollapsed = false,
   isTextVisible = false,
+  className,
 }: Readonly<UserDropdownProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -60,7 +62,8 @@ export const UserDropdown = ({
 
   const triggerClasses = cn(
     "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset",
-    isCollapsed ? "flex items-center justify-center" : ""
+    isCollapsed ? "flex items-center justify-center" : "",
+    className
   );
   const iconClasses =
     "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600";
