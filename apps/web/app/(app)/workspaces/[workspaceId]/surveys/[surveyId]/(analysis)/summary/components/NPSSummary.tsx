@@ -77,7 +77,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader
         elementSummary={elementSummary}
         survey={survey}
@@ -115,7 +115,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
         </div>
 
         <TabsContent value="aggregated" className="mt-4">
-          <div className="px-4 pb-6 pt-4 md:px-6">
+          <div className="px-4 pt-4 pb-6 md:px-6">
             <div className="space-y-5 text-sm md:text-base">
               {(["promoters", "passives", "detractors", "dismissed"] as const).map((group) => (
                 <button
@@ -127,7 +127,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
                     className={`mb-2 flex justify-between ${group === "dismissed" ? "mb-2 border-t bg-white pt-4 text-sm md:text-base" : ""}`}>
                     <div className="mr-8 flex gap-x-1">
                       <p
-                        className={`font-semibold capitalize text-slate-700 ${group === "dismissed" ? "" : "text-slate-700"}`}>
+                        className={`font-semibold text-slate-700 capitalize ${group === "dismissed" ? "" : "text-slate-700"}`}>
                         {group}
                       </p>
                       <div>
@@ -152,7 +152,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
 
         <TabsContent value="individual" className="mt-4">
           <TooltipProvider delayDuration={200}>
-            <div className="grid grid-cols-11 gap-2 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+            <div className="grid grid-cols-11 gap-2 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
               {elementSummary.choices.map((choice) => {
                 const opacity = calculateNPSOpacity(choice.rating);
 
@@ -182,7 +182,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
                       <div className="mb-1.5 text-xs font-medium text-slate-500">{choice.rating}</div>
                       <div className="mb-1 flex items-center gap-x-1">
                         <div className="text-base font-semibold text-slate-700">{choice.count}</div>
-                        <div className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                        <div className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                           {convertFloatToNDecimal(choice.percentage, 1)}%
                         </div>
                       </div>
@@ -195,7 +195,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-center pb-4 pt-4">
+      <div className="flex justify-center pt-4 pb-4">
         <HalfCircle value={elementSummary.score} />
       </div>
     </div>

@@ -22,13 +22,13 @@ export const LimitsReachedBanner = ({ organization, responseCount }: LimitsReach
     return (
       <div
         aria-live="assertive"
-        className="pointer-events-none fixed inset-0 z-[100] flex min-w-80 items-end px-4 py-6 sm:items-start sm:p-6">
+        className="pointer-events-none fixed inset-0 z-100 flex min-w-80 items-end px-4 py-6 sm:items-start sm:p-6">
         <div className="flex w-full flex-col items-center gap-y-4 sm:items-end">
-          <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition">
+          <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5 transition">
             <div className="p-4">
               <div className="relative flex flex-col">
                 <div className="flex">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <TriangleAlertIcon className="size-6 text-error" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
@@ -46,10 +46,10 @@ export const LimitsReachedBanner = ({ organization, responseCount }: LimitsReach
                   </div>
                 </div>
 
-                <div className="absolute right-0 top-0 ml-4 flex flex-shrink-0">
+                <div className="absolute top-0 right-0 ml-4 flex shrink-0">
                   <button
                     type="button"
-                    className="inline-flex rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="inline-flex rounded-md bg-white text-slate-400 hover:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-hidden"
                     onClick={() => setShow(false)}>
                     <span className="sr-only">Close</span>
                     <XIcon className="size-5" aria-hidden="true" />

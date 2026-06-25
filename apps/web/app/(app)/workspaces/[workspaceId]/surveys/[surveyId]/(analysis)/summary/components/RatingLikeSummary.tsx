@@ -49,7 +49,7 @@ export const RatingLikeSummary = ({
   const [activeTab, setActiveTab] = useState<"aggregated" | "individual">("aggregated");
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader elementSummary={elementSummary} survey={survey} additionalInfo={additionalInfo} />
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "aggregated" | "individual")}>
@@ -65,7 +65,7 @@ export const RatingLikeSummary = ({
         </div>
 
         <TabsContent value="aggregated" className="mt-4">
-          <div className="px-4 pb-6 pt-4 md:px-6">
+          <div className="px-4 pt-4 pb-6 md:px-6">
             {elementSummary.responseCount === 0 ? (
               <>
                 <EmptyState text={t("workspace.surveys.summary.no_responses_found")} variant="simple" />
@@ -153,7 +153,7 @@ export const RatingLikeSummary = ({
         </TabsContent>
 
         <TabsContent value="individual" className="mt-4">
-          <div className="px-4 pb-6 pt-4 md:px-6">
+          <div className="px-4 pt-4 pb-6 md:px-6">
             <div className="space-y-5 text-sm md:text-base">
               {elementSummary.choices.map((result) => (
                 <div key={result.rating}>

@@ -58,7 +58,7 @@ export const ModalWithTabs = ({
               <button
                 type="button"
                 key={index}
-                className={`mr-4 px-1 pb-3 focus:outline-none ${
+                className={`mr-4 px-1 pb-3 focus:outline-hidden ${
                   activeTab === index
                     ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                     : "text-slate-500 hover:text-slate-700"

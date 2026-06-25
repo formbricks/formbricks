@@ -6,7 +6,7 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 const tabsVariants = cva(
-  "bg-slate-100 rounded-lg p-1 inline-flex items-center overflow-x-auto [scrollbar-width:none]",
+  "bg-slate-100 rounded-lg p-1 inline-flex items-center overflow-x-auto scrollbar-none",
   {
     variants: {
       variant: {
@@ -31,12 +31,12 @@ const tabsVariants = cva(
 );
 
 const tabsTriggerVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         default:
-          "data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm data-[state=inactive]:text-slate-600",
+          "data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs data-[state=inactive]:text-slate-600",
         disabled: "opacity-50 pointer-events-none",
       },
       size: {
@@ -108,7 +108,7 @@ function TabsTrigger({
       className={cn(tabsTriggerVariants({ variant, size, layout }), "h-full min-w-max", className)}
       {...props}>
       {showIcon && icon}
-      <span className="text-center text-sm font-medium leading-5">{children}</span>
+      <span className="text-center text-sm leading-5 font-medium">{children}</span>
     </TabsPrimitive.Trigger>
   );
 }
@@ -117,7 +117,7 @@ function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPr
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 outline-none", className)}
+      className={cn("flex-1 outline-hidden", className)}
       {...props}
     />
   );

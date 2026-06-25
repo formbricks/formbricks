@@ -223,7 +223,7 @@ export const TeamSettingsModal = ({
         </DialogHeader>
         <FormProvider {...form}>
           <form className="contents space-y-4" onSubmit={handleSubmit(handleUpdateTeam)}>
-            <DialogBody className="flex-grow space-y-6 overflow-y-auto">
+            <DialogBody className="grow space-y-6 overflow-y-auto">
               <FormField
                 control={control}
                 name="name"

@@ -155,7 +155,7 @@ export const MainNavigation = ({
               text="Beta"
               type="gray"
               size="tiny"
-              className="text-[10px] font-semibold normal-case tracking-normal"
+              className="text-[10px] font-semibold tracking-normal normal-case"
             />
           </span>
         ),
@@ -420,7 +420,7 @@ export const MainNavigation = ({
   );
 
   const switcherTriggerClasses = cn(
-    "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset",
+    "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset",
     isCollapsed ? "flex items-center justify-center" : ""
   );
 
@@ -484,7 +484,7 @@ export const MainNavigation = ({
                   size="icon"
                   onClick={toggleSidebar}
                   className={cn(
-                    "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
+                    "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:ring-0 focus:ring-transparent focus:outline-hidden"
                   )}>
                   {isCollapsed ? (
                     <PanelLeftOpenIcon strokeWidth={1.5} />
@@ -499,7 +499,7 @@ export const MainNavigation = ({
                 {mainNavigationSections.map((section) => (
                   <li key={section.id}>
                     {!isCollapsed && !isTextVisible && (
-                      <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      <p className="px-4 pt-2 pb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
                         {section.name}
                       </p>
                     )}

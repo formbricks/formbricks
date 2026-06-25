@@ -142,7 +142,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                   className={cn(
                     "rounded-md px-4 py-2",
                     tab.id === activeId && !tab.disabled
-                      ? "bg-white text-slate-900 shadow-sm hover:bg-white"
+                      ? "bg-white text-slate-900 shadow-xs hover:bg-white"
                       : "border-transparent text-slate-700 hover:text-slate-900"
                   )}>
                   <tab.icon className="size-4 text-slate-700" />
