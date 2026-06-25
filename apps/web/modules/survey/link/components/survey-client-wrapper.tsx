@@ -14,7 +14,7 @@ import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
-import { getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
+import { getSurveyLanguageTag, getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
@@ -160,6 +160,33 @@ export const SurveyClientWrapper = ({
     return isRTLLanguage(jsSurvey, languageCode) ? "rtl" : "auto";
   }, [languageCode, jsSurvey]);
 
+  // Track the survey's active language (updated by the in-survey language switch).
+  const [currentLanguageCode, setCurrentLanguageCode] = useState(languageCode);
+  useEffect(() => {
+    setCurrentLanguageCode(languageCode);
+  }, [languageCode]);
+
+  // Keep <html lang>/<dir> aligned with the survey's active language so the browser
+  // and screen readers announce content in the right language, and RTL languages flip
+  // direction (WCAG 3.1.1 / 1.3.2). Link surveys own their document; the embedded JS
+  // widget never reaches this component, so host pages are never mutated.
+  useEffect(() => {
+    const html = document.documentElement;
+    const previousLang = html.getAttribute("lang");
+    const previousDir = html.getAttribute("dir");
+
+    const tag = getSurveyLanguageTag(jsSurvey, currentLanguageCode);
+    if (tag) html.setAttribute("lang", tag);
+    html.setAttribute("dir", isRTLLanguage(jsSurvey, currentLanguageCode) ? "rtl" : "ltr");
+
+    return () => {
+      if (previousLang === null) html.removeAttribute("lang");
+      else html.setAttribute("lang", previousLang);
+      if (previousDir === null) html.removeAttribute("dir");
+      else html.setAttribute("dir", previousDir);
+    };
+  }, [currentLanguageCode, jsSurvey]);
+
   return (
     <>
       {/* Inject custom scripts for tracking/analytics (self-hosted only) */}
@@ -194,6 +221,7 @@ export const SurveyClientWrapper = ({
           survey={jsSurvey}
           styling={styling}
           languageCode={languageCode}
+          onLanguageChange={setCurrentLanguageCode}
           isBrandingEnabled={workspace.linkSurveyBranding}
           shouldResetQuestionId={false}
           autoFocus={autoFocus}
