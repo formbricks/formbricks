@@ -57,8 +57,9 @@ describe("normalizeV3SurveyLanguageIdentifier", () => {
     expect(normalizeV3SurveyLanguageIdentifier(input)).toBe(expected);
   });
 
-  test("does not guess ambiguous legacy identifiers", () => {
-    expect(normalizeV3SurveyLanguageIdentifier("pt")).toBeNull();
+  test("resolves bare codes to their CLDR default region (ENG-1067 canonical)", () => {
+    expect(normalizeV3SurveyLanguageIdentifier("pt")).toBe("pt-BR");
+    expect(normalizeV3SurveyLanguageIdentifier("ar")).toBe("ar-EG");
   });
 });
 
@@ -73,6 +74,12 @@ describe("normalizeV3SurveyWriteLanguageCode", () => {
     expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu", "en-US"])).toBe("gu");
     expect(normalizeV3SurveyWriteLanguageCode("hi", ["hi-IN", "en-US"])).toBe("hi-IN");
     expect(normalizeV3SurveyWriteLanguageCode("vi", ["en-US"])).toBeNull();
+  });
+
+  test("maps a legacy code to its canonical configured tag (post-migration inbound)", () => {
+    // After the migration flips a stored `gu` to `gu-IN`, a client still sending `gu` keeps working.
+    expect(normalizeV3SurveyWriteLanguageCode("gu", ["gu-IN", "en-US"])).toBe("gu-IN");
+    expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu-IN", "en-US"])).toBe("gu-IN");
   });
 });
 
