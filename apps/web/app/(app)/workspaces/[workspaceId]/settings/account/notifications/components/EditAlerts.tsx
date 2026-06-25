@@ -4,7 +4,7 @@ import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { TUser } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { Membership } from "../types";
@@ -24,7 +24,6 @@ export const EditAlerts = ({
   autoDisableNotificationElementId,
 }: EditAlertsProps) => {
   const { t } = useTranslation();
-  const { workspace: currentWorkspace } = useWorkspace();
 
   if (memberships.length === 0) {
     return <EmptyState text={t("common.no_surveys_found")} variant="simple" />;
@@ -107,7 +106,7 @@ export const EditAlerts = ({
               {t("workspace.settings.notifications.want_to_loop_in_organization_mates")}{" "}
               <Link
                 className="font-semibold"
-                href={`/workspaces/${currentWorkspace?.id}/settings/organization/general`}>
+                href={organizationSettingsPath(membership.organization.id, "teams")}>
                 {t("common.invite_them")}
               </Link>
             </p>

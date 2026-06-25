@@ -4,35 +4,38 @@ import { notFound, redirect } from "next/navigation";
 import { EnterpriseLicenseFeaturesTable } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/enterprise/components/EnterpriseLicenseFeaturesTable";
 import { EnterpriseLicenseStatus } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/enterprise/components/EnterpriseLicenseStatus";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getTranslate } from "@/lingodotdev/server";
 import { GRACE_PERIOD_MS, getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
+import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
+const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const params = await props.params;
   const t = await getTranslate();
-  const { isBilling, isMember } = await getWorkspaceAuth(params.workspaceId);
+  const { session, isBilling, isMember } = await getOrganizationAuth(params.organizationId);
 
   if (isBilling && IS_FORMBRICKS_CLOUD) {
-    redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
+    redirect(getOrganizationBillingPath(params.organizationId, IS_FORMBRICKS_CLOUD));
   }
 
   if (IS_FORMBRICKS_CLOUD) {
     return notFound();
   }
 
-  const isPricingDisabled = isMember;
-
-  if (isPricingDisabled) {
+  if (isMember) {
     return notFound();
   }
 
-  const licenseState = await getEnterpriseLicense();
+  const [licenseState, layoutData] = await Promise.all([
+    getEnterpriseLicense(),
+    getSettingsLayoutData(session.user.id, params.organizationId),
+  ]);
   const hasLicense = licenseState.status !== "no-license";
+  const workspaceId = layoutData?.currentWorkspace?.id ?? "";
 
   const paidFeatures = [
     t("workspace.settings.enterprise.hide_powered_by_formbricks"),
@@ -66,7 +69,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
                 ? new Date(licenseState.lastChecked.getTime() + GRACE_PERIOD_MS)
                 : undefined
             }
-            workspaceId={params.workspaceId}
+            workspaceId={workspaceId}
           />
           {licenseState.features && <EnterpriseLicenseFeaturesTable features={licenseState.features} />}
         </>

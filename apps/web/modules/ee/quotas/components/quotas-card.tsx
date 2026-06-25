@@ -72,7 +72,6 @@ export const QuotasCard = ({
 }: QuotasCardProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [activeQuota, setActiveQuota] = useState<TSurveyQuota | null>(null);
@@ -177,13 +176,13 @@ export const QuotasCard = ({
                   {
                     text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                     href: isFormbricksCloud
-                      ? `${workspaceBasePath}/settings/organization/billing`
+                      ? `/organizations/${workspace?.organizationId}/settings/billing`
                       : enterpriseLicenseRequestFormUrl,
                   },
                   {
                     text: t("common.learn_more"),
                     href: isFormbricksCloud
-                      ? `${workspaceBasePath}/settings/organization/billing`
+                      ? `/organizations/${workspace?.organizationId}/settings/billing`
                       : "https://formbricks.com/learn-more-self-hosting-license",
                   },
                 ]}

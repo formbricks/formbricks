@@ -2,17 +2,20 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ApiKeyList } from "./components/api-key-list";
 
-export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { currentUserMembership, organization, session } = await getWorkspaceAuth(params.workspaceId);
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
+
+  const { currentUserMembership, organization, session } = await getOrganizationAuth(params.organizationId);
 
   const [workspaces, locale] = await Promise.all([
     getWorkspacesByOrganizationId(organization.id),

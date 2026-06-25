@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
 import {
@@ -33,6 +34,7 @@ export function AIQuerySection({
   isAIAvailable = true,
   aiUnavailableReason,
 }: Readonly<AIQuerySectionProps>) {
+  const { workspace } = useWorkspace();
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { t } = useTranslation();
@@ -60,7 +62,9 @@ export function AIQuerySection({
   };
 
   const aiUnavailableMessage = translateAIUnavailableMessage(aiUnavailableReason);
-  const aiUnavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
+  const aiUnavailableAction = workspace?.organizationId
+    ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
+    : undefined;
 
   if (!isAIAvailable) {
     return (

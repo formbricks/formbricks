@@ -5,6 +5,7 @@ import Link from "next/link";
 import { type KeyboardEvent, type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getAIUnavailableAction } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
@@ -56,6 +57,7 @@ export const CreateWithAIForm = ({
   promptInputRef,
 }: Readonly<CreateWithAIFormProps>) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
 
   const {
     prompt,
@@ -75,7 +77,9 @@ export const CreateWithAIForm = ({
     onSuccess,
   });
 
-  const unavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
+  const unavailableAction = workspace?.organizationId
+    ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
+    : undefined;
   let unavailableActionLabel: string | undefined;
   if (unavailableAction?.type === "enable_ai") {
     unavailableActionLabel = t("workspace.surveys.ai_create.enable_ai_in_settings");

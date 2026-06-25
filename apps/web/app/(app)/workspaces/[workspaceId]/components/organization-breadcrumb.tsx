@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useOrganization, useWorkspace } from "../context/workspace-context";
+import { useOrganization } from "../context/workspace-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
@@ -43,7 +43,6 @@ export const OrganizationBreadcrumb = ({
   // Get current organization name from context OR prop
   // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
   const { organization: currentOrganization } = useOrganization();
-  const { workspace } = useWorkspace();
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   // Lazy-load organizations when dropdown opens
@@ -84,13 +83,11 @@ export const OrganizationBreadcrumb = ({
     return;
   }
 
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
-
   const handleOrganizationChange = (organizationId: string) => {
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
-      if (organizationId === currentOrganizationId && currentWorkspaceId) {
-        router.push(`/workspaces/${currentWorkspaceId}/settings/organization/general`);
+      if (organizationId === currentOrganizationId) {
+        router.push(`/organizations/${currentOrganizationId}/settings/general`);
         return;
       }
       router.push(`/organizations/${organizationId}/`);
@@ -170,7 +167,9 @@ export const OrganizationBreadcrumb = ({
             <>
               {showOrganizationDropdown && <DropdownMenuSeparator />}
               <DropdownMenuCheckboxItem
-                onClick={() => handleSettingChange(`${workspaceBasePath}/settings/organization/general`)}
+                onClick={() =>
+                  handleSettingChange(`/organizations/${currentOrganizationId}/settings/general`)
+                }
                 className="cursor-pointer">
                 <SettingsIcon className="mr-2 size-4" />
                 {t("common.settings")}

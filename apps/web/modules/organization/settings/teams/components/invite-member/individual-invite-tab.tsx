@@ -10,9 +10,9 @@ import { OrganizationRole } from "@formbricks/database/prisma-browser";
 import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -25,6 +25,7 @@ interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]) => void;
   teams: TOrganizationTeam[];
+  organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
@@ -36,14 +37,13 @@ export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
   teams,
+  organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
   membershipRole,
   showTeamAdminRestrictions,
   enterpriseLicenseRequestFormUrl,
 }: IndividualInviteTabProps) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z
@@ -193,7 +193,7 @@ export const IndividualInviteTab = ({
                 target="_blank"
                 href={
                   isFormbricksCloud
-                    ? `${workspaceBasePath}/settings/organization/billing`
+                    ? organizationSettingsPath(organizationId, "billing")
                     : enterpriseLicenseRequestFormUrl
                 }>
                 {t("common.upgrade_plan")}

@@ -52,7 +52,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${workspaceId}/settings/organization/billing`
+                  ? `/organizations/${organization.id}/settings/billing`
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
@@ -77,7 +77,10 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
         pageTitle={t("common.analysis")}
         workspaceId={workspaceId}
         cta={isReadOnly ? undefined : <CreateDashboardButton workspaceId={workspaceId} disabled={true} />}>
-        <NoFeedbackDirectoryEmptyState workspaceId={workspaceId} isOwnerOrManager={isOwner || isManager} />
+        <NoFeedbackDirectoryEmptyState
+          organizationId={organization.id}
+          isOwnerOrManager={isOwner || isManager}
+        />
       </AnalysisPageLayout>
     );
   }

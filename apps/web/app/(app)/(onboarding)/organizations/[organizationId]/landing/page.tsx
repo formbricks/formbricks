@@ -3,6 +3,7 @@ import { CreateFirstWorkspaceButton } from "@/app/(app)/(onboarding)/organizatio
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
 import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getUser } from "@/lib/user/service";
@@ -25,6 +26,7 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   if (!user) return notFound();
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const publicDomain = getPublicDomain();
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   const isMembershipPending = membership?.role === undefined;
@@ -34,7 +36,7 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-row">
-      <LandingSidebar user={user} organization={organization} isMultiOrgEnabled={isMultiOrgEnabled} />
+      <LandingSidebar user={user} organization={organization} publicDomain={publicDomain} />
       <div className="flex-1">
         <div className="flex h-full flex-col">
           <div className="p-6">

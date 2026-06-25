@@ -9,8 +9,6 @@ import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getWorkspace } from "@/lib/workspace/service";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
@@ -28,14 +26,14 @@ import {
 } from "@/modules/ee/billing/lib/organization-billing";
 
 const ZManageSubscriptionAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
 });
 
 export const manageSubscriptionAction = authenticatedActionClient
   .inputSchema(ZManageSubscriptionAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -57,13 +55,9 @@ export const manageSubscriptionAction = authenticatedActionClient
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      const workspace = await getWorkspace(parsedInput.workspaceId);
-      if (!workspace) {
-        throw new ResourceNotFoundError("workspace", parsedInput.workspaceId);
-      }
       const result = await createCustomerPortalSession(
         organization.billing.stripeCustomerId,
-        `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`
+        `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`
       );
       ctx.auditLoggingCtx.newObject = { portalSessionCreated: true };
       return result;
@@ -71,7 +65,7 @@ export const manageSubscriptionAction = authenticatedActionClient
   );
 
 const ZCreatePlanCheckoutAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
   targetPlan: z.enum(["pro", "scale"]),
   targetInterval: ZCloudBillingInterval,
 });
@@ -80,7 +74,7 @@ export const createPlanCheckoutAction = authenticatedActionClient
   .inputSchema(ZCreatePlanCheckoutAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -108,7 +102,6 @@ export const createPlanCheckoutAction = authenticatedActionClient
       const checkoutUrl = await createPaidPlanCheckoutSession({
         organizationId,
         customerId: organization.billing.stripeCustomerId,
-        workspaceId: parsedInput.workspaceId,
         plan: parsedInput.targetPlan,
         interval: parsedInput.targetInterval,
       });
@@ -147,7 +140,7 @@ export const retryStripeSetupAction = authenticatedActionClient
   });
 
 const ZCreateTrialPaymentCheckoutAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
   targetPlan: z.enum(["pro", "scale"]).optional(),
   targetInterval: ZCloudBillingInterval.optional(),
 });
@@ -156,7 +149,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
   .inputSchema(ZCreateTrialPaymentCheckoutAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -183,11 +176,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      const workspace = await getWorkspace(parsedInput.workspaceId);
-      if (!workspace) {
-        throw new ResourceNotFoundError("workspace", parsedInput.workspaceId);
-      }
-      const returnUrl = `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`;
+      const returnUrl = `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`;
       const upgradeIntent =
         parsedInput.targetPlan !== undefined
           ? {
@@ -323,12 +312,12 @@ export const startProTrialAction = authenticatedActionClient
 
 const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
   z.object({
-    workspaceId: ZId,
+    organizationId: ZId,
     targetPlan: z.literal("hobby"),
     targetInterval: z.literal("monthly"),
   }),
   z.object({
-    workspaceId: ZId,
+    organizationId: ZId,
     targetPlan: z.enum(["pro", "scale"]),
     targetInterval: ZCloudBillingInterval,
   }),
@@ -336,7 +325,7 @@ const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
 
 export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZChangeBillingPlanAction).action(
   withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    const { organizationId } = parsedInput;
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -382,14 +371,14 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
 );
 
 const ZUndoPendingPlanChangeAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
 });
 
 export const undoPendingPlanChangeAction = authenticatedActionClient
   .inputSchema(ZUndoPendingPlanChangeAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
