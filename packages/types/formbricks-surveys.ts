@@ -25,7 +25,7 @@ export interface SurveyBaseProps {
   dir?: "ltr" | "rtl" | "auto";
   setDir?: (dir: "ltr" | "rtl" | "auto") => void;
   /** Notifies the host of the survey's active language code (e.g. "default", "en-AU", "he").
-   *  Link surveys use it to keep <html lang>/<dir> in sync; embedded widgets omit it. */
+   *  Link surveys use it to keep the page lang/dir in sync; embedded widgets omit it. */
   onLanguageChange?: (languageCode: string) => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
