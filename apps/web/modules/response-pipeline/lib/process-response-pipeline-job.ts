@@ -20,6 +20,8 @@ import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/l
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { dispatchWorkflowRunViaJobs } from "@/modules/workflows/lib/runner/dispatch";
+import { enqueueResponseCompletedWorkflowRuns } from "@/modules/workflows/lib/runner/enqueue-response-completed-runs";
 import { handleIntegrations } from "./handle-integrations";
 import { sendTelemetryEvents } from "./telemetry";
 
@@ -688,6 +690,19 @@ const runResponseFinishedSideEffects = async ({
     responseCount,
     survey,
   });
+
+  // Workflow runner (producer): enqueue runs for matching enabled workflows. Isolated so a runner
+  // failure never breaks the response pipeline job, its retries, or the other side-effects above.
+  try {
+    await enqueueResponseCompletedWorkflowRuns({
+      response: data.response,
+      workspaceId,
+      dispatch: dispatchWorkflowRunViaJobs,
+      logContext,
+    });
+  } catch (error) {
+    logger.error({ ...logContext, err: error }, "Response pipeline workflow run enqueue failed");
+  }
 };
 
 const runResponseCreatedSideEffects = async ({
