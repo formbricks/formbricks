@@ -54,9 +54,13 @@ export const getWorkflowRunLogStatusBadge = (status: TWorkflowRunLogStatus, t: T
     case "skipped":
       return { label: t("common.skipped"), type: "gray" };
     case "pending":
-    default:
       return { label: t("common.pending"), type: "gray" };
   }
+
+  // Exhaustive: a new TWorkflowRunLogStatus from the contract fails to compile here
+  // instead of being silently mislabeled as "pending".
+  const exhaustiveCheck: never = status;
+  return exhaustiveCheck;
 };
 
 export const getWorkflowTriggerTypeLabel = (triggerType: TWorkflowTriggerType, t: TFunction): string => {

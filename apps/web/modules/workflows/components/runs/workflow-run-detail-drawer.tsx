@@ -27,6 +27,7 @@ export const WorkflowRunDetailDrawer = ({
   onOpenChange,
 }: Readonly<WorkflowRunDetailDrawerProps>) => {
   const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   // The list row gives an instant header + summary; the full run (step logs, trigger payload, run
   // data) is fetched on demand and only while the drawer is open.
@@ -47,7 +48,7 @@ export const WorkflowRunDetailDrawer = ({
 
         {run ? (
           <div className="space-y-6 py-4">
-            <RunSummarySection run={run} locale={i18n.language} />
+            <RunSummarySection run={run} locale={locale} />
 
             <section className="rounded-lg border border-slate-200 bg-white p-5">
               <h2 className="mb-4 text-lg font-semibold text-slate-900">{t("common.steps")}</h2>

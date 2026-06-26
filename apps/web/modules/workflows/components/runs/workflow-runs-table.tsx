@@ -38,7 +38,7 @@ export const WorkflowRunsTable = ({
   onLoadMore,
 }: Readonly<WorkflowRunsTableProps>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language;
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const selectedRun = runs.find((run) => run.id === selectedRunId) ?? null;
 
@@ -81,7 +81,18 @@ export const WorkflowRunsTable = ({
               const triggerLabel = getWorkflowTriggerTypeLabel(run.triggerType, t);
 
               return (
-                <TableRow key={run.id} onClick={() => setSelectedRunId(run.id)} className="cursor-pointer">
+                <TableRow
+                  key={run.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedRunId(run.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedRunId(run.id);
+                    }
+                  }}
+                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
                   <TableCell className="min-w-0 px-4 py-2">
                     {showWorkflowColumn ? (
                       <>
