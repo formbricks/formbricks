@@ -236,6 +236,10 @@ export interface WorkflowRunDelegate {
     where: WorkflowRunWhereInput;
     orderBy: WorkflowRunOrderByInput[];
     take: number;
+    // The list emits only the slim `WorkflowRunRow` scalars, so omit the large JSON columns
+    // (`triggerPayload`, `data`) to avoid reading/shipping up to 100 big blobs per page for nothing.
+    // The detail `findUnique` keeps them. Optional so the port stays a faithful subset of Prisma's args.
+    omit?: { triggerPayload?: true; data?: true };
   }) => Promise<WorkflowRunRow[]>;
   findUnique: (args: {
     where: { id: string };

@@ -338,6 +338,9 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
       where: buildRunListWhere(input, cursor),
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: input.limit + 1,
+      // List summaries never use these large JSON columns; skip them so PG doesn't read/ship
+      // up to 100 big blobs per page. The detail `findUnique` still loads them.
+      omit: { triggerPayload: true, data: true },
     });
 
     const hasMore = rows.length > input.limit;
