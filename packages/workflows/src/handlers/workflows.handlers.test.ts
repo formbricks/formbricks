@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { WorkflowConflictError, WorkflowInvalidInputError } from "../errors";
 import type {
   WorkflowRowWithLastRun,
+  WorkflowRunListRow,
   WorkflowRunRow,
   WorkflowRunWithLogsRow,
   WorkflowsLogger,
@@ -609,6 +610,13 @@ const makeRunRow = (overrides: Partial<WorkflowRunRow> = {}): WorkflowRunRow => 
   ...overrides,
 });
 
+// The runs list serializer reads workflow.name; list rows are WorkflowRunListRow, not bare WorkflowRunRow.
+const makeRunListRow = (overrides: Partial<WorkflowRunListRow> = {}): WorkflowRunListRow => ({
+  ...makeRunRow(),
+  workflow: { name: "My Workflow" },
+  ...overrides,
+});
+
 // Mirrors the canonical run-data fixture's trigger payload (a valid TWorkflowTriggerRunPayload), so
 // the handler's output validation against ZWorkflowRunResource passes.
 const validTriggerPayload = {
@@ -651,17 +659,19 @@ describe("listRuns", () => {
     new Request(`http://localhost/api/v3/workflows/runs?${query}`);
 
   test("returns 200 with a cursor-paginated envelope of run summaries", async () => {
-    service.listWorkflowRuns.mockResolvedValue({ runs: [makeRunRow()], nextCursor: null });
+    service.listWorkflowRuns.mockResolvedValue({ runs: [makeRunListRow()], nextCursor: null });
 
     const res = await handlers.listRuns({ req: runsRequest(`workspaceId=${workspaceId}`), ctx: makeCtx() });
 
     expect(res.status).toBe(200);
     const body = await readJson<{
-      data: { id: string }[];
+      data: { id: string; workflowName: string }[];
       meta: { limit: number; nextCursor: string | null };
     }>(res);
     expect(body.data).toHaveLength(1);
     expect(body.data[0].id).toBe(runId);
+    // The list serializer joins the workflow name onto each row (ZWorkflowRunListItem).
+    expect(body.data[0].workflowName).toBe("My Workflow");
     expect(body.meta.limit).toBe(20);
     expect(body.meta.nextCursor).toBeNull();
     expect(authorizeAllow).toHaveBeenCalledWith(workspaceId, "read");
@@ -753,7 +763,7 @@ describe("listRuns", () => {
   });
 
   test("accepts the minimum limit (limit=1)", async () => {
-    service.listWorkflowRuns.mockResolvedValue({ runs: [makeRunRow()], nextCursor: null });
+    service.listWorkflowRuns.mockResolvedValue({ runs: [makeRunListRow()], nextCursor: null });
 
     const res = await handlers.listRuns({
       req: runsRequest(`workspaceId=${workspaceId}&limit=1`),

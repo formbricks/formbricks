@@ -62,6 +62,11 @@ export interface WorkflowRunRow {
 /** A workflow row with its most recent run eagerly loaded (for `lastRun`). */
 export type WorkflowRowWithLastRun = WorkflowRow & { runs: WorkflowRunRow[] };
 
+/** A run-list row: the slim run plus its workflow's name, joined for the runs-list display. */
+export interface WorkflowRunListRow extends WorkflowRunRow {
+  workflow: { name: string };
+}
+
 /**
  * Eager-load shape for the most recent run plus the creating user's name; matches the Prisma
  * `include` the adapter satisfies. The `creator` relation (named in `workflows.prisma`) lets the
@@ -240,7 +245,11 @@ export interface WorkflowRunDelegate {
     // (`triggerPayload`, `data`) to avoid reading/shipping up to 100 big blobs per page for nothing.
     // The detail `findUnique` keeps them. Optional so the port stays a faithful subset of Prisma's args.
     omit?: { triggerPayload?: true; data?: true };
-  }) => Promise<WorkflowRunRow[]>;
+    // Join the workflow's name so the workspace-wide runs table can label each row without an
+    // N+1 client lookup. Required because the return type guarantees `workflow.name` is present;
+    // `omit` + `include` compose in Prisma (unlike `select` + `omit`).
+    include: { workflow: { select: { name: true } } };
+  }) => Promise<WorkflowRunListRow[]>;
   findUnique: (args: {
     where: { id: string };
     include: WorkflowRunLogInclude;

@@ -5,6 +5,7 @@ import type {
   WorkflowDelegate,
   WorkflowRowWithLastRun,
   WorkflowRunDelegate,
+  WorkflowRunListRow,
   WorkflowRunRow,
   WorkflowRunWithLogsRow,
   WorkflowVersionDelegate,
@@ -96,6 +97,13 @@ const makeRunRow = (overrides: Partial<WorkflowRunRow> = {}): WorkflowRunRow => 
   error: null,
   startedAt: null,
   finishedAt: null,
+  ...overrides,
+});
+
+// The runs list query joins the workflow name; list rows are WorkflowRunListRow, not bare WorkflowRunRow.
+const makeRunListRow = (overrides: Partial<WorkflowRunListRow> = {}): WorkflowRunListRow => ({
+  ...makeRunRow(),
+  workflow: { name: "Test Workflow" },
   ...overrides,
 });
 
@@ -413,7 +421,7 @@ describe("disableWorkflow", () => {
 
 describe("listWorkflowRuns", () => {
   test("scopes to the workspace, orders newest-first with an id tie-breaker, and over-fetches by one", async () => {
-    runFindMany.mockResolvedValue([makeRunRow()]);
+    runFindMany.mockResolvedValue([makeRunListRow()]);
 
     await service.listWorkflowRuns({ workspaceId, limit: 20 });
 
@@ -421,6 +429,9 @@ describe("listWorkflowRuns", () => {
     expect(args.where).toEqual({ workspaceId });
     expect(args.orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
     expect(args.take).toBe(21);
+    // List omits the large JSON columns and joins the workflow name (omit + include compose in Prisma).
+    expect(args.omit).toEqual({ triggerPayload: true, data: true });
+    expect(args.include).toEqual({ workflow: { select: { name: true } } });
   });
 
   test("applies workflowId, responseId, statusIn, and isDryRun filters", async () => {
@@ -466,18 +477,18 @@ describe("listWorkflowRuns", () => {
   });
 
   test("returns no cursor when the page is not full", async () => {
-    runFindMany.mockResolvedValue([makeRunRow()]);
+    runFindMany.mockResolvedValue([makeRunListRow()]);
     const page = await service.listWorkflowRuns({ workspaceId, limit: 20 });
     expect(page.runs).toHaveLength(1);
     expect(page.nextCursor).toBeNull();
   });
 
   test("trims the over-fetched row and emits a next cursor from the last returned row", async () => {
-    const older = makeRunRow({
+    const older = makeRunListRow({
       id: "cm9zr5b0000000000000000001",
       createdAt: new Date("2026-06-12T09:00:00.000Z"),
     });
-    const newest = makeRunRow({
+    const newest = makeRunListRow({
       id: "cm9zr5a0000000000000000002",
       createdAt: new Date("2026-06-12T10:00:00.000Z"),
     });
@@ -501,9 +512,9 @@ describe("listWorkflowRuns", () => {
 
   test("at the page-size boundary (limit+1 rows) trims the extra row and points the cursor at the last kept row", async () => {
     const rows = [
-      makeRunRow({ id: "cm9zr5c0000000000000000003", createdAt: new Date("2026-06-12T10:00:00.000Z") }),
-      makeRunRow({ id: "cm9zr5c0000000000000000002", createdAt: new Date("2026-06-12T09:00:00.000Z") }),
-      makeRunRow({ id: "cm9zr5c0000000000000000001", createdAt: new Date("2026-06-12T08:00:00.000Z") }),
+      makeRunListRow({ id: "cm9zr5c0000000000000000003", createdAt: new Date("2026-06-12T10:00:00.000Z") }),
+      makeRunListRow({ id: "cm9zr5c0000000000000000002", createdAt: new Date("2026-06-12T09:00:00.000Z") }),
+      makeRunListRow({ id: "cm9zr5c0000000000000000001", createdAt: new Date("2026-06-12T08:00:00.000Z") }),
     ];
     // limit 2 → service over-fetches 3; exactly `limit` rows are returned and hasMore is true.
     runFindMany.mockResolvedValue(rows);

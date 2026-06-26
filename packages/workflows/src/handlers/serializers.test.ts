@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type {
   WorkflowRowWithLastRun,
+  WorkflowRunListRow,
   WorkflowRunLogRow,
   WorkflowRunRow,
   WorkflowRunWithLogsRow,
@@ -9,6 +10,7 @@ import type { TWorkflowTriggerRunPayload } from "../types/runs";
 import {
   toWorkflowListItem,
   toWorkflowResource,
+  toWorkflowRunListItem,
   toWorkflowRunLogResource,
   toWorkflowRunResource,
   toWorkflowRunSummary,
@@ -102,6 +104,15 @@ describe("serializers", () => {
     const summary = toWorkflowRunSummary({ ...run, startedAt: null, finishedAt: null });
     expect(summary.startedAt).toBeNull();
     expect(summary.finishedAt).toBeNull();
+  });
+
+  test("run list item spreads the summary and joins the workflow name", () => {
+    const listRow: WorkflowRunListRow = { ...run, workflow: { name: "Notify team" } };
+    const item = toWorkflowRunListItem(listRow);
+    expect(item.id).toBe(run.id);
+    expect(item.workflowName).toBe("Notify team");
+    // Inherits the summary projection.
+    expect(item.startedAt).toBe("2026-06-12T10:00:30.000Z");
   });
 
   test("the full resource includes the definition", () => {

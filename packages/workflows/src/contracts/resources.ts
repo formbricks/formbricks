@@ -43,8 +43,17 @@ export const ZWorkflowRunSummary = z
     startedAt: ZIsoDateTime.nullable(),
     finishedAt: ZIsoDateTime.nullable(),
   })
-  .describe("Slim run shape returned by run lists and embedded as lastRun in workflow resources.");
+  .describe("Slim run shape embedded as lastRun in workflow resources.");
 export type TWorkflowRunSummary = z.infer<typeof ZWorkflowRunSummary>;
+
+export const ZWorkflowRunListItem = ZWorkflowRunSummary.extend({
+  workflowName: z
+    .string()
+    .describe("Name of the workflow this run belongs to, joined for the runs-list display."),
+}).describe(
+  "Run-list row: the slim summary plus the resolved workflow name. Distinct from the embedded lastRun summary, which omits the name (the parent workflow already carries it)."
+);
+export type TWorkflowRunListItem = z.infer<typeof ZWorkflowRunListItem>;
 
 export const ZWorkflowRunLogResource = ZWorkflowRunLog.required({
   input: true,

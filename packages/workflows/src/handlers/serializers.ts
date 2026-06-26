@@ -1,12 +1,14 @@
 import type {
   TWorkflowListItem,
   TWorkflowResource,
+  TWorkflowRunListItem,
   TWorkflowRunLogResource,
   TWorkflowRunResource,
   TWorkflowRunSummary,
 } from "../contracts";
 import type {
   WorkflowRowWithLastRun,
+  WorkflowRunListRow,
   WorkflowRunLogRow,
   WorkflowRunRow,
   WorkflowRunWithLogsRow,
@@ -39,6 +41,11 @@ export const toWorkflowRunSummary = (run: WorkflowRunRow): TWorkflowRunSummary =
   updatedAt: run.updatedAt.toISOString(),
   startedAt: toIso(run.startedAt),
   finishedAt: toIso(run.finishedAt),
+});
+
+export const toWorkflowRunListItem = (run: WorkflowRunListRow): TWorkflowRunListItem => ({
+  ...toWorkflowRunSummary(run),
+  workflowName: run.workflow.name,
 });
 
 export const toWorkflowRunLogResource = (log: WorkflowRunLogRow): TWorkflowRunLogResource => ({
