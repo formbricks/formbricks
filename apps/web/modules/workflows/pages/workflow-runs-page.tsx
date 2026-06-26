@@ -20,10 +20,10 @@ export const WorkflowRunsPage = ({ workspaceId, workflowId }: Readonly<WorkflowR
       isLoading={isLoading}
       isError={isError}
       error={error}
-      onRetry={refetch}
+      onRetry={() => refetch()}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
-      onLoadMore={fetchNextPage}
+      onLoadMore={() => fetchNextPage()}
     />
   );
 };
