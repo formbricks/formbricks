@@ -87,9 +87,9 @@ const loadAndAuthorize = async (
  * the shared audit redactor keys off field names it does not recognize on the workflow definition,
  * so masking at this seam guarantees those values never reach the audit `changes`.
  */
-const toAuditSnapshot = (row: WorkflowRowWithLastRun): Record<string, unknown> => {
+const toAuditSnapshot = (row: WorkflowRowWithLastRun, redactionKey?: string): Record<string, unknown> => {
   const resource = toWorkflowResource(row);
-  return { ...resource, definition: redactWorkflowDefinitionPII(resource.definition) };
+  return { ...resource, definition: redactWorkflowDefinitionPII(resource.definition, redactionKey) };
 };
 
 /**
@@ -200,7 +200,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
 
       // New id only exists post-mutation; capture it here rather than parsing the Response.
-      await recordAuditSafely(ctx, { targetId: created.id, newObject: toAuditSnapshot(created) });
+      await recordAuditSafely(ctx, {
+        targetId: created.id,
+        workspaceId: created.workspaceId,
+        newObject: toAuditSnapshot(created, ctx.auditRedactionKey),
+      });
 
       return createdResponse(resource, `/api/v3/workflows/${resource.id}`, ctx.requestId);
     } catch (error) {
@@ -241,8 +245,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
-        oldObject: toAuditSnapshot(loaded),
-        newObject: toAuditSnapshot(updated),
+        workspaceId: updated.workspaceId,
+        oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
+        newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
@@ -262,7 +267,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
 
       // Target is the new copy, not the source; its id only exists after the mutation.
-      await recordAuditSafely(ctx, { targetId: created.id, newObject: toAuditSnapshot(created) });
+      await recordAuditSafely(ctx, {
+        targetId: created.id,
+        workspaceId: created.workspaceId,
+        newObject: toAuditSnapshot(created, ctx.auditRedactionKey),
+      });
 
       return createdResponse(resource, `/api/v3/workflows/${resource.id}`, ctx.requestId);
     } catch (error) {
@@ -277,7 +286,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       await service.deleteWorkflow({ workflowId: params.workflowId, workspaceId: loaded.workspaceId });
 
-      await recordAuditSafely(ctx, { targetId: loaded.id, oldObject: toAuditSnapshot(loaded) });
+      await recordAuditSafely(ctx, {
+        targetId: loaded.id,
+        workspaceId: loaded.workspaceId,
+        oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
+      });
 
       return noContentResponse(ctx.requestId);
     } catch (error) {
@@ -300,8 +313,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
-        oldObject: toAuditSnapshot(loaded),
-        newObject: toAuditSnapshot(updated),
+        workspaceId: updated.workspaceId,
+        oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
+        newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
@@ -325,8 +339,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
-        oldObject: toAuditSnapshot(loaded),
-        newObject: toAuditSnapshot(updated),
+        workspaceId: updated.workspaceId,
+        oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
+        newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
@@ -365,8 +380,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
-        oldObject: toAuditSnapshot(loaded),
-        newObject: toAuditSnapshot(updated),
+        workspaceId: updated.workspaceId,
+        oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
+        newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
@@ -390,8 +406,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
-        oldObject: toAuditSnapshot(loaded),
-        newObject: toAuditSnapshot(updated),
+        workspaceId: updated.workspaceId,
+        oldObject: toAuditSnapshot(loaded, ctx.auditRedactionKey),
+        newObject: toAuditSnapshot(updated, ctx.auditRedactionKey),
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);

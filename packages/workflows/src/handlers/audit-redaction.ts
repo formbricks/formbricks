@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { WORKFLOW_ACTIONS } from "../types/actions";
 
 /**
@@ -10,21 +10,30 @@ import { WORKFLOW_ACTIONS } from "../types/actions";
 const SEND_EMAIL_PII_FIELDS = ["to", "from", "replyTo", "subject", "body"] as const;
 
 /**
- * Replace a PII value with a value-stable, non-reversible marker: `"[redacted:<hash>]"` where the
- * hash is the first 12 hex chars of `sha256(String(value))`. Same input → same marker (an unchanged
- * recipient produces no spurious diff), different input → different marker (a real change still
- * surfaces in `changes`), and the raw value is never recoverable from the marker. A constant token
- * would collapse `deepDiff` (token == token) and hide recipient-only edits — hence the per-value hash.
+ * Replace a PII value with a value-stable, non-reversible marker: `"[redacted:<digest>]"` where
+ * `<digest>` is the first 12 hex chars of a keyed HMAC-SHA256 (or, if no key is injected, a plain
+ * SHA256 fallback for non-EE/local). Same value+key → same marker (an unchanged recipient produces
+ * no spurious diff); different value → different marker (a real change still surfaces in `changes`).
+ *
+ * The key matters: a plain `sha256` of a low-entropy value like an email is offline-guessable —
+ * anyone with audit-log read access could confirm a likely recipient by hashing candidates. An
+ * HMAC keyed with the app's audit secret keeps the marker stable yet not trivially reversible
+ * without the secret. The key is injected (never read from env here) so the package stays
+ * framework-agnostic.
  */
-const redactValue = (value: string): string =>
-  `[redacted:${createHash("sha256").update(value).digest("hex").slice(0, 12)}]`;
+const redactValue = (value: string, key?: string): string => {
+  const digest = key
+    ? createHmac("sha256", key).update(value).digest("hex")
+    : createHash("sha256").update(value).digest("hex");
+  return `[redacted:${digest.slice(0, 12)}]`;
+};
 
 /** Redact one PII field: hash each element of an array (e.g. `replyTo`), otherwise hash the value. */
-const redactField = (value: unknown): unknown => {
+const redactField = (value: unknown, key?: string): unknown => {
   if (Array.isArray(value)) {
-    return value.map((element) => redactValue(String(element)));
+    return value.map((element) => redactValue(String(element), key));
   }
-  return redactValue(String(value));
+  return redactValue(String(value), key);
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -37,11 +46,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * would reach the audit `changes` verbatim. Done here (domain knowledge about the definition shape)
  * rather than by widening the global sensitive-key list, which would over-redact unrelated events.
  *
+ * `key` is the optional HMAC secret the adapter injects (the app's audit secret); see `redactValue`.
+ *
  * Returns a deep-copied definition with the `send_email` PII fields replaced by value-stable
  * markers; everything else (status, name, structure, non-PII config) is preserved so the diff stays
  * readable, and a changed recipient still produces a (content-free) diff entry.
  */
-export const redactWorkflowDefinitionPII = (definition: unknown): unknown => {
+export const redactWorkflowDefinitionPII = (definition: unknown, key?: string): unknown => {
   if (!isRecord(definition)) return definition;
   if (!Array.isArray(definition.nodes)) return definition;
 
@@ -59,7 +70,7 @@ export const redactWorkflowDefinitionPII = (definition: unknown): unknown => {
     const redactedConfig: Record<string, unknown> = { ...node.config };
     for (const field of SEND_EMAIL_PII_FIELDS) {
       if (field in redactedConfig) {
-        redactedConfig[field] = redactField(redactedConfig[field]);
+        redactedConfig[field] = redactField(redactedConfig[field], key);
       }
     }
     return { ...node, config: redactedConfig };

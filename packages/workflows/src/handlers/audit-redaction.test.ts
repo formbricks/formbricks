@@ -73,6 +73,41 @@ describe("redactWorkflowDefinitionPII", () => {
     expect(before.replyTo).not.toEqual(after.replyTo);
   });
 
+  test("a keyed digest differs from the unkeyed one for the same value (HMAC, not plain sha256)", () => {
+    const keyed = (
+      redactWorkflowDefinitionPII(definition([sendEmailNode()]), "audit-secret") as {
+        nodes: { config: Record<string, unknown> }[];
+      }
+    ).nodes[0].config;
+    const unkeyed = redactConfig([sendEmailNode()]);
+
+    // Same input, different secret → different marker, proving the digest is actually keyed.
+    expect(keyed.to).toMatch(MARKER);
+    expect(keyed.to).not.toBe(unkeyed.to);
+    // Still value-stable under the same key, and still leaks no raw email.
+    const keyedAgain = (
+      redactWorkflowDefinitionPII(definition([sendEmailNode()]), "audit-secret") as {
+        nodes: { config: Record<string, unknown> }[];
+      }
+    ).nodes[0].config;
+    expect(keyed.to).toBe(keyedAgain.to);
+    expect(String(keyed.to)).not.toContain("@example.com");
+  });
+
+  test("different keys produce different markers for the same value", () => {
+    const withKeyA = (
+      redactWorkflowDefinitionPII(definition([sendEmailNode()]), "key-a") as {
+        nodes: { config: Record<string, unknown> }[];
+      }
+    ).nodes[0].config;
+    const withKeyB = (
+      redactWorkflowDefinitionPII(definition([sendEmailNode()]), "key-b") as {
+        nodes: { config: Record<string, unknown> }[];
+      }
+    ).nodes[0].config;
+    expect(withKeyA.to).not.toBe(withKeyB.to);
+  });
+
   test("does not mutate the input definition", () => {
     const input = definition([sendEmailNode()]);
     redactWorkflowDefinitionPII(input);

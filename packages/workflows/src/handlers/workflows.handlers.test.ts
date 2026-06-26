@@ -610,6 +610,7 @@ describe("recordAudit (audit-sink port)", () => {
     expect(recordAudit).toHaveBeenCalledTimes(1);
     const detail = recordAudit.mock.calls[0][0];
     expect(detail.targetId).toBe(workflowId);
+    expect(detail.workspaceId).toBe(workspaceId);
     expect(detail.oldObject).toBeUndefined();
     expect(detail.newObject).toEqual(expect.objectContaining({ id: workflowId, workspaceId }));
   });

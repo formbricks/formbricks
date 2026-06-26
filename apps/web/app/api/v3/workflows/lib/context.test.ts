@@ -132,31 +132,47 @@ describe("recordAudit (binds the audit sink to the request's audit log)", () => 
 
     await ctx.recordAudit?.({
       targetId: "wf_1",
+      workspaceId: "ws_1",
       oldObject: { status: "draft" },
-      newObject: { status: "enabled", workspaceId: "ws_1" },
+      newObject: { status: "enabled" },
     });
 
     expect(auditLog.targetId).toBe("wf_1");
     expect(auditLog.oldObject).toEqual({ status: "draft" });
-    expect(auditLog.newObject).toEqual({ status: "enabled", workspaceId: "ws_1" });
+    expect(auditLog.newObject).toEqual({ status: "enabled" });
   });
 
-  test("resolves the workflow's organization from its workspace for session auth", async () => {
+  test("resolves the workflow's organization from detail.workspaceId for session auth", async () => {
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_resolved");
     const auditLog = baseAuditLog();
     const ctx = buildWorkflowApiContext(sessionAuth, "req_1", "inst", auditLog);
 
-    await ctx.recordAudit?.({ targetId: "wf_1", newObject: { workspaceId: "ws_1" } });
+    await ctx.recordAudit?.({ targetId: "wf_1", workspaceId: "ws_1", newObject: { status: "draft" } });
 
     expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith("ws_1");
     expect(auditLog.organizationId).toBe("org_resolved");
+  });
+
+  test("resolves org from detail.workspaceId on the delete path (oldObject only, no newObject)", async () => {
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_resolved");
+    const auditLog = baseAuditLog();
+    const ctx = buildWorkflowApiContext(sessionAuth, "req_1", "inst", auditLog);
+
+    // Delete-style: a pre-mutation snapshot only, no newObject — org must still resolve from the
+    // explicit workspaceId (never inferred from a snapshot that the delete path may not carry).
+    await ctx.recordAudit?.({ targetId: "wf_1", workspaceId: "ws_1", oldObject: { status: "draft" } });
+
+    expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith("ws_1");
+    expect(auditLog.organizationId).toBe("org_resolved");
+    expect(auditLog.oldObject).toEqual({ status: "draft" });
+    expect(auditLog.newObject).toBeUndefined();
   });
 
   test("keeps the API-key path's organization and does not re-resolve from the workspace", async () => {
     const auditLog = { ...baseAuditLog(), organizationId: "org_from_key" };
     const ctx = buildWorkflowApiContext(apiKeyAuth as TV3Authentication, "req_1", "inst", auditLog);
 
-    await ctx.recordAudit?.({ targetId: "wf_1", newObject: { workspaceId: "ws_1" } });
+    await ctx.recordAudit?.({ targetId: "wf_1", workspaceId: "ws_1", newObject: { status: "draft" } });
 
     expect(getOrganizationIdFromWorkspaceId).not.toHaveBeenCalled();
     expect(auditLog.organizationId).toBe("org_from_key");
@@ -168,7 +184,7 @@ describe("recordAudit (binds the audit sink to the request's audit log)", () => 
     const ctx = buildWorkflowApiContext(sessionAuth, "req_1", "inst", auditLog);
 
     await expect(
-      ctx.recordAudit?.({ targetId: "wf_1", newObject: { workspaceId: "ws_1" } })
+      ctx.recordAudit?.({ targetId: "wf_1", workspaceId: "ws_1", newObject: { status: "draft" } })
     ).resolves.toBeUndefined();
 
     expect(auditLog.targetId).toBe("wf_1");

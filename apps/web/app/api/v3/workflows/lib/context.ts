@@ -9,6 +9,7 @@ import {
 } from "@formbricks/workflows/server";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { ENCRYPTION_KEY } from "@/lib/constants";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 
 /**
@@ -53,22 +54,17 @@ const verifyTriggerSurvey: WorkflowApiContext["verifyTriggerSurvey"] = async ({
   };
 };
 
-/** Reads the workspace id off an audit snapshot (the serialized resource carries it as a string). */
-const getWorkspaceId = (detail: WorkflowAuditDetail): string | undefined => {
-  const source = detail.newObject ?? detail.oldObject;
-  const workspaceId = source?.workspaceId;
-  return typeof workspaceId === "string" ? workspaceId : undefined;
-};
-
 /**
  * Bind the framework-agnostic audit sink to this request's audit log. The handlers call it once,
- * post-mutation, with the affected workflow id + before/after snapshots; we copy those onto
- * `auditLog` (target id, old/new object) so the v3 wrapper queues a complete Enterprise event.
+ * post-mutation, with the affected workflow id + workspace id + before/after snapshots; we copy
+ * those onto `auditLog` (target id, old/new object) so the v3 wrapper queues a complete Enterprise
+ * event.
  *
  * Organization resolution: the API-key path already set `auditLog.organizationId` from the key's
  * org (see `buildV3AuditLog`); the session path leaves it as `UNKNOWN_DATA`, so we resolve the
- * workflow's real org from its workspace here. Any failure is swallowed and logged — an audit
- * problem must never break or alter an already-successful mutation.
+ * workflow's real org from `detail.workspaceId` (a first-class field — never inferred from the
+ * snapshots, so snapshot reshaping or PII redaction can't silently regress it). Any failure is
+ * swallowed and logged — an audit problem must never break or alter an already-successful mutation.
  */
 const buildRecordAudit =
   (
@@ -76,7 +72,7 @@ const buildRecordAudit =
     authentication: TV3Authentication,
     requestId: string
   ): NonNullable<WorkflowApiContext["recordAudit"]> =>
-  async (detail) => {
+  async (detail: WorkflowAuditDetail) => {
     try {
       auditLog.targetId = detail.targetId;
       auditLog.oldObject = detail.oldObject;
@@ -85,10 +81,7 @@ const buildRecordAudit =
       // API-key auth already carries the org; only the session path needs resolution.
       const isApiKey = !!authentication && "apiKeyId" in authentication;
       if (!isApiKey) {
-        const workspaceId = getWorkspaceId(detail);
-        if (workspaceId) {
-          auditLog.organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-        }
+        auditLog.organizationId = await getOrganizationIdFromWorkspaceId(detail.workspaceId);
       }
     } catch (error) {
       logger.withContext({ requestId }).error({ error }, "Failed to record workflow audit detail");
@@ -105,6 +98,9 @@ export const buildWorkflowApiContext = (
   requestId,
   instance,
   logger: logger.withContext({ requestId }),
+  // HMAC key for redacting PII markers in audit snapshots; reuses the app's audit/encryption secret
+  // so markers aren't offline-guessable. Injected as data to keep `@formbricks/workflows` agnostic.
+  auditRedactionKey: ENCRYPTION_KEY,
   authorize: (workspaceId, access) =>
     requireV3WorkspaceAccess(authentication, workspaceId, access, requestId, instance),
   verifyTriggerSurvey,
