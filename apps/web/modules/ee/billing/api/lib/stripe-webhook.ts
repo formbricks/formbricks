@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import {
   applyPendingUpgradeFromSetupCheckout,
@@ -19,6 +20,8 @@ const relevantEvents = new Set([
   "subscription_schedule.released",
   "subscription_schedule.canceled",
   "subscription_schedule.completed",
+  "payment_intent.requires_action",
+  "payment_intent.canceled",
 ]);
 
 /**
@@ -82,6 +85,87 @@ const handleSetupCheckoutCompleted = async (
         "Failed to apply pending plan upgrade after setup checkout"
       );
     }
+  }
+};
+
+const handlePaymentIntentRequiresAction = async (
+  paymentIntent: Stripe.PaymentIntent
+): Promise<void> => {
+  const customerId = typeof paymentIntent.customer === "string" ? paymentIntent.customer : null;
+  if (!customerId) return;
+
+  const organizationId = await findOrganizationIdByStripeCustomerId(customerId);
+  if (!organizationId) return;
+
+  const billing = await prisma.organizationBilling.findUnique({
+    where: { organizationId },
+  });
+
+  if (!billing) return;
+
+  const currentStripeSnapshot = billing.stripe ? { ...billing.stripe } : {};
+
+  await prisma.organizationBilling.update({
+    where: { organizationId },
+    data: {
+      stripe: {
+        ...currentStripeSnapshot,
+        paymentAttemptError: {
+          type: "requires_action",
+          paymentIntentId: paymentIntent.id,
+          message: "Payment requires additional authentication. Please update your payment method.",
+          createdAt: new Date().toISOString(),
+        },
+        lastSyncedAt: new Date().toISOString(),
+      },
+    },
+  });
+
+  logger.info(
+    { paymentIntentId: paymentIntent.id, organizationId },
+    "Payment intent requires action for organization"
+  );
+};
+
+const handlePaymentIntentCanceled = async (paymentIntent: Stripe.PaymentIntent): Promise<void> => {
+  const customerId = typeof paymentIntent.customer === "string" ? paymentIntent.customer : null;
+  if (!customerId) return;
+
+  const organizationId = await findOrganizationIdByStripeCustomerId(customerId);
+  if (!organizationId) return;
+
+  const billing = await prisma.organizationBilling.findUnique({
+    where: { organizationId },
+  });
+
+  if (!billing) return;
+
+  if (
+    paymentIntent.cancellation_reason === "failed_invoice" ||
+    paymentIntent.status === "canceled"
+  ) {
+    const currentStripeSnapshot = billing.stripe ? { ...billing.stripe } : {};
+
+    await prisma.organizationBilling.update({
+      where: { organizationId },
+      data: {
+        stripe: {
+          ...currentStripeSnapshot,
+          paymentAttemptError: {
+            type: "failed_invoice",
+            paymentIntentId: paymentIntent.id,
+            message: "Payment was canceled. Please contact support to complete your upgrade.",
+            createdAt: new Date().toISOString(),
+          },
+          lastSyncedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    logger.info(
+      { paymentIntentId: paymentIntent.id, organizationId, cancellationReason: paymentIntent.cancellation_reason },
+      "Payment intent canceled for organization"
+    );
   }
 };
 
@@ -162,14 +246,24 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     return { status: 200, message: { received: true } };
   }
 
-  const eventObject = event.data.object as Stripe.Event.Data.Object;
-  const organizationId = await resolveOrganizationId(eventObject);
-
-  if (!organizationId) {
-    return getUnresolvedOrganizationResponse(event);
-  }
-
   try {
+    if (event.type === "payment_intent.requires_action") {
+      await handlePaymentIntentRequiresAction(event.data.object as Stripe.PaymentIntent);
+      return { status: 200, message: { received: true } };
+    }
+
+    if (event.type === "payment_intent.canceled") {
+      await handlePaymentIntentCanceled(event.data.object as Stripe.PaymentIntent);
+      return { status: 200, message: { received: true } };
+    }
+
+    const eventObject = event.data.object as Stripe.Event.Data.Object;
+    const organizationId = await resolveOrganizationId(eventObject);
+
+    if (!organizationId) {
+      return getUnresolvedOrganizationResponse(event);
+    }
+
     if (event.type === "checkout.session.completed") {
       await handleSetupCheckoutCompleted(event.data.object, stripe);
     }
@@ -181,8 +275,8 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     });
   } catch (error) {
     logger.error(
-      { error, eventId: event.id, organizationId, eventType: event.type },
-      "Failed to sync billing snapshot from Stripe webhook"
+      { error, eventId: event.id, eventType: event.type },
+      "Failed to process Stripe webhook"
     );
     return { status: 500, message: "Stripe webhook processing failed; please retry." };
   }

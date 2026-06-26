@@ -322,6 +322,34 @@ export const PricingTable = ({
     router.replace(`/organizations/${organizationId}/settings/billing`);
   }, [currentBillingInterval, currentCloudPlan, router, searchParams, t, organizationId]);
 
+  useEffect(() => {
+    const paymentError = organization.billing.stripe?.paymentAttemptError;
+    if (!paymentError) {
+      return;
+    }
+
+    const toastId = toast.error(
+      <div>
+        <div className="font-medium">{paymentError.message}</div>
+        <div className="text-sm mt-2">
+          Please contact{" "}
+          <a href="mailto:hola@formbricks.com" className="underline font-medium">
+            hola@formbricks.com
+          </a>{" "}
+          for support.
+        </div>
+      </div>,
+      {
+        duration: 10000,
+        icon: "⚠️",
+      }
+    );
+
+    return () => {
+      toast.dismiss(toastId);
+    };
+  }, [organization.billing.stripe?.paymentAttemptError]);
+
   const planCards = useMemo<TPlanCardData[]>(() => {
     return [
       {
