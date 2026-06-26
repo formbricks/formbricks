@@ -252,4 +252,67 @@ describe("getWorkspaceStateData", () => {
 
     expect(result).not.toHaveProperty("organization");
   });
+
+  // ENG-1067 back-compat: SDK clients match the display language by exact code, so alongside each
+  // canonical region-tagged code we expose its bare legacy code for multi-language surveys.
+  const buildLanguage = (code: string, isDefault = false) => ({
+    default: isDefault,
+    enabled: true,
+    language: {
+      id: `lang-${code}`,
+      code,
+      alias: null,
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      workspaceId,
+    },
+  });
+
+  test("appends bare legacy language codes for multi-language surveys", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          languages: [buildLanguage("en-US", true), buildLanguage("de-DE")],
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const codes = result.surveys[0].languages.map((sl) => sl.language.code);
+
+    // canonical entries stay first; bare legacy entries are appended
+    expect(codes).toEqual(["en-US", "de-DE", "en", "de"]);
+  });
+
+  test("does not append legacy codes for single-language surveys", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [{ ...mockWorkspaceData.surveys[0], languages: [buildLanguage("en-US", true)] }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const codes = result.surveys[0].languages.map((sl) => sl.language.code);
+
+    expect(codes).toEqual(["en-US"]);
+  });
+
+  test("does not duplicate a bare code that a real language already uses", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          languages: [buildLanguage("en-US", true), buildLanguage("de-DE"), buildLanguage("de")],
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const codes = result.surveys[0].languages.map((sl) => sl.language.code);
+
+    // "de" already present → only "en" gets appended
+    expect(codes).toEqual(["en-US", "de-DE", "de", "en"]);
+  });
 });

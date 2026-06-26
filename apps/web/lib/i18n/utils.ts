@@ -239,3 +239,26 @@ export const appLanguages = [
 export const sortedAppLanguages = [...appLanguages].sort((a, b) =>
   a.label["en-US"].localeCompare(b.label["en-US"])
 );
+
+/**
+ * Transitional SDK back-compat (ENG-1067).
+ *
+ * Language codes were canonicalized to region-tagged BCP-47 (`de` → `de-DE`). SDK clients pick a
+ * survey's display language by matching the user's language against the survey languages by *exact*
+ * code — they don't canonicalize. So while older clients are still in the wild, the SDK-facing surface
+ * keeps speaking the bare legacy code on both sides:
+ *   - the client environment serializer exposes a duplicate bare entry next to each canonical language, and
+ *   - the user-state response de-canonicalizes the contact's language to the same bare form,
+ * so the two line up and exact matching still works. The DB stays canonical throughout; the renderer
+ * canonicalizes whatever it receives, so content lookup is unaffected.
+ *
+ * Both call sites MUST use this single helper so the codes they emit stay aligned.
+ *
+ * Remove once SDK clients holding pre-canonicalization codes have drained.
+ *
+ * @returns the bare legacy code (`de-DE` → `de`), or `null` when the code is already bare.
+ */
+export const toLegacyLanguageCode = (code: string): string | null => {
+  const bare = code.split("-")[0].toLowerCase();
+  return bare === code.toLowerCase() ? null : bare;
+};

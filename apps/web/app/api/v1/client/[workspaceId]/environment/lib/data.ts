@@ -9,6 +9,7 @@ import {
   TJsWorkspaceStateSurvey,
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
+import { toLegacyLanguageCode } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
@@ -27,6 +28,43 @@ export interface WorkspaceStateData {
   surveys: TJsWorkspaceStateSurvey[];
   actionClasses: TJsWorkspaceStateActionClass[];
 }
+
+/**
+ * Transitional back-compat (ENG-1067). SDK clients pick a survey's display language by matching the
+ * user's language against `survey.languages` by exact code/alias — they do not canonicalize. After
+ * codes were canonicalized to region-tagged BCP-47 (e.g. `de` → `de-DE`), an SDK still holding a
+ * pre-canonicalization code (common for anonymous users, whose language lives only in local storage and
+ * never round-trips through the server) would stop matching, and the survey would be hidden.
+ *
+ * So alongside each region-tagged language we expose a duplicate entry under its bare legacy code
+ * (`de-DE` → `de`). The legacy entry only exists to satisfy the SDK's exact match; the survey renderer
+ * canonicalizes whatever it receives, so content lookup still resolves to the canonical key. Canonical
+ * entries are kept first so the renderer resolves to the canonical code.
+ *
+ * Applied to multi-language surveys only: a single-language survey skips language matching in the SDK,
+ * and adding an entry would flip it to "multi-language" and could hide it. Remove once SDK clients
+ * holding legacy codes have drained.
+ */
+const appendLegacyLanguageCodes = <
+  T extends { default: boolean; enabled: boolean; language: { code: string } },
+>(
+  languages: T[] | undefined
+): T[] | undefined => {
+  if (!languages || languages.length <= 1) return languages;
+
+  const seenCodes = new Set(languages.map((sl) => sl.language.code.toLowerCase()));
+  const legacyEntries: T[] = [];
+
+  for (const surveyLanguage of languages) {
+    const bareCode = toLegacyLanguageCode(surveyLanguage.language.code);
+    // Skip if the code is already bare, or a real language in this survey already uses that code.
+    if (!bareCode || seenCodes.has(bareCode)) continue;
+    seenCodes.add(bareCode);
+    legacyEntries.push({ ...surveyLanguage, language: { ...surveyLanguage.language, code: bareCode } });
+  }
+
+  return [...languages, ...legacyEntries];
+};
 
 /**
  * Single optimized query that fetches all required data
@@ -191,9 +229,13 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         language: { ...sl.language, projectId: sl.language.workspaceId },
       }));
 
+      // Expose bare legacy language codes alongside the canonical ones so SDK clients still holding a
+      // pre-canonicalization code keep matching (see appendLegacyLanguageCodes).
+      const languagesWithLegacyCodes = appendLegacyLanguageCodes(languagesWithProjectId);
+
       const transformed = transformPrismaSurvey<TJsWorkspaceStateSurvey>({
         ...surveyWithoutSegment,
-        languages: languagesWithProjectId,
+        languages: languagesWithLegacyCodes,
         segment: null,
       });
 
