@@ -1,6 +1,6 @@
 import "server-only";
-import type { BetterAuthOptions } from "better-auth";
-import { APIError } from "better-auth/api";
+import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
@@ -82,3 +82,38 @@ export const accountDeletionConfig = {
   beforeDelete: accountDeletionBeforeDelete,
   afterDelete: accountDeletionAfterDelete,
 } satisfies DeleteUserConfig;
+
+/**
+ * Closes Better Auth's native delete-user freshness shortcut (ENG-1054).
+ *
+ * `POST /delete-user` verifies the password only when `body.password` is present; with no password it
+ * falls back to a session-freshness check (`freshAge` = 1 day in auth.ts), so an empty-body request
+ * from a still-fresh session would delete the account with NO confirmation — bypassing the intended
+ * friction (password for credential users, email-link callback for SSO). `beforeDelete` only receives
+ * `(user, request)` and can't tell whether a password was supplied, so the guard has to sit in the
+ * request pipeline.
+ *
+ * This `before` hook rejects the direct `POST /delete-user` unless a password is supplied. Credential
+ * users pass their password (Better Auth then verifies it); SSO users have none and are therefore
+ * forced onto the `GET /delete-user/callback?token=...` email-link flow, which this does NOT match.
+ * The `freshAge` gate stays in place as defense-in-depth. Shipped as a plugin so it composes with the
+ * top-level `hooks.before` (the SSO license gate) instead of clobbering it.
+ */
+export const accountDeletionGuardPlugin = {
+  id: "formbricks-account-deletion-guard",
+  hooks: {
+    before: [
+      {
+        matcher: (context) => context.path === "/delete-user",
+        handler: createAuthMiddleware(async (ctx) => {
+          const password = (ctx.body as { password?: unknown } | undefined)?.password;
+          if (typeof password !== "string" || password.length === 0) {
+            throw new APIError("BAD_REQUEST", {
+              message: "Account deletion requires password confirmation.",
+            });
+          }
+        }),
+      },
+    ],
+  },
+} satisfies BetterAuthPlugin;

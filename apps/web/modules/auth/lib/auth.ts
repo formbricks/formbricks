@@ -14,7 +14,10 @@ import {
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
-import { accountDeletionConfig } from "@/modules/account/lib/better-auth-account-deletion";
+import {
+  accountDeletionConfig,
+  accountDeletionGuardPlugin,
+} from "@/modules/account/lib/better-auth-account-deletion";
 import {
   ssoDatabaseHooks,
   ssoLicenseGateBefore,
@@ -247,6 +250,9 @@ export const auth = betterAuth({
     // path (recovery-scoped, not a general magic-link). Inert until cutover (handler mount + email
     // repoint). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
+    // Reject the password-less `POST /delete-user` so a fresh session can't delete an account without
+    // confirmation (freshAge shortcut). Credential users must pass a password; SSO uses the callback.
+    accountDeletionGuardPlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],
