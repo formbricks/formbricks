@@ -1,6 +1,11 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
-import { getWorkflowRunStatusBadge, getWorkflowStatusBadge, getWorkflowTriggerTypeLabel } from "./display";
+import {
+  getWorkflowRunLogStatusBadge,
+  getWorkflowRunStatusBadge,
+  getWorkflowStatusBadge,
+  getWorkflowTriggerTypeLabel,
+} from "./display";
 
 // Identity translator so assertions can check the i18n key each helper resolves.
 const t = ((key: string) => key) as unknown as TFunction;
@@ -25,6 +30,18 @@ describe("getWorkflowRunStatusBadge", () => {
     ["queued", "common.queued", "gray"],
   ] as const)("maps %s to label %s / type %s", (status, label, type) => {
     expect(getWorkflowRunStatusBadge(status, t)).toEqual({ label, type });
+  });
+});
+
+describe("getWorkflowRunLogStatusBadge", () => {
+  test.each([
+    ["succeeded", "common.succeeded", "success"],
+    ["failed", "common.failed", "error"],
+    ["running", "common.running", "warning"],
+    ["skipped", "common.skipped", "gray"],
+    ["pending", "common.pending", "gray"],
+  ] as const)("maps %s to label %s / type %s", (status, label, type) => {
+    expect(getWorkflowRunLogStatusBadge(status, t)).toEqual({ label, type });
   });
 });
 
