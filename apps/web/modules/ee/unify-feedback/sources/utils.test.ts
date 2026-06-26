@@ -73,8 +73,12 @@ describe("parseCSVColumnsToFields", () => {
   });
 });
 
-const createMockFile = (name: string, size: number, type: string): File =>
-  new File(["x".repeat(size)], name, { type });
+const createMockFile = (name: string, size: number, type: string): File => {
+  const file = new File([], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+
+  return file;
+};
 
 describe("validateCsvFile", () => {
   test("accepts a valid .csv file", () => {

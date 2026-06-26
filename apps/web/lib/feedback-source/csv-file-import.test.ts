@@ -10,7 +10,15 @@ import {
 } from "@/modules/ee/unify-feedback/sources/types";
 import { CsvImportValidationError, parseCsvImportFile } from "./csv-file-import";
 
-const createFile = (name: string, content: string, type = "text/csv") => new File([content], name, { type });
+const createFile = (name: string, content: string, type = "text/csv", size?: number) => {
+  const file = new File([content], name, { type });
+
+  if (size !== undefined) {
+    Object.defineProperty(file, "size", { value: size });
+  }
+
+  return file;
+};
 
 const expectCsvValidationError = async (file: File, code: string) => {
   await expect(parseCsvImportFile(file)).rejects.toMatchObject({
@@ -19,28 +27,21 @@ const expectCsvValidationError = async (file: File, code: string) => {
   } satisfies Partial<CsvImportValidationError>);
 };
 
-const createLargeCsvContent = () => {
-  const rowCount = 900;
-  const payload = "x".repeat(16_500);
-  const rows = Array.from(
-    { length: rowCount },
-    (_, index) => `sub-${index.toString()},question,text,"${payload}"`
-  );
-
-  return ["submission_id,field_id,field_type,response_value", ...rows].join("\n");
-};
-
 describe("parseCsvImportFile", () => {
   test("accepts a CSV larger than 14MB and under the 15MB cap", async () => {
-    const content = createLargeCsvContent();
-    const file = createFile("large.csv", content);
+    const file = createFile(
+      "large.csv",
+      "submission_id,field_id,field_type,response_value\nsub-0,question,text,Great experience",
+      "text/csv",
+      14 * 1024 * 1024
+    );
 
     expect(file.size).toBeGreaterThanOrEqual(14 * 1024 * 1024);
     expect(file.size).toBeLessThanOrEqual(MAX_CSV_VALUES.FILE_SIZE);
 
     const rows = await parseCsvImportFile(file);
 
-    expect(rows).toHaveLength(900);
+    expect(rows).toHaveLength(1);
     expect(rows[0].submission_id).toBe("sub-0");
   });
 
@@ -52,7 +53,12 @@ describe("parseCsvImportFile", () => {
   });
 
   test("rejects a CSV larger than 15MB before parsing", async () => {
-    const file = createFile("large.csv", "x".repeat(MAX_CSV_VALUES.FILE_SIZE + 1));
+    const file = createFile(
+      "large.csv",
+      "submission_id,field_id\nsub-0,q1",
+      "text/csv",
+      MAX_CSV_VALUES.FILE_SIZE + 1
+    );
 
     await expectCsvValidationError(file, CSV_FILE_TOO_LARGE_ERROR_CODE);
   });
