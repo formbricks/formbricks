@@ -11,9 +11,9 @@ export const POST = withV3ApiWrapper({
   action: "updated",
   targetType: "workflow",
   schemas: { params: ZWorkflowIdInput },
-  handler: async ({ parsedInput, authentication, requestId, instance }) =>
+  handler: async ({ parsedInput, authentication, auditLog, requestId, instance }) =>
     workflowsHandlers.archive({
-      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      ctx: buildWorkflowApiContext(authentication, requestId, instance, auditLog),
       params: parsedInput.params,
     }),
 });

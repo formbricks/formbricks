@@ -3,11 +3,13 @@ import { logger } from "@formbricks/logger";
 import { ZSurveyEndings } from "@formbricks/types/surveys/types";
 import {
   type WorkflowApiContext,
+  type WorkflowAuditDetail,
   createWorkflowsHandlers,
   createWorkflowsService,
 } from "@formbricks/workflows/server";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 
 /**
  * Adapter glue between the Next.js v3 routes and the framework-agnostic `@formbricks/workflows`
@@ -51,10 +53,53 @@ const verifyTriggerSurvey: WorkflowApiContext["verifyTriggerSurvey"] = async ({
   };
 };
 
+/** Reads the workspace id off an audit snapshot (the serialized resource carries it as a string). */
+const getWorkspaceId = (detail: WorkflowAuditDetail): string | undefined => {
+  const source = detail.newObject ?? detail.oldObject;
+  const workspaceId = source?.workspaceId;
+  return typeof workspaceId === "string" ? workspaceId : undefined;
+};
+
+/**
+ * Bind the framework-agnostic audit sink to this request's audit log. The handlers call it once,
+ * post-mutation, with the affected workflow id + before/after snapshots; we copy those onto
+ * `auditLog` (target id, old/new object) so the v3 wrapper queues a complete Enterprise event.
+ *
+ * Organization resolution: the API-key path already set `auditLog.organizationId` from the key's
+ * org (see `buildV3AuditLog`); the session path leaves it as `UNKNOWN_DATA`, so we resolve the
+ * workflow's real org from its workspace here. Any failure is swallowed and logged — an audit
+ * problem must never break or alter an already-successful mutation.
+ */
+const buildRecordAudit =
+  (
+    auditLog: TV3AuditLog,
+    authentication: TV3Authentication,
+    requestId: string
+  ): NonNullable<WorkflowApiContext["recordAudit"]> =>
+  async (detail) => {
+    try {
+      auditLog.targetId = detail.targetId;
+      auditLog.oldObject = detail.oldObject;
+      auditLog.newObject = detail.newObject;
+
+      // API-key auth already carries the org; only the session path needs resolution.
+      const isApiKey = !!authentication && "apiKeyId" in authentication;
+      if (!isApiKey) {
+        const workspaceId = getWorkspaceId(detail);
+        if (workspaceId) {
+          auditLog.organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+        }
+      }
+    } catch (error) {
+      logger.withContext({ requestId }).error({ error }, "Failed to record workflow audit detail");
+    }
+  };
+
 export const buildWorkflowApiContext = (
   authentication: TV3Authentication,
   requestId: string,
-  instance: string
+  instance: string,
+  auditLog?: TV3AuditLog
 ): WorkflowApiContext => ({
   userId: getUserId(authentication),
   requestId,
@@ -63,4 +108,5 @@ export const buildWorkflowApiContext = (
   authorize: (workspaceId, access) =>
     requireV3WorkspaceAccess(authentication, workspaceId, access, requestId, instance),
   verifyTriggerSurvey,
+  ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
 });

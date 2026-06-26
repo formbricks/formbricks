@@ -578,3 +578,203 @@ describe("disable", () => {
     expect(service.disableWorkflow).not.toHaveBeenCalled();
   });
 });
+
+describe("recordAudit (audit-sink port)", () => {
+  const copyId = "cm9zr4t2b000208l8h2m1xyz9";
+  const recordAudit = vi.fn<NonNullable<WorkflowApiContext["recordAudit"]>>();
+  const auditCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContext =>
+    makeCtx({ recordAudit, ...overrides });
+
+  const postRequest = (body?: unknown): Request =>
+    new Request("http://localhost/api/v3/workflows", {
+      method: "POST",
+      ...(body !== undefined
+        ? { body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }
+        : {}),
+    });
+  const patchRequest = (body: unknown): Request =>
+    new Request("http://localhost/api/v3/workflows/x", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+
+  test("create surfaces the new id and a new-object snapshot (no old object)", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow());
+
+    await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx: auditCtx(),
+    });
+
+    expect(recordAudit).toHaveBeenCalledTimes(1);
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.targetId).toBe(workflowId);
+    expect(detail.oldObject).toBeUndefined();
+    expect(detail.newObject).toEqual(expect.objectContaining({ id: workflowId, workspaceId }));
+  });
+
+  test("update surfaces before/after snapshots showing the changed name", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft", name: "Before" }));
+    service.updateWorkflow.mockResolvedValue(makeRow({ name: "After" }));
+
+    await handlers.patch({ req: patchRequest({ name: "After" }), ctx: auditCtx(), params: { workflowId } });
+
+    expect(recordAudit).toHaveBeenCalledTimes(1);
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.targetId).toBe(workflowId);
+    expect(detail.oldObject).toEqual(expect.objectContaining({ name: "Before" }));
+    expect(detail.newObject).toEqual(expect.objectContaining({ name: "After" }));
+  });
+
+  test("delete surfaces the removed object (no new object)", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    service.deleteWorkflow.mockResolvedValue(undefined);
+
+    await handlers.delete({ ctx: auditCtx(), params: { workflowId } });
+
+    expect(recordAudit).toHaveBeenCalledTimes(1);
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.targetId).toBe(workflowId);
+    expect(detail.oldObject).toEqual(expect.objectContaining({ id: workflowId }));
+    expect(detail.newObject).toBeUndefined();
+  });
+
+  test("duplicate surfaces the copy's id, not the source id", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    service.duplicateWorkflow.mockResolvedValue(makeRow({ id: copyId, name: "Notify team (copy)" }));
+
+    await handlers.duplicate({
+      req: new Request("http://localhost/api/v3/workflows/x/duplicate", { method: "POST" }),
+      ctx: auditCtx(),
+      params: { workflowId },
+    });
+
+    expect(recordAudit).toHaveBeenCalledTimes(1);
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.targetId).toBe(copyId);
+    expect(detail.oldObject).toBeUndefined();
+    expect(detail.newObject).toEqual(expect.objectContaining({ id: copyId }));
+  });
+
+  test("enable surfaces the draft -> enabled status transition in both snapshots", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    await handlers.enable({ ctx: auditCtx(), params: { workflowId } });
+
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.oldObject).toEqual(expect.objectContaining({ status: "draft" }));
+    expect(detail.newObject).toEqual(expect.objectContaining({ status: "enabled" }));
+  });
+
+  test("disable surfaces the enabled -> disabled status transition", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
+    service.disableWorkflow.mockResolvedValue(makeRow({ status: "disabled" }));
+
+    await handlers.disable({ ctx: auditCtx(), params: { workflowId } });
+
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.oldObject).toEqual(expect.objectContaining({ status: "enabled" }));
+    expect(detail.newObject).toEqual(expect.objectContaining({ status: "disabled" }));
+  });
+
+  test("archive surfaces the * -> archived status transition", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.setStatus.mockResolvedValue(makeRow({ status: "archived" }));
+
+    await handlers.archive({ ctx: auditCtx(), params: { workflowId } });
+
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.oldObject).toEqual(expect.objectContaining({ status: "draft" }));
+    expect(detail.newObject).toEqual(expect.objectContaining({ status: "archived" }));
+  });
+
+  test("unarchive surfaces the archived -> draft status transition", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+    service.setStatus.mockResolvedValue(makeRow({ status: "draft" }));
+
+    await handlers.unarchive({ ctx: auditCtx(), params: { workflowId } });
+
+    const detail = recordAudit.mock.calls[0][0];
+    expect(detail.oldObject).toEqual(expect.objectContaining({ status: "archived" }));
+    expect(detail.newObject).toEqual(expect.objectContaining({ status: "draft" }));
+  });
+
+  test("redacts send_email PII in the snapshot definition while keeping the diff readable", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft", name: "Before" }));
+    service.updateWorkflow.mockResolvedValue(makeRow({ status: "draft", name: "After" }));
+
+    await handlers.patch({ req: patchRequest({ name: "After" }), ctx: auditCtx(), params: { workflowId } });
+
+    const detail = recordAudit.mock.calls[0][0];
+    // Emails from the definition fixture must not leak into either snapshot.
+    expect(JSON.stringify(detail.oldObject)).not.toContain("@example.com");
+    expect(JSON.stringify(detail.newObject)).not.toContain("@example.com");
+    // The non-PII change is still readable.
+    expect(detail.oldObject).toEqual(expect.objectContaining({ name: "Before" }));
+    expect(detail.newObject).toEqual(expect.objectContaining({ name: "After" }));
+    // The send_email recipient is masked (present), not dropped.
+    const newDef = (detail.newObject as { definition: { nodes: { config: { to: string } }[] } }).definition;
+    expect(newDef.nodes[0].config.to).toMatch(/^\[redacted:[0-9a-f]{12}]$/);
+  });
+
+  test("a recipient-only edit still surfaces as a change (masked, not collapsed)", async () => {
+    const withRecipient = (to: string): WorkflowRowWithLastRun =>
+      makeRow({
+        status: "draft",
+        definition: {
+          ...definition,
+          nodes: [{ ...definition.nodes[0], config: { ...definition.nodes[0].config, to } }],
+        },
+      });
+    service.getWorkflowById.mockResolvedValue(withRecipient("old@example.com"));
+    service.updateWorkflow.mockResolvedValue(withRecipient("new@example.com"));
+
+    await handlers.patch({ req: patchRequest({ definition }), ctx: auditCtx(), params: { workflowId } });
+
+    const detail = recordAudit.mock.calls[0][0];
+    const readTo = (snapshot: unknown): string =>
+      (snapshot as { definition: { nodes: { config: { to: string } }[] } }).definition.nodes[0].config.to;
+    const oldTo = readTo(detail.oldObject);
+    const newTo = readTo(detail.newObject);
+
+    // Distinct value-stable markers → a recipient change still diffs, but no raw email leaks.
+    expect(oldTo).not.toBe(newTo);
+    expect(oldTo).not.toContain("@example.com");
+    expect(newTo).not.toContain("@example.com");
+  });
+
+  test("is not called on a failed mutation (unknown workflow)", async () => {
+    service.getWorkflowById.mockResolvedValue(null);
+
+    await handlers.delete({ ctx: auditCtx(), params: { workflowId } });
+
+    expect(recordAudit).not.toHaveBeenCalled();
+  });
+
+  test("a missing sink (no adapter wired) is a no-op, mutation still succeeds", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow());
+
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx: makeCtx({ recordAudit: undefined }),
+    });
+
+    expect(res.status).toBe(201);
+  });
+
+  test("a throwing sink is swallowed: the already-successful mutation still returns success", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow());
+    const throwingSink = vi.fn().mockRejectedValue(new Error("audit backend down"));
+
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Notify team", definition }),
+      ctx: auditCtx({ recordAudit: throwingSink }),
+    });
+
+    expect(res.status).toBe(201);
+    expect(throwingSink).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalled();
+  });
+});

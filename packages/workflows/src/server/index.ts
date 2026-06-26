@@ -15,7 +15,12 @@ export type { WorkflowsService } from "../services/workflows.service";
 export { createWorkflowsHandlers } from "../handlers/workflows.handlers";
 export type { WorkflowsHandlers } from "../handlers/workflows.handlers";
 
-export type { WorkflowApiAccess, WorkflowApiContext, AuthorizedWorkspace } from "../handlers/context";
+export type {
+  WorkflowApiAccess,
+  WorkflowApiContext,
+  AuthorizedWorkspace,
+  WorkflowAuditDetail,
+} from "../handlers/context";
 
 export {
   WorkflowApiError,

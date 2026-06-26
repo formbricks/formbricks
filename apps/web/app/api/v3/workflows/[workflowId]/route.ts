@@ -24,10 +24,10 @@ export const PATCH = withV3ApiWrapper({
   action: "updated",
   targetType: "workflow",
   schemas: { params: ZWorkflowIdInput },
-  handler: async ({ req, parsedInput, authentication, requestId, instance }) =>
+  handler: async ({ req, parsedInput, authentication, auditLog, requestId, instance }) =>
     workflowsHandlers.patch({
       req,
-      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      ctx: buildWorkflowApiContext(authentication, requestId, instance, auditLog),
       params: parsedInput.params,
     }),
 });
@@ -37,9 +37,9 @@ export const DELETE = withV3ApiWrapper({
   action: "deleted",
   targetType: "workflow",
   schemas: { params: ZWorkflowIdInput },
-  handler: async ({ parsedInput, authentication, requestId, instance }) =>
+  handler: async ({ parsedInput, authentication, auditLog, requestId, instance }) =>
     workflowsHandlers.delete({
-      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      ctx: buildWorkflowApiContext(authentication, requestId, instance, auditLog),
       params: parsedInput.params,
     }),
 });

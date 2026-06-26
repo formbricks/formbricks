@@ -20,6 +20,7 @@ import { createdResponse, dataResponse, listResponse, noContentResponse } from "
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
 import { ZWorkflowExecutableDefinition } from "../types/document";
+import { redactWorkflowDefinitionPII } from "./audit-redaction";
 import type { TriggerSurveyCheck, WorkflowApiAccess, WorkflowApiContext } from "./context";
 import { parseListWorkflowsQuery } from "./parse-list-query";
 import { toWorkflowListItem, toWorkflowResource } from "./serializers";
@@ -74,6 +75,37 @@ const loadAndAuthorize = async (
   if (authorized instanceof Response) return authorized;
 
   return row;
+};
+
+/**
+ * Plain before/after snapshot for the audit sink. Reuses the serialized resource shape (the same
+ * plain object the response carries), so the adapter's diff surfaces `name` / `description` /
+ * `definition` and the `status` transition. Returned as a `Record` because the audit port's
+ * snapshots are intentionally untyped, app-agnostic plain objects.
+ *
+ * The definition's `send_email` PII (recipient/sender addresses, subject, body) is redacted here —
+ * the shared audit redactor keys off field names it does not recognize on the workflow definition,
+ * so masking at this seam guarantees those values never reach the audit `changes`.
+ */
+const toAuditSnapshot = (row: WorkflowRowWithLastRun): Record<string, unknown> => {
+  const resource = toWorkflowResource(row);
+  return { ...resource, definition: redactWorkflowDefinitionPII(resource.definition) };
+};
+
+/**
+ * Invoke the injected audit sink, swallowing any rejection. The handlers call this only AFTER the
+ * mutation has already succeeded, so an audit problem must never turn a successful mutation into an
+ * error response — the package guarantees this regardless of how the adapter implements the port.
+ */
+const recordAuditSafely = async (
+  ctx: WorkflowApiContext,
+  detail: Parameters<NonNullable<WorkflowApiContext["recordAudit"]>>[0]
+): Promise<void> => {
+  try {
+    await ctx.recordAudit?.(detail);
+  } catch (error) {
+    ctx.logger.error({ error }, "Failed to record workflow audit detail");
+  }
 };
 
 /** Map a failed trigger-survey check to field-level `invalid_params` on the definition's trigger config. */
@@ -167,6 +199,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
 
+      // New id only exists post-mutation; capture it here rather than parsing the Response.
+      await recordAuditSafely(ctx, { targetId: created.id, newObject: toAuditSnapshot(created) });
+
       return createdResponse(resource, `/api/v3/workflows/${resource.id}`, ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
@@ -204,6 +239,12 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         input
       );
 
+      await recordAuditSafely(ctx, {
+        targetId: updated.id,
+        oldObject: toAuditSnapshot(loaded),
+        newObject: toAuditSnapshot(updated),
+      });
+
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
@@ -219,6 +260,10 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const created = await service.duplicateWorkflow(loaded, { name: input.name, createdBy: ctx.userId });
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
+
+      // Target is the new copy, not the source; its id only exists after the mutation.
+      await recordAuditSafely(ctx, { targetId: created.id, newObject: toAuditSnapshot(created) });
+
       return createdResponse(resource, `/api/v3/workflows/${resource.id}`, ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
@@ -231,6 +276,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       if (loaded instanceof Response) return loaded;
 
       await service.deleteWorkflow({ workflowId: params.workflowId, workspaceId: loaded.workspaceId });
+
+      await recordAuditSafely(ctx, { targetId: loaded.id, oldObject: toAuditSnapshot(loaded) });
+
       return noContentResponse(ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
@@ -250,6 +298,12 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         "archived"
       );
 
+      await recordAuditSafely(ctx, {
+        targetId: updated.id,
+        oldObject: toAuditSnapshot(loaded),
+        newObject: toAuditSnapshot(updated),
+      });
+
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
@@ -268,6 +322,12 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
         "draft"
       );
+
+      await recordAuditSafely(ctx, {
+        targetId: updated.id,
+        oldObject: toAuditSnapshot(loaded),
+        newObject: toAuditSnapshot(updated),
+      });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
@@ -303,6 +363,12 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         { definition: executable.data, publishedBy: ctx.userId }
       );
 
+      await recordAuditSafely(ctx, {
+        targetId: updated.id,
+        oldObject: toAuditSnapshot(loaded),
+        newObject: toAuditSnapshot(updated),
+      });
+
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
@@ -320,6 +386,12 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const updated = await service.disableWorkflow({
         workflowId: params.workflowId,
         workspaceId: loaded.workspaceId,
+      });
+
+      await recordAuditSafely(ctx, {
+        targetId: updated.id,
+        oldObject: toAuditSnapshot(loaded),
+        newObject: toAuditSnapshot(updated),
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
