@@ -1,12 +1,29 @@
 "use client";
 
 import { WorkflowRunsTable } from "@/modules/workflows/components/workflow-runs-table";
-import { type TWorkflowRunListItem } from "@/modules/workflows/types";
+import { useWorkflowRuns } from "../hooks/use-workflow-runs";
+
+const RUNS_PER_PAGE = 20;
 
 interface WorkflowRunsPageProps {
-  runs: TWorkflowRunListItem[];
+  workspaceId: string;
+  workflowId: string;
 }
 
-export const WorkflowRunsPage = ({ runs }: Readonly<WorkflowRunsPageProps>) => {
-  return <WorkflowRunsTable runs={runs} />;
+export const WorkflowRunsPage = ({ workspaceId, workflowId }: Readonly<WorkflowRunsPageProps>) => {
+  const { runs, isLoading, isError, error, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useWorkflowRuns({ workspaceId, limit: RUNS_PER_PAGE, filters: { workflowId } });
+
+  return (
+    <WorkflowRunsTable
+      runs={runs}
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      hasNextPage={hasNextPage}
+      isFetchingNextPage={isFetchingNextPage}
+      onLoadMore={fetchNextPage}
+    />
+  );
 };

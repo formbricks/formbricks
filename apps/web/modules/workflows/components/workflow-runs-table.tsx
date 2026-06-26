@@ -3,21 +3,61 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { timeSince } from "@/lib/time";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/modules/workflows/lib/display";
 import { type TWorkflowRunListItem } from "@/modules/workflows/types";
+import { RunsTableSkeleton } from "../loading";
 import { WorkflowRunDetailDrawer } from "./workflow-run-detail-drawer";
 
 interface WorkflowRunsTableProps {
   runs: TWorkflowRunListItem[];
   showWorkflowColumn?: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+  error?: unknown;
+  onRetry?: () => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }
 
-export const WorkflowRunsTable = ({ runs, showWorkflowColumn = false }: Readonly<WorkflowRunsTableProps>) => {
+export const WorkflowRunsTable = ({
+  runs,
+  showWorkflowColumn = false,
+  isLoading = false,
+  isError = false,
+  error,
+  onRetry,
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  onLoadMore,
+}: Readonly<WorkflowRunsTableProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
-  const [selectedRun, setSelectedRun] = useState<TWorkflowRunListItem | null>(null);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const selectedRun = runs.find((run) => run.id === selectedRunId) ?? null;
+
+  // Initial fetch with nothing yet to show: render the skeleton instead of an empty table.
+  if (isLoading && runs.length === 0) {
+    return <RunsTableSkeleton />;
+  }
+
+  // Hard error with no rows to fall back on: surface the message and a retry affordance.
+  if (isError && runs.length === 0) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
+        <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
+        {onRetry ? (
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            {t("common.try_again")}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -39,7 +79,7 @@ export const WorkflowRunsTable = ({ runs, showWorkflowColumn = false }: Readonly
               const triggerLabel = getWorkflowTriggerTypeLabel(run.triggerType, t);
 
               return (
-                <TableRow key={run.id} onClick={() => setSelectedRun(run)} className="cursor-pointer">
+                <TableRow key={run.id} onClick={() => setSelectedRunId(run.id)} className="cursor-pointer">
                   <TableCell className="min-w-0 px-4 py-2">
                     {showWorkflowColumn ? (
                       <>
@@ -73,12 +113,20 @@ export const WorkflowRunsTable = ({ runs, showWorkflowColumn = false }: Readonly
         </Table>
       </div>
 
+      {hasNextPage ? (
+        <div className="flex justify-center py-5">
+          <Button variant="secondary" size="sm" loading={isFetchingNextPage} onClick={onLoadMore}>
+            {t("common.load_more")}
+          </Button>
+        </div>
+      ) : null}
+
       <WorkflowRunDetailDrawer
         run={selectedRun}
         open={selectedRun !== null}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
-            setSelectedRun(null);
+            setSelectedRunId(null);
           }
         }}
       />

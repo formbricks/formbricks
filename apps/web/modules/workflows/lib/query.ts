@@ -1,6 +1,11 @@
 import type { InfiniteData } from "@tanstack/react-query";
-import type { TWorkflowListItem, TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
-import type { TWorkflowListPage } from "./api-client";
+import type {
+  TWorkflowListItem,
+  TWorkflowRunListItem,
+  TWorkflowSortBy,
+  TWorkflowStatus,
+} from "@formbricks/workflows";
+import type { TWorkflowListPage, TWorkflowRunListFilters, TWorkflowRunListPage } from "./api-client";
 
 export interface TWorkflowListKeyInput {
   workspaceId: string;
@@ -17,6 +22,24 @@ export const workflowKeys = {
 };
 
 export function flattenWorkflowPages(data?: InfiniteData<TWorkflowListPage>): TWorkflowListItem[] {
+  return data?.pages.flatMap((page) => page.data) ?? [];
+}
+
+export interface TWorkflowRunListKeyInput {
+  workspaceId: string;
+  limit: number;
+  filters?: TWorkflowRunListFilters;
+}
+
+export const workflowRunKeys = {
+  all: ["workflow-runs"] as const,
+  lists: () => [...workflowRunKeys.all, "list"] as const,
+  list: (input: TWorkflowRunListKeyInput) => [...workflowRunKeys.lists(), input] as const,
+  details: () => [...workflowRunKeys.all, "detail"] as const,
+  detail: (runId: string) => [...workflowRunKeys.details(), runId] as const,
+};
+
+export function flattenWorkflowRunPages(data?: InfiniteData<TWorkflowRunListPage>): TWorkflowRunListItem[] {
   return data?.pages.flatMap((page) => page.data) ?? [];
 }
 
