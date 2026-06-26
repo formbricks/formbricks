@@ -119,6 +119,12 @@ describe("validateCsvFile", () => {
     expect(result).toEqual({ valid: true });
   });
 
+  test("accepts a CSV file larger than 14MB", () => {
+    const file = createMockFile("large.csv", 14 * 1024 * 1024, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
   test("checks extension before MIME type", () => {
     const file = createMockFile("data.txt", 100, "text/csv");
     const result = validateCsvFile(file, mockT as never);
