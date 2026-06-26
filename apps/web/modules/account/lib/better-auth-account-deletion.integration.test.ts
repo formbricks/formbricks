@@ -92,6 +92,21 @@ describe("Better Auth account deletion (real Postgres)", () => {
     expect(await prisma.organization.findUnique({ where: { id: org.id } })).toBeNull();
   });
 
+  test("rejects an empty-body delete from a fresh session (no password, no token)", async () => {
+    const userId = await createVerifiedUser("freshnoconfirm@example.com", "Passw0rd!");
+    const cookie = await signInCookie("freshnoconfirm@example.com", "Passw0rd!");
+
+    // The just-issued session is younger than freshAge, so Better Auth's native flow would skip the
+    // (absent) password check and delete via the freshness shortcut. The accountDeletionGuardPlugin
+    // before-hook must reject the password-less POST so the account survives.
+    await expect(auth.api.deleteUser({ body: {}, headers: { cookie } })).rejects.toThrow(
+      /password confirmation/i
+    );
+
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();
+    expect(await prisma.session.count()).toBe(1); // session not revoked either
+  });
+
   test("SSO email-link path: a delete-account token + session deletes the user without a password", async () => {
     const userId = await createVerifiedUser("ssodelete@example.com", "Passw0rd!");
     const cookie = await signInCookie("ssodelete@example.com", "Passw0rd!");
