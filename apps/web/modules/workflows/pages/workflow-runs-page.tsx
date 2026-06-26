@@ -11,8 +11,17 @@ interface WorkflowRunsPageProps {
 }
 
 export const WorkflowRunsPage = ({ workspaceId, workflowId }: Readonly<WorkflowRunsPageProps>) => {
-  const { runs, isLoading, isError, error, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useWorkflowRuns({ workspaceId, limit: RUNS_PER_PAGE, filters: { workflowId } });
+  const {
+    runs,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage,
+  } = useWorkflowRuns({ workspaceId, limit: RUNS_PER_PAGE, filters: { workflowId } });
 
   return (
     <WorkflowRunsTable
@@ -23,6 +32,7 @@ export const WorkflowRunsPage = ({ workspaceId, workflowId }: Readonly<WorkflowR
       onRetry={() => refetch()}
       hasNextPage={hasNextPage}
       isFetchingNextPage={isFetchingNextPage}
+      isFetchNextPageError={isFetchNextPageError}
       onLoadMore={() => fetchNextPage()}
     />
   );

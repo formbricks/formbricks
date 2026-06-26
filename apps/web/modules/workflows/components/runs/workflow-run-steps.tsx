@@ -2,21 +2,9 @@
 
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/modules/ui/components/badge";
-import { CodeBlock } from "@/modules/ui/components/code-block";
 import { getWorkflowRunLogStatusBadge } from "@/modules/workflows/lib/display";
-import { type TWorkflowRunDetail } from "@/modules/workflows/types";
-
-type TWorkflowRunLog = TWorkflowRunDetail["logs"][number];
-
-// Render a single step's duration as a compact label; null when the step hasn't started/finished.
-const formatStepDuration = (startedAt: string | null, finishedAt: string | null): string | null => {
-  if (!startedAt || !finishedAt) return null;
-  const ms = new Date(finishedAt).getTime() - new Date(startedAt).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return null;
-  return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
-};
-
-const hasKeys = (value: Record<string, unknown>): boolean => Object.keys(value).length > 0;
+import { type TWorkflowRunLog, formatStepDuration, hasKeys } from "@/modules/workflows/lib/run-display";
+import { RunJsonCode } from "./run-json-code";
 
 interface WorkflowRunStepsProps {
   logs: TWorkflowRunLog[];
@@ -57,18 +45,14 @@ export const WorkflowRunSteps = ({ logs }: Readonly<WorkflowRunStepsProps>) => {
             {hasKeys(log.input) ? (
               <div className="mt-3">
                 <p className="mb-1 text-xs font-medium text-slate-500">{t("common.input")}</p>
-                <CodeBlock language="json" noMargin>
-                  {JSON.stringify(log.input, null, 2)}
-                </CodeBlock>
+                <RunJsonCode value={log.input} />
               </div>
             ) : null}
 
             {hasKeys(log.output) ? (
               <div className="mt-3">
                 <p className="mb-1 text-xs font-medium text-slate-500">{t("common.output")}</p>
-                <CodeBlock language="json" noMargin>
-                  {JSON.stringify(log.output, null, 2)}
-                </CodeBlock>
+                <RunJsonCode value={log.output} />
               </div>
             ) : null}
           </li>

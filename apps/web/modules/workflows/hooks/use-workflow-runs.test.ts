@@ -92,6 +92,18 @@ describe("useWorkflowRuns", () => {
     );
   });
 
+  test("stays idle and issues no request when disabled", () => {
+    const fetchMock = vi.mocked(global.fetch);
+
+    const { result } = renderHook(() => useWorkflowRuns({ workspaceId: "ws_1", limit: 20, enabled: false }), {
+      wrapper: createWrapper(newQueryClient()),
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(result.current.runs).toHaveLength(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   test("surfaces the error state when the request fails", async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({ status: 500, detail: "boom", code: "internal_server_error" }), {

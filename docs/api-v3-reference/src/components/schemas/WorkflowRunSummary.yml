@@ -1,9 +1,10 @@
 type: object
 description: >
-  Slim run shape returned by `GET /api/v3/workflows/runs` and embedded as
-  `lastRun` in
+  Slim run shape embedded as `lastRun` in workflow resources. The runs list
+  (`GET /api/v3/workflows/runs`)
 
-  workflow resources. Excludes `triggerPayload`, `data`, and `logs`.
+  returns `WorkflowRunListItem`, which extends this with `workflowName`. Excludes
+  `triggerPayload`, `data`, and `logs`.
 required:
   - id
   - workflowId

@@ -1,4 +1,4 @@
-import { CodeBlock } from "@/modules/ui/components/code-block";
+import { RunJsonCode } from "./run-json-code";
 
 interface RunJsonSectionProps {
   title: string;
@@ -9,8 +9,6 @@ interface RunJsonSectionProps {
 export const RunJsonSection = ({ title, value }: Readonly<RunJsonSectionProps>) => (
   <section className="rounded-lg border border-slate-200 bg-white p-5">
     <h2 className="mb-4 text-lg font-semibold text-slate-900">{title}</h2>
-    <CodeBlock language="json" noMargin>
-      {JSON.stringify(value, null, 2)}
-    </CodeBlock>
+    <RunJsonCode value={value} />
   </section>
 );

@@ -7,6 +7,7 @@ import {
   ZCreateWorkflowInput,
   ZCursorPaginationMeta,
   ZWorkflowListItem,
+  ZWorkflowRunListItem,
   ZWorkflowRunResource,
   ZWorkflowRunSummary,
 } from "./index";
@@ -79,6 +80,15 @@ describe("resource shapes", () => {
     expect([...((yamlSchema.required as string[] | undefined) ?? [])].sort()).toEqual(
       schemaKeys(ZWorkflowRunSummary)
     );
+  });
+
+  test("WorkflowRunListItem extends the summary with the workflow name", async () => {
+    const yamlSchema = await loadYaml("components/schemas/WorkflowRunListItem.yml");
+    const [summaryRef, extension] = yamlSchema.allOf as [Record<string, string>, Record<string, unknown>];
+    expect(summaryRef.$ref).toContain("WorkflowRunSummary");
+    const summaryKeys = schemaKeys(ZWorkflowRunSummary);
+    const extensionKeys = yamlPropertyKeys(extension);
+    expect([...summaryKeys, ...extensionKeys].sort()).toEqual(schemaKeys(ZWorkflowRunListItem));
   });
 
   test("WorkflowResource composes the list item with a definition", async () => {

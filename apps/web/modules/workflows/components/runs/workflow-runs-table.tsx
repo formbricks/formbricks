@@ -21,6 +21,7 @@ interface WorkflowRunsTableProps {
   onRetry?: () => void;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
+  isFetchNextPageError?: boolean;
   onLoadMore?: () => void;
 }
 
@@ -33,6 +34,7 @@ export const WorkflowRunsTable = ({
   onRetry,
   hasNextPage = false,
   isFetchingNextPage = false,
+  isFetchNextPageError = false,
   onLoadMore,
 }: Readonly<WorkflowRunsTableProps>) => {
   const { t, i18n } = useTranslation();
@@ -114,7 +116,14 @@ export const WorkflowRunsTable = ({
       </div>
 
       {hasNextPage ? (
-        <div className="flex justify-center py-5">
+        <div className="flex flex-col items-center gap-2 py-5">
+          {/* A failed load-more keeps the already-loaded rows; surface the error inline so it
+              isn't swallowed, and let the same button retry the next page. */}
+          {isFetchNextPageError ? (
+            <p className="text-sm text-red-600">
+              {getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}
+            </p>
+          ) : null}
           <Button variant="secondary" size="sm" loading={isFetchingNextPage} onClick={onLoadMore}>
             {t("common.load_more")}
           </Button>
