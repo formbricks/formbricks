@@ -9,7 +9,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/modules/workflows/lib/display";
 import { type TWorkflowRunListItem } from "@/modules/workflows/types";
-import { RunsTableSkeleton } from "../loading";
+import { RunsTableSkeleton } from "../../loading";
 import { WorkflowRunDetailDrawer } from "./workflow-run-detail-drawer";
 
 interface WorkflowRunsTableProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { WorkflowRunsTable } from "@/modules/workflows/components/workflow-runs-table";
+import { WorkflowRunsTable } from "@/modules/workflows/components/runs/workflow-runs-table";
 import { useWorkflowRuns } from "../hooks/use-workflow-runs";
 
 const RUNS_PER_PAGE = 20;
