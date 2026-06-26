@@ -184,15 +184,16 @@ export const canonicalizeLanguageCodes: MigrationScript = {
 
     for (let i = 0; i < surveyUpdates.length; i += SURVEY_BATCH_SIZE) {
       const batch = surveyUpdates.slice(i, i + SURVEY_BATCH_SIZE);
-      await Promise.all(
-        batch.map((update) =>
-          tx.$executeRawUnsafe(
-            `UPDATE "Survey" SET ${update.setClauses.join(", ")} WHERE id = $${(update.params.length + 1).toString()}`,
-            ...update.params,
-            update.id
-          )
-        )
-      );
+      // Sequential, not Promise.all: `tx` is a single interactive-transaction connection, and Prisma
+      // can't run queries concurrently on one `tx` (it serializes at best, throws and aborts the
+      // migration at worst). So concurrency buys nothing here — match the other steps and await in order.
+      for (const update of batch) {
+        await tx.$executeRawUnsafe(
+          `UPDATE "Survey" SET ${update.setClauses.join(", ")} WHERE id = $${(update.params.length + 1).toString()}`,
+          ...update.params,
+          update.id
+        );
+      }
       logger.info(
         `Survey content progress: ${Math.min(i + SURVEY_BATCH_SIZE, surveyUpdates.length).toString()}/${surveyUpdates.length.toString()}`
       );
