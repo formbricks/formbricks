@@ -220,6 +220,10 @@ export const planSurveyLanguageMoves = (
     } else {
       moves.repoints.push({ surveyId: link.surveyId, fromLanguageId: link.languageId });
       occupiedSurveyIds.add(link.surveyId);
+      // The repointed link becomes the survivor's link for this survey, so record its flags as the
+      // baseline — any later deduped link for the same survey must merge against these (not a blank
+      // state), otherwise a promoted default/enabled from a deleted row would be computed wrong.
+      survivorLinksBySurvey.set(link.surveyId, { ...link, languageId: survivorId });
     }
   }
 

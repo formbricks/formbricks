@@ -87,17 +87,6 @@ export const canonicalizeLanguageCodes: MigrationScript = {
       }
       stats.surveyLanguageDeletes += moves.deletes.length;
 
-      // Carry over default/enabled flags onto the survivor's surviving link.
-      for (const update of moves.flagUpdates) {
-        await tx.$executeRawUnsafe(
-          `UPDATE "SurveyLanguage" SET "default" = $1, enabled = $2 WHERE "languageId" = $3 AND "surveyId" = $4`,
-          update.default,
-          update.enabled,
-          merge.survivorId,
-          update.surveyId
-        );
-      }
-
       // Move the remaining absorbed links onto the survivor.
       for (const repoint of moves.repoints) {
         await tx.$executeRawUnsafe(
@@ -108,6 +97,19 @@ export const canonicalizeLanguageCodes: MigrationScript = {
         );
       }
       stats.surveyLanguageRepoints += moves.repoints.length;
+
+      // Carry over merged default/enabled flags onto the survivor's surviving link. Runs AFTER repoints
+      // so that when the survivor's link for a survey was created by a repoint (survivor wasn't originally
+      // linked), the flag update targets the now-existing row instead of being a no-op.
+      for (const update of moves.flagUpdates) {
+        await tx.$executeRawUnsafe(
+          `UPDATE "SurveyLanguage" SET "default" = $1, enabled = $2 WHERE "languageId" = $3 AND "surveyId" = $4`,
+          update.default,
+          update.enabled,
+          merge.survivorId,
+          update.surveyId
+        );
+      }
 
       // Relabel the survivor to the canonical code and copy over an absorbed alias when the survivor has
       // none. `aliasToSet` is already null unless the survivor's own alias was empty/null and an absorbed
@@ -157,10 +159,12 @@ export const canonicalizeLanguageCodes: MigrationScript = {
       for (const field of SURVEY_CONTENT_FIELDS) {
         const original = (survey as unknown as Record<string, unknown>)[field.column];
         const result = rewriteI18nKeys(original);
+        // Record unresolved codes before the early exit — content can contain an unparseable language
+        // key that doesn't change anything yet still needs to be surfaced.
+        for (const code of result.unresolved) stats.unresolvedCodes.add(code);
         if (!result.changed) continue;
 
         stats.i18nKeysRewritten += result.keysRewritten;
-        for (const code of result.unresolved) stats.unresolvedCodes.add(code);
 
         const paramIndex = params.length + 1;
         params.push(JSON.stringify(result.value));
