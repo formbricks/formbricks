@@ -299,7 +299,6 @@ export const canonicalizeLanguageCodes: MigrationScript = {
         `Left ${stats.unresolvedCodes.size.toString()} unresolvable language code(s) untouched: ${[...stats.unresolvedCodes].join(", ")}`
       );
     }
-    // throw new Error("Stopping Migration.");
     logger.info(
       `Migration complete. Surveys updated: ${stats.surveysContentUpdated.toString()} (${stats.i18nKeysRewritten.toString()} i18n keys), responses: ${stats.responsesUpdated.toString()}, response snapshots: ${stats.responseContactAttributesUpdated.toString()}, contact attributes: ${stats.contactAttributesUpdated.toString()}`
     );
