@@ -269,8 +269,11 @@ services:
       start_period: 10s
 
   # Run Formbricks Prisma migrations before Hub writes tables to the shared database.
+  # Uses the dedicated migration image (ENG-1153), which bundles the Prisma CLI and
+  # the @prisma/config loader chain that the slim web image (`formbricks` below)
+  # leaves out. Keep this tag aligned with the `formbricks` web image tag.
   formbricks-migrate:
-    image: ghcr.io/formbricks/formbricks:latest
+    image: ghcr.io/formbricks/formbricks-migrate:latest
     restart: "no"
     entrypoint: ["sh", "-c"]
     command:
