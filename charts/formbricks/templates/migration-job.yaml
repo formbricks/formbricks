@@ -47,8 +47,8 @@ spec:
       {{- end }}
       containers:
         - name: migration
-          image: {{ include "formbricks.deploymentImage" . }}
-          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: {{ include "formbricks.migrationImage" . }}
+          imagePullPolicy: {{ .Values.migration.image.pullPolicy | default .Values.deployment.image.pullPolicy }}
           command:
             - node
             - packages/database/dist/scripts/apply-migrations.js

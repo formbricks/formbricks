@@ -179,6 +179,26 @@ Formbricks application image reference. A configured digest takes precedence ove
 {{- end -}}
 {{- end }}
 
+{{/*
+Image used by the migration Job (ENG-1153). This is the dedicated, Prisma-CLI-
+bearing migration image, kept separate so the web runtime image can stay slim.
+When migration.image.repository is left empty it falls back to the application
+image, preserving the previous behaviour for consumers (e.g. private registries)
+that have not published a separate migration image. A configured digest takes
+precedence over the tag.
+*/}}
+{{- define "formbricks.migrationImage" -}}
+{{- if .Values.migration.image.repository -}}
+{{- if .Values.migration.image.digest -}}
+{{- printf "%s@%s" .Values.migration.image.repository .Values.migration.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.migration.image.repository (.Values.migration.image.tag | default .Chart.AppVersion | default "latest") -}}
+{{- end -}}
+{{- else -}}
+{{- include "formbricks.deploymentImage" . -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.hubSecretName" -}}
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
 {{- end }}
