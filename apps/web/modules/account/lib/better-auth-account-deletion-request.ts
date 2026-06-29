@@ -1,8 +1,11 @@
 import "server-only";
 import crypto from "node:crypto";
-import { AuthenticationError } from "@formbricks/types/errors";
+import { prisma } from "@formbricks/database";
+import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
+import type { TUserLocale } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
-import { auth, getUserLocale } from "@/modules/auth/lib/auth";
+import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
+import { auth } from "@/modules/auth/lib/auth";
 import { getSession } from "@/modules/auth/lib/session";
 import { sendDeleteAccountConfirmationEmail } from "@/modules/email";
 
@@ -34,6 +37,25 @@ export const requestSsoAccountDeletionEmail = async (): Promise<void> => {
   const userId = session.user.id;
   const email = session.user.email;
 
+  // Resolve the account type + locale up front (the session/BA-callback user carries neither reliably).
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { identityProvider: true, locale: true },
+  });
+  if (!dbUser) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  // The SSO email-link path is only for password-less SSO users. Credential users (identityProvider
+  // "email") must confirm deletion with their password via Better Auth's native delete-user flow.
+  // Enforce that here, server-side: this runs behind a directly-callable server action, so the modal's
+  // `requiresPasswordConfirmation` UI gating is not a security boundary. Reject before minting a token.
+  if (requiresPasswordConfirmationForAccountDeletion(dbUser)) {
+    throw new AuthorizationError("Password confirmation is required to delete this account.");
+  }
+
+  const locale = (dbUser.locale ?? "en-US") as TUserLocale;
+
   // A 32-byte (256-bit) secret token: unguessable, and hex keeps it URL-safe for the callback query.
   const token = crypto.randomBytes(32).toString("hex");
 
@@ -45,10 +67,6 @@ export const requestSsoAccountDeletionEmail = async (): Promise<void> => {
   });
 
   const deleteLink = `${WEBAPP_URL}/api/auth/delete-user/callback?token=${token}&callbackURL=/`;
-
-  // Better Auth's callback user omits the locale, and the session may not carry it either, so resolve
-  // it from the database (defaulting to en-US) to localize the transactional email.
-  const locale = await getUserLocale(userId);
 
   await sendDeleteAccountConfirmationEmail({
     email,
