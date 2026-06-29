@@ -51,6 +51,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false # no later step needs git auth (dangerous-git-checkout re-auths)
       - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Setup Node.js 22.x
@@ -75,11 +77,13 @@ jobs:
         run: pnpm dev:setup
         shell: bash
 
+      # The harness exercises enterprise-gated flows (e.g. SSO provisioning) by calling the functions
+      # directly, so it doesn't need a real ENTERPRISE_LICENSE_KEY (verified: the suite is green with it
+      # empty). Only point the DB + Redis at the CI services.
       - name: Point .env at the CI services + test database
         run: |
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks_ba_test?schema=public|" .env
-          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
         shell: bash
 
       - name: Create the test database
@@ -90,15 +94,10 @@ jobs:
         run: pnpm db:migrate:dev
         shell: bash
 
+      # Shared with apps/web/integration/global-setup.ts (the local harness applies the same file) so
+      # CI and local provision an identical Better Auth schema shape.
       - name: Shape the schema for Better Auth (emailVerified boolean, Account.type nullable)
-        run: |
-          psql "postgresql://postgres:postgres@localhost:5432/formbricks_ba_test" -v ON_ERROR_STOP=1 <<'SQL'
-          ALTER TABLE "User" ALTER COLUMN email_verified DROP DEFAULT;
-          ALTER TABLE "User" ALTER COLUMN email_verified TYPE boolean USING (email_verified IS NOT NULL);
-          ALTER TABLE "User" ALTER COLUMN email_verified SET DEFAULT false;
-          ALTER TABLE "User" ALTER COLUMN email_verified SET NOT NULL;
-          ALTER TABLE "Account" ALTER COLUMN type DROP NOT NULL;
-          SQL
+        run: psql "postgresql://postgres:postgres@localhost:5432/formbricks_ba_test" -v ON_ERROR_STOP=1 -f apps/web/integration/ba-test-schema-shape.sql
         shell: bash
 
       - name: Run Better Auth integration tests

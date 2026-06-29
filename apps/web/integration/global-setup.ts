@@ -1,5 +1,8 @@
 /* eslint-disable turbo/no-undeclared-env-vars -- harness-only env overrides (TEST_*), not app config */
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Vitest globalSetup for the Better Auth integration harness (ENG-1054).
@@ -64,13 +67,13 @@ export default function setup(): void {
         `psql -U postgres -q -v ON_ERROR_STOP=1 -d ${TEST_DB} -f /tmp/ba_test_schema.sql`
     )}`
   );
-  testPsql(
-    `ALTER TABLE "User" ALTER COLUMN email_verified DROP DEFAULT;` +
-      `ALTER TABLE "User" ALTER COLUMN email_verified TYPE boolean USING (email_verified IS NOT NULL);` +
-      `ALTER TABLE "User" ALTER COLUMN email_verified SET DEFAULT false;` +
-      `ALTER TABLE "User" ALTER COLUMN email_verified SET NOT NULL;` +
-      `ALTER TABLE "Account" ALTER COLUMN type DROP NOT NULL;`
+  // Single source of truth for the Better Auth schema shape, shared with the CI workflow (which runs
+  // it via `psql -f`) so local and CI provision the same database — see ba-test-schema-shape.sql.
+  const schemaShapeSql = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "ba-test-schema-shape.sql"),
+    "utf8"
   );
+  testPsql(schemaShapeSql);
 
   // Isolate Better Auth's Redis secondary storage (db 15) from the dev cache (db 0).
   try {
