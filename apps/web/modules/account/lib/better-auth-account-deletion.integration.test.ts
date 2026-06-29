@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
+import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
 import { auth } from "@/modules/auth/lib/auth";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -48,7 +49,7 @@ describe("Better Auth account deletion (real Postgres)", () => {
 
     await expect(
       auth.api.deleteUser({ body: { password: "Passw0rd!" }, headers: { cookie } })
-    ).rejects.toBeTruthy();
+    ).rejects.toThrow(ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE);
 
     // both the user and the org survive the blocked deletion
     expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull();

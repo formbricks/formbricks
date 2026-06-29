@@ -1,15 +1,15 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
-
 interface NextAuthProviderProps {
   children: React.ReactNode;
   sessionMaxAge: number;
 }
 
-export const NextAuthProvider = ({ children, sessionMaxAge }: NextAuthProviderProps) => {
-  // Refresh at 1/3 of session max age, capped at 5 minutes
-  const refetchInterval = Math.min(Math.max(Math.floor(sessionMaxAge / 3), 60), 300);
-
-  return <SessionProvider refetchInterval={refetchInterval}>{children}</SessionProvider>;
+/**
+ * Better Auth's `useSession` (createAuthClient) fetches on demand and needs no React provider, so this
+ * is now a passthrough. Kept (with its props) so the layout import stays stable until the Phase 7
+ * cutover cleanup removes the wrapper. (ENG-1054)
+ */
+export const NextAuthProvider = ({ children }: Readonly<NextAuthProviderProps>) => {
+  return <>{children}</>;
 };

@@ -29,6 +29,9 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
   // The 2FA challenge completes the credentials sign-in → "password" (matches NextAuth). Deliberately
   // NOT /two-factor/verify-otp (also the first-time-enable path) nor /two-factor/disable|enable.
   if (path === "/two-factor/verify-totp" || path === "/two-factor/verify-backup-code") return "password";
+  // The SSO-recovery magic-link sign-in also creates a session (verify-before-link), so audit it as
+  // "sso" — the unified signedIn trail should capture every session creation.
+  if (path === "/sso-recovery/sign-in") return "sso";
   return null;
 };
 

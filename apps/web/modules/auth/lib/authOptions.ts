@@ -15,12 +15,6 @@ import {
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
-import {
-  completeAccountDeletionSsoReauthentication,
-  getAccountDeletionSsoReauthFailureRedirectUrl,
-  getAccountDeletionSsoReauthIntentFromCallbackUrl,
-  validateAccountDeletionSsoReauthenticationCallback,
-} from "@/modules/account/lib/account-deletion-sso-reauth";
 import { getAuthCallbackUrlFromCookies } from "@/modules/auth/lib/callback-url";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { updateUser } from "@/modules/auth/lib/user";
@@ -93,25 +87,16 @@ const handleCredentialsOrTokenSignIn = async ({
 const handleEnterpriseSsoSignIn = async ({
   account,
   callbackUrl,
-  intentToken,
   user,
   userEmail,
   userId,
 }: {
   account: NonNullable<TSignInAccount>;
   callbackUrl: string;
-  intentToken: string | null;
   user: TSignInUser;
   userEmail: string;
   userId: string;
 }) => {
-  if (intentToken) {
-    await validateAccountDeletionSsoReauthenticationCallback({
-      account,
-      intentToken,
-    });
-  }
-
   const result = await handleSsoCallback({
     user: user as TUser,
     account,
@@ -119,13 +104,6 @@ const handleEnterpriseSsoSignIn = async ({
   });
 
   if (result === true) {
-    if (intentToken) {
-      await completeAccountDeletionSsoReauthentication({
-        account,
-        intentToken,
-      });
-    }
-
     await finalizeSuccessfulSignIn({
       userId,
       email: userEmail,
@@ -438,8 +416,6 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }) {
       const callbackUrl = await getValidatedAuthCallbackUrl();
-      const accountDeletionSsoReauthIntentToken =
-        getAccountDeletionSsoReauthIntentFromCallbackUrl(callbackUrl);
 
       const userEmail = user.email ?? "";
       const userId = user.id;
@@ -454,26 +430,13 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (ENTERPRISE_LICENSE_KEY && account) {
-        try {
-          return await handleEnterpriseSsoSignIn({
-            account,
-            callbackUrl,
-            intentToken: accountDeletionSsoReauthIntentToken,
-            user,
-            userEmail,
-            userId,
-          });
-        } catch (error) {
-          const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
-            intentToken: accountDeletionSsoReauthIntentToken,
-          });
-
-          if (failureRedirectUrl) {
-            return failureRedirectUrl;
-          }
-
-          throw error;
-        }
+        return handleEnterpriseSsoSignIn({
+          account,
+          callbackUrl,
+          user,
+          userEmail,
+          userId,
+        });
       }
 
       await finalizeSuccessfulSignIn({

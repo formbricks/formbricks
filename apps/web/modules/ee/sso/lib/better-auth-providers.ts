@@ -18,6 +18,8 @@ import {
   OIDC_ISSUER,
   OIDC_OAUTH_ENABLED,
   SAML_OAUTH_ENABLED,
+  SAML_PRODUCT,
+  SAML_TENANT,
   WEBAPP_URL,
 } from "@/lib/constants";
 import { captureSsoIdentity } from "./sso-request-context";
@@ -146,7 +148,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               userInfoUrl: `${WEBAPP_URL}/api/auth/saml/userinfo`,
               scopes: [],
               pkce: true,
-              authorizationUrlParams: { provider: "saml" },
+              authorizationUrlParams: { provider: "saml", tenant: SAML_TENANT, product: SAML_PRODUCT },
               mapProfileToUser: (profile) => {
                 // ⚠ BoxyHQ's userinfo id — validate it matches Better Auth's account.accountId at cutover.
                 captureSsoIdentity({ email: profile.email, providerAccountId: String(profile.id) });

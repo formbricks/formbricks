@@ -52,6 +52,9 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
   test("mints a delete-account verification value, emails the callback link, and the callback deletes the user", async () => {
     const email = "ssorequest@example.com";
     const userId = await createVerifiedUser(email, "Passw0rd!");
+    // The email-link path serves password-less SSO users; mark this one accordingly so the guard
+    // (credential users must use the password flow) allows it.
+    await prisma.user.update({ where: { id: userId }, data: { identityProvider: "google" } });
     const cookie = await signInCookie(email, "Passw0rd!");
     getSessionMock.mockResolvedValue({ user: { id: userId, email } });
 
@@ -82,5 +85,25 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     });
 
     expect(await prisma.user.findUnique({ where: { id: userId } })).toBeNull();
+  });
+
+  test("rejects a credential (email-identity) user — they must confirm with their password", async () => {
+    const email = "credrequest@example.com";
+    const userId = await createVerifiedUser(email, "Passw0rd!"); // identityProvider defaults to "email"
+    getSessionMock.mockResolvedValue({ user: { id: userId, email } });
+
+    // Spy on the token mint to prove no delete-account verification value is ever created — not just
+    // that no email was sent. A future refactor could mint before throwing, leaving a live delete token
+    // the callback would honor; this keeps that regression visible.
+    const ctx = await auth.$context;
+    const mintSpy = vi.spyOn(ctx.internalAdapter, "createVerificationValue");
+
+    // A directly-called server action must not let a credential user take the SSO email-link path.
+    await expect(requestSsoAccountDeletionEmail()).rejects.toThrow(/password confirmation/i);
+    expect(mintSpy).not.toHaveBeenCalled(); // no delete-account token minted
+    expect(sendDeleteAccountConfirmationEmailMock).not.toHaveBeenCalled(); // and no email sent
+    expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull(); // user untouched
+
+    mintSpy.mockRestore();
   });
 });
