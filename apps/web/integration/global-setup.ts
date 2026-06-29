@@ -41,6 +41,13 @@ const REDIS_TEST_DB = safeEnv(process.env.TEST_REDIS_DB ?? "15", /^\d+$/, "TEST_
 const sh = (cmd: string): string => execSync(cmd, { stdio: "pipe" }).toString();
 
 export default function setup(): void {
+  // CI provisions formbricks_ba_test out-of-band (the workflow creates the DB, runs the migrations,
+  // and applies the two ALTERs below) because GitHub Actions service containers aren't reachable via
+  // `docker exec`. When that's already done, skip the docker-based clone + redis flush; per-test
+  // isolation still comes from resetDb (TRUNCATE), and a fresh CI Valkey starts empty. Local dev (flag
+  // unset) is unchanged.
+  if (process.env.TEST_DB_PROVISIONED === "1") return;
+
   const adminPsql = (sql: string) =>
     sh(`docker exec ${CONTAINER} psql -U postgres -q -c ${JSON.stringify(sql)}`);
   const testPsql = (sql: string) =>
