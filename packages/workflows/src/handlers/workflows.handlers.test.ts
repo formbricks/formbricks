@@ -578,3 +578,78 @@ describe("disable", () => {
     expect(service.disableWorkflow).not.toHaveBeenCalled();
   });
 });
+
+interface TestResultBody {
+  data: { workflowId: string; ok: boolean; problems: { code: string; field: string }[] };
+}
+
+describe("testWorkflow", () => {
+  test("returns ok=true for an executable workflow with a valid trigger survey", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    expect(verifyTriggerSurvey).toHaveBeenCalledWith({ workspaceId, surveyId, endingCardIds: [] });
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data).toEqual({ workflowId, ok: true, problems: [] });
+  });
+
+  test("validates any status, including archived (no run, no side effect)", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(true);
+  });
+
+  test("collects every problem in one pass (non-executable AND missing survey)", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({ status: "draft", definition: { ...definition, nodes: [], edges: [] } })
+    );
+    verifyTriggerSurvey.mockResolvedValue({ surveyExists: false, missingEndingCardIds: [] });
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    const codes = body.data.problems.map((p) => p.code);
+    expect(codes).toContain("definition_not_executable");
+    expect(codes).toContain("survey_not_found");
+  });
+
+  test("reports a missing ending card", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: ["ec_missing"] });
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    const problem = body.data.problems.find((p) => p.code === "ending_card_not_found");
+    expect(problem?.field).toBe("definition.trigger.config.endingCardIds");
+  });
+
+  test("returns 403 for an unknown workflow without checking the survey", async () => {
+    service.getWorkflowById.mockResolvedValue(null);
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(403);
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+
+  test("returns the authorization denial without checking the survey", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
+
+    const res = await handlers.testWorkflow({ ctx, params: { workflowId } });
+
+    expect(res.status).toBe(403);
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+});

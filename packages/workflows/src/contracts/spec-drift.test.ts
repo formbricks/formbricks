@@ -9,6 +9,7 @@ import {
   ZWorkflowListItem,
   ZWorkflowRunResource,
   ZWorkflowRunSummary,
+  ZWorkflowTestResult,
 } from "./index";
 
 /**
@@ -101,6 +102,14 @@ describe("resource shapes", () => {
     const yamlSchema = await loadYaml("components/schemas/CursorPaginationMeta.yml");
     expect(yamlPropertyKeys(yamlSchema)).toEqual(schemaKeys(ZCursorPaginationMeta));
   });
+
+  test("WorkflowTestResult properties match the contract shape", async () => {
+    const yamlSchema = await loadYaml("components/schemas/WorkflowTestResult.yml");
+    expect(yamlPropertyKeys(yamlSchema)).toEqual(schemaKeys(ZWorkflowTestResult));
+    expect([...((yamlSchema.required as string[] | undefined) ?? [])].sort()).toEqual(
+      schemaKeys(ZWorkflowTestResult)
+    );
+  });
 });
 
 describe("spec examples", () => {
@@ -115,7 +124,7 @@ describe("spec examples", () => {
     expect(() => ZCreateWorkflowInput.parse(example)).not.toThrow();
   });
 
-  test("the queued dry-run example parses with ZWorkflowRunResource", async () => {
+  test("the dry-run validation examples parse with ZWorkflowTestResult", async () => {
     const pathItem = await loadYaml("paths/api_v3_workflows_{workflowId}_test.yml");
     const post = pathItem.post as {
       responses: Record<
@@ -123,7 +132,9 @@ describe("spec examples", () => {
         { content: Record<string, { examples: Record<string, { value: { data: unknown } }> }> }
       >;
     };
-    const example = post.responses["201"].content["application/json"].examples.queuedDryRun.value.data;
-    expect(() => ZWorkflowRunResource.parse(example)).not.toThrow();
+    const examples = post.responses["200"].content["application/json"].examples;
+    for (const example of Object.values(examples)) {
+      expect(() => ZWorkflowTestResult.parse(example.value.data)).not.toThrow();
+    }
   });
 });

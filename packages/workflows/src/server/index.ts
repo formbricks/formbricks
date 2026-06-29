@@ -15,13 +15,6 @@ export type { WorkflowsService } from "../services/workflows.service";
 export { createWorkflowsHandlers } from "../handlers/workflows.handlers";
 export type { WorkflowsHandlers } from "../handlers/workflows.handlers";
 
-export {
-  buildDryRunTriggerPayload,
-  getResponseCompletedTriggerConfig,
-  selectSampleEndingCardId,
-} from "../handlers/dry-run-trigger-payload";
-export type { DryRunTriggerSource } from "../handlers/dry-run-trigger-payload";
-
 export type { WorkflowApiAccess, WorkflowApiContext, AuthorizedWorkspace } from "../handlers/context";
 
 export {

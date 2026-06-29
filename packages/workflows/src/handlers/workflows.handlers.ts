@@ -1,10 +1,12 @@
 import {
   type TWorkflowIdInput,
+  type TWorkflowTestProblem,
   ZCreateWorkflowInput,
   ZDuplicateWorkflowInput,
   ZPatchWorkflowInput,
   ZWorkflowListItem,
   ZWorkflowResource,
+  ZWorkflowTestResult,
   zCursorPage,
 } from "../contracts";
 import {
@@ -123,6 +125,7 @@ export interface WorkflowsHandlers {
   unarchive: (args: WorkflowResourceArgs) => Promise<Response>;
   enable: (args: WorkflowResourceArgs) => Promise<Response>;
   disable: (args: WorkflowResourceArgs) => Promise<Response>;
+  testWorkflow: (args: WorkflowResourceArgs) => Promise<Response>;
 }
 
 /**
@@ -323,6 +326,68 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       });
 
       return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+    } catch (error) {
+      return toProblemResponse(error, ctx);
+    }
+  },
+
+  /**
+   * Dry-run (test) a workflow: validate that its live definition would execute and that the
+   * trigger's referenced survey + ending cards still resolve. No run is created and no side
+   * effects occur — this is a pure pre-flight check the author can use before enabling. Unlike
+   * `enable`, problems are *collected* (not thrown on the first one) so every issue is reported in
+   * one pass; an `ok: false` result is still a 200 (the request succeeded; the workflow is just not
+   * ready). Reuses the same executability + survey checks as `enable`.
+   */
+  async testWorkflow({ ctx, params }) {
+    try {
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      if (loaded instanceof Response) return loaded;
+
+      const problems: TWorkflowTestProblem[] = [];
+
+      // safeParse + collect every issue, rather than throwing on the first (as enable does).
+      const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
+      if (!executable.success) {
+        for (const issue of executable.error.issues) {
+          problems.push({
+            code: "definition_not_executable",
+            field: issue.path.map(String).join(".") || "definition",
+            message: issue.message,
+          });
+        }
+      }
+
+      // Trigger references are checked against the persisted definition regardless of executability,
+      // so a missing survey / ending is reported even when the graph also has problems.
+      const { surveyId, endingCardIds } = loaded.definition.trigger.config;
+      const surveyCheck = await ctx.verifyTriggerSurvey({
+        workspaceId: loaded.workspaceId,
+        surveyId,
+        endingCardIds,
+      });
+      if (!surveyCheck.surveyExists) {
+        problems.push({
+          code: "survey_not_found",
+          field: "definition.trigger.config.surveyId",
+          message: "The referenced survey does not exist in this workspace.",
+        });
+      }
+      for (const endingCardId of surveyCheck.missingEndingCardIds) {
+        problems.push({
+          code: "ending_card_not_found",
+          field: "definition.trigger.config.endingCardIds",
+          message: `Ending card ${endingCardId} does not exist on the survey.`,
+        });
+      }
+
+      const result = validateOutput(ZWorkflowTestResult, {
+        workflowId: params.workflowId,
+        ok: problems.length === 0,
+        problems,
+      });
+
+      return dataResponse(result, ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);
     }
