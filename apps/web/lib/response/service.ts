@@ -39,6 +39,7 @@ import {
   getResponseMeta,
   getResponsesFileName,
   getResponsesJson,
+  normalizeResponseLanguage,
 } from "./utils";
 import { buildWhereClause } from "./where-clause";
 
@@ -538,7 +539,8 @@ export const updateResponse = async (
       : currentTtc;
     // Calculate total only when finished
     const ttc = responseInput.finished ? calculateTtcTotal(mergedTtc) : mergedTtc;
-    const language = responseInput.language;
+    // Canonicalize on write (ENG-1067), same as response creation — see normalizeResponseLanguage.
+    const language = normalizeResponseLanguage(responseInput.language);
     const variables = {
       ...currentResponse.variables,
       ...responseInput.variables,

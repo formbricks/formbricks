@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import {
   DatabaseError,
@@ -23,7 +22,7 @@ import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/l
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
 import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
-import { calculateTtcTotal } from "@/lib/response/utils";
+import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContact } from "./contact";
@@ -50,9 +49,7 @@ const buildPrismaResponseData = (
     display: displayId ? { connect: { id: displayId } } : undefined,
     finished: finished,
     data: data,
-    // Canonicalize on write (ENG-1067): stale SDK caches can submit a legacy code (e.g. "hi"); store
-    // its canonical BCP-47 form ("hi-IN"). "default" and unresolvable values are preserved.
-    language: language ? (normalizeLanguageCode(language) ?? language) : language,
+    language: normalizeResponseLanguage(language),
     ...(contact?.id && {
       contact: {
         connect: {

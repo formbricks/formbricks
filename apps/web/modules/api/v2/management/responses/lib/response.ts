@@ -1,11 +1,10 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma, Response } from "@formbricks/database/prisma";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { calculateTtcTotal } from "@/lib/response/utils";
+import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
 import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
   getMonthlyOrganizationResponseCount,
@@ -108,9 +107,7 @@ export const createResponse = async (
       }),
       finished,
       data,
-      // Canonicalize on write (ENG-1067): store the canonical BCP-47 form ("hi" → "hi-IN"); "default"
-      // and unresolvable values are preserved (normalizeLanguageCode returns null → keep the original).
-      language: language ? (normalizeLanguageCode(language) ?? language) : language,
+      language: normalizeResponseLanguage(language),
       meta,
       singleUseId,
       variables,
