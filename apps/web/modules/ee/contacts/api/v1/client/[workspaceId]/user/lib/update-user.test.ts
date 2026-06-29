@@ -118,12 +118,13 @@ describe("updateUser", () => {
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
-    // Legacy `en` is stored as its canonical BCP-47 tag `en-US` and echoed back so the SDK self-heals.
+    // `en` is stored as its canonical BCP-47 tag `en-US`, but echoed back to the SDK in its bare legacy
+    // form `en` (transitional SDK back-compat — see toLegacyLanguageCode).
     expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
       email: "new@example.com",
       language: "en-US",
     });
-    expect(result.state.data?.language).toBe("en-US");
+    expect(result.state.data?.language).toBe("en");
     expect(result.messages).toBeUndefined();
   });
 
@@ -137,7 +138,8 @@ describe("updateUser", () => {
       email: "new@example.com",
       language: "de-DE",
     });
-    expect(result.state.data?.language).toBe("de-DE");
+    // stored canonical `de-DE`, echoed back to the SDK as bare legacy `de`
+    expect(result.state.data?.language).toBe("de");
   });
 
   test("should preserve an unresolvable language value as-is", async () => {
