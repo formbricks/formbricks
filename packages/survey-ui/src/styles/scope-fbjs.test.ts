@@ -1,0 +1,92 @@
+import postcss from "postcss";
+import { describe, expect, test } from "vitest";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+import scopeFbjs from "../../../vite-plugins/postcss-scope-fbjs.cjs";
+
+/**
+ * Regression guard for ENG-1333 / formbricks/js#46.
+ *
+ * The survey widget injects @formbricks/survey-ui's compiled CSS into the host
+ * page's <head>. Tailwind v4 emits three constructs that are GLOBAL by spec and
+ * cannot be confined by `important: "#fbjs"` selector scoping:
+ *   1. @layer properties { *, :before, :after, ::backdrop { --tw-*: ... } }
+ *   2. @layer theme      { :root, :host { ... } }
+ *   3. @property --tw-*  { inherits: false; ... }
+ * If any of these reach the host page, they reset/override the host's own
+ * Tailwind custom properties and theme, breaking host UI (shadows, rings,
+ * transforms, gradients, colors).
+ *
+ * These tests run the shared scoping plugins over representative Tailwind v4
+ * output and assert nothing global survives.
+ */
+
+const run = (css: string): string =>
+  postcss(scopeFbjs.scopeFbjsPlugins()).process(css, { from: undefined }).css;
+
+// A faithful slice of real Tailwind v4 compiled output.
+const TAILWIND_V4_OUTPUT = `
+@layer properties {
+  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) {
+    *, :before, :after, ::backdrop {
+      --tw-translate-x: 0;
+      --tw-border-style: solid;
+      --tw-ring-offset-color: #fff;
+    }
+  }
+}
+@layer theme {
+  :root, :host {
+    --color-red-500: oklch(63.7% .237 25.331);
+    --spacing: .25rem;
+  }
+}
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-ring-offset-color {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #fff;
+}
+#fbjs .flex {
+  display: flex !important;
+}
+`;
+
+describe("postcss-scope-fbjs", () => {
+  const out = run(TAILWIND_V4_OUTPUT);
+
+  test("removes the global @layer properties reset block", () => {
+    expect(out).not.toMatch(/@layer properties/);
+    // the bare universal reset selector must not survive anywhere
+    expect(out).not.toMatch(/(^|[^-\w])\*\s*,\s*:before/);
+  });
+
+  test("re-scopes @layer theme :root/:host to #fbjs", () => {
+    expect(out).toMatch(/@layer theme/);
+    // no bare :root / :host remain
+    expect(out).not.toMatch(/(^|[^#\w-]):root\b/);
+    expect(out).not.toMatch(/(^|[^#\w-]):host\b/);
+    // theme variables now live under #fbjs
+    expect(out.replace(/\s+/g, " ")).toMatch(/#fbjs[^{]*\{[^}]*--color-red-500/);
+  });
+
+  test("replaces global @property --tw-* with a #fbjs-scoped rule", () => {
+    expect(out).not.toMatch(/@property\s+--tw-/);
+    const flat = out.replace(/\s+/g, " ");
+    // initial values re-emitted, scoped to #fbjs
+    expect(flat).toMatch(/#fbjs[^{]*\{[^}]*--tw-translate-x: 0/);
+    expect(flat).toMatch(/--tw-ring-offset-color: #fff/);
+  });
+
+  test("preserves utility classes already scoped to #fbjs", () => {
+    expect(out).toMatch(/#fbjs \.flex/);
+  });
+
+  test("is a no-op when there is nothing global to scope", () => {
+    const plain = "#fbjs .button { color: red; }";
+    expect(run(plain).trim()).toBe(plain);
+  });
+});
