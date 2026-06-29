@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} 筆回應} other {{count} 筆回應}}",
     "count_selections": "{count, plural, one {{count} 個選擇} other {{count} 個選擇}}",
     "create": "建立",
-    "create_new_organization": "建立新組織",
     "create_segment": "建立區隔",
     "create_survey": "建立問卷",
     "create_workspace": "建立工作區",

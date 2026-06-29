@@ -83,6 +83,10 @@
       "message": "Sua resposta não pôde ser enviada porque foi sinalizada como atividade automatizada. Se você respira, por favor tente novamente.",
       "title": "Não foi possível verificar que você é humano."
     },
+    "response_already_completed": {
+      "message": "Esta resposta já foi concluída e não pode mais ser alterada. Podes fechar esta janela com segurança.",
+      "title": "Esta resposta já foi concluída."
+    },
     "value_must_contain": "O valor deve conter {value}",
     "value_must_equal": "O valor deve ser igual a {value}",
     "value_must_not_contain": "O valor não deve conter {value}",

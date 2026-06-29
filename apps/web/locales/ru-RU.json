@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} ответ} few {{count} ответа} many {{count} ответов} other {{count} ответа}}",
     "count_selections": "{count, plural, one {{count} выбор} few {{count} выбора} many {{count} выборов} other {{count} выбора}}",
     "create": "Создать",
-    "create_new_organization": "Создать новую организацию",
     "create_segment": "Создать сегмент",
     "create_survey": "Создать опрос",
     "create_workspace": "Создать рабочее пространство",

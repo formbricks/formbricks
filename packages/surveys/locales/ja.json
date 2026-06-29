@@ -83,6 +83,10 @@
       "message": "自動化された活動としてフラグが立てられたため、回答を送信できませんでした。人間の方は、もう一度お試しください。",
       "title": "あなたが人間であることを確認できませんでした。"
     },
+    "response_already_completed": {
+      "message": "この回答は既に完了しており、変更できません。このウィンドウを閉じても問題ありません。",
+      "title": "この回答は既に完了しています。"
+    },
     "value_must_contain": "値に{value}を含める必要があります",
     "value_must_equal": "値は{value}と等しい必要があります",
     "value_must_not_contain": "値に{value}を含めることはできません",

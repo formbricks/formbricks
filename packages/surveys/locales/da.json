@@ -83,6 +83,10 @@
       "message": "Dit svar kunne ikke sendes, fordi det blev markeret som automatiseret aktivitet. Hvis du trækker vejret, så prøv igen.",
       "title": "Vi kunne ikke bekræfte, at du er et menneske."
     },
+    "response_already_completed": {
+      "message": "Dette svar er allerede gennemført og kan ikke længere ændres. Du kan trygt lukke dette vindue.",
+      "title": "Dette svar er allerede gennemført."
+    },
     "value_must_contain": "Værdien skal indeholde {value}",
     "value_must_equal": "Værdien skal være lig med {value}",
     "value_must_not_contain": "Værdien må ikke indeholde {value}",

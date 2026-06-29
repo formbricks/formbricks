@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, other {{count} 件の回答}}",
     "count_selections": "{count, plural, other {{count} 件の選択}}",
     "create": "作成",
-    "create_new_organization": "新しい組織を作成",
     "create_segment": "セグメントを作成",
     "create_survey": "フォームを作成",
     "create_workspace": "ワークスペースを作成",

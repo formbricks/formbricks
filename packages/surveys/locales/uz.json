@@ -83,6 +83,10 @@
       "message": "Sizning javobingiz avtomatlashtirilgan faoliyat sifatida belgilanganligi sababli yuborilmadi. Agar siz nafas olayotgan bo'lsangiz, qayta urinib ko'ring.",
       "title": "Sizning inson ekanligingizni tasdiqlay olmadik."
     },
+    "response_already_completed": {
+      "message": "Bu javob allaqachon yakunlangan va endi o'zgartirib bo'lmaydi. Ushbu oynani xavfsiz yopishingiz mumkin.",
+      "title": "Bu javob allaqachon yakunlangan."
+    },
     "value_must_contain": "Qiymatda {value} bo‘lishi kerak",
     "value_must_equal": "Qiymat {value} ga teng bo‘lishi kerak",
     "value_must_not_contain": "Qiymatda {value} bo‘lmasligi kerak",

@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} válasz} other {{count} válasz}}",
     "count_selections": "{count, plural, one {{count} kiválasztás} other {{count} kiválasztás}}",
     "create": "Létrehozás",
-    "create_new_organization": "Új szervezet létrehozása",
     "create_segment": "Szegmens létrehozása",
     "create_survey": "Kérdőív létrehozása",
     "create_workspace": "Munkaterület létrehozása",

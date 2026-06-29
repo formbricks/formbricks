@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} yanıt} other {{count} yanıt}}",
     "count_selections": "{count, plural, one {{count} seçim} other {{count} seçim}}",
     "create": "Oluştur",
-    "create_new_organization": "Yeni organizasyon oluştur",
     "create_segment": "Segment oluştur",
     "create_survey": "Survey oluştur",
     "create_workspace": "Çalışma alanı oluştur",

@@ -83,6 +83,10 @@
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
       "title": "Wir konnten nicht verifizieren, dass du ein Mensch bist."
     },
+    "response_already_completed": {
+      "message": "Diese Antwort wurde bereits abgeschlossen und kann nicht mehr geändert werden. Du kannst dieses Fenster jetzt schließen.",
+      "title": "Diese Antwort wurde bereits abgeschlossen."
+    },
     "value_must_contain": "Wert muss {value} enthalten",
     "value_must_equal": "Wert muss {value} entsprechen",
     "value_must_not_contain": "Wert darf {value} nicht enthalten",

@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} reactie} other {{count} reacties}}",
     "count_selections": "{count, plural, one {{count} selectie} other {{count} selecties}}",
     "create": "Creëren",
-    "create_new_organization": "Creëer een nieuwe organisatie",
     "create_segment": "Segment maken",
     "create_survey": "Enquête maken",
     "create_workspace": "Werkruimte aanmaken",

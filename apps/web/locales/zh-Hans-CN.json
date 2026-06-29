@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, other {{count} 回复} }",
     "count_selections": "{count, plural, other {已选择{count}项}}",
     "create": "创建",
-    "create_new_organization": "创建 新的 组织",
     "create_segment": "创建 细分",
     "create_survey": "创建 调查",
     "create_workspace": "创建工作区",

@@ -83,6 +83,10 @@
       "message": "Sinu vastust ei saanud esitada, kuna see märgiti automatiseeritud tegevuseks. Kui sa hingad, palun proovi uuesti.",
       "title": "Me ei suutnud kinnitada, et sa oled inimene."
     },
+    "response_already_completed": {
+      "message": "See vastus on juba lõpetatud ega saa enam muuta. Võid selle akna turvaliselt sulgeda.",
+      "title": "See vastus on juba lõpetatud."
+    },
     "value_must_contain": "Väärtus peab sisaldama {value}",
     "value_must_equal": "Väärtus peab võrduma {value}",
     "value_must_not_contain": "Väärtus ei tohi sisaldada {value}",

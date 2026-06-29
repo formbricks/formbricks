@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} resposta} other {{count} respostas}}",
     "count_selections": "{count, plural, one {{count} seleção} other {{count} seleções}}",
     "create": "Criar",
-    "create_new_organization": "Criar nova organização",
     "create_segment": "Criar segmento",
     "create_survey": "Criar pesquisa",
     "create_workspace": "Criar workspace",

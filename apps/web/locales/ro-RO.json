@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} răspuns} few {{count} răspunsuri} other {{count} de răspunsuri}}",
     "count_selections": "{count, plural, one {{count} selecție} few {{count} selecții} other {{count} de selecții}}",
     "create": "Creează",
-    "create_new_organization": "Creează organizație nouă",
     "create_segment": "Creați segment",
     "create_survey": "Creează sondaj",
     "create_workspace": "Creează workspace",

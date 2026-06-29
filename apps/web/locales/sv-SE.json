@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} svar} other {{count} svar}}",
     "count_selections": "{count, plural, one {{count} val} other {{count} val}}",
     "create": "Skapa",
-    "create_new_organization": "Skapa ny organisation",
     "create_segment": "Skapa segment",
     "create_survey": "Skapa enkät",
     "create_workspace": "Skapa arbetsyta",
