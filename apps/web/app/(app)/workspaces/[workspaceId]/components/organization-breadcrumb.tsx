@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useOrganization } from "../context/workspace-context";
+import { useOptionalWorkspaceContext } from "../context/workspace-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
@@ -40,9 +40,9 @@ export const OrganizationBreadcrumb = ({
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Get current organization name from context OR prop
-  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
-  const { organization: currentOrganization } = useOrganization();
+  // Name comes from context, falling back to the prop when there's no context yet.
+  const workspaceContext = useOptionalWorkspaceContext();
+  const currentOrganization = workspaceContext?.organization ?? null;
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   // Lazy-load organizations when dropdown opens
@@ -76,7 +76,9 @@ export const OrganizationBreadcrumb = ({
     t,
   ]);
 
-  if (!currentOrganization) {
+  // Report only when context exists but its org is missing. Absent context (e.g. the
+  // landing page) is expected — render from the prop instead of hitting Sentry.
+  if (workspaceContext && !workspaceContext.organization) {
     const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
     logger.error(errorMessage);
     Sentry.captureException(new Error(errorMessage));
