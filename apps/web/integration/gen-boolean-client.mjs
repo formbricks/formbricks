@@ -3,7 +3,7 @@
 // @formbricks/database to a shim backed by this client so BA's real user/account creation works
 // against a real Postgres before the live schema is flipped. Derived from schema.prisma so it never
 // drifts. Output (generated/prisma-test) is gitignored. Run via `pnpm test:integration`.
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,5 +45,9 @@ if (schema === before) {
 writeFileSync(testSchema, schema);
 console.log("[gen-boolean-client] derived", testSchema);
 
-execSync(`pnpm -C ${dbDir} exec prisma generate --schema ${testSchema}`, { stdio: "inherit" });
+// execFileSync (no shell) passes dbDir/testSchema as literal argv — avoids building a shell command
+// string from import.meta.url-derived absolute paths (CodeQL: shell command from environment values).
+execFileSync("pnpm", ["-C", dbDir, "exec", "prisma", "generate", "--schema", testSchema], {
+  stdio: "inherit",
+});
 console.log("[gen-boolean-client] generated → packages/database/generated/prisma-test");
