@@ -523,6 +523,13 @@
   "emails": {
     "accept": "Kabul Et",
     "click_or_drag_to_upload_files": "Dosya yüklemek için tıklayın veya sürükleyin.",
+    "delete_account_email_confirm_deletion": "Hesap silmeyi onayla",
+    "delete_account_email_did_not_request": "Bu talebi siz oluşturmadıysanız bu e-postayı yoksayın; hesabınız etkin kalır.",
+    "delete_account_email_heading": "Hesabınızın silinmesini onaylayın",
+    "delete_account_email_link_valid_for_minutes": "Bağlantı {minutes} dakika boyunca geçerlidir.",
+    "delete_account_email_subject": "Formbricks hesabınızın silinmesini onaylayın",
+    "delete_account_email_text": "Formbricks hesabınızı silmeyi talep ettiniz. Onaylamak için aşağıdaki düğmeye tıklayın:",
+    "delete_account_email_warning": "Bu işlem, hesabınızı ve ilişkili tüm verileri kalıcı olarak siler. Bu işlem geri alınamaz.",
     "email_customization_preview_email_heading": "Merhaba {userName}",
     "email_customization_preview_email_subject": "Formbricks Email Özelleştirme Önizlemesi",
     "email_customization_preview_email_text": "Bu, email'lerde hangi logonun gösterileceğini gösteren bir email önizlemesidir.",

@@ -836,6 +836,13 @@ model Account {
   id_token          String?  @db.Text
   session_state     String?
 
+  // Better Auth (ENG-1054): credential password hash + OAuth token expiry timestamps.
+  // BA maps providerId←provider, accountId←providerAccountId, accessToken←access_token,
+  // refreshToken←refresh_token, idToken←id_token via account.fields in auth.ts.
+  password              String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+
   @@unique([provider, providerAccountId])
   @@index([userId])
 }
@@ -854,6 +861,10 @@ model Session {
   userId       String
   expires      DateTime
 
+  // Better Auth (ENG-1054): token←sessionToken, expiresAt←expires (mapped via session.fields); ipAddress + userAgent below are new BA columns.
+  ipAddress String?
+  userAgent String?
+
   @@index([userId])
 }
 
@@ -864,6 +875,20 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Better Auth (ENG-1054) two-factor secrets. Supersedes the legacy User.twoFactorSecret /
+/// User.backupCodes columns (kept until cutover). `secret` and `backupCodes` are encrypted
+/// at rest by Better Auth using BETTER_AUTH_SECRET.
+model TwoFactor {
+  id          String  @id @default(cuid())
+  secret      String
+  backupCodes String
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified    Boolean @default(true)
+
+  @@unique([userId])
 }
 
 /// Stores the active password reset token for a user.
@@ -906,6 +931,7 @@ model User {
   memberships               Membership[]
   accounts                  Account[]
   sessions                  Session[]
+  twoFactor                 TwoFactor?
   passwordResetToken        PasswordResetToken?
   groupId                   String?
   invitesCreated            Invite[]            @relation("inviteCreatedBy")

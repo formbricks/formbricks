@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -8,7 +7,7 @@ import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
 
 export const CreateOrganizationPage = async () => {
   const t = await getTranslate();
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session) throw new AuthenticationError(t("common.session_not_found"));
 

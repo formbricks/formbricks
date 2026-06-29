@@ -1,4 +1,4 @@
-import { Session, getServerSession } from "next-auth";
+import { Session } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -14,7 +14,7 @@ import {
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import {
   TEnvoyRateLimitAuthType,
   isRouteRateLimitedByEnvoy,
@@ -193,13 +193,13 @@ const handleAuthentication = async (
     case AuthenticationMethod.ApiKey:
       return await authenticateRequest(req, { allowOrganizationOnlyApiKey });
     case AuthenticationMethod.Session:
-      return await getServerSession(authOptions);
+      return await getSession();
     case AuthenticationMethod.Both: {
       if (getApiKeyFromHeaders(req.headers)) {
         return await authenticateRequest(req, { allowOrganizationOnlyApiKey });
       }
 
-      return await getServerSession(authOptions);
+      return await getSession();
     }
     case AuthenticationMethod.None:
       return null;

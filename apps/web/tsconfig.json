@@ -14,7 +14,7 @@
     "skipLibCheck": true,
     "strictNullChecks": true
   },
-  "exclude": ["../../.env", "node_modules"],
+  "exclude": ["../../.env", "node_modules", "integration", "**/*.integration.test.ts"],
   "extends": "@formbricks/config-typescript/nextjs.json",
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../../packages/types/*.d.ts"]
 }

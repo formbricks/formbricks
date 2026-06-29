@@ -523,6 +523,13 @@
   "emails": {
     "accept": "Acceptera",
     "click_or_drag_to_upload_files": "Klicka eller dra för att ladda upp filer.",
+    "delete_account_email_confirm_deletion": "Bekräfta borttagning av konto",
+    "delete_account_email_did_not_request": "Om du inte har begärt detta kan du ignorera det här e-postmeddelandet, så förblir ditt konto aktivt.",
+    "delete_account_email_heading": "Bekräfta borttagningen av ditt konto",
+    "delete_account_email_link_valid_for_minutes": "Länken är giltig i {minutes} minuter.",
+    "delete_account_email_subject": "Bekräfta borttagningen av ditt Formbricks-konto",
+    "delete_account_email_text": "Du har begärt att ta bort ditt Formbricks-konto. Klicka på knappen nedan för att bekräfta:",
+    "delete_account_email_warning": "Detta raderar permanent ditt konto och alla tillhörande data. Åtgärden kan inte ångras.",
     "email_customization_preview_email_heading": "Hej {userName}",
     "email_customization_preview_email_subject": "Formbricks förhandsgranskning av e-postanpassning",
     "email_customization_preview_email_text": "Detta är en förhandsgranskning av e-post för att visa vilken logotyp som kommer att renderas i e-postmeddelandena.",

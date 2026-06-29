@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -9,7 +8,7 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { redirectBillingRoleFromRestrictedSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/lib/redirect-billing-role";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -137,7 +136,7 @@ const Page = async (props: {
 
   const searchParams = await props.searchParams;
   const t = await getTranslate();
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) {
     throw new AuthenticationError(t("common.not_authenticated"));
   }
