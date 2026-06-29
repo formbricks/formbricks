@@ -108,7 +108,16 @@ const replaceAtPropertyWithScoped = () => {
       for (const [name, value] of collected) {
         rule.append(postcss.decl({ prop: name, value }));
       }
-      root.append(rule);
+      // Emit the fallback inside the low-priority `theme` layer rather than as an
+      // unlayered author rule. `@property` initial values are defaults that any
+      // real declaration overrides; an unlayered rule, by contrast, wins over
+      // every Tailwind `@layer` (theme/base/components/utilities) and would reset
+      // `--tw-*` set by the survey's own utilities. `theme` is the lowest layer
+      // (see `@layer theme, base, components, utilities` in the globals), so
+      // utilities still win and the fallback only applies when nothing sets it.
+      const layer = postcss.atRule({ name: "layer", params: "theme" });
+      layer.append(rule);
+      root.append(layer);
     },
   };
 };

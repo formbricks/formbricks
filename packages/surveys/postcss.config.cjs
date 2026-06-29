@@ -3,11 +3,7 @@
 // scoping logic stays identical across both CSS bundles that ship together in
 // the injected <style>. See packages/vite-plugins/postcss-scope-fbjs.cjs and
 // https://github.com/formbricks/js/issues/46.
-const {
-  stripLayerProperties,
-  scopeLayerTheme,
-  replaceAtPropertyWithScoped,
-} = require("../vite-plugins/postcss-scope-fbjs.cjs");
+const { scopeFbjsPlugins } = require("../vite-plugins/postcss-scope-fbjs.cjs");
 
 // Matches a CSS numeric value followed by "rem" — e.g. "1rem", "1.5rem", "16rem".
 // Single character-class + single quantifier: no nested quantifiers, no backtracking risk.
@@ -39,5 +35,5 @@ const remtoEm = (opts = {}) => {
 };
 
 module.exports = {
-  plugins: [require("@tailwindcss/postcss"), require("autoprefixer"), remtoEm(), stripLayerProperties(), scopeLayerTheme(), replaceAtPropertyWithScoped()],
+  plugins: [require("@tailwindcss/postcss"), require("autoprefixer"), remtoEm(), ...scopeFbjsPlugins()],
 };
