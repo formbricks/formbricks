@@ -92,9 +92,18 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     const userId = await createVerifiedUser(email, "Passw0rd!"); // identityProvider defaults to "email"
     getSessionMock.mockResolvedValue({ user: { id: userId, email } });
 
+    // Spy on the token mint to prove no delete-account verification value is ever created — not just
+    // that no email was sent. A future refactor could mint before throwing, leaving a live delete token
+    // the callback would honor; this keeps that regression visible.
+    const ctx = await auth.$context;
+    const mintSpy = vi.spyOn(ctx.internalAdapter, "createVerificationValue");
+
     // A directly-called server action must not let a credential user take the SSO email-link path.
     await expect(requestSsoAccountDeletionEmail()).rejects.toThrow(/password confirmation/i);
-    expect(sendDeleteAccountConfirmationEmailMock).not.toHaveBeenCalled(); // rejected before minting/emailing
+    expect(mintSpy).not.toHaveBeenCalled(); // no delete-account token minted
+    expect(sendDeleteAccountConfirmationEmailMock).not.toHaveBeenCalled(); // and no email sent
     expect(await prisma.user.findUnique({ where: { id: userId } })).not.toBeNull(); // user untouched
+
+    mintSpy.mockRestore();
   });
 });

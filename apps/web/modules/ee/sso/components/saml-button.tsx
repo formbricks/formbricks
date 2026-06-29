@@ -16,7 +16,7 @@ interface SamlButtonProps {
   source: "signin" | "signup";
 }
 
-export const SamlButton = ({ returnToUrl, lastUsed, source }: SamlButtonProps) => {
+export const SamlButton = ({ returnToUrl, lastUsed, source }: Readonly<SamlButtonProps>) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
