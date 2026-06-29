@@ -110,3 +110,21 @@ jobs:
           DUMMY_CUBEJS_API_URL: ${{ secrets.DUMMY_CUBEJS_API_URL }}
           DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      # Dedicated migration image (ENG-1153): ships the Prisma CLI + @prisma/config
+      # loader chain so the web image can stay slim. Same version tags as the web
+      # image, published as ghcr.io/<repo>-migrate. Built from the `migrations`
+      # Dockerfile stage, which does not run the web build (no build secrets used).
+      - name: Build and push community migration image
+        id: build_migrate
+        uses: ./.github/actions/build-and-push-docker
+        with:
+          registry_type: "ghcr"
+          ghcr_image_name: ${{ env.IMAGE_NAME }}-migrate
+          target: "migrations"
+          version: ${{ steps.extract_release_tag.outputs.VERSION }}
+          is_prerelease: ${{ inputs.IS_PRERELEASE }}
+          make_latest: ${{ inputs.MAKE_LATEST }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}

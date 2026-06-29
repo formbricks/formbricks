@@ -68,6 +68,10 @@ inputs:
     description: "Build context"
     required: false
     default: "."
+  target:
+    description: "Dockerfile build stage to target (e.g. 'migrations'). Empty builds the default final stage."
+    required: false
+    default: ""
 
 outputs:
   image_tag:
@@ -276,6 +280,7 @@ runs:
         token: ${{ env.DEPOT_PROJECT_TOKEN }}
         context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile }}
+        target: ${{ inputs.target }}
         platforms: linux/amd64,linux/arm64
         pull: true
         push: ${{ github.event_name != 'pull_request' }}
