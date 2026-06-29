@@ -31,13 +31,17 @@ describe("Better Auth sign-out invalidates the session (real Postgres)", () => {
 
     const cookieHeader = await signedInCookieHeader("carol@example.com", "Correct-Horse1");
     expect(cookieHeader).toContain("session_token");
-    expect(await prisma.session.count()).toBe(1);
+    // A second, independent session for the same user — sign-out must remove only the targeted one,
+    // not every session (it's sign-out, not sign-out-all).
+    await signedInCookieHeader("carol@example.com", "Correct-Horse1");
+    expect(await prisma.session.count()).toBe(2);
 
     const out = await auth.api.signOut({ headers: new Headers({ cookie: cookieHeader }), asResponse: true });
     expect(out.status).toBe(200);
 
-    // The forward-auth proxy validates via prisma.session.findUnique — so the row MUST be gone.
-    expect(await prisma.session.count()).toBe(0);
+    // Exactly the signed-out session is gone (the forward-auth proxy reads prisma.session.findUnique);
+    // the other survives.
+    expect(await prisma.session.count()).toBe(1);
   });
 
   test("the HTTP /sign-out route (what the client calls) deletes the DB Session row", async () => {
@@ -57,7 +61,7 @@ describe("Better Auth sign-out invalidates the session (real Postgres)", () => {
         headers: { cookie: cookieHeader },
       })
     );
-    expect(res.status).toBeLessThan(500);
+    expect(res.ok).toBe(true); // a 4xx (e.g. CSRF/415) would also "not crash" but isn't a real sign-out
 
     expect(await prisma.session.count()).toBe(0);
   });

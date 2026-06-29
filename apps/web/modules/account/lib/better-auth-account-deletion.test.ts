@@ -140,15 +140,23 @@ describe("requireDeletionConfirmationBeforeHandler (delete-user freshAge guard)"
   });
 
   test("blocks a confirmation-less delete (closes the freshAge password bypass)", async () => {
-    await expect(
-      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: {} }))
-    ).rejects.toBeInstanceOf(APIError);
+    await expect(requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: {} }))).rejects.toThrow(
+      "Password confirmation is required"
+    );
   });
 
   test("blocks when the request has no body", async () => {
     await expect(
       requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: undefined }))
-    ).rejects.toBeInstanceOf(APIError);
+    ).rejects.toThrow("Password confirmation is required");
+  });
+
+  test("exempts the SSO email-link callback (/delete-user/callback)", async () => {
+    // SSO deletion completes via the emailed GET callback (carrying its own token), not a password —
+    // the guard must let it through, or the SSO email-link flow breaks.
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ path: "/delete-user/callback", body: {} }))
+    ).resolves.toBeUndefined();
   });
 
   test("ignores non-delete-user paths", async () => {

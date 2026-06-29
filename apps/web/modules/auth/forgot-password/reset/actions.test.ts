@@ -67,12 +67,12 @@ describe("resetPasswordAction", () => {
       new APIError("BAD_REQUEST", { message: "invalid token", code: "INVALID_TOKEN" })
     );
 
-    await expect(resetPasswordAction({ parsedInput } as any)).rejects.toBeInstanceOf(
-      InvalidPasswordResetTokenError
-    );
-    await expect(resetPasswordAction({ parsedInput } as any)).rejects.toThrow(
-      INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE
-    );
+    // Invoke once and assert on the single promise — this action wraps a mutating auth call, so
+    // re-invoking would double the side effect and weaken the test.
+    const result = resetPasswordAction({ parsedInput } as any);
+    await expect(result).rejects.toBeInstanceOf(InvalidPasswordResetTokenError);
+    await expect(result).rejects.toThrow(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
+    expect(auth.api.resetPassword).toHaveBeenCalledTimes(1);
   });
 
   test("propagates an unexpected (non-APIError) error unchanged", async () => {

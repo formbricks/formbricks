@@ -23,10 +23,24 @@ describe("[...all] Better Auth route (ENG-1054 cutover)", () => {
 
   test("GET delegates to auth.handler within the SSO request context", async () => {
     const request = new Request("http://localhost/api/auth/get-session");
+    // Record ordering so we prove auth.handler runs INSIDE the wrapper (not merely that both ran) —
+    // that's the cutover regression: a bare handler would make new-SSO-user sign-ups throw.
+    const calls: string[] = [];
+    runWithCtxMock.mockImplementationOnce(async (fn: () => unknown) => {
+      calls.push("wrapper:start");
+      const response = await fn();
+      calls.push("wrapper:end");
+      return response;
+    });
+    handlerMock.mockImplementationOnce(async () => {
+      calls.push("handler");
+      return new Response("ok", { status: 200 });
+    });
     const response = await GET(request);
     expect(response.status).toBe(200);
     expect(runWithCtxMock).toHaveBeenCalledTimes(1);
     expect(handlerMock).toHaveBeenCalledWith(request);
+    expect(calls).toEqual(["wrapper:start", "handler", "wrapper:end"]);
   });
 
   test("POST delegates to auth.handler within the SSO request context", async () => {

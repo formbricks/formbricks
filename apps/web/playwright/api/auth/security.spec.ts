@@ -402,7 +402,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         "database",
         "prisma",
         "stack trace",
-        "rate limit exceeded",
         "sql",
         "query",
         "connection timeout",

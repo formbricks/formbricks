@@ -101,13 +101,18 @@ async function signUpUserSafely(
   }
 
   let user = await getUserByEmail(normalizedEmail);
+  if (!user) {
+    // signUpEmail succeeded but the row can't be loaded — an invariant violation. Fail loud rather
+    // than returning { success: true } with no user, which would skip org creation / invite acceptance.
+    throw new UnknownError("Failed to load user after signup");
+  }
   // signUpEmail can't carry the chosen locale (not a Better Auth field), so apply it afterwards.
-  if (user && userLocale && user.locale !== userLocale) {
+  if (userLocale && user.locale !== userLocale) {
     await updateUser(user.id, { locale: userLocale });
     user = { ...user, locale: userLocale };
   }
 
-  return { user: user ?? undefined, userAlreadyExisted: false };
+  return { user, userAlreadyExisted: false };
 }
 
 async function handleInviteAcceptance(

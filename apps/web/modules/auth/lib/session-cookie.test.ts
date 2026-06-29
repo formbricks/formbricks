@@ -86,4 +86,13 @@ describe("Better Auth session-cookie verification", () => {
     expect(getSessionTokenFromCookieHeader(`foo=1; ${BA_COOKIE}=${cookie}; bar=2`)).toBe(token);
     expect(getSessionTokenFromCookieHeader(null)).toBeNull();
   });
+
+  test("Cookie header: falls through a present-but-invalid __Secure- cookie to a valid one", () => {
+    // Same redirect-loop protection as the cookie-store path (above), but for the raw Cookie header
+    // parser: a stale `__Secure-` cookie alongside a valid `formbricks.session_token` must not wedge.
+    mockEnv.BETTER_AUTH_SECRET = BA_SECRET;
+    const stale = `${token}.${createHmac("sha256", "old-default-secret").update(token).digest("base64")}`;
+    const valid = sign(token, BA_SECRET);
+    expect(getSessionTokenFromCookieHeader(`${BA_COOKIE}=${stale}; ${DEV_COOKIE}=${valid}`)).toBe(token);
+  });
 });

@@ -671,7 +671,10 @@ describe("withV1ApiWrapper", () => {
       authenticationMethod: AuthMethod.Both,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" } } as any);
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1" },
+      expires: "2999-01-01T00:00:00.000Z",
+    });
     vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Rate limit exceeded"));
 
     const handler = vi.fn();

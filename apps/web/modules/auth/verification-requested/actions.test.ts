@@ -77,7 +77,7 @@ describe("resendVerificationEmailAction", () => {
   const mockVerifiedUser = {
     id: "user123",
     email: "test@example.com",
-    emailVerified: new Date(),
+    emailVerified: true, // boolean post-cutover (ENG-1054); keep fixtures off the legacy Date contract
     name: "Test User",
   };
 

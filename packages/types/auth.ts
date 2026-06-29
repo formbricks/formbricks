@@ -51,7 +51,7 @@ export interface Session {
  */
 export interface Account {
   provider: string;
-  type: string;
+  type: string | null; // Better Auth-created accounts set no `type` (column nullable, ENG-1054 cutover)
   providerAccountId: string;
   access_token?: string;
   refresh_token?: string;

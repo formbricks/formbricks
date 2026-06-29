@@ -90,6 +90,10 @@ describe("Better Auth password reset (real Postgres)", () => {
     // onPasswordReset side effect (ENG-1054): the user gets the "password changed" security
     // notification. (The audit event from the same hook is unit-tested in better-auth-observability.)
     expect(sendPasswordResetNotifyEmail).toHaveBeenCalledTimes(1);
+    // ...sent to the user who reset (not some other recipient) — count alone wouldn't catch that.
+    expect(sendPasswordResetNotifyEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "reset@example.com" })
+    );
 
     // the reset token is single-use (consumed via getAndDelete) — replaying it fails
     await expect(auth.api.resetPassword({ body: { token, newPassword: "Another1!" } })).rejects.toBeTruthy();
