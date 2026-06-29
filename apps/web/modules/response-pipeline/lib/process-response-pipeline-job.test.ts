@@ -263,6 +263,16 @@ describe("processResponsePipelineJob", () => {
     expect(mockEnqueueResponseCompletedWorkflowRuns).not.toHaveBeenCalled();
   });
 
+  test("rethrows a transient DB pool-exhaustion error from the workflow runner so the job retries", async () => {
+    mockEnqueueResponseCompletedWorkflowRuns.mockRejectedValue(
+      new Error("Timed out fetching a new connection from the connection pool")
+    );
+
+    await expect(
+      processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext)
+    ).rejects.toThrow(/connection pool/i);
+  });
+
   test("isolates a workflow runner failure from the response pipeline", async () => {
     mockEnqueueResponseCompletedWorkflowRuns.mockRejectedValue(new Error("runner boom"));
 

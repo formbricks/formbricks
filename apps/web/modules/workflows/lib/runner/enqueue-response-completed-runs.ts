@@ -3,6 +3,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZWorkflowTriggerRunPayload } from "@formbricks/workflows";
+import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { type DispatchWorkflowRun } from "./dispatch";
 import { type WorkflowMatchCandidate, matchWorkflowsForResponse } from "./match-workflows";
 
@@ -122,8 +123,20 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
         });
         if (existing) {
           await dispatch({ workflowRunId: existing.id, workflowId: match.workflowId, workspaceId });
+        } else {
+          // The unique violation says a run exists, but we can't find it by its idempotency key — a
+          // contradictory state with no run id to dispatch. Surface it rather than silently drop it.
+          logger.error(
+            { ...logContext, workflowId: match.workflowId, workspaceId, responseId: response.id },
+            "Workflow run unique-constraint violation but no existing run found to re-dispatch"
+          );
         }
         continue;
+      }
+      if (isDatabasePoolExhaustionError(error)) {
+        // Transient DB pool exhaustion: propagate so the pipeline retries the whole (idempotent)
+        // enqueue rather than swallow it and silently drop this workflow's run.
+        throw error;
       }
       logger.error(
         { ...logContext, workflowId: match.workflowId, workspaceId, responseId: response.id, err: error },

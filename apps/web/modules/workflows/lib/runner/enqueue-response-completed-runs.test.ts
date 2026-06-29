@@ -138,7 +138,7 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
     expect(error).not.toHaveBeenCalled();
   });
 
-  test("on a unique violation with no findable existing run, neither dispatches nor throws", async () => {
+  test("on a unique violation with no findable existing run, surfaces an error and does not dispatch", async () => {
     findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
     create.mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
@@ -150,6 +150,24 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
 
     await expect(run()).resolves.toBeUndefined();
 
+    expect(dispatch).not.toHaveBeenCalled();
+    // A unique violation with no recoverable run is a contradictory state; surface it, don't hide it.
+    expect(error).toHaveBeenCalled();
+  });
+
+  test("propagates a database error raised during candidate load (does not swallow it before matching)", async () => {
+    findMany.mockRejectedValue(new Error("Timed out fetching a new connection from the connection pool"));
+
+    await expect(run()).rejects.toThrow(/connection pool/i);
+    expect(create).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test("rethrows a transient pool-exhaustion error raised during run creation so the pipeline can retry", async () => {
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
+    create.mockRejectedValue(new Error("Timed out fetching a new connection from the connection pool"));
+
+    await expect(run()).rejects.toThrow(/connection pool/i);
     expect(dispatch).not.toHaveBeenCalled();
     expect(error).not.toHaveBeenCalled();
   });
