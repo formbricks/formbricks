@@ -3790,6 +3790,10 @@ checksums:
     workspace/workflows/settings_title: 8df6777277469c1fd88cc18dde2f1cc3
     workspace/workflows/test: 82a46f197779af4dde92e7e5f9336ccf
     workspace/workflows/test_failed: 1b943f34c72e29e2698969a5c48efb65
+    workspace/workflows/test_problem_ending_card_not_found: 2a288324d1a1c0c96dfb24ec7df1111b
+    workspace/workflows/test_problem_generic: 74440165343f47662547a903237df811
+    workspace/workflows/test_problem_not_executable: 181e882b51b31ca871e2028af80ccc14
+    workspace/workflows/test_problem_survey_not_found: 9e13808eb7af204ab95f276ca079de1e
     workspace/workflows/test_problems_description: 37be3906bffaee0b9ef17b7c0e539b04
     workspace/workflows/test_problems_title: 73142b32a51d802b163270e2989fd7b9
     workspace/workflows/test_success: 16c95465ffc0b3e331d51006b6e735ad

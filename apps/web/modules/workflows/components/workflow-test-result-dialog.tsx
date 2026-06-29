@@ -31,6 +31,14 @@ export const WorkflowTestResultDialog = ({
 }: Readonly<WorkflowTestResultDialogProps>) => {
   const { t } = useTranslation();
 
+  // Localize each problem by its machine-readable `code` rather than rendering the API's English
+  // `message`. Inline literal t() calls so the translation-key scanner detects the keys.
+  const problemMessages: Record<string, string> = {
+    definition_not_executable: t("workspace.workflows.test_problem_not_executable"),
+    survey_not_found: t("workspace.workflows.test_problem_survey_not_found"),
+    ending_card_not_found: t("workspace.workflows.test_problem_ending_card_not_found"),
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -44,7 +52,9 @@ export const WorkflowTestResultDialog = ({
               <li
                 key={`${problem.code}-${problem.field}-${index.toString()}`}
                 className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <p className="text-sm text-slate-800">{problem.message}</p>
+                <p className="text-sm text-slate-800">
+                  {problemMessages[problem.code] ?? t("workspace.workflows.test_problem_generic")}
+                </p>
                 <p className="mt-1 font-mono text-xs text-slate-500">{problem.field}</p>
               </li>
             ))}

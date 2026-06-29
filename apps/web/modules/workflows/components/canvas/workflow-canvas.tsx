@@ -58,9 +58,11 @@ const EDGE_TYPES: EdgeTypes = {
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
+  /** Workspace write permission. Distinct from `isEditable` (which is also false when enabled). */
+  isReadOnly: boolean;
 }
 
-const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) => {
+const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanvasProps>) => {
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
@@ -75,9 +77,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const { fitView } = useReactFlow();
   const isEnabled = workflow?.status === "enabled";
-  // Dry-run testing is only meaningful for live workflows: a draft is still being built and an
-  // archived one is dead. Mirrors the API guard in workflows.handlers.ts (testWorkflow).
-  const isTestable = workflow?.status === "enabled" || workflow?.status === "disabled";
+  // Dry-run testing is only meaningful for live workflows (draft is still being built, archived is
+  // dead) and requires workspace write access — testWorkflow authorizes with readWrite, so a
+  // read-only user would only get a 403. Mirrors the API guard in workflows.handlers.ts.
+  const isTestable = !isReadOnly && (workflow?.status === "enabled" || workflow?.status === "disabled");
   const [isTesting, setIsTesting] = useState(false);
   // null = dialog closed; a non-empty array opens the problems dialog (the ok case is a toast).
   const [testProblems, setTestProblems] = useState<TWorkflowTestProblem[] | null>(null);

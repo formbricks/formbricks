@@ -9,6 +9,7 @@ required:
 properties:
   workflowId:
     type: string
+    format: cuid2
     example: clworkflow0000000000000000
   ok:
     type: boolean

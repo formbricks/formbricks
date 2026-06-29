@@ -128,7 +128,12 @@ describe("testWorkflow", () => {
       })
     );
 
-    await expect(testWorkflow("wf1")).rejects.toBeInstanceOf(V3ApiError);
+    await expect(testWorkflow("wf1")).rejects.toMatchObject({
+      name: "V3ApiError",
+      status: 422,
+      code: "invalid_workflow_state",
+      detail: "Only enabled or disabled workflows can be tested.",
+    });
   });
 });
 
