@@ -13,11 +13,14 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
 import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TWorkflowTestProblem } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
+import { testWorkflow } from "@/modules/workflows/lib/api-client";
 import {
   WORKFLOW_CANVAS_NODE_TYPE,
   WORKFLOW_CANVAS_SNAP_GRID,
@@ -40,6 +43,7 @@ import {
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
 } from "@/modules/workflows/state/editor";
+import { WorkflowTestResultDialog } from "../workflow-test-result-dialog";
 import { AddButtonEdge } from "./add-button-edge";
 import { CanvasControls } from "./canvas-controls";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
@@ -71,6 +75,12 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const { fitView } = useReactFlow();
   const isEnabled = workflow?.status === "enabled";
+  // Dry-run testing is only meaningful for live workflows: a draft is still being built and an
+  // archived one is dead. Mirrors the API guard in workflows.handlers.ts (testWorkflow).
+  const isTestable = workflow?.status === "enabled" || workflow?.status === "disabled";
+  const [isTesting, setIsTesting] = useState(false);
+  // null = dialog closed; a non-empty array opens the problems dialog (the ok case is a toast).
+  const [testProblems, setTestProblems] = useState<TWorkflowTestProblem[] | null>(null);
   // `isEditable` (canEditDefinition) is the API-side gate. The lock toggle is the user-driven
   // gate layered on top: even when permissions allow editing, the canvas stays read-only until
   // the user unlocks it.
@@ -124,10 +134,24 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     requestAnimationFrame(() => fitView({ padding: 0.25, maxZoom: 0.85, minZoom: 0.4, duration: 300 }));
   }, [canMutate, setDefinition, fitView]);
 
-  const handleRunWorkflow = () => {
-    // Run/test dispatch lands with the test endpoint client wiring (separate ticket); the
-    // button is rendered here so the canvas matches the Figma layout end-to-end.
-    toast(t("workspace.workflows.test_not_implemented"));
+  const handleRunWorkflow = async () => {
+    // Dry-run the workflow: validate its survey + ending references without running it or causing
+    // side effects. Valid → toast; problems → dialog listing them. The button only renders for
+    // testable (enabled/disabled) workflows, so `workflow` is always present here.
+    if (!workflow || isTesting) return;
+    setIsTesting(true);
+    try {
+      const result = await testWorkflow(workflow.id);
+      if (result.ok) {
+        toast.success(t("workspace.workflows.test_success"));
+      } else {
+        setTestProblems(result.problems);
+      }
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.test_failed")));
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleToggleLock = () => {
@@ -149,10 +173,12 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
       <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
-        <Button variant="secondary" onClick={handleRunWorkflow}>
-          <PlayIcon className="size-4" />
-          {t("workspace.workflows.run")}
-        </Button>
+        {isTestable ? (
+          <Button variant="secondary" onClick={handleRunWorkflow} loading={isTesting} disabled={isTesting}>
+            <PlayIcon className="size-4" />
+            {t("workspace.workflows.test")}
+          </Button>
+        ) : null}
         <Button
           variant="outline"
           size="icon"
@@ -192,6 +218,13 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         isLocked={isLocked}
         onAutoLayout={handleAutoLayout}
         onToggleLock={handleToggleLock}
+      />
+      <WorkflowTestResultDialog
+        open={testProblems !== null}
+        onOpenChange={(open) => {
+          if (!open) setTestProblems(null);
+        }}
+        problems={testProblems ?? []}
       />
     </div>
   );

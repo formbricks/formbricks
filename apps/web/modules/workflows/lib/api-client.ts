@@ -5,6 +5,7 @@ import type {
   TWorkflowResource,
   TWorkflowSortBy,
   TWorkflowStatus,
+  TWorkflowTestResult,
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
@@ -173,6 +174,26 @@ export const enableWorkflow = (workflowId: string) => postLifecycle(workflowId, 
 export const disableWorkflow = (workflowId: string) => postLifecycle(workflowId, "disable");
 export const archiveWorkflow = (workflowId: string) => postLifecycle(workflowId, "archive");
 export const unarchiveWorkflow = (workflowId: string) => postLifecycle(workflowId, "unarchive");
+
+/**
+ * Dry-run (validate) a workflow. Returns `{ ok, problems }` — no run is created and no side effect
+ * occurs. A non-`ok` result is still a successful (200) response; only transport/permission/state
+ * failures reject (and surface as the test error toast).
+ */
+export async function testWorkflow(workflowId: string): Promise<TWorkflowTestResult> {
+  const response = await fetch(`/api/v3/workflows/${workflowId}/test`, {
+    method: "POST",
+    cache: "no-store",
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const body = (await response.json()) as { data: TWorkflowTestResult };
+  return body.data;
+}
 
 export async function deleteWorkflow(workflowId: string): Promise<void> {
   const response = await fetch(`/api/v3/workflows/${workflowId}`, {

@@ -343,6 +343,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
     try {
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
       if (loaded instanceof Response) return loaded;
+      // Only enabled or disabled workflows can be tested: a draft is still being built, and an
+      // archived workflow is soft-deleted. Both are rejected up front (mirrors the lifecycle guards).
+      if (loaded.status !== "enabled" && loaded.status !== "disabled") {
+        throw new WorkflowInvalidStateError("Only enabled or disabled workflows can be tested.");
+      }
 
       const problems: TWorkflowTestProblem[] = [];
 

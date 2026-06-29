@@ -1826,7 +1826,9 @@ paths:
       description: |
         Validates a workflow without running it or causing any side effect. It checks that the workflow's current definition is executable and that the trigger's referenced survey and ending cards still exist in the workspace. **No** workflow run is created and **no** email or webhook is sent.
 
-        The response is always `200` with `{ ok, problems }`. `ok` is `true` when the workflow would execute; otherwise `problems` lists every issue found — each with a machine-readable `code` and the offending `field` — so they can be fixed in a single pass. Validation works in any workflow state.
+        The response is always `200` with `{ ok, problems }`. `ok` is `true` when the workflow would execute; otherwise `problems` lists every issue found — each with a machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
+
+        Only `enabled` and `disabled` workflows can be tested. Testing a `draft` or `archived` workflow returns **422** with code `invalid_workflow_state`.
       tags:
         - V3 Workflows
       parameters:
@@ -1878,6 +1880,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':

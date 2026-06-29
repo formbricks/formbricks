@@ -584,8 +584,8 @@ interface TestResultBody {
 }
 
 describe("testWorkflow", () => {
-  test("returns ok=true for an executable workflow with a valid trigger survey", async () => {
-    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+  test("returns ok=true for an executable enabled workflow with a valid trigger survey", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
 
     const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
 
@@ -595,8 +595,8 @@ describe("testWorkflow", () => {
     expect(body.data).toEqual({ workflowId, ok: true, problems: [] });
   });
 
-  test("validates any status, including archived (no run, no side effect)", async () => {
-    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+  test("tests a disabled workflow", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled" }));
 
     const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
 
@@ -605,9 +605,23 @@ describe("testWorkflow", () => {
     expect(body.data.ok).toBe(true);
   });
 
+  test.each([["draft"], ["archived"]] as const)(
+    "rejects a %s workflow with 422 invalid_workflow_state without checking the survey",
+    async (status) => {
+      service.getWorkflowById.mockResolvedValue(makeRow({ status }));
+
+      const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+      expect(res.status).toBe(422);
+      const body = await readJson<{ code: string }>(res);
+      expect(body.code).toBe("invalid_workflow_state");
+      expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+    }
+  );
+
   test("collects every problem in one pass (non-executable AND missing survey)", async () => {
     service.getWorkflowById.mockResolvedValue(
-      makeRow({ status: "draft", definition: { ...definition, nodes: [], edges: [] } })
+      makeRow({ status: "enabled", definition: { ...definition, nodes: [], edges: [] } })
     );
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: false, missingEndingCardIds: [] });
 
@@ -622,7 +636,7 @@ describe("testWorkflow", () => {
   });
 
   test("reports a missing ending card", async () => {
-    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: ["ec_missing"] });
 
     const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
@@ -644,7 +658,7 @@ describe("testWorkflow", () => {
   });
 
   test("returns the authorization denial without checking the survey", async () => {
-    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
     const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
 
     const res = await handlers.testWorkflow({ ctx, params: { workflowId } });
