@@ -5,7 +5,8 @@
 // drifts. Output (generated/prisma-test) is gitignored. Run via `pnpm test:integration`.
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { createRequire } from "node:module";
+import { delimiter, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -45,9 +46,25 @@ if (schema === before) {
 writeFileSync(testSchema, schema);
 console.log("[gen-boolean-client] derived", testSchema);
 
-// execFileSync (no shell) passes dbDir/testSchema as literal argv — avoids building a shell command
-// string from import.meta.url-derived absolute paths (CodeQL: shell command from environment values).
-execFileSync("pnpm", ["-C", dbDir, "exec", "prisma", "generate", "--schema", testSchema], {
+// Invoke the Prisma CLI directly through Node by ABSOLUTE path, rather than `pnpm exec prisma`:
+// - process.execPath is a fixed, unwriteable path to the running Node binary, and the CLI path is
+//   resolved from node_modules — so the command itself is never looked up via $PATH (Sonar S4036: a
+//   planted `pnpm`/`prisma` on a writable $PATH entry can't be executed).
+// - execFileSync (no shell) still passes every path as literal argv (CodeQL: no shell command built
+//   from import.meta.url-derived values).
+// Prisma spawns the schema's custom generators (e.g. prisma-json-types-generator) by bare name, which
+// it resolves via $PATH, so the child still needs node_modules/.bin — the .bin dir alongside the
+// resolved prisma package, a fixed project-owned directory (this is what `pnpm exec` set up before).
+const require = createRequire(import.meta.url);
+const prismaPkgJson = require.resolve("prisma/package.json");
+const prismaPkg = JSON.parse(readFileSync(prismaPkgJson, "utf8"));
+const prismaBin = typeof prismaPkg.bin === "string" ? prismaPkg.bin : prismaPkg.bin.prisma;
+const prismaDir = dirname(prismaPkgJson);
+const prismaCli = resolve(prismaDir, prismaBin);
+const nodeModulesBin = resolve(prismaDir, "../.bin");
+execFileSync(process.execPath, [prismaCli, "generate", "--schema", testSchema], {
+  cwd: dbDir,
   stdio: "inherit",
+  env: { ...process.env, PATH: `${nodeModulesBin}${delimiter}${process.env.PATH ?? ""}` },
 });
 console.log("[gen-boolean-client] generated → packages/database/generated/prisma-test");
