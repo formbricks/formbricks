@@ -73,8 +73,12 @@ describe("parseCSVColumnsToFields", () => {
   });
 });
 
-const createMockFile = (name: string, size: number, type: string): File =>
-  new File(["x".repeat(size)], name, { type });
+const createMockFile = (name: string, size: number, type: string): File => {
+  const file = new File([], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+
+  return file;
+};
 
 describe("validateCsvFile", () => {
   test("accepts a valid .csv file", () => {
@@ -115,6 +119,12 @@ describe("validateCsvFile", () => {
 
   test("accepts a file exactly at the size limit", () => {
     const file = createMockFile("exact.csv", MAX_CSV_VALUES.FILE_SIZE, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
+  test("accepts a CSV file larger than 14MB", () => {
+    const file = createMockFile("large.csv", 14 * 1024 * 1024, "text/csv");
     const result = validateCsvFile(file, mockT as never);
     expect(result).toEqual({ valid: true });
   });
