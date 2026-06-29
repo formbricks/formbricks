@@ -1500,6 +1500,8 @@
       "delete_action_text": "您確定要刪除此操作嗎？這也會從您的所有問卷中移除此操作作為觸發器。",
       "does_not_contain": "不包含",
       "does_not_exactly_match": "不完全相符",
+      "edit_shared_action_warning_description": "變更將更新所有使用此操作的問卷，包括：{{surveys}}",
+      "edit_shared_action_warning_title": "此操作在其他問卷中使用",
       "eg_clicked_download": "例如，點擊下載",
       "eg_download_cta_click_on_home": "例如，download_cta_click_on_home",
       "eg_install_app": "例如，安裝應用程式",

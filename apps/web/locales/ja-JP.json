@@ -1500,6 +1500,8 @@
       "delete_action_text": "このアクションを本当に削除しますか？これにより、すべてのフォームからこのアクションがトリガーとして削除されます。",
       "does_not_contain": "を含まない",
       "does_not_exactly_match": "と完全に一致しない",
+      "edit_shared_action_warning_description": "変更は、このアクションを使用しているすべてのアンケート（{{surveys}} を含む）に反映されます",
+      "edit_shared_action_warning_title": "このアクションは他のアンケートでも使用されています",
       "eg_clicked_download": "例: ダウンロードをクリック",
       "eg_download_cta_click_on_home": "例: download_cta_click_on_home",
       "eg_install_app": "例: アプリをインストール",

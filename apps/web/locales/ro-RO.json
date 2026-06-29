@@ -1500,6 +1500,8 @@
       "delete_action_text": "Sigur doriți să ștergeți această acțiune? Acest lucru va elimina acțiunea ca declanșator din toate sondajele dvs.",
       "does_not_contain": "Nu conține",
       "does_not_exactly_match": "Nu se potrivește exact",
+      "edit_shared_action_warning_description": "Modificările vor actualiza această acțiune pentru toate sondajele care o folosesc, inclusiv: {{surveys}}",
+      "edit_shared_action_warning_title": "Această acțiune este utilizată în alte sondaje",
       "eg_clicked_download": "Exemplu clic pe Descărcare",
       "eg_download_cta_click_on_home": "exemplu descărcare_cta_click_pe_acasă",
       "eg_install_app": "Exemplu: Instalați aplicația",

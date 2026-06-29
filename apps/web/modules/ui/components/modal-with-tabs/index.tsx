@@ -53,22 +53,24 @@ export const ModalWithTabs = ({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <div className="flex h-full w-full items-center justify-center gap-x-2 border-b border-slate-200 px-6">
-            {tabs.map((tab, index) => (
-              <button
-                type="button"
-                key={index}
-                className={`mr-4 px-1 pb-3 focus:outline-hidden ${
-                  activeTab === index
-                    ? "border-b-2 border-brand-dark font-semibold text-slate-900"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-                onClick={() => handleTabClick(index)}>
-                {tab.title}
-              </button>
-            ))}
-          </div>
-          <div className="flex-1 pt-4">{tabs[activeTab].children}</div>
+          {tabs.length > 1 ? (
+            <div className="flex h-full w-full items-center justify-center gap-x-2 border-b border-slate-200 px-6">
+              {tabs.map((tab, index) => (
+                <button
+                  type="button"
+                  key={index}
+                  className={`mr-4 px-1 pb-3 focus:outline-hidden ${
+                    activeTab === index
+                      ? "border-b-2 border-brand-dark font-semibold text-slate-900"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                  onClick={() => handleTabClick(index)}>
+                  {tab.title}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <div className={tabs.length > 1 ? "flex-1 pt-4" : "flex-1"}>{tabs[activeTab].children}</div>
         </DialogBody>
       </DialogContent>
     </Dialog>

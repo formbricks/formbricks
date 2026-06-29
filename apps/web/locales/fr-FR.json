@@ -1500,6 +1500,8 @@
       "delete_action_text": "Êtes-vous sûr de vouloir supprimer cette action ? Cela supprime également cette action en tant que déclencheur de toutes vos enquêtes.",
       "does_not_contain": "Ne contient pas",
       "does_not_exactly_match": "Ne correspond pas exactement à",
+      "edit_shared_action_warning_description": "Les modifications mettront à jour cette action pour toutes les enquêtes qui l'utilisent, notamment : {{surveys}}",
+      "edit_shared_action_warning_title": "Cette action est utilisée dans d'autres enquêtes",
       "eg_clicked_download": "Exemple : Cliqué sur Télécharger",
       "eg_download_cta_click_on_home": "Exemple : Cliquer sur le CTA de téléchargement sur la page d'accueil",
       "eg_install_app": "Exemple : Installer l'application",

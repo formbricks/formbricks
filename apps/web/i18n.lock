@@ -1442,6 +1442,8 @@ checksums:
     workspace/actions/delete_action_text: 5fdb159be2c8635f6a007da95c5edd57
     workspace/actions/does_not_contain: d618eb0f854f7efa0d7c644e6628fa42
     workspace/actions/does_not_exactly_match: abd0ebeecb2195c62e4ba486ce733d71
+    workspace/actions/edit_shared_action_warning_description: 5416dd3a972845328cdd2489afe44363
+    workspace/actions/edit_shared_action_warning_title: 3f843b5bf39faa04d03c2f76eb328648
     workspace/actions/eg_clicked_download: 57788a879091bd0057a5aaa83e93bfd5
     workspace/actions/eg_download_cta_click_on_home: 5ff43573743b99adbc1bf4d45daca9b3
     workspace/actions/eg_install_app: 3e27e6602d1c5958abe407ac77b0807e
