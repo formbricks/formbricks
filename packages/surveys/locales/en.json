@@ -83,6 +83,10 @@
       "message": "Your response could not be submitted because it was flagged as automated activity. If you breathe, please try again.",
       "title": "We could not verify that you are human."
     },
+    "response_already_completed": {
+      "message": "This response has already been completed and can no longer be changed. You can safely close this window.",
+      "title": "This response has already been completed."
+    },
     "value_must_contain": "Value must contain {value}",
     "value_must_equal": "Value must equal {value}",
     "value_must_not_contain": "Value must not contain {value}",

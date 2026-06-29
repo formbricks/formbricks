@@ -170,6 +170,76 @@ describe("ResponseQueue", () => {
     expect(queue["isRequestInProgress"]).toBe(false);
   });
 
+  test("processQueue does not retry 400 'already finished', drops item, surfaces ResponseAlreadyCompleted", async () => {
+    queue.queue.push(responseUpdate);
+    const sendSpy = vi.spyOn(queue, "sendResponse").mockResolvedValue(
+      err({
+        code: "bad_request",
+        message: "Response is already finished",
+        status: 400,
+      })
+    );
+
+    const result = await queue.processQueue();
+
+    expect(result.success).toBe(false);
+    expect(sendSpy).toHaveBeenCalledTimes(1); // no exponential-backoff retries
+    expect(queue.queue).toHaveLength(0); // dead item dropped so manual Retry can't loop
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.ResponseAlreadyCompleted
+    );
+    expect(queue["isRequestInProgress"]).toBe(false);
+  });
+
+  test("processQueue treats 409 as already-completed and drops the item", async () => {
+    queue.queue.push(responseUpdate);
+    const sendSpy = vi
+      .spyOn(queue, "sendResponse")
+      .mockResolvedValue(err({ code: "bad_request", message: "conflict", status: 409 }));
+
+    await queue.processQueue();
+
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    expect(queue.queue).toHaveLength(0);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.ResponseAlreadyCompleted
+    );
+  });
+
+  test("processQueue drops other 4xx client errors without retry but keeps generic error code", async () => {
+    queue.queue.push(responseUpdate);
+    const sendSpy = vi
+      .spyOn(queue, "sendResponse")
+      .mockResolvedValue(err({ code: "bad_request", message: "Validation failed", status: 400 }));
+
+    await queue.processQueue();
+
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    expect(queue.queue).toHaveLength(0);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.ResponseSendingError
+    );
+  });
+
+  test("processQueue keeps retrying 404 (not treated as terminal) and leaves item in queue", async () => {
+    queue.queue.push(responseUpdate);
+    const sendSpy = vi
+      .spyOn(queue, "sendResponse")
+      .mockResolvedValue(err({ code: "not_found", message: "Response not found", status: 404 }));
+
+    await queue.processQueue();
+
+    expect(sendSpy).toHaveBeenCalledTimes(config.retryAttempts); // retried, not dropped on first 4xx
+    expect(queue.queue).toHaveLength(1);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.ResponseSendingError
+    );
+  }, 10000);
+
   test("processQueue calls onResponseSendingFinished if finished", async () => {
     queue.queue.push({ ...responseUpdate, finished: true });
     vi.spyOn(queue, "sendResponse").mockResolvedValue(ok(true));

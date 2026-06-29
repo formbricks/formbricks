@@ -205,8 +205,45 @@ export class ResponseQueue {
     }
   }
 
-  private isTerminalStaleResponseError(error: ApiErrorResponse): boolean {
-    return error.status === 409;
+  /**
+   * 4xx client errors are permanent: the server is reachable and is rejecting the request.
+   * Re-sending the identical payload will keep failing, so these must not be retried
+   * (neither automatic backoff nor manual Retry) and the item must be dropped from the queue.
+   *
+   * Excluded (kept for retry): 401 (auth may recover after a token refresh), 404 (the offline
+   * sync path treats it as "create never reached the server" and retries as a fresh
+   * createResponse), and 429 (rate limited — transient).
+   */
+  private isTerminalClientError(error?: ApiErrorResponse): boolean {
+    if (!error) return false;
+    return (
+      error.status >= 400 &&
+      error.status < 500 &&
+      error.status !== 401 &&
+      error.status !== 404 &&
+      error.status !== 429
+    );
+  }
+
+  /**
+   * The response can no longer be updated because it was already finalized out-of-band
+   * (e.g. a second tab / email link scanner finished the same single-use response).
+   * Server returns 400 "Response is already finished" or 409 on a stale update.
+   */
+  private isResponseAlreadyCompletedError(error?: ApiErrorResponse): boolean {
+    if (!error) return false;
+    return (
+      error.status === 409 ||
+      (error.status === 400 &&
+        typeof error.message === "string" &&
+        error.message.includes("already finished"))
+    );
+  }
+
+  private getTerminalClientErrorCode(error?: ApiErrorResponse): TResponseErrorCodesEnum {
+    return this.isResponseAlreadyCompletedError(error)
+      ? TResponseErrorCodesEnum.ResponseAlreadyCompleted
+      : TResponseErrorCodesEnum.ResponseSendingError;
   }
 
   add(responseUpdate: TResponseUpdate) {
@@ -300,7 +337,21 @@ export class ResponseQueue {
         this.isRequestInProgress = false;
         return { success: false };
       }
-      this.handleFailedResponse(responseUpdate, result.isRecaptchaError);
+
+      // Permanent 4xx rejection: drop the dead item so the manual Retry button can't
+      // re-send the identical payload forever.
+      if (result.isTerminalClientError) {
+        this.queue.shift();
+        const dbId = this.pendingDbIds.get(responseUpdate);
+        if (dbId !== undefined) {
+          await this.removePendingResponseFromIndexedDB(
+            dbId,
+            "Failed to remove rejected response from IndexedDB"
+          );
+        }
+      }
+
+      this.handleFailedResponse(responseUpdate, result.isRecaptchaError, result.errorCode);
       return { success: false };
     }
   }
@@ -393,9 +444,9 @@ export class ResponseQueue {
             }
           }
         } else {
-          if (entry.id !== undefined && result.error && this.isTerminalStaleResponseError(result.error)) {
-            // Client error (e.g., 409 "already completed") —
-            // this entry is stale, remove it and continue with the next one.
+          if (entry.id !== undefined && result.error && this.isTerminalClientError(result.error)) {
+            // Permanent 4xx client error (e.g., 400 "already finished" or 409 stale) —
+            // this entry can never be accepted, remove it and continue with the next one.
             const removed = await this.removePendingResponseFromIndexedDB(
               entry.id,
               "Failed to remove stale response from IndexedDB",
@@ -438,6 +489,8 @@ export class ResponseQueue {
     success: boolean;
     quotaFullResponse?: TQuotaFullResponse;
     isRecaptchaError?: boolean;
+    isTerminalClientError?: boolean;
+    errorCode?: TResponseErrorCodesEnum;
   }> {
     let attempts = 0;
     let quotaFullResponse: TQuotaFullResponse | null = null;
@@ -465,6 +518,21 @@ export class ResponseQueue {
           responseId: this.surveyState.responseId,
         });
         return { success: false, isRecaptchaError: true };
+      }
+
+      // Permanent 4xx rejection — don't retry (backoff or manual Retry would just loop on the
+      // same rejection). Signal the caller to drop the item from the queue.
+      if (this.isTerminalClientError(res.error)) {
+        console.error("Formbricks: Response rejected permanently, dropping from queue", {
+          error: res.error,
+          responseId: this.surveyState.responseId,
+          queueLength: this.queue.length,
+        });
+        return {
+          success: false,
+          isTerminalClientError: true,
+          errorCode: this.getTerminalClientErrorCode(res.error),
+        };
       }
 
       console.error(`Formbricks: Response send failed`, {
@@ -543,7 +611,11 @@ export class ResponseQueue {
     this.processQueueInBackground("Failed to process next queued response");
   }
 
-  private handleFailedResponse(responseUpdate: TResponseUpdate, isRecaptchaError?: boolean) {
+  private handleFailedResponse(
+    responseUpdate: TResponseUpdate,
+    isRecaptchaError?: boolean,
+    errorCode?: TResponseErrorCodesEnum
+  ) {
     this.isRequestInProgress = false;
 
     if (isRecaptchaError) {
@@ -551,7 +623,10 @@ export class ResponseQueue {
       return;
     }
 
-    this.config.onResponseSendingFailed?.(responseUpdate, TResponseErrorCodesEnum.ResponseSendingError);
+    this.config.onResponseSendingFailed?.(
+      responseUpdate,
+      errorCode ?? TResponseErrorCodesEnum.ResponseSendingError
+    );
   }
 
   async sendResponse(
