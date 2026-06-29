@@ -184,6 +184,16 @@ describe("parseRecallInformation", () => {
     expect(result.headline.en).toBe(expectedHeadline);
   });
 
+  test("does not throw when the language code is not a content key", () => {
+    // After canonicalization, content is keyed "hi-IN"/"default"; an SDK may still request legacy "hi".
+    const question: TSurveyOpenTextElement = {
+      ...baseQuestion,
+      headline: { default: "Welcome!", "hi-IN": "स्वागत है" },
+      subheader: { default: "Subtitle", "hi-IN": "उपशीर्षक" },
+    };
+    expect(() => parseRecallInformation(question, "hi", responseData, variables)).not.toThrow();
+  });
+
   test("should replace recall info in subheader", () => {
     const question: TSurveyOpenTextElement = {
       ...baseQuestion,

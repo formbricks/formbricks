@@ -1,3 +1,4 @@
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import {
   TResponse,
   TResponseDataValue,
@@ -429,3 +430,12 @@ export const generateAllPermutationsOfSubsets = (array: string[]): string[][] =>
   findSubsets(0, []);
   return subsets;
 };
+
+/**
+ * Canonicalize a response's language code on write (ENG-1067). SDK clients — especially stale or
+ * anonymous caches — can submit a legacy code (e.g. "hi") at any point; storing its canonical BCP-47
+ * form ("hi-IN") keeps the Response table canonical. The "default" sentinel and unresolvable values
+ * are preserved (normalizeLanguageCode returns null → keep the original); null/undefined pass through.
+ */
+export const normalizeResponseLanguage = (language: string | null | undefined): string | null | undefined =>
+  language ? (normalizeLanguageCode(language) ?? language) : language;
