@@ -1,5 +1,6 @@
 import { useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
@@ -44,6 +45,17 @@ export function LanguageSwitch({
   const defaultLanguageCode = surveyLanguages.find((surveyLanguage) => {
     return surveyLanguage.default;
   })?.language.code;
+
+  // Dedupe enabled languages by canonical code so the back-compat legacy aliases (e.g. "hi" sent
+  // alongside "hi-IN") don't show as duplicate options. Canonical entries come first, so they win.
+  const seenCanonicalCodes = new Set<string>();
+  const visibleLanguages = surveyLanguages.filter((surveyLanguage) => {
+    if (!surveyLanguage.enabled) return false;
+    const canonical = normalizeLanguageCode(surveyLanguage.language.code) ?? surveyLanguage.language.code;
+    if (seenCanonicalCodes.has(canonical)) return false;
+    seenCanonicalCodes.add(canonical);
+    return true;
+  });
 
   const handleI18nLanguage = (languageCode: string) => {
     const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
@@ -102,8 +114,7 @@ export function LanguageSwitch({
             dir === "rtl" ? "left-8" : "right-8"
           )}
           ref={languageDropdownRef}>
-          {surveyLanguages.map((surveyLanguage) => {
-            if (!surveyLanguage.enabled) return;
+          {visibleLanguages.map((surveyLanguage) => {
             return (
               <button
                 key={surveyLanguage.language.id}
