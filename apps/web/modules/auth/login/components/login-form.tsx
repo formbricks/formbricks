@@ -114,6 +114,10 @@ export const LoginForm = ({
       const { data: signInData, error } = await authClient.signIn.email({
         email: data.email.toLowerCase(),
         password: data.password,
+        // For an unverified address Better Auth (sendOnSignIn) resends the verification email and builds
+        // its link around this callbackURL; without it the post-verify redirect falls back to "/", so an
+        // unverified user signing in from an invite/deep-link would lose the original destination.
+        callbackURL: resolvedCallbackUrl,
       });
 
       if (error) {
