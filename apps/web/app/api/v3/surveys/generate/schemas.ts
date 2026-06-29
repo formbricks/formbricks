@@ -61,7 +61,7 @@ export const ZV3SurveyGenerateBody = z
         V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH,
         `Prompt must be ${V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH} characters or less`
       ),
-    type: z.literal("link").prefault("link"),
+    type: z.enum(["link", "app"]).prefault("link"),
     language: ZV3SurveyGenerateLanguage.optional(),
   })
   .strict();

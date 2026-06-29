@@ -353,6 +353,10 @@ function buildCreatePayload(input: TV3SurveyGenerateBody, generatedSurvey: TGene
     ],
     hiddenFields: { enabled: false },
     variables: [],
+    // AI generates content only. For app surveys, seed a valid default distribution (display once,
+    // no triggers, no targeting) the user finishes wiring in the editor. Omitted scalars fall back to
+    // the schema/DB defaults; the auto-created empty segment means "show to everyone".
+    ...(input.type === "app" ? { distribution: { displayOption: "displayOnce", triggers: [] } } : {}),
   };
 }
 

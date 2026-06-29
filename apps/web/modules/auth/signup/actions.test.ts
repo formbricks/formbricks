@@ -88,7 +88,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     });
   });
 
-  test("bakes the invite deep link into the verification email when an inviteToken is present", async () => {
+  test("does not point the verification callback at /invite for invite signups (ENG-1527)", async () => {
     vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
     vi.mocked(getInvite).mockResolvedValue({
       id: "invite-1",
@@ -103,12 +103,14 @@ describe("createUserAction — signup verification email callbackURL", () => {
       parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
     } as never);
 
+    // The invite is accepted + deleted during signup, so a /invite callback would render "Invite Not
+    // Found" once the verification link is clicked. signUpEmail is called with no callbackURL (Better
+    // Auth defaults it to "/"), landing the verified, already-provisioned user on the app home.
     expect(auth.api.signUpEmail).toHaveBeenCalledWith({
       body: {
         email: "ada@example.com",
         password: "Password123!",
         name: "Ada",
-        callbackURL: "http://localhost:3000/invite?token=invite-jwt-123",
       },
     });
   });

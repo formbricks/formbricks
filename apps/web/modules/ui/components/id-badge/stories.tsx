@@ -193,15 +193,15 @@ export const InTable: Story = {
     <div className="space-y-2">
       <div className="mb-3 text-sm font-medium text-slate-700">Table Row Examples:</div>
       <div className="w-96 space-y-1">
-        <div className="flex items-center justify-between rounded border bg-white p-2">
+        <div className="flex items-center justify-between rounded-sm border bg-white p-2">
           <span className="text-sm">Survey Response #1</span>
           <IdBadge id="1734" showCopyIconOnHover />
         </div>
-        <div className="flex items-center justify-between rounded border bg-white p-2">
+        <div className="flex items-center justify-between rounded-sm border bg-white p-2">
           <span className="text-sm">Survey Response #2</span>
           <IdBadge id="1735" showCopyIconOnHover />
         </div>
-        <div className="flex items-center justify-between rounded border bg-white p-2">
+        <div className="flex items-center justify-between rounded-sm border bg-white p-2">
           <span className="text-sm">Survey Response #3</span>
           <IdBadge id="1736" showCopyIconOnHover />
         </div>

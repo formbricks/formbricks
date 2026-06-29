@@ -1,0 +1,90 @@
+get:
+  operationId: listActionClassesV3
+  summary: List action classes
+  description: |
+    Returns the action classes (user actions that can trigger an app survey) for a workspace. Use
+    the returned ids as `distribution.triggers[].actionClassId` when creating or updating app
+    surveys. Read-only: this v3 endpoint lists action classes but does not create them — action
+    classes are managed in the Formbricks app (Actions settings) or via the v1/v2 management API.
+
+    An empty `data` array means the workspace has no action classes yet. Triggers are optional, so
+    you can still create an app survey with `distribution.triggers: []` (or omit `distribution`
+    entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie or
+    x-api-key.
+  tags:
+    - V3 Action Classes
+  parameters:
+    - in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: |
+        Workspace identifier. This is the canonical container ID for v3 APIs.
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Page size (max 100).
+    - in: query
+      name: cursor
+      schema:
+        type: string
+      description: >
+        Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first
+        request.
+  responses:
+    "200":
+      description: Action classes retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/ActionClassResource.yml
+              meta:
+                type: object
+                required:
+                  - limit
+                  - nextCursor
+                properties:
+                  limit:
+                    type: integer
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                    description: >-
+                      Opaque cursor for the next page. `null` when there are no more results.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

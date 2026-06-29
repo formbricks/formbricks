@@ -63,7 +63,7 @@ export function ConfigureChartDialog({
                           : "border-gray-200"
                       )}
                       aria-label={chart.label}>
-                      <div className="flex size-10 items-center justify-center rounded bg-gray-100">
+                      <div className="flex size-10 items-center justify-center rounded-sm bg-gray-100">
                         <chart.icon className="size-5 text-gray-600" strokeWidth={1.5} />
                       </div>
                       <span className="text-sm font-medium text-gray-700">{chart.label}</span>

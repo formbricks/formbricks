@@ -126,7 +126,7 @@ export const VerifyEmail = ({
 
   if (isErrorComponent) {
     return (
-      <div className="flex h-[100vh] w-[100vw] flex-col items-center justify-center bg-slate-50">
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-50">
         <span className="size-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
         <p className="mt-8 text-4xl font-bold">{t("s.this_looks_fishy")}</p>
         <Button variant="ghost" className="mt-4" onClick={handleGoBackClick}>
@@ -196,7 +196,7 @@ export const VerifyEmail = ({
         {!emailSent && showPreviewQuestions && (
           <div>
             <p className="text-2xl font-bold">{t("s.question_preview")}</p>
-            <div className="mt-4 flex max-h-[50vh] w-full flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-4 text-slate-700">
+            <div className="mt-4 flex max-h-[50vh] w-full flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/20 p-4 text-slate-700">
               {questions.map((question, index) => (
                 <p
                   key={index}

@@ -40,7 +40,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
     const baseClasses =
       "inline-flex cursor-default items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs font-regular text-slate-500";
     const interactiveClasses =
-      "cursor-pointer hover:border-transparent hover:text-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2";
+      "cursor-pointer hover:border-transparent hover:text-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2";
     const hoverBg = isCopied ? "hover:bg-slate-900" : "hover:bg-slate-900/80";
 
     return cn(baseClasses, isCopyEnabled && interactiveClasses, isCopyEnabled && hoverBg, className);
@@ -52,7 +52,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
     return (
       <div
         data-testid="copy-icon"
-        className="flex size-4 items-center justify-center rounded transition-colors"
+        className="flex size-4 items-center justify-center rounded-sm transition-colors"
         title={t("common.copy")}>
         {isCopied ? <Check className="size-4" /> : <Copy className="h-4 w-4" />}
       </div>

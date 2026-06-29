@@ -1,7 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { z } from "zod";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import { ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import {
+  type TSurveyType,
+  ZSurveyDisplayOption,
   ZSurveyEndings,
   ZSurveyHiddenFields,
   ZSurveyMetadata,
@@ -388,6 +391,8 @@ const ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "distribution",
+  "targeting",
 ]);
 const PATCH_ROOT_KEYS = new Set([
   "name",
@@ -399,7 +404,24 @@ const PATCH_ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "distribution",
+  "targeting",
 ]);
+// Single source of truth for the app-survey distribution scalar columns. Shared with the
+// distribution mappers (./distribution) so the field list can't drift across the read/write sites.
+export const V3_DISTRIBUTION_SCALAR_KEYS = [
+  "displayOption",
+  "displayPercentage",
+  "displayLimit",
+  "recontactDays",
+  "autoClose",
+  "autoComplete",
+  "delay",
+] as const;
+// App-survey distribution/targeting key sets (validated only when type === "app").
+const DISTRIBUTION_KEYS = new Set<string>([...V3_DISTRIBUTION_SCALAR_KEYS, "triggers"]);
+const TRIGGER_KEYS = new Set(["actionClassId"]);
+const TARGETING_KEYS = new Set(["filters"]);
 const LANGUAGE_KEYS = new Set(["code", "default", "enabled"]);
 const WELCOME_CARD_KEYS = new Set([
   "enabled",
@@ -932,6 +954,22 @@ function validateEnding(
   );
 }
 
+function validateTrigger(value: unknown, path: string, issues: InvalidParam[]): void {
+  addMissingRequiredKeyIssues(value, ["actionClassId"], path, issues, "survey trigger");
+  addUnknownKeyIssues(value, TRIGGER_KEYS, path, issues, "survey trigger");
+}
+
+function validateDistribution(value: unknown, path: string, issues: InvalidParam[]): void {
+  addUnknownKeyIssues(value, DISTRIBUTION_KEYS, path, issues, "survey distribution");
+  if (isPlainObject(value) && Array.isArray(value.triggers)) {
+    value.triggers.forEach((trigger, index) => validateTrigger(trigger, `${path}.triggers.${index}`, issues));
+  }
+}
+
+function validateTargeting(value: unknown, path: string, issues: InvalidParam[]): void {
+  addUnknownKeyIssues(value, TARGETING_KEYS, path, issues, "survey targeting");
+}
+
 function getUnsupportedV3SurveyDocumentFields(
   value: unknown,
   rootKeys: Set<string>,
@@ -939,7 +977,9 @@ function getUnsupportedV3SurveyDocumentFields(
   options?: TV3LanguageCompatibilityOptions
 ): InvalidParam[] {
   const issues: InvalidParam[] = [];
-  addUnknownKeyIssues(value, rootKeys, "", issues);
+  // Include the allowed top-level fields in the error so agents/clients can self-correct from the
+  // message alone (mirrors the per-element/block unknown-key errors).
+  addUnknownKeyIssues(value, rootKeys, "", issues, "the survey document");
 
   if (!isPlainObject(value)) {
     return issues;
@@ -980,6 +1020,13 @@ function getUnsupportedV3SurveyDocumentFields(
     V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
       validateTranslatableField(metadata[key], `metadata.${key}`, issues, defaultLanguage, options)
     );
+  }
+
+  if ("distribution" in value) {
+    validateDistribution(value.distribution, "distribution", issues);
+  }
+  if ("targeting" in value) {
+    validateTargeting(value.targeting, "targeting", issues);
   }
 
   return issues;
@@ -1045,6 +1092,88 @@ function addLanguageIssues(
 const ZV3SurveyName = z.string().trim().min(1, "Survey name is required");
 const ZV3SurveyBlocks = ZSurveyBlocks.min(1, "At least one block is required");
 
+// App-survey trigger references an existing workspace action class by id.
+// Existence/uniqueness is validated against workspace action classes at write time.
+const ZV3SurveyTrigger = z.object({ actionClassId: z.cuid2() }).strict();
+
+/**
+ * App-survey runtime/distribution settings. Scalar defaults mirror the Survey DB defaults so a
+ * provided `distribution` object fully determines the runtime config (top-level replacement semantics).
+ * Only honored when `type === "app"`; rejected for link surveys (see addAppDistributionIssues).
+ */
+const ZV3SurveyDistribution = z
+  .object({
+    displayOption: ZSurveyDisplayOption.prefault("displayOnce"),
+    displayPercentage: z.number().min(0.01).max(100).nullable().prefault(null),
+    displayLimit: z.number().int().nonnegative().nullable().prefault(null),
+    recontactDays: z.number().int().nonnegative().nullable().prefault(null),
+    autoClose: z.number().int().nonnegative().nullable().prefault(null),
+    autoComplete: z.number().int().min(1, "Response limit must be greater than 0").nullable().prefault(null),
+    delay: z.number().int().nonnegative().prefault(0),
+    triggers: z.array(ZV3SurveyTrigger).prefault([]),
+  })
+  .strict();
+
+// App-survey contact targeting. `filters: []` means "show to everyone".
+const ZV3SurveyTargeting = z.object({ filters: ZSegmentFilters }).strict();
+
+/**
+ * Body-level validation for app-survey distribution/targeting. `distribution`/`targeting` are
+ * rejected for explicit `link` surveys; for `app` (or when the type is unknown, e.g. the generic
+ * patch schema) the displayOption ↔ displayPercentage coupling is enforced.
+ */
+function addAppDistributionIssues(
+  survey: {
+    distribution?: z.infer<typeof ZV3SurveyDistribution>;
+    targeting?: z.infer<typeof ZV3SurveyTargeting>;
+  },
+  surveyType: TSurveyType | undefined,
+  ctx: z.RefinementCtx
+): void {
+  if (surveyType === "link") {
+    if (survey.distribution !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "'distribution' is only supported for app surveys (type: 'app')",
+        params: { code: "unsupported_field" },
+        path: ["distribution"],
+      });
+    }
+    if (survey.targeting !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "'targeting' is only supported for app surveys (type: 'app')",
+        params: { code: "unsupported_field" },
+        path: ["targeting"],
+      });
+    }
+    return;
+  }
+
+  const distribution = survey.distribution;
+  if (!distribution) {
+    return;
+  }
+
+  if (distribution.displayOption === "displaySome") {
+    if (distribution.displayPercentage === null || distribution.displayPercentage === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "displayPercentage is required when displayOption is 'displaySome'",
+        params: { code: "missing_required_field" },
+        path: ["distribution", "displayPercentage"],
+      });
+    }
+  } else if (distribution.displayPercentage !== null && distribution.displayPercentage !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      message: "displayPercentage is only allowed when displayOption is 'displaySome'",
+      params: { code: "unsupported_field" },
+      path: ["distribution", "displayPercentage"],
+    });
+  }
+}
+
 function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions) {
   return {
     name: ZV3SurveyName,
@@ -1057,6 +1186,8 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions) 
     endings: ZSurveyEndings.prefault([]),
     hiddenFields: ZSurveyHiddenFields.prefault({ enabled: false }),
     variables: ZSurveyVariables.prefault([]),
+    distribution: ZV3SurveyDistribution.optional(),
+    targeting: ZV3SurveyTargeting.optional(),
   };
 }
 
@@ -1071,6 +1202,8 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     endings: ZSurveyEndings.optional(),
     hiddenFields: ZSurveyHiddenFields.optional(),
     variables: ZSurveyVariables.optional(),
+    distribution: ZV3SurveyDistribution.optional(),
+    targeting: ZV3SurveyTargeting.optional(),
   };
 }
 
@@ -1100,6 +1233,7 @@ const ZV3CreateSurveyBodyBase = z.preprocess(
     })
     .strict()
     .superRefine(addLanguageIssues)
+    .superRefine((body, ctx) => addAppDistributionIssues(body, body.type, ctx))
 );
 
 export const ZV3CreateSurveyBody = z
@@ -1111,7 +1245,11 @@ export const ZV3CreateSurveyBody = z
   })
   .pipe(ZV3CreateSurveyBodyBase);
 
-function createV3PatchSurveyBodyBase(defaultLanguage: string, options?: TV3LanguageCompatibilityOptions) {
+function createV3PatchSurveyBodyBase(
+  defaultLanguage: string,
+  options?: TV3LanguageCompatibilityOptions,
+  surveyType?: TSurveyType
+) {
   return z.preprocess(
     createV3SurveyDocumentNormalizer({
       fallbackDefaultLanguage: defaultLanguage,
@@ -1122,6 +1260,7 @@ function createV3PatchSurveyBodyBase(defaultLanguage: string, options?: TV3Langu
       .object(createV3SurveyPatchShape(options))
       .strict()
       .superRefine((body, ctx) => addLanguageIssues({ ...body, defaultLanguage }, ctx))
+      .superRefine((body, ctx) => addAppDistributionIssues(body, surveyType, ctx))
       .refine((body) => Object.keys(body).length > 0, {
         message: "Request body must include at least one updatable field",
       })
@@ -1130,7 +1269,8 @@ function createV3PatchSurveyBodyBase(defaultLanguage: string, options?: TV3Langu
 
 export function createZV3PatchSurveyBodySchema(
   defaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE,
-  options?: TV3LanguageCompatibilityOptions
+  options?: TV3LanguageCompatibilityOptions,
+  surveyType?: TSurveyType
 ) {
   return z
     .unknown()
@@ -1144,7 +1284,7 @@ export function createZV3PatchSurveyBodySchema(
         addInvalidParamZodIssue(ctx, issue);
       }
     })
-    .pipe(createV3PatchSurveyBodyBase(defaultLanguage, options));
+    .pipe(createV3PatchSurveyBodyBase(defaultLanguage, options, surveyType));
 }
 
 export const ZV3PatchSurveyBody = createZV3PatchSurveyBodySchema();
@@ -1184,3 +1324,6 @@ export type TV3SurveyDocument = z.infer<typeof ZV3SurveyDocumentBase>;
 export type TV3CreateSurveyBody = z.infer<typeof ZV3CreateSurveyBody>;
 export type TV3PatchSurveyBody = z.infer<typeof ZV3PatchSurveyBody>;
 export type TV3SurveyValidationRequestBody = z.infer<typeof ZV3SurveyValidationRequestBody>;
+export type TV3SurveyDistribution = z.infer<typeof ZV3SurveyDistribution>;
+export type TV3SurveyTargeting = z.infer<typeof ZV3SurveyTargeting>;
+export type TV3SurveyTrigger = z.infer<typeof ZV3SurveyTrigger>;

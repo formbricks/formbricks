@@ -31,10 +31,12 @@ properties:
     type: string
     enum:
       - link
+      - app
     default: link
     description: >-
-      Link Survey is the only AI-created type until the v3 create endpoint
-      supports additional types.
+      Survey type to generate. The AI generates the survey content (blocks/questions) for both types;
+      for `app` it additionally seeds a default `distribution` (display once, no triggers, no targeting)
+      that you finish configuring before publishing.
   language:
     $ref: ./AISurveyGenerationLocaleCode.yml
     description: >

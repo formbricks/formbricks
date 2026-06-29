@@ -30,7 +30,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
         <DatabaseIcon className="size-4 text-gray-600" />
         <h4 className="text-sm font-semibold text-gray-900">{t("workspace.analysis.charts.chart_data")}</h4>
       </div>
-      <div className="max-h-64 overflow-auto rounded bg-white">
+      <div className="max-h-64 overflow-auto rounded-sm bg-white">
         <table className="w-full text-xs">
           <thead className="bg-gray-100">
             <tr>

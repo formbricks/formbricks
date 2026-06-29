@@ -1,0 +1,86 @@
+type: object
+description: >
+  App-survey runtime/display settings. Only valid for `type: app`; rejected for link surveys.
+
+  **Replacement semantics (destructive):** when `distribution` is provided on PATCH it fully replaces
+  the stored object — any sub-field you omit is reset to its default, NOT preserved. In particular,
+  omitting `triggers` removes ALL existing triggers, and omitting `displayOption` resets it to
+  `displayOnce`. To change one setting, send the complete desired distribution. To leave distribution
+  untouched, omit the whole `distribution` key.
+properties:
+  displayOption:
+    type: string
+    enum:
+      - displayOnce
+      - displayMultiple
+      - respondMultiple
+      - displaySome
+    default: displayOnce
+    description: >
+      How often the survey may be shown to a contact. `displaySome` shows it to `displayPercentage`
+      of contacts.
+  displayPercentage:
+    type:
+      - number
+      - "null"
+    minimum: 0.01
+    maximum: 100
+    default: null
+    description: >
+      Percentage of contacts to show the survey to. Required when `displayOption` is `displaySome`;
+      must be null/omitted otherwise.
+  displayLimit:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    default: null
+    description: Maximum number of times the survey is shown to a single contact.
+  recontactDays:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    default: null
+    description: Days to wait before showing this survey again to the same contact. Null uses the workspace default.
+  autoClose:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    default: null
+    description: Seconds of inactivity after which the survey widget auto-closes. Null disables auto-close.
+  autoComplete:
+    type:
+      - integer
+      - "null"
+    minimum: 1
+    default: null
+    description: Automatically stop collecting responses after this many completed responses. Null disables it.
+  delay:
+    type: integer
+    minimum: 0
+    default: 0
+    description: Seconds to wait after a trigger fires before showing the survey.
+  triggers:
+    type: array
+    default: []
+    items:
+      $ref: ./SurveyTrigger.yml
+    description: >
+      Action classes that trigger the survey. Every id must reference an existing workspace action
+      class. On PATCH this list fully replaces the survey's triggers — omitting it (or sending `[]`)
+      removes all existing triggers.
+additionalProperties: false
+example:
+  # `displaySome` requires `displayPercentage` (shown to that % of contacts); any other displayOption
+  # requires `displayPercentage` to be null/omitted.
+  displayOption: displaySome
+  displayPercentage: 50
+  displayLimit: null
+  recontactDays: 7
+  autoClose: null
+  autoComplete: null
+  delay: 0
+  triggers:
+    - actionClassId: clyy1234567890123456789012

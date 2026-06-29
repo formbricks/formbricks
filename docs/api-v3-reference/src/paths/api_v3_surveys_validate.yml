@@ -111,34 +111,13 @@ post:
           schema:
             $ref: ../components/schemas/Problem.yml
     '401':
-      description: Not authenticated (no valid session or API key)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     '403':
-      description: Forbidden — no write access, or survey/workspace does not exist
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Forbidden.yml
     '429':
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: Seconds until the current rate-limit window resets
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3TooManyRequests.yml
     '500':
-      description: Internal Server Error
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
     - apiKeyAuth: []

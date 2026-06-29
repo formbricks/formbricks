@@ -10,10 +10,16 @@ import { GoogleIcon } from "@/modules/ui/components/icons";
 interface GoogleButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
+  variant?: "default" | "secondary";
   source: "signin" | "signup";
 }
 
-export const GoogleButton = ({ returnToUrl, lastUsed, source }: GoogleButtonProps) => {
+export const GoogleButton = ({
+  returnToUrl,
+  lastUsed,
+  variant = "secondary",
+  source,
+}: Readonly<GoogleButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = async () => {
     if (typeof window !== "undefined") {
@@ -30,14 +36,10 @@ export const GoogleButton = ({ returnToUrl, lastUsed, source }: GoogleButtonProp
   };
 
   return (
-    <Button
-      type="button"
-      onClick={handleLogin}
-      variant="secondary"
-      className="relative w-full justify-center">
+    <Button type="button" onClick={handleLogin} variant={variant} className="w-full justify-center">
       {t("auth.continue_with_google")}
       <GoogleIcon />
-      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
+      {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
 };
