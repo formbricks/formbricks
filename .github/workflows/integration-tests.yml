@@ -65,6 +65,12 @@ jobs:
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
         shell: bash
 
+      # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so
+      # vite can resolve their package.json `exports` → dist. Deps only (`^...`), not the Next app.
+      - name: Build workspace package dependencies
+        run: pnpm build --filter=@formbricks/web^...
+        shell: bash
+
       - name: Create .env
         run: pnpm dev:setup
         shell: bash
