@@ -1,25 +1,21 @@
 import postcss from "postcss";
 import { describe, expect, test } from "vitest";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import scopeFbjs from "./postcss-scope-fbjs.cjs";
 
-/**
- * Regression guard for ENG-1333 / formbricks/js#46.
- *
- * @formbricks/survey-ui's and @formbricks/surveys' compiled CSS is injected into
- * the host page's <head> by the survey widget. Tailwind v4 emits three
- * constructs that are GLOBAL by spec and cannot be confined by `important:
- * "#fbjs"` selector scoping:
- *   1. @layer properties { *, :before, :after, ::backdrop { --tw-*: ... } }
- *   2. @layer theme      { :root, :host { ... } }
- *   3. @property --tw-*  { inherits: false; ... }
- * If any reach the host page, they reset/override the host's own Tailwind
- * custom properties and theme, breaking host UI (shadows, rings, transforms,
- * gradients, colors).
- *
- * These tests run the shared scoping plugins over representative Tailwind v4
- * output and assert nothing global survives.
- */
+// Regression guard for ENG-1333 / formbricks/js#46.
+//
+// survey-ui's and surveys' compiled CSS is injected into the host page's <head>
+// by the survey widget. Tailwind v4 emits three constructs that are GLOBAL by
+// spec and cannot be confined by the `important: "#fbjs"` selector scoping:
+//   1. "@layer properties" with a bare `*, :before, :after, ::backdrop` reset
+//   2. "@layer theme" with `:root, :host` custom properties
+//   3. "@property --tw-*" registrations (inherits: false)
+// If any reach the host page, they reset/override the host's own Tailwind
+// custom properties and theme, breaking host UI (shadows, rings, transforms,
+// gradients, colors).
+//
+// These tests run the shared scoping plugins over representative Tailwind v4
+// output and assert nothing global survives.
 
 const run = (css: string): string =>
   postcss(scopeFbjs.scopeFbjsPlugins()).process(css, { from: undefined }).css;
@@ -63,14 +59,14 @@ describe("postcss-scope-fbjs", () => {
   test("removes the global @layer properties reset block", () => {
     expect(out).not.toMatch(/@layer properties/);
     // the bare universal reset selector must not survive anywhere
-    expect(out).not.toMatch(/(^|[^-\w])\*\s*,\s*:before/);
+    expect(out).not.toMatch(/(?:^|[^-\w])\*\s*,\s*:before/);
   });
 
   test("re-scopes @layer theme :root/:host to #fbjs", () => {
     expect(out).toMatch(/@layer theme/);
     // no bare :root / :host remain
-    expect(out).not.toMatch(/(^|[^#\w-]):root\b/);
-    expect(out).not.toMatch(/(^|[^#\w-]):host\b/);
+    expect(out).not.toMatch(/(?:^|[^#\w-]):root\b/);
+    expect(out).not.toMatch(/(?:^|[^#\w-]):host\b/);
     // theme variables now live under #fbjs
     expect(flat).toMatch(/#fbjs[^{]*\{[^}]*--color-red-500/);
   });
