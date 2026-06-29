@@ -63,4 +63,24 @@ describe("Better Auth email/password (real Postgres)", () => {
     expect(sessions[0].sessionToken).toBeTruthy();
     expect(sessions[0].expires.getTime()).toBeGreaterThan(Date.now());
   });
+
+  test("rejects sign-in for a deactivated user and creates no session", async () => {
+    await auth.api.signUpEmail({
+      body: { email: "inactive@example.com", password: "Correct-Horse1", name: "Ina" },
+      asResponse: true,
+    });
+    // The shape a migrated inactive credential user has after the backfill: verified (so verification
+    // isn't what blocks) with a password, but isActive=false. NextAuth rejected this at sign-in; the
+    // session.create.before gate must preserve that.
+    await prisma.user.update({
+      where: { email: "inactive@example.com" },
+      data: { emailVerified: true, isActive: false },
+    });
+
+    await expect(
+      auth.api.signInEmail({ body: { email: "inactive@example.com", password: "Correct-Horse1" } })
+    ).rejects.toThrow(/inactive/i);
+    // gate threw before the Session row was written
+    expect(await prisma.session.count()).toBe(0);
+  });
 });

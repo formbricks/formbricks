@@ -24,6 +24,7 @@ import {
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
+import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
 import { betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { redisSecondaryStorage } from "./secondary-storage";
@@ -173,10 +174,17 @@ export const auth = betterAuth({
 
   // SSO sign-up flow — email-verification, identity denormalization, and JIT provisioning
   // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
-  // recovery is the remaining Phase 5c work. Plus the Phase 7 `signedIn` audit on session creation.
+  // recovery is the remaining Phase 5c work. The session hook composes the isActive gate (reject
+  // deactivated users before a session is created — parity with authOptions, covers every sign-in
+  // path) with the Phase 7 `signedIn` success audit.
   databaseHooks: {
     ...ssoDatabaseHooks,
-    session: signInAuditDatabaseHook,
+    session: {
+      create: {
+        before: rejectInactiveUserOnSessionCreate,
+        after: signInAuditDatabaseHook.create?.after,
+      },
+    },
   },
 
   // Request hooks (parity with handleSsoCallback). `before` re-checks the SSO/SAML license on every
