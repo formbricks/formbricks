@@ -132,7 +132,6 @@ export const BlockCard = ({
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
 
-  const [parent] = useAutoAnimate();
   const [elementsParent] = useAutoAnimate();
 
   const getElementHeadline = (
@@ -266,7 +265,7 @@ export const BlockCard = ({
 
         <button
           type="button"
-          className="opacity-0 hover:cursor-move group-hover:opacity-100"
+          className="opacity-0 group-hover:opacity-100 hover:cursor-move"
           aria-label="Drag to reorder block">
           <GripIcon className="size-4" />
         </button>
@@ -420,7 +419,7 @@ export const BlockCard = ({
                                 : t("workspace.surveys.edit.show_question_settings")}
                             </Collapsible.CollapsibleTrigger>
 
-                            <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
+                            <Collapsible.CollapsibleContent className="flex flex-col gap-4 overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                               {element.type !== TSurveyElementTypeEnum.NPS &&
                               element.type !== TSurveyElementTypeEnum.Rating &&
                               element.type !== TSurveyElementTypeEnum.CTA ? (

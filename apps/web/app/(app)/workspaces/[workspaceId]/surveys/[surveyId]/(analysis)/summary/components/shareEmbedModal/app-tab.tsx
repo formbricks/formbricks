@@ -175,7 +175,7 @@ export const AppTab = () => {
           <H4>{t("workspace.surveys.summary.in_app.display_criteria")}</H4>
           <div
             className={
-              "flex w-full flex-col space-y-4 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm"
+              "flex w-full flex-col space-y-4 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xs"
             }>
             <DisplayCriteriaItem
               icon={<TimerResetIcon className="size-4" />}

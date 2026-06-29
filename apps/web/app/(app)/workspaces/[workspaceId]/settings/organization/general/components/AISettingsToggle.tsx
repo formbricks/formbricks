@@ -6,11 +6,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { updateOrganizationAISettingsAction } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
 import { getDisplayedOrganizationAISettingValue, getOrganizationAIEnablementState } from "@/lib/ai/utils";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { type ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -32,8 +32,7 @@ export const AISettingsToggle = ({
   isFormbricksCloud,
   enterpriseLicenseRequestFormUrl,
 }: Readonly<AISettingsToggleProps>) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const organizationBillingPath = organizationSettingsPath(organization.id, "billing");
   const [loadingField, setLoadingField] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
@@ -80,9 +79,7 @@ export const AISettingsToggle = ({
   const upgradeButtons: [ModalButton, ModalButton] = [
     {
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
-      href: isFormbricksCloud
-        ? `${workspaceBasePath}/settings/organization/billing`
-        : enterpriseLicenseRequestFormUrl,
+      href: isFormbricksCloud ? organizationBillingPath : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),

@@ -59,6 +59,10 @@ describe("survey service scheduling", () => {
     vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as never);
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({ id: "org123" } as never);
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
+    // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
+    // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
+    vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
+      callback(prisma)) as typeof prisma.$transaction);
   });
 
   afterEach(() => {

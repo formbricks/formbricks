@@ -28,12 +28,12 @@ export function ManualChartBuilder({
                 type="button"
                 onClick={() => onChartTypeSelect(chart.id)}
                 className={cn(
-                  "rounded-md border p-4 text-center transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-dark focus:ring-offset-2",
+                  "rounded-md border p-4 text-center transition-all hover:bg-gray-50 focus:ring-2 focus:ring-brand-dark focus:ring-offset-2 focus:outline-hidden",
                   isSelected
                     ? "border-brand-dark bg-brand-dark/5 ring-1 ring-brand-dark"
                     : "border-gray-200 hover:border-gray-300"
                 )}>
-                <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded bg-gray-100">
+                <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-sm bg-gray-100">
                   <chart.icon className="size-6 text-gray-600" strokeWidth={1.5} />
                 </div>
                 <span className="text-sm font-medium text-gray-700">{chart.label}</span>

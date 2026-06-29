@@ -551,7 +551,7 @@ export const TopicsSubtopicsPreview = ({
       </PageHeader>
 
       <div className="space-y-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
             <Selector label={t("workspace.unify.feedback_directory")}>
               <Select
@@ -643,7 +643,7 @@ export const TopicsSubtopicsPreview = ({
         </div>
 
         {!hasDirectories && (
-          <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-xs">
             <p className="text-sm text-slate-600">{t("workspace.unify.taxonomy_no_directory")}</p>
             <Button className="mt-4" size="sm" asChild>
               <Link href={`/workspaces/${workspaceId}/feedback-sources`}>
@@ -663,7 +663,7 @@ export const TopicsSubtopicsPreview = ({
         )}
 
         {latestRun && (
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
             <div className="flex flex-wrap items-center gap-3">
               <Badge
                 text={runStatusLabel(latestRun.status, t)}
@@ -684,7 +684,7 @@ export const TopicsSubtopicsPreview = ({
         )}
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <GitBranchIcon className="size-4 text-slate-500" />
@@ -795,7 +795,7 @@ const TaxonomyColumnView = ({
     <section className="min-w-0 rounded-lg border border-slate-200 bg-white">
       <div className="flex h-12 items-center justify-between border-b border-slate-200 px-3">
         <div className="flex min-w-0 items-baseline gap-2">
-          <h3 className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600">
+          <h3 className="truncate text-xs font-semibold tracking-wide text-slate-600 uppercase">
             {t("workspace.unify.taxonomy_level_keywords", { level: column.level })}
           </h3>
           <span className="text-xs font-medium text-slate-400">{column.nodes.length}</span>
@@ -872,7 +872,7 @@ const TaxonomyColumnRow = ({
           className={`rounded p-0.5 ${
             isInSelectedPath
               ? "text-slate-300 hover:text-white"
-              : "text-slate-400 opacity-0 hover:text-slate-700 group-hover:opacity-100"
+              : "text-slate-400 opacity-0 group-hover:opacity-100 hover:text-slate-700"
           }`}
           onClick={() => onEdit(node)}>
           <PencilIcon className="size-3.5" />
@@ -906,7 +906,7 @@ const TaxonomyDetailPanel = ({
   const childKeywords = selectedNode?.children ?? [];
 
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <aside className="rounded-lg border border-slate-200 bg-white shadow-xs">
       {selectedNode ? (
         <div className="space-y-6 p-5">
           <div className="flex items-start justify-between gap-3">
@@ -983,7 +983,7 @@ const TaxonomyDetailPanel = ({
                         }`}
                       />
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase text-slate-500">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">
                           {nodeTypeLabel(child.node_type, t)}
                         </p>
                         <p className="mt-1 truncate text-sm font-semibold text-slate-950">{child.label}</p>
@@ -1159,7 +1159,7 @@ const FeedbackRecordCard = ({
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-xs">
       <div className="flex flex-wrap gap-2">
         <Badge
           text={record.source_type || t("workspace.unify.taxonomy_feedback_source_fallback")}
@@ -1168,10 +1168,10 @@ const FeedbackRecordCard = ({
         />
         {record.field_type && <Badge text={record.field_type} type="gray" size="tiny" />}
       </div>
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <p className="mt-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
         {record.field_label || record.field_id}
       </p>
-      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+      <p className="mt-1 text-sm leading-6 whitespace-pre-wrap text-slate-700">
         {record.value_text || t("workspace.unify.taxonomy_no_text_value")}
       </p>
     </div>

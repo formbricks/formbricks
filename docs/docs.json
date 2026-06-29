@@ -5,6 +5,9 @@
     "light": "#00C4B8",
     "primary": "#00C4B8"
   },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
+  },
   "errors": {
     "404": {
       "redirect": true

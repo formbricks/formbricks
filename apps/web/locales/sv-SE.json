@@ -2636,6 +2636,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Är du säker på att du vill ta bort det här teamet? Detta tar även bort åtkomsten till alla arbetsytor och undersökningar som är kopplade till teamet.",
         "billing_role_description": "Har endast åtkomst till faktureringsinformation.",
         "bulk_invite": "Massinbjudning",
+        "bulk_invite_scale_only_description": "Att bjuda in medlemmar i bulk via CSV är tillgängligt på Scale-planen. Uppgradera för att bjuda in hela ditt team på en gång.",
+        "bulk_invite_scale_only_title": "Lås upp bulkinbjudan med en högre plan",
         "contributor": "Bidragsgivare",
         "create": "Skapa",
         "create_first_team_message": "Du måste skapa ett team först.",
@@ -2682,6 +2684,7 @@
         "ai_not_available": "AI-enkätskapande är inte tillgängligt.",
         "ai_not_enabled": "AI-smarta verktyg är inaktiverade för den här organisationen.",
         "ai_not_in_plan": "AI-enkätskapande är inte tillgängligt i din nuvarande plan.",
+        "app_survey": "App-enkät",
         "card_description": "Beskriv vad du vill lära dig och skapa ett utkast till enkät.",
         "card_title": "Skapa med AI",
         "characters": "{count}/{max}",
@@ -2694,7 +2697,6 @@
         "enable_ai_in_settings": "Aktivera i inställningar",
         "generated_payload_invalid": "Enkätutkastet kunde inte valideras. Försök lägga till mer detaljer.",
         "link_survey": "Länk-enkät",
-        "only_link_supported": "Endast Länk-enkät kan skapas just nu.",
         "opening_editor": "Öppnar redigeraren...",
         "prompt_helper_churn": "Förstå varför aktiva kunder kan försvinna och vad som skulle hålla dem engagerade",
         "prompt_helper_churn_label": "Churnrisk",
@@ -2708,12 +2710,14 @@
         "prompt_placeholder": "t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra installationen",
         "shortcut_hint": "⌘/Ctrl + Enter för att skapa",
         "start_from_scratch": "Börja från början",
+        "survey_type_help": "Du kan slutföra konfigurationen i redigeraren efter att utkastet har skapats.",
         "survey_type_label": "Undersökningstyp",
         "try_prompt": "Se exempelprompt",
         "upgrade_plan": "Uppgradera abonnemang"
       },
       "all_set_time_to_create_first_survey": "Allt klart! Dags att skapa din första enkät",
       "alphabetical": "Alfabetisk",
+      "change_status": "Ändra status",
       "copy_survey": "Kopiera undersökning",
       "copy_survey_description": "Välj en arbetsyta att kopiera den här undersökningen till.",
       "copy_survey_error": "Kunde inte kopiera undersökningen",
@@ -3298,6 +3302,7 @@
         "zip": "Postnummer"
       },
       "error_deleting_survey": "Ett fel uppstod vid borttagning av enkät",
+      "error_updating_status": "Ett fel uppstod när undersökningens status uppdaterades",
       "filter": {
         "complete_and_partial_responses": "Kompletta och delvisa svar",
         "complete_responses": "Kompletta svar",
@@ -3474,6 +3479,8 @@
           "title": "Sociala medier"
         }
       },
+      "status_updated_successfully": "Undersökningens status har uppdaterats",
+      "status_updating": "Uppdaterar undersökningens status...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter har lagts till för svar där svaret på fråga {questionIdx} är {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Lade till filter för svar där svar på fråga {questionIdx} är överhoppad",

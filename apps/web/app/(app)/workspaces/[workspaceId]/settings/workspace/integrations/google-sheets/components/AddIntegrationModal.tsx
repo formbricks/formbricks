@@ -297,7 +297,7 @@ export const AddIntegrationModal = ({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
-                    <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
+                    <div className="mt-1 max-h-[15vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {surveyElements.map((question) => (
                           <div key={question.id} className="my-1 flex items-center gap-x-2">
@@ -312,7 +312,7 @@ export const AddIntegrationModal = ({
                                   handleCheckboxChange(question.id);
                                 }}
                               />
-                              <span className="ml-2 w-[30rem] truncate">
+                              <span className="ml-2 w-120 truncate">
                                 {getTextContent(
                                   recallToHeadline(question.headline, selectedSurvey, false, "default")[
                                     "default"

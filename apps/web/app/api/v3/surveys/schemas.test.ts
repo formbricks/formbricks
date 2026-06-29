@@ -361,6 +361,117 @@ describe("ZV3CreateSurveyBody", () => {
     expect(result.type).toBe("app");
   });
 
+  test("accepts an app survey with distribution + targeting and applies distribution defaults", () => {
+    const result = ZV3CreateSurveyBody.parse({
+      ...validCreateBody,
+      type: "app",
+      distribution: {
+        displayOption: "respondMultiple",
+        recontactDays: 7,
+        triggers: [{ actionClassId: "claa1234567890123456789012" }],
+      },
+      targeting: { filters: [] },
+    });
+
+    expect(result.distribution).toMatchObject({
+      displayOption: "respondMultiple",
+      recontactDays: 7,
+      displayPercentage: null,
+      displayLimit: null,
+      autoClose: null,
+      autoComplete: null,
+      delay: 0,
+      triggers: [{ actionClassId: "claa1234567890123456789012" }],
+    });
+    expect(result.targeting).toEqual({ filters: [] });
+  });
+
+  test("rejects distribution and targeting on link surveys", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "link",
+      distribution: { displayOption: "displayOnce" },
+      targeting: { filters: [] },
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "distribution", code: "unsupported_field" }),
+          expect.objectContaining({ name: "targeting", code: "unsupported_field" }),
+        ])
+      );
+    }
+  });
+
+  test("requires displayPercentage when displayOption is displaySome", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "app",
+      distribution: { displayOption: "displaySome" },
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "distribution.displayPercentage",
+            code: "missing_required_field",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects displayPercentage when displayOption is not displaySome", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "app",
+      distribution: { displayOption: "displayOnce", displayPercentage: 50 },
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "distribution.displayPercentage",
+            code: "unsupported_field",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects unsupported fields inside distribution", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "app",
+      distribution: { displayOption: "displayOnce", surprise: true },
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "distribution.surprise", code: "unsupported_field" }),
+        ])
+      );
+    }
+  });
+
+  test("rejects a malformed trigger action class id", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "app",
+      distribution: { triggers: [{ actionClassId: "not-a-cuid" }] },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   test("rejects malformed locale maps that do not include the default language", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
@@ -651,5 +762,32 @@ describe("ZV3PatchSurveyBody", () => {
     expect(result.error?.issues.map((issue) => issue.path.join("."))).toEqual(
       expect.arrayContaining(["blocks.0.id", "variables.0.id"])
     );
+  });
+
+  test("rejects distribution and targeting when patching a link survey", () => {
+    const result = createZV3PatchSurveyBodySchema("en-US", undefined, "link").safeParse({
+      distribution: { displayOption: "displayOnce" },
+      targeting: { filters: [] },
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: "distribution", code: "unsupported_field" }),
+          expect.objectContaining({ name: "targeting", code: "unsupported_field" }),
+        ])
+      );
+    }
+  });
+
+  test("accepts distribution and targeting when patching an app survey", () => {
+    const parsed = createZV3PatchSurveyBodySchema("en-US", undefined, "app").parse({
+      distribution: { displayOption: "displayMultiple" },
+      targeting: { filters: [] },
+    });
+
+    expect(parsed.distribution).toMatchObject({ displayOption: "displayMultiple" });
+    expect(parsed.targeting).toEqual({ filters: [] });
   });
 });

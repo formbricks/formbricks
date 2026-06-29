@@ -11,7 +11,6 @@ import {
   type TOrganizationStripePendingChange,
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
@@ -31,7 +30,7 @@ import { PlanResponseFeature } from "./response-pricing-tooltip";
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
-const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
+const BILLING_CONFIRMATION_ORGANIZATION_ID_KEY = "billingConfirmationOrganizationId";
 const BILLING_PENDING_UPGRADE_PLAN_KEY = "billingPendingUpgradePlan";
 const BILLING_PENDING_UPGRADE_INTERVAL_KEY = "billingPendingUpgradeInterval";
 const UPGRADE_CHECKOUT_POLL_INTERVAL_MS = 2000;
@@ -42,7 +41,6 @@ type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
   organization: TOrganization;
-  workspaceId: string;
   responseCount: number;
   workspaceCount: number;
   usageCycleStart: Date;
@@ -105,15 +103,19 @@ const getPlanPeriodLabel = (
   return t("workspace.settings.billing.per_year");
 };
 
-const getPlanChangePayload = (workspaceId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
+const getPlanChangePayload = (
+  organizationId: string,
+  plan: TStandardPlan,
+  interval: TCloudBillingInterval
+) =>
   plan === "hobby"
     ? {
-        workspaceId,
+        organizationId,
         targetPlan: "hobby" as const,
         targetInterval: "monthly" as const,
       }
     : {
-        workspaceId,
+        organizationId,
         targetPlan: plan,
         targetInterval: interval,
       };
@@ -193,7 +195,6 @@ const isSwitchAtPeriodEndCta = (
 };
 
 export const PricingTable = ({
-  workspaceId,
   organization,
   responseCount,
   workspaceCount,
@@ -209,7 +210,7 @@ export const PricingTable = ({
   billingCatalog,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
-  const { workspace } = useWorkspace();
+  const organizationId = organization.id;
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
@@ -318,8 +319,8 @@ export const PricingTable = ({
       })
     );
     clearUpgradeIntent();
-    router.replace(`/workspaces/${workspaceId}/settings/organization/billing`);
-  }, [currentBillingInterval, currentCloudPlan, router, searchParams, t, workspaceId]);
+    router.replace(`/organizations/${organizationId}/settings/billing`);
+  }, [currentBillingInterval, currentCloudPlan, router, searchParams, t, organizationId]);
 
   const planCards = useMemo<TPlanCardData[]>(() => {
     return [
@@ -388,11 +389,9 @@ export const PricingTable = ({
     ];
   }, [billingCatalog, locale, selectedInterval, t]);
 
-  const persistWorkspaceId = () => {
+  const persistOrganizationId = () => {
     if (globalThis.window !== undefined) {
-      if (workspace?.id) {
-        globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_WORKSPACE_ID_KEY, workspace.id);
-      }
+      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ORGANIZATION_ID_KEY, organizationId);
     }
   };
 
@@ -403,7 +402,7 @@ export const PricingTable = ({
   };
 
   const openBillingPortal = async () => {
-    const response = await manageSubscriptionAction({ workspaceId });
+    const response = await manageSubscriptionAction({ organizationId });
     if (response?.serverError) {
       toast.error(getActionErrorMessage(response.serverError, t));
       return;
@@ -418,8 +417,8 @@ export const PricingTable = ({
 
   const openTrialPaymentCheckout = async () => {
     try {
-      persistWorkspaceId();
-      const response = await createTrialPaymentCheckoutAction({ workspaceId });
+      persistOrganizationId();
+      const response = await createTrialPaymentCheckoutAction({ organizationId });
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
@@ -440,10 +439,10 @@ export const PricingTable = ({
     interval: TCloudBillingInterval
   ) => {
     try {
-      persistWorkspaceId();
+      persistOrganizationId();
       persistUpgradeIntent(plan, interval);
       const response = await createTrialPaymentCheckoutAction({
-        workspaceId,
+        organizationId,
         targetPlan: plan,
         targetInterval: interval,
       });
@@ -499,9 +498,9 @@ export const PricingTable = ({
       return;
     }
 
-    persistWorkspaceId();
+    persistOrganizationId();
     const response = await createPlanCheckoutAction({
-      workspaceId,
+      organizationId,
       targetPlan: plan,
       targetInterval: interval,
     });
@@ -546,7 +545,9 @@ export const PricingTable = ({
           pendingChange
         )
       ) {
-        const response = await changeBillingPlanAction(getPlanChangePayload(workspaceId, "hobby", "monthly"));
+        const response = await changeBillingPlanAction(
+          getPlanChangePayload(organizationId, "hobby", "monthly")
+        );
         if (response?.serverError) {
           toast.error(getActionErrorMessage(response.serverError, t));
           return;
@@ -556,7 +557,7 @@ export const PricingTable = ({
         return;
       }
 
-      const response = await changeBillingPlanAction(getPlanChangePayload(workspaceId, plan, interval));
+      const response = await changeBillingPlanAction(getPlanChangePayload(organizationId, plan, interval));
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
@@ -574,7 +575,7 @@ export const PricingTable = ({
   const undoPendingChange = async () => {
     setIsPlanActionPending("undo");
     try {
-      const response = await undoPendingPlanChangeAction({ workspaceId });
+      const response = await undoPendingPlanChangeAction({ organizationId });
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
@@ -853,7 +854,7 @@ export const PricingTable = ({
                     <div
                       key={`${planCard.plan}-${planCard.interval}`}
                       className={cn(
-                        "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-sm",
+                        "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-xs",
                         planCard.plan === "pro" ? "border-slate-900/20" : "border-slate-200"
                       )}>
                       <div className="mb-4 flex min-h-7 items-start gap-2">
@@ -881,7 +882,7 @@ export const PricingTable = ({
                         <p className="mt-3 text-sm leading-6 text-slate-500">{planCard.description}</p>
                       </div>
 
-                      <div className="mt-4 flex min-h-[3rem] items-end gap-2">
+                      <div className="mt-4 flex min-h-12 items-end gap-2">
                         <span className="text-3xl font-normal tracking-tight text-slate-900">
                           {planCard.amount}
                         </span>

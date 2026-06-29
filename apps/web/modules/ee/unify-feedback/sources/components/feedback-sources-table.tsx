@@ -29,7 +29,7 @@ export function FeedbackSourcesTable({
   const { t } = useTranslation();
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="grid h-12 grid-cols-12 content-center border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
         <div className="col-span-1 pl-6">{t("common.type")}</div>
         <div className="col-span-4">{t("common.name")}</div>

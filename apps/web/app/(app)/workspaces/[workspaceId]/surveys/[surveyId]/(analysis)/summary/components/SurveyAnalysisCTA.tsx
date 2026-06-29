@@ -219,7 +219,7 @@ export const SurveyAnalysisCTA = ({
     {
       icon: BellRing,
       tooltip: t("workspace.surveys.summary.configure_alerts"),
-      onClick: () => router.push(`/workspaces/${workspace?.id}/settings/account/notifications`),
+      onClick: () => router.push(`/account/settings/notifications`),
       isVisible: !isReadOnly,
     },
     {

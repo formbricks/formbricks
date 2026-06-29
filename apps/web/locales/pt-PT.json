@@ -2636,6 +2636,8 @@
         "are_you_sure_you_want_to_delete_this_team": "Tem a certeza de que pretende eliminar esta equipa? Isto também remove o acesso a todos os espaços de trabalho e inquéritos associados a esta equipa.",
         "billing_role_description": "Apenas tem acesso a informações de faturação.",
         "bulk_invite": "Convite em Massa",
+        "bulk_invite_scale_only_description": "Convidar membros em massa através de CSV está disponível no plano Scale. Faz upgrade para convidares toda a tua equipa de uma só vez.",
+        "bulk_invite_scale_only_title": "Desbloqueia o convite em massa com um plano superior",
         "contributor": "Contribuidor",
         "create": "Criar",
         "create_first_team_message": "Primeiro, precisa de criar uma equipa.",
@@ -2682,6 +2684,7 @@
         "ai_not_available": "A criação de inquéritos com IA não está disponível.",
         "ai_not_enabled": "As ferramentas inteligentes de IA estão desativadas para esta organização.",
         "ai_not_in_plan": "A criação de inquéritos com IA não está disponível no teu plano atual.",
+        "app_survey": "Inquérito (app)",
         "card_description": "Descreve o que queres aprender e cria um rascunho de inquérito.",
         "card_title": "Criar com IA",
         "characters": "{count}/{max}",
@@ -2694,7 +2697,6 @@
         "enable_ai_in_settings": "Ativar nas definições",
         "generated_payload_invalid": "O rascunho do inquérito não pôde ser validado. Tenta adicionar mais detalhes.",
         "link_survey": "Inquérito de Link",
-        "only_link_supported": "Apenas o Inquérito de Link pode ser criado neste momento.",
         "opening_editor": "A abrir o editor...",
         "prompt_helper_churn": "Compreende porque é que os clientes ativos podem abandonar e o que os manteria envolvidos",
         "prompt_helper_churn_label": "Risco de abandono",
@@ -2708,12 +2710,14 @@
         "prompt_placeholder": "ex: Perceber porque é que os novos utilizadores desistem durante o onboarding e o que os ajudaria a concluir a configuração",
         "shortcut_hint": "⌘/Ctrl + Enter para criar",
         "start_from_scratch": "Começar do zero",
+        "survey_type_help": "Podes concluir a configuração no editor depois de criar o rascunho.",
         "survey_type_label": "Tipo de inquérito",
         "try_prompt": "Ver exemplo de prompt",
         "upgrade_plan": "Melhorar plano"
       },
       "all_set_time_to_create_first_survey": "Está tudo pronto! Hora de criar o seu primeiro inquérito",
       "alphabetical": "Alfabética",
+      "change_status": "Alterar estado",
       "copy_survey": "Copiar inquérito",
       "copy_survey_description": "Escolhe um espaço de trabalho para copiar este inquérito.",
       "copy_survey_error": "Falha ao copiar inquérito",
@@ -3298,6 +3302,7 @@
         "zip": "Comprimir"
       },
       "error_deleting_survey": "Ocorreu um erro ao eliminar o inquérito",
+      "error_updating_status": "Ocorreu um erro ao atualizar o estado do inquérito",
       "filter": {
         "complete_and_partial_responses": "Respostas completas e parciais",
         "complete_responses": "Respostas completas",
@@ -3474,6 +3479,8 @@
           "title": "Redes Sociais"
         }
       },
+      "status_updated_successfully": "Estado do inquérito atualizado com sucesso",
+      "status_updating": "A atualizar o estado do inquérito...",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Foi adicionado um filtro para respostas em que a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é ignorada",

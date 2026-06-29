@@ -37,8 +37,8 @@ const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="whitespace-pre-line break-all">{apiKey}</span>
-      <div className="copyApiKeyIcon flex-shrink-0">
+      <span className="break-all whitespace-pre-line">{apiKey}</span>
+      <div className="copyApiKeyIcon shrink-0">
         <FilesIcon
           className="size-4 cursor-pointer"
           onClick={(e) => {
@@ -174,14 +174,14 @@ export const EditAPIKeys = ({
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal?.length === 0 ? (
-            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
+            <div className="flex h-12 items-center justify-center px-6 text-sm font-medium whitespace-nowrap text-slate-400">
               {t("workspace.api_keys.no_api_keys_yet")}
             </div>
           ) : (
             apiKeysLocal?.map((apiKey) => (
               <div
                 role="button"
-                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-hidden"
                 onClick={() => {
                   setActiveKey(apiKey);
                   setViewPermissionsOpen(true);

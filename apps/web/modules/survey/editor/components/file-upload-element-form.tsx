@@ -43,7 +43,6 @@ export const FileUploadElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: FileUploadFormProps): JSX.Element => {
-  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const [isMaxSizeError, setIsMaxSizeError] = useState(false);
   const {
@@ -190,7 +189,7 @@ export const FileUploadElementForm = ({
                       <Link
                         className="underline"
                         target="_blank"
-                        href={`${workspaceBasePath}/settings/organization/billing`}
+                        href={`/organizations/${workspace.organizationId}/settings/billing`}
                       />
                     ),
                   }}
