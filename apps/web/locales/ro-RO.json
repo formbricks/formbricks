@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Email de verificare trimis! Vă rugăm să verificați căsuța de email.",
       "verification_email_successfully_sent_info": "Dacă există un cont asociat cu {email}, am trimis un link de verificare la acea adresă. Vă rugăm să verificați inboxul pentru a finaliza înscrierea.",
       "you_didnt_receive_an_email_or_your_link_expired": "Nu ați primit un email sau link-ul dvs. a expirat?"
-    },
-    "verify": {
-      "no_token_provided": "Niciun token furnizat",
-      "verifying": "Verificare..."
     }
   },
   "billing_confirmation": {

@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Bestätigungs-E-Mail versendet! Bitte überprüfe deinen Posteingang.",
       "verification_email_successfully_sent_info": "Falls ein Konto mit {email} verknüpft ist, haben wir einen Bestätigungslink an diese Adresse gesendet. Bitte überprüfe Deinen Posteingang, um die Registrierung abzuschließen.",
       "you_didnt_receive_an_email_or_your_link_expired": "Du hast keine E-Mail erhalten oder Dein Link ist abgelaufen?"
-    },
-    "verify": {
-      "no_token_provided": "Kein Token angegeben",
-      "verifying": "Überprüfe…"
     }
   },
   "billing_confirmation": {

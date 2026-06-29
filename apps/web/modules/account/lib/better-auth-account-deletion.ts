@@ -1,6 +1,6 @@
 import "server-only";
-import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import type { BetterAuthOptions } from "better-auth";
+import { APIError } from "better-auth/api";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
@@ -8,6 +8,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
 
 type DeleteUserConfig = NonNullable<NonNullable<BetterAuthOptions["user"]>["deleteUser"]>;
@@ -24,9 +25,8 @@ type DeleteUserConfig = NonNullable<NonNullable<BetterAuthOptions["user"]>["dele
  *
  * The hooks below run for BOTH paths and only get `(user, request)`, so everything is derived from
  * `user.id` / `user.email`. The DeleteAccountModal drives this flow (credential users call
- * `authClient.deleteUser`; SSO users go through the email-link request action). Note the `[...all]`
- * route is not mounted on this client-cutover branch, so the endpoint is reachable only once the
- * coordinated flip lands the server route.
+ * `authClient.deleteUser`; SSO users go through the email-link request action). The `[...all]` route is
+ * mounted, so the deletion endpoints are live.
  */
 
 /**
@@ -43,6 +43,13 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
   const soleOwnerOrganizations = await getOrganizationsWhereUserIsSingleOwner(user.id);
 
   if (soleOwnerOrganizations.length > 0 && !(await getIsMultiOrgEnabled())) {
+    // Failure-path audit parity: record the blocked deletion attempt before surfacing the error
+    // (the afterDelete success audit never runs for a blocked deletion).
+    await queueAccountDeletionAuditEvent({
+      status: "failure",
+      targetUserId: user.id,
+      oldUser: user as Record<string, unknown>,
+    });
     throw new APIError("BAD_REQUEST", {
       message: ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE,
     });
@@ -84,36 +91,22 @@ export const accountDeletionConfig = {
 } satisfies DeleteUserConfig;
 
 /**
- * Closes Better Auth's native delete-user freshness shortcut (ENG-1054).
- *
- * `POST /delete-user` verifies the password only when `body.password` is present; with no password it
- * falls back to a session-freshness check (`freshAge` = 1 day in auth.ts), so an empty-body request
- * from a still-fresh session would delete the account with NO confirmation — bypassing the intended
- * friction (password for credential users, email-link callback for SSO). `beforeDelete` only receives
- * `(user, request)` and can't tell whether a password was supplied, so the guard has to sit in the
- * request pipeline.
- *
- * This `before` hook rejects the direct `POST /delete-user` unless a password is supplied. Credential
- * users pass their password (Better Auth then verifies it); SSO users have none and are therefore
- * forced onto the `GET /delete-user/callback?token=...` email-link flow, which this does NOT match.
- * The `freshAge` gate stays in place as defense-in-depth. Shipped as a plugin so it composes with the
- * top-level `hooks.before` (the SSO license gate) instead of clobbering it.
+ * `hooks.before` guard for `POST /delete-user` (ENG-1054, S1). Better Auth verifies the password only
+ * when one is sent; otherwise it allows deletion on session freshness alone (the `freshAge` window), so
+ * a credential user with a recent session could delete their account without re-confirming the
+ * password. We require an explicit confirmation factor — the password (credential users) or a deletion
+ * token — on the POST entry point. The credential DeleteAccountModal always sends the password and SSO
+ * users delete via the emailed `GET /delete-user/callback` (which carries its own token), so a real
+ * client never trips this; it's defense in depth against a direct API call. Better Auth still verifies
+ * whichever factor is supplied.
  */
-export const accountDeletionGuardPlugin = {
-  id: "formbricks-account-deletion-guard",
-  hooks: {
-    before: [
-      {
-        matcher: (context) => context.path === "/delete-user",
-        handler: createAuthMiddleware(async (ctx) => {
-          const password = (ctx.body as { password?: unknown } | undefined)?.password;
-          if (typeof password !== "string" || password.length === 0) {
-            throw new APIError("BAD_REQUEST", {
-              message: "Account deletion requires password confirmation.",
-            });
-          }
-        }),
-      },
-    ],
-  },
-} satisfies BetterAuthPlugin;
+export const requireDeletionConfirmationBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
+  if (ctx.path !== "/delete-user") return;
+
+  const body = ctx.body as { password?: unknown; token?: unknown } | undefined;
+  if (body?.password || body?.token) return; // Better Auth verifies the supplied factor
+
+  throw new APIError("BAD_REQUEST", {
+    message: "Password confirmation is required to delete your account.",
+  });
+};

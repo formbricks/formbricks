@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Doğrulama email'i gönderildi! Lütfen gelen kutunuzu kontrol edin.",
       "verification_email_successfully_sent_info": "{email} ile ilişkili bir hesap varsa, o adrese bir doğrulama bağlantısı gönderdik. Kayıt işlemini tamamlamak için lütfen gelen kutunuzu kontrol edin.",
       "you_didnt_receive_an_email_or_your_link_expired": "Email almadınız mı veya bağlantınızın süresi mi doldu?"
-    },
-    "verify": {
-      "no_token_provided": "Token sağlanmadı",
-      "verifying": "Doğrulanıyor..."
     }
   },
   "billing_confirmation": {

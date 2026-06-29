@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Verificatie-e-mail verzonden! Controleer uw inbox.",
       "verification_email_successfully_sent_info": "Als er een account is gekoppeld aan {email}, hebben we een verificatielink naar dat adres gestuurd. Controleer uw inbox om de aanmelding te voltooien.",
       "you_didnt_receive_an_email_or_your_link_expired": "Heeft u geen e-mail ontvangen of is uw link verlopen?"
-    },
-    "verify": {
-      "no_token_provided": "Geen token verstrekt",
-      "verifying": "Verifiëren..."
     }
   },
   "billing_confirmation": {

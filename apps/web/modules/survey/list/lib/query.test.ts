@@ -9,6 +9,7 @@ const surveyA = {
   workspaceId: "env_1",
   type: "link" as const,
   status: "draft" as const,
+  publishOn: null,
   createdAt: new Date("2026-04-15T10:00:00.000Z"),
   updatedAt: new Date("2026-04-15T10:00:00.000Z"),
   responseCount: 0,

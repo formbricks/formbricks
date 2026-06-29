@@ -487,7 +487,6 @@ describe("Tests for handleTriggerUpdates", () => {
   });
 
   test("returns empty object when no triggers provided", () => {
-    // @ts-expect-error -- This is a test case to check the empty input
     const result = handleTriggerUpdates(undefined, [], mockActionClasses);
     expect(result).toEqual({});
   });
@@ -782,7 +781,14 @@ describe("Tests for createSurvey", () => {
     test("preserves an explicitly provided segment relation for existing callers", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.segment.findUnique.mockResolvedValueOnce({
+        id: "clseg123456789012345678901",
+        title: "Segment",
+        description: null,
+        isPrivate: false,
+        filters: [],
         workspaceId: mockWorkspaceId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
@@ -818,7 +824,14 @@ describe("Tests for createSurvey", () => {
 
     test("rejects an explicitly provided segment from another workspace", async () => {
       prisma.segment.findUnique.mockResolvedValueOnce({
+        id: "clseg123456789012345678901",
+        title: "Segment",
+        description: null,
+        isPrivate: false,
+        filters: [],
         workspaceId: "clotherworkspace1234567890",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       await expect(

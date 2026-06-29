@@ -11,6 +11,7 @@ import {
   accountDeletionAfterDelete,
   accountDeletionBeforeDelete,
   accountDeletionConfig,
+  requireDeletionConfirmationBeforeHandler,
 } from "./better-auth-account-deletion";
 
 vi.mock("@formbricks/database", () => ({ prisma: { invite: { deleteMany: vi.fn() } } }));
@@ -40,6 +41,12 @@ describe("accountDeletionBeforeDelete", () => {
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
 
     await expect(accountDeletionBeforeDelete(user)).rejects.toBeInstanceOf(APIError);
+    // records the blocked attempt as a failure-path audit before surfacing the error
+    expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      status: "failure",
+      targetUserId: "user-1",
+      oldUser: expect.objectContaining({ id: "user-1" }),
+    });
     // throws before any destructive cleanup
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
@@ -108,5 +115,53 @@ describe("accountDeletionConfig", () => {
     expect(accountDeletionConfig.beforeDelete).toBe(accountDeletionBeforeDelete);
     expect(accountDeletionConfig.afterDelete).toBe(accountDeletionAfterDelete);
     expect("sendDeleteAccountVerification" in accountDeletionConfig).toBe(false);
+  });
+});
+
+const makeDeleteCtx = (overrides: {
+  path?: string;
+  body?: unknown;
+}): Parameters<typeof requireDeletionConfirmationBeforeHandler>[0] =>
+  ({ path: overrides.path ?? "/delete-user", body: overrides.body }) as unknown as Parameters<
+    typeof requireDeletionConfirmationBeforeHandler
+  >[0];
+
+describe("requireDeletionConfirmationBeforeHandler (delete-user freshAge guard)", () => {
+  test("allows the request when a password is supplied", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: { password: "pw" } }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("allows the request when a deletion token is supplied", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: { token: "tok" } }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("blocks a confirmation-less delete (closes the freshAge password bypass)", async () => {
+    await expect(requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: {} }))).rejects.toThrow(
+      "Password confirmation is required"
+    );
+  });
+
+  test("blocks when the request has no body", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: undefined }))
+    ).rejects.toThrow("Password confirmation is required");
+  });
+
+  test("exempts the SSO email-link callback (/delete-user/callback)", async () => {
+    // SSO deletion completes via the emailed GET callback (carrying its own token), not a password —
+    // the guard must let it through, or the SSO email-link flow breaks.
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ path: "/delete-user/callback", body: {} }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("ignores non-delete-user paths", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ path: "/sign-out", body: {} }))
+    ).resolves.toBeUndefined();
   });
 });

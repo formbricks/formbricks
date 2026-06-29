@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "確認メールを送信しました！受信トレイを確認してください。",
       "verification_email_successfully_sent_info": "もし {email} に関連するアカウントがあれば、確認リンクがそのアドレスに送信されました。受信トレイを確認してサインアップを完了してください。",
       "you_didnt_receive_an_email_or_your_link_expired": "メールを受け取っていないか、リンクが期限切れですか？"
-    },
-    "verify": {
-      "no_token_provided": "トークンが提供されていません",
-      "verifying": "認証中..."
     }
   },
   "billing_confirmation": {

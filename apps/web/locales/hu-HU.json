@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Az ellenőrző e-mail elküldve! Nézze meg a beérkezett üzeneteit.",
       "verification_email_successfully_sent_info": "Ha létezik a(z) {email} címhez rendelt fiók, akkor elküldtünk egy ellenőrző hivatkozást arra a címre. Nézze meg a beérkezett üzeneteit a regisztráció befejezéséhez.",
       "you_didnt_receive_an_email_or_your_link_expired": "Nem kapott e-mailt vagy a hivatkozása lejárt?"
-    },
-    "verify": {
-      "no_token_provided": "Nincs token megadva",
-      "verifying": "Ellenőrzés…"
     }
   },
   "billing_confirmation": {

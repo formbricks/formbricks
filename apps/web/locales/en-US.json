@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Verification email sent! Please check your inbox.",
       "verification_email_successfully_sent_info": "If there is an account associated with {email}, we have sent a verification link to that address. Please check your inbox to complete the sign-up.",
       "you_didnt_receive_an_email_or_your_link_expired": "You did not receive an email or your link expired?"
-    },
-    "verify": {
-      "no_token_provided": "No Token provided",
-      "verifying": "Verifying…"
     }
   },
   "billing_confirmation": {

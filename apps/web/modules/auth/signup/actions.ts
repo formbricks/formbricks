@@ -2,11 +2,9 @@
 
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
+import { UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import { hashPassword } from "@/lib/auth";
 import {
-  EMAIL_VERIFICATION_DISABLED,
   IS_FORMBRICKS_CLOUD,
   IS_TURNSTILE_CONFIGURED,
   TURNSTILE_SECRET_KEY,
@@ -16,10 +14,12 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
-import { createUser, updateUser } from "@/modules/auth/lib/user";
+import { auth } from "@/modules/auth/lib/auth";
+import { updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
@@ -29,7 +29,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
+import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreatedUser = ZUser.pick({
@@ -72,31 +72,47 @@ async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): 
   }
 }
 
-async function createUserSafely(
+async function signUpUserSafely(
   email: string,
   name: string,
-  hashedPassword: string,
-  userLocale: z.infer<typeof ZUserLocale> | undefined
+  password: string,
+  userLocale: z.infer<typeof ZUserLocale> | undefined,
+  inviteToken: string | undefined
 ): Promise<{ user: TCreatedUser | undefined; userAlreadyExisted: boolean }> {
-  let user: TCreatedUser | undefined = undefined;
-  let userAlreadyExisted = false;
+  const normalizedEmail = email.toLowerCase();
+
+  // When signing up from an invite, bake the invite-accept deep link into Better Auth's verification
+  // email so the FIRST verification link lands on /invite (parity with the legacy handlePostUserCreation
+  // flow). Omitted otherwise, in which case Better Auth defaults the callbackURL to "/".
+  const callbackURL = inviteToken ? `${WEBAPP_URL}/invite?token=${inviteToken}` : undefined;
 
   try {
-    user = await createUser({
-      email: email.toLowerCase(),
-      name,
-      password: hashedPassword,
-      locale: userLocale,
-    });
+    // Better Auth-native signup: creates the User + a bcrypt credential Account (via the password
+    // hook in auth.ts) and, when verification is enabled, sends Better Auth's verification email
+    // (sendOnSignUp). Replaces the manual hash + createUser + the legacy verification-token email.
+    await auth.api.signUpEmail({ body: { email: normalizedEmail, password, name, callbackURL } });
   } catch (error) {
-    if (error instanceof InvalidInputError) {
-      userAlreadyExisted = true;
-    } else {
-      throw error;
+    // Enumeration-safe: a duplicate email resolves to "already existed", not a surfaced error.
+    const existing = await getUserByEmail(normalizedEmail);
+    if (existing) {
+      return { user: existing, userAlreadyExisted: true };
     }
+    throw error;
   }
 
-  return { user, userAlreadyExisted };
+  let user = await getUserByEmail(normalizedEmail);
+  if (!user) {
+    // signUpEmail succeeded but the row can't be loaded — an invariant violation. Fail loud rather
+    // than returning { success: true } with no user, which would skip org creation / invite acceptance.
+    throw new UnknownError("Failed to load user after signup");
+  }
+  // signUpEmail can't carry the chosen locale (not a Better Auth field), so apply it afterwards.
+  if (userLocale && user.locale !== userLocale) {
+    await updateUser(user.id, { locale: userLocale });
+    user = { ...user, locale: userLocale };
+  }
+
+  return { user, userAlreadyExisted: false };
 }
 
 async function handleInviteAcceptance(
@@ -226,23 +242,6 @@ async function handlePostUserCreation(
   } else {
     await handleOrganizationCreation(ctx, user);
   }
-
-  if (!EMAIL_VERIFICATION_DISABLED) {
-    let inviteCallbackUrl: string | undefined;
-
-    if (inviteToken) {
-      const inviteUrl = new URL("/invite", WEBAPP_URL);
-      inviteUrl.searchParams.set("token", inviteToken);
-      inviteCallbackUrl = inviteUrl.toString();
-    }
-
-    await sendVerificationEmail({
-      id: user.id,
-      email: user.email,
-      locale: user.locale,
-      callbackUrl: inviteCallbackUrl,
-    });
-  }
 }
 
 export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
@@ -250,12 +249,12 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
     await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
-    const hashedPassword = await hashPassword(parsedInput.password);
-    const { user, userAlreadyExisted } = await createUserSafely(
+    const { user, userAlreadyExisted } = await signUpUserSafely(
       parsedInput.email,
       parsedInput.name,
-      hashedPassword,
-      parsedInput.userLocale
+      parsedInput.password,
+      parsedInput.userLocale,
+      parsedInput.inviteToken
     );
 
     if (!userAlreadyExisted && user) {

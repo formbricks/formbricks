@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "¡Correo de verificación enviado! Por favor, revisa tu bandeja de entrada.",
       "verification_email_successfully_sent_info": "Si hay una cuenta asociada con {email}, hemos enviado un enlace de verificación a esa dirección. Por favor, revisa tu bandeja de entrada para completar el registro.",
       "you_didnt_receive_an_email_or_your_link_expired": "¿No recibiste un correo electrónico o tu enlace expiró?"
-    },
-    "verify": {
-      "no_token_provided": "No se proporcionó ningún token",
-      "verifying": "Verificando..."
     }
   },
   "billing_confirmation": {

@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "E-mail de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
       "verification_email_successfully_sent_info": "Si un compte est associé à {email}, nous avons envoyé un lien de vérification à cette adresse. Veuillez vérifier votre boîte de réception pour terminer l'inscription.",
       "you_didnt_receive_an_email_or_your_link_expired": "Vous n'avez pas reçu d'email ou votre lien a expiré ?"
-    },
-    "verify": {
-      "no_token_provided": "Aucun jeton fourni",
-      "verifying": "Vérification..."
     }
   },
   "billing_confirmation": {

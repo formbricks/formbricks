@@ -53,10 +53,10 @@ const deriveNameFromEmail = (email: string): string =>
  *  - `account.create.after` — denormalize `identityProvider` + `identityProviderAccountId` onto
  *    `User` for legacy SSO lookups (`findLegacyExactMatch`), parity with `syncSsoIdentityForUser`.
  *
- * Nothing here runs until the Phase 7 cutover — the `[...all]` route is not mounted (its handler must
- * wrap `auth.handler` in `runWithSsoRequestContext` for the before→after carry), and `emailVerified`
- * stays a `DateTime` column until then. (The per-callback license re-check is `ssoLicenseGateBefore`,
- * below.) The verify-before-link recovery flow is the remaining Phase 5c work.
+ * These hooks are LIVE: the `[...all]` route is mounted (its handler wraps `auth.handler` in
+ * `runWithSsoRequestContext` for the before→after carry) and `emailVerified` is a boolean column. The
+ * per-callback license re-check is `ssoLicenseGateBefore`, below; the verify-before-link recovery flow
+ * is wired via `ssoRecoveryAfter` + the `/sso-recovery/sign-in` plugin.
  */
 export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> = {
   user: {
@@ -139,7 +139,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
  * NOTE (cutover): on a browser callback this surfaces as a 403; redirecting to the auth error page
  * (matching NextAuth's behavior) is a Phase 7 refinement.
  */
-export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
+export const ssoLicenseGateBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   const provider = getSsoProviderFromContext(ctx);
   const identityProvider = provider ? normalizeSsoProvider(provider) : null;
   if (!identityProvider) return; // not an SSO callback → no license gate
@@ -150,7 +150,9 @@ export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
   if (identityProvider === "saml" && !(await getIsSamlSsoEnabled())) {
     throw new APIError("FORBIDDEN", { message: "SAML SSO is not enabled for this instance." });
   }
-});
+};
+
+export const ssoLicenseGateBefore = createAuthMiddleware(ssoLicenseGateBeforeHandler);
 
 /**
  * Request hook (`hooks.after`) that turns Better Auth's "account not linked" collision into
@@ -159,10 +161,19 @@ export const ssoLicenseGateBefore = createAuthMiddleware(async (ctx) => {
  * We detect that on the callback, read the SSO identity captured in `mapProfileToUser`, and — if the
  * email maps to an existing user — start recovery (inbox-verification email + redirect to the
  * "check your email" page) instead of the generic error. Parity with handleSsoCallback's
- * email-match → startSsoRecovery branch. Inert until cutover (route unmounted + the handler must wrap
- * `auth.handler` in `runWithSsoRequestContext`).
+ * email-match → startSsoRecovery branch. Live now that the `[...all]` route is mounted (its handler
+ * wraps `auth.handler` in `runWithSsoRequestContext`).
  */
-export const ssoRecoveryAfter = createAuthMiddleware(async (ctx) => {
+/** The endpoint context Better Auth passes to a `hooks.before`/`hooks.after` middleware handler. */
+export type AuthHookContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];
+
+/**
+ * Plain-handler form of {@link ssoRecoveryAfter}. Exported so the composition root (auth.ts) can run
+ * it alongside other after-hooks (e.g. the failed-auth audit) in Better Auth's single `hooks.after`
+ * slot — passing the already-built context straight through, rather than calling the wrapped
+ * middleware (which would re-run `createInternalContext` + the middleware `use` chain).
+ */
+export const ssoRecoveryAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   const providerId = getSsoProviderFromContext(ctx);
   const provider = providerId ? normalizeSsoProvider(providerId) : null;
   if (!provider) return; // not an SSO callback
@@ -200,4 +211,6 @@ export const ssoRecoveryAfter = createAuthMiddleware(async (ctx) => {
 
   // Replace the ?error=account_not_linked redirect with the verify-before-link recovery flow.
   throw ctx.redirect(new URL(recoveryPath, WEBAPP_URL).toString());
-});
+};
+
+export const ssoRecoveryAfter = createAuthMiddleware(ssoRecoveryAfterHandler);

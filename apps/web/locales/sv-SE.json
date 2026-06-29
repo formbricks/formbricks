@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Verifieringsmeddelande skickat! Kontrollera din inkorg.",
       "verification_email_successfully_sent_info": "Om det finns ett konto kopplat till {email} har vi skickat en verifieringslänk till den adressen. Kontrollera din inkorg för att slutföra registreringen.",
       "you_didnt_receive_an_email_or_your_link_expired": "Fick du ingen e-post eller har din länk gått ut?"
-    },
-    "verify": {
-      "no_token_provided": "Ingen token angiven",
-      "verifying": "Verifierar..."
     }
   },
   "billing_confirmation": {

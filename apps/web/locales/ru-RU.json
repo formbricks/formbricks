@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "Письмо с подтверждением отправлено! Проверьте ваш почтовый ящик.",
       "verification_email_successfully_sent_info": "Если с адресом {email} связан аккаунт, мы отправили на него ссылку для подтверждения. Проверьте почту, чтобы завершить регистрацию.",
       "you_didnt_receive_an_email_or_your_link_expired": "Вы не получили письмо или ваша ссылка устарела?"
-    },
-    "verify": {
-      "no_token_provided": "Токен не предоставлен",
-      "verifying": "Проверка..."
     }
   },
   "billing_confirmation": {

@@ -1,16 +1,27 @@
 import "server-only";
 import * as Sentry from "@sentry/nextjs";
 import type { BetterAuthOptions } from "better-auth";
+import { isAPIError } from "better-auth/api";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
+import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 /**
- * Observability parity for the Better Auth cutover (ENG-1054, Phase 7) — re-expresses the audit + Sentry
+ * Observability parity for the Better Auth cutover (ENG-1054) — re-expresses the audit + Sentry
  * emission the NextAuth `[...nextauth]` route did (its `events.signIn` audit + `Sentry.captureException`)
- * as Better Auth config, so the security audit trail and error reporting survive the flip. Additive:
- * inert until the Better Auth handler is mounted at cutover.
+ * as Better Auth config, so the security audit trail and error reporting survive the flip. The
+ * success-path `signedIn` audit below is LIVE now that the handler is mounted; the failure-path audit
+ * is `auditFailedAuthAfter` (wired into `hooks.after`).
+ *
+ * Mechanism note: a wrong-password sign-in is a HANDLED failure — Better Auth converts it to an
+ * `APIError` *response* (surfaced on `ctx.context.returned`), not an unexpected throw — so it does NOT
+ * reach `onAPIError.onError` (that fires only for unexpected/internal errors). The failure audit
+ * therefore lives in `hooks.after`, where both the request and the returned error are available.
  */
 
 /**
@@ -39,8 +50,8 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
  * Emit the `signedIn` success audit on session creation — parity with the NextAuth route's
  * `events.signIn`. Guarded to genuine sign-in completions (see getSignInAuthMethod) so non-sign-in
  * session re-issues don't produce spurious events. `autoSignIn` is off, so sign-up/verification don't
- * create a session either. Failures create no session — failed-login auditing is a cutover follow-up
- * (needs response inspection).
+ * create a session either. Failures create no session, so they're audited separately by
+ * `auditFailedAuthAfter` below (which inspects the returned error in `hooks.after`).
  */
 export const signInAuditDatabaseHook: NonNullable<
   NonNullable<BetterAuthOptions["databaseHooks"]>["session"]
@@ -63,6 +74,23 @@ export const signInAuditDatabaseHook: NonNullable<
       } catch {
         // Auditing must never block a sign-in (parity with the route's try/catch around emission).
         logger.withContext({ source: "better-auth" }).error("Failed to queue signedIn audit event");
+      }
+
+      // Parity with the NextAuth route's per-sign-in finalize (events.signIn → finalizeSuccessfulSignIn):
+      // refresh User.lastLoginAt + emit the `user_signed_in` analytics event on every genuine sign-in.
+      // The session record carries only userId, so resolve the email that updateUserLastLoginAt needs.
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: session.userId },
+          select: { email: true },
+        });
+        if (user?.email) {
+          await finalizeSuccessfulSignIn({ userId: session.userId, email: user.email, provider: authMethod });
+        }
+      } catch {
+        logger
+          .withContext({ source: "better-auth" })
+          .error("Failed to record successful sign-in (lastLoginAt / analytics)");
       }
     },
   },
@@ -91,4 +119,61 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
       contextLogger.info(message);
     }
   },
+};
+
+/**
+ * Failed-login audit (parity with NextAuth's credentials `authorize` → `logAuthAttempt`), emitted from
+ * `hooks.after` because a rejected sign-in is a handled `APIError` *response*, not a thrown error (see
+ * the header note — it never reaches `onAPIError.onError`). Reusing `logAuthAttempt` +
+ * `shouldLogAuthFailure` preserves full parity: the email is hashed (never stored raw), brute-force
+ * attempts are rate-limited (fail-closed when Redis is down), and the failure is mirrored to Sentry in
+ * production.
+ *
+ * Scope: the credential password sign-in (`/sign-in/email`). A failed 2FA challenge
+ * (`/two-factor/verify-*`) identifies the user via the two-factor cookie rather than the request body,
+ * so it is tracked separately; SSO sign-in failures are redirects (not `APIError`s) and never reach
+ * this branch. Composed with `ssoRecoveryAfter` at the single `hooks.after` slot in auth.ts.
+ */
+export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> => {
+  if (ctx.path !== "/sign-in/email") return;
+
+  // A created session (success) is audited by signInAuditDatabaseHook; only a returned APIError here
+  // represents a rejected attempt.
+  const returned = (ctx.context as { returned?: unknown }).returned;
+  if (!isAPIError(returned)) return;
+
+  const body = ctx.body as { email?: unknown } | undefined;
+  const email = typeof body?.email === "string" ? body.email : undefined;
+  if (!email) return;
+
+  // Throttle audit volume under brute force (fail-closed on Redis outage), matching the NextAuth path.
+  if (!(await shouldLogAuthFailure(email))) return;
+
+  const code = (returned.body as { code?: unknown } | undefined)?.code;
+  const failureReason = (typeof code === "string" ? code : String(returned.status)).toLowerCase();
+  logAuthAttempt(failureReason, "credentials", "password", UNKNOWN_DATA, email);
+};
+
+/**
+ * Audit a completed password reset — parity with the retired `completePasswordReset` action audit
+ * (`updated`/`user`). Wired into Better Auth's `emailAndPassword.onPasswordReset` callback (auth.ts),
+ * which fires once per successful reset with the user. The prior audit's old/new snapshots only
+ * captured `{id,email,locale,emailVerified}` — none of which change on a reset — so the meaningful
+ * signal is just "this user's password was reset", recorded via the marker.
+ */
+export const auditPasswordReset = async (userId: string): Promise<void> => {
+  try {
+    await queueAuditEventBackground({
+      action: "updated",
+      targetType: "user",
+      userId,
+      targetId: userId,
+      organizationId: UNKNOWN_DATA,
+      status: "success",
+      userType: "user",
+      newObject: { passwordResetMarker: true },
+    });
+  } catch {
+    logger.withContext({ source: "better-auth" }).error("Failed to queue password-reset audit event");
+  }
 };

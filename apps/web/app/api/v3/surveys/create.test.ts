@@ -124,7 +124,6 @@ describe("createV3Survey", () => {
         usageCycleAnchor: null,
       },
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: false,
       whitelabel: undefined,
     });
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);

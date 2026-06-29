@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "E-mail de verificação enviado! Por favor, verifique sua caixa de entrada.",
       "verification_email_successfully_sent_info": "Se houver uma conta associada a {email}, enviamos um link de verificação para esse endereço. Por favor, verifique sua caixa de entrada para completar o cadastro.",
       "you_didnt_receive_an_email_or_your_link_expired": "Você não recebeu um e-mail ou seu link expirou?"
-    },
-    "verify": {
-      "no_token_provided": "Token não fornecido",
-      "verifying": "Verificando..."
     }
   },
   "billing_confirmation": {

@@ -66,9 +66,6 @@ overrides:
   # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
   form-data@4: 4.0.5
 
-patchedDependencies:
-  next-auth@4.24.13: patches/next-auth@4.24.13.patch
-
 autoInstallPeers: true
 linkWorkspacePackages: true
 shamefullyHoist: true

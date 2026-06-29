@@ -2,9 +2,11 @@ import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth, twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_VERIFICATION_DISABLED,
@@ -16,24 +18,34 @@ import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
 import {
   accountDeletionConfig,
-  accountDeletionGuardPlugin,
+  requireDeletionConfirmationBeforeHandler,
 } from "@/modules/account/lib/better-auth-account-deletion";
 import {
   ssoDatabaseHooks,
-  ssoLicenseGateBefore,
-  ssoRecoveryAfter,
+  ssoLicenseGateBeforeHandler,
+  ssoRecoveryAfterHandler,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
-import { betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import {
+  auditFailedAuthAfter,
+  auditPasswordReset,
+  betterAuthLogger,
+  signInAuditDatabaseHook,
+} from "./better-auth-observability";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
+// `__Secure-`/Secure cookies require HTTPS — on http://localhost the browser drops them and the
+// session can't persist. Gate on the configured URL scheme (parity with NextAuth's URL-based
+// useSecureCookies default) instead of hardcoding true, so local/dev over http works.
+const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? "").startsWith("https://");
+
 /** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
-const getUserLocale = async (userId: string): Promise<TUserLocale> => {
+export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
   return (dbUser?.locale ?? "en-US") as TUserLocale;
 };
@@ -41,26 +53,30 @@ const getUserLocale = async (userId: string): Promise<TUserLocale> => {
 /**
  * Better Auth server instance (ENG-1054 — NextAuth → Better Auth migration).
  *
- * PHASE 1 (additive foundation): this instance exists and is usable server-side via `auth.api.*`,
- * but NextAuth still owns sessions and the HTTP handler is intentionally NOT mounted at
- * /api/auth/[...all] yet — it would collide with the NextAuth [...nextauth] catch-all. The
- * handler + cutover land in Phase 7.
+ * CUTOVER (the ENG-1054 flip): Better Auth owns sessions. Its HTTP handler is mounted at
+ * /api/auth/[...all] (wrapped in `runWithSsoRequestContext`), the NextAuth [...nextauth] route is
+ * removed, and the session DAL (`session.ts`) reads Better Auth only — no dual-read, so the flip is
+ * a one-time forced re-login.
  *
  * Field mappings target the EXISTING Prisma columns (packages/database/schema.prisma), verified
  * against better-auth@1.6.18 `getAuthTables` (design doc §11). With Redis `secondaryStorage`
  * configured, BA skips the DB session/verification tables unless told otherwise — so
- * `session.storeSessionInDatabase` is set (the forward-auth proxies + dual-read need DB sessions);
- * verification stays Redis-only (ephemeral; no Verification Prisma model needed).
+ * `session.storeSessionInDatabase` is set (the forward-auth proxies need DB sessions); verification
+ * stays Redis-only (ephemeral; no Verification Prisma model needed).
  *
- * Deferred to later phases (kept out so they don't half-activate against the live NextAuth flows):
- *  - `emailVerified` Date→boolean column conversion (Phase 2/3 — required before requireEmailVerification works at cutover)
- *  - SSO verify-before-link recovery completion + the shared "token" email-signin (Phase 7 cutover; providers, JIT provisioning, license re-check, and recovery-start are done)
- *  - failed-login audit (the signedIn-success audit + Sentry/logger forwarding are wired via better-auth-observability.ts)
+ * Known deferral (not blocking): the 2FA-challenge failure audit (`/two-factor/verify-*`) — the user
+ * identity lives in the two-factor cookie, not the request body, so it is tracked separately. The
+ * credential sign-in + sole-owner-deletion failure audits and the signedIn-success / lastLoginAt /
+ * analytics / Sentry / logger wiring are all live in better-auth-observability.ts.
  */
 export const auth = betterAuth({
   appName: "Formbricks",
-  // ENG-1054: BA throws in production if this is unset; keep NEXTAUTH_SECRET for app JWTs (lib/jwt.ts).
-  secret: env.BETTER_AUTH_SECRET,
+  // ENG-1054: fall back to NEXTAUTH_SECRET (which already signed NextAuth's session cookies) when
+  // BETTER_AUTH_SECRET is unset. This keeps existing envs working AND guarantees BA's cookie signing
+  // uses the same secret the forward-auth proxy verifies with (session-cookie.ts) — a mismatch makes
+  // the proxy reject every session and bounce users between / and /auth/login. NEXTAUTH_SECRET also
+  // still signs app JWTs (lib/jwt.ts).
+  secret: env.BETTER_AUTH_SECRET ?? env.NEXTAUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL,
   trustedOrigins: [env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url)),
   telemetry: { enabled: false },
@@ -102,9 +118,24 @@ export const auth = betterAuth({
         linkValidityInMinutes: PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
       });
     },
+    // After a successful reset, send the security notification (parity with the retired
+    // completePasswordReset) and audit it. Better Auth already revoked sessions
+    // (revokeSessionsOnPasswordReset above). Both are best-effort — never fail the completed reset.
+    onPasswordReset: async ({ user }) => {
+      try {
+        const { sendPasswordResetNotifyEmail } = await import("@/modules/email");
+        await sendPasswordResetNotifyEmail({ email: user.email, locale: await getUserLocale(user.id) });
+      } catch (error) {
+        logger.error({ error, userId: user.id }, "Failed to send password-reset notification email");
+      }
+      await auditPasswordReset(user.id);
+    },
   },
 
   emailVerification: {
+    // BA sends the verification email on signup (used by the createUserAction signup flow). When
+    // EMAIL_VERIFICATION_DISABLED the user still receives it but isn't blocked from signing in —
+    // requireEmailVerification (above) gates that.
     sendOnSignUp: true,
     // Resend a fresh verification link when an unverified user tries to sign in (the original sign-up
     // link may have expired). The login form surfaces this as a "check your inbox" message — without
@@ -132,11 +163,11 @@ export const auth = betterAuth({
   },
 
   session: {
-    expiresIn: SESSION_MAX_AGE, // keep the current 1-day TTL; bounds the dual-read window (D3)
+    expiresIn: SESSION_MAX_AGE, // keep the current 1-day session TTL (parity with the legacy SESSION_MAX_AGE)
     updateAge: DAY_IN_SECONDS,
     freshAge: DAY_IN_SECONDS, // require recent auth for sensitive ops; never 0
     // REQUIRED with secondaryStorage — otherwise no `session` DB rows, which the forward-auth
-    // proxies (getProxySession) and the dual-read cutover both depend on (design doc §11).
+    // proxies (getProxySession) depend on (design doc §11).
     storeSessionInDatabase: true,
     cookieCache: { enabled: true, maxAge: 5 * 60 },
     // Map BA's logical fields onto the existing Prisma columns.
@@ -193,12 +224,23 @@ export const auth = betterAuth({
     },
   },
 
-  // Request hooks (parity with handleSsoCallback). `before` re-checks the SSO/SAML license on every
-  // SSO callback (covers existing-user sign-ins that skip user.create); `after` turns Better Auth's
-  // "account not linked" collision into the verify-before-link recovery flow.
+  // Request hooks (parity with handleSsoCallback). Each slot is a single middleware, so related
+  // concerns are composed as plain handlers (calling a wrapped middleware would re-run the per-request
+  // context setup). `before`: re-check the SSO/SAML license on every SSO callback (covers existing-user
+  // sign-ins that skip user.create), then require an explicit confirmation factor on POST /delete-user
+  // (closes Better Auth's freshAge password bypass). `after`: turn an SSO "account not linked"
+  // collision into the verify-before-link recovery flow, then emit the failed-login audit (parity with
+  // NextAuth's `logAuthAttempt`). Recovery runs first; if it redirects (throws), the request is an SSO
+  // recovery rather than a credential failure, so skipping the audit is correct.
   hooks: {
-    before: ssoLicenseGateBefore,
-    after: ssoRecoveryAfter,
+    before: createAuthMiddleware(async (ctx) => {
+      await ssoLicenseGateBeforeHandler(ctx);
+      await requireDeletionConfirmationBeforeHandler(ctx);
+    }),
+    after: createAuthMiddleware(async (ctx) => {
+      await ssoRecoveryAfterHandler(ctx);
+      await auditFailedAuthAfter(ctx);
+    }),
   },
 
   rateLimit: {
@@ -225,14 +267,14 @@ export const auth = betterAuth({
   },
 
   advanced: {
-    useSecureCookies: true, // also yields the browser-enforced "__Secure-" cookie name prefix
+    useSecureCookies: USE_SECURE_COOKIES, // "__Secure-" prefix on HTTPS; relaxed on http (local/dev)
     cookiePrefix: "formbricks",
     // Formbricks ids are cuid2 (Prisma `@default(cuid())` + the `ZId = z.cuid2()` validators in the
     // service layer). Better Auth's default id format is NOT cuid2, so without this every Formbricks
     // service that validates a user id via ZId (e.g. updateUser, called from the SSO provisioning
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
-    defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: true, path: "/" },
+    defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
     ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
   },
 
@@ -255,12 +297,8 @@ export const auth = betterAuth({
     // providers are configured. The account-linking/provisioning hooks are a separate reviewed pass.
     genericOAuth({ config: ssoGenericOAuthConfig }),
     // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
-    // path (recovery-scoped, not a general magic-link). Inert until cutover (handler mount + email
-    // repoint). See better-auth-recovery-signin.ts.
+    // path (recovery-scoped, not a general magic-link). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
-    // Reject the password-less `POST /delete-user` so a fresh session can't delete an account without
-    // confirmation (freshAge shortcut). Credential users must pass a password; SSO uses the callback.
-    accountDeletionGuardPlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],

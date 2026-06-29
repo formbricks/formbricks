@@ -99,10 +99,6 @@
       "verification_email_resent_successfully": "验证 电子邮件 已 发送！请 检查 您的 收件箱。",
       "verification_email_successfully_sent_info": "如果有一个 账户 与 {email} 相关 联，我们已将 验证 链接 发送到该 地址 。请查看您的 收件箱 以完成 注册 。",
       "you_didnt_receive_an_email_or_your_link_expired": "您 没 有 收 到 电 子 邮 件 或者 链接 已 过 期 ?"
-    },
-    "verify": {
-      "no_token_provided": "未提供 Token",
-      "verifying": "验证 ..."
     }
   },
   "billing_confirmation": {

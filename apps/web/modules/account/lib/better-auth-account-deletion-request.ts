@@ -19,8 +19,8 @@ import { sendDeleteAccountConfirmationEmail } from "@/modules/email";
  * value === the session user's id) — and emails the callback link.
  *
  * The global `sendDeleteAccountVerification` is intentionally NOT configured in auth.ts (it would
- * email credential deletions too), so the verification value is minted manually here. Server-only and
- * inert until the Phase 7 cutover wires the DeleteAccountModal to call it.
+ * email credential deletions too), so the verification value is minted manually here. Server-only; the
+ * DeleteAccountModal calls this for SSO users.
  */
 
 // Matches the manual mint in better-auth-account-deletion.integration.test.ts: a 1-hour window.

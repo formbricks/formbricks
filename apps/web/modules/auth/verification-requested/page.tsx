@@ -1,11 +1,10 @@
-import { cookies } from "next/headers";
 import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
-import { getAuthCallbackUrlFromCookies, resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
+import { resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
 
@@ -15,12 +14,10 @@ export const VerificationRequestedPage = async ({
   searchParams: Promise<{ token: string; callbackUrl?: string | string[] }>;
 }) => {
   const t = await getTranslate();
-  const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
+  const params = await searchParams;
   const { token, callbackUrl } = params;
   const resolvedCallbackUrl = resolveAuthCallbackUrl({
     searchParamCallbackUrl: callbackUrl,
-    cookieCallbackUrl: getAuthCallbackUrlFromCookies(cookieStore),
-    allowCookieFallback: true,
     webAppUrl: WEBAPP_URL,
   });
   try {
