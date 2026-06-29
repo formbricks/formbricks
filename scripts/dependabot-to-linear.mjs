@@ -151,10 +151,12 @@ async function resolveDoneStateId(apiKey) {
   return done.id;
 }
 
-async function closeIssue(apiKey, issueId, stateId) {
+// Move an issue to a workflow state. Shared by the reconcile pass (-> Done) and
+// the create pass (reopen a stale closed ticket -> Todo when its alert is open).
+async function setIssueState(apiKey, issueId, stateId) {
   const data = await linearRequest(
     apiKey,
-    `mutation CloseIssue($id: String!, $stateId: String!) {
+    `mutation SetIssueState($id: String!, $stateId: String!) {
       issueUpdate(id: $id, input: { stateId: $stateId }) {
         success
         issue { identifier url }
@@ -242,22 +244,42 @@ async function main() {
   console.log(`Found ${openAlerts.length} open and ${resolvedAlerts.length} resolved alert(s).`);
 
   let created = 0;
+  let reopened = 0;
   let skipped = 0;
   let closed = 0;
   let failed = 0;
 
   // Create pass: open alerts -> new Linear issues (idempotent by title prefix).
+  // Every alert here is `state === "open"`, so a matching ticket that's already
+  // closed (completed/canceled) means the vulnerability is still live without an
+  // active ticket — reopen it to Todo rather than skipping. Active matches are
+  // left untouched so re-runs don't churn.
   for (const alert of openAlerts) {
     const issue = buildIssue(alert);
     try {
-      if (await findIssue(linearKey, issue.titlePrefix)) {
+      const existing = await findIssue(linearKey, issue.titlePrefix);
+      const isClosed =
+        existing && (existing.state.type === "completed" || existing.state.type === "canceled");
+
+      if (existing && !isClosed) {
         skipped += 1;
         console.log(`skip   ${issue.titlePrefix} (already in Linear)`);
         continue;
       }
       if (DRY_RUN) {
-        created += 1;
-        console.log(`would create ${issue.title} [priority ${issue.priority}]`);
+        if (isClosed) {
+          reopened += 1;
+          console.log(`would reopen ${issue.titlePrefix} (alert open; was "${existing.state.name}")`);
+        } else {
+          created += 1;
+          console.log(`would create ${issue.title} [priority ${issue.priority}]`);
+        }
+        continue;
+      }
+      if (isClosed) {
+        const result = await setIssueState(linearKey, existing.id, LINEAR_TODO_STATE_ID);
+        reopened += 1;
+        console.log(`reopen ${result.identifier} (alert open; was "${existing.state.name}") ${result.url}`);
         continue;
       }
       const result = await createIssue(linearKey, issue);
@@ -285,7 +307,7 @@ async function main() {
         continue;
       }
       doneStateId ??= await resolveDoneStateId(linearKey);
-      const result = await closeIssue(linearKey, existing.id, doneStateId);
+      const result = await setIssueState(linearKey, existing.id, doneStateId);
       closed += 1;
       console.log(`close  ${result.identifier} (alert ${alert.state}) ${result.url}`);
     } catch (err) {
@@ -295,7 +317,7 @@ async function main() {
   }
 
   console.log(
-    `Done. created=${created} skipped=${skipped} closed=${closed} failed=${failed}${DRY_RUN ? " (dry run)" : ""}`
+    `Done. created=${created} reopened=${reopened} skipped=${skipped} closed=${closed} failed=${failed}${DRY_RUN ? " (dry run)" : ""}`
   );
   if (failed > 0) process.exit(1);
 }
