@@ -157,6 +157,9 @@ export const createResponseWithQuotaEvaluation = async (
   workspaceId: string,
   responseInput: TResponseInput
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
+  // Canonicalize once so quota evaluation uses the same code persisted on the response (createResponse
+  // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
+  const canonicalLanguage = normalizeResponseLanguage(responseInput.language);
   const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
     const responseResult = await createResponse(workspaceId, responseInput, tx);
     if (!responseResult.ok) {
@@ -170,7 +173,7 @@ export const createResponseWithQuotaEvaluation = async (
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
-      language: responseInput.language || "default",
+      language: canonicalLanguage || "default",
       responseFinished: response.finished,
       tx,
     });

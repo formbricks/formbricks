@@ -47,15 +47,20 @@ export function LanguageSwitch({
   })?.language.code;
 
   // Dedupe enabled languages by canonical code so the back-compat legacy aliases (e.g. "hi" sent
-  // alongside "hi-IN") don't show as duplicate options. Canonical entries come first, so they win.
-  const seenCanonicalCodes = new Set<string>();
-  const visibleLanguages = surveyLanguages.filter((surveyLanguage) => {
-    if (!surveyLanguage.enabled) return false;
-    const canonical = normalizeLanguageCode(surveyLanguage.language.code) ?? surveyLanguage.language.code;
-    if (seenCanonicalCodes.has(canonical)) return false;
-    seenCanonicalCodes.add(canonical);
-    return true;
-  });
+  // alongside "hi-IN") don't show as duplicate options. Prefer the canonical entry over a legacy alias
+  // regardless of order (an entry is canonical when its code equals its normalized form), so the
+  // dropdown always keeps the canonical code in state and label.
+  const languagesByCanonical = new Map<string, TSurveyLanguage>();
+  for (const surveyLanguage of surveyLanguages) {
+    if (!surveyLanguage.enabled) continue;
+    const code = surveyLanguage.language.code;
+    const canonical = normalizeLanguageCode(code) ?? code;
+    const existing = languagesByCanonical.get(canonical);
+    if (!existing || code === canonical) {
+      languagesByCanonical.set(canonical, surveyLanguage);
+    }
+  }
+  const visibleLanguages = [...languagesByCanonical.values()];
 
   const handleI18nLanguage = (languageCode: string) => {
     const calculatedLanguage = getI18nLanguage(languageCode, surveyLanguages);
