@@ -32,9 +32,67 @@ That's it! After running the command and providing the required information, vis
 
 The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`) and the bundled Cube service. Hub and Cube share the same database as Formbricks by default and both start as part of the baseline `docker compose up`.
 
-- **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent.
+- **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent. `formbricks-migrate` uses the dedicated migration image `ghcr.io/formbricks/formbricks-migrate` (see [Database migrations](#database-migrations) below); the `formbricks` web service runs with `SKIP_STARTUP_MIGRATION=true` so application startup is decoupled from schema migration.
 - **Production** (`docker/docker-compose.yml`): Set non-empty `HUB_API_KEY` and `CUBEJS_API_SECRET` in `.env` before starting the stack. `docker compose config >/dev/null` validates compose syntax, but missing secrets are reported by the service that needs them at startup. `HUB_API_URL` defaults to `http://hub:8080` and `CUBEJS_API_URL` defaults to `http://cube:4000` so the Formbricks app reaches Hub and Cube inside the compose network. Cube JWT issuer/audience default to `formbricks-web` and `formbricks-cube`, and the bundled Cube service exposes only `meta,data` API scopes. Override `HUB_DATABASE_URL` and `CUBEJS_DB_*` only if Hub or Cube should use a separate database. The Hub image tracks `:latest` by default so `formbricks.sh update` advances Hub in lockstep with the app. `hub` and `hub-migrate` always resolve to the same image. To pin to an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a tag (e.g. `:0.3.0`) or a digest (e.g. `@sha256:14db7b3d...`).
 - **Development** (`docker-compose.dev.yml`): Hub uses a dedicated local `hub` database and `HUB_API_KEY` defaults to `dev-api-key`. The dev stack starts `hub` plus `hub-worker`; set `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, and any provider credentials in the repo root `.env` to enable Hub embeddings locally. See the [Hub embeddings environment reference](https://hub.formbricks.com/reference/environment-variables/#embeddings) for provider-specific values. Cube starts with the dev stack, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`. The Hub image is pinned to a semver tag (`hub`, `hub-worker`, and `hub-migrate` share the same value); override `HUB_IMAGE_TAG` in the repo root `.env` to test a specific Hub release.
+
+## Database migrations
+
+Formbricks ships database migrations in a **dedicated migration image**,
+`ghcr.io/formbricks/formbricks-migrate`, separate from the web runtime image
+(`ghcr.io/formbricks/formbricks`). The migration image bundles the Prisma CLI and
+its config-loader dependencies; the web image is kept slim and runs with
+`SKIP_STARTUP_MIGRATION=true`. Run migrations as a one-shot step **before** the web
+app serves traffic. The migration image and the web image must always be deployed
+at the **same version tag**.
+
+### Docker Compose (default)
+
+No action needed — the bundled `docker-compose.yml` already wires this up: the
+`formbricks-migrate` one-shot service runs `prisma migrate deploy` plus the
+data-migration runner and must complete before `formbricks` starts. Migrations are
+idempotent, so a repeated `docker compose up` reports no pending work.
+
+### Single container (`docker run`)
+
+If you run the web image directly (without Compose), application startup no longer
+runs migrations. Run the migration image once against the same database first:
+
+```bash
+# 1. Apply migrations (one-shot; exits 0 on success, non-zero on failure)
+docker run --rm \
+  -e DATABASE_URL="postgresql://user:pass@host:5432/formbricks" \
+  ghcr.io/formbricks/formbricks-migrate:<tag>
+
+# 2. Start the web app with startup migrations disabled
+docker run -d -p 3000:3000 \
+  -e DATABASE_URL="postgresql://user:pass@host:5432/formbricks" \
+  -e SKIP_STARTUP_MIGRATION=true \
+  ghcr.io/formbricks/formbricks:<tag>
+```
+
+Use `MIGRATE_DATABASE_URL` instead of `DATABASE_URL` on the migration container if
+migrations must run under a higher-privilege database role than the application.
+
+> **Upgrading from a pre-ENG-1153 release?** Earlier web images ran migrations at
+> startup. After upgrading, the web image will not migrate on its own — adopt one of
+> the flows above so pending migrations are applied on each deploy.
+
+### Rollback guidance
+
+Schema migrations are **forward-only** — there are no down migrations. To recover
+from a bad deploy:
+
+1. **Migration step failed:** the deployment stops before the new web version serves
+   traffic (the one-shot exits non-zero; Compose `service_completed_successfully` and
+   the Helm Job both gate the app on it). Fix the cause and re-run; the runner records
+   per-migration state, skips already-applied migrations, and retries failed ones.
+2. **App regressed after a successful migration:** roll the **web image** back to the
+   previous tag. Because migrations are additive, the older app version normally keeps
+   working against the newer schema. Do **not** roll the database forward and the app
+   back across a destructive schema change without a database restore.
+3. **Always take a database backup/snapshot before upgrading** so you can restore if a
+   migration is incompatible with the previous application version.
 
 ## Smart Functionality AI with Qwen/vLLM
 
