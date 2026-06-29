@@ -53,8 +53,6 @@ export default function setup(): void {
 
   const adminPsql = (sql: string) =>
     sh(`docker exec ${CONTAINER} psql -U postgres -q -c ${JSON.stringify(sql)}`);
-  const testPsql = (sql: string) =>
-    sh(`docker exec ${CONTAINER} psql -U postgres -q -d ${TEST_DB} -c ${JSON.stringify(sql)}`);
 
   adminPsql(`DROP DATABASE IF EXISTS ${TEST_DB} WITH (FORCE);`);
   adminPsql(`CREATE DATABASE ${TEST_DB};`);
@@ -67,18 +65,27 @@ export default function setup(): void {
         `psql -U postgres -q -v ON_ERROR_STOP=1 -d ${TEST_DB} -f /tmp/ba_test_schema.sql`
     )}`
   );
-  // Single source of truth for the Better Auth schema shape, shared with the CI workflow (which runs
-  // it via `psql -f`) so local and CI provision the same database — see ba-test-schema-shape.sql.
+  // Single source of truth for the Better Auth schema shape, shared with the CI workflow — see
+  // ba-test-schema-shape.sql. Apply it exactly the way CI does (`psql -v ON_ERROR_STOP=1 -f`) by
+  // piping the file to psql's stdin: with `-f`, a failed ALTER exits non-zero so execSync throws and
+  // the harness aborts loudly. (Passing the multi-statement SQL via `psql -c "<...>"` instead would
+  // run the good statements but swallow a mid-file failure — exit 0 — leaving a half-shaped DB that
+  // silently passes, the same trap the dump/restore step above guards against.)
   const schemaShapeSql = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), "ba-test-schema-shape.sql"),
     "utf8"
   );
-  testPsql(schemaShapeSql);
+  execSync(`docker exec -i ${CONTAINER} psql -U postgres -q -v ON_ERROR_STOP=1 -d ${TEST_DB} -f -`, {
+    stdio: "pipe",
+    input: schemaShapeSql,
+  });
 
   // Isolate Better Auth's Redis secondary storage (db 15) from the dev cache (db 0).
   try {
     sh(`docker exec ${REDIS_CONTAINER} redis-cli -n ${REDIS_TEST_DB} flushdb`);
-  } catch {
-    // redis-cli may be unavailable under that container name; the DB-backed assertions don't need it.
+  } catch (error) {
+    // redis-cli may be unavailable under that container name; the DB-backed assertions don't need it,
+    // so this is non-fatal — but surface it so a genuinely failing flush isn't silently swallowed.
+    console.warn(`[integration] skipped Redis flush (db ${REDIS_TEST_DB}): ${String(error)}`);
   }
 }
