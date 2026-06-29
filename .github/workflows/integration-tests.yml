@@ -7,16 +7,23 @@ name: Integration Tests
 
 on:
   pull_request:
+    # apps/web holds the auth code under test; packages/** because the harness transitively imports
+    # several workspace packages (@formbricks/logger, cache, types, email, database) whose changes
+    # can affect the BA boundary.
     paths:
       - "apps/web/**"
-      - "packages/database/**"
-      - "packages/cache/**"
+      - "packages/**"
       - ".github/workflows/integration-tests.yml"
   workflow_dispatch:
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+# Cancel superseded runs on the same PR/ref (matches pr.yml).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
