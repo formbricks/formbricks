@@ -4,12 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import {
-  IS_FORMBRICKS_CLOUD,
-  IS_TURNSTILE_CONFIGURED,
-  TURNSTILE_SECRET_KEY,
-  WEBAPP_URL,
-} from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
@@ -76,21 +71,19 @@ async function signUpUserSafely(
   email: string,
   name: string,
   password: string,
-  userLocale: z.infer<typeof ZUserLocale> | undefined,
-  inviteToken: string | undefined
+  userLocale: z.infer<typeof ZUserLocale> | undefined
 ): Promise<{ user: TCreatedUser | undefined; userAlreadyExisted: boolean }> {
   const normalizedEmail = email.toLowerCase();
 
-  // When signing up from an invite, bake the invite-accept deep link into Better Auth's verification
-  // email so the FIRST verification link lands on /invite (parity with the legacy handlePostUserCreation
-  // flow). Omitted otherwise, in which case Better Auth defaults the callbackURL to "/".
-  const callbackURL = inviteToken ? `${WEBAPP_URL}/invite?token=${inviteToken}` : undefined;
-
   try {
-    // Better Auth-native signup: creates the User + a bcrypt credential Account (via the password
-    // hook in auth.ts) and, when verification is enabled, sends Better Auth's verification email
-    // (sendOnSignUp). Replaces the manual hash + createUser + the legacy verification-token email.
-    await auth.api.signUpEmail({ body: { email: normalizedEmail, password, name, callbackURL } });
+    // Better Auth-native signup: creates the User + a bcrypt credential Account (via the password hook
+    // in auth.ts) and, when verification is enabled, sends Better Auth's verification email (sendOnSignUp;
+    // callbackURL defaults to "/"). We deliberately do NOT pass a /invite callbackURL for invite signups:
+    // the invite is accepted and deleted in handlePostUserCreation right after this, so by the time the
+    // verification link is clicked /invite would render "Invite Not Found" (ENG-1527) — the verified,
+    // already-provisioned user lands on the app home instead. Replaces the manual hash + createUser + the
+    // legacy verification-token email.
+    await auth.api.signUpEmail({ body: { email: normalizedEmail, password, name } });
   } catch (error) {
     // Enumeration-safe: a duplicate email resolves to "already existed", not a surfaced error.
     const existing = await getUserByEmail(normalizedEmail);
@@ -242,6 +235,9 @@ async function handlePostUserCreation(
   } else {
     await handleOrganizationCreation(ctx, user);
   }
+  // Better Auth sends the verification email itself during signUpEmail (sendOnSignUp) — no manual
+  // send here. The legacy EMAIL_VERIFICATION_DISABLED branch (ENG-1527) is folded into auth.ts'
+  // requireEmailVerification config and the callbackURL chosen in signUpUserSafely.
 }
 
 export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
@@ -253,8 +249,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       parsedInput.email,
       parsedInput.name,
       parsedInput.password,
-      parsedInput.userLocale,
-      parsedInput.inviteToken
+      parsedInput.userLocale
     );
 
     if (!userAlreadyExisted && user) {

@@ -32,14 +32,14 @@ export const TrialBannerNew = ({
   const planLabel = planName.charAt(0).toUpperCase() + planName.slice(1);
 
   return (
-    <div className="m-2 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm">
+    <div className="m-2 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-xs">
       <div className="mb-1 flex items-center gap-2">
         <span className="font-semibold text-slate-800">
           {trialDaysRemaining > 0
             ? t("common.trial_days_remaining", { count: trialDaysRemaining })
             : t("common.trial_expired")}
         </span>
-        <span className="whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-slate-600">
           {t("common.trial_plan_badge", { plan: planLabel })}
         </span>
       </div>

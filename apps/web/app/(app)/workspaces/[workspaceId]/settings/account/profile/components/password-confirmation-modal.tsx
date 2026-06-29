@@ -98,7 +98,7 @@ export const PasswordConfirmationModal = ({
                             aria-label="password"
                             aria-required="true"
                             required
-                            className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                             value={field.value}
                             onChange={(password) => field.onChange(password)}
                           />

@@ -8,6 +8,7 @@ import {
   isPresetSourceType,
   mapRecordToValues,
   parseNumberValue,
+  resolveFeedbackDisplayText,
   toISOOrUndefined,
   toLocalDateTimeInput,
 } from "./utils";
@@ -165,5 +166,75 @@ describe("formatSourceType", () => {
 
   test("returns raw value for unknown types", () => {
     expect(formatSourceType("custom", t)).toBe("custom");
+  });
+});
+
+describe("resolveFeedbackDisplayText", () => {
+  test("prefers the translation when present and different from the original", () => {
+    const result = resolveFeedbackDisplayText(
+      makeRecord({
+        value_text: "Großartig",
+        value_text_translated: "Great",
+        translation_lang_key: "en",
+      })
+    );
+    expect(result).toEqual({
+      text: "Great",
+      original: "Großartig",
+      isTranslated: true,
+      langKey: "en",
+    });
+  });
+
+  test("falls back to the original when no translation exists", () => {
+    const result = resolveFeedbackDisplayText(makeRecord({ value_text: "Hello" }));
+    expect(result).toEqual({
+      text: "Hello",
+      original: "Hello",
+      isTranslated: false,
+      langKey: null,
+    });
+  });
+
+  test.each([["   "], [""]])(
+    "ignores empty/whitespace-only translations (%j) and shows the original",
+    (translated) => {
+      const result = resolveFeedbackDisplayText(
+        makeRecord({ value_text: "Original", value_text_translated: translated, translation_lang_key: "en" })
+      );
+      expect(result.text).toBe("Original");
+      expect(result.isTranslated).toBe(false);
+      expect(result.langKey).toBeNull();
+    }
+  );
+
+  test("does not flag a translation identical to the original", () => {
+    const result = resolveFeedbackDisplayText(
+      makeRecord({ value_text: "Same", value_text_translated: "Same", translation_lang_key: "en" })
+    );
+    expect(result.text).toBe("Same");
+    expect(result.isTranslated).toBe(false);
+    expect(result.langKey).toBeNull();
+  });
+
+  test("drops the language key when there is no usable translation", () => {
+    const result = resolveFeedbackDisplayText(
+      makeRecord({ value_text: "Hello", translation_lang_key: "en" })
+    );
+    expect(result.isTranslated).toBe(false);
+    expect(result.langKey).toBeNull();
+  });
+
+  test("returns null text when the record carries no text value at all", () => {
+    const result = resolveFeedbackDisplayText(makeRecord({ value_text: undefined }));
+    expect(result.text).toBeNull();
+    expect(result.original).toBeNull();
+    expect(result.isTranslated).toBe(false);
+  });
+
+  test("preserves an empty-string original (does not collapse to null)", () => {
+    const result = resolveFeedbackDisplayText(makeRecord({ value_text: "" }));
+    expect(result.text).toBe("");
+    expect(result.original).toBe("");
   });
 });

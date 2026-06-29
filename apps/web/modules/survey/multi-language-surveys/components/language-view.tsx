@@ -370,7 +370,7 @@ export const LanguageView = ({
                     <td className="px-4 py-3">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button type="button" className="rounded p-1 hover:bg-slate-100">
+                          <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
                             <EllipsisVerticalIcon className="size-4 text-slate-500" />
                           </button>
                         </DropdownMenuTrigger>
@@ -441,7 +441,7 @@ export const LanguageView = ({
                             {inSurvey && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button type="button" className="rounded p-1 hover:bg-slate-100">
+                                  <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
                                     <EllipsisVerticalIcon className="size-4 text-slate-500" />
                                   </button>
                                 </DropdownMenuTrigger>

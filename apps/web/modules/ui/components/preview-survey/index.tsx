@@ -244,10 +244,10 @@ export const PreviewSurvey = ({
           )}>
           {previewMode === "mobile" && (
             <>
-              <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
+              <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-400">
                 {t("common.preview")}
               </p>
-              <div className="absolute right-0 top-0 m-2 flex items-center gap-1">
+              <div className="absolute top-0 right-0 m-2 flex items-center gap-1">
                 {showLanguageSelector && (
                   <LanguageSelector
                     languages={enabledLanguages}
@@ -298,7 +298,7 @@ export const PreviewSurvey = ({
                       isCardless ? "min-h-0 overflow-hidden" : "justify-center"
                     )}>
                     {!styling.isLogoHidden && !isCardless && (
-                      <div className="absolute left-5 top-5">
+                      <div className="absolute top-5 left-5">
                         <ClientLogo
                           workspaceLogo={workspace.logo}
                           workspaceId={workspace.id}
@@ -440,7 +440,7 @@ export const PreviewSurvey = ({
                         : "h-full items-center"
                     )}>
                     {!styling.isLogoHidden && !isCardless && (
-                      <div className="absolute left-5 top-5">
+                      <div className="absolute top-5 left-5">
                         <ClientLogo
                           workspaceLogo={workspace.logo}
                           workspaceId={workspace.id}

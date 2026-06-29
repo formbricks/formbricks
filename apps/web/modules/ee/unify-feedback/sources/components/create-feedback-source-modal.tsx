@@ -11,6 +11,7 @@ import {
   TFeedbackSourceType,
   UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
 } from "@formbricks/types/feedback-source";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import {
   getResponseCountAction,
   importCsvDataAction,
@@ -137,6 +138,7 @@ export const CreateFeedbackSourceModal = ({
   directories,
 }: CreateFeedbackSourceModalProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
 
   const defaultFeedbackSourceName = useMemo<Record<TFeedbackSourceType, string>>(
     () => ({
@@ -515,7 +517,9 @@ export const CreateFeedbackSourceModal = ({
                     )}
                   />
 
-                  {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
+                  {directories.length === 0 && (
+                    <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} t={t} />
+                  )}
 
                   <FormField
                     control={formbricksForm.control}
@@ -602,7 +606,9 @@ export const CreateFeedbackSourceModal = ({
                   <p className="text-xs text-slate-500">{t("workspace.unify.source_name_hint")}</p>
                 </div>
 
-                {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
+                {directories.length === 0 && (
+                  <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} t={t} />
+                )}
 
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
                   <CsvFeedbackSourceUI
@@ -694,20 +700,22 @@ export const CreateFeedbackSourceModal = ({
 };
 
 interface NoFeedbackDirectoryAlertProps {
-  workspaceId: string;
+  organizationId?: string;
   t: (key: string) => string;
 }
 
-const NoFeedbackDirectoryAlert = ({ workspaceId, t }: NoFeedbackDirectoryAlertProps) => {
+const NoFeedbackDirectoryAlert = ({ organizationId, t }: NoFeedbackDirectoryAlertProps) => {
   return (
     <Alert variant="error" size="small">
       <div>
         <p>{t("workspace.unify.no_feedback_directory_available")}</p>
-        <a
-          className="mt-1 inline-block font-medium underline"
-          href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
-          {t("workspace.unify.go_to_feedback_directories")}
-        </a>
+        {organizationId && (
+          <a
+            className="mt-1 inline-block font-medium underline"
+            href={`/organizations/${organizationId}/settings/feedback-directories`}>
+            {t("workspace.unify.go_to_feedback_directories")}
+          </a>
+        )}
       </div>
     </Alert>
   );

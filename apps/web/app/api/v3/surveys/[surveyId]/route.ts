@@ -73,6 +73,9 @@ export const DELETE = withV3ApiWrapper({
   targetType: "survey",
   schemas: {
     params: surveyParamsSchema,
+    // Reject unknown query params (e.g. a stray `?workspaceId=`) consistently with GET/PATCH on this
+    // resource — single-survey endpoints locate the survey by its globally-unique id, not workspaceId.
+    query: ZV3EmptyQuery,
   },
   handler: async ({ parsedInput, authentication, requestId, instance, auditLog }) => {
     return await deleteV3Survey({

@@ -1,5 +1,6 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
 import { getV3SurveyDefaultLanguage, getV3SurveyLanguages } from "./language";
 import { type TV3SurveyLanguageRequest, deriveV3SurveyLanguageRequests } from "./languages";
 import {
@@ -88,6 +89,12 @@ function buildDocumentFromSurvey(
   }
 
   const defaultLanguage = getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE);
+  // App surveys carry distribution/targeting; include them so the patch replacement-merge preserves
+  // unspecified runtime settings (omitting the whole object on a patch keeps the stored values).
+  const appFields =
+    survey.type === "app"
+      ? { distribution: surveyToV3Distribution(survey), targeting: surveyToV3Targeting(survey) }
+      : {};
   const documentResult = createZV3SurveyDocumentBaseSchema({
     allowInternalDefaultTranslationKey: true,
     allowedLanguageCodes,
@@ -103,6 +110,7 @@ function buildDocumentFromSurvey(
     endings: survey.endings,
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    ...appFields,
   });
 
   if (!documentResult.success) {
@@ -191,9 +199,11 @@ export function prepareV3SurveyPatchInput(
     return currentDocument;
   }
 
-  const parsedPatch = createZV3PatchSurveyBodySchema(currentDocument.document.defaultLanguage, {
-    allowedLanguageCodes,
-  }).safeParse(input);
+  const parsedPatch = createZV3PatchSurveyBodySchema(
+    currentDocument.document.defaultLanguage,
+    { allowedLanguageCodes },
+    survey.type
+  ).safeParse(input);
 
   if (!parsedPatch.success) {
     return invalidPreparation(formatV3ZodInvalidParams(parsedPatch.error, "data"));

@@ -32,6 +32,8 @@ properties:
       - forbidden
       - internal_server_error
       - not_authenticated
+      - not_found
+      - payload_too_large
       - too_many_requests
       - unprocessable_content
   requestId:

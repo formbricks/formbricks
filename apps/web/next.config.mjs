@@ -163,6 +163,30 @@ const nextConfig = {
         destination: "/workspaces/:projectId",
         permanent: true,
       },
+      // Redirect old workspace-scoped account settings to the account-scoped routes.
+      {
+        source: "/workspaces/:workspaceId/settings/account",
+        destination: "/account/settings/profile",
+        permanent: true,
+      },
+      {
+        source: "/workspaces/:workspaceId/settings/account/:path*",
+        destination: "/account/settings/:path*",
+        permanent: true,
+      },
+      // Old workspace-scoped org settings need workspaceId -> organizationId resolution, so they go
+      // through a server route shim (not a static redirect). Non-permanent: the target is resolved
+      // at request time.
+      {
+        source: "/workspaces/:workspaceId/settings/organization",
+        destination: "/legacy-organization-settings/:workspaceId",
+        permanent: false,
+      },
+      {
+        source: "/workspaces/:workspaceId/settings/organization/:path*",
+        destination: "/legacy-organization-settings/:workspaceId/:path*",
+        permanent: false,
+      },
     ];
   },
   async headers() {
