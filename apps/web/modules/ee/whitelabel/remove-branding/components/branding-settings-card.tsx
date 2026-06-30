@@ -34,36 +34,43 @@ export const BrandingSettingsCard = async ({
     },
   ];
 
+  let brandingContent: React.ReactNode;
+  if (canRemoveBranding) {
+    brandingContent = (
+      <div className="space-y-4">
+        <EditBranding
+          type="linkSurvey"
+          isEnabled={workspace.linkSurveyBranding}
+          workspaceId={workspace.id}
+          isReadOnly={isReadOnly}
+        />
+        <EditBranding
+          type="appSurvey"
+          isEnabled={workspace.inAppSurveyBranding}
+          workspaceId={workspace.id}
+          isReadOnly={isReadOnly}
+        />
+      </div>
+    );
+  } else if (showLiteLicenseTip) {
+    brandingContent = <RemoveBrandingLicenseTip licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL} />;
+  } else {
+    brandingContent = (
+      <UpgradePrompt
+        title={t("workspace.look.remove_branding_with_a_higher_plan")}
+        description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
+        buttons={buttons}
+        feature="remove_branding"
+      />
+    );
+  }
+
   return (
     <SettingsCard
       title={t("workspace.look.formbricks_branding")}
       description={t("workspace.look.formbricks_branding_settings_description")}
       noPadding={showLiteLicenseTip}>
-      {canRemoveBranding ? (
-        <div className="space-y-4">
-          <EditBranding
-            type="linkSurvey"
-            isEnabled={workspace.linkSurveyBranding}
-            workspaceId={workspace.id}
-            isReadOnly={isReadOnly}
-          />
-          <EditBranding
-            type="appSurvey"
-            isEnabled={workspace.inAppSurveyBranding}
-            workspaceId={workspace.id}
-            isReadOnly={isReadOnly}
-          />
-        </div>
-      ) : showLiteLicenseTip ? (
-        <RemoveBrandingLicenseTip licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL} />
-      ) : (
-        <UpgradePrompt
-          title={t("workspace.look.remove_branding_with_a_higher_plan")}
-          description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
-          buttons={buttons}
-          feature="remove_branding"
-        />
-      )}
+      {brandingContent}
       {isReadOnly && (
         <Alert variant="warning" className="mt-4">
           <AlertDescription>
