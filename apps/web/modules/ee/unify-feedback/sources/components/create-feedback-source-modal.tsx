@@ -344,23 +344,24 @@ export const CreateFeedbackSourceModal = ({
     if (!csvFile) return "skipped";
 
     setIsImporting(true);
-    const importResult = await importCsvFile({
-      feedbackSourceId,
-      workspaceId,
-      file: csvFile,
-    });
-    setIsImporting(false);
+    try {
+      const importResult = await importCsvFile({
+        feedbackSourceId,
+        workspaceId,
+        file: csvFile,
+      });
 
-    if (importResult?.data) {
-      showFeedbackRecordsSuccessToast(
-        t("workspace.unify.csv_import_complete", {
-          successes: importResult.data.successes,
-          failures: importResult.data.failures,
-          skipped: importResult.data.skipped,
-        })
-      );
-      return "success";
-    } else {
+      if (importResult?.data) {
+        showFeedbackRecordsSuccessToast(
+          t("workspace.unify.csv_import_complete", {
+            successes: importResult.data.successes,
+            failures: importResult.data.failures,
+            skipped: importResult.data.skipped,
+          })
+        );
+        return "success";
+      }
+
       toast.error(
         getTranslatedFeedbackSourceError(importResult.error.error, t, {
           row: importResult.error.row,
@@ -368,6 +369,11 @@ export const CreateFeedbackSourceModal = ({
         })
       );
       return "error";
+    } catch {
+      toast.error(t("common.something_went_wrong"));
+      return "error";
+    } finally {
+      setIsImporting(false);
     }
   };
 
