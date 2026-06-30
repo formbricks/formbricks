@@ -19,6 +19,40 @@ interface WorkspaceLayoutProps {
   children?: React.ReactNode;
 }
 
+type TCookieStore = Awaited<ReturnType<typeof cookies>>;
+
+// Response-limit warning for Hobby (free) plan: 200 = 80% of the 250/mo cap, 250 = limit reached.
+const getResponseWarningThreshold = (
+  responseCount: number,
+  cookieStore: TCookieStore
+): "200" | "250" | null => {
+  if (responseCount >= 250 && !cookieStore.get("trial_warning_shown_250")) {
+    return "250";
+  }
+  if (
+    responseCount >= 200 &&
+    !cookieStore.get("trial_warning_shown_200") &&
+    !cookieStore.get("trial_warning_shown_250")
+  ) {
+    return "200";
+  }
+  return null;
+};
+
+// Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
+const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCookieStore): number | null => {
+  const MS_PER_DAY = 86_400_000;
+  const trialEndTime = new Date(trialEnd).getTime();
+  if (!Number.isFinite(trialEndTime)) {
+    return null;
+  }
+  const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
+  if (daysRemaining >= 1 && daysRemaining <= 3 && !cookieStore.get(`trial_ending_shown_${daysRemaining}`)) {
+    return daysRemaining;
+  }
+  return null;
+};
+
 export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutProps) => {
   const t = await getTranslate();
   const publicDomain = getPublicDomain();
@@ -65,38 +99,17 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  // Response-limit warning for Hobby (free) plan: 200 = 80% of the 250/mo cap, 250 = limit reached.
-  let responseWarningThreshold: "200" | "250" | null = null;
-  if (isHobby && responseWarningVariant === "test" && cookieStore) {
-    if (responseCount >= 250 && !cookieStore.get("trial_warning_shown_250")) {
-      responseWarningThreshold = "250";
-    } else if (
-      responseCount >= 200 &&
-      !cookieStore.get("trial_warning_shown_200") &&
-      !cookieStore.get("trial_warning_shown_250")
-    ) {
-      responseWarningThreshold = "200";
-    }
-  }
-
-  // Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
   // (Hobby response warning and trial-ending target mutually exclusive audiences, so no stacking.)
-  const MS_PER_DAY = 86_400_000;
+  const responseWarningThreshold =
+    isHobby && responseWarningVariant === "test" && cookieStore
+      ? getResponseWarningThreshold(responseCount, cookieStore)
+      : null;
+
   const trialEnd = organization.billing?.stripe?.trialEnd;
-  let trialEndingDaysRemaining: number | null = null;
-  if (isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd) {
-    const trialEndTime = new Date(trialEnd).getTime();
-    if (Number.isFinite(trialEndTime)) {
-      const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
-      if (
-        daysRemaining >= 1 &&
-        daysRemaining <= 3 &&
-        !cookieStore.get(`trial_ending_shown_${daysRemaining}`)
-      ) {
-        trialEndingDaysRemaining = daysRemaining;
-      }
-    }
-  }
+  const trialEndingDaysRemaining =
+    isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd
+      ? getTrialEndingDaysRemaining(trialEnd, cookieStore)
+      : null;
 
   const billingHref = `/workspaces/${workspace.id}/settings/organization/billing`;
 
