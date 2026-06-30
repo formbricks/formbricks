@@ -112,6 +112,34 @@ export const ResponseSampleModal = ({
     }
   };
 
+  const renderBody = () => {
+    if (isLoading) {
+      return (
+        <div className="py-12">
+          <LoadingSpinner />
+        </div>
+      );
+    }
+
+    if (errorMessage) {
+      return <div className="py-12 text-center text-sm text-slate-600">{errorMessage}</div>;
+    }
+
+    if (response) {
+      return (
+        <SingleResponseCard
+          survey={survey}
+          response={response}
+          environmentTags={tags}
+          isReadOnly={isReadOnly}
+          locale={locale}
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <Dialog open={!!responseId} onOpenChange={handleOpenChange}>
       <DialogContent width="wide">
@@ -121,23 +149,7 @@ export const ResponseSampleModal = ({
         <VisuallyHidden asChild>
           <DialogDescription>{t("common.response")}</DialogDescription>
         </VisuallyHidden>
-        <DialogBody>
-          {isLoading ? (
-            <div className="py-12">
-              <LoadingSpinner />
-            </div>
-          ) : errorMessage ? (
-            <div className="py-12 text-center text-sm text-slate-600">{errorMessage}</div>
-          ) : response ? (
-            <SingleResponseCard
-              survey={survey}
-              response={response}
-              environmentTags={tags}
-              isReadOnly={isReadOnly}
-              locale={locale}
-            />
-          ) : null}
-        </DialogBody>
+        <DialogBody>{renderBody()}</DialogBody>
       </DialogContent>
     </Dialog>
   );
