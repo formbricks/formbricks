@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
@@ -116,6 +116,16 @@ describe("workspace lib", () => {
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
       expectNoFrdSideEffects();
+    });
+
+    test("seeds English as the default survey language when creating a workspace", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p-language" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+
+      await createWorkspace("org1", { name: "Workspace language" });
+
+      const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
+      expect((createArgs.data as any).languages.create).toEqual([{ code: "en-US", alias: null }]);
     });
 
     test("seeds the default contact attribute keys when creating a workspace", async () => {

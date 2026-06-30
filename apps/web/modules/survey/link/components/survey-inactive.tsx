@@ -1,7 +1,7 @@
-import { Workspace } from "@prisma/client";
 import { CalendarClockIcon, CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TSurveyClosedMessage } from "@formbricks/types/surveys/types";
 import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
@@ -58,7 +58,7 @@ export const SurveyInactive = async ({
     !(status === "completed" && surveyClosedMessage);
 
   return (
-    <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
+    <div className="flex h-full flex-col items-center justify-between bg-linear-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
       <div className="my-auto flex flex-col items-center gap-y-3 text-slate-300">
         {icons[status]}
         <h1 className="text-4xl font-bold text-slate-800">{title}</h1>

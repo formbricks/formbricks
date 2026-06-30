@@ -1,6 +1,6 @@
-import { type ApiKey, ApiKeyPermission, type ApiKeyWorkspace } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "../../types/api-key";
+import { type ApiKey, ApiKeyPermission, type ApiKeyWorkspace } from "../src/prisma";
 
 export const ZApiKeyPermission = z.enum(ApiKeyPermission);
 

@@ -14,7 +14,6 @@ interface TrialBannerNewProps {
   responseLimit: number | null;
   baseResponseLimit: number;
   billingHref: string;
-  hasPaymentMethod?: boolean;
 }
 
 export const TrialBannerNew = ({
@@ -24,7 +23,6 @@ export const TrialBannerNew = ({
   responseLimit,
   baseResponseLimit,
   billingHref,
-  hasPaymentMethod = false,
 }: TrialBannerNewProps) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -34,14 +32,14 @@ export const TrialBannerNew = ({
   const planLabel = planName.charAt(0).toUpperCase() + planName.slice(1);
 
   return (
-    <div className="m-2 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm">
+    <div className="m-2 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-xs">
       <div className="mb-1 flex items-center gap-2">
         <span className="font-semibold text-slate-800">
           {trialDaysRemaining > 0
             ? t("common.trial_days_remaining", { count: trialDaysRemaining })
             : t("common.trial_expired")}
         </span>
-        <span className="whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-slate-600">
           {t("common.trial_plan_badge", { plan: planLabel })}
         </span>
       </div>
@@ -59,15 +57,13 @@ export const TrialBannerNew = ({
         />
       </div>
 
-      {!hasPaymentMethod && (
-        <Button
-          variant="secondary"
-          size="sm"
-          className="w-full"
-          onClick={() => posthog.capture("main_nav_add_payment_clicked")}>
-          <Link href={billingHref}>{t("workspace.settings.billing.add_payment_method")}</Link>
-        </Button>
-      )}
+      <Button
+        variant="secondary"
+        size="sm"
+        className="w-full"
+        onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}>
+        <Link href={billingHref}>{t("workspace.settings.billing.go_to_billing")}</Link>
+      </Button>
     </div>
   );
 };

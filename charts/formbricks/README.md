@@ -69,6 +69,8 @@ The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is
 When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
 If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
 
+When deployed with Argo CD, chart-managed Secrets and ExternalSecrets render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist before migration jobs start.
+
 Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
 
 ```yaml
@@ -94,6 +96,123 @@ The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. 
 When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
 
 Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
+
+## Web AI with self-hosted Qwen/vLLM
+
+The chart can optionally deploy a Formbricks-provided Qwen runtime through the `vllm-stack` dependency. It is disabled by default so existing installs keep using their current AI provider settings.
+
+To deploy the bundled Qwen/vLLM runtime and automatically point the Formbricks app at it:
+
+```yaml
+llm:
+  enabled: true
+```
+
+This renders the vLLM router and Qwen serving engine, then injects these app env vars unless you override them in `deployment.env`:
+
+```yaml
+AI_PROVIDER: openai-compatible
+AI_MODEL: qwen3-14b-awq
+AI_OPENAI_COMPATIBLE_BASE_URL: http://<release-name>-router-service:8000/v1
+AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
+AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
+```
+
+Set `llm.autoConfigureApp=false` to deploy the bundled runtime without injecting Formbricks app AI env vars.
+
+If you manage your own LLM runtime, keep `llm.enabled=false` and point the web app at your OpenAI-compatible `/v1` endpoint through `deployment.env`.
+
+Only set these variables when you use `AI_PROVIDER=openai-compatible`; Google Vertex, AWS Bedrock, and Azure continue to use their own provider-specific variables.
+
+```yaml
+deployment:
+  env:
+    AI_PROVIDER: openai-compatible
+    AI_MODEL: qwen3-14b-awq
+    AI_OPENAI_COMPATIBLE_BASE_URL: http://vllm:8000/v1
+    AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
+    AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
+    AI_OPENAI_COMPATIBLE_API_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: formbricks-ai-secrets
+          key: AI_OPENAI_COMPATIBLE_API_KEY
+```
+
+Optional JSON fields such as `AI_OPENAI_COMPATIBLE_HEADERS_JSON` and `AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON` can use the same `valueFrom.secretKeyRef` pattern. If you use External Secrets, render a dedicated Secret and reference it from `deployment.env`:
+
+```yaml
+externalSecret:
+  enabled: true
+  files:
+    ai-secrets:
+      data:
+        AI_OPENAI_COMPATIBLE_API_KEY:
+          remoteRef:
+            key: formbricks/qwen-vllm
+            property: apiKey
+```
+
+## AI Taxonomy Beta
+
+The chart can optionally deploy the standalone AI taxonomy service. It is disabled by default and remains internal
+to the cluster through a `ClusterIP` service.
+
+To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
+
+```yaml
+llm:
+  enabled: true
+
+taxonomy:
+  enabled: true
+```
+
+When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment, Service, and Secret, then injects these
+Hub API env vars unless `taxonomy.autoConfigureHub=false`:
+
+```yaml
+TAXONOMY_SERVICE_URL: http://formbricks-taxonomy:8000
+TAXONOMY_SERVICE_TOKEN: <from taxonomy auth secret>
+HUB_INTERNAL_API_TOKEN: <from taxonomy auth secret>
+```
+
+If `llm.enabled=true` and `taxonomy.llm.baseUrl` is empty, taxonomy uses the bundled vLLM router at
+`http://<release-name>-router-service:8000/v1`. To use an external OpenAI-compatible LLM instead:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    model: qwen3-14b-awq
+    baseUrl: http://my-llm-gateway:8000/v1
+    existingSecret: taxonomy-llm-secret
+```
+
+The taxonomy service exposes public `/health` only for Kubernetes probes. Use authenticated `/v1/preflight` as an
+operator check after install:
+
+```sh
+kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
+  python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
+```
+
+To use Gemini on Vertex AI instead of an OpenAI-compatible endpoint:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    provider: vertex-gemini
+    model: gemini-2.5-flash
+    vertex:
+      project: formbricks-cloud
+      location: europe-west3
+      existingSecret: taxonomy-vertex-secret
+```
+
+The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
+JSON that can call Vertex AI.
 
 ## Values
 
@@ -130,8 +249,8 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | deployment.command                                                 | list   | `[]`                                                                        |                                                           |
 | deployment.containerSecurityContext.readOnlyRootFilesystem         | bool   | `true`                                                                      |                                                           |
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                                                                      |                                                           |
-| deployment.env                                                     | object | `{}`                                                                        |                                                           |
-| deployment.envFrom                                                 | string | `nil`                                                                       |                                                           |
+| deployment.env                                                     | object | `{}`                                                                        | App container environment variables. Supports scalar values and `valueFrom` maps such as `secretKeyRef`. |
+| deployment.envFrom                                                 | string | `nil`                                                                       | Additional app container environment sources from ConfigMaps or Secrets. |
 | deployment.image.digest                                            | string | `""`                                                                        | When set, takes precedence over tag.                      |
 | deployment.image.pullPolicy                                        | string | `"IfNotPresent"`                                                            |                                                           |
 | deployment.image.repository                                        | string | `"ghcr.io/formbricks/formbricks"`                                           |                                                           |
@@ -217,10 +336,10 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | hub.embeddings.service.type                                        | string | `"ClusterIP"`                                                               |                                                           |
 | hub.env                                                            | object | `{}`                                                                        |                                                           |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
-| hub.image.digest                                                   | string | `"sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"` | When set, takes precedence over tag (immutable pin).      |
+| hub.image.digest                                                   | string | `"sha256:b22c5f8d1e2dd79224574f526a6714a3cc5372d18f4c047eaa9d18fe6ab75591"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |
-| hub.image.tag                                                      | string | `"0.3.0"`                                                                   | Fallback when digest is empty.                            |
+| hub.image.tag                                                      | string | `"0.6.0"`                                                                   | Fallback when digest is empty.                            |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |
@@ -252,6 +371,25 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | ingress.hosts[0].paths[0].pathType                                 | string | `"Prefix"`                                                                  |                                                           |
 | ingress.hosts[0].paths[0].serviceName                              | string | `"formbricks"`                                                              |                                                           |
 | ingress.ingressClassName                                           | string | `"alb"`                                                                     |                                                           |
+| llm.autoConfigureApp                                               | bool   | `true`                                                                      | Inject OpenAI-compatible app env vars when bundled Qwen/vLLM is enabled. |
+| llm.enabled                                                        | bool   | `false`                                                                     | Deploy bundled Qwen/vLLM through the optional vllm-stack dependency. |
+| llm.formbricks.baseUrl                                             | string | `""`                                                                        | Defaults to `http://<release-name>-router-service:<llm.routerSpec.servicePort>/v1`. |
+| llm.formbricks.model                                               | string | `"qwen3-14b-awq"`                                                           | Formbricks `AI_MODEL` value for the bundled runtime.      |
+| llm.formbricks.providerName                                        | string | `"vllm"`                                                                    | Formbricks OpenAI-compatible provider display name.       |
+| llm.formbricks.supportsStructuredOutputs                           | string | `"1"`                                                                       | Enables structured output usage for the bundled runtime.  |
+| llm.routerSpec.enableRouter                                        | bool   | `true`                                                                      | Enable the vLLM router service.                           |
+| llm.routerSpec.k8sServiceDiscoveryType                             | string | `"service-name"`                                                            | vLLM router Kubernetes service discovery mode.            |
+| llm.routerSpec.servicePort                                         | int    | `8000`                                                                      | vLLM router service port used by the app base URL.        |
+| llm.routerSpec.serviceType                                         | string | `"ClusterIP"`                                                               | vLLM router service type.                                 |
+| llm.servingEngineSpec.enableEngine                                 | bool   | `true`                                                                      | Enable the vLLM serving engine.                           |
+| llm.servingEngineSpec.modelSpec[0].modelURL                        | string | `"Qwen/Qwen3-14B-AWQ"`                                                      | Hugging Face model loaded by vLLM.                        |
+| llm.servingEngineSpec.modelSpec[0].name                            | string | `"qwen"`                                                                    | vLLM model spec name.                                     |
+| llm.servingEngineSpec.modelSpec[0].repository                      | string | `"vllm/vllm-openai"`                                                        | vLLM runtime image repository.                            |
+| llm.servingEngineSpec.modelSpec[0].requestGPU                      | int    | `1`                                                                         | GPU request for the Qwen serving pod.                     |
+| llm.servingEngineSpec.modelSpec[0].requestGPUType                  | string | `"nvidia.com/gpu"`                                                          | Kubernetes GPU resource key.                              |
+| llm.servingEngineSpec.modelSpec[0].tag                             | string | `"v0.14.0"`                                                                 | vLLM runtime image tag.                                   |
+| llm.servingEngineSpec.servicePort                                  | int    | `8000`                                                                      | Qwen serving engine service port.                         |
+| llm.servingEngineSpec.strategy.type                                | string | `"Recreate"`                                                                | Avoids requiring a second GPU during model pod upgrades.  |
 | migration.annotations                                              | object | `{}`                                                                        |                                                           |
 | migration.backoffLimit                                             | int    | `3`                                                                         |                                                           |
 | migration.enabled                                                  | bool   | `true`                                                                      |                                                           |
@@ -332,3 +470,17 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | serviceMonitor.endpoints[0].interval                               | string | `"5s"`                                                                      |                                                           |
 | serviceMonitor.endpoints[0].path                                   | string | `"/metrics"`                                                                |                                                           |
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
+| taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
+| taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
+| taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
+| taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
+| taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
+| taxonomy.llm.existingSecret                                        | string | `""`                                                                        | Existing secret containing `TAXONOMY_LLM_API_KEY`.        |
+| taxonomy.llm.model                                                 | string | `"qwen3-14b-awq"`                                                           | LLM model used by taxonomy labeling and tree generation.  |
+| taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Taxonomy LLM provider.                                    |
+| taxonomy.llm.vertex.credentialsJson                                | string | `""`                                                                        | Inline Vertex service-account JSON used only when no existing secret is set. |
+| taxonomy.llm.vertex.credentialsJsonSecretKey                       | string | `"TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON"`                                  | Secret key containing Vertex service-account JSON.        |
+| taxonomy.llm.vertex.existingSecret                                 | string | `""`                                                                        | Existing secret containing Vertex service-account JSON.   |
+| taxonomy.llm.vertex.location                                       | string | `""`                                                                        | Vertex AI location for Gemini taxonomy calls.             |
+| taxonomy.llm.vertex.project                                        | string | `""`                                                                        | Google Cloud project for Gemini taxonomy calls.           |
+| taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |

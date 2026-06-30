@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { ZSurveyBlocks } from "./surveys/blocks";
-import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyStyling, ZSurveyWelcomeCard } from "./surveys/types";
+import {
+  ZSurveyEndings,
+  ZSurveyHiddenFields,
+  ZSurveyMetadata,
+  ZSurveyVariables,
+  ZSurveyWelcomeCard,
+} from "./surveys/types";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "./workspace";
 
 export const ZTemplateRole = z.enum([
@@ -12,7 +18,13 @@ export const ZTemplateRole = z.enum([
 ]);
 export type TTemplateRole = z.infer<typeof ZTemplateRole>;
 
+const ZTemplateId = z
+  .string()
+  .trim()
+  .min(1, "Template id must contain at least one non-whitespace character");
+
 export const ZTemplate = z.object({
+  id: ZTemplateId,
   name: z.string(),
   description: z.string(),
   icon: z.any().optional(),
@@ -25,19 +37,12 @@ export const ZTemplate = z.object({
     blocks: ZSurveyBlocks.prefault([]),
     endings: ZSurveyEndings,
     hiddenFields: ZSurveyHiddenFields,
+    metadata: ZSurveyMetadata.optional(),
+    variables: ZSurveyVariables.optional(),
   }),
 });
 
 export type TTemplate = z.infer<typeof ZTemplate>;
-
-export const ZXMTemplate = z.object({
-  name: z.string(),
-  blocks: ZSurveyBlocks,
-  endings: ZSurveyEndings,
-  styling: ZSurveyStyling,
-});
-
-export type TXMTemplate = z.infer<typeof ZXMTemplate>;
 
 export const ZTemplateFilter = z.union([
   ZWorkspaceConfigChannel,

@@ -1,8 +1,8 @@
 "use client";
 
-import { ActionClass } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ActionClass } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
 import { SavedActionsTab } from "@/modules/survey/editor/components/saved-actions-tab";
@@ -91,7 +91,7 @@ export const AddActionModal = ({
               <button
                 type="button"
                 key={tab.title}
-                className={`mr-4 px-1 pb-3 focus:outline-none ${
+                className={`mr-4 px-1 pb-3 focus:outline-hidden ${
                   activeTab === index
                     ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                     : "text-slate-500 hover:text-slate-700"

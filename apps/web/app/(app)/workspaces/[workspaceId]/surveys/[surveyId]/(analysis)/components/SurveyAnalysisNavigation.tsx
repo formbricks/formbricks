@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { revalidateSurveyIdPath } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface SurveyAnalysisNavigationProps {
@@ -27,9 +26,6 @@ export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNav
       icon: <PresentationIcon className="size-5" />,
       href: `${url}/summary?referer=true`,
       current: pathname?.includes("/summary"),
-      onClick: () => {
-        revalidateSurveyIdPath(workspace?.id ?? "", survey.id);
-      },
     },
     {
       id: "responses",
@@ -37,9 +33,6 @@ export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNav
       icon: <InboxIcon className="size-5" />,
       href: `${url}/responses?referer=true`,
       current: pathname?.includes("/responses"),
-      onClick: () => {
-        revalidateSurveyIdPath(workspace?.id ?? "", survey.id);
-      },
     },
   ];
 

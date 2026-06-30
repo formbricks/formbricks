@@ -1,4 +1,4 @@
-import { Invite } from "@prisma/client";
+import { Invite } from "@formbricks/database/prisma";
 import { TUserLocale } from "@formbricks/types/user";
 
 export interface InviteWithCreator extends Pick<

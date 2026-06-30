@@ -18,7 +18,6 @@ import { SegmentActivityTab } from "./segment-activity-tab";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface EditSegmentModalProps {
-  workspaceId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
   currentSegment: TSegmentWithSurveyRefs;
@@ -33,7 +32,6 @@ const SegmentSettingsTab = ({
   activitySummary,
   contactAttributeKeys,
   currentSegment,
-  workspaceId,
   isContactsEnabled,
   isReadOnly,
   segments,
@@ -43,7 +41,6 @@ const SegmentSettingsTab = ({
   | "activitySummary"
   | "contactAttributeKeys"
   | "currentSegment"
-  | "workspaceId"
   | "isContactsEnabled"
   | "isReadOnly"
   | "segments"
@@ -57,7 +54,6 @@ const SegmentSettingsTab = ({
     <SegmentSettings
       activitySummary={activitySummary}
       contactAttributeKeys={contactAttributeKeys}
-      workspaceId={workspaceId}
       initialSegment={currentSegment}
       segments={segments}
       setOpen={setOpen}
@@ -67,7 +63,6 @@ const SegmentSettingsTab = ({
 };
 
 export const EditSegmentModal = ({
-  workspaceId,
   open,
   setOpen,
   currentSegment,
@@ -92,7 +87,6 @@ export const EditSegmentModal = ({
           activitySummary={activitySummary}
           contactAttributeKeys={contactAttributeKeys}
           currentSegment={currentSegment}
-          workspaceId={workspaceId}
           isContactsEnabled={isContactsEnabled}
           isReadOnly={isReadOnly}
           segments={segments}
@@ -126,7 +120,7 @@ export const EditSegmentModal = ({
               <button
                 type="button"
                 key={tab.title}
-                className={`mr-4 px-1 pb-3 focus:outline-none ${
+                className={`mr-4 px-1 pb-3 focus:outline-hidden ${
                   activeTab === index
                     ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                     : "text-slate-500 hover:text-slate-700"

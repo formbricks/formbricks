@@ -1,9 +1,8 @@
 import { prisma } from "@/lib/__mocks__/database";
-import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TActionClass } from "@formbricks/types/action-classes";
 import {
   DatabaseError,
@@ -11,7 +10,8 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { TSegment } from "@formbricks/types/segment";
+import { TBaseFilters, TSegment } from "@formbricks/types/segment";
+import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import {
@@ -58,6 +58,10 @@ vi.mock("@/lib/actionClass/service", () => ({
 
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
+  // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
+  // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
+  vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
+    callback(prisma)) as typeof prisma.$transaction);
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {
@@ -686,6 +690,44 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.update).toHaveBeenCalled();
     });
 
+    test("seeds the private segment with the provided filters for app surveys", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        type: "app",
+      });
+      prisma.segment.create.mockResolvedValueOnce({
+        id: "segment-123",
+        workspaceId: mockWorkspaceId,
+        title: mockSurveyOutput.id,
+        isPrivate: true,
+        filters: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as unknown as TSegment);
+
+      const filters = [
+        {
+          id: "clf01234567890123456789012",
+          connector: null,
+          resource: {
+            id: "clf11234567890123456789012",
+            root: { type: "attribute", contactAttributeKey: "plan" },
+            qualifier: { operator: "equals" },
+            value: "pro",
+          },
+        },
+      ] as unknown as TBaseFilters;
+
+      await createSurvey(mockWorkspaceId, { ...mockCreateSurveyInput, type: "app" }, filters);
+
+      expect(prisma.segment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ filters, isPrivate: true }),
+        })
+      );
+    });
+
     test("creates survey with follow-ups", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       const followUp = {
@@ -733,6 +775,136 @@ describe("Tests for createSurvey", () => {
         })
       );
     });
+
+    test("creates survey languages from validated language inputs", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        languages: [
+          {
+            default: true,
+            enabled: true,
+            language: {
+              id: "cllang12345678901234567890",
+              code: "en-US",
+              alias: null,
+              workspaceId: mockWorkspaceId,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          },
+        ],
+      });
+
+      expect(prisma.survey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            languages: {
+              create: [
+                {
+                  language: {
+                    connect: {
+                      id: "cllang12345678901234567890",
+                    },
+                  },
+                  default: true,
+                  enabled: true,
+                },
+              ],
+            },
+          }),
+        })
+      );
+    });
+
+    test("preserves an explicitly provided segment relation for existing callers", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: mockWorkspaceId,
+      });
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        segment: {
+          id: "clseg123456789012345678901",
+          title: "Segment",
+          description: null,
+          isPrivate: false,
+          filters: [],
+          workspaceId: mockWorkspaceId,
+          surveys: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      expect(prisma.survey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            segment: {
+              connect: {
+                id: "clseg123456789012345678901",
+              },
+            },
+          }),
+        })
+      );
+    });
+
+    test("rejects an explicitly provided segment from another workspace", async () => {
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: "clotherworkspace1234567890",
+      });
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          segment: {
+            id: "clseg123456789012345678901",
+            title: "Segment",
+            description: null,
+            isPrivate: false,
+            filters: [],
+            workspaceId: mockWorkspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("rejects an explicitly provided segment that does not exist", async () => {
+      prisma.segment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          segment: {
+            id: "clseg123456789012345678901",
+            title: "Segment",
+            description: null,
+            isPrivate: false,
+            filters: [],
+            workspaceId: mockWorkspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("Sad Path", () => {
@@ -743,6 +915,30 @@ describe("Tests for createSurvey", () => {
       await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(
         ResourceNotFoundError
       );
+    });
+
+    test("rejects survey languages from a different workspace", async () => {
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          languages: [
+            {
+              default: true,
+              enabled: true,
+              language: {
+                id: "cllang12345678901234567890",
+                code: "en-US",
+                alias: null,
+                workspaceId: "clotherworkspace0000000000",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            },
+          ],
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
     });
 
     test("throws DatabaseError if there is a Prisma error", async () => {

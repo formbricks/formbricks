@@ -1,5 +1,5 @@
-import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { ActionClass, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError, UniqueConstraintError } from "@formbricks/types/errors";

@@ -1,0 +1,13 @@
+oneOf:
+  - $ref: ./SurveyEndScreenEnding.yml
+  - $ref: ./SurveyRedirectEnding.yml
+discriminator:
+  propertyName: type
+  mapping:
+    endScreen: ./SurveyEndScreenEnding.yml
+    redirectToUrl: ./SurveyRedirectEnding.yml
+description: >
+  Ending reached after the last block or a jump action. `type` selects the
+  allowed shape;
+
+  unsupported fields are rejected instead of ignored.

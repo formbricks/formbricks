@@ -50,7 +50,8 @@ spec:
               const https = require("https");
               const path = require("path");
               const { pathToFileURL } = require("url");
-              const { Prisma, PrismaClient } = require("@prisma/client");
+              const { Prisma, PrismaClient } = require("./packages/database/dist/src/prisma.cjs");
+              const { createPrismaPgAdapter } = require("./packages/database/dist/src/prisma-adapter.cjs");
 
               const parsePositiveInteger = (value, fallback) => {
                 const parsed = Number.parseInt(value || "", 10);
@@ -67,7 +68,7 @@ spec:
               );
               const jobName = process.env.FORMBRICKS_MIGRATION_JOB_NAME;
               const migrationsDir = path.resolve("packages/database/dist/migration");
-              const prisma = new PrismaClient();
+              const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
               const namespace = fs
                 .readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "utf8")
                 .trim();
@@ -381,8 +382,9 @@ spec:
                   name: {{ include "formbricks.hubSecretName" . }}
                   key: HUB_API_KEY
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
+            {{- include "formbricks.taxonomyHubEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
-            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
+            {{- if and (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.taxonomy.enabled $.Values.taxonomy.autoConfigureHub (include "formbricks.taxonomyHubEnvManaged" (dict "key" $key)))) }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}

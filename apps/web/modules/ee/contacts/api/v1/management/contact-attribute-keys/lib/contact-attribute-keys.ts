@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";

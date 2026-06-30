@@ -1,0 +1,11 @@
+type: object
+required:
+  - id
+  - label
+properties:
+  id:
+    type: string
+    description: Stable choice id.
+  label:
+    $ref: ./TranslatableText.yml
+additionalProperties: false

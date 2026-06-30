@@ -1,10 +1,10 @@
 "use client";
 
-import { ApiKeyPermission } from "@prisma/client";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { ApiKeyPermission } from "@formbricks/database/prisma-browser";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -19,6 +19,38 @@ import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
+
+const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
+  const { t } = useTranslation();
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(apiKey);
+      toast.success(t("workspace.api_keys.api_key_copied_to_clipboard"));
+    } catch {
+      toast.error(t("workspace.api_keys.unable_to_copy_api_key"));
+    }
+  };
+
+  if (!apiKey) {
+    return <span className="italic">{t("workspace.api_keys.secret")}</span>;
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="break-all whitespace-pre-line">{apiKey}</span>
+      <div className="copyApiKeyIcon shrink-0">
+        <FilesIcon
+          className="size-4 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            void copyToClipboard();
+          }}
+          data-testid="copy-button"
+        />
+      </div>
+    </div>
+  );
+};
 
 interface EditAPIKeysProps {
   organizationId: string;
@@ -131,37 +163,6 @@ export const EditAPIKeys = ({
     setViewPermissionsOpen(false);
   };
 
-  const ApiKeyDisplay = ({ apiKey }: { apiKey: string }) => {
-    const copyToClipboard = async () => {
-      try {
-        await navigator.clipboard.writeText(apiKey);
-        toast.success(t("workspace.api_keys.api_key_copied_to_clipboard"));
-      } catch {
-        toast.error(t("workspace.api_keys.unable_to_copy_api_key"));
-      }
-    };
-
-    if (!apiKey) {
-      return <span className="italic">{t("workspace.api_keys.secret")}</span>;
-    }
-
-    return (
-      <div className="flex items-center justify-between gap-2">
-        <span className="whitespace-pre-line break-all">{apiKey}</span>
-        <div className="copyApiKeyIcon flex-shrink-0">
-          <FilesIcon
-            className="size-4 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              void copyToClipboard();
-            }}
-            data-testid="copy-button"
-          />
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200">
@@ -173,14 +174,14 @@ export const EditAPIKeys = ({
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal?.length === 0 ? (
-            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
+            <div className="flex h-12 items-center justify-center px-6 text-sm font-medium whitespace-nowrap text-slate-400">
               {t("workspace.api_keys.no_api_keys_yet")}
             </div>
           ) : (
             apiKeysLocal?.map((apiKey) => (
               <div
                 role="button"
-                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-hidden"
                 onClick={() => {
                   setActiveKey(apiKey);
                   setViewPermissionsOpen(true);

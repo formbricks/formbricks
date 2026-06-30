@@ -13,7 +13,7 @@ interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export function SubmitButton({
   buttonLabel,
   isLastQuestion,
-  tabIndex = 1,
+  tabIndex = 0,
   focus = false,
   onClick,
   disabled,

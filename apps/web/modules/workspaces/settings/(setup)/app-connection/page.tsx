@@ -6,6 +6,7 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { WEBAPP_URL } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { CodeBlock } from "@/modules/ui/components/code-block";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -14,12 +15,19 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
   const { workspaceId } = await params;
-  const frameworkGuidesUrl =
-    "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides";
+  const frameworkGuidesUrl = "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides";
   const workspaceIdMigrationUrl =
     "https://formbricks.com/docs/surveys/website-app-surveys/workspace-id-migration";
 
   const { workspace } = await getWorkspaceAuth(workspaceId);
+  const htmlSnippet = `<!-- START Formbricks Surveys -->
+<script type="text/javascript">
+!function(){
+    var appUrl = "${WEBAPP_URL}";
+    var workspaceId = "${workspace.id}";
+var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({workspaceId: workspaceId, appUrl: appUrl})},500)}();
+</script>
+<!-- END Formbricks Surveys -->`;
 
   return (
     <PageContentWrapper>
@@ -50,6 +58,13 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
               </Alert>
             )}
           </div>
+        </SettingsCard>
+        <SettingsCard
+          title={t("workspace.app-connection.how_to_setup")}
+          description={t("workspace.app-connection.how_to_setup_description")}>
+          <CodeBlock customEditorClass="bg-white! border border-slate-200" language="html" noMargin>
+            {htmlSnippet}
+          </CodeBlock>
         </SettingsCard>
         <SettingsCard
           title={t("workspace.app-connection.app_connection")}

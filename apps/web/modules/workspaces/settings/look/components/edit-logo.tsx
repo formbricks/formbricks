@@ -206,7 +206,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
               childrenContainerClass="overflow-visible"
               disabled={!isEditing}>
               {isBgColorEnabled && (
-                <div className="px-2">
+                <div className="w-full p-2">
                   <ColorPicker
                     color={logoBgColor || "#f8f8f8"}
                     onChange={setLogoBgColor}

@@ -1,0 +1,21 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - format
+    properties:
+      type:
+        type: string
+        enum:
+          - date
+      html:
+        $ref: ./TranslatableText.yml
+      format:
+        type: string
+        enum:
+          - M-d-y
+          - d-M-y
+          - y-M-d
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

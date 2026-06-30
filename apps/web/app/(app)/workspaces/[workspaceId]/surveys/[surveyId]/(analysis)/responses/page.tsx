@@ -2,6 +2,7 @@ import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/er
 import { SurveyAnalysisNavigation } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
+import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import {
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
   IS_FORMBRICKS_CLOUD,
@@ -60,6 +61,9 @@ const Page = async (props: { params: Promise<{ workspaceId: string; surveyId: st
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
   const quotas = isQuotasAllowed ? await getQuotas(survey.id) : [];
 
+  const aiConfig = await getOrganizationAIConfig(organization.id);
+  const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig) ?? null;
+
   // Fetch initial responses on the server to prevent duplicate client-side fetch
   const initialResponses = await getResponses(params.surveyId, RESPONSES_PER_PAGE, 0);
 
@@ -78,6 +82,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string; surveyId: st
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isStorageConfigured={IS_STORAGE_CONFIGURED}
             enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
+            aiUnavailableReason={aiUnavailableReason}
           />
         }>
         <SurveyAnalysisNavigation survey={survey} activeId="responses" />

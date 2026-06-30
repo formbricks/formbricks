@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
-import { type Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { type Prisma } from "@formbricks/database/prisma";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   EMBED_SURVEY_PREVIEW_CHOICE_IDS,
@@ -96,7 +96,7 @@ test.describe("Survey Email Preview", () => {
     await expect(firstChoiceMarker).toHaveCSS("height", "16px");
     await expect(firstChoiceMarker).toHaveCSS("border-top-left-radius", "4px");
     await expect(firstChoiceLink).toContainText("Apples");
-    await expect(firstChoiceLink).toHaveCSS("background-color", "rgb(243, 244, 246)");
+    await expect(firstChoiceLink).toHaveCSS("background-color", "rgb(237, 240, 249)");
     await expect(firstChoiceLink).toHaveCSS("border-top-left-radius", "8px");
     await expect(firstChoiceLink).toHaveCSS("font-family", /Inter/);
     await expect(firstChoiceLink).toHaveCSS("padding-top", "16px");
@@ -144,7 +144,7 @@ test.describe("Survey Email Preview", () => {
 
     await expect(previewFrame.getByText(EMBED_SURVEY_PREVIEW_HEADLINE)).toBeVisible();
     await expect(openTextLink).toBeVisible();
-    await expect(openTextInputShell).toHaveCSS("background-color", "rgb(243, 244, 246)");
+    await expect(openTextInputShell).toHaveCSS("background-color", "rgb(237, 240, 249)");
     await expect(openTextInputShell).toHaveCSS("border-top-left-radius", "8px");
     await expect(openTextInputShell).toHaveCSS("padding-top", "8px");
     await expect(openTextInputShell).toHaveCSS("padding-left", "8px");

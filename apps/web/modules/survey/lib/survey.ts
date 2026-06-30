@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";

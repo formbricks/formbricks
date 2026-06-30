@@ -5,6 +5,7 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   HashIcon,
+  LanguagesIcon,
   MessageSquareTextIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -15,8 +16,9 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TConnectorFieldMapping } from "@formbricks/types/connector";
-import { listFeedbackRecordsAction } from "@/lib/connector/actions";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
+import { listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
@@ -33,7 +35,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { deleteFeedbackRecordAction } from "../actions";
-import { formatSourceType } from "../lib/utils";
+import { formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
 import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolbar-left";
@@ -52,26 +54,37 @@ const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
   date: <CalendarIcon className="size-3.5" />,
 };
 
-const formatValue = (record: FeedbackRecordData, t: TFunction, locale: string): string => {
-  if (record.value_text != null) return record.value_text;
+// resolvedText (translation-preferred) is computed once by the caller; null falls through to other types.
+const formatValue = (
+  record: FeedbackRecordData,
+  resolvedText: string | null,
+  t: TFunction,
+  locale: string
+): string => {
+  if (resolvedText != null) return resolvedText;
   if (record.value_number != null) return String(record.value_number);
   if (record.value_boolean != null) return record.value_boolean ? t("common.yes") : t("common.no");
   if (record.value_date != null) return formatDateForDisplay(new Date(record.value_date), locale);
   return "—";
 };
 
-function truncate(str: string, maxLen: number): string {
-  if (str.length <= maxLen) return str;
-  return str.slice(0, maxLen) + "…";
-}
-
 interface FeedbackRecordsTableProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
   initialCursors: Record<string, string>;
   frdMap: Record<string, string>;
-  csvSources: { id: string; name: string; fieldMappings: TConnectorFieldMapping[] }[];
+  csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
   canWrite: boolean;
+}
+
+interface FeedbackRecordRowProps {
+  record: FeedbackRecordData;
+  workspaceId: string;
+  locale: string;
+  t: TFunction;
+  isSelected: boolean;
+  onSelectChange: (checked: boolean) => void;
+  onClick: () => void;
 }
 
 export const FeedbackRecordsTable = ({
@@ -94,7 +107,7 @@ export const FeedbackRecordsTable = ({
   const [csvImportSource, setCsvImportSource] = useState<{
     id: string;
     name: string;
-    fieldMappings: TConnectorFieldMapping[];
+    fieldMappings: TFeedbackSourceFieldMapping[];
   } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
@@ -227,7 +240,7 @@ export const FeedbackRecordsTable = ({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
         <div className="flex h-48 flex-col items-center justify-center gap-3 px-4 text-center">
           <MessageSquareTextIcon className="size-8 text-slate-400" />
           <p className="text-sm text-slate-500">{error}</p>
@@ -372,9 +385,19 @@ export const FeedbackRecordsTable = ({
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-[1040px] table-fixed">
+              <colgroup>
+                <col className="w-10" />
+                <col className="w-40" />
+                <col className="w-32" />
+                <col className="w-40" />
+                <col className="w-52" />
+                <col className="w-28" />
+                <col />
+                <col className="w-44" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-slate-200 text-left text-sm text-slate-900 [&>th]:font-semibold">
                   <th className="w-10 px-4 py-3">
@@ -384,13 +407,13 @@ export const FeedbackRecordsTable = ({
                       onCheckedChange={(checked) => toggleAllOnPage(checked === true)}
                     />
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.collected_at")}</th>
-                  <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.source_type")}</th>
-                  <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.source_name")}</th>
-                  <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.field_label")}</th>
-                  <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.field_type")}</th>
-                  <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.value")}</th>
-                  <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.user_identifier")}</th>
+                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.collected_at")}</th>
+                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.source_type")}</th>
+                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.source_name")}</th>
+                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.field_label")}</th>
+                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.field_type")}</th>
+                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.value")}</th>
+                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.user_identifier")}</th>
                 </tr>
               </thead>
               {isEmpty ? (
@@ -465,7 +488,7 @@ export const FeedbackRecordsTable = ({
               setCsvImportSource(null);
             }
           }}
-          connectorId={csvImportSource.id}
+          feedbackSourceId={csvImportSource.id}
           workspaceId={workspaceId}
           fieldMappings={csvImportSource.fieldMappings}
         />
@@ -482,24 +505,19 @@ const FeedbackRecordRow = ({
   isSelected,
   onSelectChange,
   onClick,
-}: {
-  record: FeedbackRecordData;
-  workspaceId: string;
-  locale: string;
-  t: TFunction;
-  isSelected: boolean;
-  onSelectChange: (checked: boolean) => void;
-  onClick: () => void;
-}) => {
-  const value = formatValue(record, t, locale);
+}: Readonly<FeedbackRecordRowProps>) => {
+  const { text, isTranslated, original, langKey } = resolveFeedbackDisplayText(record);
+  const value = formatValue(record, text, t, locale);
   const isLongValue = value.length > 60;
+  const translatedLangLabel = langKey ? (getLanguageLabel(langKey, locale) ?? langKey) : null;
+  const collectedAt = formatDateTimeForDisplay(new Date(record.collected_at), locale);
   const isFormbricksSurveySource =
     (record.source_type === "formbricks" || record.source_type === "formbricks_survey") && !!record.source_id;
   const surveySummaryHref = `/workspaces/${workspaceId}/surveys/${record.source_id}/summary`;
 
   return (
     <tr
-      className={`cursor-pointer text-sm text-slate-700 transition-colors focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${isSelected ? "bg-slate-50" : ""}`}
+      className={`cursor-pointer text-sm text-slate-700 transition-colors focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 ${isSelected ? "bg-slate-50" : ""}`}
       tabIndex={0}
       aria-label={record.field_label ?? record.field_id}
       aria-selected={isSelected}
@@ -520,51 +538,80 @@ const FeedbackRecordRow = ({
           onCheckedChange={(checked) => onSelectChange(checked === true)}
         />
       </td>
-      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-        {formatDateTimeForDisplay(new Date(record.collected_at), locale)}
+      <td className="px-4 py-3 text-slate-500" title={collectedAt}>
+        <span className="block min-w-0 truncate">{collectedAt}</span>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">
+      <td className="px-4 py-3 whitespace-nowrap">
         <Badge text={formatSourceType(record.source_type, t)} type="gray" size="tiny" />
       </td>
-      <td className="max-w-[150px] truncate px-4 py-3" title={record.source_name ?? undefined}>
+      <td className="px-4 py-3" title={record.source_name ?? undefined}>
         {isFormbricksSurveySource ? (
           <Link
             href={surveySummaryHref}
-            className="text-slate-700 underline underline-offset-2 hover:text-slate-900"
+            className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900"
             onClick={(event) => event.stopPropagation()}>
             {record.source_name ?? "—"}
           </Link>
         ) : (
-          <span>{record.source_name ?? "—"}</span>
+          <span className="block min-w-0 truncate">{record.source_name ?? "—"}</span>
         )}
       </td>
-      <td className="max-w-[200px] truncate px-4 py-3" title={record.field_label ?? undefined}>
-        {record.field_label ?? record.field_id}
+      <td className="px-4 py-3" title={record.field_label ?? undefined}>
+        <span className="block min-w-0 truncate">{record.field_label ?? record.field_id}</span>
       </td>
-      <td className="whitespace-nowrap px-4 py-3">
+      <td className="px-4 py-3 whitespace-nowrap">
         <span className="inline-flex items-center gap-1 text-slate-600">
           {FIELD_TYPE_ICONS[record.field_type] ?? <HashIcon className="size-3.5" />}
           {record.field_type}
         </span>
       </td>
-      <td className="max-w-[250px] px-4 py-3">
-        {isLongValue ? (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="cursor-default truncate">{truncate(value, 60)}</span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
-                {value}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : (
-          <span>{value}</span>
-        )}
+      <td className="px-4 py-3" title={value}>
+        <div className="flex min-w-0 items-center gap-1.5">
+          {isLongValue ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="block min-w-0 cursor-default truncate">{value}</span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
+                  {value}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <span className="block min-w-0 truncate">{value}</span>
+          )}
+          {isTranslated && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-auto shrink-0 cursor-default gap-1 px-1.5 py-0.5 text-xs font-normal [&_svg]:size-3"
+                    aria-label={
+                      translatedLangLabel
+                        ? `${t("workspace.unify.translated")}: ${translatedLangLabel}`
+                        : t("workspace.unify.translated")
+                    }
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}>
+                    <LanguagesIcon aria-hidden="true" />
+                    {translatedLangLabel ?? t("workspace.unify.translated")}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
+                  <span className="font-medium">{t("workspace.unify.original_text")}: </span>
+                  {original ?? "—"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       </td>
-      <td className="max-w-[120px] truncate px-4 py-3 text-slate-500" title={record.user_id}>
-        {record.user_id ?? "—"}
+      <td className="px-4 py-3 text-slate-500" title={record.user_id}>
+        <span className="block min-w-0 truncate">{record.user_id ?? "—"}</span>
       </td>
     </tr>
   );

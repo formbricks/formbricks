@@ -3,10 +3,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
-import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
+const SURVEY_CREATE_API_PATHS = new Set(["/api/v3/surveys", "/api/v3/surveys/templates"]);
 
 type MockStorageFileFixture = {
   name: string;
@@ -41,6 +41,97 @@ const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
     `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#0f172a"/><circle cx="32" cy="32" r="18" fill="#22c55e"/></svg>`,
     "utf8"
   ),
+};
+
+export const waitForSurveyCreateResponse = async (page: Page): Promise<string> => {
+  const response = await page.waitForResponse((response) => {
+    const url = new URL(response.url());
+
+    return SURVEY_CREATE_API_PATHS.has(url.pathname) && response.request().method() === "POST";
+  });
+  const responseBody = await response.json().catch(() => null);
+  expect(response.status(), JSON.stringify(responseBody)).toBe(201);
+
+  const surveyId = (responseBody as { data?: { id?: unknown } } | null)?.data?.id;
+  if (typeof surveyId !== "string") {
+    throw new TypeError("Survey create response did not include a survey id");
+  }
+
+  return surveyId;
+};
+
+export const waitForSurveyEditor = async (
+  page: Page,
+  surveyId: string,
+  options: { mode?: "cx" } = {}
+): Promise<void> => {
+  const editorUrlPattern = new RegExp(`/workspaces/[^/]+/surveys/${surveyId}/edit(?:\\?.*)?$`);
+  const currentUrl = new URL(page.url());
+
+  if (!editorUrlPattern.test(`${currentUrl.pathname}${currentUrl.search}`)) {
+    await page.waitForURL(editorUrlPattern);
+  }
+
+  if (options.mode === "cx") {
+    await expect(page).toHaveURL(
+      new RegExp(String.raw`/workspaces/[^/]+/surveys/${surveyId}/edit\?.*mode=cx`)
+    );
+    await expect(page.getByRole("button", { name: "Save & Close", exact: true })).toBeVisible();
+    return;
+  }
+
+  await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
+};
+
+export const createSurveyFromScratch = async (page: Page, options: { mode?: "cx" } = {}): Promise<string> => {
+  const createResponse = waitForSurveyCreateResponse(page);
+  const createSurveyButton = page.getByRole("button", { name: "Create survey", exact: true });
+  const startFromScratchButton = page.getByText("Start from scratch", { exact: true }).first();
+
+  if (await createSurveyButton.isVisible().catch(() => false)) {
+    await createSurveyButton.click();
+  } else if (await startFromScratchButton.isVisible().catch(() => false)) {
+    await startFromScratchButton.click();
+
+    const createSurveyButtonAppeared = await Promise.race([
+      createSurveyButton
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false),
+      createResponse.then(() => false),
+    ]);
+
+    if (createSurveyButtonAppeared) {
+      await createSurveyButton.click();
+    }
+  } else {
+    await page.getByRole("button", { name: "New Survey" }).click();
+    await page.getByRole("menuitem", { name: "Start from scratch" }).click();
+  }
+
+  const surveyId = await createResponse;
+  await waitForSurveyEditor(page, surveyId, options);
+  await expect(page.getByRole("main").getByText("What would you like to know?").first()).toBeVisible();
+
+  return surveyId;
+};
+
+export const useSelectedTemplate = async (page: Page): Promise<string> => {
+  const createResponse = waitForSurveyCreateResponse(page);
+  await page.getByRole("button", { name: "Use this template", exact: true }).click();
+  const surveyId = await createResponse;
+  await waitForSurveyEditor(page, surveyId);
+
+  return surveyId;
+};
+
+export const createXMTemplateSurvey = async (page: Page, templateName: RegExp | string): Promise<string> => {
+  const createResponse = waitForSurveyCreateResponse(page);
+  await page.getByRole("button", { name: templateName, exact: typeof templateName === "string" }).click();
+  const surveyId = await createResponse;
+  await waitForSurveyEditor(page, surveyId, { mode: "cx" });
+
+  return surveyId;
 };
 
 const getMockStorageFileUrl = ({
@@ -313,31 +404,14 @@ export const uploadImageChoicesForPictureSelection = async (page: Page) => {
   }
 };
 
-export const finishOnboarding = async (
-  page: Page,
-  workspaceChannel: TWorkspaceConfigChannel = "website"
-): Promise<void> => {
-  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
+export const finishOnboarding = async (page: Page): Promise<void> => {
+  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/survey/);
+  await page.getByRole("button", { name: "Start from scratch" }).click();
 
-  await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx/);
+  await page.getByRole("button", { name: "Save & Close" }).click();
 
-  if (workspaceChannel === "app") {
-    await page.getByRole("button", { name: "In-product surveys" }).click();
-  } else {
-    await page.getByRole("button", { name: "Link & email surveys" }).click();
-  }
-
-  // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
-  await page.getByPlaceholder("e.g. Formbricks").click();
-  await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
-  await page.locator("#form-next-button").click();
-
-  if (workspaceChannel !== "link") {
-    await page.getByRole("button", { name: "I will do it later" }).click();
-  }
-
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-  await expect(page.getByText("My Workspace")).toBeVisible();
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 };
 
 export const signupUsingInviteToken = async (page: Page, name: string, email: string, password: string) => {
@@ -410,10 +484,7 @@ export const fillModalRichTranslation = async (page: Page, path: string, text: s
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 
-  await page.getByText("Start from scratch").click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
-
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await createSurveyFromScratch(page);
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -615,10 +686,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 
-  await page.getByText("Start from scratch").click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
-
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await createSurveyFromScratch(page);
 
   // Add variables
   await page.getByText("Variables").click();

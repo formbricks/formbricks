@@ -1,8 +1,8 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -14,7 +14,6 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
-import { getWorkspace } from "@/lib/workspace/service";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -553,7 +552,6 @@ export const createProTrialSubscription = async (
 export const createPaidPlanCheckoutSession = async (input: {
   organizationId: string;
   customerId: string;
-  workspaceId: string;
   plan: Exclude<TStandardCloudPlan, "hobby">;
   interval: TCloudBillingInterval;
 }): Promise<string> => {
@@ -573,10 +571,6 @@ export const createPaidPlanCheckoutSession = async (input: {
   }
 
   const items = await getCatalogItemsForPlan(input.plan, input.interval);
-  const workspace = await getWorkspace(input.workspaceId);
-  if (!workspace) {
-    throw new ResourceNotFoundError("workspace", input.workspaceId);
-  }
   const session = await stripeClient.checkout.sessions.create({
     mode: "subscription",
     customer: input.customerId,
@@ -591,8 +585,8 @@ export const createPaidPlanCheckoutSession = async (input: {
       address: "auto",
       name: "auto",
     },
-    success_url: `${WEBAPP_URL}/billing-confirmation?workspaceId=${input.workspaceId}&checkout_success=1`,
-    cancel_url: `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`,
+    success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1`,
+    cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
     metadata: {
       organizationId: input.organizationId,
       targetPlan: input.plan,
@@ -932,6 +926,43 @@ export const undoPendingOrganizationPlanChange = async (
   await clearPendingPlanState(organizationId, subscription);
 };
 
+const isValidSetupCheckoutUpgradeTarget = (
+  targetPlan?: string
+): targetPlan is Exclude<TStandardCloudPlan, "hobby"> => {
+  return targetPlan === "pro" || targetPlan === "scale";
+};
+
+export const applyPendingUpgradeFromSetupCheckout = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan?: string;
+  targetInterval?: string;
+}): Promise<boolean> => {
+  if (!isValidSetupCheckoutUpgradeTarget(input.targetPlan)) {
+    return false;
+  }
+
+  const targetInterval: TCloudBillingInterval = input.targetInterval === "yearly" ? "yearly" : "monthly";
+  const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
+  const currentPlan = resolveCloudPlanFromSubscription(subscription);
+  const isNonStandardCurrentPlan = currentPlan === "custom" || currentPlan === "unknown";
+  const isUpgrade =
+    isNonStandardCurrentPlan || CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
+
+  if (!isUpgrade) {
+    return false;
+  }
+
+  await switchOrganizationToCloudPlan({
+    organizationId: input.organizationId,
+    customerId: input.customerId,
+    targetPlan: input.targetPlan,
+    targetInterval,
+  });
+
+  return true;
+};
+
 const ensureOrganizationBillingRecord = async (
   organizationId: string
 ): Promise<TOrganizationBilling | null> => {
@@ -1196,6 +1227,39 @@ export const syncOrganizationBillingFromStripe = async (
 
   await invalidateOrganizationBillingCache(organizationId);
   return updatedBilling;
+};
+
+/**
+ * Optimistically add a feature lookup key to OrganizationBilling.stripe.features.
+ *
+ * Used immediately after a successful subscription change (e.g. starting a Pro
+ * trial) so the next page render sees the feature without waiting for Stripe's
+ * entitlements API to propagate.
+ *
+ * Only the features array is mutated. Every other field on the stripe snapshot
+ * (lastSyncedAt, subscriptionStatus, plan, interval, trialEnd, …) is preserved
+ * verbatim by spreading the existing snapshot. The subsequent
+ * customer.subscription.created webhook re-syncs the full snapshot from Stripe
+ * and is expected to converge on the same value in the common case.
+ */
+export const addOptimisticBillingFeature = async (organizationId: string, feature: string): Promise<void> => {
+  const billing = await getOrganizationBillingFromDatabase(organizationId);
+  if (!billing?.stripe) return;
+
+  const currentFeatures = billing.stripe.features ?? [];
+  if (currentFeatures.includes(feature)) return;
+
+  const updatedStripe = {
+    ...billing.stripe,
+    features: [...currentFeatures, feature],
+  };
+
+  await prisma.organizationBilling.update({
+    where: { organizationId },
+    data: { stripe: updatedStripe },
+  });
+
+  await invalidateOrganizationBillingCache(organizationId);
 };
 
 const isSnapshotStale = (billing: TOrganizationBilling | null): boolean => {

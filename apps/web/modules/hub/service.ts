@@ -4,45 +4,37 @@ import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { getHubClient } from "./hub-client";
 import type {
+  CreateTaxonomyRunInput,
+  CreateTaxonomyRunResponse,
   FeedbackRecordCreateParams,
   FeedbackRecordData,
   FeedbackRecordListParams,
   FeedbackRecordListResponse,
   FeedbackRecordUpdateParams,
+  ListTaxonomyRunsResponse,
+  RenameTaxonomyNodeInput,
   SemanticSearchInput,
   SemanticSearchResponse,
+  TaxonomyFieldsResponse,
+  TaxonomyNode,
+  TaxonomyNodeRecordsResponse,
+  TaxonomyRun,
+  TaxonomyScope,
+  TaxonomyTreeResponse,
 } from "./types";
-
-type HubError = { status: number; message: string; detail: string };
+import {
+  type HubError,
+  type HubResult,
+  NO_CONFIG_ERROR,
+  createHubResultFromError,
+  getErrorMessage,
+  getErrorStatus,
+  toQueryString,
+} from "./utils";
 
 export type HubFeedbackRecordResult = {
   data: FeedbackRecordData | null;
   error: HubError | null;
-};
-
-const NO_CONFIG_ERROR = {
-  status: 0,
-  message: "HUB_API_KEY is not set; Hub integration is disabled.",
-  detail: "HUB_API_KEY is not set; Hub integration is disabled.",
-} as const;
-
-const getErrorMessage = (err: unknown): string => {
-  if (err instanceof Error) return err.message;
-  if (typeof err === "string") return err;
-  return "Unknown error";
-};
-
-// Duck-typed: `instanceof` against the SDK error class breaks under Next dev/Turbopack
-// when @formbricks/hub is loaded into more than one module scope.
-const getErrorStatus = (err: unknown): number =>
-  err && typeof err === "object" && typeof (err as { status?: unknown }).status === "number"
-    ? (err as { status: number }).status
-    : 0;
-
-const createResultFromError = (err: unknown): HubFeedbackRecordResult => {
-  const status = getErrorStatus(err);
-  const message = getErrorMessage(err);
-  return { data: null, error: { status, message, detail: message } };
 };
 
 /**
@@ -61,7 +53,7 @@ export const createFeedbackRecord = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
-    return createResultFromError(err);
+    return createHubResultFromError(err);
   }
 };
 
@@ -79,7 +71,7 @@ export const retrieveFeedbackRecord = async (id: string): Promise<HubFeedbackRec
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id }, "Hub: retrieveFeedbackRecord failed");
-    return createResultFromError(err);
+    return createHubResultFromError(err);
   }
 };
 
@@ -100,7 +92,7 @@ export const updateFeedbackRecord = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id }, "Hub: updateFeedbackRecord failed");
-    return createResultFromError(err);
+    return createHubResultFromError(err);
   }
 };
 
@@ -280,9 +272,185 @@ export const createFeedbackRecordsBatch = async (
         return { data, error: null as HubFeedbackRecordResult["error"] };
       } catch (err) {
         logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
-        return createResultFromError(err);
+        return createHubResultFromError<FeedbackRecordData>(err);
       }
     })
   );
   return { results };
+};
+
+export const listTaxonomyFields = async (tenantId: string): Promise<HubResult<TaxonomyFieldsResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.get<TaxonomyFieldsResponse>(
+      `/v1/taxonomy/fields${toQueryString({ tenant_id: tenantId })}`
+    );
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId }, "Hub: listTaxonomyFields failed");
+    return createHubResultFromError(err);
+  }
+};
+
+export const createTaxonomyRun = async (
+  input: CreateTaxonomyRunInput
+): Promise<HubResult<CreateTaxonomyRunResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.post<CreateTaxonomyRunResponse>("/v1/taxonomy/runs", { body: input });
+    return { data, error: null };
+  } catch (err) {
+    logger.warn(
+      {
+        err,
+        tenantId: input.tenant_id,
+        sourceType: input.source_type,
+        sourceId: input.source_id,
+        fieldId: input.field_id,
+      },
+      "Hub: createTaxonomyRun failed"
+    );
+    return createHubResultFromError(err);
+  }
+};
+
+export const listTaxonomyRuns = async (
+  params: TaxonomyScope & { limit?: number }
+): Promise<HubResult<ListTaxonomyRunsResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.get<ListTaxonomyRunsResponse>(`/v1/taxonomy/runs${toQueryString(params)}`);
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId: params.tenant_id }, "Hub: listTaxonomyRuns failed");
+    return createHubResultFromError(err);
+  }
+};
+
+export const getTaxonomyRun = async (runId: string, tenantId: string): Promise<HubResult<TaxonomyRun>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.get<TaxonomyRun>(
+      `/v1/taxonomy/runs/${encodeURIComponent(runId)}${toQueryString({ tenant_id: tenantId })}`
+    );
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyRun failed");
+    return createHubResultFromError(err);
+  }
+};
+
+export const getActiveTaxonomyTree = async (
+  scope: TaxonomyScope
+): Promise<HubResult<TaxonomyTreeResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.get<TaxonomyTreeResponse>(
+      `/v1/taxonomy/runs/active/tree${toQueryString(scope)}`
+    );
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId: scope.tenant_id }, "Hub: getActiveTaxonomyTree failed");
+    return createHubResultFromError(err);
+  }
+};
+
+export const getTaxonomyTree = async (
+  runId: string,
+  tenantId: string
+): Promise<HubResult<TaxonomyTreeResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.get<TaxonomyTreeResponse>(
+      `/v1/taxonomy/runs/${encodeURIComponent(runId)}/tree${toQueryString({ tenant_id: tenantId })}`
+    );
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyTree failed");
+    return createHubResultFromError(err);
+  }
+};
+
+export const renameTaxonomyNode = async (
+  nodeId: string,
+  input: RenameTaxonomyNodeInput
+): Promise<HubResult<TaxonomyNode>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.patch<TaxonomyNode>(`/v1/taxonomy/nodes/${encodeURIComponent(nodeId)}`, {
+      body: input,
+    });
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, nodeId, tenantId: input.tenant_id }, "Hub: renameTaxonomyNode failed");
+    return createHubResultFromError(err);
+  }
+};
+
+export const removeTaxonomyNode = async (
+  nodeId: string,
+  params: { tenant_id: string; actor_id: string }
+): Promise<HubResult<TaxonomyNode>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.delete<TaxonomyNode>(
+      `/v1/taxonomy/nodes/${encodeURIComponent(nodeId)}${toQueryString(params)}`
+    );
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, nodeId, tenantId: params.tenant_id }, "Hub: removeTaxonomyNode failed");
+    return createHubResultFromError(err);
+  }
+};
+
+export const listTaxonomyNodeRecords = async (
+  nodeId: string,
+  params: { tenant_id: string; limit?: number }
+): Promise<HubResult<TaxonomyNodeRecordsResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.get<TaxonomyNodeRecordsResponse>(
+      `/v1/taxonomy/nodes/${encodeURIComponent(nodeId)}/records${toQueryString(params)}`
+    );
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, nodeId, tenantId: params.tenant_id }, "Hub: listTaxonomyNodeRecords failed");
+    return createHubResultFromError(err);
+  }
 };

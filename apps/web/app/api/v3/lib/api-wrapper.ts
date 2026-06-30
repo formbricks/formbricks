@@ -5,16 +5,16 @@ import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
-import { buildAuditLogBaseObject } from "@/app/lib/api/with-api-logging";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
+import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import {
   type InvalidParam,
+  isInvalidParamCode,
   problemBadRequest,
   problemInternalError,
   problemPayloadTooLarge,
@@ -72,11 +72,21 @@ function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
   return "Not authenticated";
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {
-  return error.issues.map((issue) => ({
-    name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-    reason: issue.message,
-  }));
+  return error.issues.map((issue) => {
+    const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
+    const code = isInvalidParamCode(params.code) ? params.code : undefined;
+
+    return {
+      name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
+      reason: issue.message,
+      ...(code ? { code } : {}),
+    };
+  });
 }
 
 type TV3InputParseFailure = {
@@ -323,49 +333,6 @@ async function applyV3RateLimitOrRespond(params: {
   return null;
 }
 
-function buildV3AuditLog(
-  authentication: TV3Authentication,
-  action?: TAuditAction,
-  targetType?: TAuditTarget,
-  apiUrl?: string
-): TV3AuditLog | undefined {
-  if (!authentication || !action || !targetType || !apiUrl) {
-    return undefined;
-  }
-
-  const auditLog = buildAuditLogBaseObject(action, targetType, apiUrl);
-
-  if ("user" in authentication && authentication.user?.id) {
-    auditLog.userId = authentication.user.id;
-    auditLog.userType = "user";
-  } else if ("apiKeyId" in authentication) {
-    auditLog.userId = authentication.apiKeyId;
-    auditLog.userType = "api";
-    auditLog.organizationId = authentication.organizationId;
-  }
-
-  return auditLog;
-}
-
-async function queueV3AuditLog(
-  auditLog: TV3AuditLog | undefined,
-  requestId: string,
-  log: ReturnType<typeof logger.withContext>
-): Promise<void> {
-  if (!auditLog) {
-    return;
-  }
-
-  try {
-    await queueAuditEvent({
-      ...auditLog,
-      ...(auditLog.status === "failure" ? { eventId: auditLog.eventId ?? requestId } : {}),
-    });
-  } catch (error) {
-    log.error({ error }, "Failed to queue V3 audit event");
-  }
-}
-
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
   params: TWithV3ApiWrapperParams<S, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
@@ -399,6 +366,17 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return authResult.response;
       }
 
+      const rateLimitResponse = await applyV3RateLimitOrRespond({
+        authentication: authResult.authentication,
+        enabled: rateLimit,
+        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
+        requestId,
+        log,
+      });
+      if (rateLimitResponse) {
+        return rateLimitResponse;
+      }
+
       const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
       if (!parsedInputResult.ok) {
         log.warn(
@@ -410,17 +388,6 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
           "V3 API request validation failed"
         );
         return parsedInputResult.response;
-      }
-
-      const rateLimitResponse = await applyV3RateLimitOrRespond({
-        authentication: authResult.authentication,
-        enabled: rateLimit,
-        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
-        requestId,
-        log,
-      });
-      if (rateLimitResponse) {
-        return rateLimitResponse;
       }
 
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);

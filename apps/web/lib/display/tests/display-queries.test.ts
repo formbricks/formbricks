@@ -1,7 +1,7 @@
 import { mockDisplayId, mockSurveyId } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
-import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import {

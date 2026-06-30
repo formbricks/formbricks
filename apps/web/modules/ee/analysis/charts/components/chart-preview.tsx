@@ -14,9 +14,15 @@ interface ChartPreviewProps {
   chartData: AnalyticsResponse | null;
   isLoading?: boolean;
   error?: string | null;
+  emptyMessage?: string;
 }
 
-export function ChartPreview({ chartData, isLoading = false, error }: Readonly<ChartPreviewProps>) {
+export function ChartPreview({
+  chartData,
+  isLoading = false,
+  error,
+  emptyMessage,
+}: Readonly<ChartPreviewProps>) {
   const [activeTab, setActiveTab] = useState<"chart" | "data">("chart");
   const { t } = useTranslation();
 
@@ -47,8 +53,16 @@ export function ChartPreview({ chartData, isLoading = false, error }: Readonly<C
 
     if (!chartData) {
       return (
-        <div className="flex h-48 items-center justify-center text-sm text-gray-500">
-          {t("workspace.analysis.charts.no_data_available")}
+        <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-gray-500">
+          {emptyMessage ?? t("workspace.analysis.charts.no_data_available")}
+        </div>
+      );
+    }
+
+    if (data.length === 0) {
+      return (
+        <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-gray-500">
+          {t("workspace.analysis.charts.no_data_returned")}
         </div>
       );
     }
@@ -80,7 +94,7 @@ export function ChartPreview({ chartData, isLoading = false, error }: Readonly<C
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
       <h3 className="mb-4 font-semibold text-gray-900">{t("workspace.analysis.charts.chart_preview")}</h3>
       {renderContent()}
     </div>

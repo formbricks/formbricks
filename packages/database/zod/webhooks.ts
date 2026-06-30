@@ -1,5 +1,5 @@
-import type { Webhook } from "@prisma/client";
 import { z } from "zod";
+import type { Webhook } from "../src/prisma";
 
 export const ZWebhook = z.object({
   id: z.cuid2().describe("The ID of the webhook"),
@@ -35,3 +35,10 @@ export const ZWebhook = z.object({
 ZWebhook.meta({
   id: "webhook",
 }).describe("A webhook");
+
+// The signing secret is only exposed once, in the create response.
+export const ZWebhookWithoutSecret = ZWebhook.omit({ secret: true });
+
+ZWebhookWithoutSecret.meta({
+  id: "webhookWithoutSecret",
+}).describe("A webhook without its signing secret");

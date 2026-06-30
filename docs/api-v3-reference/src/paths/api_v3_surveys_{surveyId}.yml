@@ -1,0 +1,381 @@
+get:
+  operationId: getSurveyV3
+  summary: Retrieve a survey
+  description: >
+    Returns the public v3 survey management resource for one survey. By default,
+    translatable
+
+    fields are returned as stable multilingual maps keyed by the language codes
+    emitted in
+
+    `languages[].code`. Use `lang` to filter those maps to one or more requested
+    language selectors.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+    - in: query
+      name: lang
+      required: false
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+        examples:
+          - - de-DE
+          - - de-DE
+            - pt-PT
+          - - de
+          - - zh-Hans
+          - - zh-Hans-CN
+      description: >
+        Comma-separated language selector filter for translatable fields, for
+        example `?lang=de-DE,pt-PT`.
+
+        The response shape stays stable: translatable fields are always maps,
+        never strings, and response
+
+        keys match the emitted `languages[].code` values for this survey.
+
+        For compatibility with existing Formbricks surveys, GET accepts language
+        tags such as `de`,
+
+        `de-DE`, `zh-Hans`, and `zh-Hans-CN`, accepts `_` or `-` separators, is
+        case-insensitive, and
+
+        accepts configured workspace aliases such as `english`. Bare language
+        selectors are resolved
+
+        against the survey's configured languages and return `400` if ambiguous,
+        for example if both
+
+        `en-US` and `en-GB` are configured.
+
+        Disabled-but-configured languages are readable in the management API so
+        unfinished translations can
+
+        be completed.
+  responses:
+    '200':
+      description: Survey retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyResource.yml
+          examples:
+            multilingual:
+              summary: Multilingual authoring resource
+              value:
+                data:
+                  id: clseedsurveycsat000000
+                  workspaceId: clseedworkspace000000000
+                  createdAt: '2026-05-18T09:24:54.014Z'
+                  updatedAt: '2026-05-18T09:24:54.014Z'
+                  name: CSAT Survey
+                  type: link
+                  status: inProgress
+                  metadata: {}
+                  defaultLanguage: en-US
+                  languages:
+                    - code: en-US
+                      default: true
+                      enabled: true
+                    - code: de-DE
+                      alias: german
+                      default: false
+                      enabled: false
+                  welcomeCard:
+                    enabled: false
+                  blocks:
+                    - id: e0tfwzqk63op37y14z95qq3k
+                      name: Main Block
+                      elements:
+                        - id: nzte4cm8836hgjw63pesziht
+                          type: rating
+                          range: 5
+                          scale: smiley
+                          headline:
+                            en-US: How satisfied are you with our product?
+                            de-DE: Wie zufrieden sind Sie mit unserem Produkt?
+                          required: true
+                  endings: []
+                  hiddenFields:
+                    enabled: false
+                  variables: []
+            filtered:
+              summary: Language-filtered projection with ?lang=de-DE
+              value:
+                data:
+                  id: clseedsurveycsat000000
+                  workspaceId: clseedworkspace000000000
+                  createdAt: '2026-05-18T09:24:54.014Z'
+                  updatedAt: '2026-05-18T09:24:54.014Z'
+                  name: CSAT Survey
+                  type: link
+                  status: inProgress
+                  metadata: {}
+                  defaultLanguage: en-US
+                  languages:
+                    - code: en-US
+                      default: true
+                      enabled: true
+                    - code: de-DE
+                      alias: german
+                      default: false
+                      enabled: false
+                  welcomeCard:
+                    enabled: false
+                  blocks:
+                    - id: e0tfwzqk63op37y14z95qq3k
+                      name: Main Block
+                      elements:
+                        - id: nzte4cm8836hgjw63pesziht
+                          type: rating
+                          range: 5
+                          scale: smiley
+                          headline:
+                            de-DE: Wie zufrieden sind Sie mit unserem Produkt?
+                          required: true
+                  endings: []
+                  hiddenFields:
+                    enabled: false
+                  variables: []
+    '400':
+      description: >-
+        Invalid survey id, unsupported query parameter, unknown language, or
+        unsupported legacy survey shape
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+patch:
+  operationId: patchSurveyV3
+  summary: Update a survey
+  description: >
+    Updates a survey through a strict top-level partial document. Omitted
+    top-level fields are
+
+    preserved. Provided top-level objects and arrays replace that whole subtree;
+    this endpoint
+
+    does not deep-merge nested objects and does not implement JSON Patch.
+
+
+    This write endpoint accepts the canonical multilingual authoring document
+    only. Translatable
+
+    fields must be locale-code maps, not strings. `PATCH ?lang=...` and
+    `?version=...` are not
+
+    supported in Scope 1.
+
+
+    For MCP and AI-agent workflows, fetch the current survey first, modify only
+    the intended
+
+    top-level fields, call `/api/v3/surveys/validate` with `operation: patch`
+    for preflight, then
+
+    submit the same patch here. Missing ids in replaced arrays are treated as
+    deletions. Variable
+
+    name renames are allowed but may be destructive for downstream exports or
+    integrations.
+
+    Element id changes are rejected once the survey and element are no longer
+    drafts.
+
+
+    Optimistic concurrency (`ETag`, `If-Match`, or revision tokens) is future
+    work; until then,
+
+    overlapping writes are last-write-wins.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchSurveyRequest.yml
+        examples:
+          renameSurvey:
+            summary: Rename a survey
+            value:
+              name: Updated Product Feedback
+          replaceMetadata:
+            summary: Replace metadata
+            value:
+              metadata:
+                title:
+                  en-US: Product Feedback
+                  de-DE: Produktfeedback
+                cx_operation: product_feedback
+          replaceBlocks:
+            summary: Replace survey blocks
+            value:
+              blocks:
+                - id: clbk1234567890123456789012
+                  name: Main Block
+                  elements:
+                    - id: satisfaction
+                      type: rating
+                      headline:
+                        en-US: How satisfied are you?
+                        de-DE: Wie zufrieden sind Sie?
+                      required: true
+                      range: 5
+                      scale: smiley
+  responses:
+    '200':
+      description: Survey updated successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/SurveyResource.yml
+    '400':
+      description: >
+        Bad Request — the patch failed schema validation, i.e. any rule checkable from the request
+        body alone, without consulting stored state. Covers: malformed JSON; an unsupported query
+        parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation,
+        and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is
+        rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps;
+        and intra-document field-combination rules — notably `displayPercentage` is required when
+        `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need
+        stored state to detect return **422** instead. Every offending field is itemized in
+        `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry
+        `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey);
+        omissions carry `code: missing_required_field`. Bare type, range, enum, and
+        malformed-locale-map violations report the field `name` with a human-readable `reason` and no
+        machine `code`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      description: >-
+        Forbidden — no write access, missing external URL permission, missing
+        Contacts entitlement for app-survey targeting, or survey does not exist
+        (404 not used; avoids existence leak)
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '422':
+      description: >-
+        Unprocessable Content — the patched document passed schema validation but failed a
+        cross-reference check that requires stored state to detect: an undeclared locale key used in
+        content, a duplicate stable id, an immutable element-id change on a published survey, a
+        dangling logic/jump reference, an invalid media URL, a
+        `distribution.triggers[].actionClassId` referencing an action class that does not exist in
+        the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters`
+        entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an
+        unsupported person identifier, or an unknown device value. The `invalid_params`
+        array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+delete:
+  operationId: deleteSurveyV3
+  summary: Delete a survey
+  description: Deletes a survey by id. Session cookie or x-api-key.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  responses:
+    '204':
+      description: Survey deleted successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

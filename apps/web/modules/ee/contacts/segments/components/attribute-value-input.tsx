@@ -7,7 +7,6 @@ import { getDistinctAttributeValuesAction } from "../actions";
 
 interface AttributeValueInputProps {
   attributeKeyId: string;
-  workspaceId: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
@@ -17,7 +16,6 @@ interface AttributeValueInputProps {
 
 export const AttributeValueInput = ({
   attributeKeyId,
-  workspaceId,
   value,
   onChange,
   disabled,
@@ -40,7 +38,6 @@ export const AttributeValueInput = ({
       setLoading(true);
       try {
         const result = await getDistinctAttributeValuesAction({
-          workspaceId,
           attributeKeyId,
         });
 
@@ -68,7 +65,7 @@ export const AttributeValueInput = ({
     return () => {
       isCancelled = true;
     };
-  }, [workspaceId, attributeKeyId]);
+  }, [attributeKeyId]);
 
   const emptyDropdownText = useMemo(() => {
     if (loading) return "Loading values...";

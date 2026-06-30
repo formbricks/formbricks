@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import type { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";

@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";

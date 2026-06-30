@@ -1,8 +1,8 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -32,7 +32,6 @@ import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
 import {
-  buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
   getResponseContactAttributes,
@@ -41,6 +40,7 @@ import {
   getResponsesFileName,
   getResponsesJson,
 } from "./utils";
+import { buildWhereClause } from "./where-clause";
 
 const RESPONSES_PER_PAGE = 10;
 
@@ -422,7 +422,7 @@ export const getResponseDownloadFile = async (
       ...elements.flat(),
       ...variables,
       ...hiddenFields,
-      ...userAttributes,
+      ...userAttributes.map((attribute) => `person.${attribute}`),
     ];
 
     if (survey.isVerifyEmailEnabled) {

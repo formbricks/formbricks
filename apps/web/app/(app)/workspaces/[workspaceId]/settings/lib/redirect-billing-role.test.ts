@@ -23,11 +23,13 @@ vi.mock("@/modules/workspaces/lib/utils", () => ({
 }));
 
 const workspaceId = "workspace-1";
-const billingFallbackPath = `/workspaces/${workspaceId}/settings/organization/billing`;
+const organizationId = "organization-1";
+const billingFallbackPath = `/organizations/${organizationId}/settings/billing`;
 
 const getWorkspaceAuthResponse = (isBilling: boolean) =>
   ({
     isBilling,
+    organization: { id: organizationId },
   }) as Awaited<ReturnType<typeof getWorkspaceAuth>>;
 
 describe("redirectBillingRoleFromRestrictedSettings", () => {
@@ -48,7 +50,7 @@ describe("redirectBillingRoleFromRestrictedSettings", () => {
     await redirectBillingRoleFromRestrictedSettings(workspaceId);
 
     expect(getWorkspaceAuth).toHaveBeenCalledWith(workspaceId);
-    expect(getBillingFallbackPath).toHaveBeenCalledWith(workspaceId, mocks.isFormbricksCloud);
+    expect(getBillingFallbackPath).toHaveBeenCalledWith(organizationId, mocks.isFormbricksCloud);
     expect(redirect).toHaveBeenCalledWith(billingFallbackPath);
   });
 });

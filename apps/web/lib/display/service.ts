@@ -1,8 +1,8 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";

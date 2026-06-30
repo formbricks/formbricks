@@ -11,10 +11,10 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Workspace } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -73,7 +73,6 @@ interface ElementsViewProps {
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
-  moveHiddenFieldsToSettingsTab?: boolean;
 }
 
 export const ElementsView = ({
@@ -93,7 +92,6 @@ export const ElementsView = ({
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
-  moveHiddenFieldsToSettingsTab = false,
 }: ElementsViewProps) => {
   const { t } = useTranslation();
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
@@ -731,7 +729,8 @@ export const ElementsView = ({
       const currentInvalidSet = new Set(invalidElements);
       let hasChanges = false;
 
-      // Validate each element
+      // Live re-validation: clear errors as elements become valid (including
+      // drafts), but don't flag freshly added drafts — save/publish does that.
       elements.forEach((element) => {
         const isValid = validateElement(element, surveyLanguages);
         if (isValid) {
@@ -739,7 +738,7 @@ export const ElementsView = ({
             currentInvalidSet.delete(element.id);
             hasChanges = true;
           }
-        } else if (!currentInvalidSet.has(element.id)) {
+        } else if (!element.isDraft && !currentInvalidSet.has(element.id)) {
           currentInvalidSet.add(element.id);
           hasChanges = true;
         }
@@ -924,25 +923,21 @@ export const ElementsView = ({
         {!isCxMode && (
           <>
             <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
-            {!moveHiddenFieldsToSettingsTab && (
-              <>
-                <hr />
-                <HiddenFieldsCard
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                  setActiveElementId={setActiveElementId}
-                  activeElementId={activeElementId}
-                  quotas={quotas}
-                />
-                <SurveyVariablesCard
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                  activeElementId={activeElementId}
-                  setActiveElementId={setActiveElementId}
-                  quotas={quotas}
-                />
-              </>
-            )}
+            <hr />
+            <HiddenFieldsCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              setActiveElementId={setActiveElementId}
+              activeElementId={activeElementId}
+              quotas={quotas}
+            />
+            <SurveyVariablesCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              activeElementId={activeElementId}
+              setActiveElementId={setActiveElementId}
+              quotas={quotas}
+            />
           </>
         )}
       </div>

@@ -72,10 +72,16 @@ enterprise functionality.
 
 - `AI_PROVIDER` and `AI_MODEL` are the base settings
 - `AI_PROVIDER=aws` requires `AI_AWS_REGION`, `AI_AWS_ACCESS_KEY_ID`, and `AI_AWS_SECRET_ACCESS_KEY`
-- `AI_PROVIDER=google` requires `AI_GOOGLE_CLOUD_PROJECT`, `AI_GOOGLE_CLOUD_LOCATION`, and either
-  `AI_GOOGLE_CLOUD_CREDENTIALS_JSON` or `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS`
+- `AI_PROVIDER=google` requires `AI_GOOGLE_CLOUD_PROJECT` and `AI_GOOGLE_CLOUD_LOCATION`; credentials are
+  optional overrides when Application Default Credentials are unavailable
 - `AI_PROVIDER=azure` requires `AI_AZURE_API_KEY` and either `AI_AZURE_BASE_URL` or
   `AI_AZURE_RESOURCE_NAME`
+- `AI_PROVIDER=openai-compatible` requires `AI_OPENAI_COMPATIBLE_BASE_URL`; the LLM GA v1 self-hosted
+  path is Qwen served by vLLM
+- Helm operators can set `llm.enabled: true` to deploy the bundled Qwen/vLLM runtime
+- Docker Compose operators can set `COMPOSE_PROFILES=qwen` to deploy the bundled Qwen/vLLM runtime
+- Keep the bundled runtime disabled when you configure Google Vertex, Azure, AWS Bedrock, or an external
+  OpenAI-compatible endpoint manually
 
 #### Cube
 
@@ -145,7 +151,7 @@ Cube is part of the baseline Formbricks v5 stack.
 
     - add a non-empty `HUB_API_KEY` and reuse the same value wherever your deployment resolves Hub auth
     - keep `HUB_API_URL` at `http://hub:8080` unless Hub runs elsewhere
-    - include the bundled `hub-migrate` and `hub` services
+    - include the bundled `formbricks-migrate`, `hub-migrate`, and `hub` services
     - sync `formbricks/cube/cube.js` and `formbricks/cube/schema/FeedbackRecords.js` from the current
       release and ensure `formbricks/.env` contains `CUBEJS_API_SECRET` (Cube is part of the baseline stack
       in v5)
@@ -174,7 +180,7 @@ Cube is part of the baseline Formbricks v5 stack.
 
     - `HUB_API_KEY` is configured and the same value is available wherever your deployment resolves Hub auth
     - `HUB_API_URL` points to the Hub service the app can reach
-    - the compose stack includes `hub-migrate` and `hub`
+    - the compose stack includes `formbricks-migrate`, `hub-migrate`, and `hub`
     - the v5 stack also includes `cube`, `cube/cube.js`, and `cube/schema/FeedbackRecords.js`, with
       `CUBEJS_API_SECRET` available through your `.env` or shell environment
     - if your legacy Compose file still includes bundled MinIO for uploads, treat that as a separate storage
@@ -238,11 +244,14 @@ Common upgrade issues:
 - **Bad `HUB_API_URL`**: the app starts, but Hub-backed features fail because the service cannot be reached
 - **No edge rate limiter in front of covered routes**: the v5 deployment runs, but those routes are no longer
   protected by the legacy in-app limiter
-- **Missing AI credentials**: AI features remain unavailable until `AI_PROVIDER`, `AI_MODEL`, and the matching
-  provider credentials are set correctly
+- **Missing AI provider configuration**: AI features remain unavailable until `AI_PROVIDER`, `AI_MODEL`, and the
+  matching provider settings are set correctly
 - **Missing `CUBEJS_API_SECRET`** (or unreachable Cube endpoint): the Formbricks app fails env validation
   at boot, or — if env vars are present but Cube is unreachable — dashboards and analysis queries fail
   while the rest of the app stays healthy
+- **Cube healthcheck fails with `wget: not found`**: older v5 Docker Compose files used `wget` for the
+  bundled Cube healthcheck, but `cubejs/cube:v1.6.6` does not include it. Sync the Cube healthcheck from the
+  current Docker Compose file so it checks `/readyz` with Node instead.
 
 If you need to roll back:
 

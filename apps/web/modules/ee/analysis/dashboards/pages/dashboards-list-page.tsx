@@ -1,6 +1,6 @@
 import { use } from "react";
-import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
@@ -52,7 +52,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${workspaceId}/settings/organization/billing`
+                  ? `/organizations/${organization.id}/settings/billing`
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
@@ -66,9 +66,9 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
     );
   }
 
-  const [frds, connectors] = await Promise.all([
+  const [frds, feedbackSources] = await Promise.all([
     getFeedbackDirectoriesByWorkspaceId(workspaceId),
-    getConnectorsWithMappings(workspaceId),
+    getFeedbackSourcesWithMappings(workspaceId),
   ]);
 
   if (frds.length === 0) {
@@ -77,7 +77,10 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
         pageTitle={t("common.analysis")}
         workspaceId={workspaceId}
         cta={isReadOnly ? undefined : <CreateDashboardButton workspaceId={workspaceId} disabled={true} />}>
-        <NoFeedbackDirectoryEmptyState workspaceId={workspaceId} isOwnerOrManager={isOwner || isManager} />
+        <NoFeedbackDirectoryEmptyState
+          organizationId={organization.id}
+          isOwnerOrManager={isOwner || isManager}
+        />
       </AnalysisPageLayout>
     );
   }
@@ -101,7 +104,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
           isReadOnly={isReadOnly}
         />
       ) : (
-        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={connectors.length > 0} />
+        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={feedbackSources.length > 0} />
       )}
     </AnalysisPageLayout>
   );

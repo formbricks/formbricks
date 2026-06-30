@@ -1,6 +1,6 @@
-import { Language } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/prisma-browser";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { Button } from "@/modules/ui/components/button";
 

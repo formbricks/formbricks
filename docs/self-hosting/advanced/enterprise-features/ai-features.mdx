@@ -5,6 +5,46 @@ icon: "sparkles"
 sidebarTitle: "AI Features"
 ---
 
-A single organization toggle unlocks AI-assisted survey translation and AI chart creation across the app. Requires `AI_PROVIDER`, `AI_MODEL`, and the matching provider credentials on the instance.
+A single organization toggle unlocks AI-assisted survey translation and AI chart creation across the app. Requires `AI_PROVIDER`, `AI_MODEL`, and the matching provider configuration on the instance.
+
+## Kubernetes Helm
+
+The Formbricks Helm chart can deploy a bundled Qwen/vLLM runtime for Smart functionality. This path is disabled
+by default and requires GPU-capable Kubernetes nodes.
+
+```yaml
+llm:
+  enabled: true
+```
+
+When `llm.enabled` is true, the chart deploys the vLLM router and Qwen serving engine. By default it also points
+the Formbricks app at the in-cluster OpenAI-compatible endpoint by injecting the required `AI_*` environment
+variables.
+
+Set `llm.autoConfigureApp=false` if you want the chart to deploy Qwen/vLLM but prefer to configure the app
+provider manually.
+
+## Docker Compose
+
+The Docker stack can deploy the same Qwen/vLLM runtime through an opt-in Compose profile. This path is disabled
+by default and requires a GPU-capable Docker host with the NVIDIA Container Toolkit installed.
+
+```bash
+COMPOSE_PROFILES=qwen
+AI_PROVIDER=openai-compatible
+AI_MODEL=qwen3-14b-awq
+AI_OPENAI_COMPATIBLE_BASE_URL=http://vllm:8000/v1
+AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
+AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
+```
+
+If you use the optional taxonomy service and want it to share the bundled Qwen runtime, start Docker Compose with
+`COMPOSE_PROFILES=qwen,taxonomy` and point `TAXONOMY_LLM_BASE_URL` at `http://vllm:8000/v1`.
+
+## External Providers
+
+Keep `llm.enabled=false` when you use Google Vertex, Azure, AWS Bedrock, or your own OpenAI-compatible runtime.
+Configure those providers with `deployment.env` in your Helm values or with environment variables in your
+deployment platform.
 
 Read the full guide: [AI Features](/platform/features/ai-features).

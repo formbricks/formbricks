@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import {
   normalizeV3SurveyLanguageIdentifier,
   normalizeV3SurveyLanguageTag,
+  normalizeV3SurveyLocaleCode,
+  normalizeV3SurveyWriteLanguageCode,
   parseV3SurveyLanguageQuery,
   resolveV3SurveyLanguageCode,
 } from "./language";
@@ -32,6 +34,19 @@ describe("normalizeV3SurveyLanguageTag", () => {
   });
 });
 
+describe("normalizeV3SurveyLocaleCode", () => {
+  test.each([
+    ["EN_us", "en-US"],
+    ["zh_hans_cn", "zh-Hans-CN"],
+  ])("normalizes write locale %s to %s", (input, expected) => {
+    expect(normalizeV3SurveyLocaleCode(input)).toBe(expected);
+  });
+
+  test.each(["de", "zh_Hans", "not a locale"])("rejects non-region-qualified write locale %s", (input) => {
+    expect(normalizeV3SurveyLocaleCode(input)).toBeNull();
+  });
+});
+
 describe("normalizeV3SurveyLanguageIdentifier", () => {
   test.each([
     ["hi", "hi-IN"],
@@ -44,6 +59,20 @@ describe("normalizeV3SurveyLanguageIdentifier", () => {
 
   test("does not guess ambiguous legacy identifiers", () => {
     expect(normalizeV3SurveyLanguageIdentifier("pt")).toBeNull();
+  });
+});
+
+describe("normalizeV3SurveyWriteLanguageCode", () => {
+  test("keeps strict write locale validation by default", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("de-DE")).toBe("de-DE");
+    expect(normalizeV3SurveyWriteLanguageCode("gu")).toBeNull();
+  });
+
+  test("allows legacy codes only when they are already configured", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("gu", ["gu", "en-US"])).toBe("gu");
+    expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu", "en-US"])).toBe("gu");
+    expect(normalizeV3SurveyWriteLanguageCode("hi", ["hi-IN", "en-US"])).toBe("hi-IN");
+    expect(normalizeV3SurveyWriteLanguageCode("vi", ["en-US"])).toBeNull();
   });
 });
 

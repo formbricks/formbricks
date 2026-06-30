@@ -28,7 +28,7 @@ export const SegmentTableDataRow = ({
   isReadOnly,
 }: TSegmentTableDataRowProps) => {
   const { i18n } = useTranslation();
-  const { createdAt, workspaceId, id, surveys, title, updatedAt, description } = currentSegment;
+  const { createdAt, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
@@ -41,7 +41,7 @@ export const SegmentTableDataRow = ({
         onClick={() => setIsEditSegmentModalOpen(true)}>
         <div className="col-span-4 flex items-center pl-6 text-sm">
           <div className="flex items-center gap-4">
-            <div className="ph-no-capture w-8 flex-shrink-0 text-slate-500">
+            <div className="ph-no-capture w-8 shrink-0 text-slate-500">
               <UsersIcon className="size-5" />
             </div>
             <div className="flex flex-col">
@@ -50,13 +50,13 @@ export const SegmentTableDataRow = ({
             </div>
           </div>
         </div>
-        <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+        <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">{surveys?.length}</div>
         </div>
         <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">{timeSinceDate(updatedAt, locale)}</div>
         </div>
-        <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
+        <div className="col-span-1 my-auto hidden text-center text-sm whitespace-normal text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">
             {formatDateForDisplay(createdAt, locale, {
               year: "numeric",
@@ -68,7 +68,6 @@ export const SegmentTableDataRow = ({
       </button>
 
       <EditSegmentModal
-        workspaceId={workspaceId}
         open={isEditSegmentModalOpen}
         setOpen={setIsEditSegmentModalOpen}
         currentSegment={currentSegment}

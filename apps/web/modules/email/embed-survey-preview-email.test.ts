@@ -41,6 +41,10 @@ const renderPreviewFragment = async (type?: TSurveyElementTypeEnum) =>
 
 const normalizeStyleAttribute = (style: string) =>
   style
+    // Zero-length values are unit-agnostic in CSS; Tailwind v4 emits a bare `0`
+    // where v3 emitted `0rem`. Collapse them so the comparison ignores the
+    // cosmetic difference while still comparing non-zero values exactly.
+    .replace(/\b0(?:rem|px|em|%)\b/g, "0")
     .split(";")
     .map((declaration) => declaration.trim().replace(/\s*:\s*/g, ":"))
     .filter(Boolean)

@@ -1,5 +1,5 @@
-import type { Contact } from "@prisma/client";
 import { z } from "zod";
+import type { Contact } from "../src/prisma";
 
 export const ZContact = z.object({
   id: z.cuid2().describe("Unique identifier for the contact"),

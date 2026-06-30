@@ -10,7 +10,6 @@ import {
   ShareViaType,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/types/share";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
-import { Badge } from "@/modules/ui/components/badge";
 
 interface SuccessViewProps {
   survey: TSurvey;
@@ -68,13 +67,12 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
           <button
             type="button"
             onClick={() => handleEmbedViewWithTab(tabs[1].id)}
-            className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
+            className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <UserIcon className="size-8 stroke-1 text-slate-900" />
             {t("workspace.surveys.summary.use_personal_links")}
-            <Badge size="normal" type="success" className="absolute right-3 top-3" text={t("common.new")} />
           </button>
           <Link
-            href={`/workspaces/${workspace?.id}/settings/account/notifications`}
+            href={`/account/settings/notifications`}
             className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <BellRing className="size-8 stroke-1 text-slate-900" />
             {t("workspace.surveys.summary.configure_alerts")}

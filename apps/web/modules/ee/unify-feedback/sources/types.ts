@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
 import { z } from "zod";
-import { THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
+import { THubFieldType, ZHubFieldType } from "@formbricks/types/feedback-source";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 
 export interface TUnifySurveyElement {
@@ -25,6 +25,14 @@ export interface TFieldMapping {
 }
 
 export const CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE = "CSV_IMPORT_MISSING_COLUMNS";
+export const CSV_IMPORT_FAILED_ERROR_CODE = "CSV_IMPORT_FAILED";
+export const CSV_FILE_TOO_LARGE_ERROR_CODE = "CSV_FILE_TOO_LARGE";
+export const CSV_FILES_ONLY_ERROR_CODE = "CSV_FILES_ONLY";
+export const CSV_PARSE_ERROR_CODE = "CSV_PARSE_ERROR";
+export const CSV_AT_LEAST_ONE_ROW_ERROR_CODE = "CSV_AT_LEAST_ONE_ROW";
+export const CSV_MAX_RECORDS_ERROR_CODE = "CSV_MAX_RECORDS";
+export const CSV_INCONSISTENT_COLUMNS_ERROR_CODE = "CSV_INCONSISTENT_COLUMNS";
+export const CSV_EMPTY_COLUMN_HEADERS_ERROR_CODE = "CSV_EMPTY_COLUMN_HEADERS";
 
 export type TTargetFieldType = "string" | "enum" | "timestamp" | "float64" | "boolean" | "jsonb" | "string[]";
 
@@ -227,7 +235,7 @@ sub-003,2026-01-15T10:10:30Z,nps_comment,text,"Documentation could be clearer",c
 `;
 
 export const MAX_CSV_VALUES = {
-  FILE_SIZE: 2_097_152, // 2MB (2 * 1024 * 1024)
+  FILE_SIZE: 15 * 1024 * 1024, // 15MB
   RECORDS: 1_000, // 1,000 records
 } as const;
 
@@ -266,33 +274,57 @@ export const createFeedbackCSVDataSchema = (t: TFunction) =>
 
 export type TFeedbackCSVData = z.infer<ReturnType<typeof createFeedbackCSVDataSchema>>;
 
-export type TCreateConnectorStep = "selectType" | "mapping";
+export type TCreateFeedbackSourceStep = "selectType" | "mapping";
 
-export const ZFormbricksConnectorForm = z.object({
-  sourceName: z.string().trim().min(1, "CONNECTOR_NAME_REQUIRED"),
-  surveyId: z.string().min(1, "CONNECTOR_SURVEY_REQUIRED"),
-  selectedQuestionIds: z.array(z.string()).min(1, "CONNECTOR_QUESTIONS_REQUIRED"),
+export const ZFormbricksFeedbackSourceForm = z.object({
+  sourceName: z.string().trim().min(1, "FEEDBACK_SOURCE_NAME_REQUIRED"),
+  surveyId: z.string().min(1, "FEEDBACK_SOURCE_SURVEY_REQUIRED"),
+  selectedQuestionIds: z.array(z.string()).min(1, "FEEDBACK_SOURCE_QUESTIONS_REQUIRED"),
   importHistorical: z.boolean(),
 });
 
-export type TFormbricksConnectorForm = z.infer<typeof ZFormbricksConnectorForm>;
+export type TFormbricksFeedbackSourceForm = z.infer<typeof ZFormbricksFeedbackSourceForm>;
 
-export const getTranslatedConnectorError = (errorCode: string, t: TFunction): string => {
+export const getTranslatedFeedbackSourceError = (
+  errorCode: string,
+  t: TFunction,
+  values?: { row?: number | string; max?: number | string }
+): string => {
   switch (errorCode) {
-    case "CONNECTOR_NAME_DUPLICATE":
-      return t("workspace.unify.error_connector_name_duplicate");
-    case "CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE":
-      return t("workspace.unify.error_connector_formbricks_mapping_duplicate");
-    case "CONNECTOR_FIELD_MAPPING_DUPLICATE":
-      return t("workspace.unify.error_connector_field_mapping_duplicate");
+    case "FEEDBACK_SOURCE_NAME_DUPLICATE":
+      return t("workspace.unify.error_source_name_duplicate");
+    case "FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE":
+      return t("workspace.unify.error_source_formbricks_mapping_duplicate");
+    case "FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE":
+      return t("workspace.unify.error_source_field_mapping_duplicate");
     case CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE:
       return t("workspace.unify.csv_saved_mapping_missing_columns");
-    case "CONNECTOR_NAME_REQUIRED":
-      return t("workspace.unify.error_connector_name_required");
-    case "CONNECTOR_SURVEY_REQUIRED":
-      return t("workspace.unify.error_connector_survey_required");
-    case "CONNECTOR_QUESTIONS_REQUIRED":
-      return t("workspace.unify.error_connector_questions_required");
+    case CSV_IMPORT_FAILED_ERROR_CODE:
+      return t("common.something_went_wrong");
+    case CSV_FILE_TOO_LARGE_ERROR_CODE:
+      return t("workspace.unify.csv_file_too_large");
+    case CSV_FILES_ONLY_ERROR_CODE:
+      return t("workspace.unify.csv_files_only");
+    case CSV_PARSE_ERROR_CODE:
+      return t("common.failed_to_parse_csv");
+    case CSV_AT_LEAST_ONE_ROW_ERROR_CODE:
+      return t("workspace.unify.csv_at_least_one_row");
+    case CSV_MAX_RECORDS_ERROR_CODE:
+      return t("workspace.unify.csv_max_records", {
+        max: values?.max?.toLocaleString() ?? MAX_CSV_VALUES.RECORDS.toLocaleString(),
+      });
+    case CSV_INCONSISTENT_COLUMNS_ERROR_CODE:
+      return t("workspace.unify.csv_inconsistent_columns", {
+        row: values?.row?.toString() ?? "",
+      });
+    case CSV_EMPTY_COLUMN_HEADERS_ERROR_CODE:
+      return t("workspace.unify.csv_empty_column_headers");
+    case "FEEDBACK_SOURCE_NAME_REQUIRED":
+      return t("workspace.unify.error_source_name_required");
+    case "FEEDBACK_SOURCE_SURVEY_REQUIRED":
+      return t("workspace.unify.error_source_survey_required");
+    case "FEEDBACK_SOURCE_QUESTIONS_REQUIRED":
+      return t("workspace.unify.error_source_questions_required");
     default:
       return errorCode;
   }

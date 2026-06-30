@@ -48,6 +48,10 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
   SDK.
 </Card>
 
+<Card title="Flutter" icon="flutter" color="lightblue" href="#flutter">
+  Add surveys to your Flutter app on iOS and Android with our Dart SDK.
+</Card>
+
 </CardGroup>
 
 ## Prerequisites
@@ -77,8 +81,8 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -123,8 +127,8 @@ export default App;
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -234,8 +238,8 @@ export default function App({ Component, pageProps }: AppProps) {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 First, initialize the Formbricks SDK to run only on the client side. To track page changes, register the route change event with the Next.js router.
 
@@ -291,8 +295,8 @@ router.afterEach((to, from) => {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -337,8 +341,8 @@ export default function App() {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -423,8 +427,8 @@ Formbricks.cleanup(waitForOperations: true) {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -497,8 +501,101 @@ Formbricks.logout()
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| workspace-id | string | Formbricks Workspace ID.               |
-| app-url        | string | URL of the hosted Formbricks instance. |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
+
+## Flutter
+
+<Info>
+  **Platform Support:** The Formbricks Flutter SDK targets **iOS and Android only**. Flutter Web and desktop are not supported.
+</Info>
+
+Install the Formbricks Flutter SDK from [pub.dev](https://pub.dev/packages/formbricks):
+
+```bash
+flutter pub add formbricks
+```
+
+### Usage
+
+Mount the `Formbricks` widget once, high in your widget tree (e.g. alongside your app's home). It initializes the SDK on mount and renders any triggered survey in a modal overlay:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:formbricks/formbricks.dart';
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Stack(
+        children: [
+          const HomePage(),
+          // Initializes the SDK and hosts the survey overlay.
+          Formbricks(
+            appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
+            workspaceId: "<workspace-id>",
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+Then drive the SDK through its static API from anywhere:
+
+```dart
+// 1. Trigger a code action — shows a matching, eligible survey.
+await Formbricks.track("button_clicked");
+
+// 2. Identify the current user.
+await Formbricks.setUserId("user_123");
+
+// 3. Set or add user attributes.
+await Formbricks.setAttribute("plan", "pro");
+await Formbricks.setAttributes({"plan": "pro", "mrr": 99, "signup_date": DateTime.now()});
+
+// 4. Set the survey language.
+await Formbricks.setLanguage("de");
+
+// 5. Reset to an anonymous session on sign-out.
+await Formbricks.logout();
+```
+
+<Note>
+  Prefer to initialize before any UI mounts? Call `Formbricks.setup(appUrl: ..., workspaceId: ...)` directly — the widget still needs to be in the tree to render surveys, but it won't re-run setup (setup is idempotent). All static methods are sequenced through an internal command queue, so calls run in submission order and return a `Future<Result<void, FormbricksError>>`.
+</Note>
+
+### Public API
+
+| Method                                              | Description                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Formbricks(appUrl:, workspaceId:, logLevel:)`      | Host widget — initializes the SDK and renders triggered surveys.         |
+| `Formbricks.setup({appUrl, workspaceId, logLevel})` | Imperative initialization. Idempotent.                                   |
+| `Formbricks.track(String name)`                     | Fire a code action; shows a matching eligible survey.                    |
+| `Formbricks.setUserId(String userId)`               | Identify the contact. Switching ids resets the prior user's state first. |
+| `Formbricks.setAttribute(String key, Object value)` | Set one attribute (`String` / `num` / `DateTime`).                       |
+| `Formbricks.setAttributes(Map<String, Object>)`     | Set several attributes at once.                                          |
+| `Formbricks.setLanguage(String language)`           | Set the survey language.                                                 |
+| `Formbricks.logout()`                               | Reset to an anonymous session.                                           |
+
+Attribute keys must be lowercase letters, numbers, and underscores, and start with a letter. `DateTime` values are sent as UTC ISO-8601 strings; numbers stay numbers. Identity and attribute changes are debounced (~500 ms) and coalesced into a single backend request.
+
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| workspaceId    | string | Formbricks Workspace ID.               |
+| appUrl         | string | URL of the hosted Formbricks instance. |
+
+<Note>
+  Surveys render by loading `{appUrl}/js/surveys.umd.cjs` in a WebView, so that URL must be reachable from the device. Formbricks Cloud and standard self-hosted instances serve this script automatically. Config is persisted with `shared_preferences` and is **not encrypted at rest** — avoid putting sensitive PII in attribute values.
+</Note>
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
 ## Validate your setup
 
@@ -513,7 +610,7 @@ To this:
 
 <Note>
   The debug mode is only available in the JavaScript SDK and works exclusively in the browser. It is not
-  supported in mobile SDKs such as React Native, iOS, or Android.
+  supported in mobile SDKs such as React Native, iOS, Android, or Flutter.
 </Note>
 
 Enabling debug mode in your browser can help troubleshoot issues with Formbricks. Here's how to activate it and what to look for in the logs.

@@ -1,0 +1,27 @@
+type: object
+required:
+  - valid
+  - operation
+  - invalid_params
+properties:
+  valid:
+    type: boolean
+    description: Whether the submitted survey document is valid.
+  operation:
+    type: string
+    enum:
+      - create
+      - patch
+  invalid_params:
+    type: array
+    description: Repairable validation errors using document-relative paths.
+    items:
+      $ref: ./InvalidParam.yml
+  languages:
+    type: array
+    description: >-
+      Languages that a successful write would connect or create. Present only
+      when `valid=true`.
+    items:
+      $ref: ./SurveyValidationLanguage.yml
+additionalProperties: false

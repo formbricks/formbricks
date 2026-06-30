@@ -25,21 +25,39 @@ vi.mock("@/lib/cache", () => ({
   },
 }));
 
+const RESPONSE_PRICE_TIERS = [
+  { flat_amount: null, flat_amount_decimal: null, unit_amount: 0, unit_amount_decimal: "0", up_to: 2000 },
+  { flat_amount: null, flat_amount_decimal: null, unit_amount: 8, unit_amount_decimal: "8", up_to: 5000 },
+  { flat_amount: null, flat_amount_decimal: null, unit_amount: 2, unit_amount_decimal: "2", up_to: null },
+];
+
+const EXPECTED_RESPONSE_OVERAGE = {
+  currency: "usd",
+  tiers: [
+    { firstUnit: 0, lastUnit: 2000, perUnitCents: 0 },
+    { firstUnit: 2001, lastUnit: 5000, perUnitCents: 8 },
+    { firstUnit: 5001, lastUnit: null, perUnitCents: 2 },
+  ],
+};
+
 const createPrice = ({
   id,
   plan,
   kind,
   interval,
+  tiersMode = "graduated",
 }: {
   id: string;
   plan: "hobby" | "pro" | "scale";
   kind: "base" | "responses";
   interval: "monthly" | "yearly";
+  tiersMode?: "graduated" | "volume";
 }) => ({
   id,
   active: true,
   currency: "usd",
   unit_amount: kind === "responses" ? 0 : interval === "monthly" ? 1000 : 10000,
+  ...(kind === "responses" ? { tiers: RESPONSE_PRICE_TIERS, tiers_mode: tiersMode } : {}),
   metadata: {
     formbricks_plan: plan,
     formbricks_price_kind: kind,
@@ -108,6 +126,7 @@ describe("stripe-billing-catalog", () => {
             interval: "monthly",
             currency: "usd",
             unitAmount: 1000,
+            responseOverage: null,
           },
         },
         pro: {
@@ -116,12 +135,14 @@ describe("stripe-billing-catalog", () => {
             interval: "monthly",
             currency: "usd",
             unitAmount: 1000,
+            responseOverage: EXPECTED_RESPONSE_OVERAGE,
           },
           yearly: {
             plan: "pro",
             interval: "yearly",
             currency: "usd",
             unitAmount: 10000,
+            responseOverage: EXPECTED_RESPONSE_OVERAGE,
           },
         },
         scale: {
@@ -130,15 +151,48 @@ describe("stripe-billing-catalog", () => {
             interval: "monthly",
             currency: "usd",
             unitAmount: 1000,
+            responseOverage: EXPECTED_RESPONSE_OVERAGE,
           },
           yearly: {
             plan: "scale",
             interval: "yearly",
             currency: "usd",
             unitAmount: 10000,
+            responseOverage: EXPECTED_RESPONSE_OVERAGE,
           },
         },
       });
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "omits responseOverage for volume-mode response prices",
+    async () => {
+      mocks.pricesList.mockResolvedValue({
+        data: [
+          createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+          createPrice({
+            id: "price_pro_responses",
+            plan: "pro",
+            kind: "responses",
+            interval: "monthly",
+            tiersMode: "volume",
+          }),
+          createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+        ],
+        has_more: false,
+      });
+
+      const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
+      const display = await getStripeBillingCatalogDisplay();
+
+      expect(display.pro.monthly.responseOverage).toBeNull();
+      expect(display.scale.monthly.responseOverage).toEqual(EXPECTED_RESPONSE_OVERAGE);
     },
     TEST_TIMEOUT_MS
   );

@@ -7,4 +7,5 @@ export type IntegrationModalInputs = {
   includeHiddenFields: boolean;
   includeMetadata: boolean;
   includeCreatedAt: boolean;
+  includeContactAttributes: boolean;
 };

@@ -1,9 +1,9 @@
 "use client";
 
-import { Webhook } from "@prisma/client";
 import { WebhookIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TUserLocale } from "@formbricks/types/user";
 import { WebhookOverviewTab } from "@/modules/integrations/webhooks/components/webhook-overview-tab";
@@ -84,7 +84,7 @@ export const WebhookModal = ({
                 <button
                   key={tab.title}
                   type="button"
-                  className={`mr-4 px-1 pb-3 focus:outline-none ${
+                  className={`mr-4 px-1 pb-3 focus:outline-hidden ${
                     activeTab === index
                       ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                       : "text-slate-500 hover:text-slate-700"

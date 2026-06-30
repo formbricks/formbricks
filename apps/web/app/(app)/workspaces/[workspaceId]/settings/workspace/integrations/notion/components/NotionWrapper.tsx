@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
@@ -22,6 +23,7 @@ interface NotionWrapperProps {
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
   locale: TUserLocale;
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const NotionWrapper = ({
@@ -32,6 +34,7 @@ export const NotionWrapper = ({
   surveys,
   databasesArray,
   locale,
+  contactAttributeKeys,
 }: NotionWrapperProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
@@ -61,6 +64,7 @@ export const NotionWrapper = ({
             notionIntegration={notionIntegration}
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
+            contactAttributeKeys={contactAttributeKeys}
           />
           <ManageIntegration
             notionIntegration={notionIntegration}

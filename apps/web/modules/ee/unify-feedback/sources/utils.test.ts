@@ -3,9 +3,9 @@ import { CSV_HIDDEN_STATIC_MAPPINGS, MAX_CSV_VALUES, TFieldMapping, TSourceField
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
-  getConnectorOptions,
+  getFeedbackSourceOptions,
   inferFieldType,
-  isConnectorNameValid,
+  isFeedbackSourceNameValid,
   parseCSVColumnsToFields,
   titleizeFromFileName,
   toggleQuestionId,
@@ -14,9 +14,9 @@ import {
 
 const mockT = (key: string) => key;
 
-describe("getConnectorOptions", () => {
+describe("getFeedbackSourceOptions", () => {
   test("returns formbricks, csv, api ingestion, and mcp options", () => {
-    const options = getConnectorOptions(mockT as never);
+    const options = getFeedbackSourceOptions(mockT as never);
     expect(options).toHaveLength(4);
     expect(options[0].id).toBe("formbricks_survey");
     expect(options[1].id).toBe("csv");
@@ -25,12 +25,12 @@ describe("getConnectorOptions", () => {
   });
 
   test("both options are enabled by default", () => {
-    const options = getConnectorOptions(mockT as never);
+    const options = getFeedbackSourceOptions(mockT as never);
     expect(options.every((o) => !o.disabled)).toBe(true);
   });
 
   test("uses translation keys for name and description", () => {
-    const options = getConnectorOptions(mockT as never);
+    const options = getFeedbackSourceOptions(mockT as never);
     expect(options[0].name).toBe("workspace.unify.formbricks_surveys");
     expect(options[0].description).toBe("workspace.unify.source_connect_formbricks_description");
     expect(options[1].name).toBe("workspace.unify.csv_import");
@@ -73,8 +73,12 @@ describe("parseCSVColumnsToFields", () => {
   });
 });
 
-const createMockFile = (name: string, size: number, type: string): File =>
-  new File(["x".repeat(size)], name, { type });
+const createMockFile = (name: string, size: number, type: string): File => {
+  const file = new File([], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+
+  return file;
+};
 
 describe("validateCsvFile", () => {
   test("accepts a valid .csv file", () => {
@@ -119,6 +123,12 @@ describe("validateCsvFile", () => {
     expect(result).toEqual({ valid: true });
   });
 
+  test("accepts a CSV file larger than 14MB", () => {
+    const file = createMockFile("large.csv", 14 * 1024 * 1024, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
   test("checks extension before MIME type", () => {
     const file = createMockFile("data.txt", 100, "text/csv");
     const result = validateCsvFile(file, mockT as never);
@@ -126,26 +136,26 @@ describe("validateCsvFile", () => {
   });
 });
 
-describe("isConnectorNameValid", () => {
+describe("isFeedbackSourceNameValid", () => {
   test("returns true for non-empty name", () => {
-    expect(isConnectorNameValid("My Connector")).toBe(true);
+    expect(isFeedbackSourceNameValid("My FeedbackSource")).toBe(true);
   });
 
   test("returns false for empty string", () => {
-    expect(isConnectorNameValid("")).toBe(false);
+    expect(isFeedbackSourceNameValid("")).toBe(false);
   });
 
   test("returns false for whitespace-only string", () => {
-    expect(isConnectorNameValid("   ")).toBe(false);
-    expect(isConnectorNameValid("\t\n  ")).toBe(false);
+    expect(isFeedbackSourceNameValid("   ")).toBe(false);
+    expect(isFeedbackSourceNameValid("\t\n  ")).toBe(false);
   });
 
   test("returns true for name with surrounding whitespace", () => {
-    expect(isConnectorNameValid("  name  ")).toBe(true);
+    expect(isFeedbackSourceNameValid("  name  ")).toBe(true);
   });
 
   test("returns true for single character", () => {
-    expect(isConnectorNameValid("a")).toBe(true);
+    expect(isFeedbackSourceNameValid("a")).toBe(true);
   });
 });
 

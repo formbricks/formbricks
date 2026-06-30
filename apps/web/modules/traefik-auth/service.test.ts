@@ -220,6 +220,24 @@ describe("authorizeTraefikRequest", () => {
     });
   });
 
+  test("authorizes similar feedback by resolving the record tenant", async () => {
+    mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
+    mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
+
+    const response = await authorizeTraefikRequest(
+      createRequest({
+        forwardedUri: `/v1/feedback-records/${feedbackRecordId}/similar`,
+        headers: {
+          authorization: "Bearer header.payload.signature",
+        },
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockGetFeedbackRecordTenant).toHaveBeenCalledWith(feedbackRecordId);
+    expect(mockGetFeedbackDirectoryAuthContext).toHaveBeenCalledWith(feedbackDirectoryId);
+  });
+
   test("returns 401 for invalid explicit JWT instead of falling back to session cookies", async () => {
     mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockGetProxySession.mockResolvedValue({

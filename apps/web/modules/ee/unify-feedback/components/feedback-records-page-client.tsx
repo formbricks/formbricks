@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import type { TConnectorFieldMapping } from "@formbricks/types/connector";
+import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -13,7 +13,7 @@ interface FeedbackRecordsPageClientProps {
   initialRecords: FeedbackRecordData[];
   initialCursors: Record<string, string>;
   frdMap: Record<string, string>;
-  csvSources: { id: string; name: string; fieldMappings: TConnectorFieldMapping[] }[];
+  csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
   canWrite: boolean;
 }
 

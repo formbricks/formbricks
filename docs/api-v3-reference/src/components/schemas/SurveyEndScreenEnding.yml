@@ -1,0 +1,27 @@
+type: object
+description: Visual end screen displayed after survey completion.
+required:
+  - id
+  - type
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Stable ending id. `jumpToBlock.target` may point to this id.
+  type:
+    type: string
+    enum:
+      - endScreen
+  headline:
+    $ref: ./TranslatableText.yml
+  subheader:
+    $ref: ./TranslatableText.yml
+  buttonLabel:
+    $ref: ./TranslatableText.yml
+  buttonLink:
+    type: string
+  imageUrl:
+    type: string
+  videoUrl:
+    type: string
+additionalProperties: false

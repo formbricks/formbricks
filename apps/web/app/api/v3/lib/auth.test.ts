@@ -1,5 +1,5 @@
-import { ApiKeyPermission } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";

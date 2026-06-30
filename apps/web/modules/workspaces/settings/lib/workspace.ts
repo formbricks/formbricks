@@ -1,11 +1,12 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
@@ -45,6 +46,11 @@ const DEFAULT_CONTACT_ATTRIBUTE_KEYS: Prisma.ContactAttributeKeyCreateWithoutWor
     type: "default",
   },
 ];
+
+const DEFAULT_WORKSPACE_LANGUAGE: Prisma.LanguageCreateWithoutWorkspaceInput = {
+  code: DEFAULT_LOCALE,
+  alias: null,
+};
 
 const selectWorkspace = {
   id: true,
@@ -115,6 +121,9 @@ export const createWorkspace = async (
         organizationId,
         contactAttributeKeys: {
           create: DEFAULT_CONTACT_ATTRIBUTE_KEYS,
+        },
+        languages: {
+          create: [DEFAULT_WORKSPACE_LANGUAGE],
         },
       },
       select: selectWorkspace,

@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import {
   V3SurveyLanguageError,
   V3SurveyUnsupportedShapeError,
+  serializeV3SurveyListItem,
   serializeV3SurveyResource,
 } from "./serializers";
 
@@ -14,7 +16,11 @@ const baseSurvey = {
   name: "Product Feedback",
   type: "link",
   status: "draft",
-  metadata: { cx: "enterprise" },
+  metadata: {
+    cx: "enterprise",
+    arbitraryConfig: { default: "preserve-me", mode: "strict" },
+    title: { default: "Product Feedback", "de-DE": "Produktfeedback" },
+  },
   languages: [
     {
       default: true,
@@ -92,6 +98,70 @@ const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
   }) as unknown as TSurvey;
 
 describe("serializeV3SurveyResource", () => {
+  test("includes distribution and targeting for app surveys", () => {
+    const appSurvey = {
+      ...baseSurvey,
+      type: "app",
+      displayOption: "respondMultiple",
+      displayPercentage: 25,
+      displayLimit: 3,
+      recontactDays: 7,
+      autoClose: 30,
+      autoComplete: 100,
+      delay: 5,
+      triggers: [{ actionClass: { id: "claa1234567890123456789012", name: "Checkout" } }],
+      segment: {
+        id: "seg_1",
+        filters: [
+          {
+            id: "f1",
+            connector: null,
+            resource: {
+              id: "r1",
+              root: { type: "attribute", contactAttributeKey: "plan" },
+              qualifier: { operator: "equals" },
+              value: "pro",
+            },
+          },
+        ],
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(appSurvey);
+
+    expect(resource.distribution).toEqual({
+      displayOption: "respondMultiple",
+      displayPercentage: 25,
+      displayLimit: 3,
+      recontactDays: 7,
+      autoClose: 30,
+      autoComplete: 100,
+      delay: 5,
+      triggers: [{ actionClassId: "claa1234567890123456789012" }],
+    });
+    expect(resource.targeting).toEqual({
+      filters: [
+        {
+          id: "f1",
+          connector: null,
+          resource: {
+            id: "r1",
+            root: { type: "attribute", contactAttributeKey: "plan" },
+            qualifier: { operator: "equals" },
+            value: "pro",
+          },
+        },
+      ],
+    });
+  });
+
+  test("omits distribution and targeting for link surveys", () => {
+    const resource = serializeV3SurveyResource(baseSurvey);
+
+    expect(resource).not.toHaveProperty("distribution");
+    expect(resource).not.toHaveProperty("targeting");
+  });
+
   test("returns multilingual fields using emitted survey language codes", () => {
     const resource = serializeV3SurveyResource(baseSurvey);
 
@@ -102,6 +172,16 @@ describe("serializeV3SurveyResource", () => {
       { code: "de-DE", default: false, enabled: true, alias: "de" },
       { code: "fr-FR", default: false, enabled: false, alias: "fr" },
     ]);
+    expect(resource).toMatchObject({
+      metadata: {
+        cx: "enterprise",
+        arbitraryConfig: { default: "preserve-me", mode: "strict" },
+        title: {
+          "en-US": "Product Feedback",
+          "de-DE": "Produktfeedback",
+        },
+      },
+    });
     expect(resource).toMatchObject({
       welcomeCard: {
         headline: {
@@ -581,5 +661,42 @@ describe("serializeV3SurveyResource", () => {
     expect(() => serializeV3SurveyResource(survey)).toThrow(
       "Legacy question-based surveys are not supported by the v3 survey management API"
     );
+  });
+});
+
+describe("serializeV3SurveyListItem", () => {
+  const baseListSurvey = {
+    id: "survey_1",
+    name: "Customer onboarding",
+    workspaceId: "workspace_1",
+    type: "link",
+    status: "draft",
+    publishOn: null,
+    createdAt: new Date("2026-04-15T10:00:00.000Z"),
+    updatedAt: new Date("2026-04-16T10:00:00.000Z"),
+    responseCount: 0,
+    singleUse: null,
+  } satisfies Omit<TSurveyListRecord, "creator">;
+
+  test("allowlists nested creator fields", () => {
+    const survey = {
+      ...baseListSurvey,
+      creator: {
+        name: "Ada",
+        email: "ada@example.com",
+        id: "user_1",
+      },
+    } as unknown as TSurveyListRecord;
+
+    expect(serializeV3SurveyListItem(survey).creator).toEqual({ name: "Ada" });
+  });
+
+  test("preserves null creator", () => {
+    const survey = {
+      ...baseListSurvey,
+      creator: null,
+    } satisfies TSurveyListRecord;
+
+    expect(serializeV3SurveyListItem(survey).creator).toBeNull();
   });
 });

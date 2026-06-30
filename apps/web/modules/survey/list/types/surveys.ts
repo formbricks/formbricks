@@ -1,5 +1,5 @@
-import { Language, Workspace } from "@prisma/client";
 import { z } from "zod";
+import { Language, Workspace } from "@formbricks/database/prisma";
 import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 export const ZSurvey = z.object({

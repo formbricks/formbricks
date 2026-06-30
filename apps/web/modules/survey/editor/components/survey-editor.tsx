@@ -1,7 +1,7 @@
 "use client";
 
-import { ActionClass, Language, OrganizationRole, Workspace } from "@prisma/client";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
@@ -50,7 +50,6 @@ interface SurveyEditorProps {
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
   publicDomain: string;
-  moveHiddenFieldsToSettingsTab?: boolean;
   enterpriseLicenseRequestFormUrl: string;
 }
 
@@ -80,13 +79,12 @@ export const SurveyEditor = ({
   quotas,
   isExternalUrlsAllowed,
   publicDomain,
-  moveHiddenFieldsToSettingsTab = false,
   enterpriseLicenseRequestFormUrl,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
-  const [invalidElements, setInvalidElements] = useState<string[] | null>([]);
+  const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
@@ -195,7 +193,7 @@ export const SurveyEditor = ({
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
-          className="relative z-0 w-full overflow-y-auto bg-slate-50 focus:outline-none md:w-2/3"
+          className="relative z-0 w-full overflow-y-auto bg-slate-50 focus:outline-hidden md:w-2/3"
           ref={surveyEditorRef}>
           <SurveyEditorTabs
             activeId={activeView}
@@ -223,7 +221,6 @@ export const SurveyEditor = ({
               isStorageConfigured={isStorageConfigured}
               quotas={quotas}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
-              moveHiddenFieldsToSettingsTab={moveHiddenFieldsToSettingsTab}
             />
           )}
 
@@ -272,9 +269,6 @@ export const SurveyEditor = ({
               locale={locale}
               appSetupCompleted={localWorkspace.appSetupCompleted}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
-              moveHiddenFieldsToSettingsTab={moveHiddenFieldsToSettingsTab}
-              activeElementId={activeElementId}
-              setActiveElementId={setActiveElementId}
             />
           )}
 
@@ -294,7 +288,7 @@ export const SurveyEditor = ({
           )}
         </main>
 
-        <aside className="group hidden w-1/3 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
+        <aside className="group hidden w-1/3 shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <PreviewSurvey
             survey={localSurvey}
             elementId={activeElementId}

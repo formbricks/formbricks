@@ -69,7 +69,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all API configurations", () => {
       const apiConfigs = Object.keys(rateLimitConfigs.api);
-      expect(apiConfigs).toEqual(["v1", "v2", "v3", "client", "clientEnvironment"]);
+      expect(apiConfigs).toEqual(["v1", "v2", "v3", "v3SurveyGenerate", "client", "clientEnvironment"]);
     });
 
     test("should have all action configurations", () => {
@@ -82,6 +82,9 @@ describe("rateLimitConfigs", () => {
         "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
+        "inviteMember",
+        "bulkInviteMembers",
+        "generateExampleResponses",
       ]);
     });
 
@@ -148,6 +151,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
         { config: rateLimitConfigs.api.v3, identifier: "api-v3-key" },
+        { config: rateLimitConfigs.api.v3SurveyGenerate, identifier: "api-v3-survey-generate-key" },
         { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
         { config: rateLimitConfigs.api.clientEnvironment, identifier: "environment-id" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
@@ -207,6 +211,14 @@ describe("rateLimitConfigs", () => {
       expect(config.interval).toBe(60);
       expect(config.allowedPerInterval).toBe(1000);
       expect(config.namespace).toBe("api:client:environment");
+    });
+
+    test("should properly configure v3 survey generation rate limit", async () => {
+      const config = rateLimitConfigs.api.v3SurveyGenerate;
+
+      expect(config.interval).toBe(60);
+      expect(config.allowedPerInterval).toBe(10);
+      expect(config.namespace).toBe("api:v3:surveys:generate");
     });
   });
 });

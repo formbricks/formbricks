@@ -12,13 +12,13 @@ import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
 import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
-import { type TPlanVariant } from "@/modules/ee/billing/lib/select-plan-variants";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
   nextUrl: string;
   organizationId: string;
-  variant: TPlanVariant;
+  featureVariant: "control" | "variant_b";
+  ctaVariant: "control" | "variant_b" | "variant_c" | "variant_d";
 }
 
 const CUSTOMER_LOGOS = [
@@ -29,39 +29,47 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<SelectPlanCardProps>) => {
+export const SelectPlanCard = ({
+  nextUrl,
+  organizationId,
+  featureVariant,
+  ctaVariant,
+}: Readonly<SelectPlanCardProps>) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
-  const isVariantB = variant === "variant_b";
-  const isVariantC = variant === "variant_c";
-  const copy = isVariantB
-    ? {
-        header: t("workspace.settings.billing.select_plan_variant_b_header"),
-        subheader: t("workspace.settings.billing.select_plan_variant_b_subheader"),
-        cta: t("workspace.settings.billing.select_plan_variant_b_cta"),
-        skip: t("workspace.settings.billing.select_plan_variant_b_skip"),
-      }
-    : isVariantC
-      ? {
-          header: t("workspace.settings.billing.select_plan_variant_c_header"),
-          subheader: t("workspace.settings.billing.select_plan_variant_c_subheader"),
-          cta: t("workspace.settings.billing.select_plan_variant_c_cta"),
-          skip: t("workspace.settings.billing.select_plan_variant_c_skip"),
-        }
-      : {
-          header: t("workspace.settings.billing.select_plan_header"),
-          subheader: t("workspace.settings.billing.select_plan_subheader"),
-          cta: t("workspace.settings.billing.select_plan_cta"),
-          skip: t("workspace.settings.billing.select_plan_skip"),
-        };
+  let ctaCopy: string;
+  if (ctaVariant === "variant_b") {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_b");
+  } else if (ctaVariant === "variant_c") {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_c");
+  } else if (ctaVariant === "variant_d") {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_d");
+  } else {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta");
+  }
 
-  const SELECT_PLAN_FEATURE_KEYS = [
-    t("workspace.settings.billing.select_plan_feature_1"),
-    t("workspace.settings.billing.select_plan_feature_2"),
-    t("workspace.settings.billing.select_plan_feature_3"),
-  ] as const;
+  const copy = {
+    header: t("workspace.settings.billing.select_plan_header"),
+    subheader: t("workspace.settings.billing.select_plan_subheader"),
+    cta: ctaCopy,
+    skip: t("workspace.settings.billing.select_plan_skip"),
+  };
+
+  const SELECT_PLAN_FEATURE_KEYS =
+    featureVariant === "variant_b"
+      ? [
+          t("workspace.settings.billing.select_plan_variant_b_feature_1"),
+          t("workspace.settings.billing.select_plan_variant_b_feature_2"),
+          t("workspace.settings.billing.select_plan_variant_b_feature_3"),
+          t("workspace.settings.billing.select_plan_variant_b_feature_4"),
+        ]
+      : [
+          t("workspace.settings.billing.select_plan_feature_1"),
+          t("workspace.settings.billing.select_plan_feature_2"),
+          t("workspace.settings.billing.select_plan_feature_3"),
+        ];
 
   const handleStartTrial = async () => {
     setIsStartingTrial(true);
@@ -114,7 +122,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<Se
           <ul className="my-3 w-full space-y-3 text-left">
             {SELECT_PLAN_FEATURE_KEYS.map((key) => (
               <li key={key} className="flex items-center gap-3 text-slate-700">
-                <CheckIcon className="size-5 flex-shrink-0 text-slate-900" />
+                <CheckIcon className="size-5 shrink-0 text-slate-900" />
                 <span>{key}</span>
               </li>
             ))}
@@ -131,7 +139,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<Se
         </div>
 
         <div className="w-full overflow-hidden border-t border-slate-100 bg-slate-50 py-4">
-          <div className="flex w-max animate-logo-scroll gap-12 hover:[animation-play-state:paused]">
+          <div className="flex w-max animate-logo-scroll gap-12 hover:paused">
             {[...CUSTOMER_LOGOS, ...CUSTOMER_LOGOS].map((logo, index) => (
               <div
                 key={`${logo.alt}-${index}`}

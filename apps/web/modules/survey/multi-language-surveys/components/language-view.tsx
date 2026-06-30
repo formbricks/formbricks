@@ -1,10 +1,10 @@
 "use client";
 
-import { Language } from "@prisma/client";
 import { ArrowUpRight, EllipsisVerticalIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -370,7 +370,7 @@ export const LanguageView = ({
                     <td className="px-4 py-3">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button type="button" className="rounded p-1 hover:bg-slate-100">
+                          <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
                             <EllipsisVerticalIcon className="size-4 text-slate-500" />
                           </button>
                         </DropdownMenuTrigger>
@@ -441,7 +441,7 @@ export const LanguageView = ({
                             {inSurvey && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button type="button" className="rounded p-1 hover:bg-slate-100">
+                                  <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
                                     <EllipsisVerticalIcon className="size-4 text-slate-500" />
                                   </button>
                                 </DropdownMenuTrigger>

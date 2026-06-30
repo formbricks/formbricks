@@ -1,9 +1,9 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -151,6 +151,8 @@ export const SurveyClientWrapper = ({
     setResponseData({});
   };
   const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(survey), [survey]);
+  const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const hasLogo = !styling.isLogoHidden && !!(styling.logo?.url || workspace.logo?.url);
 
   // Determine text direction based on language code for logo positioning only
   // which checks both language code and survey content. This is only for logo UI positioning.
@@ -170,6 +172,7 @@ export const SurveyClientWrapper = ({
       )}
       <LinkSurveyWrapper
         workspace={workspace}
+        workspaceId={survey.workspaceId}
         surveyId={survey.id}
         isWelcomeCardEnabled={survey.welcomeCard.enabled}
         isPreview={isPreview}
@@ -218,6 +221,7 @@ export const SurveyClientWrapper = ({
           isSpamProtectionEnabled={isSpamProtectionEnabled}
           offlineSupport={offlineSupport}
           onOfflineStatusChange={offlineSupport ? handleOfflineStatusChange : undefined}
+          showCardlessPreviewLogoSlot={isCardless && hasLogo}
         />
       </LinkSurveyWrapper>
       {offlineSupport && !isEmbed && (

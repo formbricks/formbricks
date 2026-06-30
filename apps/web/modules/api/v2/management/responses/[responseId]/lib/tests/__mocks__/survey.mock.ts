@@ -1,4 +1,4 @@
-import { Survey } from "@prisma/client";
+import { Survey } from "@formbricks/database/prisma";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
@@ -10,7 +10,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { ConnectorsSection } from "./components/connectors-page-client";
+import { FeedbackSourcesSection } from "./components/feedback-sources-page-client";
 import { transformToUnifySurvey } from "./lib";
 
 export const WorkspaceFeedbackSourcesPage = async (
@@ -56,13 +56,13 @@ export const WorkspaceFeedbackSourcesPage = async (
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  ? `/organizations/${organization.id}/settings/billing`
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  ? `/organizations/${organization.id}/settings/billing`
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}
@@ -72,8 +72,8 @@ export const WorkspaceFeedbackSourcesPage = async (
     );
   }
 
-  const [connectors, surveys, directories] = await Promise.all([
-    getConnectorsWithMappings(params.workspaceId),
+  const [feedbackSources, surveys, directories] = await Promise.all([
+    getFeedbackSourcesWithMappings(params.workspaceId),
     getSurveys(params.workspaceId),
     getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
   ]);
@@ -81,9 +81,9 @@ export const WorkspaceFeedbackSourcesPage = async (
   const unifySurveys = surveys.map(transformToUnifySurvey);
 
   return (
-    <ConnectorsSection
+    <FeedbackSourcesSection
       workspaceId={params.workspaceId}
-      initialConnectors={connectors}
+      initialFeedbackSources={feedbackSources}
       initialSurveys={unifySurveys}
       directories={directories}
       isReadOnly={isReadOnly}

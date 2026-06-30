@@ -71,7 +71,6 @@ import { DateFilterValue } from "./date-filter-value";
 interface TSegmentFilterProps {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
-  workspaceId: string;
   segment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
@@ -314,7 +313,6 @@ function AttributeSegmentFilter({
         return (
           <AttributeValueInput
             attributeKeyId={attributeKey.id}
-            workspaceId={segment.workspaceId}
             value={resource.value as string}
             onChange={(newValue) => {
               updateValueInLocalSurvey(resource.id, newValue);
@@ -855,7 +853,6 @@ function DeviceFilter({
 export function SegmentFilter({
   resource,
   connector,
-  workspaceId,
   segment,
   segments,
   contactAttributeKeys,
@@ -881,19 +878,17 @@ export function SegmentFilter({
     setAddFilterModalOpen(true);
   };
 
-  function RenderFilterModal() {
-    return (
-      <AddFilterModal
-        contactAttributeKeys={contactAttributeKeys}
-        onAddFilter={(filter) => {
-          handleAddFilterBelow(resource.id, filter);
-        }}
-        open={addFilterModalOpen}
-        segments={segments}
-        setOpen={setAddFilterModalOpen}
-      />
-    );
-  }
+  const filterModal = (
+    <AddFilterModal
+      contactAttributeKeys={contactAttributeKeys}
+      onAddFilter={(filter) => {
+        handleAddFilterBelow(resource.id, filter);
+      }}
+      open={addFilterModalOpen}
+      segments={segments}
+      setOpen={setAddFilterModalOpen}
+    />
+  );
 
   switch (resource.root.type) {
     case "attribute":
@@ -902,7 +897,6 @@ export function SegmentFilter({
           <AttributeSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -916,7 +910,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 
@@ -926,7 +920,6 @@ export function SegmentFilter({
           <PersonSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -940,7 +933,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 
@@ -950,7 +943,6 @@ export function SegmentFilter({
           <SegmentSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -963,7 +955,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 
@@ -973,7 +965,6 @@ export function SegmentFilter({
           <DeviceFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -986,7 +977,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 

@@ -1,6 +1,6 @@
-import { OrganizationRole, User } from "@prisma/client";
 import { z } from "zod";
 import { ZUserEmail, ZUserName } from "../../types/user";
+import { OrganizationRole, User } from "../src/prisma";
 
 const ZNoBillingOrganizationRoles = z.enum(
   Object.values(OrganizationRole).filter((role) => role !== OrganizationRole.billing) as [

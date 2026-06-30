@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -35,7 +35,7 @@ vi.mock("@/lib/i18n/utils", () => ({
 vi.mock("@/lib/response/service", () => ({
   getResponseCountBySurveyId: vi.fn(),
 }));
-vi.mock("@/lib/response/utils", () => ({
+vi.mock("@/lib/response/where-clause", () => ({
   buildWhereClause: vi.fn(() => ({})),
 }));
 vi.mock("@/lib/survey/service", () => ({

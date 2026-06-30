@@ -1,8 +1,8 @@
 import "server-only";
-import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError, InvalidInputError } from "@formbricks/types/errors";
 import { cache } from "@/lib/cache";
