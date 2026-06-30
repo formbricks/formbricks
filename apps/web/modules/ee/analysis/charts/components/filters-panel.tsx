@@ -94,12 +94,14 @@ export function FiltersPanel({
       return null;
     }
 
+    const currentValue = String(filter.values?.[0] ?? "");
+
     // Time-type dimensions (Collected At, Created At, Updated At, Value (Date)) get a
     // date picker instead of a free-text field.
     if (fieldType === "time") {
       return (
         <FilterDateInput
-          value={filter.values?.[0] != null ? String(filter.values[0]) : ""}
+          value={currentValue}
           onChange={(value) => handleUpdateFilter(index, { values: value ? [value] : null })}
         />
       );
@@ -117,7 +119,7 @@ export function FiltersPanel({
           workspaceId={workspaceId}
           feedbackDirectoryId={feedbackDirectoryId}
           dimension={filter.field}
-          value={filter.values?.[0] != null ? String(filter.values[0]) : ""}
+          value={currentValue}
           onChange={(value) => handleUpdateFilter(index, { values: value ? [value] : null })}
         />
       );
