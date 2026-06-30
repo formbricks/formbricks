@@ -993,6 +993,7 @@ export const PricingTable = ({
             if (!value) closeUpgradeConfirmation();
           }}
           title={t("workspace.settings.billing.confirm_upgrade_title")}
+          description={t("workspace.settings.billing.confirm_upgrade_description")}
           body={
             isLoadingUpgradePreview
               ? t("workspace.settings.billing.confirm_upgrade_calculating")

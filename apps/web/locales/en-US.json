@@ -2303,6 +2303,7 @@
         "confirm_upgrade_body_with_charge": "You're about to upgrade to the {plan} plan ({period}). You'll be charged {chargeNow} now for the rest of your current billing period, with any applicable taxes calculated at payment. Continue?",
         "confirm_upgrade_button": "Confirm upgrade",
         "confirm_upgrade_calculating": "Calculating your prorated charge…",
+        "confirm_upgrade_description": "You can change your plan again at any time.",
         "confirm_upgrade_title": "Confirm upgrade",
         "continue_with_plan_after_trial": "Continue with Pro after trial",
         "current_plan_badge": "Current",
