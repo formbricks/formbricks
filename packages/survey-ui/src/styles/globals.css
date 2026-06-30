@@ -57,7 +57,7 @@
   /* ---------------------------------------------------------------------------
      Theming Tokens (--fb-*)
 
-     Color values MUST match the output of getSuggestedColors("#64748b") in
+     Color values MUST match the output of getSuggestedColors("#1e40af") in
      apps/web/lib/styling/constants.ts.  Non-color values MUST match
      STYLE_DEFAULTS in the same file.
 
@@ -65,46 +65,46 @@
      CSS values below act as the initial / fallback state so the survey looks
      correct before JS executes.
 
-     Derived colour palette for brand #64748b:
-       questionColor  = #414b5a   (brand mixed with black @ 0.35)
-       inputBg        = #f3f4f6   (brand mixed with white @ 0.92)
-       inputBorder    = #c1c7d1   (brand mixed with white @ 0.60)
-       cardBg         = #fafbfc   (brand mixed with white @ 0.97)
-       cardBorder     = #e0e3e8   (brand mixed with white @ 0.80)
-       progressTrack  = #d9dbde   (questionColor mixed with white @ 0.80)
+     Derived colour palette for brand #1e40af:
+       questionColor  = #142a72   (brand mixed with black @ 0.35)
+       inputBg        = #edf0f9   (brand mixed with white @ 0.92)
+       inputBorder    = #a5b3df   (brand mixed with white @ 0.60)
+       cardBg         = #f8f9fd   (brand mixed with white @ 0.97)
+       cardBorder     = #d2d9ef   (brand mixed with white @ 0.80)
+       progressTrack  = #d2d9ef   (brand mixed with white @ 0.80)
      --------------------------------------------------------------------------- */
 
   /* ── Brand ─────────────────────────────────────────────────────────── */
-  --fb-survey-brand-color: #64748b;
-  --fb-accent-background-color: #e2e8f0;
-  --fb-accent-background-color-selected: #f1f5f9;
+  --fb-survey-brand-color: #1e40af;
+  --fb-accent-background-color: #d2d9ef;
+  --fb-accent-background-color-selected: #bcc6e7;
 
   /* ── Headlines ─────────────────────────────────────────────────────── */
   --fb-element-headline-font-family: inherit;
   --fb-element-headline-font-weight: 600;
   --fb-element-headline-font-size: 16px;
-  --fb-element-headline-color: #414b5a;
+  --fb-element-headline-color: #142a72;
   --fb-element-headline-opacity: 1;
 
   /* ── Descriptions ──────────────────────────────────────────────────── */
   --fb-element-description-font-family: inherit;
   --fb-element-description-font-weight: 400;
   --fb-element-description-font-size: 14px;
-  --fb-element-description-color: #414b5a;
+  --fb-element-description-color: #142a72;
   --fb-element-description-opacity: 1;
 
   /* ── Upper Labels ──────────────────────────────────────────────────── */
   --fb-element-upper-label-font-family: inherit;
   --fb-element-upper-label-font-weight: 400;
   --fb-element-upper-label-font-size: 12px;
-  --fb-element-upper-label-color: #414b5a;
+  --fb-element-upper-label-color: #142a72;
   --fb-element-upper-label-opacity: 0.6;
 
   /* ── Labels ────────────────────────────────────────────────────────── */
   --fb-label-font-family: inherit;
   --fb-label-font-weight: 400;
   --fb-label-font-size: 14px;
-  --fb-label-color: #414b5a;
+  --fb-label-color: #142a72;
   --fb-label-opacity: 1;
 
   /* ── Buttons ───────────────────────────────────────────────────────── */
@@ -114,19 +114,19 @@
   --fb-button-font-size: 16px;
   --fb-button-font-weight: 500;
   --fb-button-border-radius: 8px;
-  --fb-button-bg-color: #414b5a;
+  --fb-button-bg-color: #1e40af;
   --fb-button-text-color: #ffffff;
   --fb-button-padding-x: 12px;
   --fb-button-padding-y: 12px;
 
   /* ── Inputs ────────────────────────────────────────────────────────── */
-  --fb-input-bg-color: #f3f4f6;
-  --fb-input-border-color: #c1c7d1;
+  --fb-input-bg-color: #edf0f9;
+  --fb-input-border-color: #a5b3df;
   --fb-input-border-radius: 8px;
   --fb-input-font-family: inherit;
   --fb-input-font-size: 14px;
   --fb-input-font-weight: 400;
-  --fb-input-color: #414b5a;
+  --fb-input-color: #142a72;
   --fb-input-placeholder-color: var(--fb-input-text-color, var(--fb-input-color));
   --fb-input-placeholder-opacity: 0.5;
   --fb-input-width: 100%;
@@ -137,14 +137,14 @@
 
   /* ── Progress Bar ──────────────────────────────────────────────────── */
   --fb-progress-track-height: 8px;
-  --fb-progress-track-bg-color: #d9dbde;
+  --fb-progress-track-bg-color: #d2d9ef;
   --fb-progress-track-border-radius: 8px;
-  --fb-progress-indicator-bg-color: #414b5a;
+  --fb-progress-indicator-bg-color: #1e40af;
   --fb-progress-indicator-border-radius: 8px;
 
   /* ── Options (radio / checkbox / multi-select) ─────────────────────── */
-  --fb-option-bg-color: #f3f4f6;
-  --fb-option-label-color: #414b5a;
+  --fb-option-bg-color: #edf0f9;
+  --fb-option-label-color: #142a72;
   --fb-option-border-radius: 8px;
   --fb-option-padding-x: 16px;
   --fb-option-padding-y: 16px;
@@ -213,6 +213,7 @@
 }
 
 #fbjs .progress-indicator {
+  --fb-progress-translate-x: -100%;
   background-color: var(--fb-progress-indicator-bg-color);
   border-radius: var(--fb-progress-indicator-border-radius);
 }

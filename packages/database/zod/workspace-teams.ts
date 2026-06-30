@@ -1,5 +1,5 @@
-import { type WorkspaceTeam, WorkspaceTeamPermission } from "@prisma/client";
 import { z } from "zod";
+import { type WorkspaceTeam, WorkspaceTeamPermission } from "../src/prisma";
 
 export const ZWorkspaceTeam = z.object({
   createdAt: z.coerce

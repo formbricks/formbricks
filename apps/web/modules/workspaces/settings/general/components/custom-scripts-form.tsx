@@ -67,9 +67,9 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
   return (
     <>
       <FormProvider {...form}>
-        <form className="flex w-full flex-col space-y-4" onSubmit={form.handleSubmit(updateCustomScripts)}>
+        <form className="flex w-full flex-col gap-y-4" onSubmit={form.handleSubmit(updateCustomScripts)}>
           <Alert variant="warning" className="flex items-start gap-2">
-            <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+            <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
             <AlertDescription>{t("workspace.general.custom_scripts_warning")}</AlertDescription>
           </Alert>
 
@@ -88,7 +88,7 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
                     rows={8}
                     placeholder={t("workspace.general.custom_scripts_placeholder")}
                     className={cn(
-                      "flex w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 font-mono text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                      "flex w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 font-mono text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
                       isReadOnly && "bg-slate-50"
                     )}
                     {...field}

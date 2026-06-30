@@ -1,6 +1,6 @@
-import { ContactAttributeKey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -145,6 +145,13 @@ describe("createContactAttributeKey", () => {
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValue(err);
 
     await expect(createContactAttributeKey({ workspaceId, key: "email" })).rejects.toThrow(InvalidInputError);
+  });
+
+  test("throws InvalidInputError when key is reserved for future defaults", async () => {
+    await expect(createContactAttributeKey({ workspaceId, key: "user_id" })).rejects.toThrow(
+      InvalidInputError
+    );
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
   });
 
   test("rethrows unknown prisma error codes", async () => {

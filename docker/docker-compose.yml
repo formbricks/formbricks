@@ -1,5 +1,5 @@
 x-environment: &environment
-  environment:
+  environment: &app-environment
     ######################################################## REQUIRED ########################################################
 
     # The url of your Formbricks instance used in the admin panel
@@ -30,7 +30,23 @@ x-environment: &environment
     REDIS_URL: redis://redis:6379
 
     # Formbricks Hub (port 8080): API key required. Use e.g. openssl rand -hex 32
-    HUB_API_KEY:
+    HUB_API_KEY: ${HUB_API_KEY:-}
+
+    # Taxonomy service credentials are consumed by Hub/taxonomy only. Keep these
+    # empty here so a shared docker/.env file cannot leak them into the web app.
+    TAXONOMY_SERVICE_URL: ""
+    TAXONOMY_SERVICE_TOKEN: ""
+    HUB_INTERNAL_API_TOKEN: ""
+    TAXONOMY_LLM_PROVIDER: ""
+    TAXONOMY_LLM_MODEL: ""
+    TAXONOMY_LLM_BASE_URL: ""
+    TAXONOMY_LLM_API_KEY: ""
+    TAXONOMY_VERTEX_PROJECT: ""
+    TAXONOMY_VERTEX_LOCATION: ""
+    TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON: ""
+    TAXONOMY_BEDROCK_MODEL: ""
+    TAXONOMY_MAX_RECORDS: ""
+    AWS_BEARER_TOKEN_BEDROCK: ""
 
     # Base URL the Formbricks app uses to reach Hub. Defaults to the internal Hub service.
     HUB_API_URL: ${HUB_API_URL:-http://hub:8080}
@@ -38,7 +54,7 @@ x-environment: &environment
     # Hub database URL (optional). Default: same Postgres as Formbricks. Set only if Hub uses a separate DB.
     # HUB_DATABASE_URL:
 
-    # Cube.js analytics for XM Suite v5. Enable the optional xm profile and set CUBEJS_API_SECRET to run Cube.
+    # Cube semantic-layer API used by Formbricks analytics. Required.
     CUBEJS_API_URL: ${CUBEJS_API_URL:-http://cube:4000}
     CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:-}
     CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
@@ -192,6 +208,8 @@ x-environment: &environment
     # OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     # OTEL_SERVICE_NAME: formbricks
     # OTEL_RESOURCE_ATTRIBUTES: deployment.environment=development
+    # Set the below to 1 to also export Pino logs via OTLP (needs OTEL_EXPORTER_OTLP_ENDPOINT)
+    # OTEL_LOGS_ENABLED: 1
     # OTEL_TRACES_SAMPLER: parentbased_traceidratio
     # OTEL_TRACES_SAMPLER_ARG: 1
 
@@ -222,9 +240,10 @@ services:
     restart: always
     image: pgvector/pgvector:pg18
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     environment:
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=formbricks
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       interval: 5s
@@ -249,19 +268,40 @@ services:
       retries: 30
       start_period: 10s
 
+  # Run Formbricks Prisma migrations before Hub writes tables to the shared database.
+  formbricks-migrate:
+    image: ghcr.io/formbricks/formbricks:latest
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      [
+        'if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi',
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    <<: *environment
+
   formbricks:
     restart: always
     image: ghcr.io/formbricks/formbricks:latest
+    env_file:
+      - path: .env
+        required: false
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      cube:
+        condition: service_healthy
     ports:
       - 3000:3000
     volumes:
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
-    <<: *environment
+    environment:
+      <<: *app-environment
+      SKIP_STARTUP_MIGRATION: "true"
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
@@ -278,8 +318,8 @@ services:
     environment:
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
     depends_on:
-      postgres:
-        condition: service_healthy
+      formbricks-migrate:
+        condition: service_completed_successfully
 
   # Formbricks Hub API (ghcr.io/formbricks/hub). Set HUB_API_KEY. By default shares the Formbricks database; set HUB_DATABASE_URL to use a separate DB.
   hub:
@@ -291,14 +331,114 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      API_KEY: ${HUB_API_KEY:?HUB_API_KEY is required to run Hub}
+      API_KEY: ${HUB_API_KEY:-}
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
+      TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
+      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
 
-  # Optional Cube.js analytics service for XM Suite v5. Enable with COMPOSE_PROFILES=xm and set CUBEJS_API_SECRET.
+  # Optional AI taxonomy beta service. Enable with COMPOSE_PROFILES=taxonomy.
+  taxonomy:
+    restart: always
+    profiles: ["taxonomy"]
+    image: ghcr.io/formbricks/taxonomy${TAXONOMY_IMAGE_REF:-:latest}
+    depends_on:
+      hub:
+        condition: service_started
+    environment:
+      APP_ENV: production
+      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+      HUB_INTERNAL_API_URL: http://hub:8080
+      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+      TAXONOMY_LLM_PROVIDER: ${TAXONOMY_LLM_PROVIDER:-openai-compatible}
+      TAXONOMY_LLM_MODEL: ${TAXONOMY_LLM_MODEL:-}
+      TAXONOMY_LLM_BASE_URL: ${TAXONOMY_LLM_BASE_URL:-}
+      TAXONOMY_LLM_API_KEY: ${TAXONOMY_LLM_API_KEY:-}
+      TAXONOMY_VERTEX_PROJECT: ${TAXONOMY_VERTEX_PROJECT:-}
+      TAXONOMY_VERTEX_LOCATION: ${TAXONOMY_VERTEX_LOCATION:-}
+      TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON: ${TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_BEARER_TOKEN_BEDROCK: ${AWS_BEARER_TOKEN_BEDROCK:-}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # Optional bundled Qwen/vLLM OpenAI-compatible runtime. Enable with COMPOSE_PROFILES=qwen.
+  vllm:
+    restart: always
+    profiles: ["qwen"]
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command:
+      - vllm
+      - serve
+      - ${QWEN_MODEL_ID:-Qwen/Qwen3-14B-AWQ}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --no-enable-prefix-caching
+      - --max-model-len
+      - ${QWEN_MAX_MODEL_LEN:-8192}
+      - --dtype
+      - ${QWEN_DTYPE:-float16}
+      - --tensor-parallel-size
+      - ${QWEN_TENSOR_PARALLEL_SIZE:-1}
+      - --max-num-seqs
+      - ${QWEN_MAX_NUM_SEQS:-8}
+      - --gpu_memory_utilization
+      - ${QWEN_GPU_MEMORY_UTILIZATION:-0.9}
+      - --served-model-name
+      - ${QWEN_SERVED_MODEL_NAME:-qwen3-14b-awq}
+      - --default-chat-template-kwargs
+      - '{"enable_thinking": false}'
+    environment:
+      HF_HOME: /data
+    volumes:
+      - qwen-model-cache:/data
+    ports:
+      - "${QWEN_VLLM_HOST:-127.0.0.1}:${QWEN_VLLM_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 40
+      start_period: 10m
+
+  # Cube semantic-layer API used by Formbricks analytics dashboards.
   cube:
-    profiles: ["xm"]
     restart: always
     image: cubejs/cube:v1.6.6
+    command:
+      - sh
+      - -c
+      - |
+        if [ -z "$$CUBEJS_API_SECRET" ]; then
+          echo "CUBEJS_API_SECRET is required for Cube JWT authentication" >&2
+          exit 1
+        fi
+        exec cubejs server
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -319,9 +459,23 @@ services:
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js:ro
       - ./cube/schema:/cube/conf/model:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:4000/readyz', (res) => { res.resume(); process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
 volumes:
   postgres:
     driver: local
   redis:
+    driver: local
+  qwen-model-cache:
     driver: local

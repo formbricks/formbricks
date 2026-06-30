@@ -1,47 +1,36 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  UniqueConstraintError,
+} from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
-import { TTag } from "@formbricks/types/tags";
+import {
+  buildClientResponse,
+  createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
+} from "@/app/api/client/[workspaceId]/responses/lib/response";
 import {
   isPrismaKnownRequestError,
   isSingleUseIdUniqueConstraintError,
 } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
+import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContact } from "./contact";
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2
 ): Promise<TResponseWithQuotaFull> => {
-  const txResponse = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const response = await createResponse(responseInput, tx);
-
-    const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
-      responseId: response.id,
-      data: responseInput.data,
-      variables: responseInput.variables,
-      language: responseInput.language,
-      responseFinished: response.finished,
-      tx,
-    });
-
-    return {
-      ...response,
-      ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
-    };
-  });
-
-  return txResponse;
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse);
 };
 
 const buildPrismaResponseData = (
@@ -49,18 +38,7 @@ const buildPrismaResponseData = (
   contact: { id: string; attributes: TContactAttributes } | null,
   ttc: Record<string, number>
 ): Prisma.ResponseCreateInput => {
-  const {
-    surveyId,
-    displayId,
-    finished,
-    data,
-    language,
-    meta,
-    singleUseId,
-    variables,
-    createdAt,
-    updatedAt,
-  } = responseInput;
+  const { surveyId, displayId, finished, data, language, meta, singleUseId, variables } = responseInput;
 
   return {
     survey: {
@@ -84,8 +62,6 @@ const buildPrismaResponseData = (
     singleUseId,
     ...(variables && { variables }),
     ttc: ttc,
-    createdAt,
-    updatedAt,
   };
 };
 
@@ -112,6 +88,16 @@ export const createResponse = async (
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
+    if (responseInput.displayId) {
+      await assertDisplayOwnership(
+        responseInput.displayId,
+        workspaceId,
+        responseInput.surveyId,
+        contactId ?? null,
+        tx
+      );
+    }
+
     const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
 
     const prismaClient = tx ?? prisma;
@@ -121,20 +107,16 @@ export const createResponse = async (
       select: responseSelection,
     });
 
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: contact
-        ? {
-            id: contact.id,
-            userId: contact.attributes.userId,
-          }
-        : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
+    return buildClientResponse(responsePrisma, contact);
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
+      if (
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes("displayId")
+      ) {
+        throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
+      }
       if (isSingleUseIdUniqueConstraintError(error)) {
         throw new UniqueConstraintError("Response already submitted for this single-use link");
       }

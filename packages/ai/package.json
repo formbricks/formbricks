@@ -30,6 +30,7 @@
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/ai.json",
+    "typecheck": "tsc --noEmit",
     "build": "rimraf dist && vite build && tsc --project tsconfig.build.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
@@ -39,6 +40,7 @@
     "@ai-sdk/amazon-bedrock": "4.0.104",
     "@ai-sdk/azure": "3.0.64",
     "@ai-sdk/google-vertex": "4.0.126",
+    "@ai-sdk/openai-compatible": "2.0.48",
     "@aws-sdk/credential-providers": "3.1017.0",
     "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
@@ -48,7 +50,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.6",
-    "vite": "8.0.12",
+    "vite": "8.0.16",
     "vitest": "4.1.6"
   }
 }

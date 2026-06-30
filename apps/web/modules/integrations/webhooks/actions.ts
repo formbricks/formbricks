@@ -12,7 +12,10 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromWebhookId,
 } from "@/lib/utils/helper";
-import { getWebhook } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
+import {
+  getWebhook,
+  getWebhookWithSecret,
+} from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   createWebhook,
@@ -157,13 +160,13 @@ export const testEndpointAction = authenticatedActionClient
           },
           {
             type: "workspaceTeam",
-            minPermission: "read",
+            minPermission: "readWrite",
             workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
           },
         ],
       });
 
-      const webhookResult = await getWebhook(parsedInput.webhookId);
+      const webhookResult = await getWebhookWithSecret(parsedInput.webhookId);
       if (!webhookResult.ok) {
         throw new ResourceNotFoundError("Webhook", parsedInput.webhookId);
       }

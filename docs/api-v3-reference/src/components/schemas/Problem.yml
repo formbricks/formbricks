@@ -1,0 +1,46 @@
+type: object
+description: >-
+  RFC 9457 Problem Details for HTTP APIs (`application/problem+json`). Responses
+  typically include a machine-readable `code` field alongside `title`, `status`,
+  `detail`, and `requestId`.
+required:
+  - title
+  - status
+  - detail
+  - requestId
+properties:
+  type:
+    type: string
+    format: uri
+  title:
+    type: string
+  status:
+    type: integer
+  detail:
+    type: string
+  instance:
+    type: string
+  code:
+    type: string
+    enum:
+      - ai_features_not_enabled
+      - ai_generated_payload_invalid
+      - ai_instance_not_configured
+      - ai_smart_tools_disabled
+      - bad_gateway
+      - bad_request
+      - forbidden
+      - internal_server_error
+      - not_authenticated
+      - not_found
+      - payload_too_large
+      - too_many_requests
+      - unprocessable_content
+  requestId:
+    type: string
+  details:
+    type: object
+  invalid_params:
+    type: array
+    items:
+      $ref: ./InvalidParam.yml

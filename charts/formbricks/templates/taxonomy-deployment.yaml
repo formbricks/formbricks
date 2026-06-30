@@ -1,0 +1,181 @@
+{{- if .Values.taxonomy.enabled }}
+{{- $provider := .Values.taxonomy.llm.provider | default "openai-compatible" -}}
+{{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
+  {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
+{{- end }}
+{{- if and (eq $provider "vertex-gemini") (or (not .Values.taxonomy.llm.vertex.project) (not .Values.taxonomy.llm.vertex.location)) }}
+  {{- fail "taxonomy.llm.vertex.project and taxonomy.llm.vertex.location are required when taxonomy.llm.provider is 'vertex-gemini'" }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "formbricks.taxonomyName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: taxonomy
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  {{- if not .Values.taxonomy.autoscaling.enabled }}
+  replicas: {{ .Values.taxonomy.replicas | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: taxonomy
+        {{- with .Values.taxonomy.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.taxonomy.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.taxonomy.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.taxonomy.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.taxonomy.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.taxonomy.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.taxonomy.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: taxonomy
+          image: {{ include "formbricks.taxonomyImage" . | quote }}
+          imagePullPolicy: {{ .Values.taxonomy.image.pullPolicy }}
+          {{- with .Values.taxonomy.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.taxonomy.port }}
+              protocol: TCP
+          {{- with .Values.taxonomy.probes.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.taxonomy.probes.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.taxonomy.probes.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.taxonomy.envFrom }}
+          envFrom:
+            {{- range $value := .Values.taxonomy.envFrom }}
+            {{- if (eq .type "configmap") }}
+            - configMapRef:
+                {{- if .name }}
+                name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+                {{- else if .nameSuffix }}
+                name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+                {{- else }}
+                name: {{ template "formbricks.name" $ }}
+                {{- end }}
+            {{- end }}
+            {{- if (eq .type "secret") }}
+            - secretRef:
+                {{- if .name }}
+                name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+                {{- else if .nameSuffix }}
+                name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+                {{- else }}
+                name: {{ template "formbricks.name" $ }}
+                {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: HUB_INTERNAL_API_URL
+              value: {{ printf "http://%s:8080" (include "formbricks.hubname" .) | quote }}
+            - name: TAXONOMY_SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.taxonomyAuthSecretName" . }}
+                  key: {{ .Values.taxonomy.auth.serviceTokenKey | default "TAXONOMY_SERVICE_TOKEN" }}
+            - name: HUB_INTERNAL_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.taxonomyAuthSecretName" . }}
+                  key: {{ .Values.taxonomy.auth.hubInternalApiTokenKey | default "HUB_INTERNAL_API_TOKEN" }}
+            - name: TAXONOMY_LLM_PROVIDER
+              value: {{ $provider | quote }}
+            - name: TAXONOMY_LLM_MODEL
+              value: {{ .Values.taxonomy.llm.model | quote }}
+            {{- if eq $provider "openai-compatible" }}
+            - name: TAXONOMY_LLM_BASE_URL
+              value: {{ include "formbricks.taxonomyLlmBaseUrl" . | quote }}
+            - name: TAXONOMY_LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.taxonomyLlmSecretName" . }}
+                  key: {{ .Values.taxonomy.llm.apiKeySecretKey | default "TAXONOMY_LLM_API_KEY" }}
+            {{- else if eq $provider "vertex-gemini" }}
+            - name: TAXONOMY_VERTEX_PROJECT
+              value: {{ .Values.taxonomy.llm.vertex.project | quote }}
+            - name: TAXONOMY_VERTEX_LOCATION
+              value: {{ .Values.taxonomy.llm.vertex.location | quote }}
+            - name: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.taxonomyVertexSecretName" . }}
+                  key: {{ .Values.taxonomy.llm.vertex.credentialsJsonSecretKey | default "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" }}
+            {{- end }}
+            - name: TAXONOMY_LLM_TEMPERATURE
+              value: {{ .Values.taxonomy.llm.temperature | quote }}
+            - name: TAXONOMY_LLM_MAX_ATTEMPTS
+              value: {{ .Values.taxonomy.llm.maxAttempts | quote }}
+            - name: TAXONOMY_LLM_TIMEOUT_SECONDS
+              value: {{ .Values.taxonomy.llm.timeoutSeconds | quote }}
+            - name: HUB_CLIENT_TIMEOUT_SECONDS
+              value: {{ .Values.taxonomy.hubClientTimeoutSeconds | quote }}
+            - name: TAXONOMY_EMBEDDING_DIMENSION
+              value: {{ .Values.taxonomy.embeddingDimension | quote }}
+            - name: TAXONOMY_MIN_EMBEDDED_RECORDS
+              value: {{ .Values.taxonomy.minEmbeddedRecords | quote }}
+            - name: TAXONOMY_MAX_RECORDS
+              value: {{ .Values.taxonomy.maxRecords | quote }}
+            - name: TAXONOMY_MAX_CLUSTERS
+              value: {{ .Values.taxonomy.maxClusters | quote }}
+            - name: TAXONOMY_RANDOM_SEED
+              value: {{ .Values.taxonomy.randomSeed | quote }}
+            {{- range $key, $value := .Values.taxonomy.env }}
+            {{- if not (include "formbricks.taxonomyEnvManaged" (dict "key" $key)) }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            {{- end }}
+          {{- with .Values.taxonomy.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

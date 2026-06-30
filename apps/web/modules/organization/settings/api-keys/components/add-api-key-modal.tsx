@@ -1,11 +1,11 @@
 "use client";
 
-import { ApiKeyPermission } from "@prisma/client";
 import { ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { ApiKeyPermission } from "@formbricks/database/prisma-browser";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TOrganizationWorkspace } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
@@ -228,16 +228,16 @@ export const AddApiKeyModal = ({
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                               <span className="flex w-4/5 flex-1">
                                 <span className="w-full truncate text-left">{permission.workspaceName}</span>
                               </span>
                               <span className="flex h-full items-center border-l pl-3">
-                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                                <ChevronDownIcon className="size-4 text-slate-500" />
                               </span>
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto">
+                          <DropdownMenuContent className="max-h-[300px] min-w-32 overflow-y-auto">
                             {workspaceOptions.map((option) => (
                               <DropdownMenuItem
                                 key={option.id}
@@ -257,18 +257,18 @@ export const AddApiKeyModal = ({
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                               <span className="flex w-4/5 flex-1">
                                 <span className="w-full truncate text-left capitalize">
                                   {permission.permission}
                                 </span>
                               </span>
                               <span className="flex h-full items-center border-l pl-3">
-                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                                <ChevronDownIcon className="size-4 text-slate-500" />
                               </span>
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="min-w-[8rem] capitalize">
+                          <DropdownMenuContent className="min-w-32 capitalize">
                             {permissionOptions.map((option) => (
                               <DropdownMenuItem
                                 key={option}
@@ -284,7 +284,7 @@ export const AddApiKeyModal = ({
 
                       {/* Delete button */}
                       <button type="button" className="p-2" onClick={() => removePermission(permissionIndex)}>
-                        <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
+                        <Trash2Icon className={"size-5 text-slate-500 hover:text-red-500"} />
                       </button>
                     </div>
                   );

@@ -9,36 +9,69 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
-import { semanticSearchFeedbackRecords } from "@/modules/hub/service";
-import type { SemanticSearchResultItem } from "@/modules/hub/types";
+import {
+  createTaxonomyRun,
+  getActiveTaxonomyTree,
+  getTaxonomyRun,
+  getTaxonomyTree,
+  listTaxonomyFields,
+  listTaxonomyNodeRecords,
+  listTaxonomyRuns,
+  removeTaxonomyNode,
+  renameTaxonomyNode,
+} from "@/modules/hub/service";
+import type {
+  TaxonomyFieldOption,
+  TaxonomyNode,
+  TaxonomyNodeRecordsResponse,
+  TaxonomyRun,
+  TaxonomyTreeResponse,
+} from "@/modules/hub/types";
 
-const TOPICS_PREVIEW_LIMIT = 10;
-const SEARCH_CONCURRENCY = 4;
-
-const ZSemanticSearchFeedbackRecordsAction = z.object({
-  workspaceId: ZId,
-  query: z.string().trim().min(1).max(500),
-  limit: z.number().min(1).max(50).optional(),
-  minScore: z.number().min(0).max(1).optional(),
+const ZTaxonomyScope = z.object({
+  tenant_id: ZId,
+  source_type: z.string().trim().min(1).max(255),
+  // Empty string is valid: it's the "no source" bucket for feedback ingested without an
+  // attributed source_id. Hub canonicalizes "no source" to "" (Hub PR #88), so the scope
+  // must accept and forward it rather than reject it as missing.
+  source_id: z.string().trim().max(255),
+  field_id: z.string().trim().min(1).max(255),
 });
 
-export type TTopicsPreviewSearchResult = SemanticSearchResultItem & {
-  tenant_id: string;
-  directory_name: string;
-};
+const ZWorkspaceDirectory = z.object({
+  workspaceId: ZId,
+  directoryId: ZId,
+});
 
-export type TTopicsPreviewSearchActionResult = {
-  results: TTopicsPreviewSearchResult[];
+const ZScopedTaxonomyInput = z.object({
+  workspaceId: ZId,
+  scope: ZTaxonomyScope,
+});
+
+export type TTaxonomyFieldsActionResult = {
+  fields: TaxonomyFieldOption[];
   unavailable: boolean;
   unavailableMessage?: string;
 };
 
-const ensureReadAccess = async (userId: string, workspaceId: string): Promise<void> => {
+export type TTaxonomyStateActionResult = {
+  activeTree: TaxonomyTreeResponse | null;
+  runs: TaxonomyRun[];
+  unavailable: boolean;
+  unavailableMessage?: string;
+};
+
+const ensureAccess = async (
+  userId: string,
+  workspaceId: string,
+  minPermission: "read" | "readWrite"
+): Promise<void> => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
   if (!isFeedbackDirectoriesAllowed) {
     throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
   }
+
   await checkAuthorizationUpdated({
     userId,
     organizationId,
@@ -49,79 +82,264 @@ const ensureReadAccess = async (userId: string, workspaceId: string): Promise<vo
       },
       {
         type: "workspaceTeam",
-        minPermission: "read",
+        minPermission,
         workspaceId,
       },
     ],
   });
 };
 
-export const semanticSearchFeedbackRecordsAction = authenticatedActionClient
-  .inputSchema(ZSemanticSearchFeedbackRecordsAction)
+const ensureDirectoryAccess = async (workspaceId: string, directoryId: string): Promise<void> => {
+  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
+  if (!directories.some((directory) => directory.id === directoryId)) {
+    throw new OperationNotAllowedError("Feedback directory is not assigned to this workspace");
+  }
+};
+
+const unavailableResult = (message: string) => ({
+  unavailable: true,
+  unavailableMessage: message,
+});
+
+const hubErrorMessage = (message: string | undefined, fallback: string) => message || fallback;
+
+export const getTaxonomyFieldsAction = authenticatedActionClient
+  .inputSchema(ZWorkspaceDirectory)
   .action(
     async ({
       ctx,
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZSemanticSearchFeedbackRecordsAction>;
-    }): Promise<TTopicsPreviewSearchActionResult> => {
-      await ensureReadAccess(ctx.user.id, parsedInput.workspaceId);
+      parsedInput: z.infer<typeof ZWorkspaceDirectory>;
+    }): Promise<TTaxonomyFieldsActionResult> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.directoryId);
 
-      const directories = await getFeedbackDirectoriesByWorkspaceId(parsedInput.workspaceId);
-      if (directories.length === 0) {
-        return { results: [], unavailable: false };
-      }
-
-      const limit = parsedInput.limit ?? TOPICS_PREVIEW_LIMIT;
-      const searches: {
-        directory: (typeof directories)[number];
-        result: Awaited<ReturnType<typeof semanticSearchFeedbackRecords>>;
-      }[] = [];
-      for (let i = 0; i < directories.length; i += SEARCH_CONCURRENCY) {
-        const chunk = directories.slice(i, i + SEARCH_CONCURRENCY);
-        const chunkResults = await Promise.all(
-          chunk.map(async (directory) => {
-            const result = await semanticSearchFeedbackRecords({
-              tenant_id: directory.id,
-              query: parsedInput.query,
-              limit,
-              min_score: parsedInput.minScore,
-            });
-            return { directory, result };
-          })
-        );
-        searches.push(...chunkResults);
-      }
-
-      const successfulResults = searches.flatMap(({ directory, result }) =>
-        (result.data?.data ?? []).map((item) => ({
-          ...item,
-          tenant_id: directory.id,
-          directory_name: directory.name,
-        }))
-      );
-
-      if (successfulResults.length > 0) {
+      const result = await listTaxonomyFields(parsedInput.directoryId);
+      if (result.error) {
         return {
-          results: successfulResults.toSorted((a, b) => b.score - a.score).slice(0, limit),
-          unavailable: false,
+          fields: [],
+          ...unavailableResult(hubErrorMessage(result.error.message, "Taxonomy fields are unavailable")),
         };
       }
 
-      const firstError = searches.find(({ result }) => result.error)?.result.error;
-      if (firstError?.status === 0 || firstError?.status === 503) {
+      return { fields: result.data?.data ?? [], unavailable: false };
+    }
+  );
+
+export const getTaxonomyStateAction = authenticatedActionClient
+  .inputSchema(ZScopedTaxonomyInput)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZScopedTaxonomyInput>;
+    }): Promise<TTaxonomyStateActionResult> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+
+      const [activeTree, runs] = await Promise.all([
+        getActiveTaxonomyTree(parsedInput.scope),
+        listTaxonomyRuns({ ...parsedInput.scope, limit: 5 }),
+      ]);
+
+      if (runs.error) {
         return {
-          results: [],
-          unavailable: true,
-          unavailableMessage: firstError.message,
+          activeTree: null,
+          runs: [],
+          ...unavailableResult(hubErrorMessage(runs.error.message, "Taxonomy runs are unavailable")),
         };
       }
 
-      if (firstError) {
-        throw new Error(firstError.message);
+      return {
+        activeTree: activeTree.error?.status === 404 ? null : activeTree.data,
+        runs: runs.data?.data ?? [],
+        unavailable: Boolean(activeTree.error && activeTree.error.status !== 404),
+        unavailableMessage:
+          activeTree.error && activeTree.error.status !== 404
+            ? hubErrorMessage(activeTree.error.message, "Active taxonomy is unavailable")
+            : undefined,
+      };
+    }
+  );
+
+export const triggerTaxonomyRunAction = authenticatedActionClient
+  .inputSchema(
+    ZScopedTaxonomyInput.extend({
+      fieldLabel: z.string().trim().max(1000).optional(),
+    })
+  )
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZScopedTaxonomyInput> & { fieldLabel?: string };
+    }): Promise<{ run: TaxonomyRun; inProgress: boolean }> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+
+      const result = await createTaxonomyRun({
+        ...parsedInput.scope,
+        field_label: parsedInput.fieldLabel,
+        actor_id: ctx.user.id,
+      });
+      if (result.error || !result.data) {
+        throw new Error(hubErrorMessage(result.error?.message, "Failed to start taxonomy generation"));
       }
 
-      return { results: [], unavailable: false };
+      return { run: result.data.run, inProgress: result.data.in_progress };
+    }
+  );
+
+export const getTaxonomyRunAction = authenticatedActionClient
+  .inputSchema(
+    ZScopedTaxonomyInput.extend({
+      runId: z.string().uuid(),
+    })
+  )
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZScopedTaxonomyInput> & { runId: string };
+    }): Promise<TaxonomyRun> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+
+      const result = await getTaxonomyRun(parsedInput.runId, parsedInput.scope.tenant_id);
+      if (result.error || !result.data) {
+        throw new Error(hubErrorMessage(result.error?.message, "Failed to load taxonomy run"));
+      }
+
+      return result.data;
+    }
+  );
+
+export const getTaxonomyTreeAction = authenticatedActionClient
+  .inputSchema(
+    ZScopedTaxonomyInput.extend({
+      runId: z.string().uuid(),
+    })
+  )
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZScopedTaxonomyInput> & { runId: string };
+    }): Promise<TaxonomyTreeResponse> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+
+      const result = await getTaxonomyTree(parsedInput.runId, parsedInput.scope.tenant_id);
+      if (result.error || !result.data) {
+        throw new Error(hubErrorMessage(result.error?.message, "Failed to load taxonomy tree"));
+      }
+
+      return result.data;
+    }
+  );
+
+export const getTaxonomyNodeRecordsAction = authenticatedActionClient
+  .inputSchema(
+    z.object({
+      workspaceId: ZId,
+      tenantId: ZId,
+      nodeId: z.string().uuid(),
+      limit: z.number().min(1).max(100).optional(),
+    })
+  )
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: { workspaceId: string; tenantId: string; nodeId: string; limit?: number };
+    }): Promise<TaxonomyNodeRecordsResponse> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.tenantId);
+
+      const result = await listTaxonomyNodeRecords(parsedInput.nodeId, {
+        tenant_id: parsedInput.tenantId,
+        limit: parsedInput.limit,
+      });
+      if (result.error || !result.data) {
+        throw new Error(hubErrorMessage(result.error?.message, "Failed to load node feedback records"));
+      }
+
+      return result.data;
+    }
+  );
+
+export const renameTaxonomyNodeAction = authenticatedActionClient
+  .inputSchema(
+    z.object({
+      workspaceId: ZId,
+      tenantId: ZId,
+      nodeId: z.string().uuid(),
+      label: z.string().trim().min(1).max(1000),
+    })
+  )
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: { workspaceId: string; tenantId: string; nodeId: string; label: string };
+    }): Promise<TaxonomyNode> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.tenantId);
+
+      const result = await renameTaxonomyNode(parsedInput.nodeId, {
+        tenant_id: parsedInput.tenantId,
+        actor_id: ctx.user.id,
+        label: parsedInput.label,
+      });
+      if (result.error || !result.data) {
+        throw new Error(hubErrorMessage(result.error?.message, "Failed to rename taxonomy node"));
+      }
+
+      return result.data;
+    }
+  );
+
+export const removeTaxonomyNodeAction = authenticatedActionClient
+  .inputSchema(
+    z.object({
+      workspaceId: ZId,
+      tenantId: ZId,
+      nodeId: z.string().uuid(),
+    })
+  )
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: { workspaceId: string; tenantId: string; nodeId: string };
+    }): Promise<TaxonomyNode> => {
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
+      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.tenantId);
+
+      const result = await removeTaxonomyNode(parsedInput.nodeId, {
+        tenant_id: parsedInput.tenantId,
+        actor_id: ctx.user.id,
+      });
+      if (result.error || !result.data) {
+        throw new Error(hubErrorMessage(result.error?.message, "Failed to remove taxonomy node"));
+      }
+
+      return result.data;
     }
   );

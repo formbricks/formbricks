@@ -169,13 +169,13 @@ export const PersonalLinksTab = ({
           {
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
             href: isFormbricksCloud
-              ? `/workspaces/${workspace?.id}/settings/organization/billing`
+              ? `/organizations/${workspace?.organizationId}/settings/billing`
               : enterpriseLicenseRequestFormUrl,
           },
           {
             text: t("common.learn_more"),
             href: isFormbricksCloud
-              ? `/workspaces/${workspace?.id}/settings/organization/billing`
+              ? `/organizations/${workspace?.organizationId}/settings/billing`
               : "https://formbricks.com/learn-more-self-hosting-license",
           },
         ]}
@@ -184,7 +184,7 @@ export const PersonalLinksTab = ({
   }
 
   return (
-    <div className="flex h-full flex-col justify-between space-y-4">
+    <div className="flex h-full flex-col justify-between gap-y-4">
       <FormProvider {...form}>
         <div className="flex grow flex-col gap-6">
           {/* Recipients Section */}
@@ -247,7 +247,7 @@ export const PersonalLinksTab = ({
             disabled={isButtonDisabled}
             loading={isGenerating}
             className="w-fit">
-            <DownloadIcon className="mr-2 h-4 w-4" />
+            <DownloadIcon className="mr-2 size-4" />
             {buttonText}
           </Button>
         </div>

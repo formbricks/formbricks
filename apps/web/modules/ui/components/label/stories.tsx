@@ -107,8 +107,8 @@ export const Required: Story = {
 
 export const WithCheckbox: Story = {
   render: (args) => (
-    <div className="flex items-center space-x-2">
-      <input id="terms" type="checkbox" className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+    <div className="flex items-center gap-x-2">
+      <input id="terms" type="checkbox" className="size-4 rounded-sm border-slate-300 text-blue-600" />
       <Label {...args} htmlFor="terms">
         I agree to the terms and conditions
       </Label>
@@ -127,14 +127,14 @@ export const WithCheckbox: Story = {
 export const WithRadio: Story = {
   render: (args) => (
     <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <input id="option1" type="radio" name="options" className="h-4 w-4 border-slate-300 text-blue-600" />
+      <div className="flex items-center gap-x-2">
+        <input id="option1" type="radio" name="options" className="size-4 border-slate-300 text-blue-600" />
         <Label {...args} htmlFor="option1">
           Option 1
         </Label>
       </div>
-      <div className="flex items-center space-x-2">
-        <input id="option2" type="radio" name="options" className="h-4 w-4 border-slate-300 text-blue-600" />
+      <div className="flex items-center gap-x-2">
+        <input id="option2" type="radio" name="options" className="size-4 border-slate-300 text-blue-600" />
         <Label {...args} htmlFor="option2">
           Option 2
         </Label>

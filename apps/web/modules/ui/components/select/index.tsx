@@ -18,12 +18,12 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-slate-400",
+      "flex h-9 w-full items-center justify-between gap-2 rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-slate-400",
       className
     )}
     {...props}>
     {children}
-    {!hideArrow ? <ChevronDown className="h-4 w-4 opacity-50" /> : null}
+    {!hideArrow ? <ChevronDown className="size-4 opacity-50" /> : null}
   </SelectPrimitive.Trigger>
 ));
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
@@ -37,7 +37,7 @@ const SelectContent: React.ComponentType<SelectPrimitive.SelectContentProps> = R
       ref={ref}
       position={position}
       className={cn(
-        "relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white text-slate-700 shadow-md animate-in fade-in-80 dark:bg-slate-700 dark:text-slate-300",
+        "relative z-50 min-w-32 overflow-hidden rounded-md border border-slate-100 bg-white text-slate-700 shadow-md animate-in fade-in-80 dark:bg-slate-700 dark:text-slate-300",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className
@@ -47,7 +47,7 @@ const SelectContent: React.ComponentType<SelectPrimitive.SelectContentProps> = R
         className={cn(
           "p-1",
           position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+            "h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width)"
         )}>
         {children}
       </SelectPrimitive.Viewport>
@@ -62,7 +62,7 @@ const SelectLabel: React.ComponentType<SelectPrimitive.SelectLabelProps> = React
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold text-slate-900 dark:text-slate-200", className)}
+    className={cn("py-1.5 pr-2 pl-8 text-sm font-semibold text-slate-900 dark:text-slate-200", className)}
     {...props}
   />
 ));
@@ -75,7 +75,7 @@ const SelectItem: React.ComponentType<SelectPrimitive.SelectItemProps> = React.f
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-md py-1.5 pl-2 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer items-center rounded-md py-1.5 pr-2 pl-2 text-sm font-medium outline-hidden select-none focus:bg-slate-100 data-disabled:pointer-events-none data-disabled:opacity-50",
       className
     )}
     {...props}>

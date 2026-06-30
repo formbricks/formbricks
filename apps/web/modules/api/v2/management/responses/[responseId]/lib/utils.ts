@@ -1,9 +1,10 @@
-import { Response, Survey } from "@prisma/client";
+import { Response, Survey } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { Result, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { deleteFile } from "@/modules/storage/service";
+import { parseStorageFileUrl } from "@/modules/storage/utils";
 
 export const findAndDeleteUploadedFilesInResponse = async (
   responseData: Response["data"],
@@ -24,13 +25,12 @@ export const findAndDeleteUploadedFilesInResponse = async (
 
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
-      const { pathname } = new URL(fileUrl);
-      const [, storageId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const storageFile = parseStorageFileUrl(fileUrl);
 
-      if (!storageId || !accessType || !fileName) {
-        throw new Error(`Invalid file path: ${pathname}`);
+      if (!storageFile) {
+        throw new Error(`Invalid storage file URL: ${fileUrl}`);
       }
-      return deleteFile(storageId, accessType as "private" | "public", fileName, workspaceId);
+      return deleteFile(storageFile.storageId, storageFile.accessType, storageFile.fileName, workspaceId);
     } catch (error) {
       logger.error({ error, fileUrl }, "Failed to delete file");
     }

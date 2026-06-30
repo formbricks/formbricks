@@ -22,7 +22,7 @@ export const ClickableBarSegment = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button className={className} style={style} onClick={onClick}>
+        <button type="button" className={className} style={style} onClick={onClick}>
           {children}
         </button>
       </TooltipTrigger>

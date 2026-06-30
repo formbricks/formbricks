@@ -1,6 +1,6 @@
 import "server-only";
-import { Team } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Team } from "@formbricks/database/prisma";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { getTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/utils";
 import {

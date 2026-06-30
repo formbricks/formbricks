@@ -20,7 +20,7 @@ export const DashboardsTable = async ({
   const t = await getTranslate();
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="grid h-12 grid-cols-8 content-center border-b text-left text-sm font-semibold text-slate-900">
         <div className="col-span-3 pl-6">{t("common.title")}</div>
         <div className="col-span-1 hidden text-center sm:block">{t("common.charts")}</div>
@@ -54,19 +54,19 @@ export const DashboardsTable = async ({
                 className="col-span-7 grid cursor-pointer grid-cols-7 content-center p-2">
                 <div className="col-span-3 flex items-center pl-6 text-sm">
                   <div className="flex items-center gap-4">
-                    <div className="w-8 flex-shrink-0 text-slate-500">
-                      <BarChart3Icon className="h-5 w-5" />
+                    <div className="w-8 shrink-0 text-slate-500">
+                      <BarChart3Icon className="size-5" />
                     </div>
                     <div className="font-medium text-slate-900">{dashboard.name}</div>
                   </div>
                 </div>
-                <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+                <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
                   <div className="text-slate-900">{dashboard._count.widgets}</div>
                 </div>
-                <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+                <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
                   <div className="text-slate-900">{dashboard.creator?.name || "-"}</div>
                 </div>
-                <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
+                <div className="col-span-1 my-auto hidden text-center text-sm whitespace-normal text-slate-500 sm:block">
                   <div className="text-slate-900">{formatDate(new Date(dashboard.createdAt))}</div>
                 </div>
                 <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">

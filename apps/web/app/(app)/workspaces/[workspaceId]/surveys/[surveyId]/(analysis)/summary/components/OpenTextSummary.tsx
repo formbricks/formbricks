@@ -40,7 +40,7 @@ export const OpenTextSummary = ({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div className="border-t border-slate-200"></div>
       {elementSummary.samples.length === 0 ? (
@@ -52,10 +52,10 @@ export const OpenTextSummary = ({
           <Table>
             <TableHeader className="bg-slate-100">
               <TableRow>
-                <TableHead className="w-1/4">{t("common.user")}</TableHead>
-                <TableHead className="w-2/4">{t("common.response")}</TableHead>
-                <TableHead className="w-1/6">{t("common.time")}</TableHead>
-                <TableHead className="w-1/6">{t("common.response_id")}</TableHead>
+                <TableHead className="w-1/5">{t("common.user")}</TableHead>
+                <TableHead className="w-2/5">{t("common.response")}</TableHead>
+                <TableHead className="w-1/5">{t("common.time")}</TableHead>
+                <TableHead className="w-1/5">{t("common.response_id")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -73,7 +73,7 @@ export const OpenTextSummary = ({
                       setSelectedResponseId(response.id);
                     }
                   }}>
-                  <TableCell className="w-1/4">
+                  <TableCell className="w-1/5">
                     {response.contact ? (
                       <Link
                         className="ph-no-capture group flex items-center"
@@ -95,15 +95,15 @@ export const OpenTextSummary = ({
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="w-2/4 font-medium">
+                  <TableCell className="w-2/5 font-medium">
                     {typeof response.value === "string"
                       ? renderHyperlinkedContent(response.value)
                       : response.value}
                   </TableCell>
-                  <TableCell className="w-1/6">
+                  <TableCell className="w-1/5">
                     {timeSince(new Date(response.updatedAt).toISOString(), locale)}
                   </TableCell>
-                  <TableCell className="w-1/6" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="w-1/5" onClick={(e) => e.stopPropagation()}>
                     <IdBadge id={response.id} />
                   </TableCell>
                 </TableRow>

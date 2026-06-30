@@ -1,11 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
@@ -540,6 +544,22 @@ export const upsertBulkContacts = async (
         {
           field: "attributes",
           issue: `Invalid attribute key(s): ${invalidNewKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`,
+        },
+      ],
+    });
+  }
+
+  const reservedNewKeys = attributeKeys.filter(
+    (key) => !existingKeySet.has(key) && isReservedFutureDefaultAttributeKey(key)
+  );
+
+  if (reservedNewKeys.length > 0) {
+    return err({
+      type: "bad_request",
+      details: [
+        {
+          field: "attributes",
+          issue: getReservedFutureDefaultAttributeKeyIssue(reservedNewKeys),
         },
       ],
     });

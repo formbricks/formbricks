@@ -81,6 +81,7 @@ export const AddIntegrationModal = ({
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
+  const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
     type: "googleSheets",
     config: {
@@ -115,6 +116,7 @@ export const AddIntegrationModal = ({
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
+      setIncludeContactAttributes(!!selectedIntegration.includeContactAttributes);
       return;
     } else {
       setSpreadsheetUrl("");
@@ -172,6 +174,7 @@ export const AddIntegrationModal = ({
       integrationData.includeHiddenFields = includeHiddenFields;
       integrationData.includeMetadata = includeMetadata;
       integrationData.includeCreatedAt = includeCreatedAt;
+      integrationData.includeContactAttributes = includeContactAttributes;
       if (selectedIntegration) {
         // update action
         googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData;
@@ -247,7 +250,7 @@ export const AddIntegrationModal = ({
     <Dialog open={open} onOpenChange={setOpenWithStates}>
       <DialogContent>
         <DialogHeader>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <div className="relative size-8">
               <Image
                 fill
@@ -294,10 +297,10 @@ export const AddIntegrationModal = ({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
-                    <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
+                    <div className="mt-1 max-h-[15vh] overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {surveyElements.map((question) => (
-                          <div key={question.id} className="my-1 flex items-center space-x-2">
+                          <div key={question.id} className="my-1 flex items-center gap-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox
                                 type="button"
@@ -309,7 +312,7 @@ export const AddIntegrationModal = ({
                                   handleCheckboxChange(question.id);
                                 }}
                               />
-                              <span className="ml-2 w-[30rem] truncate">
+                              <span className="ml-2 w-120 truncate">
                                 {getTextContent(
                                   recallToHeadline(question.headline, selectedSurvey, false, "default")[
                                     "default"
@@ -331,6 +334,8 @@ export const AddIntegrationModal = ({
                     setIncludeMetadata={setIncludeMetadata}
                     includeCreatedAt={includeCreatedAt}
                     setIncludeCreatedAt={setIncludeCreatedAt}
+                    includeContactAttributes={includeContactAttributes}
+                    setIncludeContactAttributes={setIncludeContactAttributes}
                   />
                 </div>
               )}

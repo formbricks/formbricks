@@ -146,7 +146,6 @@ export const HiddenFieldsCard = ({
     );
   };
 
-  // Auto Animate
   const [parent] = useAutoAnimate();
 
   return (
@@ -154,9 +153,9 @@ export const HiddenFieldsCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
         )}>
-        <EyeOff className="h-4 w-4" />
+        <EyeOff className="size-4" />
       </div>
       <Collapsible.Root
         open={open}
@@ -173,7 +172,8 @@ export const HiddenFieldsCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
+        <Collapsible.CollapsibleContent
+          className={`flex flex-col px-4 ${open && "pb-6"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
           <div className="flex flex-wrap gap-2" ref={parent}>
             {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
               localSurvey.hiddenFields?.fieldIds?.map((fieldId) => {
@@ -187,7 +187,7 @@ export const HiddenFieldsCard = ({
                 );
               })
             ) : (
-              <p className="mt-2 text-sm italic text-slate-500">
+              <p className="mt-2 text-sm text-slate-500 italic">
                 {t("workspace.surveys.edit.no_hidden_fields_yet_add_first_one_below")}
               </p>
             )}

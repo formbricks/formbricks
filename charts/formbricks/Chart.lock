@@ -2,14 +2,14 @@ dependencies:
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 16.4.16
-- name: redis
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 20.11.2
 - name: gateway-helm
   repository: oci://docker.io/envoyproxy
   version: v1.7.1
 - name: redis
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 20.11.2
-digest: sha256:d93a29cb9cbef513db410ded5aa199f219c5b25ce1870e1e049dc470acc34235
-generated: "2026-04-08T00:33:09.875832+05:30"
+- name: vllm-stack
+  repository: https://vllm-project.github.io/production-stack
+  version: 0.1.11
+digest: sha256:d3f3f8395f197fa3f91516e0dbf1ec49f48a7eea6e7e3d5dc2c242588c5c27f7
+generated: "2026-06-13T01:11:28.264456+05:30"

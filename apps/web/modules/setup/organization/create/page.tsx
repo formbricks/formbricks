@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
@@ -43,6 +43,7 @@ export const CreateOrganizationPage = async () => {
       <RemovedFromOrganization
         user={user}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        isSsoIdentityConfirmationDisabled={DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION}
         requiresPasswordConfirmation={requiresPasswordConfirmationForAccountDeletion(user)}
       />
     );

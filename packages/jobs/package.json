@@ -33,9 +33,9 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@vitest/coverage-v8": "4.0.18",
-    "vite": "7.3.2",
+    "@vitest/coverage-v8": "4.1.6",
+    "vite": "7.3.5",
     "vite-plugin-dts": "4.5.4",
-    "vitest": "4.0.18"
+    "vitest": "4.1.6"
   }
 }

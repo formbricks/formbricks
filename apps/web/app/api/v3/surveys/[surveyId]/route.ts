@@ -1,72 +1,89 @@
 import { z } from "zod";
-import { logger } from "@formbricks/logger";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { problemForbidden, problemInternalError, successResponse } from "@/app/api/v3/lib/response";
-import { getSurvey } from "@/lib/survey/service";
-import { deleteSurvey } from "@/modules/survey/lib/surveys";
+import { parseV3SurveyLanguageQuery } from "../language";
+import { deleteV3Survey, getV3Survey, patchV3SurveyResponse } from "../lib/operations";
+import { ZV3EmptyQuery } from "../schemas";
+
+const surveyParamsSchema = z.object({
+  surveyId: z.cuid2(),
+});
+
+const surveyQuerySchema = z
+  .object({
+    lang: z
+      .union([z.string(), z.array(z.string())])
+      .transform((value, ctx) => {
+        const parsedLanguageQuery = parseV3SurveyLanguageQuery(value);
+
+        if (!parsedLanguageQuery.ok) {
+          ctx.addIssue({
+            code: "custom",
+            message: parsedLanguageQuery.message,
+          });
+          return z.NEVER;
+        }
+
+        return parsedLanguageQuery.languages;
+      })
+      .optional(),
+  })
+  .strict();
+
+export const GET = withV3ApiWrapper({
+  auth: "both",
+  schemas: {
+    params: surveyParamsSchema,
+    query: surveyQuerySchema,
+  },
+  handler: async ({ parsedInput, authentication, requestId, instance }) => {
+    return await getV3Survey({
+      surveyId: parsedInput.params.surveyId,
+      lang: parsedInput.query.lang,
+      authentication,
+      requestId,
+      instance,
+    });
+  },
+});
+
+export const PATCH = withV3ApiWrapper({
+  auth: "both",
+  action: "updated",
+  targetType: "survey",
+  schemas: {
+    params: surveyParamsSchema,
+    query: ZV3EmptyQuery,
+    body: z.unknown(),
+  },
+  handler: async ({ parsedInput, authentication, requestId, instance, auditLog }) => {
+    return await patchV3SurveyResponse({
+      surveyId: parsedInput.params.surveyId,
+      body: parsedInput.body,
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+  },
+});
 
 export const DELETE = withV3ApiWrapper({
   auth: "both",
   action: "deleted",
   targetType: "survey",
   schemas: {
-    params: z.object({
-      surveyId: z.cuid2(),
-    }),
+    params: surveyParamsSchema,
+    // Reject unknown query params (e.g. a stray `?workspaceId=`) consistently with GET/PATCH on this
+    // resource — single-survey endpoints locate the survey by its globally-unique id, not workspaceId.
+    query: ZV3EmptyQuery,
   },
   handler: async ({ parsedInput, authentication, requestId, instance, auditLog }) => {
-    const surveyId = parsedInput.params.surveyId;
-    const log = logger.withContext({ requestId, surveyId });
-
-    try {
-      const survey = await getSurvey(surveyId);
-
-      if (!survey) {
-        log.warn({ statusCode: 403 }, "Survey not found or not accessible");
-        return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-      }
-
-      const authResult = await requireV3WorkspaceAccess(
-        authentication,
-        survey.workspaceId,
-        "readWrite",
-        requestId,
-        instance
-      );
-
-      if (authResult instanceof Response) {
-        return authResult;
-      }
-
-      if (auditLog) {
-        auditLog.targetId = survey.id;
-        auditLog.organizationId = authResult.organizationId;
-        auditLog.oldObject = survey;
-      }
-
-      const deletedSurvey = await deleteSurvey(surveyId);
-
-      return successResponse(
-        {
-          id: deletedSurvey.id,
-        },
-        { requestId }
-      );
-    } catch (error) {
-      if (error instanceof ResourceNotFoundError) {
-        log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
-        return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-      }
-
-      if (error instanceof DatabaseError) {
-        log.error({ error, statusCode: 500 }, "Database error");
-        return problemInternalError(requestId, "An unexpected error occurred.", instance);
-      }
-
-      log.error({ error, statusCode: 500 }, "V3 survey delete unexpected error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
+    return await deleteV3Survey({
+      surveyId: parsedInput.params.surveyId,
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
   },
 });

@@ -1,0 +1,31 @@
+{{- if .Values.taxonomy.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "formbricks.taxonomyName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: taxonomy
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.taxonomy.service.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.taxonomy.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.taxonomy.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "formbricks.taxonomyName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.taxonomy.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

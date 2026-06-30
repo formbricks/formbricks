@@ -1,4 +1,4 @@
-import { Response, Survey } from "@prisma/client";
+import { Response, Survey } from "@formbricks/database/prisma";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const workspaceId = "u8qa6u0tlxb6160pi2jb8s4p";
@@ -26,7 +26,7 @@ export const fileUploadQuestion: Survey["questions"][number] = {
 export const responseData: Response["data"] = {
   [openTextQuestion.id]: "Open Text Answer",
   [fileUploadQuestion.id]: [
-    `https://example.com/dummy/${workspaceId}/private/file1.png`,
-    `https://example.com/dummy/${workspaceId}/private/file2.pdf`,
+    `https://example.com/storage/${workspaceId}/private/file1.png`,
+    `https://example.com/storage/${workspaceId}/private/file2.pdf`,
   ],
 };

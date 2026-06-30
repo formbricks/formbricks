@@ -31,13 +31,7 @@ const getCustomPlanFeaturePermission = async (
   organizationId: string,
   featureKey: keyof Pick<
     TEnterpriseLicenseFeatures,
-    | "accessControl"
-    | "quotas"
-    | "contacts"
-    | "aiSmartTools"
-    | "aiDataAnalysis"
-    | "feedbackDirectories"
-    | "dashboards"
+    "accessControl" | "quotas" | "contacts" | "aiSmartTools" | "feedbackDirectories" | "dashboards"
   >
 ): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) {
@@ -46,7 +40,6 @@ const getCustomPlanFeaturePermission = async (
       quotas: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.QUOTA_MANAGEMENT,
       contacts: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CONTACTS,
       aiSmartTools: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS,
-      aiDataAnalysis: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_DATA_ANALYSIS,
       feedbackDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES,
       dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS,
     };
@@ -126,10 +119,6 @@ export const getIsAISmartToolsEnabled = async (organizationId: string): Promise<
   return getCustomPlanFeaturePermission(organizationId, "aiSmartTools");
 };
 
-export const getIsAIDataAnalysisEnabled = async (organizationId: string): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(organizationId, "aiDataAnalysis");
-};
-
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
   if (!AUDIT_LOG_ENABLED) return false;
   return getSpecificFeatureFlag("auditLogs");
@@ -168,6 +157,19 @@ export const getIsFeedbackDirectoriesEnabled = async (organizationId: string): P
 
 export const getIsDashboardsEnabled = async (organizationId: string): Promise<boolean> => {
   return getCustomPlanFeaturePermission(organizationId, "dashboards");
+};
+
+export const getBulkInvitePermission = async (organizationId: string): Promise<boolean> => {
+  // Bulk invite is gated only on Formbricks Cloud (anti-spam, multi-tenant concern). Self-hosted
+  // keeps the original unrestricted behavior for every tier, including community.
+  if (!IS_FORMBRICKS_CLOUD) {
+    return true;
+  }
+
+  return hasOrganizationEntitlementWithLicenseGuard(
+    organizationId,
+    CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.BULK_INVITE
+  );
 };
 
 export const getOrganizationWorkspacesLimit = async (organizationId: string): Promise<number> => {

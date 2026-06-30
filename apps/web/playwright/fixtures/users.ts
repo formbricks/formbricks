@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Page } from "playwright";
 import { TestInfo } from "playwright/test";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 
 export const login = async (user: Prisma.UserGetPayload<{ include: { memberships: true } }>, page: Page) => {
   const csrfToken = await page
@@ -50,6 +50,7 @@ export type UsersFixture = {
     organizationName?: string;
     workspaceName?: string;
     withoutWorkspace?: boolean;
+    skipSurveySeed?: boolean;
   }) => Promise<UserFixture>;
   get: () => UserFixture[];
 };
@@ -66,6 +67,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       organizationName?: string;
       workspaceName?: string;
       withoutWorkspace?: boolean;
+      skipSurveySeed?: boolean;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
@@ -127,6 +129,18 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
               workspaceId: workspace.id,
             })),
           });
+
+          if (!params?.skipSurveySeed) {
+            await prisma.survey.create({
+              data: {
+                workspaceId: workspace.id,
+                createdBy: user.id,
+                name: "E2E Seed Survey",
+                status: "draft",
+                type: "link",
+              },
+            });
+          }
 
           ids = { workspaceId: workspace.id };
         }

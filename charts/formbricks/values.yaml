@@ -96,8 +96,16 @@ deployment:
     #   nameSuffix: app-secrets
 
   # Environment variables passed to the app container.
-  # XM Suite v5 analytics requires an external Cube endpoint when using Helm:
-  # set deployment.env.CUBEJS_API_URL and provide CUBEJS_API_SECRET through a Secret referenced by envFrom/existingSecret.
+  # Cube is bundled by default (see the `cube` section below). To use an external Cube cluster instead,
+  # set `cube.enabled: false` and provide CUBEJS_API_URL / CUBEJS_API_SECRET here via deployment.env or envFrom.
+  # When bundled Cube is enabled, CUBEJS_API_URL is rendered automatically unless set here.
+  # For self-hosted Qwen/vLLM AI, set only the OpenAI-compatible variables you need, for example:
+  # AI_PROVIDER: openai-compatible
+  # AI_MODEL: qwen3-14b-awq
+  # AI_OPENAI_COMPATIBLE_BASE_URL: http://vllm:8000/v1
+  # AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
+  # AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
+  # Secret values can use valueFrom.secretKeyRef; omit unused provider variables.
   env: {}
 
   # Tolerations for scheduling pods on tainted nodes
@@ -179,6 +187,257 @@ deployment:
       containerPort: 9464
       protocol: TCP
       exposed: true
+
+##########################################################
+# Optional bundled web LLM runtime
+##########################################################
+llm:
+  # Deploy Formbricks-provided Qwen through the vLLM OpenAI-compatible runtime.
+  # Disabled by default; keep using deployment.env for Google Vertex, Azure, Bedrock,
+  # or externally managed OpenAI-compatible providers.
+  enabled: false
+
+  # When enabled, automatically points the Formbricks app at the bundled vLLM router.
+  # Any AI_* value explicitly set in deployment.env takes precedence over these defaults.
+  autoConfigureApp: true
+
+  # Formbricks app-facing settings for the bundled runtime.
+  formbricks:
+    # Defaults to http://<release-name>-router-service:<llm.routerSpec.servicePort>/v1 when empty.
+    baseUrl: ""
+    model: qwen3-14b-awq
+    providerName: vllm
+    supportsStructuredOutputs: "1"
+
+  servingEngineSpec:
+    enableEngine: true
+    labels:
+      environment: llm
+      release: vllm
+    imagePullPolicy: IfNotPresent
+    servicePort: 8000
+    runtimeClassName: ""
+    strategy:
+      type: Recreate
+    modelSpec:
+      - name: qwen
+        enabled: true
+        repository: vllm/vllm-openai
+        tag: v0.14.0
+        modelURL: Qwen/Qwen3-14B-AWQ
+        replicaCount: 1
+        requestCPU: 4
+        requestMemory: 24Gi
+        limitCPU: 8
+        limitMemory: 32Gi
+        requestGPU: 1
+        requestGPUType: nvidia.com/gpu
+        pvcStorage: 100Gi
+        runtimeClassName: ""
+        shmSize: 8Gi
+        vllmConfig:
+          maxModelLen: 8192
+          dtype: float16
+          tensorParallelSize: 1
+          maxNumSeqs: 8
+          gpuMemoryUtilization: 0.9
+          extraArgs:
+            - --served-model-name
+            - qwen3-14b-awq
+            - --default-chat-template-kwargs
+            - '{"enable_thinking": false}'
+        lmcacheConfig:
+          enabled: false
+        keda:
+          enabled: false
+    startupProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 180
+      httpGet:
+        path: /health
+        port: 8000
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        path: /health
+        port: 8000
+    readinessProbe:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 12
+      httpGet:
+        path: /health
+        port: 8000
+
+  routerSpec:
+    enableRouter: true
+    imagePullPolicy: IfNotPresent
+    serviceType: ClusterIP
+    servicePort: 8000
+    serviceDiscovery: k8s
+    k8sServiceDiscoveryType: service-name
+    resources:
+      requests:
+        cpu: 400m
+        memory: 1Gi
+      limits:
+        memory: 2Gi
+    startupProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 120
+      httpGet:
+        path: /health
+        port: router-port
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        path: /health
+        port: router-port
+    readinessProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 30
+      httpGet:
+        path: /health
+        port: router-port
+
+##########################################################
+# Optional AI taxonomy service
+##########################################################
+taxonomy:
+  # Deploy the standalone taxonomy service. Disabled by default.
+  enabled: false
+  replicas: 1
+
+  # When enabled, automatically points Hub API at the in-cluster taxonomy service.
+  # Disable only when you want to wire Hub manually through hub.env.
+  autoConfigureHub: true
+
+  image:
+    repository: "ghcr.io/formbricks/taxonomy"
+    tag: "v0.1.0"
+    digest: ""
+    pullPolicy: IfNotPresent
+
+  port: 8000
+
+  service:
+    type: ClusterIP
+    port: 8000
+    annotations: {}
+    additionalLabels: {}
+
+  auth:
+    # Existing secret must contain serviceTokenKey and hubInternalApiTokenKey.
+    existingSecret: ""
+    serviceTokenKey: TAXONOMY_SERVICE_TOKEN
+    hubInternalApiTokenKey: HUB_INTERNAL_API_TOKEN
+    serviceToken: ""
+    hubInternalApiToken: ""
+
+  llm:
+    provider: openai-compatible
+    model: qwen3-14b-awq
+    # Defaults to the bundled vLLM router URL when llm.enabled=true. Required otherwise.
+    baseUrl: ""
+    # Existing secret must contain apiKeySecretKey. When unset, the chart creates a non-empty dummy key.
+    existingSecret: ""
+    apiKeySecretKey: TAXONOMY_LLM_API_KEY
+    apiKey: ""
+    temperature: "0.1"
+    maxAttempts: "4"
+    timeoutSeconds: "60"
+    vertex:
+      project: ""
+      location: ""
+      # Existing secret must contain credentialsJsonSecretKey.
+      existingSecret: ""
+      credentialsJsonSecretKey: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON
+      credentialsJson: ""
+
+  embeddingDimension: "768"
+  minEmbeddedRecords: "20"
+  maxRecords: "50000"
+  maxClusters: "80"
+  randomSeed: "42"
+  hubClientTimeoutSeconds: "120"
+
+  envFrom: []
+  env: {}
+
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      memory: 4Gi
+
+  autoscaling:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minReplicas: 1
+    maxReplicas: 3
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: Resource
+        resource:
+          name: memory
+          target:
+            type: Utilization
+            averageUtilization: 80
+    behavior: {}
+
+  # Disabled by default because the default taxonomy replica count is 1.
+  pdb:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minAvailable: 1
+    # maxUnavailable: 1
+    # unhealthyPodEvictionPolicy: AlwaysAllow
+
+  probes:
+    startupProbe:
+      failureThreshold: 30
+      periodSeconds: 10
+      httpGet:
+        path: /health
+        port: http
+    readinessProbe:
+      failureThreshold: 6
+      periodSeconds: 10
+      timeoutSeconds: 5
+      httpGet:
+        path: /health
+        port: http
+    livenessProbe:
+      failureThreshold: 6
+      periodSeconds: 20
+      timeoutSeconds: 5
+      httpGet:
+        path: /health
+        port: http
+
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
 
 ##########################################################
 # Horizontal Pod Autoscaler (HPA)
@@ -513,15 +772,20 @@ envoyRedis:
     enabled: false
 
 ##########################################################
-# Redis Configuration
+# Valkey Configuration
 ##########################################################
 redis:
-  enabled: true # Enable/disable Redis
+  enabled: true # Enable/disable bundled Valkey
   # Use this to point Formbricks jobs and cache traffic at an existing Redis/Valkey deployment.
   # External Redis instances must also be configured with `maxmemory-policy noeviction`
   # in their redis.conf/valkey.conf (or equivalent managed-service setting) to avoid BullMQ job loss.
   externalRedisUrl: ""
   fullnameOverride: "formbricks-redis"
+  image:
+    repository: "valkey/valkey"
+    tag: ""
+    digest: "sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
+    pullPolicy: IfNotPresent
   architecture: standalone
   commonConfiguration: |-
     appendonly yes
@@ -534,8 +798,30 @@ redis:
   networkPolicy:
     enabled: false
   master:
+    resources:
+      limits:
+        cpu: 150m
+        memory: 192Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    podSecurityContext: {}
+    containerSecurityContext: {}
+    podAnnotations: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
     persistence:
       enabled: true
+      size: 8Gi
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+    pdb:
+      enabled: true
+      minAvailable: ""
+      maxUnavailable: 0
 
 ##########################################################
 # Service Monitor to collect Prometheus metrices
@@ -561,8 +847,10 @@ serviceMonitor:
 # Cube.js Analytics Configuration
 ##########################################################
 cube:
-  # Optional internal Cube.js service for XM Suite v5 analytics.
-  enabled: false
+  # Cube semantic-layer service used by Formbricks analytics. Bundled by default.
+  # Set to false only if you want to point the app at an external Cube cluster
+  # via deployment.env.CUBEJS_API_URL (CUBEJS_API_SECRET must still be provided).
+  enabled: true
   replicas: 1
 
   image:
@@ -578,11 +866,14 @@ cube:
     type: ClusterIP
     port: 4000
 
-  # Secret values such as CUBEJS_API_SECRET and CUBEJS_DB_* should be supplied
-  # through envFrom or another secret-management flow.
+  # The generated app secret supplies CUBEJS_API_SECRET when secret.enabled=true.
+  # Secret values such as CUBEJS_DB_* should be supplied through envFrom or another secret-management
+  # flow.
   envFrom: []
 
   env:
+    # PORT is rendered from cube.port so app-level secret values cannot override
+    # the Cube listener port through envFrom.
     CUBEJS_DB_TYPE: "postgres"
     CUBEJS_DEFAULT_API_SCOPES: "meta,data"
     # Keep the in-memory cache/queue driver at one Cube replica only. The chart
@@ -640,10 +931,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.3.0.
-    digest: "sha256:6c39b1143527137e881df785a5b668625a1fe3edb05485bb5ded19f813c8de88"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.6.0.
+    digest: "sha256:b22c5f8d1e2dd79224574f526a6714a3cc5372d18f4c047eaa9d18fe6ab75591"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.3.0"
+    tag: "0.6.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
@@ -900,16 +1191,18 @@ hub:
     affinity: {}
     topologySpreadConstraints: []
 
-  # XM Suite v5 analytics also requires Cube. Use cube.enabled=true to deploy
-  # the internal chart-managed Cube service, or set deployment.env.CUBEJS_API_URL
-  # to an operator-managed Cube endpoint.
-
   # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
   # Fresh installs run the same migrations through the Hub deployment init container.
   migration:
     ttlSecondsAfterFinished: 300
     backoffLimit: 3
     activeDeadlineSeconds: 900
+    waitForFormbricksMigration:
+      enabled: true
+      maxAttempts: 180
+      # Consecutive missing Job reads before falling back to persisted Prisma/DataMigration markers.
+      missingJobMaxAttempts: 12
+      intervalSeconds: 5
 
   resources:
     limits:

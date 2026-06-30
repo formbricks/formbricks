@@ -1126,7 +1126,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
     });
 
-    describe("account deletion SSO reauthentication intents", () => {
+    describe("account deletion SSO identity confirmation intents", () => {
       const accountDeletionIntent = {
         id: "intent-id",
         userId: mockUser.id,
@@ -1137,7 +1137,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         returnToUrl: "http://localhost:3000/environments/env-1/settings/profile",
       };
 
-      test("round-trips encrypted account deletion reauth intents", () => {
+      test("round-trips encrypted account deletion SSO identity confirmation intents", () => {
         const token = createAccountDeletionSsoReauthIntent(accountDeletionIntent);
 
         expect(verifyAccountDeletionSsoReauthIntent(token)).toEqual(accountDeletionIntent);
@@ -1154,14 +1154,14 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         );
       });
 
-      test("creates account deletion reauth intents with a ten minute default expiry", () => {
+      test("creates account deletion SSO identity confirmation intents with a ten minute default expiry", () => {
         const token = createAccountDeletionSsoReauthIntent(accountDeletionIntent);
         const decoded = jwt.decode(token) as any;
 
         expect(decoded.exp - decoded.iat).toBe(10 * 60);
       });
 
-      test("rejects account deletion reauth intents with the wrong purpose", () => {
+      test("rejects account deletion SSO identity confirmation intents with the wrong purpose", () => {
         const token = jwt.sign(
           {
             id: crypto.symmetricEncrypt(accountDeletionIntent.id, TEST_ENCRYPTION_KEY),
@@ -1183,7 +1183,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         );
       });
 
-      test("rejects account deletion reauth intents missing required fields", () => {
+      test("rejects account deletion SSO identity confirmation intents missing required fields", () => {
         const token = jwt.sign(
           {
             id: crypto.symmetricEncrypt(accountDeletionIntent.id, TEST_ENCRYPTION_KEY),
@@ -1204,7 +1204,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         );
       });
 
-      test("rejects expired account deletion reauth intents", () => {
+      test("rejects expired account deletion SSO identity confirmation intents", () => {
         const expiredToken = jwt.sign(
           {
             id: crypto.symmetricEncrypt(accountDeletionIntent.id, TEST_ENCRYPTION_KEY),
@@ -1225,7 +1225,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         expect(() => verifyAccountDeletionSsoReauthIntent(expiredToken)).toThrow();
       });
 
-      test("throws when account deletion reauth intent secrets are missing", async () => {
+      test("throws when account deletion SSO identity confirmation intent secrets are missing", async () => {
         await testMissingSecretsError(createAccountDeletionSsoReauthIntent, [accountDeletionIntent]);
 
         const token = jwt.sign(

@@ -1,5 +1,5 @@
-import { OrganizationRole, Prisma, TeamUserRole } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
@@ -173,9 +173,15 @@ export const updateUser = async (
   let newTeams;
 
   try {
-    // First, fetch the existing user along with memberships and teamUsers.
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // Restrict the lookup to a user with a membership in the authenticated organization,
+    // and scope teamUsers to teams that belong to the same organization. Looking up by
+    // email alone would surface users from other organizations and allow mutations to
+    // their global fields and team memberships.
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email,
+        memberships: { some: { organizationId } },
+      },
       include: {
         memberships: {
           select: {
@@ -184,6 +190,7 @@ export const updateUser = async (
           },
         },
         teamUsers: {
+          where: { team: { organizationId } },
           include: {
             team: true,
           },
@@ -198,7 +205,7 @@ export const updateUser = async (
       });
     }
 
-    // Capture the existing team names for the user.
+    // Capture the existing team names for the user (within the authenticated organization).
     existingTeams = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
 
     // Build an array of operations for deleting teamUsers that are not in the input.
@@ -272,9 +279,10 @@ export const updateUser = async (
       },
     };
 
-    // Build the user update operation.
+    // Update by id so the mutation is bound to the org-scoped lookup above. Email is
+    // a global unique key and using it here would defeat the membership check.
     const updateUserOp = prisma.user.update({
-      where: { email },
+      where: { id: existingUser.id },
       data: prismaData,
       include: {
         memberships: {

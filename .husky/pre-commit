@@ -3,7 +3,7 @@
 if command -v pnpm >/dev/null 2>&1; then
   pnpm lint-staged
 elif command -v npm >/dev/null 2>&1; then
-  npm exec --yes pnpm@10.32.1 lint-staged
+  npm exec --yes pnpm@11.7.0 lint-staged
 elif command -v corepack >/dev/null 2>&1; then
   corepack pnpm lint-staged
 else

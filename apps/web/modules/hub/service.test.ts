@@ -4,9 +4,19 @@ import FormbricksHub from "@formbricks/hub";
 import {
   createFeedbackRecord,
   createFeedbackRecordsBatch,
+  createTaxonomyRun,
   deleteFeedbackRecord,
+  deleteHubTenantData,
+  getActiveTaxonomyTree,
   getFeedbackRecordTenant,
+  getTaxonomyRun,
+  getTaxonomyTree,
   listFeedbackRecords,
+  listTaxonomyFields,
+  listTaxonomyNodeRecords,
+  listTaxonomyRuns,
+  removeTaxonomyNode,
+  renameTaxonomyNode,
   retrieveFeedbackRecord,
   semanticSearchFeedbackRecords,
   updateFeedbackRecord,
@@ -54,6 +64,13 @@ const sampleInput: FeedbackRecordCreateParams = {
   collected_at: "2026-02-24T10:00:00.000Z",
   submission_id: "sub-1",
   tenant_id: "tenant-1",
+};
+
+const taxonomyScope = {
+  tenant_id: "tenant-1",
+  source_type: "formbricks_survey",
+  source_id: "survey-1",
+  field_id: "question-1",
 };
 
 describe("hub service", () => {
@@ -344,6 +361,48 @@ describe("hub service", () => {
     });
   });
 
+  describe("deleteHubTenantData", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await deleteHubTenantData("tenant-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    test("returns mapped data when client.delete resolves", async () => {
+      const deleteSpy = vi.fn().mockResolvedValue({
+        tenant_id: "tenant-1",
+        deleted_feedback_records: 3,
+        deleted_embeddings: 5,
+        deleted_webhooks: 1,
+      });
+      vi.mocked(getHubClient).mockReturnValue({ delete: deleteSpy } as any);
+
+      const result = await deleteHubTenantData("tenant-1");
+
+      expect(deleteSpy).toHaveBeenCalledWith("/v1/tenants/tenant-1/data");
+      expect(result.error).toBeNull();
+      expect(result.data).toEqual({
+        deletedFeedbackRecords: 3,
+        deletedEmbeddings: 5,
+        deletedWebhooks: 1,
+      });
+    });
+
+    test("returns error when client.delete throws", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        delete: vi.fn().mockRejectedValue(new Error("network")),
+      } as any);
+
+      const result = await deleteHubTenantData("tenant-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: "network" });
+    });
+  });
+
   describe("createFeedbackRecordsBatch", () => {
     test("returns all errors when getHubClient returns null", async () => {
       vi.mocked(getHubClient).mockReturnValue(null);
@@ -456,6 +515,125 @@ describe("hub service", () => {
           detail: "Network error",
         },
       });
+    });
+  });
+
+  describe("taxonomy wrappers", () => {
+    test("returns config errors when the Hub client is disabled", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      await expect(listTaxonomyFields("tenant-1")).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(createTaxonomyRun({ ...taxonomyScope, actor_id: "user-1" })).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(listTaxonomyRuns(taxonomyScope)).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(getTaxonomyRun("run-1", "tenant-1")).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(getActiveTaxonomyTree(taxonomyScope)).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(getTaxonomyTree("run-1", "tenant-1")).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(
+        renameTaxonomyNode("node-1", { tenant_id: "tenant-1", actor_id: "user-1", label: "New" })
+      ).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(
+        removeTaxonomyNode("node-1", { tenant_id: "tenant-1", actor_id: "user-1" })
+      ).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+      await expect(listTaxonomyNodeRecords("node-1", { tenant_id: "tenant-1" })).resolves.toMatchObject({
+        data: null,
+        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
+      });
+    });
+
+    test("builds taxonomy endpoint URLs with scoped query parameters", async () => {
+      const get = vi.fn().mockResolvedValue({ data: [], limit: 10 });
+      const post = vi.fn().mockResolvedValue({ run: { id: "run-1" }, in_progress: false });
+      const patch = vi.fn().mockResolvedValue({ id: "node-1", label: "Renamed" });
+      const del = vi.fn().mockResolvedValue({ id: "node-1", removed_at: "2026-06-11T00:00:00Z" });
+      vi.mocked(getHubClient).mockReturnValue({ get, post, patch, delete: del } as any);
+
+      await listTaxonomyFields("tenant-1");
+      await createTaxonomyRun({ ...taxonomyScope, field_label: "Question?", actor_id: "user-1" });
+      await listTaxonomyRuns({ ...taxonomyScope, limit: 5 });
+      await getTaxonomyRun("run 1", "tenant-1");
+      await getActiveTaxonomyTree(taxonomyScope);
+      await getTaxonomyTree("run 1", "tenant-1");
+      await renameTaxonomyNode("node 1", { tenant_id: "tenant-1", actor_id: "user-1", label: "Renamed" });
+      await removeTaxonomyNode("node 1", { tenant_id: "tenant-1", actor_id: "user-1" });
+      await listTaxonomyNodeRecords("node 1", { tenant_id: "tenant-1", limit: 25 });
+
+      expect(get).toHaveBeenNthCalledWith(1, "/v1/taxonomy/fields?tenant_id=tenant-1");
+      expect(post).toHaveBeenCalledWith("/v1/taxonomy/runs", {
+        body: { ...taxonomyScope, field_label: "Question?", actor_id: "user-1" },
+      });
+      expect(get).toHaveBeenNthCalledWith(
+        2,
+        "/v1/taxonomy/runs?tenant_id=tenant-1&source_type=formbricks_survey&source_id=survey-1&field_id=question-1&limit=5"
+      );
+      expect(get).toHaveBeenNthCalledWith(3, "/v1/taxonomy/runs/run%201?tenant_id=tenant-1");
+      expect(get).toHaveBeenNthCalledWith(
+        4,
+        "/v1/taxonomy/runs/active/tree?tenant_id=tenant-1&source_type=formbricks_survey&source_id=survey-1&field_id=question-1"
+      );
+      expect(get).toHaveBeenNthCalledWith(5, "/v1/taxonomy/runs/run%201/tree?tenant_id=tenant-1");
+      expect(patch).toHaveBeenCalledWith("/v1/taxonomy/nodes/node%201", {
+        body: { tenant_id: "tenant-1", actor_id: "user-1", label: "Renamed" },
+      });
+      expect(del).toHaveBeenCalledWith("/v1/taxonomy/nodes/node%201?tenant_id=tenant-1&actor_id=user-1");
+      expect(get).toHaveBeenNthCalledWith(
+        6,
+        "/v1/taxonomy/nodes/node%201/records?tenant_id=tenant-1&limit=25"
+      );
+    });
+
+    test("preserves an empty source_id in taxonomy scope query params (the no-source bucket)", async () => {
+      const get = vi.fn().mockResolvedValue({ run: {}, root: null });
+      vi.mocked(getHubClient).mockReturnValue({ get } as any);
+
+      const noSourceScope = { ...taxonomyScope, source_id: "" };
+      await getActiveTaxonomyTree(noSourceScope);
+      await listTaxonomyRuns({ ...noSourceScope, limit: 5 });
+
+      // source_id="" must be sent (source_id=), not dropped — otherwise Hub reads it as
+      // "no source filter" instead of "the unattributed bucket". See Hub PR #88.
+      expect(get).toHaveBeenNthCalledWith(
+        1,
+        "/v1/taxonomy/runs/active/tree?tenant_id=tenant-1&source_type=formbricks_survey&source_id=&field_id=question-1"
+      );
+      expect(get).toHaveBeenNthCalledWith(
+        2,
+        "/v1/taxonomy/runs?tenant_id=tenant-1&source_type=formbricks_survey&source_id=&field_id=question-1&limit=5"
+      );
+    });
+
+    test("maps taxonomy endpoint failures to HubResult errors", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        get: vi.fn().mockRejectedValue(new Error("taxonomy unavailable")),
+      } as any);
+
+      const result = await listTaxonomyFields("tenant-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: "taxonomy unavailable" });
     });
   });
 });

@@ -18,11 +18,11 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const { t } = useTranslation();
   const getIcon = (elementType: TSurveyElementTypeEnum) => {
     const Icon = getElementIcon(elementType, t);
-    return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
+    return <Icon className="mt-[3px] size-5 shrink-0 text-slate-600" />;
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="">
         <div className="grid min-h-10 grid-cols-6 items-center rounded-t-xl border-b border-slate-200 bg-slate-100 text-sm font-semibold text-slate-600">
           <div className="col-span-3 px-4 md:px-6">{t("common.questions")}</div>
@@ -30,7 +30,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
-                  <TimerIcon className="h-5 w-5" />
+                  <TimerIcon className="size-5" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"}>
                   <p className="text-center font-normal">{t("workspace.surveys.summary.ttc_tooltip")}</p>
@@ -39,7 +39,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
             </TooltipProvider>
           </div>
           <div className="px-4 text-right md:px-6">{t("workspace.surveys.summary.impressions")}</div>
-          <div className="px-4 text-right md:mr-1 md:pl-6 md:pr-6">
+          <div className="px-4 text-right md:mr-1 md:pr-6 md:pl-6">
             {t("workspace.surveys.summary.drop_offs")}
           </div>
         </div>
@@ -64,10 +64,10 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
                 )}
               </p>
             </div>
-            <div className="whitespace-pre-wrap px-4 py-2 text-right font-mono font-medium md:px-6">
+            <div className="px-4 py-2 text-right font-mono font-medium whitespace-pre-wrap md:px-6">
               {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>
-            <div className="whitespace-pre-wrap px-4 py-2 text-right font-mono font-medium md:px-6">
+            <div className="px-4 py-2 text-right font-mono font-medium whitespace-pre-wrap md:px-6">
               {quesDropOff.impressions}
             </div>
             <div className="px-4 py-2 text-right md:px-6">

@@ -88,7 +88,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
         </DialogHeader>
 
         <FormProvider {...form}>
-          <form className="flex flex-col space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+          <form className="flex flex-col gap-y-6" onSubmit={form.handleSubmit(onSubmit)}>
             <DialogBody className="space-y-6">
               <div className="flex flex-col gap-2">
                 <label htmlFor="password" className="text-sm font-medium text-slate-700">
@@ -109,7 +109,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                             required
                             onChange={(password) => field.onChange(password)}
                             value={field.value}
-                            className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                           />
                           {error?.message && <FormError className="text-left">{error.message}</FormError>}
                         </FormItem>
@@ -186,7 +186,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                   {backupCodeInputVisible ? t("common.go_back") : t("workspace.settings.profile.lost_access")}
                 </Button>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center gap-x-4">
                 <Button
                   variant="secondary"
                   type="button"

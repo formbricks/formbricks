@@ -23,7 +23,7 @@ export function DimensionsPanel({
   const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
     value: d.id,
     label: [getTranslatedFieldLabel(d.id, t), d.description].filter(Boolean).join(" - "),
-    icon: d.isGenerated ? <SparklesIcon className="h-4 w-4 text-slate-500" aria-hidden="true" /> : undefined,
+    icon: d.isGenerated ? <SparklesIcon className="size-4 text-slate-500" aria-hidden="true" /> : undefined,
   }));
 
   return (

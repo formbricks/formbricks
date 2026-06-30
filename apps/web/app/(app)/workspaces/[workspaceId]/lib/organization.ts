@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
@@ -18,6 +18,10 @@ export const getOrganizationsByUserId = reactCache(
             },
           },
         },
+        // Deterministic order so callers that take organizations[0] (e.g. account settings'
+        // default org) always resolve the same organization for a given user. id breaks ties when
+        // two organizations share a createdAt timestamp.
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
           id: true,
           name: true,

@@ -1,6 +1,6 @@
-import { type ActionClass } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { type ActionClass } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { getActionClasses } from "./action-class";
@@ -103,6 +103,7 @@ describe("getActionClasses", () => {
     // We need to import the actual react cache to test it with vi.spyOn if we weren't mocking it.
     // However, since we are mocking it to be a pass-through, we just check if our main cache is called.
 
-    await getActionClasses(workspaceId);
+    const result = await getActionClasses(workspaceId);
+    expect(result).toEqual(mockActionClasses);
   });
 });

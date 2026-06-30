@@ -1,16 +1,17 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { type Workspace } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { type Workspace } from "@formbricks/database/prisma-browser";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { addElementToBlock } from "@/modules/survey/editor/lib/blocks";
+import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import {
   getCXElementNameMap,
   getElementDefaults,
@@ -74,13 +75,14 @@ export const AddElementToBlockButton = ({
     setLocalSurvey(result.data);
     setOpen(false);
     setActiveElementId(elementWithLabels.id);
+    scrollElementCardIntoView(elementWithLabels.id);
   };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="secondary">
-          <PlusIcon className="h-4 w-4" />
+          <PlusIcon className="size-4" />
           <div>
             <p className="text-sm font-medium text-slate-900">
               {t("workspace.surveys.edit.add_question_to_block")}

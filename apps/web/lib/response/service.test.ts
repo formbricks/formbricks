@@ -1,6 +1,7 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
 import { updateResponse } from "./service";
@@ -323,6 +324,36 @@ describe("updateResponse", () => {
       const responseInput = createMockResponseInput();
 
       await expect(updateResponse(mockResponseId, responseInput)).rejects.toThrow(DatabaseError);
+    });
+
+    test("should throw ResourceNotFoundError when response is deleted during update", async () => {
+      const currentResponse = createMockCurrentResponse();
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+          code: PrismaErrorType.RelatedRecordDoesNotExist,
+          clientVersion: "5.0.0",
+        })
+      );
+
+      const responseInput = createMockResponseInput();
+
+      await expect(updateResponse(mockResponseId, responseInput)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("should throw ResourceNotFoundError when Prisma reports a missing response record", async () => {
+      const currentResponse = createMockCurrentResponse();
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Record does not exist", {
+          code: PrismaErrorType.RecordDoesNotExist,
+          clientVersion: "5.0.0",
+        })
+      );
+
+      const responseInput = createMockResponseInput();
+
+      await expect(updateResponse(mockResponseId, responseInput)).rejects.toThrow(ResourceNotFoundError);
     });
   });
 });

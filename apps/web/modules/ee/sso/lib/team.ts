@@ -1,8 +1,8 @@
 import "server-only";
-import { Organization, Prisma, PrismaClient, Team } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Organization, Prisma, PrismaClient, Team } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_TEAM_ID } from "@/lib/constants";

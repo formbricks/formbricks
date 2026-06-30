@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
@@ -9,6 +9,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
   TAddWidgetInput,
+  TChartType,
   TDashboard,
   TDashboardCreateInput,
   TDashboardUpdateInput,
@@ -19,6 +20,9 @@ import {
 } from "@/modules/ee/analysis/types/analysis";
 
 const MAX_NAME_ATTEMPTS = 5;
+
+const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout =>
+  chartType === "big_number" ? { x: 0, y: 0, w: 3, h: 2 } : { x: 0, y: 0, w: 4, h: 4 };
 
 const selectDashboard = {
   id: true,
@@ -235,7 +239,7 @@ export const duplicateDashboard = async (
           widgets: {
             create: source.widgets.map((widget) => ({
               chartId: widget.chartId,
-              layout: widget.layout ?? { x: 0, y: 0, w: 4, h: 3 },
+              layout: widget.layout ?? { x: 0, y: 0, w: 4, h: 4 },
               order: widget.order,
             })),
           },
@@ -376,25 +380,33 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
             where: { dashboardId: data.dashboardId },
             _max: { order: true },
           }),
-          tx.dashboardWidget.findMany({
-            where: { dashboardId: data.dashboardId },
-            select: { layout: true },
-          }),
+          data.respectY
+            ? Promise.resolve([])
+            : tx.dashboardWidget.findMany({
+                where: { dashboardId: data.dashboardId },
+                select: { layout: true },
+              }),
         ]);
 
-        const bottomY = existingWidgets.reduce((max, w) => {
-          const layout =
-            typeof w.layout === "object" && w.layout !== null
-              ? (w.layout as Partial<{ y: number; h: number }>)
-              : {};
-          return Math.max(max, (layout.y ?? 0) + (layout.h ?? 0));
-        }, 0);
+        const baseLayout = data.layout ?? getDefaultWidgetLayout(chart.type as TChartType);
+        const layout = data.respectY
+          ? baseLayout
+          : {
+              ...baseLayout,
+              y: existingWidgets.reduce((max, w) => {
+                const l =
+                  typeof w.layout === "object" && w.layout !== null
+                    ? (w.layout as Partial<{ y: number; h: number }>)
+                    : {};
+                return Math.max(max, (l.y ?? 0) + (l.h ?? 0));
+              }, 0),
+            };
 
         return tx.dashboardWidget.create({
           data: {
             dashboardId: data.dashboardId,
             chartId: data.chartId,
-            layout: { ...data.layout, y: bottomY },
+            layout,
             order: (maxOrder._max.order ?? -1) + 1,
           },
         });

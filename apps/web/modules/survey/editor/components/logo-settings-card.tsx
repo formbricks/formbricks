@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Image from "next/image";
@@ -40,7 +39,6 @@ export const LogoSettingsCard = ({
   isStorageConfigured,
 }: LogoSettingsCardProps) => {
   const { t } = useTranslation();
-  const [parent] = useAutoAnimate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -125,10 +123,10 @@ export const LogoSettingsCard = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex w-full px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
 
@@ -141,7 +139,7 @@ export const LogoSettingsCard = ({
         </div>
       </Collapsible.CollapsibleTrigger>
 
-      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
+      <Collapsible.CollapsibleContent className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         <hr className="py-1 text-slate-600" />
 
         <div className="flex flex-col gap-6 p-6 pt-2">
@@ -149,7 +147,7 @@ export const LogoSettingsCard = ({
             control={form.control}
             name="isLogoHidden"
             render={({ field }) => (
-              <FormItem className="flex items-center gap-2 space-y-0">
+              <FormItem className="flex items-center gap-2 gap-y-0">
                 <FormControl>
                   <Switch checked={!!field.value} onCheckedChange={field.onChange} disabled={disabled} />
                 </FormControl>
@@ -231,7 +229,7 @@ export const LogoSettingsCard = ({
                     childrenContainerClass="overflow-visible"
                     disabled={disabled}>
                     {isBgColorEnabled && (
-                      <div className="px-2">
+                      <div className="w-full p-2">
                         <ColorPicker
                           color={logoBgColor || "#f8f8f8"}
                           onChange={handleBgColorChange}

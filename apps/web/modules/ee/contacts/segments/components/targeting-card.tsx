@@ -39,7 +39,6 @@ import { SegmentEditor } from "./segment-editor";
 interface TargetingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  workspaceId: string;
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   initialSegment?: TSegment;
@@ -48,7 +47,6 @@ interface TargetingCardProps {
 export function TargetingCard({
   localSurvey,
   setLocalSurvey,
-  workspaceId,
   contactAttributeKeys,
   segments,
   initialSegment,
@@ -181,7 +179,7 @@ export function TargetingCard({
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               strokeWidth={3}
             />
           </div>
@@ -222,7 +220,6 @@ export function TargetingCard({
                   <div className="w-full">
                     <SegmentEditor
                       contactAttributeKeys={contactAttributeKeys}
-                      workspaceId={workspaceId}
                       group={segment.filters}
                       key={segment.filters.toString()}
                       segment={segment}
@@ -309,7 +306,6 @@ export function TargetingCard({
                   <div className="opacity-60">
                     <SegmentEditor
                       contactAttributeKeys={contactAttributeKeys}
-                      workspaceId={workspaceId}
                       group={segment.filters}
                       key={segment.filters.toString()}
                       segment={segment}
@@ -331,9 +327,9 @@ export function TargetingCard({
                       ? t("workspace.segments.hide_filters")
                       : t("workspace.segments.view_filters")}
                     {segmentEditorViewOnly ? (
-                      <ChevronUpIcon className="ml-2 h-3 w-3" />
+                      <ChevronUpIcon className="ml-2 size-3" />
                     ) : (
-                      <ChevronDownIcon className="ml-2 h-3 w-3" />
+                      <ChevronDownIcon className="ml-2 size-3" />
                     )}
                   </Button>
 
@@ -351,13 +347,13 @@ export function TargetingCard({
                       size="sm"
                       variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>
                       {t("workspace.segments.edit_segment")}
-                      <PencilIcon className="ml-2 h-3 w-3" />
+                      <PencilIcon className="ml-2 size-3" />
                     </Button>
                   )}
                 </div>
                 {isSegmentUsedInOtherSurveys ? (
                   <p className="mt-1 flex items-center text-xs text-slate-500">
-                    <AlertCircle className="mr-1 inline h-3 w-3" />
+                    <AlertCircle className="mr-1 inline size-3" />
                     <Trans
                       i18nKey="workspace.segments.segment_used_in_other_surveys_make_changes_here"
                       components={{

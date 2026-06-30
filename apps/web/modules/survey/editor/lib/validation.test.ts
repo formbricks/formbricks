@@ -16,6 +16,7 @@ import {
   TSurveyPictureSelectionElement,
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
+import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -23,7 +24,11 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
+import {
+  TValidateIdErrorCode,
+  validateCardFieldsForAllLanguages,
+  validateQuestionLabels,
+} from "@formbricks/types/surveys/validation";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import * as validation from "./validation";
 
@@ -120,6 +125,173 @@ const surveyLanguagesWithDisabled: TSurveyLanguage[] = [
     enabled: false,
   },
 ];
+
+const surveyLanguagesMultipleEnabled: TSurveyLanguage[] = [
+  {
+    language: {
+      id: "1",
+      code: "en",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: true,
+    enabled: true,
+  },
+  {
+    language: {
+      id: "2",
+      code: "de",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: false,
+    enabled: true,
+  },
+  {
+    language: {
+      id: "3",
+      code: "fr",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: false,
+    enabled: true,
+  },
+  {
+    language: {
+      id: "4",
+      code: "es",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: false,
+    enabled: true,
+  },
+];
+
+describe("survey schema multilingual label validation", () => {
+  test("returns a card issue when the welcome card default headline is missing but translations are present", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "cardHeadline",
+      { default: "", en: "Welcome", de: "Willkommen" },
+      surveyLanguagesEnabled,
+      "welcome"
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message: "The note on the Welcome card is missing",
+      path: ["welcomeCard", "cardHeadline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns language params when only a translated welcome card headline is missing", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "cardHeadline",
+      { default: "Welcome", en: "Welcome", de: "" },
+      surveyLanguagesEnabled,
+      "welcome"
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message: "The note on the Welcome card is missing for the following languages:  -fLang- de",
+      path: ["welcomeCard", "cardHeadline"],
+      params: { invalidLanguageCodes: ["de"] },
+    });
+  });
+
+  test("returns a card issue without params when the ending card default headline and translations are missing", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "cardHeadline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      "end",
+      2
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message: "The note on the Ending card 3 is missing",
+      path: ["endings", 2, "cardHeadline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns all invalid language params for mixed valid and invalid ending card translations", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "endingCardButtonLabel",
+      { default: "Done", en: "Done", de: "", fr: " ", es: "Listo" },
+      surveyLanguagesMultipleEnabled,
+      "end",
+      1
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message:
+        "The button label on the Ending card 2 is missing for the following languages:  -fLang- de, fr",
+      path: ["endings", 1, "endingCardButtonLabel"],
+      params: { invalidLanguageCodes: ["de", "fr"] },
+    });
+  });
+
+  test("returns a block-editor issue when a block element default headline is missing", () => {
+    const issue = validateElementLabels(
+      "headline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      1,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 of block 2 is missing",
+      path: ["blocks", 1, "elements", 0, "headline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns a block-editor issue when a question default headline is missing", () => {
+    const issue = validateQuestionLabels(
+      "headline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 is missing",
+      path: ["questions", 0, "headline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns language params when only a translated block element headline is missing", () => {
+    const issue = validateElementLabels(
+      "headline",
+      { default: "Question", en: "Question", de: "" },
+      surveyLanguagesEnabled,
+      1,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 of block 2 is missing for the following languages:  -fLang- de",
+      path: ["blocks", 1, "elements", 0, "headline"],
+      params: { invalidLanguageCodes: ["de"] },
+    });
+  });
+});
 
 describe("validation.isLabelValidForAllLanguages", () => {
   test("should return true if all enabled languages have non-empty labels", () => {

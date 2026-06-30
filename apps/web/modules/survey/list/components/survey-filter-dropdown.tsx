@@ -29,7 +29,7 @@ export const SurveyFilterDropdown = ({
   isOpen,
   toggleDropdown,
 }: SurveyFilterDropdownProps) => {
-  const triggerClasses = `surveyFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none 
+  const triggerClasses = `surveyFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-hidden 
     ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900"}`;
 
   return (
@@ -37,7 +37,7 @@ export const SurveyFilterDropdown = ({
       <DropdownMenuTrigger asChild className={triggerClasses}>
         <div className="flex w-full items-center justify-between">
           <span className="text-sm">{title}</span>
-          <ChevronDownIcon className="ml-2 h-4 w-4" />
+          <ChevronDownIcon className="ml-2 size-4" />
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="bg-slate-900">
@@ -49,7 +49,7 @@ export const SurveyFilterDropdown = ({
               e.preventDefault();
               setSelectedOptions(option.value);
             }}>
-            <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
+            <div className="flex h-full w-full items-center gap-x-2 px-2 py-1 hover:bg-slate-700">
               <Checkbox
                 checked={selectedOptions.includes(option.value)}
                 className={`bg-white ${selectedOptions.includes(option.value) ? "border-none bg-brand-dark" : ""}`}

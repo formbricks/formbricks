@@ -116,8 +116,8 @@ export function ConditionsEditor({
                   <DropdownMenuTrigger>
                     <Button
                       variant="secondary"
-                      className="flex h-10 w-10 items-center justify-center rounded-md">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                      className="flex size-10 items-center justify-center rounded-md">
+                      <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -125,12 +125,12 @@ export function ConditionsEditor({
                       onClick={() => {
                         callbacks.onAddConditionBelow(condition.id);
                       }}
-                      icon={<PlusIcon className="h-4 w-4" />}>
+                      icon={<PlusIcon className="size-4" />}>
                       {t("workspace.surveys.edit.add_condition_below")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => callbacks.onRemoveCondition(condition.id)}
-                      icon={<TrashIcon className="h-4 w-4" />}>
+                      icon={<TrashIcon className="size-4" />}>
                       {t("common.remove")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -223,8 +223,8 @@ export function ConditionsEditor({
             <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
               <Button
                 variant="outline"
-                className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
-                <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                className="flex size-10 items-center justify-center rounded-md bg-white">
+                <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -232,25 +232,25 @@ export function ConditionsEditor({
                 onClick={() => {
                   callbacks.onAddConditionBelow(condition.id);
                 }}
-                icon={<PlusIcon className="h-4 w-4" />}>
+                icon={<PlusIcon className="size-4" />}>
                 {t("workspace.surveys.edit.add_condition_below")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 // onCreateGroup determines if this component is being used in quotas or logic, if in quotas we do not allow removal of only condition
                 disabled={!onCreateGroup && conditions.conditions.length === 1}
                 onClick={() => callbacks.onRemoveCondition(condition.id)}
-                icon={<TrashIcon className="h-4 w-4" />}>
+                icon={<TrashIcon className="size-4" />}>
                 {t("common.remove")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => callbacks.onDuplicateCondition(condition.id)}
-                icon={<CopyIcon className="h-4 w-4" />}>
+                icon={<CopyIcon className="size-4" />}>
                 {t("common.duplicate")}
               </DropdownMenuItem>
               {onCreateGroup && (
                 <DropdownMenuItem
                   onClick={() => onCreateGroup(condition.id)}
-                  icon={<WorkflowIcon className="h-4 w-4" />}
+                  icon={<WorkflowIcon className="size-4" />}
                   disabled={conditions.conditions.length <= 1}>
                   {t("workspace.surveys.edit.create_group")}
                 </DropdownMenuItem>

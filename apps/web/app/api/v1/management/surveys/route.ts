@@ -8,11 +8,12 @@ import {
   addLegacyProjectOverwritesToList,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
-  transformBlocksToQuestions,
   transformQuestionsToBlocks,
   validateSurveyInput,
+  withDerivedQuestions,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -40,24 +41,9 @@ export const GET = withV1ApiWrapper({
 
       const surveys = await getSurveys(workspaceIds, limit, offset);
 
-      const surveysWithQuestions = surveys.map((survey) => {
-        // If the survey has blocks and each block has ONLY ONE element, we can transform the blocks to questions
-        // This is only for backwards compatibility with the older surveys
-        const shouldTransformToQuestions =
-          survey.blocks &&
-          survey.blocks.length > 0 &&
-          survey.blocks.every((block) => block.elements.length === 1);
-
-        if (shouldTransformToQuestions) {
-          return {
-            ...survey,
-            questions: transformBlocksToQuestions(survey.blocks, survey.endings),
-            blocks: [],
-          };
-        }
-
-        return survey;
-      });
+      // Always expose `questions` (derived from blocks) alongside `blocks` so API v1
+      // consumers get a consistent shape regardless of how the survey was built.
+      const surveysWithQuestions = surveys.map((survey) => withDerivedQuestions(survey));
 
       return {
         response: responses.successResponse(
@@ -84,8 +70,14 @@ export const POST = withV1ApiWrapper({
     try {
       let surveyInput;
       try {
-        surveyInput = await req.json();
+        surveyInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
@@ -158,20 +150,10 @@ export const POST = withV1ApiWrapper({
         auditLog.newObject = survey;
       }
 
-      if (hasQuestions) {
-        const surveyWithQuestions = {
-          ...survey,
-          questions: transformBlocksToQuestions(survey.blocks, survey.endings),
-          blocks: [],
-        };
-
-        return {
-          response: responses.successResponse(addLegacyProjectOverwrites(surveyWithQuestions)),
-        };
-      }
-
       return {
-        response: responses.successResponse(addLegacyProjectOverwrites(survey)),
+        response: responses.successResponse(
+          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+        ),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {

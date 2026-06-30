@@ -1,0 +1,22 @@
+type: object
+description: >
+  Hidden fields, sometimes called embedded data in other survey products. Field
+  ids are stable
+
+  public identifiers and may be referenced by logic, recall, quotas,
+  integrations, and response data.
+
+  Use only letters, numbers, underscores, and hyphens; avoid spaces and reserved
+  ids.
+required:
+  - enabled
+properties:
+  enabled:
+    type: boolean
+  fieldIds:
+    type: array
+    items:
+      type: string
+      pattern: ^[a-zA-Z0-9_-]+$
+    uniqueItems: true
+additionalProperties: false

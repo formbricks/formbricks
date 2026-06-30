@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { TFunction } from "i18next";
 import { CheckIcon } from "lucide-react";
@@ -73,7 +72,6 @@ export const QuotasCard = ({
 }: QuotasCardProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
   const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
   const [activeQuota, setActiveQuota] = useState<TSurveyQuota | null>(null);
@@ -82,8 +80,6 @@ export const QuotasCard = ({
   const [isDeletingQuota, setIsDeletingQuota] = useState(false);
   const [openCreateQuotaConfirmationModal, setOpenCreateQuotaConfirmationModal] = useState(false);
   const router = useRouter();
-
-  const [parent] = useAutoAnimate();
 
   const handleQuotaDelete = async (quotaId: string) => {
     setIsDeletingQuota(true);
@@ -154,10 +150,10 @@ export const QuotasCard = ({
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
           id="quotasCardTrigger">
           <div className="inline-flex px-4 py-4">
-            <div className="flex items-center pl-2 pr-5">
+            <div className="flex items-center pr-5 pl-2">
               <CheckIcon
                 strokeWidth={3}
-                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               />
             </div>
 
@@ -168,9 +164,9 @@ export const QuotasCard = ({
           </div>
         </Collapsible.Trigger>
 
-        <Collapsible.Content className="flex flex-col" ref={parent}>
+        <Collapsible.Content className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
           <hr className="py-1 text-slate-600" />
-          <div className="px-3 pb-3 pt-1">
+          <div className="px-3 pt-1 pb-3">
             {!isQuotasAllowed ? (
               <UpgradePrompt
                 title={t("workspace.surveys.edit.quotas.upgrade_prompt_title")}
@@ -180,13 +176,13 @@ export const QuotasCard = ({
                   {
                     text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                     href: isFormbricksCloud
-                      ? `${workspaceBasePath}/settings/organization/billing`
+                      ? `/organizations/${workspace?.organizationId}/settings/billing`
                       : enterpriseLicenseRequestFormUrl,
                   },
                   {
                     text: t("common.learn_more"),
                     href: isFormbricksCloud
-                      ? `${workspaceBasePath}/settings/organization/billing`
+                      ? `/organizations/${workspace?.organizationId}/settings/billing`
                       : "https://formbricks.com/learn-more-self-hosting-license",
                   },
                 ]}

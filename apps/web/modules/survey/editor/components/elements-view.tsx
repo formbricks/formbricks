@@ -11,10 +11,10 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Workspace } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -50,6 +50,7 @@ import {
   findElementUsedInLogic,
   isUsedInQuota,
   isUsedInRecall,
+  scrollElementCardIntoView,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -500,6 +501,7 @@ export const ElementsView = ({
 
     setActiveElementId(element.id);
     internalElementIdMap[element.id] = createId();
+    scrollElementCardIntoView(element.id);
   };
 
   const _addElementToBlock = (element: TSurveyElement, blockId: string, afterElementIdx: number) => {
@@ -525,6 +527,7 @@ export const ElementsView = ({
     setLocalSurvey(result.data);
     setActiveElementId(updatedElement.id);
     internalElementIdMap[updatedElement.id] = createId();
+    scrollElementCardIntoView(updatedElement.id);
   };
 
   const moveElementToBlock = (elementId: string, targetBlockId: string) => {
@@ -726,7 +729,8 @@ export const ElementsView = ({
       const currentInvalidSet = new Set(invalidElements);
       let hasChanges = false;
 
-      // Validate each element
+      // Live re-validation: clear errors as elements become valid (including
+      // drafts), but don't flag freshly added drafts — save/publish does that.
       elements.forEach((element) => {
         const isValid = validateElement(element, surveyLanguages);
         if (isValid) {
@@ -734,7 +738,7 @@ export const ElementsView = ({
             currentInvalidSet.delete(element.id);
             hasChanges = true;
           }
-        } else if (!currentInvalidSet.has(element.id)) {
+        } else if (!element.isDraft && !currentInvalidSet.has(element.id)) {
           currentInvalidSet.add(element.id);
           hasChanges = true;
         }
@@ -920,7 +924,6 @@ export const ElementsView = ({
           <>
             <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
             <hr />
-
             <HiddenFieldsCard
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
@@ -928,7 +931,6 @@ export const ElementsView = ({
               activeElementId={activeElementId}
               quotas={quotas}
             />
-
             <SurveyVariablesCard
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}

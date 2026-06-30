@@ -39,15 +39,15 @@ export const ElementSummaryHeader = ({
           )}
         </h3>
       </div>
-      <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
+      <div className="flex gap-x-2 text-xs font-semibold text-slate-600 md:text-sm">
         <div className="flex items-center rounded-lg bg-slate-100 p-2">
-          {elementType && <elementType.icon className="mr-2 h-4 w-4" />}
+          {elementType && <elementType.icon className="mr-2 size-4" />}
           {elementType ? elementType.label : t("workspace.surveys.summary.unknown_question_type")}{" "}
           {t("common.question")}
         </div>
         {showResponses && (
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxIcon className="mr-2 h-4 w-4" />
+            <InboxIcon className="mr-2 size-4" />
             {t("common.count_responses", { count: elementSummary.responseCount })}
           </div>
         )}

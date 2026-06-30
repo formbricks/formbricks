@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContacts } from "./contacts";
 
@@ -72,11 +72,5 @@ describe("getContacts", () => {
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: { workspaceId: { in: mockWorkspaceIds } },
     });
-  });
-
-  test("should get contacts", async () => {
-    vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
-
-    await getContacts(mockWorkspaceIds);
   });
 });

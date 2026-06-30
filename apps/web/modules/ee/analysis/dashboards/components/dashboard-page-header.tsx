@@ -20,13 +20,13 @@ export function DashboardPageHeader({
 
   return (
     <div className="border-b border-slate-200">
-      <div className="flex items-center justify-between space-x-4 pb-4">
+      <div className="flex items-center justify-between gap-x-4 pb-4">
         {isEditing ? (
           <input
             type="text"
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
-            className="w-full rounded-md border border-dashed border-slate-300 bg-transparent px-2 py-1 text-3xl font-bold text-slate-800 focus:border-brand-dark focus:outline-none focus:ring-0"
+            className="w-full rounded-md border border-dashed border-slate-300 bg-transparent px-2 py-1 text-3xl font-bold text-slate-800 focus:border-brand-dark focus:ring-0 focus:outline-hidden"
             aria-label={t("workspace.analysis.dashboards.dashboard_name_placeholder")}
             placeholder={t("workspace.analysis.dashboards.dashboard_name_placeholder")}
           />

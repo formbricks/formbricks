@@ -89,10 +89,10 @@ export const WorkspaceLookSettingsLoading = () => {
             <div className="relative mb-3 flex h-fit w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
               <div className="flex h-[90%] max-h-[90%] w-4/6 flex-1 flex-col">
                 <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
-                  <div className="ml-6 flex space-x-2">
-                    <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                    <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                    <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+                  <div className="ml-6 flex gap-x-2">
+                    <div className="size-3 rounded-full bg-red-500"></div>
+                    <div className="size-3 rounded-full bg-amber-500"></div>
+                    <div className="size-3 rounded-full bg-emerald-500"></div>
                   </div>
                   <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                     <p>{t("common.preview")}</p>
@@ -125,7 +125,7 @@ export const WorkspaceLookSettingsLoading = () => {
           <div className="flex cursor-not-allowed select-none">
             <RadioGroup>
               {placements.map((placement) => (
-                <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
+                <div key={placement.value} className="flex items-center gap-x-2 whitespace-nowrap">
                   <RadioGroupItem
                     className="cursor-not-allowed select-none"
                     id={placement.value}
@@ -142,11 +142,11 @@ export const WorkspaceLookSettingsLoading = () => {
                 </div>
               ))}
             </RadioGroup>
-            <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
-              <div className={cn("absolute bottom-3 h-16 w-16 rounded bg-slate-700 sm:right-3")}></div>
+            <div className="relative ml-8 h-40 w-full rounded-sm bg-slate-200">
+              <div className={cn("absolute bottom-3 h-16 w-16 rounded-sm bg-slate-700 sm:right-3")}></div>
             </div>
           </div>
-          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
+          <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed bg-slate-200 select-none">
             {t("common.loading")}
           </Button>
         </div>
@@ -156,7 +156,7 @@ export const WorkspaceLookSettingsLoading = () => {
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">
         <div className="w-full items-center">
-          <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
+          <div className="pointer-events-none flex cursor-not-allowed items-center gap-x-2 select-none">
             <Switch id="signature" checked={false} />
             <Label htmlFor="signature">{t("workspace.look.show_powered_by_formbricks")}</Label>
           </div>

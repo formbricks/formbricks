@@ -145,26 +145,6 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
     expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "ai-smart-tools")).toBe(false);
   });
 
-  test("returns true when license active and ai-data-analysis mapped feature enabled", async () => {
-    mockGetContext.mockResolvedValue({
-      ...baseContext,
-      features: ["ai-data-analysis"],
-      licenseStatus: "active",
-      licenseFeatures: { aiDataAnalysis: true } as TOrganizationEntitlementsContext["licenseFeatures"],
-    });
-    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "ai-data-analysis")).toBe(true);
-  });
-
-  test("returns false when license active but ai-data-analysis mapped feature disabled", async () => {
-    mockGetContext.mockResolvedValue({
-      ...baseContext,
-      features: ["ai-data-analysis"],
-      licenseStatus: "active",
-      licenseFeatures: { aiDataAnalysis: false } as TOrganizationEntitlementsContext["licenseFeatures"],
-    });
-    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "ai-data-analysis")).toBe(false);
-  });
-
   test("returns true when license active and feature has no license mapping", async () => {
     mockGetContext.mockResolvedValue({
       ...baseContext,

@@ -181,7 +181,8 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               {option.icon ? <span className="mr-1 inline-flex items-center">{option.icon}</span> : null}
               {option.label}
               <button
-                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+                type="button"
+                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleUnselect(option);
@@ -192,7 +193,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                   e.stopPropagation();
                 }}
                 onClick={() => handleUnselect(option)}>
-                <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
+                <X className="text-muted-foreground hover:text-foreground size-3" />
               </button>
             </Badge>
           ))}
@@ -204,7 +205,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
-            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-none"
+            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-hidden"
           />
         </div>
       </div>
@@ -216,14 +217,14 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         portalContainer &&
         createPortal(
           <div
-            className="fixed z-[100]"
+            className="fixed z-100"
             style={{
               top: `${position.top}px`,
               left: `${position.left}px`,
               width: `${position.width}px`,
             }}>
             <CommandList className="border-0">
-              <div className="text-popover-foreground max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-none animate-in">
+              <div className="text-popover-foreground max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-hidden animate-in">
                 <CommandGroup className="h-full overflow-auto">
                   {selectableOptions.map((option) => (
                     <CommandItem

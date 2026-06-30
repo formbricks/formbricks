@@ -77,6 +77,7 @@ const SegmentDetail = ({
 
   return (
     <button
+      type="button"
       key={segment.id}
       className={cn(
         "relative mt-1 grid h-16 w-full cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100",
@@ -93,13 +94,13 @@ const SegmentDetail = ({
       }}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-50 opacity-80">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Loader2 className="size-6 animate-spin" />
         </div>
       )}
       <div className="col-span-3 flex items-center pl-6 text-sm">
         <div className="flex items-center gap-4">
-          <div className="ph-no-capture h-8 w-8 flex-shrink-0 text-slate-700">
-            <UsersIcon className="h-5 w-5" />
+          <div className="ph-no-capture size-8 shrink-0 text-slate-700">
+            <UsersIcon className="size-5" />
           </div>
           <div className="flex flex-col">
             <div className="ph-no-capture font-medium text-slate-900">{segment.title}</div>

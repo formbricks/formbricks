@@ -1,0 +1,29 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    description: >-
+      If `buttonExternal` is true, `buttonUrl` and `ctaButtonLabel` are
+      required.
+    properties:
+      type:
+        type: string
+        enum:
+          - cta
+      buttonExternal:
+        type: boolean
+        default: false
+      buttonUrl:
+        type: string
+      ctaButtonLabel:
+        $ref: ./TranslatableText.yml
+  - if:
+      required:
+        - buttonExternal
+      properties:
+        buttonExternal:
+          const: true
+    then:
+      required:
+        - buttonUrl
+        - ctaButtonLabel
+unevaluatedProperties: false

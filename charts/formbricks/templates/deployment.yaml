@@ -79,7 +79,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
       containers:
         - name: {{ template "formbricks.name" . }}
-          image: {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion | default "latest" }}
+          image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           {{- if .Values.deployment.command }}
           command:
@@ -135,13 +135,34 @@ spec:
             - name: HUB_API_URL
               value: "http://{{ include "formbricks.hubname" . }}:8080"
             {{- end }}
+            {{- if and .Values.cube.enabled (not (hasKey .Values.deployment.env "CUBEJS_API_URL")) }}
+            - name: CUBEJS_API_URL
+              value: "http://{{ include "formbricks.cubeName" . }}:{{ .Values.cube.service.port }}"
+            {{- end }}
+            {{- if and .Values.llm.enabled .Values.llm.autoConfigureApp }}
+            {{- if not (hasKey .Values.deployment.env "AI_PROVIDER") }}
+            - name: AI_PROVIDER
+              value: "openai-compatible"
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_MODEL") }}
+            - name: AI_MODEL
+              value: {{ .Values.llm.formbricks.model | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_OPENAI_COMPATIBLE_BASE_URL") }}
+            - name: AI_OPENAI_COMPATIBLE_BASE_URL
+              value: {{ include "formbricks.llmBaseUrl" . | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_OPENAI_COMPATIBLE_PROVIDER_NAME") }}
+            - name: AI_OPENAI_COMPATIBLE_PROVIDER_NAME
+              value: {{ .Values.llm.formbricks.providerName | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS") }}
+            - name: AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS
+              value: {{ .Values.llm.formbricks.supportsStructuredOutputs | quote }}
+            {{- end }}
+            {{- end }}
             {{- range $key, $value := .Values.deployment.env }}
-            - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
-              {{- if kindIs "string" $value }}
-              value: {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | quote }}
-              {{- else }}
-              {{- toYaml $value | nindent 14 }}
-              {{- end }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
           {{- if .Values.deployment.resources }}
           resources:

@@ -1,8 +1,8 @@
 "use client";
 
-import { Webhook } from "@prisma/client";
 import { type JSX, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
 import { EmptyState } from "@/modules/ui/components/empty-state";
@@ -55,6 +55,7 @@ export const WebhookTable = ({
           <div className="grid-cols-7">
             {webhooks.map((webhook, index) => (
               <button
+                type="button"
                 onClick={(e) => {
                   handleOpenWebhookDetailModalClick(e, webhook);
                 }}

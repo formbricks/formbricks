@@ -552,4 +552,12 @@ describe("cn", () => {
   test("handles all undefined", () => {
     expect(cn(undefined, undefined)).toBe("");
   });
+
+  test("handles nested arrays of classes", () => {
+    expect(cn(["foo", ["foo", ["foo", "bar"]]])).toBe("foo foo foo bar");
+  });
+
+  test("handles nulls, booleans and undefined values", () => {
+    expect(cn(null, true, false, undefined, [null, true, false, undefined])).toBe("");
+  });
 });

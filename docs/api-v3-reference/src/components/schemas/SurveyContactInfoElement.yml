@@ -1,0 +1,27 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - firstName
+      - lastName
+      - email
+      - phone
+      - company
+    properties:
+      type:
+        type: string
+        enum:
+          - contactInfo
+      firstName:
+        $ref: ./SurveyToggleInputConfig.yml
+      lastName:
+        $ref: ./SurveyToggleInputConfig.yml
+      email:
+        $ref: ./SurveyToggleInputConfig.yml
+      phone:
+        $ref: ./SurveyToggleInputConfig.yml
+      company:
+        $ref: ./SurveyToggleInputConfig.yml
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

@@ -11,6 +11,7 @@ import {
   ContactIcon,
   EyeOff,
   FlagIcon,
+  GaugeIcon,
   GlobeIcon,
   GridIcon,
   HashIcon,
@@ -26,6 +27,7 @@ import {
   PieChartIcon,
   Rows3Icon,
   SmartphoneIcon,
+  SmilePlusIcon,
   StarIcon,
   User,
 } from "lucide-react";
@@ -103,6 +105,8 @@ const elementIcons = {
   [TSurveyElementTypeEnum.PictureSelection]: ImageIcon,
   [TSurveyElementTypeEnum.Matrix]: GridIcon,
   [TSurveyElementTypeEnum.Ranking]: ListOrderedIcon,
+  [TSurveyElementTypeEnum.CSAT]: SmilePlusIcon,
+  [TSurveyElementTypeEnum.CES]: GaugeIcon,
   [TSurveyElementTypeEnum.Address]: HomeIcon,
   [TSurveyElementTypeEnum.ContactInfo]: ContactIcon,
 
@@ -136,7 +140,7 @@ const getIcon = (type: string) => {
   const IconComponent = (elementIcons as Record<string, (typeof elementIcons)[keyof typeof elementIcons]>)[
     type
   ];
-  return IconComponent ? <IconComponent className="h-5 w-5" strokeWidth={1.5} /> : null;
+  return IconComponent ? <IconComponent className="size-5" strokeWidth={1.5} /> : null;
 };
 
 const getIconBackground = (type: OptionsType | string): string => {
@@ -170,7 +174,7 @@ export const SelectedCommandItem = ({ label, elementType, type }: Partial<Elemen
     <div className="flex h-full min-w-0 items-center gap-2">
       <span
         className={clsx(
-          "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-white",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white",
           getIconBackground(type ?? "")
         )}>
         {getDisplayIcon()}
@@ -214,7 +218,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={open ? `${t("common.search")}...` : t("common.select_filter")}
-            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none outline-none ring-offset-transparent focus:border-none focus:shadow-none focus:outline-none focus:ring-offset-0"
+            className="max-w-full grow border-none p-0 pl-2 text-sm shadow-none ring-offset-transparent outline-hidden focus:border-none focus:shadow-none focus:ring-offset-0 focus:outline-hidden"
           />
         )}
         <Button
@@ -224,15 +228,15 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
           }}
           variant="secondary"
           size="icon"
-          className="flex-shrink-0"
+          className="shrink-0"
           aria-expanded={open}
           aria-label={t("common.select")}>
-          <ChevronIcon className="h-4 w-4 opacity-50" />
+          <ChevronIcon className="size-4 opacity-50" />
         </Button>
       </div>
 
       {open && (
-        <div className="absolute top-full z-10 mt-1 w-full overflow-auto rounded-md shadow-md outline-none animate-in">
+        <div className="absolute top-full z-10 mt-1 w-full overflow-auto rounded-md shadow-md outline-hidden animate-in">
           <CommandList className="max-h-[600px]">
             <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
             {options?.map((data) => (

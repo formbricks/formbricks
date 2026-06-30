@@ -40,6 +40,50 @@ const getWorkspaceSurveyLocation = (url: URL): WorkspaceSurveyLocation | null =>
   };
 };
 
+const SURVEY_EDITOR_URL = /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)?$/;
+const ONBOARDING_SURVEY_URL = /\/organizations\/[^/]+\/workspaces\/new\/survey(\?.*)?$/;
+
+export async function startSurveyFromScratch(
+  page: Page,
+  options?: { waitForEditUrl?: RegExp }
+): Promise<void> {
+  const editUrlPattern = options?.waitForEditUrl ?? SURVEY_EDITOR_URL;
+
+  if (ONBOARDING_SURVEY_URL.test(page.url())) {
+    await page.getByRole("button", { name: "Start from scratch" }).click();
+    await page.waitForURL(editUrlPattern);
+    return;
+  }
+
+  const createSurveyButton = page.getByRole("button", { name: "Create survey", exact: true });
+
+  if (await createSurveyButton.isVisible().catch(() => false)) {
+    await createSurveyButton.click();
+    await page.waitForURL(editUrlPattern);
+    return;
+  }
+
+  const emptyStateCard = page.getByRole("button", { name: /Start from scratch/i }).first();
+
+  if (await emptyStateCard.isVisible().catch(() => false)) {
+    await emptyStateCard.click();
+    await createSurveyButton.waitFor({ state: "visible" });
+    await createSurveyButton.click();
+    await page.waitForURL(editUrlPattern);
+    return;
+  }
+
+  await page.getByRole("button", { name: "New Survey" }).click();
+  await page.getByRole("menuitem", { name: "Start from scratch" }).click();
+  await page.waitForURL(editUrlPattern);
+}
+
+export async function gotoSurveyTemplates(page: Page, workspaceId: string): Promise<void> {
+  await page.goto(`/workspaces/${workspaceId}/surveys/templates`, { waitUntil: "domcontentloaded" });
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/templates/);
+  await page.getByRole("heading", { name: /Create a new survey/i }).waitFor({ state: "visible" });
+}
+
 export async function gotoSurveyList(page: Page): Promise<string> {
   await page.waitForURL((url) => getWorkspaceSurveyLocation(url) !== null, { timeout: 30000 });
 
@@ -75,6 +119,7 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
       throw new Error("Unable to parse workspaceId from URL");
     })();
 
+  // Old workspace-scoped org settings URL is redirected to the org-scoped API keys route.
   await page.goto(`/workspaces/${workspaceId}/settings/organization/api-keys`, {
     waitUntil: "domcontentloaded",
   });

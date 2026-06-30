@@ -1,12 +1,12 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
@@ -193,36 +193,34 @@ export const StylingView = ({
     <FormProvider {...form}>
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="mt-12 space-y-3 p-5">
-          {!isCxMode && (
-            <div className="flex items-center gap-4 rounded-lg border border-slate-300 bg-white p-4">
-              <FormField
-                control={form.control}
-                name="overwriteThemeStyling"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-4 space-y-0">
-                    <FormControl>
-                      <Switch
-                        id="overwrite-theme-styling"
-                        checked={!!field.value}
-                        onCheckedChange={handleOverwriteToggle}
-                      />
-                    </FormControl>
+          <div className="flex items-center gap-4 rounded-lg border border-slate-300 bg-white p-4">
+            <FormField
+              control={form.control}
+              name="overwriteThemeStyling"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-4 gap-y-0">
+                  <FormControl>
+                    <Switch
+                      id="overwrite-theme-styling"
+                      checked={!!field.value}
+                      onCheckedChange={handleOverwriteToggle}
+                    />
+                  </FormControl>
 
-                    <div>
-                      <FormLabel
-                        htmlFor="overwrite-theme-styling"
-                        className="text-base font-semibold text-slate-900">
-                        {t("workspace.surveys.edit.add_custom_styles")}
-                      </FormLabel>
-                      <FormDescription className="text-sm text-slate-500">
-                        {t("workspace.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
+                  <div>
+                    <FormLabel
+                      htmlFor="overwrite-theme-styling"
+                      className="text-base font-semibold text-slate-900">
+                      {t("workspace.surveys.edit.add_custom_styles")}
+                    </FormLabel>
+                    <FormDescription className="text-sm text-slate-500">
+                      {t("workspace.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormStylingSettings
             open={formStylingOpen}
@@ -274,7 +272,7 @@ export const StylingView = ({
                     className="flex items-center gap-2"
                     onClick={() => setConfirmResetStylingModalOpen(true)}>
                     {t("workspace.surveys.edit.reset_to_theme_styles")}
-                    <RotateCcwIcon className="h-4 w-4" />
+                    <RotateCcwIcon className="size-4" />
                   </Button>
                 )}
               </div>
@@ -284,7 +282,7 @@ export const StylingView = ({
                   components={{
                     lookFeelLink: (
                       <Link
-                        href={`${workspaceBasePath}/look`}
+                        href={`${workspaceBasePath}/settings/workspace/look`}
                         target="_blank"
                         className="font-semibold underline"
                       />

@@ -7,7 +7,6 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
@@ -45,8 +44,6 @@ export const FaviconCustomizationSettings = ({
   isReadOnly,
   isStorageConfigured,
 }: FaviconCustomizationSettingsProps) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -154,11 +151,11 @@ export const FaviconCustomizationSettings = ({
   const buttons: [ModalButton, ModalButton] = [
     {
       text: t("common.upgrade_plan"),
-      href: `${workspaceBasePath}/settings/organization/billing`,
+      href: `/organizations/${organization.id}/settings/billing`,
     },
     {
       text: t("common.learn_more"),
-      href: `${workspaceBasePath}/settings/organization/billing`,
+      href: `/organizations/${organization.id}/settings/billing`,
     },
   ];
 
@@ -174,7 +171,7 @@ export const FaviconCustomizationSettings = ({
               alt="Favicon"
               width={64}
               height={64}
-              className="-mb-2 h-16 w-16 rounded-lg border object-contain p-1"
+              className="-mb-2 size-16 rounded-lg border object-contain p-1"
             />
           ) : (
             <FileInput

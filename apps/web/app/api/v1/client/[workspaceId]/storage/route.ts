@@ -12,7 +12,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
-import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
+import { getErrorResponseFromStorageError, validateSurveyAllowsFileUpload } from "@/modules/storage/utils";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -27,7 +27,7 @@ export const OPTIONS = async (): Promise<Response> => {
 // api endpoint for getting a s3 signed url for uploading private files
 // uploaded files will be private, only the user who has access to the environment can access the file
 // uploading private files requires no authentication
-// use this to let users upload files to a file upload question response for example
+// use this to let users upload files to a file upload element response for example
 
 export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ workspaceId: string }> }>) => {
@@ -66,7 +66,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, surveyId } = parsedInputResult.data;
+    const { fileName, fileType, surveyId, elementId } = parsedInputResult.data;
 
     const [survey, organizationId] = await Promise.all([
       getSurvey(surveyId),
@@ -107,6 +107,28 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    const fileUploadPermission = validateSurveyAllowsFileUpload({
+      fileName,
+      elementId,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    });
+
+    if (!fileUploadPermission.ok) {
+      let responseString: string = "";
+      if (fileUploadPermission.reason === "no_file_upload_element") {
+        responseString = "Survey does not allow file uploads";
+      } else if (fileUploadPermission.reason === "file_upload_element_not_found") {
+        responseString = "Element does not allow file uploads";
+      } else {
+        responseString = "File extension is not allowed for this element";
+      }
+
+      return {
+        response: responses.badRequestResponse(responseString, undefined),
+      };
+    }
+
     const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.id);
     const maxFileUploadSize = isBiggerFileUploadAllowed
       ? MAX_FILE_UPLOAD_SIZES.big
@@ -117,7 +139,8 @@ export const POST = withV1ApiWrapper({
       workspaceId,
       fileType,
       "private",
-      maxFileUploadSize
+      maxFileUploadSize,
+      ["surveys", surveyId, "elements", elementId]
     );
 
     if (!signedUrlResponse.ok) {

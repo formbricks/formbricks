@@ -1,21 +1,29 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  UniqueConstraintError,
+} from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { TTag } from "@formbricks/types/tags";
+import {
+  buildClientResponse,
+  createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
+} from "@/app/api/client/[workspaceId]/responses/lib/response";
 import {
   isPrismaKnownRequestError,
   isSingleUseIdUniqueConstraintError,
 } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
+import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContactByUserId } from "./contact";
 
 export const responseSelection = {
@@ -59,26 +67,7 @@ export const responseSelection = {
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponseWithQuotaFull> => {
-  const txResponse = await prisma.$transaction(async (tx) => {
-    const response = await createResponse(responseInput, tx);
-
-    const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
-      responseId: response.id,
-      data: responseInput.data,
-      variables: responseInput.variables,
-      language: responseInput.language,
-      responseFinished: response.finished,
-      tx,
-    });
-
-    return {
-      ...response,
-      ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
-    };
-  });
-
-  return txResponse;
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse);
 };
 
 export const createResponse = async (
@@ -104,7 +93,21 @@ export const createResponse = async (
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
+    if (responseInput.displayId) {
+      await assertDisplayOwnership(
+        responseInput.displayId,
+        workspaceId,
+        responseInput.surveyId,
+        contact?.id ?? null,
+        tx
+      );
+    }
+
+    const prismaData = buildPrismaResponseData(
+      { ...responseInput, createdAt: undefined, updatedAt: undefined },
+      contact,
+      ttc
+    );
 
     const prismaClient = tx ?? prisma;
 
@@ -113,20 +116,16 @@ export const createResponse = async (
       select: responseSelection,
     });
 
-    const response = {
-      ...responsePrisma,
-      contact: contact
-        ? {
-            id: contact.id,
-            userId: contact.attributes.userId,
-          }
-        : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
+    return buildClientResponse(responsePrisma, contact);
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
+      if (
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes("displayId")
+      ) {
+        throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
+      }
       if (isSingleUseIdUniqueConstraintError(error)) {
         throw new UniqueConstraintError("Response already submitted for this single-use link");
       }

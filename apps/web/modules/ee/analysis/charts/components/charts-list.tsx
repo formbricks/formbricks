@@ -1,6 +1,7 @@
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartRow } from "@/modules/ee/analysis/charts/components/chart-row";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 interface ChartsListProps {
@@ -8,6 +9,8 @@ interface ChartsListProps {
   workspaceId: string;
   isReadOnly: boolean;
   directories: { id: string; name: string }[];
+  isAIAvailable: boolean;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export const ChartsList = async ({
@@ -15,11 +18,13 @@ export const ChartsList = async ({
   workspaceId,
   isReadOnly,
   directories,
+  isAIAvailable,
+  aiUnavailableReason,
 }: Readonly<ChartsListProps>) => {
   const t = await getTranslate();
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
         <div className="col-span-3 pl-6">{t("common.title")}</div>
         <div className="col-span-1 hidden text-center sm:block">{t("common.created_by")}</div>
@@ -42,6 +47,8 @@ export const ChartsList = async ({
               workspaceId={workspaceId}
               directories={directories}
               buttonProps={{ variant: "secondary" }}
+              isAIAvailable={isAIAvailable}
+              aiUnavailableReason={aiUnavailableReason}
             />
           )}
         </div>

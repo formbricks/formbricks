@@ -1,0 +1,145 @@
+---
+title: "Custom CSS"
+description: "Use scoped global CSS to customize Website & App Surveys without breaking your app styles."
+icon: "palette"
+---
+
+Yes, custom CSS for Website & App Surveys is supported.
+
+Use this when the Styling UI is not enough and you need tighter brand control.
+
+<Note>
+  Start with the built-in [Styling Theme](/xm-and-surveys/core-features/styling-theme) first. Use custom CSS only for advanced overrides.
+</Note>
+
+## Problem
+
+Website & App Surveys are rendered inside your product, so your app's global CSS can compete with survey styles.
+
+Common examples:
+
+- A global rule like `button { ... !important; }` changes survey buttons.
+- Typography resets change survey text spacing and sizing.
+- Utility-heavy global styles create unexpected visual differences between pages.
+
+## Solution
+
+Scope your overrides to the survey root (`#fbjs`) and use `!important` for the exact targets you want to control.
+
+This gives you two important guarantees:
+
+1. Your custom rules apply only to the survey.
+2. Your rules reliably win against conflicting global styles.
+
+## Add Scoped Overrides In Global CSS
+
+<Steps>
+  <Step title="Open your global stylesheet">
+    Use the stylesheet that is loaded on pages where surveys are shown (for example `globals.css`).
+  </Step>
+  <Step title="Add scoped rules under #fbjs">
+    Keep all custom rules prefixed with `#fbjs`.
+  </Step>
+  <Step title="Use !important only where needed">
+    Add `!important` to properties that are still being overridden by your app-wide CSS.
+  </Step>
+</Steps>
+
+```css globals.css
+/* 1) Theme-level variables */
+#fbjs {
+  --fb-brand-color: #0ea5e9 !important;
+  --fb-brand-text-color: #ffffff !important;
+  --fb-heading-color: #0f172a !important;
+  --fb-subheading-color: #334155 !important;
+  --fb-survey-background-color: #ffffff !important;
+  --fb-border-radius: 12px !important;
+}
+
+/* 2) Targeted component overrides */
+#fbjs .button-custom,
+#fbjs button.button-custom {
+  border: 1px solid #0284c7 !important;
+  box-shadow: none !important;
+}
+
+#fbjs .label-headline,
+#fbjs .label-headline * {
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+}
+
+#fbjs .bg-input-bg,
+#fbjs .border-input-border,
+#fbjs .text-input-text {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+```
+
+<Info>
+  Internal Tailwind utility classes are implementation details and may change over time. Prefer CSS variables and stable survey selectors scoped under `#fbjs`.
+</Info>
+
+## Best Practices
+
+- Keep all survey overrides in one section or file for easier maintenance.
+- Avoid global selectors without `#fbjs` (for example `button`, `input`, `p`) when styling surveys.
+- Document why each `!important` exists so future cleanup is easy.
+- After changes, hard refresh your page to clear cached SDK assets.
+
+## Troubleshooting
+
+**My app styles still win over survey styles**
+
+- Increase selector specificity under `#fbjs`.
+- Add `!important` only on the conflicting property.
+- Check the browser inspector to confirm which rule is winning.
+
+**Survey styles are affecting the rest of my app**
+
+- This usually means a selector is missing `#fbjs`.
+- Prefix every rule with `#fbjs` to keep styles isolated.
+
+## Survey UI CSS Class Reference
+
+The following classes are used by `packages/survey-ui` and are safe to target when scoped with `#fbjs`.
+
+| CSS class | Element(s) it styles | Notes |
+| --- | --- | --- |
+| `.button-custom` | Survey action buttons (submit, CTA, navigation buttons with custom variant) | Applies `--fb-button-*` styling tokens. |
+| `.label-headline` | Question headlines and headline HTML content | Used by `Label` variant `headline`. |
+| `.label-description` | Question descriptions and helper copy | Used by `Label` variant `description`. |
+| `.label-default` | Default label text content | Used by `Label` variant `default`. |
+| `.label-card` | Upper labels (for example, required label text) | Used by `Label` variant `card`. |
+| `.progress-track` | Progress bar track container | Uses `--fb-progress-track-*` tokens. |
+| `.progress-indicator` | Progress bar fill indicator | Uses `--fb-progress-indicator-*` tokens. |
+| `.rounded-input` | Input-like controls (text inputs, dropdown triggers, date inputs, rating/NPS options) | Controls input border radius token. |
+| `.bg-input-bg` | Input-like control backgrounds | Maps to `--fb-input-bg-color`. |
+| `.border-input-border` | Input-like control borders | Maps to `--fb-input-border-color`. |
+| `.text-input` | Input-like text size | Maps to `--fb-input-font-size`. |
+| `.text-input-text` | Input text and some input icons | Maps to `--fb-input-color`. |
+| `.text-input-placeholder` | Placeholder and empty-state text | Maps to `--fb-input-placeholder-color`. |
+| `.font-input` | Input-like font family | Maps to `--fb-input-font-family`. |
+| `.font-input-weight` | Input-like font weight | Maps to `--fb-input-font-weight`. |
+| `.w-input` | Input width | Maps to `--fb-input-width`. |
+| `.min-h-input` | Input minimum height | Maps to `--fb-input-height`. |
+| `.px-input-x` | Input horizontal padding | Maps to `--fb-input-padding-x`. |
+| `.py-input-y` | Input vertical padding | Maps to `--fb-input-padding-y`. |
+| `.shadow-input` | Input shadow | Maps to `--fb-input-shadow`. |
+| `.rounded-option` | Select/multi-select/ranking/picture-select option containers | Controls option border radius token. |
+| `.bg-option-bg` | Unselected option backgrounds | Maps to `--fb-option-bg-color`. |
+| `.bg-option-selected-bg` | Selected option backgrounds | Used for selected states. |
+| `.bg-option-hover-bg` | Option hover background | Used for hover states. |
+| `.border-option-border` | Option borders and dropdown search divider | Maps to option border token. |
+| `.text-option` | Option label font size | Maps to `--fb-option-font-size`. |
+| `.text-option-label` | Option label text color | Maps to `--fb-option-label-color`. |
+| `.font-option` | Option label font family | Maps to `--fb-option-font-family`. |
+| `.font-option-weight` | Option label font weight | Maps to `--fb-option-font-weight`. |
+| `.px-option-x` | Option horizontal padding | Maps to `--fb-option-padding-x`. |
+| `.py-option-y` | Option vertical padding | Maps to `--fb-option-padding-y`. |
+| `.rounded-button` | Button radius (base button component) | Maps to `--fb-button-border-radius`. |
+| `.text-button` | Button text size | Maps to `--fb-button-font-size`. |
+| `.font-button-weight` | Button font weight | Maps to `--fb-button-font-weight`. |
+| `.border-brand` | Selected/active option borders | Uses survey brand color token. |

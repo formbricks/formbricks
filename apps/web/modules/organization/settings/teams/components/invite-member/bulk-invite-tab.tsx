@@ -8,25 +8,33 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
+import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]) => void;
+  organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
+  isBulkInviteAllowed: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const BulkInviteTab = ({
   setOpen,
   onSubmit,
+  organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
   isStorageConfigured,
-}: BulkInviteTabProps) => {
+  isBulkInviteAllowed,
+  enterpriseLicenseRequestFormUrl,
+}: Readonly<BulkInviteTabProps>) => {
   const { t } = useTranslation();
   const [csvFile, setCSVFile] = useState<File>();
 
@@ -36,7 +44,7 @@ export const BulkInviteTab = ({
   };
 
   const onImport = () => {
-    if (!csvFile) {
+    if (!csvFile || !isBulkInviteAllowed) {
       return;
     }
     Papa.parse(csvFile, {
@@ -97,6 +105,30 @@ export const BulkInviteTab = ({
     onFileInputChange(files);
   };
 
+  if (!isBulkInviteAllowed) {
+    const upgradeButtons: [ModalButton, ModalButton] = [
+      {
+        text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
+        href: isFormbricksCloud
+          ? organizationSettingsPath(organizationId, "billing")
+          : enterpriseLicenseRequestFormUrl,
+      },
+      {
+        text: t("common.learn_more"),
+        href: "https://formbricks.com/docs/self-hosting/license",
+      },
+    ];
+
+    return (
+      <UpgradePrompt
+        title={t("workspace.settings.teams.bulk_invite_scale_only_title")}
+        description={t("workspace.settings.teams.bulk_invite_scale_only_description")}
+        buttons={upgradeButtons}
+        feature="bulk-invite"
+      />
+    );
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -114,10 +146,10 @@ export const BulkInviteTab = ({
         />
 
         {csvFile && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <p className="text-sm font-semibold text-slate-900">{csvFile.name}</p>
             <Button variant="secondary" size="sm" type="button" onClick={removeFile}>
-              <XIcon className="h-4 w-4" />
+              <XIcon className="size-4" />
             </Button>
           </div>
         )}
@@ -144,7 +176,7 @@ export const BulkInviteTab = ({
             {t("common.download")} CSV template
           </Button>
         </Link>
-        <div className="flex space-x-2">
+        <div className="flex gap-x-2">
           <Button
             size="default"
             type="button"

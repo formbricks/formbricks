@@ -8,12 +8,11 @@ import { Button } from "@/modules/ui/components/button";
 export const ManageTeam = () => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
 
   const router = useRouter();
 
   const handleManageTeams = () => {
-    router.push(`${workspaceBasePath}/settings/teams`);
+    router.push(`/organizations/${workspace?.organizationId}/settings/teams`);
   };
 
   return (

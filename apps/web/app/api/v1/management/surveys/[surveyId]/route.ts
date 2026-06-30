@@ -9,11 +9,12 @@ import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
-  transformBlocksToQuestions,
   transformQuestionsToBlocks,
   validateSurveyInput,
+  withDerivedQuestions,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -21,6 +22,12 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
+
+type TSurveyUpdateBody = Record<string, unknown> & {
+  blocks?: Parameters<typeof validateSurveyInput>[0]["blocks"];
+  endings?: Parameters<typeof transformQuestionsToBlocks>[1];
+  questions?: Parameters<typeof transformQuestionsToBlocks>[0];
+};
 
 const fetchAndAuthorizeSurvey = async (
   surveyId: string,
@@ -54,28 +61,11 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const shouldTransformToQuestions =
-        result.survey.blocks &&
-        result.survey.blocks.length > 0 &&
-        result.survey.blocks.every((block) => block.elements.length === 1);
-
-      if (shouldTransformToQuestions) {
-        return {
-          response: responses.successResponse(
-            addLegacyProjectOverwrites(
-              resolveStorageUrlsInObject({
-                ...result.survey,
-                questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
-                blocks: [],
-              })
-            )
-          ),
-        };
-      }
-
+      // Always expose `questions` (derived from blocks) alongside `blocks` so API v1
+      // consumers get a consistent shape regardless of how the survey was built.
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwrites(resolveStorageUrlsInObject(result.survey))
+          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(result.survey)))
         ),
       };
     } catch (error) {
@@ -164,10 +154,16 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      let surveyUpdate;
+      let surveyUpdate: TSurveyUpdateBody;
       try {
-        surveyUpdate = await req.json();
+        surveyUpdate = await parseJsonBodyWithLimit<TSurveyUpdateBody>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
@@ -188,7 +184,7 @@ export const PUT = withV1ApiWrapper({
 
       if (hasQuestions) {
         surveyUpdate.blocks = transformQuestionsToBlocks(
-          surveyUpdate.questions,
+          surveyUpdate.questions ?? [],
           surveyUpdate.endings || result.survey.endings
         );
         surveyUpdate.questions = [];
@@ -208,7 +204,11 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization, result.survey);
+      const featureCheckResult = await checkFeaturePermissions(
+        surveyUpdate as Parameters<typeof checkFeaturePermissions>[0],
+        organization,
+        result.survey
+      );
       if (featureCheckResult) {
         return {
           response: featureCheckResult,
@@ -221,23 +221,9 @@ export const PUT = withV1ApiWrapper({
           auditLog.newObject = updatedSurvey;
         }
 
-        if (hasQuestions) {
-          const surveyWithQuestions = {
-            ...updatedSurvey,
-            questions: transformBlocksToQuestions(updatedSurvey.blocks, updatedSurvey.endings),
-            blocks: [],
-          };
-
-          return {
-            response: responses.successResponse(
-              addLegacyProjectOverwrites(resolveStorageUrlsInObject(surveyWithQuestions))
-            ),
-          };
-        }
-
         return {
           response: responses.successResponse(
-            addLegacyProjectOverwrites(resolveStorageUrlsInObject(updatedSurvey))
+            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(updatedSurvey)))
           ),
         };
       } catch (error) {

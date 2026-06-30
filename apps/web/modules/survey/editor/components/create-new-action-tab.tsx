@@ -1,11 +1,11 @@
 "use client";
 
-import { ActionClass } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { ActionClass } from "@formbricks/database/prisma-browser";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -153,7 +153,7 @@ export const CreateNewActionTab = ({
               <NoCodeActionForm form={form} isReadOnly={isReadOnly} />
             )}
           </div>
-          <div className="sticky bottom-0 flex justify-end space-x-2 bg-white pt-4">
+          <div className="sticky bottom-0 flex justify-end gap-x-2 bg-white pt-4">
             <Button type="button" variant="secondary" onClick={resetAllStates}>
               {t("common.cancel")}
             </Button>

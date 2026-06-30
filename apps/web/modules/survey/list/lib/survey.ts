@@ -1,9 +1,9 @@
 import "server-only";
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";

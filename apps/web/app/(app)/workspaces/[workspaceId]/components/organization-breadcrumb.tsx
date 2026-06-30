@@ -1,21 +1,13 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import {
-  Building2Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Loader2,
-  PlusIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { Building2Icon, ChevronDownIcon, ChevronRightIcon, Loader2, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
@@ -25,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useOrganization, useWorkspace } from "../context/workspace-context";
+import { useOrganization } from "../context/workspace-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
@@ -42,7 +34,6 @@ export const OrganizationBreadcrumb = ({
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
-  const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
@@ -52,7 +43,6 @@ export const OrganizationBreadcrumb = ({
   // Get current organization name from context OR prop
   // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
   const { organization: currentOrganization } = useOrganization();
-  const { workspace } = useWorkspace();
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   // Lazy-load organizations when dropdown opens
@@ -93,13 +83,11 @@ export const OrganizationBreadcrumb = ({
     return;
   }
 
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
-
   const handleOrganizationChange = (organizationId: string) => {
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
-      if (organizationId === currentOrganizationId && currentWorkspaceId) {
-        router.push(`/workspaces/${currentWorkspaceId}/settings/organization/general`);
+      if (organizationId === currentOrganizationId) {
+        router.push(`/organizations/${currentOrganizationId}/settings/general`);
         return;
       }
       router.push(`/organizations/${organizationId}/`);
@@ -120,17 +108,17 @@ export const OrganizationBreadcrumb = ({
     <BreadcrumbItem isActive={isOrganizationDropdownOpen}>
       <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
         <DropdownMenuTrigger
-          className="flex cursor-pointer items-center gap-1 outline-none"
+          className="flex cursor-pointer items-center gap-1 outline-hidden"
           id="organizationDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
-            <Building2Icon className="h-3 w-3" strokeWidth={1.5} />
+            <Building2Icon className="size-3" strokeWidth={1.5} />
             <span>{organizationName}</span>
-            {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+            {isPending && <Loader2 className="size-3 animate-spin" strokeWidth={1.5} />}
             {isOrganizationDropdownOpen ? (
-              <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
+              <ChevronDownIcon className="size-3" strokeWidth={1.5} />
             ) : (
-              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+              <ChevronRightIcon className="size-3" strokeWidth={1.5} />
             )}
           </div>
         </DropdownMenuTrigger>
@@ -138,18 +126,19 @@ export const OrganizationBreadcrumb = ({
           {showOrganizationDropdown && (
             <>
               <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <Building2Icon className="mr-2 inline h-4 w-4" />
+                <Building2Icon className="mr-2 inline size-4" />
                 {t("common.choose_organization")}
               </div>
               {isLoadingOrganizations && (
                 <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 </div>
               )}
               {!isLoadingOrganizations && loadError && (
                 <div className="px-2 py-4">
                   <p className="mb-2 text-sm text-red-600">{loadError}</p>
                   <button
+                    type="button"
                     onClick={() => {
                       setLoadError(null);
                       setOrganizations([]);
@@ -160,27 +149,17 @@ export const OrganizationBreadcrumb = ({
                 </div>
               )}
               {!isLoadingOrganizations && !loadError && (
-                <>
-                  <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                    {organizations.map((org) => (
-                      <DropdownMenuCheckboxItem
-                        key={org.id}
-                        checked={org.id === currentOrganizationId}
-                        onClick={() => handleOrganizationChange(org.id)}
-                        className="cursor-pointer">
-                        {org.name}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuGroup>
-                  {isMultiOrgEnabled && (
+                <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                  {organizations.map((org) => (
                     <DropdownMenuCheckboxItem
-                      onClick={() => setOpenCreateOrganizationModal(true)}
+                      key={org.id}
+                      checked={org.id === currentOrganizationId}
+                      onClick={() => handleOrganizationChange(org.id)}
                       className="cursor-pointer">
-                      <span>{t("common.create_new_organization")}</span>
-                      <PlusIcon className="ml-2 h-4 w-4" />
+                      {org.name}
                     </DropdownMenuCheckboxItem>
-                  )}
-                </>
+                  ))}
+                </DropdownMenuGroup>
               )}
             </>
           )}
@@ -188,21 +167,17 @@ export const OrganizationBreadcrumb = ({
             <>
               {showOrganizationDropdown && <DropdownMenuSeparator />}
               <DropdownMenuCheckboxItem
-                onClick={() => handleSettingChange(`${workspaceBasePath}/settings/organization/general`)}
+                onClick={() =>
+                  handleSettingChange(`/organizations/${currentOrganizationId}/settings/general`)
+                }
                 className="cursor-pointer">
-                <SettingsIcon className="mr-2 h-4 w-4" />
+                <SettingsIcon className="mr-2 size-4" />
                 {t("common.settings")}
               </DropdownMenuCheckboxItem>
             </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {openCreateOrganizationModal && (
-        <CreateOrganizationModal
-          open={openCreateOrganizationModal}
-          setOpen={setOpenCreateOrganizationModal}
-        />
-      )}
     </BreadcrumbItem>
   );
 };

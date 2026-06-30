@@ -1,7 +1,11 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList } from "./lib/utils";
-import { fillRichTextEditor, uploadImageChoicesForPictureSelection } from "./utils/helper";
+import {
+  createSurveyFromScratch,
+  fillRichTextEditor,
+  uploadImageChoicesForPictureSelection,
+} from "./utils/helper";
 
 const firstPictureChoiceAltPrefix = "playwright-choice-1--fid--";
 const secondPictureChoiceAltPrefix = "playwright-choice-2--fid--";
@@ -14,9 +18,7 @@ test.describe("Storage Smoke @storage-smoke", () => {
     await user.login();
 
     await gotoSurveyList(page);
-    await page.getByText("Start from scratch").click();
-    await page.getByRole("button", { name: "Create survey", exact: true }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
+    await createSurveyFromScratch(page);
 
     await fillRichTextEditor(page, "Question*", "Storage smoke question");
 

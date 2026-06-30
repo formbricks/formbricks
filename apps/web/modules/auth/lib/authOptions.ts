@@ -1,4 +1,3 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
@@ -37,6 +36,7 @@ import {
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
+import { getNextAuthAdapter } from "./adapter";
 import { createBrevoCustomer } from "./brevo";
 
 type TSignInCallbackParams = Parameters<NonNullable<NonNullable<NextAuthOptions["callbacks"]>["signIn"]>>[0];
@@ -90,40 +90,6 @@ const handleCredentialsOrTokenSignIn = async ({
   return true;
 };
 
-const maybeValidateAccountDeletionSsoReauth = async ({
-  account,
-  intentToken,
-}: {
-  account: NonNullable<TSignInAccount>;
-  intentToken: string | null;
-}) => {
-  if (!intentToken) {
-    return;
-  }
-
-  await validateAccountDeletionSsoReauthenticationCallback({
-    account,
-    intentToken,
-  });
-};
-
-const maybeCompleteAccountDeletionSsoReauth = async ({
-  account,
-  intentToken,
-}: {
-  account: NonNullable<TSignInAccount>;
-  intentToken: string | null;
-}) => {
-  if (!intentToken) {
-    return;
-  }
-
-  await completeAccountDeletionSsoReauthentication({
-    account,
-    intentToken,
-  });
-};
-
 const handleEnterpriseSsoSignIn = async ({
   account,
   callbackUrl,
@@ -139,7 +105,12 @@ const handleEnterpriseSsoSignIn = async ({
   userEmail: string;
   userId: string;
 }) => {
-  await maybeValidateAccountDeletionSsoReauth({ account, intentToken });
+  if (intentToken) {
+    await validateAccountDeletionSsoReauthenticationCallback({
+      account,
+      intentToken,
+    });
+  }
 
   const result = await handleSsoCallback({
     user: user as TUser,
@@ -148,7 +119,12 @@ const handleEnterpriseSsoSignIn = async ({
   });
 
   if (result === true) {
-    await maybeCompleteAccountDeletionSsoReauth({ account, intentToken });
+    if (intentToken) {
+      await completeAccountDeletionSsoReauthentication({
+        account,
+        intentToken,
+      });
+    }
 
     await finalizeSuccessfulSignIn({
       userId,
@@ -161,7 +137,7 @@ const handleEnterpriseSsoSignIn = async ({
 };
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: getNextAuthAdapter(prisma),
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -489,7 +465,6 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (error) {
           const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
-            error,
             intentToken: accountDeletionSsoReauthIntentToken,
           });
 

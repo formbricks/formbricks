@@ -103,13 +103,7 @@ const validateLabelForAllLanguages = (label: TI18nString, surveyLanguages: TSurv
     return textContent.length === 0;
   });
 
-  return invalidLanguageCodes.map((invalidLanguageCode) => {
-    if (invalidLanguageCode === "default") {
-      return surveyLanguages.find((lang) => lang.default)?.language.code ?? "default";
-    }
-
-    return invalidLanguageCode;
-  });
+  return invalidLanguageCodes;
 };
 
 export const validateQuestionLabels = (
@@ -119,6 +113,26 @@ export const validateQuestionLabels = (
   questionIndex: number,
   skipArticle = false
 ): z.core.$ZodRawIssue | null => {
+  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+  const isDefaultMissing = invalidLanguageCodes.includes("default");
+
+  const messagePrefix = skipArticle ? "" : "The ";
+  const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
+  const messageSuffix = isDefaultMissing ? " is missing" : " is missing for the following languages: ";
+
+  const message = isDefaultMissing
+    ? `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`
+    : `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+
+  if (isDefaultMissing) {
+    return {
+      code: "custom",
+      input: fieldLabel,
+      message,
+      path: ["questions", questionIndex, field],
+    };
+  }
+
   // fieldLabel should contain all the keys present in languages
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
@@ -137,24 +151,13 @@ export const validateQuestionLabels = (
     }
   }
 
-  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
-  const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-  const messagePrefix = skipArticle ? "" : "The ";
-  const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
-  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
-
-  const message = isDefaultOnly
-    ? `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`
-    : `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
-
   if (invalidLanguageCodes.length) {
     return {
       code: "custom",
       input: fieldLabel,
       message,
       path: ["questions", questionIndex, field],
-      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+      params: { invalidLanguageCodes },
     };
   }
 
@@ -169,13 +172,33 @@ export const validateCardFieldsForAllLanguages = (
   endingCardIndex?: number,
   skipArticle = false
 ): z.core.$ZodRawIssue | null => {
-  // fieldLabel should contain all the keys present in languages
-  // even if one of the keys is an empty string, its okay but it shouldn't be undefined
-
   const cardTypeLabel =
     cardType === "welcome" ? "Welcome card" : `Ending card ${((endingCardIndex ?? -1) + 1).toString()}`; // Ensure 1-based indexing
 
   const path = cardType === "welcome" ? ["welcomeCard", field] : ["endings", endingCardIndex ?? -1, field];
+
+  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+  const isDefaultMissing = invalidLanguageCodes.includes("default");
+
+  const messagePrefix = skipArticle ? "" : "The ";
+  const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
+  const messageSuffix = isDefaultMissing ? " is missing" : " is missing for the following languages: ";
+
+  const message = isDefaultMissing
+    ? `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix}`
+    : `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix} -fLang- ${invalidLanguageCodes.join(", ")}`;
+
+  if (isDefaultMissing) {
+    return {
+      code: "custom",
+      input: fieldLabel,
+      message,
+      path,
+    };
+  }
+
+  // fieldLabel should contain all the keys present in languages
+  // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
   for (const language of languages) {
     if (
@@ -192,24 +215,13 @@ export const validateCardFieldsForAllLanguages = (
     }
   }
 
-  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
-  const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-  const messagePrefix = skipArticle ? "" : "The ";
-  const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
-  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
-
-  const message = isDefaultOnly
-    ? `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix}`
-    : `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix} -fLang- ${invalidLanguageCodes.join(", ")}`;
-
   if (invalidLanguageCodes.length) {
     return {
       code: "custom",
       input: fieldLabel,
       message,
       path,
-      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+      params: { invalidLanguageCodes },
     };
   }
 

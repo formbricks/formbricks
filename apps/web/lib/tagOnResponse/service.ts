@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
@@ -31,6 +31,16 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      const target = error.meta?.target;
+      const isTagsOnResponsesUniqueViolation =
+        Array.isArray(target) && target.includes("responseId") && target.includes("tagId");
+
+      if (error.code === "P2002" && isTagsOnResponsesUniqueViolation) {
+        return {
+          responseId,
+          tagId,
+        };
+      }
       throw new DatabaseError(error.message);
     }
 

@@ -1,4 +1,4 @@
-import { Response } from "@prisma/client";
+import { Response } from "@formbricks/database/prisma";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
 

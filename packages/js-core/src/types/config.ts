@@ -1,45 +1,109 @@
-/* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
-import type { ActionClass, Language, Survey, SurveyLanguage, Workspace } from "@prisma/client";
+type TJsonObject = Record<string, unknown>;
 
-export type TWorkspaceStateSurvey = Pick<
-  Survey,
-  | "id"
-  // name intentionally omitted — internal label, not needed by SDK
-  | "welcomeCard"
-  | "questions"
-  | "variables"
-  | "type"
-  | "showLanguageSwitch"
-  | "endings"
-  | "autoClose"
-  | "status"
-  | "recontactDays"
-  | "displayLimit"
-  | "displayOption"
-  | "hiddenFields"
-  | "delay"
-  | "workspaceOverwrites"
-  | "isBackButtonHidden"
-  | "isAutoProgressingEnabled"
-  | "recaptcha"
-> & {
-  languages: (SurveyLanguage & { language: Language })[];
-  triggers: { actionClass: ActionClass }[];
-  // Minimal segment shape — full filter logic is evaluated server-side and must not reach the browser
-  segment?: { id: string; hasFilters: boolean };
-  displayPercentage: number;
+export type TActionClassPageUrlRule =
+  | "exactMatch"
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "notMatch"
+  | "notContains"
+  | "matchesRegex";
+
+export type TActionClassNoCodeConfig =
+  | {
+      type: "click";
+      urlFilters: { value: string; rule: TActionClassPageUrlRule }[];
+      urlFiltersConnector?: "or" | "and";
+      elementSelector: {
+        cssSelector?: string;
+        innerHtml?: string;
+      };
+    }
+  | {
+      type: "pageView" | "exitIntent" | "fiftyPercentScroll";
+      urlFilters: { value: string; rule: TActionClassPageUrlRule }[];
+      urlFiltersConnector?: "or" | "and";
+    }
+  | {
+      type: "pageDwell";
+      urlFilters: { value: string; rule: TActionClassPageUrlRule }[];
+      urlFiltersConnector?: "or" | "and";
+      timeInSeconds: number;
+    };
+
+interface TWorkspaceStateLanguage {
+  surveyId?: string;
+  languageId?: string;
+  language: {
+    id?: string;
+    code: string;
+    alias?: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+    workspaceId?: string;
+  };
+  default: boolean;
+  enabled: boolean;
+}
+
+export interface TWorkspaceStateActionClass {
+  id: string;
+  key: string | null;
+  type: "code" | "noCode";
+  name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  workspaceId?: string;
+  description?: string | null;
+  noCodeConfig: TActionClassNoCodeConfig | null;
+}
+
+export interface TWorkspaceStateSurvey {
+  id: string;
+  // name intentionally omitted: internal label, not needed by SDK
+  welcomeCard: TJsonObject | null;
+  questions: TJsonObject[];
+  variables: TJsonObject[];
   type: "link" | "app";
+  showLanguageSwitch: boolean | null;
+  endings: TJsonObject[];
+  autoClose: number | null;
+  status: "draft" | "inProgress" | "paused" | "completed";
+  recontactDays: number | null;
+  displayLimit: number | null;
+  displayOption: "displayOnce" | "displayMultiple" | "displaySome" | "respondMultiple";
+  hiddenFields: {
+    enabled: boolean;
+    fieldIds?: string[];
+  };
+  delay: number;
+  workspaceOverwrites: {
+    clickOutsideClose?: boolean | null;
+    overlay?: "none" | "light" | "dark" | null;
+    placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center" | null;
+  } | null;
+  isBackButtonHidden: boolean;
+  isAutoProgressingEnabled: boolean;
+  recaptcha: {
+    enabled: boolean;
+    threshold?: number;
+  } | null;
+  languages: TWorkspaceStateLanguage[];
+  triggers: { actionClass: TWorkspaceStateActionClass }[];
+  // Minimal segment shape; full filter logic is evaluated server-side and must not reach the browser.
+  segment?: { id: string; hasFilters: boolean };
+  displayPercentage: number | null;
   styling?: TSurveyStyling;
-};
+}
 
-export type TWorkspaceStateSettings = Pick<
-  Workspace,
-  "recontactDays" | "clickOutsideClose" | "overlay" | "placement" | "inAppSurveyBranding"
-> & {
+export interface TWorkspaceStateSettings {
+  recontactDays: number;
+  clickOutsideClose: boolean;
+  overlay: "none" | "light" | "dark";
+  placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+  inAppSurveyBranding: boolean;
   styling: TWorkspaceStyling;
-};
-
-export type TWorkspaceStateActionClass = Pick<ActionClass, "id" | "key" | "type" | "name" | "noCodeConfig">;
+}
 
 export interface TWorkspaceState {
   expiresAt: Date;
@@ -94,7 +158,7 @@ export interface TConfigInput {
 
 export interface TStylingColor {
   light: string;
-  dark?: string | null | undefined;
+  dark?: string | null;
 }
 
 type TDimension = number | string | null;
@@ -158,9 +222,11 @@ export interface TBaseStyling {
   isDarkModeEnabled?: boolean | null;
   roundness?: TDimension;
   cardArrangement?: {
-    linkSurveys: "casual" | "straight" | "simple";
+    // "cardless" is only supported for link surveys.
+    linkSurveys: "casual" | "straight" | "simple" | "cardless";
     appSurveys: "casual" | "straight" | "simple";
   } | null;
+  linkSurveyCardWidth?: "narrow" | "default" | "wide" | null;
   background?: {
     bg?: string | null;
     bgType?: "animation" | "color" | "image" | "upload" | null;

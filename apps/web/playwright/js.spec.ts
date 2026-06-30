@@ -1,6 +1,8 @@
 import { expect } from "@playwright/test";
 import http from "http";
 import { test } from "./lib/fixtures";
+import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
+import { useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript">
@@ -53,7 +55,7 @@ test.describe("JS Package Test", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     // Get the workspaceId from the fixture (needed for SDK setup)
     workspaceId =
@@ -62,14 +64,15 @@ test.describe("JS Package Test", async () => {
         throw new Error("Unable to get workspaceId from user fixture");
       })();
 
+    await gotoSurveyTemplates(page, workspaceId);
+
     // Create survey from template
     await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).isVisible();
     await page.getByRole("heading", { name: "Product Market Fit (Superhuman)" }).click();
     await page.getByRole("button", { name: "Use this template" }).isVisible();
-    await page.getByRole("button", { name: "Use this template" }).click();
+    await useSelectedTemplate(page);
 
     // Configure survey settings
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit/);
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();

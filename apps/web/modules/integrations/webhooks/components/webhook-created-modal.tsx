@@ -1,11 +1,11 @@
 "use client";
 
-import { Webhook } from "@prisma/client";
 import { CheckIcon, CopyIcon, ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Webhook } from "@formbricks/database/prisma-browser";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -40,7 +40,7 @@ export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedMo
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <CheckIcon className="h-6 w-6 text-green-500" />
+          <CheckIcon className="size-6 text-green-500" />
           <DialogTitle>{t("workspace.integrations.webhooks.webhook_created")}</DialogTitle>
           <DialogDescription>{t("workspace.integrations.webhooks.copy_secret_now")}</DialogDescription>
         </DialogHeader>
@@ -57,12 +57,12 @@ export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedMo
                 onClick={() => copyToClipboard(webhook.secret ?? "")}>
                 {copied ? (
                   <>
-                    <CheckIcon className="h-4 w-4" />
+                    <CheckIcon className="size-4" />
                     {t("common.copied")}
                   </>
                 ) : (
                   <>
-                    <CopyIcon className="h-4 w-4" />
+                    <CopyIcon className="size-4" />
                     {t("common.copy")}
                   </>
                 )}
@@ -76,7 +76,7 @@ export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedMo
               target="_blank"
               className="mt-2 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
               {t("workspace.integrations.webhooks.learn_to_verify")}
-              <ExternalLinkIcon className="h-3 w-3" />
+              <ExternalLinkIcon className="size-3" />
             </Link>
           </div>
         </DialogBody>

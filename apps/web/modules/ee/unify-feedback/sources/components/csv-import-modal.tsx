@@ -5,14 +5,12 @@ import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TConnectorFieldMapping } from "@formbricks/types/connector";
-import { importCsvDataAction } from "@/lib/connector/actions";
+import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import {
   formatCsvMissingMappedSourceColumns,
   getMissingCsvMappedSourceColumns,
   getMissingRequiredCsvSourceColumns,
-} from "@/lib/connector/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+} from "@/lib/feedback-source/utils";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -24,25 +22,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { createFeedbackCSVDataSchema, getTranslatedConnectorError } from "../types";
+import { importCsvFile } from "../csv-import-client";
+import { createFeedbackCSVDataSchema, getTranslatedFeedbackSourceError } from "../types";
 import { validateCsvFile } from "../utils";
 
 interface CsvImportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  connectorId: string;
+  feedbackSourceId: string;
   workspaceId: string;
-  fieldMappings: TConnectorFieldMapping[];
-  onOpenEditConnector?: () => void;
+  fieldMappings: TFeedbackSourceFieldMapping[];
+  onOpenEditFeedbackSource?: () => void;
 }
 
 export function CsvImportModal({
   open,
   onOpenChange,
-  connectorId,
+  feedbackSourceId,
   workspaceId,
   fieldMappings,
-  onOpenEditConnector,
+  onOpenEditFeedbackSource,
 }: CsvImportModalProps) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -64,7 +63,7 @@ export function CsvImportModal({
     file
       .text()
       .then((csv) => {
-        const records = parse(csv, { columns: true, skip_empty_lines: true });
+        const records = parse(csv, { columns: true, relax_column_count: true, skip_empty_lines: true });
         const result = createFeedbackCSVDataSchema(t).safeParse(records);
 
         if (!result.success) {
@@ -123,10 +122,10 @@ export function CsvImportModal({
   };
 
   const handleImport = async () => {
-    if (parsedData.length === 0) return;
+    if (!csvFile || parsedData.length === 0) return;
 
     setIsImporting(true);
-    const result = await importCsvDataAction({ connectorId, workspaceId, csvData: parsedData });
+    const result = await importCsvFile({ feedbackSourceId, workspaceId, file: csvFile });
     setIsImporting(false);
 
     if (result?.data) {
@@ -142,7 +141,12 @@ export function CsvImportModal({
       setRowCount(0);
       onOpenChange(false);
     } else {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(result.error.error, t, {
+          row: result.error.row,
+          max: result.error.max,
+        })
+      );
     }
   };
 
@@ -189,7 +193,7 @@ export function CsvImportModal({
                 className="flex cursor-pointer flex-col items-center justify-center"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}>
-                <ArrowUpFromLineIcon className="h-8 w-8 text-slate-400" />
+                <ArrowUpFromLineIcon className="size-8 text-slate-400" />
                 <p className="mt-2 text-sm text-slate-600">
                   <span className="font-semibold">{t("workspace.unify.click_to_upload")}</span>{" "}
                   {t("workspace.unify.or_drag_and_drop")}
@@ -208,12 +212,12 @@ export function CsvImportModal({
         </div>
 
         <DialogFooter>
-          {onOpenEditConnector && (
+          {onOpenEditFeedbackSource && (
             <Button
               variant="secondary"
               onClick={() => {
                 onOpenChange(false);
-                onOpenEditConnector();
+                onOpenEditFeedbackSource();
               }}>
               {t("workspace.unify.edit_csv_mapping")}
             </Button>
@@ -221,7 +225,7 @@ export function CsvImportModal({
           <Button onClick={handleImport} disabled={parsedData.length === 0 || isImporting}>
             {isImporting ? (
               <>
-                <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2Icon className="mr-2 size-4 animate-spin" />
                 {t("workspace.unify.importing_data")}
               </>
             ) : (

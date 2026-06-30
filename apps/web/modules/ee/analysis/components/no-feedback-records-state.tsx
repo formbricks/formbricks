@@ -15,10 +15,10 @@ export const NoFeedbackRecordsState = async ({
   const t = await getTranslate();
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-xs">
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 text-center">
-        <MessageSquareDashedIcon className="h-8 w-8 text-slate-400" />
-        <p className="text-balance text-sm text-slate-600">
+        <MessageSquareDashedIcon className="size-8 text-slate-400" />
+        <p className="text-sm text-balance text-slate-600">
           {hasFeedbackSources
             ? t("workspace.analysis.no_feedback_records_with_sources_message")
             : t("workspace.analysis.no_feedback_records_message")}

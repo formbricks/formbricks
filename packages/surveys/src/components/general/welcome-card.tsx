@@ -27,6 +27,7 @@ interface WelcomeCardProps {
   responseData: TResponseData;
   variablesData: TResponseVariables;
   fullSizeCards: boolean;
+  isCardless?: boolean;
   isPreviewMode?: boolean;
 }
 
@@ -82,6 +83,7 @@ export function WelcomeCard({
   responseData,
   variablesData,
   fullSizeCards,
+  isCardless = false,
   isPreviewMode = false,
 }: WelcomeCardProps) {
   const { t } = useTranslation();
@@ -145,7 +147,7 @@ export function WelcomeCard({
   }, [isCurrent, isPreviewMode]);
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
+    <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
       <div>
         {fileUrl ? (
           <ElementMedia imgUrl={fileUrl} altText={t("common.company_logo")} className="mb-8 min-h-0 w-1/4" />

@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import { TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";

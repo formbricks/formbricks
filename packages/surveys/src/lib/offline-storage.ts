@@ -130,54 +130,66 @@ export const addPendingResponse = async (entry: Omit<PendingResponseEntry, "id">
   }
 };
 
+export const getPendingResponsesStrict = async (surveyId: string): Promise<PendingResponseEntry[]> => {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_PENDING_RESPONSES, "readonly");
+    const store = tx.objectStore(STORE_PENDING_RESPONSES);
+    const index = store.index("surveyId");
+    const request = index.getAll(surveyId);
+
+    request.onsuccess = () => {
+      const results = (request.result as PendingResponseEntry[]).sort((a, b) => a.createdAt - b.createdAt);
+      resolve(results);
+    };
+    request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
+  });
+};
+
 export const getPendingResponses = async (surveyId: string): Promise<PendingResponseEntry[]> => {
   try {
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_PENDING_RESPONSES, "readonly");
-      const store = tx.objectStore(STORE_PENDING_RESPONSES);
-      const index = store.index("surveyId");
-      const request = index.getAll(surveyId);
-
-      request.onsuccess = () => {
-        const results = (request.result as PendingResponseEntry[]).sort((a, b) => a.createdAt - b.createdAt);
-        resolve(results);
-      };
-      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
-    });
+    return await getPendingResponsesStrict(surveyId);
   } catch (e) {
     console.warn("Formbricks: Failed to read pending responses from IndexedDB", e);
     return [];
   }
 };
 
+export const removePendingResponseStrict = async (id: number): Promise<void> => {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_PENDING_RESPONSES, "readwrite");
+    const store = tx.objectStore(STORE_PENDING_RESPONSES);
+    const request = store.delete(id);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
+  });
+};
+
 export const removePendingResponse = async (id: number): Promise<void> => {
   try {
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_PENDING_RESPONSES, "readwrite");
-      const store = tx.objectStore(STORE_PENDING_RESPONSES);
-      const request = store.delete(id);
-
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
-    });
+    return await removePendingResponseStrict(id);
   } catch (e) {
     console.warn("Formbricks: Failed to remove pending response from IndexedDB", e);
   }
 };
 
+export const countPendingResponsesStrict = async (surveyId: string): Promise<number> => {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_PENDING_RESPONSES, "readonly");
+    const index = tx.objectStore(STORE_PENDING_RESPONSES).index("surveyId");
+    const request = index.count(IDBKeyRange.only(surveyId));
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
+  });
+};
+
 export const countPendingResponses = async (surveyId: string): Promise<number> => {
   try {
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_PENDING_RESPONSES, "readonly");
-      const index = tx.objectStore(STORE_PENDING_RESPONSES).index("surveyId");
-      const request = index.count(IDBKeyRange.only(surveyId));
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
-    });
+    return await countPendingResponsesStrict(surveyId);
   } catch (e) {
     console.warn("Formbricks: Failed to count pending responses from IndexedDB", e);
     return 0;

@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZString } from "@formbricks/types/common";
 import {
   AuthenticationError,

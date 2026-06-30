@@ -225,12 +225,12 @@ export const EditProfileDetailsForm = ({
                             ) : (
                               t("common.select")
                             )}
-                            <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                            <ChevronDownIcon className="size-4 text-slate-500" />
                           </div>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        className="min-w-[var(--radix-dropdown-menu-trigger-width)] bg-white text-slate-700"
+                        className="min-w-(--radix-dropdown-menu-trigger-width) bg-white text-slate-700"
                         align="start">
                         <DropdownMenuRadioGroup value={field.value} onValueChange={field.onChange}>
                           {sortedAppLanguages.map((lang) => (

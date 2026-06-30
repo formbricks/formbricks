@@ -1,6 +1,6 @@
-import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import {
   TContactAttributeKeyInput,
@@ -102,6 +102,28 @@ describe("createContactAttributeKey", () => {
 
     if (!result.ok) {
       expect(result.error.type).toEqual("internal_server_error");
+    }
+  });
+
+  test("returns bad request when key is reserved for future defaults", async () => {
+    const result = await createContactAttributeKey({
+      ...inputContactAttributeKey,
+      key: "user_id",
+    });
+    expect(result.ok).toBe(false);
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+
+    if (!result.ok) {
+      expect(result.error).toStrictEqual({
+        type: "bad_request",
+        details: [
+          {
+            field: "key",
+            issue:
+              "Reserved attribute key(s): user_id. These keys are reserved for the v5.1 safe-identifier default attribute migration and cannot be created as custom attributes.",
+          },
+        ],
+      });
     }
   });
 

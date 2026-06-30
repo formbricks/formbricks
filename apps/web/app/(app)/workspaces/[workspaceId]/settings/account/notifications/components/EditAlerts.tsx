@@ -4,7 +4,8 @@ import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { TUser } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
@@ -23,13 +24,17 @@ export const EditAlerts = ({
   autoDisableNotificationElementId,
 }: EditAlertsProps) => {
   const { t } = useTranslation();
-  const { workspace: currentWorkspace } = useWorkspace();
+
+  if (memberships.length === 0) {
+    return <EmptyState text={t("common.no_surveys_found")} variant="simple" />;
+  }
+
   return (
     <>
       {memberships.map((membership) => (
         <div key={membership.organization.id}>
-          <div className="mb-5 grid grid-cols-6 items-center space-x-3">
-            <div className="col-span-3 flex items-center space-x-3">
+          <div className="mb-5 grid grid-cols-6 items-center gap-x-3">
+            <div className="col-span-3 flex items-center gap-x-3">
               <UsersIcon className="h-6 w-7 text-slate-600" />
 
               <p className="text-sm font-medium text-slate-800">{membership.organization.name}</p>
@@ -54,9 +59,9 @@ export const EditAlerts = ({
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
+                    <div className="col-span-1 flex cursor-default items-center justify-center gap-x-2">
                       <span>{t("workspace.settings.notifications.every_response")}</span>
-                      <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                      <HelpCircleIcon className="size-4 shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -93,7 +98,7 @@ export const EditAlerts = ({
                 ))}
               </div>
             ) : (
-              <div className="m-2 flex h-16 items-center justify-center rounded bg-slate-50 text-sm text-slate-500">
+              <div className="m-2 flex h-16 items-center justify-center rounded-sm bg-slate-50 text-sm text-slate-500">
                 <p>{t("common.no_surveys_found")}</p>
               </div>
             )}
@@ -101,7 +106,7 @@ export const EditAlerts = ({
               {t("workspace.settings.notifications.want_to_loop_in_organization_mates")}{" "}
               <Link
                 className="font-semibold"
-                href={`/workspaces/${currentWorkspace?.id}/settings/organization/general`}>
+                href={organizationSettingsPath(membership.organization.id, "teams")}>
                 {t("common.invite_them")}
               </Link>
             </p>

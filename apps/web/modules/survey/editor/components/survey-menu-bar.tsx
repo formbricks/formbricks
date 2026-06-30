@@ -1,11 +1,11 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
@@ -263,7 +263,7 @@ export const SurveyMenuBar = ({
           setActiveId("language");
         } else {
           toast.error(firstError.message, {
-            className: "w-fit !max-w-md",
+            className: "w-fit max-w-md!",
           });
         }
 
@@ -543,7 +543,7 @@ export const SurveyMenuBar = ({
 
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
-      <div className="flex h-full items-center space-x-2 whitespace-nowrap">
+      <div className="flex h-full items-center gap-x-2 whitespace-nowrap">
         {!isCxMode && (
           <Button
             size="sm"
@@ -567,7 +567,7 @@ export const SurveyMenuBar = ({
         />
       </div>
 
-      <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+      <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
         <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
         {!isStorageConfigured && (
           <div>
@@ -575,7 +575,7 @@ export const SurveyMenuBar = ({
               <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
               <AlertButton className="flex items-center justify-center">
                 <a
-                  className="flex h-full w-full items-center justify-center !bg-white"
+                  className="flex h-full w-full items-center justify-center bg-white!"
                   href="https://formbricks.com/docs/self-hosting/configuration/file-uploads"
                   target="_blank"
                   rel="noopener noreferrer">

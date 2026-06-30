@@ -53,6 +53,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
       )}
 
       <PendingDowngradeBanner
+        organizationId={organization.id}
         lastChecked={lastChecked}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}
@@ -69,7 +70,6 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
           publicDomain={publicDomain}
-          isMultiOrgEnabled={isMultiOrgEnabled}
           organizationWorkspacesLimit={organizationWorkspacesLimit}
           isLicenseActive={active}
           isAccessControlAllowed={isAccessControlAllowed}

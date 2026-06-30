@@ -1,8 +1,8 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
@@ -314,18 +314,40 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ worksp
   }
 });
 
-export const getConnector = reactCache(
-  async (connectorId: string): Promise<{ workspaceId: string } | null> => {
-    validateInputs([connectorId, ZId]);
+export const getFeedbackSource = reactCache(
+  async (feedbackSourceId: string): Promise<{ workspaceId: string } | null> => {
+    validateInputs([feedbackSourceId, ZId]);
     try {
-      const connector = await prisma.connector.findUnique({
+      const feedbackSource = await prisma.feedbackSource.findUnique({
         where: {
-          id: connectorId,
+          id: feedbackSourceId,
         },
         select: { workspaceId: true },
       });
 
-      return connector;
+      return feedbackSource;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+export const getContactAttributeKey = reactCache(
+  async (contactAttributeKeyId: string): Promise<{ workspaceId: string } | null> => {
+    validateInputs([contactAttributeKeyId, ZId]);
+    try {
+      const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
+        where: {
+          id: contactAttributeKeyId,
+        },
+        select: { workspaceId: true },
+      });
+
+      return contactAttributeKey;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

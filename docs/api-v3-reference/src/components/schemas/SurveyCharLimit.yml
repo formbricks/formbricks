@@ -1,0 +1,11 @@
+type: object
+description: Optional `openText` character limit configuration.
+properties:
+  enabled:
+    type: boolean
+    default: false
+  min:
+    type: number
+  max:
+    type: number
+additionalProperties: false

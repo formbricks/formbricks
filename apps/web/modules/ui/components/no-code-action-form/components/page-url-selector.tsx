@@ -143,7 +143,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
         />
       </div>
       {filterType === "specific" && (
-        <div className="mb-2 mt-4 w-full space-y-3 pe-2">
+        <div className="mt-4 mb-2 w-full space-y-3 pe-2">
           <Label>{t("workspace.actions.url")}</Label>
           <UrlInput
             control={form.control}
@@ -156,7 +156,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
             }}
           />
           <Button variant="secondary" size="sm" type="button" onClick={handleAddMore} disabled={isReadOnly}>
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <PlusIcon className="mr-2 size-4" />
             {t("workspace.actions.add_url")}
           </Button>
           <div className="mt-4">
@@ -164,7 +164,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
             <p className="text-sm font-normal text-slate-500">
               {t("workspace.actions.enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked")}
             </p>
-            <div className="rounded">
+            <div className="rounded-sm">
               <div className="mt-1 flex items-end">
                 <Input
                   type="text"
@@ -220,7 +220,7 @@ const UrlInput = ({
   return (
     <div className="flex w-full flex-col gap-2">
       {fields.map((field, index) => (
-        <div key={field.id} className="ml-1 flex items-start space-x-2">
+        <div key={field.id} className="ml-1 flex items-start gap-x-2">
           {index !== 0 && (
             <Select value={connector} onValueChange={onConnectorChange} disabled={disabled}>
               <SelectTrigger className="h-[40px] w-[80px] bg-white">
@@ -292,7 +292,7 @@ const UrlInput = ({
               onClick={() => {
                 removeUrlRule(index);
               }}>
-              <TrashIcon className="h-4 w-4" />
+              <TrashIcon className="size-4" />
             </Button>
           )}
         </div>

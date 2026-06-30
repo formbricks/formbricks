@@ -107,7 +107,7 @@ export function WorkspaceRow(props: Readonly<WorkspaceRowProps>) {
           className="shrink-0"
           disabled={!isOwnerOrManager}
           onClick={() => onRemoveWorkspace(index)}>
-          <Trash2Icon className="h-4 w-4" />
+          <Trash2Icon className="size-4" />
         </Button>
       )}
     </div>

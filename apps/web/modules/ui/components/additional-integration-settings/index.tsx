@@ -9,10 +9,12 @@ interface AdditionalIntegrationSettingsProps {
   includeHiddenFields: boolean;
   includeMetadata: boolean;
   includeCreatedAt: boolean;
+  includeContactAttributes: boolean;
   setIncludeVariables: (includeVariables: boolean) => void;
   setIncludeHiddenFields: (includeHiddenFields: boolean) => void;
   setIncludeMetadata: (includeMetadata: boolean) => void;
   setIncludeCreatedAt: (includeCreatedAt: boolean) => void;
+  setIncludeContactAttributes: (includeContactAttributes: boolean) => void;
 }
 
 export const AdditionalIntegrationSettings = ({
@@ -20,10 +22,12 @@ export const AdditionalIntegrationSettings = ({
   includeHiddenFields,
   includeMetadata,
   includeCreatedAt,
+  includeContactAttributes,
   setIncludeVariables,
   setIncludeHiddenFields,
   setIncludeMetadata,
   setIncludeCreatedAt,
+  setIncludeContactAttributes,
 }: AdditionalIntegrationSettingsProps) => {
   const { t } = useTranslation();
 
@@ -52,6 +56,12 @@ export const AdditionalIntegrationSettings = ({
       onChange: setIncludeMetadata,
       label: t("workspace.integrations.include_metadata"),
     },
+    {
+      id: "includeContactAttributes",
+      checked: includeContactAttributes,
+      onChange: setIncludeContactAttributes,
+      label: t("workspace.integrations.include_contact_attributes"),
+    },
   ];
 
   return (
@@ -59,7 +69,7 @@ export const AdditionalIntegrationSettings = ({
       <Label htmlFor="Surveys">{t("workspace.integrations.additional_settings")}</Label>
       <div className="text-sm">
         {checkboxes.map(({ id, checked, onChange, label }) => (
-          <div key={id} className="my-1 flex items-center space-x-2">
+          <div key={id} className="my-1 flex items-center gap-x-2">
             <label htmlFor={id} className="flex cursor-pointer items-center">
               <Checkbox
                 type="button"
@@ -69,7 +79,7 @@ export const AdditionalIntegrationSettings = ({
                 checked={checked}
                 onCheckedChange={() => onChange(!checked)}
               />
-              <span className="ml-2 w-[30rem] truncate">{label}</span>
+              <span className="ml-2 w-120 truncate">{label}</span>
             </label>
           </div>
         ))}

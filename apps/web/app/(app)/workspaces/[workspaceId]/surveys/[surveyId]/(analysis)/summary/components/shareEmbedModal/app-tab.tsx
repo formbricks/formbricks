@@ -149,8 +149,8 @@ export const AppTab = () => {
   };
 
   return (
-    <div className="flex flex-col justify-between space-y-6 pb-4">
-      <div className="flex flex-col space-y-6">
+    <div className="flex flex-col justify-between gap-y-6 pb-4">
+      <div className="flex flex-col gap-y-6">
         <Alert variant={workspace.appSetupCompleted ? "success" : "warning"} size="default">
           <AlertTitle>
             {workspace.appSetupCompleted
@@ -171,14 +171,14 @@ export const AppTab = () => {
           )}
         </Alert>
 
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col gap-y-3">
           <H4>{t("workspace.surveys.summary.in_app.display_criteria")}</H4>
           <div
             className={
-              "flex w-full flex-col space-y-4 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm"
+              "flex w-full flex-col space-y-4 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xs"
             }>
             <DisplayCriteriaItem
-              icon={<TimerResetIcon className="h-4 w-4" />}
+              icon={<TimerResetIcon className="size-4" />}
               title={waitTime()}
               titleSuffix={
                 survey.recontactDays !== null
@@ -188,7 +188,7 @@ export const AppTab = () => {
               description={t("workspace.surveys.summary.in_app.display_criteria.time_based_description")}
             />
             <DisplayCriteriaItem
-              icon={<UsersIcon className="h-4 w-4" />}
+              icon={<UsersIcon className="size-4" />}
               title={getSegmentTitle(survey.segment)}
               description={t("workspace.surveys.summary.in_app.display_criteria.audience_description")}
             />
@@ -197,9 +197,9 @@ export const AppTab = () => {
                 key={trigger.actionClass.id}
                 icon={
                   trigger.actionClass.type === "code" ? (
-                    <CodeXmlIcon className="h-4 w-4" />
+                    <CodeXmlIcon className="size-4" />
                   ) : (
-                    <MousePointerClickIcon className="h-4 w-4" />
+                    <MousePointerClickIcon className="size-4" />
                   )
                 }
                 title={trigger.actionClass.name}
@@ -209,7 +209,7 @@ export const AppTab = () => {
             ))}
             {survey.displayPercentage !== null && survey.displayPercentage > 0 && (
               <DisplayCriteriaItem
-                icon={<PercentIcon className="h-4 w-4" />}
+                icon={<PercentIcon className="size-4" />}
                 title={t("workspace.surveys.summary.in_app.display_criteria.randomizer", {
                   percentage: survey.displayPercentage,
                 })}
@@ -219,7 +219,7 @@ export const AppTab = () => {
               />
             )}
             <DisplayCriteriaItem
-              icon={<Repeat1Icon className="h-4 w-4" />}
+              icon={<Repeat1Icon className="size-4" />}
               title={displayOption()}
               description={t("workspace.surveys.summary.in_app.display_criteria.recontact_description")}
             />

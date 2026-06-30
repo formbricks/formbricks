@@ -1,8 +1,9 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -13,7 +14,7 @@ import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
-import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
+import { getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
@@ -63,6 +64,17 @@ export const SurveyClientWrapper = ({
   IS_FORMBRICKS_CLOUD,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const webAppLocale = getWebAppLocale(languageCode, survey);
+    if (i18n.language !== webAppLocale) {
+      i18n.changeLanguage(webAppLocale).catch(() => {
+        i18n.changeLanguage("en-US");
+      });
+    }
+  }, [languageCode, survey, i18n]);
+
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const offlineSupport = searchParams.get("offlineSupport") === "true";
   const userId = canReadUserIdFromUrl ? getUserIdFromSearchParams(searchParams) : undefined;
@@ -139,6 +151,8 @@ export const SurveyClientWrapper = ({
     setResponseData({});
   };
   const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(survey), [survey]);
+  const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const hasLogo = !styling.isLogoHidden && !!(styling.logo?.url || workspace.logo?.url);
 
   // Determine text direction based on language code for logo positioning only
   // which checks both language code and survey content. This is only for logo UI positioning.
@@ -158,6 +172,7 @@ export const SurveyClientWrapper = ({
       )}
       <LinkSurveyWrapper
         workspace={workspace}
+        workspaceId={survey.workspaceId}
         surveyId={survey.id}
         isWelcomeCardEnabled={survey.welcomeCard.enabled}
         isPreview={isPreview}
@@ -206,6 +221,7 @@ export const SurveyClientWrapper = ({
           isSpamProtectionEnabled={isSpamProtectionEnabled}
           offlineSupport={offlineSupport}
           onOfflineStatusChange={offlineSupport ? handleOfflineStatusChange : undefined}
+          showCardlessPreviewLogoSlot={isCardless && hasLogo}
         />
       </LinkSurveyWrapper>
       {offlineSupport && !isEmbed && (

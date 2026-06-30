@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
@@ -535,6 +535,22 @@ describe("Contacts Lib", () => {
       await expect(
         createContactsFromCSV(invalidCsvData as any, mockWorkspaceId, "skip", attributeMap)
       ).rejects.toThrow(ValidationError);
+    });
+
+    test("throws ValidationError when CSV creates reserved future default keys", async () => {
+      const reservedCsvData = [{ email: "john@example.com", user_id: "user-1" }];
+      const attributeMap = { email: "email", user_id: "user_id" };
+
+      vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce([
+        { key: "email", id: "key-1", dataType: "string" },
+      ] as any);
+
+      await expect(
+        createContactsFromCSV(reservedCsvData as any, mockWorkspaceId, "skip", attributeMap)
+      ).rejects.toThrow(ValidationError);
+      expect(prisma.contactAttributeKey.createMany).not.toHaveBeenCalled();
     });
 
     test("throws DatabaseError on Prisma error", async () => {

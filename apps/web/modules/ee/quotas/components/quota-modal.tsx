@@ -260,7 +260,7 @@ export const QuotaModal = ({
           <FormProvider {...form}>
             <DialogHeader>
               <div className="flex items-center gap-2">
-                <PieChart className="h-4 w-4" />
+                <PieChart className="size-4" />
                 <div className="flex flex-col">
                   <DialogTitle>
                     {isEditing
@@ -408,7 +408,7 @@ export const QuotaModal = ({
                 control={control}
                 name="countPartialSubmissions"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start gap-x-3 gap-y-0">
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
@@ -438,7 +438,7 @@ export const QuotaModal = ({
                   }}
                   className="flex items-center gap-2"
                   disabled={isSubmitting || !isEditing}>
-                  <Trash2Icon className="h-4 w-4" />
+                  <Trash2Icon className="size-4" />
                   {t("common.delete")}
                 </Button>
                 <div className="flex gap-2">

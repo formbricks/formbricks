@@ -1,5 +1,4 @@
 /* eslint-disable import/no-relative-packages -- Need to import from parent package */
-import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { ZOverlay } from "../../types/common";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
@@ -12,6 +11,7 @@ import {
   ZSurveyRecaptcha,
   ZSurveyVariable,
 } from "../../types/surveys/types";
+import { SurveyStatus, SurveyType } from "../src/prisma";
 
 const ZColor = z.string().regex(/^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/);
 
@@ -20,12 +20,16 @@ export const ZStylingColor = z.object({
   dark: ZColor.nullish(),
 });
 
-export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
+// "cardless" is only supported for link surveys; app surveys keep the card-based arrangements.
+export const ZLinkSurveyCardArrangementOptions = z.enum(["casual", "straight", "simple", "cardless"]);
+export const ZAppSurveyCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
 
 export const ZCardArrangement = z.object({
-  linkSurveys: ZCardArrangementOptions,
-  appSurveys: ZCardArrangementOptions,
+  linkSurveys: ZLinkSurveyCardArrangementOptions,
+  appSurveys: ZAppSurveyCardArrangementOptions,
 });
+
+export const ZLinkSurveyCardWidthOptions = z.enum(["narrow", "default", "wide"]);
 
 export const ZSurveyStylingBackground = z.object({
   bg: z.string().nullish(),
@@ -121,6 +125,7 @@ const ZSurveyBase = z.object({
       isDarkModeEnabled: z.boolean().nullish(),
       roundness: z.number().nullish(),
       cardArrangement: ZCardArrangement.nullish(),
+      linkSurveyCardWidth: ZLinkSurveyCardWidthOptions.nullish(),
       background: ZSurveyStylingBackground.nullish(),
       hideProgressBar: z.boolean().nullish(),
       isLogoHidden: z.boolean().nullish(),

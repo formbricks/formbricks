@@ -47,6 +47,12 @@ ${dimensionsText}
 The time field is \`${CUBE_NAME}.collectedAt\`. Supported granularities: hour, day, week, month, quarter, year.
 Date range presets: ${datePresetsText}
 
+### Metric aliases
+- "NPS score" or "net promoter score" means \`${CUBE_NAME}.npsScore\`.
+- "NPS value", "NPS average", or "NPS average rating" means \`${CUBE_NAME}.npsAverage\`.
+- "CSAT score" means \`${CUBE_NAME}.csatScore\`; "CSAT average" means \`${CUBE_NAME}.csatAverage\`.
+- "CES average" or "CES score" means \`${CUBE_NAME}.cesAverage\`.
+
 ### Filter operators by field type
 ${operatorsText}
 
@@ -56,5 +62,6 @@ ${operatorsText}
 - For time-based filtering (date range only, no time grouping): add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\` and dateRange. Do NOT include granularity (default is None / filter only).
 - For time-series or trend questions (e.g. "over time", "by day", "weekly", "monthly"): add a timeDimension with dimension, granularity (hour/day/week/month/quarter/year), and dateRange.
 - Choose the most appropriate chart type: bar, line, area, pie, or big_number (for single-number queries).
-- Filters must use the exact operator strings from the schema.`;
+- Filters must use the exact operator strings from the schema.
+- Generate a short, descriptive chart name (max 255 characters) that reflects the user's question.`;
 }

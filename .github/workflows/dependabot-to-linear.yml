@@ -1,0 +1,48 @@
+name: Dependabot Alerts to Linear
+
+on:
+  schedule:
+    - cron: "0 11 * * *" # 11:00 UTC = 12:00 CET (noon); +1h during CEST
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Log what would be created without writing to Linear"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-to-linear-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync Dependabot alerts to Linear
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      - name: Sync alerts to Linear
+        env:
+          DEPENDABOT_ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN }}
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          # Fallback used by the script if LINEAR_API_KEY is not set; must be
+          # listed here because the job only sees secrets exposed via env.
+          LINEAR_ACCESS_KEY: ${{ secrets.LINEAR_ACCESS_KEY }}
+        run: node scripts/dependabot-to-linear.mjs ${{ inputs.dry_run && '--dry-run' || '' }}

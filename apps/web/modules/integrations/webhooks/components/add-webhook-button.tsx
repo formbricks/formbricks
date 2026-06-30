@@ -23,7 +23,7 @@ export const AddWebhookButton = ({ workspaceId, surveys, allowInternalUrls }: Ad
         onClick={() => {
           setAddWebhookModalOpen(true);
         }}>
-        <Webhook className="mr-2 h-5 w-5 text-white" />
+        <Webhook className="mr-2 size-5 text-white" />
         {t("workspace.integrations.webhooks.add_webhook")}
       </Button>
       <AddWebhookModal

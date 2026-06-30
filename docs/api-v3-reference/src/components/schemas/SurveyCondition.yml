@@ -1,0 +1,55 @@
+type: object
+description: >
+  Single condition. Operators such as `isSubmitted`, `isSkipped`, `isClicked`,
+  `isAccepted`,
+
+  `isBooked`, `isSet`, and `isEmpty` do not use `rightOperand`; comparison
+  operators do.
+required:
+  - id
+  - leftOperand
+  - operator
+properties:
+  id:
+    type: string
+    format: cuid2
+  leftOperand:
+    $ref: ./SurveyDynamicReference.yml
+  operator:
+    type: string
+    enum:
+      - equals
+      - doesNotEqual
+      - contains
+      - doesNotContain
+      - startsWith
+      - doesNotStartWith
+      - endsWith
+      - doesNotEndWith
+      - isSubmitted
+      - isSkipped
+      - isGreaterThan
+      - isLessThan
+      - isGreaterThanOrEqual
+      - isLessThanOrEqual
+      - equalsOneOf
+      - includesAllOf
+      - includesOneOf
+      - doesNotIncludeOneOf
+      - doesNotIncludeAllOf
+      - isClicked
+      - isNotClicked
+      - isAccepted
+      - isBefore
+      - isAfter
+      - isBooked
+      - isPartiallySubmitted
+      - isCompletelySubmitted
+      - isSet
+      - isNotSet
+      - isEmpty
+      - isNotEmpty
+      - isAnyOf
+  rightOperand:
+    $ref: ./SurveyLogicOperand.yml
+additionalProperties: false

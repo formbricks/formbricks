@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma, Response } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";

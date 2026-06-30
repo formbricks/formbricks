@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
@@ -119,7 +119,6 @@ export const workspaceIdLayoutChecks = async (workspaceId: string) => {
             },
           },
           isAISmartToolsEnabled: true,
-          isAIDataAnalysisEnabled: true,
           whitelabel: true,
         },
       },
@@ -173,7 +172,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
               },
             },
             isAISmartToolsEnabled: true,
-            isAIDataAnalysisEnabled: true,
             whitelabel: true,
             memberships: {
               where: { userId },
@@ -223,7 +221,6 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
         name: data.organization.name,
         billing: data.organization.billing,
         isAISmartToolsEnabled: data.organization.isAISmartToolsEnabled,
-        isAIDataAnalysisEnabled: data.organization.isAIDataAnalysisEnabled,
         whitelabel: data.organization.whitelabel,
       },
       membership: data.organization.memberships[0] || null,

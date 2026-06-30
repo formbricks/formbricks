@@ -166,13 +166,13 @@ export function AddFilterModal({
     {
       id: "attributes",
       label: t("workspace.segments.person_and_attributes"),
-      icon: <TagIcon className="h-4 w-4" />,
+      icon: <TagIcon className="size-4" />,
     },
-    { id: "segments", label: t("common.segments"), icon: <Users2Icon className="h-4 w-4" /> },
+    { id: "segments", label: t("common.segments"), icon: <Users2Icon className="size-4" /> },
     {
       id: "devices",
       label: t("workspace.segments.devices"),
-      icon: <MonitorSmartphoneIcon className="h-4 w-4" />,
+      icon: <MonitorSmartphoneIcon className="size-4" />,
     },
   ];
 
@@ -184,22 +184,33 @@ export function AddFilterModal({
     [t]
   );
 
+  const contactAttributeKeysForPicker = useMemo(() => {
+    // `userId` is represented by the person filter (fingerprint icon), so hide it from attribute entries.
+    return contactAttributeKeys.filter((attributeKey) => attributeKey.key !== "userId");
+  }, [contactAttributeKeys]);
+
   const contactAttributeKeysFiltered = useMemo(() => {
-    if (!contactAttributeKeys) return [];
+    if (!contactAttributeKeysForPicker) return [];
 
-    if (!searchValue) return contactAttributeKeys;
+    if (!searchValue) return contactAttributeKeysForPicker;
 
-    return contactAttributeKeys.filter((attributeKey) => {
+    return contactAttributeKeysForPicker.filter((attributeKey) => {
       const attributeValueToSeach = attributeKey.name ?? attributeKey.key;
       return attributeValueToSeach.toLowerCase().includes(searchValue.toLowerCase());
     });
-  }, [contactAttributeKeys, searchValue]);
+  }, [contactAttributeKeysForPicker, searchValue]);
 
   const contactAttributeFiltered = useMemo(() => {
-    const contactAttributes = [{ name: "userId" }];
+    const personIdentifiers = [{ id: "userId", label: t("common.user_id") }];
 
-    return contactAttributes.filter((ca) => ca.name.toLowerCase().includes(searchValue.toLowerCase()));
-  }, [searchValue]);
+    return personIdentifiers.filter((personIdentifier) => {
+      const query = searchValue.toLowerCase();
+      return (
+        personIdentifier.id.toLowerCase().includes(query) ||
+        personIdentifier.label.toLowerCase().includes(query)
+      );
+    });
+  }, [searchValue, t]);
 
   const segmentsFiltered = useMemo(() => {
     if (!segments) return [];
@@ -283,10 +294,10 @@ export function AddFilterModal({
 
             {filters.contactAttributeFiltered.map((personAttribute) => (
               <FilterButton
-                key={personAttribute.name}
-                data-testid={`filter-btn-person-${personAttribute.name}`}
-                icon={<FingerprintIcon className="h-4 w-4" />}
-                label={personAttribute.name}
+                key={personAttribute.id}
+                data-testid={`filter-btn-person-${personAttribute.id}`}
+                icon={<FingerprintIcon className="size-4" />}
+                label={personAttribute.label}
                 onClick={() => {
                   handleAddFilter({
                     type: "person",
@@ -311,7 +322,7 @@ export function AddFilterModal({
               <FilterButton
                 key={segment.id}
                 data-testid={`filter-btn-segment-${segment.id}`}
-                icon={<Users2Icon className="h-4 w-4" />}
+                icon={<Users2Icon className="size-4" />}
                 label={segment.title}
                 onClick={() => {
                   handleAddFilter({
@@ -339,7 +350,7 @@ export function AddFilterModal({
               <FilterButton
                 key={deviceType.id}
                 data-testid={`filter-btn-device-${deviceType.id}`}
-                icon={<MonitorSmartphoneIcon className="h-4 w-4" />}
+                icon={<MonitorSmartphoneIcon className="size-4" />}
                 label={deviceType.name}
                 onClick={() => {
                   handleAddFilter({
@@ -393,7 +404,7 @@ export function AddFilterModal({
             <FilterButton
               key={segment.id}
               data-testid={`filter-btn-segment-${segment.id}`}
-              icon={<Users2Icon className="h-4 w-4" />}
+              icon={<Users2Icon className="size-4" />}
               label={segment.title}
               onClick={() => {
                 handleAddFilter({
@@ -427,7 +438,7 @@ export function AddFilterModal({
           <FilterButton
             key={deviceType.id}
             data-testid={`filter-btn-device-${deviceType.id}`}
-            icon={<MonitorSmartphoneIcon className="h-4 w-4" />}
+            icon={<MonitorSmartphoneIcon className="size-4" />}
             label={deviceType.name}
             onClick={() => {
               handleAddFilter({
@@ -454,7 +465,7 @@ export function AddFilterModal({
     );
   };
 
-  const TabContent = (): JSX.Element => {
+  const getTabContent = (): JSX.Element => {
     switch (activeTabId) {
       case "all": {
         return getAllTabContent();
@@ -494,9 +505,7 @@ export function AddFilterModal({
               <TabBar activeId={activeTabId} className="bg-white" setActiveId={setActiveTabId} tabs={tabs} />
             </div>
 
-            <div className={cn("mt-2 flex flex-col gap-1 overflow-y-auto")}>
-              <TabContent />
-            </div>
+            <div className={cn("mt-2 flex flex-col gap-1 overflow-y-auto")}>{getTabContent()}</div>
           </div>
         </DialogBody>
       </DialogContent>

@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
-type TJsonBodyValidationIssue = "invalid_json" | "invalid_body";
+type TJsonBodyValidationIssue = "invalid_json" | "invalid_body" | "payload_too_large";
 
 type TJsonBodyValidationError = {
   details: Record<string, string> | { error: string };
@@ -44,9 +45,17 @@ export const parseAndValidateJsonBody = async <TSchema extends z.ZodTypeAny>({
   let jsonInput: unknown;
 
   try {
-    jsonInput = await request.json();
+    jsonInput = await parseJsonBodyWithLimit(request);
   } catch (error) {
     const details = { error: getErrorMessage(error) };
+
+    if (error instanceof RequestBodyTooLargeError) {
+      return {
+        details,
+        issue: "payload_too_large",
+        response: responses.payloadTooLargeResponse("Payload Too Large", details, true),
+      };
+    }
 
     return {
       details,

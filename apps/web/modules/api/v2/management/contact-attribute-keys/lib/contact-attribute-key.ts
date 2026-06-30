@@ -1,6 +1,6 @@
-import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
@@ -10,6 +10,10 @@ import {
   TGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 
 export const getContactAttributeKeys = reactCache(
   async (workspaceIds: string[], params: TGetContactAttributeKeysFilter) => {
@@ -44,6 +48,13 @@ export const createContactAttributeKey = async (
   contactAttributeKey: TContactAttributeKeyInput
 ): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
   const { workspaceId, name, description, key, dataType } = contactAttributeKey;
+
+  if (isReservedFutureDefaultAttributeKey(key)) {
+    return err({
+      type: "bad_request",
+      details: [{ field: "key", issue: getReservedFutureDefaultAttributeKeyIssue([key]) }],
+    });
+  }
 
   try {
     const prismaData: Prisma.ContactAttributeKeyCreateInput = {

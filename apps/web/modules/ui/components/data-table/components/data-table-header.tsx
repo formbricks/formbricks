@@ -46,13 +46,13 @@ export const DataTableHeader = <T,>({
       })}>
       <div className="flex items-center gap-1">
         {header.column.id !== "select" && header.column.id !== "createdAt" && (
-          <div className="flex flex-shrink-0">
+          <div className="flex shrink-0">
             <ColumnSettingsDropdown
               column={header.column}
               setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
             />
-            <button {...attributes} {...listeners} className="cursor-move">
-              <GripVerticalIcon className="h-4 w-4" />
+            <button type="button" {...attributes} {...listeners} className="cursor-move">
+              <GripVerticalIcon className="size-4" />
             </button>
           </div>
         )}
@@ -63,12 +63,13 @@ export const DataTableHeader = <T,>({
 
         {/* Resize handle */}
         <button
+          type="button"
           onDoubleClick={() => header.column.resetSize()}
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}
           data-testid="column-resize-handle"
           className={cn(
-            "absolute right-0 top-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
+            "absolute top-0 right-0 hidden h-full w-1 cursor-col-resize bg-slate-500",
             header.column.getIsResizing() ? "bg-black" : "bg-slate-500",
             !header.column.getCanResize() ? "hidden" : "group-hover:block"
           )}></button>

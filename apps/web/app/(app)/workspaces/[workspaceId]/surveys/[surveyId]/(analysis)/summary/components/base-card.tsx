@@ -35,7 +35,7 @@ export const BaseCard = ({
         <TooltipTrigger onClick={onClick} data-testid={testId}>
           <div
             className={cn(
-              "flex h-full flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm",
+              "flex h-full flex-col justify-between space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs",
               isClickable ? "cursor-pointer" : "cursor-default",
               className
             )}

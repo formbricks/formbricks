@@ -1,13 +1,56 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
+
+// Keep v5 defaults aligned with current production camelCase keys.
+// Safe-identifier migration (with backwards compatibility) is intentionally deferred to v5.1.
+const DEFAULT_CONTACT_ATTRIBUTE_KEYS: Prisma.ContactAttributeKeyCreateWithoutWorkspaceInput[] = [
+  {
+    key: "userId",
+    name: "User Id",
+    description: "The user id of a contact",
+    type: "default",
+    isUnique: true,
+  },
+  {
+    key: "email",
+    name: "Email",
+    description: "The email of a contact",
+    type: "default",
+    isUnique: true,
+  },
+  {
+    key: "firstName",
+    name: "First Name",
+    description: "Your contact's first name",
+    type: "default",
+  },
+  {
+    key: "lastName",
+    name: "Last Name",
+    description: "Your contact's last name",
+    type: "default",
+  },
+  {
+    key: "language",
+    name: "Language",
+    description: "The language preference of a contact",
+    type: "default",
+  },
+];
+
+const DEFAULT_WORKSPACE_LANGUAGE: Prisma.LanguageCreateWithoutWorkspaceInput = {
+  code: DEFAULT_LOCALE,
+  alias: null,
+};
 
 const selectWorkspace = {
   id: true,
@@ -76,6 +119,12 @@ export const createWorkspace = async (
         ...data,
         name: workspaceInput.name,
         organizationId,
+        contactAttributeKeys: {
+          create: DEFAULT_CONTACT_ATTRIBUTE_KEYS,
+        },
+        languages: {
+          create: [DEFAULT_WORKSPACE_LANGUAGE],
+        },
       },
       select: selectWorkspace,
     });
@@ -113,7 +162,7 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
     if (workspace) {
       const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);
 
-      if (!s3Result.ok) {
+      if (!s3Result.ok && "error" in s3Result) {
         // fail silently because we don't want to throw an error if the files are not deleted
         logger.error(s3Result.error, "Error deleting S3 files");
       }

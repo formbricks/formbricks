@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   createFeedbackDirectory,
@@ -34,7 +34,7 @@ vi.mock("@formbricks/database", () => {
     workspace: {
       count: vi.fn(),
     },
-    connector: {
+    feedbackSource: {
       count: vi.fn().mockResolvedValue(0),
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
@@ -52,7 +52,7 @@ const mockDirectoryDbRow = {
   id: mockDirectoryId,
   name: "Test Directory",
   isArchived: false,
-  _count: { workspaces: 2, connectors: 1 },
+  _count: { workspaces: 2, feedbackSources: 1 },
 };
 
 const mockDirectoryDetailsDbRow = {
@@ -64,7 +64,7 @@ const mockDirectoryDetailsDbRow = {
     { workspaceId: mockWorkspaceId1, workspace: { name: "Workspace A" } },
     { workspaceId: mockWorkspaceId2, workspace: { name: "Workspace B" } },
   ],
-  connectors: [],
+  feedbackSources: [],
 };
 
 describe("FeedbackDirectory Service", () => {
@@ -84,7 +84,7 @@ describe("FeedbackDirectory Service", () => {
           name: "Test Directory",
           isArchived: false,
           workspaceCount: 2,
-          connectorCount: 1,
+          feedbackSourceCount: 1,
         },
       ]);
       expect(prisma.feedbackDirectory.findMany).toHaveBeenCalledWith({
@@ -93,7 +93,7 @@ describe("FeedbackDirectory Service", () => {
           id: true,
           name: true,
           isArchived: true,
-          _count: { select: { workspaces: true, connectors: true } },
+          _count: { select: { workspaces: true, feedbackSources: true } },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -140,14 +140,14 @@ describe("FeedbackDirectory Service", () => {
           { workspaceId: mockWorkspaceId1, workspaceName: "Workspace A" },
           { workspaceId: mockWorkspaceId2, workspaceName: "Workspace B" },
         ],
-        connectors: [],
+        feedbackSources: [],
       });
     });
 
-    test("returns directory details with connectors", async () => {
+    test("returns directory details with feedbackSources", async () => {
       const dbRowWithConnectors = {
         ...mockDirectoryDetailsDbRow,
-        connectors: [
+        feedbackSources: [
           {
             id: "conn-1",
             name: "My Connector",
@@ -161,7 +161,7 @@ describe("FeedbackDirectory Service", () => {
 
       const result = await getFeedbackDirectoryDetails(mockDirectoryId);
 
-      expect(result?.connectors).toEqual([
+      expect(result?.feedbackSources).toEqual([
         {
           id: "conn-1",
           name: "My Connector",
@@ -375,8 +375,8 @@ describe("FeedbackDirectory Service", () => {
       });
     });
 
-    test("archives directory when no connectors linked", async () => {
-      vi.mocked(prisma.connector.count).mockResolvedValueOnce(0);
+    test("archives directory when no feedbackSources linked", async () => {
+      vi.mocked(prisma.feedbackSource.count).mockResolvedValueOnce(0);
       vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
       const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
@@ -384,7 +384,7 @@ describe("FeedbackDirectory Service", () => {
       });
 
       expect(result).toBe(true);
-      expect(prisma.connector.count).toHaveBeenCalledWith({
+      expect(prisma.feedbackSource.count).toHaveBeenCalledWith({
         where: { feedbackDirectoryId: mockDirectoryId },
       });
       expect(prisma.feedbackDirectory.update).toHaveBeenCalledWith({
@@ -393,15 +393,16 @@ describe("FeedbackDirectory Service", () => {
       });
     });
 
-    test("throws InvalidInputError when archiving directory with connectors", async () => {
-      vi.mocked(prisma.connector.count).mockResolvedValueOnce(2);
+    test("throws InvalidInputError when archiving directory with feedbackSources", async () => {
+      vi.mocked(prisma.feedbackSource.count).mockResolvedValueOnce(2);
 
       await expect(
         updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, { isArchived: true })
-      ).rejects.toThrow(new InvalidInputError("DIRECTORY_HAS_CONNECTORS"));
+      ).rejects.toThrow(new InvalidInputError("DIRECTORY_HAS_FEEDBACK_SOURCES"));
     });
 
     test("unarchives directory", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
       const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
@@ -409,10 +410,46 @@ describe("FeedbackDirectory Service", () => {
       });
 
       expect(result).toBe(true);
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).toHaveBeenCalledWith({
+        where: {
+          workspaceId: { in: [mockWorkspaceId1, mockWorkspaceId2] },
+          feedbackDirectoryId: { not: mockDirectoryId },
+          feedbackDirectory: { isArchived: false },
+        },
+        select: { workspaceId: true },
+      });
       expect(prisma.feedbackDirectory.update).toHaveBeenCalledWith({
         where: { id: mockDirectoryId },
         data: { isArchived: false },
       });
+    });
+
+    test("throws ResourceNotFoundError when unarchiving and directory cannot be loaded", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(null);
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
+          isArchived: false,
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).not.toHaveBeenCalled();
+      expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when unarchiving would assign a workspace to two active directories", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce({
+        workspaceId: mockWorkspaceId1,
+      } as any);
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
+          isArchived: false,
+        })
+      ).rejects.toThrow(new InvalidInputError("WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY"));
+
+      expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
     });
 
     test("updates workspace assignments with diff", async () => {
@@ -436,7 +473,7 @@ describe("FeedbackDirectory Service", () => {
       });
     });
 
-    test("pauses connectors in removed workspaces when requested", async () => {
+    test("pauses feedbackSources in removed workspaces when requested", async () => {
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
@@ -447,11 +484,11 @@ describe("FeedbackDirectory Service", () => {
         {
           workspaceIds: [mockWorkspaceId1],
         },
-        { pauseConnectorsInRemovedWorkspaces: true }
+        { pauseFeedbackSourcesInRemovedWorkspaces: true }
       );
 
       expect(result).toBe(true);
-      expect(prisma.connector.updateMany).toHaveBeenCalledWith({
+      expect(prisma.feedbackSource.updateMany).toHaveBeenCalledWith({
         where: {
           feedbackDirectoryId: mockDirectoryId,
           workspaceId: { in: [mockWorkspaceId2] },

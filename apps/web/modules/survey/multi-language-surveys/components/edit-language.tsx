@@ -1,11 +1,11 @@
 "use client";
 
-import { Language } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/prisma-browser";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
@@ -190,7 +190,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div className="space-y-4">
         {languages.length > 0 ? (
           <>

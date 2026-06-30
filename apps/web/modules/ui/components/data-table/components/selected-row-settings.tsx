@@ -17,6 +17,8 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { cn } from "@/modules/ui/lib/utils";
 
+const Separator = () => <div>|</div>;
+
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   updateRowList: (rowId: string[]) => void;
@@ -107,9 +109,6 @@ export const SelectedRowSettings = <T,>({
     setIsDownloading(false);
   };
 
-  // Helper component for the separator
-  const Separator = () => <div>|</div>;
-
   const quotasDialogText = isQuotasAllowed
     ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
         value: selectedRowCount,
@@ -170,7 +169,7 @@ export const SelectedRowSettings = <T,>({
               className={cn(isDownloading && "cursor-not-allowed opacity-50")}
               disabled={isDownloading}>
               <Button variant="outline" size="sm" className="h-6 gap-1 border-none px-2">
-                {isDownloading ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <ArrowDownToLineIcon />}
+                {isDownloading ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowDownToLineIcon />}
                 {t("common.download")}
               </Button>
             </DropdownMenuTrigger>

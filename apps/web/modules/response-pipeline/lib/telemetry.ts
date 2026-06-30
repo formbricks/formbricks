@@ -1,6 +1,6 @@
-import { IntegrationType } from "@prisma/client";
 import { createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { IntegrationType } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { E2E_TESTING, IS_DEVELOPMENT, TELEMETRY_DISABLED } from "@/lib/constants";
 import { env } from "@/lib/env";

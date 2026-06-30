@@ -1,11 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon } from "lucide-react";
+import { LanguagesIcon, PlusIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -57,6 +58,7 @@ import {
   isPresetSourceType,
   mapRecordToValues,
   parseNumberValue,
+  resolveFeedbackDisplayText,
   toISOOrUndefined,
 } from "../lib/utils";
 import { type TFeedbackRecordUpdateInput } from "../types";
@@ -84,7 +86,8 @@ export const FeedbackRecordFormDrawer = ({
   recordId,
   onSuccess,
 }: Readonly<FeedbackRecordFormDrawerProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [record, setRecord] = useState<FeedbackRecordData | null>(null);
   const [isLoadingRecord, setIsLoadingRecord] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,6 +116,17 @@ export const FeedbackRecordFormDrawer = ({
   const [customSourceType, setCustomSourceType] = useState("");
 
   const readOnlyMetadataEntries = useMemo(() => (record ? getReadOnlyMetadataEntries(record) : []), [record]);
+
+  // ENG-1253: show the Hub translation read-only beside the editable original. Shared resolver keeps the
+  // empty/identical guards consistent with the other surfaces.
+  const { isTranslated: hasTranslation, text: resolvedTranslatedText } = record
+    ? resolveFeedbackDisplayText(record)
+    : { isTranslated: false, text: null };
+  const translatedText =
+    selectedValueField === "value_text" && hasTranslation ? resolvedTranslatedText : null;
+  const translatedLangLabel = record?.translation_lang_key
+    ? (getLanguageLabel(record.translation_lang_key, locale) ?? record.translation_lang_key)
+    : null;
 
   const resetForCreate = useCallback(() => {
     const nextDefaults = getCreateDefaults(directories);
@@ -642,6 +656,22 @@ export const FeedbackRecordFormDrawer = ({
                   )}
                 />
 
+                {translatedText && (
+                  <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <LanguagesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
+                      <span className="text-sm font-medium text-slate-700">
+                        {t("workspace.unify.translated_text")}
+                      </span>
+                      {translatedLangLabel && (
+                        <span className="text-xs text-slate-500">{translatedLangLabel}</span>
+                      )}
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap text-slate-700">{translatedText}</p>
+                    <p className="text-xs text-slate-400">{t("workspace.unify.translated_text_hint")}</p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={form.control}
@@ -737,7 +767,7 @@ export const FeedbackRecordFormDrawer = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => append({ key: "", value: "" })}>
-                        <PlusIcon className="h-4 w-4" />
+                        <PlusIcon className="size-4" />
                         {t("common.add")}
                       </Button>
                     )}

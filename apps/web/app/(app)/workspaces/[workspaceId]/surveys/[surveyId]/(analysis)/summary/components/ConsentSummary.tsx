@@ -35,12 +35,13 @@ export const ConsentSummary = ({ elementSummary, survey, setFilter }: ConsentSum
     },
   ];
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
           return (
             <button
+              type="button"
               className="group w-full cursor-pointer"
               key={summaryItem.title}
               onClick={() =>
@@ -53,7 +54,7 @@ export const ConsentSummary = ({ elementSummary, survey, setFilter }: ConsentSum
                 )
               }>
               <div className="text flex justify-between px-2 pb-2">
-                <div className="mr-8 flex space-x-1">
+                <div className="mr-8 flex gap-x-1">
                   <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
                     {summaryItem.title}
                   </p>

@@ -2,6 +2,10 @@ import { z } from "zod";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 
 export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({})
   .refine(
@@ -38,6 +42,14 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
         path: ["key"],
       });
     }
+
+    if (isReservedFutureDefaultAttributeKey(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message: getReservedFutureDefaultAttributeKeyIssue([data.key]),
+        path: ["key"],
+      });
+    }
   })
   .meta({
     id: "contactAttributeKeyInput",
@@ -62,6 +74,14 @@ export const ZContactAttributeKeyCreateInput = ZContactAttributeKey.pick({
         code: "custom",
         message:
           "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+        path: ["key"],
+      });
+    }
+
+    if (isReservedFutureDefaultAttributeKey(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message: getReservedFutureDefaultAttributeKeyIssue([data.key]),
         path: ["key"],
       });
     }

@@ -1,8 +1,8 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -33,7 +33,7 @@ import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { buildWhereClause } from "@/lib/response/utils";
+import { buildWhereClause } from "@/lib/response/where-clause";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -1111,27 +1111,23 @@ export const getResponsesForSummary = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TSurveySummaryResponse[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          return {
-            id: responsePrisma.id,
-            data: (responsePrisma.data ?? {}) as TResponseData,
-            updatedAt: responsePrisma.updatedAt,
-            contact: responsePrisma.contact
-              ? {
-                  id: responsePrisma.contact.id as string,
-                  userId: responsePrisma.contact.attributes.find(
-                    (attribute) => attribute.attributeKey.key === "userId"
-                  )?.value as string,
-                }
-              : null,
-            contactAttributes: (responsePrisma.contactAttributes ?? {}) as TResponseContactAttributes,
-            language: responsePrisma.language,
-            ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,
-            finished: responsePrisma.finished,
-          };
-        })
-      );
+      const transformedResponses: TSurveySummaryResponse[] = responses.map((responsePrisma) => ({
+        id: responsePrisma.id,
+        data: (responsePrisma.data ?? {}) as TResponseData,
+        updatedAt: responsePrisma.updatedAt,
+        contact: responsePrisma.contact
+          ? {
+              id: responsePrisma.contact.id as string,
+              userId: responsePrisma.contact.attributes.find(
+                (attribute) => attribute.attributeKey.key === "userId"
+              )?.value as string,
+            }
+          : null,
+        contactAttributes: (responsePrisma.contactAttributes ?? {}) as TResponseContactAttributes,
+        language: responsePrisma.language,
+        ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,
+        finished: responsePrisma.finished,
+      }));
 
       return transformedResponses;
     } catch (error) {

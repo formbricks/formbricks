@@ -31,14 +31,14 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          
+
           # Get the latest release tag from GitHub API with error handling
           echo "Fetching latest release from GitHub API..."
-          
+
           # Use curl with error handling - API returns 404 if no releases exist
           http_code=$(curl -s -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
             "https://api.github.com/repos/${REPO}/releases/latest" -o /tmp/latest_release.json)
-          
+
           if [[ "$http_code" == "404" ]]; then
             echo "⚠️  No previous releases found (404). This appears to be the first release."
             echo "latest_release=" >> $GITHUB_OUTPUT
@@ -55,7 +55,7 @@ jobs:
             echo "❌ GitHub API error (HTTP ${http_code}). Treating as first release."
             echo "latest_release=" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "Current release tag: ${{ github.event.release.tag_name }}"
 
       - name: Compare release tags
@@ -65,7 +65,7 @@ jobs:
           LATEST_TAG: ${{ steps.get_latest_release.outputs.latest_release }}
         run: |
           set -euo pipefail
-          
+
           # Handle first release case (no previous releases)
           if [[ -z "${LATEST_TAG}" ]]; then
             echo "🎉 This is the first release (${CURRENT_TAG}) - treating as latest"
@@ -156,6 +156,113 @@ jobs:
       is_prerelease: ${{ github.event.release.prerelease }}
       make_latest: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
 
+  update-helm-app-version:
+    name: Create Helm app version update
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      - docker-build-community
+      - helm-chart-release
+    if: ${{ !github.event.release.prerelease }}
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Install YQ
+        uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
+
+      - name: Prepare Helm app version update
+        id: update
+        env:
+          VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Skipping Helm app version source update for non-stable version: ${VERSION}"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          yq -i ".appVersion = \"${VERSION}\"" charts/formbricks/Chart.yaml
+          perl -0pi -e "s/!\[AppVersion: [^\]]+\]/![AppVersion: ${VERSION}]/" charts/formbricks/README.md
+          perl -0pi -e "s/AppVersion-[0-9A-Za-z._+-]+-informational/AppVersion-${VERSION}-informational/" charts/formbricks/README.md
+
+          if git diff --quiet -- charts/formbricks/Chart.yaml charts/formbricks/README.md; then
+            echo "Helm chart appVersion already matches ${VERSION}"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Helm update PR app configuration
+        if: steps.update.outputs.changed == 'true'
+        env:
+          APP_CLIENT_ID: ${{ vars.HELM_APP_VERSION_PR_APP_CLIENT_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.HELM_APP_VERSION_PR_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$APP_CLIENT_ID" || -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::error::Configure HELM_APP_VERSION_PR_APP_CLIENT_ID as a repository variable and HELM_APP_VERSION_PR_APP_PRIVATE_KEY as a repository secret."
+            exit 1
+          fi
+
+      - name: Create GitHub App token for Helm update PR
+        id: helm-update-pr-token
+        if: steps.update.outputs.changed == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.HELM_APP_VERSION_PR_APP_CLIENT_ID }}
+          private-key: ${{ secrets.HELM_APP_VERSION_PR_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Create Helm app version PR
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.helm-update-pr-token.outputs.token }}
+          VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
+          APP_SLUG: ${{ steps.helm-update-pr-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+
+          branch="chore/update-helm-app-version-${VERSION}"
+          title="chore: update Helm app version to ${VERSION}"
+          body_file="$(mktemp)"
+          app_user_id="$(gh api "/users/${APP_SLUG}[bot]" --jq .id)"
+
+          gh auth setup-git
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${app_user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add charts/formbricks/Chart.yaml charts/formbricks/README.md
+          git commit -m "$title"
+          git push --force-with-lease origin "$branch"
+
+          cat > "$body_file" <<EOF
+          Updates the Helm chart default app version after publishing stable Formbricks release ${VERSION}.
+
+          Release candidates and pre-releases do not create this source update.
+          EOF
+
+          if gh pr view "$branch" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh pr edit "$branch" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file "$body_file" --base main
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "$title" --body-file "$body_file"
+          fi
+
   linear-release-complete:
     name: Mark Linear release as complete
     runs-on: ubuntu-latest
@@ -165,6 +272,7 @@ jobs:
       - docker-build-cloud
       - helm-chart-release
       - move-stable-tag
+      - update-helm-app-version
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Harden the runner
@@ -176,6 +284,15 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+
+      # Stamp the in-progress release with the tag version before completing it.
+      # complete only looks up a release by version, it never assigns one, so a
+      # versioned sync must run first (Linear's recommended scheduled-pipeline flow).
+      - name: Stamp Linear release version
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          version: ${{ github.event.release.tag_name }}
 
       - name: Complete Linear release
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0

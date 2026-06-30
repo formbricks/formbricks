@@ -1,5 +1,5 @@
-import { OrganizationRole } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
+import { OrganizationRole } from "@formbricks/database/prisma";
 import * as constants from "@/lib/constants";
 import { getRoles } from "./utils";
 

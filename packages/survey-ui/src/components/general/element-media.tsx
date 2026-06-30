@@ -56,8 +56,7 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
             <iframe
               src={videoUrlWithParams}
               title="Question video"
-              style={{ border: 0 }}
-              className={cn("aspect-video w-full rounded-md", isLoading ? "opacity-0" : "")}
+              className={cn("aspect-video w-full rounded-md border-0", isLoading ? "opacity-0" : "")}
               onLoad={() => {
                 setIsLoading(false);
               }}

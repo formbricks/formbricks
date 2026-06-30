@@ -49,23 +49,23 @@ export const RatingLikeSummary = ({
   const [activeTab, setActiveTab] = useState<"aggregated" | "individual">("aggregated");
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader elementSummary={elementSummary} survey={survey} additionalInfo={additionalInfo} />
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "aggregated" | "individual")}>
         <div className="flex justify-end px-4 md:px-6">
           <TabsList>
-            <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="h-4 w-4" />}>
+            <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="size-4" />}>
               {t("workspace.surveys.summary.aggregated")}
             </TabsTrigger>
-            <TabsTrigger value="individual" icon={<BarChart className="h-4 w-4" />}>
+            <TabsTrigger value="individual" icon={<BarChart className="size-4" />}>
               {t("workspace.surveys.summary.individual")}
             </TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="aggregated" className="mt-4">
-          <div className="px-4 pb-6 pt-4 md:px-6">
+          <div className="px-4 pt-4 pb-6 md:px-6">
             {elementSummary.responseCount === 0 ? (
               <>
                 <EmptyState text={t("workspace.surveys.summary.no_responses_found")} variant="simple" />
@@ -153,11 +153,12 @@ export const RatingLikeSummary = ({
         </TabsContent>
 
         <TabsContent value="individual" className="mt-4">
-          <div className="px-4 pb-6 pt-4 md:px-6">
+          <div className="px-4 pt-4 pb-6 md:px-6">
             <div className="space-y-5 text-sm md:text-base">
               {elementSummary.choices.map((result) => (
                 <div key={result.rating}>
                   <button
+                    type="button"
                     className="w-full cursor-pointer hover:opacity-80"
                     onClick={() =>
                       setFilter(
@@ -169,7 +170,7 @@ export const RatingLikeSummary = ({
                       )
                     }>
                     <div className="text flex justify-between px-2 pb-2">
-                      <div className="mr-8 flex items-center space-x-1">
+                      <div className="mr-8 flex items-center gap-x-1">
                         <div className="font-semibold text-slate-700">
                           <RatingResponse
                             scale={elementSummary.element.scale}

@@ -1,7 +1,7 @@
 "use client";
 
-import { Workspace } from "@prisma/client";
 import { useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { cn } from "@/lib/cn";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
@@ -30,10 +30,10 @@ export const Template = ({
   loading,
   selectedFilter,
   noPreview,
-}: TemplateProps) => {
+}: Readonly<TemplateProps>) => {
   const { t } = useTranslation();
 
-  const showCreateSurveyButton = activeTemplate?.name === template.name;
+  const showCreateSurveyButton = activeTemplate?.id === template.id;
 
   const handleCardClick = () => {
     const newTemplate = replacePresetPlaceholders(template, workspace);
@@ -47,22 +47,23 @@ export const Template = ({
 
   const cardClass = cn(
     showCreateSurveyButton && "ring-2 ring-slate-400",
-    "flex flex-col group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-120 duration-150 hover:ring-2 hover:ring-slate-300"
+    "flex flex-col group relative cursor-pointer rounded-lg bg-white p-6 shadow-sm transition-all duration-120 duration-150 hover:ring-2 hover:ring-slate-300"
   );
 
   const cardContent = (
     <>
       <TemplateTags template={template} selectedFilter={selectedFilter} />
-      <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
+      <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{template.name}</h3>
       <p className="text-left text-xs text-slate-600">{template.description}</p>
       {showCreateSurveyButton && (
         <div className="flex justify-start">
           <Button
-            className="mt-6 px-6 py-3"
+            className="mt-6 max-w-full px-6 py-3"
             disabled={activeTemplate === null}
             loading={loading}
+            aria-label={t("workspace.surveys.templates.use_this_template")}
             onClick={() => createSurvey(activeTemplate)}>
-            {t("workspace.surveys.templates.use_this_template")}
+            <span className="truncate">{t("workspace.surveys.templates.use_this_template")}</span>
           </Button>
         </div>
       )}
@@ -74,7 +75,7 @@ export const Template = ({
   }
 
   return (
-    <button type="button" className={cardClass} onClick={handleCardClick} key={template.name}>
+    <button type="button" className={cardClass} onClick={handleCardClick}>
       {cardContent}
     </button>
   );

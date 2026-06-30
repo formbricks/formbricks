@@ -3,11 +3,11 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Workspace } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -132,7 +132,6 @@ export const BlockCard = ({
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
 
-  const [parent] = useAutoAnimate();
   const [elementsParent] = useAutoAnimate();
 
   const getElementHeadline = (
@@ -265,9 +264,10 @@ export const BlockCard = ({
         </div>
 
         <button
-          className="opacity-0 hover:cursor-move group-hover:opacity-100"
+          type="button"
+          className="opacity-0 group-hover:opacity-100 hover:cursor-move"
           aria-label="Drag to reorder block">
-          <GripIcon className="h-4 w-4" />
+          <GripIcon className="size-4" />
         </button>
       </div>
       <div className="flex-1 rounded-r-lg border border-slate-200">
@@ -315,7 +315,10 @@ export const BlockCard = ({
                 const isOpen = activeElementId === element.id;
 
                 return (
-                  <div key={element.id} className={cn(elementIndex > 0 && "border-t border-slate-200")}>
+                  <div
+                    key={element.id}
+                    id={element.id}
+                    className={cn(elementIndex > 0 && "border-t border-slate-200")}>
                     <Collapsible.Root
                       open={isOpen}
                       onOpenChange={() => {
@@ -361,7 +364,7 @@ export const BlockCard = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center gap-x-2">
                             <EditorCardMenu
                               survey={localSurvey}
                               cardIdx={elementIdx}
@@ -416,11 +419,11 @@ export const BlockCard = ({
                                 : t("workspace.surveys.edit.show_question_settings")}
                             </Collapsible.CollapsibleTrigger>
 
-                            <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
+                            <Collapsible.CollapsibleContent className="flex flex-col gap-4 overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
                               {element.type !== TSurveyElementTypeEnum.NPS &&
                               element.type !== TSurveyElementTypeEnum.Rating &&
                               element.type !== TSurveyElementTypeEnum.CTA ? (
-                                <div className="mt-2 flex space-x-2"></div>
+                                <div className="mt-2 flex gap-x-2"></div>
                               ) : null}
                               <AdvancedSettings
                                 // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the element type to the respective element type in all the element forms.

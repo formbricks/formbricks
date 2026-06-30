@@ -21,7 +21,6 @@ import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
   activitySummary: TSegmentActivitySummary;
-  workspaceId: string;
   setOpen: (open: boolean) => void;
   initialSegment: TSegmentWithSurveyRefs;
   segments: TSegment[];
@@ -31,7 +30,6 @@ interface TSegmentSettingsTabProps {
 
 export function SegmentSettings({
   activitySummary,
-  workspaceId,
   initialSegment,
   setOpen,
   contactAttributeKeys,
@@ -196,7 +194,7 @@ export function SegmentSettings({
             <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment.filters.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
-                  <FilterIcon className="h-5 w-5 text-slate-700" />
+                  <FilterIcon className="size-5 text-slate-700" />
                   <h3 className="text-sm font-medium text-slate-700">
                     {t("workspace.segments.add_your_first_filter_to_get_started")}
                   </h3>
@@ -205,7 +203,6 @@ export function SegmentSettings({
 
               <SegmentEditor
                 contactAttributeKeys={contactAttributeKeys}
-                workspaceId={workspaceId}
                 group={segment.filters}
                 segment={segment}
                 segments={segments}

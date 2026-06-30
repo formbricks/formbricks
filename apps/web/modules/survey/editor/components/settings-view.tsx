@@ -1,5 +1,5 @@
-import { ActionClass, OrganizationRole } from "@prisma/client";
 import { type Dispatch, type SetStateAction } from "react";
+import { ActionClass, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
@@ -71,7 +71,6 @@ export const SettingsView = ({
                   key={localSurvey.segment?.id}
                   localSurvey={localSurvey}
                   setLocalSurvey={setLocalSurvey}
-                  workspaceId={localSurvey.workspaceId}
                   contactAttributeKeys={contactAttributeKeys}
                   segments={segments}
                   initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
@@ -81,7 +80,6 @@ export const SettingsView = ({
           ) : (
             <TargetingLockedCard
               isFormbricksCloud={isFormbricksCloud}
-              workspaceId={localSurvey.workspaceId}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
             />
           )}

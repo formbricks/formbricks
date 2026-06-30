@@ -1,8 +1,13 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  UniqueConstraintError,
+} from "@formbricks/types/errors";
 import { TResponseWithQuotaFull, TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
@@ -190,7 +195,19 @@ describe("createResponse V2", () => {
     ).rejects.toThrow(UniqueConstraintError);
   });
 
-  test("should throw DatabaseError on P2002 without singleUseId target", async () => {
+  test("should throw DatabaseError on P2002 without singleUseId or displayId target", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: ["someOtherField"] },
+    });
+    vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
+    await expect(
+      createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
+    ).rejects.toThrow(DatabaseError);
+  });
+
+  test("should throw InvalidInputError on P2002 with displayId target (race condition)", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
       code: "P2002",
       clientVersion: "test",
@@ -199,7 +216,7 @@ describe("createResponse V2", () => {
     vi.mocked(mockTx.response.create).mockRejectedValue(prismaError);
     await expect(
       createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient)
-    ).rejects.toThrow(DatabaseError);
+    ).rejects.toThrow(InvalidInputError);
   });
 
   test("should throw DatabaseError on non-P2002 Prisma known request error", async () => {

@@ -235,6 +235,29 @@ describe("authorizeEnvoyRequest", () => {
     expect(response.status).toBe(503);
   });
 
+  test("allows similar feedback without tenant_id by resolving the record tenant", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: false } },
+      workspacePermissions: [],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}/similar`, {
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockGetFeedbackRecordTenant).toHaveBeenCalledWith(feedbackRecordId);
+    expect(mockGetFeedbackDirectoryAuthContext).toHaveBeenCalledWith(feedbackDirectoryId);
+  });
+
   test("returns 401 for invalid explicit JWT even when a session cookie exists", async () => {
     mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockGetProxySession.mockResolvedValue({

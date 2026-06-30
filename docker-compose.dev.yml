@@ -97,7 +97,7 @@ services:
   # Keep hub, hub-migrate, and any future hub-worker on the same tag — they share one image and
   # drift breaks migrations or job processing.
   hub-migrate:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.3.0}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
     restart: "no"
     entrypoint: ["sh", "-c"]
     command:
@@ -112,7 +112,7 @@ services:
 
   # Formbricks Hub API (ghcr.io/formbricks/hub). Uses a dedicated local Hub database by default.
   hub:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.3.0}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -139,10 +139,13 @@ services:
       EMBEDDING_GOOGLE_CLOUD_PROJECT: ${EMBEDDING_GOOGLE_CLOUD_PROJECT:-}
       EMBEDDING_GOOGLE_CLOUD_LOCATION: ${EMBEDDING_GOOGLE_CLOUD_LOCATION:-}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+      TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
+      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
 
   # Hub worker processes async jobs enqueued by the API, including embeddings.
   hub-worker:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.3.0}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -154,11 +157,106 @@ services:
     environment:
       <<: *hub-runtime-environment
 
+  # Optional AI taxonomy beta service. Enable with COMPOSE_PROFILES=taxonomy.
+  taxonomy:
+    image: ghcr.io/formbricks/taxonomy${TAXONOMY_IMAGE_REF:-:latest}
+    profiles: ["taxonomy"]
+    depends_on:
+      hub:
+        condition: service_started
+    environment:
+      APP_ENV: production
+      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+      HUB_INTERNAL_API_URL: http://hub:8080
+      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+      TAXONOMY_LLM_PROVIDER: ${TAXONOMY_LLM_PROVIDER:-openai-compatible}
+      TAXONOMY_LLM_MODEL: ${TAXONOMY_LLM_MODEL:-}
+      TAXONOMY_LLM_BASE_URL: ${TAXONOMY_LLM_BASE_URL:-}
+      TAXONOMY_LLM_API_KEY: ${TAXONOMY_LLM_API_KEY:-}
+      TAXONOMY_VERTEX_PROJECT: ${TAXONOMY_VERTEX_PROJECT:-}
+      TAXONOMY_VERTEX_LOCATION: ${TAXONOMY_VERTEX_LOCATION:-}
+      TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON: ${TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_BEARER_TOKEN_BEDROCK: ${AWS_BEARER_TOKEN_BEDROCK:-}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # Optional bundled Qwen/vLLM OpenAI-compatible runtime. Enable with COMPOSE_PROFILES=qwen.
+  vllm:
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
+    profiles: ["qwen"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command:
+      - vllm
+      - serve
+      - ${QWEN_MODEL_ID:-Qwen/Qwen3-14B-AWQ}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --no-enable-prefix-caching
+      - --max-model-len
+      - ${QWEN_MAX_MODEL_LEN:-8192}
+      - --dtype
+      - ${QWEN_DTYPE:-float16}
+      - --tensor-parallel-size
+      - ${QWEN_TENSOR_PARALLEL_SIZE:-1}
+      - --max-num-seqs
+      - ${QWEN_MAX_NUM_SEQS:-8}
+      - --gpu_memory_utilization
+      - ${QWEN_GPU_MEMORY_UTILIZATION:-0.9}
+      - --served-model-name
+      - ${QWEN_SERVED_MODEL_NAME:-qwen3-14b-awq}
+      - --default-chat-template-kwargs
+      - '{"enable_thinking": false}'
+    environment:
+      HF_HOME: /data
+    volumes:
+      - qwen-model-cache:/data
+    ports:
+      - "${QWEN_VLLM_HOST:-127.0.0.1}:${QWEN_VLLM_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 40
+      start_period: 10m
+
   cube:
-    profiles: ["xm"]
     image: cubejs/cube:v1.6.6
     env_file:
       - apps/web/.env
+    command:
+      - sh
+      - -c
+      - |
+        if [ -z "$$CUBEJS_API_SECRET" ]; then
+          echo "CUBEJS_API_SECRET is required for Cube JWT authentication" >&2
+          exit 1
+        fi
+        exec cubejs server
     depends_on:
       postgres:
         condition: service_healthy
@@ -191,4 +289,6 @@ volumes:
   valkey-data:
     driver: local
   rustfs-data:
+    driver: local
+  qwen-model-cache:
     driver: local

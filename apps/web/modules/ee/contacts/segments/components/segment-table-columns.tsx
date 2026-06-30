@@ -18,8 +18,8 @@ export const generateSegmentTableColumns = (
     cell: ({ row }) => {
       return (
         <div className="flex items-center gap-4">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
-            <UsersIcon className="h-5 w-5 text-slate-600" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+            <UsersIcon className="size-5 text-slate-600" />
           </div>
           <div className="flex flex-col">
             <div className="font-medium text-slate-900">{row.original.title}</div>

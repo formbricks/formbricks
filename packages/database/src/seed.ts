@@ -1,12 +1,14 @@
 import { createId } from "@paralleldrive/cuid2";
-import { type Prisma, PrismaClient } from "@prisma/client";
 import bcryptjs from "bcryptjs";
 import { logger } from "@formbricks/logger";
+import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { type Prisma, PrismaClient } from "./prisma";
+import { createPrismaPgAdapter } from "./prisma-adapter";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
 
 const hashPassword = bcryptjs.hash;
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
 
 const isProduction = process.env.NODE_ENV === "production";
 const allowSeed = process.env.ALLOW_SEED === "true";
@@ -329,8 +331,7 @@ async function generateResponses(surveyId: string, count: number): Promise<void>
         data: {
           surveyId,
           finished: true,
-          // @ts-expect-error - data is not typed correctly
-          data: data as unknown as Prisma.InputJsonValue,
+          data,
           displayId: display.id,
         },
       });
@@ -449,6 +450,8 @@ async function main(): Promise<void> {
     },
   });
 
+  // Keep seed defaults aligned with production v5 camelCase keys.
+  // Safe-identifier migration is deferred to v5.1.
   // Contact attribute keys for the workspace
   const defaultAttributeKeys = [
     { name: "Email", key: "email", isUnique: true, type: "default" as const },
@@ -479,17 +482,19 @@ async function main(): Promise<void> {
       {
         id: createId(),
         name: "Main Block",
-        elements: questions,
+        elements: questions.map((question) => ({
+          required: false,
+          ...question,
+        })),
       },
-    ];
+    ] as unknown as TSurveyBlocks;
 
     await prisma.survey.upsert({
       where: { id },
       update: {
         workspaceId,
         type: "link",
-        // @ts-expect-error - blocks is not typed correctly
-        blocks: blocks as unknown as Prisma.InputJsonValue[],
+        blocks,
       },
       create: {
         id,
@@ -497,8 +502,7 @@ async function main(): Promise<void> {
         workspaceId,
         status,
         type: "link",
-        // @ts-expect-error - blocks is not typed correctly
-        blocks: blocks as unknown as Prisma.InputJsonValue[],
+        blocks,
       },
     });
   };

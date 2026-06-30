@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { generateOrganizationAIText } from "@/lib/ai/service";
+import { generateOrganizationAIObject } from "@/lib/ai/service";
 
 export const ZAITranslationField = z.object({
   path: z.string(),
@@ -10,6 +10,11 @@ export const ZAITranslationField = z.object({
 });
 
 export type TAITranslationField = z.infer<typeof ZAITranslationField>;
+
+const AI_TRANSLATION_TIMEOUT_MS = 45_000;
+const AI_TRANSLATION_MIN_OUTPUT_TOKENS = 1024;
+const AI_TRANSLATION_MAX_OUTPUT_TOKENS = 8192;
+const AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD = 160;
 
 interface TranslateFieldsInput {
   organizationId: string;
@@ -24,59 +29,92 @@ export const translateFields = async ({
   sourceLanguage,
   targetLanguage,
 }: TranslateFieldsInput): Promise<Record<string, string>> => {
-  const items = fields.map((f) => ({
-    key: f.path,
+  if (fields.length === 0) {
+    return {};
+  }
+
+  // Empty defaultText is valid per the schema but has no meaningful translation.
+  // Echo it through unchanged so callers still see every requested path in the
+  // result, instead of aborting the whole batch when the model "fails" to
+  // translate an empty string.
+  const translatableFields: TAITranslationField[] = [];
+  const passthroughTranslations: Record<string, string> = {};
+  for (const field of fields) {
+    if (field.defaultText.length === 0) {
+      passthroughTranslations[field.path] = "";
+    } else {
+      translatableFields.push(field);
+    }
+  }
+
+  if (translatableFields.length === 0) {
+    return passthroughTranslations;
+  }
+
+  // Indexed IDs insulate the LLM from user-supplied paths (dots, casing,
+  // separator normalization). We map back to paths after generation.
+  const items = translatableFields.map((f, i) => ({
+    id: `t${i}`,
+    path: f.path,
     text: f.defaultText,
     richText: f.isRichText,
   }));
 
-  const systemPrompt = `You are a professional translator for survey content. Translate the provided survey fields from ${sourceLanguage} to ${targetLanguage}.
+  // Schema with explicit keys forces the provider to return exactly this set.
+  const schema = z.object(Object.fromEntries(items.map((item) => [item.id, z.string()])));
+
+  const systemPrompt = `You are a professional translator for survey content. Translate each item from ${sourceLanguage} to ${targetLanguage}.
 
 Rules:
-- Return ONLY a valid JSON object mapping each "key" to its translated text.
-- For rich text fields (richText: true), preserve all HTML tags exactly as they are. Only translate the text content within the tags.
-- Preserve any {{variable}} patterns exactly as they are — do not translate text inside double curly braces.
-- Do not add any explanation, markdown formatting, or extra text — return raw JSON only.`;
+- For rich text items (richText: true), preserve all HTML tags exactly. Only translate the text content within the tags.
+- Preserve any {{variable}} patterns exactly — do not translate text inside double curly braces.
+- Translate every item. Do not omit any keys.`;
 
-  const result = await generateOrganizationAIText({
+  const userPayload = JSON.stringify(items.map(({ id, text, richText }) => ({ id, text, richText })));
+
+  const result = await generateOrganizationAIObject({
     organizationId,
-    capability: "smartTools",
+    schema,
     system: systemPrompt,
-    prompt: JSON.stringify(items),
+    prompt: userPayload,
+    temperature: 0,
+    maxOutputTokens: Math.min(
+      AI_TRANSLATION_MAX_OUTPUT_TOKENS,
+      Math.max(
+        AI_TRANSLATION_MIN_OUTPUT_TOKENS,
+        translatableFields.length * AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD
+      )
+    ),
+    timeout: AI_TRANSLATION_TIMEOUT_MS,
   });
 
-  // Parse AI response as JSON.
-  // 1. Strip markdown code fences if present, then try JSON.parse directly.
-  // 2. Fall back to extracting the first {...} block for wrapper text.
-  let parsed: Record<string, string>;
-  try {
-    const stripped = result.text.replaceAll(/^```(?:json)?\s*\n?|\n?```\s*$/g, "").trim();
-    try {
-      parsed = JSON.parse(stripped);
-    } catch {
-      const start = stripped.indexOf("{");
-      const end = stripped.lastIndexOf("}");
-      if (start === -1 || end === -1 || end <= start) {
-        throw new Error("No JSON object found in AI response");
-      }
-      parsed = JSON.parse(stripped.slice(start, end + 1));
-    }
-  } catch (parseError) {
-    logger.error(
-      { rawResponse: result.text.slice(0, 500), parseError },
-      "Failed to parse AI translation response"
-    );
-    throw new Error("Failed to parse AI translation response");
-  }
+  const translatedById = result.object;
 
-  // Validate and filter to only requested keys
-  const validKeys = new Set(fields.map((f) => f.path));
   const translations: Record<string, string> = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (validKeys.has(key) && typeof value === "string") {
-      translations[key] = value;
+  const missingIds: string[] = [];
+  for (const item of items) {
+    const value = translatedById[item.id];
+    if (typeof value === "string" && value.length > 0) {
+      translations[item.path] = value;
+    } else {
+      missingIds.push(item.id);
     }
   }
 
-  return translations;
+  if (missingIds.length > 0) {
+    logger.error(
+      {
+        organizationId,
+        sourceLanguage,
+        targetLanguage,
+        requestedCount: translatableFields.length,
+        returnedCount: Object.keys(translations).length,
+        missingIds,
+      },
+      "AI translation returned incomplete result"
+    );
+    throw new Error("AI translation returned incomplete result");
+  }
+
+  return { ...passthroughTranslations, ...translations };
 };

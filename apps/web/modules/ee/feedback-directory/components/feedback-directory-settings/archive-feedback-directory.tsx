@@ -60,7 +60,7 @@ export const ArchiveFeedbackDirectory = ({
 
   return (
     <>
-      <div className="flex flex-row items-baseline space-x-2">
+      <div className="flex flex-row items-baseline gap-x-2">
         <TooltipRenderer
           shouldRender={!isOwnerOrManager}
           tooltipContent={t("workspace.settings.feedback_directories.archive_not_allowed")}
@@ -81,7 +81,7 @@ export const ArchiveFeedbackDirectory = ({
           <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
             <DialogHeader>
               <div className="flex items-center gap-2">
-                <CircleAlert className="h-4 w-4" />
+                <CircleAlert className="size-4" />
                 <DialogTitle>{t("workspace.settings.feedback_directories.archive_directory")}</DialogTitle>
               </div>
             </DialogHeader>

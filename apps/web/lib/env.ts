@@ -1,8 +1,23 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { throwEnvValidationError } from "./env-validation-error";
 
 const ZActiveAIProvider = z.enum(AI_PROVIDERS);
+
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const ZOpenAICompatibleBaseUrl = z.url().refine(isHttpUrl, {
+  message: "AI_OPENAI_COMPATIBLE_BASE_URL must be a valid http(s) URL",
+});
+
 const ZAIConfigurationEnv = z.object({
   AI_PROVIDER: ZActiveAIProvider.optional(),
   AI_MODEL: z.string().optional(),
@@ -16,6 +31,12 @@ const ZAIConfigurationEnv = z.object({
   AI_AZURE_API_KEY: z.string().optional(),
   AI_AZURE_BASE_URL: z.url().optional(),
   AI_AZURE_RESOURCE_NAME: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_BASE_URL: ZOpenAICompatibleBaseUrl.optional(),
+  AI_OPENAI_COMPATIBLE_API_KEY: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_PROVIDER_NAME: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_HEADERS_JSON: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: z.string().optional(),
 });
 
 type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
@@ -99,6 +120,48 @@ const validateAzureAIConfiguration = (values: TAIConfigurationEnv, ctx: z.Refine
   }
 };
 
+const isStringRecord = (value: unknown): value is Record<string, string> =>
+  isJsonObject(value) && Object.values(value).every((entry) => typeof entry === "string");
+
+// Mirrors parseStringRecordJson in packages/ai so headers/query params that the provider rejects
+// fail at startup instead of only when an AI flow runs.
+const validateStringRecordEnv = (
+  ctx: z.RefinementCtx,
+  path: keyof TAIConfigurationEnv,
+  value: string | undefined
+): void => {
+  if (!value) {
+    return;
+  }
+
+  try {
+    const parsedValue = JSON.parse(value) as unknown;
+
+    if (!isStringRecord(parsedValue)) {
+      throw new Error(`${path} must be a JSON object of string values`);
+    }
+  } catch {
+    addEnvIssue(ctx, path, `${path} must be a JSON object of string values`);
+  }
+};
+
+const validateOpenAICompatibleAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AI_OPENAI_COMPATIBLE_BASE_URL) {
+    addEnvIssue(
+      ctx,
+      "AI_OPENAI_COMPATIBLE_BASE_URL",
+      "AI_OPENAI_COMPATIBLE_BASE_URL is required when AI_PROVIDER=openai-compatible"
+    );
+  }
+
+  validateStringRecordEnv(ctx, "AI_OPENAI_COMPATIBLE_HEADERS_JSON", values.AI_OPENAI_COMPATIBLE_HEADERS_JSON);
+  validateStringRecordEnv(
+    ctx,
+    "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON",
+    values.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON
+  );
+};
+
 const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
   validateActiveAIModel(values, ctx);
 
@@ -113,6 +176,7 @@ const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx:
     aws: validateAwsAIConfiguration,
     google: validateGoogleAIConfiguration,
     azure: validateAzureAIConfiguration,
+    "openai-compatible": validateOpenAICompatibleAIConfiguration,
   };
 
   providerValidators[values.AI_PROVIDER](values, ctx);
@@ -138,6 +202,7 @@ const emptyStringToUndefined = (value: unknown) =>
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
 
 const parsedEnv = createEnv({
+  onValidationError: throwEnvValidationError,
   /*
    * Serverside Environment variables, not available on the client.
    * Will throw if you access these variables on the client.
@@ -153,7 +218,7 @@ const parsedEnv = createEnv({
     BREVO_API_KEY: z.string().optional(),
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
-    DISABLE_ACCOUNT_DELETION_SSO_REAUTH: z.enum(["1", "0"]).optional(),
+    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: z.enum(["1", "0"]).optional(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
     // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here
@@ -173,7 +238,6 @@ const parsedEnv = createEnv({
     ENVIRONMENT: z.enum(["production", "staging"]).prefault("production"),
     GITHUB_ID: z.string().optional(),
     GITHUB_SECRET: z.string().optional(),
-    GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED: z.enum(["1", "0"]).optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     AI_GOOGLE_CLOUD_PROJECT: z.string().optional(),
@@ -191,6 +255,12 @@ const parsedEnv = createEnv({
     AI_AZURE_API_KEY: z.string().optional(),
     AI_AZURE_API_VERSION: z.string().optional(),
     AI_AZURE_RESOURCE_NAME: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_BASE_URL: ZOpenAICompatibleBaseUrl.optional(),
+    AI_OPENAI_COMPATIBLE_API_KEY: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_PROVIDER_NAME: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_HEADERS_JSON: z.string().optional(),
+    AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: z.string().optional(),
     CUBEJS_API_SECRET: z.string().trim().min(1),
     CUBEJS_API_URL: z.url(),
     CUBEJS_JWT_AUDIENCE: ZOptionalNonEmptyString,
@@ -315,7 +385,7 @@ const parsedEnv = createEnv({
     BREVO_LIST_ID: process.env.BREVO_LIST_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    DISABLE_ACCOUNT_DELETION_SSO_REAUTH: process.env.DISABLE_ACCOUNT_DELETION_SSO_REAUTH,
+    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: process.env.DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
     DEBUG: process.env.DEBUG,
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
@@ -333,7 +403,6 @@ const parsedEnv = createEnv({
     ENVIRONMENT: process.env.ENVIRONMENT,
     GITHUB_ID: process.env.GITHUB_ID,
     GITHUB_SECRET: process.env.GITHUB_SECRET,
-    GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED: process.env.GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     AI_GOOGLE_CLOUD_PROJECT: process.env.AI_GOOGLE_CLOUD_PROJECT,
@@ -351,6 +420,13 @@ const parsedEnv = createEnv({
     AI_AZURE_API_KEY: process.env.AI_AZURE_API_KEY,
     AI_AZURE_API_VERSION: process.env.AI_AZURE_API_VERSION,
     AI_AZURE_RESOURCE_NAME: process.env.AI_AZURE_RESOURCE_NAME,
+    AI_OPENAI_COMPATIBLE_BASE_URL: process.env.AI_OPENAI_COMPATIBLE_BASE_URL,
+    AI_OPENAI_COMPATIBLE_API_KEY: process.env.AI_OPENAI_COMPATIBLE_API_KEY,
+    AI_OPENAI_COMPATIBLE_PROVIDER_NAME: process.env.AI_OPENAI_COMPATIBLE_PROVIDER_NAME,
+    AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS:
+      process.env.AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS,
+    AI_OPENAI_COMPATIBLE_HEADERS_JSON: process.env.AI_OPENAI_COMPATIBLE_HEADERS_JSON,
+    AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: process.env.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON,
     CUBEJS_API_SECRET: process.env.CUBEJS_API_SECRET,
     CUBEJS_API_URL: process.env.CUBEJS_API_URL,
     CUBEJS_JWT_AUDIENCE: process.env.CUBEJS_JWT_AUDIENCE,

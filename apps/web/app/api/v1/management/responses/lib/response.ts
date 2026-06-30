@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
@@ -161,15 +161,11 @@ export const getResponsesByWorkspaceIds = reactCache(
         skip: offset ? offset : undefined,
       });
 
-      const transformedResponses: TResponse[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          return {
-            ...responsePrisma,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          };
-        })
-      );
+      const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
+        ...responsePrisma,
+        contact: getResponseContact(responsePrisma),
+        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      }));
 
       return transformedResponses;
     } catch (error) {
@@ -205,15 +201,11 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TResponse[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          return {
-            ...responsePrisma,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          };
-        })
-      );
+      const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
+        ...responsePrisma,
+        contact: getResponseContact(responsePrisma),
+        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      }));
 
       return transformedResponses;
     } catch (error) {

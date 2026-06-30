@@ -59,7 +59,7 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
         </h3>
       </div>
 
-      <form className="flex flex-col space-y-10" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col gap-y-10" onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-2 px-6">
           <label htmlFor="code" className="text-sm font-medium text-slate-700">
             {t("common.code")}
@@ -86,7 +86,7 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
           />
         </div>
 
-        <div className="flex w-full items-center justify-end space-x-4">
+        <div className="flex w-full items-center justify-end gap-x-4">
           <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
             {t("common.cancel")}
           </Button>

@@ -145,7 +145,6 @@ export const ManageTranslationsModal = ({
       const errorMessages: Record<string, string> = {
         ai_features_not_enabled: t("workspace.surveys.edit.ai_features_not_enabled"),
         ai_smart_tools_disabled: t("workspace.surveys.edit.ai_smart_tools_disabled"),
-        ai_data_analysis_disabled: t("workspace.surveys.edit.ai_data_analysis_disabled"),
         ai_instance_not_configured: t("workspace.surveys.edit.ai_instance_not_configured"),
       };
       return errorMessages[errorCode] ?? errorCode;
@@ -196,7 +195,11 @@ export const ManageTranslationsModal = ({
   const handleSave = () => {
     const updatedSurvey = structuredClone(localSurvey);
     for (const s of strings) {
-      const val = draftTranslations[s.path] ?? "";
+      const draft = draftTranslations[s.path] ?? "";
+      // Rich-text editors keep an empty wrapper like "<p><br></p>" in the draft. That's
+      // visually empty but a non-empty string, so without normalization it would survive
+      // save and downstream checks would treat the field as translated.
+      const val = s.isRichText && getTextContent(draft).trim() === "" ? "" : draft;
       setTranslationAtPathMutable(updatedSurvey, s.path, languageCode, val);
     }
     setLocalSurvey(updatedSurvey);
@@ -238,7 +241,7 @@ export const ManageTranslationsModal = ({
                         onClick={handleTranslateWithAI}
                         disabled={!isAIAvailable || isTranslating || emptyFields.length === 0}
                         loading={isTranslating}>
-                        <SparklesIcon className="mr-1 h-3.5 w-3.5" />
+                        <SparklesIcon className="mr-1 size-3.5" />
                         {t("workspace.surveys.edit.ai_translate")}
                       </Button>
                     </div>
@@ -267,7 +270,7 @@ export const ManageTranslationsModal = ({
                     {missingFirst
                       ? t("workspace.surveys.edit.missing_first")
                       : t("workspace.surveys.edit.show_in_order")}
-                    <ChevronDownIcon className="ml-1 h-3.5 w-3.5" />
+                    <ChevronDownIcon className="ml-1 size-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="text-xs">

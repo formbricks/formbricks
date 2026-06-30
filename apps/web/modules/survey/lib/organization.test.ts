@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { Mocked, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
@@ -77,11 +77,9 @@ describe("getOrganizationAIKeys", () => {
   const mockOrgId = "org_test789";
   const mockOrganizationData: {
     isAISmartToolsEnabled: boolean;
-    isAIDataAnalysisEnabled: boolean;
     billing: TOrganizationBilling;
   } = {
     isAISmartToolsEnabled: true,
-    isAIDataAnalysisEnabled: true,
     billing: {
       stripeCustomerId: null,
       usageCycleAnchor: new Date(),
@@ -104,7 +102,6 @@ describe("getOrganizationAIKeys", () => {
       },
       select: {
         isAISmartToolsEnabled: true,
-        isAIDataAnalysisEnabled: true,
         billing: {
           select: {
             stripeCustomerId: true,

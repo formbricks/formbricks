@@ -17,7 +17,7 @@ interface TemplateTagsProps {
 
 type NonNullabeChannel = NonNullable<TWorkspaceConfigChannel>;
 
-export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
+const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
     case "productManager":
       return "border-blue-300 bg-blue-50 text-blue-500";
@@ -94,17 +94,19 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
+      <div className={cn("rounded-sm border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
       {industryTag && (
         <div
-          className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
+          className={cn(
+            "rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
+          )}>
           {industryTag}
         </div>
       )}
       {channelTag && (
         <div
           className={cn(
-            "flex-nowrap rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
+            "flex-nowrap rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
           )}>
           {channelTag}
         </div>
@@ -113,7 +115,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
         <TooltipRenderer
           tooltipContent={t("workspace.surveys.templates.uses_branching_logic")}
           shouldRender={true}>
-          <SplitIcon className="h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+          <SplitIcon className="size-5 rounded-sm border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
         </TooltipRenderer>
       )}
     </div>

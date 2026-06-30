@@ -29,6 +29,7 @@
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+    "typecheck": "tsc --noEmit",
     "build": "vite build && tsc --project tsconfig.build.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -45,7 +46,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.6",
-    "vite": "7.3.3",
+    "vite": "7.3.5",
     "vitest": "4.1.6"
   }
 }

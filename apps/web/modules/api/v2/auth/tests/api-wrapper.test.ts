@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { err, ok } from "@formbricks/types/error-handlers";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { apiWrapper } from "@/modules/api/v2/auth/api-wrapper";
 import { authenticateRequest } from "@/modules/api/v2/auth/authenticate-request";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -159,6 +160,42 @@ describe("apiWrapper", () => {
         {
           field: "error",
           issue: "Malformed JSON input, please check your request body",
+        },
+      ],
+    });
+  });
+
+  test("should handle oversized JSON input in request body", async () => {
+    const request = new Request("http://localhost", {
+      method: "POST",
+      body: "{}",
+      headers: {
+        "Content-Length": String(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1),
+        "Content-Type": "application/json",
+      },
+    });
+
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
+    vi.mocked(handleApiError).mockResolvedValue(new Response("error", { status: 413 }));
+
+    const bodySchema = z.object({ key: z.string() });
+    const handler = vi.fn();
+
+    const response = await apiWrapper({
+      request,
+      schemas: { body: bodySchema },
+      rateLimit: false,
+      handler,
+    });
+
+    expect(response.status).toBe(413);
+    expect(handler).not.toHaveBeenCalled();
+    expect(handleApiError).toHaveBeenCalledWith(request, {
+      type: "payload_too_large",
+      details: [
+        {
+          field: "body",
+          issue: `Request body must not exceed ${DEFAULT_REQUEST_BODY_LIMIT_BYTES} bytes`,
         },
       ],
     });

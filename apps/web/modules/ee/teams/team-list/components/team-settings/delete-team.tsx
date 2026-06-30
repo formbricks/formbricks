@@ -48,7 +48,7 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
 
   return (
     <>
-      <div className="flex flex-row items-baseline space-x-2">
+      <div className="flex flex-row items-baseline gap-x-2">
         <TooltipRenderer
           shouldRender={!isOwnerOrManager}
           tooltipContent={t("workspace.settings.teams.team_deletion_not_allowed")}

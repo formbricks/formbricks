@@ -183,6 +183,45 @@ describe("ApiClient", () => {
       expect(fileUrl).toBe("https://fake-file-url.com");
     });
 
+    test("includes surveyId and elementId in the upload signing request", async () => {
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              signedUrl: "https://fake-s3-url.com",
+              fileUrl: "/storage/ws-test/private/surveys/survey123/elements/element123/test.jpg",
+              presignedFields: { policy: "test" },
+              signingData: null,
+              updatedFileName: "test.jpg",
+            },
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({ ok: true } as unknown as Response);
+
+      await client.uploadFile(
+        {
+          base64: "data:image/jpeg;base64,abcd",
+          name: "test.jpg",
+          type: "image/jpeg",
+        },
+        {
+          allowedFileExtensions: ["jpg"],
+          surveyId: "survey123",
+          elementId: "element123",
+        }
+      );
+
+      const requestInit = vi.mocked(global.fetch).mock.calls[0][1] as RequestInit;
+      expect(JSON.parse(requestInit.body as string)).toEqual({
+        fileName: "test.jpg",
+        fileType: "image/jpeg",
+        allowedFileExtensions: ["jpg"],
+        surveyId: "survey123",
+        elementId: "element123",
+      });
+    });
+
     test("throws an error if file is invalid", async () => {
       await expect(() => client.uploadFile({ base64: "", name: "", type: "" } as any)).rejects.toThrow(
         "Invalid file object"

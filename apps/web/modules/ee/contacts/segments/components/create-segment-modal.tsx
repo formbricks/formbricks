@@ -200,7 +200,7 @@ export function CreateSegmentModal({
               <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
                 {segment.filters.length === 0 && (
                   <div className="-mb-2 flex items-center gap-1">
-                    <FilterIcon className="h-5 w-5 text-slate-700" />
+                    <FilterIcon className="size-5 text-slate-700" />
                     <h3 className="text-sm font-medium text-slate-700">
                       {t("workspace.segments.add_your_first_filter_to_get_started")}
                     </h3>
@@ -209,7 +209,6 @@ export function CreateSegmentModal({
 
                 <SegmentEditor
                   contactAttributeKeys={contactAttributeKeys}
-                  workspaceId={workspaceId}
                   group={segment.filters}
                   segment={segment}
                   segments={segments}

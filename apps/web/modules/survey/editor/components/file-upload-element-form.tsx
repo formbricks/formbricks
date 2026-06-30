@@ -1,12 +1,12 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Workspace } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import type { TSurveyElement, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -43,7 +43,6 @@ export const FileUploadElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: FileUploadFormProps): JSX.Element => {
-  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const [isMaxSizeError, setIsMaxSizeError] = useState(false);
   const {
@@ -124,7 +123,7 @@ export const FileUploadElementForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
+            <PlusIcon className="mr-1 size-4" />
             {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
@@ -190,7 +189,7 @@ export const FileUploadElementForm = ({
                       <Link
                         className="underline"
                         target="_blank"
-                        href={`${workspaceBasePath}/settings/organization/billing`}
+                        href={`/organizations/${workspace.organizationId}/settings/billing`}
                       />
                     ),
                   }}
