@@ -12,11 +12,7 @@ import {
   UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
 } from "@formbricks/types/feedback-source";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import {
-  getResponseCountAction,
-  importCsvDataAction,
-  importHistoricalResponsesAction,
-} from "@/lib/feedback-source/actions";
+import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -47,6 +43,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { importCsvFile } from "../csv-import-client";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
   CSV_PROTECTED_TARGET_IDS,
@@ -163,6 +160,7 @@ export const CreateFeedbackSourceModal = ({
   const [selectedType, setSelectedType] = useState<TFeedbackSourceOptionId | null>(null);
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvParsedData, setCsvParsedData] = useState<Record<string, string>[]>([]);
   const [enumValidationErrors, setEnumValidationErrors] = useState<TEnumValidationError[]>([]);
   const [csvFeedbackSourceName, setCsvFeedbackSourceName] = useState("");
@@ -250,6 +248,7 @@ export const CreateFeedbackSourceModal = ({
     });
     setMappings([]);
     setSourceFields([]);
+    setCsvFile(null);
     setCsvParsedData([]);
     setEnumValidationErrors([]);
     setResponseCountBySurvey({});
@@ -300,6 +299,8 @@ export const CreateFeedbackSourceModal = ({
       setCurrentStep("selectType");
       setMappings([]);
       setSourceFields([]);
+      setCsvFile(null);
+      setCsvParsedData([]);
       setEnumValidationErrors([]);
     }
   };
@@ -340,35 +341,33 @@ export const CreateFeedbackSourceModal = ({
   };
 
   const handleCsvImport = async (feedbackSourceId: string): Promise<TImportState> => {
+    if (!csvFile) return "skipped";
+
     setIsImporting(true);
-    try {
-      const importResult = await importCsvDataAction({
-        feedbackSourceId,
-        workspaceId,
-        csvData: csvParsedData,
-      });
+    const importResult = await importCsvFile({
+      feedbackSourceId,
+      workspaceId,
+      file: csvFile,
+    });
+    setIsImporting(false);
 
-      if (importResult?.data) {
-        showFeedbackRecordsSuccessToast(
-          t("workspace.unify.csv_import_complete", {
-            successes: importResult.data.successes,
-            failures: importResult.data.failures,
-            skipped: importResult.data.skipped,
-          })
-        );
-        return "success";
-      }
-
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
+    if (importResult?.data) {
+      showFeedbackRecordsSuccessToast(
+        t("workspace.unify.csv_import_complete", {
+          successes: importResult.data.successes,
+          failures: importResult.data.failures,
+          skipped: importResult.data.skipped,
+        })
+      );
+      return "success";
+    } else {
+      toast.error(
+        getTranslatedFeedbackSourceError(importResult.error.error, t, {
+          row: importResult.error.row,
+          max: importResult.error.max,
+        })
+      );
       return "error";
-    } catch {
-      // A large CSV payload can exceed the server-action body limit, which Next.js rejects at
-      // the framework level (outside next-safe-action) as a thrown error rather than a typed
-      // result. Surface it instead of letting it bubble up and freeze the modal on the spinner.
-      toast.error(t("common.something_went_wrong"));
-      return "error";
-    } finally {
-      setIsImporting(false);
     }
   };
 
@@ -634,6 +633,7 @@ export const CreateFeedbackSourceModal = ({
                       setEnumValidationErrors([]);
                     }}
                     onSourceFieldsChange={setSourceFields}
+                    onFileChange={setCsvFile}
                     onParsedDataChange={setCsvParsedData}
                     onSuggestFeedbackSourceName={handleSuggestFeedbackSourceName}
                   />
