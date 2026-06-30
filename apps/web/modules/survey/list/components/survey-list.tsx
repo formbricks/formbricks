@@ -331,15 +331,12 @@ export const SurveysList = ({
       <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
       <div className="space-y-6">
         {!isReadOnly && showFeaturedTemplates && (
-          <>
-            <FeaturedTemplates
-              workspace={workspace}
-              locale={locale}
-              isAIAvailable={isAIAvailable}
-              aiUnavailableReason={aiUnavailableReason}
-            />
-            <hr className="border-slate-200" />
-          </>
+          <FeaturedTemplates
+            workspace={workspace}
+            locale={locale}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
+          />
         )}
         <SurveyFilters
           surveyFilters={normalizedFilters}

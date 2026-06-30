@@ -191,15 +191,25 @@ export const SelectPlanCard = ({
             <p className="text-slate-500">{t("workspace.settings.billing.hobby_confirm_description")}</p>
             <ul className="mt-4 space-y-1.5">
               {[
-                t("workspace.settings.billing.hobby_confirm_feature_responses"),
+                { from: "2,000", to: t("workspace.settings.billing.hobby_confirm_feature_responses") },
+                { from: "3", to: t("workspace.settings.billing.hobby_confirm_feature_workspaces") },
+              ].map((item) => (
+                <li key={item.to} className="flex items-center gap-2 text-sm text-slate-700">
+                  <XCircleIcon className="size-3.5 shrink-0 text-primary" />
+                  <span>
+                    <span className="text-slate-400 line-through">{item.from}</span>{" "}
+                    <span aria-hidden="true">→</span> {item.to}
+                  </span>
+                </li>
+              ))}
+              {[
                 t("workspace.settings.billing.hobby_confirm_feature_branding"),
                 t("workspace.settings.billing.hobby_confirm_feature_contacts"),
                 t("workspace.settings.billing.hobby_confirm_feature_ai"),
-                t("workspace.settings.billing.hobby_confirm_feature_seats"),
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
-                  <XCircleIcon className="size-3.5 shrink-0 text-red-400" />
-                  {item}
+                  <XCircleIcon className="size-3.5 shrink-0 text-primary" />
+                  <span className="text-slate-400 line-through">{item}</span>
                 </li>
               ))}
             </ul>
@@ -215,7 +225,6 @@ export const SelectPlanCard = ({
               {t("workspace.settings.billing.hobby_confirm_start_trial")}
             </Button>
             <Button
-              variant="destructive"
               loading={isStartingHobby}
               onClick={() => {
                 posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "downgrade_hobby" });

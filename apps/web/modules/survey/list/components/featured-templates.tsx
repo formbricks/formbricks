@@ -4,6 +4,7 @@ import {
   BarChart2Icon,
   CheckIcon,
   ChevronDownIcon,
+  EyeOffIcon,
   HeartHandshakeIcon,
   LayoutTemplateIcon,
   LogOutIcon,
@@ -17,7 +18,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { Workspace } from "@formbricks/database/prisma-browser";
@@ -37,6 +38,9 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+
+const HIDDEN_COOKIE = "featured_templates_hidden";
+const HIDDEN_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 const ROLE_ICONS: Record<TTemplateRole, LucideIcon> = {
   productManager: BarChart2Icon,
@@ -97,6 +101,19 @@ export const FeaturedTemplates = ({
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<TTemplateRole | null>(null);
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+
+  useEffect(() => {
+    if (document.cookie.split("; ").includes(`${HIDDEN_COOKIE}=true`)) {
+      setIsHidden(true);
+    }
+  }, []);
+
+  const handleHide = () => {
+    document.cookie = `${HIDDEN_COOKIE}=true; path=/; max-age=${HIDDEN_COOKIE_MAX_AGE}; SameSite=Lax`;
+    posthog.capture("featured_templates_hidden");
+    setIsHidden(true);
+  };
 
   const roleMapping = useMemo(() => getRoleMapping(t), [t]);
 
@@ -145,43 +162,55 @@ export const FeaturedTemplates = ({
   const cardClass =
     "relative flex flex-col items-center gap-3 rounded-xl border border-slate-200 bg-white p-5 text-center shadow-sm transition-transform duration-150 hover:scale-[1.02] hover:border-slate-300 disabled:opacity-60";
 
+  if (isHidden) return null;
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-1.5">
-        <span className="text-sm text-slate-500">
-          {t("workspace.surveys.featured_templates.templates_for")}
-        </span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 text-sm font-medium text-slate-700 hover:text-slate-900">
-              {selectedRoleLabel}
-              <ChevronDownIcon className="size-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onSelect={() => setSelectedRole(null)}>
-              <span className="flex w-full items-center justify-between gap-6">
-                {t("common.all_roles")}
-                {selectedRole === null && <CheckIcon className="size-3.5 text-slate-500" />}
-              </span>
-            </DropdownMenuItem>
-            {roleMapping.map((role) => {
-              const RoleIcon = ROLE_ICONS[role.value];
-              const roleColor = ROLE_COLORS[role.value];
-              return (
-                <DropdownMenuItem key={role.value} onSelect={() => setSelectedRole(role.value)}>
-                  <span className="flex w-full items-center justify-between gap-6">
-                    <span className="flex items-center gap-2">
-                      <RoleIcon className={`size-3.5 ${roleColor}`} />
-                      {role.label}
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm text-slate-500">
+            {t("workspace.surveys.featured_templates.templates_for")}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1 text-sm font-medium text-slate-700 hover:text-slate-900">
+                {selectedRoleLabel}
+                <ChevronDownIcon className="size-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onSelect={() => setSelectedRole(null)}>
+                <span className="flex w-full items-center justify-between gap-6">
+                  {t("common.all_roles")}
+                  {selectedRole === null && <CheckIcon className="size-3.5 text-slate-500" />}
+                </span>
+              </DropdownMenuItem>
+              {roleMapping.map((role) => {
+                const RoleIcon = ROLE_ICONS[role.value];
+                const roleColor = ROLE_COLORS[role.value];
+                return (
+                  <DropdownMenuItem key={role.value} onSelect={() => setSelectedRole(role.value)}>
+                    <span className="flex w-full items-center justify-between gap-6">
+                      <span className="flex items-center gap-2">
+                        <RoleIcon className={`size-3.5 ${roleColor}`} />
+                        {role.label}
+                      </span>
+                      {selectedRole === role.value && <CheckIcon className="size-3.5 text-slate-500" />}
                     </span>
-                    {selectedRole === role.value && <CheckIcon className="size-3.5 text-slate-500" />}
-                  </span>
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <button
+          type="button"
+          onClick={handleHide}
+          aria-label={t("workspace.surveys.featured_templates.hide")}
+          title={t("workspace.surveys.featured_templates.hide")}
+          className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600">
+          <EyeOffIcon className="size-4" />
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">

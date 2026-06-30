@@ -7,6 +7,7 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
+import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
 import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -41,15 +42,21 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
   const isTrialing = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.subscriptionStatus === "trialing";
 
-  const [organizationWorkspacesLimit, newTrialBannerVariant, trialWarningVariant, cookieStore] =
-    await Promise.all([
-      getOrganizationWorkspacesLimit(organization.id),
-      getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner"),
-      isTrialing
-        ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning")
-        : Promise.resolve(null),
-      isTrialing ? cookies() : Promise.resolve(null),
-    ]);
+  const [
+    organizationWorkspacesLimit,
+    newTrialBannerVariant,
+    trialWarningVariant,
+    trialEndingVariant,
+    cookieStore,
+  ] = await Promise.all([
+    getOrganizationWorkspacesLimit(organization.id),
+    getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner"),
+    isTrialing
+      ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning")
+      : Promise.resolve(null),
+    isTrialing ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-ending-warning") : Promise.resolve(null),
+    isTrialing ? cookies() : Promise.resolve(null),
+  ]);
 
   const isOwnerOrManager = isOwner || isManager;
 
@@ -58,16 +65,29 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  let trialWarningThreshold: "200" | "250" | null = null;
-  if (isTrialing && trialWarningVariant === "test" && cookieStore) {
-    if (responseCount >= 250 && !cookieStore.get("trial_warning_shown_250")) {
-      trialWarningThreshold = "250";
-    } else if (
-      responseCount >= 200 &&
-      !cookieStore.get("trial_warning_shown_200") &&
-      !cookieStore.get("trial_warning_shown_250")
-    ) {
-      trialWarningThreshold = "200";
+  const showTrialResponseInfo =
+    isTrialing &&
+    trialWarningVariant === "test" &&
+    !!cookieStore &&
+    responseCount >= 250 &&
+    !cookieStore.get("trial_warning_shown_250");
+
+  // Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
+  // Don't stack it on top of the response-threshold modal if both fire on the same load.
+  const MS_PER_DAY = 86_400_000;
+  const trialEnd = organization.billing?.stripe?.trialEnd;
+  let trialEndingDaysRemaining: number | null = null;
+  if (isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd && !showTrialResponseInfo) {
+    const trialEndTime = new Date(trialEnd).getTime();
+    if (Number.isFinite(trialEndTime)) {
+      const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
+      if (
+        daysRemaining >= 1 &&
+        daysRemaining <= 3 &&
+        !cookieStore.get(`trial_ending_shown_${daysRemaining}`)
+      ) {
+        trialEndingDaysRemaining = daysRemaining;
+      }
     }
   }
 
@@ -87,12 +107,12 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
         status={status}
       />
 
-      {trialWarningThreshold && (
-        <TrialResponseWarningModal
-          threshold={trialWarningThreshold}
-          billingHref={billingHref}
-          responseCount={responseCount}
-        />
+      {showTrialResponseInfo && (
+        <TrialResponseWarningModal billingHref={billingHref} responseCount={responseCount} />
+      )}
+
+      {trialEndingDaysRemaining && (
+        <TrialEndingWarningModal daysRemaining={trialEndingDaysRemaining} billingHref={billingHref} />
       )}
 
       <div className="flex h-full">

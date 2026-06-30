@@ -12,6 +12,7 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
+import { SetupInstructions } from "./components/setup-instructions";
 
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
@@ -211,22 +212,14 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
         <SettingsCard
           title={t("workspace.app-connection.how_to_setup")}
           description={t("workspace.app-connection.how_to_setup_description")}>
-          <CodeBlock customEditorClass="!bg-white border border-slate-200" language="html" noMargin>
-            {htmlSnippet}
-          </CodeBlock>
-        </SettingsCard>
-        {showAIPrompt && (
-          <SettingsCard
-            title={t("workspace.app-connection.connect_with_ai")}
-            description={t("workspace.app-connection.connect_with_ai_description")}>
-            <CodeBlock
-              customEditorClass="!bg-white border border-slate-200 max-h-52 overflow-y-auto"
-              language="markdown"
-              noMargin>
-              {aiPrompt}
+          {showAIPrompt ? (
+            <SetupInstructions htmlSnippet={htmlSnippet} aiPrompt={aiPrompt} />
+          ) : (
+            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="html" noMargin>
+              {htmlSnippet}
             </CodeBlock>
-          </SettingsCard>
-        )}
+          )}
+        </SettingsCard>
         <SettingsCard
           title={t("workspace.app-connection.app_connection")}
           description={t("workspace.app-connection.app_connection_description")}>
