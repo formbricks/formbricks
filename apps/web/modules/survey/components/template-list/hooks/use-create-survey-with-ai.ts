@@ -89,7 +89,7 @@ export const useCreateSurveyWithAI = ({
           return;
         }
 
-        const survey = await createV3Survey(generatedSurvey.payload);
+        const survey = await createV3Survey(generatedSurvey.payload, "ai");
         setIsNavigatingToEditor(true);
         onSuccess(survey.id);
       } catch (error) {
