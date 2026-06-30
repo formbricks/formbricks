@@ -216,21 +216,21 @@ export const SelectPlanCard = ({
           </DialogBody>
           <DialogFooter>
             <Button
-              variant="ghost"
-              onClick={() => {
-                posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "start_trial" });
-                setShowHobbyConfirm(false);
-                void handleStartTrial();
-              }}>
-              {t("workspace.settings.billing.hobby_confirm_start_trial")}
-            </Button>
-            <Button
+              variant="secondary"
               loading={isStartingHobby}
               onClick={() => {
                 posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "downgrade_hobby" });
                 void handleContinueHobby();
               }}>
               {t("workspace.settings.billing.hobby_confirm_downgrade")}
+            </Button>
+            <Button
+              onClick={() => {
+                posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "start_trial" });
+                setShowHobbyConfirm(false);
+                void handleStartTrial();
+              }}>
+              {t("workspace.settings.billing.hobby_confirm_start_trial")}
             </Button>
           </DialogFooter>
         </DialogContent>

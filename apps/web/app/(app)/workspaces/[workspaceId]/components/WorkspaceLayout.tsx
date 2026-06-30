@@ -41,21 +41,21 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   const { features, lastChecked, isPendingDowngrade, active, status } = license;
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
   const isTrialing = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.subscriptionStatus === "trialing";
+  // Hobby (free) plan only — excludes trial and paid (Pro/Scale) orgs.
+  const isHobby = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.plan === "hobby";
 
   const [
     organizationWorkspacesLimit,
     newTrialBannerVariant,
-    trialWarningVariant,
+    responseWarningVariant,
     trialEndingVariant,
     cookieStore,
   ] = await Promise.all([
     getOrganizationWorkspacesLimit(organization.id),
     getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner"),
-    isTrialing
-      ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning")
-      : Promise.resolve(null),
+    isHobby ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning") : Promise.resolve(null),
     isTrialing ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-ending-warning") : Promise.resolve(null),
-    isTrialing ? cookies() : Promise.resolve(null),
+    isTrialing || isHobby ? cookies() : Promise.resolve(null),
   ]);
 
   const isOwnerOrManager = isOwner || isManager;
@@ -65,19 +65,26 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
-  const showTrialResponseInfo =
-    isTrialing &&
-    trialWarningVariant === "test" &&
-    !!cookieStore &&
-    responseCount >= 250 &&
-    !cookieStore.get("trial_warning_shown_250");
+  // Response-limit warning for Hobby (free) plan: 200 = 80% of the 250/mo cap, 250 = limit reached.
+  let responseWarningThreshold: "200" | "250" | null = null;
+  if (isHobby && responseWarningVariant === "test" && cookieStore) {
+    if (responseCount >= 250 && !cookieStore.get("trial_warning_shown_250")) {
+      responseWarningThreshold = "250";
+    } else if (
+      responseCount >= 200 &&
+      !cookieStore.get("trial_warning_shown_200") &&
+      !cookieStore.get("trial_warning_shown_250")
+    ) {
+      responseWarningThreshold = "200";
+    }
+  }
 
   // Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
-  // Don't stack it on top of the response-threshold modal if both fire on the same load.
+  // (Hobby response warning and trial-ending target mutually exclusive audiences, so no stacking.)
   const MS_PER_DAY = 86_400_000;
   const trialEnd = organization.billing?.stripe?.trialEnd;
   let trialEndingDaysRemaining: number | null = null;
-  if (isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd && !showTrialResponseInfo) {
+  if (isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd) {
     const trialEndTime = new Date(trialEnd).getTime();
     if (Number.isFinite(trialEndTime)) {
       const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
@@ -95,7 +102,8 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
-      {IS_FORMBRICKS_CLOUD && !isTrialing && (
+      {/* Hide the limits-reached toast for Hobby users in the response-warning test variant — the modal replaces it with richer copy + CTAs. */}
+      {IS_FORMBRICKS_CLOUD && !isTrialing && !(isHobby && responseWarningVariant === "test") && (
         <LimitsReachedBanner organization={organization} responseCount={responseCount} />
       )}
 
@@ -108,8 +116,12 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
         status={status}
       />
 
-      {showTrialResponseInfo && (
-        <TrialResponseWarningModal billingHref={billingHref} responseCount={responseCount} />
+      {responseWarningThreshold && (
+        <TrialResponseWarningModal
+          threshold={responseWarningThreshold}
+          billingHref={billingHref}
+          responseCount={responseCount}
+        />
       )}
 
       {trialEndingDaysRemaining && (

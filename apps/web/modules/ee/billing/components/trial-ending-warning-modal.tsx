@@ -59,30 +59,30 @@ export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEnd
 
           <ul className="w-full space-y-1.5 text-left">
             {[
-              t("workspace.settings.billing.trial_ending_feature_responses"),
-              t("workspace.settings.billing.trial_ending_feature_branding"),
-              t("workspace.settings.billing.trial_ending_feature_contacts"),
-              t("workspace.settings.billing.trial_ending_feature_ai"),
+              { from: "2,000", to: t("workspace.settings.billing.hobby_confirm_feature_responses") },
+              { from: "3", to: t("workspace.settings.billing.hobby_confirm_feature_workspaces") },
+            ].map((item) => (
+              <li key={item.to} className="flex items-center gap-2 text-sm text-slate-700">
+                <XCircleIcon className="size-3.5 shrink-0 text-primary" />
+                <span>
+                  <span className="text-slate-400 line-through">{item.from}</span>{" "}
+                  <span aria-hidden="true">→</span> {item.to}
+                </span>
+              </li>
+            ))}
+            {[
+              t("workspace.settings.billing.hobby_confirm_feature_branding"),
+              t("workspace.settings.billing.hobby_confirm_feature_contacts"),
+              t("workspace.settings.billing.hobby_confirm_feature_ai"),
             ].map((item) => (
               <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
                 <XCircleIcon className="size-3.5 shrink-0 text-primary" />
-                {item}
+                <span className="text-slate-400 line-through">{item}</span>
               </li>
             ))}
           </ul>
 
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
-            <Button
-              asChild
-              onClick={() => {
-                posthog.capture("trial_ending_warning_cta_clicked", {
-                  days_remaining: daysRemaining,
-                  cta: "keep_pro_features",
-                });
-                handleDismiss();
-              }}>
-              <Link href={billingHref}>{t("workspace.settings.billing.trial_ending_keep_features")}</Link>
-            </Button>
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
             <Button
               variant="secondary"
               onClick={() => {
@@ -93,6 +93,19 @@ export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEnd
                 handleDismiss();
               }}>
               {t("workspace.settings.billing.trial_warning_remind_me_later")}
+            </Button>
+            <Button
+              asChild
+              onClick={() => {
+                posthog.capture("trial_ending_warning_cta_clicked", {
+                  days_remaining: daysRemaining,
+                  cta: "add_payment_method",
+                });
+                handleDismiss();
+              }}>
+              <Link href={billingHref}>
+                {t("workspace.settings.billing.trial_ending_add_payment_method")}
+              </Link>
             </Button>
           </div>
         </div>

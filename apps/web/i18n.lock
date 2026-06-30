@@ -2219,7 +2219,7 @@ checksums:
     workspace/settings/billing/dynamic_pricing_unlimited: 1762c0cfba36e1229b5cb5f22c08aeb8
     workspace/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
     workspace/settings/billing/go_to_billing: cd3ec8ecd7af2e724b44a61b29517ee7
-    workspace/settings/billing/hobby_confirm_description: b6b0dfa84add4e60d3107289251f830b
+    workspace/settings/billing/hobby_confirm_description: f9fc023eb49423eef508bcc98fcd9e5c
     workspace/settings/billing/hobby_confirm_downgrade: 77a35281775a0e2bac9c27ae0d28e4bf
     workspace/settings/billing/hobby_confirm_feature_ai: a780f0b9c8e8ce9bfc1612e4774f3977
     workspace/settings/billing/hobby_confirm_feature_branding: a5c71d43cd3ed25e6e48bca64e8ffc9f
@@ -2302,17 +2302,15 @@ checksums:
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
     workspace/settings/billing/trial_alert_description: e8c20d27d8cd41690db0373463c2eacb
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
+    workspace/settings/billing/trial_ending_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
     workspace/settings/billing/trial_ending_description: 8be0ee811be739704ce92391593ca544
-    workspace/settings/billing/trial_ending_feature_ai: 5f34d83e8b3901734d80eac3a8e37ff9
-    workspace/settings/billing/trial_ending_feature_branding: 541bf84a7269c0aaa2c283b93fb6312b
-    workspace/settings/billing/trial_ending_feature_contacts: fbdf68bdbef9c09acafd6ff0c6986a7b
-    workspace/settings/billing/trial_ending_feature_responses: ce12033a2acec2b04f314fd277282746
-    workspace/settings/billing/trial_ending_keep_features: 2920f1f6aca6cbce01d1e8c3fbab82bd
     workspace/settings/billing/trial_ending_title: 3c2b88e6693450a7f38255076414eed5
-    workspace/settings/billing/trial_info_250_description: 94acd144f00fd562477b9340189fa2d9
-    workspace/settings/billing/trial_info_250_title: 774364ac84c8e285ba7b5700a727362b
     workspace/settings/billing/trial_payment_method_added_description: 917727553a379d52b8a9c8ebce370061
-    workspace/settings/billing/trial_warning_add_billing_method: a3a70b20195d87869d3af3987c69cc8c
+    workspace/settings/billing/trial_warning_200_description: b62a8996f7002340e1ed89e37ca713d2
+    workspace/settings/billing/trial_warning_200_title: 804fae1197fba14b15e2d697e62f34cd
+    workspace/settings/billing/trial_warning_250_description: 8142e4b105b47443895a315e4b4a156e
+    workspace/settings/billing/trial_warning_250_title: 93d34846276f30d6b394a8a3a626a291
+    workspace/settings/billing/trial_warning_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
     workspace/settings/billing/trial_warning_remind_me_later: a12f38fb4352c31ca0d43c05303b7257
     workspace/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     workspace/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
