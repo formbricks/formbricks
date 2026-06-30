@@ -266,13 +266,13 @@ describe("processWorkflowRunJob", () => {
     });
   });
 
-  test("marks the step + run failed for an invalid resolved recipient and never calls sendEmail", async () => {
+  test("fails the step for an invalid resolved recipient and never calls sendEmail (final attempt → failed)", async () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       triggerPayload: { ...triggerPayload, data: { response: { email: "not-an-email" } } },
     });
 
-    await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow(/not a valid address/);
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
 
     expect(mockSendEmail).not.toHaveBeenCalled();
     const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
@@ -284,10 +284,25 @@ describe("processWorkflowRunJob", () => {
     });
   });
 
-  test("marks the run failed and rethrows when SMTP is not configured (sendEmail returns false)", async () => {
+  test("keeps the run non-terminal and rethrows on a non-final attempt when SMTP is not configured", async () => {
     mockSendEmail.mockResolvedValue(false);
 
     await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow(/SMTP is not configured/);
+
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    // Run stays `running` so BullMQ's retry is not defeated by the terminal-skip guard.
+    expect(failure.data.status).toBeUndefined();
+    expect(failure.data.finishedAt).toBeUndefined();
+    expect(failure.data.error).toMatch(/SMTP is not configured/);
+    expect(failure.data.lastErrorAt).toBeInstanceOf(Date);
+    const statuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
+    expect(statuses).not.toContain("failed");
+  });
+
+  test("marks the run failed on the final attempt when SMTP is not configured (sendEmail returns false)", async () => {
+    mockSendEmail.mockResolvedValue(false);
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
 
     const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(failure.data.status).toBe("failed");
@@ -297,10 +312,19 @@ describe("processWorkflowRunJob", () => {
     expect(failure.data.data.steps[0]).toMatchObject({ status: "failed" });
   });
 
-  test("marks the run failed when sendEmail throws", async () => {
+  test("keeps the run non-terminal and rethrows on a non-final attempt when sendEmail throws", async () => {
     mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message"));
 
     await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow(/SMTP provider rejected/);
+
+    const statuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
+    expect(statuses).not.toContain("failed");
+  });
+
+  test("marks the run failed on the final attempt when sendEmail throws", async () => {
+    mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message"));
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
 
     const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(failure.data.status).toBe("failed");
@@ -310,18 +334,44 @@ describe("processWorkflowRunJob", () => {
     });
   });
 
-  test("marks the run failed for an invalid / non-executable definition", async () => {
+  test("marks the run failed for an invalid / non-executable definition (final attempt)", async () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: { not: "a workflow" } },
       workflow: { definition: { not: "a workflow" } },
     });
 
-    await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow(/not executable/);
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
 
     expect(mockSendEmail).not.toHaveBeenCalled();
     const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(failure.data.status).toBe("failed");
+  });
+
+  test("a transient failure on a non-final attempt leaves the run non-terminal, then resumes and completes", async () => {
+    // Attempt 1: send throws. The run must NOT become terminal `failed` (which would defeat retries),
+    // and the step must NOT be recorded as a succeeded log.
+    mockSendEmail.mockRejectedValueOnce(new Error("SMTP provider rejected the message"));
+
+    await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow(/SMTP provider rejected/);
+
+    const firstAttemptStatuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
+    expect(firstAttemptStatuses).not.toContain("failed");
+
+    // Attempt 2 (redelivery): the run is still claimable; sendEmail now succeeds and the run completes.
+    vi.clearAllMocks();
+    mockWorkflowRunFindFirst.mockResolvedValue(baseRun);
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 1 });
+    mockWorkflowRunLogCreate.mockResolvedValue(undefined);
+    mockWorkflowRunLogFindMany.mockResolvedValue([]);
+    mockSendEmail.mockResolvedValue(true);
+
+    await expect(processWorkflowRunJob(data, { ...baseContext, attempt: 2 })).resolves.toBeUndefined();
+
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(completion.data.status).toBe("completed");
+    expect(completion.data.data.steps[0]).toMatchObject({ stepId: "send-email", status: "succeeded" });
   });
 
   test("swallows the failure on the final attempt after recording it", async () => {

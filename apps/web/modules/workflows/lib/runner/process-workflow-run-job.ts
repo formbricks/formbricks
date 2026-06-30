@@ -341,11 +341,16 @@ export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (dat
     }
 
     const runData = error instanceof WorkflowStepFailedError ? error.runData : undefined;
-    await markRunFailed(run.id, data.workspaceId, error, runData, logContext);
+    const isFinalAttempt = context.attempt >= context.maxAttempts;
 
-    // Before the final attempt, rethrow so BullMQ retries. On the last attempt, swallow — the failure
-    // is durably recorded on the run, and rethrowing would only re-log without changing the outcome.
-    if (context.attempt < context.maxAttempts) {
+    // Writing the terminal `failed` status before the final attempt would defeat retries: the next
+    // redelivery would hit the terminal-skip guard and return immediately. So on non-final attempts the
+    // run stays `running` (only the error trace is recorded) and we rethrow so BullMQ retries — the
+    // resume path then re-runs the failed step (succeeded steps are already durably logged). Only the
+    // final attempt commits the terminal `failed` state.
+    await recordRunFailure(run.id, data.workspaceId, error, runData, isFinalAttempt, logContext);
+
+    if (!isFinalAttempt) {
       throw toError(error, "Workflow run job failed");
     }
 
@@ -354,26 +359,28 @@ export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (dat
 };
 
 /**
- * Records a failed terminal state on the run, tenant-scoped by `workspaceId`. Best-effort: a
- * persistence failure here is logged but never masks the original execution error the caller is about
- * to rethrow/swallow.
+ * Persists the failure trace on the run, tenant-scoped by `workspaceId`. On the final attempt this
+ * commits the terminal `failed` status + `finishedAt`; on earlier attempts it records only
+ * `error`/`lastErrorAt`/`attempt` and KEEPS the run non-terminal (`running`) so BullMQ retries are not
+ * defeated by the terminal-skip guard. Best-effort: a persistence failure here is logged but never
+ * masks the original execution error the caller is about to rethrow/swallow.
  */
-const markRunFailed = async (
+const recordRunFailure = async (
   runId: string,
   workspaceId: string,
   error: unknown,
   runData: TWorkflowRunData | undefined,
+  isFinalAttempt: boolean,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
-  const finishedAt = new Date();
+  const now = new Date();
   try {
     await prisma.workflowRun.updateMany({
       where: { id: runId, workspaceId },
       data: {
-        status: "failed",
         error: toError(error, "Workflow run job failed").message,
-        lastErrorAt: finishedAt,
-        finishedAt,
+        lastErrorAt: now,
+        ...(isFinalAttempt ? { status: "failed", finishedAt: now } : {}),
         ...(runData ? { data: runData } : {}),
       },
     });
