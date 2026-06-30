@@ -12,7 +12,6 @@ interface BrandingSettingsCardProps {
   workspace: TWorkspace;
   isReadOnly: boolean;
   showLiteLicenseTip?: boolean;
-  userEmail?: string;
 }
 
 export const BrandingSettingsCard = async ({
@@ -20,7 +19,6 @@ export const BrandingSettingsCard = async ({
   workspace,
   isReadOnly,
   showLiteLicenseTip = false,
-  userEmail,
 }: Readonly<BrandingSettingsCardProps>) => {
   const t = await getTranslate();
   const buttons: [ModalButton, ModalButton] = [
@@ -56,11 +54,8 @@ export const BrandingSettingsCard = async ({
             isReadOnly={isReadOnly}
           />
         </div>
-      ) : showLiteLicenseTip && userEmail ? (
-        <RemoveBrandingLicenseTip
-          userEmail={userEmail}
-          licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
-        />
+      ) : showLiteLicenseTip ? (
+        <RemoveBrandingLicenseTip licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL} />
       ) : (
         <UpgradePrompt
           title={t("workspace.look.remove_branding_with_a_higher_plan")}

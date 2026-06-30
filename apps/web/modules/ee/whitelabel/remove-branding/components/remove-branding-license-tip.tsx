@@ -6,21 +6,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 
 interface RemoveBrandingLicenseTipProps {
-  userEmail: string;
   licenseRequestUrl: string;
 }
 
-export const RemoveBrandingLicenseTip = ({
-  userEmail,
-  licenseRequestUrl,
-}: Readonly<RemoveBrandingLicenseTipProps>) => {
+export const RemoveBrandingLicenseTip = ({ licenseRequestUrl }: Readonly<RemoveBrandingLicenseTipProps>) => {
   const { t } = useTranslation();
 
   const requestUrl = new URL(licenseRequestUrl);
   requestUrl.searchParams.set("type", "lite");
-  if (userEmail) {
-    requestUrl.searchParams.set("email", userEmail);
-  }
 
   return (
     <div className="flex w-full flex-col items-center gap-5 px-6 py-8">
