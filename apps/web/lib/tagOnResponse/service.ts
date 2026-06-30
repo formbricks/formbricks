@@ -1,10 +1,10 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "../utils/validate";
 
 const selectTagsOnResponse = {
@@ -30,12 +30,12 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
       tagId,
     };
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       const target = error.meta?.target;
       const isTagsOnResponsesUniqueViolation =
         Array.isArray(target) && target.includes("responseId") && target.includes("tagId");
 
-      if (error.code === "P2002" && isTagsOnResponsesUniqueViolation) {
+      if (isUniqueConstraintError(error) && isTagsOnResponsesUniqueViolation) {
         return {
           responseId,
           tagId,
@@ -65,7 +65,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
       responseId,
     };
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -92,7 +92,7 @@ export const getTagsOnResponsesCount = reactCache(async (workspaceId: string): P
 
     return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;

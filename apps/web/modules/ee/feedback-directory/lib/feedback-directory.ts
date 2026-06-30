@@ -6,6 +6,7 @@ import { Prisma, type PrismaClient } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TFeedbackDirectory,
@@ -61,7 +62,7 @@ export const getFeedbackDirectories = reactCache(
         feedbackSourceCount: dir._count.feedbackSources,
       }));
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -97,7 +98,7 @@ export const getFeedbackDirectoriesByWorkspaceId = reactCache(
       });
       return rows.map((r) => r.feedbackDirectory);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -134,7 +135,7 @@ export const getFeedbackDirectoryAuthContext = reactCache(
         isArchived: directory.isArchived,
       };
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -183,7 +184,7 @@ export const getWorkspaceFeedbackDirectoryAccess = reactCache(
 
       return Array.from(accessByWorkspaceId.values());
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -286,7 +287,7 @@ export const getFeedbackDirectoryDetails = reactCache(
 
       return mapFeedbackDirectoryDetails(directory);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -339,10 +340,10 @@ export const createFeedbackDirectory = async (
 
     return directory.id;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -584,13 +585,13 @@ export const updateFeedbackDirectory = async (
 
     return true;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
-      }
-      if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
-        throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
+    }
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)) {
+      throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;

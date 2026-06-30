@@ -16,6 +16,7 @@ import {
   ZFeedbackSourceCreateInput,
   ZFeedbackSourceUpdateInput,
 } from "@formbricks/types/feedback-source";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -99,7 +100,7 @@ export const getFeedbackSourcesWithMappings = reactCache(
 
       return feedbackSources.map(mapFeedbackSourceWithMappings);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -122,7 +123,7 @@ export const getFeedbackSourceWithMappingsById = reactCache(
 
       return feedbackSource ? mapFeedbackSourceWithMappings(feedbackSource) : null;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -150,7 +151,7 @@ export const getFeedbackSourcesBySurveyId = reactCache(
 
       return feedbackSources.map(mapFeedbackSourceWithMappings);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -181,10 +182,10 @@ export const updateFeedbackSource = async (
 
     return feedbackSource;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
-      }
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist)) {
+      throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -208,10 +209,10 @@ export const deleteFeedbackSource = async (
 
     return feedbackSource;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
-      }
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist)) {
+      throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -302,10 +303,10 @@ export const createFeedbackSourceWithMappings = async (
 
     return mapFeedbackSourceWithMappings(result);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw mapUniqueConstraintError(error);
-      }
+    if (isUniqueConstraintError(error)) {
+      throw mapUniqueConstraintError(error);
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -378,13 +379,13 @@ export const updateFeedbackSourceWithMappings = async (
 
     return mapFeedbackSourceWithMappings(result);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw mapUniqueConstraintError(error);
-      }
-      if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
-      }
+    if (isUniqueConstraintError(error)) {
+      throw mapUniqueConstraintError(error);
+    }
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist)) {
+      throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;

@@ -14,16 +14,14 @@ import {
   buildClientResponse,
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
-import {
-  isPrismaKnownRequestError,
-  isSingleUseIdUniqueConstraintError,
-} from "@/app/api/client/[workspaceId]/responses/lib/response-error";
+import { isSingleUseIdUniqueConstraintError } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
 import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContact } from "./contact";
 
@@ -111,7 +109,7 @@ export const createResponse = async (
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
       if (
-        error.code === "P2002" &&
+        isUniqueConstraintError(error) &&
         Array.isArray(error.meta?.target) &&
         error.meta.target.includes("displayId")
       ) {
