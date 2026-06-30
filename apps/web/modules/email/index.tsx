@@ -62,6 +62,7 @@ const legalProps: TEmailTemplateLegalProps = {
 
 interface SendEmailDataProps {
   to: string;
+  from?: string;
   replyTo?: string;
   subject: string;
   text?: string;
