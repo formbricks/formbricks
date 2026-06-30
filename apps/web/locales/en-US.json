@@ -2783,6 +2783,7 @@
         "ai_translation_instance_not_configured": "AI is not configured on this instance. Contact your administrator.",
         "ai_translation_not_available": "AI translation is not available on your current plan. Upgrade to unlock this feature.",
         "ai_translation_not_enabled": "AI smart tools are disabled for this organization. Enable them in organization settings.",
+        "ai_translation_quota_exceeded": "Translation is temporarily unavailable due to high demand. Please try again shortly.",
         "all_are_true": "all are true",
         "all_other_answers_will_continue_to_fallback": "All other answers will continue to <fallbackSelect />",
         "allow_multi_select": "Allow multi-select",

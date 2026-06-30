@@ -1,5 +1,9 @@
 import { logger } from "@formbricks/logger";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
@@ -7,6 +11,7 @@ import {
   problemBadGateway,
   problemBadRequest,
   problemNotFound,
+  problemTooManyRequests,
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -23,6 +28,9 @@ const AI_UNAVAILABLE_DETAILS: Record<TAIErrorCode, string> = {
   [AI_ERROR_CODES.FEATURES_NOT_ENABLED]: "AI smart tools are not available for this organization.",
   [AI_ERROR_CODES.SMART_TOOLS_DISABLED]: "AI smart tools are disabled for this organization.",
   [AI_ERROR_CODES.INSTANCE_NOT_CONFIGURED]: "AI is not configured for this Formbricks instance.",
+  // Quota exhaustion is surfaced as a 429 (see the TooManyRequestsError branch below), not as an
+  // AI-unavailable 503 — this entry only keeps the code map exhaustive.
+  [AI_ERROR_CODES.QUOTA_EXCEEDED]: "The AI provider is temporarily rate-limited. Try again shortly.",
 };
 
 function isAIErrorCode(value: string): value is TAIErrorCode {
@@ -62,6 +70,14 @@ export const POST = withV3ApiWrapper({
           instance,
           invalid_params: error.invalidParams,
         });
+      }
+
+      if (error instanceof TooManyRequestsError) {
+        return problemTooManyRequests(
+          requestId,
+          "The AI provider is temporarily rate-limited. Try again shortly.",
+          error.retryAfter
+        );
       }
 
       if (error instanceof OperationNotAllowedError && isAIErrorCode(error.message)) {
