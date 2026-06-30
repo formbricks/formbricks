@@ -2299,7 +2299,7 @@
       "billing": {
         "billing_interval_toggle": "Faktureringsintervall",
         "cancel_at_period_end": "Avsluta vid periodens slut",
-        "confirm_upgrade_body": "Du är på väg att uppgradera till {plan}-planen för {amount} {period}. En proportionell avgift för resten av din nuvarande faktureringscykel tas ut omedelbart, och eventuella skatter beräknas vid betalningen. Vill du fortsätta?",
+        "confirm_upgrade_body": "Du är på väg att uppgradera till {plan}-planen för {amount} {period}. En proportionell avgift för resten av din nuvarande faktureringscykel tas ut omedelbart, och eventuella skatter beräknas vid betalningen.",
         "confirm_upgrade_body_with_charge": "Du är på väg att uppgradera till {plan}-planen ({period}). Du debiteras {chargeNow} nu för resten av din nuvarande faktureringsperiod, med eventuella tillämpliga skatter beräknade vid betalning.",
         "confirm_upgrade_button": "Bekräfta uppgradering",
         "confirm_upgrade_calculating": "Beräknar din proportionella avgift…",

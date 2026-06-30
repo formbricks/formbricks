@@ -2299,7 +2299,7 @@
       "billing": {
         "billing_interval_toggle": "Billing interval",
         "cancel_at_period_end": "Cancel at period end",
-        "confirm_upgrade_body": "You're about to upgrade to the {plan} plan at {amount} {period}. A prorated charge for the rest of your current billing period is applied immediately, and any applicable taxes are calculated at payment. Continue?",
+        "confirm_upgrade_body": "You're about to upgrade to the {plan} plan at {amount} {period}. A prorated charge for the rest of your current billing period is applied immediately, and any applicable taxes are calculated at payment.",
         "confirm_upgrade_body_with_charge": "You're about to upgrade to the {plan} plan ({period}). You'll be charged {chargeNow} now for the rest of your current billing period, with any applicable taxes calculated at payment.",
         "confirm_upgrade_button": "Confirm upgrade",
         "confirm_upgrade_calculating": "Calculating your prorated charge…",

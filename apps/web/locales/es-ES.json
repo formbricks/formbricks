@@ -2299,7 +2299,7 @@
       "billing": {
         "billing_interval_toggle": "Intervalo de facturación",
         "cancel_at_period_end": "Cancelar al finalizar el período",
-        "confirm_upgrade_body": "Estás a punto de actualizar al plan {plan} por {amount} {period}. Se aplica de inmediato un cargo prorrateado por el resto de tu período de facturación actual, y los impuestos aplicables se calculan al momento del pago. ¿Continuar?",
+        "confirm_upgrade_body": "Estás a punto de actualizar al plan {plan} por {amount} {period}. Se aplica de inmediato un cargo prorrateado por el resto de tu período de facturación actual, y los impuestos aplicables se calculan al momento del pago.",
         "confirm_upgrade_body_with_charge": "Estás a punto de actualizar al plan {plan} ({period}). Se te cobrará {chargeNow} ahora por el resto de tu período de facturación actual, con los impuestos aplicables calculados al momento del pago.",
         "confirm_upgrade_button": "Confirmar actualización",
         "confirm_upgrade_calculating": "Calculando tu cargo prorrateado…",

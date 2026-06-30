@@ -2299,7 +2299,7 @@
       "billing": {
         "billing_interval_toggle": "Fatura dönemi",
         "cancel_at_period_end": "Dönem sonunda iptal et",
-        "confirm_upgrade_body": "Aylık {amount} ücretle {plan} planına yükseltme yapmak üzeresiniz {period}. Mevcut fatura döneminizin kalan kısmı için orantılı ücret hemen tahsil edilir ve ödeme sırasında geçerli vergiler hesaplanır. Devam etmek istiyor musunuz?",
+        "confirm_upgrade_body": "Aylık {amount} ücretle {plan} planına yükseltme yapmak üzeresiniz {period}. Mevcut fatura döneminizin kalan kısmı için orantılı ücret hemen tahsil edilir ve ödeme sırasında geçerli vergiler hesaplanır.",
         "confirm_upgrade_body_with_charge": "{plan} planına ({period}) yükseltmek üzeresin. Mevcut fatura döneminin kalan kısmı için şimdi {chargeNow} ücretlendirileceksin, ilgili vergiler ödeme sırasında hesaplanacak.",
         "confirm_upgrade_button": "Yükseltmeyi onayla",
         "confirm_upgrade_calculating": "Orantılı ücretiniz hesaplanıyor…",
