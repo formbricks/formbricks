@@ -9,6 +9,7 @@ import {
   type WorkflowMatch,
   type WorkflowMatchCandidate,
   matchWorkflowsForResponse,
+  readResponseCompletedTriggerConfig,
 } from "./match-workflows";
 
 /** The subset of a completed response the runner needs. Structurally satisfied by the response-pipeline payload. */
@@ -34,8 +35,10 @@ const isUniqueConstraintError = (error: unknown): boolean =>
 
 /**
  * Load the enabled workflows for a workspace as match candidates, each carrying its current published
- * version (highest `version`). Enabled workflows with no published version are logged and skipped —
- * a data-integrity guard, since enable always publishes a version — so we never build an unrunnable run.
+ * version (highest `version`). Skips (and logs) two unrunnable cases so they never reach matching:
+ * an enabled workflow with no published version (enable always publishes one — a data-integrity guard),
+ * and a published version whose definition has no usable `response.completed` trigger (a malformed or
+ * corrupt snapshot — the definition is unvalidated DB JSON).
  */
 const loadEnabledWorkflowCandidates = async (
   workspaceId: string,
@@ -59,6 +62,13 @@ const loadEnabledWorkflowCandidates = async (
       );
       continue;
     }
+    if (!readResponseCompletedTriggerConfig(publishedVersion.definition)) {
+      logger.warn(
+        { ...logContext, workflowId: workflow.id, workspaceId, workflowVersionId: publishedVersion.id },
+        "Published workflow version has no usable response.completed trigger; skipping workflow run enqueue"
+      );
+      continue;
+    }
     candidates.push({
       workflowId: workflow.id,
       publishedVersionId: publishedVersion.id,
@@ -70,28 +80,25 @@ const loadEnabledWorkflowCandidates = async (
 };
 
 /**
- * Persist one `queued` `WorkflowRun` for a matched workflow (bound to its published version) and hand it
- * to the dispatcher. Idempotent: on the `@@unique([workflowId, idempotencyKey])` violation from a
- * replayed pipeline pass, re-dispatch the existing run (covers "created but not enqueued"); a unique
- * violation with no findable run is surfaced as a contradictory state. Transient DB pool exhaustion is
- * rethrown so the pipeline retries the whole (idempotent) enqueue; any other failure is isolated per
- * workflow (logged, so one bad workflow never blocks the rest).
+ * Persist one `queued` `WorkflowRun` for a matched workflow (bound to its published version) and return
+ * its id. Idempotent: on the `@@unique([workflowId, idempotencyKey])` violation from a replayed pipeline
+ * pass, returns the run already created on an earlier pass; a unique violation with no findable run is a
+ * contradictory state and is surfaced. Transient DB pool exhaustion is rethrown so the pipeline retries
+ * the whole (idempotent) enqueue; any other create failure is isolated per workflow (logged → null).
  */
-const createAndDispatchWorkflowRun = async ({
+const persistQueuedRun = async ({
   match,
   response,
   workspaceId,
   triggerPayload,
-  dispatch,
   logContext,
 }: {
   match: WorkflowMatch;
   response: RunnerResponse;
   workspaceId: string;
   triggerPayload: TWorkflowTriggerRunPayload;
-  dispatch: DispatchWorkflowRun;
   logContext?: Record<string, unknown>;
-}): Promise<void> => {
+}): Promise<string | null> => {
   try {
     const run = await prisma.workflowRun.create({
       data: {
@@ -109,33 +116,76 @@ const createAndDispatchWorkflowRun = async ({
       },
       select: { id: true },
     });
-    await dispatch({ workflowRunId: run.id, workflowId: match.workflowId, workspaceId });
+    return run.id;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       const existing = await prisma.workflowRun.findUnique({
         where: { workflowId_idempotencyKey: { workflowId: match.workflowId, idempotencyKey: response.id } },
         select: { id: true },
       });
-      if (existing) {
-        await dispatch({ workflowRunId: existing.id, workflowId: match.workflowId, workspaceId });
-      } else {
-        // The unique violation says a run exists, but we can't find it by its idempotency key — a
-        // contradictory state with no run id to dispatch. Surface it rather than silently drop it.
-        logger.error(
-          { ...logContext, workflowId: match.workflowId, workspaceId, responseId: response.id },
-          "Workflow run unique-constraint violation but no existing run found to re-dispatch"
-        );
-      }
-      return;
+      if (existing) return existing.id;
+      // The unique violation says a run exists, but we can't find it by its idempotency key — a
+      // contradictory state with no run id to dispatch. Surface it rather than silently drop it.
+      logger.error(
+        { ...logContext, workflowId: match.workflowId, workspaceId, responseId: response.id },
+        "Workflow run unique-constraint violation but no existing run found to re-dispatch"
+      );
+      return null;
     }
     if (isDatabasePoolExhaustionError(error)) {
-      // Transient DB pool exhaustion: propagate so the pipeline retries the whole (idempotent)
-      // enqueue rather than swallow it and silently drop this workflow's run.
+      // Transient DB pool exhaustion: propagate so the pipeline retries the whole (idempotent) enqueue.
       throw error;
     }
     logger.error(
       { ...logContext, workflowId: match.workflowId, workspaceId, responseId: response.id, err: error },
-      "Failed to create or dispatch workflow run"
+      "Failed to persist workflow run"
+    );
+    return null;
+  }
+};
+
+/**
+ * Persist a `queued` `WorkflowRun` for a matched workflow and hand it to the dispatcher.
+ *
+ * If `dispatch` fails after the row is persisted, the run is left `queued` with no backing job — an
+ * orphan. We log it distinctly (so it is alertable) and swallow rather than rethrow: rethrowing would
+ * retry the whole response-pipeline job and re-run its other side-effects (webhooks, follow-ups,
+ * notifications). The durable run row plus the `status` / `nextAttemptAt` indexes exist precisely so a
+ * reconciler can re-dispatch orphaned runs; that reconciler is tracked separately (out of scope here).
+ */
+const createAndDispatchWorkflowRun = async ({
+  match,
+  response,
+  workspaceId,
+  triggerPayload,
+  dispatch,
+  logContext,
+}: {
+  match: WorkflowMatch;
+  response: RunnerResponse;
+  workspaceId: string;
+  triggerPayload: TWorkflowTriggerRunPayload;
+  dispatch: DispatchWorkflowRun;
+  logContext?: Record<string, unknown>;
+}): Promise<void> => {
+  const workflowRunId = await persistQueuedRun({ match, response, workspaceId, triggerPayload, logContext });
+  if (!workflowRunId) {
+    return;
+  }
+
+  try {
+    await dispatch({ workflowRunId, workflowId: match.workflowId, workspaceId });
+  } catch (error) {
+    logger.error(
+      {
+        ...logContext,
+        workflowId: match.workflowId,
+        workspaceId,
+        responseId: response.id,
+        workflowRunId,
+        err: error,
+      },
+      "Workflow run persisted but dispatch failed; queued run is orphaned until the reconciler re-dispatches it"
     );
   }
 };

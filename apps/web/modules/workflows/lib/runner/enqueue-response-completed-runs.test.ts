@@ -196,4 +196,31 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
     expect(create).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();
   });
+
+  test("skips (and logs) a published version with a malformed trigger, still processing the others", async () => {
+    findMany.mockResolvedValue([
+      // No trigger at all — a malformed/corrupt published snapshot.
+      { id: "wf_bad", versions: [{ id: "ver_bad", definition: { schemaVersion: 1, nodes: [], edges: [] } }] },
+      enabledWorkflow("wf_ok", "ver_ok"),
+    ]);
+    create.mockResolvedValue({ id: "run_ok" });
+
+    await run();
+
+    expect(warn).toHaveBeenCalled();
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(dispatch).toHaveBeenCalledWith({ workflowRunId: "run_ok", workflowId: "wf_ok", workspaceId });
+  });
+
+  test("logs an orphan and does not throw when dispatch fails after the run is persisted", async () => {
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
+    create.mockResolvedValue({ id: "run_1" });
+    dispatch.mockRejectedValue(new Error("redis unavailable"));
+
+    await expect(run()).resolves.toBeUndefined();
+
+    // Attempted once (not retried here), the persisted run is surfaced as an orphan for the reconciler.
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(error).toHaveBeenCalled();
+  });
 });

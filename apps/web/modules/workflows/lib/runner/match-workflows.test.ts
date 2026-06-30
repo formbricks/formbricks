@@ -61,4 +61,39 @@ describe("matchWorkflowsForResponse", () => {
   test("returns nothing for no candidates", () => {
     expect(matchWorkflowsForResponse([], { surveyId: SURVEY, endingId: ENDING_A })).toEqual([]);
   });
+
+  test("does not match (and does not throw) a malformed definition with no trigger", () => {
+    const candidate = {
+      workflowId: "wf_bad",
+      publishedVersionId: "v",
+      definition: { schemaVersion: 1, nodes: [], edges: [] } as unknown as TWorkflowExecutableDefinition,
+    };
+    expect(matchWorkflowsForResponse([candidate], { surveyId: SURVEY, endingId: ENDING_A })).toEqual([]);
+  });
+
+  test("does not match (and does not throw) a trigger missing its config", () => {
+    const candidate = {
+      workflowId: "wf_bad",
+      publishedVersionId: "v",
+      definition: {
+        schemaVersion: 1,
+        trigger: { id: "t", type: "trigger", triggerType: "response.completed" },
+        nodes: [],
+        edges: [],
+        entryNodeId: "t",
+      } as unknown as TWorkflowExecutableDefinition,
+    };
+    expect(matchWorkflowsForResponse([candidate], { surveyId: SURVEY, endingId: ENDING_A })).toEqual([]);
+  });
+
+  test("a malformed candidate never blocks matching of a valid one", () => {
+    const malformed = {
+      workflowId: "wf_bad",
+      publishedVersionId: "vb",
+      definition: {} as unknown as TWorkflowExecutableDefinition,
+    };
+    const valid = makeCandidate("wf_ok", { surveyId: SURVEY, endingCardIds: [] });
+    const result = matchWorkflowsForResponse([malformed, valid], { surveyId: SURVEY, endingId: ENDING_A });
+    expect(result.map((m) => m.workflowId)).toEqual(["wf_ok"]);
+  });
 });
