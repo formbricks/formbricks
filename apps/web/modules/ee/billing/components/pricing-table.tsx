@@ -17,6 +17,7 @@ import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   changeBillingPlanAction,
   createPlanCheckoutAction,
@@ -215,6 +216,11 @@ export const PricingTable = ({
   const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
+  // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
+  const [upgradeConfirmation, setUpgradeConfirmation] = useState<{
+    plan: Exclude<TStandardPlan, "hobby">;
+    interval: TCloudBillingInterval;
+  } | null>(null);
   const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
     currentBillingInterval ?? "monthly"
   );
@@ -572,6 +578,34 @@ export const PricingTable = ({
     }
   };
 
+  // An upgrade for a subscriber who already has a payment method is applied in place (no Stripe
+  // checkout page), charging the card immediately. That is the path that previously had no
+  // confirmation step. New/trial checkouts redirect to Stripe (which shows its own confirmation +
+  // tax), and same-plan/downgrade changes are scheduled at period end — none of those charge now.
+  const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
+    hasPaymentMethod &&
+    plan !== "hobby" &&
+    currentPlanLevel !== null &&
+    STANDARD_PLAN_LEVEL[plan] > currentPlanLevel &&
+    !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval) &&
+    !canCancelCurrentPaidPlanAtPeriodEnd(
+      plan,
+      interval,
+      currentCloudPlan,
+      currentBillingInterval,
+      isTrialingWithoutPayment,
+      pendingChange
+    );
+
+  // Gate the immediate-charge upgrade behind a confirmation modal; everything else runs as before.
+  const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    if (plan !== "hobby" && willChargeImmediately(plan, interval)) {
+      setUpgradeConfirmation({ plan, interval });
+      return;
+    }
+    void handlePlanAction(plan, interval);
+  };
+
   const undoPendingChange = async () => {
     setIsPlanActionPending("undo");
     try {
@@ -896,7 +930,7 @@ export const PricingTable = ({
                         className="mt-4 w-full"
                         disabled={isDisabled}
                         loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
-                        onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
+                        onClick={() => requestPlanAction(planCard.plan, planCard.interval)}>
                         {getCtaLabel(planCard.plan, planCard.interval)}
                       </Button>
 
@@ -934,6 +968,31 @@ export const PricingTable = ({
           </SettingsCard>
         )}
       </div>
+
+      {upgradeConfirmation && (
+        <ConfirmationModal
+          open
+          setOpen={() => setUpgradeConfirmation(null)}
+          title={t("workspace.settings.billing.confirm_upgrade_title")}
+          body={t("workspace.settings.billing.confirm_upgrade_body", {
+            plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
+            amount:
+              planCards.find(
+                (card) =>
+                  card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
+              )?.amount ?? "",
+            period: getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t),
+          })}
+          buttonText={t("workspace.settings.billing.confirm_upgrade_button")}
+          buttonVariant="default"
+          cancelButtonText={t("common.cancel")}
+          onConfirm={() => {
+            const { plan, interval } = upgradeConfirmation;
+            setUpgradeConfirmation(null);
+            void handlePlanAction(plan, interval);
+          }}
+        />
+      )}
     </main>
   );
 };

@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} válasz} other {{count} válasz}}",
     "count_selections": "{count, plural, one {{count} kiválasztás} other {{count} kiválasztás}}",
     "create": "Létrehozás",
-    "create_new_organization": "Új szervezet létrehozása",
     "create_segment": "Szegmens létrehozása",
     "create_survey": "Kérdőív létrehozása",
     "create_workspace": "Munkaterület létrehozása",
@@ -2300,6 +2299,9 @@
       "billing": {
         "billing_interval_toggle": "Számlázási időköz",
         "cancel_at_period_end": "Lemondás az időszak végén",
+        "confirm_upgrade_body": "You're about to upgrade to the {plan} plan at {amount} {period}. A prorated charge for the rest of your current billing period is applied immediately, and any applicable taxes are calculated at payment. Continue?",
+        "confirm_upgrade_button": "Confirm upgrade",
+        "confirm_upgrade_title": "Confirm upgrade",
         "continue_with_plan_after_trial": "Folytatás Pro csomaggal a próbaidőszak után",
         "current_plan_badge": "Jelenlegi",
         "current_plan_cta": "Jelenlegi csomag",

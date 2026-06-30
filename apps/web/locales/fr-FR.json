@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} réponse} other {{count} réponses}}",
     "count_selections": "{count, plural, one {{count} sélection} other {{count} sélections}}",
     "create": "Créer",
-    "create_new_organization": "Créer une nouvelle organisation",
     "create_segment": "Créer un segment",
     "create_survey": "Créer un sondage",
     "create_workspace": "Créer un espace de travail",
@@ -2300,6 +2299,9 @@
       "billing": {
         "billing_interval_toggle": "Intervalle de facturation",
         "cancel_at_period_end": "Annuler à la fin de la période",
+        "confirm_upgrade_body": "You're about to upgrade to the {plan} plan at {amount} {period}. A prorated charge for the rest of your current billing period is applied immediately, and any applicable taxes are calculated at payment. Continue?",
+        "confirm_upgrade_button": "Confirm upgrade",
+        "confirm_upgrade_title": "Confirm upgrade",
         "continue_with_plan_after_trial": "Continuer avec Pro après l'essai",
         "current_plan_badge": "Actuel",
         "current_plan_cta": "Formule actuelle",

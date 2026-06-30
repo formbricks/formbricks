@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} yanıt} other {{count} yanıt}}",
     "count_selections": "{count, plural, one {{count} seçim} other {{count} seçim}}",
     "create": "Oluştur",
-    "create_new_organization": "Yeni organizasyon oluştur",
     "create_segment": "Segment oluştur",
     "create_survey": "Survey oluştur",
     "create_workspace": "Çalışma alanı oluştur",
@@ -2300,6 +2299,9 @@
       "billing": {
         "billing_interval_toggle": "Fatura dönemi",
         "cancel_at_period_end": "Dönem sonunda iptal et",
+        "confirm_upgrade_body": "You're about to upgrade to the {plan} plan at {amount} {period}. A prorated charge for the rest of your current billing period is applied immediately, and any applicable taxes are calculated at payment. Continue?",
+        "confirm_upgrade_button": "Confirm upgrade",
+        "confirm_upgrade_title": "Confirm upgrade",
         "continue_with_plan_after_trial": "Deneme sonrası Pro ile devam et",
         "current_plan_badge": "Mevcut",
         "current_plan_cta": "Mevcut plan",

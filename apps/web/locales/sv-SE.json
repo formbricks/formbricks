@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, one {{count} svar} other {{count} svar}}",
     "count_selections": "{count, plural, one {{count} val} other {{count} val}}",
     "create": "Skapa",
-    "create_new_organization": "Skapa ny organisation",
     "create_segment": "Skapa segment",
     "create_survey": "Skapa enkät",
     "create_workspace": "Skapa arbetsyta",
@@ -2300,6 +2299,9 @@
       "billing": {
         "billing_interval_toggle": "Faktureringsintervall",
         "cancel_at_period_end": "Avsluta vid periodens slut",
+        "confirm_upgrade_body": "You're about to upgrade to the {plan} plan at {amount} {period}. A prorated charge for the rest of your current billing period is applied immediately, and any applicable taxes are calculated at payment. Continue?",
+        "confirm_upgrade_button": "Confirm upgrade",
+        "confirm_upgrade_title": "Confirm upgrade",
         "continue_with_plan_after_trial": "Fortsätt med Pro efter provperioden",
         "current_plan_badge": "Nuvarande",
         "current_plan_cta": "Nuvarande abonnemang",

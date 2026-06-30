@@ -198,7 +198,6 @@
     "count_responses": "{count, plural, other {{count} 件の回答}}",
     "count_selections": "{count, plural, other {{count} 件の選択}}",
     "create": "作成",
-    "create_new_organization": "新しい組織を作成",
     "create_segment": "セグメントを作成",
     "create_survey": "フォームを作成",
     "create_workspace": "ワークスペースを作成",
@@ -2300,6 +2299,9 @@
       "billing": {
         "billing_interval_toggle": "請求間隔",
         "cancel_at_period_end": "期間終了時にキャンセル",
+        "confirm_upgrade_body": "You're about to upgrade to the {plan} plan at {amount} {period}. A prorated charge for the rest of your current billing period is applied immediately, and any applicable taxes are calculated at payment. Continue?",
+        "confirm_upgrade_button": "Confirm upgrade",
+        "confirm_upgrade_title": "Confirm upgrade",
         "continue_with_plan_after_trial": "トライアル後もProプランを継続",
         "current_plan_badge": "現在のプラン",
         "current_plan_cta": "現在のプラン",

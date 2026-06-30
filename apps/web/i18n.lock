@@ -171,7 +171,6 @@ checksums:
     common/count_responses: 437e022825c7a08481d8f7e56926742d
     common/count_selections: a1ec41682b9a7d8601c3905dfba34e16
     common/create: 757ccd28dd533ff3a933355273c1e32a
-    common/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     common/create_segment: 9d8291cd4d778b53b73bbc84fd91c181
     common/create_survey: 1cfbba08d34876566d84b2960054a987
     common/create_workspace: 2e6718e79964ea5ce22d76c2189c77ca
@@ -2205,6 +2204,9 @@ checksums:
     workspace/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     workspace/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     workspace/settings/billing/cancel_at_period_end: c252f54e4ee6f9419a945f3cb7c31e80
+    workspace/settings/billing/confirm_upgrade_body: 9447dbe94ab2b6c7d4ed257c0dcf8197
+    workspace/settings/billing/confirm_upgrade_button: 0c91db4f2f989972d493fed2311cbbc0
+    workspace/settings/billing/confirm_upgrade_title: 0c91db4f2f989972d493fed2311cbbc0
     workspace/settings/billing/continue_with_plan_after_trial: 96f01459c998341b8467fe239e890875
     workspace/settings/billing/current_plan_badge: 27f172f76ac28e72cb062f80002b0ad5
     workspace/settings/billing/current_plan_cta: 53ac259fd40a361274861ee7c7498424
@@ -2571,6 +2573,7 @@ checksums:
     workspace/surveys/ai_create/ai_not_available: 840b27ce9b718b487cea62e9768cc904
     workspace/surveys/ai_create/ai_not_enabled: 13df84ae47d35dfa6e86ffa62f29c75d
     workspace/surveys/ai_create/ai_not_in_plan: a059bf0be5d6ef524c1a4212b32a0c8b
+    workspace/surveys/ai_create/app_survey: f076d131d20bfdadb35fba29c8275232
     workspace/surveys/ai_create/card_description: 3917eefc745d2bfec15d25ac343bbb64
     workspace/surveys/ai_create/card_title: 5d8c659f559f1343bb23fd191a6556ad
     workspace/surveys/ai_create/characters: 94b5a8b5c869a7e9bc031f59de56de44
@@ -2583,7 +2586,6 @@ checksums:
     workspace/surveys/ai_create/enable_ai_in_settings: f994107b44e64d8202446acb723740ac
     workspace/surveys/ai_create/generated_payload_invalid: 6b15c376fafd72298cb460107e82d4f2
     workspace/surveys/ai_create/link_survey: f860f30b034d29c3aaac984f34f46c1d
-    workspace/surveys/ai_create/only_link_supported: 62be59926da0ae25eba52908cd0d3722
     workspace/surveys/ai_create/opening_editor: 4c85b8b6dd78f09afea85939fab32612
     workspace/surveys/ai_create/prompt_helper_churn: 0a12f5fcab212aaa357c4ebc32b81124
     workspace/surveys/ai_create/prompt_helper_churn_label: be67c423d132ffdcf7447efe1602ee52
@@ -2597,6 +2599,7 @@ checksums:
     workspace/surveys/ai_create/prompt_placeholder: e03466bf725d3c2efa2ccdbb4073900e
     workspace/surveys/ai_create/shortcut_hint: f5a8984cb659c299fe1c93b2d40599ae
     workspace/surveys/ai_create/start_from_scratch: 6fc756927ca9ea22c26368cccd64a67e
+    workspace/surveys/ai_create/survey_type_help: e69a5ae55ca2275b45fef4b085eba2eb
     workspace/surveys/ai_create/survey_type_label: 4cd3589d9f17bedd77d14a61b2fcb6b6
     workspace/surveys/ai_create/try_prompt: 041af9478444924632c47c1cc5e6c14d
     workspace/surveys/ai_create/upgrade_plan: 81c9e7a593c0e9290f7078ecdc1c6693
@@ -3598,6 +3601,7 @@ checksums:
     workspace/unify/no_formbricks_surveys_available_description: 2218334806910168bdfb6f283f31b963
     workspace/unify/no_sources_connected: 0e8a5612530bfc82091091f40f95012f
     workspace/unify/or_drag_and_drop: 6c7d6b05d39dcbfc710d35fcab25cb8c
+    workspace/unify/original_text: 7e55782bdf7cb49f5616b326c003c278
     workspace/unify/question_type_not_supported: 8d9f7554e3b509dfd5307d8d1fef08d7
     workspace/unify/refresh_feedback_records: c111751e02a7dee57390ed7fb79cfcc6
     workspace/unify/refreshing_feedback_records: 2a03b44510ebe19eea6473639e9a7222
@@ -3704,6 +3708,9 @@ checksums:
     workspace/unify/taxonomy_view_records: 2cd75f5478004d915a3c752f20e530a3
     workspace/unify/taxonomy_view_records_count: 0870b41e8a2208bc54d4d995d0da9a79
     workspace/unify/topics_and_subtopics: 1148eca01a1993fadca932efcdea7641
+    workspace/unify/translated: 5b9d805410310b726f12bacb06da44e3
+    workspace/unify/translated_text: aa93e50a0559cbe99aedc954d649bd34
+    workspace/unify/translated_text_hint: 95276e457e89bf50e4fc1ccf9023b128
     workspace/unify/unify_feedback: cd68c8ce0445767e7dcfb4de789903d5
     workspace/unify/update_mapping_description: 58d5966c0c9b406c037dff3aa8bcb396
     workspace/unify/updated_at: 8fdb85248e591254973403755dcc3724
