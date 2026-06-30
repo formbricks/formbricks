@@ -562,10 +562,15 @@ function MultiSelect({
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {isListVariant ? (
         // A checkbox group is role="group", which doesn't support aria-required (only the
-        // legend's visible "Required" conveys it). aria-invalid is a global attribute, so it stays.
-        <fieldset className="w-full space-y-4" aria-invalid={Boolean(errorMessage)}>
+        // visible "Required" badge conveys it). aria-invalid is a global attribute, so it stays.
+        // The group is named by its headline via aria-labelledby instead of a <legend>, so the
+        // headline's media/required badge are not nested in invalid block content.
+        <fieldset
+          className="w-full space-y-4"
+          aria-labelledby={`${inputId}-headline`}
+          aria-invalid={Boolean(errorMessage)}>
           <ElementHeader
-            as="legend"
+            headlineId={`${inputId}-headline`}
             headline={headline}
             description={description}
             required={required}

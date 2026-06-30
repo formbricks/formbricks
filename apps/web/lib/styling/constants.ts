@@ -26,10 +26,6 @@ export const COLOR_DEFAULTS = {
 export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => {
   // Question / dark text: brand darkened with black (visible brand tint)
   const questionColor = mixColor(brandColor, "#000000", 0.35);
-  // Small "Required" / scale legend text: a fixed muted neutral (slate-500).
-  // Kept independent of the brand so it always clears WCAG 1.4.3 (4.5:1) on the
-  // default light card, where a brand-tinted, dimmed color used to fail.
-  const mutedLabelColor = "#64748b";
   // Input / option background: white with noticeable brand tint
   const inputBg = mixColor(brandColor, "#ffffff", 0.92);
   // Input border: visible brand-tinted border
@@ -47,7 +43,9 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
     // Headlines & Descriptions
     "elementHeadlineColor.light": questionColor,
     "elementDescriptionColor.light": questionColor,
-    "elementUpperLabelColor.light": mutedLabelColor,
+    // Brand-derived like the other text colors so it stays configurable and visually cohesive.
+    // The WCAG 1.4.3 fix was dropping the old 0.6 opacity (see globals.css), not muting the hue.
+    "elementUpperLabelColor.light": questionColor,
 
     // Buttons — use the brand color so the button matches the user's intent.
     "buttonBgColor.light": brandColor,

@@ -118,7 +118,7 @@ export function Survey({
   offlineSupport = false,
   onOfflineStatusChange,
   showCardlessPreviewLogoSlot = false,
-}: SurveyContainerProps) {
+}: Readonly<SurveyContainerProps>) {
   const workspaceId = workspaceIdProp ?? environmentId;
   let apiClient: ApiClient | null = null;
 

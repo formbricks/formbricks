@@ -15,11 +15,12 @@ interface ElementHeaderProps extends React.ComponentProps<"div"> {
   videoUrl?: string;
   imageAltText?: string;
   /**
-   * Element used to wrap the header. Use "legend" for grouped questions (radio/checkbox/matrix)
-   * so the headline names the surrounding native fieldset instead of dangling on a non-input
-   * via htmlFor. Defaults to "div" for questions that keep a normal label-to-input association.
+   * Id placed on the headline element. For grouped questions (radio/checkbox/matrix) the
+   * surrounding native <fieldset> references this id via aria-labelledby instead of pointing
+   * a htmlFor at a non-input, which keeps the group name correct without nesting block content
+   * (media, etc.) inside a <legend> (invalid HTML).
    */
-  as?: "div" | "legend";
+  headlineId?: string;
 }
 
 function ElementHeader({
@@ -33,19 +34,13 @@ function ElementHeader({
   imageUrl,
   videoUrl,
   imageAltText,
-  as = "div",
+  headlineId,
   ...props
 }: Readonly<ElementHeaderProps>): React.JSX.Element {
   const isMediaAvailable = Boolean(imageUrl) || Boolean(videoUrl);
-  const isLegend = as === "legend";
 
-  // In legend mode the surrounding <fieldset> takes its accessible name from the legend text,
-  // so the headline must not point at a non-input control via htmlFor. The Label component
-  // sanitizes any HTML headline internally, so no extra processing is needed here.
-  const headlineHtmlFor = isLegend ? undefined : htmlFor;
-
-  const headerContent = (
-    <>
+  return (
+    <div className={cn("space-y-2", className)} {...props}>
       {/* Media (Image or Video) */}
       {isMediaAvailable ? (
         <ElementMedia imgUrl={imageUrl} videoUrl={videoUrl} altText={imageAltText} />
@@ -55,7 +50,7 @@ function ElementHeader({
       <div>
         <div>{required ? <span className="label-card mb-[3px]">{requiredLabel}</span> : null}</div>
         <div className="flex">
-          <Label htmlFor={headlineHtmlFor} variant="headline">
+          <Label htmlFor={htmlFor} id={headlineId} variant="headline">
             {headline}
           </Label>
         </div>
@@ -67,22 +62,6 @@ function ElementHeader({
           {description}
         </Label>
       ) : null}
-    </>
-  );
-
-  if (isLegend) {
-    // The public props are div-shaped; drop the div-typed ref when rendering as a <legend>.
-    const { ref: _ref, ...legendProps } = props;
-    return (
-      <legend className={cn("w-full space-y-2", className)} {...legendProps}>
-        {headerContent}
-      </legend>
-    );
-  }
-
-  return (
-    <div className={cn("space-y-2", className)} {...props}>
-      {headerContent}
     </div>
   );
 }

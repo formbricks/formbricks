@@ -93,15 +93,16 @@
   --fb-element-description-color: #142a72;
   --fb-element-description-opacity: 1;
 
-  /* ── Upper Labels ("Required" + rating scale legends) ──────────────────
-     Muted neutral (slate-500) at full opacity so small labels keep a 4.5:1
-     contrast on the default light card (WCAG 1.4.3). Must match
-     getSuggestedColors().elementUpperLabelColor in apps/web/lib/styling/constants.ts.
-     The previous brand-tinted color at 0.6 opacity failed contrast. */
+  /* ── Upper Labels ("Required" + rating/matrix scale labels) ────────────
+     Brand-tinted text at full opacity. The opacity is the WCAG 1.4.3 fix: the
+     previous 0.6 opacity diluted the color into the card and failed the 4.5:1
+     contrast for this small text. The hue stays configurable and brand-derived
+     (see getSuggestedColors().elementUpperLabelColor in
+     apps/web/lib/styling/constants.ts). */
   --fb-element-upper-label-font-family: inherit;
   --fb-element-upper-label-font-weight: 400;
   --fb-element-upper-label-font-size: 12px;
-  --fb-element-upper-label-color: #64748b;
+  --fb-element-upper-label-color: #142a72;
   --fb-element-upper-label-opacity: 1;
 
   /* ── Labels ────────────────────────────────────────────────────────── */

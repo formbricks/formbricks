@@ -379,17 +379,19 @@ function Rating({
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
-      {/* The whole scale is one radio group, named by its headline legend. This replaces a
-          dangling <label htmlFor> (the headline pointed at a non-input) and the generic
-          sr-only "Rating options" legend. role="radiogroup" keeps aria-required valid. */}
+      {/* The whole scale is one radio group, named by its headline via aria-labelledby. This
+          replaces a dangling <label htmlFor> (the headline pointed at a non-input); the headline
+          stays a plain block so its media/required badge are not nested in a <legend> (invalid
+          HTML). role="radiogroup" keeps aria-required valid. */}
       <fieldset
         className="w-full space-y-4"
         role="radiogroup"
+        aria-labelledby={`${inputId}-headline`}
         aria-required={required}
         aria-invalid={Boolean(errorMessage)}
         dir={dir}>
         <ElementHeader
-          as="legend"
+          headlineId={`${inputId}-headline`}
           headline={headline}
           description={description}
           required={required}

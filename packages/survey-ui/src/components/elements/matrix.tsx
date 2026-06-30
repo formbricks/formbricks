@@ -102,11 +102,15 @@ function Matrix({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Matrix Table. The outer group is role="group" (a set of per-row radio groups), which
-          doesn't support aria-required; the legend's visible "Required" conveys it. aria-invalid
-          is global, so it stays. */}
-      <fieldset className="w-full space-y-4" aria-invalid={Boolean(errorMessage)}>
+          doesn't support aria-required; the visible "Required" badge conveys it. aria-invalid is
+          global, so it stays. The group is named by its headline via aria-labelledby (no <legend>,
+          so the headline media/badge are not nested in invalid block content). */}
+      <fieldset
+        className="w-full space-y-4"
+        aria-labelledby={`${inputId}-headline`}
+        aria-invalid={Boolean(errorMessage)}>
         <ElementHeader
-          as="legend"
+          headlineId={`${inputId}-headline`}
           headline={headline}
           description={description}
           required={required}

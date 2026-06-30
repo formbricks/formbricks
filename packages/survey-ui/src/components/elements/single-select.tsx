@@ -680,14 +680,17 @@ function SingleSelect({
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {isListVariant ? (
         // role="radiogroup" makes aria-required/aria-invalid valid on the group (a bare
-        // <fieldset> is role="group", which supports neither).
+        // <fieldset> is role="group", which supports neither). The group is named by its headline
+        // via aria-labelledby instead of a <legend>, so the headline's media/required badge are
+        // not nested in invalid block content.
         <fieldset
           className="w-full space-y-4"
           role="radiogroup"
+          aria-labelledby={`${inputId}-headline`}
           aria-required={required}
           aria-invalid={Boolean(errorMessage)}>
           <ElementHeader
-            as="legend"
+            headlineId={`${inputId}-headline`}
             headline={headline}
             description={description}
             required={required}
