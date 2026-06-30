@@ -66,6 +66,6 @@ describe("type narrowing", () => {
     // predicate used the namespaced `Prisma.PrismaClientKnownRequestError` (which is `any` in
     // type position), their post-guard `error.message` accesses would narrow to `never` and fail
     // typecheck.
-    expect(error instanceof Error).toBe(true);
+    expect(error).toBeInstanceOf(Error);
   });
 });
