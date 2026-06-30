@@ -4,12 +4,12 @@ import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
 
 interface NoFeedbackDirectoryEmptyStateProps {
-  workspaceId: string;
+  organizationId: string;
   isOwnerOrManager: boolean;
 }
 
 export const NoFeedbackDirectoryEmptyState = async ({
-  workspaceId,
+  organizationId,
   isOwnerOrManager,
 }: Readonly<NoFeedbackDirectoryEmptyStateProps>) => {
   const t = await getTranslate();
@@ -29,7 +29,7 @@ export const NoFeedbackDirectoryEmptyState = async ({
       </div>
       {isOwnerOrManager && (
         <Button asChild size="sm">
-          <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
+          <Link href={`/organizations/${organizationId}/settings/feedback-directories`}>
             {t("workspace.unify.go_to_feedback_directories")}
           </Link>
         </Button>

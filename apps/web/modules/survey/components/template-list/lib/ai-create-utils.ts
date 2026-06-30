@@ -11,9 +11,9 @@ import type { TAIUnavailableReason } from "@/lib/ai/service";
 export const AI_SURVEY_PROMPT_MIN_LENGTH = 4;
 export const AI_SURVEY_PROMPT_MAX_LENGTH = 1200;
 
-export type TSurveyGenerationType = "link";
+export type TSurveyGenerationType = "link" | "app";
 
-export const SURVEY_TYPE_OPTIONS: { value: TSurveyGenerationType }[] = [{ value: "link" }];
+export const SURVEY_TYPE_OPTIONS: { value: TSurveyGenerationType }[] = [{ value: "link" }, { value: "app" }];
 
 export const getUnavailableMessageKey = (reason?: TAIUnavailableReason) => {
   if (reason === "read_only") {

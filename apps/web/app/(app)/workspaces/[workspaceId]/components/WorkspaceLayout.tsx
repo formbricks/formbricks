@@ -53,6 +53,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
       )}
 
       <PendingDowngradeBanner
+        organizationId={organization.id}
         lastChecked={lastChecked}
         isPendingDowngrade={isPendingDowngrade ?? false}
         active={active}

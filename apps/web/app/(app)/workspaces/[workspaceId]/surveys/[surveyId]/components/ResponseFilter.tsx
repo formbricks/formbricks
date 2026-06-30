@@ -53,7 +53,7 @@ export const PopoverTriggerButton = React.forwardRef<HTMLButtonElement, PopoverT
       ref={ref}
       type="button"
       {...props}
-      className="flex min-w-[8rem] cursor-pointer items-center justify-between rounded-md border border-slate-300 bg-white p-2 hover:border-slate-400">
+      className="flex min-w-32 cursor-pointer items-center justify-between rounded-md border border-slate-300 bg-white p-2 hover:border-slate-400">
       <span className="text-sm text-slate-700">{children}</span>
       <div className="ml-3">
         {isOpen ? (

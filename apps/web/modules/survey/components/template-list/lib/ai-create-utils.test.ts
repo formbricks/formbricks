@@ -12,7 +12,7 @@ describe("ai-create-utils", () => {
   test("defines prompt limits and supported survey types", () => {
     expect(AI_SURVEY_PROMPT_MIN_LENGTH).toBe(4);
     expect(AI_SURVEY_PROMPT_MAX_LENGTH).toBe(1200);
-    expect(SURVEY_TYPE_OPTIONS).toEqual([{ value: "link" }]);
+    expect(SURVEY_TYPE_OPTIONS).toEqual([{ value: "link" }, { value: "app" }]);
   });
 
   test("returns the unavailable message key for each AI reason", () => {

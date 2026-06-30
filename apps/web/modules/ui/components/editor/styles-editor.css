@@ -27,7 +27,7 @@
 }
 
 .editor-container:focus-within {
-  @apply border-brand-dark;
+  border-color: var(--color-brand-dark);
 }
 
 .editor-inner {

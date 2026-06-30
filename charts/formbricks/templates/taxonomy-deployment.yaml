@@ -1,7 +1,10 @@
 {{- if .Values.taxonomy.enabled }}
 {{- $provider := .Values.taxonomy.llm.provider | default "openai-compatible" -}}
-{{- if not (has $provider (list "openai-compatible" "bedrock")) }}
-  {{- fail "taxonomy.llm.provider must be 'openai-compatible' or 'bedrock'" }}
+{{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
+  {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
+{{- end }}
+{{- if and (eq $provider "vertex-gemini") (or (not .Values.taxonomy.llm.vertex.project) (not .Values.taxonomy.llm.vertex.location)) }}
+  {{- fail "taxonomy.llm.vertex.project and taxonomy.llm.vertex.location are required when taxonomy.llm.provider is 'vertex-gemini'" }}
 {{- end }}
 ---
 apiVersion: apps/v1
@@ -137,6 +140,16 @@ spec:
                 secretKeyRef:
                   name: {{ include "formbricks.taxonomyLlmSecretName" . }}
                   key: {{ .Values.taxonomy.llm.apiKeySecretKey | default "TAXONOMY_LLM_API_KEY" }}
+            {{- else if eq $provider "vertex-gemini" }}
+            - name: TAXONOMY_VERTEX_PROJECT
+              value: {{ .Values.taxonomy.llm.vertex.project | quote }}
+            - name: TAXONOMY_VERTEX_LOCATION
+              value: {{ .Values.taxonomy.llm.vertex.location | quote }}
+            - name: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.taxonomyVertexSecretName" . }}
+                  key: {{ .Values.taxonomy.llm.vertex.credentialsJsonSecretKey | default "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" }}
             {{- end }}
             - name: TAXONOMY_LLM_TEMPERATURE
               value: {{ .Values.taxonomy.llm.temperature | quote }}

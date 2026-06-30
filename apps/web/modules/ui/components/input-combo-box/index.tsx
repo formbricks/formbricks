@@ -254,14 +254,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         <DropdownMenuContent
           side="bottom"
           align="start"
-          className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-52"
+          className="w-(--radix-dropdown-menu-trigger-width) min-w-52"
           data-testid="dropdown-menu-content">
           <Command className="h-full max-h-[400px] overflow-y-auto">
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput
                   placeholder={resolvedSearchPlaceholder}
-                  className="h-8 border-none placeholder-slate-300 outline-none"
+                  className="h-8 border-none placeholder-slate-300 outline-hidden"
                   autoFocus
                   ref={searchRef}
                 />
@@ -278,7 +278,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               {options && options.length > 0 && (
                 <CommandGroup className="p-0">
                   {options.map((opt) => (
-                    <CommandItem key={opt.value} onSelect={() => handleSelect(opt)} className="truncate px-2">
+                    <CommandItem
+                      key={opt.value}
+                      value={String(opt.value)}
+                      keywords={[opt.label]}
+                      onSelect={() => handleSelect(opt)}
+                      className="truncate px-2">
                       {showCheckIcon && isSelected(opt) && (
                         <CheckIcon className="size-4 text-slate-300 hover:text-slate-400" />
                       )}
@@ -299,7 +304,11 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                     <div className="px-2 pb-2 text-xs font-medium text-slate-500">{group.label}</div>
                     {group.options.map((opt) =>
                       opt.children ? (
-                        <CommandItem key={opt.value} className="flex w-full items-center justify-center p-0">
+                        <CommandItem
+                          key={opt.value}
+                          value={String(opt.value)}
+                          keywords={[opt.label]}
+                          className="flex w-full items-center justify-center p-0">
                           <DropdownMenuSub key={opt.value}>
                             <DropdownMenuSubTrigger
                               className="w-full"
@@ -354,6 +363,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                       ) : (
                         <CommandItem
                           key={opt.value}
+                          value={String(opt.value)}
+                          keywords={[opt.label]}
                           onSelect={() => handleSelect(opt)}
                           className="truncate px-2">
                           {showCheckIcon && isSelected(opt) && (

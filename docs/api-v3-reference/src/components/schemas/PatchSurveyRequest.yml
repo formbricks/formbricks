@@ -8,9 +8,11 @@ description: >
   Immutable/system fields
 
   such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps,
-  `questions`, analytics,
+  `questions`, analytics, styling,
 
-  distribution, styling, targeting, and scripts are rejected.
+  and scripts are rejected. App surveys (stored `type: app`) additionally accept `distribution` and
+  `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the
+  Contacts entitlement.
 
 
   `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`,
@@ -80,4 +82,14 @@ properties:
     type: array
     items:
       $ref: ./SurveyVariable.yml
+  distribution:
+    allOf:
+      - $ref: ./SurveyDistribution.yml
+    description: >
+      App-survey runtime/display settings. Only valid for stored `type: app`. Replaces the full
+      distribution; omitted scalars reset to their defaults.
+  targeting:
+    allOf:
+      - $ref: ./SurveyTargeting.yml
+    description: App-survey contact targeting. Only valid for stored app surveys.
 additionalProperties: false

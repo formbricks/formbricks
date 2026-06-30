@@ -23,7 +23,7 @@ const sizeClasses = {
 const cardContentClasses = "flex h-full w-full flex-col items-center gap-y-4 text-center no-underline";
 
 const interactiveCardClasses =
-  "cursor-pointer hover:scale-[1.03] hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2";
+  "cursor-pointer hover:scale-[1.03] hover:border-slate-300 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2";
 
 export const OptionCard = ({
   size,
@@ -44,7 +44,7 @@ export const OptionCard = ({
       {children}
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <p className="text-lg font-medium text-slate-800">{title}</p>
-        <p className="text-balance text-sm text-slate-500">{description}</p>
+        <p className="text-sm text-balance text-slate-500">{description}</p>
       </div>
     </div>
   );

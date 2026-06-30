@@ -1,0 +1,12 @@
+type: object
+description: >
+  Reference to an existing workspace action class that triggers this app survey. Discover available
+  action-class ids with `GET /api/v3/action-classes`.
+required:
+  - actionClassId
+properties:
+  actionClassId:
+    type: string
+    format: cuid2
+    description: Id of an action class in the same workspace.
+additionalProperties: false

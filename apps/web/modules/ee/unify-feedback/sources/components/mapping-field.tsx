@@ -255,7 +255,7 @@ export const FormTargetField = ({
                               <span className="flex min-w-0 items-center gap-2">
                                 <span className="truncate text-slate-900">{column.name}</span>
                                 {otherUsage && (
-                                  <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
+                                  <span className="shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
                                     {t("workspace.unify.csv_column_used_by", { target: otherUsage })}
                                   </span>
                                 )}

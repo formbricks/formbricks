@@ -1,0 +1,16 @@
+type: object
+description: >
+  App-survey contact targeting. Only valid for `type: app`. `filters: []` targets everyone. Setting or
+  changing non-empty filters requires the Contacts entitlement; otherwise create/patch returns 403.
+
+
+  `attribute` filters reference workspace contact-attribute keys (discover them via
+  `GET /api/v3/contact-attribute-keys`) and `segment` filters reference other segment ids — both are
+  workspace-scoped resources you must obtain before constructing filters (an invalid key/id targets no
+  one rather than erroring). See `SegmentFilter` for the per-`root.type` operator sets.
+required:
+  - filters
+properties:
+  filters:
+    $ref: ./SegmentFilters.yml
+additionalProperties: false

@@ -18,6 +18,42 @@ export function flattenSurveyPages(data?: InfiniteData<TSurveyListPage>): TSurve
   return data?.pages.flatMap((page) => page.data) ?? [];
 }
 
+export function updateSurveyInInfiniteData(
+  data: InfiniteData<TSurveyListPage> | undefined,
+  surveyId: string,
+  patch: Partial<TSurveyListItem>
+): InfiniteData<TSurveyListPage> | undefined {
+  if (!data) {
+    return data;
+  }
+
+  let surveyWasFound = false;
+
+  const pages = data.pages.map((page) => {
+    const nextData = page.data.map((survey) => {
+      if (survey.id !== surveyId) {
+        return survey;
+      }
+      surveyWasFound = true;
+      return { ...survey, ...patch };
+    });
+
+    return {
+      ...page,
+      data: nextData,
+    };
+  });
+
+  if (!surveyWasFound) {
+    return data;
+  }
+
+  return {
+    ...data,
+    pages,
+  };
+}
+
 export function removeSurveyFromInfiniteData(
   data: InfiniteData<TSurveyListPage> | undefined,
   surveyId: string

@@ -4,16 +4,20 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackDirectoryView } from "@/modules/ee/feedback-directory/components/feedback-directory-view";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
+import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
+export const FeedbackDirectoriesPage = async (props: { params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { currentUserMembership, organization } = await getWorkspaceAuth(params.workspaceId);
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
+
+  const { currentUserMembership, organization } = await getOrganizationAuth(params.organizationId);
 
   const { isOwner, isManager } = getAccessFlags(currentUserMembership.role);
 
@@ -35,13 +39,13 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspa
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  ? getOrganizationBillingPath(params.organizationId, IS_FORMBRICKS_CLOUD)
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  ? getOrganizationBillingPath(params.organizationId, IS_FORMBRICKS_CLOUD)
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}
