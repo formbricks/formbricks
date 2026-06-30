@@ -118,7 +118,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
                 onLoadingComplete={() => setBackgroundLoaded(true)}
               />
               {authorDetailsForUnsplash.authorName && (
-                <div className="absolute bottom-4 right-6 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
+                <div className="absolute right-6 bottom-4 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
                   <span>{t("common.photo_by")}</span>
                   <Link
                     href={authorDetailsForUnsplash.authorURL + "?utm_source=formbricks&utm_medium=referral"}
@@ -162,7 +162,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   const renderContent = () => (
     <div
       className={cn(
-        "no-scrollbar absolute flex h-full w-full overflow-hidden",
+        "absolute no-scrollbar flex h-full w-full overflow-hidden",
         useNaturalHeight
           ? "flex-col items-stretch overflow-hidden"
           : "items-center justify-center overflow-hidden"
@@ -178,7 +178,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         data-testid="mobile-preview-container"
         className={`relative h-[90%] w-full overflow-hidden rounded-[3rem] border-[6px] border-slate-400 lg:w-[75%] ${getFilterStyle()}`}>
         {/* below element is use to create notch for the mobile device mockup   */}
-        <div className="absolute left-1/2 right-1/2 top-2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
+        <div className="absolute top-2 right-1/2 left-1/2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
         {surveyType === "link" && renderBackground()}
         {renderContent()}
       </div>
@@ -187,13 +187,13 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     return (
       <div
         ref={ContentRef}
-        className={cn("flex flex-col rounded-b-lg", useNaturalHeight ? "min-h-0 flex-1" : "flex-grow")}>
+        className={cn("flex flex-col rounded-b-lg", useNaturalHeight ? "min-h-0 flex-1" : "grow")}>
         <div
           className={cn(
             "relative flex w-full flex-col",
             useNaturalHeight
-              ? "min-h-0 flex-1 items-stretch overflow-hidden pb-4 pt-0"
-              : "flex-grow items-center justify-center p-4 py-6"
+              ? "min-h-0 flex-1 items-stretch overflow-hidden pt-0 pb-4"
+              : "grow items-center justify-center p-4 py-6"
           )}>
           {renderBackground()}
           <div

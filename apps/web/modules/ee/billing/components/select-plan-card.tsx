@@ -139,7 +139,7 @@ export const SelectPlanCard = ({
           <ul className="my-3 w-full space-y-3 text-left">
             {SELECT_PLAN_FEATURE_KEYS.map((key) => (
               <li key={key} className="flex items-center gap-3 text-slate-700">
-                <CheckIcon className="size-5 flex-shrink-0 text-slate-900" />
+                <CheckIcon className="size-5 shrink-0 text-slate-900" />
                 <span>{key}</span>
               </li>
             ))}
@@ -156,7 +156,7 @@ export const SelectPlanCard = ({
         </div>
 
         <div className="w-full overflow-hidden border-t border-slate-100 bg-slate-50 py-4">
-          <div className="flex w-max animate-logo-scroll gap-12 hover:[animation-play-state:paused]">
+          <div className="flex w-max animate-logo-scroll gap-12 hover:paused">
             {[...CUSTOMER_LOGOS, ...CUSTOMER_LOGOS].map((logo, index) => (
               <div
                 key={`${logo.alt}-${index}`}

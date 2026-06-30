@@ -36,7 +36,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const { session, isBilling, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
+    return redirect(getBillingFallbackPath(workspace.organizationId, IS_FORMBRICKS_CLOUD));
   }
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;

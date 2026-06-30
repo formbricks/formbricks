@@ -573,7 +573,7 @@ export async function PreviewEmailTemplate({
           <Section className="mx-0 mt-4">
             {firstQuestion.choices.map((choice) => (
               <Link
-                className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
+                className="rounded-custom mr-3 mb-3 inline-block h-[150px] w-[250px]"
                 href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choice.id)}
                 key={choice.id}
                 target={PREVIEW_LINK_TARGET}>
@@ -619,11 +619,11 @@ export async function PreviewEmailTemplate({
           <Container className="mx-0">
             <Section className="w-full table-auto">
               <Row>
-                <Column className="w-40 break-words px-4 py-2" />
+                <Column className="w-40 px-4 py-2 wrap-break-word" />
                 {firstQuestion.columns.map((column) => {
                   return (
                     <Column
-                      className="text-question-color max-w-40 break-words px-4 py-2 text-center"
+                      className="text-question-color max-w-40 px-4 py-2 text-center wrap-break-word"
                       key={column.id}
                       style={{ ...getLightModeTextStyle(styleTokens), textAlign: "center" }}>
                       {getLocalizedValue(column.label, "default")}
@@ -643,7 +643,9 @@ export async function PreviewEmailTemplate({
                           }
                         : undefined
                     }>
-                    <Column className="w-40 break-words px-4 py-2" style={getLightModeTextStyle(styleTokens)}>
+                    <Column
+                      className="w-40 px-4 py-2 wrap-break-word"
+                      style={getLightModeTextStyle(styleTokens)}>
                       {getLocalizedValue(row.label, "default")}
                     </Column>
                     {firstQuestion.columns.map((column) => {
@@ -878,7 +880,7 @@ function PreviewFieldList({
       {fields.map((field) => (
         <Section className="mt-3 w-full" key={field.id}>
           <Text
-            className="text-question-color font-survey m-0 mb-2 text-sm font-normal leading-6"
+            className="text-question-color font-survey m-0 mb-2 text-sm leading-6 font-normal"
             style={getFieldLabelStyle(styleTokens)}>
             {field.label}
           </Text>

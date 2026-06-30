@@ -9,7 +9,6 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -52,8 +51,6 @@ export const EmailCustomizationSettings = ({
   isStorageConfigured,
   enterpriseLicenseRequestFormUrl,
 }: EmailCustomizationSettingsProps) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -189,13 +186,13 @@ export const EmailCustomizationSettings = ({
     {
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
-        ? `${workspaceBasePath}/settings/organization/billing`
+        ? `/organizations/${organization.id}/settings/billing`
         : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),
       href: isFormbricksCloud
-        ? `${workspaceBasePath}/settings/organization/billing`
+        ? `/organizations/${organization.id}/settings/billing`
         : "https://formbricks.com/learn-more-self-hosting-license",
     },
   ];

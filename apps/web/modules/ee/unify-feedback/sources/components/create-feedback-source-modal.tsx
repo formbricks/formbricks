@@ -11,11 +11,8 @@ import {
   TFeedbackSourceType,
   UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
 } from "@formbricks/types/feedback-source";
-import {
-  getResponseCountAction,
-  importCsvDataAction,
-  importHistoricalResponsesAction,
-} from "@/lib/feedback-source/actions";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -46,6 +43,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { importCsvFile } from "../csv-import-client";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
   CSV_PROTECTED_TARGET_IDS,
@@ -137,6 +135,7 @@ export const CreateFeedbackSourceModal = ({
   directories,
 }: CreateFeedbackSourceModalProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
 
   const defaultFeedbackSourceName = useMemo<Record<TFeedbackSourceType, string>>(
     () => ({
@@ -161,6 +160,7 @@ export const CreateFeedbackSourceModal = ({
   const [selectedType, setSelectedType] = useState<TFeedbackSourceOptionId | null>(null);
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvParsedData, setCsvParsedData] = useState<Record<string, string>[]>([]);
   const [enumValidationErrors, setEnumValidationErrors] = useState<TEnumValidationError[]>([]);
   const [csvFeedbackSourceName, setCsvFeedbackSourceName] = useState("");
@@ -248,6 +248,7 @@ export const CreateFeedbackSourceModal = ({
     });
     setMappings([]);
     setSourceFields([]);
+    setCsvFile(null);
     setCsvParsedData([]);
     setEnumValidationErrors([]);
     setResponseCountBySurvey({});
@@ -298,6 +299,8 @@ export const CreateFeedbackSourceModal = ({
       setCurrentStep("selectType");
       setMappings([]);
       setSourceFields([]);
+      setCsvFile(null);
+      setCsvParsedData([]);
       setEnumValidationErrors([]);
     }
   };
@@ -332,11 +335,13 @@ export const CreateFeedbackSourceModal = ({
   };
 
   const handleCsvImport = async (feedbackSourceId: string): Promise<TImportState> => {
+    if (!csvFile) return "skipped";
+
     setIsImporting(true);
-    const importResult = await importCsvDataAction({
+    const importResult = await importCsvFile({
       feedbackSourceId,
       workspaceId,
-      csvData: csvParsedData,
+      file: csvFile,
     });
     setIsImporting(false);
 
@@ -350,7 +355,12 @@ export const CreateFeedbackSourceModal = ({
       );
       return "success";
     } else {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(importResult.error.error, t, {
+          row: importResult.error.row,
+          max: importResult.error.max,
+        })
+      );
       return "error";
     }
   };
@@ -515,7 +525,9 @@ export const CreateFeedbackSourceModal = ({
                     )}
                   />
 
-                  {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
+                  {directories.length === 0 && (
+                    <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} t={t} />
+                  )}
 
                   <FormField
                     control={formbricksForm.control}
@@ -602,7 +614,9 @@ export const CreateFeedbackSourceModal = ({
                   <p className="text-xs text-slate-500">{t("workspace.unify.source_name_hint")}</p>
                 </div>
 
-                {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
+                {directories.length === 0 && (
+                  <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} t={t} />
+                )}
 
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
                   <CsvFeedbackSourceUI
@@ -613,6 +627,7 @@ export const CreateFeedbackSourceModal = ({
                       setEnumValidationErrors([]);
                     }}
                     onSourceFieldsChange={setSourceFields}
+                    onFileChange={setCsvFile}
                     onParsedDataChange={setCsvParsedData}
                     onSuggestFeedbackSourceName={handleSuggestFeedbackSourceName}
                   />
@@ -694,20 +709,22 @@ export const CreateFeedbackSourceModal = ({
 };
 
 interface NoFeedbackDirectoryAlertProps {
-  workspaceId: string;
+  organizationId?: string;
   t: (key: string) => string;
 }
 
-const NoFeedbackDirectoryAlert = ({ workspaceId, t }: NoFeedbackDirectoryAlertProps) => {
+const NoFeedbackDirectoryAlert = ({ organizationId, t }: NoFeedbackDirectoryAlertProps) => {
   return (
     <Alert variant="error" size="small">
       <div>
         <p>{t("workspace.unify.no_feedback_directory_available")}</p>
-        <a
-          className="mt-1 inline-block font-medium underline"
-          href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
-          {t("workspace.unify.go_to_feedback_directories")}
-        </a>
+        {organizationId && (
+          <a
+            className="mt-1 inline-block font-medium underline"
+            href={`/organizations/${organizationId}/settings/feedback-directories`}>
+            {t("workspace.unify.go_to_feedback_directories")}
+          </a>
+        )}
       </div>
     </Alert>
   );

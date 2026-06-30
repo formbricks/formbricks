@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
 import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
 describe("getValidatedResponseUpdateInput", () => {
@@ -80,5 +81,32 @@ describe("getValidatedResponseUpdateInput", () => {
         }),
       })
     );
+  });
+
+  test("clamps out-of-range ttc values instead of rejecting the response", async () => {
+    const request = new Request("http://localhost/api/v1/client/test/responses/response-id", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        finished: true,
+        ttc: { q1: -5, q2: 9_000_000_000_000, q3: 1234 },
+      }),
+    });
+
+    const result = await getValidatedResponseUpdateInput(request);
+
+    expect("responseUpdateInput" in result).toBe(true);
+    if (!("responseUpdateInput" in result)) {
+      throw new Error("Expected a parsed responseUpdateInput");
+    }
+
+    // Bogus timing telemetry is sanitized at the boundary, not rejected.
+    expect(result.responseUpdateInput.ttc).toEqual({
+      q1: 0,
+      q2: MAX_RESPONSE_TTC,
+      q3: 1234,
+    });
   });
 });

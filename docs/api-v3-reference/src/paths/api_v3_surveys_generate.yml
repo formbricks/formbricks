@@ -15,13 +15,14 @@ post:
     /api/v3/surveys`.
 
 
-    The generated payload always sets `status: draft`. The initial contract
-    supports only
+    The generated payload always sets `status: draft`. Both `type: link` and
+    `type: app` are
 
-    `type: link`; app and website survey creation must stay disabled until the
-    v3 create
+    supported; for `app`, the payload includes a default `distribution` (display
+    once, no triggers,
 
-    endpoint accepts those types.
+    no targeting) that you finish configuring in the editor or via the create
+    request.
 
 
     Prompt privacy: prompt text is sent to the configured AI provider to create
@@ -143,11 +144,7 @@ post:
                       Describe the survey goal, audience, or topic in a sentence
                       so the AI can create a useful draft.
     '401':
-      description: Not authenticated (no valid session or API key)
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3Unauthorized.yml
     '403':
       description: >-
         Forbidden — no write access, workspace does not exist, AI is not in
@@ -173,6 +170,14 @@ post:
                 detail: AI smart tools are disabled for this organization.
                 code: ai_smart_tools_disabled
                 requestId: req_123
+            aiNotInPlan:
+              summary: AI features not enabled for the plan
+              value:
+                title: AI Unavailable
+                status: 403
+                detail: AI features are not enabled for this organization's plan.
+                code: ai_features_not_enabled
+                requestId: req_123
     '422':
       description: AI generated an invalid payload after schema and v3 create validation
       content:
@@ -194,22 +199,9 @@ post:
                   - name: generatedSurvey.blocks
                     reason: Too small
     '429':
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-          description: Seconds until the current rate-limit window resets
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3TooManyRequests.yml
     '500':
-      description: Internal Server Error
-      content:
-        application/problem+json:
-          schema:
-            $ref: ../components/schemas/Problem.yml
+      $ref: ../components/responses/V3InternalServerError.yml
     '502':
       description: The configured AI provider failed or could not produce a valid draft
       content:

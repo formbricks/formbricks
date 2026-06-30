@@ -121,7 +121,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
 
   if (!data || data.length === 0) {
     return (
-      <div className="text-muted-foreground flex h-full min-h-[16rem] items-center justify-center">
+      <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
         {t("workspace.analysis.charts.no_data_available")}
       </div>
     );
@@ -140,7 +140,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
 
   if (dataKeys.length === 0) {
     return (
-      <div className="text-muted-foreground flex h-full min-h-[16rem] items-center justify-center">
+      <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
         {t("workspace.analysis.charts.no_data_available")}
       </div>
     );
@@ -267,7 +267,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       const pieResult = preparePieData(data, dataKey);
       if (!pieResult) {
         return (
-          <div className="text-muted-foreground flex h-full min-h-[16rem] items-center justify-center">
+          <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
             {t("workspace.analysis.charts.no_valid_data_to_display")}
           </div>
         );
@@ -277,7 +277,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       const centerLabel = formatCubeColumnHeader(dataKey, t);
 
       return (
-        <div className="h-full min-h-[16rem] w-full min-w-0">
+        <div className="h-full min-h-64 w-full min-w-0">
           <ChartContainer config={chartConfig} className="h-full w-full min-w-0">
             <PieChart margin={{ top: 16, right: 32, bottom: 8, left: 32 }}>
               <Pie
@@ -324,7 +324,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       return (
         <div className="flex h-full items-center justify-center p-4">
           <div className="text-center">
-            <div className="text-foreground text-5xl font-semibold tabular-nums tracking-tight">
+            <div className="text-foreground text-5xl font-semibold tracking-tight tabular-nums">
               {formatted}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
@@ -334,7 +334,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     }
     default:
       return (
-        <div className="text-muted-foreground flex h-full min-h-[16rem] items-center justify-center">
+        <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
           {t("workspace.analysis.charts.chart_type_not_supported", { chartType })}
         </div>
       );

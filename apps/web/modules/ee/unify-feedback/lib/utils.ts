@@ -3,6 +3,30 @@ import { v7 as uuidv7 } from "uuid";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { SOURCE_TYPE_PRESET_OPTIONS, type TFeedbackRecordFormValues } from "./types";
 
+export interface ResolvedFeedbackText {
+  text: string | null; // translation if usable, else original value_text
+  original: string | null;
+  isTranslated: boolean; // non-empty translation that differs from the original
+  langKey: string | null; // set only when isTranslated
+}
+
+// Pick which feedback text to show (ENG-1253): the translation when usable, else the original.
+export const resolveFeedbackDisplayText = (
+  record: Pick<FeedbackRecordData, "value_text" | "value_text_translated" | "translation_lang_key">
+): ResolvedFeedbackText => {
+  const original = record.value_text ?? null;
+  const translated = record.value_text_translated;
+  const hasTranslation =
+    typeof translated === "string" && translated.trim().length > 0 && translated !== original;
+
+  return {
+    text: hasTranslation ? translated : original,
+    original,
+    isTranslated: hasTranslation,
+    langKey: hasTranslation ? (record.translation_lang_key ?? null) : null,
+  };
+};
+
 export const getValueFieldByType = (
   fieldType: TFeedbackRecordFormValues["field_type"]
 ): "value_text" | "value_number" | "value_boolean" | "value_date" => {

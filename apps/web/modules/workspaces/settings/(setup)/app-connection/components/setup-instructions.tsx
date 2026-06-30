@@ -37,13 +37,13 @@ export const SetupInstructions = ({ htmlSnippet, aiPrompt }: Readonly<SetupInstr
       />
       {selectedOption === "ai" ? (
         <CodeBlock
-          customEditorClass="!bg-white border border-slate-200 max-h-52 overflow-y-auto"
+          customEditorClass="bg-white! border border-slate-200 max-h-52 overflow-y-auto"
           language="markdown"
           noMargin>
           {aiPrompt}
         </CodeBlock>
       ) : (
-        <CodeBlock customEditorClass="!bg-white border border-slate-200" language="html" noMargin>
+        <CodeBlock customEditorClass="bg-white! border border-slate-200" language="html" noMargin>
           {htmlSnippet}
         </CodeBlock>
       )}

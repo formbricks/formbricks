@@ -7,6 +7,17 @@ description: >
 
   Legacy DB rows may include survey **type** values `website` or `web` (see
   Prisma); filter **type** only accepts `link` | `app`.
+required:
+  - id
+  - name
+  - workspaceId
+  - type
+  - status
+  - publishOn
+  - createdAt
+  - updatedAt
+  - responseCount
+  - creator
 properties:
   id:
     type: string
@@ -34,21 +45,22 @@ properties:
   updatedAt:
     type: string
     format: date-time
+  publishOn:
+    type:
+      - string
+      - 'null'
+    format: date-time
+    description: Scheduled publish time (ISO 8601), or null if not scheduled.
   responseCount:
     type: integer
   creator:
     type:
       - object
       - 'null'
+    description: The user who created the survey, or null for API-key/system-created surveys.
+    required:
+      - name
     properties:
       name:
         type: string
-  singleUse:
-    type:
-      - object
-      - 'null'
-    properties:
-      enabled:
-        type: boolean
-      isEncrypted:
-        type: boolean
+    additionalProperties: false

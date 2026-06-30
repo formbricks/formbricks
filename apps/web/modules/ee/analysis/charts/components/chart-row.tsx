@@ -48,7 +48,7 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
         <div className="col-span-6 grid grid-cols-6 content-center">
           <div className="col-span-3 flex items-center pl-6 text-sm">
             <div className="flex items-center gap-4">
-              <div className="ph-no-capture w-8 flex-shrink-0 text-slate-500">
+              <div className="ph-no-capture w-8 shrink-0 text-slate-500">
                 <IconComponent className="size-5" />
               </div>
               <div className="flex flex-col">
@@ -56,10 +56,10 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
               </div>
             </div>
           </div>
-          <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+          <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">
             <div className="ph-no-capture text-slate-900">{chart.creator?.name ?? "-"}</div>
           </div>
-          <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
+          <div className="col-span-1 my-auto hidden text-center text-sm whitespace-normal text-slate-500 sm:block">
             <div className="ph-no-capture text-slate-900">{formatDate(new Date(chart.createdAt))}</div>
           </div>
           <div className="col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">

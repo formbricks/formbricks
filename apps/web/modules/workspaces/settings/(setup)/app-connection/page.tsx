@@ -215,7 +215,7 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
           {showAIPrompt ? (
             <SetupInstructions htmlSnippet={htmlSnippet} aiPrompt={aiPrompt} />
           ) : (
-            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="html" noMargin>
+            <CodeBlock customEditorClass="bg-white! border border-slate-200" language="html" noMargin>
               {htmlSnippet}
             </CodeBlock>
           )}

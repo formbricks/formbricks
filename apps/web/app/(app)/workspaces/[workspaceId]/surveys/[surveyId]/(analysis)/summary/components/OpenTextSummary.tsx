@@ -35,7 +35,7 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div className="border-t border-slate-200"></div>
       {elementSummary.samples.length === 0 ? (

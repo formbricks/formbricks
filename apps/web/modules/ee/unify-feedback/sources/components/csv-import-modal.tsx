@@ -6,13 +6,11 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
-import { importCsvDataAction } from "@/lib/feedback-source/actions";
 import {
   formatCsvMissingMappedSourceColumns,
   getMissingCsvMappedSourceColumns,
   getMissingRequiredCsvSourceColumns,
 } from "@/lib/feedback-source/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -24,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { importCsvFile } from "../csv-import-client";
 import { createFeedbackCSVDataSchema, getTranslatedFeedbackSourceError } from "../types";
 import { validateCsvFile } from "../utils";
 
@@ -64,7 +63,7 @@ export function CsvImportModal({
     file
       .text()
       .then((csv) => {
-        const records = parse(csv, { columns: true, skip_empty_lines: true });
+        const records = parse(csv, { columns: true, relax_column_count: true, skip_empty_lines: true });
         const result = createFeedbackCSVDataSchema(t).safeParse(records);
 
         if (!result.success) {
@@ -123,10 +122,10 @@ export function CsvImportModal({
   };
 
   const handleImport = async () => {
-    if (parsedData.length === 0) return;
+    if (!csvFile || parsedData.length === 0) return;
 
     setIsImporting(true);
-    const result = await importCsvDataAction({ feedbackSourceId, workspaceId, csvData: parsedData });
+    const result = await importCsvFile({ feedbackSourceId, workspaceId, file: csvFile });
     setIsImporting(false);
 
     if (result?.data) {
@@ -142,7 +141,12 @@ export function CsvImportModal({
       setRowCount(0);
       onOpenChange(false);
     } else {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(result.error.error, t, {
+          row: result.error.row,
+          max: result.error.max,
+        })
+      );
     }
   };
 

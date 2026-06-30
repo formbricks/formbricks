@@ -341,6 +341,17 @@ describe("ZV3SurveyGenerateBody", () => {
     expect(result.success).toBe(true);
   });
 
+  test("accepts both link and app survey types and defaults to link", () => {
+    const base = {
+      workspaceId: "clxx1234567890123456789012",
+      prompt: "Measure onboarding completion for new users.",
+    };
+
+    expect(ZV3SurveyGenerateBody.parse(base).type).toBe("link");
+    expect(ZV3SurveyGenerateBody.parse({ ...base, type: "app" }).type).toBe("app");
+    expect(ZV3SurveyGenerateBody.safeParse({ ...base, type: "website" }).success).toBe(false);
+  });
+
   test("normalizes requested survey language aliases into supported app locales", () => {
     const cases = [
       { input: "es_ES", expected: "es-ES" },
