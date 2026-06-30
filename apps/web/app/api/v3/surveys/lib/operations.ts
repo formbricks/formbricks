@@ -58,7 +58,7 @@ type TCreateV3SurveyParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
-  createdFrom?: "blank" | "template" | "xm-template";
+  createdFrom?: "blank" | "template" | "xm-template" | "ai";
   createOptions?: TV3SurveyCreateOptions;
   authResult?: V3WorkspaceContext;
 };
