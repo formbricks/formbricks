@@ -201,10 +201,93 @@ describe("cube queryRewrite", () => {
     const rewrittenQuery = queryRewrite(query, { securityContext });
 
     expect(rewrittenQuery.filters).toEqual([
-      { member: "FeedbackRecords.sourceType", operator: "equals", values: ["positive"] },
+      // exact-match filters on string dimensions are redirected to the case-insensitive companion
+      { member: "FeedbackRecords.sourceTypeNormalized", operator: "equals", values: ["positive"] },
       { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
     ]);
     expect(query.filters).toHaveLength(1);
+  });
+
+  test("rewrites equals on a string dimension to its case-insensitive companion", () => {
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.sourceName", operator: "equals", values: ["After-Match"] }],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "FeedbackRecords.sourceNameNormalized", operator: "equals", values: ["after-match"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
+  });
+
+  test("trims and lowercases values and handles notEquals", () => {
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.language", operator: "notEquals", values: ["  EN ", "De"] }],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "FeedbackRecords.languageNormalized", operator: "notEquals", values: ["en", "de"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
+  });
+
+  test("leaves contains and other substring operators untouched", () => {
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.sourceName", operator: "contains", values: ["After"] }],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "FeedbackRecords.sourceName", operator: "contains", values: ["After"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
+  });
+
+  test("does not rewrite equals on non-normalizable members (ids stay exact)", () => {
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.userId", operator: "equals", values: ["ABC-123"] }],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "FeedbackRecords.userId", operator: "equals", values: ["ABC-123"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
+  });
+
+  test("normalizes equals filters nested inside an or group", () => {
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        {
+          or: [
+            { member: "FeedbackRecords.sourceName", operator: "equals", values: ["After-Match"] },
+            { member: "FeedbackRecords.sourceName", operator: "contains", values: ["Pre"] },
+          ],
+        },
+      ],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      {
+        or: [
+          { member: "FeedbackRecords.sourceNameNormalized", operator: "equals", values: ["after-match"] },
+          { member: "FeedbackRecords.sourceName", operator: "contains", values: ["Pre"] },
+        ],
+      },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
   });
 
   test("logs sanitized Cube audit metadata without raw filter values", () => {
