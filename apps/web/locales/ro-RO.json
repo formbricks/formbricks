@@ -2300,7 +2300,7 @@
         "billing_interval_toggle": "Interval de facturare",
         "cancel_at_period_end": "Anulează la sfârșitul perioadei",
         "confirm_upgrade_body": "Ești pe cale să faci upgrade la planul {plan} la {amount} {period}. O taxă proporțională pentru restul perioadei tale curente de facturare este aplicată imediat, iar orice taxe aplicabile sunt calculate la plată. Continui?",
-        "confirm_upgrade_body_with_charge": "Ești pe cale să treci la planul {plan} ({period}). Vei fi taxat cu {chargeNow} acum pentru restul perioadei tale de facturare curente, cu orice taxe aplicabile calculate la plată. Continui?",
+        "confirm_upgrade_body_with_charge": "Ești pe cale să treci la planul {plan} ({period}). Vei fi taxat cu {chargeNow} acum pentru restul perioadei tale de facturare curente, cu orice taxe aplicabile calculate la plată.",
         "confirm_upgrade_button": "Confirmă upgrade-ul",
         "confirm_upgrade_calculating": "Se calculează taxa proporțională…",
         "confirm_upgrade_description": "Poți schimba planul oricând dorești.",

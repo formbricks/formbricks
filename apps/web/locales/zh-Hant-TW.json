@@ -2300,7 +2300,7 @@
         "billing_interval_toggle": "帳單週期",
         "cancel_at_period_end": "在週期結束時取消",
         "confirm_upgrade_body": "你即將升級至 {plan} 方案,費用為 {amount} {period}。系統會立即收取當前計費週期剩餘時間的按比例費用,並在付款時計算適用的稅金。要繼續嗎?",
-        "confirm_upgrade_body_with_charge": "你即將升級至 {plan} 方案({period})。你將立即支付 {chargeNow},涵蓋當前帳務週期的剩餘時間,並在付款時計算任何適用的稅金。要繼續嗎?",
+        "confirm_upgrade_body_with_charge": "你即將升級至 {plan} 方案({period})。你將立即支付 {chargeNow},涵蓋當前帳務週期的剩餘時間,並在付款時計算任何適用的稅金。",
         "confirm_upgrade_button": "確認升級",
         "confirm_upgrade_calculating": "正在計算你的按比例分攤費用…",
         "confirm_upgrade_description": "你可以隨時再次變更方案。",

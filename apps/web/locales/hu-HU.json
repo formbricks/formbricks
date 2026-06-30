@@ -2300,7 +2300,7 @@
         "billing_interval_toggle": "Számlázási időköz",
         "cancel_at_period_end": "Lemondás az időszak végén",
         "confirm_upgrade_body": "Ön most a(z) {plan} csomagra fog frissíteni {amount} {period} áron. A jelenlegi számlázási időszak hátralévő részére vonatkozó arányos díj azonnal felszámításra kerül, és a vonatkozó adók a fizetéskor kerülnek kiszámításra. Folytatja?",
-        "confirm_upgrade_body_with_charge": "Ön a {plan} csomag ({period}) verzióra készül frissíteni. A jelenlegi számlázási időszak hátralévő részére most {chargeNow} összeget számlázunk fel, a fizetéskor kiszámított vonatkozó adókkal együtt. Folytatja?",
+        "confirm_upgrade_body_with_charge": "Ön a {plan} csomag ({period}) verzióra készül frissíteni. A jelenlegi számlázási időszak hátralévő részére most {chargeNow} összeget számlázunk fel, a fizetéskor kiszámított vonatkozó adókkal együtt.",
         "confirm_upgrade_button": "Frissítés megerősítése",
         "confirm_upgrade_calculating": "Az arányosított díj kiszámítása folyamatban…",
         "confirm_upgrade_description": "Bármikor módosíthatja a csomagját.",
