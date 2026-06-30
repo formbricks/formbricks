@@ -333,4 +333,34 @@ describe("getWorkspaceStateData", () => {
 
     expect(codes).toEqual(["en-US", "fil-PH", "ak-GH", "en", "tl", "ak", "tw"]);
   });
+
+  test("distinguishes Simplified and Traditional Chinese (script preserved, not a bare 'zh')", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          languages: [buildLanguage("en-US", true), buildLanguage("zh-Hans-CN"), buildLanguage("zh-Hant-TW")],
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const codes = result.surveys[0].languages.map((sl) => sl.language.code);
+
+    // Each script keeps its own legacy aliases, so a deployed Chinese client matches whichever code it
+    // holds: Simplified -> zh / zh-CN / zh-Hans, Traditional -> zh-Hant / zh-TW. A region-strip would have
+    // emitted a single bare "zh" for both — which no Chinese client holds and can't tell the two apart.
+    expect(codes).toEqual([
+      "en-US",
+      "zh-Hans-CN",
+      "zh-Hant-TW",
+      "en",
+      "zh",
+      "zh-CN",
+      "zh-Hans",
+      "zh-Hant",
+      "zh-TW",
+    ]);
+  });
 });

@@ -25,4 +25,9 @@ describe("buildPrismaResponseData — language canonicalization (ENG-1067)", () 
   test("leaves undefined language as-is", () => {
     expect(buildPrismaResponseData(input(undefined), null, {}).language).toBeUndefined();
   });
+
+  test("treats blank/whitespace-only language as absent (not persisted)", () => {
+    expect(buildPrismaResponseData(input(""), null, {}).language).toBeUndefined();
+    expect(buildPrismaResponseData(input("   "), null, {}).language).toBeUndefined();
+  });
 });

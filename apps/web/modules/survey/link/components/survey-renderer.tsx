@@ -212,17 +212,24 @@ function computeStyling(
 function getLanguageCode(langParam: string | undefined, survey: TSurvey): string {
   if (!langParam) return "default";
 
-  // Match the URL `?lang=` value against the survey's languages by canonical equivalence, so a shared
-  // link with a legacy code (`?lang=pt`) still resolves to a migrated survey language (`pt-BR`), and a
-  // canonical link resolves a not-yet-migrated survey. Returns the survey's stored code so it lines up
-  // with the survey's i18n content keys.
+  // Match the URL `?lang=` value against the survey's languages. An exact code/alias match wins first;
+  // only if there's none do we fall back to canonical equivalence, so a shared link with a legacy code
+  // (`?lang=pt`) still resolves to a migrated survey language (`pt-BR`), while `?lang=pt-BR` always
+  // selects the `pt-BR` row regardless of array order (a survey can hold both `pt` and `pt-BR` before the
+  // merge migration runs). Returns the survey's stored code so it lines up with its i18n content keys.
+  const langParamLower = langParam.toLowerCase();
   const langParamCanonical = normalizeLanguageCode(langParam);
-  const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    const surveyCode = surveyLanguage.language.code;
-    if (surveyCode.toLowerCase() === langParam.toLowerCase()) return true;
-    if (surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()) return true;
-    return Boolean(langParamCanonical) && langParamCanonical === normalizeLanguageCode(surveyCode);
-  });
+  const selectedLanguage =
+    survey.languages.find(
+      (surveyLanguage) =>
+        surveyLanguage.language.code.toLowerCase() === langParamLower ||
+        surveyLanguage.language.alias?.toLowerCase() === langParamLower
+    ) ??
+    (langParamCanonical
+      ? survey.languages.find(
+          (surveyLanguage) => normalizeLanguageCode(surveyLanguage.language.code) === langParamCanonical
+        )
+      : undefined);
 
   if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
     return "default";

@@ -142,17 +142,21 @@ describe("updateUser", () => {
     expect(result.state.data?.language).toBe("de");
   });
 
-  test("should preserve an unresolvable language value as-is", async () => {
+  test("should drop an invalid (unresolvable) language but keep other attributes", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { email: "new@example.com", language: "123" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
+    // invalid language is removed from the write payload; the rest of the attributes still persist
     expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
       email: "new@example.com",
-      language: "123",
     });
-    expect(result.state.data?.language).toBe("123");
+    expect(result.state.data?.language).toBeUndefined();
+    // ...and the caller is told the language was ignored
+    expect(result.messages).toContain(
+      "Ignored invalid language code '123'. The existing value was preserved."
+    );
   });
 
   test("should not update attributes if they are the same", async () => {

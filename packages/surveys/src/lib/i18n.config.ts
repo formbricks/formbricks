@@ -30,7 +30,7 @@ import zhHansCNTranslations from "../../locales/zh-Hans-CN.json";
  * `ar-SA` → `ar-EG`, `pt-PT` → `pt-BR` — while SCRIPT is preserved: `zh-Hant-TW` resolves to a
  * Traditional bundle (none shipped yet) → English, NOT to the Simplified `zh-Hans-CN`.
  */
-const resolveFallbackBundles = (code: string): string[] => {
+export const resolveFallbackBundles = (code: string): string[] => {
   if (!code) return ["en-US"];
   try {
     const locale = new Intl.Locale(code);
