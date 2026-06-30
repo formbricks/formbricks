@@ -9,11 +9,21 @@ on:
   pull_request:
     # apps/web holds the auth code under test; packages/** because the harness transitively imports
     # several workspace packages (@formbricks/logger, cache, types, email, database) whose changes
-    # can affect the BA boundary.
+    # can affect the BA boundary. The dependency/toolchain files are included because a lockfile-only
+    # Better Auth/Prisma transitive bump, a workspace/root-manifest change, or an edit to the shared
+    # checkout action can all alter this job's behavior without touching apps/web or packages/**.
     paths:
       - "apps/web/**"
       - "packages/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".github/actions/dangerous-git-checkout/action.yml"
       - ".github/workflows/integration-tests.yml"
+  # Also run in the merge queue (matches pr.yml / docker-build-validation.yml) so this suite can be
+  # promoted to a required check that actually gates merges. merge_group events ignore `paths`, so the
+  # job always runs in the queue regardless of the PR-event filter above.
+  merge_group:
   workflow_dispatch:
 
 env:
