@@ -126,23 +126,31 @@ export function CsvImportModal({
     if (parsedData.length === 0) return;
 
     setIsImporting(true);
-    const result = await importCsvDataAction({ feedbackSourceId, workspaceId, csvData: parsedData });
-    setIsImporting(false);
+    try {
+      const result = await importCsvDataAction({ feedbackSourceId, workspaceId, csvData: parsedData });
 
-    if (result?.data) {
-      toast.success(
-        t("workspace.unify.csv_import_complete", {
-          successes: result.data.successes,
-          failures: result.data.failures,
-          skipped: result.data.skipped,
-        })
-      );
-      setCsvFile(null);
-      setParsedData([]);
-      setRowCount(0);
-      onOpenChange(false);
-    } else {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
+      if (result?.data) {
+        toast.success(
+          t("workspace.unify.csv_import_complete", {
+            successes: result.data.successes,
+            failures: result.data.failures,
+            skipped: result.data.skipped,
+          })
+        );
+        setCsvFile(null);
+        setParsedData([]);
+        setRowCount(0);
+        onOpenChange(false);
+      } else {
+        toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
+      }
+    } catch {
+      // A large CSV payload can exceed the server-action body limit, which Next.js rejects at
+      // the framework level (outside next-safe-action) as a thrown error rather than a typed
+      // result. Surface it instead of letting it bubble up and freeze the modal on the spinner.
+      toast.error(t("common.something_went_wrong"));
+    } finally {
+      setIsImporting(false);
     }
   };
 

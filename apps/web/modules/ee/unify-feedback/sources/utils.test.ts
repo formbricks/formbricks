@@ -424,6 +424,30 @@ describe("autoMapCsvSourceFields", () => {
       expect(result.confidence.field_type).toBe("high");
     }
   );
+
+  test.each(["Embedded Data - DeviceType", "Page Type", "Website Type"])(
+    "does not auto-map field_type to an unrelated 'type' column (%s)",
+    (typeColumn) => {
+      const result = autoMapCsvSourceFields({
+        sourceFields: buildSourceFields(["response_id", "question", "answer", typeColumn]),
+        sampleRow: {
+          response_id: "resp-1",
+          question: "How was it?",
+          answer: "Great",
+          [typeColumn]: "Desktop",
+        },
+        fileName: "feedback.csv",
+      });
+
+      // The column merely contains the word "type" and must not be claimed by field_type.
+      expect(result.mappings.some((m) => m.sourceFieldId === typeColumn)).toBe(false);
+
+      // field_type should be inferred as a static hub field type from the response value instead.
+      const fieldTypeMapping = result.mappings.find((m) => m.targetFieldId === "field_type");
+      expect(fieldTypeMapping?.sourceFieldId).toBeUndefined();
+      expect(fieldTypeMapping?.staticValue).toBe("text");
+    }
+  );
 });
 
 describe("toggleQuestionId", () => {

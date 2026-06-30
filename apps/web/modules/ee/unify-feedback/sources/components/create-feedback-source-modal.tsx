@@ -311,49 +311,64 @@ export const CreateFeedbackSourceModal = ({
     const responseCount = responseCountBySurvey[surveyId] ?? 0;
     if (responseCount <= 0) return "skipped";
     setIsImporting(true);
-    const importResult = await importHistoricalResponsesAction({
-      feedbackSourceId,
-      workspaceId,
-      surveyId,
-    });
-    setIsImporting(false);
+    try {
+      const importResult = await importHistoricalResponsesAction({
+        feedbackSourceId,
+        workspaceId,
+        surveyId,
+      });
 
-    if (importResult?.data) {
-      showFeedbackRecordsSuccessToast(
-        t("workspace.unify.historical_import_complete", {
-          successes: importResult.data.successes,
-          failures: importResult.data.failures,
-          skipped: importResult.data.skipped,
-        })
-      );
-      return "success";
-    } else {
+      if (importResult?.data) {
+        showFeedbackRecordsSuccessToast(
+          t("workspace.unify.historical_import_complete", {
+            successes: importResult.data.successes,
+            failures: importResult.data.failures,
+            skipped: importResult.data.skipped,
+          })
+        );
+        return "success";
+      }
+
       toast.error(getFormattedErrorMessage(importResult));
       return "error";
+    } catch {
+      toast.error(t("common.something_went_wrong"));
+      return "error";
+    } finally {
+      setIsImporting(false);
     }
   };
 
   const handleCsvImport = async (feedbackSourceId: string): Promise<TImportState> => {
     setIsImporting(true);
-    const importResult = await importCsvDataAction({
-      feedbackSourceId,
-      workspaceId,
-      csvData: csvParsedData,
-    });
-    setIsImporting(false);
+    try {
+      const importResult = await importCsvDataAction({
+        feedbackSourceId,
+        workspaceId,
+        csvData: csvParsedData,
+      });
 
-    if (importResult?.data) {
-      showFeedbackRecordsSuccessToast(
-        t("workspace.unify.csv_import_complete", {
-          successes: importResult.data.successes,
-          failures: importResult.data.failures,
-          skipped: importResult.data.skipped,
-        })
-      );
-      return "success";
-    } else {
+      if (importResult?.data) {
+        showFeedbackRecordsSuccessToast(
+          t("workspace.unify.csv_import_complete", {
+            successes: importResult.data.successes,
+            failures: importResult.data.failures,
+            skipped: importResult.data.skipped,
+          })
+        );
+        return "success";
+      }
+
       toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
       return "error";
+    } catch {
+      // A large CSV payload can exceed the server-action body limit, which Next.js rejects at
+      // the framework level (outside next-safe-action) as a thrown error rather than a typed
+      // result. Surface it instead of letting it bubble up and freeze the modal on the spinner.
+      toast.error(t("common.something_went_wrong"));
+      return "error";
+    } finally {
+      setIsImporting(false);
     }
   };
 
