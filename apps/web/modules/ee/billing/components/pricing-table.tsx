@@ -22,6 +22,7 @@ import {
   changeBillingPlanAction,
   createPlanCheckoutAction,
   createTrialPaymentCheckoutAction,
+  getUpgradeChargePreviewAction,
   manageSubscriptionAction,
   retryStripeSetupAction,
   undoPendingPlanChangeAction,
@@ -221,6 +222,9 @@ export const PricingTable = ({
     plan: Exclude<TStandardPlan, "hobby">;
     interval: TCloudBillingInterval;
   } | null>(null);
+  // Prorated amount Stripe would charge now for the pending upgrade confirmation, fetched lazily.
+  const [upgradePreview, setUpgradePreview] = useState<{ amountDue: number; currency: string } | null>(null);
+  const [isLoadingUpgradePreview, setIsLoadingUpgradePreview] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
     currentBillingInterval ?? "monthly"
   );
@@ -601,9 +605,22 @@ export const PricingTable = ({
   const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     if (plan !== "hobby" && willChargeImmediately(plan, interval)) {
       setUpgradeConfirmation({ plan, interval });
+      // Fetch the prorated charge to show in the modal. On failure we fall back to the generic copy.
+      setUpgradePreview(null);
+      setIsLoadingUpgradePreview(true);
+      getUpgradeChargePreviewAction({ organizationId, targetPlan: plan, targetInterval: interval })
+        .then((response) => setUpgradePreview(response?.data ?? null))
+        .catch(() => setUpgradePreview(null))
+        .finally(() => setIsLoadingUpgradePreview(false));
       return;
     }
     void handlePlanAction(plan, interval);
+  };
+
+  const closeUpgradeConfirmation = () => {
+    setUpgradeConfirmation(null);
+    setUpgradePreview(null);
+    setIsLoadingUpgradePreview(false);
   };
 
   const undoPendingChange = async () => {
@@ -972,23 +989,38 @@ export const PricingTable = ({
       {upgradeConfirmation && (
         <ConfirmationModal
           open
-          setOpen={() => setUpgradeConfirmation(null)}
+          setOpen={(value) => {
+            if (!value) closeUpgradeConfirmation();
+          }}
           title={t("workspace.settings.billing.confirm_upgrade_title")}
-          body={t("workspace.settings.billing.confirm_upgrade_body", {
-            plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
-            amount:
-              planCards.find(
-                (card) =>
-                  card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
-              )?.amount ?? "",
-            period: getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t),
-          })}
+          body={
+            isLoadingUpgradePreview
+              ? t("workspace.settings.billing.confirm_upgrade_calculating")
+              : upgradePreview
+                ? t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
+                    plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
+                    period: getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t),
+                    chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+                  })
+                : t("workspace.settings.billing.confirm_upgrade_body", {
+                    plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
+                    amount:
+                      planCards.find(
+                        (card) =>
+                          card.plan === upgradeConfirmation.plan &&
+                          card.interval === upgradeConfirmation.interval
+                      )?.amount ?? "",
+                    period: getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t),
+                  })
+          }
           buttonText={t("workspace.settings.billing.confirm_upgrade_button")}
           buttonVariant="default"
+          buttonLoading={isLoadingUpgradePreview}
+          isButtonDisabled={isLoadingUpgradePreview}
           cancelButtonText={t("common.cancel")}
           onConfirm={() => {
             const { plan, interval } = upgradeConfirmation;
-            setUpgradeConfirmation(null);
+            closeUpgradeConfirmation();
             void handlePlanAction(plan, interval);
           }}
         />

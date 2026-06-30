@@ -918,6 +918,40 @@ export const switchOrganizationToCloudPlan = async (input: {
   return { mode: "scheduled", pendingChange };
 };
 
+// Previews the invoice an immediate, in-place upgrade would generate, so the UI can show how much
+// the customer is charged right now. Mirrors updateSubscriptionItemsImmediately (same item swap and
+// proration_behavior) so the previewed total matches the charge that would actually be collected.
+// proration_date is left to "now"; the figure is an estimate and the invoice raised at confirmation
+// time is authoritative.
+export const previewImmediateUpgradeCharge = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan: Exclude<TStandardCloudPlan, "hobby">;
+  targetInterval: TCloudBillingInterval;
+}): Promise<{ amountDue: number; currency: string } | null> => {
+  if (!stripeClient) {
+    return null;
+  }
+
+  const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
+  const targetItems = await getCatalogItemsForPlan(input.targetPlan, input.targetInterval);
+  const existingDeletions = subscription.items.data.map((item) => ({
+    id: item.id,
+    deleted: true as const,
+  }));
+
+  const preview = await stripeClient.invoices.createPreview({
+    customer: input.customerId,
+    subscription: subscription.id,
+    subscription_details: {
+      items: [...existingDeletions, ...targetItems],
+      proration_behavior: "always_invoice",
+    },
+  });
+
+  return { amountDue: preview.amount_due, currency: preview.currency };
+};
+
 export const undoPendingOrganizationPlanChange = async (
   organizationId: string,
   customerId: string
