@@ -81,6 +81,15 @@ describe("normalizeV3SurveyWriteLanguageCode", () => {
     expect(normalizeV3SurveyWriteLanguageCode("gu", ["gu-IN", "en-US"])).toBe("gu-IN");
     expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu-IN", "en-US"])).toBe("gu-IN");
   });
+
+  test("returns the survey's stored legacy code on match, not its canonical form (pre-migration)", () => {
+    // `pt` and `hi` are in the curated map, so the identifier resolves to `pt-BR`/`hi-IN`. A survey that
+    // still stores the bare code (not yet migrated) keys its content by `pt`/`hi`, so the write must
+    // target the stored code as-is — rewriting it to the canonical tag would create a mismatched i18n key.
+    expect(normalizeV3SurveyWriteLanguageCode("pt", ["pt", "en-US"])).toBe("pt");
+    expect(normalizeV3SurveyWriteLanguageCode("PT", ["pt", "en-US"])).toBe("pt");
+    expect(normalizeV3SurveyWriteLanguageCode("hi", ["hi", "en-US"])).toBe("hi");
+  });
 });
 
 describe("parseV3SurveyLanguageQuery", () => {

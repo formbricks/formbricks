@@ -119,7 +119,7 @@ describe("updateUser", () => {
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
     // `en` is stored as its canonical BCP-47 tag `en-US`, but echoed back to the SDK in its bare legacy
-    // form `en` (transitional SDK back-compat — see toLegacyLanguageCode).
+    // form `en` (transitional SDK back-compat — see toLegacyLanguageCodes).
     expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
       email: "new@example.com",
       language: "en-US",

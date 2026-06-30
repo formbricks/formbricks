@@ -2,7 +2,7 @@ import { prisma } from "@formbricks/database";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
-import { toLegacyLanguageCode } from "@/lib/i18n/utils";
+import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
@@ -193,12 +193,12 @@ export const updateUser = async (
   // Build user state from already-fetched data (no additional query needed)
   const userStateData = await buildUserStateFromContact(contactData, workspaceId, userId, device);
 
-  // Transitional SDK back-compat (ENG-1067): de-canonicalize the language echoed back to the SDK to its
-  // bare legacy form, matching the bare codes the client environment serializer exposes, so SDK clients
-  // that match the display language by exact code keep working until the canonical-aware versions are
-  // adopted (notably older React Native apps). The DB stays canonical (normalized on write above) — only
-  // the wire is legacy. Remove once those clients have drained.
-  const responseLanguage = language ? (toLegacyLanguageCode(language) ?? language) : language;
+  // Transitional SDK back-compat (ENG-1067): de-canonicalize the language echoed back to the SDK to a
+  // legacy form (the first known alias), matching the legacy codes the client environment serializer
+  // exposes, so SDK clients that match the display language by exact code keep working until the
+  // canonical-aware versions are adopted (notably older React Native apps). The DB stays canonical
+  // (normalized on write above) — only the wire is legacy. Remove once those clients have drained.
+  const responseLanguage = language ? (toLegacyLanguageCodes(language)[0] ?? language) : language;
 
   return {
     state: {
