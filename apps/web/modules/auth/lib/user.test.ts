@@ -103,6 +103,34 @@ describe("User Management", () => {
         })
       ).rejects.toThrow(InvalidInputError);
     });
+
+    test("throws DatabaseError on a non-unique Prisma error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.user.create).mockRejectedValueOnce(errToThrow);
+
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: mockUser.name,
+          locale: mockUser.locale,
+        })
+      ).rejects.toMatchObject({ name: "DatabaseError" });
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.user.create).mockRejectedValueOnce(new Error("boom"));
+
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: mockUser.name,
+          locale: mockUser.locale,
+        })
+      ).rejects.toThrow("boom");
+    });
   });
 
   describe("updateUser", () => {
@@ -124,6 +152,12 @@ describe("User Management", () => {
       vi.mocked(prisma.user.update).mockRejectedValueOnce(errToThrow);
 
       await expect(updateUser(mockUser.id, mockUpdateData)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.user.update).mockRejectedValueOnce(new Error("boom"));
+
+      await expect(updateUser(mockUser.id, mockUpdateData)).rejects.toThrow("boom");
     });
   });
 
@@ -156,6 +190,22 @@ describe("User Management", () => {
 
       await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow(ResourceNotFoundError);
     });
+
+    test("throws ResourceNotFoundError on a RecordDoesNotExist Prisma error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: PrismaErrorType.RecordDoesNotExist,
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.$transaction).mockRejectedValueOnce(errToThrow);
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("boom"));
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow("boom");
+    });
   });
 
   describe("getUserByEmail", () => {
@@ -181,6 +231,16 @@ describe("User Management", () => {
       vi.mocked(prisma.user.findFirst).mockRejectedValueOnce(new Error("Database error"));
 
       await expect(getUserByEmail(mockEmail)).rejects.toThrow();
+    });
+
+    test("throws DatabaseError on a known Prisma request error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.user.findFirst).mockRejectedValueOnce(errToThrow);
+
+      await expect(getUserByEmail(mockEmail)).rejects.toMatchObject({ name: "DatabaseError" });
     });
   });
 
@@ -212,6 +272,16 @@ describe("User Management", () => {
       vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error("Database error"));
 
       await expect(getUser(mockUserId)).rejects.toThrow();
+    });
+
+    test("throws DatabaseError on a known Prisma request error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(errToThrow);
+
+      await expect(getUser(mockUserId)).rejects.toMatchObject({ name: "DatabaseError" });
     });
   });
 });

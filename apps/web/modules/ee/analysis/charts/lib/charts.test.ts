@@ -167,6 +167,23 @@ describe("Chart Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.chart.create).mockRejectedValue(new Error("boom"));
+      const { createChart } = await import("./charts");
+
+      await expect(
+        createChart({
+          workspaceId: mockWorkspaceId,
+          name: "Test",
+          type: "bar",
+          query: {},
+          config: {},
+          feedbackDirectoryId: mockFeedbackDirectoryId,
+          createdBy: mockUserId,
+        })
+      ).rejects.toThrow("boom");
+    });
   });
 
   describe("updateChart", () => {
@@ -227,6 +244,26 @@ describe("Chart Service", () => {
       await expect(updateChart(mockChartId, mockWorkspaceId, { name: "Taken Name" })).rejects.toMatchObject({
         name: "InvalidInputError",
       });
+    });
+
+    test("throws DatabaseError on other Prisma errors", async () => {
+      mockTxChart.findFirst.mockResolvedValue(mockChart);
+      mockTxChart.update.mockRejectedValue(makePrismaError("P2010"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
+      const { updateChart } = await import("./charts");
+
+      await expect(updateChart(mockChartId, mockWorkspaceId, { name: "Updated" })).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      mockTxChart.findFirst.mockResolvedValue(mockChart);
+      mockTxChart.update.mockRejectedValue(new Error("boom"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
+      const { updateChart } = await import("./charts");
+
+      await expect(updateChart(mockChartId, mockWorkspaceId, { name: "Updated" })).rejects.toThrow("boom");
     });
   });
 
@@ -332,6 +369,40 @@ describe("Chart Service", () => {
 
       expect(prisma.chart.create).not.toHaveBeenCalled();
     });
+
+    test("throws DatabaseError on other Prisma errors", async () => {
+      vi.mocked(prisma.chart.findFirst).mockRejectedValue(makePrismaError("P2010"));
+      const { duplicateChart } = await import("./charts");
+
+      await expect(duplicateChart(mockChartId, mockWorkspaceId, mockUserId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.chart.findFirst).mockRejectedValue(new Error("boom"));
+      const { duplicateChart } = await import("./charts");
+
+      await expect(duplicateChart(mockChartId, mockWorkspaceId, mockUserId)).rejects.toThrow("boom");
+    });
+
+    test("throws DatabaseError when looking up copy names hits a Prisma error", async () => {
+      vi.mocked(prisma.chart.findFirst).mockResolvedValue(mockChart as any);
+      vi.mocked(prisma.chart.findMany).mockRejectedValue(makePrismaError("P2010"));
+      const { duplicateChart } = await import("./charts");
+
+      await expect(duplicateChart(mockChartId, mockWorkspaceId, mockUserId)).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+
+    test("rethrows non-Prisma errors raised while looking up copy names", async () => {
+      vi.mocked(prisma.chart.findFirst).mockResolvedValue(mockChart as any);
+      vi.mocked(prisma.chart.findMany).mockRejectedValue(new Error("boom"));
+      const { duplicateChart } = await import("./charts");
+
+      await expect(duplicateChart(mockChartId, mockWorkspaceId, mockUserId)).rejects.toThrow("boom");
+    });
   });
 
   describe("deleteChart", () => {
@@ -371,6 +442,14 @@ describe("Chart Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      mockTxChart.findFirst.mockRejectedValue(new Error("boom"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
+      const { deleteChart } = await import("./charts");
+
+      await expect(deleteChart(mockChartId, mockWorkspaceId)).rejects.toThrow("boom");
+    });
   });
 
   describe("getChart", () => {
@@ -405,6 +484,13 @@ describe("Chart Service", () => {
       await expect(getChart(mockChartId, mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.chart.findFirst).mockRejectedValue(new Error("boom"));
+      const { getChart } = await import("./charts");
+
+      await expect(getChart(mockChartId, mockWorkspaceId)).rejects.toThrow("boom");
     });
   });
 
@@ -457,6 +543,13 @@ describe("Chart Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.chart.findMany).mockRejectedValue(new Error("boom"));
+      const { getCharts } = await import("./charts");
+
+      await expect(getCharts(mockWorkspaceId)).rejects.toThrow("boom");
+    });
   });
 
   describe("getChartsWithCreator", () => {
@@ -487,6 +580,13 @@ describe("Chart Service", () => {
       await expect(getChartsWithCreator(mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.chart.findMany).mockRejectedValue(new Error("boom"));
+      const { getChartsWithCreator } = await import("./charts");
+
+      await expect(getChartsWithCreator(mockWorkspaceId)).rejects.toThrow("boom");
     });
   });
 });
