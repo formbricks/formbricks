@@ -918,11 +918,7 @@ export const switchOrganizationToCloudPlan = async (input: {
   return { mode: "scheduled", pendingChange };
 };
 
-// Previews the invoice an immediate, in-place upgrade would generate, so the UI can show how much
-// the customer is charged right now. Mirrors updateSubscriptionItemsImmediately (same item swap and
-// proration_behavior) so the previewed total matches the charge that would actually be collected.
-// proration_date is left to "now"; the figure is an estimate and the invoice raised at confirmation
-// time is authoritative.
+// Previews the invoice an immediate in-place upgrade would generate; mirrors updateSubscriptionItemsImmediately so the amount matches the real charge (estimate — final invoice is authoritative).
 export const previewImmediateUpgradeCharge = async (input: {
   organizationId: string;
   customerId: string;

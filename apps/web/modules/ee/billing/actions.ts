@@ -124,8 +124,7 @@ const ZGetUpgradeChargePreviewAction = z.object({
   targetInterval: ZCloudBillingInterval,
 });
 
-// Read-only proration preview for an immediate upgrade. Used to show the amount charged now in the
-// upgrade confirmation modal; no audit logging since it mutates nothing.
+// Read-only proration preview for the upgrade confirmation modal; no audit logging since it mutates nothing.
 export const getUpgradeChargePreviewAction = authenticatedActionClient
   .inputSchema(ZGetUpgradeChargePreviewAction)
   .action(async ({ ctx, parsedInput }) => {

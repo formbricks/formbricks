@@ -582,10 +582,7 @@ export const PricingTable = ({
     }
   };
 
-  // An upgrade for a subscriber who already has a payment method is applied in place (no Stripe
-  // checkout page), charging the card immediately. That is the path that previously had no
-  // confirmation step. New/trial checkouts redirect to Stripe (which shows its own confirmation +
-  // tax), and same-plan/downgrade changes are scheduled at period end — none of those charge now.
+  // True only for the in-place upgrade that charges the card immediately (the path with no prior confirmation).
   const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
     hasPaymentMethod &&
     plan !== "hobby" &&
@@ -700,6 +697,31 @@ export const PricingTable = ({
     return STANDARD_PLAN_LEVEL[plan] > currentPlanLevel
       ? t("workspace.settings.billing.upgrade_now")
       : t("workspace.settings.billing.switch_at_period_end");
+  };
+
+  // Upgrade modal body: calculating placeholder, real prorated charge once previewed, or generic fallback.
+  const getUpgradeConfirmationBody = () => {
+    if (!upgradeConfirmation) return "";
+    const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
+    const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
+
+    if (isLoadingUpgradePreview) {
+      return t("workspace.settings.billing.confirm_upgrade_calculating");
+    }
+
+    if (upgradePreview) {
+      return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
+        plan,
+        period,
+        chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+      });
+    }
+
+    const amount =
+      planCards.find(
+        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
+      )?.amount ?? "";
+    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount, period });
   };
 
   return (
@@ -994,26 +1016,7 @@ export const PricingTable = ({
           }}
           title={t("workspace.settings.billing.confirm_upgrade_title")}
           description={t("workspace.settings.billing.confirm_upgrade_description")}
-          body={
-            isLoadingUpgradePreview
-              ? t("workspace.settings.billing.confirm_upgrade_calculating")
-              : upgradePreview
-                ? t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
-                    plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
-                    period: getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t),
-                    chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
-                  })
-                : t("workspace.settings.billing.confirm_upgrade_body", {
-                    plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
-                    amount:
-                      planCards.find(
-                        (card) =>
-                          card.plan === upgradeConfirmation.plan &&
-                          card.interval === upgradeConfirmation.interval
-                      )?.amount ?? "",
-                    period: getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t),
-                  })
-          }
+          body={getUpgradeConfirmationBody()}
           buttonText={t("workspace.settings.billing.confirm_upgrade_button")}
           buttonVariant="default"
           buttonLoading={isLoadingUpgradePreview}
