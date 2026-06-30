@@ -25,7 +25,7 @@ vi.mock("@/modules/survey/list/lib/v3-surveys-client", () => ({
 
 const submitEvent = {
   preventDefault: vi.fn(),
-} as Parameters<ReturnType<typeof useCreateSurveyWithAI>["handleGenerate"]>[0];
+} as unknown as Parameters<ReturnType<typeof useCreateSurveyWithAI>["handleGenerate"]>[0];
 const payload = { name: "Generated survey" };
 const validGeneratedSurvey = {
   payload,
@@ -103,7 +103,7 @@ describe("useCreateSurveyWithAI", () => {
       language: "en-US",
     });
     expect(validateSurveyCreatePayload).toHaveBeenCalledWith(payload);
-    expect(createV3Survey).toHaveBeenCalledWith(payload);
+    expect(createV3Survey).toHaveBeenCalledWith(payload, "ai");
     expect(onSuccess).toHaveBeenCalledWith("survey1");
     expect(result.current.submitLabel).toBe("workspace.surveys.ai_create.opening_editor");
   });
