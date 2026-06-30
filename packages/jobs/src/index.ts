@@ -12,6 +12,7 @@ export {
   enqueueResponsePipelineJob,
   enqueueSurveySchedulingJob,
   enqueueTestLogJob,
+  enqueueWorkflowRunJob,
   getBackgroundJobProducer,
   removeRecurringSurveySchedulingJobSchedule,
   scheduleResponsePipelineJobAt,
@@ -22,6 +23,7 @@ export {
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
+export { processWorkflowRunJob } from "./processors/workflow-run";
 export { processSurveySchedulingJob } from "./processors/survey-scheduling";
 export { processTestLogJob } from "./processors/test-log";
 export { startJobsRuntime } from "./runtime";
@@ -49,11 +51,13 @@ export {
   ZResponsePipelineJobData,
   ZSurveySchedulingJobData,
   ZTestLogJobData,
+  ZWorkflowRunJobData,
 } from "./types";
 export type {
   TResponsePipelineEvent,
   TResponsePipelineJobData,
   TSurveySchedulingJobData,
   TTestLogJobData,
+  TWorkflowRunJobData,
 } from "./types";
 /* v8 ignore stop */

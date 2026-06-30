@@ -43,3 +43,11 @@ export const ZSurveySchedulingJobData = z.object({
 });
 
 export type TSurveySchedulingJobData = z.infer<typeof ZSurveySchedulingJobData>;
+
+export const ZWorkflowRunJobData = z.object({
+  workflowRunId: z.cuid2(),
+  workflowId: z.cuid2(),
+  workspaceId: z.cuid2(),
+});
+
+export type TWorkflowRunJobData = z.infer<typeof ZWorkflowRunJobData>;

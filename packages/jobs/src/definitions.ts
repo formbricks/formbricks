@@ -3,7 +3,13 @@ import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@
 import { processResponsePipelineJob } from "@/src/processors/response-pipeline";
 import { processSurveySchedulingJob } from "@/src/processors/survey-scheduling";
 import { processTestLogJob } from "@/src/processors/test-log";
-import { ZResponsePipelineJobData, ZSurveySchedulingJobData, ZTestLogJobData } from "@/src/types";
+import { processWorkflowRunJob } from "@/src/processors/workflow-run";
+import {
+  ZResponsePipelineJobData,
+  ZSurveySchedulingJobData,
+  ZTestLogJobData,
+  ZWorkflowRunJobData,
+} from "@/src/types";
 
 export const backgroundJobDefinitions = {
   [JOB_NAMES.responsePipeline]: toAnyBackgroundJobDefinition({
@@ -20,6 +26,11 @@ export const backgroundJobDefinitions = {
     handle: processTestLogJob,
     name: JOB_NAMES.testLog,
     schema: ZTestLogJobData,
+  }),
+  [JOB_NAMES.workflowRun]: toAnyBackgroundJobDefinition({
+    handle: processWorkflowRunJob,
+    name: JOB_NAMES.workflowRun,
+    schema: ZWorkflowRunJobData,
   }),
 } as const satisfies Record<string, AnyBackgroundJobDefinition>;
 

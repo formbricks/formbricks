@@ -13,6 +13,7 @@ import {
   enqueueResponsePipelineJob,
   enqueueSurveySchedulingJob,
   enqueueTestLogJob,
+  enqueueWorkflowRunJob,
   getBackgroundJobProducer,
   getJobsQueue,
   removeRecurringSurveySchedulingJobSchedule,
@@ -76,6 +77,12 @@ const responsePipelineJobData = {
 
 const surveySchedulingJobData = {
   scope: "global" as const,
+};
+
+const workflowRunJobData = {
+  workflowRunId: "cm8cmpnjj000108jfdr9wrun1",
+  workflowId: "cm8cmpnjj000108jfdr9wflo1",
+  workspaceId: "cm8cmpnjj000108jfdr9wksp1",
 };
 
 vi.mock("@formbricks/logger", () => ({
@@ -172,6 +179,19 @@ describe("@formbricks/jobs queue helpers", () => {
 
     expect(job).toBe(mockJob);
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, undefined);
+  });
+
+  test("enqueues the workflow run job with attempts:1 and a deterministic jobId", async () => {
+    const mockJob = { id: "job-workflow-run-1" };
+    mockQueueAdd.mockResolvedValue(mockJob);
+
+    const job = await enqueueWorkflowRunJob(workflowRunJobData, { jobId: workflowRunJobData.workflowRunId });
+
+    expect(job).toBe(mockJob);
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, {
+      attempts: 1,
+      jobId: workflowRunJobData.workflowRunId,
+    });
   });
 
   test("exposes an engine-neutral producer interface", async () => {

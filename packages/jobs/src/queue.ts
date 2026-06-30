@@ -23,6 +23,7 @@ import {
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
   type TTestLogJobData,
+  type TWorkflowRunJobData,
 } from "@/src/types";
 
 export interface JobsQueueHandle {
@@ -241,6 +242,26 @@ export const enqueueSurveySchedulingJob = async (data: TSurveySchedulingJobData)
   }
 };
 
+export const enqueueWorkflowRunJob = async (
+  data: TWorkflowRunJobData,
+  options?: { jobId: string }
+): Promise<Job> => {
+  try {
+    // Run-level retry/backoff is modelled on the WorkflowRun row, so override the BullMQ default of 3
+    // attempts to 1. A deterministic jobId (the run id) makes a re-enqueue idempotent (no duplicate job).
+    return await enqueueBackgroundJob(JOB_NAMES.workflowRun, data, {
+      attempts: 1,
+      ...(options?.jobId ? { jobId: options.jobId } : {}),
+    });
+  } catch (error) {
+    logger.error(
+      { err: error, jobName: JOB_NAMES.workflowRun, workflowRunId: data.workflowRunId },
+      "Failed to enqueue BullMQ workflow run job"
+    );
+    throw error;
+  }
+};
+
 export const scheduleTestLogJobAt = async (
   schedule: TRunAtBackgroundJobSchedule,
   data: TTestLogJobData
@@ -375,6 +396,7 @@ export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
   enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),
   enqueueSurveyScheduling: async (data) => toEnqueuedJob(await enqueueSurveySchedulingJob(data)),
   enqueueTestLog: async (data) => toEnqueuedJob(await enqueueTestLogJob(data)),
+  enqueueWorkflowRun: async (data, options) => toEnqueuedJob(await enqueueWorkflowRunJob(data, options)),
   scheduleResponsePipelineAt: async (schedule, data) =>
     toEnqueuedJob(await scheduleResponsePipelineJobAt(schedule, data)),
   scheduleSurveySchedulingAt: async (schedule, data) =>
