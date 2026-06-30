@@ -1,6 +1,18 @@
 import { describe, expect, test } from "vitest";
-import type { WorkflowRowWithLastRun, WorkflowRunRow } from "../services/ports";
-import { toWorkflowListItem, toWorkflowResource, toWorkflowRunSummary } from "./serializers";
+import type {
+  WorkflowRowWithLastRun,
+  WorkflowRunLogRow,
+  WorkflowRunRow,
+  WorkflowRunWithLogsRow,
+} from "../services/ports";
+import type { TWorkflowTriggerRunPayload } from "../types/runs";
+import {
+  toWorkflowListItem,
+  toWorkflowResource,
+  toWorkflowRunLogResource,
+  toWorkflowRunResource,
+  toWorkflowRunSummary,
+} from "./serializers";
 
 const surveyId = "cm9zr4q7i000108l84gozfggr";
 const workflowId = "cm9zr4t2b000208l8h2m1aq3c";
@@ -96,5 +108,88 @@ describe("serializers", () => {
     const resource = toWorkflowResource(baseRow);
     expect(resource.definition).toEqual(definition);
     expect(resource.id).toBe(workflowId);
+  });
+});
+
+const triggerPayload = {
+  triggerType: "response.completed",
+  config: { surveyId, endingCardIds: [] },
+  surveyId,
+  responseId: "cm9zr5resp0000000000000000",
+  finishedEndingId: null,
+  triggeredAt: "2026-06-12T10:00:00.000Z",
+} as unknown as TWorkflowTriggerRunPayload;
+
+const logA: WorkflowRunLogRow = {
+  id: "cm9zr5log0000000000000000a",
+  runId: run.id,
+  sequence: 0,
+  stepId: "send-email",
+  stepType: "send_email",
+  status: "succeeded",
+  input: { to: "support@example.com" },
+  output: { messageId: "msg_1" },
+  error: null,
+  startedAt: new Date("2026-06-12T10:00:30.000Z"),
+  finishedAt: new Date("2026-06-12T10:00:31.000Z"),
+};
+
+const detailRun: WorkflowRunWithLogsRow = {
+  ...run,
+  triggerPayload,
+  data: { steps: [] },
+  idempotencyKey: "idem-1",
+  nextAttemptAt: null,
+  lastErrorAt: null,
+  logs: [logA],
+};
+
+describe("run serializers", () => {
+  test("run log resource emits every field explicitly, including null error/timestamps", () => {
+    const resource = toWorkflowRunLogResource({
+      ...logA,
+      error: null,
+      startedAt: null,
+      finishedAt: null,
+    });
+    expect(resource).toEqual({
+      id: logA.id,
+      runId: run.id,
+      sequence: 0,
+      stepId: "send-email",
+      stepType: "send_email",
+      status: "succeeded",
+      input: { to: "support@example.com" },
+      output: { messageId: "msg_1" },
+      error: null,
+      startedAt: null,
+      finishedAt: null,
+    });
+  });
+
+  test("run resource carries summary fields, triggerPayload, data, and serialized logs", () => {
+    const resource = toWorkflowRunResource(detailRun);
+
+    expect(resource.id).toBe(run.id);
+    expect(resource.status).toBe("completed");
+    expect(resource.triggerPayload).toEqual(triggerPayload);
+    expect(resource.data).toEqual({ steps: [] });
+    expect(resource.idempotencyKey).toBe("idem-1");
+    expect(resource.nextAttemptAt).toBeNull();
+    expect(resource.lastErrorAt).toBeNull();
+    expect(resource.logs).toHaveLength(1);
+    expect(resource.logs[0]).toMatchObject({ id: logA.id, sequence: 0, status: "succeeded" });
+    expect(resource.logs[0].startedAt).toBe("2026-06-12T10:00:30.000Z");
+  });
+
+  test("serializes non-null nextAttemptAt / lastErrorAt as ISO strings", () => {
+    const resource = toWorkflowRunResource({
+      ...detailRun,
+      nextAttemptAt: new Date("2026-06-12T11:00:00.000Z"),
+      lastErrorAt: new Date("2026-06-12T10:30:00.000Z"),
+    });
+
+    expect(resource.nextAttemptAt).toBe("2026-06-12T11:00:00.000Z");
+    expect(resource.lastErrorAt).toBe("2026-06-12T10:30:00.000Z");
   });
 });

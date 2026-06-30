@@ -1,5 +1,16 @@
-import type { TWorkflowListItem, TWorkflowResource, TWorkflowRunSummary } from "../contracts";
-import type { WorkflowRowWithLastRun, WorkflowRunRow } from "../services/ports";
+import type {
+  TWorkflowListItem,
+  TWorkflowResource,
+  TWorkflowRunLogResource,
+  TWorkflowRunResource,
+  TWorkflowRunSummary,
+} from "../contracts";
+import type {
+  WorkflowRowWithLastRun,
+  WorkflowRunLogRow,
+  WorkflowRunRow,
+  WorkflowRunWithLogsRow,
+} from "../services/ports";
 
 /**
  * Map Prisma rows to the public v3 resource shapes. Serializer output is validated against the
@@ -17,6 +28,8 @@ export const toWorkflowRunSummary = (run: WorkflowRunRow): TWorkflowRunSummary =
   workflowVersionId: run.workflowVersionId,
   status: run.status,
   isDryRun: run.isDryRun,
+  // `triggerType` is a `String` column (see WorkflowRunRow in ports.ts); the union is enforced by
+  // `validateOutput(ZWorkflowRunSummary, …)` at the handler boundary, so this narrowing cast is safe.
   triggerType: run.triggerType as TWorkflowRunSummary["triggerType"],
   surveyId: run.surveyId,
   responseId: run.responseId,
@@ -26,6 +39,30 @@ export const toWorkflowRunSummary = (run: WorkflowRunRow): TWorkflowRunSummary =
   updatedAt: run.updatedAt.toISOString(),
   startedAt: toIso(run.startedAt),
   finishedAt: toIso(run.finishedAt),
+});
+
+export const toWorkflowRunLogResource = (log: WorkflowRunLogRow): TWorkflowRunLogResource => ({
+  id: log.id,
+  runId: log.runId,
+  sequence: log.sequence,
+  stepId: log.stepId,
+  stepType: log.stepType,
+  status: log.status,
+  input: log.input,
+  output: log.output,
+  error: log.error,
+  startedAt: toIso(log.startedAt),
+  finishedAt: toIso(log.finishedAt),
+});
+
+export const toWorkflowRunResource = (run: WorkflowRunWithLogsRow): TWorkflowRunResource => ({
+  ...toWorkflowRunSummary(run),
+  triggerPayload: run.triggerPayload,
+  data: run.data,
+  logs: run.logs.map(toWorkflowRunLogResource),
+  idempotencyKey: run.idempotencyKey,
+  nextAttemptAt: toIso(run.nextAttemptAt),
+  lastErrorAt: toIso(run.lastErrorAt),
 });
 
 export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListItem => {
