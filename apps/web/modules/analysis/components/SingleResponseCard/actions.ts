@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { deleteResponse, getResponseWithQuotas } from "@/lib/response/service";
+import { deleteResponse, getResponse, getResponseWithQuotas } from "@/lib/response/service";
 import { createTag, getTagsByWorkspaceId } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
