@@ -80,7 +80,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       "buttonLabel",
       base,
       did,
-      t("environments.surveys.edit.button_label"),
+      t("workspace.surveys.edit.button_label"),
       eid
     );
   }
@@ -94,7 +94,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       "buttonLabel",
       `blocks.${blockIdx}`,
       `${blockIdx + 1}`,
-      t("environments.surveys.edit.button_label"),
+      t("workspace.surveys.edit.button_label"),
       block.id
     );
     pushIfI18n(
@@ -103,7 +103,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       "backButtonLabel",
       `blocks.${blockIdx}`,
       `${blockIdx + 1}`,
-      t("environments.surveys.edit.back_button_label"),
+      t("workspace.surveys.edit.back_button_label"),
       block.id
     );
 
@@ -151,24 +151,8 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
         }
         case TSurveyElementTypeEnum.NPS:
         case TSurveyElementTypeEnum.Rating:
-          pushIfI18n(
-            result,
-            element,
-            "lowerLabel",
-            base,
-            did,
-            t("environments.surveys.edit.lower_label"),
-            eid
-          );
-          pushIfI18n(
-            result,
-            element,
-            "upperLabel",
-            base,
-            did,
-            t("environments.surveys.edit.upper_label"),
-            eid
-          );
+          pushIfI18n(result, element, "lowerLabel", base, did, t("workspace.surveys.edit.lower_label"), eid);
+          pushIfI18n(result, element, "upperLabel", base, did, t("workspace.surveys.edit.upper_label"), eid);
           break;
         case TSurveyElementTypeEnum.CTA:
           pushIfI18n(
@@ -177,7 +161,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
             "ctaButtonLabel",
             base,
             did,
-            t("environments.surveys.edit.cta_button_label"),
+            t("workspace.surveys.edit.cta_button_label"),
             eid
           );
           break;
@@ -281,7 +265,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       const eid = ending.id;
       pushIfI18n(result, ending, "headline", base, did, t("common.headline"), eid);
       pushIfI18n(result, ending, "subheader", base, did, t("common.subheader"), eid);
-      pushIfI18n(result, ending, "buttonLabel", base, did, t("environments.surveys.edit.button_label"), eid);
+      pushIfI18n(result, ending, "buttonLabel", base, did, t("workspace.surveys.edit.button_label"), eid);
     }
   });
 

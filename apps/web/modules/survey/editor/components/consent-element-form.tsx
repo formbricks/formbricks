@@ -54,7 +54,7 @@ export const ConsentElementForm = ({
         {...commonInputProps}
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
       />
 
@@ -83,8 +83,8 @@ export const ConsentElementForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            <PlusIcon className="mr-1 size-4" />
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -92,7 +92,7 @@ export const ConsentElementForm = ({
       <ElementFormInput
         {...commonInputProps}
         id="label"
-        label={t("environments.surveys.edit.checkbox_label") + "*"}
+        label={t("workspace.surveys.edit.checkbox_label") + "*"}
         placeholder="I agree to the terms and conditions"
         value={element.label}
       />

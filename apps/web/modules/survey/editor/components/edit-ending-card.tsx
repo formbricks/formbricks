@@ -70,10 +70,10 @@ export const EditEndingCard = ({
   const [openDeleteConfirmationModal, setOpenDeleteConfirmationModal] = useState(false);
 
   const endingCardTypes = [
-    { value: "endScreen", label: t("environments.surveys.edit.ending_card") },
+    { value: "endScreen", label: t("workspace.surveys.edit.ending_card") },
     {
       value: "redirectToUrl",
-      label: t("environments.surveys.edit.redirect_to_url"),
+      label: t("workspace.surveys.edit.redirect_to_url"),
       disabled: isRedirectToUrlDisabled,
     },
   ];
@@ -125,7 +125,7 @@ export const EditEndingCard = ({
     const quotaIdx = quotas.findIndex((quota) => isUsedInQuota(quota, { endingCardId: endingCard.id }));
     if (quotaIdx !== -1) {
       toast.error(
-        t("environments.surveys.edit.ending_used_in_quota", {
+        t("workspace.surveys.edit.ending_used_in_quota", {
           quotaName: quotas[quotaIdx].name,
         })
       );
@@ -145,7 +145,7 @@ export const EditEndingCard = ({
     const quesIdx = findEndingCardUsedInLogic(localSurvey, endingCard.id);
 
     if (quesIdx !== -1) {
-      toast.error(t("environments.surveys.edit.ending_card_used_in_logic", { questionIndex: quesIdx + 1 }));
+      toast.error(t("workspace.surveys.edit.ending_card_used_in_logic", { questionIndex: quesIdx + 1 }));
       return;
     }
 
@@ -207,13 +207,15 @@ export const EditEndingCard = ({
         )}>
         <div className="mt-3 flex w-full justify-center">
           {endingCard.type === "endScreen" ? (
-            <Handshake className="h-4 w-4" />
+            <Handshake className="size-4" />
           ) : (
-            <Undo2 className="h-4 w-4 rotate-180" />
+            <Undo2 className="size-4 rotate-180" />
           )}
         </div>
-        <button className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
-          <GripIcon className="h-4 w-4" />
+        <button
+          type="button"
+          className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
+          <GripIcon className="size-4" />
         </button>
       </div>
       <Collapsible.Root
@@ -239,21 +241,21 @@ export const EditEndingCard = ({
                             ]
                           )
                         )
-                      : t("environments.surveys.edit.ending_card"))}
+                      : t("workspace.surveys.edit.ending_card"))}
                   {endingCard.type === "redirectToUrl" &&
-                    (endingCard.label || t("environments.surveys.edit.redirect_to_url"))}
+                    (endingCard.label || t("workspace.surveys.edit.redirect_to_url"))}
                 </p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
                     {endingCard.type === "endScreen"
-                      ? t("environments.surveys.edit.ending_card")
-                      : t("environments.surveys.edit.redirect_to_url")}
+                      ? t("workspace.surveys.edit.ending_card")
+                      : t("workspace.surveys.edit.redirect_to_url")}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-x-4">
               <EditorCardMenu
                 survey={localSurvey}
                 cardIdx={endingCardIndex}
@@ -272,7 +274,7 @@ export const EditEndingCard = ({
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "mt-3 pb-6"}`}>
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
-            tooltipContent={t("environments.surveys.edit.external_urls_paywall_tooltip")}
+            tooltipContent={t("workspace.surveys.edit.external_urls_paywall_tooltip")}
             triggerClass="w-full">
             <OptionsSwitch
               options={endingCardTypes}
@@ -335,8 +337,8 @@ export const EditEndingCard = ({
         }}
         open={openDeleteConfirmationModal}
         setOpen={setOpenDeleteConfirmationModal}
-        body={t("environments.surveys.edit.follow_ups_ending_card_delete_modal_text")}
-        title={t("environments.surveys.edit.follow_ups_ending_card_delete_modal_title")}
+        body={t("workspace.surveys.edit.follow_ups_ending_card_delete_modal_text")}
+        title={t("workspace.surveys.edit.follow_ups_ending_card_delete_modal_title")}
       />
     </div>
   );

@@ -3,11 +3,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { verifyAccountDeletionSsoReauthIntent } from "@/lib/jwt";
+import { FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL } from "@/modules/account/constants";
 import { deleteUserWithAccountDeletionAuthorization } from "@/modules/account/lib/account-deletion";
-import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
-import { completeAccountDeletionSsoReauthenticationAndGetRedirectPath } from "./account-deletion-sso-complete";
+import { queueAccountDeletionAuditEvent } from "@/modules/account/lib/account-deletion-audit";
+import { completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath } from "./account-deletion-sso-complete";
 
 vi.mock("server-only", () => ({}));
+
+const mockConstants = vi.hoisted(() => ({
+  isFormbricksCloud: false,
+}));
 
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
@@ -21,7 +26,9 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: false,
+  get IS_FORMBRICKS_CLOUD() {
+    return mockConstants.isFormbricksCloud;
+  },
   WEBAPP_URL: "http://localhost:3000",
 }));
 
@@ -37,15 +44,15 @@ vi.mock("@/modules/auth/lib/authOptions", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  queueAuditEventBackground: vi.fn(),
+vi.mock("@/modules/account/lib/account-deletion-audit", () => ({
+  queueAccountDeletionAuditEvent: vi.fn(),
 }));
 
 const mockGetServerSession = vi.mocked(getServerSession);
 const mockLoggerError = vi.mocked(logger.error);
 const mockVerifyAccountDeletionSsoReauthIntent = vi.mocked(verifyAccountDeletionSsoReauthIntent);
 const mockDeleteUserWithAccountDeletionAuthorization = vi.mocked(deleteUserWithAccountDeletionAuthorization);
-const mockQueueAuditEventBackground = vi.mocked(queueAuditEventBackground);
+const mockQueueAccountDeletionAuditEvent = vi.mocked(queueAccountDeletionAuditEvent);
 
 const intent = {
   id: "intent-id",
@@ -57,9 +64,10 @@ const intent = {
   userId: "user-id",
 };
 
-describe("completeAccountDeletionSsoReauthenticationAndGetRedirectPath", () => {
+describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockConstants.isFormbricksCloud = false;
 
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
     mockGetServerSession.mockResolvedValue({
@@ -71,22 +79,22 @@ describe("completeAccountDeletionSsoReauthenticationAndGetRedirectPath", () => {
     mockDeleteUserWithAccountDeletionAuthorization.mockResolvedValue({
       oldUser: { id: intent.userId } as any,
     });
-    mockQueueAuditEventBackground.mockResolvedValue(undefined);
+    mockQueueAccountDeletionAuditEvent.mockResolvedValue(undefined);
   });
 
   test("returns login without deleting when the callback has no intent", async () => {
-    await expect(completeAccountDeletionSsoReauthenticationAndGetRedirectPath({})).resolves.toBe(
+    await expect(completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({})).resolves.toBe(
       "/auth/login"
     );
 
     expect(mockVerifyAccountDeletionSsoReauthIntent).not.toHaveBeenCalled();
     expect(mockDeleteUserWithAccountDeletionAuthorization).not.toHaveBeenCalled();
-    expect(mockQueueAuditEventBackground).not.toHaveBeenCalled();
+    expect(mockQueueAccountDeletionAuditEvent).not.toHaveBeenCalled();
   });
 
-  test("deletes the account after a completed SSO reauthentication", async () => {
+  test("deletes the account after a completed SSO identity confirmation", async () => {
     await expect(
-      completeAccountDeletionSsoReauthenticationAndGetRedirectPath({ intent: "intent-token" })
+      completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: "intent-token" })
     ).resolves.toBe("/auth/login");
 
     expect(mockDeleteUserWithAccountDeletionAuthorization).toHaveBeenCalledWith({
@@ -94,15 +102,24 @@ describe("completeAccountDeletionSsoReauthenticationAndGetRedirectPath", () => {
       userEmail: intent.email,
       userId: intent.userId,
     });
-    expect(mockQueueAuditEventBackground).toHaveBeenCalledWith({
-      action: "deleted",
-      targetType: "user",
-      userId: intent.userId,
-      userType: "user",
-      targetId: intent.userId,
-      organizationId: "unknown",
-      oldObject: { id: intent.userId },
+    expect(mockQueueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      oldUser: { id: intent.userId },
       status: "success",
+      targetUserId: intent.userId,
+    });
+  });
+
+  test("redirects to the account deletion survey after SSO identity confirmation on Formbricks Cloud", async () => {
+    mockConstants.isFormbricksCloud = true;
+
+    await expect(
+      completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: "intent-token" })
+    ).resolves.toBe(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL);
+
+    expect(mockDeleteUserWithAccountDeletionAuthorization).toHaveBeenCalledWith({
+      confirmationEmail: intent.email,
+      userEmail: intent.email,
+      userId: intent.userId,
     });
   });
 
@@ -115,27 +132,43 @@ describe("completeAccountDeletionSsoReauthenticationAndGetRedirectPath", () => {
     } as any);
 
     await expect(
-      completeAccountDeletionSsoReauthenticationAndGetRedirectPath({ intent: "intent-token" })
-    ).resolves.toBe("/environments/env-id/settings/profile");
+      completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: "intent-token" })
+    ).resolves.toBe("/environments/env-id/settings/profile?accountDeletionError=sso_reauth_failed");
 
     expect(mockDeleteUserWithAccountDeletionAuthorization).not.toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalledWith(
       { error: expect.any(AuthorizationError) },
-      "Failed to complete account deletion after SSO reauth"
+      "Failed to complete account deletion after SSO identity confirmation"
     );
   });
 
-  test("keeps the post-deletion redirect if audit logging fails after deletion", async () => {
-    mockQueueAuditEventBackground.mockRejectedValue(new Error("audit unavailable"));
+  test("returns to the profile page with an error when deletion fails after SSO identity confirmation", async () => {
+    mockDeleteUserWithAccountDeletionAuthorization.mockRejectedValue(
+      new AuthorizationError("marker missing")
+    );
 
     await expect(
-      completeAccountDeletionSsoReauthenticationAndGetRedirectPath({ intent: "intent-token" })
+      completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: "intent-token" })
+    ).resolves.toBe("/environments/env-id/settings/profile?accountDeletionError=sso_reauth_failed");
+
+    expect(mockDeleteUserWithAccountDeletionAuthorization).toHaveBeenCalled();
+    expect(mockQueueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      status: "failure",
+      targetUserId: intent.userId,
+    });
+  });
+
+  test("keeps the post-deletion redirect if audit logging fails after deletion", async () => {
+    mockQueueAccountDeletionAuditEvent.mockRejectedValue(new Error("audit unavailable"));
+
+    await expect(
+      completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: "intent-token" })
     ).resolves.toBe("/auth/login");
 
     expect(mockDeleteUserWithAccountDeletionAuthorization).toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalledWith(
       { error: expect.any(Error) },
-      "Failed to complete account deletion after SSO reauth"
+      "Failed to complete account deletion after SSO identity confirmation"
     );
   });
 
@@ -152,7 +185,7 @@ describe("completeAccountDeletionSsoReauthenticationAndGetRedirectPath", () => {
     } as any);
 
     await expect(
-      completeAccountDeletionSsoReauthenticationAndGetRedirectPath({ intent: ["intent-token"] })
+      completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: ["intent-token"] })
     ).resolves.toBe("/auth/login");
 
     expect(mockDeleteUserWithAccountDeletionAuthorization).not.toHaveBeenCalled();

@@ -15,6 +15,7 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -38,7 +39,6 @@ import { SegmentEditor } from "./segment-editor";
 interface TargetingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  environmentId: string;
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   initialSegment?: TSegment;
@@ -47,13 +47,14 @@ interface TargetingCardProps {
 export function TargetingCard({
   localSurvey,
   setLocalSurvey,
-  environmentId,
   contactAttributeKeys,
   segments,
   initialSegment,
 }: TargetingCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
 
@@ -135,18 +136,18 @@ export function TargetingCard({
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
-      if (!segment) throw new Error(t("environments.segments.invalid_segment"));
+      if (!segment) throw new Error(t("workspace.segments.invalid_segment"));
       const result = await updateSegmentAction({ segmentId: segment.id, data });
       if (result?.serverError) {
         toast.error(getFormattedErrorMessage(result));
         return;
       }
-      toast.success(t("environments.segments.segment_saved_successfully"));
+      toast.success(t("workspace.segments.segment_saved_successfully"));
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
     } catch (err: any) {
-      toast.error(err.message ?? t("environments.segments.error_saving_segment"));
+      toast.error(err.message ?? t("workspace.segments.error_saving_segment"));
     }
   };
 
@@ -155,7 +156,7 @@ export function TargetingCard({
       const segmentResponse = await resetSegmentFiltersAction({ surveyId: localSurvey.id });
       return segmentResponse?.data;
     } catch (err) {
-      toast.error(t("environments.segments.error_resetting_filters"));
+      toast.error(t("workspace.segments.error_resetting_filters"));
     }
   };
 
@@ -164,7 +165,7 @@ export function TargetingCard({
   }
 
   if (!segment) {
-    throw new Error(t("environments.segments.invalid_segment"));
+    throw new Error(t("workspace.segments.invalid_segment"));
   }
 
   return (
@@ -178,13 +179,13 @@ export function TargetingCard({
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               strokeWidth={3}
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">{t("environments.segments.target_audience")}</p>
-            <p className="mt-1 text-sm text-slate-500">{t("environments.segments.pre_segment_users")}</p>
+            <p className="font-semibold text-slate-800">{t("workspace.segments.target_audience")}</p>
+            <p className="mt-1 text-sm text-slate-500">{t("workspace.segments.pre_segment_users")}</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -219,7 +220,6 @@ export function TargetingCard({
                   <div className="w-full">
                     <SegmentEditor
                       contactAttributeKeys={contactAttributeKeys}
-                      environmentId={environmentId}
                       group={segment.filters}
                       key={segment.filters.toString()}
                       segment={segment}
@@ -306,7 +306,6 @@ export function TargetingCard({
                   <div className="opacity-60">
                     <SegmentEditor
                       contactAttributeKeys={contactAttributeKeys}
-                      environmentId={environmentId}
                       group={segment.filters}
                       key={segment.filters.toString()}
                       segment={segment}
@@ -325,18 +324,18 @@ export function TargetingCard({
                     size="sm"
                     variant="secondary">
                     {segmentEditorViewOnly
-                      ? t("environments.segments.hide_filters")
-                      : t("environments.segments.view_filters")}
+                      ? t("workspace.segments.hide_filters")
+                      : t("workspace.segments.view_filters")}
                     {segmentEditorViewOnly ? (
-                      <ChevronUpIcon className="ml-2 h-3 w-3" />
+                      <ChevronUpIcon className="ml-2 size-3" />
                     ) : (
-                      <ChevronDownIcon className="ml-2 h-3 w-3" />
+                      <ChevronDownIcon className="ml-2 size-3" />
                     )}
                   </Button>
 
                   {isSegmentUsedInOtherSurveys ? (
                     <Button onClick={() => handleCloneSegment()} size="sm" variant="secondary">
-                      {t("environments.segments.clone_and_edit_segment")}
+                      {t("workspace.segments.clone_and_edit_segment")}
                     </Button>
                   ) : null}
                   {!isSegmentUsedInOtherSurveys && (
@@ -347,21 +346,21 @@ export function TargetingCard({
                       }}
                       size="sm"
                       variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>
-                      {t("environments.segments.edit_segment")}
-                      <PencilIcon className="ml-2 h-3 w-3" />
+                      {t("workspace.segments.edit_segment")}
+                      <PencilIcon className="ml-2 size-3" />
                     </Button>
                   )}
                 </div>
                 {isSegmentUsedInOtherSurveys ? (
                   <p className="mt-1 flex items-center text-xs text-slate-500">
-                    <AlertCircle className="mr-1 inline h-3 w-3" />
+                    <AlertCircle className="mr-1 inline size-3" />
                     <Trans
-                      i18nKey="environments.segments.segment_used_in_other_surveys_make_changes_here"
+                      i18nKey="workspace.segments.segment_used_in_other_surveys_make_changes_here"
                       components={{
                         segmentsLink: (
                           <Link
                             className="ml-1 underline"
-                            href={`/environments/${environmentId}/segments`}
+                            href={`${workspaceBasePath}/segments`}
                             target="_blank"
                           />
                         ),
@@ -380,7 +379,7 @@ export function TargetingCard({
               }}
               size="sm"
               variant="secondary">
-              {t("environments.segments.load_segment")}
+              {t("workspace.segments.load_segment")}
             </Button>
 
             {!segment?.isPrivate && Boolean(segment?.filters.length) && (
@@ -390,7 +389,7 @@ export function TargetingCard({
                 }}
                 size="sm"
                 variant="secondary">
-                {t("environments.segments.reset_all_filters")}
+                {t("workspace.segments.reset_all_filters")}
               </Button>
             )}
 
@@ -402,19 +401,19 @@ export function TargetingCard({
                 }}
                 size="sm"
                 variant="secondary">
-                {t("environments.segments.save_as_new_segment")}
+                {t("workspace.segments.save_as_new_segment")}
               </Button>
             ) : null}
 
             <AlertDialog
-              confirmBtnLabel={t("environments.segments.remove_all_filters")}
+              confirmBtnLabel={t("workspace.segments.remove_all_filters")}
               declineBtnLabel={t("common.cancel")}
               headerText={t("common.are_you_sure")}
-              mainText={t("environments.segments.this_action_resets_all_filters_in_this_survey")}
+              mainText={t("workspace.segments.this_action_resets_all_filters_in_this_survey")}
               onConfirm={async () => {
                 const segment = await handleResetAllFilters();
                 if (segment) {
-                  toast.success(t("environments.segments.filters_reset_successfully"));
+                  toast.success(t("workspace.segments.filters_reset_successfully"));
 
                   setSegment(segment);
                   setResetAllFiltersModalOpen(false);
@@ -436,7 +435,7 @@ export function TargetingCard({
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
                 <Trans
-                  i18nKey="environments.segments.user_targeting_only_available_when_identifying_users"
+                  i18nKey="workspace.segments.user_targeting_only_available_when_identifying_users"
                   components={{
                     docsLink: (
                       <Link

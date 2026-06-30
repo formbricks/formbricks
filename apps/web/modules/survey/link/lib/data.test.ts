@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
@@ -14,6 +14,8 @@ import {
   getSurveyWithMetadata,
   isSurveyResponsePresent,
 } from "./data";
+
+vi.mock("server-only", () => ({}));
 
 // Mock dependencies
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
@@ -52,7 +54,7 @@ describe("data", () => {
       updatedAt: new Date(),
       name: "Test Survey",
       type: "link",
-      environmentId: "env-1",
+      workspaceId: "ws-1",
       createdBy: "user-1",
       status: "inProgress",
       welcomeCard: {
@@ -81,7 +83,7 @@ describe("data", () => {
       isBackButtonHidden: false,
       isAutoProgressingEnabled: true,
       singleUse: null,
-      projectOverwrites: null,
+      workspaceOverwrites: null,
       styling: null,
       surveyClosedMessage: null,
       showLanguageSwitch: null,
@@ -161,7 +163,7 @@ describe("data", () => {
       id: "survey-1",
       type: "link",
       status: "inProgress",
-      environmentId: "env-1",
+      workspaceId: "ws-1",
       name: "Test Survey",
       styling: { primaryColor: "#000" },
       // Additional fields that should not be in metadata
@@ -180,7 +182,7 @@ describe("data", () => {
         updatedAt: new Date(),
         name: "Test Survey",
         type: "link",
-        environmentId: "env-1",
+        workspaceId: "ws-1",
         createdBy: "user-1",
         status: "inProgress",
         styling: { primaryColor: "#000" },
@@ -204,7 +206,7 @@ describe("data", () => {
         isBackButtonHidden: false,
         isAutoProgressingEnabled: true,
         singleUse: null,
-        projectOverwrites: null,
+        workspaceOverwrites: null,
         surveyClosedMessage: null,
         showLanguageSwitch: null,
         recaptcha: null,
@@ -223,7 +225,7 @@ describe("data", () => {
         id: "survey-1",
         type: "link",
         status: "inProgress",
-        environmentId: "env-1",
+        workspaceId: "ws-1",
         name: "Test Survey",
         styling: { primaryColor: "#000" },
       });

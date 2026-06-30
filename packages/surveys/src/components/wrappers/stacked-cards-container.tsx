@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
 import { type TPlacement } from "@formbricks/types/common";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import { type TProjectStyling } from "@formbricks/types/project";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
+import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
@@ -14,9 +14,9 @@ import { StackedCard } from "./stacked-card";
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
   currentBlockId: string;
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   getCardContent: (blockIdx: number, offset: number) => JSX.Element | undefined;
-  styling: TProjectStyling | TSurveyStyling;
+  styling: TWorkspaceStyling | TSurveyStyling;
   setBlockId: (blockId: string) => void;
   shouldResetBlockId?: boolean;
   fullSizeCards: boolean;
@@ -45,6 +45,7 @@ export function StackedCardsContainer({
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
   const [cardWidth, setCardWidth] = useState<number>(0);
+  const isCardless = cardArrangement === "cardless";
 
   const blockIdxTemp = useMemo(() => {
     if (currentBlockId === "start") return survey.welcomeCard.enabled ? -1 : 0;
@@ -145,20 +146,26 @@ export function StackedCardsContainer({
   return (
     <div // NOSONAR - hover handlers are for visual feedback on card animation, not interactive content
       data-testid="stacked-cards-container"
-      className="relative flex h-full items-center justify-center"
+      className={cn("relative flex justify-center", isCardless ? "w-full" : "h-full items-center")}
       onMouseEnter={() => {
         setHovered(true);
       }}
       onMouseLeave={() => {
         setHovered(false);
       }}>
-      <div style={{ height: cardHeight }} />
-      {cardArrangement === "simple" ? (
+      {(cardArrangement === "straight" || cardArrangement === "casual") && (
+        <div style={{ height: cardHeight }} />
+      )}
+      {cardArrangement === "simple" || isCardless ? (
         <div
           id={`questionCard-${blockIdxTemp.toString()}`}
           data-testid={`questionCard-${blockIdxTemp.toString()}`}
-          className={cn("bg-survey-bg w-full overflow-hidden", fullSizeCards ? "h-full" : "")}
-          style={borderStyles}>
+          className={cn(
+            "w-full",
+            !isCardless && "bg-survey-bg overflow-hidden",
+            fullSizeCards && !isCardless ? "h-full" : ""
+          )}
+          style={isCardless ? undefined : borderStyles}>
           {getCardContent(blockIdxTemp, 0)}
         </div>
       ) : (

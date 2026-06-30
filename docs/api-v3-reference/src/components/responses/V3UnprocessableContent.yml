@@ -1,0 +1,16 @@
+description: >-
+  Unprocessable Content — semantic validation failed or the requested lifecycle
+  transition is invalid.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

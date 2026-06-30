@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
@@ -46,6 +46,13 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   cleanupStripeCustomer: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/modules/hub/service", () => ({
+  deleteHubTenantData: vi.fn().mockResolvedValue({
+    data: { deletedFeedbackRecords: 0, deletedEmbeddings: 0, deletedWebhooks: 0 },
+    error: null,
+  }),
+}));
+
 describe("Organization Service", () => {
   beforeEach(() => {
     vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined);
@@ -64,7 +71,7 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: {
           limits: {
-            projects: 3,
+            workspaces: 3,
             monthly: {
               responses: 1500,
             },
@@ -73,7 +80,6 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -117,7 +123,7 @@ describe("Organization Service", () => {
           updatedAt: new Date(),
           billing: {
             limits: {
-              projects: 3,
+              workspaces: 3,
               monthly: {
                 responses: 1500,
               },
@@ -126,7 +132,6 @@ describe("Organization Service", () => {
             usageCycleAnchor: new Date(),
           },
           isAISmartToolsEnabled: false,
-          isAIDataAnalysisEnabled: false,
           whitelabel: false,
         },
       ];
@@ -163,7 +168,7 @@ describe("Organization Service", () => {
     test("should create organization with default billing settings", async () => {
       const expectedBilling = {
         limits: {
-          projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+          workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
           monthly: {
             responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
           },
@@ -179,7 +184,6 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: expectedBilling,
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -194,7 +198,7 @@ describe("Organization Service", () => {
           billing: {
             create: {
               limits: {
-                projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+                workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
                 monthly: {
                   responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
                 },
@@ -230,7 +234,7 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: {
           limits: {
-            projects: 3,
+            workspaces: 3,
             monthly: {
               responses: 1500,
             },
@@ -239,10 +243,9 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
         memberships: [{ userId: "user1" }, { userId: "user2" }],
-        projects: [
+        workspaces: [
           {
             environments: [{ id: "env1" }, { id: "env2" }],
           },
@@ -272,7 +275,7 @@ describe("Organization Service", () => {
         updatedAt: expect.any(Date),
         billing: {
           limits: {
-            projects: 3,
+            workspaces: 3,
             monthly: {
               responses: 1500,
             },
@@ -281,7 +284,6 @@ describe("Organization Service", () => {
           usageCycleAnchor: expect.any(Date),
         },
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       });
       expect(prisma.organization.update).toHaveBeenCalledWith({
@@ -354,7 +356,8 @@ describe("Organization Service", () => {
         name: "Test Org",
         billing: { stripeCustomerId: "cus_123" },
         memberships: [],
-        projects: [],
+        workspaces: [],
+        feedbackDirectories: [],
       } as any);
 
       await deleteOrganization("org1");
@@ -362,6 +365,24 @@ describe("Organization Service", () => {
       if (IS_FORMBRICKS_CLOUD) {
         expect(cleanupStripeCustomer).toHaveBeenCalledWith("cus_123");
       }
+    });
+
+    test("should purge Hub-owned data for each feedback directory", async () => {
+      const { deleteHubTenantData } = await import("@/modules/hub/service");
+      vi.mocked(prisma.organization.delete).mockResolvedValue({
+        id: "org1",
+        name: "Test Org",
+        billing: null,
+        memberships: [],
+        workspaces: [],
+        feedbackDirectories: [{ id: "frd_1" }, { id: "frd_2" }],
+      } as any);
+
+      await deleteOrganization("org1");
+
+      expect(deleteHubTenantData).toHaveBeenCalledTimes(2);
+      expect(deleteHubTenantData).toHaveBeenCalledWith("frd_1");
+      expect(deleteHubTenantData).toHaveBeenCalledWith("frd_2");
     });
   });
 });

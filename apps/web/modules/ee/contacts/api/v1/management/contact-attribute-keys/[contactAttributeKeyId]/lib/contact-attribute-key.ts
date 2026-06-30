@@ -1,10 +1,14 @@
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
   TContactAttributeKeyUpdateInput,
   ZContactAttributeKeyUpdateInput,
@@ -55,6 +59,10 @@ export const updateContactAttributeKey = async (
   data: TContactAttributeKeyUpdateInput
 ): Promise<TContactAttributeKey | null> => {
   validateInputs([contactAttributeKeyId, ZId], [data, ZContactAttributeKeyUpdateInput]);
+
+  if (data.key && isReservedFutureDefaultAttributeKey(data.key)) {
+    throw new InvalidInputError(getReservedFutureDefaultAttributeKeyIssue([data.key]));
+  }
 
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.update({

@@ -10,6 +10,7 @@ import {
   InvalidInputError,
   InvalidPasswordResetTokenError,
   OperationNotAllowedError,
+  QueryExecutionError,
   ResourceNotFoundError,
   TooManyRequestsError,
   UniqueConstraintError,
@@ -17,6 +18,7 @@ import {
   ValidationError,
   isExpectedError,
 } from "@formbricks/types/errors";
+import { RequestBodyTooLargeError } from "@/app/lib/api/request-body";
 
 // Mock Sentry
 vi.mock("@sentry/nextjs", () => ({
@@ -73,9 +75,11 @@ describe("isExpectedError (shared helper)", () => {
       "ValidationError",
       "AuthenticationError",
       "OperationNotAllowedError",
+      "QueryExecutionError",
       "TooManyRequestsError",
       "InvalidPasswordResetTokenError",
       "UniqueConstraintError",
+      "RequestBodyTooLargeError",
     ];
 
     expect(EXPECTED_ERROR_NAMES.size).toBe(expected.length);
@@ -92,8 +96,10 @@ describe("isExpectedError (shared helper)", () => {
     { ErrorClass: InvalidInputError, args: ["Invalid input"] },
     { ErrorClass: ValidationError, args: ["Invalid data"] },
     { ErrorClass: OperationNotAllowedError, args: ["Not allowed"] },
+    { ErrorClass: QueryExecutionError, args: ["Cube query failed. Details: connect ECONNREFUSED"] },
     { ErrorClass: InvalidPasswordResetTokenError, args: [INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE] },
     { ErrorClass: UniqueConstraintError, args: ["Already exists"] },
+    { ErrorClass: RequestBodyTooLargeError, args: [2 * 1024 * 1024] },
   ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
     const error = new (ErrorClass as any)(...args);
     expect(isExpectedError(error)).toBe(true);
@@ -179,6 +185,14 @@ describe("actionClient handleServerError", () => {
     test("OperationNotAllowedError returns its message and is not sent to Sentry", async () => {
       const result = await executeThrowingAction(new OperationNotAllowedError("Not allowed"));
       expect(result?.serverError).toBe("Not allowed");
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    test("QueryExecutionError returns its message and is not sent to Sentry", async () => {
+      const result = await executeThrowingAction(
+        new QueryExecutionError("Cube query failed. Details: connect ECONNREFUSED")
+      );
+      expect(result?.serverError).toBe("Cube query failed. Details: connect ECONNREFUSED");
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 

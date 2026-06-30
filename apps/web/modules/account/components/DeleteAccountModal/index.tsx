@@ -11,7 +11,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
   ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE,
-  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
   ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE,
   DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
   FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
@@ -20,7 +19,7 @@ import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { deleteUserAction, startAccountDeletionSsoReauthenticationAction } from "./actions";
+import { deleteUserAction } from "./actions";
 
 interface DeleteAccountModalProps {
   requiresPasswordConfirmation: boolean;
@@ -29,6 +28,7 @@ interface DeleteAccountModalProps {
   user: TUser;
   isFormbricksCloud: boolean;
   organizationsWithSingleOwner: TOrganization[];
+  isSsoIdentityConfirmationDisabled: boolean;
 }
 
 export const DeleteAccountModal = ({
@@ -38,6 +38,7 @@ export const DeleteAccountModal = ({
   user,
   isFormbricksCloud,
   organizationsWithSingleOwner,
+  isSsoIdentityConfirmationDisabled,
 }: Readonly<DeleteAccountModalProps>) => {
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
@@ -62,53 +63,22 @@ export const DeleteAccountModal = ({
   const isDeleteDisabled = !hasValidConfirmation;
   const getLocalizedDeletionErrorMessage = (serverError?: string) => {
     if (serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
-      return t("environments.settings.profile.wrong_password");
-    }
-
-    if (serverError === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
-      return t("environments.settings.profile.google_sso_account_deletion_requires_setup");
+      return t("workspace.settings.profile.wrong_password");
     }
 
     if (serverError === ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE) {
-      return t("environments.settings.profile.email_confirmation_does_not_match");
+      return t("workspace.settings.profile.email_confirmation_does_not_match");
     }
 
     if (serverError === ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE) {
-      return t("environments.settings.profile.delete_account_confirmation_required");
+      return t("workspace.settings.profile.delete_account_confirmation_required");
     }
 
     if (serverError === ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE) {
-      return t("environments.settings.profile.sso_reauthentication_failed");
+      return t("workspace.settings.profile.sso_identity_confirmation_failed");
     }
 
     return null;
-  };
-
-  const startSsoReauthentication = async () => {
-    const result = await startAccountDeletionSsoReauthenticationAction({
-      confirmationEmail: inputValue,
-      returnToUrl: globalThis.location.href,
-    });
-
-    if (!result?.data) {
-      const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
-      const errorMessage =
-        getLocalizedDeletionErrorMessage(result?.serverError) ??
-        (result ? getFormattedErrorMessage(result) : fallbackErrorMessage);
-
-      logger.error({ errorMessage }, "Account deletion SSO reauthentication action failed");
-      toast.error(errorMessage || fallbackErrorMessage);
-      return;
-    }
-
-    await signIn(
-      result.data.provider,
-      {
-        callbackUrl: result.data.callbackUrl,
-        redirect: true,
-      },
-      result.data.authorizationParams
-    );
   };
 
   const deleteAccount = async () => {
@@ -123,37 +93,47 @@ export const DeleteAccountModal = ({
           ? {
               confirmationEmail: inputValue,
               password,
+              returnToUrl: globalThis.location.href,
             }
           : {
               confirmationEmail: inputValue,
+              returnToUrl: globalThis.location.href,
             }
       );
 
+      if (result?.data?.ssoConfirmation) {
+        await signIn(
+          result.data.ssoConfirmation.provider,
+          {
+            callbackUrl: result.data.ssoConfirmation.callbackUrl,
+            redirect: true,
+          },
+          result.data.ssoConfirmation.authorizationParams
+        );
+        return;
+      }
+
       if (!result?.data?.success) {
         const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
-        let errorMessage = getLocalizedDeletionErrorMessage(result?.serverError) ?? fallbackErrorMessage;
-
-        if (result?.serverError === ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE) {
-          await startSsoReauthentication();
-          return;
-        } else if (result) {
-          errorMessage =
-            getLocalizedDeletionErrorMessage(result.serverError) ?? getFormattedErrorMessage(result);
-        }
+        const errorMessage = result
+          ? (getLocalizedDeletionErrorMessage(result.serverError) ?? getFormattedErrorMessage(result))
+          : fallbackErrorMessage;
 
         logger.error({ errorMessage }, "Account deletion action failed");
         toast.error(errorMessage || fallbackErrorMessage);
         return;
       }
 
-      // Sign out with account deletion reason (no automatic redirect)
-      await signOutWithAudit({
-        reason: "account_deletion",
-        redirect: false, // Prevent NextAuth automatic redirect
-        clearEnvironmentId: true,
-      });
+      try {
+        await signOutWithAudit({
+          clearWorkspaceId: true,
+          reason: "account_deletion",
+          redirect: false,
+        });
+      } catch (error) {
+        logger.error({ error }, "Failed to sign out after account deletion");
+      }
 
-      // Manual redirect after signOut completes
       if (isFormbricksCloud) {
         globalThis.location.replace(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL);
       } else {
@@ -173,20 +153,18 @@ export const DeleteAccountModal = ({
       setOpen={handleOpenChange}
       deleteWhat={t("common.account")}
       onDelete={() => deleteAccount()}
-      text={t("environments.settings.profile.account_deletion_consequences_warning")}
+      text={t("workspace.settings.profile.account_deletion_consequences_warning")}
       isDeleting={deleting}
       disabled={isDeleteDisabled}>
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
-            {t(
-              "environments.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data"
-            )}
+            {t("workspace.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data")}
           </li>
           {organizationsWithSingleOwner.length > 0 && (
             <li>
               <Trans
-                i18nKey="environments.settings.profile.organizations_delete_message"
+                i18nKey="workspace.settings.profile.organizations_delete_message"
                 components={{ b: <b /> }}
               />
             </li>
@@ -200,7 +178,7 @@ export const DeleteAccountModal = ({
               })}
             </ul>
           )}
-          <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
+          <li>{t("workspace.settings.profile.warning_cannot_undo")}</li>
         </ul>
         <form
           data-testid="deleteAccountForm"
@@ -209,7 +187,7 @@ export const DeleteAccountModal = ({
             await deleteAccount();
           }}>
           <label htmlFor="deleteAccountConfirmation">
-            {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
+            {t("workspace.settings.profile.please_enter_email_to_confirm_account_deletion", {
               email: user.email,
             })}
           </label>
@@ -223,9 +201,9 @@ export const DeleteAccountModal = ({
             id="deleteAccountConfirmation"
             name="deleteAccountConfirmation"
           />
-          {!requiresPasswordConfirmation && (
+          {!requiresPasswordConfirmation && !isSsoIdentityConfirmationDisabled && (
             <p className="mt-2 text-sm text-slate-600">
-              {t("environments.settings.profile.sso_reauthentication_may_be_required_for_deletion")}
+              {t("workspace.settings.profile.sso_identity_confirmation_may_be_required_for_deletion")}
             </p>
           )}
           {requiresPasswordConfirmation && (

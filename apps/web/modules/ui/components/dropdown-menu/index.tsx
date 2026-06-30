@@ -1,7 +1,7 @@
 "use client";
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { Check, ChevronRight, Circle } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
@@ -22,23 +22,30 @@ const DropdownMenuSub: React.ComponentType<DropdownMenuPrimitive.DropdownMenuSub
 const DropdownMenuRadioGroup: React.ComponentType<DropdownMenuPrimitive.DropdownMenuRadioGroupProps> =
   DropdownMenuPrimitive.RadioGroup;
 
+type DropdownMenuSubTriggerExtraProps = {
+  inset?: boolean;
+  chevronSide?: "left" | "right";
+};
+
 const DropdownMenuSubTrigger: React.ComponentType<
-  DropdownMenuPrimitive.DropdownMenuSubTriggerProps & { inset?: boolean }
-> = React.forwardRef<HTMLDivElement, DropdownMenuPrimitive.DropdownMenuSubTriggerProps & { inset?: boolean }>(
-  ({ className, inset, children, ...props }, ref) => (
-    <DropdownMenuPrimitive.SubTrigger
-      ref={ref as any}
-      className={cn(
-        "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-none hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
-        inset && "pl-8",
-        className
-      )}
-      {...props}>
-      {children}
-      <ChevronRight className="ml-auto h-4 w-4" />
-    </DropdownMenuPrimitive.SubTrigger>
-  )
-);
+  Readonly<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps>
+> = React.forwardRef<
+  HTMLDivElement,
+  Readonly<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps>
+>(({ className, inset, chevronSide = "right", children, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubTrigger
+    ref={ref as any}
+    className={cn(
+      "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-hidden hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
+      inset && "pl-8",
+      className
+    )}
+    {...props}>
+    {chevronSide === "left" && <ChevronLeft className="mr-2 size-4" />}
+    {children}
+    {chevronSide === "right" && <ChevronRight className="ml-auto size-4" />}
+  </DropdownMenuPrimitive.SubTrigger>
+));
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
 
 const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.DropdownMenuSubContentProps> =
@@ -46,7 +53,7 @@ const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.Dropdown
     <DropdownMenuPrimitive.SubContent
       ref={ref as any}
       className={cn(
-        "animate-in slide-in-from-left-1 z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-sm hover:text-slate-700",
+        "z-50 min-w-32 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-xs animate-in slide-in-from-left-1 hover:text-slate-700",
         className
       )}
       {...props}
@@ -67,7 +74,7 @@ const DropdownMenuContent: React.ComponentType<DropdownMenuPrimitive.DropdownMen
           ref={ref}
           sideOffset={sideOffset}
           className={cn(
-            "animate-in data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-700 shadow-sm",
+            "z-50 min-w-32 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-700 shadow-xs animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
             className
           )}
           {...props}
@@ -92,7 +99,7 @@ const DropdownMenuItem: React.ForwardRefExoticComponent<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-pointer items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium outline-hidden select-none focus:bg-slate-100 data-disabled:pointer-events-none data-disabled:opacity-50",
       inset && "pl-8",
       className
     )}
@@ -112,14 +119,14 @@ const DropdownMenuCheckboxItem: React.ComponentType<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default items-center rounded-lg py-1.5 pr-2 pl-8 text-sm font-medium outline-hidden select-none focus:bg-slate-100 data-disabled:pointer-events-none data-disabled:opacity-50",
       className
     )}
     checked={checked}
     {...props}>
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className="absolute left-2 flex size-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check className="size-4" />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}
@@ -136,13 +143,13 @@ const DropdownMenuRadioItem: React.ComponentType<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default items-center rounded-lg py-1.5 pr-2 pl-8 text-sm font-medium outline-hidden select-none focus:bg-slate-100 data-disabled:pointer-events-none data-disabled:opacity-50",
       className
     )}
     {...props}>
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <span className="absolute left-2 flex size-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
-        <Circle className="h-2 w-2 fill-current" />
+        <Circle className="size-2 fill-current" />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}

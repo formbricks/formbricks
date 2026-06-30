@@ -1,12 +1,18 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getOrganizationLogoUrl,
   removeOrganizationEmailLogoUrl,
   updateOrganizationEmailLogoUrl,
 } from "./organization";
+
+vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
+}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -36,10 +42,9 @@ describe("organization", () => {
       };
 
       const mockUpdatedOrganization = {
-        projects: [
+        workspaces: [
           {
             id: "clp123456789012345678901234",
-            environments: [{ id: "cle123456789012345678901234" }],
           },
         ],
       };
@@ -62,14 +67,9 @@ describe("organization", () => {
           },
         },
         select: {
-          projects: {
+          workspaces: {
             select: {
               id: true,
-              environments: {
-                select: {
-                  id: true,
-                },
-              },
             },
           },
         },
@@ -97,10 +97,9 @@ describe("organization", () => {
         whitelabel: {
           logoUrl: "old-logo.png",
         },
-        projects: [
+        workspaces: [
           {
             id: "clp123456789012345678901234",
-            environments: [{ id: "cle123456789012345678901234" }],
           },
         ],
       };
@@ -115,14 +114,9 @@ describe("organization", () => {
         where: { id: "clg123456789012345678901234" },
         select: {
           whitelabel: true,
-          projects: {
+          workspaces: {
             select: {
               id: true,
-              environments: {
-                select: {
-                  id: true,
-                },
-              },
             },
           },
         },
@@ -149,14 +143,9 @@ describe("organization", () => {
         where: { id: "clg123456789012345678901234" },
         select: {
           whitelabel: true,
-          projects: {
+          workspaces: {
             select: {
               id: true,
-              environments: {
-                select: {
-                  id: true,
-                },
-              },
             },
           },
         },

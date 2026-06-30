@@ -17,6 +17,8 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { cn } from "@/modules/ui/lib/utils";
 
+const Separator = () => <div>|</div>;
+
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   updateRowList: (rowId: string[]) => void;
@@ -107,20 +109,17 @@ export const SelectedRowSettings = <T,>({
     setIsDownloading(false);
   };
 
-  // Helper component for the separator
-  const Separator = () => <div>|</div>;
-
   const quotasDialogText = isQuotasAllowed
-    ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+    ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
         value: selectedRowCount,
       })
-    : t("environments.contacts.delete_contact_confirmation");
+    : t("workspace.contacts.delete_contact_confirmation");
 
   let deleteDialogText: string;
   if (type === "response") {
-    deleteDialogText = t("environments.surveys.responses.delete_response_confirmation");
+    deleteDialogText = t("workspace.surveys.responses.delete_response_confirmation");
   } else if (type === "attribute") {
-    deleteDialogText = t("environments.contacts.delete_attribute_confirmation", { value: selectedRowCount });
+    deleteDialogText = t("workspace.contacts.delete_attribute_confirmation", { value: selectedRowCount });
   } else {
     deleteDialogText = quotasDialogText;
   }
@@ -170,7 +169,7 @@ export const SelectedRowSettings = <T,>({
               className={cn(isDownloading && "cursor-not-allowed opacity-50")}
               disabled={isDownloading}>
               <Button variant="outline" size="sm" className="h-6 gap-1 border-none px-2">
-                {isDownloading ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <ArrowDownToLineIcon />}
+                {isDownloading ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowDownToLineIcon />}
                 {t("common.download")}
               </Button>
             </DropdownMenuTrigger>
@@ -179,13 +178,13 @@ export const SelectedRowSettings = <T,>({
                 onClick={() => {
                   handleDownloadSelectedRows("csv");
                 }}>
-                <p className="text-slate-700">{t("environments.surveys.summary.selected_responses_csv")}</p>
+                <p className="text-slate-700">{t("workspace.surveys.summary.selected_responses_csv")}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   handleDownloadSelectedRows("xlsx");
                 }}>
-                <p>{t("environments.surveys.summary.selected_responses_excel")}</p>
+                <p>{t("workspace.surveys.summary.selected_responses_excel")}</p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -208,7 +207,7 @@ export const SelectedRowSettings = <T,>({
         text={deleteDialogText}>
         {hasQuotas && (
           <DecrementQuotasCheckbox
-            title={t("environments.surveys.responses.bulk_delete_response_quotas")}
+            title={t("workspace.surveys.responses.bulk_delete_response_quotas")}
             checked={decrementQuotas ?? hasQuotas}
             onCheckedChange={setDecrementQuotas}
           />

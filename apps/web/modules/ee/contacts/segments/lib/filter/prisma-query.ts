@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
 import {
@@ -124,7 +124,7 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
  */
 const buildNumberAttributeFilterWhereClause = async (
   filter: TSegmentAttributeFilter,
-  environmentId: string
+  workspaceId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
@@ -164,7 +164,7 @@ const buildNumberAttributeFilterWhereClause = async (
     where: {
       attributeKey: {
         key: contactAttributeKey,
-        environmentId,
+        workspaceId,
         dataType: "number",
       },
       valueNumber: null,
@@ -183,7 +183,7 @@ const buildNumberAttributeFilterWhereClause = async (
     FROM "ContactAttribute" ca
     JOIN "ContactAttributeKey" cak ON ca."attributeKeyId" = cak.id
     WHERE cak.key = $1
-    AND cak."environmentId" = $4
+    AND cak."workspaceId" = $4
     AND cak."dataType" = 'number'
     AND ca."valueNumber" IS NULL
     AND ca.value ~ $3
@@ -192,7 +192,7 @@ const buildNumberAttributeFilterWhereClause = async (
     contactAttributeKey,
     numericValue,
     NUMBER_PATTERN_SQL,
-    environmentId
+    workspaceId
   );
 
   if (unmigratedMatchingIds.length === 0) {
@@ -211,7 +211,7 @@ const buildNumberAttributeFilterWhereClause = async (
  */
 const buildAttributeFilterWhereClause = async (
   filter: TSegmentAttributeFilter,
-  environmentId: string
+  workspaceId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
@@ -258,7 +258,7 @@ const buildAttributeFilterWhereClause = async (
 
   // Handle number operators
   if (["greaterThan", "greaterEqual", "lessThan", "lessEqual"].includes(operator)) {
-    return await buildNumberAttributeFilterWhereClause(filter, environmentId);
+    return await buildNumberAttributeFilterWhereClause(filter, workspaceId);
   }
 
   // For string operators, ensure value is a primitive (not an object or array)
@@ -297,7 +297,7 @@ const buildAttributeFilterWhereClause = async (
  */
 const buildPersonFilterWhereClause = async (
   filter: TSegmentPersonFilter,
-  environmentId: string
+  workspaceId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { personIdentifier } = filter.root;
 
@@ -309,7 +309,7 @@ const buildPersonFilterWhereClause = async (
         contactAttributeKey: personIdentifier,
       },
     };
-    return await buildAttributeFilterWhereClause(personFilter, environmentId);
+    return await buildAttributeFilterWhereClause(personFilter, workspaceId);
   }
 
   return {};
@@ -358,7 +358,7 @@ const buildDeviceFilterWhereClause = (
 const buildSegmentFilterWhereClause = async (
   filter: TSegmentSegmentFilter,
   segmentPath: Set<string>,
-  environmentId: string,
+  workspaceId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier } = filter;
@@ -382,7 +382,7 @@ const buildSegmentFilterWhereClause = async (
   const newPath = new Set(segmentPath);
   newPath.add(segmentId);
 
-  const nestedWhereClause = await processFilters(segment.filters, newPath, environmentId, deviceType);
+  const nestedWhereClause = await processFilters(segment.filters, newPath, workspaceId, deviceType);
   const hasNestedConditions = Object.keys(nestedWhereClause).length > 0;
 
   if (qualifier.operator === "userIsIn") {
@@ -406,23 +406,23 @@ const buildSegmentFilterWhereClause = async (
 const processSingleFilter = async (
   filter: TSegmentFilter,
   segmentPath: Set<string>,
-  environmentId: string,
+  workspaceId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
 
   switch (root.type) {
     case "attribute":
-      return await buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter, environmentId);
+      return await buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter, workspaceId);
     case "person":
-      return await buildPersonFilterWhereClause(filter as TSegmentPersonFilter, environmentId);
+      return await buildPersonFilterWhereClause(filter as TSegmentPersonFilter, workspaceId);
     case "device":
       return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter, deviceType);
     case "segment":
       return await buildSegmentFilterWhereClause(
         filter as TSegmentSegmentFilter,
         segmentPath,
-        environmentId,
+        workspaceId,
         deviceType
       );
     default:
@@ -436,7 +436,7 @@ const processSingleFilter = async (
 const processFilters = async (
   filters: TBaseFilters,
   segmentPath: Set<string>,
-  environmentId: string,
+  workspaceId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
@@ -453,10 +453,10 @@ const processFilters = async (
     // Process the resource based on its type
     if (isResourceFilter(resource)) {
       // If it's a single filter, process it directly
-      whereClause = await processSingleFilter(resource, segmentPath, environmentId, deviceType);
+      whereClause = await processSingleFilter(resource, segmentPath, workspaceId, deviceType);
     } else {
       // If it's a group of filters, process it recursively
-      whereClause = await processFilters(resource, segmentPath, environmentId, deviceType);
+      whereClause = await processFilters(resource, segmentPath, workspaceId, deviceType);
     }
 
     if (Object.keys(whereClause).length === 0) continue;
@@ -482,24 +482,19 @@ const processFilters = async (
  * Transforms a segment filter into a Prisma query for contacts
  * @param segmentId - The segment ID being evaluated
  * @param filters - The segment filters
- * @param environmentId - The environment ID
+ * @param workspaceId - The workspace ID
  * @param deviceType - Optional device type for runtime device filter evaluation
  */
 export const segmentFilterToPrismaQuery = reactCache(
-  async (
-    segmentId: string,
-    filters: TBaseFilters,
-    environmentId: string,
-    deviceType?: "phone" | "desktop"
-  ) => {
+  async (segmentId: string, filters: TBaseFilters, workspaceId: string, deviceType?: "phone" | "desktop") => {
     try {
       const baseWhereClause = {
-        environmentId,
+        workspaceId,
       };
 
       // Initialize an empty stack for tracking the current evaluation path
       const segmentPath = new Set<string>([segmentId]);
-      const filtersWhereClause = await processFilters(filters, segmentPath, environmentId, deviceType);
+      const filtersWhereClause = await processFilters(filters, segmentPath, workspaceId, deviceType);
 
       const whereClause = {
         AND: [baseWhereClause, filtersWhereClause],
@@ -507,7 +502,7 @@ export const segmentFilterToPrismaQuery = reactCache(
 
       return ok({ whereClause });
     } catch (error) {
-      logger.error({ error, segmentId, environmentId }, "Error transforming segment filter to Prisma query");
+      logger.error({ error, segmentId, workspaceId }, "Error transforming segment filter to Prisma query");
       return err({
         type: "bad_request",
         message: "Failed to convert segment filters to Prisma query",

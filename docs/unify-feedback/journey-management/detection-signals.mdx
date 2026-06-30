@@ -1,0 +1,30 @@
+---
+title: "Capture Detection Signals at the Moments That Matter"
+sidebarTitle: "Detection Signals"
+description: "Collect feedback at the few journey steps that decide retention, and route it in as a detection signal to act on."
+icon: "satellite-dish"
+---
+
+Collect feedback at the few journey steps that decide the outcome, and route it in as a detection signal for the inner loop.
+
+## Purpose
+
+Journey Activation runs on two loops. The inner loop opens a case to recover one customer in trouble; the outer loop fixes the recurring problem behind many cases. Both start with a detection signal: a feedback, behavioral, or operational trigger that flags a customer who needs attention. Surveys are a strong feedback signal at the moments that matter, the few steps where a journey is won or lost. It lets you:
+
+* Catch problems at the steps that decide the journey outcome
+* Open inner loop cases while the experience is fresh
+* Feed both inner loop recovery and outer loop pattern detection
+* Avoid surveying steps that do not change the result
+
+## Formbricks Approach
+
+* [Actions](/surveys/website-app-surveys/actions) to trigger a survey on the exact behavior that defines the moment
+* [Advanced targeting](/surveys/website-app-surveys/advanced-targeting) to fire for the right segment
+* [Recontact options](/surveys/website-app-surveys/recontact) to cap contact frequency, set once at the workspace level
+* [Feedback Directories](/unify-feedback/feedback-directories) and [Sources](/unify-feedback/feedback-sources) to land the signal next to the journey's other data
+
+For a custom moment, fire the action from your code, then attach a survey to it:
+
+```javascript
+formbricks.track("setup_abandoned");
+```

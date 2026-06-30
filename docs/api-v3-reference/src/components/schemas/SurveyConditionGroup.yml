@@ -1,0 +1,21 @@
+type: object
+required:
+  - id
+  - connector
+  - conditions
+properties:
+  id:
+    type: string
+    format: cuid2
+  connector:
+    type: string
+    enum:
+      - and
+      - or
+  conditions:
+    type: array
+    items:
+      oneOf:
+        - $ref: ./SurveyCondition.yml
+        - $ref: ./SurveyConditionGroup.yml
+additionalProperties: false

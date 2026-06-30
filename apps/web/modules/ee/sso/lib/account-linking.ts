@@ -1,6 +1,6 @@
-import type { IdentityProvider, Prisma } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
+import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { OAUTH_ACCOUNT_NOT_LINKED_ERROR } from "@/modules/ee/sso/lib/constants";
 
 export const LINKED_SSO_LOOKUP_SELECT = {

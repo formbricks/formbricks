@@ -5,11 +5,11 @@ import { ApiClient } from "./api-client";
 
 describe("ApiClient", () => {
   const appUrl = "http://localhost:3000";
-  const environmentId = "env-test";
+  const workspaceId = "ws-test";
   let client: ApiClient;
 
   beforeEach(() => {
-    client = new ApiClient({ appUrl, environmentId });
+    client = new ApiClient({ appUrl, workspaceId });
     global.fetch = vi.fn();
   });
 
@@ -110,7 +110,7 @@ describe("ApiClient", () => {
         expect(result.data.responseId).toBe("response123");
       }
       expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain(
-        "/api/v1/client/env-test/displays/display123/response"
+        "/api/v1/client/ws-test/displays/display123/response"
       );
     });
 
@@ -181,6 +181,45 @@ describe("ApiClient", () => {
         type: "image/jpeg",
       });
       expect(fileUrl).toBe("https://fake-file-url.com");
+    });
+
+    test("includes surveyId and elementId in the upload signing request", async () => {
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              signedUrl: "https://fake-s3-url.com",
+              fileUrl: "/storage/ws-test/private/surveys/survey123/elements/element123/test.jpg",
+              presignedFields: { policy: "test" },
+              signingData: null,
+              updatedFileName: "test.jpg",
+            },
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({ ok: true } as unknown as Response);
+
+      await client.uploadFile(
+        {
+          base64: "data:image/jpeg;base64,abcd",
+          name: "test.jpg",
+          type: "image/jpeg",
+        },
+        {
+          allowedFileExtensions: ["jpg"],
+          surveyId: "survey123",
+          elementId: "element123",
+        }
+      );
+
+      const requestInit = vi.mocked(global.fetch).mock.calls[0][1] as RequestInit;
+      expect(JSON.parse(requestInit.body as string)).toEqual({
+        fileName: "test.jpg",
+        fileType: "image/jpeg",
+        allowedFileExtensions: ["jpg"],
+        surveyId: "survey123",
+        elementId: "element123",
+      });
     });
 
     test("throws an error if file is invalid", async () => {

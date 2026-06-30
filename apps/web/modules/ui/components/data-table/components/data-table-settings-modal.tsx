@@ -53,7 +53,7 @@ export const DataTableSettingsModal = <T,>({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <SettingsIcon className="h-6 w-6" />
+          <SettingsIcon className="size-6" />
           <DialogTitle>{t("common.table_settings")}</DialogTitle>
           <DialogDescription>{t("common.reorder_and_hide_columns")}</DialogDescription>
         </DialogHeader>

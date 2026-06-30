@@ -30,10 +30,10 @@ export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesP
     <div>
       <div className="p-6">
         <h1 className="text-lg font-semibold" data-testid="backup-codes-title">
-          {t("environments.settings.profile.enable_two_factor_authentication")}
+          {t("workspace.settings.profile.enable_two_factor_authentication")}
         </h1>
         <h3 className="text-sm text-slate-700" data-testid="backup-codes-description">
-          {t("environments.settings.profile.save_the_following_backup_codes_in_a_safe_place")}
+          {t("workspace.settings.profile.save_the_following_backup_codes_in_a_safe_place")}
         </h3>
       </div>
 
@@ -47,7 +47,7 @@ export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesP
         ))}
       </div>
 
-      <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+      <div className="flex w-full items-center justify-end gap-x-4 border-t border-slate-300 p-4">
         <Button
           variant="secondary"
           type="button"

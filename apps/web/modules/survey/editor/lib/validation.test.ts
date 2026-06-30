@@ -16,6 +16,7 @@ import {
   TSurveyPictureSelectionElement,
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
+import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -23,7 +24,11 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
+import {
+  TValidateIdErrorCode,
+  validateCardFieldsForAllLanguages,
+  validateQuestionLabels,
+} from "@formbricks/types/surveys/validation";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import * as validation from "./validation";
 
@@ -48,7 +53,7 @@ const surveyLanguagesEnabled: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
     default: true,
     enabled: true,
@@ -60,7 +65,7 @@ const surveyLanguagesEnabled: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
     default: false,
     enabled: true,
@@ -75,7 +80,7 @@ const surveyLanguagesOnlyDefault: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
     default: true,
     enabled: true,
@@ -90,7 +95,7 @@ const surveyLanguagesWithDisabled: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
     default: true,
     enabled: true,
@@ -102,7 +107,7 @@ const surveyLanguagesWithDisabled: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
     default: false,
     enabled: true,
@@ -114,12 +119,179 @@ const surveyLanguagesWithDisabled: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      projectId: "proj1",
+      workspaceId: "proj1",
     },
     default: false,
     enabled: false,
   },
 ];
+
+const surveyLanguagesMultipleEnabled: TSurveyLanguage[] = [
+  {
+    language: {
+      id: "1",
+      code: "en",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: true,
+    enabled: true,
+  },
+  {
+    language: {
+      id: "2",
+      code: "de",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: false,
+    enabled: true,
+  },
+  {
+    language: {
+      id: "3",
+      code: "fr",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: false,
+    enabled: true,
+  },
+  {
+    language: {
+      id: "4",
+      code: "es",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+    default: false,
+    enabled: true,
+  },
+];
+
+describe("survey schema multilingual label validation", () => {
+  test("returns a card issue when the welcome card default headline is missing but translations are present", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "cardHeadline",
+      { default: "", en: "Welcome", de: "Willkommen" },
+      surveyLanguagesEnabled,
+      "welcome"
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message: "The note on the Welcome card is missing",
+      path: ["welcomeCard", "cardHeadline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns language params when only a translated welcome card headline is missing", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "cardHeadline",
+      { default: "Welcome", en: "Welcome", de: "" },
+      surveyLanguagesEnabled,
+      "welcome"
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message: "The note on the Welcome card is missing for the following languages:  -fLang- de",
+      path: ["welcomeCard", "cardHeadline"],
+      params: { invalidLanguageCodes: ["de"] },
+    });
+  });
+
+  test("returns a card issue without params when the ending card default headline and translations are missing", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "cardHeadline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      "end",
+      2
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message: "The note on the Ending card 3 is missing",
+      path: ["endings", 2, "cardHeadline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns all invalid language params for mixed valid and invalid ending card translations", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "endingCardButtonLabel",
+      { default: "Done", en: "Done", de: "", fr: " ", es: "Listo" },
+      surveyLanguagesMultipleEnabled,
+      "end",
+      1
+    );
+
+    expect(issue).toMatchObject({
+      code: "custom",
+      message:
+        "The button label on the Ending card 2 is missing for the following languages:  -fLang- de, fr",
+      path: ["endings", 1, "endingCardButtonLabel"],
+      params: { invalidLanguageCodes: ["de", "fr"] },
+    });
+  });
+
+  test("returns a block-editor issue when a block element default headline is missing", () => {
+    const issue = validateElementLabels(
+      "headline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      1,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 of block 2 is missing",
+      path: ["blocks", 1, "elements", 0, "headline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns a block-editor issue when a question default headline is missing", () => {
+    const issue = validateQuestionLabels(
+      "headline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 is missing",
+      path: ["questions", 0, "headline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns language params when only a translated block element headline is missing", () => {
+    const issue = validateElementLabels(
+      "headline",
+      { default: "Question", en: "Question", de: "" },
+      surveyLanguagesEnabled,
+      1,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 of block 2 is missing for the following languages:  -fLang- de",
+      path: ["blocks", 1, "elements", 0, "headline"],
+      params: { invalidLanguageCodes: ["de"] },
+    });
+  });
+});
 
 describe("validation.isLabelValidForAllLanguages", () => {
   test("should return true if all enabled languages have non-empty labels", () => {
@@ -167,7 +339,7 @@ describe("validation.isLabelValidForAllLanguages", () => {
           alias: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          projectId: "proj1",
+          workspaceId: "proj1",
         },
         default: true,
         enabled: true,
@@ -911,7 +1083,6 @@ describe("validation.isSurveyValid", () => {
       id: "survey1",
       name: "Test Survey",
       type: "web",
-      environmentId: "env1",
       status: "draft",
       questions: [],
       blocks: [
@@ -968,7 +1139,7 @@ describe("validation.isSurveyValid", () => {
       required: false,
     });
     expect(validation.isSurveyValid(baseSurvey, "de", mockT)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.fallback_missing");
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.fallback_missing");
   });
 
   test("should return false and toast error if response limit is 0", () => {
@@ -977,7 +1148,7 @@ describe("validation.isSurveyValid", () => {
       autoComplete: 0,
     };
     expect(validation.isSurveyValid(surveyWithZeroLimit, "en", mockT, 5)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.response_limit_can_t_be_set_to_0");
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.response_limit_can_t_be_set_to_0");
   });
 
   test("should return false and toast error if response limit is less than or equal to response count", () => {
@@ -987,7 +1158,7 @@ describe("validation.isSurveyValid", () => {
     };
     expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      "workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
       {
         id: "response-limit-error",
       }
@@ -1001,7 +1172,7 @@ describe("validation.isSurveyValid", () => {
     };
     expect(validation.isSurveyValid(surveyWithLowLimit, "en", mockT, 5)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
+      "workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses",
       {
         id: "response-limit-error",
       }
@@ -1037,9 +1208,7 @@ describe("validation.isSurveyValid", () => {
     } as unknown as TSurvey;
 
     expect(validation.isSurveyValid(surveyWithEmptyClosedMessageHeading, "en", mockT)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.survey_closed_message_heading_required"
-    );
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.survey_closed_message_heading_required");
   });
 
   test("should return false and toast error if a link survey has a whitespace-only custom survey closed message heading", () => {
@@ -1053,9 +1222,7 @@ describe("validation.isSurveyValid", () => {
     } as unknown as TSurvey;
 
     expect(validation.isSurveyValid(surveyWithWhitespaceClosedMessageHeading, "en", mockT)).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith(
-      "environments.surveys.edit.survey_closed_message_heading_required"
-    );
+    expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.survey_closed_message_heading_required");
   });
 
   test("should return true if a link survey has a custom survey closed message heading and no subheading", () => {
@@ -1098,12 +1265,11 @@ describe("validation.isSurveyValid", () => {
           title: "temp segment",
           description: "",
           surveyId: "survey1",
-          environmentId: "env1",
         },
       } as unknown as TSurvey;
 
       expect(validation.isSurveyValid(surveyWithInvalidSegment, "en", mockT)).toBe(false); // Zod parse will fail
-      expect(toast.error).toHaveBeenCalledWith("environments.surveys.edit.invalid_targeting");
+      expect(toast.error).toHaveBeenCalledWith("workspace.surveys.edit.invalid_targeting");
     });
 
     test("should return true for app survey with valid segment filters", () => {
@@ -1123,7 +1289,6 @@ describe("validation.isSurveyValid", () => {
           title: "temp segment",
           description: "",
           surveyId: "survey1",
-          environmentId: "env1",
         },
       } as unknown as TSurvey;
       const mockSafeParse = vi.spyOn(ZSegmentFilters, "safeParse");
@@ -1140,7 +1305,7 @@ describe("validation.getValidateIdErrorMessage", () => {
   const mockT: TFunction = ((key: string, params?: Record<string, string>) => {
     // Simulate localized entity labels
     if (key === "common.hidden_field") return "Hidden field";
-    if (key === "environments.surveys.edit.question") return "Question";
+    if (key === "workspace.surveys.edit.question") return "Question";
     if (!params) return key;
     return Object.entries(params).reduce((str, [k, v]) => str.replace(`{${k}}`, v), key);
   }) as TFunction;
@@ -1201,7 +1366,7 @@ describe("validation.getValidateIdErrorMessage", () => {
       spyT as unknown as TFunction
     );
     expect(spyT).toHaveBeenCalledWith("common.hidden_field");
-    expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.validate_id_empty", {
+    expect(spyT).toHaveBeenCalledWith("workspace.surveys.edit.validate_id_empty", {
       type: "Hidden field",
     });
     expect(result).toBe("translated");
@@ -1209,7 +1374,7 @@ describe("validation.getValidateIdErrorMessage", () => {
 
   test("localizes question type and passes field for Reserved error code", () => {
     const spyT = vi.fn().mockImplementation((key: string) => {
-      if (key === "environments.surveys.edit.question") return "Question";
+      if (key === "workspace.surveys.edit.question") return "Question";
       return "translated";
     });
     validation.getValidateIdErrorMessage(
@@ -1217,8 +1382,8 @@ describe("validation.getValidateIdErrorMessage", () => {
       "question",
       spyT as unknown as TFunction
     );
-    expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.question");
-    expect(spyT).toHaveBeenCalledWith("environments.surveys.edit.validate_id_reserved", {
+    expect(spyT).toHaveBeenCalledWith("workspace.surveys.edit.question");
+    expect(spyT).toHaveBeenCalledWith("workspace.surveys.edit.validate_id_reserved", {
       type: "Question",
       field: "userId",
     });

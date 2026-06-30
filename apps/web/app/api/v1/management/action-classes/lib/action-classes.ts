@@ -1,9 +1,9 @@
 "use server";
 
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -18,23 +18,23 @@ const selectActionClass = {
   type: true,
   key: true,
   noCodeConfig: true,
-  environmentId: true,
+  workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 
-export const getActionClasses = reactCache(async (environmentIds: string[]): Promise<TActionClass[]> => {
-  validateInputs([environmentIds, ZId.array()]);
+export const getActionClasses = reactCache(async (workspaceIds: string[]): Promise<TActionClass[]> => {
+  validateInputs([workspaceIds, ZId.array()]);
 
   try {
     return await prisma.actionClass.findMany({
       where: {
-        environmentId: { in: environmentIds },
+        workspaceId: { in: workspaceIds },
       },
       select: selectActionClass,
       orderBy: {
         createdAt: "asc",
       },
     });
-  } catch (error) {
-    throw new DatabaseError(`Database error when fetching actions for environment ${environmentIds}`);
+  } catch {
+    throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceIds}`);
   }
 });

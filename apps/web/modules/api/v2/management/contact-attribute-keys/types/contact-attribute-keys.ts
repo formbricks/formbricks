@@ -2,10 +2,12 @@ import { z } from "zod";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 
-export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({
-  environmentId: z.cuid2().optional().describe("The environment ID to filter by"),
-})
+export const ZGetContactAttributeKeysFilter = ZGetFilter.extend({})
   .refine(
     (data) => {
       if (data.startDate && data.endDate && data.startDate > data.endDate) {
@@ -25,7 +27,7 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   key: true,
   name: true,
   description: true,
-  environmentId: true,
+  workspaceId: true,
 })
   .extend({
     dataType: ZContactAttributeKey.shape.dataType.optional(),
@@ -40,6 +42,14 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
         path: ["key"],
       });
     }
+
+    if (isReservedFutureDefaultAttributeKey(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message: getReservedFutureDefaultAttributeKeyIssue([data.key]),
+        path: ["key"],
+      });
+    }
   })
   .meta({
     id: "contactAttributeKeyInput",
@@ -47,3 +57,38 @@ export const ZContactAttributeKeyInput = ZContactAttributeKey.pick({
   });
 
 export type TContactAttributeKeyInput = z.infer<typeof ZContactAttributeKeyInput>;
+
+// Route-level schema — both IDs are required; bodyTransform resolves the missing one before validation.
+export const ZContactAttributeKeyCreateInput = ZContactAttributeKey.pick({
+  key: true,
+  name: true,
+  description: true,
+})
+  .extend({
+    workspaceId: z.cuid2(),
+    dataType: ZContactAttributeKey.shape.dataType.optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!isSafeIdentifier(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+        path: ["key"],
+      });
+    }
+
+    if (isReservedFutureDefaultAttributeKey(data.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message: getReservedFutureDefaultAttributeKeyIssue([data.key]),
+        path: ["key"],
+      });
+    }
+  })
+  .meta({
+    id: "contactAttributeKeyCreateInput",
+    description: "Input data for creating a contact attribute key",
+  });
+
+export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKeyCreateInput>;

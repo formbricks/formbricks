@@ -1,11 +1,23 @@
-import { SurveyStatus, SurveyType } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { SurveyStatus, SurveyType } from "@formbricks/database/prisma";
 import type { TBaseFilters } from "@formbricks/types/segment";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getContactsInSegment } from "../contact";
+import { getContactAttributeKeys } from "../contact-attribute-key";
 import { getSegment } from "../segment";
 import { getSurvey } from "../surveys";
+
+vi.mock("react", () => ({
+  cache: vi.fn((fn: Function) => fn),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -14,10 +26,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
-    contactAttributeKey: {
-      findMany: vi.fn(),
-    },
-    $transaction: vi.fn(),
+    $transaction: vi.fn(async (promises: Promise<unknown>[]) => Promise.all(promises)),
   },
 }));
 
@@ -29,16 +38,48 @@ vi.mock("../surveys", () => ({
   getSurvey: vi.fn(),
 }));
 
+vi.mock("../contact-attribute-key", () => ({
+  getContactAttributeKeys: vi.fn().mockResolvedValue({
+    ok: true,
+    data: ["email", "name"],
+  }),
+}));
+
+vi.mock("@/modules/ee/contacts/segments/lib/filter/prisma-query", () => ({
+  segmentFilterToPrismaQuery: vi.fn().mockResolvedValue({
+    ok: true,
+    data: {
+      whereClause: {
+        AND: [
+          { workspaceId: "workspace-789" },
+          {
+            AND: [
+              {
+                attributes: {
+                  some: {
+                    attributeKey: { key: "email" },
+                    value: { equals: "test@example.com", mode: "insensitive" },
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  }),
+}));
+
 describe("getContactsInSegment", () => {
   const mockSurveyId = "survey-123";
   const mockSegmentId = "segment-456";
   const mockLimit = 10;
   const mockSkip = 0;
-  const mockEnvironmentId = "env-789";
+  const mockWorkspaceId = "workspace-789";
 
   const mockSurvey = {
     id: mockSurveyId,
-    environmentId: mockEnvironmentId,
+    workspaceId: mockWorkspaceId,
     type: "link" as SurveyType,
     status: "inProgress" as SurveyStatus,
   };
@@ -64,7 +105,7 @@ describe("getContactsInSegment", () => {
 
   const mockSegment = {
     id: mockSegmentId,
-    environmentId: mockEnvironmentId,
+    workspaceId: mockWorkspaceId,
     filters: mockFilters,
   };
 
@@ -98,10 +139,33 @@ describe("getContactsInSegment", () => {
       data: mockSegment,
     });
 
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
-      { key: "email" },
-      { key: "name" },
-    ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+    vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+      ok: true,
+      data: {
+        whereClause: {
+          AND: [
+            { workspaceId: "workspace-789" },
+            {
+              AND: [
+                {
+                  attributes: {
+                    some: {
+                      attributeKey: { key: "email" },
+                      value: { equals: "test@example.com", mode: "insensitive" },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    } as any);
+
+    vi.mocked(getContactAttributeKeys).mockResolvedValue({
+      ok: true,
+      data: ["email", "name"],
+    } as any);
 
     vi.mocked(prisma.contact.count).mockResolvedValue(2);
     vi.mocked(prisma.contact.findMany).mockResolvedValue(
@@ -110,7 +174,7 @@ describe("getContactsInSegment", () => {
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   test("should return contacts when all operations succeed", async () => {
@@ -127,7 +191,7 @@ describe("getContactsInSegment", () => {
     const whereClause = {
       AND: [
         {
-          environmentId: "env-789",
+          workspaceId: mockWorkspaceId,
         },
         {
           AND: [
@@ -148,15 +212,6 @@ describe("getContactsInSegment", () => {
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
-
-    expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: {
-        environmentId: mockEnvironmentId,
-      },
-      select: {
-        key: true,
-      },
-    });
 
     expect(prisma.contact.count).toHaveBeenCalledWith({
       where: whereClause,
@@ -237,7 +292,7 @@ describe("getContactsInSegment", () => {
     const whereClause = {
       AND: [
         {
-          environmentId: "env-789",
+          workspaceId: mockWorkspaceId,
         },
         {
           AND: [
@@ -474,15 +529,15 @@ describe("getContactsInSegment", () => {
     }
   });
 
-  test("should return error when survey and segment are in different environments", async () => {
-    const mockSegmentWithDifferentEnv = {
+  test("should return error when survey and segment are in different workspaces", async () => {
+    const mockSegmentWithDifferentWorkspace = {
       ...mockSegment,
-      environmentId: "different-env",
+      workspaceId: "different-workspace",
     };
 
     vi.mocked(getSegment).mockResolvedValue({
       ok: true,
-      data: mockSegmentWithDifferentEnv,
+      data: mockSegmentWithDifferentWorkspace,
     });
 
     const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
@@ -503,12 +558,11 @@ describe("getContactsInSegment", () => {
 
   test("should return error when database operation fails", async () => {
     const dbError = new Error("Database connection failed");
-    vi.mocked(prisma.contact.count).mockRejectedValue(dbError);
+    vi.mocked(prisma.$transaction).mockRejectedValue(dbError);
     const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
-    expect(prisma.contact.count).toHaveBeenCalled();
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

@@ -1,0 +1,106 @@
+{{- if and .Values.hub.enabled .Values.hub.worker.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "formbricks.hubWorkerName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubWorkerName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-worker
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  {{- if not .Values.hub.worker.autoscaling.enabled }}
+  replicas: {{ .Values.hub.worker.replicas | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.hubWorkerName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.hubWorkerName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: hub-worker
+    spec:
+      {{- with .Values.hub.worker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.worker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.worker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.worker.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .Values.hub.worker.waitForApi.enabled }}
+      initContainers:
+        - name: wait-for-hub-api
+          image: {{ include "formbricks.hubImage" . }}
+          imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          command:
+            - sh
+            - -c
+            - |
+              attempts=0
+              max_attempts={{ .Values.hub.worker.waitForApi.maxAttempts | default 120 }}
+              until wget --no-verbose --tries=1 --spider http://{{ include "formbricks.hubname" . }}:8080/health; do
+                attempts=$((attempts+1))
+                if [ "$attempts" -ge "$max_attempts" ]; then
+                  echo "Hub API health check timed out after $((max_attempts * 5)) seconds"
+                  exit 1
+                fi
+                echo "Waiting for Hub API migrations and health check..."
+                sleep 5
+              done
+      {{- end }}
+      containers:
+        - name: hub-worker
+          image: {{ include "formbricks.hubImage" . }}
+          imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          command:
+            - /app/hub-worker
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          envFrom:
+            - secretRef:
+                name: {{ include "formbricks.hubSecretName" . }}
+          {{- if or .Values.hub.embeddings.enabled (gt (len .Values.hub.env) 0) (gt (len .Values.hub.worker.env) 0) }}
+          env:
+            {{- $workerEnv := merge (dict) .Values.hub.env .Values.hub.worker.env }}
+            {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" $workerEnv) | nindent 12 }}
+            {{- range $key, $value := .Values.hub.env }}
+            {{- if and (not (hasKey $.Values.hub.worker.env $key)) (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $value := .Values.hub.worker.env }}
+            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.hub.worker.resources }}
+          resources:
+            {{- toYaml .Values.hub.worker.resources | nindent 12 }}
+          {{- end }}
+{{- end }}

@@ -6,6 +6,10 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
@@ -38,6 +42,7 @@ const MESSAGE_TEMPLATES: Record<string, string> = {
   userid_already_exists: "The userId already exists for this environment and was not updated.",
   invalid_attribute_keys:
     "Skipped creating attribute(s) with invalid key(s): {keys}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.",
+  reserved_attribute_keys: "{issue}",
   attribute_limit_exceeded:
     "Could not create {count} new attribute(s) as it would exceed the maximum limit of {limit} attribute classes. Existing attributes were updated successfully.",
   new_attribute_created: "Created new attribute '{key}' with type '{dataType}'",
@@ -100,7 +105,7 @@ const deleteAttributes = async (
  *
  * @param contactId - The ID of the contact to update
  * @param userId - The user ID of the contact
- * @param environmentId - The environment ID
+ * @param workspaceId - The workspace ID
  * @param contactAttributesParam - The attributes to update/create
  * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
  * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
@@ -108,7 +113,7 @@ const deleteAttributes = async (
 export const updateAttributes = async (
   contactId: string,
   userId: string,
-  environmentId: string,
+  workspaceId: string,
   contactAttributesParam: TContactAttributesInput,
   deleteRemovedAttributes: boolean = false
 ): Promise<{
@@ -121,7 +126,7 @@ export const updateAttributes = async (
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
-    [environmentId, ZId],
+    [workspaceId, ZId],
     [contactAttributesParam, ZContactAttributesInput]
   );
 
@@ -149,9 +154,9 @@ export const updateAttributes = async (
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
     await Promise.all([
       getContactAttributes(contactId),
-      getContactAttributeKeys(environmentId),
-      emailValue ? hasEmailAttribute(emailValue, environmentId, contactId) : Promise.resolve(null),
-      userIdValue ? hasUserIdAttribute(userIdValue, environmentId, contactId) : Promise.resolve(null),
+      getContactAttributeKeys(workspaceId),
+      emailValue ? hasEmailAttribute(emailValue, workspaceId, contactId) : Promise.resolve(null),
+      userIdValue ? hasUserIdAttribute(userIdValue, workspaceId, contactId) : Promise.resolve(null),
     ]);
 
   // Process email and userId existence early
@@ -304,12 +309,15 @@ export const updateAttributes = async (
     // Validate that new attribute keys are safe identifiers
     const validNewAttributes: typeof newAttributes = [];
     const invalidKeys: string[] = [];
+    const reservedKeys: string[] = [];
 
     for (const attr of newAttributes) {
-      if (isSafeIdentifier(attr.key)) {
-        validNewAttributes.push(attr);
-      } else {
+      if (!isSafeIdentifier(attr.key)) {
         invalidKeys.push(attr.key);
+      } else if (isReservedFutureDefaultAttributeKey(attr.key)) {
+        reservedKeys.push(attr.key);
+      } else {
+        validNewAttributes.push(attr);
       }
     }
 
@@ -320,8 +328,19 @@ export const updateAttributes = async (
         params: { keys: invalidKeys.join(", ") },
       });
       logger.warn(
-        { environmentId, invalidKeys },
+        { workspaceId, invalidKeys },
         "SDK tried to create attributes with invalid keys - skipping"
+      );
+    }
+
+    if (reservedKeys.length > 0) {
+      errors.push({
+        code: "reserved_attribute_keys",
+        params: { issue: getReservedFutureDefaultAttributeKeyIssue(reservedKeys) },
+      });
+      logger.warn(
+        { workspaceId, reservedKeys },
+        "SDK tried to create reserved future default attribute keys - skipping"
       );
     }
 
@@ -346,7 +365,7 @@ export const updateAttributes = async (
 
         // Log new attribute creation with their types
         for (const { key, dataType } of preparedNewAttributes) {
-          logger.info({ environmentId, attributeKey: key, dataType }, "Created new contact attribute");
+          logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
           messages.push({ code: "new_attribute_created", params: { key, dataType } });
         }
 
@@ -359,7 +378,7 @@ export const updateAttributes = async (
                 name: formatSnakeCaseToTitleCase(key),
                 type: "custom",
                 dataType,
-                environment: { connect: { id: environmentId } },
+                workspaceId,
                 attributes: {
                   create: {
                     contactId,

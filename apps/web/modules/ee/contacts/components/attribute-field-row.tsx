@@ -57,7 +57,7 @@ export const AttributeFieldRow = ({
 
           return (
             <FormItem className="flex-1">
-              <FormLabel>{t("environments.contacts.attribute_key")}</FormLabel>
+              <FormLabel>{t("workspace.contacts.attribute_key")}</FormLabel>
               <FormControl>
                 <Select
                   value={keyField.value || undefined}
@@ -66,11 +66,11 @@ export const AttributeFieldRow = ({
                   <SelectTrigger id={`attribute-key-${index}`} className="h-10 w-full">
                     {keyField.value ? (
                       <span className="flex items-center gap-2">
-                        <Icon className="h-4 w-4 text-slate-400" />
+                        <Icon className="size-4 text-slate-400" />
                         <span>{selectedOption?.label ?? keyField.value}</span>
                       </span>
                     ) : (
-                      <SelectValue placeholder={t("environments.contacts.select_attribute_key")} />
+                      <SelectValue placeholder={t("workspace.contacts.select_attribute_key")} />
                     )}
                   </SelectTrigger>
                   <SelectContent>
@@ -79,7 +79,7 @@ export const AttributeFieldRow = ({
                       return (
                         <SelectItem key={option.value} value={option.value}>
                           <span className="flex items-center gap-2">
-                            <OptionIcon className="h-4 w-4 text-slate-400" />
+                            <OptionIcon className="size-4 text-slate-400" />
                             <span>{option.label}</span>
                           </span>
                         </SelectItem>
@@ -111,7 +111,7 @@ export const AttributeFieldRow = ({
                     const dateValue = e.target.value ? new Date(e.target.value).toISOString() : "";
                     valueField.onChange(dateValue);
                   }}
-                  placeholder={t("environments.contacts.attribute_value_placeholder")}
+                  placeholder={t("workspace.contacts.attribute_value_placeholder")}
                   className="w-full"
                 />
               );
@@ -122,7 +122,7 @@ export const AttributeFieldRow = ({
                 <Input
                   type="number"
                   {...valueField}
-                  placeholder={t("environments.contacts.attribute_value_placeholder")}
+                  placeholder={t("workspace.contacts.attribute_value_placeholder")}
                   className="w-full"
                 />
               );
@@ -132,7 +132,7 @@ export const AttributeFieldRow = ({
               <Input
                 type="text"
                 {...valueField}
-                placeholder={t("environments.contacts.attribute_value_placeholder")}
+                placeholder={t("workspace.contacts.attribute_value_placeholder")}
                 className="w-full"
               />
             );
@@ -140,9 +140,9 @@ export const AttributeFieldRow = ({
 
           return (
             <FormItem className="flex-1">
-              <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
+              <FormLabel>{t("workspace.contacts.attribute_value")}</FormLabel>
               <FormControl>
-                <div className="flex space-x-2">
+                <div className="flex gap-x-2">
                   {renderValueInput()}
                   <div className="flex items-end pb-0.5">
                     <Button
@@ -153,8 +153,8 @@ export const AttributeFieldRow = ({
                       )}
                       size="sm"
                       onClick={() => onRemove(index)}
-                      className="h-10 w-10 p-0">
-                      <TrashIcon className="h-4 w-4" />
+                      className="size-10 p-0">
+                      <TrashIcon className="size-4" />
                     </Button>
                   </div>
                 </div>

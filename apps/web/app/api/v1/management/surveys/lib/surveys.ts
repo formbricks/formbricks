@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -11,13 +11,13 @@ import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getSurveys = reactCache(
-  async (environmentIds: string[], limit?: number, offset?: number): Promise<TSurvey[]> => {
-    validateInputs([environmentIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+  async (workspaceIds: string[], limit?: number, offset?: number): Promise<TSurvey[]> => {
+    validateInputs([workspaceIds, ZId.array()], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const surveysPrisma = await prisma.survey.findMany({
         where: {
-          environmentId: { in: environmentIds },
+          workspaceId: { in: workspaceIds },
         },
         select: selectSurvey,
         orderBy: {

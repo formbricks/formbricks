@@ -22,10 +22,10 @@ const fetchPages = async (config: TIntegrationNotionConfig) => {
   }
 };
 
-export const getNotionDatabases = async (environmentId: string): Promise<TIntegrationNotionDatabase[]> => {
+export const getNotionDatabases = async (workspaceId: string): Promise<TIntegrationNotionDatabase[]> => {
   let results: TIntegrationNotionDatabase[] = [];
   try {
-    const notionIntegration = await getIntegrationByType(environmentId, "notion");
+    const notionIntegration = await getIntegrationByType(workspaceId, "notion");
     if (notionIntegration && notionIntegration.config?.key.bot_id) {
       results = await fetchPages(notionIntegration.config);
     }

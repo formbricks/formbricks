@@ -1,13 +1,12 @@
 import { expect } from "@playwright/test";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
-import { TProjectConfigChannel } from "@formbricks/types/project";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
-const MOCK_STORAGE_FILE_PATH = "/storage/playwright-mock";
+const SURVEY_CREATE_API_PATHS = new Set(["/api/v3/surveys", "/api/v3/surveys/templates"]);
 
 type MockStorageFileFixture = {
   name: string;
@@ -44,11 +43,110 @@ const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
   ),
 };
 
-const getMockStorageFileUrl = (
-  appOrigin: string,
-  fileName: string,
-  accessType: "public" | "private"
-): string => {
+export const waitForSurveyCreateResponse = async (page: Page): Promise<string> => {
+  const response = await page.waitForResponse((response) => {
+    const url = new URL(response.url());
+
+    return SURVEY_CREATE_API_PATHS.has(url.pathname) && response.request().method() === "POST";
+  });
+  const responseBody = await response.json().catch(() => null);
+  expect(response.status(), JSON.stringify(responseBody)).toBe(201);
+
+  const surveyId = (responseBody as { data?: { id?: unknown } } | null)?.data?.id;
+  if (typeof surveyId !== "string") {
+    throw new TypeError("Survey create response did not include a survey id");
+  }
+
+  return surveyId;
+};
+
+export const waitForSurveyEditor = async (
+  page: Page,
+  surveyId: string,
+  options: { mode?: "cx" } = {}
+): Promise<void> => {
+  const editorUrlPattern = new RegExp(`/workspaces/[^/]+/surveys/${surveyId}/edit(?:\\?.*)?$`);
+  const currentUrl = new URL(page.url());
+
+  if (!editorUrlPattern.test(`${currentUrl.pathname}${currentUrl.search}`)) {
+    await page.waitForURL(editorUrlPattern);
+  }
+
+  if (options.mode === "cx") {
+    await expect(page).toHaveURL(
+      new RegExp(String.raw`/workspaces/[^/]+/surveys/${surveyId}/edit\?.*mode=cx`)
+    );
+    await expect(page.getByRole("button", { name: "Save & Close", exact: true })).toBeVisible();
+    return;
+  }
+
+  await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
+};
+
+export const createSurveyFromScratch = async (page: Page, options: { mode?: "cx" } = {}): Promise<string> => {
+  const createResponse = waitForSurveyCreateResponse(page);
+  const createSurveyButton = page.getByRole("button", { name: "Create survey", exact: true });
+  const startFromScratchButton = page.getByText("Start from scratch", { exact: true }).first();
+
+  if (await createSurveyButton.isVisible().catch(() => false)) {
+    await createSurveyButton.click();
+  } else if (await startFromScratchButton.isVisible().catch(() => false)) {
+    await startFromScratchButton.click();
+
+    const createSurveyButtonAppeared = await Promise.race([
+      createSurveyButton
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false),
+      createResponse.then(() => false),
+    ]);
+
+    if (createSurveyButtonAppeared) {
+      await createSurveyButton.click();
+    }
+  } else {
+    await page.getByRole("button", { name: "New Survey" }).click();
+    await page.getByRole("menuitem", { name: "Start from scratch" }).click();
+  }
+
+  const surveyId = await createResponse;
+  await waitForSurveyEditor(page, surveyId, options);
+  await expect(page.getByRole("main").getByText("What would you like to know?").first()).toBeVisible();
+
+  return surveyId;
+};
+
+export const useSelectedTemplate = async (page: Page): Promise<string> => {
+  const createResponse = waitForSurveyCreateResponse(page);
+  await page.getByRole("button", { name: "Use this template", exact: true }).click();
+  const surveyId = await createResponse;
+  await waitForSurveyEditor(page, surveyId);
+
+  return surveyId;
+};
+
+export const createXMTemplateSurvey = async (page: Page, templateName: RegExp | string): Promise<string> => {
+  const createResponse = waitForSurveyCreateResponse(page);
+  await page.getByRole("button", { name: templateName, exact: typeof templateName === "string" }).click();
+  const surveyId = await createResponse;
+  await waitForSurveyEditor(page, surveyId, { mode: "cx" });
+
+  return surveyId;
+};
+
+const getMockStorageFileUrl = ({
+  appOrigin,
+  fileName,
+  accessType,
+  storageId = "playwright-mock",
+  filePathSegments = [],
+}: {
+  appOrigin: string;
+  fileName: string;
+  accessType: "public" | "private";
+  storageId?: string;
+  filePathSegments?: string[];
+}): string => {
   if (accessType === "public") {
     const fixture = PLAYWRIGHT_STORAGE_FILE_FIXTURES.get(fileName);
 
@@ -57,7 +155,7 @@ const getMockStorageFileUrl = (
     }
   }
 
-  return `${MOCK_STORAGE_FILE_PATH}/${accessType}/${encodeURIComponent(fileName)}`;
+  return `/storage/${storageId}/${accessType}/${[...filePathSegments, encodeURIComponent(fileName)].join("/")}`;
 };
 
 /**
@@ -86,7 +184,7 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
           presignedFields: {
             key: fileName,
           },
-          fileUrl: getMockStorageFileUrl(appOrigin, fileName, "public"),
+          fileUrl: getMockStorageFileUrl({ appOrigin, fileName, accessType: "public" }),
           signingData: null,
           updatedFileName: fileName,
         },
@@ -113,9 +211,17 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
         return;
       }
 
-      const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
+      const payload = route.request().postDataJSON() as
+        | { fileName?: string; surveyId?: string; elementId?: string }
+        | undefined;
       const fileName = payload?.fileName ?? "uploaded-file.bin";
-      const appOrigin = new URL(route.request().url()).origin;
+      const requestUrl = new URL(route.request().url());
+      const appOrigin = requestUrl.origin;
+      const workspaceId = requestUrl.pathname.split("/").filter(Boolean)[3] ?? "playwright-mock";
+      const filePathSegments =
+        payload?.surveyId && payload?.elementId
+          ? ["surveys", payload.surveyId, "elements", payload.elementId]
+          : [];
 
       await route.fulfill({
         status: 200,
@@ -126,7 +232,13 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
             presignedFields: {
               key: fileName,
             },
-            fileUrl: getMockStorageFileUrl(appOrigin, fileName, "private"),
+            fileUrl: getMockStorageFileUrl({
+              appOrigin,
+              fileName,
+              accessType: "private",
+              storageId: workspaceId,
+              filePathSegments,
+            }),
             signingData: null,
             updatedFileName: fileName,
           },
@@ -148,7 +260,7 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
     });
   });
 
-  await page.route(`**${MOCK_STORAGE_FILE_PATH}/**`, async (route) => {
+  await page.route("**/storage/**", async (route) => {
     if (!["GET", "HEAD"].includes(route.request().method())) {
       await route.fallback();
       return;
@@ -236,6 +348,43 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
   });
 };
 
+export const isWorkspaceStorageConfigured = async (page: Page, workspaceId: string): Promise<boolean> => {
+  const response = await page.context().request.post("/api/v1/management/storage", {
+    data: {
+      fileName: "e2e-storage-check.png",
+      fileType: "image/png",
+      workspaceId,
+    },
+  });
+
+  return response.ok();
+};
+
+export const uploadFileForFileUploadQuestion = async (page: Page) => {
+  try {
+    const fileInput = page.locator('input[type="file"]');
+    const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
+    const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
+    const buffer1 = Buffer.from(await response1.arrayBuffer());
+    const buffer2 = Buffer.from(await response2.arrayBuffer());
+
+    await fileInput.setInputFiles([
+      {
+        name: "puppy-1-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer1,
+      },
+      {
+        name: "puppy-2-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer2,
+      },
+    ]);
+  } catch (error) {
+    logger.error(error, "Error uploading files");
+  }
+};
+
 export const waitForPendingFileUploads = async (page: Page): Promise<void> => {
   await expect(page.locator("svg.animate-spin.text-slate-700")).toHaveCount(0, { timeout: 60000 });
   await expect(page.getByText("Some files failed to upload")).toHaveCount(0);
@@ -255,39 +404,14 @@ export const uploadImageChoicesForPictureSelection = async (page: Page) => {
   }
 };
 
-export const finishOnboarding = async (
-  page: Page,
-  projectChannel: TProjectConfigChannel = "website"
-): Promise<void> => {
-  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
+export const finishOnboarding = async (page: Page): Promise<void> => {
+  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/survey/);
+  await page.getByRole("button", { name: "Start from scratch" }).click();
 
-  await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx/);
+  await page.getByRole("button", { name: "Save & Close" }).click();
 
-  if (projectChannel === "app") {
-    await page.getByRole("button", { name: "In-product surveys" }).click();
-  } else {
-    await page.getByRole("button", { name: "Link & email surveys" }).click();
-  }
-
-  // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
-  await page.getByPlaceholder("e.g. Formbricks").click();
-  await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
-  await page.locator("#form-next-button").click();
-
-  if (projectChannel !== "link") {
-    await page.getByRole("button", { name: "I will do it later" }).click();
-  }
-
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page.getByText("My Workspace")).toBeVisible();
-};
-
-export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
-  let htmlContent = readFileSync(filePath, "utf-8");
-  htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
-
-  writeFileSync(filePath, htmlContent, { mode: 1 });
-  return "file:///" + filePath;
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 };
 
 export const signupUsingInviteToken = async (page: Page, name: string, email: string, password: string) => {
@@ -360,10 +484,7 @@ export const fillModalRichTranslation = async (page: Page, path: string, text: s
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 
-  await page.getByText("Start from scratch").click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
-
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await createSurveyFromScratch(page);
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -499,17 +620,17 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
   await page.getByRole("button", { name: "Add row" }).click();
-  await page.locator("#row-2").click();
+  await expect(page.locator("#row-2")).toBeEditable();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-2").click();
+  await expect(page.locator("#column-2")).toBeEditable();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-3").click();
+  await expect(page.locator("#column-3")).toBeEditable();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
   // Fill Address Question
@@ -565,10 +686,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 
-  await page.getByText("Start from scratch").click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
-
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await createSurveyFromScratch(page);
 
   // Add variables
   await page.getByText("Variables").click();
@@ -706,17 +824,17 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
   await page.getByRole("button", { name: "Add row" }).click();
-  await page.locator("#row-2").click();
+  await expect(page.locator("#row-2")).toBeEditable();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-2").click();
+  await expect(page.locator("#column-2")).toBeEditable();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-3").click();
+  await expect(page.locator("#column-3")).toBeEditable();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
   // CTA Question

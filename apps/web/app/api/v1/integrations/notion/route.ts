@@ -6,7 +6,8 @@ import {
   NOTION_OAUTH_CLIENT_SECRET,
   NOTION_REDIRECT_URI,
 } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { createIntegrationOAuthState } from "@/lib/oauth/integration-state";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -14,16 +15,16 @@ export const GET = withV1ApiWrapper({
       return { response: responses.notAuthenticatedResponse() };
     }
 
-    const environmentId = req.headers.get("environmentId");
+    const workspaceId = req.headers.get("workspaceId");
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("environmentId is missing"),
+        response: responses.badRequestResponse("workspaceId is missing"),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
@@ -49,9 +50,16 @@ export const GET = withV1ApiWrapper({
       return {
         response: responses.internalServerErrorResponse("Notion auth url is missing"),
       };
+    const state = await createIntegrationOAuthState({
+      provider: "notion",
+      userId: authentication.user.id,
+      workspaceId,
+    });
+    const authUrlWithState = new URL(auth_url);
+    authUrlWithState.searchParams.set("state", state);
 
     return {
-      response: responses.successResponse({ authUrl: `${auth_url}&state=${environmentId}` }),
+      response: responses.successResponse({ authUrl: authUrlWithState.toString() }),
     };
   },
 });

@@ -1,15 +1,25 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import {
+  SURVEY_SCHEDULING_TIME_LABEL,
+  SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+} from "@/modules/survey/scheduling/lib/constants";
+import {
+  getMinimumSurveySchedulingCalendarDate,
+  toCalendarDate,
+  toDateOnlySelection,
+} from "@/modules/survey/scheduling/lib/date-utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Slider } from "@/modules/ui/components/slider";
@@ -19,6 +29,7 @@ interface ResponseOptionsCardProps {
   setLocalSurvey: (survey: TSurvey | ((prev: TSurvey) => TSurvey)) => void;
   responseCount: number;
   isSpamProtectionAllowed: boolean;
+  locale: TUserLocale;
 }
 
 export const ResponseOptionsCard = ({
@@ -26,9 +37,10 @@ export const ResponseOptionsCard = ({
   setLocalSurvey,
   responseCount,
   isSpamProtectionAllowed,
+  locale,
 }: ResponseOptionsCardProps) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
+  const [open, setOpen] = useState(localSurvey.type === "link");
   const autoComplete = localSurvey.autoComplete !== null;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
@@ -39,11 +51,29 @@ export const ResponseOptionsCard = ({
   const [captureIpToggle, setCaptureIpToggle] = useState(localSurvey.isCaptureIpEnabled);
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
-    heading: t("environments.surveys.edit.survey_completed_heading"),
-    subheading: t("environments.surveys.edit.survey_completed_subheading"),
+    heading: t("workspace.surveys.edit.survey_completed_heading"),
+    subheading: t("workspace.surveys.edit.survey_completed_subheading"),
   });
 
   const [recaptchaThreshold, setRecaptchaThreshold] = useState<number>(localSurvey.recaptcha?.threshold ?? 0);
+  const publishOn = localSurvey.publishOn ? toCalendarDate(localSurvey.publishOn) : null;
+  const closeOn = localSurvey.closeOn ? toCalendarDate(localSurvey.closeOn) : null;
+  const minimumSchedulingDate = getMinimumSurveySchedulingCalendarDate();
+  const minPublishDate = minimumSchedulingDate;
+  const minCloseDate = (() => {
+    if (!publishOn) {
+      return minimumSchedulingDate;
+    }
+
+    const nextCalendarDay = new Date(publishOn);
+    nextCalendarDay.setDate(nextCalendarDay.getDate() + 1);
+
+    return nextCalendarDay.getTime() > minimumSchedulingDate.getTime()
+      ? nextCalendarDay
+      : minimumSchedulingDate;
+  })();
+  const isPublishOnDateEnabled = localSurvey.publishOn !== null;
+  const isCloseOnDateEnabled = localSurvey.closeOn !== null;
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
@@ -57,7 +87,7 @@ export const ResponseOptionsCard = ({
     //check if pin only contains numbers
     const validation = /^\d+$/;
     const isValidPin = validation.test(pin);
-    if (!isValidPin) return toast.error(t("environments.surveys.edit.pin_can_only_contain_numbers"));
+    if (!isValidPin) return toast.error(t("workspace.surveys.edit.pin_can_only_contain_numbers"));
     setLocalSurvey({ ...localSurvey, pin });
   };
 
@@ -68,7 +98,7 @@ export const ResponseOptionsCard = ({
     const isValidPin = regexPattern.test(`${localSurvey.pin}`);
 
     if (!isValidPin)
-      return setVerifyProtectWithPinError(t("environments.surveys.edit.pin_must_be_a_four_digit_number"));
+      return setVerifyProtectWithPinError(t("workspace.surveys.edit.pin_must_be_a_four_digit_number"));
     setVerifyProtectWithPinError(null);
   };
 
@@ -128,7 +158,7 @@ export const ResponseOptionsCard = ({
   };
 
   useEffect(() => {
-    if (!!localSurvey.surveyClosedMessage) {
+    if (localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
         heading: localSurvey.surveyClosedMessage.heading ?? surveyClosedMessage.heading,
         subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
@@ -136,6 +166,72 @@ export const ResponseOptionsCard = ({
       setSurveyClosedMessageToggle(true);
     }
   }, [localSurvey, surveyClosedMessage.heading, surveyClosedMessage.subheading]);
+
+  useEffect(() => {
+    if (!publishOn || !closeOn) {
+      return;
+    }
+
+    if (closeOn.getTime() > publishOn.getTime()) {
+      return;
+    }
+
+    setLocalSurvey((currentSurvey) => {
+      if (!currentSurvey.closeOn || !currentSurvey.publishOn) {
+        return currentSurvey;
+      }
+
+      const currentCloseOn = toCalendarDate(currentSurvey.closeOn);
+      const currentPublishOn = toCalendarDate(currentSurvey.publishOn);
+
+      if (currentCloseOn.getTime() > currentPublishOn.getTime()) {
+        return currentSurvey;
+      }
+
+      return {
+        ...currentSurvey,
+        closeOn: null,
+      };
+    });
+  }, [closeOn, publishOn, setLocalSurvey]);
+
+  const togglePublishOnDate = () => {
+    if (isPublishOnDateEnabled) {
+      setLocalSurvey((currentSurvey) => ({
+        ...currentSurvey,
+        publishOn: null,
+      }));
+      return;
+    }
+
+    const nextPublishOn = toDateOnlySelection(minPublishDate);
+    const nextPublishCalendarDate = toCalendarDate(nextPublishOn);
+
+    setLocalSurvey((currentSurvey) => ({
+      ...currentSurvey,
+      closeOn:
+        currentSurvey.closeOn &&
+        toCalendarDate(currentSurvey.closeOn).getTime() <= nextPublishCalendarDate.getTime()
+          ? null
+          : currentSurvey.closeOn,
+      publishOn: nextPublishOn,
+    }));
+  };
+
+  const toggleCloseOnDate = () => {
+    if (isCloseOnDateEnabled) {
+      setLocalSurvey((currentSurvey) => ({
+        ...currentSurvey,
+        closeOn: null,
+      }));
+      return;
+    }
+
+    setLocalSurvey((currentSurvey) => ({
+      ...currentSurvey,
+      closeOn: toDateOnlySelection(minCloseDate),
+    }));
+  };
 
   const toggleAutocomplete = () => {
     if (autoComplete) {
@@ -148,7 +244,7 @@ export const ResponseOptionsCard = ({
   };
 
   const handleInputResponse = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = parseInt(e.target.value);
+    let value = Number.parseInt(e.target.value);
     if (Number.isNaN(value) || value < 1) {
       value = 1;
     }
@@ -158,24 +254,22 @@ export const ResponseOptionsCard = ({
   };
 
   const handleInputResponseBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (parseInt(e.target.value) === 0) {
-      toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
+    if (Number.parseInt(e.target.value) === 0) {
+      toast.error(t("workspace.surveys.edit.response_limit_can_t_be_set_to_0"));
       return;
     }
 
-    if (parseInt(e.target.value) <= responseCount) {
+    if (Number.parseInt(e.target.value) <= responseCount) {
       toast.error(
-        t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
+        t("workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
           responseCount,
         }),
         {
           id: "response-limit-error",
         }
       );
-      return;
     }
   };
-  const [parent] = useAutoAnimate();
 
   const handleRecaptchaToggle = () => {
     if (!isSpamProtectionAllowed) return;
@@ -214,37 +308,109 @@ export const ResponseOptionsCard = ({
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />{" "}
           </div>
           <div>
-            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.response_options")}</p>
+            <p className="font-semibold text-slate-800">{t("workspace.surveys.edit.response_options")}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.response_limits_redirections_and_more")}
+              {t("workspace.surveys.edit.response_limits_redirections_and_more")}
             </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
+      <Collapsible.CollapsibleContent className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
+          <AdvancedOptionToggle
+            htmlId="publishSurveyOnDate"
+            isChecked={isPublishOnDateEnabled}
+            onToggle={togglePublishOnDate}
+            title={t("workspace.surveys.edit.publish_survey_on_date")}
+            description={t("workspace.surveys.edit.survey_will_be_published_at_midnight_cet", {
+              time: SURVEY_SCHEDULING_TIME_LABEL,
+              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+            })}
+            childBorder={true}>
+            <div className="p-4">
+              <DatePicker
+                clearButtonId="clear-publish-on-date"
+                clearButtonLabel={t("workspace.surveys.edit.clear_publish_on_date")}
+                date={publishOn}
+                locale={locale}
+                minDate={minPublishDate}
+                onClearDate={() => {
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    publishOn: null,
+                  }));
+                }}
+                updateSurveyDate={(date) => {
+                  const nextPublishOn = toDateOnlySelection(date);
+                  const nextPublishCalendarDate = toCalendarDate(nextPublishOn);
+
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    closeOn:
+                      currentSurvey.closeOn &&
+                      toCalendarDate(currentSurvey.closeOn).getTime() <= nextPublishCalendarDate.getTime()
+                        ? null
+                        : currentSurvey.closeOn,
+                    publishOn: nextPublishOn,
+                  }));
+                }}
+              />
+            </div>
+          </AdvancedOptionToggle>
+          <AdvancedOptionToggle
+            htmlId="closeSurveyOnDate"
+            isChecked={isCloseOnDateEnabled}
+            onToggle={toggleCloseOnDate}
+            title={t("workspace.surveys.edit.close_survey_on_date")}
+            description={t("workspace.surveys.edit.survey_will_be_closed_at_midnight_cet", {
+              time: SURVEY_SCHEDULING_TIME_LABEL,
+              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+            })}
+            childBorder={true}>
+            <div className="p-4">
+              <DatePicker
+                clearButtonId="clear-close-on-date"
+                clearButtonLabel={t("workspace.surveys.edit.clear_close_on_date")}
+                date={closeOn}
+                locale={locale}
+                minDate={minCloseDate}
+                onClearDate={() => {
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    closeOn: null,
+                  }));
+                }}
+                updateSurveyDate={(date) => {
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    closeOn: toDateOnlySelection(date),
+                  }));
+                }}
+              />
+            </div>
+          </AdvancedOptionToggle>
           {/* Close Survey on Limit */}
           <AdvancedOptionToggle
             htmlId="closeOnNumberOfResponse"
             isChecked={autoComplete}
             onToggle={toggleAutocomplete}
-            title={t("environments.surveys.edit.close_survey_on_response_limit")}
+            title={t("workspace.surveys.edit.close_survey_on_response_limit")}
             description={t(
-              "environments.surveys.edit.automatically_close_the_survey_after_a_certain_number_of_responses"
+              "workspace.surveys.edit.automatically_close_the_survey_after_a_certain_number_of_responses"
             )}
             childBorder={true}>
             <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-700">
                 <Trans
-                  i18nKey="environments.surveys.edit.automatically_mark_complete_after_n_responses"
+                  i18nKey="workspace.surveys.edit.automatically_mark_complete_after_n_responses"
                   components={{
                     autoCompleteInput: (
                       <Input
@@ -255,7 +421,7 @@ export const ResponseOptionsCard = ({
                         value={localSurvey.autoComplete?.toString()}
                         onChange={handleInputResponse}
                         onBlur={handleInputResponseBlur}
-                        className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                        className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                       />
                     ),
                   }}
@@ -270,15 +436,15 @@ export const ResponseOptionsCard = ({
               htmlId="recaptchaToggle"
               isChecked={recaptchaToggle}
               onToggle={handleRecaptchaToggle}
-              title={t("environments.surveys.edit.enable_spam_protection")}
-              description={t("environments.surveys.edit.enable_recaptcha_to_protect_your_survey_from_spam")}
+              title={t("workspace.surveys.edit.enable_spam_protection")}
+              description={t("workspace.surveys.edit.enable_recaptcha_to_protect_your_survey_from_spam")}
               childBorder={true}>
               <div className="w-full px-2 py-4">
                 <p className="text-sm font-semibold text-slate-800">
-                  {t("environments.surveys.edit.spam_protection_threshold_heading")} : {recaptchaThreshold}
+                  {t("workspace.surveys.edit.spam_protection_threshold_heading")} : {recaptchaThreshold}
                 </p>
                 <p className="mb-2 text-xs text-slate-500">
-                  {t("environments.surveys.edit.spam_protection_threshold_description")}
+                  {t("workspace.surveys.edit.spam_protection_threshold_description")}
                 </p>
                 <div className="flex w-full items-center gap-1">
                   <div className="text-center">
@@ -302,7 +468,7 @@ export const ResponseOptionsCard = ({
                   </div>
                 </div>
                 <Alert variant="warning" size="default" className="w-fill mt-2 text-sm">
-                  <AlertTitle>{t("environments.surveys.edit.spam_protection_note")}</AlertTitle>
+                  <AlertTitle>{t("workspace.surveys.edit.spam_protection_note")}</AlertTitle>
                 </Alert>
               </div>
             </AdvancedOptionToggle>
@@ -315,22 +481,22 @@ export const ResponseOptionsCard = ({
                 htmlId="adjustSurveyClosedMessage"
                 isChecked={surveyClosedMessageToggle}
                 onToggle={handleCloseSurveyMessageToggle}
-                title={t("environments.surveys.edit.adjust_survey_closed_message")}
-                description={t("environments.surveys.edit.adjust_survey_closed_message_description")}
+                title={t("workspace.surveys.edit.adjust_survey_closed_message")}
+                description={t("workspace.surveys.edit.adjust_survey_closed_message_description")}
                 childBorder={true}>
-                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                <div className="flex w-full items-center gap-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <Label htmlFor="headline">{t("environments.surveys.edit.heading")}</Label>
+                    <Label htmlFor="headline">{t("workspace.surveys.edit.heading")}</Label>
                     <Input
                       autoFocus
                       id="heading"
-                      className="mb-4 mt-2 bg-white"
+                      className="mt-2 mb-4 bg-white"
                       name="heading"
                       defaultValue={surveyClosedMessage.heading}
                       onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
                     />
 
-                    <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
+                    <Label htmlFor="headline">{t("workspace.surveys.edit.subheading")}</Label>
                     <Input
                       className="mt-2 bg-white"
                       id="subheading"
@@ -347,16 +513,16 @@ export const ResponseOptionsCard = ({
                 htmlId="verifyEmailBeforeSubmission"
                 isChecked={verifyEmailToggle}
                 onToggle={handleVerifyEmailToogle}
-                title={t("environments.surveys.edit.verify_email_before_submission")}
-                description={t("environments.surveys.edit.verify_email_before_submission_description")}
+                title={t("workspace.surveys.edit.verify_email_before_submission")}
+                description={t("workspace.surveys.edit.verify_email_before_submission_description")}
                 childBorder={true}>
                 <div className="m-1">
                   <AdvancedOptionToggle
                     htmlId="preventDoubleSubmission"
                     isChecked={singleResponsePerEmailToggle}
                     onToggle={handleSingleResponsePerEmailToggle}
-                    title={t("environments.surveys.edit.prevent_double_submission")}
-                    description={t("environments.surveys.edit.prevent_double_submission_description")}
+                    title={t("workspace.surveys.edit.prevent_double_submission")}
+                    description={t("workspace.surveys.edit.prevent_double_submission_description")}
                   />
                 </div>
               </AdvancedOptionToggle>
@@ -366,12 +532,12 @@ export const ResponseOptionsCard = ({
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
-                title={t("environments.surveys.edit.protect_survey_with_pin")}
-                description={t("environments.surveys.edit.protect_survey_with_pin_description")}
+                title={t("workspace.surveys.edit.protect_survey_with_pin")}
+                description={t("workspace.surveys.edit.protect_survey_with_pin_description")}
                 childBorder={true}>
                 <div className="p-4">
                   <Label htmlFor="headline" className="sr-only">
-                    {t("environments.surveys.edit.add_pin")}
+                    {t("workspace.surveys.edit.add_pin")}
                   </Label>
                   <Input
                     autoFocus
@@ -379,7 +545,7 @@ export const ResponseOptionsCard = ({
                     isInvalid={Boolean(verifyProtectWithPinError)}
                     className="bg-white"
                     name="pin"
-                    placeholder={t("environments.surveys.edit.add_a_four_digit_pin")}
+                    placeholder={t("workspace.surveys.edit.add_a_four_digit_pin")}
                     onBlur={handleProtectSurveyPinBlurEvent}
                     defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
                     onKeyDown={handleSurveyPinInputKeyDown}
@@ -397,22 +563,22 @@ export const ResponseOptionsCard = ({
             htmlId="autoProgressRatingNps"
             isChecked={Boolean(localSurvey.isAutoProgressingEnabled)}
             onToggle={handleAutoProgressToggle}
-            title={t("environments.surveys.edit.auto_progress_rating_and_nps")}
-            description={t("environments.surveys.edit.auto_progress_rating_and_nps_description")}
+            title={t("workspace.surveys.edit.auto_progress_rating_and_nps")}
+            description={t("workspace.surveys.edit.auto_progress_rating_and_nps_description")}
           />
           <AdvancedOptionToggle
             htmlId="hideBackButton"
             isChecked={localSurvey.isBackButtonHidden}
             onToggle={handleHideBackButtonToggle}
-            title={t("environments.surveys.edit.hide_back_button")}
-            description={t("environments.surveys.edit.hide_back_button_description")}
+            title={t("workspace.surveys.edit.hide_back_button")}
+            description={t("workspace.surveys.edit.hide_back_button_description")}
           />
           <AdvancedOptionToggle
             htmlId="captureIp"
             isChecked={captureIpToggle}
             onToggle={handleCaptureIpToggle}
-            title={t("environments.surveys.edit.capture_ip_address")}
-            description={t("environments.surveys.edit.capture_ip_address_description")}
+            title={t("workspace.surveys.edit.capture_ip_address")}
+            description={t("workspace.surveys.edit.capture_ip_address_description")}
           />
         </div>
       </Collapsible.CollapsibleContent>

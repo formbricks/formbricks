@@ -5,17 +5,13 @@ import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
 
-export const ContactsPage = async ({
-  params: paramsProps,
-}: {
-  params: Promise<{ environmentId: string }>;
-}) => {
+export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {
   const params = await paramsProps;
 
-  const { environment, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const t = await getTranslate();
 
@@ -23,23 +19,24 @@ export const ContactsPage = async ({
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const contactAttributeKeys = await getContactAttributeKeys(params.environmentId);
-  const initialContacts = await getContacts(params.environmentId, 0);
+  const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
+  const initialContacts = await getContacts(workspace.id, 0);
 
   const AddContactsButton = (
-    <UploadContactsCSVButton environmentId={environment.id} contactAttributeKeys={contactAttributeKeys} />
+    <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
   );
 
   return (
     <ContactsPageLayout
       pageTitle={t("common.contacts")}
       activeId="contacts"
-      environmentId={params.environmentId}
+      workspaceId={params.workspaceId}
+      organizationId={organization.id}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
       cta={AddContactsButton}>
       <ContactDataView
-        environment={environment}
+        workspaceId={workspace.id}
         itemsPerPage={ITEMS_PER_PAGE}
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}

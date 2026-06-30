@@ -1,25 +1,25 @@
-import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "./api-key";
 import { ZUser } from "./user";
+
+export const ZApiKeyPermission = z.enum(["read", "write", "manage"]);
+export type TApiKeyPermission = z.infer<typeof ZApiKeyPermission>;
 
 export const ZAuthSession = z.object({
   user: ZUser,
 });
 
-export const ZAPIKeyEnvironmentPermission = z.object({
-  environmentId: z.string(),
-  environmentType: z.enum(EnvironmentType),
-  projectId: z.cuid2(),
-  projectName: z.string(),
-  permission: z.enum(ApiKeyPermission),
+export const ZAPIKeyWorkspacePermission = z.object({
+  workspaceId: z.cuid2(),
+  workspaceName: z.string(),
+  permission: ZApiKeyPermission,
 });
 
-export type TAPIKeyEnvironmentPermission = z.infer<typeof ZAPIKeyEnvironmentPermission>;
+export type TAPIKeyWorkspacePermission = z.infer<typeof ZAPIKeyWorkspacePermission>;
 
 export const ZAuthenticationApiKey = z.object({
   type: z.literal("apiKey"),
-  environmentPermissions: z.array(ZAPIKeyEnvironmentPermission),
+  workspacePermissions: z.array(ZAPIKeyWorkspacePermission),
   apiKeyId: z.string(),
   organizationId: z.string(),
   organizationAccess: ZOrganizationAccess,

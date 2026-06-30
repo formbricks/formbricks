@@ -4,8 +4,8 @@ import { TFunction } from "i18next";
 import { ChevronDownIcon, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TProjectConfigChannel } from "@formbricks/types/project";
 import type { TFilterOption, TSortOption } from "@formbricks/types/surveys/types";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
@@ -21,7 +21,7 @@ import { SurveyFilterDropdown } from "./survey-filter-dropdown";
 interface SurveyFilterProps {
   surveyFilters: TSurveyOverviewFilters;
   setSurveyFilters: Dispatch<SetStateAction<TSurveyOverviewFilters>>;
-  currentProjectChannel: TProjectConfigChannel;
+  currentWorkspaceChannel: TWorkspaceConfigChannel;
 }
 
 const getStatusOptions = (t: TFunction): TFilterOption[] => [
@@ -41,11 +41,11 @@ const getSortOptions = (t: TFunction): TSortOption[] => [
     value: "createdAt",
   },
   {
-    label: t("environments.surveys.alphabetical"),
+    label: t("workspace.surveys.alphabetical"),
     value: "name",
   },
   {
-    label: t("environments.surveys.relevance"),
+    label: t("workspace.surveys.relevance"),
     value: "relevance",
   },
 ];
@@ -53,7 +53,7 @@ const getSortOptions = (t: TFunction): TSortOption[] => [
 export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
-  currentProjectChannel,
+  currentWorkspaceChannel,
 }: SurveyFilterProps) => {
   const { sortBy, status, type } = surveyFilters;
   const [name, setName] = useState(surveyFilters.name);
@@ -106,11 +106,11 @@ export const SurveyFilters = ({
 
   return (
     <div className="flex justify-between">
-      <div className="flex space-x-2">
+      <div className="flex gap-x-2">
         <SearchBar
           value={name}
           onChange={setName}
-          placeholder={t("environments.surveys.search_by_survey_name")}
+          placeholder={t("workspace.surveys.search_by_survey_name")}
           className="border-slate-700"
         />
         <div>
@@ -124,7 +124,7 @@ export const SurveyFilters = ({
             toggleDropdown={toggleDropdown}
           />
         </div>
-        {currentProjectChannel !== "link" && (
+        {currentWorkspaceChannel !== "link" && (
           <div>
             <SurveyFilterDropdown
               title={t("common.type")}
@@ -151,12 +151,12 @@ export const SurveyFilters = ({
           </Button>
         )}
       </div>
-      <div className="flex space-x-2">
+      <div className="flex gap-x-2">
         <DropdownMenu>
           <DropdownMenuTrigger
             asChild
-            className="surveyFilterDropdown h-full cursor-pointer border border-slate-700 outline-none hover:bg-slate-900">
-            <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
+            className="surveyFilterDropdown h-full cursor-pointer border border-slate-700 outline-hidden hover:bg-slate-900">
+            <div className="h-8 min-w-auto rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
                 <span className="text-sm">
                   {t("common.sort_by")}:{" "}
@@ -164,7 +164,7 @@ export const SurveyFilters = ({
                     ? getSortOptions(t).find((option) => option.value === sortBy)?.label
                     : ""}
                 </span>
-                <ChevronDownIcon className="ml-2 h-4 w-4" />
+                <ChevronDownIcon className="ml-2 size-4" />
               </div>
             </div>
           </DropdownMenuTrigger>

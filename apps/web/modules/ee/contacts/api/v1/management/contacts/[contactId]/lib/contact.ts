@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
@@ -36,7 +36,6 @@ export const deleteContact = async (contactId: string): Promise<void> => {
       where: { id: contactId },
       select: {
         id: true,
-        environmentId: true,
         attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
       },
     });

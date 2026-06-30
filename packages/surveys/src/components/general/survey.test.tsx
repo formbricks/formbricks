@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import type { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { Survey } from "./survey";
 
@@ -32,8 +32,11 @@ vi.mock("@/lib/api-client", () => ({
 vi.mock("@/lib/offline-storage", () => ({
   addPendingResponse: offlineStorageMocks.addPendingResponse,
   countPendingResponses: offlineStorageMocks.countPendingResponses,
+  countPendingResponsesStrict: offlineStorageMocks.countPendingResponses,
   getPendingResponses: offlineStorageMocks.getPendingResponses,
+  getPendingResponsesStrict: offlineStorageMocks.getPendingResponses,
   removePendingResponse: offlineStorageMocks.removePendingResponse,
+  removePendingResponseStrict: offlineStorageMocks.removePendingResponse,
   clearSurveyProgress: offlineStorageMocks.clearSurveyProgress,
   getSurveyProgress: offlineStorageMocks.getSurveyProgress,
   patchSurveyProgressSnapshot: offlineStorageMocks.patchSurveyProgressSnapshot,
@@ -122,11 +125,11 @@ const defaultLanguage = {
     alias: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    projectId: "project12345678901234567",
+    workspaceId: "workspace12345678901234567",
   },
 };
 
-const baseSurvey: TJsEnvironmentStateSurvey = {
+const baseSurvey: TJsWorkspaceStateSurvey = {
   id: "survey12345678901234567890",
   name: "Offline Resume Survey",
   type: "link",
@@ -166,7 +169,7 @@ const baseSurvey: TJsEnvironmentStateSurvey = {
   languages: [defaultLanguage],
   segment: null,
   hiddenFields: { enabled: false, fieldIds: [] },
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   triggers: [],
   displayOption: "displayOnce",
   showLanguageSwitch: false,
@@ -175,7 +178,7 @@ const baseSurvey: TJsEnvironmentStateSurvey = {
   recaptcha: {
     enabled: false,
   },
-} as unknown as TJsEnvironmentStateSurvey;
+} as unknown as TJsWorkspaceStateSurvey;
 
 const makeProgress = (overrides: Record<string, unknown> = {}) => ({
   surveyId: baseSurvey.id,
@@ -207,7 +210,7 @@ const renderSurvey = () =>
   render(
     <Survey
       appUrl="http://localhost:3000"
-      environmentId="env1234567890123456789012"
+      workspaceId="ws1234567890123456789012"
       survey={baseSurvey}
       styling={{} as any}
       isBrandingEnabled={false}

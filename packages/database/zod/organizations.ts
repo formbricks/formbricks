@@ -1,5 +1,5 @@
-import type { Organization, OrganizationBilling } from "@prisma/client";
 import { z } from "zod";
+import type { Organization, OrganizationBilling } from "../src/prisma";
 
 export const ZOrganizationWhiteLabel = z.object({
   logoUrl: z.string().nullable(),
@@ -10,13 +10,13 @@ export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
   limits: z
     .object({
-      projects: z.number().nullable(),
+      workspaces: z.number().nullable(),
       monthly: z.object({
         responses: z.number().nullable(),
       }),
     })
     .prefault({
-      projects: 3,
+      workspaces: 3,
       monthly: {
         responses: 1500,
       },
@@ -69,5 +69,4 @@ export const ZOrganization = z.object({
   name: z.string(),
   whitelabel: ZOrganizationWhiteLabel,
   isAISmartToolsEnabled: z.boolean().default(false) as z.ZodType<Organization["isAISmartToolsEnabled"]>,
-  isAIDataAnalysisEnabled: z.boolean().default(false) as z.ZodType<Organization["isAIDataAnalysisEnabled"]>,
 }) satisfies z.ZodType<Organization>;

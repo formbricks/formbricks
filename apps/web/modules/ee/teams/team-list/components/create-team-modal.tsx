@@ -39,7 +39,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
     const name = teamName.trim();
     const createTeamActionResponse = await createTeamAction({ name, organizationId });
     if (createTeamActionResponse?.data) {
-      toast.success(t("environments.settings.teams.team_created_successfully"));
+      toast.success(t("workspace.settings.teams.team_created_successfully"));
       if (typeof onCreate === "function") {
         onCreate(createTeamActionResponse.data);
       }
@@ -58,13 +58,13 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
       <DialogContent>
         <DialogHeader>
           <UsersIcon />
-          <DialogTitle>{t("environments.settings.teams.create_new_team")}</DialogTitle>
+          <DialogTitle>{t("workspace.settings.teams.create_new_team")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleTeamCreation} className="gap-y-4 pt-4">
           <DialogBody>
             <div className="grid w-full gap-y-2 pb-4">
-              <Label htmlFor="team-name">{t("environments.settings.teams.team_name")}</Label>
+              <Label htmlFor="team-name">{t("workspace.settings.teams.team_name")}</Label>
               <Input
                 id="team-name"
                 name="team-name"
@@ -72,7 +72,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
                 onChange={(e) => {
                   setTeamName(e.target.value);
                 }}
-                placeholder={t("environments.settings.teams.enter_team_name")}
+                placeholder={t("workspace.settings.teams.enter_team_name")}
               />
             </div>
           </DialogBody>
@@ -88,7 +88,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
               {t("common.cancel")}
             </Button>
             <Button disabled={!teamName || isLoading} loading={isLoading} type="submit">
-              {t("environments.settings.teams.create")}
+              {t("workspace.settings.teams.create")}
             </Button>
           </DialogFooter>
         </form>

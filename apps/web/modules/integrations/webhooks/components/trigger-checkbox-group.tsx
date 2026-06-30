@@ -1,8 +1,8 @@
 "use client";
 
-import { PipelineTriggers } from "@prisma/client";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { PipelineTriggers } from "@formbricks/database/prisma-browser";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface TriggerCheckboxGroupProps {
@@ -23,15 +23,15 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
     value: PipelineTriggers;
   }[] = [
     {
-      title: t("environments.integrations.webhooks.response_created"),
+      title: t("workspace.integrations.webhooks.response_created"),
       value: "responseCreated",
     },
     {
-      title: t("environments.integrations.webhooks.response_updated"),
+      title: t("workspace.integrations.webhooks.response_updated"),
       value: "responseUpdated",
     },
     {
-      title: t("environments.integrations.webhooks.response_finished"),
+      title: t("workspace.integrations.webhooks.response_finished"),
       value: "responseFinished",
     },
   ];
@@ -39,7 +39,7 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
     <div className="mt-1 rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
         {triggers.map((trigger) => (
-          <div key={trigger.value} className="my-1 flex items-center space-x-2">
+          <div key={trigger.value} className="my-1 flex items-center gap-x-2">
             <label
               htmlFor={trigger.value}
               className={`flex ${

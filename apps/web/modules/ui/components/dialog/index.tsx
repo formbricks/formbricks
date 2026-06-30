@@ -23,7 +23,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-all duration-100",
+      "fixed inset-0 z-50 bg-black/80 backdrop-blur-xs transition-all duration-100 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in",
       className
     )}
     {...props}
@@ -34,12 +34,14 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 interface DialogContentProps {
   hideCloseButton?: boolean;
   disableCloseOnOutsideClick?: boolean;
-  width?: "default" | "wide" | "narrow";
+  width?: "default" | "wide" | "full" | "narrow";
   unconstrained?: boolean;
 }
 
-const getDialogWidthClass = (width: "default" | "wide" | "narrow"): string => {
+const getDialogWidthClass = (width: "default" | "wide" | "full" | "narrow"): string => {
   switch (width) {
+    case "full":
+      return "w-[90dvw] max-w-[1400px]";
     case "wide":
       return "sm:w-[90dvw] md:w-[720px] lg:w-[960px]";
     case "narrow":
@@ -73,7 +75,7 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           className={cn(
-            "animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 md:zoom-in-90 data-[state=open]:md:slide-in-from-bottom-0 fixed z-50 flex max-h-[90dvh] w-full flex-col space-y-4 rounded-t-lg border bg-white p-4 shadow-lg sm:rounded-lg",
+            "fixed z-50 flex max-h-[90dvh] w-full flex-col gap-4 rounded-t-lg border bg-white p-4 shadow-lg animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 sm:rounded-lg md:zoom-in-90 md:data-[state=open]:slide-in-from-bottom-0",
             !unconstrained && "md:overflow-hidden",
             widthClass,
             className
@@ -83,7 +85,7 @@ const DialogContent = React.forwardRef<
           {...props}>
           {children}
           {!hideCloseButton && (
-            <DialogPrimitive.Close className="ring-offset-background focus:ring-ring absolute right-3 top-[-0.25rem] z-10 rounded-sm bg-transparent transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-slate-500">
+            <DialogPrimitive.Close className="ring-offset-background focus:ring-ring absolute top-3 right-3 z-20 rounded-xs bg-transparent transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-slate-500">
               <X className="size-4 text-slate-500" />
               <span className="sr-only">Close</span>
             </DialogPrimitive.Close>
@@ -104,7 +106,7 @@ type DialogHeaderProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
   <div
     className={cn(
-      "sticky top-[-32px] z-10 flex flex-shrink-0 flex-col gap-y-1 bg-white text-left",
+      "sticky top-[-32px] z-10 flex shrink-0 flex-col gap-y-1 bg-white text-left",
       "[&>svg]:absolute [&>svg]:size-4 [&>svg]:text-primary [&>svg~*]:min-h-4 [&>svg~*]:items-center [&>svg~*]:pl-6 sm:[&>svg~*]:flex",
       className
     )}
@@ -122,7 +124,7 @@ type DialogFooterProps = Omit<React.HTMLAttributes<HTMLDivElement>, "dangerously
 const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
   <div
     className={cn(
-      "bottom-0 z-10 flex flex-shrink-0 flex-col-reverse gap-2 bg-white sm:sticky sm:flex-row sm:justify-end",
+      "bottom-0 z-10 flex shrink-0 flex-col-reverse gap-2 bg-white sm:sticky sm:flex-row sm:justify-end",
       className
     )}
     {...props}
@@ -150,7 +152,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-sm font-medium leading-none text-primary", className)}
+    className={cn("text-sm leading-none font-medium text-primary", className)}
     {...props}
   />
 ));

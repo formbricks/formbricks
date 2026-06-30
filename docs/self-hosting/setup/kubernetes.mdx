@@ -1,211 +1,259 @@
 ---
 title: "Kubernetes Deployment"
-description: "Deploy the new Helm chart on a Kubernetes cluster using Helm."
+description: "Deploy Formbricks on Kubernetes with the current OCI Helm chart."
 icon: "circle-nodes"
 ---
 
+Deploy Formbricks on Kubernetes using the current OCI Helm chart published from the `charts/formbricks`
+directory in the Formbricks repository.
+
+<Info>
+  Formbricks v5 self-hosting expects Hub to be part of the runtime. The chart handles that by default. Use the
+  [migration guide](/self-hosting/advanced/migration#v5) before upgrading an existing 4.x deployment.
+</Info>
+
 ## Prerequisites
+
 Ensure you have the following before proceeding:
 
-- A running Kubernetes cluster (EKS, GKE, AKS, Minikube, etc.)
-- An **Ingress Controller** (e.g., Traefik, Nginx)
-- **Helm installed** on your local machine
-- **Production setup requires managed PostgreSQL and Redis services**
+- a running Kubernetes cluster
+- Helm 3 installed locally
+- a public hostname for `formbricks.webappUrl`
+- a plan for PostgreSQL and Redis/Valkey, either in-cluster or managed externally
+- an edge rate-limiting plan for the v5-covered routes: the chart's Envoy bundle or an equivalent external edge
+  solution
 
-> **Note:** Redis is required for **session handling** when deploying multiple pods.
-
----
-
-## 1. Installation Steps
+## 1. Install The Chart
 
 <Steps>
-<Step title="Install with Default Configuration">
-```sh
-helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace
-```
-> **Note:** To specify specific version use `--version` flag. E.g., `--version 1.0.0`. Starting from 3.5.0, the chart is available on the GitHub Container Registry (GHCR).
+<Step title="Create A Minimal values.yaml">
 
-By default:
-- PostgreSQL and Redis are deployed within the cluster.
-- Secrets are dynamically generated and stored as Kubernetes Secrets.
+```yaml
+formbricks:
+  webappUrl: https://surveys.example.com
+```
+
+Add any additional overrides you need for ingress, external services, secrets, or Enterprise license features.
 </Step>
 
-<Step title="Install with an Enterprise License">
+<Step title="Install Formbricks">
+
 ```sh
-helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace --set enterprise.licenseKey="YOUR_LICENSE_KEY"
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
+  -n formbricks \
+  --create-namespace \
+  -f values.yaml
 ```
+
+By default, the chart deploys:
+
+- the Formbricks application
+- Formbricks Hub
+- PostgreSQL
+- Redis
+- generated Kubernetes Secrets
 </Step>
 </Steps>
 
----
+## 2. Configure Secrets And External Services
 
-## 2. Configuring Secrets
+### Using Generated Secrets
 
-### Using Kubernetes Secrets (Default)
-By default, **secrets are stored as Kubernetes Secrets**.
-The chart automatically generates **random values** for required secrets.
+The default chart path keeps `secret.enabled: true`, which lets the chart generate the required application
+secrets for you.
 
-Modify `values.yaml`:
-```yaml
-secret:
-  enabled: true
-```
+### Using Managed PostgreSQL And Redis
 
----
+For production workloads, many teams prefer managed services:
 
-### Using External Secrets (AWS Secrets Manager, Vault, etc.)
-To use an **external secrets manager**, enable `externalSecret` in `values.yaml`:
-```yaml
-secret:
-  enabled: false  # Disable default secret generation
-
-externalSecret:
-  enabled: true
-  secretStore:
-    name: aws-secrets-manager
-    kind: ClusterSecretStore
-  refreshInterval: "1h"
-  files:
-    redis:
-      data:
-        REDIS_PASSWORD:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: REDIS_PASSWORD
-    postgres:
-      data:
-        POSTGRES_ADMIN_PASSWORD:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: POSTGRES_ADMIN_PASSWORD
-        POSTGRES_USER_PASSWORD:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: POSTGRES_USER_PASSWORD
-    app-secrets:
-      data:
-        DATABASE_URL:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: DATABASE_URL
-        REDIS_URL:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: REDIS_URL
-        ENCRYPTION_KEY:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: ENCRYPTION_KEY
-```
-**Ensure ExternalSecrets Operator is installed:**
-[https://external-secrets.io/latest/](https://external-secrets.io/latest/)
-
-Install with:
-```sh
-helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
-```
-
----
-
-## 3. Configuring PostgreSQL and Redis
-
-### Using Managed PostgreSQL and Redis
-For production, we recommend using **managed database and cache services**.
-
-Modify `values.yaml`:
 ```yaml
 postgresql:
   enabled: false
-  externalDatabaseUrl: "postgresql://user:password@your-postgres-host:5432/mydb"
+  externalDatabaseUrl: "postgresql://user:password@your-postgres-host:5432/formbricks"
 
 redis:
   enabled: false
   externalRedisUrl: "redis://your-redis-host:6379"
 ```
-Install with:
-```sh
-helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
-```
 
----
+### Using External Secrets
 
-### Using In-Cluster PostgreSQL and Redis (Default)
-By default, PostgreSQL and Redis are **deployed inside the cluster**.
-To **ensure in-cluster deployment**, use:
+If your cluster already uses an external secret manager, enable `externalSecret` and point it at your existing
+SecretStore. Ensure the resulting app secret exposes the values your deployment needs, including `DATABASE_URL`,
+`REDIS_URL`, and `HUB_API_KEY`.
+
+## 3. v5-Specific Deployment Notes
+
+### Hub Is Mandatory
+
+Formbricks v5 does not support `hub.enabled=false`. Keep the default `hub.enabled=true` behavior in place.
+
+Use `hub.image.tag`, `hub.resources`, and `hub.existingSecret` only when you need to pin or customize the Hub
+deployment details.
+
+### Envoy Bundle Modes
+
+The chart supports three edge patterns for the v5-covered routes:
+
+- **Bundled Envoy controller**: set `envoy.enabled=true` and `envoy.controller.enabled=true`
+- **Existing cluster Envoy controller**: set `envoy.enabled=true` and `envoy.controller.enabled=false`
+- **Equivalent external edge protection**: keep using your platform's own ingress or gateway layer if it already
+  provides equivalent rate-limiting coverage
+
+If you use the chart-managed Envoy rate-limiting path, enable a dedicated backend with:
 
 ```yaml
-postgresql:
-  enabled: true
-
-redis:
+envoyRedis:
   enabled: true
 ```
-Apply with:
-```sh
-helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
+
+This keeps Envoy rate-limiting state separate from the application's own Redis traffic.
+
+### Cube
+
+Cube is part of the baseline Formbricks v5 stack and is bundled with the chart by default
+(`cube.enabled: true`). To run an external Cube cluster instead:
+
+- set `cube.enabled: false` to skip the bundled Cube deployment
+- point the app at your external endpoint via `deployment.env.CUBEJS_API_URL`
+- supply `CUBEJS_API_SECRET` via `deployment.env` or `deployment.envFrom` if you disable generated
+  secrets
+
+### Optional Bundled Qwen/vLLM For AI
+
+The Helm chart can optionally deploy a Formbricks-provided Qwen runtime through vLLM. This is disabled by
+default and requires GPU-capable Kubernetes nodes.
+
+To deploy Qwen/vLLM and automatically point the Formbricks app at the in-cluster OpenAI-compatible endpoint:
+
+```yaml
+llm:
+  enabled: true
 ```
 
----
+With `llm.enabled: true`, the chart renders the vLLM router and Qwen serving engine, then injects the required
+`AI_PROVIDER=openai-compatible` app environment variables unless you override them in `deployment.env`.
 
-## 4. Upgrading the Deployment
-To apply changes:
-```sh
-helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks
+If you want to deploy the bundled Qwen runtime without changing the Formbricks app AI configuration:
+
+```yaml
+llm:
+  enabled: true
+  autoConfigureApp: false
 ```
 
-### Scaling Resources
-```sh
-helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks   --set deployment.resources.limits.cpu=2   --set deployment.resources.limits.memory=4Gi
+Keep `llm.enabled: false` when you use Google Vertex, Azure, AWS Bedrock, or an externally managed
+OpenAI-compatible endpoint. Configure those providers through `deployment.env`.
+
+### Optional AI Taxonomy Beta
+
+The Helm chart can optionally deploy the standalone taxonomy service. This is disabled by default and does not
+force the bundled Qwen/vLLM runtime.
+
+To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
+
+```yaml
+llm:
+  enabled: true
+
+taxonomy:
+  enabled: true
 ```
 
-### Enabling Autoscaling
-```sh
-helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks   --set autoscaling.enabled=true   --set autoscaling.minReplicas=3   --set autoscaling.maxReplicas=10
+With this setup, taxonomy uses the in-cluster vLLM router for cluster labeling and 5-level taxonomy generation.
+The chart also injects `TAXONOMY_SERVICE_URL`, `TAXONOMY_SERVICE_TOKEN`, and `HUB_INTERNAL_API_TOKEN` into Hub API.
+
+To use your own OpenAI-compatible LLM endpoint instead, keep `llm.enabled: false` and set the taxonomy LLM values:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    model: qwen3-14b-awq
+    baseUrl: http://my-llm-gateway:8000/v1
+    existingSecret: taxonomy-llm-secret
 ```
 
----
+The `taxonomy-llm-secret` secret must contain `TAXONOMY_LLM_API_KEY`. If your endpoint does not enforce
+authentication, store a non-empty dummy value.
 
-## 5. Key Configuration Values
+To use Gemini on Vertex AI instead, keep `llm.enabled: false`, create a secret containing
+`TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON`, and configure the Vertex provider:
 
-| Field                         | Description                          | Default Value |
-|--------------------------------|--------------------------------------|--------------|
-| `deployment.replicas`         | Number of application replicas       | `1`          |
-| `deployment.image.repository` | Docker image repository              | `"ghcr.io/formbricks/formbricks"` |
-| `deployment.image.tag`        | Docker image tag                     | `"latest"`   |
-| `autoscaling.enabled`         | Enable autoscaling                   | `false`      |
-| `postgresql.enabled`          | Deploy PostgreSQL in cluster         | `true`       |
-| `postgresql.externalDatabaseUrl` | External PostgreSQL URL           | `""`         |
-| `redis.enabled`               | Deploy Redis in cluster              | `true`       |
-| `redis.externalRedisUrl`      | External Redis URL                   | `""`         |
-| `externalSecret.enabled`      | Enable external secrets manager      | `false`      |
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    provider: vertex-gemini
+    model: gemini-2.5-flash
+    vertex:
+      project: formbricks-cloud
+      location: europe-west3
+      existingSecret: taxonomy-vertex-secret
+```
 
-**Refer to the Helm chart repository for full configuration options.**
+The service account in `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` must be allowed to call Vertex AI for the selected
+project and location.
 
----
+After startup, run the authenticated preflight check from inside the taxonomy pod:
 
-## 6. Uninstalling the Deployment
+```sh
+kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
+  python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
+```
+
+The taxonomy service is internal-only by default. Kubernetes probes use public `/health`; `/v1/preflight` is for
+operator validation and requires the internal taxonomy bearer token.
+
+## 4. Upgrade The Deployment
+
+For normal chart upgrades:
+
+```sh
+helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
+  -n formbricks \
+  -f values.yaml
+```
+
+For a Formbricks 4.x to 5.0 migration, confirm the following before running the upgrade:
+
+- Hub remains enabled
+- `HUB_API_KEY` is present
+- your edge rate-limiting plan is in place
+- any required `AI_*` variables are added
+- `CUBEJS_API_SECRET` is configured (the generated app secret supplies it by default; provide an external
+  endpoint if you set `cube.enabled: false`)
+
+## 5. Key Values
+
+| Field                         | Description                                                   |
+| ----------------------------- | ------------------------------------------------------------- |
+| `formbricks.webappUrl`        | Public base URL for the Formbricks app                        |
+| `deployment.image.tag`        | Formbricks image tag override                                 |
+| `hub.enabled`                 | Must stay `true` in Formbricks v5                             |
+| `hub.image.tag`               | Hub image tag override                                        |
+| `envoy.enabled`               | Enables chart-managed Envoy Gateway resources                 |
+| `envoy.controller.enabled`    | Installs the bundled Envoy controller when `true`             |
+| `envoyRedis.enabled`          | Deploys a dedicated Redis backend for Envoy rate limiting     |
+| `llm.enabled`                 | Deploys the optional bundled Qwen/vLLM runtime                |
+| `llm.autoConfigureApp`        | Injects Formbricks OpenAI-compatible env vars for bundled Qwen |
+| `taxonomy.enabled`            | Deploys the optional standalone AI taxonomy service           |
+| `postgresql.externalDatabaseUrl` | Uses an external PostgreSQL service instead of in-cluster |
+| `redis.externalRedisUrl`      | Uses an external Redis/Valkey service instead of in-cluster   |
+
+For the complete values surface, refer to the chart README in the repository:
+[charts/formbricks/README.md](https://github.com/formbricks/formbricks/tree/main/charts/formbricks).
+
+## 6. Uninstalling The Deployment
+
 To remove the deployment:
+
 ```sh
 helm uninstall formbricks -n formbricks
 ```
 
-### Removing Persistent Volumes (PVCs)
-By default, **PVCs are not deleted** with Helm.
-To manually remove them:
+If you also want to remove in-cluster persistent volumes:
+
 ```sh
 kubectl delete pvc --all -n formbricks
 ```
-
-To completely delete the namespace:
-```sh
-kubectl delete namespace formbricks
-```
-
----
-
-## Additional Notes
-- **Ingress Setup:** If using an ingress controller, make sure to configure `ingress.enabled: true` in `values.yaml`.
-- **Environment Variables:** Pass custom environment variables via `envFrom` in `values.yaml`.
-- **Backup Strategy:** Ensure you have a backup policy for PostgreSQL if running in-cluster.
-
-**Your Formbricks deployment is now ready!**

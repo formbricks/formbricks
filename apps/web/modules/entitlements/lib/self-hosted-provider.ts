@@ -30,8 +30,11 @@ const mapLicenseFeaturesToEntitlements = (
   if (features.aiSmartTools) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS);
   }
-  if (features.aiDataAnalysis) {
-    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_DATA_ANALYSIS);
+  if (features.feedbackDirectories) {
+    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES);
+  }
+  if (features.dashboards) {
+    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS);
   }
 
   return entitlementKeys;
@@ -54,7 +57,7 @@ export const getSelfHostedOrganizationEntitlementsContext = async (
     source: "self_hosted_license",
     features: license.active ? mapLicenseFeaturesToEntitlements(license.features) : [],
     limits: {
-      projects: license.active ? (license.features?.projects ?? 3) : 3,
+      workspaces: license.active ? (license.features?.workspaces ?? 3) : 3,
       // Self-hosted response limits are not license-server-managed today.
       monthlyResponses: null,
     },

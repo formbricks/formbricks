@@ -149,8 +149,8 @@ export const ValidationRuleRow = ({
         type="button"
         onClick={() => onDelete(rule.id)}
         className="shrink-0 bg-white"
-        aria-label={t("environments.surveys.edit.validation.delete_validation_rule")}>
-        <TrashIcon className="h-4 w-4" />
+        aria-label={t("workspace.surveys.edit.validation.delete_validation_rule")}>
+        <TrashIcon className="size-4" />
       </Button>
 
       {/* Add button */}
@@ -161,8 +161,8 @@ export const ValidationRuleRow = ({
           type="button"
           onClick={() => onAdd(index)}
           className="shrink-0 bg-white"
-          aria-label={t("environments.surveys.edit.validation.add_validation_rule")}>
-          <PlusIcon className="h-4 w-4" />
+          aria-label={t("workspace.surveys.edit.validation.add_validation_rule")}>
+          <PlusIcon className="size-4" />
         </Button>
       )}
     </div>

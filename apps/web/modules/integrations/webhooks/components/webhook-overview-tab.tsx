@@ -1,8 +1,8 @@
 "use client";
 
-import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
+import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TUserLocale } from "@formbricks/types/user";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
@@ -28,11 +28,11 @@ const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): stri
 const convertTriggerIdToName = (triggerId: string, t: TFunction): string => {
   switch (triggerId) {
     case "responseCreated":
-      return t("environments.integrations.webhooks.response_created");
+      return t("workspace.integrations.webhooks.response_created");
     case "responseUpdated":
-      return t("environments.integrations.webhooks.response_updated");
+      return t("workspace.integrations.webhooks.response_updated");
     case "responseFinished":
-      return t("environments.integrations.webhooks.response_finished");
+      return t("workspace.integrations.webhooks.response_finished");
     default:
       return triggerId;
   }
@@ -50,7 +50,7 @@ export const WebhookOverviewTab = ({ webhook, surveys, locale }: ActivityTabProp
 
         <div>
           <Label className="text-slate-500">
-            {t("environments.integrations.webhooks.created_by_third_party")}
+            {t("workspace.integrations.webhooks.created_by_third_party")}
           </Label>
           <p className="text-sm capitalize text-slate-900">
             {webhook.source === "user" ? "No" : webhook.source}
@@ -72,7 +72,7 @@ export const WebhookOverviewTab = ({ webhook, surveys, locale }: ActivityTabProp
           ))}
         </div>
         <div>
-          <Label className="text-slate-500">{t("environments.integrations.webhooks.triggers")}</Label>
+          <Label className="text-slate-500">{t("workspace.integrations.webhooks.triggers")}</Label>
           {webhook.triggers.map((triggerId) => (
             <p key={triggerId} className="text-sm text-slate-900">
               {convertTriggerIdToName(triggerId, t)}

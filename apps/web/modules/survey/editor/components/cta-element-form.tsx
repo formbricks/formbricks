@@ -46,7 +46,7 @@ export const CTAElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -88,8 +88,8 @@ export const CTAElementForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            <PlusIcon className="mr-1 size-4" />
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -99,15 +99,15 @@ export const CTAElementForm = ({
           isChecked={element.buttonExternal}
           onToggle={() => updateElement(elementIdx, { buttonExternal: !element.buttonExternal })}
           htmlId="buttonExternal"
-          title={t("environments.surveys.edit.button_external")}
-          description={t("environments.surveys.edit.button_external_description")}
+          title={t("workspace.surveys.edit.button_external")}
+          description={t("workspace.surveys.edit.button_external_description")}
           childBorder
           customContainerClass="p-0 mt-4">
           <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
             <ElementFormInput
               id="ctaButtonLabel"
               value={element.ctaButtonLabel}
-              label={t("environments.surveys.edit.cta_button_label")}
+              label={t("workspace.surveys.edit.cta_button_label")}
               localSurvey={localSurvey}
               elementIdx={elementIdx}
               maxLength={48}
@@ -119,7 +119,7 @@ export const CTAElementForm = ({
             />
 
             <div>
-              <Label htmlFor="buttonLabel">{t("environments.surveys.edit.button_url")}</Label>
+              <Label htmlFor="buttonLabel">{t("workspace.surveys.edit.button_url")}</Label>
               <Input
                 id="buttonUrl"
                 name="buttonUrl"

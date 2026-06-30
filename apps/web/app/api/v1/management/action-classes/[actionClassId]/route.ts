@@ -2,6 +2,8 @@ import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -19,8 +21,8 @@ const fetchAndAuthorizeActionClass = async (
     return null;
   }
 
-  // Check if API key has permission to access this environment with appropriate permissions
-  if (!hasPermission(authentication.environmentPermissions, actionClass.environmentId, method)) {
+  // Check if API key has permission to access this workspace with appropriate permissions
+  if (!hasPermission(authentication.workspacePermissions, actionClass.workspaceId, method)) {
     throw new Error("Unauthorized");
   }
 
@@ -83,15 +85,25 @@ export const PUT = withV1ApiWrapper({
 
       let actionClassUpdate;
       try {
-        actionClassUpdate = await req.json();
+        actionClassUpdate = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
 
-      const inputValidation = ZActionClassInput.safeParse(actionClassUpdate);
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveBodyIds(actionClassUpdate, authentication.workspacePermissions, "PUT");
+      if (!resolved.ok) return { response: resolved.response };
+
+      const inputValidation = ZActionClassInput.safeParse(resolved.body);
       if (!inputValidation.success) {
         return {
           response: responses.badRequestResponse(
@@ -100,8 +112,16 @@ export const PUT = withV1ApiWrapper({
           ),
         };
       }
+
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "PUT")
+      ) {
+        return { response: responses.unauthorizedResponse() };
+      }
+
       const updatedActionClass = await updateActionClass(
-        inputValidation.data.environmentId,
+        inputValidation.data.workspaceId,
         params.actionClassId,
         inputValidation.data
       );

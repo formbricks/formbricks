@@ -5,7 +5,7 @@ import { exampleData } from "@formbricks/email/src/lib/example-data";
 import { embedSurveyPreviewEmailHtml } from "@formbricks/email/src/lib/fixtures/embed-survey-preview-email-html";
 import { t as mockT } from "@formbricks/email/src/lib/mock-translate";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { extractEmailBodyFragment } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplateFragment";
+import { extractEmailBodyFragment } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplateFragment";
 import { mixColor } from "@/lib/utils/colors";
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 import {
@@ -41,6 +41,10 @@ const renderPreviewFragment = async (type?: TSurveyElementTypeEnum) =>
 
 const normalizeStyleAttribute = (style: string) =>
   style
+    // Zero-length values are unit-agnostic in CSS; Tailwind v4 emits a bare `0`
+    // where v3 emitted `0rem`. Collapse them so the comparison ignores the
+    // cosmetic difference while still comparing non-zero values exactly.
+    .replace(/\b0(?:rem|px|em|%)\b/g, "0")
     .split(";")
     .map((declaration) => declaration.trim().replace(/\s*:\s*/g, ":"))
     .filter(Boolean)
@@ -360,7 +364,7 @@ describe("renderEmbedSurveyPreviewEmail", () => {
 
     const openTextStyling = {
       ...EMBED_SURVEY_PREVIEW_STYLING,
-      inputColor: { light: "#fcedf0" },
+      inputBgColor: { light: "#fcedf0" },
       inputTextColor: { light: "#901629" },
       inputPlaceholderOpacity: 0.5,
       inputHeight: 20,

@@ -114,9 +114,7 @@ export const SignupForm = ({
         password: data.password,
         userLocale,
         inviteToken: inviteToken ?? "",
-        emailVerificationDisabled,
         turnstileToken,
-        isFormbricksCloud,
         subscribeToSecurityUpdates,
         subscribeToProductUpdates,
       });
@@ -226,7 +224,7 @@ export const SignupForm = ({
                               placeholder="*******"
                               aria-placeholder="password"
                               required
-                              className="block w-full rounded-md shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
+                              className="block w-full rounded-md shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                             />
                             {error?.message && <FormError className="text-left">{error.message}</FormError>}
                           </div>
@@ -255,12 +253,12 @@ export const SignupForm = ({
               (isFormbricksCloud ? (
                 <label
                   htmlFor="product-updates"
-                  className="my-4 flex cursor-pointer space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
+                  className="my-4 flex cursor-pointer gap-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
                   <Checkbox
                     id="product-updates"
                     checked={subscribeToProductUpdates}
                     onCheckedChange={(checked) => setSubscribeToProductUpdates(checked === true)}
-                    className="mt-0.5 h-4 w-4"
+                    className="mt-0.5 size-4"
                   />
                   <div>
                     <span className="text-sm font-medium text-slate-700">
@@ -272,12 +270,12 @@ export const SignupForm = ({
               ) : (
                 <label
                   htmlFor="security-updates"
-                  className="my-4 flex cursor-pointer space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
+                  className="my-4 flex cursor-pointer gap-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
                   <Checkbox
                     id="security-updates"
                     checked={subscribeToSecurityUpdates}
                     onCheckedChange={(checked) => setSubscribeToSecurityUpdates(checked === true)}
-                    className="mt-0.5 h-4 w-4"
+                    className="mt-0.5 size-4"
                   />
                   <div>
                     <span className="text-sm font-medium text-slate-700">
@@ -288,28 +286,21 @@ export const SignupForm = ({
                 </label>
               ))}
 
-            {showLogin && (
-              <Button
-                data-testid="signup-submit"
-                type="submit"
-                className="h-10 w-full justify-center"
-                loading={form.formState.isSubmitting}
-                disabled={!form.formState.isValid}>
-                {t("auth.continue_with_email")}
-              </Button>
-            )}
-
-            {!showLogin && (
-              <Button
-                data-testid="signup-show-login"
-                type="button"
-                onClick={() => {
-                  setShowLogin(true);
-                }}
-                className="h-10 w-full justify-center">
-                {t("auth.continue_with_email")}
-              </Button>
-            )}
+            <Button
+              data-testid={showLogin ? "signup-submit" : "signup-show-login"}
+              type={showLogin ? "submit" : "button"}
+              onClick={
+                showLogin
+                  ? undefined
+                  : () => {
+                      setShowLogin(true);
+                    }
+              }
+              disabled={showLogin && !form.formState.isValid}
+              className="h-10 w-full justify-center"
+              loading={showLogin && form.formState.isSubmitting}>
+              {t("auth.continue_with_email")}
+            </Button>
           </form>
         </FormProvider>
       )}

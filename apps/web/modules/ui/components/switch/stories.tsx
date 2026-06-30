@@ -68,7 +68,7 @@ export const DefaultWithLabel: Story = {
     id: "switch-with-label",
   },
   render: (args) => (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center gap-x-2">
       <Switch {...args} />
       <Label htmlFor="switch-with-label" className="cursor-pointer">
         Switch Text
@@ -91,7 +91,7 @@ export const Disabled: Story = {
     disabled: true,
   },
   render: (args) => (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center gap-x-2">
       <Switch {...args} />
       <Label htmlFor="disabled-switch" className="cursor-pointer">
         Switch Text

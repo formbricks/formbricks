@@ -133,7 +133,7 @@ export const EditContactAttributesModal = ({
         const errorFieldId = `attribute-key-${firstErrorIndex}`;
         const errorElement = document.getElementById(errorFieldId);
         if (errorElement) {
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
             // Try to focus the input inside the combobox if it exists
             const inputElement = errorElement.querySelector("input") as HTMLInputElement;
@@ -143,6 +143,7 @@ export const EditContactAttributesModal = ({
               errorElement.focus();
             }
           }, 100);
+          return () => clearTimeout(timeoutId);
         }
       }
     }
@@ -174,23 +175,23 @@ export const EditContactAttributesModal = ({
       });
 
       if (result?.data) {
-        toast.success(t("environments.contacts.edit_attributes_success"));
+        toast.success(t("workspace.contacts.edit_attributes_success"));
 
         if (result.data.messages && result.data.messages.length > 0) {
           const translateMessage = (code: string, params: Record<string, string>): string => {
             switch (code) {
               case "email_or_userid_required":
-                return t("environments.contacts.attributes_msg_email_or_userid_required");
+                return t("workspace.contacts.attributes_msg_email_or_userid_required");
               case "attribute_type_validation_error":
-                return t("environments.contacts.attributes_msg_attribute_type_validation_error", params);
+                return t("workspace.contacts.attributes_msg_attribute_type_validation_error", params);
               case "email_already_exists":
-                return t("environments.contacts.attributes_msg_email_already_exists");
+                return t("workspace.contacts.attributes_msg_email_already_exists");
               case "userid_already_exists":
-                return t("environments.contacts.attributes_msg_userid_already_exists");
+                return t("workspace.contacts.attributes_msg_userid_already_exists");
               case "attribute_limit_exceeded":
-                return t("environments.contacts.attributes_msg_attribute_limit_exceeded", params);
+                return t("workspace.contacts.attributes_msg_attribute_limit_exceeded", params);
               case "new_attribute_created":
-                return t("environments.contacts.attributes_msg_new_attribute_created", params);
+                return t("workspace.contacts.attributes_msg_new_attribute_created", params);
               default:
                 return code;
             }
@@ -231,10 +232,8 @@ export const EditContactAttributesModal = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent width="default" className="max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>{t("environments.contacts.edit_attribute_values")}</DialogTitle>
-          <DialogDescription>
-            {t("environments.contacts.edit_attribute_values_description")}
-          </DialogDescription>
+          <DialogTitle>{t("workspace.contacts.edit_attribute_values")}</DialogTitle>
+          <DialogDescription>{t("workspace.contacts.edit_attribute_values_description")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody>
@@ -263,8 +262,8 @@ export const EditContactAttributesModal = ({
               {/* Only show Add Attribute button if there are remaining attributes to add */}
               {watchedAttributes.length < attributeKeys.length && (
                 <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
-                  <PlusIcon className="mr-2 h-4 w-4" />
-                  {t("environments.contacts.add_attribute")}
+                  <PlusIcon className="mr-2 size-4" />
+                  {t("workspace.contacts.add_attribute")}
                 </Button>
               )}
 

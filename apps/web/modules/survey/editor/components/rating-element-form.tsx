@@ -44,7 +44,7 @@ export const RatingElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -86,21 +86,21 @@ export const RatingElementForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            <PlusIcon className="mr-1 size-4" />
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
-          <Label htmlFor="subheader">{t("environments.surveys.edit.scale")}</Label>
+          <Label htmlFor="subheader">{t("workspace.surveys.edit.scale")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: t("environments.surveys.edit.number"), value: "number", icon: HashIcon },
-                { label: t("environments.surveys.edit.star"), value: "star", icon: StarIcon },
-                { label: t("environments.surveys.edit.smiley"), value: "smiley", icon: SmileIcon },
+                { label: t("workspace.surveys.edit.number"), value: "number", icon: HashIcon },
+                { label: t("workspace.surveys.edit.star"), value: "star", icon: StarIcon },
+                { label: t("workspace.surveys.edit.smiley"), value: "smiley", icon: SmileIcon },
               ]}
               defaultValue={element.scale || "number"}
               onSelect={(option) => {
@@ -114,16 +114,16 @@ export const RatingElementForm = ({
           </div>
         </div>
         <div className="flex-1">
-          <Label htmlFor="subheader">{t("environments.surveys.edit.range")}</Label>
+          <Label htmlFor="subheader">{t("workspace.surveys.edit.range")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: t("environments.surveys.edit.five_points_recommended"), value: 5 },
-                { label: t("environments.surveys.edit.three_points"), value: 3 },
-                { label: t("environments.surveys.edit.four_points"), value: 4 },
-                { label: t("environments.surveys.edit.six_points"), value: 6 },
-                { label: t("environments.surveys.edit.seven_points"), value: 7 },
-                { label: t("environments.surveys.edit.ten_points"), value: 10 },
+                { label: t("workspace.surveys.edit.five_points_recommended"), value: 5 },
+                { label: t("workspace.surveys.edit.three_points"), value: 3 },
+                { label: t("workspace.surveys.edit.four_points"), value: 4 },
+                { label: t("workspace.surveys.edit.six_points"), value: 6 },
+                { label: t("workspace.surveys.edit.seven_points"), value: 7 },
+                { label: t("workspace.surveys.edit.ten_points"), value: 10 },
               ]}
               /* disabled={survey.status !== "draft"} */
               defaultValue={element.range || 5}
@@ -141,7 +141,7 @@ export const RatingElementForm = ({
             id="lowerLabel"
             placeholder="Not good"
             value={element.lowerLabel}
-            label={t("environments.surveys.edit.lower_label")}
+            label={t("workspace.surveys.edit.lower_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
@@ -155,7 +155,7 @@ export const RatingElementForm = ({
             id="upperLabel"
             placeholder="Very satisfied"
             value={element.upperLabel}
-            label={t("environments.surveys.edit.upper_label")}
+            label={t("workspace.surveys.edit.upper_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
@@ -171,8 +171,8 @@ export const RatingElementForm = ({
           isChecked={element.isColorCodingEnabled}
           onToggle={() => updateElement(elementIdx, { isColorCodingEnabled: !element.isColorCodingEnabled })}
           htmlId="isColorCodingEnabled"
-          title={t("environments.surveys.edit.add_color_coding")}
-          description={t("environments.surveys.edit.add_color_coding_description")}
+          title={t("workspace.surveys.edit.add_color_coding")}
+          description={t("workspace.surveys.edit.add_color_coding_description")}
           childBorder
           customContainerClass="p-0 mt-4"
         />

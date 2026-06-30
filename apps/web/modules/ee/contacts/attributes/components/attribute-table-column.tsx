@@ -46,7 +46,7 @@ export const generateAttributeTableColumns = (
     cell: ({ row }) => {
       const description = row.original.description;
       return description ? (
-        <div className={isExpanded ? "whitespace-normal break-words" : "truncate"}>
+        <div className={isExpanded ? "wrap-break-word whitespace-normal" : "truncate"}>
           <HighlightedText value={description} searchValue={searchValue} />
         </div>
       ) : (
@@ -76,18 +76,18 @@ export const generateAttributeTableColumns = (
   const dataTypeColumn: ColumnDef<TContactAttributeKey> = {
     id: "dataType",
     accessorKey: "dataType",
-    header: t("environments.contacts.data_type"),
+    header: t("workspace.contacts.data_type"),
     cell: ({ row }) => {
       const dataType = row.original.dataType;
       const getIcon = () => {
         switch (dataType) {
           case "date":
-            return <CalendarIcon className="h-4 w-4" />;
+            return <CalendarIcon className="size-4" />;
           case "number":
-            return <HashIcon className="h-4 w-4" />;
+            return <HashIcon className="size-4" />;
           case "string":
           default:
-            return <TagIcon className="h-4 w-4" />;
+            return <TagIcon className="size-4" />;
         }
       };
 

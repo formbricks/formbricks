@@ -5,7 +5,7 @@ import type * as CommonUtils from "@/lib/common/utils";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
-import { type TEnvironmentStateSurvey } from "@/types/config";
+import { type TWorkspaceStateSurvey } from "@/types/config";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {
@@ -69,6 +69,20 @@ describe("widget-file", () => {
     configure: vi.fn(),
   };
 
+  const createMockFormbricksSurveys = (): NonNullable<Window["formbricksSurveys"]> => ({
+    renderSurvey: vi.fn(),
+    setNonce: vi.fn(),
+  });
+
+  const getFormbricksSurveys = (): NonNullable<Window["formbricksSurveys"]> => {
+    const formbricksSurveys = window.formbricksSurveys;
+    if (!formbricksSurveys) {
+      throw new Error("window.formbricksSurveys is not set");
+    }
+
+    return formbricksSurveys;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
@@ -82,8 +96,13 @@ describe("widget-file", () => {
     vi.restoreAllMocks();
   });
 
-  test("setIsSurveyRunning toggles internal state (covered by usage in other tests)", () => {
-    widget.setIsSurveyRunning(true);
+  test("setIsSurveyRunning toggles internal state without throwing", () => {
+    expect(() => {
+      widget.setIsSurveyRunning(true);
+    }).not.toThrow();
+    expect(() => {
+      widget.setIsSurveyRunning(false);
+    }).not.toThrow();
   });
 
   test("triggerSurvey skips if shouldDisplayBasedOnPercentage returns false", async () => {
@@ -97,7 +116,8 @@ describe("widget-file", () => {
     );
   });
 
-  test("triggerSurvey calls renderWidget if displayPercentage is not an issue", async () => {
+  test("triggerSurvey short-circuits via renderWidget when a survey is already running", async () => {
+    widget.setIsSurveyRunning(true);
     (shouldDisplayBasedOnPercentage as Mock).mockReturnValueOnce(true);
 
     await widget.triggerSurvey(mockSurvey);
@@ -109,10 +129,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -139,10 +159,7 @@ describe("widget-file", () => {
     (filterSurveys as Mock).mockReturnValue([]);
     widget.setIsSurveyRunning(false);
 
-    // @ts-expect-error -- mock window.formbricksSurveys
-    window.formbricksSurveys = {
-      renderSurvey: vi.fn(),
-    };
+    window.formbricksSurveys = createMockFormbricksSurveys();
 
     vi.useFakeTimers();
 
@@ -154,11 +171,11 @@ describe("widget-file", () => {
 
     vi.advanceTimersByTime(mockSurvey.delay * 1000);
 
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
       expect.objectContaining({
         survey: mockSurvey,
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        workspaceId: "env_123",
         contactId: "contact_abc",
       })
     );
@@ -175,10 +192,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -210,7 +227,7 @@ describe("widget-file", () => {
     widget.setIsSurveyRunning(false);
     (getLanguageCode as Mock).mockReturnValueOnce(undefined); // means "not available"
 
-    await widget.renderWidget(mockSurveyNoDelay as unknown as TEnvironmentStateSurvey);
+    await widget.renderWidget(mockSurveyNoDelay as unknown as TWorkspaceStateSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       `Survey "${mockSurvey.id}" is not available in specified language.`
@@ -221,10 +238,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -274,10 +291,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -302,24 +319,21 @@ describe("widget-file", () => {
     getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
     widget.setIsSurveyRunning(false);
 
-    // @ts-expect-error -- mock window.formbricksSurveys
-    window.formbricksSurveys = {
-      renderSurvey: vi.fn(),
-    };
+    window.formbricksSurveys = createMockFormbricksSurveys();
 
     vi.useFakeTimers();
 
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).toHaveBeenCalled();
 
     vi.advanceTimersByTime(0);
 
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
       expect.objectContaining({
         contactId: "contact_abc",
       })
@@ -334,10 +348,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -362,23 +376,20 @@ describe("widget-file", () => {
     getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
     widget.setIsSurveyRunning(false);
 
-    // @ts-expect-error -- mock window.formbricksSurveys
-    window.formbricksSurveys = {
-      renderSurvey: vi.fn(),
-    };
+    window.formbricksSurveys = createMockFormbricksSurveys();
 
     vi.useFakeTimers();
 
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(0);
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalled();
 
     vi.useRealTimers();
   });
@@ -390,10 +401,10 @@ describe("widget-file", () => {
         callCount++;
         return {
           appUrl: "https://fake.app",
-          environmentId: "env_123",
-          environment: {
+          workspaceId: "env_123",
+          workspace: {
             data: {
-              project: {
+              settings: {
                 clickOutsideClose: true,
                 overlay: "none",
                 placement: "bottomRight",
@@ -422,22 +433,19 @@ describe("widget-file", () => {
     mockUpdateQueue.waitForPendingWork.mockResolvedValue(true);
     widget.setIsSurveyRunning(false);
 
-    // @ts-expect-error -- mock window.formbricksSurveys
-    window.formbricksSurveys = {
-      renderSurvey: vi.fn(),
-    };
+    window.formbricksSurveys = createMockFormbricksSurveys();
 
     vi.useFakeTimers();
 
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     vi.advanceTimersByTime(0);
 
     // The contactId passed to renderSurvey should be read after the wait
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
       expect.objectContaining({
         contactId: "contact_after_identification",
       })
@@ -452,32 +460,29 @@ describe("widget-file", () => {
 
     widget.setIsSurveyRunning(false);
 
-    // @ts-expect-error -- mock window.formbricksSurveys
-    window.formbricksSurveys = {
-      renderSurvey: vi.fn(),
-    };
+    window.formbricksSurveys = createMockFormbricksSurveys();
 
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-      segment: { id: "seg_1", hasFilters: true },
-    } as unknown as TEnvironmentStateSurvey);
+      segment: { id: "seg_1", filters: [{ type: "attribute", value: "plan" }] },
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockUpdateQueue.waitForPendingWork).toHaveBeenCalled();
     expect(mockLogger.debug).toHaveBeenCalledWith(
       "User identification failed. Skipping survey with segment filters."
     );
-    expect(window.formbricksSurveys.renderSurvey).not.toHaveBeenCalled();
+    expect(getFormbricksSurveys().renderSurvey).not.toHaveBeenCalled();
   });
 
   describe("loadFormbricksSurveysExternally and waitForSurveysGlobal", () => {
     const scriptLoadMockConfig = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -529,7 +534,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       const scriptEl = getAppendedScript();
 
@@ -557,7 +562,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       const scriptEl = getAppendedScript();
 
@@ -590,7 +595,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       const scriptEl = getAppendedScript();
 
@@ -598,8 +603,7 @@ describe("widget-file", () => {
       (scriptEl.onload as () => void)();
 
       // Set the global after script "loads" — simulates browser finishing execution
-      // @ts-expect-error -- mock window.formbricksSurveys
-      window.formbricksSurveys = { renderSurvey: vi.fn(), setNonce: vi.fn() };
+      window.formbricksSurveys = createMockFormbricksSurveys();
 
       // Advance one polling interval for waitForSurveysGlobal to find it
       await vi.advanceTimersByTimeAsync(200);
@@ -609,11 +613,11 @@ describe("widget-file", () => {
       // Run remaining timers for survey.delay setTimeout
       vi.runAllTimers();
 
-      expect(window.formbricksSurveys.setNonce).toHaveBeenCalledWith("test-nonce-123");
-      expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+      expect(getFormbricksSurveys().setNonce).toHaveBeenCalledWith("test-nonce-123");
+      expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
         expect.objectContaining({
           appUrl: "https://fake.app",
-          environmentId: "env_123",
+          workspaceId: "env_123",
           contactId: "contact_abc",
         })
       );
@@ -629,20 +633,18 @@ describe("widget-file", () => {
       // After the previous successful test, surveysLoadPromise holds a resolved promise.
       // Calling renderWidget again (without formbricksSurveys on window, but with cached promise)
       // should reuse the cached promise rather than creating a new script element.
-      // @ts-expect-error -- cleaning up mock to force dedup path
       delete window.formbricksSurveys;
 
       const appendChildSpy = vi.spyOn(document.head, "appendChild");
 
-      // @ts-expect-error -- mock window.formbricksSurveys
-      window.formbricksSurveys = { renderSurvey: vi.fn(), setNonce: vi.fn() };
+      window.formbricksSurveys = createMockFormbricksSurveys();
 
       vi.useFakeTimers();
 
       await widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       vi.advanceTimersByTime(0);
 
@@ -653,7 +655,7 @@ describe("widget-file", () => {
       });
       expect(scriptAppendCalls.length).toBe(0);
 
-      expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
+      expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalled();
 
       vi.useRealTimers();
     });
@@ -685,10 +687,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -713,10 +715,7 @@ describe("widget-file", () => {
     getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
     widget.setIsSurveyRunning(false);
 
-    // @ts-expect-error -- mock window.formbricksSurveys
-    window.formbricksSurveys = {
-      renderSurvey: vi.fn(),
-    };
+    window.formbricksSurveys = createMockFormbricksSurveys();
 
     vi.useFakeTimers();
 
@@ -724,14 +723,14 @@ describe("widget-file", () => {
       ...mockSurvey,
       delay: 0,
       segment: undefined,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       "User identification failed but survey has no segment filters. Proceeding."
     );
 
     vi.advanceTimersByTime(0);
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalled();
 
     vi.useRealTimers();
   });

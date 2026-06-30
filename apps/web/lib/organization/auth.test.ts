@@ -30,7 +30,7 @@ describe("auth", () => {
           billing: {
             stripeCustomerId: null,
             limits: {
-              projects: 3,
+              workspaces: 3,
               monthly: {
                 responses: 1500,
               },
@@ -38,7 +38,6 @@ describe("auth", () => {
             usageCycleAnchor: new Date(),
           },
           isAISmartToolsEnabled: false,
-          isAIDataAnalysisEnabled: false,
         },
       ];
       vi.mocked(getOrganizationsByUserId).mockResolvedValue(mockOrganizations);

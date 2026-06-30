@@ -2,7 +2,6 @@ import {
   getMockUpdateResponseInput,
   mockContact,
   mockDisplay,
-  mockEnvironmentId,
   mockResponse,
   mockResponseData,
   mockResponseWithQuotas,
@@ -10,16 +9,17 @@ import {
   mockSurveyId,
   mockSurveySummaryOutput,
   mockTags,
+  mockWorkspaceId,
 } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { getSurveySummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
+import { getSurveySummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import {
   mockContactAttributeKey,
   mockOrganizationOutput,
@@ -31,7 +31,7 @@ import {
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
   getResponseDownloadFile,
-  getResponsesByEnvironmentId,
+  getResponsesByWorkspaceId,
   responseSelection,
   updateResponse,
 } from "../service";
@@ -94,7 +94,8 @@ beforeEach(() => {
   prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput as unknown as any);
   prisma.organizationBilling.findUnique.mockResolvedValue(mockOrganizationBillingRecord as unknown as any);
-  prisma.project.findMany.mockResolvedValue([]);
+  prisma.workspace.findMany.mockResolvedValue([]);
+  prisma.workspace.findUnique.mockResolvedValue({ organizationId: mockOrganizationOutput.id } as any);
   // @ts-expect-error
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });
@@ -285,16 +286,16 @@ describe("Tests for getResponseDownloadUrl service", () => {
   });
 });
 
-describe("Tests for getResponsesByEnvironmentId", () => {
+describe("Tests for getResponsesByWorkspaceId", () => {
   describe("Happy Path", () => {
-    test("Obtains all responses associated with a specific environment ID", async () => {
-      const responses = await getResponsesByEnvironmentId(mockEnvironmentId);
+    test("Obtains all responses associated with a specific workspace ID", async () => {
+      const responses = await getResponsesByWorkspaceId(mockWorkspaceId);
       expect(responses).toEqual([expectedResponseWithoutPerson]);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getResponsesByEnvironmentId, "123#");
+    testInputValidation(getResponsesByWorkspaceId, "123#");
 
     test("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -305,14 +306,14 @@ describe("Tests for getResponsesByEnvironmentId", () => {
 
       prisma.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getResponsesByEnvironmentId(mockEnvironmentId)).rejects.toThrow(DatabaseError);
+      await expect(getResponsesByWorkspaceId(mockWorkspaceId)).rejects.toThrow(DatabaseError);
     });
 
     test("Throws a generic Error for any other unhandled exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getResponsesByEnvironmentId(mockEnvironmentId)).rejects.toThrow(Error);
+      await expect(getResponsesByWorkspaceId(mockWorkspaceId)).rejects.toThrow(Error);
     });
   });
 });

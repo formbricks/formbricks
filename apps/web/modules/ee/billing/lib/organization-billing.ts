@@ -1,8 +1,8 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -47,7 +47,7 @@ export const invalidateOrganizationBillingCache = async (organizationId: string)
 
 export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
-    projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+    workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
     },
@@ -552,7 +552,6 @@ export const createProTrialSubscription = async (
 export const createPaidPlanCheckoutSession = async (input: {
   organizationId: string;
   customerId: string;
-  environmentId: string;
   plan: Exclude<TStandardCloudPlan, "hobby">;
   interval: TCloudBillingInterval;
 }): Promise<string> => {
@@ -586,8 +585,8 @@ export const createPaidPlanCheckoutSession = async (input: {
       address: "auto",
       name: "auto",
     },
-    success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${input.environmentId}&checkout_success=1`,
-    cancel_url: `${WEBAPP_URL}/environments/${input.environmentId}/settings/billing`,
+    success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1`,
+    cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
     metadata: {
       organizationId: input.organizationId,
       targetPlan: input.plan,
@@ -927,6 +926,43 @@ export const undoPendingOrganizationPlanChange = async (
   await clearPendingPlanState(organizationId, subscription);
 };
 
+const isValidSetupCheckoutUpgradeTarget = (
+  targetPlan?: string
+): targetPlan is Exclude<TStandardCloudPlan, "hobby"> => {
+  return targetPlan === "pro" || targetPlan === "scale";
+};
+
+export const applyPendingUpgradeFromSetupCheckout = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan?: string;
+  targetInterval?: string;
+}): Promise<boolean> => {
+  if (!isValidSetupCheckoutUpgradeTarget(input.targetPlan)) {
+    return false;
+  }
+
+  const targetInterval: TCloudBillingInterval = input.targetInterval === "yearly" ? "yearly" : "monthly";
+  const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
+  const currentPlan = resolveCloudPlanFromSubscription(subscription);
+  const isNonStandardCurrentPlan = currentPlan === "custom" || currentPlan === "unknown";
+  const isUpgrade =
+    isNonStandardCurrentPlan || CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
+
+  if (!isUpgrade) {
+    return false;
+  }
+
+  await switchOrganizationToCloudPlan({
+    organizationId: input.organizationId,
+    customerId: input.customerId,
+    targetPlan: input.targetPlan,
+    targetInterval,
+  });
+
+  return true;
+};
+
 const ensureOrganizationBillingRecord = async (
   organizationId: string
 ): Promise<TOrganizationBilling | null> => {
@@ -1062,15 +1098,15 @@ const resolveEntitlementDrivenLimits = (
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
 
-  const projectsLimit =
+  const workspacesLimit =
     workspaceLimitFromEntitlements === undefined
-      ? (previousLimits?.projects ?? null)
+      ? (previousLimits?.workspaces ?? null)
       : workspaceLimitFromEntitlements;
 
-  if (workspaceLimitFromEntitlements === undefined && previousLimits?.projects == null) {
+  if (workspaceLimitFromEntitlements === undefined && previousLimits?.workspaces == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
-      "No workspace limit entitlement found in Stripe entitlements; preserving previous projects limit"
+      "No workspace limit entitlement found in Stripe entitlements; preserving previous workspaces limit"
     );
   }
 
@@ -1087,7 +1123,7 @@ const resolveEntitlementDrivenLimits = (
   }
 
   return {
-    projects: projectsLimit,
+    workspaces: workspacesLimit,
     monthly: {
       responses: responsesIncludedLimit,
     },
@@ -1193,6 +1229,39 @@ export const syncOrganizationBillingFromStripe = async (
   return updatedBilling;
 };
 
+/**
+ * Optimistically add a feature lookup key to OrganizationBilling.stripe.features.
+ *
+ * Used immediately after a successful subscription change (e.g. starting a Pro
+ * trial) so the next page render sees the feature without waiting for Stripe's
+ * entitlements API to propagate.
+ *
+ * Only the features array is mutated. Every other field on the stripe snapshot
+ * (lastSyncedAt, subscriptionStatus, plan, interval, trialEnd, …) is preserved
+ * verbatim by spreading the existing snapshot. The subsequent
+ * customer.subscription.created webhook re-syncs the full snapshot from Stripe
+ * and is expected to converge on the same value in the common case.
+ */
+export const addOptimisticBillingFeature = async (organizationId: string, feature: string): Promise<void> => {
+  const billing = await getOrganizationBillingFromDatabase(organizationId);
+  if (!billing?.stripe) return;
+
+  const currentFeatures = billing.stripe.features ?? [];
+  if (currentFeatures.includes(feature)) return;
+
+  const updatedStripe = {
+    ...billing.stripe,
+    features: [...currentFeatures, feature],
+  };
+
+  await prisma.organizationBilling.update({
+    where: { organizationId },
+    data: { stripe: updatedStripe },
+  });
+
+  await invalidateOrganizationBillingCache(organizationId);
+};
+
 const isSnapshotStale = (billing: TOrganizationBilling | null): boolean => {
   const lastSyncedAt = getDateFromBilling(billing?.stripe?.lastSyncedAt ?? null);
   if (!lastSyncedAt) return true;
@@ -1213,7 +1282,7 @@ export const getOrganizationBillingWithReadThroughSync = async (
     return await getOrganizationBillingFromDatabase(organizationId);
   }
 
-  const cachedBilling = await cache.withCache(
+  const cachedBilling = await cache.withCacheNullable(
     async () => await getOrganizationBillingFromDatabase(organizationId),
     getBillingCacheKey(organizationId),
     BILLING_SYNC_STALE_MS

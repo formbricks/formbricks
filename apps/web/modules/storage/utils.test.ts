@@ -2,16 +2,20 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { ZAllowedFileExtension } from "@formbricks/types/storage";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   isAllowedFileExtension,
   isValidImageFile,
+  parseStorageFileUrl,
   resolveStorageUrl,
   resolveStorageUrlAuto,
   resolveStorageUrlsInObject,
   sanitizeFileName,
+  validateClientFileUploads,
   validateFileUploads,
   validateSingleFile,
+  validateSurveyAllowsFileUpload,
 } from "@/modules/storage/utils";
 
 // Mock the getOriginalFileNameFromUrl function
@@ -348,6 +352,299 @@ describe("storage utils", () => {
       };
 
       expect(validateFileUploads(responseData)).toBe(true);
+    });
+  });
+
+  describe("validateSurveyAllowsFileUpload", () => {
+    test("should allow a matching extension from a modern file upload block element", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "element1",
+              type: "fileUpload" as const,
+              allowedFileExtensions: ["pdf"],
+            },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element1", blocks })
+      ).toEqual({
+        ok: true,
+      });
+    });
+
+    test("should allow a matching extension from a legacy file upload question", () => {
+      const questions = [
+        {
+          id: "question1",
+          type: "fileUpload" as const,
+          allowedFileExtensions: ["png"],
+        },
+      ] as TSurveyQuestion[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "image.png", elementId: "question1", questions })
+      ).toEqual({ ok: true });
+    });
+
+    test("should allow any globally safe extension when a file upload has no survey restriction", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "element1",
+              type: "fileUpload" as const,
+            },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element1", blocks })
+      ).toEqual({
+        ok: true,
+      });
+    });
+
+    test("should reject surveys without file upload blocks or questions", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "element1",
+              type: "openText" as const,
+            },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+      const questions = [
+        {
+          id: "question1",
+          type: "openText" as const,
+        },
+      ] as TSurveyQuestion[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "question1", blocks, questions })
+      ).toEqual({
+        ok: false,
+        reason: "no_file_upload_element",
+      });
+    });
+
+    test("should reject when no file upload entry allows the requested extension", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "element1",
+              type: "fileUpload" as const,
+              allowedFileExtensions: ["jpg"],
+            },
+            {
+              id: "element2",
+              type: "fileUpload" as const,
+              allowedFileExtensions: ["png"],
+            },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
+      ).toEqual({
+        ok: false,
+        reason: "file_extension_not_allowed",
+      });
+    });
+
+    test("should allow when any file upload entry permits the requested extension", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "element1",
+              type: "fileUpload" as const,
+              allowedFileExtensions: ["jpg"],
+            },
+            {
+              id: "element2",
+              type: "fileUpload" as const,
+              allowedFileExtensions: ["pdf"],
+            },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
+      ).toEqual({
+        ok: true,
+      });
+    });
+
+    test("should reject files without a globally safe extension even when the survey has an unrestricted upload", () => {
+      const questions = [
+        {
+          id: "question1",
+          type: "fileUpload" as const,
+        },
+      ] as TSurveyQuestion[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "report", elementId: "question1", questions })
+      ).toEqual({
+        ok: false,
+        reason: "file_extension_not_allowed",
+      });
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "malware.exe", elementId: "question1", questions })
+      ).toEqual({
+        ok: false,
+        reason: "file_extension_not_allowed",
+      });
+    });
+
+    test("should reject an element id that is not the file upload element", () => {
+      const blocks = [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "element1",
+              type: "fileUpload" as const,
+              allowedFileExtensions: ["pdf"],
+            },
+          ],
+        },
+      ] as unknown as TSurveyBlock[];
+
+      expect(
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
+      ).toEqual({
+        ok: false,
+        reason: "file_upload_element_not_found",
+      });
+    });
+  });
+
+  describe("validateClientFileUploads", () => {
+    const workspaceId = "clxworkspace123";
+    const surveyId = "clxsurvey123";
+    const elementId = "file_element";
+    const blocks = [
+      {
+        id: "block1",
+        name: "Block 1",
+        elements: [
+          {
+            id: elementId,
+            type: "fileUpload" as const,
+            allowedFileExtensions: ["pdf"],
+          },
+        ],
+      },
+    ] as unknown as TSurveyBlock[];
+
+    test("should accept scoped private storage URLs for the matching survey and element", () => {
+      const responseData = {
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+        ],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(true);
+    });
+
+    test("should reject unscoped legacy storage URLs for new client submissions", () => {
+      const responseData = {
+        [elementId]: [`/storage/${workspaceId}/private/report--fid--abc.pdf`],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+
+    test("should reject scoped URLs for a different survey", () => {
+      const responseData = {
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/otherSurvey/elements/${elementId}/report--fid--abc.pdf`,
+        ],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+
+    test("should reject scoped URLs for a different element", () => {
+      const responseData = {
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/${surveyId}/elements/otherElement/report--fid--abc.pdf`,
+        ],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+
+    test("should reject external URLs", () => {
+      const responseData = {
+        [elementId]: ["https://example.com/report--fid--abc.pdf"],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+
+    test("should reject file extensions not allowed by the matching upload element", () => {
+      const responseData = {
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/image--fid--abc.png`,
+        ],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+  });
+
+  describe("parseStorageFileUrl", () => {
+    test("should parse nested relative storage URLs", () => {
+      expect(
+        parseStorageFileUrl(
+          "/storage/workspace-123/private/surveys/survey-123/elements/element-123/report.pdf"
+        )
+      ).toEqual({
+        storageId: "workspace-123",
+        accessType: "private",
+        fileName: "surveys/survey-123/elements/element-123/report.pdf",
+      });
+    });
+
+    test("should parse absolute storage URLs", () => {
+      expect(parseStorageFileUrl("https://example.com/storage/workspace-123/public/report.pdf")).toEqual({
+        storageId: "workspace-123",
+        accessType: "public",
+        fileName: "report.pdf",
+      });
+    });
+
+    test.each([
+      "https://example.com/not-storage/workspace-123/private/report.pdf",
+      "/storage/workspace-123/internal/report.pdf",
+      "/storage/workspace-123/private",
+      "not a url",
+    ])("should reject invalid storage URL %s", (fileUrl) => {
+      expect(parseStorageFileUrl(fileUrl)).toBeNull();
     });
   });
 

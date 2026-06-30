@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -61,7 +61,7 @@ describe("Quota Utils", () => {
   const mockQuotaId = "quota123";
   const mockEndingCardId = "ending123";
 
-  const mockSurvey: TJsEnvironmentStateSurvey = {
+  const mockSurvey: TJsWorkspaceStateSurvey = {
     id: mockSurveyId,
     name: "Test Survey",
     type: "link",
@@ -105,7 +105,7 @@ describe("Quota Utils", () => {
     delay: 0,
     displayPercentage: null,
     isBackButtonHidden: false,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     styling: null,
     showLanguageSwitch: null,
     languages: [],
@@ -292,9 +292,10 @@ describe("Quota Utils", () => {
     test("should handle empty quota arrays within transaction", async () => {
       await upsertResponseQuotaLinks(mockResponseId, [], [], [], asTx(mockTx));
 
-      // Verify transaction was called even with empty arrays
-      // expect(mockTx).toHaveBeenCalledTimes(1);
-      // expect(mockTx).toHaveBeenCalledWith(expect.any(Function));
+      // deleteMany always runs; create/update are skipped when arrays are empty
+      expect(mockTx.responseQuotaLink.deleteMany).toHaveBeenCalledTimes(1);
+      expect(mockTx.responseQuotaLink.createMany).not.toHaveBeenCalled();
+      expect(mockTx.responseQuotaLink.updateMany).not.toHaveBeenCalled();
     });
 
     test("should execute correct operations within transaction", async () => {

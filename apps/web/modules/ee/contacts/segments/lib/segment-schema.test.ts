@@ -29,7 +29,7 @@ describe("segment schema validation", () => {
 
   test("requires at least one filter when creating a segment", () => {
     const result = ZSegmentCreateInput.safeParse({
-      environmentId: "environmentId",
+      workspaceId: "workspaceId",
       title: "Power users",
       description: "Users with a matching email",
       isPrivate: false,
@@ -43,7 +43,7 @@ describe("segment schema validation", () => {
 
   test("accepts segment creation with a valid filter", () => {
     const result = ZSegmentCreateInput.safeParse({
-      environmentId: "environmentId",
+      workspaceId: "workspaceId",
       title: "Power users",
       description: "Users with a matching email",
       isPrivate: false,

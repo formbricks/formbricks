@@ -1,16 +1,23 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { PlusIcon } from "lucide-react";
-import Link from "next/link";
+import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon, SparklesIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TProjectConfigChannel } from "@formbricks/types/project";
-import { TUserLocale } from "@formbricks/types/user";
+import type { TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types";
+import type { TUserLocale } from "@formbricks/types/user";
+import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
+import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
+import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
+import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
+import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import {
   hasActiveSurveyFilters,
@@ -20,6 +27,13 @@ import {
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SurveyCard } from "./survey-card";
@@ -27,25 +41,110 @@ import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
-  environment: ComponentProps<typeof TemplateContainerWithPreview>["environment"];
-  project: ComponentProps<typeof TemplateContainerWithPreview>["project"];
-  userId: string;
+  workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
   publicDomain: string;
   isReadOnly: boolean;
   surveysPerPage: number;
-  currentProjectChannel: TProjectConfigChannel;
+  currentWorkspaceChannel: TWorkspaceConfigChannel;
   locale: TUserLocale;
+  isAIAvailable: boolean;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
+type NewSurveyMenuProps = {
+  workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
+  language: TUserLocale;
+  isAIAvailable: boolean;
+  aiUnavailableReason?: TAIUnavailableReason;
+};
+
+const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason }: NewSurveyMenuProps) => {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
+  const createSurveyMutation = useCreateSurveyFromTemplate();
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
+
+  const surveyType: TSurveyType = useMemo(() => {
+    if (workspace.config.channel) {
+      if (workspace.config.channel === "website") {
+        return "app";
+      }
+
+      return workspace.config.channel;
+    }
+
+    return "link";
+  }, [workspace.config.channel]);
+
+  const handleStartFromScratch = async () => {
+    try {
+      const survey = await createSurveyMutation.mutateAsync({
+        workspaceId: workspace.id,
+        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
+        source: "custom",
+        surveyType,
+        defaultLanguage: language,
+      });
+
+      router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm">
+            {t("workspace.surveys.new_survey")}
+            <ChevronDownIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem
+            icon={<SparklesIcon className="size-4" />}
+            onSelect={() => setIsAIDialogOpen(true)}>
+            {t("workspace.surveys.ai_create.create_with_ai")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            icon={<LayoutTemplateIcon className="size-4" />}
+            onSelect={() => router.push(`${workspaceBasePath}/surveys/templates`)}>
+            {t("workspace.surveys.ai_create.choose_template")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={createSurveyMutation.isPending}
+            icon={<PlusCircleIcon className="size-4" />}
+            onSelect={(event) => {
+              event.preventDefault();
+              void handleStartFromScratch();
+            }}>
+            {t("workspace.surveys.ai_create.start_from_scratch")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <CreateWithAIDialog
+        workspaceId={workspace.id}
+        language={language}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
+        open={isAIDialogOpen}
+        onOpenChange={setIsAIDialogOpen}
+      />
+    </>
+  );
+};
+
 export const SurveysList = ({
-  environment,
-  project,
-  userId,
+  workspace,
   publicDomain,
   isReadOnly,
   surveysPerPage,
-  currentProjectChannel,
+  currentWorkspaceChannel,
   locale,
+  isAIAvailable,
+  aiUnavailableReason,
 }: SurveysListProps) => {
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
@@ -58,7 +157,7 @@ export const SurveysList = ({
     }
 
     const storedFilters = globalThis.window.localStorage.getItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-    const parsedFilters = parseStoredSurveyFilters(storedFilters, currentProjectChannel);
+    const parsedFilters = parseStoredSurveyFilters(storedFilters, currentWorkspaceChannel);
 
     if (storedFilters && !parsedFilters) {
       globalThis.window.localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
@@ -68,11 +167,11 @@ export const SurveysList = ({
     }
 
     setIsFilterInitialized(true);
-  }, [currentProjectChannel]);
+  }, [currentWorkspaceChannel]);
 
   const normalizedFilters = useMemo(
-    () => normalizeSurveyFilters(surveyFilters, currentProjectChannel),
-    [currentProjectChannel, surveyFilters]
+    () => normalizeSurveyFilters(surveyFilters, currentWorkspaceChannel),
+    [currentWorkspaceChannel, surveyFilters]
   );
 
   useEffect(() => {
@@ -98,13 +197,14 @@ export const SurveysList = ({
     surveys,
     totalCount,
   } = useSurveys({
-    workspaceId: environment.id,
+    workspaceId: workspace.id,
     limit: surveysPerPage,
     filters: normalizedFilters,
     enabled: isFilterInitialized,
   });
 
   const deleteSurveyMutation = useDeleteSurvey({ queryKey });
+  const updateSurveyStatusMutation = useUpdateSurveyStatus({ queryKey });
 
   const hasAppliedFilters = hasActiveSurveyFilters(normalizedFilters);
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
@@ -115,13 +215,17 @@ export const SurveysList = ({
     await deleteSurveyMutation.mutateAsync({ surveyId });
   };
 
+  const handleUpdateSurveyStatus = async (surveyId: string, status: TSurveyStatus) => {
+    await updateSurveyStatusMutation.mutateAsync({ surveyId, status });
+  };
+
   const createSurveyButton = (
-    <Button size="sm" asChild>
-      <Link href={`/environments/${environment.id}/surveys/templates`}>
-        {t("environments.surveys.new_survey")}
-        <PlusIcon />
-      </Link>
-    </Button>
+    <NewSurveyMenu
+      workspace={workspace}
+      language={locale}
+      isAIAvailable={isAIAvailable}
+      aiUnavailableReason={aiUnavailableReason}
+    />
   );
 
   if (showInitialLoading) {
@@ -147,11 +251,13 @@ export const SurveysList = ({
   if (showTemplateEmptyState) {
     return (
       <TemplateContainerWithPreview
-        userId={userId}
-        environment={environment}
-        project={project}
+        workspace={workspace}
         isTemplatePage={false}
         publicDomain={publicDomain}
+        defaultLanguage={locale}
+        language={locale}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
       />
     );
   }
@@ -159,12 +265,8 @@ export const SurveysList = ({
   if (showReadOnlyEmptyState) {
     return (
       <PageContentWrapper>
-        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("environments.surveys.no_surveys_created_yet")}
-        </h1>
-        <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
-        </h2>
+        <PageHeader pageTitle={t("common.surveys")} />
+        <EmptyState text={t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")} />
       </PageContentWrapper>
     );
   }
@@ -172,7 +274,7 @@ export const SurveysList = ({
   let surveyContent = (
     <div className="flex h-full w-full">
       <div className="flex w-full flex-col items-center justify-center text-slate-600">
-        <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
+        <span className="size-24 p-4 text-center text-5xl">🕵️</span>
         {t("common.no_surveys_found")}
       </div>
     </div>
@@ -204,9 +306,9 @@ export const SurveysList = ({
             <SurveyCard
               key={survey.id}
               survey={survey}
-              environmentId={environment.id}
               isReadOnly={isReadOnly}
               deleteSurvey={handleDeleteSurvey}
+              updateSurveyStatus={handleUpdateSurveyStatus}
               publicDomain={publicDomain}
               locale={locale}
             />
@@ -235,7 +337,7 @@ export const SurveysList = ({
         <SurveyFilters
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}
-          currentProjectChannel={currentProjectChannel}
+          currentWorkspaceChannel={currentWorkspaceChannel}
         />
         {surveyContent}
       </div>

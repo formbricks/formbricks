@@ -1,17 +1,18 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { OrganizationRole } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { OrganizationRole } from "@formbricks/database/prisma-browser";
 import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -24,9 +25,9 @@ interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]) => void;
   teams: TOrganizationTeam[];
+  organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
-  environmentId: string;
   membershipRole?: TOrganizationRole;
   showTeamAdminRestrictions: boolean;
   enterpriseLicenseRequestFormUrl: string;
@@ -36,9 +37,9 @@ export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
   teams,
+  organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
-  environmentId,
   membershipRole,
   showTeamAdminRestrictions,
   enterpriseLicenseRequestFormUrl,
@@ -106,7 +107,7 @@ export const IndividualInviteTab = ({
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(submitEventClass)} className="flex flex-col gap-6">
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col gap-y-2">
           <Label htmlFor="memberNameInput">{t("common.full_name")}</Label>
           <Input
             id="memberNameInput"
@@ -115,7 +116,7 @@ export const IndividualInviteTab = ({
           />
           {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
         </div>
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col gap-y-2">
           <Label htmlFor="memberEmailInput">{t("common.email")}</Label>
           <Input
             id="memberEmailInput"
@@ -127,9 +128,9 @@ export const IndividualInviteTab = ({
         </div>
         <div>
           {showTeamAdminRestrictions ? (
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="memberRoleSelect">{t("environments.settings.teams.organization_role")}</Label>
-              <Input value={t("environments.settings.teams.member")} disabled />
+            <div className="flex flex-col gap-y-2">
+              <Label htmlFor="memberRoleSelect">{t("workspace.settings.teams.organization_role")}</Label>
+              <Input value={t("workspace.settings.teams.member")} disabled />
             </div>
           ) : (
             <>
@@ -142,7 +143,7 @@ export const IndividualInviteTab = ({
               {watch("role") === "member" && (
                 <Alert className="mt-2" variant="info">
                   <AlertDescription>
-                    {t("environments.settings.teams.member_role_info_message")}
+                    {t("workspace.settings.teams.member_role_info_message")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -156,19 +157,19 @@ export const IndividualInviteTab = ({
               control={control}
               name="teamIds"
               render={({ field }) => (
-                <FormItem className="flex flex-col space-y-2">
+                <FormItem className="flex flex-col gap-y-2">
                   <FormLabel>{t("common.add_to_team")} </FormLabel>
                   <div className="space-y-2">
                     <MultiSelect
                       value={field.value}
                       options={teamOptions}
-                      placeholder={t("environments.settings.teams.team_select_placeholder")}
+                      placeholder={t("workspace.settings.teams.team_select_placeholder")}
                       disabled={!teamOptions.length}
                       onChange={(val) => field.onChange(val)}
                     />
                     {!teamOptions.length && (
                       <Small className="font-normal text-amber-600">
-                        {t("environments.settings.teams.create_first_team_message")}
+                        {t("workspace.settings.teams.create_first_team_message")}
                       </Small>
                     )}
                   </div>
@@ -176,9 +177,9 @@ export const IndividualInviteTab = ({
                 </FormItem>
               )}
             />
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col gap-y-2">
               <Label htmlFor="teamRoleInput">{t("common.team_role")}</Label>
-              <Input value={t("environments.settings.teams.contributor")} disabled />
+              <Input value={t("workspace.settings.teams.contributor")} disabled />
             </div>
           </>
         )}
@@ -186,13 +187,13 @@ export const IndividualInviteTab = ({
         {!isAccessControlAllowed && (
           <Alert>
             <AlertDescription className="flex">
-              {t("environments.settings.teams.upgrade_plan_notice_message")}
+              {t("workspace.settings.teams.upgrade_plan_notice_message")}
               <Link
                 className="ml-1 underline"
                 target="_blank"
                 href={
                   isFormbricksCloud
-                    ? `/environments/${environmentId}/settings/billing`
+                    ? organizationSettingsPath(organizationId, "billing")
                     : enterpriseLicenseRequestFormUrl
                 }>
                 {t("common.upgrade_plan")}

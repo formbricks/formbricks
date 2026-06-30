@@ -1,8 +1,8 @@
-import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
-import { TProjectStyling } from "@formbricks/types/project";
+import { type Response } from "@formbricks/database/prisma-browser";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import {
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
@@ -12,29 +12,27 @@ import {
   TERMS_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
-import { TEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
+import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
+import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
   survey: TSurvey;
-  searchParams: {
-    verify?: string;
-    lang?: string;
-    embed?: string;
-    preview?: string;
-    suId?: string;
-  };
+  searchParams: TLinkSurveySearchParams;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   contactId?: string;
+  allowUrlUserIdLookup?: boolean;
   isPreview: boolean;
   // New props - pre-fetched in parent
-  environmentContext: TEnvironmentContextForLinkSurvey;
+  workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
   responseCount?: number;
 }
@@ -46,7 +44,7 @@ interface SurveyRendererProps {
  * database queries. The parent (page.tsx) fetches data in parallel stages
  * to minimize latency for users geographically distant from servers.
  *
- * @param environmentContext - Pre-fetched project and organization data
+ * @param workspaceContext - Pre-fetched workspace and organization data
  * @param locale - User's locale from Accept-Language header
  * @param responseCount - Conditionally fetched if showResponseCount is enabled
  */
@@ -56,8 +54,9 @@ export const renderSurvey = async ({
   singleUseId,
   singleUseResponse,
   contactId,
+  allowUrlUserIdLookup = false,
   isPreview,
-  environmentContext,
+  workspaceContext,
   locale,
   responseCount,
 }: SurveyRendererProps) => {
@@ -68,24 +67,26 @@ export const renderSurvey = async ({
     notFound();
   }
 
-  // Extract project from pre-fetched context
-  const { project } = environmentContext;
+  // Extract workspace from pre-fetched context
+  const { workspace } = workspaceContext;
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
+  const isScheduled = survey.status === "paused" && survey.publishOn !== null;
 
   if (survey.status !== "inProgress") {
     return (
       <SurveyInactive
         status={survey.status}
+        isScheduled={isScheduled}
         surveyClosedMessage={survey.surveyClosedMessage}
-        project={project}
+        workspace={workspace}
       />
     );
   }
 
   // Check if single-use survey has already been completed
   if (singleUseResponse?.finished) {
-    return <SurveyCompletedMessage singleUseMessage={survey.singleUse} project={project} />;
+    return <SurveyCompletedMessage singleUseMessage={survey.singleUse} workspace={workspace} />;
   }
 
   // Handle email verification flow if enabled
@@ -109,7 +110,7 @@ export const renderSurvey = async ({
           survey={survey}
           isErrorComponent={true}
           languageCode={getLanguageCode(langParam, survey)}
-          styling={project.styling}
+          styling={workspace.styling}
           locale={locale}
         />
       );
@@ -117,18 +118,23 @@ export const renderSurvey = async ({
     return (
       <VerifyEmail
         singleUseId={searchParams.suId ?? ""}
+        singleUseToken={searchParams.suToken}
         survey={survey}
         languageCode={getLanguageCode(langParam, survey)}
-        styling={project.styling}
+        styling={workspace.styling}
         locale={locale}
       />
     );
   }
 
-  // Compute final styling based on project and survey settings
-  const styling = computeStyling(project.styling, survey.styling);
+  // Compute final styling based on workspace and survey settings
+  const styling = computeStyling(workspace.styling, survey.styling);
   const languageCode = getLanguageCode(langParam, survey);
   const publicDomain = getPublicDomain();
+  const canReadUserIdFromUrl =
+    allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
+      ? await getIsContactsEnabled(workspaceContext.organizationId)
+      : false;
 
   // Handle PIN-protected surveys
   if (survey.pin) {
@@ -137,7 +143,7 @@ export const renderSurvey = async ({
         surveyId={survey.id}
         styling={styling}
         publicDomain={publicDomain}
-        project={project}
+        workspace={workspace}
         singleUseId={singleUseId}
         singleUseResponse={singleUseResponse}
         IMPRINT_URL={IMPRINT_URL}
@@ -149,6 +155,7 @@ export const renderSurvey = async ({
         isEmbed={isEmbed}
         isPreview={isPreview}
         contactId={contactId}
+        canReadUserIdFromUrl={canReadUserIdFromUrl}
         recaptchaSiteKey={RECAPTCHA_SITE_KEY}
         isSpamProtectionEnabled={isSpamProtectionEnabled}
         responseCount={responseCount}
@@ -160,7 +167,7 @@ export const renderSurvey = async ({
   return (
     <SurveyClientWrapper
       survey={survey}
-      project={project}
+      workspace={workspace}
       styling={styling}
       publicDomain={publicDomain}
       responseCount={responseCount}
@@ -169,6 +176,7 @@ export const renderSurvey = async ({
       singleUseId={singleUseId}
       singleUseResponseId={singleUseResponse?.id}
       contactId={contactId}
+      canReadUserIdFromUrl={canReadUserIdFromUrl}
       recaptchaSiteKey={RECAPTCHA_SITE_KEY}
       isSpamProtectionEnabled={isSpamProtectionEnabled}
       isPreview={isPreview}
@@ -182,17 +190,17 @@ export const renderSurvey = async ({
 };
 
 /**
- * Determines which styling to use based on project and survey settings.
- * Returns survey styling if theme overwriting is enabled, otherwise returns project styling.
+ * Determines which styling to use based on workspace and survey settings.
+ * Returns survey styling if theme overwriting is enabled, otherwise returns workspace styling.
  */
 function computeStyling(
-  projectStyling: TProjectStyling,
+  workspaceStyling: TWorkspaceStyling,
   surveyStyling?: TSurveyStyling | null
-): TProjectStyling | TSurveyStyling {
-  if (!projectStyling.allowStyleOverwrite) {
-    return projectStyling;
+): TWorkspaceStyling | TSurveyStyling {
+  if (!workspaceStyling.allowStyleOverwrite) {
+    return workspaceStyling;
   }
-  return surveyStyling?.overwriteThemeStyling ? surveyStyling : projectStyling;
+  return surveyStyling?.overwriteThemeStyling ? surveyStyling : workspaceStyling;
 }
 
 /**

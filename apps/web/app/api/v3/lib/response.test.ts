@@ -1,11 +1,16 @@
 import { describe, expect, test } from "vitest";
 import {
+  createdResponse,
+  noContentResponse,
+  problemAIUnavailable,
+  problemBadGateway,
   problemBadRequest,
   problemForbidden,
   problemInternalError,
   problemNotFound,
   problemTooManyRequests,
   problemUnauthorized,
+  problemUnprocessableContent,
   successListResponse,
   successResponse,
 } from "./response";
@@ -13,7 +18,7 @@ import {
 describe("v3 problem responses", () => {
   test("problemBadRequest includes invalid_params", async () => {
     const res = problemBadRequest("rid", "bad", {
-      invalid_params: [{ name: "x", reason: "y" }],
+      invalid_params: [{ name: "x", reason: "y", identifier: "canonical-x" }],
       instance: "/p",
     });
     expect(res.status).toBe(400);
@@ -21,7 +26,7 @@ describe("v3 problem responses", () => {
     const body = await res.json();
     expect(body.code).toBe("bad_request");
     expect(body.requestId).toBe("rid");
-    expect(body.invalid_params).toEqual([{ name: "x", reason: "y" }]);
+    expect(body.invalid_params).toEqual([{ name: "x", reason: "y", identifier: "canonical-x" }]);
     expect(body.instance).toBe("/p");
   });
 
@@ -39,6 +44,40 @@ describe("v3 problem responses", () => {
     const body = await res.json();
     expect(body.code).toBe("forbidden");
     expect(body.instance).toBe("/api/x");
+  });
+
+  test("problemAIUnavailable preserves AI error codes", async () => {
+    const res = problemAIUnavailable("r-ai", "AI is disabled", "ai_smart_tools_disabled", "/api/ai");
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.title).toBe("AI Unavailable");
+    expect(body.code).toBe("ai_smart_tools_disabled");
+    expect(body.instance).toBe("/api/ai");
+  });
+
+  test("problemAIUnavailable returns 503 for instance configuration gaps", async () => {
+    const res = problemAIUnavailable("r-ai", "AI is not configured", "ai_instance_not_configured");
+    expect(res.status).toBe(503);
+  });
+
+  test("problemUnprocessableContent includes validation details", async () => {
+    const res = problemUnprocessableContent("r-422", "Generated payload is invalid", {
+      invalid_params: [{ name: "blocks.0.elements", reason: "At least one element is required" }],
+      code: "ai_generated_payload_invalid",
+    });
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.code).toBe("ai_generated_payload_invalid");
+    expect(body.invalid_params).toEqual([
+      { name: "blocks.0.elements", reason: "At least one element is required" },
+    ]);
+  });
+
+  test("problemBadGateway", async () => {
+    const res = problemBadGateway("r-502", "Provider failed");
+    expect(res.status).toBe(502);
+    const body = await res.json();
+    expect(body.code).toBe("bad_gateway");
   });
 
   test("problemInternalError", async () => {
@@ -116,5 +155,36 @@ describe("successResponse", () => {
     );
     expect(res.status).toBe(202);
     expect(res.headers.get("Cache-Control")).toBe("private, max-age=60");
+  });
+});
+
+describe("createdResponse", () => {
+  test("returns 201 with Location, request id, and data envelope", async () => {
+    const res = createdResponse(
+      { id: "survey_1" },
+      {
+        location: "/api/v3/surveys/survey_1",
+        requestId: "req-created",
+      }
+    );
+
+    expect(res.status).toBe(201);
+    expect(res.headers.get("Location")).toBe("/api/v3/surveys/survey_1");
+    expect(res.headers.get("X-Request-Id")).toBe("req-created");
+    expect(res.headers.get("Content-Type")).toBe("application/json");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
+    expect(await res.json()).toEqual({
+      data: { id: "survey_1" },
+    });
+  });
+});
+
+describe("noContentResponse", () => {
+  test("returns 204 without a body", async () => {
+    const res = noContentResponse({ requestId: "req-empty" });
+    expect(res.status).toBe(204);
+    expect(res.headers.get("X-Request-Id")).toBe("req-empty");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
+    expect(await res.text()).toBe("");
   });
 });

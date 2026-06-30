@@ -1,12 +1,10 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { Prisma } from "@formbricks/database/prisma";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
-export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
-  surveyPrisma: any
-): T => {
+export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurvey>(surveyPrisma: any): T => {
   let segment: TSegment | null = null;
 
   if (surveyPrisma.segment) {

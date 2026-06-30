@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { CreateMembershipInvite } from "@/modules/auth/invite/types/invites";
@@ -11,7 +11,7 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
   const { isOwner, isManager } = getAccessFlags(userMembershipRole);
 
   const validTeamIds: string[] = [];
-  const validProjectIds: string[] = [];
+  const validWorkspaceIds: string[] = [];
 
   const isOwnerOrManager = isOwner || isManager;
   try {
@@ -21,9 +21,9 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
           id: teamId,
         },
         select: {
-          projectTeams: {
+          workspaceTeams: {
             select: {
-              projectId: true,
+              workspaceId: true,
             },
           },
         },
@@ -39,7 +39,7 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
         });
 
         validTeamIds.push(teamId);
-        validProjectIds.push(...team.projectTeams.map((pt) => pt.projectId));
+        validWorkspaceIds.push(...team.workspaceTeams.map((pt) => pt.workspaceId));
       }
     }
   } catch (error) {

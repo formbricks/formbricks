@@ -1,20 +1,22 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-export const TeamsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const TeamsPage = async (props: Readonly<{ params: Promise<{ organizationId: string }> }>) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
+
+  const { session, currentUserMembership, organization } = await getOrganizationAuth(params.organizationId);
 
   const isAccessControlAllowed = await getAccessControlPermission(organization.id);
 
@@ -34,19 +36,11 @@ export const TeamsPage = async (props: { params: Promise<{ environmentId: string
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
-          activeId="teams"
-        />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.teams")} />
       <MembersView
         membershipRole={currentUserMembership?.role}
         organization={organization}
         currentUserId={session.user.id}
-        environmentId={params.environmentId}
         isAccessControlAllowed={isAccessControlAllowed}
         isUserManagementDisabledFromUi={!hasUserManagementAccess}
       />
@@ -55,7 +49,6 @@ export const TeamsPage = async (props: { params: Promise<{ environmentId: string
         membershipRole={currentUserMembership?.role}
         currentUserId={session.user.id}
         isAccessControlAllowed={isAccessControlAllowed}
-        environmentId={params.environmentId}
       />
     </PageContentWrapper>
   );

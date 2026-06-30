@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
-import { type Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { type Prisma } from "@formbricks/database/prisma";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   EMBED_SURVEY_PREVIEW_CHOICE_IDS,
@@ -18,52 +18,8 @@ import { test } from "./lib/fixtures";
  * 3. Send one preview email and compare it in new Outlook against the in-app preview.
  */
 
-const getUserContext = async (email: string) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-    select: {
-      id: true,
-      memberships: {
-        take: 1,
-        select: {
-          organization: {
-            select: {
-              projects: {
-                take: 1,
-                select: {
-                  environments: {
-                    where: {
-                      type: "development",
-                    },
-                    take: 1,
-                    select: {
-                      id: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const environmentId = user?.memberships[0]?.organization.projects[0]?.environments[0]?.id;
-  if (!user?.id || !environmentId) {
-    throw new Error(`Unable to resolve user context for ${email}`);
-  }
-
-  return {
-    environmentId,
-    userId: user.id,
-  };
-};
-
 const createSurveySeed = async (
-  environmentId: string,
+  workspaceId: string,
   userId: string,
   name: string,
   type: TSurveyElementTypeEnum = TSurveyElementTypeEnum.MultipleChoiceMulti
@@ -75,7 +31,7 @@ const createSurveySeed = async (
 
   return prisma.survey.create({
     data: {
-      environmentId,
+      workspaceId,
       createdBy: userId,
       name,
       status: "inProgress",
@@ -103,16 +59,18 @@ test.describe("Survey Email Preview", () => {
     const user = await users.create({
       email,
       name: `survey-email-preview-${timestamp}`,
-      projectName: "Email Preview Workspace",
+      workspaceName: "Email Preview Workspace",
     });
 
     await user.login();
-    await expect(page).toHaveURL(/\/environments\/[^/]+/);
+    await expect(page).toHaveURL(/\/workspaces\/[^/]+/);
 
-    const { environmentId, userId } = await getUserContext(email);
-    const survey = await createSurveySeed(environmentId, userId, `Email Preview Survey ${timestamp}`);
+    if (!user.workspaceId) {
+      throw new Error("Workspace not seeded for test user");
+    }
+    const survey = await createSurveySeed(user.workspaceId, user.id, `Email Preview Survey ${timestamp}`);
 
-    await page.goto(`/environments/${environmentId}/surveys/${survey.id}/summary`);
+    await page.goto(`/workspaces/${user.workspaceId}/surveys/${survey.id}/summary`);
     await page.getByRole("button", { name: "Share survey" }).click();
     await page.getByRole("button", { name: "Email embed" }).click();
 
@@ -138,7 +96,7 @@ test.describe("Survey Email Preview", () => {
     await expect(firstChoiceMarker).toHaveCSS("height", "16px");
     await expect(firstChoiceMarker).toHaveCSS("border-top-left-radius", "4px");
     await expect(firstChoiceLink).toContainText("Apples");
-    await expect(firstChoiceLink).toHaveCSS("background-color", "rgb(243, 244, 246)");
+    await expect(firstChoiceLink).toHaveCSS("background-color", "rgb(237, 240, 249)");
     await expect(firstChoiceLink).toHaveCSS("border-top-left-radius", "8px");
     await expect(firstChoiceLink).toHaveCSS("font-family", /Inter/);
     await expect(firstChoiceLink).toHaveCSS("padding-top", "16px");
@@ -160,21 +118,23 @@ test.describe("Survey Email Preview", () => {
     const user = await users.create({
       email,
       name: `survey-email-open-text-${timestamp}`,
-      projectName: "Email Preview Workspace",
+      workspaceName: "Email Preview Workspace",
     });
 
     await user.login();
-    await expect(page).toHaveURL(/\/environments\/[^/]+/);
+    await expect(page).toHaveURL(/\/workspaces\/[^/]+/);
 
-    const { environmentId, userId } = await getUserContext(email);
+    if (!user.workspaceId) {
+      throw new Error("Workspace not seeded for test user");
+    }
     const survey = await createSurveySeed(
-      environmentId,
-      userId,
+      user.workspaceId,
+      user.id,
       `Email Preview Open Text ${timestamp}`,
       TSurveyElementTypeEnum.OpenText
     );
 
-    await page.goto(`/environments/${environmentId}/surveys/${survey.id}/summary`);
+    await page.goto(`/workspaces/${user.workspaceId}/surveys/${survey.id}/summary`);
     await page.getByRole("button", { name: "Share survey" }).click();
     await page.getByRole("button", { name: "Email embed" }).click();
 
@@ -184,7 +144,7 @@ test.describe("Survey Email Preview", () => {
 
     await expect(previewFrame.getByText(EMBED_SURVEY_PREVIEW_HEADLINE)).toBeVisible();
     await expect(openTextLink).toBeVisible();
-    await expect(openTextInputShell).toHaveCSS("background-color", "rgb(243, 244, 246)");
+    await expect(openTextInputShell).toHaveCSS("background-color", "rgb(237, 240, 249)");
     await expect(openTextInputShell).toHaveCSS("border-top-left-radius", "8px");
     await expect(openTextInputShell).toHaveCSS("padding-top", "8px");
     await expect(openTextInputShell).toHaveCSS("padding-left", "8px");

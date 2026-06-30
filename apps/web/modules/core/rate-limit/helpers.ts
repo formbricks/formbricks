@@ -3,6 +3,7 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { hashString } from "@/lib/hash-string";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { checkRateLimit } from "./rate-limit";
+import { rateLimitConfigs } from "./rate-limit-configs";
 import { type TRateLimitConfig, type TRateLimitResponse } from "./types/rate-limit";
 
 /**
@@ -57,4 +58,25 @@ export const applyRateLimit = async (
 export const applyIPRateLimit = async (config: TRateLimitConfig): Promise<TRateLimitResponse> => {
   const identifier = await getClientIdentifier();
   return await applyRateLimit(config, identifier);
+};
+
+/**
+ * Apply public client API rate limiting scoped by environment.
+ *
+ * The compound environment/IP check keeps the existing per-client behavior without cross-environment
+ * interference, while the environment-only check bounds distributed-IP abuse against one environment.
+ *
+ * @param environmentId - Public client API environment ID from the route params
+ * @param customRateLimitConfig - Optional route-specific limit for the environment/IP check
+ * @throws {Error} When rate limit is exceeded or IP hashing fails
+ */
+export const applyClientRateLimit = async (
+  environmentId: string,
+  customRateLimitConfig?: TRateLimitConfig
+): Promise<TRateLimitResponse> => {
+  const identifier = await getClientIdentifier();
+  const compoundIdentifier = `${environmentId}:${identifier}`;
+
+  await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client, compoundIdentifier);
+  return await applyRateLimit(rateLimitConfigs.api.clientEnvironment, environmentId);
 };

@@ -32,6 +32,7 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 
 TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
 We are using SonarQube to identify code smells and security hotspots.
+Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
 
 ## Architecture & Patterns
 
@@ -71,7 +72,36 @@ We are using SonarQube to identify code smells and security hotspots.
 
 ## Testing Guidelines
 
-Prefer Vitest with Testing Library for logic in `.ts` files, keeping specs colocated with the code they exercise (`utility.test.ts`). Do not write tests for `.tsx` files—React components are covered by Playwright E2E tests instead. Mock network and storage boundaries through helpers from `@formbricks/*`. Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows; keep coverage from regressing. End-to-end scenarios belong in `apps/web/playwright`, using descriptive filenames (`billing.spec.ts`) and tagging slow suites with `@slow` when necessary.
+Principles:
+
+- Confidence over coverage. Test behavior and outcomes; avoid brittle implementation-detail tests.
+
+Do:
+
+- E2E tests (Playwright): cover critical user flows and regression risks. Extend existing specs or add
+  focused new ones in `apps/web/playwright`, keep tests small and well-named, use descriptive filenames
+  such as `billing.spec.ts`, tag slow suites with `@slow`, and run the suite before opening a PR.
+- Unit tests: cover stable, high-value logic in `.ts` files, such as validators, transformers,
+  evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
+  the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
+  from `@formbricks/*`.
+- Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
+  re-test.
+- Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows.
+
+Do not:
+
+- Do not write component or UI unit tests for `.tsx` files; React components are covered by Playwright E2E
+  tests instead.
+- Do not add coverage-driven or low-signal tests.
+- Do not write tests that lock implementation details, markup, snapshots, or create churn.
+- Do not create mega or flaky E2E tests; avoid timing hacks and unstable dependencies.
+
+Heuristic:
+
+- User journey risk: E2E.
+- Pure logic or edge cases: unit test.
+- Release readiness: manual QA plus bug/backport loop.
 
 ## Documentation (apps/docs)
 

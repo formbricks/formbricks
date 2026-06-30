@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -9,23 +10,22 @@ import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/servic
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getEnvironmentIdFromResponseId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromResponseId,
+  getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromResponseId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateTagAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   tagName: z.string(),
 });
 
 export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagAction).action(
   withAuditLogging("created", "tag", async ({ parsedInput, ctx }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -36,14 +36,14 @@ export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagA
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          type: "workspaceTeam",
+          workspaceId: parsedInput.workspaceId,
           minPermission: "readWrite",
         },
       ],
     });
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createTag(parsedInput.environmentId, parsedInput.tagName);
+    const result = await createTag(parsedInput.workspaceId, parsedInput.tagName);
 
     if (result.ok) {
       ctx.auditLoggingCtx.tagId = result.data.id;
@@ -65,18 +65,20 @@ export const createTagToResponseAction = authenticatedActionClient
   .inputSchema(ZCreateTagToResponseAction)
   .action(
     withAuditLogging("addedToResponse", "tag", async ({ parsedInput, ctx }) => {
-      const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
-      const tagEnvironment = await getTag(parsedInput.tagId);
+      const response = await getResponse(parsedInput.responseId);
+      const tag = await getTag(parsedInput.tagId);
 
-      if (!responseEnvironmentId || !tagEnvironment) {
-        throw new ResourceNotFoundError("Environment", null);
+      if (!response || !tag) {
+        throw new ResourceNotFoundError("Workspace", null);
       }
 
-      if (responseEnvironmentId !== tagEnvironment.environmentId) {
-        throw new Error("Response and tag are not in the same environment");
+      const responseWorkspaceId = await getWorkspaceIdFromSurveyId(response.surveyId);
+
+      if (responseWorkspaceId !== tag.workspaceId) {
+        throw new Error("Response and tag are not in the same workspace");
       }
 
-      const organizationId = await getOrganizationIdFromEnvironmentId(responseEnvironmentId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(responseWorkspaceId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
@@ -87,8 +89,8 @@ export const createTagToResponseAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
-            projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
+            type: "workspaceTeam",
+            workspaceId: responseWorkspaceId,
             minPermission: "readWrite",
           },
         ],
@@ -97,6 +99,7 @@ export const createTagToResponseAction = authenticatedActionClient
       ctx.auditLoggingCtx.tagId = parsedInput.tagId;
       const result = await addTagToRespone(parsedInput.responseId, parsedInput.tagId);
       ctx.auditLoggingCtx.newObject = result;
+      revalidatePath(`/workspaces/${responseWorkspaceId}/surveys/${response.surveyId}`);
       return result;
     })
   );
@@ -110,15 +113,17 @@ export const deleteTagOnResponseAction = authenticatedActionClient
   .inputSchema(ZDeleteTagOnResponseAction)
   .action(
     withAuditLogging("removedFromResponse", "tag", async ({ parsedInput, ctx }) => {
-      const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
-      const tagEnvironment = await getTag(parsedInput.tagId);
+      const response = await getResponse(parsedInput.responseId);
+      const tag = await getTag(parsedInput.tagId);
       const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
-      if (!responseEnvironmentId || !tagEnvironment) {
-        throw new ResourceNotFoundError("Environment", null);
+      if (!response || !tag) {
+        throw new ResourceNotFoundError("Workspace", null);
       }
 
-      if (responseEnvironmentId !== tagEnvironment.environmentId) {
-        throw new Error("Response and tag are not in the same environment");
+      const responseWorkspaceId = await getWorkspaceIdFromSurveyId(response.surveyId);
+
+      if (responseWorkspaceId !== tag.workspaceId) {
+        throw new Error("Response and tag are not in the same workspace");
       }
 
       await checkAuthorizationUpdated({
@@ -130,8 +135,8 @@ export const deleteTagOnResponseAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
-            projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
+            type: "workspaceTeam",
+            workspaceId: responseWorkspaceId,
             minPermission: "readWrite",
           },
         ],
@@ -140,6 +145,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
       ctx.auditLoggingCtx.tagId = parsedInput.tagId;
       const result = await deleteTagOnResponse(parsedInput.responseId, parsedInput.tagId);
       ctx.auditLoggingCtx.oldObject = result;
+      revalidatePath(`/workspaces/${responseWorkspaceId}/surveys/${response.surveyId}`);
       return result;
     })
   );
@@ -161,8 +167,8 @@ export const deleteResponseAction = authenticatedActionClient.inputSchema(ZDelet
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromResponseId(parsedInput.responseId),
           minPermission: "readWrite",
         },
       ],
@@ -171,6 +177,9 @@ export const deleteResponseAction = authenticatedActionClient.inputSchema(ZDelet
     ctx.auditLoggingCtx.responseId = parsedInput.responseId;
     const result = await deleteResponse(parsedInput.responseId, parsedInput.decrementQuotas);
     ctx.auditLoggingCtx.oldObject = result;
+    revalidatePath(
+      `/workspaces/${await getWorkspaceIdFromSurveyId(result.surveyId)}/surveys/${result.surveyId}`
+    );
     return result;
   })
 );
@@ -191,9 +200,9 @@ export const getResponseAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
+          workspaceId: await getWorkspaceIdFromResponseId(parsedInput.responseId),
         },
       ],
     });

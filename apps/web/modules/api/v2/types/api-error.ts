@@ -10,7 +10,13 @@ export type ApiErrorDetails = {
 
 export type ApiErrorResponseV2 =
   | {
-      type: "unauthorized" | "forbidden" | "conflict" | "too_many_requests" | "internal_server_error";
+      type:
+        | "unauthorized"
+        | "forbidden"
+        | "conflict"
+        | "payload_too_large"
+        | "too_many_requests"
+        | "internal_server_error";
       details?: ApiErrorDetails;
     }
   | {

@@ -132,8 +132,8 @@ export function ConditionalLogic({
   return (
     <div className="mt-4" ref={parent}>
       <Label className="flex gap-2">
-        {t("environments.surveys.edit.conditional_logic")}
-        <SplitIcon className="h-4 w-4 rotate-90" />
+        {t("workspace.surveys.edit.conditional_logic")}
+        <SplitIcon className="size-4 rotate-90" />
       </Label>
 
       {blockLogic.length > 0 && (
@@ -159,8 +159,8 @@ export function ConditionalLogic({
                     <Button
                       variant="secondary"
                       aria-label="More options"
-                      className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-md">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                      className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-md">
+                      <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="mt-10">
@@ -168,7 +168,7 @@ export function ConditionalLogic({
                       onClick={() => {
                         duplicateLogic(logicItemIdx);
                       }}
-                      icon={<CopyIcon className="h-4 w-4" />}>
+                      icon={<CopyIcon className="size-4" />}>
                       {t("common.duplicate")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -176,7 +176,7 @@ export function ConditionalLogic({
                       onClick={() => {
                         moveLogic(logicItemIdx, logicItemIdx - 1);
                       }}
-                      icon={<ArrowUpIcon className="h-4 w-4" />}>
+                      icon={<ArrowUpIcon className="size-4" />}>
                       {t("common.move_up")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -184,14 +184,14 @@ export function ConditionalLogic({
                       onClick={() => {
                         moveLogic(logicItemIdx, logicItemIdx + 1);
                       }}
-                      icon={<ArrowDownIcon className="h-4 w-4" />}>
+                      icon={<ArrowDownIcon className="size-4" />}>
                       {t("common.move_down")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
                         handleRemoveLogic(logicItemIdx);
                       }}
-                      icon={<TrashIcon className="h-4 w-4" />}>
+                      icon={<TrashIcon className="size-4" />}>
                       {t("common.remove")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -202,7 +202,7 @@ export function ConditionalLogic({
         </div>
       )}
 
-      <div className="mt-2 flex items-center space-x-2">
+      <div className="mt-2 flex items-center gap-x-2">
         <Button
           id="logicJumps"
           type="button"
@@ -210,7 +210,7 @@ export function ConditionalLogic({
           size="sm"
           variant="secondary"
           onClick={addLogic}>
-          {t("environments.surveys.edit.add_logic")}
+          {t("workspace.surveys.edit.add_logic")}
           <PlusIcon />
         </Button>
       </div>

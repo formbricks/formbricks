@@ -1,0 +1,24 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - rows
+      - columns
+    properties:
+      type:
+        type: string
+        enum:
+          - matrix
+      rows:
+        type: array
+        items:
+          $ref: ./SurveyChoice.yml
+      columns:
+        type: array
+        items:
+          $ref: ./SurveyChoice.yml
+      shuffleOption:
+        $ref: ./SurveyShuffleOption.yml
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

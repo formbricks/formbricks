@@ -52,5 +52,6 @@ yarn-error.log*
 # project specific
 packages/lib/uploads
 apps/web/public/js
+packages/database/generated
 packages/database/migrations
 branch.json

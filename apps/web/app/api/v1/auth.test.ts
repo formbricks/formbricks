@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
-import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
+import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
 import {
   DatabaseError,
   InvalidInputError,
@@ -26,19 +26,11 @@ describe("getApiKeyWithPermissions", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      apiKeyEnvironments: [
+      apiKeyWorkspaces: [
         {
-          environmentId: "env-1",
+          workspaceId: "workspace-1",
           permission: "manage" as const,
-          environment: {
-            id: "env-1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            type: "development" as const,
-            projectId: "project-1",
-            appSetupCompleted: true,
-            project: { id: "project-1", name: "Project 1" },
-          },
+          workspace: { id: "workspace-1", name: "Workspace 1" },
         },
       ],
     };
@@ -61,50 +53,44 @@ describe("getApiKeyWithPermissions", () => {
 });
 
 describe("hasPermission", () => {
-  const permissions: TAPIKeyEnvironmentPermission[] = [
+  const permissions: TAPIKeyWorkspacePermission[] = [
     {
-      environmentId: "env-1",
       permission: "manage",
-      environmentType: "development",
-      projectId: "project-1",
-      projectName: "Project 1",
+      workspaceId: "workspace-1",
+      workspaceName: "Workspace 1",
     },
     {
-      environmentId: "env-2",
       permission: "write",
-      environmentType: "production",
-      projectId: "project-2",
-      projectName: "Project 2",
+      workspaceId: "workspace-2",
+      workspaceName: "Workspace 2",
     },
     {
-      environmentId: "env-3",
       permission: "read",
-      environmentType: "development",
-      projectId: "project-3",
-      projectName: "Project 3",
+      workspaceId: "workspace-3",
+      workspaceName: "Workspace 3",
     },
   ];
 
   test("returns true for manage permission with any method", () => {
-    expect(hasPermission(permissions, "env-1", "GET")).toBe(true);
-    expect(hasPermission(permissions, "env-1", "POST")).toBe(true);
-    expect(hasPermission(permissions, "env-1", "DELETE")).toBe(true);
+    expect(hasPermission(permissions, "workspace-1", "GET")).toBe(true);
+    expect(hasPermission(permissions, "workspace-1", "POST")).toBe(true);
+    expect(hasPermission(permissions, "workspace-1", "DELETE")).toBe(true);
   });
 
   test("handles write permission correctly", () => {
-    expect(hasPermission(permissions, "env-2", "GET")).toBe(true);
-    expect(hasPermission(permissions, "env-2", "POST")).toBe(true);
-    expect(hasPermission(permissions, "env-2", "DELETE")).toBe(false);
+    expect(hasPermission(permissions, "workspace-2", "GET")).toBe(true);
+    expect(hasPermission(permissions, "workspace-2", "POST")).toBe(true);
+    expect(hasPermission(permissions, "workspace-2", "DELETE")).toBe(false);
   });
 
   test("handles read permission correctly", () => {
-    expect(hasPermission(permissions, "env-3", "GET")).toBe(true);
-    expect(hasPermission(permissions, "env-3", "POST")).toBe(false);
-    expect(hasPermission(permissions, "env-3", "DELETE")).toBe(false);
+    expect(hasPermission(permissions, "workspace-3", "GET")).toBe(true);
+    expect(hasPermission(permissions, "workspace-3", "POST")).toBe(false);
+    expect(hasPermission(permissions, "workspace-3", "DELETE")).toBe(false);
   });
 
-  test("returns false for non-existent environment", () => {
-    expect(hasPermission(permissions, "env-4", "GET")).toBe(false);
+  test("returns false for non-existent workspace", () => {
+    expect(hasPermission(permissions, "workspace-4", "GET")).toBe(false);
   });
 });
 
@@ -122,19 +108,11 @@ describe("authenticateRequest", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      apiKeyEnvironments: [
+      apiKeyWorkspaces: [
         {
-          environmentId: "env-1",
+          workspaceId: "workspace-1",
           permission: "manage" as const,
-          environment: {
-            id: "env-1",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            type: "development" as const,
-            projectId: "project-1",
-            appSetupCompleted: true,
-            project: { id: "project-1", name: "Project 1" },
-          },
+          workspace: { id: "workspace-1", name: "Workspace 1" },
         },
       ],
     };
@@ -144,13 +122,11 @@ describe("authenticateRequest", () => {
 
     expect(result).toEqual({
       type: "apiKey",
-      environmentPermissions: [
+      workspacePermissions: [
         {
-          environmentId: "env-1",
           permission: "manage",
-          environmentType: "development",
-          projectId: "project-1",
-          projectName: "Project 1",
+          workspaceId: "workspace-1",
+          workspaceName: "Workspace 1",
         },
       ],
       apiKeyId: "api-key-id",
@@ -177,7 +153,7 @@ describe("authenticateRequest", () => {
     expect(result).toBeNull();
   });
 
-  test("returns null by default when API key has no environment permissions", async () => {
+  test("returns authentication data when API key has no workspace permissions", async () => {
     const request = new NextRequest("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
@@ -190,13 +166,47 @@ describe("authenticateRequest", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      apiKeyEnvironments: [],
+      apiKeyWorkspaces: [],
     };
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
 
-    const result = await authenticateRequest(request);
-    expect(result).toBeNull();
+    const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
+    expect(result).toEqual({
+      type: "apiKey",
+      workspacePermissions: [],
+      apiKeyId: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all",
+    });
+  });
+
+  test("returns authentication data for bearer API keys", async () => {
+    const request = new NextRequest("http://localhost", {
+      headers: { authorization: "Bearer fbk_valid_bearer_key" },
+    });
+
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
+      id: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all" as const,
+      createdAt: new Date(),
+      createdBy: "user-id",
+      lastUsedAt: null,
+      label: "Test API Key",
+      apiKeyWorkspaces: [],
+    } as any);
+
+    const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
+
+    expect(result).toEqual({
+      type: "apiKey",
+      workspacePermissions: [],
+      apiKeyId: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all",
+    });
+    expect(getApiKeyWithPermissions).toHaveBeenCalledWith("fbk_valid_bearer_key");
   });
 
   test("authenticates a valid API key with no environment permissions when explicitly allowed", async () => {
@@ -212,7 +222,7 @@ describe("authenticateRequest", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
-      apiKeyEnvironments: [],
+      apiKeyWorkspaces: [],
     };
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
@@ -220,7 +230,7 @@ describe("authenticateRequest", () => {
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
       type: "apiKey",
-      environmentPermissions: [],
+      workspacePermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
       organizationAccess: "all",
@@ -245,7 +255,7 @@ describe("authenticateRequest", () => {
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Read-only Organization API Key",
-      apiKeyEnvironments: [],
+      apiKeyWorkspaces: [],
     };
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
@@ -253,7 +263,7 @@ describe("authenticateRequest", () => {
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
       type: "apiKey",
-      environmentPermissions: [],
+      workspacePermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
       organizationAccess: {
@@ -303,9 +313,18 @@ describe("handleErrorResponse", () => {
     expect(body.message).toBe("bad input");
   });
 
-  test("returns 400 badRequest for ResourceNotFoundError", async () => {
+  test("returns 404 notFound for ResourceNotFoundError", async () => {
     const response = handleErrorResponse(new ResourceNotFoundError("Survey", "id-1"));
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
+    const body = await response.json();
+    expect(body).toEqual({
+      code: "not_found",
+      message: "Survey not found",
+      details: {
+        resource_id: "id-1",
+        resource_type: "Survey",
+      },
+    });
   });
 
   test("returns 500 internalServerError for unknown errors", async () => {

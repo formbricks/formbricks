@@ -10,15 +10,18 @@ import {
   getSignedUploadUrl,
 } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { TAccessType } from "@formbricks/types/storage";
+import { type TAccessType } from "@formbricks/types/storage";
 import { sanitizeFileName } from "./utils";
+
+const SAFE_FILE_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
 
 export const getSignedUrlForUpload = async (
   fileName: string,
-  environmentId: string,
+  workspaceId: string,
   fileType: string,
   accessType: TAccessType,
-  maxFileUploadSize: number = 1024 * 1024 * 10 // 10MB
+  maxFileUploadSize: number = 1024 * 1024 * 10, // 10MB
+  filePathSegments: string[] = []
 ): Promise<
   Result<
     {
@@ -34,17 +37,19 @@ export const getSignedUrlForUpload = async (
     if (!safeFileName) {
       return err({ code: StorageErrorCode.InvalidInput });
     }
+
+    if (filePathSegments.some((segment) => !SAFE_FILE_PATH_SEGMENT.test(segment))) {
+      return err({ code: StorageErrorCode.InvalidInput });
+    }
+
+    const encodedFilePathSegments = filePathSegments.map((segment) => encodeURIComponent(segment));
     const fileNameWithoutExtension = safeFileName.split(".").slice(0, -1).join(".");
     const fileExtension = safeFileName.split(".").pop();
 
     const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
+    const filePath = [workspaceId, accessType, ...filePathSegments].join("/");
 
-    const signedUrlResult = await getSignedUploadUrl(
-      updatedFileName,
-      fileType,
-      `${environmentId}/${accessType}`,
-      maxFileUploadSize
-    );
+    const signedUrlResult = await getSignedUploadUrl(updatedFileName, fileType, filePath, maxFileUploadSize);
 
     if (!signedUrlResult.ok) {
       return signedUrlResult;
@@ -54,7 +59,10 @@ export const getSignedUrlForUpload = async (
     return ok({
       signedUrl: signedUrlResult.data.signedUrl,
       presignedFields: signedUrlResult.data.presignedFields,
-      fileUrl: `/storage/${environmentId}/${accessType}/${encodeURIComponent(updatedFileName)}`,
+      fileUrl: `/storage/${workspaceId}/${accessType}/${[
+        ...encodedFilePathSegments,
+        encodeURIComponent(updatedFileName),
+      ].join("/")}`,
     });
   } catch (error) {
     logger.error({ error }, "Error getting signed url for upload");
@@ -66,22 +74,28 @@ export const getSignedUrlForUpload = async (
 };
 
 /**
- * Get a file stream for downloading/streaming files directly
- * Use this instead of signed URL redirect for Next.js Image component compatibility
+ * Get a file stream for downloading/streaming files directly.
+ * Use this instead of signed URL redirect for Next.js Image component compatibility.
+ *
+ * Tries the primary ID path first. If the file is not found and a fallbackId is provided,
+ * retries with the fallback path. This supports backwards compatibility: new uploads use
+ * workspaceId paths while old files may still live under environmentId paths.
  */
 export const getFileStreamForDownload = async (
   fileName: string,
-  environmentId: string,
-  accessType: TAccessType
+  primaryId: string,
+  accessType: TAccessType,
+  fallbackId?: string
 ): Promise<Result<FileStreamResult, StorageError>> => {
   try {
     const fileNameDecoded = decodeURIComponent(fileName);
-    const fileKey = `${environmentId}/${accessType}/${fileNameDecoded}`;
+    const primaryKey = `${primaryId}/${accessType}/${fileNameDecoded}`;
 
-    const streamResult = await getFileStream(fileKey);
+    const streamResult = await getFileStream(primaryKey);
 
-    if (!streamResult.ok) {
-      return streamResult;
+    if (!streamResult.ok && streamResult.error.code === StorageErrorCode.FileNotFoundError && fallbackId) {
+      const fallbackKey = `${fallbackId}/${accessType}/${fileNameDecoded}`;
+      return await getFileStream(fallbackKey);
     }
 
     return streamResult;
@@ -94,10 +108,37 @@ export const getFileStreamForDownload = async (
   }
 };
 
-// We don't need to return or throw any errors, even if the file doesn't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFile function
-export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) =>
-  await deleteFileFromS3(`${environmentId}/${accessType}/${fileName}`);
+// Deletes a file from S3. Tries the primary ID path first; if the file is not found and a
+// fallbackId is provided, retries with the fallback path (backwards compat for old environmentId paths).
+export const deleteFile = async (
+  primaryId: string,
+  accessType: TAccessType,
+  fileName: string,
+  fallbackId?: string
+) => {
+  const result = await deleteFileFromS3(`${primaryId}/${accessType}/${fileName}`);
 
-// We don't need to return or throw any errors, even if the files don't exist, we should not fail the request, nor log any errors, those will be handled by the deleteFilesByPrefix function
-export const deleteFilesByEnvironmentId = async (environmentId: string) =>
-  await deleteFilesByPrefix(environmentId);
+  if (!result.ok && result.error.code === StorageErrorCode.FileNotFoundError && fallbackId) {
+    return await deleteFileFromS3(`${fallbackId}/${accessType}/${fileName}`);
+  }
+
+  return result;
+};
+
+// Deletes all files for a workspace — cleans up both workspaceId-prefixed (new uploads) and
+// environmentId-prefixed (legacy uploads) paths. Errors are not thrown; callers should check results.
+export const deleteFilesByWorkspaceId = async (workspaceId: string, environmentIds: string[]) => {
+  const results = await Promise.all([
+    deleteFilesByPrefix(workspaceId),
+    ...environmentIds.map((envId) => deleteFilesByPrefix(envId)),
+  ]);
+
+  // Return the first error if any, otherwise success
+  for (const result of results) {
+    if (!result.ok) {
+      return result;
+    }
+  }
+
+  return results[0];
+};

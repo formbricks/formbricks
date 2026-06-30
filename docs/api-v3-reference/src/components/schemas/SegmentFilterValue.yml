@@ -1,0 +1,27 @@
+description: >
+  Comparison value for a segment filter condition. A string or number for most operators; a
+  relative-date object (`{ amount, unit }`) for `isOlderThan` / `isNewerThan`; a two-element
+  `[from, to]` string array for `isBetween`. Ignored for `isSet` / `isNotSet` but still required.
+oneOf:
+  - type: string
+  - type: number
+  - type: object
+    required:
+      - amount
+      - unit
+    properties:
+      amount:
+        type: number
+      unit:
+        type: string
+        enum:
+          - days
+          - weeks
+          - months
+          - years
+    additionalProperties: false
+  - type: array
+    items:
+      type: string
+    minItems: 2
+    maxItems: 2

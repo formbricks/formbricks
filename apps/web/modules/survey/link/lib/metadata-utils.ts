@@ -1,7 +1,7 @@
 import { Metadata } from "next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -46,12 +46,22 @@ export const getBasicSurveyMetadata = async (
 
   const metadata = surveyData.metadata;
   const welcomeCard = surveyData.welcomeCard;
-  const useDefaultLanguageCode =
-    languageCode === "default" ||
-    surveyData.languages.find((lang) => lang.language.code === languageCode)?.default;
+
+  // Resolve the language code, accepting either the language code or its alias (case-insensitive).
+  const selectedLanguage =
+    languageCode === "default"
+      ? undefined
+      : surveyData.languages.find(
+          (lang) =>
+            lang.language.code.toLowerCase() === languageCode.toLowerCase() ||
+            lang.language.alias?.toLowerCase() === languageCode.toLowerCase()
+        );
 
   // Determine language code to use for metadata
-  const langCode = useDefaultLanguageCode ? "default" : languageCode;
+  const langCode =
+    !selectedLanguage || selectedLanguage.default || !selectedLanguage.enabled
+      ? "default"
+      : selectedLanguage.language.code;
 
   // Set title - priority: custom link metadata > welcome card > survey name
   const titleFromMetadata = metadata?.title ? getLocalizedValue(metadata.title, langCode) || "" : undefined;
@@ -87,20 +97,20 @@ export const getBasicSurveyMetadata = async (
 };
 
 /**
- * Determines the brand color for OG metadata based on project and survey styling settings.
- * Uses project brand color unless the project allows style overwrite AND the survey overrides the theme.
+ * Determines the brand color for OG metadata based on workspace and survey styling settings.
+ * Uses workspace brand color unless the workspace allows style overwrite AND the survey overrides the theme.
  */
 export const getMetadataBrandColor = (
-  projectStyling: TProjectStyling,
+  workspaceStyling: TWorkspaceStyling,
   surveyStyling?: TSurveyStyling | null
 ): string | undefined => {
-  if (!projectStyling.allowStyleOverwrite) {
-    return projectStyling.brandColor?.light;
+  if (!workspaceStyling.allowStyleOverwrite) {
+    return workspaceStyling.brandColor?.light;
   }
 
   return surveyStyling?.overwriteThemeStyling
     ? surveyStyling.brandColor?.light
-    : projectStyling.brandColor?.light;
+    : workspaceStyling.brandColor?.light;
 };
 
 /**

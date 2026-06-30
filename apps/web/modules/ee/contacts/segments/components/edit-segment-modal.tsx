@@ -18,7 +18,6 @@ import { SegmentActivityTab } from "./segment-activity-tab";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface EditSegmentModalProps {
-  environmentId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
   currentSegment: TSegmentWithSurveyRefs;
@@ -33,7 +32,6 @@ const SegmentSettingsTab = ({
   activitySummary,
   contactAttributeKeys,
   currentSegment,
-  environmentId,
   isContactsEnabled,
   isReadOnly,
   segments,
@@ -43,7 +41,6 @@ const SegmentSettingsTab = ({
   | "activitySummary"
   | "contactAttributeKeys"
   | "currentSegment"
-  | "environmentId"
   | "isContactsEnabled"
   | "isReadOnly"
   | "segments"
@@ -57,7 +54,6 @@ const SegmentSettingsTab = ({
     <SegmentSettings
       activitySummary={activitySummary}
       contactAttributeKeys={contactAttributeKeys}
-      environmentId={environmentId}
       initialSegment={currentSegment}
       segments={segments}
       setOpen={setOpen}
@@ -67,7 +63,6 @@ const SegmentSettingsTab = ({
 };
 
 export const EditSegmentModal = ({
-  environmentId,
   open,
   setOpen,
   currentSegment,
@@ -92,7 +87,6 @@ export const EditSegmentModal = ({
           activitySummary={activitySummary}
           contactAttributeKeys={contactAttributeKeys}
           currentSegment={currentSegment}
-          environmentId={environmentId}
           isContactsEnabled={isContactsEnabled}
           isReadOnly={isReadOnly}
           segments={segments}
@@ -114,18 +108,19 @@ export const EditSegmentModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent disableCloseOnOutsideClick>
+      <DialogContent disableCloseOnOutsideClick width="wide">
         <DialogHeader>
           <UsersIcon />
           <DialogTitle>{currentSegment.title}</DialogTitle>
           <DialogDescription>{currentSegment.description ?? ""}</DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <div className="flex h-full w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
+          <div className="flex h-full w-full items-center justify-center gap-x-2 border-b border-slate-200 px-6">
             {tabs.map((tab, index) => (
               <button
+                type="button"
                 key={tab.title}
-                className={`mr-4 px-1 pb-3 focus:outline-none ${
+                className={`mr-4 px-1 pb-3 focus:outline-hidden ${
                   activeTab === index
                     ? "border-b-2 border-brand-dark font-semibold text-slate-900"
                     : "text-slate-500 hover:text-slate-700"

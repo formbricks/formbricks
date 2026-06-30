@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { parseAndValidateJsonBody } from "./parse-and-validate-json-body";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "./request-body";
 
 describe("parseAndValidateJsonBody", () => {
   test("returns a malformed JSON response when request parsing fails", async () => {
@@ -35,6 +36,40 @@ describe("parseAndValidateJsonBody", () => {
       message: "Malformed JSON in request body",
       details: {
         error: expect.any(String),
+      },
+    });
+  });
+
+  test("returns a payload too large response when the request body exceeds the body limit", async () => {
+    const request = new Request("http://localhost/api/test", {
+      method: "POST",
+      headers: {
+        "Content-Length": String(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1),
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    });
+
+    const result = await parseAndValidateJsonBody({
+      request,
+      schema: z.object({
+        finished: z.boolean(),
+      }),
+    });
+
+    expect("response" in result).toBe(true);
+
+    if (!("response" in result)) {
+      throw new Error("Expected a response result");
+    }
+
+    expect(result.issue).toBe("payload_too_large");
+    expect(result.response.status).toBe(413);
+    await expect(result.response.json()).resolves.toEqual({
+      code: "payload_too_large",
+      message: "Payload Too Large",
+      details: {
+        error: `Request body must not exceed ${DEFAULT_REQUEST_BODY_LIMIT_BYTES} bytes`,
       },
     });
   });
@@ -93,17 +128,17 @@ describe("parseAndValidateJsonBody", () => {
       request,
       schema: z.object({
         finished: z.boolean(),
-        environmentId: z.string(),
+        workspaceId: z.string(),
       }),
       buildInput: (jsonInput) => ({
         ...(jsonInput as Record<string, unknown>),
-        environmentId: "env_123",
+        workspaceId: "ws_123",
       }),
     });
 
     expect(result).toEqual({
       data: {
-        environmentId: "env_123",
+        workspaceId: "ws_123",
         finished: true,
       },
     });

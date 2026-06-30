@@ -4,6 +4,7 @@ import {
   EyeOffIcon,
   FileDigitIcon,
   FileTextIcon,
+  GaugeIcon,
   HomeIcon,
   ListIcon,
   ListOrderedIcon,
@@ -11,6 +12,7 @@ import {
   PhoneIcon,
   PresentationIcon,
   Rows3Icon,
+  SmilePlusIcon,
   StarIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -38,6 +40,8 @@ const elementIconMapping = {
   address: HomeIcon,
   contactInfo: ContactIcon,
   ranking: ListOrderedIcon,
+  csat: SmilePlusIcon,
+  ces: GaugeIcon,
 };
 
 interface RecallItemSelectProps {
@@ -173,7 +177,7 @@ export const RecallItemSelect = ({
         align="start"
         side="bottom"
         data-recall-dropdown>
-        <p className="font-medium">{t("environments.surveys.edit.recall_information_from")}</p>
+        <p className="font-medium">{t("workspace.surveys.edit.recall_information_from")}</p>
         <Input
           id="recallItemSearchInput"
           placeholder="Search options"
@@ -187,7 +191,7 @@ export const RecallItemSelect = ({
             }
           }}
         />
-        <div className="max-h-72 overflow-y-auto overflow-x-hidden">
+        <div className="max-h-72 overflow-x-hidden overflow-y-auto">
           {filteredRecallItems.map((recallItem, index) => {
             const IconComponent = getRecallItemIcon(recallItem);
             return (
@@ -200,7 +204,7 @@ export const RecallItemSelect = ({
                   setShowRecallItemSelect(false);
                 }}
                 autoFocus={false}
-                className="flex w-full cursor-pointer items-center rounded-md p-2 focus:bg-slate-200 focus:outline-none"
+                className="flex w-full cursor-pointer items-center rounded-md p-2 focus:bg-slate-200 focus:outline-hidden"
                 onKeyDown={(e) => {
                   if (
                     (e.key === "ArrowUp" && index === 0) ||
@@ -211,7 +215,7 @@ export const RecallItemSelect = ({
                   }
                 }}>
                 <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
-                <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                <p className="max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap">
                   {getTextContentWithRecallTruncated(recallItem.label).trim() || t("common.no_text_found")}
                 </p>
               </DropdownMenuItem>
@@ -219,7 +223,7 @@ export const RecallItemSelect = ({
           })}
           {filteredRecallItems.length === 0 && (
             <p className="p-2 text-sm font-medium text-slate-700">
-              {t("environments.surveys.edit.no_recall_items_found")}
+              {t("workspace.surveys.edit.no_recall_items_found")}
             </p>
           )}
         </div>

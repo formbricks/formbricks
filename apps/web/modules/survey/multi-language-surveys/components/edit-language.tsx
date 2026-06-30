@@ -1,14 +1,14 @@
 "use client";
 
-import { Language } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Language } from "@formbricks/database/prisma-browser";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
-import type { TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
+import type { TWorkspace } from "@formbricks/types/workspace";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -24,7 +24,7 @@ import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
-  project: TProject;
+  workspace: TWorkspace;
   locale: TUserLocale;
   isReadOnly: boolean;
 }
@@ -40,19 +40,19 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
     .map((language) => language.alias!.toLowerCase().trim());
 
   if (languageCodes.includes("")) {
-    toast.error(t("environments.workspace.languages.please_select_a_language"), { duration: 2000 });
+    toast.error(t("workspace.languages.please_select_a_language"), { duration: 2000 });
     return false;
   }
 
   // Check for duplicates within the languageCodes and languageAliases
   if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageCodes)) {
-    toast.error(t("environments.workspace.languages.duplicate_language_or_language_id"), { duration: 4000 });
+    toast.error(t("workspace.languages.duplicate_language_or_language_id"), { duration: 4000 });
     return false;
   }
 
   // Check if any alias matches the identifier of any added languages
   if (languageCodes.some((code) => languageAliases.includes(code))) {
-    toast.error(t("environments.workspace.languages.conflict_between_identifier_and_alias"), {
+    toast.error(t("workspace.languages.conflict_between_identifier_and_alias"), {
       duration: 6000,
     });
     return false;
@@ -64,12 +64,9 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
   // dropdowns that rely on ISO identifiers.
   for (const alias of languageAliases) {
     if (iso639Languages.some((language) => language.code === alias && !languageCodes.includes(alias))) {
-      toast.error(
-        t("environments.workspace.languages.conflict_between_selected_alias_and_another_language"),
-        {
-          duration: 6000,
-        }
-      );
+      toast.error(t("workspace.languages.conflict_between_selected_alias_and_another_language"), {
+        duration: 6000,
+      });
       return false;
     }
   }
@@ -77,9 +74,9 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
   return true;
 };
 
-export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps) {
+export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProps) {
   const { t } = useTranslation();
-  const [languages, setLanguages] = useState<Language[]>(project.languages);
+  const [languages, setLanguages] = useState<Language[]>(workspace.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -89,8 +86,8 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
   });
 
   useEffect(() => {
-    setLanguages(project.languages);
-  }, [project.languages]);
+    setLanguages(workspace.languages);
+  }, [workspace.languages]);
 
   const router = useRouter();
 
@@ -101,7 +98,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
       updatedAt: new Date(),
       code: "",
       alias: "",
-      projectId: project.id,
+      workspaceId: workspace.id,
     };
     setLanguages((prev) => [...prev, newLanguage]);
     setIsEditing(true);
@@ -123,14 +120,14 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: `${t("environments.workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("environments.workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
+            text: `${t("workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
             isButtonDisabled: true,
           });
         } else {
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: t("environments.workspace.languages.delete_language_confirmation"),
+            text: t("workspace.languages.delete_language_confirmation"),
             isButtonDisabled: false,
           });
         }
@@ -145,14 +142,14 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
 
   const performLanguageDeletion = async (languageId: string) => {
     try {
-      const result = await deleteLanguageAction({ languageId, projectId: project.id });
+      const result = await deleteLanguageAction({ languageId, workspaceId: workspace.id });
       if (result?.serverError) {
         toast.error(getFormattedErrorMessage(result));
         setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
         return;
       }
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
-      toast.success(t("environments.workspace.languages.language_deleted_successfully"));
+      toast.success(t("workspace.languages.language_deleted_successfully"));
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     } catch {
@@ -162,7 +159,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
   };
 
   const handleCancelChanges = async () => {
-    setLanguages(project.languages);
+    setLanguages(workspace.languages);
     setIsEditing(false);
   };
 
@@ -172,11 +169,11 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
       languages.map((lang) => {
         return lang.id === "new"
           ? createLanguageAction({
-              projectId: project.id,
+              workspaceId: workspace.id,
               languageInput: { code: lang.code, alias: lang.alias },
             })
           : updateLanguageAction({
-              projectId: project.id,
+              workspaceId: workspace.id,
               languageId: lang.id,
               languageInput: { code: lang.code, alias: lang.alias },
             });
@@ -187,13 +184,13 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
       toast.error(getFormattedErrorMessage(errorResult));
       return;
     }
-    toast.success(t("environments.workspace.languages.languages_updated_successfully"));
+    toast.success(t("workspace.languages.languages_updated_successfully"));
     router.refresh();
     setIsEditing(false);
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div className="space-y-4">
         {languages.length > 0 ? (
           <>
@@ -214,16 +211,14 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
             ))}
           </>
         ) : (
-          <p className="text-sm italic text-slate-500">
-            {t("environments.workspace.languages.no_language_found")}
-          </p>
+          <p className="text-sm italic text-slate-500">{t("workspace.languages.no_language_found")}</p>
         )}
 
         <AddLanguageButton
           onClick={handleAddLanguage}
           isEditing={isEditing}
           languages={languages}
-          project={project}
+          workspace={workspace}
         />
       </div>
       <EditSaveButtons
@@ -244,7 +239,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
         </Alert>
       )}
       <ConfirmationModal
-        buttonText={t("environments.workspace.languages.remove_language")}
+        buttonText={t("workspace.languages.remove_language")}
         isButtonDisabled={confirmationModal.isButtonDisabled}
         onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
         open={confirmationModal.isOpen}
@@ -252,7 +247,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
           setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
         }}
         body={confirmationModal.text}
-        title={t("environments.workspace.languages.remove_language")}
+        title={t("workspace.languages.remove_language")}
       />
     </div>
   );
@@ -277,6 +272,6 @@ const EditSaveButtons: React.FC<{
     </div>
   ) : (
     <Button className="w-fit" onClick={onEdit} size="sm" disabled={disabled}>
-      {t("environments.workspace.languages.edit_languages")}
+      {t("workspace.languages.edit_languages")}
     </Button>
   );

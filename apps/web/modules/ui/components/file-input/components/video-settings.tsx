@@ -37,7 +37,7 @@ export const VideoSettings = ({
 
     const videoId = extractYoutubeId(uploadedVideoUrl);
     if (!videoId) {
-      toast.error(t("environments.surveys.edit.invalid_youtube_url"));
+      toast.error(t("workspace.surveys.edit.invalid_youtube_url"));
       return;
     }
     const newUrl = isYoutubePrivacyModeEnabled
@@ -57,7 +57,7 @@ export const VideoSettings = ({
       setUploadedVideoUrl(embedUrl);
       onFileUpload([embedUrl], "video");
     } else {
-      toast.error(t("environments.surveys.edit.url_not_supported"));
+      toast.error(t("workspace.surveys.edit.url_not_supported"));
     }
   };
 
@@ -91,9 +91,9 @@ export const VideoSettings = ({
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col gap-y-4">
       <Label>Video URL (YouTube, Vimeo, or Loom):</Label>
-      <div className="flex h-10 items-center space-x-2">
+      <div className="flex h-10 items-center gap-x-2">
         <Input
           className="w-full"
           placeholder="https://www.youtube.com/watch?v=VIDEO_ID"
@@ -113,7 +113,7 @@ export const VideoSettings = ({
 
       {showPlatformWarning && (
         <Alert variant="warning" size="small">
-          <AlertTitle>{t("environments.surveys.edit.invalid_video_url_warning")}</AlertTitle>
+          <AlertTitle>{t("workspace.surveys.edit.invalid_video_url_warning")}</AlertTitle>
         </Alert>
       )}
 

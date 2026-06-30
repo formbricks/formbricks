@@ -1,8 +1,8 @@
 "use client";
 
-import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
+import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
@@ -34,15 +34,15 @@ const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
 
 const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   if (webhook.triggers.length === 0) {
-    return <p className="text-slate-400">{t("environments.integrations.webhooks.no_triggers")}</p>;
+    return <p className="text-slate-400">{t("workspace.integrations.webhooks.no_triggers")}</p>;
   } else {
     let cleanedTriggers = webhook.triggers.map((trigger) => {
       if (trigger === "responseCreated") {
-        return t("environments.integrations.webhooks.response_created");
+        return t("workspace.integrations.webhooks.response_created");
       } else if (trigger === "responseUpdated") {
-        return t("environments.integrations.webhooks.response_updated");
+        return t("workspace.integrations.webhooks.response_updated");
       } else if (trigger === "responseFinished") {
-        return t("environments.integrations.webhooks.response_finished");
+        return t("workspace.integrations.webhooks.response_finished");
       } else {
         return trigger;
       }

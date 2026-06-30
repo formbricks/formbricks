@@ -110,14 +110,14 @@ export function LogicEditorActions({
   return (
     <div className="flex grow flex-col gap-2">
       <div className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">
-        {t("environments.surveys.edit.then")}
+        {t("workspace.surveys.edit.then")}
       </div>
 
       <div className={cn("flex grow flex-col gap-y-2 last:pb-3", isLast && "border-b border-slate-200")}>
         {actions?.map((action, idx) => (
           <div className="flex items-center gap-x-2" key={action.id}>
             <div className="flex w-10 shrink-0 items-center justify-end">
-              <CornerDownRightIcon className="h-4 w-4 shrink-0 text-slate-500" />
+              <CornerDownRightIcon className="size-4 shrink-0 text-slate-500" />
             </div>
             <div key={action.id} className="flex grow items-center justify-between gap-x-2">
               <div className={cn("grid flex-1 grid-cols-12 gap-x-2")}>
@@ -180,7 +180,7 @@ export function LogicEditorActions({
                           });
                         }}
                         comboboxClasses="grow"
-                        emptyDropdownText={t("environments.surveys.edit.add_a_variable_to_calculate")}
+                        emptyDropdownText={t("workspace.surveys.edit.add_a_variable_to_calculate")}
                       />
                     </div>
 
@@ -250,8 +250,8 @@ export function LogicEditorActions({
                 <DropdownMenuTrigger id={`actions-${idx}-dropdown`} asChild>
                   <Button
                     variant="outline"
-                    className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
-                    <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                    className="flex size-10 items-center justify-center rounded-md bg-white">
+                    <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
                   </Button>
                 </DropdownMenuTrigger>
 
@@ -260,8 +260,8 @@ export function LogicEditorActions({
                     onClick={() => {
                       handleActionsChange("addBelow", idx);
                     }}
-                    icon={<PlusIcon className="h-4 w-4" />}>
-                    {t("environments.surveys.edit.add_action_below")}
+                    icon={<PlusIcon className="size-4" />}>
+                    {t("workspace.surveys.edit.add_action_below")}
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
@@ -269,7 +269,7 @@ export function LogicEditorActions({
                     onClick={() => {
                       handleActionsChange("remove", idx);
                     }}
-                    icon={<TrashIcon className="h-4 w-4" />}>
+                    icon={<TrashIcon className="size-4" />}>
                     {t("common.remove")}
                   </DropdownMenuItem>
 
@@ -277,7 +277,7 @@ export function LogicEditorActions({
                     onClick={() => {
                       handleActionsChange("duplicate", idx);
                     }}
-                    icon={<CopyIcon className="h-4 w-4" />}>
+                    icon={<CopyIcon className="size-4" />}>
                     {t("common.duplicate")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>

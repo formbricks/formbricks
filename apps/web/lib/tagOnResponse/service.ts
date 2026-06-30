@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
@@ -10,7 +10,7 @@ import { validateInputs } from "../utils/validate";
 const selectTagsOnResponse = {
   tag: {
     select: {
-      environmentId: true,
+      workspaceId: true,
     },
   },
 };
@@ -31,6 +31,16 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      const target = error.meta?.target;
+      const isTagsOnResponsesUniqueViolation =
+        Array.isArray(target) && target.includes("responseId") && target.includes("tagId");
+
+      if (error.code === "P2002" && isTagsOnResponsesUniqueViolation) {
+        return {
+          responseId,
+          tagId,
+        };
+      }
       throw new DatabaseError(error.message);
     }
 
@@ -62,8 +72,8 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
   }
 };
 
-export const getTagsOnResponsesCount = reactCache(async (environmentId: string): Promise<TTagsCount> => {
-  validateInputs([environmentId, ZId]);
+export const getTagsOnResponsesCount = reactCache(async (workspaceId: string): Promise<TTagsCount> => {
+  validateInputs([workspaceId, ZId]);
 
   try {
     const tagsCount = await prisma.tagsOnResponses.groupBy({
@@ -71,9 +81,7 @@ export const getTagsOnResponsesCount = reactCache(async (environmentId: string):
       where: {
         response: {
           survey: {
-            environment: {
-              id: environmentId,
-            },
+            workspaceId,
           },
         },
       },

@@ -6,11 +6,11 @@ import { RESPONSES_API_URL, SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests for Responses", () => {
   test("Create, Retrieve, Update, and Delete Responses via API", async ({ page, users, request }) => {
-    let environmentId: string;
+    let workspaceId: string;
     let apiKey: string;
 
     try {
-      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
+      ({ workspaceId, apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
       logger.error(error, "Error during login and getting API key");
       throw error;
@@ -22,7 +22,7 @@ test.describe("API Tests for Responses", () => {
 
     await test.step("Create Survey via API", async () => {
       const surveyBody = {
-        environmentId: environmentId,
+        workspaceId: workspaceId,
         type: "link",
         name: "My new Survey from API",
         questions: [

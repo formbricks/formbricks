@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { verifyTokenForLinkSurvey } from "@/lib/jwt";
+import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { checkAndValidateSingleUseId, getEmailVerificationDetails } from "./helper";
+
+vi.mock("server-only", () => ({}));
 
 vi.mock("@/lib/jwt", () => ({
   verifyTokenForLinkSurvey: vi.fn(),
@@ -9,6 +12,9 @@ vi.mock("@/lib/jwt", () => ({
 
 vi.mock("@/app/lib/singleUseSurveys", () => ({
   validateSurveySingleUseId: vi.fn(),
+}));
+vi.mock("@/lib/utils/single-use-surveys", () => ({
+  validateSurveySingleUseLinkParams: vi.fn(),
 }));
 
 describe("getEmailVerificationDetails", () => {
@@ -62,6 +68,7 @@ describe("getEmailVerificationDetails", () => {
 
 describe("checkAndValidateSingleUseId", () => {
   const mockedValidateSurveySingleUseId = vi.mocked(validateSurveySingleUseId);
+  const mockedValidateSurveySingleUseLinkParams = vi.mocked(validateSurveySingleUseLinkParams);
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -81,19 +88,37 @@ describe("checkAndValidateSingleUseId", () => {
     expect(mockedValidateSurveySingleUseId).not.toHaveBeenCalled();
   });
 
-  test("returns suid as-is when isEncrypted is false", () => {
+  test("returns null when isEncrypted is false and surveyId is missing", () => {
     const testSuid = "plain-suid-123";
     const result = checkAndValidateSingleUseId(testSuid, false);
 
-    expect(result).toBe(testSuid);
+    expect(result).toBeNull();
     expect(mockedValidateSurveySingleUseId).not.toHaveBeenCalled();
+    expect(mockedValidateSurveySingleUseLinkParams).not.toHaveBeenCalled();
   });
 
-  test("returns suid as-is when isEncrypted is not provided (defaults to false)", () => {
+  test("returns signed suid when isEncrypted is false and signature validation succeeds", () => {
     const testSuid = "plain-suid-123";
-    const result = checkAndValidateSingleUseId(testSuid);
+    mockedValidateSurveySingleUseLinkParams.mockReturnValueOnce(testSuid);
+    const result = checkAndValidateSingleUseId(testSuid, false, "survey-1", "token-1");
 
     expect(result).toBe(testSuid);
+    expect(mockedValidateSurveySingleUseId).not.toHaveBeenCalled();
+    expect(mockedValidateSurveySingleUseLinkParams).toHaveBeenCalledWith({
+      surveyId: "survey-1",
+      suId: testSuid,
+      suToken: "token-1",
+      isEncrypted: false,
+      decrypt: expect.any(Function),
+    });
+  });
+
+  test("returns null when isEncrypted is false and signature validation fails", () => {
+    const testSuid = "plain-suid-123";
+    mockedValidateSurveySingleUseLinkParams.mockReturnValueOnce(null);
+    const result = checkAndValidateSingleUseId(testSuid, false, "survey-1");
+
+    expect(result).toBeNull();
     expect(mockedValidateSurveySingleUseId).not.toHaveBeenCalled();
   });
 

@@ -1,6 +1,6 @@
-import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
@@ -10,11 +10,15 @@ import {
   TGetContactAttributeKeysFilter,
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentIds: string[], params: TGetContactAttributeKeysFilter) => {
+  async (workspaceIds: string[], params: TGetContactAttributeKeysFilter) => {
     try {
-      const query = getContactAttributeKeysQuery(environmentIds, params);
+      const query = getContactAttributeKeysQuery(workspaceIds, params);
 
       const [keys, count] = await prisma.$transaction([
         prisma.contactAttributeKey.findMany({
@@ -43,13 +47,20 @@ export const getContactAttributeKeys = reactCache(
 export const createContactAttributeKey = async (
   contactAttributeKey: TContactAttributeKeyInput
 ): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
-  const { environmentId, name, description, key, dataType } = contactAttributeKey;
+  const { workspaceId, name, description, key, dataType } = contactAttributeKey;
+
+  if (isReservedFutureDefaultAttributeKey(key)) {
+    return err({
+      type: "bad_request",
+      details: [{ field: "key", issue: getReservedFutureDefaultAttributeKeyIssue([key]) }],
+    });
+  }
 
   try {
     const prismaData: Prisma.ContactAttributeKeyCreateInput = {
-      environment: {
+      workspace: {
         connect: {
-          id: environmentId,
+          id: workspaceId,
         },
       },
       name: name ?? formatSnakeCaseToTitleCase(key),

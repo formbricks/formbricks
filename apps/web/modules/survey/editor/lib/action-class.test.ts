@@ -1,6 +1,6 @@
-import { ActionClass, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ActionClass, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError, UniqueConstraintError } from "@formbricks/types/errors";
@@ -17,14 +17,14 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const mockEnvironmentId = "test-environment-id";
+const mockWorkspaceId = "test-workspace-id";
 
 const mockCodeActionInput: TActionClassInput = {
   name: "Test Code Action",
   description: "This is a test code action",
   type: "code",
   key: "test-code-action-key",
-  environmentId: mockEnvironmentId,
+  workspaceId: mockWorkspaceId,
 };
 
 const mockNoCodeActionInput: TActionClassInput = {
@@ -36,7 +36,7 @@ const mockNoCodeActionInput: TActionClassInput = {
     elementSelector: { cssSelector: ".btn" },
     urlFilters: [],
   },
-  environmentId: mockEnvironmentId,
+  workspaceId: mockWorkspaceId,
 };
 
 const mockActionClass: ActionClass = {
@@ -48,7 +48,7 @@ const mockActionClass: ActionClass = {
   type: "code",
   key: "test-action-key",
   noCodeConfig: null,
-  environmentId: mockEnvironmentId,
+  workspaceId: mockWorkspaceId,
 };
 
 describe("createActionClass", () => {
@@ -60,7 +60,7 @@ describe("createActionClass", () => {
     const createdAction = { ...mockActionClass, ...mockCodeActionInput, noCodeConfig: null };
     vi.mocked(prisma.actionClass.create).mockResolvedValue(createdAction);
 
-    const result = await createActionClass(mockEnvironmentId, mockCodeActionInput);
+    const result = await createActionClass(mockWorkspaceId, mockCodeActionInput);
 
     expect(prisma.actionClass.create).toHaveBeenCalledWith({
       data: {
@@ -68,7 +68,7 @@ describe("createActionClass", () => {
         description: mockCodeActionInput.description,
         type: "code",
         key: mockCodeActionInput.key,
-        environment: { connect: { id: mockEnvironmentId } },
+        workspace: { connect: { id: mockWorkspaceId } },
         noCodeConfig: undefined,
       },
     });
@@ -84,7 +84,7 @@ describe("createActionClass", () => {
     };
     vi.mocked(prisma.actionClass.create).mockResolvedValue(createdAction);
 
-    const result = await createActionClass(mockEnvironmentId, mockNoCodeActionInput);
+    const result = await createActionClass(mockWorkspaceId, mockNoCodeActionInput);
 
     expect(prisma.actionClass.create).toHaveBeenCalledWith({
       data: {
@@ -92,7 +92,7 @@ describe("createActionClass", () => {
         description: mockNoCodeActionInput.description,
         type: "noCode",
         key: undefined,
-        environment: { connect: { id: mockEnvironmentId } },
+        workspace: { connect: { id: mockWorkspaceId } },
         noCodeConfig: mockNoCodeActionInput.noCodeConfig,
       },
     });
@@ -109,7 +109,7 @@ describe("createActionClass", () => {
     );
     vi.mocked(prisma.actionClass.create).mockRejectedValue(prismaError);
 
-    await expect(createActionClass(mockEnvironmentId, mockCodeActionInput)).rejects.toThrow(
+    await expect(createActionClass(mockWorkspaceId, mockCodeActionInput)).rejects.toThrow(
       UniqueConstraintError
     );
   });
@@ -118,6 +118,6 @@ describe("createActionClass", () => {
     const genericError = new Error("Some database error");
     vi.mocked(prisma.actionClass.create).mockRejectedValue(genericError);
 
-    await expect(createActionClass(mockEnvironmentId, mockCodeActionInput)).rejects.toThrow(DatabaseError);
+    await expect(createActionClass(mockWorkspaceId, mockCodeActionInput)).rejects.toThrow(DatabaseError);
   });
 });

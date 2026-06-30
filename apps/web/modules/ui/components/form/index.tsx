@@ -87,7 +87,7 @@ const FormLabel = React.forwardRef<
   return (
     <Label
       ref={ref}
-      className={cn(error ? "text-red-500" : "text-slate-800", className)}
+      className={cn("block", error ? "text-red-500" : "text-slate-800", className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -126,7 +126,8 @@ const FormError = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
   ({ className, children, ...props }, ref) => {
     const { error, formMessageId } = useFormField();
     const errorMessage = error?.message || error?.root?.message;
-    const body = error ? String(errorMessage) : children;
+    // Explicit children win — they're typically a translated/formatted version of the raw error.
+    const body = children ?? (error ? String(errorMessage) : null);
 
     if (!body) {
       return null;

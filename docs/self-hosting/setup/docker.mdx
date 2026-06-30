@@ -4,16 +4,38 @@ description: "Set up Formbricks quickly using our ready-to-use Docker image."
 icon: "docker"
 ---
 
-The image is pre-built and requires minimal setup—just download it and start the container.
+Use this guide for a manual Docker Compose setup. It downloads the production Compose file and starts the
+baseline Formbricks stack: Formbricks Web, PostgreSQL, Redis/Valkey, Formbricks Hub, and Cube. Optional
+services such as Qwen/vLLM, AI taxonomy, and RustFS are documented after the baseline stack is running.
 
 ### Requirements
 
-Make sure Docker and Docker Compose are installed on your system. These are usually included in tools like Docker Desktop and Rancher Desktop.
+Make sure the following tools are installed:
+
+- Docker Engine with Docker Compose V2 (`docker compose`)
+- `curl`
+- `openssl`
+- A POSIX-compatible shell such as `sh`, `bash`, or `zsh`
+
+Docker and Docker Compose are usually included in tools like Docker Desktop and Rancher Desktop.
 
 <Note>
   `docker compose` without the hyphen is now the primary method of using docker-compose, according to the
   Docker documentation.
 </Note>
+
+## Choose Your Setup Path
+
+- Use this manual Docker Compose guide for local installs, custom servers, or custom reverse-proxy setups.
+- Use the [one-click setup script](/self-hosting/setup/one-click) for production Ubuntu servers where you want
+  Traefik, HTTPS certificates, and optional RustFS automation.
+- Use the [migration guide](/self-hosting/advanced/migration#v5) before updating an existing Formbricks 4.x
+  install or an older v5 compose file.
+
+<Info>
+  Starting with Formbricks v5, the production Docker Compose stack includes Formbricks Hub and Cube as part of
+  the baseline. Keep `HUB_API_URL` at its internal default unless Hub runs elsewhere.
+</Info>
 
 ## Start
 
@@ -25,65 +47,59 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    mkdir formbricks-quickstart && cd formbricks-quickstart
    ```
 
-1. **Download the Docker-Compose File**
+1. **Download the Docker Files**
 
-   Get the docker-compose file from the Formbricks repository by running:
-
-   ```bash
-   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
-   ```
-
-1. **Generate NextAuth Secret**
-
-   You need a NextAuth secret for session signing and encryption. Run one of the commands below based on your operating system:
-
-   For Linux:
+   Get the Docker Compose file plus the Cube configuration shipped with the baseline stack:
 
    ```bash
-   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   mkdir -p cube/schema
+   curl -fsSL \
+     -o docker-compose.yml \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+   curl -fsSL \
+     -o cube/cube.js \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
+   curl -fsSL \
+     -o cube/schema/FeedbackRecords.js \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
    ```
 
-   For macOS:
+1. **Create the Environment File**
+
+   Store your configuration in `.env`. Docker Compose reads this file for variable interpolation, and the
+   Formbricks container also loads it at startup. For a local install, use `http://localhost:3000`. For a server
+   install, replace both URL values with your public HTTPS URL before starting the stack.
 
    ```bash
-   sed -i '' "s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   cat <<EOF > .env
+   WEBAPP_URL=http://localhost:3000
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=$(openssl rand -hex 32)
+   ENCRYPTION_KEY=$(openssl rand -hex 32)
+   CRON_SECRET=$(openssl rand -hex 32)
+   HUB_API_KEY=$(openssl rand -hex 32)
+   CUBEJS_API_SECRET=$(openssl rand -hex 32)
+   CUBEJS_JWT_ISSUER=formbricks-web
+   CUBEJS_JWT_AUDIENCE=formbricks-cube
+   EOF
+   chmod 600 .env
    ```
 
-1. **Generate Encryption Key**
+1. **Validate the Docker Compose Configuration**
 
-   Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. Run one of the commands below based on your operating system:
-
-   For Linux:
+   Validate the Compose file after `.env` contains the required values:
 
    ```bash
-   sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   docker compose config >/dev/null
    ```
 
-   For macOS:
-
-   ```bash
-   sed -i '' "s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
-   ```
-
-1. **Generate Cron Secret**
-
-   You require a Cron secret to secure API access for running cron jobs. Run one of the commands below based on your operating system:
-
-   For Linux:
-
-   ```bash
-   sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
-   ```
-
-   For macOS:
-
-   ```bash
-   sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
-   ```
+   If validation fails, check that `.env` contains the required values and that `docker-compose.yml` has valid
+   syntax.
 
 1. **Start the Docker Setup**
 
-   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
+   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
+   PostgreSQL, Redis, Formbricks Hub, and Cube.
 
    ```bash
    docker compose up -d
@@ -91,13 +107,189 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
    The `-d` flag runs the containers in the background, so they keep running even after you close the terminal.
 
+1. **Verify the Stack**
+
+   Confirm the baseline services started and the Formbricks health endpoint responds:
+
+   ```bash
+   docker compose ps -a
+   curl -fsS http://localhost:3000/health
+   docker compose logs --tail=100 formbricks-migrate hub-migrate formbricks hub cube
+   ```
+
+   `formbricks-migrate` and `hub-migrate` should complete successfully. `postgres`, `redis`, `cube`,
+   `hub`, and `formbricks` should be running or healthy.
+
 1. **Open Formbricks in Your Browser**
 
-   Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
+   Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access
+   Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user
+   and start using Formbricks.
+
+<Note>
+  The bundled Docker stack keeps Formbricks Hub and Cube internal to the compose network. The app reaches them
+  through `http://hub:8080` and `http://cube:4000`. When AI taxonomy beta is enabled, Hub reaches taxonomy
+  internally through `http://taxonomy:8000`.
+</Note>
+
+## Optional Services
+
+Start and verify the baseline stack before enabling optional services.
+
+<Note>
+  If `.env` already contains a `COMPOSE_PROFILES` line, update that line instead of adding a second one.
+</Note>
+
+### Enable Bundled Qwen/vLLM For AI
+
+The Docker stack can optionally run Qwen through vLLM as an OpenAI-compatible `/v1` endpoint. Baseline
+installs do not start vLLM and can still use Google Vertex, Azure, AWS Bedrock, or another OpenAI-compatible
+endpoint.
+
+The bundled Qwen/vLLM service requires a GPU-capable Docker host with the NVIDIA Container Toolkit installed.
+Model files are stored in the `qwen-model-cache` Docker volume. Startup can take several minutes while vLLM
+downloads and loads the model.
+
+To use the bundled Qwen runtime, add these values to `.env`:
+
+```bash
+cat <<EOF >> .env
+COMPOSE_PROFILES=qwen
+AI_PROVIDER=openai-compatible
+AI_MODEL=qwen3-14b-awq
+AI_OPENAI_COMPATIBLE_BASE_URL=http://vllm:8000/v1
+AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
+AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
+EOF
+```
+
+Then start the stack with the profile and check vLLM:
+
+```bash
+docker compose --profile qwen up -d
+docker compose --profile qwen ps
+docker compose logs --tail=100 vllm formbricks
+curl -fsS http://127.0.0.1:8000/health
+```
+
+The vLLM endpoint is available inside the Compose network at `http://vllm:8000/v1` and is bound to
+`127.0.0.1:8000` by default for local checks.
+
+If you run your own Qwen/vLLM service, do not enable the `qwen` profile. Set `AI_PROVIDER`, `AI_MODEL`, and
+`AI_OPENAI_COMPATIBLE_BASE_URL` to your external endpoint instead.
+
+### Enable AI Taxonomy Beta
+
+The standalone AI taxonomy service is included as an opt-in Docker Compose profile. Baseline installs do not
+start taxonomy and do not require taxonomy or LLM secrets.
+
+To enable taxonomy with the bundled Qwen runtime, add these values to `.env`:
+
+```bash
+cat <<EOF >> .env
+COMPOSE_PROFILES=qwen,taxonomy
+TAXONOMY_SERVICE_URL=http://taxonomy:8000
+TAXONOMY_SERVICE_TOKEN=$(openssl rand -hex 32)
+HUB_INTERNAL_API_TOKEN=$(openssl rand -hex 32)
+TAXONOMY_IMAGE_REF=:v0.1.0
+TAXONOMY_LLM_PROVIDER=openai-compatible
+TAXONOMY_LLM_MODEL=qwen3-14b-awq
+TAXONOMY_LLM_BASE_URL=http://vllm:8000/v1
+TAXONOMY_LLM_API_KEY=not-used
+EOF
+```
+
+Replace `:v0.1.0` with the current released `ghcr.io/formbricks/taxonomy` image tag for your Formbricks
+version. Production installs should pin a release tag instead of relying on `:latest`.
+
+If you run your own OpenAI-compatible endpoint, use `COMPOSE_PROFILES=taxonomy` instead and point
+`TAXONOMY_LLM_BASE_URL` at that `/v1` endpoint. The selected model must reliably return strict JSON because
+taxonomy generation validates an exact 5-level tree.
+
+To use Amazon Bedrock instead of an OpenAI-compatible endpoint, replace the taxonomy LLM values with:
+
+```bash
+TAXONOMY_LLM_PROVIDER=bedrock
+TAXONOMY_LLM_MODEL=eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+AWS_REGION=eu-north-1
+AWS_BEARER_TOKEN_BEDROCK=<bedrock-api-key>
+```
+
+To use Gemini on Vertex AI instead, replace the taxonomy LLM values with:
+
+```bash
+TAXONOMY_LLM_PROVIDER=vertex-gemini
+TAXONOMY_LLM_MODEL=gemini-2.5-flash
+TAXONOMY_VERTEX_PROJECT=<google-cloud-project>
+TAXONOMY_VERTEX_LOCATION=<vertex-location>
+TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON=<service-account-json>
+```
+
+Start the stack after updating `.env`. Compose reads `COMPOSE_PROFILES` from `.env`, so the same command works
+for `taxonomy` and `qwen,taxonomy` setups:
+
+```bash
+docker compose up -d
+docker compose ps
+docker compose logs --tail=100 taxonomy hub
+```
+
+If you enabled the bundled Qwen profile, also check vLLM:
+
+```bash
+docker compose logs --tail=100 vllm
+```
+
+Run the authenticated preflight after startup to verify Hub internal auth and LLM reachability:
+
+```bash
+docker compose --profile taxonomy exec -T taxonomy python - <<'PY'
+import os
+import urllib.request
+
+request = urllib.request.Request(
+    "http://127.0.0.1:8000/v1/preflight",
+    headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]},
+)
+print(urllib.request.urlopen(request, timeout=10).read().decode())
+PY
+```
+
+This command runs inside the taxonomy container, so `127.0.0.1:8000` refers to the taxonomy service itself.
+The preflight endpoint then checks Hub internal auth and LLM reachability from taxonomy.
+
+The taxonomy service remains internal to the compose network by default. For production workloads,
+`TAXONOMY_MAX_RECORDS` defaults to `50000`; override it only as an advanced safety limit after sizing CPU,
+memory, and LLM capacity.
+
+<Info>
+  The taxonomy service is internal to the Docker network. Formbricks Web still calls Hub with
+  <code>HUB_API_KEY</code>; Hub calls taxonomy with <code>TAXONOMY_SERVICE_TOKEN</code>; taxonomy calls Hub
+  internal APIs with <code>HUB_INTERNAL_API_TOKEN</code>.
+</Info>
+
+<Info>
+  The one-click installer does not prompt for AI taxonomy settings. One-click users can enable the beta later
+  by editing `./formbricks/.env`, adding the taxonomy variables above, ensuring `COMPOSE_PROFILES=taxonomy` is
+  set, and restarting with `docker compose up -d`.
+</Info>
+
+<Info>
+  If you use the one-click Traefik setup, FeedbackRecords are available on the Formbricks origin at
+  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Custom Docker reverse proxies need equivalent wiring:
+  run gateway auth against the Formbricks app, rewrite `/api/v3/feedbackRecords` to Hub's
+  `/v1/feedback-records`, and inject `Authorization: Bearer <HUB_API_KEY>` only on the Hub-bound hop.
+</Info>
 
 ## Update
 
-Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.
+See our [migration guide](/self-hosting/advanced/migration) for version-specific steps to update Formbricks.
+
+<Info>
+  For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
+  Pulling images alone is not enough if your stack does not yet include Hub (`HUB_API_KEY`), Cube (`cube/`
+  config files plus `CUBEJS_API_SECRET`), or the new edge rate-limiting setup.
+</Info>
 
 1. Pull the latest Formbricks image
 
@@ -117,11 +309,11 @@ Please take a look at our [migration guide](/self-hosting/advanced/migration) fo
    docker compose up -d
    ```
 
-## Optional: Adding RustFS for File Storage
+## Optional: Add RustFS for File Storage
 
-RustFS provides S3-compatible object storage for file uploads in Formbricks. If you want to enable features
-like image uploads, survey file uploads, or custom logos, you can run RustFS alongside Formbricks while
-keeping the existing `S3_*` environment variables.
+RustFS provides S3-compatible object storage for file uploads in Formbricks. It is not required for the
+baseline Docker setup. Add it only when you want features like image uploads, survey file uploads, or custom
+logos.
 
 <Note>
   For a broader overview of file storage options and required environment variables, see our [File Uploads
@@ -142,10 +334,15 @@ keeping the existing `S3_*` environment variables.
   object storage or run a dedicated RustFS deployment separately.
 </Warning>
 
-### Quick Start: Using docker-compose.dev.yml
+### Quick Start: Repository Development Stack
 
-The fastest way to test file uploads locally is to use the included `docker-compose.dev.yml`, which already
-starts RustFS and auto-creates the `formbricks` bucket.
+If you cloned the Formbricks repository, the fastest way to test file uploads locally is to use the included
+`docker-compose.dev.yml`, which already starts RustFS and auto-creates the `formbricks` bucket.
+
+<Note>
+  This development compose file is not downloaded by the manual production quickstart above. If you only
+  downloaded `docker-compose.yml`, use the manual RustFS setup below or the one-click production setup.
+</Note>
 
 1. **Start the local stack**
 
@@ -155,8 +352,8 @@ starts RustFS and auto-creates the `formbricks` bucket.
    docker compose -f docker-compose.dev.yml up -d
    ```
 
-   This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, and a one-time bucket
-   bootstrap job.
+   This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, a one-time bucket
+   bootstrap job, Formbricks Hub, and a local Cube instance for analytics testing.
 
 2. **Access the RustFS console**
 
@@ -218,6 +415,9 @@ services:
       RUSTFS_ADDRESS: ":9000"
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: ":9001"
+      # CORS for browser uploads: set to your Formbricks origin(s), comma-separated.
+      # Unset = allow all origins; a value is treated as an allow-list. See the File Uploads guide.
+      RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.yourdomain.com"
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -304,6 +504,15 @@ S3_ENDPOINT_URL="http://rustfs:9000"
 S3_FORCE_PATH_STYLE="1"
 ```
 
+Start the stack:
+
+```bash
+docker compose up -d
+```
+
+The bucket and service account are created automatically by the `rustfs-init` job defined above, so no manual
+RustFS console step is required.
+
 <Note>
   Restrict the `.env` file to `0600` and do not commit it to source control. For production, prefer the
   [one-click setup script](/self-hosting/setup/one-click), which creates a separate least-privilege service
@@ -354,54 +563,39 @@ adds the reverse proxy wiring and bootstrap automation needed for long-lived dep
 
 ## Debug
 
-If you encounter any issues, you can check the logs of the container with this command:
+If startup fails, first check the resolved configuration and container state:
 
 ```bash
-docker compose logs -f
+docker compose config >/dev/null
+docker compose ps -a
 ```
 
-In an ideal case, you should see this:
+Then inspect the services that commonly explain startup issues:
 
 ```bash
-[+] Running 9/16
-⠹ formbricks 15 layers [⣿⣤⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀] 29.78MB/47.76MB Pulling                                                           13.3s
-✔ 7264a8db6415 Already exists                                                                                                 0.0s
-⠋ 751194035c36 Downloading    [===============================>                   ]  29.78MB/47.76...                         8.1s
-✔ eff5dce73b38 Download complete                                                                                              1.7s
-✔ c8ce5be43019 Download complete                                                                                              1.2s
-✔ a2f33c630af5 Download complete                                                                                              5.1s
-✔ e3b64e437860 Download complete                                                                                              3.3s
-✔ a6551ac5f976 Download complete                                                                                              4.9s
-✔ 4f4fb700ef54 Download complete                                                                                              6.0s
-✔ 22163889e16b Download complete                                                                                              6.7s
-✔ dc647bb9eb13 Download complete                                                                                              7.8s
-⠋ 49c2ad494720 Waiting                                                                                                        8.1s
-⠋ 5c797a842dcb Waiting                                                                                                        8.1s
-⠋ 1f231213db04 Waiting                                                                                                        8.1s
-⠋ e407294bdcda Waiting                                                                                                        8.1s
-⠋ 6fd8358dca47 Pulling fs layer                                                                                               8.1s
-
-[+] Running 2/2
-✔ Container formbricks-quickstart-postgres-1    Created                                                                       0.0s
-✔ Container formbricks-quickstart-formbricks-1  Created                                                                       0.0s
+docker compose logs --tail=200 formbricks-migrate hub-migrate formbricks hub cube
+docker compose logs --tail=200 postgres redis
 ```
 
-And at the tail of the output, you should see this:
+Common checks:
 
-```bash
-formbricks-quickstart-formbricks-1  | All migrations have been successfully applied.
-formbricks-quickstart-formbricks-1  |
-formbricks-quickstart-formbricks-1  | - info Loaded env from /home/nextjs/apps/web/.env
-formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random-string>:3000
-```
-
-You can close the logs again by hitting `CTRL + C`.
+- **Missing or empty secrets**: Confirm `.env` contains `NEXTAUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
+  `HUB_API_KEY`, and `CUBEJS_API_SECRET`.
+- **Migration failures**: Check `formbricks-migrate`, `hub-migrate`, and `postgres` logs. Do not remove Docker
+  volumes on an existing install unless you intend to delete its data.
+- **Cube is unhealthy**: Confirm `cube/cube.js`, `cube/schema/FeedbackRecords.js`, and `CUBEJS_API_SECRET`
+  exist, then inspect `docker compose logs cube`.
+- **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
+  service.
+- **Port conflicts**: Confirm ports `3000`, `6379`, and any optional service ports you enabled are not already
+  in use on the host.
+- **Optional Qwen/vLLM issues**: Check GPU availability, NVIDIA Container Toolkit installation, and
+  `docker compose --profile qwen logs --tail=200 vllm`.
 
 <Note>
-  **Customizing environment variables**
-
-To edit any of the available environment variables, check out our [Configuration](/self-hosting/configuration/environment-variables) section!
-
+  To edit any of the available environment variables, check out our
+  [Configuration](/self-hosting/configuration/environment-variables) section.
 </Note>
 
-If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃
+If you have any questions or require help, reach out on
+[**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions).

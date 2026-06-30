@@ -1,0 +1,418 @@
+{{- if not .Values.hub.enabled }}
+{{- fail "hub.enabled=false is not supported in Formbricks 5; Hub is mandatory." }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "formbricks.hubname" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  {{- if not .Values.hub.autoscaling.enabled }}
+  replicas: {{ .Values.hub.replicas | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: hub
+    spec:
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+      serviceAccountName: {{ include "formbricks.hubMigrationWaitServiceAccountName" . }}
+      automountServiceAccountToken: true
+      {{- end }}
+      initContainers:
+        {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+        - name: wait-for-formbricks-migration
+          image: {{ include "formbricks.deploymentImage" . }}
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          command:
+            - node
+            - -e
+            - |
+              const fs = require("fs");
+              const fsp = fs.promises;
+              const https = require("https");
+              const path = require("path");
+              const { pathToFileURL } = require("url");
+              const { Prisma, PrismaClient } = require("./packages/database/dist/src/prisma.cjs");
+              const { createPrismaPgAdapter } = require("./packages/database/dist/src/prisma-adapter.cjs");
+
+              const parsePositiveInteger = (value, fallback) => {
+                const parsed = Number.parseInt(value || "", 10);
+                return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+              };
+              const maxAttempts = parsePositiveInteger(process.env.FORMBRICKS_MIGRATION_WAIT_MAX_ATTEMPTS, 180);
+              const missingJobMaxAttempts = parsePositiveInteger(
+                process.env.FORMBRICKS_MIGRATION_WAIT_MISSING_JOB_MAX_ATTEMPTS,
+                12
+              );
+              const intervalSeconds = parsePositiveInteger(
+                process.env.FORMBRICKS_MIGRATION_WAIT_INTERVAL_SECONDS,
+                5
+              );
+              const jobName = process.env.FORMBRICKS_MIGRATION_JOB_NAME;
+              const migrationsDir = path.resolve("packages/database/dist/migration");
+              const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
+              const namespace = fs
+                .readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "utf8")
+                .trim();
+              const token = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf8");
+              const ca = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt");
+              const host = process.env.KUBERNETES_SERVICE_HOST;
+              const port = process.env.KUBERNETES_SERVICE_PORT || "443";
+              const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+              const jobPath = `/apis/batch/v1/namespaces/${namespace}/jobs/${jobName}`;
+
+              const fetchJob = () =>
+                new Promise((resolve, reject) => {
+                  const request = https.request(
+                    {
+                      host,
+                      port,
+                      path: jobPath,
+                      method: "GET",
+                      ca,
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    },
+                    (response) => {
+                      let body = "";
+
+                      response.setEncoding("utf8");
+                      response.on("data", (chunk) => {
+                        body += chunk;
+                      });
+                      response.on("end", () => {
+                        if (response.statusCode >= 200 && response.statusCode < 300) {
+                          resolve(JSON.parse(body));
+                          return;
+                        }
+
+                        const error = new Error(`Kubernetes API returned ${response.statusCode}: ${body}`);
+                        error.statusCode = response.statusCode;
+                        reject(error);
+                      });
+                    }
+                  );
+
+                  request.on("error", reject);
+                  request.end();
+                });
+
+              const loadExpectedMigrationMarkers = async () => {
+                const entries = await fsp.readdir(migrationsDir, { withFileTypes: true });
+                const schemaMigrationNames = [];
+                const dataMigrationIds = [];
+
+                const migrationEntries = entries
+                  .filter((dirent) => dirent.isDirectory())
+                  .sort((a, b) => a.name.localeCompare(b.name));
+
+                for (const entry of migrationEntries) {
+                  const migrationPath = path.join(migrationsDir, entry.name);
+                  const files = await fsp.readdir(migrationPath);
+
+                  if (files.includes("migration.sql")) {
+                    schemaMigrationNames.push(entry.name);
+                  }
+
+                  if (files.includes("migration.js")) {
+                    const migrationModule = await import(
+                      pathToFileURL(path.join(migrationPath, "migration.js")).href
+                    );
+
+                    for (const exportedValue of Object.values(migrationModule)) {
+                      if (
+                        exportedValue &&
+                        typeof exportedValue === "object" &&
+                        exportedValue.type === "data" &&
+                        exportedValue.id
+                      ) {
+                        dataMigrationIds.push(exportedValue.id);
+                      }
+                    }
+                  }
+                }
+
+                return { schemaMigrationNames, dataMigrationIds };
+              };
+
+              let expectedMigrationMarkersPromise;
+              const getExpectedMigrationMarkers = () => {
+                if (!expectedMigrationMarkersPromise) {
+                  expectedMigrationMarkersPromise = loadExpectedMigrationMarkers();
+                }
+
+                return expectedMigrationMarkersPromise;
+              };
+
+              const hasFormbricksMigrationSuccessMarkers = async () => {
+                try {
+                  const { schemaMigrationNames, dataMigrationIds } = await getExpectedMigrationMarkers();
+
+                  // apply-migrations.js persists success in these DB tables after Prisma/data migrations complete.
+                  if (schemaMigrationNames.length === 0) {
+                    console.log(
+                      `No schema migrations found in ${migrationsDir}; refusing missing-Job success fallback.`
+                    );
+                    return false;
+                  }
+
+                  const appliedSchemaMigrations = await prisma.$queryRaw`
+                    SELECT migration_name
+                    FROM _prisma_migrations
+                    WHERE finished_at IS NOT NULL
+                      AND rolled_back_at IS NULL
+                      AND migration_name IN (${Prisma.join(schemaMigrationNames)})
+                  `;
+                  const appliedSchemaMigrationNames = new Set(
+                    appliedSchemaMigrations.map((migration) => migration.migration_name)
+                  );
+                  const missingSchemaMigrations = schemaMigrationNames.filter(
+                    (migrationName) => !appliedSchemaMigrationNames.has(migrationName)
+                  );
+
+                  if (missingSchemaMigrations.length > 0) {
+                    console.log(
+                      `Prisma migration markers are incomplete; ${missingSchemaMigrations.length} schema migration(s) are missing.`
+                    );
+                    return false;
+                  }
+
+                  if (dataMigrationIds.length === 0) {
+                    return true;
+                  }
+
+                  const appliedDataMigrations = await prisma.$queryRaw`
+                    SELECT id
+                    FROM "DataMigration"
+                    WHERE status = 'applied'
+                      AND id IN (${Prisma.join(dataMigrationIds)})
+                  `;
+                  const appliedDataMigrationIds = new Set(
+                    appliedDataMigrations.map((migration) => migration.id)
+                  );
+                  const missingDataMigrations = dataMigrationIds.filter(
+                    (migrationId) => !appliedDataMigrationIds.has(migrationId)
+                  );
+
+                  if (missingDataMigrations.length > 0) {
+                    console.log(
+                      `Data migration markers are incomplete; ${missingDataMigrations.length} data migration(s) are missing.`
+                    );
+                    return false;
+                  }
+
+                  return true;
+                } catch (error) {
+                  const message = error instanceof Error ? error.message : String(error);
+                  console.log(`Migration success markers are not ready: ${message}`);
+                  return false;
+                }
+              };
+
+              (async () => {
+                let missingJobAttempts = 0;
+
+                for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+                  try {
+                    const job = await fetchJob();
+                    missingJobAttempts = 0;
+                    const conditions = job.status?.conditions || [];
+                    const isComplete = conditions.some(
+                      (condition) => condition.type === "Complete" && condition.status === "True"
+                    );
+                    const isFailed = conditions.some(
+                      (condition) => condition.type === "Failed" && condition.status === "True"
+                    );
+
+                    if (isComplete) {
+                      console.log(`${jobName} completed; starting Hub migrations.`);
+                      return;
+                    }
+
+                    if (isFailed) {
+                      console.error(`${jobName} failed; refusing to start Hub migrations.`);
+                      process.exitCode = 1;
+                      return;
+                    }
+
+                    console.log(`Waiting for ${jobName} to complete (${attempt}/${maxAttempts})...`);
+                  } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    if (error && error.statusCode === 404) {
+                      missingJobAttempts += 1;
+
+                      if (missingJobAttempts >= missingJobMaxAttempts) {
+                        const hasSuccessMarkers = await hasFormbricksMigrationSuccessMarkers();
+
+                        if (hasSuccessMarkers) {
+                          console.log(
+                            `${jobName} was not found after ${missingJobAttempts} consecutive attempts, ` +
+                              "but all Formbricks migration success markers are present; starting Hub migrations."
+                          );
+                          return;
+                        }
+                      }
+
+                      console.log(
+                        `Waiting for ${jobName} to be available (${attempt}/${maxAttempts}; missing ${missingJobAttempts}/${missingJobMaxAttempts}): ${message}`
+                      );
+                    } else {
+                      missingJobAttempts = 0;
+                      console.log(
+                        `Waiting for ${jobName} to be available (${attempt}/${maxAttempts}): ${message}`
+                      );
+                    }
+                  }
+
+                  await sleep(intervalSeconds * 1000);
+                }
+
+                console.error(`Timed out waiting for ${jobName} after ${maxAttempts} attempts.`);
+                process.exitCode = 1;
+              })()
+                .catch((error) => {
+                  console.error(error);
+                  process.exitCode = 1;
+                })
+                .finally(async () => {
+                  await prisma.$disconnect().catch((error) => {
+                    console.error(error);
+                  });
+                });
+          {{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
+          envFrom:
+          {{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+          - secretRef:
+              name: {{ template "formbricks.name" . }}-app-secrets
+          {{- end }}
+          {{- range $value := .Values.deployment.envFrom }}
+          {{- if (eq .type "configmap") }}
+          - configMapRef:
+              {{- if .name }}
+              name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+              {{- else if .nameSuffix }}
+              name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+              {{- else }}
+              name: {{ template "formbricks.name" $ }}
+              {{- end }}
+          {{- end }}
+          {{- if (eq .type "secret") }}
+          - secretRef:
+              {{- if .name }}
+              name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+              {{- else if .nameSuffix }}
+              name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+              {{- else }}
+              name: {{ template "formbricks.name" $ }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          env:
+            {{- range $key, $value := .Values.deployment.env }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            - name: FORMBRICKS_MIGRATION_JOB_NAME
+              value: {{ include "formbricks.migrationJobName" . | quote }}
+            - name: FORMBRICKS_MIGRATION_WAIT_MAX_ATTEMPTS
+              value: {{ .Values.hub.migration.waitForFormbricksMigration.maxAttempts | quote }}
+            - name: FORMBRICKS_MIGRATION_WAIT_MISSING_JOB_MAX_ATTEMPTS
+              value: {{ .Values.hub.migration.waitForFormbricksMigration.missingJobMaxAttempts | quote }}
+            - name: FORMBRICKS_MIGRATION_WAIT_INTERVAL_SECONDS
+              value: {{ .Values.hub.migration.waitForFormbricksMigration.intervalSeconds | quote }}
+          {{- if .Values.migration.resources }}
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        - name: hub-migrate
+          image: {{ include "formbricks.hubImage" . }}
+          imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          command:
+            - sh
+            - -c
+            - |
+              /usr/local/bin/goose -dir /app/migrations postgres "$DATABASE_URL" up && \
+              /usr/local/bin/river migrate-up --database-url "$DATABASE_URL"
+          envFrom:
+            - secretRef:
+                name: {{ include "formbricks.hubSecretName" . }}
+      containers:
+        - name: hub
+          image: {{ include "formbricks.hubImage" . }}
+          imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "formbricks.hubSecretName" . }}
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.hubSecretName" . }}
+                  key: HUB_API_KEY
+            {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
+            {{- include "formbricks.taxonomyHubEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
+            {{- range $key, $value := .Values.hub.env }}
+            {{- if and (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.taxonomy.enabled $.Values.taxonomy.autoConfigureHub (include "formbricks.taxonomyHubEnvManaged" (dict "key" $key)))) }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            {{- end }}
+          {{- if .Values.hub.resources }}
+          resources:
+            {{- toYaml .Values.hub.resources | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10

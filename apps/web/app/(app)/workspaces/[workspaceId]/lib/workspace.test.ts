@@ -1,0 +1,292 @@
+import { describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TMembership } from "@formbricks/types/memberships";
+import { getWorkspacesByUserId, getWritableWorkspacesByUserId } from "./workspace";
+
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    workspace: {
+      findMany: vi.fn(),
+    },
+  },
+}));
+
+describe("Workspace", () => {
+  describe("getUserWorkspaces", () => {
+    const mockAdminMembership: TMembership = {
+      role: "manager",
+      organizationId: "org1",
+      userId: "user1",
+      accepted: true,
+    };
+
+    const mockMemberMembership: TMembership = {
+      role: "member",
+      organizationId: "org1",
+      userId: "user1",
+      accepted: true,
+    };
+
+    test("should return workspaces for admin role", async () => {
+      const mockWorkspaces = [
+        { id: "workspace1", name: "Workspace 1" },
+        { id: "workspace2", name: "Workspace 2" },
+      ];
+
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWorkspacesByUserId("user1", mockAdminMembership);
+
+      expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      expect(result).toEqual(mockWorkspaces);
+    });
+
+    test("should return workspaces for member role with team restrictions", async () => {
+      const mockWorkspaces = [{ id: "workspace1", name: "Workspace 1" }];
+
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWorkspacesByUserId("user1", mockMemberMembership);
+
+      expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+          workspaceTeams: {
+            some: {
+              team: {
+                teamUsers: {
+                  some: {
+                    userId: "user1",
+                  },
+                },
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      expect(result).toEqual(mockWorkspaces);
+    });
+
+    test("should return empty array when no workspaces found", async () => {
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+      const result = await getWorkspacesByUserId("user1", mockAdminMembership);
+
+      expect(result).toEqual([]);
+    });
+
+    test("should throw DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      });
+
+      vi.mocked(prisma.workspace.findMany).mockRejectedValue(prismaError);
+
+      await expect(getWorkspacesByUserId("user1", mockAdminMembership)).rejects.toThrow(
+        new DatabaseError("Database error")
+      );
+    });
+
+    test("should re-throw unknown errors", async () => {
+      const unknownError = new Error("Unknown error");
+      vi.mocked(prisma.workspace.findMany).mockRejectedValue(unknownError);
+
+      await expect(getWorkspacesByUserId("user1", mockAdminMembership)).rejects.toThrow(unknownError);
+    });
+
+    test("should validate inputs correctly", async () => {
+      await expect(getWorkspacesByUserId(123 as any, mockAdminMembership)).rejects.toThrow();
+    });
+
+    test("should validate membership input correctly", async () => {
+      const invalidMembership = {} as TMembership;
+      await expect(getWorkspacesByUserId("user1", invalidMembership)).rejects.toThrow();
+    });
+
+    test("should handle owner role like manager", async () => {
+      const mockOwnerMembership: TMembership = {
+        role: "owner",
+        organizationId: "org1",
+        userId: "user1",
+        accepted: true,
+      };
+
+      const mockWorkspaces = [{ id: "workspace1", name: "Workspace 1" }];
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWorkspacesByUserId("user1", mockOwnerMembership);
+
+      expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      expect(result).toEqual(mockWorkspaces);
+    });
+  });
+
+  describe("getWritableWorkspacesByUserId", () => {
+    const mockOwnerMembership: TMembership = {
+      role: "owner",
+      organizationId: "org1",
+      userId: "user1",
+      accepted: true,
+    };
+
+    const mockManagerMembership: TMembership = {
+      role: "manager",
+      organizationId: "org1",
+      userId: "user1",
+      accepted: true,
+    };
+
+    const mockMemberMembership: TMembership = {
+      role: "member",
+      organizationId: "org1",
+      userId: "user1",
+      accepted: true,
+    };
+
+    test("should return all workspaces in org for owner role without team filter", async () => {
+      const mockWorkspaces = [
+        { id: "workspace1", name: "Workspace 1" },
+        { id: "workspace2", name: "Workspace 2" },
+      ];
+
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWritableWorkspacesByUserId("user1", mockOwnerMembership);
+
+      expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      expect(result).toEqual(mockWorkspaces);
+    });
+
+    test("should return all workspaces in org for manager role without team filter", async () => {
+      const mockWorkspaces = [{ id: "workspace1", name: "Workspace 1" }];
+
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWritableWorkspacesByUserId("user1", mockManagerMembership);
+
+      expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      expect(result).toEqual(mockWorkspaces);
+    });
+
+    test("should filter to readWrite or manage team workspaces for member role", async () => {
+      const mockWorkspaces = [{ id: "workspace1", name: "Workspace 1" }];
+
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWritableWorkspacesByUserId("user1", mockMemberMembership);
+
+      expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+          workspaceTeams: {
+            some: {
+              permission: { in: ["readWrite", "manage"] },
+              team: {
+                teamUsers: {
+                  some: {
+                    userId: "user1",
+                  },
+                },
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      expect(result).toEqual(mockWorkspaces);
+    });
+
+    test("should include workspaces where member has manage permission", async () => {
+      const mockWorkspaces = [{ id: "workspace-manage", name: "Managed Workspace" }];
+
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWritableWorkspacesByUserId("user1", mockMemberMembership);
+
+      const callArgs = vi.mocked(prisma.workspace.findMany).mock.calls.at(-1)?.[0];
+      const permissionFilter = (callArgs?.where as any)?.workspaceTeams?.some?.permission;
+      expect(permissionFilter).toEqual({ in: ["readWrite", "manage"] });
+      expect(permissionFilter.in).toContain("manage");
+      expect(result).toEqual(mockWorkspaces);
+    });
+
+    test("should return empty array when member has no readWrite or manage team access", async () => {
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+      const result = await getWritableWorkspacesByUserId("user1", mockMemberMembership);
+
+      expect(result).toEqual([]);
+    });
+
+    test("should throw DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      });
+
+      vi.mocked(prisma.workspace.findMany).mockRejectedValue(prismaError);
+
+      await expect(getWritableWorkspacesByUserId("user1", mockOwnerMembership)).rejects.toThrow(
+        new DatabaseError("Database error")
+      );
+    });
+
+    test("should re-throw unknown errors", async () => {
+      const unknownError = new Error("Unknown error");
+      vi.mocked(prisma.workspace.findMany).mockRejectedValue(unknownError);
+
+      await expect(getWritableWorkspacesByUserId("user1", mockOwnerMembership)).rejects.toThrow(unknownError);
+    });
+
+    test("should validate inputs correctly", async () => {
+      await expect(getWritableWorkspacesByUserId(123 as any, mockOwnerMembership)).rejects.toThrow();
+    });
+
+    test("should validate membership input correctly", async () => {
+      const invalidMembership = {} as TMembership;
+      await expect(getWritableWorkspacesByUserId("user1", invalidMembership)).rejects.toThrow();
+    });
+  });
+});

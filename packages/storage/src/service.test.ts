@@ -11,16 +11,13 @@ import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-vi.mock("@formbricks/logger", () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
-
 type Paginator<T> = AsyncGenerator<T, undefined, unknown>;
+const mockLogger = vi.hoisted(() => ({
+  debug: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+}));
 
 // Mock AWS SDK modules
 vi.mock("@aws-sdk/client-s3", () => ({
@@ -37,6 +34,10 @@ vi.mock("@aws-sdk/s3-presigned-post", () => ({
 
 vi.mock("@aws-sdk/s3-request-presigner", () => ({
   getSignedUrl: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: mockLogger,
 }));
 
 // Mock client module
@@ -401,6 +402,242 @@ describe("service.ts", () => {
         expect(result.error.code).toBe("file_not_found_error");
       }
     });
+
+    test("warns and still signs when head object fails with a non-404 error", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const transientError = Object.assign(new Error("temporary head failure"), {
+        $metadata: { httpStatusCode: 500 },
+      });
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(transientError),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const mockSignedUrl = "https://example.com/recovered.pdf?signature=abc123";
+      mockGetSignedUrl.mockResolvedValueOnce(mockSignedUrl);
+
+      const { getSignedDownloadUrl } = await import("./service");
+
+      const result = await getSignedDownloadUrl("documents/recovered.pdf");
+
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toBe(mockSignedUrl);
+      }
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        {
+          error: transientError,
+          fileKey: "documents/recovered.pdf",
+        },
+        "HeadObject check failed; proceeding to sign download URL"
+      );
+    });
+  });
+
+  describe("getFileStream", () => {
+    test("returns an s3 client error when the client is unavailable", async () => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => undefined),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/file.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_client_error");
+      }
+    });
+
+    test("returns a credentials error when the bucket name is missing", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+        S3_BUCKET_NAME: undefined,
+      }));
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({
+          send: vi.fn(),
+        })),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/file.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("s3_credentials_error");
+      }
+    });
+
+    test("returns the streamed body and metadata when the file exists", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const stream = new ReadableStream<Uint8Array>();
+      const mockS3Client = {
+        send: vi.fn().mockResolvedValueOnce({
+          Body: {
+            transformToWebStream: vi.fn(() => stream),
+          },
+          ContentLength: 42,
+          ContentType: "application/pdf",
+        }),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/file.pdf");
+
+      expect(mockGetObjectCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Key: "responses/file.pdf",
+      });
+      expect(result.ok).toBe(true);
+
+      if (result.ok) {
+        expect(result.data).toEqual({
+          body: stream,
+          contentLength: 42,
+          contentType: "application/pdf",
+        });
+      }
+    });
+
+    test("returns file not found when the object body is missing", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const mockS3Client = {
+        send: vi.fn().mockResolvedValueOnce({
+          Body: undefined,
+        }),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/file.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+      }
+    });
+
+    test("returns file not found when S3 reports NoSuchKey", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const noSuchKeyError = new Error("missing object");
+      noSuchKeyError.name = "NoSuchKey";
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(noSuchKeyError),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/missing.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+      }
+    });
+
+    test("returns file not found when S3 reports NotFound", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const notFoundError = new Error("not found");
+      notFoundError.name = "NotFound";
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(notFoundError),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/missing.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+      }
+    });
+
+    test("returns file not found when S3 error carries a 404 status code", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const s3Error = Object.assign(new Error("not found"), {
+        $metadata: { httpStatusCode: 404 },
+      });
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(s3Error),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/missing.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+      }
+    });
+
+    test("logs and returns unknown when streaming fails unexpectedly", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const s3Error = new Error("network failure");
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(s3Error),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/error.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("unknown");
+      }
+
+      expect(mockLogger.error).toHaveBeenCalledWith({ error: s3Error }, "Failed to get file stream");
+    });
   });
 
   describe("deleteFile", () => {
@@ -590,6 +827,56 @@ describe("service.ts", () => {
       if (!result.ok) {
         expect(result.error.code).toBe("s3_client_error");
       }
+    });
+
+    test("logs partial batch failures and still resolves successfully", async () => {
+      vi.doMock("./constants", () => ({
+        ...mockConstants,
+      }));
+
+      const mockS3Client = {
+        send: vi.fn().mockResolvedValueOnce({
+          Deleted: [{ Key: "uploads/ok-1.txt" }, { Key: "uploads/ok-2.txt" }],
+          Errors: [{ Key: "uploads/fail.txt", Code: "AccessDenied", Message: "Denied" }],
+        }),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const mockPaginator = {
+        async *[Symbol.asyncIterator]() {
+          yield {
+            Contents: [{ Key: "uploads/ok-1.txt" }, { Key: "uploads/ok-2.txt" }, { Key: "uploads/fail.txt" }],
+          };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>;
+
+      mockPaginateListObjectsV2.mockReturnValueOnce(mockPaginator);
+
+      const { deleteFilesByPrefix } = await import("./service");
+
+      const result = await deleteFilesByPrefix("uploads/");
+
+      expect(result.ok).toBe(true);
+      expect(mockLogger.debug).toHaveBeenCalledWith({ count: 2 }, "Successfully deleted objects in batch");
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        {
+          errors: [
+            {
+              code: "AccessDenied",
+              key: "uploads/fail.txt",
+              message: "Denied",
+            },
+          ],
+        },
+        "Some objects failed to delete"
+      );
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        { totalDeleted: 2, totalErrors: 1 },
+        "Bulk delete completed with some failures"
+      );
     });
 
     test("should delete multiple files with given prefix", async () => {

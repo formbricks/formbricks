@@ -13,12 +13,20 @@ import { Button } from "@/modules/ui/components/button";
 interface SamlButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
+  variant?: "default" | "secondary";
   samlTenant: string;
   samlProduct: string;
   source: "signin" | "signup";
 }
 
-export const SamlButton = ({ returnToUrl, lastUsed, samlTenant, samlProduct, source }: SamlButtonProps) => {
+export const SamlButton = ({
+  returnToUrl,
+  lastUsed,
+  variant = "secondary",
+  samlTenant,
+  samlProduct,
+  source,
+}: Readonly<SamlButtonProps>) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,13 +61,13 @@ export const SamlButton = ({ returnToUrl, lastUsed, samlTenant, samlProduct, sou
     <Button
       type="button"
       onClick={handleLogin}
-      variant="secondary"
-      className="relative w-full justify-center"
+      variant={variant}
+      className="w-full justify-center"
       loading={isLoading}>
       {t("auth.continue_with_saml")}
 
       <LockIcon />
-      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
+      {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
 };

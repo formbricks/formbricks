@@ -1,14 +1,14 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId, getTeamsWhereUserIsAdmin } from "./roles";
+import { getTeamRoleByTeamIdUserId, getTeamsWhereUserIsAdmin, getWorkspacePermissionByUserId } from "./roles";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    projectTeam: { findMany: vi.fn() },
+    workspaceTeam: { findMany: vi.fn() },
     teamUser: { findUnique: vi.fn(), findMany: vi.fn() },
   },
 }));
@@ -17,7 +17,7 @@ vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 
 const mockUserId = "user-1";
-const mockProjectId = "project-1";
+const mockWorkspaceId = "workspace-1";
 const mockTeamId = "team-1";
 const mockOrganizationId = "org-1";
 
@@ -26,39 +26,39 @@ describe("roles lib", () => {
     vi.clearAllMocks();
   });
 
-  describe("getProjectPermissionByUserId", () => {
+  describe("getWorkspacePermissionByUserId", () => {
     test("returns null if no memberships", async () => {
-      vi.mocked(prisma.projectTeam.findMany).mockResolvedValueOnce([]);
-      const result = await getProjectPermissionByUserId(mockUserId, mockProjectId);
+      vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValueOnce([]);
+      const result = await getWorkspacePermissionByUserId(mockUserId, mockWorkspaceId);
       expect(result).toBeNull();
       expect(validateInputs).toHaveBeenCalledWith(
         [mockUserId, expect.anything()],
-        [mockProjectId, expect.anything()]
+        [mockWorkspaceId, expect.anything()]
       );
     });
 
     test("returns 'manage' if any membership has manage", async () => {
-      vi.mocked(prisma.projectTeam.findMany).mockResolvedValueOnce([
+      vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValueOnce([
         { permission: "read" },
         { permission: "manage" },
         { permission: "readWrite" },
       ] as any);
-      const result = await getProjectPermissionByUserId(mockUserId, mockProjectId);
+      const result = await getWorkspacePermissionByUserId(mockUserId, mockWorkspaceId);
       expect(result).toBe("manage");
     });
 
     test("returns 'readWrite' if highest is readWrite", async () => {
-      vi.mocked(prisma.projectTeam.findMany).mockResolvedValueOnce([
+      vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValueOnce([
         { permission: "read" },
         { permission: "readWrite" },
       ] as any);
-      const result = await getProjectPermissionByUserId(mockUserId, mockProjectId);
+      const result = await getWorkspacePermissionByUserId(mockUserId, mockWorkspaceId);
       expect(result).toBe("readWrite");
     });
 
     test("returns 'read' if only read", async () => {
-      vi.mocked(prisma.projectTeam.findMany).mockResolvedValueOnce([{ permission: "read" }] as any);
-      const result = await getProjectPermissionByUserId(mockUserId, mockProjectId);
+      vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValueOnce([{ permission: "read" }] as any);
+      const result = await getWorkspacePermissionByUserId(mockUserId, mockWorkspaceId);
       expect(result).toBe("read");
     });
 
@@ -67,15 +67,17 @@ describe("roles lib", () => {
         code: "P2002",
         clientVersion: "1.0.0",
       });
-      vi.mocked(prisma.projectTeam.findMany).mockRejectedValueOnce(error);
-      await expect(getProjectPermissionByUserId(mockUserId, mockProjectId)).rejects.toThrow(DatabaseError);
+      vi.mocked(prisma.workspaceTeam.findMany).mockRejectedValueOnce(error);
+      await expect(getWorkspacePermissionByUserId(mockUserId, mockWorkspaceId)).rejects.toThrow(
+        DatabaseError
+      );
       expect(logger.error).toHaveBeenCalledWith(error, expect.any(String));
     });
 
     test("throws UnknownError on generic error", async () => {
       const error = new Error("fail");
-      vi.mocked(prisma.projectTeam.findMany).mockRejectedValueOnce(error);
-      await expect(getProjectPermissionByUserId(mockUserId, mockProjectId)).rejects.toThrow(UnknownError);
+      vi.mocked(prisma.workspaceTeam.findMany).mockRejectedValueOnce(error);
+      await expect(getWorkspacePermissionByUserId(mockUserId, mockWorkspaceId)).rejects.toThrow(UnknownError);
     });
   });
 

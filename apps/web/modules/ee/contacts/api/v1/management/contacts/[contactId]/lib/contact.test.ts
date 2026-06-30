@@ -1,6 +1,6 @@
-import { Contact, Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { deleteContact, getContact } from "./contact";
 
@@ -14,12 +14,11 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 const mockContactId = "eegeo7qmz9sn5z85fi76lg8o";
-const mockEnvironmentId = "sv7jqr9qjmayp1hc6xm7rfud";
 const mockContact = {
   id: mockContactId,
-  environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
+  workspaceId: "workspace-1",
 };
 
 describe("contact lib", () => {
@@ -73,18 +72,22 @@ describe("contact lib", () => {
   describe("deleteContact", () => {
     const mockDeletedContact = {
       id: mockContactId,
-      environmentId: mockEnvironmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "workspace-1",
       attributes: [{ attributeKey: { key: "email" }, value: "test@example.com" }],
-    } as unknown as Contact;
+    };
 
     const mockDeletedContactWithUserId = {
       id: mockContactId,
-      environmentId: mockEnvironmentId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "workspace-1",
       attributes: [
         { attributeKey: { key: "email" }, value: "test@example.com" },
         { attributeKey: { key: "userId" }, value: "user123" },
       ],
-    } as unknown as Contact;
+    };
 
     test("should delete contact", async () => {
       vi.mocked(prisma.contact.delete).mockResolvedValue(mockDeletedContact);
@@ -94,7 +97,6 @@ describe("contact lib", () => {
         where: { id: mockContactId },
         select: {
           id: true,
-          environmentId: true,
           attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
         },
       });
@@ -108,7 +110,6 @@ describe("contact lib", () => {
         where: { id: mockContactId },
         select: {
           id: true,
-          environmentId: true,
           attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
         },
       });

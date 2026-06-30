@@ -21,7 +21,6 @@ import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
   activitySummary: TSegmentActivitySummary;
-  environmentId: string;
   setOpen: (open: boolean) => void;
   initialSegment: TSegmentWithSurveyRefs;
   segments: TSegment[];
@@ -31,7 +30,6 @@ interface TSegmentSettingsTabProps {
 
 export function SegmentSettings({
   activitySummary,
-  environmentId,
   initialSegment,
   setOpen,
   contactAttributeKeys,
@@ -71,7 +69,7 @@ export function SegmentSettings({
 
   const handleUpdateSegment = async () => {
     if (!segment.title) {
-      toast.error(t("environments.segments.title_is_required"));
+      toast.error(t("workspace.segments.title_is_required"));
       return;
     }
 
@@ -120,7 +118,7 @@ export function SegmentSettings({
       }
 
       setIsDeletingSegment(false);
-      toast.success(t("environments.segments.segment_deleted_successfully"));
+      toast.success(t("workspace.segments.segment_deleted_successfully"));
       handleResetState();
     } catch (err: any) {
       toast.error(t("common.something_went_wrong_please_try_again"));
@@ -166,7 +164,7 @@ export function SegmentSettings({
                     }));
                   }}
                   disabled={isReadOnly}
-                  placeholder={t("environments.segments.ex_power_users")}
+                  placeholder={t("workspace.segments.ex_power_users")}
                   value={segment.title}
                 />
               </div>
@@ -184,7 +182,7 @@ export function SegmentSettings({
                     }));
                   }}
                   disabled={isReadOnly}
-                  placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
+                  placeholder={t("workspace.segments.ex_fully_activated_recurring_users")}
                   value={segment.description ?? ""}
                 />
               </div>
@@ -196,16 +194,15 @@ export function SegmentSettings({
             <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment.filters.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
-                  <FilterIcon className="h-5 w-5 text-slate-700" />
+                  <FilterIcon className="size-5 text-slate-700" />
                   <h3 className="text-sm font-medium text-slate-700">
-                    {t("environments.segments.add_your_first_filter_to_get_started")}
+                    {t("workspace.segments.add_your_first_filter_to_get_started")}
                   </h3>
                 </div>
               )}
 
               <SegmentEditor
                 contactAttributeKeys={contactAttributeKeys}
-                environmentId={environmentId}
                 group={segment.filters}
                 segment={segment}
                 segments={segments}

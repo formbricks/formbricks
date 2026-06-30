@@ -1,0 +1,677 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import {
+  TIntegrationAirtable,
+  TIntegrationAirtableConfig,
+  TIntegrationAirtableConfigData,
+  TIntegrationAirtableCredential,
+} from "@formbricks/types/integration/airtable";
+import {
+  TIntegrationGoogleSheets,
+  TIntegrationGoogleSheetsConfig,
+  TIntegrationGoogleSheetsConfigData,
+  TIntegrationGoogleSheetsCredential,
+} from "@formbricks/types/integration/google-sheet";
+import {
+  TIntegrationNotion,
+  TIntegrationNotionConfigData,
+  TIntegrationNotionCredential,
+} from "@formbricks/types/integration/notion";
+import {
+  TIntegrationSlack,
+  TIntegrationSlackConfigData,
+  TIntegrationSlackCredential,
+} from "@formbricks/types/integration/slack";
+import { TResponse, TResponseMeta } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { writeData as airtableWriteData } from "@/lib/airtable/service";
+import { writeData as googleSheetWriteData } from "@/lib/googleSheet/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { writeData as writeNotionData } from "@/lib/notion/service";
+import { processResponseData } from "@/lib/responses";
+import { writeDataToSlack } from "@/lib/slack/service";
+import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { parseRecallInfo } from "@/lib/utils/recall";
+import { truncateText } from "@/lib/utils/strings";
+import { handleIntegrations } from "./handle-integrations";
+
+// Mock dependencies
+vi.mock("@/lib/airtable/service");
+vi.mock("@/lib/googleSheet/service");
+vi.mock("@/lib/i18n/utils");
+vi.mock("@/lib/notion/service");
+vi.mock("@/lib/responses");
+vi.mock("@/lib/slack/service");
+vi.mock("@/lib/utils/datetime");
+vi.mock("@/lib/utils/recall");
+vi.mock("@/lib/utils/strings");
+vi.mock("@formbricks/logger");
+
+// Mock data
+const surveyId = "survey1";
+const questionId1 = "q1";
+const questionId2 = "q2";
+const questionId3 = "q3_picture";
+const hiddenFieldId = "hidden1";
+const variableId = "var1";
+type TIntegrationPipelineInput = Parameters<typeof handleIntegrations>[1];
+
+const mockPipelineInput = {
+  workspaceId: "env1",
+  surveyId: surveyId,
+  response: {
+    id: "response1",
+    createdAt: new Date("2024-01-01T12:00:00Z"),
+    updatedAt: new Date("2024-01-01T12:00:00Z"),
+    finished: true,
+    surveyId: surveyId,
+    data: {
+      [questionId1]: "Answer 1",
+      [questionId2]: ["Choice 1", "Choice 2"],
+      [questionId3]: ["picChoice1"],
+      [hiddenFieldId]: "Hidden Value",
+    },
+    meta: {
+      url: "http://example.com",
+      source: "web",
+      userAgent: {
+        browser: "Chrome",
+        os: "Mac OS",
+        device: "Desktop",
+      },
+      country: "USA",
+      action: "Action Name",
+      ipAddress: "203.0.113.7",
+    } as TResponseMeta,
+    contactAttributes: { plan: "pro", email: "person@example.com" },
+    personAttributes: {},
+    singleUseId: null,
+    personId: "person1",
+    tags: [],
+    variables: {
+      [variableId]: "Variable Value",
+    },
+    ttc: {},
+  } as unknown as TResponse,
+} as Parameters<typeof handleIntegrations>[1];
+
+const mockSurvey = {
+  id: surveyId,
+  name: "Test Survey",
+  blocks: [
+    {
+      id: "block1",
+      name: "Block 1",
+      elements: [
+        {
+          id: questionId1,
+          type: TSurveyElementTypeEnum.OpenText,
+          headline: { default: "Question 1 {{recall:q2}}" },
+          required: true,
+          inputType: "text",
+          charLimit: 1000,
+          subheader: { default: "" },
+          placeholder: { default: "" },
+        },
+        {
+          id: questionId2,
+          type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+          headline: { default: "Question 2" },
+          required: true,
+          choices: [
+            { id: "choice1", label: { default: "Choice 1" } },
+            { id: "choice2", label: { default: "Choice 2" } },
+          ],
+          shuffleOption: "none",
+          subheader: { default: "" },
+        },
+        {
+          id: questionId3,
+          type: TSurveyElementTypeEnum.PictureSelection,
+          headline: { default: "Question 3" },
+          required: true,
+          choices: [
+            { id: "picChoice1", imageUrl: "http://image.com/1" },
+            { id: "picChoice2", imageUrl: "http://image.com/2" },
+          ],
+          allowMultiple: false,
+          subheader: { default: "" },
+        },
+      ],
+    },
+  ],
+  hiddenFields: {
+    enabled: true,
+    fieldIds: [hiddenFieldId],
+  },
+  variables: [{ id: variableId, name: "Variable 1" } as unknown as TSurvey["variables"][0]],
+  autoClose: null,
+  triggers: [],
+  status: "inProgress",
+  type: "app",
+  languages: [],
+  styling: {},
+  segment: null,
+  recontactDays: null,
+  autoComplete: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  displayOption: "displayOnce",
+  displayPercentage: null,
+  workspaceId: "env1",
+  singleUse: null,
+  surveyClosedMessage: null,
+  pin: null,
+} as unknown as TSurvey;
+
+const mockAirtableIntegration: TIntegrationAirtable = {
+  id: "int_airtable",
+  type: "airtable",
+  workspaceId: "env1",
+  config: {
+    key: { access_token: "airtable_key" } as TIntegrationAirtableCredential,
+    data: [
+      {
+        surveyId: surveyId,
+        elementIds: [questionId1, questionId2],
+        baseId: "base1",
+        tableId: "table1",
+        createdAt: new Date(),
+        includeHiddenFields: true,
+        includeMetadata: true,
+        includeCreatedAt: true,
+        includeVariables: true,
+      } as TIntegrationAirtableConfigData,
+    ],
+  } as TIntegrationAirtableConfig,
+};
+
+const mockGoogleSheetsIntegration: TIntegrationGoogleSheets = {
+  id: "int_gsheets",
+  type: "googleSheets",
+  workspaceId: "env1",
+  config: {
+    key: { refresh_token: "gsheet_key" } as TIntegrationGoogleSheetsCredential,
+    data: [
+      {
+        surveyId: surveyId,
+        spreadsheetId: "sheet1",
+        spreadsheetName: "Sheet Name",
+        elementIds: [questionId1],
+        elements: "What is Q1?",
+        createdAt: new Date("2024-01-01T00:00:00.000Z"),
+        includeHiddenFields: false,
+        includeMetadata: false,
+        includeCreatedAt: false,
+        includeVariables: false,
+      } as TIntegrationGoogleSheetsConfigData,
+    ],
+  } as TIntegrationGoogleSheetsConfig,
+};
+
+const mockSlackIntegration: TIntegrationSlack = {
+  id: "int_slack",
+  type: "slack",
+  workspaceId: "env1",
+  config: {
+    key: { access_token: "slack_key", app_id: "A1" } as TIntegrationSlackCredential,
+    data: [
+      {
+        surveyId: surveyId,
+        channelId: "channel1",
+        channelName: "Channel 1",
+        elementIds: [questionId1, questionId2, questionId3],
+        elements: "Q1, Q2, Q3",
+        createdAt: new Date(),
+        includeHiddenFields: true,
+        includeMetadata: true,
+        includeCreatedAt: true,
+        includeVariables: true,
+      } as TIntegrationSlackConfigData,
+    ],
+  },
+};
+
+const mockNotionIntegration: TIntegrationNotion = {
+  id: "int_notion",
+  type: "notion",
+  workspaceId: "env1",
+  config: {
+    key: {
+      access_token: "notion_key",
+      workspace_name: "ws",
+      workspace_icon: "",
+      workspace_id: "w1",
+    } as TIntegrationNotionCredential,
+    data: [
+      {
+        surveyId: surveyId,
+        databaseId: "db1",
+        databaseName: "DB 1",
+        mapping: [
+          {
+            element: { id: questionId1, name: "Question 1", type: TSurveyQuestionTypeEnum.OpenText },
+            column: { id: "col1", name: "Column 1", type: "rich_text" },
+          },
+          {
+            element: { id: questionId3, name: "Question 3", type: TSurveyQuestionTypeEnum.PictureSelection },
+            column: { id: "col3", name: "Column 3", type: "url" },
+          },
+          {
+            element: { id: "metadata", name: "Metadata", type: "metadata" },
+            column: { id: "col_meta", name: "Metadata Col", type: "rich_text" },
+          },
+          {
+            element: { id: "createdAt", name: "Created At", type: "createdAt" },
+            column: { id: "col_created", name: "Created Col", type: "date" },
+          },
+        ],
+        createdAt: new Date(),
+      } as TIntegrationNotionConfigData,
+    ],
+  },
+};
+
+describe("handleIntegrations", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    // Refine mock to explicitly handle string inputs
+    vi.mocked(processResponseData).mockImplementation((data) => {
+      if (typeof data === "string") {
+        return data; // Directly return string inputs
+      }
+      // Handle arrays and null/undefined as before
+      return String(Array.isArray(data) ? data.join(", ") : (data ?? ""));
+    });
+    vi.mocked(getLocalizedValue).mockImplementation((value, _) => value?.default || "");
+    vi.mocked(parseRecallInfo).mockImplementation((text, _, __) => text || "");
+    vi.mocked(getFormattedDateTimeString).mockReturnValue("2024-01-01 12:00");
+    vi.mocked(truncateText).mockImplementation((text, limit) => text.slice(0, limit));
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("should call correct handlers for each integration type", async () => {
+    const integrations = [
+      mockAirtableIntegration,
+      mockGoogleSheetsIntegration,
+      mockSlackIntegration,
+      mockNotionIntegration,
+    ];
+    vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+    vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
+    vi.mocked(writeDataToSlack).mockResolvedValue(undefined);
+    vi.mocked(writeNotionData).mockResolvedValue(undefined);
+
+    await handleIntegrations(integrations, mockPipelineInput, mockSurvey);
+
+    expect(airtableWriteData).toHaveBeenCalledTimes(1);
+    expect(googleSheetWriteData).toHaveBeenCalledTimes(1);
+    expect(writeDataToSlack).toHaveBeenCalledTimes(1);
+    expect(writeNotionData).toHaveBeenCalledTimes(1);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  test("should log errors when integration handlers fail", async () => {
+    const integrations = [mockAirtableIntegration, mockSlackIntegration];
+    const airtableError = new Error("Airtable failed");
+    const slackError = new Error("Slack failed");
+    vi.mocked(airtableWriteData).mockRejectedValue(airtableError);
+    vi.mocked(writeDataToSlack).mockRejectedValue(slackError);
+
+    await handleIntegrations(integrations, mockPipelineInput, mockSurvey);
+
+    expect(airtableWriteData).toHaveBeenCalledTimes(1);
+    expect(writeDataToSlack).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(airtableError, "Error in airtable integration");
+    expect(logger.error).toHaveBeenCalledWith(slackError, "Error in slack integration");
+  });
+
+  test("should handle empty integrations array", async () => {
+    await handleIntegrations([], mockPipelineInput, mockSurvey);
+    expect(airtableWriteData).not.toHaveBeenCalled();
+    expect(googleSheetWriteData).not.toHaveBeenCalled();
+    expect(writeDataToSlack).not.toHaveBeenCalled();
+    expect(writeNotionData).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  // Test individual handlers by calling the main function with a single integration
+  describe("Airtable Integration", () => {
+    test("should call airtableWriteData with correct parameters", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      await handleIntegrations([mockAirtableIntegration], mockPipelineInput, mockSurvey);
+
+      expect(airtableWriteData).toHaveBeenCalledTimes(1);
+      // Adjust expectations for metadata and recalled question
+      const expectedMetadataString =
+        "Source: web\nURL: http://example.com\nBrowser: Chrome\nOS: Mac OS\nDevice: Desktop\nCountry: USA\nAction: Action Name\nIP Address: 203.0.113.7";
+      expect(airtableWriteData).toHaveBeenCalledWith(
+        mockAirtableIntegration.config.key,
+        mockAirtableIntegration.config.data[0],
+        [
+          "Answer 1",
+          "Choice 1, Choice 2",
+          "Hidden Value",
+          expectedMetadataString,
+          "Variable Value",
+          "2024-01-01 12:00",
+        ], // responses + hidden + meta + var + created
+        ["Question 1 {{recall:q2}}", "Question 2", hiddenFieldId, "Metadata", "Variable 1", "Created At"] // elements (raw headline for Airtable) + hidden + meta + var + created
+      );
+    });
+
+    test("should not call airtableWriteData if surveyId does not match", async () => {
+      const differentSurveyInput = { ...mockPipelineInput, surveyId: "otherSurvey" };
+      await handleIntegrations([mockAirtableIntegration], differentSurveyInput, mockSurvey);
+
+      expect(airtableWriteData).not.toHaveBeenCalled();
+    });
+
+    test("should return error result on failure", async () => {
+      const error = new Error("Airtable API error");
+      vi.mocked(airtableWriteData).mockRejectedValue(error);
+      await handleIntegrations([mockAirtableIntegration], mockPipelineInput, mockSurvey);
+
+      // Verify error was logged, remove checks on the return value
+      expect(logger.error).toHaveBeenCalledWith(error, "Error in airtable integration");
+    });
+  });
+
+  describe("Google Sheets Integration", () => {
+    test("should call googleSheetWriteData with correct parameters", async () => {
+      vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
+      await handleIntegrations([mockGoogleSheetsIntegration], mockPipelineInput, mockSurvey);
+
+      expect(googleSheetWriteData).toHaveBeenCalledTimes(1);
+      // Check that createdAt is converted to Date object
+      const expectedIntegrationData = structuredClone(mockGoogleSheetsIntegration);
+      expectedIntegrationData.config.data[0].createdAt = new Date(
+        mockGoogleSheetsIntegration.config.data[0].createdAt
+      );
+      expect(googleSheetWriteData).toHaveBeenCalledWith(
+        expectedIntegrationData,
+        mockGoogleSheetsIntegration.config.data[0].spreadsheetId,
+        ["Answer 1"], // responses
+        ["Question 1 {{recall:q2}}"] // elements (raw headline for Google Sheets)
+      );
+    });
+
+    test("should not call googleSheetWriteData if surveyId does not match", async () => {
+      const differentSurveyInput = { ...mockPipelineInput, surveyId: "otherSurvey" };
+      await handleIntegrations([mockGoogleSheetsIntegration], differentSurveyInput, mockSurvey);
+
+      expect(googleSheetWriteData).not.toHaveBeenCalled();
+    });
+
+    test("should return error result on failure", async () => {
+      const error = new Error("Google Sheets API error");
+      vi.mocked(googleSheetWriteData).mockRejectedValue(error);
+      await handleIntegrations([mockGoogleSheetsIntegration], mockPipelineInput, mockSurvey);
+
+      // Verify error was logged, remove checks on the return value
+      expect(logger.error).toHaveBeenCalledWith(error, "Error in google sheets integration");
+    });
+  });
+
+  describe("Slack Integration", () => {
+    test("should not call writeDataToSlack if surveyId does not match", async () => {
+      const differentSurveyInput = { ...mockPipelineInput, surveyId: "otherSurvey" };
+      await handleIntegrations([mockSlackIntegration], differentSurveyInput, mockSurvey);
+
+      expect(writeDataToSlack).not.toHaveBeenCalled();
+    });
+
+    test("should return error result on failure", async () => {
+      const error = new Error("Slack API error");
+      vi.mocked(writeDataToSlack).mockRejectedValue(error);
+      await handleIntegrations([mockSlackIntegration], mockPipelineInput, mockSurvey);
+
+      // Verify error was logged, remove checks on the return value
+      expect(logger.error).toHaveBeenCalledWith(error, "Error in slack integration");
+    });
+  });
+
+  describe("Notion Integration", () => {
+    test("should not call writeNotionData if surveyId does not match", async () => {
+      const differentSurveyInput = { ...mockPipelineInput, surveyId: "otherSurvey" };
+      await handleIntegrations([mockNotionIntegration], differentSurveyInput, mockSurvey);
+
+      expect(writeNotionData).not.toHaveBeenCalled();
+    });
+
+    test("maps picture selection URLs without mutating the shared response payload", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+
+      await handleIntegrations([mockNotionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          "Column 3": {
+            url: "http://image.com/1",
+          },
+        }),
+        mockNotionIntegration.config
+      );
+      expect(pipelineInput.response.data[questionId3]).toEqual(["picChoice1"]);
+    });
+
+    test("coerces non-string Notion text values and avoids invalid multi-url payloads", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
+      pipelineResponseData[questionId1] = 42;
+      pipelineResponseData.objectField = { foo: "bar" };
+      pipelineResponseData.manyUrls = ["https://example.com/a", "https://example.com/b"];
+
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: questionId1, name: "Question 1", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_title", name: "Title", type: "title" },
+        },
+        {
+          element: { id: "objectField", name: "Object Field", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_rich", name: "Rich", type: "rich_text" },
+        },
+        {
+          element: { id: "manyUrls", name: "Many Urls", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_url", name: "Url", type: "url" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          Rich: {
+            rich_text: [
+              {
+                text: {
+                  content: JSON.stringify({ foo: "bar" }),
+                },
+              },
+            ],
+          },
+          Title: {
+            title: [
+              {
+                text: {
+                  content: "42",
+                },
+              },
+            ],
+          },
+          Url: {
+            url: null,
+          },
+        }),
+        notionIntegration.config
+      );
+    });
+
+    test("sanitizes mixed Notion multi-select values and preserves numeric precision", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
+      pipelineResponseData[questionId2] = ["Choice 1", { name: "Choice, 3" }, 42] as unknown as string[];
+      pipelineResponseData.numericField = 3.5;
+
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: questionId2, name: "Question 2", type: TSurveyQuestionTypeEnum.MultipleChoiceMulti },
+          column: { id: "col_multi", name: "Multi", type: "multi_select" },
+        },
+        {
+          element: { id: "numericField", name: "Numeric Field", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_number", name: "Number", type: "number" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          Multi: {
+            multi_select: [{ name: "Choice 1" }, { name: "Choice 3" }],
+          },
+          Number: {
+            number: 3.5,
+          },
+        }),
+        notionIntegration.config
+      );
+    });
+
+    test("should return error result on failure", async () => {
+      const error = new Error("Notion API error");
+      vi.mocked(writeNotionData).mockRejectedValue(error);
+      await handleIntegrations([mockNotionIntegration], mockPipelineInput, mockSurvey);
+
+      // Verify error was logged, remove checks on the return value
+      expect(logger.error).toHaveBeenCalledWith(error, "Error in notion integration");
+    });
+  });
+
+  describe("Person attributes (includeContactAttributes)", () => {
+    test("Airtable: appends person.* columns when includeContactAttributes is true", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      const integration: TIntegrationAirtable = structuredClone(mockAirtableIntegration);
+      integration.config.data[0].includeContactAttributes = true;
+      // Drop hidden/meta/var/created toggles to keep the assertion focused.
+      integration.config.data[0].includeHiddenFields = false;
+      integration.config.data[0].includeMetadata = false;
+      integration.config.data[0].includeVariables = false;
+      integration.config.data[0].includeCreatedAt = false;
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, , responses, elements] = vi.mocked(airtableWriteData).mock.calls[0];
+      expect(elements).toContain("person.plan");
+      expect(elements).toContain("person.email");
+      expect(responses[elements.indexOf("person.plan")]).toBe("pro");
+      expect(responses[elements.indexOf("person.email")]).toBe("person@example.com");
+    });
+
+    test("Google Sheets: omits person.* columns when toggle is off (default)", async () => {
+      vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
+      // mockGoogleSheetsIntegration has includeContactAttributes unset → off.
+      await handleIntegrations([mockGoogleSheetsIntegration], mockPipelineInput, mockSurvey);
+
+      const [, , , elements] = vi.mocked(googleSheetWriteData).mock.calls[0];
+      expect(elements.every((e) => !e.startsWith("person."))).toBe(true);
+    });
+
+    test("Slack: appends person.* columns when toggle is on", async () => {
+      vi.mocked(writeDataToSlack).mockResolvedValue(undefined);
+      const integration: TIntegrationSlack = structuredClone(mockSlackIntegration);
+      integration.config.data[0].includeContactAttributes = true;
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, , responses, elements] = vi.mocked(writeDataToSlack).mock.calls[0];
+      expect(elements).toContain("person.plan");
+      expect(elements).toContain("person.email");
+      expect(responses[elements.indexOf("person.plan")]).toBe("pro");
+    });
+
+    test("Notion: maps person.<key> mapping entries to the matching contact attribute", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const integration: TIntegrationNotion = structuredClone(mockNotionIntegration);
+      integration.config.data[0].mapping.push({
+        element: { id: "person.plan", name: "Person: Plan", type: TSurveyElementTypeEnum.OpenText },
+        column: { id: "col_plan", name: "Plan Col", type: "rich_text" },
+      });
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
+        string,
+        Record<string, any>,
+      ];
+      expect(properties["Plan Col"]).toBeDefined();
+      expect(properties["Plan Col"].rich_text).not.toBeNull();
+    });
+
+    test("emits no person.* columns when contactAttributes is null even if toggle is on", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      const integration: TIntegrationAirtable = structuredClone(mockAirtableIntegration);
+      integration.config.data[0].includeContactAttributes = true;
+      const input = structuredClone(mockPipelineInput) as typeof mockPipelineInput;
+      (input.response as unknown as { contactAttributes: null }).contactAttributes = null;
+
+      await handleIntegrations([integration], input, mockSurvey);
+
+      const [, , , elements] = vi.mocked(airtableWriteData).mock.calls[0];
+      expect(elements.every((e) => !e.startsWith("person."))).toBe(true);
+    });
+
+    test("Notion person.<key> renders null when response has no contactAttributes", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const integration: TIntegrationNotion = structuredClone(mockNotionIntegration);
+      integration.config.data[0].mapping.push({
+        element: { id: "person.plan", name: "Person: Plan", type: TSurveyElementTypeEnum.OpenText },
+        column: { id: "col_plan", name: "Plan Col", type: "rich_text" },
+      });
+      const input = structuredClone(mockPipelineInput) as typeof mockPipelineInput;
+      (input.response as unknown as { contactAttributes: null }).contactAttributes = null;
+
+      await handleIntegrations([integration], input, mockSurvey);
+
+      const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
+        string,
+        Record<string, any>,
+      ];
+      expect(properties["Plan Col"].rich_text).toBeNull();
+    });
+
+    test("Notion: gracefully handles person.<key> when the attribute is missing", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const integration: TIntegrationNotion = structuredClone(mockNotionIntegration);
+      integration.config.data[0].mapping.push({
+        element: {
+          id: "person.does_not_exist",
+          name: "Person: Missing",
+          type: TSurveyElementTypeEnum.OpenText,
+        },
+        column: { id: "col_missing", name: "Missing Col", type: "rich_text" },
+      });
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
+        string,
+        Record<string, any>,
+      ];
+      expect(properties["Missing Col"].rich_text).toBeNull();
+    });
+  });
+});

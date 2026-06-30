@@ -8,21 +8,16 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
+import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 
 interface LinkSurveyPageProps {
   params: Promise<{
     surveyId: string;
   }>;
-  searchParams: Promise<{
-    suId?: string;
-    verify?: string;
-    lang?: string;
-    embed?: string;
-    preview?: string;
-  }>;
+  searchParams: Promise<TLinkSurveySearchParams>;
 }
 
 export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {
@@ -84,6 +79,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   }
 
   const suId = searchParams.suId;
+  const suToken = searchParams.suToken;
 
   // Validate single-use ID early (no I/O, just validation)
   const isSingleUseSurvey = survey.singleUse?.enabled;
@@ -91,18 +87,23 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
+    const validatedSingleUseId = checkAndValidateSingleUseId(
+      suId,
+      isSingleUseSurveyEncrypted,
+      survey.id,
+      suToken
+    );
     if (!validatedSingleUseId) {
-      // Need to fetch project for error page - fetch environmentContext for it
-      const environmentContext = await getEnvironmentContextForLinkSurvey(survey.environmentId);
-      return <SurveyInactive status="link invalid" project={environmentContext.project} />;
+      // Need to fetch workspace for error page - fetch environmentContext for it
+      const environmentContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+      return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
     }
     singleUseId = validatedSingleUseId;
   }
 
   // Stage 2: Parallel fetch of all remaining data
-  const [environmentContext, locale, singleUseResponse] = await Promise.all([
-    getEnvironmentContextForLinkSurvey(survey.environmentId),
+  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+    getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
     // Only fetch single-use response if we have a validated ID
     isSingleUseSurvey && singleUseId
@@ -121,8 +122,9 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     searchParams,
     singleUseId,
     singleUseResponse: singleUseResponse ?? undefined,
+    allowUrlUserIdLookup: true,
     isPreview,
-    environmentContext,
+    workspaceContext,
     locale,
     responseCount,
   });

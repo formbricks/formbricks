@@ -152,7 +152,7 @@ export const SingleResponseCardBody = ({
 
       {response.finished && (
         <div className="mt-4 flex items-center">
-          <CheckCircle2Icon className="h-6 w-6 text-slate-400" />
+          <CheckCircle2Icon className="size-6 text-slate-400" />
           <p className="mx-2 rounded-lg bg-slate-100 px-2 text-sm font-medium text-slate-700">
             {t("common.completed")}
           </p>

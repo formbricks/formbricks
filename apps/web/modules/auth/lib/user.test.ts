@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { mockUser } from "./mock-data";
 import { createUser, getUser, getUserByEmail, updateUser, updateUserLastLoginAt } from "./user";
 
@@ -51,6 +51,41 @@ describe("User Management", () => {
       });
 
       expect(result).toEqual(mockPrismaUser);
+    });
+
+    test("creates a user with an Azure AD enterprise display name", async () => {
+      const enterpriseDisplayName = "Lastname,Firstname (DEPT) COMPANY-CITY";
+      vi.mocked(prisma.user.create).mockResolvedValueOnce({
+        ...mockPrismaUser,
+        name: enterpriseDisplayName,
+      });
+
+      const result = await createUser({
+        email: mockUser.email,
+        name: enterpriseDisplayName,
+        locale: mockUser.locale,
+      });
+
+      expect(result.name).toBe(enterpriseDisplayName);
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: enterpriseDisplayName,
+          }),
+        })
+      );
+    });
+
+    test("rejects display names with newline characters", async () => {
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: "Lastname,Firstname\n(DEPT) COMPANY-CITY",
+          locale: mockUser.locale,
+        })
+      ).rejects.toThrow(ValidationError);
+
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
     test("throws InvalidInputError when email already exists", async () => {

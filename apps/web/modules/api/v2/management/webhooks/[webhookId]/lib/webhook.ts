@@ -1,6 +1,6 @@
-import { Prisma, Webhook } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma, Webhook } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -8,7 +8,45 @@ import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { ZWebhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
-export const getWebhook = async (webhookId: string) => {
+type WebhookWithoutSecret = Omit<Webhook, "secret">;
+
+// Safe by default — the signing secret stays in the database.
+// Use getWebhookWithSecret only for server-side flows that legitimately need to sign payloads.
+export const getWebhook = async (
+  webhookId: string
+): Promise<Result<WebhookWithoutSecret, ApiErrorResponseV2>> => {
+  try {
+    const webhook = await prisma.webhook.findUnique({
+      where: {
+        id: webhookId,
+      },
+      omit: {
+        secret: true,
+      },
+    });
+
+    if (!webhook) {
+      return err({
+        type: "not_found",
+        details: [{ field: "webhook", issue: "not found" }],
+      });
+    }
+
+    return ok(webhook);
+  } catch (error) {
+    return err({
+      type: "internal_server_error",
+      details: [
+        { field: "webhook", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
+  }
+};
+
+// Internal-only — returns the signing secret. Never expose the result through an API response.
+export const getWebhookWithSecret = async (
+  webhookId: string
+): Promise<Result<Webhook, ApiErrorResponseV2>> => {
   try {
     const webhook = await prisma.webhook.findUnique({
       where: {
@@ -37,7 +75,7 @@ export const getWebhook = async (webhookId: string) => {
 export const updateWebhook = async (
   webhookId: string,
   webhookInput: z.infer<typeof ZWebhookUpdateSchema>
-): Promise<Result<Webhook, ApiErrorResponseV2>> => {
+): Promise<Result<WebhookWithoutSecret, ApiErrorResponseV2>> => {
   if (webhookInput.url) {
     try {
       await validateWebhookUrl(webhookInput.url);
@@ -61,6 +99,9 @@ export const updateWebhook = async (
         id: webhookId,
       },
       data: webhookInput,
+      omit: {
+        secret: true,
+      },
     });
 
     return ok(updatedWebhook);
@@ -85,11 +126,16 @@ export const updateWebhook = async (
   }
 };
 
-export const deleteWebhook = async (webhookId: string): Promise<Result<Webhook, ApiErrorResponseV2>> => {
+export const deleteWebhook = async (
+  webhookId: string
+): Promise<Result<WebhookWithoutSecret, ApiErrorResponseV2>> => {
   try {
     const deletedWebhook = await prisma.webhook.delete({
       where: {
         id: webhookId,
+      },
+      omit: {
+        secret: true,
       },
     });
 

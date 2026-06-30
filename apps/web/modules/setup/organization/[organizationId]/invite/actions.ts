@@ -7,6 +7,8 @@ import { ZUserEmail, ZUserName } from "@formbricks/types/user";
 import { INVITE_DISABLED } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";
@@ -37,6 +39,10 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       });
 
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+
+      // Shares the inviteMember namespace so the per-org cap bounds invite-spam across both the
+      // settings and onboarding invite paths combined (abusive orgs sit in this setup flow).
+      await applyRateLimit(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
 
       const invitedUserId = await inviteUser({
         organizationId: parsedInput.organizationId,

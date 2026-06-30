@@ -1,0 +1,158 @@
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { DatabaseError } from "@formbricks/types/errors";
+import { getContact, getContactByUserId } from "./contact";
+
+// Mock prisma
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    contact: {
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+    },
+  },
+}));
+
+// Mock react cache
+vi.mock("react", async () => {
+  const actual = await vi.importActual("react");
+  return {
+    ...actual,
+    cache: vi.fn((fn: Function) => fn), // Mock react's cache to just return the function
+  };
+});
+
+const mockContactId = "test-contact-id";
+const mockWorkspaceId = "test-env-id";
+const mockUserId = "test-user-id";
+
+describe("Contact API Lib", () => {
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  describe("getContact", () => {
+    test("should return contact if found", async () => {
+      const mockContactData = {
+        id: mockContactId,
+        workspaceId: mockWorkspaceId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContactData as any);
+
+      const contact = await getContact(mockContactId);
+
+      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
+        where: { id: mockContactId },
+        select: { id: true },
+      });
+      expect(contact).toEqual(mockContactData);
+    });
+
+    test("should return null if contact not found", async () => {
+      vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
+
+      const contact = await getContact(mockContactId);
+
+      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
+        where: { id: mockContactId },
+        select: { id: true },
+      });
+      expect(contact).toBeNull();
+    });
+
+    test("should throw DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: "P2025",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.contact.findUnique).mockRejectedValue(prismaError);
+
+      await expect(getContact(mockContactId)).rejects.toThrow(DatabaseError);
+      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
+        where: { id: mockContactId },
+        select: { id: true },
+      });
+    });
+  });
+
+  describe("getContactByUserId", () => {
+    test("should return contact with formatted attributes if found", async () => {
+      const mockContactData = {
+        id: mockContactId,
+        workspaceId: mockWorkspaceId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        attributes: [
+          { attributeKey: { key: "userId" }, value: mockUserId },
+          { attributeKey: { key: "email" }, value: "test@example.com" },
+        ],
+      };
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+
+      const contact = await getContactByUserId(mockWorkspaceId, mockUserId);
+
+      expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+        where: {
+          attributes: {
+            some: {
+              attributeKey: {
+                key: "userId",
+                workspaceId: mockWorkspaceId,
+              },
+              value: mockUserId,
+            },
+          },
+        },
+        select: {
+          id: true,
+          attributes: {
+            select: {
+              attributeKey: { select: { key: true } },
+              value: true,
+            },
+          },
+        },
+      });
+      expect(contact).toEqual({
+        id: mockContactId,
+        attributes: {
+          userId: mockUserId,
+          email: "test@example.com",
+        },
+      });
+    });
+
+    test("should return null if contact not found by userId", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+
+      const contact = await getContactByUserId(mockWorkspaceId, mockUserId);
+
+      expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+        where: {
+          attributes: {
+            some: {
+              attributeKey: {
+                key: "userId",
+                workspaceId: mockWorkspaceId,
+              },
+              value: mockUserId,
+            },
+          },
+        },
+        select: {
+          id: true,
+          attributes: {
+            select: {
+              attributeKey: { select: { key: true } },
+              value: true,
+            },
+          },
+        },
+      });
+      expect(contact).toBeNull();
+    });
+  });
+});

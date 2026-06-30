@@ -1,12 +1,12 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/prisma";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
 
-export const getResponsesQuery = (environmentIds: string[], params?: TGetResponsesFilter) => {
+export const getResponsesQuery = (workspaceIds: string[], params?: TGetResponsesFilter) => {
   let query: Prisma.ResponseFindManyArgs = {
     where: {
       survey: {
-        environmentId: { in: environmentIds },
+        workspaceId: { in: workspaceIds },
       },
     },
   };

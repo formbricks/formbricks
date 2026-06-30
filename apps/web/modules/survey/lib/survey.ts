@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -13,7 +13,7 @@ export const selectSurvey = {
   updatedAt: true,
   name: true,
   type: true,
-  environmentId: true,
+  workspaceId: true,
   createdBy: true,
   status: true,
   welcomeCard: true,
@@ -29,11 +29,13 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   autoComplete: true,
+  publishOn: true,
+  closeOn: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isCaptureIpEnabled: true,
   redirectUrl: true,
-  projectOverwrites: true,
+  workspaceOverwrites: true,
   styling: true,
   surveyClosedMessage: true,
   singleUse: true,
@@ -56,7 +58,7 @@ export const selectSurvey = {
           createdAt: true,
           updatedAt: true,
           code: true,
-          projectId: true,
+          workspaceId: true,
           alias: true,
         },
       },
@@ -69,7 +71,7 @@ export const selectSurvey = {
           id: true,
           createdAt: true,
           updatedAt: true,
-          environmentId: true,
+          workspaceId: true,
           name: true,
           description: true,
           type: true,
@@ -84,7 +86,7 @@ export const selectSurvey = {
       id: true,
       createdAt: true,
       updatedAt: true,
-      environmentId: true,
+      workspaceId: true,
       title: true,
       description: true,
       isPrivate: true,

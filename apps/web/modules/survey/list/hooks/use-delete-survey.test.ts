@@ -99,12 +99,7 @@ describe("useDeleteSurvey", () => {
       0
     );
 
-    resolveFetch?.(
-      new Response(JSON.stringify({ data: { id: "survey_1" } }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
-    );
+    resolveFetch?.(new Response(null, { status: 204 }));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: surveyKeys.lists() });

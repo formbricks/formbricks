@@ -1,8 +1,9 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -22,8 +23,8 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteFile } from "@/modules/storage/service";
-import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { parseStorageFileUrl, resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
 import { deleteDisplay } from "../display/service";
@@ -31,7 +32,6 @@ import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
 import {
-  buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
   getResponseContactAttributes,
@@ -40,6 +40,7 @@ import {
   getResponsesFileName,
   getResponsesJson,
 } from "./utils";
+import { buildWhereClause } from "./where-clause";
 
 const RESPONSES_PER_PAGE = 10;
 
@@ -74,7 +75,7 @@ export const responseSelection = {
           createdAt: true,
           updatedAt: true,
           name: true,
-          environmentId: true,
+          workspaceId: true,
         },
       },
     },
@@ -92,6 +93,14 @@ export const getResponseContact = (
       ?.value as string,
   };
 };
+
+const mapResponsePrismaToResponse = (
+  responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
+): TResponse => ({
+  ...responsePrisma,
+  contact: getResponseContact(responsePrisma),
+  tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+});
 
 export const getResponsesByContactId = reactCache(
   async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
@@ -172,13 +181,7 @@ export const getResponseBySingleUseId = reactCache(
         return null;
       }
 
-      const response: TResponse = {
-        ...responsePrisma,
-        contact: getResponseContact(responsePrisma),
-        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-      };
-
-      return response;
+      return mapResponsePrismaToResponse(responsePrisma);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -204,13 +207,7 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
       return null;
     }
 
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: getResponseContact(responsePrisma),
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
+    return mapResponsePrismaToResponse(responsePrisma);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -219,6 +216,31 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
     throw error;
   }
 });
+
+export const getResponseSnapshotForPipeline = async (responseId: string): Promise<TResponse | null> => {
+  validateInputs([responseId, ZId]);
+
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: responseSelection,
+    });
+
+    if (!responsePrisma) {
+      return null;
+    }
+
+    return mapResponsePrismaToResponse(responsePrisma);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
 
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
@@ -316,17 +338,15 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TResponseWithQuotas[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          const { quotaLinks, ...response } = responsePrisma;
-          return {
-            ...response,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-            quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
-          };
-        })
-      );
+      const transformedResponses: TResponseWithQuotas[] = responses.map((responsePrisma) => {
+        const { quotaLinks, ...response } = responsePrisma;
+        return {
+          ...response,
+          contact: getResponseContact(responsePrisma),
+          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+          quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
+        };
+      });
 
       return transformedResponses;
     } catch (error) {
@@ -376,7 +396,7 @@ export const getResponseDownloadFile = async (
       responses
     );
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(survey.workspaceId);
     if (!organizationId) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -402,7 +422,7 @@ export const getResponseDownloadFile = async (
       ...elements.flat(),
       ...variables,
       ...hiddenFields,
-      ...userAttributes,
+      ...userAttributes.map((attribute) => `person.${attribute}`),
     ];
 
     if (survey.isVerifyEmailEnabled) {
@@ -441,15 +461,15 @@ export const getResponseDownloadFile = async (
   }
 };
 
-export const getResponsesByEnvironmentId = reactCache(
-  async (environmentId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
-    validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+export const getResponsesByWorkspaceId = reactCache(
+  async (workspaceId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
+    validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const responses = await prisma.response.findMany({
         where: {
           survey: {
-            environmentId,
+            workspaceId,
           },
         },
         select: responseSelection,
@@ -548,6 +568,13 @@ export const updateResponse = async (
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (
+        error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+      ) {
+        throw new ResourceNotFoundError("Response", responseId);
+      }
+
       throw new DatabaseError(error.message);
     }
 
@@ -568,14 +595,18 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
 
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
-      const { pathname } = new URL(fileUrl);
-      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const storageFile = parseStorageFileUrl(fileUrl);
 
-      if (!environmentId || !accessType || !fileName) {
-        throw new Error(`Invalid file path: ${pathname}`);
+      if (!storageFile) {
+        throw new Error(`Invalid storage file URL: ${fileUrl}`);
       }
 
-      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+      return deleteFile(
+        storageFile.storageId,
+        storageFile.accessType,
+        storageFile.fileName,
+        survey.workspaceId
+      );
     } catch (error) {
       logger.error(error, `Failed to delete file ${fileUrl}`);
     }

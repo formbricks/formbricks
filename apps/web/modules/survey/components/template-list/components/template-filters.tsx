@@ -38,14 +38,14 @@ export const TemplateFilters = ({
               className={cn(
                 selectedFilter[index] === null
                   ? "bg-slate-800 font-semibold text-white"
-                  : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
-                "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
+                  : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:ring-0 focus:outline-hidden",
+                "rounded-sm border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
               )}>
               {index === 0
-                ? t("environments.surveys.templates.all_channels")
+                ? t("workspace.surveys.templates.all_channels")
                 : index === 1
-                  ? t("environments.surveys.templates.all_industries")
-                  : t("environments.surveys.templates.all_roles")}
+                  ? t("workspace.surveys.templates.all_industries")
+                  : t("workspace.surveys.templates.all_roles")}
             </button>
             {filters.map((filter) => (
               <button
@@ -56,8 +56,8 @@ export const TemplateFilters = ({
                 className={cn(
                   selectedFilter[index] === filter.value
                     ? "bg-slate-800 font-semibold text-white"
-                    : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
-                  "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
+                    : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:ring-0 focus:outline-hidden",
+                  "rounded-sm border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
                 )}>
                 {filter.label}
               </button>

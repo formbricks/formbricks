@@ -5,10 +5,10 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
+import { type TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import {
-  TApiKeyUpdateInput,
-  TApiKeyWithEnvironmentPermission,
-  TOrganizationProject,
+  type TApiKeyUpdateInput,
+  type TApiKeyWithEnvironmentPermission,
   ZApiKeyUpdateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -30,7 +30,7 @@ interface ViewPermissionModalProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
   apiKey: TApiKeyWithEnvironmentPermission;
-  projects: TOrganizationProject[];
+  workspaces: TOrganizationWorkspace[];
   isUpdating: boolean;
 }
 
@@ -39,7 +39,7 @@ export const ViewPermissionModal = ({
   setOpen,
   onSubmit,
   apiKey,
-  projects,
+  workspaces,
   isUpdating,
 }: ViewPermissionModalProps) => {
   const { register, getValues, handleSubmit, reset, watch } = useForm<TApiKeyUpdateInput>({
@@ -66,15 +66,11 @@ export const ViewPermissionModal = ({
 
   const { t } = useTranslation();
   const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
+  const workspacePermissions = apiKey.apiKeyWorkspaces ?? [];
 
-  const getProjectName = (environmentId: string) => {
-    return projects.find((project) => project.environments.find((env) => env.id === environmentId))?.name;
-  };
-
-  const getEnvironmentName = (environmentId: string) => {
-    return projects
-      .find((project) => project.environments.find((env) => env.id === environmentId))
-      ?.environments.find((env) => env.id === environmentId)?.type;
+  const getWorkspaceName = (workspaceId: string) => {
+    const name = workspaces.find((workspace) => workspace.id === workspaceId)?.name;
+    return name ?? `${t("workspace.api_keys.unknown_workspace")} (${workspaceId})`;
   };
 
   const updateApiKey = async () => {
@@ -94,7 +90,7 @@ export const ViewPermissionModal = ({
           <form onSubmit={handleSubmit(updateApiKey)}>
             <div className="w-full space-y-6">
               <div className="space-y-2">
-                <Label>{t("environments.workspace.api_keys.api_key_label")}</Label>
+                <Label>{t("workspace.api_keys.api_key_label")}</Label>
                 <Input
                   placeholder="e.g. GitHub, PostHog, Slack"
                   data-testid="api-key-label"
@@ -102,43 +98,26 @@ export const ViewPermissionModal = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t("environments.workspace.api_keys.permissions")}</Label>
-                {apiKey.apiKeyEnvironments?.length === 0 && (
+                <Label>{t("workspace.api_keys.permissions")}</Label>
+                {workspacePermissions.length === 0 && (
                   <div className="text-center text-sm">
-                    {t("environments.workspace.api_keys.no_env_permissions_found")}
+                    {t("workspace.api_keys.no_workspace_permissions_found")}
                   </div>
                 )}
                 <div className="space-y-2">
-                  {apiKey.apiKeyEnvironments?.map((permission) => {
+                  {workspacePermissions.map((permission) => {
                     return (
-                      <div key={permission.environmentId} className="flex items-center gap-2">
-                        {/* Project dropdown */}
-                        <div className="w-1/3">
+                      <div key={permission.workspaceId} className="flex items-center gap-2">
+                        {/* Workspace dropdown */}
+                        <div className="w-1/2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left">
-                                    {getProjectName(permission.environmentId)}
-                                  </span>
-                                </span>
-                              </button>
-                            </DropdownMenuTrigger>
-                          </DropdownMenu>
-                        </div>
-
-                        {/* Environment dropdown */}
-                        <div className="w-1/3">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
-                                <span className="flex w-4/5 flex-1">
-                                  <span className="w-full truncate text-left capitalize">
-                                    {getEnvironmentName(permission.environmentId)}
+                                    {getWorkspaceName(permission.workspaceId)}
                                   </span>
                                 </span>
                               </button>
@@ -147,12 +126,12 @@ export const ViewPermissionModal = ({
                         </div>
 
                         {/* Permission level dropdown */}
-                        <div className="w-1/3">
+                        <div className="w-1/2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left capitalize">
                                     {permission.permission}
@@ -168,7 +147,7 @@ export const ViewPermissionModal = ({
                 </div>
               </div>
               <div className="space-y-4">
-                <Label>{t("environments.workspace.api_keys.organization_access")}</Label>
+                <Label>{t("workspace.api_keys.organization_access")}</Label>
                 {Object.keys(organizationAccess).map((key) => (
                   <div key={key} className="mb-2 flex items-center gap-6">
                     <div className="flex items-center gap-2">

@@ -28,7 +28,6 @@ import { SegmentFilter } from "./segment-filter";
 
 interface TSegmentEditorProps {
   group: TBaseFilters;
-  environmentId: string;
   segment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
@@ -38,7 +37,6 @@ interface TSegmentEditorProps {
 
 export function SegmentEditor({
   group,
-  environmentId,
   setSegment,
   segment,
   contactAttributeKeys,
@@ -125,7 +123,6 @@ export function SegmentEditor({
             <SegmentFilter
               contactAttributeKeys={contactAttributeKeys}
               connector={connector}
-              environmentId={environmentId}
               handleAddFilterBelow={handleAddFilterBelow}
               key={groupId}
               onCreateGroup={(filterId: string) => {
@@ -150,6 +147,7 @@ export function SegmentEditor({
             <div className="flex items-start gap-2">
               <div className="w-auto" key={connector}>
                 <button
+                  type="button"
                   className={cn(
                     Boolean(connector) && "cursor-pointer underline",
                     "text-sm",
@@ -159,14 +157,13 @@ export function SegmentEditor({
                     if (viewOnly) return;
                     onConnectorChange(groupId, connector);
                   }}>
-                  {connector ?? t("environments.segments.where")}
+                  {connector ?? t("workspace.segments.where")}
                 </button>
               </div>
 
               <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
                 <SegmentEditor
                   contactAttributeKeys={contactAttributeKeys}
-                  environmentId={environmentId}
                   group={resource}
                   segment={segment}
                   segments={segments}
@@ -207,7 +204,7 @@ export function SegmentEditor({
               <div className="flex items-center gap-2 p-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger data-testid="segment-editor-group-menu-trigger" disabled={viewOnly}>
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="size-4" />
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent>
@@ -216,21 +213,21 @@ export function SegmentEditor({
                         setAddFilterModalOpenedFromBelow(true);
                         setAddFilterModalOpen(true);
                       }}>
-                      {t("environments.segments.add_filter_below")}
+                      {t("workspace.segments.add_filter_below")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       onClick={() => {
                         handleCreateGroup(groupId);
                       }}>
-                      {t("environments.segments.create_group")}
+                      {t("workspace.segments.create_group")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       onClick={() => {
                         handleMoveResource(groupId, "up");
                       }}
-                      icon={<ArrowUpIcon className="h-4 w-4" />}>
+                      icon={<ArrowUpIcon className="size-4" />}>
                       {t("common.move_up")}
                     </DropdownMenuItem>
 
@@ -239,7 +236,7 @@ export function SegmentEditor({
                         if (viewOnly) return;
                         handleMoveResource(groupId, "down");
                       }}
-                      icon={<ArrowDownIcon className="h-4 w-4" />}>
+                      icon={<ArrowDownIcon className="size-4" />}>
                       {t("common.move_down")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>

@@ -1,14 +1,15 @@
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
+import { getOnboardingRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
+import ClientWorkspaceRedirect from "@/app/ClientWorkspaceRedirect";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUserProjectEnvironmentsByOrganizationIds } from "@/lib/project/service";
 import { getUser } from "@/lib/user/service";
+import { getUserWorkspaces } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 
@@ -35,28 +36,14 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  const projectsByOrg = await getUserProjectEnvironmentsByOrganizationIds(
-    userOrganizations.map((org) => org.id),
-    user.id
-  );
-
-  // Flatten all environments from all projects across all organizations
-  const allEnvironments = projectsByOrg.flatMap((project) => project.environments);
-
-  // Find first production environment and collect all other environment IDs in one pass
-  const { firstProductionEnvironmentId, otherEnvironmentIds } = allEnvironments.reduce(
-    (acc, env) => {
-      if (env.type === "production" && !acc.firstProductionEnvironmentId) {
-        acc.firstProductionEnvironmentId = env.id;
-      } else {
-        acc.otherEnvironmentIds.add(env.id);
-      }
-      return acc;
-    },
-    { firstProductionEnvironmentId: null as string | null, otherEnvironmentIds: new Set<string>() }
-  );
-
-  const userEnvironments = [...otherEnvironmentIds];
+  // Collect workspace IDs across all organizations
+  const allWorkspaceIds: string[] = [];
+  for (const org of userOrganizations) {
+    const workspaces = await getUserWorkspaces(user.id, org.id);
+    for (const ws of workspaces) {
+      allWorkspaceIds.push(ws.id);
+    }
+  }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session.user.id,
@@ -65,21 +52,23 @@ const Page = async () => {
 
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
 
-  if (!firstProductionEnvironmentId) {
-    if (isOwner || isManager) {
-      if (IS_FORMBRICKS_CLOUD) {
-        return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/plan`);
-      }
-      return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/mode`);
-    } else {
-      return redirect(`/organizations/${userOrganizations[0].id}/landing`);
+  if (isOwner || isManager) {
+    const onboardingWorkspace = await getOnboardingWorkspace(session.user.id, userOrganizations[0].id);
+    const onboardingRedirectPath = await getOnboardingRedirectPath({
+      organizationId: userOrganizations[0].id,
+      workspace: onboardingWorkspace,
+    });
+
+    if (onboardingRedirectPath) {
+      return redirect(onboardingRedirectPath);
     }
   }
 
-  // Put the first production environment at the front of the array
-  const sortedUserEnvironments = [firstProductionEnvironmentId, ...userEnvironments];
+  if (allWorkspaceIds.length === 0) {
+    return redirect(`/organizations/${userOrganizations[0].id}/landing`);
+  }
 
-  return <ClientEnvironmentRedirect userEnvironments={sortedUserEnvironments} />;
+  return <ClientWorkspaceRedirect userWorkspaceIds={allWorkspaceIds} />;
 };
 
 export default Page;

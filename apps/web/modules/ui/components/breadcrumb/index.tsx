@@ -16,7 +16,7 @@ const BreadcrumbList = React.forwardRef<HTMLOListElement, React.ComponentPropsWi
     <ol
       ref={ref}
       className={cn(
-        "flex flex-wrap items-center gap-1.5 break-words text-sm text-slate-500 hover:text-slate-700",
+        "flex flex-wrap items-center gap-1.5 text-sm wrap-break-word text-slate-500 hover:text-slate-700",
         className
       )}
       {...props}
@@ -36,9 +36,9 @@ const BreadcrumbItem = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex items-center gap-1.5 space-x-1 rounded-md px-1.5 py-1",
-      !isHighlighted && "hover:bg-white hover:outline hover:outline-slate-300",
-      isActive && "bg-slate-100 outline outline-slate-300",
-      isHighlighted && "bg-red-800 text-white outline hover:bg-red-700 hover:outline-red-800",
+      !isHighlighted && "hover:bg-white hover:outline-slate-300 hover:outline-solid",
+      isActive && "bg-slate-100 outline-slate-300 outline-solid",
+      isHighlighted && "bg-red-800 text-white outline-solid hover:bg-red-700 hover:outline-red-800",
       className
     )}
     {...props}
@@ -80,7 +80,7 @@ BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
 const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => (
   <span aria-hidden="true" className={cn("flex h-9 w-9 items-center justify-center", className)} {...props}>
-    <EllipsisIcon className="h-4 w-4" />
+    <EllipsisIcon className="size-4" />
     <span className="sr-only">More</span>
   </span>
 );

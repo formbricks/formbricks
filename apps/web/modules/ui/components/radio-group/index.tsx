@@ -25,7 +25,7 @@ const RadioGroupItem: React.ComponentType<RadioGroupPrimitive.RadioGroupItemProp
       )}
       {...props}>
       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-2.5 w-2.5 fill-slate-800" />
+        <Circle className="size-2.5 fill-slate-800" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

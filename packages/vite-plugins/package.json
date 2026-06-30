@@ -12,11 +12,12 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "vite": "7.3.3"
+    "vite": "7.3.5"
   }
 }

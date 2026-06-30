@@ -1,38 +1,34 @@
 import { describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
-import { getEnvironment } from "@/lib/utils/services";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { getWorkspace } from "@/lib/workspace/service";
 import { resolveV3WorkspaceContext } from "./workspace-context";
 
-vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromProjectId: vi.fn(),
+vi.mock("@/lib/workspace/service", () => ({
+  getWorkspace: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/services", () => ({
-  getEnvironment: vi.fn(),
+vi.mock("@/lib/utils/helper", () => ({
+  getOrganizationIdFromWorkspaceId: vi.fn(),
 }));
 
 describe("resolveV3WorkspaceContext", () => {
-  test("returns environmentId, projectId and organizationId when workspace exists (today: workspaceId === environmentId)", async () => {
-    vi.mocked(getEnvironment).mockResolvedValueOnce({
-      id: "env_abc",
-      projectId: "proj_xyz",
-    } as any);
-    vi.mocked(getOrganizationIdFromProjectId).mockResolvedValueOnce("org_123");
-    const result = await resolveV3WorkspaceContext("env_abc");
+  test("returns workspaceId and organizationId when workspace exists", async () => {
+    vi.mocked(getWorkspace).mockResolvedValueOnce({ id: "ws_abc" });
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_123");
+    const result = await resolveV3WorkspaceContext("ws_abc");
     expect(result).toEqual({
-      environmentId: "env_abc",
-      projectId: "proj_xyz",
+      workspaceId: "ws_abc",
       organizationId: "org_123",
     });
-    expect(getEnvironment).toHaveBeenCalledWith("env_abc");
-    expect(getOrganizationIdFromProjectId).toHaveBeenCalledWith("proj_xyz");
+    expect(getWorkspace).toHaveBeenCalledWith("ws_abc");
+    expect(getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith("ws_abc");
   });
 
-  test("throws when workspace (environment) does not exist", async () => {
-    vi.mocked(getEnvironment).mockResolvedValueOnce(null);
-    await expect(resolveV3WorkspaceContext("env_nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    expect(getEnvironment).toHaveBeenCalledWith("env_nonexistent");
-    expect(getOrganizationIdFromProjectId).not.toHaveBeenCalled();
+  test("throws when workspace does not exist", async () => {
+    vi.mocked(getWorkspace).mockResolvedValueOnce(null);
+    await expect(resolveV3WorkspaceContext("ws_nonexistent")).rejects.toThrow(ResourceNotFoundError);
+    expect(getWorkspace).toHaveBeenCalledWith("ws_nonexistent");
+    expect(getOrganizationIdFromWorkspaceId).not.toHaveBeenCalled();
   });
 });

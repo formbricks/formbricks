@@ -1,11 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/prisma";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetWebhooksFilter } from "@/modules/api/v2/management/webhooks/types/webhooks";
 
-export const getWebhooksQuery = (environmentIds: string[], params?: TGetWebhooksFilter) => {
+export const getWebhooksQuery = (workspaceIds: string[], params?: TGetWebhooksFilter) => {
   let query: Prisma.WebhookFindManyArgs = {
     where: {
-      environmentId: { in: environmentIds },
+      workspaceId: { in: workspaceIds },
     },
   };
 

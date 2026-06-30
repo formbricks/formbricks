@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const ZIntegrationBase = z.object({
   id: z.string(),
-  environmentId: z.string(),
+  workspaceId: z.cuid2(),
 });
 
 export const ZIntegrationBaseSurveyData = z.object({
@@ -13,6 +13,7 @@ export const ZIntegrationBaseSurveyData = z.object({
   includeHiddenFields: z.boolean().optional(),
   includeMetadata: z.boolean().optional(),
   includeCreatedAt: z.boolean().optional(),
+  includeContactAttributes: z.boolean().optional(),
   // questions: z.string(),
   elements: z.string(),
   surveyId: z.string(),

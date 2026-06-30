@@ -1,6 +1,6 @@
-import { type ActionClass } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { type ActionClass } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { getActionClasses } from "./action-class";
@@ -16,7 +16,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const environmentId = "test-environment-id";
+const workspaceId = "test-workspace-id";
 const mockActionClasses: ActionClass[] = [
   {
     id: "action1",
@@ -26,7 +26,7 @@ const mockActionClasses: ActionClass[] = [
     description: "Description 1",
     type: "code",
     noCodeConfig: null,
-    environmentId: environmentId,
+    workspaceId: workspaceId,
     key: "key1",
   },
   {
@@ -41,7 +41,7 @@ const mockActionClasses: ActionClass[] = [
       elementSelector: { cssSelector: ".btn" },
       urlFilters: [],
     },
-    environmentId: environmentId,
+    workspaceId: workspaceId,
     key: null,
   },
 ];
@@ -58,13 +58,13 @@ describe("getActionClasses", () => {
   test("should return action classes successfully", async () => {
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
 
-    const result = await getActionClasses(environmentId);
+    const result = await getActionClasses(workspaceId);
 
     expect(result).toEqual(mockActionClasses);
-    expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
+    expect(validateInputs).toHaveBeenCalledWith([workspaceId, expect.any(Object)]);
     expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId: environmentId,
+        workspaceId: workspaceId,
       },
       orderBy: {
         createdAt: "asc",
@@ -76,12 +76,12 @@ describe("getActionClasses", () => {
     const errorMessage = "Prisma error";
     vi.mocked(prisma.actionClass.findMany).mockRejectedValue(new Error(errorMessage));
 
-    await expect(getActionClasses(environmentId)).rejects.toThrow(DatabaseError);
-    await expect(getActionClasses(environmentId)).rejects.toThrow(
-      `Database error when fetching actions for environment ${environmentId}`
+    await expect(getActionClasses(workspaceId)).rejects.toThrow(DatabaseError);
+    await expect(getActionClasses(workspaceId)).rejects.toThrow(
+      `Database error when fetching actions for workspace ${workspaceId}`
     );
 
-    expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
+    expect(validateInputs).toHaveBeenCalledWith([workspaceId, expect.any(Object)]);
     expect(prisma.actionClass.findMany).toHaveBeenCalledTimes(2); // Called twice due to rejection
   });
 
@@ -91,10 +91,10 @@ describe("getActionClasses", () => {
       throw new ValidationError(validationErrorMessage);
     });
 
-    await expect(getActionClasses(environmentId)).rejects.toThrow(ValidationError);
-    await expect(getActionClasses(environmentId)).rejects.toThrow(validationErrorMessage);
+    await expect(getActionClasses(workspaceId)).rejects.toThrow(ValidationError);
+    await expect(getActionClasses(workspaceId)).rejects.toThrow(validationErrorMessage);
 
-    expect(validateInputs).toHaveBeenCalledWith([environmentId, expect.any(Object)]);
+    expect(validateInputs).toHaveBeenCalledWith([workspaceId, expect.any(Object)]);
     expect(prisma.actionClass.findMany).not.toHaveBeenCalled();
   });
 
@@ -103,6 +103,7 @@ describe("getActionClasses", () => {
     // We need to import the actual react cache to test it with vi.spyOn if we weren't mocking it.
     // However, since we are mocking it to be a pass-through, we just check if our main cache is called.
 
-    await getActionClasses(environmentId);
+    const result = await getActionClasses(workspaceId);
+    expect(result).toEqual(mockActionClasses);
   });
 });

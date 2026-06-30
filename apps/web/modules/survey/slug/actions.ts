@@ -6,7 +6,7 @@ import { ZSurveySlug } from "@formbricks/types/surveys/types";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { updateSurveySlug } from "@/modules/survey/lib/slug";
 
 const ZUpdateSurveySlugAction = z.object({
@@ -28,8 +28,8 @@ export const updateSurveySlugAction = authenticatedActionClient
       access: [
         { type: "organization", roles: ["owner", "manager"] },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -56,8 +56,8 @@ export const removeSurveySlugAction = authenticatedActionClient
       access: [
         { type: "organization", roles: ["owner", "manager"] },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],

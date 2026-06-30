@@ -113,7 +113,7 @@ export const SurveyLoadingAnimation = ({
   return (
     <div
       className={cn(
-        "absolute inset-0 z-[5000] flex items-center justify-center transition-colors duration-1000",
+        "absolute inset-0 z-5000 flex items-center justify-center transition-colors duration-1000",
         isReadyToTransition ? "bg-transparent" : "bg-white",
         isHidden && "hidden"
       )}>
@@ -123,11 +123,7 @@ export const SurveyLoadingAnimation = ({
           isReadyToTransition ? "animate-surveyExit" : "animate-surveyLoading"
         )}>
         {isBrandingEnabled && (
-          <Image
-            src={Logo as string}
-            alt="Logo"
-            className={cn("w-32 transition-all duration-1000 md:w-40")}
-          />
+          <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
         )}
         <LoadingSpinner />
       </div>

@@ -27,7 +27,7 @@ export const Calendar = ({ className, classNames, showOutsideDays = true, ...pro
         head_row: "flex",
         head_cell: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
         row: "flex w-full mt-2",
-        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-slate-200 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        cell: "text-center text-sm p-0 relative has-aria-[selected]:bg-slate-200 first:has-aria-[selected]:rounded-l-md last:has-aria-[selected]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           "hover:bg-slate-200 rounded-md p-0",
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100 text-center"
@@ -43,9 +43,9 @@ export const Calendar = ({ className, classNames, showOutsideDays = true, ...pro
       components={{
         Chevron: (props) => {
           if (props.orientation === "left") {
-            return <ChevronLeft className="h-4 w-4" />;
+            return <ChevronLeft className="size-4" />;
           } else if (props.orientation === "right") {
-            return <ChevronRight className="h-4 w-4" />;
+            return <ChevronRight className="size-4" />;
           }
           return <Chevron {...props} />;
         },

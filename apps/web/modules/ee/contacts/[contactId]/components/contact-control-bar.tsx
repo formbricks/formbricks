@@ -1,11 +1,12 @@
 "use client";
 
-import { LinkIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { LinkIcon, PencilIcon, RefreshCwIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { EditContactAttributesModal } from "@/modules/ee/contacts/components/edit-contact-attributes-modal";
@@ -22,7 +23,6 @@ interface TContactAttributeWithKeyInfo {
 }
 
 interface ContactControlBarProps {
-  environmentId: string;
   contactId: string;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
@@ -32,7 +32,6 @@ interface ContactControlBarProps {
 }
 
 export const ContactControlBar = ({
-  environmentId,
   contactId,
   isReadOnly,
   isQuotasAllowed,
@@ -41,19 +40,28 @@ export const ContactControlBar = ({
   currentAttributes,
 }: ContactControlBarProps) => {
   const router = useRouter();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
   const [isGenerateLinkModalOpen, setIsGenerateLinkModalOpen] = useState(false);
   const [isEditAttributesModalOpen, setIsEditAttributesModalOpen] = useState(false);
+  const [isRefreshing, startRefreshTransition] = useTransition();
+
+  const handleRefresh = () => {
+    startRefreshTransition(() => {
+      router.refresh();
+    });
+  };
 
   const handleDeletePerson = async () => {
     setIsDeletingPerson(true);
     const deletePersonResponse = await deleteContactAction({ contactId });
     if (deletePersonResponse?.data) {
       router.refresh();
-      router.push(`/environments/${environmentId}/contacts`);
-      toast.success(t("environments.contacts.contact_deleted_successfully"));
+      router.push(`${workspaceBasePath}/contacts`);
+      toast.success(t("workspace.contacts.contact_deleted_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(deletePersonResponse);
       toast.error(errorMessage);
@@ -62,26 +70,30 @@ export const ContactControlBar = ({
     setDeleteDialogOpen(false);
   };
 
-  if (isReadOnly) {
-    return null;
-  }
-
   const iconActions = [
     {
+      icon: RefreshCwIcon,
+      tooltip: t("common.refresh"),
+      onClick: handleRefresh,
+      isVisible: true,
+      disabled: isRefreshing,
+      iconClassName: isRefreshing ? "animate-spin" : undefined,
+    },
+    {
       icon: PencilIcon,
-      tooltip: t("environments.contacts.edit_attributes"),
+      tooltip: t("workspace.contacts.edit_attributes"),
       onClick: () => {
         setIsEditAttributesModalOpen(true);
       },
-      isVisible: true,
+      isVisible: !isReadOnly,
     },
     {
       icon: LinkIcon,
-      tooltip: t("environments.contacts.generate_personal_link"),
+      tooltip: t("workspace.contacts.generate_personal_link"),
       onClick: () => {
         setIsGenerateLinkModalOpen(true);
       },
-      isVisible: true,
+      isVisible: !isReadOnly,
     },
     {
       icon: TrashIcon,
@@ -89,7 +101,7 @@ export const ContactControlBar = ({
       onClick: () => {
         setDeleteDialogOpen(true);
       },
-      isVisible: true,
+      isVisible: !isReadOnly,
     },
   ];
 
@@ -104,10 +116,10 @@ export const ContactControlBar = ({
         isDeleting={isDeletingPerson}
         text={
           isQuotasAllowed
-            ? t("environments.contacts.delete_contact_confirmation_with_quotas", {
+            ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
                 value: 1,
               })
-            : t("environments.contacts.delete_contact_confirmation")
+            : t("workspace.contacts.delete_contact_confirmation")
         }
       />
       <GeneratePersonalLinkModal

@@ -6,10 +6,13 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
+import { cn } from "@/modules/ui/lib/utils";
 
 interface TOption<T> {
   value: T;
   label: string;
+  disabled?: boolean;
+  icon?: React.ReactNode;
 }
 
 interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
@@ -18,12 +21,13 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
   onChange?: (selected: K) => void;
   disabled?: boolean;
   placeholder?: string;
+  containerClassName?: string;
 }
 
 export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   props: Readonly<MultiSelectProps<T, K>>
 ) {
-  const { options, value, onChange, disabled = false, placeholder = "Select options..." } = props;
+  const { options, value, onChange, disabled = false, placeholder, containerClassName } = props;
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -166,15 +170,19 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       className={`relative overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
       <div
         ref={containerRef}
-        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${
-          disabled ? "pointer-events-none" : "focus-within:ring-ring"
-        }`}>
+        className={cn(
+          `border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2`,
+          disabled ? "pointer-events-none" : "focus-within:ring-ring",
+          containerClassName ?? ""
+        )}>
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
             <Badge key={option.value} className="rounded-md">
+              {option.icon ? <span className="mr-1 inline-flex items-center">{option.icon}</span> : null}
               {option.label}
               <button
-                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+                type="button"
+                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleUnselect(option);
@@ -185,7 +193,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                   e.stopPropagation();
                 }}
                 onClick={() => handleUnselect(option)}>
-                <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
+                <X className="text-muted-foreground hover:text-foreground size-3" />
               </button>
             </Badge>
           ))}
@@ -197,7 +205,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
-            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-none"
+            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-hidden"
           />
         </div>
       </div>
@@ -209,29 +217,33 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         portalContainer &&
         createPortal(
           <div
-            className="fixed z-[100]"
+            className="fixed z-100"
             style={{
               top: `${position.top}px`,
               left: `${position.left}px`,
               width: `${position.width}px`,
             }}>
             <CommandList className="border-0">
-              <div className="text-popover-foreground animate-in max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-none">
+              <div className="text-popover-foreground max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-hidden animate-in">
                 <CommandGroup className="h-full overflow-auto">
                   {selectableOptions.map((option) => (
                     <CommandItem
                       key={option.value}
+                      disabled={option.disabled}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
                       onSelect={() => {
-                        if (disabled) return;
+                        if (disabled || option.disabled) return;
                         isUserInitiatedRef.current = true; // Mark as user-initiated
                         setSelected((prev) => [...prev, option]);
                         setInputValue("");
                       }}
-                      className="cursor-pointer">
+                      className={option.disabled ? "cursor-not-allowed" : "cursor-pointer"}>
+                      {option.icon ? (
+                        <span className="mr-1 inline-flex items-center">{option.icon}</span>
+                      ) : null}
                       {option.label}
                     </CommandItem>
                   ))}

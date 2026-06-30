@@ -4,8 +4,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
@@ -123,33 +123,34 @@ export const FollowUpItem = ({
     <>
       <div className="relative cursor-pointer rounded-lg border border-slate-300 bg-white p-4 hover:bg-slate-50">
         <button
-          className="flex w-full flex-col items-start space-y-2"
+          type="button"
+          className="flex w-full flex-col items-start gap-y-2"
           onClick={() => {
             setEditFollowUpModalOpen(true);
           }}>
           <h3 className="text-slate-900">{followUp.name}</h3>
-          <div className="flex space-x-2">
+          <div className="flex gap-x-2">
             <Badge
               size="normal"
               type="gray"
               text={
                 followUp.trigger.type === "response"
-                  ? t("environments.surveys.edit.follow_ups_item_response_tag")
-                  : t("environments.surveys.edit.follow_ups_item_ending_tag")
+                  ? t("workspace.surveys.edit.follow_ups_item_response_tag")
+                  : t("workspace.surveys.edit.follow_ups_item_ending_tag")
               }
             />
 
             <Badge
               size="normal"
               type="gray"
-              text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
+              text={t("workspace.surveys.edit.follow_ups_item_send_email_tag")}
             />
 
             {isEmailToInvalid || isEndingInvalid ? (
               <Badge
                 size="normal"
                 type="warning"
-                text={t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
+                text={t("workspace.surveys.edit.follow_ups_item_issue_detected_tag")}
               />
             ) : null}
           </div>
@@ -165,7 +166,7 @@ export const FollowUpItem = ({
                 setDeleteFollowUpModalOpen(true);
               }}
               aria-label={t("common.delete")}>
-              <Trash2Icon className="h-4 w-4 text-slate-500" />
+              <Trash2Icon className="size-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
 
@@ -178,7 +179,7 @@ export const FollowUpItem = ({
                 duplicateFollowUp();
               }}
               aria-label={t("common.duplicate")}>
-              <CopyIcon className="h-4 w-4 text-slate-500" />
+              <CopyIcon className="size-4 text-slate-500" />
             </Button>
           </TooltipRenderer>
         </div>
@@ -231,8 +232,8 @@ export const FollowUpItem = ({
             };
           });
         }}
-        body={t("environments.surveys.edit.follow_ups_delete_modal_text")}
-        title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
+        body={t("workspace.surveys.edit.follow_ups_delete_modal_text")}
+        title={t("workspace.surveys.edit.follow_ups_delete_modal_title")}
         buttonVariant="destructive"
       />
     </>

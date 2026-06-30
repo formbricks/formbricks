@@ -1,6 +1,7 @@
 import { awsProviderAdapter } from "./providers/aws";
 import { azureProviderAdapter } from "./providers/azure";
-import { gcpProviderAdapter } from "./providers/gcp";
+import { googleProviderAdapter } from "./providers/google";
+import { openaiCompatibleProviderAdapter } from "./providers/openai-compatible";
 import type { AIEnvironment, AILanguageModel, ActiveAIProvider } from "./types";
 
 export interface AIProviderValidationResult {
@@ -16,8 +17,9 @@ export interface AIProviderAdapter {
 
 const AI_PROVIDER_REGISTRY: Record<ActiveAIProvider, AIProviderAdapter> = {
   aws: awsProviderAdapter,
-  gcp: gcpProviderAdapter,
+  google: googleProviderAdapter,
   azure: azureProviderAdapter,
+  "openai-compatible": openaiCompatibleProviderAdapter,
 };
 
 export const getAIProviderAdapter = (provider: ActiveAIProvider): AIProviderAdapter =>

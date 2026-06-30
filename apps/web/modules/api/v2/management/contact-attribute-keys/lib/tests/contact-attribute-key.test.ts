@@ -1,6 +1,6 @@
-import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import {
   TContactAttributeKeyInput,
@@ -20,7 +20,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 describe("getContactAttributeKeys", () => {
-  const environmentIds = ["env1", "env2"];
+  const workspaceIds = ["ws1", "ws2"];
   const params: TGetContactAttributeKeysFilter = {
     limit: 10,
     skip: 0,
@@ -28,15 +28,15 @@ describe("getContactAttributeKeys", () => {
     sortBy: "createdAt",
   };
   const fakeContactAttributeKeys = [
-    { id: "key1", environmentId: "env1", name: "Key One", key: "keyOne" },
-    { id: "key2", environmentId: "env1", name: "Key Two", key: "keyTwo" },
+    { id: "key1", workspaceId: "ws1", name: "Key One", key: "keyOne" },
+    { id: "key2", workspaceId: "ws1", name: "Key Two", key: "keyTwo" },
   ];
   const count = fakeContactAttributeKeys.length;
 
   test("returns ok response with contact attribute keys and meta", async () => {
     vi.mocked(prisma.$transaction).mockResolvedValueOnce([fakeContactAttributeKeys, count]);
 
-    const result = await getContactAttributeKeys(environmentIds, params);
+    const result = await getContactAttributeKeys(workspaceIds, params);
     expect(result.ok).toBe(true);
 
     if (result.ok) {
@@ -52,7 +52,7 @@ describe("getContactAttributeKeys", () => {
   test("returns error when prisma.$transaction throws", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("Test error"));
 
-    const result = await getContactAttributeKeys(environmentIds, params);
+    const result = await getContactAttributeKeys(workspaceIds, params);
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
@@ -63,7 +63,7 @@ describe("getContactAttributeKeys", () => {
 
 describe("createContactAttributeKey", () => {
   const inputContactAttributeKey: TContactAttributeKeyInput = {
-    environmentId: "env1",
+    workspaceId: "workspace-1",
     name: "New Contact Attribute Key",
     key: "newKey",
     description: "Description for new key",
@@ -71,7 +71,7 @@ describe("createContactAttributeKey", () => {
 
   const createdContactAttributeKey: ContactAttributeKey = {
     id: "key100",
-    environmentId: inputContactAttributeKey.environmentId,
+    workspaceId: inputContactAttributeKey.workspaceId,
     name: inputContactAttributeKey.name,
     key: inputContactAttributeKey.key,
     description: inputContactAttributeKey.description,
@@ -102,6 +102,28 @@ describe("createContactAttributeKey", () => {
 
     if (!result.ok) {
       expect(result.error.type).toEqual("internal_server_error");
+    }
+  });
+
+  test("returns bad request when key is reserved for future defaults", async () => {
+    const result = await createContactAttributeKey({
+      ...inputContactAttributeKey,
+      key: "user_id",
+    });
+    expect(result.ok).toBe(false);
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+
+    if (!result.ok) {
+      expect(result.error).toStrictEqual({
+        type: "bad_request",
+        details: [
+          {
+            field: "key",
+            issue:
+              "Reserved attribute key(s): user_id. These keys are reserved for the v5.1 safe-identifier default attribute migration and cannot be created as custom attributes.",
+          },
+        ],
+      });
     }
   });
 

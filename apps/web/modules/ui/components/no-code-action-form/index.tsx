@@ -30,18 +30,18 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
           <FormItem>
             <FormControl>
               <div>
-                <Label>{t("environments.actions.what_is_the_user_doing")}</Label>
+                <Label>{t("workspace.actions.what_is_the_user_doing")}</Label>
                 <TabToggle
                   disabled={isReadOnly}
                   id="userAction"
                   {...field}
                   defaultSelected={field.value}
                   options={[
-                    { value: "click", label: t("environments.actions.click") },
-                    { value: "pageView", label: t("environments.actions.page_view") },
-                    { value: "exitIntent", label: t("environments.actions.exit_intent") },
-                    { value: "fiftyPercentScroll", label: t("environments.actions.fifty_percent_scroll") },
-                    { value: "pageDwell", label: t("environments.actions.time_on_page") },
+                    { value: "click", label: t("workspace.actions.click") },
+                    { value: "pageView", label: t("workspace.actions.page_view") },
+                    { value: "exitIntent", label: t("workspace.actions.exit_intent") },
+                    { value: "fiftyPercentScroll", label: t("workspace.actions.fifty_percent_scroll") },
+                    { value: "pageDwell", label: t("workspace.actions.time_on_page") },
                   ]}
                 />
               </div>
@@ -70,29 +70,29 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
         )}
         {watch("noCodeConfig.type") === "pageView" && (
           <Alert>
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle>{t("environments.actions.page_view")}</AlertTitle>
+            <InfoIcon className="size-4" />
+            <AlertTitle>{t("workspace.actions.page_view")}</AlertTitle>
             <AlertDescription>
-              {t("environments.actions.this_action_will_be_triggered_when_the_page_is_loaded")}
+              {t("workspace.actions.this_action_will_be_triggered_when_the_page_is_loaded")}
             </AlertDescription>
           </Alert>
         )}
         {watch("noCodeConfig.type") === "exitIntent" && (
           <Alert>
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle>{t("environments.actions.exit_intent")}</AlertTitle>
+            <InfoIcon className="size-4" />
+            <AlertTitle>{t("workspace.actions.exit_intent")}</AlertTitle>
             <AlertDescription>
-              {t("environments.actions.this_action_will_be_triggered_when_the_user_tries_to_leave_the_page")}
+              {t("workspace.actions.this_action_will_be_triggered_when_the_user_tries_to_leave_the_page")}
             </AlertDescription>
           </Alert>
         )}
         {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
           <Alert>
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle>{t("environments.actions.fifty_percent_scroll")}</AlertTitle>
+            <InfoIcon className="size-4" />
+            <AlertTitle>{t("workspace.actions.fifty_percent_scroll")}</AlertTitle>
             <AlertDescription>
               {t(
-                "environments.actions.this_action_will_be_triggered_when_the_user_scrolls_50_percent_of_the_page"
+                "workspace.actions.this_action_will_be_triggered_when_the_user_scrolls_50_percent_of_the_page"
               )}
             </AlertDescription>
           </Alert>
@@ -100,10 +100,10 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
         {watch("noCodeConfig.type") === "pageDwell" && (
           <div className="flex flex-col gap-2">
             <Alert>
-              <InfoIcon className="h-4 w-4" />
-              <AlertTitle>{t("environments.actions.time_on_page")}</AlertTitle>
+              <InfoIcon className="size-4" />
+              <AlertTitle>{t("workspace.actions.time_on_page")}</AlertTitle>
               <AlertDescription>
-                {t("environments.actions.this_action_will_be_triggered_after_user_stays_on_page")}
+                {t("workspace.actions.this_action_will_be_triggered_after_user_stays_on_page")}
               </AlertDescription>
             </Alert>
             <FormField
@@ -111,13 +111,13 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
               name="noCodeConfig.timeInSeconds"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{t("environments.actions.time_in_seconds")}</Label>
+                  <Label>{t("workspace.actions.time_in_seconds")}</Label>
                   <FormControl>
                     <Input
                       type="number"
                       min={1}
                       max={3600}
-                      placeholder={t("environments.actions.time_in_seconds_placeholder")}
+                      placeholder={t("workspace.actions.time_in_seconds_placeholder")}
                       disabled={isReadOnly}
                       {...field}
                       value={field.value ?? ""}

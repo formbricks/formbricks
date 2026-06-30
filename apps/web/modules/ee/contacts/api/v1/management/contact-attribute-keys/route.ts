@@ -1,5 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -24,11 +26,11 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const contactAttributeKeys = await getContactAttributeKeys(environmentIds);
+      const contactAttributeKeys = await getContactAttributeKeys(workspaceIds);
 
       return {
         response: responses.successResponse(contactAttributeKeys),
@@ -62,15 +64,29 @@ export const POST = withV1ApiWrapper({
 
       let contactAttributeKeyInput;
       try {
-        contactAttributeKeyInput = await req.json();
+        contactAttributeKeyInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
 
-      const inputValidation = ZContactAttributeKeyCreateInput.safeParse(contactAttributeKeyInput);
+      // Accept workspaceId as alternative to environmentId — resolve to production environment
+      const resolved = await resolveBodyIds(
+        contactAttributeKeyInput,
+        authentication.workspacePermissions,
+        "POST"
+      );
+      if (!resolved.ok) return { response: resolved.response };
+
+      const inputValidation = ZContactAttributeKeyCreateInput.safeParse(resolved.body);
 
       if (!inputValidation.success) {
         return {
@@ -81,15 +97,17 @@ export const POST = withV1ApiWrapper({
           ),
         };
       }
-      const environmentId = inputValidation.data.environmentId;
-
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
-        return {
-          response: responses.unauthorizedResponse(),
-        };
+      if (
+        !resolved.alreadyAuthorized &&
+        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "POST")
+      ) {
+        return { response: responses.unauthorizedResponse() };
       }
 
-      const contactAttributeKey = await createContactAttributeKey(environmentId, inputValidation.data);
+      const contactAttributeKey = await createContactAttributeKey(
+        inputValidation.data.workspaceId,
+        inputValidation.data
+      );
 
       if (!contactAttributeKey) {
         return {

@@ -4,40 +4,48 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "./attribute-key-policy";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentId: string): Promise<TContactAttributeKey[]> => {
+  async (workspaceId: string): Promise<TContactAttributeKey[]> => {
     return await prisma.contactAttributeKey.findMany({
-      where: { environmentId },
+      where: { workspaceId },
     });
   }
 );
 
 export const getContactAttributeKeyById = async (
   id: string
-): Promise<Pick<TContactAttributeKey, "id" | "environmentId" | "type" | "name" | "description"> | null> => {
+): Promise<Pick<TContactAttributeKey, "id" | "workspaceId" | "type" | "name" | "description"> | null> => {
   const key = await prisma.contactAttributeKey.findUnique({
     where: { id },
-    select: { id: true, environmentId: true, type: true, name: true, description: true },
+    select: { id: true, workspaceId: true, type: true, name: true, description: true },
   });
 
   return key;
 };
 
 export const createContactAttributeKey = async (data: {
-  environmentId: string;
+  workspaceId: string;
   key: string;
   name?: string;
   description?: string;
   dataType?: TContactAttributeDataType;
 }): Promise<TContactAttributeKey> => {
+  if (isReservedFutureDefaultAttributeKey(data.key)) {
+    throw new InvalidInputError(getReservedFutureDefaultAttributeKeyIssue([data.key]));
+  }
+
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
         key: data.key,
         name: data.name ?? formatSnakeCaseToTitleCase(data.key),
         description: data.description ?? null,
-        environmentId: data.environmentId,
+        workspaceId: data.workspaceId,
         type: "custom",
         ...(data.dataType && { dataType: data.dataType }),
       },

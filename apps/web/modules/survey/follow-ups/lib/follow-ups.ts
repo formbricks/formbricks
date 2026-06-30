@@ -1,13 +1,14 @@
 import { z } from "zod";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { Result, err } from "@formbricks/types/error-handlers";
 import { ValidationError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
+import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { TUserLocale } from "@formbricks/types/user";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -21,7 +22,8 @@ const evaluateFollowUp = async (
   followUp: TSurveyFollowUp,
   survey: TSurvey,
   response: TResponse,
-  organization: TOrganization
+  organization: TOrganization,
+  locale?: TUserLocale
 ): Promise<FollowUpResult> => {
   try {
     const { properties } = followUp.action;
@@ -43,6 +45,7 @@ const evaluateFollowUp = async (
         includeVariables: properties.includeVariables,
         includeHiddenFields: properties.includeHiddenFields,
         logoUrl,
+        locale,
       });
 
       return {
@@ -75,6 +78,7 @@ const evaluateFollowUp = async (
           attachResponseData: properties.attachResponseData,
           includeVariables: properties.includeVariables,
           includeHiddenFields: properties.includeHiddenFields,
+          locale,
         });
 
         return {
@@ -110,6 +114,7 @@ const evaluateFollowUp = async (
           attachResponseData: properties.attachResponseData,
           includeVariables: properties.includeVariables,
           includeHiddenFields: properties.includeHiddenFields,
+          locale,
         });
 
         return {
@@ -145,7 +150,8 @@ const evaluateFollowUp = async (
  * and only requires a response ID.
  */
 export const sendFollowUpsForResponse = async (
-  responseId: string
+  responseId: string,
+  locale?: TUserLocale
 ): Promise<
   Result<FollowUpResult[], { code: FollowUpSendError; message: string; meta?: Record<string, string> }>
 > => {
@@ -171,13 +177,13 @@ export const sendFollowUpsForResponse = async (
       });
     }
 
-    // Get organization from survey's environmentId
-    const organization = await getOrganizationByEnvironmentId(survey.environmentId);
+    // Get organization from survey's workspaceId
+    const organization = await getOrganizationByWorkspaceId(survey.workspaceId);
     if (!organization) {
       return err({
         code: FollowUpSendError.ORG_NOT_FOUND,
         message: "Organization not found",
-        meta: { responseId, surveyId, environmentId: survey.environmentId },
+        meta: { responseId, surveyId, workspaceId: survey.workspaceId },
       });
     }
 
@@ -226,7 +232,7 @@ export const sendFollowUpsForResponse = async (
         }
       }
 
-      return evaluateFollowUp(followUp, survey, response, organization);
+      return evaluateFollowUp(followUp, survey, response, organization, locale);
     });
 
     const followUpResults = await Promise.all(followUpPromises);

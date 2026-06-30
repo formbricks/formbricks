@@ -1,5 +1,5 @@
-import type { ContactAttribute } from "@prisma/client";
 import { z } from "zod";
+import type { ContactAttribute } from "../src/prisma";
 
 export const ZContactAttribute = z.object({
   id: z.cuid2().describe("The ID of the contact attribute"),

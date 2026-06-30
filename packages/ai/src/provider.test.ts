@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   createAmazonBedrock: vi.fn(),
   createAzure: vi.fn(),
   createVertex: vi.fn(),
+  createOpenAICompatible: vi.fn(),
 }));
 
 vi.mock("@ai-sdk/google-vertex", () => ({
@@ -26,6 +27,10 @@ vi.mock("@ai-sdk/amazon-bedrock", () => ({
 
 vi.mock("@ai-sdk/azure", () => ({
   createAzure: mocks.createAzure,
+}));
+
+vi.mock("@ai-sdk/openai-compatible", () => ({
+  createOpenAICompatible: mocks.createOpenAICompatible,
 }));
 
 const createMockProvider = (
@@ -45,9 +50,9 @@ describe("packages/ai provider helpers", () => {
   test("resolves the active provider from the environment", () => {
     expect(
       getActiveAiProvider({
-        AI_PROVIDER: " gcp ",
+        AI_PROVIDER: " google ",
       })
-    ).toBe("gcp");
+    ).toBe("google");
   });
 
   test("resolves the active model from the environment", () => {
@@ -58,23 +63,47 @@ describe("packages/ai provider helpers", () => {
     ).toBe("gemini-2.5-flash");
   });
 
-  test("reports a fully configured GCP instance when the active provider credentials and model are valid", () => {
+  test("reports a fully configured Google Cloud instance when the active provider credentials and model are valid", () => {
     expect(
       getAiConfigurationStatus({
-        AI_PROVIDER: "gcp",
+        AI_PROVIDER: "google",
         AI_MODEL: "gemini-2.5-flash",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "google@example.com" }),
       })
     ).toEqual({
-      provider: "gcp",
+      provider: "google",
       model: "gemini-2.5-flash",
       isConfigured: true,
       missingFields: [],
       invalidFields: [],
       providerStatus: {
-        provider: "gcp",
+        provider: "google",
+        model: "gemini-2.5-flash",
+        isConfigured: true,
+        missingFields: [],
+        invalidFields: [],
+      },
+    });
+  });
+
+  test("reports a fully configured Google Cloud instance when ADC provides credentials", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      })
+    ).toEqual({
+      provider: "google",
+      model: "gemini-2.5-flash",
+      isConfigured: true,
+      missingFields: [],
+      invalidFields: [],
+      providerStatus: {
+        provider: "google",
         model: "gemini-2.5-flash",
         isConfigured: true,
         missingFields: [],
@@ -87,9 +116,9 @@ describe("packages/ai provider helpers", () => {
     expect(
       isAiConfigured({
         AI_MODEL: "gemini-2.5-flash",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
       })
     ).toBe(false);
   });
@@ -141,52 +170,189 @@ describe("packages/ai provider helpers", () => {
     });
   });
 
-  test("treats the instance as not configured when GCP credentials JSON is invalid", () => {
+  test("treats the instance as not configured when Google Cloud credentials JSON is invalid", () => {
     expect(
       getAiConfigurationStatus({
-        AI_PROVIDER: "gcp",
+        AI_PROVIDER: "google",
         AI_MODEL: "gemini-2.5-flash",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_CREDENTIALS_JSON: "{not-json}",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_CREDENTIALS_JSON: "{not-json}",
       })
     ).toMatchObject({
-      provider: "gcp",
+      provider: "google",
       model: "gemini-2.5-flash",
       isConfigured: false,
-      invalidFields: ["AI_GCP_CREDENTIALS_JSON"],
+      invalidFields: ["AI_GOOGLE_CLOUD_CREDENTIALS_JSON"],
       errorCode: "providerNotConfigured",
     });
   });
 
-  test("creates and caches a GCP model with parsed JSON credentials", () => {
-    const vertexProvider = createMockProvider("gcp");
+  test("treats the instance as not configured when Google Cloud credentials JSON is not an object", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_CREDENTIALS_JSON: "[]",
+      })
+    ).toMatchObject({
+      provider: "google",
+      model: "gemini-2.5-flash",
+      isConfigured: false,
+      invalidFields: ["AI_GOOGLE_CLOUD_CREDENTIALS_JSON"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
+  test("creates and caches a Google Cloud model with parsed JSON credentials", () => {
+    const vertexProvider = createMockProvider("google");
     mocks.createVertex.mockReturnValue(vertexProvider);
 
     const environment: AIEnvironment = {
-      AI_PROVIDER: "gcp",
+      AI_PROVIDER: "google",
       AI_MODEL: "gemini-2.5-flash",
-      AI_GCP_PROJECT: "test-project",
-      AI_GCP_LOCATION: "us-central1",
-      AI_GCP_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "google@example.com" }),
     };
 
     const firstModel = getAiModel(environment);
     const secondModel = getAiModel(environment);
 
-    expect(firstModel).toEqual({ providerName: "gcp", modelName: "gemini-2.5-flash" });
+    expect(firstModel).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
     expect(secondModel).toBe(firstModel);
     expect(mocks.createVertex).toHaveBeenCalledWith({
       project: "test-project",
       location: "us-central1",
       googleAuthOptions: {
         credentials: {
-          client_email: "vertex@example.com",
+          client_email: "google@example.com",
         },
       },
     });
     expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
     expect(mocks.createVertex).toHaveBeenCalledTimes(1);
+  });
+
+  test("creates a Google Cloud model with application credentials file", () => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location: "us-central1",
+      googleAuthOptions: {
+        keyFilename: "/tmp/google-cloud.json",
+      },
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
+  });
+
+  test("creates a Google Cloud model using ADC when no credential override is configured", () => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location: "us-central1",
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
+  });
+
+  test.each([
+    [
+      "us",
+      "https://aiplatform.us.rep.googleapis.com/v1/projects/test-project/locations/us/publishers/google",
+    ],
+    [
+      "eu",
+      "https://aiplatform.eu.rep.googleapis.com/v1/projects/test-project/locations/eu/publishers/google",
+    ],
+  ])("creates a Google Cloud model with the %s multi-region endpoint", (location, baseURL) => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-3.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: location,
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location,
+      baseURL,
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-3.5-flash");
+  });
+
+  test.each(["global", "europe-west3", "me-central2"])(
+    "keeps the SDK default Google Cloud endpoint for the %s location",
+    (location) => {
+      const vertexProvider = createMockProvider("google");
+      mocks.createVertex.mockReturnValue(vertexProvider);
+
+      const model = getAiModel({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-3.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: location,
+      });
+
+      expect(model).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+      expect(mocks.createVertex).toHaveBeenCalledWith({
+        project: "test-project",
+        location,
+      });
+      expect(vertexProvider).toHaveBeenCalledWith("gemini-3.5-flash");
+    }
+  );
+
+  test("does not reuse a cached Google Cloud model after credentials change", () => {
+    const firstVertexProvider = createMockProvider("google");
+    const secondVertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValueOnce(firstVertexProvider).mockReturnValueOnce(secondVertexProvider);
+
+    const firstModel = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-3.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "eu",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "first@example.com" }),
+    });
+    const secondModel = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-3.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "eu",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "second@example.com" }),
+    });
+
+    expect(firstModel).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+    expect(secondModel).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+    expect(secondModel).not.toBe(firstModel);
+    expect(mocks.createVertex).toHaveBeenCalledTimes(2);
   });
 
   test("creates an AWS model with explicit AWS credentials", () => {
@@ -231,13 +397,184 @@ describe("packages/ai provider helpers", () => {
     });
   });
 
+  test("reports a fully configured OpenAI-compatible instance with the base URL and model", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "openai-compatible",
+        AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+        AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+      })
+    ).toEqual({
+      provider: "openai-compatible",
+      model: "Qwen/Qwen2.5-7B-Instruct",
+      isConfigured: true,
+      missingFields: [],
+      invalidFields: [],
+      providerStatus: {
+        provider: "openai-compatible",
+        model: "Qwen/Qwen2.5-7B-Instruct",
+        isConfigured: true,
+        missingFields: [],
+        invalidFields: [],
+      },
+    });
+  });
+
+  test("treats the OpenAI-compatible instance as not configured when the base URL is missing", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "openai-compatible",
+        AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      })
+    ).toMatchObject({
+      provider: "openai-compatible",
+      model: "Qwen/Qwen2.5-7B-Instruct",
+      isConfigured: false,
+      missingFields: ["AI_OPENAI_COMPATIBLE_BASE_URL"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
+  test("treats the OpenAI-compatible instance as not configured when the model is missing", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "openai-compatible",
+        AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+      })
+    ).toMatchObject({
+      provider: "openai-compatible",
+      model: null,
+      isConfigured: false,
+      missingFields: ["AI_MODEL"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
+  test("treats the OpenAI-compatible instance as not configured when the base URL is invalid", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "openai-compatible",
+        AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+        AI_OPENAI_COMPATIBLE_BASE_URL: "not-a-url",
+      })
+    ).toMatchObject({
+      provider: "openai-compatible",
+      isConfigured: false,
+      invalidFields: ["AI_OPENAI_COMPATIBLE_BASE_URL"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
+  test("treats the OpenAI-compatible instance as not configured when the headers JSON is invalid", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "openai-compatible",
+        AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+        AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+        AI_OPENAI_COMPATIBLE_HEADERS_JSON: "{not-json}",
+      })
+    ).toMatchObject({
+      provider: "openai-compatible",
+      isConfigured: false,
+      invalidFields: ["AI_OPENAI_COMPATIBLE_HEADERS_JSON"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
+  test("treats the OpenAI-compatible instance as not configured when the query params JSON is invalid", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "openai-compatible",
+        AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+        AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+        AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: "[]",
+      })
+    ).toMatchObject({
+      provider: "openai-compatible",
+      isConfigured: false,
+      invalidFields: ["AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
+  test("creates and caches an OpenAI-compatible model with all provider-shaping fields", () => {
+    const openaiCompatibleProvider = createMockProvider("openai-compatible");
+    mocks.createOpenAICompatible.mockReturnValue(openaiCompatibleProvider);
+
+    const environment: AIEnvironment = {
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+      AI_OPENAI_COMPATIBLE_API_KEY: "vllm-api-key",
+      AI_OPENAI_COMPATIBLE_PROVIDER_NAME: "qwen-vllm",
+      AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "true",
+      AI_OPENAI_COMPATIBLE_HEADERS_JSON: JSON.stringify({ "X-Tenant": "acme" }),
+      AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: JSON.stringify({ "api-version": "2024-01" }),
+    };
+
+    const firstModel = getAiModel(environment);
+    const secondModel = getAiModel(environment);
+
+    expect(firstModel).toEqual({ providerName: "openai-compatible", modelName: "Qwen/Qwen2.5-7B-Instruct" });
+    expect(secondModel).toBe(firstModel);
+    expect(mocks.createOpenAICompatible).toHaveBeenCalledWith({
+      name: "qwen-vllm",
+      baseURL: "http://vllm:8000/v1",
+      supportsStructuredOutputs: true,
+      apiKey: "vllm-api-key",
+      headers: { "X-Tenant": "acme" },
+      queryParams: { "api-version": "2024-01" },
+    });
+    expect(openaiCompatibleProvider).toHaveBeenCalledWith("Qwen/Qwen2.5-7B-Instruct");
+    expect(mocks.createOpenAICompatible).toHaveBeenCalledTimes(1);
+  });
+
+  test("creates an OpenAI-compatible model without an API key and defaults the provider name", () => {
+    const openaiCompatibleProvider = createMockProvider("openai-compatible");
+    mocks.createOpenAICompatible.mockReturnValue(openaiCompatibleProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+    });
+
+    expect(model).toEqual({ providerName: "openai-compatible", modelName: "Qwen/Qwen2.5-7B-Instruct" });
+    expect(mocks.createOpenAICompatible).toHaveBeenCalledWith({
+      name: "openai-compatible",
+      baseURL: "http://vllm:8000/v1",
+      supportsStructuredOutputs: false,
+    });
+    expect(openaiCompatibleProvider).toHaveBeenCalledWith("Qwen/Qwen2.5-7B-Instruct");
+  });
+
+  test("does not reuse a cached OpenAI-compatible model after the base URL changes", () => {
+    const firstProvider = createMockProvider("openai-compatible");
+    const secondProvider = createMockProvider("openai-compatible");
+    mocks.createOpenAICompatible.mockReturnValueOnce(firstProvider).mockReturnValueOnce(secondProvider);
+
+    const firstModel = getAiModel({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm-a:8000/v1",
+    });
+    const secondModel = getAiModel({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm-b:8000/v1",
+    });
+
+    expect(secondModel).not.toBe(firstModel);
+    expect(mocks.createOpenAICompatible).toHaveBeenCalledTimes(2);
+  });
+
   test("throws a helpful error when the active model is missing", () => {
     const getModel = (): ReturnType<typeof getAiModel> =>
       getAiModel({
-        AI_PROVIDER: "gcp",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+        AI_PROVIDER: "google",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
       });
 
     expect(getModel).toThrowError(AIConfigurationError);

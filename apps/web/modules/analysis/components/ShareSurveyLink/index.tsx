@@ -43,9 +43,12 @@ export const ShareSurveyLink = ({
     const previewUrl = new URL(surveyUrl);
 
     if (survey.singleUse?.enabled) {
-      const newId = await refreshSingleUseId();
-      if (newId) {
-        previewUrl.searchParams.set("suId", newId);
+      const singleUseLinkParams = await refreshSingleUseId();
+      if (singleUseLinkParams) {
+        previewUrl.searchParams.set("suId", singleUseLinkParams.suId);
+        if (singleUseLinkParams.suToken) {
+          previewUrl.searchParams.set("suToken", singleUseLinkParams.suToken);
+        }
       }
     }
 
@@ -60,13 +63,13 @@ export const ShareSurveyLink = ({
         key={surveyUrl}
         enforceSurveyUrlWidth={enforceSurveyUrlWidth}
       />
-      <div className="flex items-center justify-center space-x-2">
+      <div className="flex items-center justify-center gap-x-2">
         <LanguageDropdown survey={survey} setLanguage={handleLanguageChange} locale={locale} />
         <Button
           disabled={!surveyUrl}
           variant="secondary"
-          title={t("environments.surveys.copy_survey_link_to_clipboard")}
-          aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
+          title={t("workspace.surveys.copy_survey_link_to_clipboard")}
+          aria-label={t("workspace.surveys.copy_survey_link_to_clipboard")}
           onClick={() => {
             navigator.clipboard.writeText(surveyUrl);
             toast.success(t("common.copied_to_clipboard"));
@@ -75,8 +78,8 @@ export const ShareSurveyLink = ({
           <Copy />
         </Button>
         <Button
-          title={t("environments.surveys.preview_survey_in_a_new_tab")}
-          aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
+          title={t("workspace.surveys.preview_survey_in_a_new_tab")}
+          aria-label={t("workspace.surveys.preview_survey_in_a_new_tab")}
           disabled={!surveyUrl}
           onClick={async () => {
             const url = await getPreviewUrl();

@@ -13,9 +13,9 @@ import {
 } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
-import { type Result, type StorageError, StorageErrorCode, err, ok } from "../types/error";
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
+import { type Result, type StorageError, StorageErrorCode, err, ok } from "./types/error";
 
 /**
  * Get a signed URL for uploading a file to S3
@@ -191,7 +191,9 @@ export const getFileStream = async (fileKey: string): Promise<Result<FileStreamR
       contentLength: response.ContentLength ?? 0,
     });
   } catch (error) {
-    if ((error as { name?: string }).name === "NoSuchKey") {
+    const errName = (error as { name?: string }).name;
+    const httpStatusCode = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+    if (errName === "NoSuchKey" || errName === "NotFound" || httpStatusCode === 404) {
       return err({
         code: StorageErrorCode.FileNotFoundError,
       });

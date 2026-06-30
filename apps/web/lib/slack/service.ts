@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
@@ -55,10 +55,10 @@ export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIn
   return channels;
 };
 
-export const getSlackChannels = async (environmentId: string): Promise<TIntegrationItem[]> => {
+export const getSlackChannels = async (workspaceId: string): Promise<TIntegrationItem[]> => {
   let channels: TIntegrationItem[] = [];
   try {
-    const slackIntegration = await getIntegrationByType(environmentId, "slack");
+    const slackIntegration = await getIntegrationByType(workspaceId, "slack");
     if (slackIntegration && slackIntegration.config?.key) {
       channels = await fetchChannels(slackIntegration);
     }

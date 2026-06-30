@@ -35,7 +35,7 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
       return;
     }
     if (deleteTeamActionResponse?.data) {
-      toast.success(t("environments.settings.teams.team_deleted_successfully"));
+      toast.success(t("workspace.settings.teams.team_deleted_successfully"));
       onDelete?.();
       router.refresh();
     } else {
@@ -48,10 +48,10 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
 
   return (
     <>
-      <div className="flex flex-row items-baseline space-x-2">
+      <div className="flex flex-row items-baseline gap-x-2">
         <TooltipRenderer
           shouldRender={!isOwnerOrManager}
-          tooltipContent={t("environments.settings.teams.team_deletion_not_allowed")}
+          tooltipContent={t("workspace.settings.teams.team_deletion_not_allowed")}
           className="w-auto">
           <Button
             variant="destructive"
@@ -60,7 +60,7 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
             className="w-auto"
             disabled={!isOwnerOrManager}
             onClick={() => setIsDeleteDialogOpen(true)}>
-            {t("environments.settings.teams.delete_team")}
+            {t("workspace.settings.teams.delete_team")}
           </Button>
         </TooltipRenderer>
       </div>
@@ -70,7 +70,7 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
           open={isDeleteDialogOpen}
           setOpen={setIsDeleteDialogOpen}
           deleteWhat={t("common.team")}
-          text={t("environments.settings.teams.are_you_sure_you_want_to_delete_this_team")}
+          text={t("workspace.settings.teams.are_you_sure_you_want_to_delete_this_team")}
           onDelete={handleDeleteTeam}
           isDeleting={isDeleting}
         />

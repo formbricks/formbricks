@@ -42,7 +42,7 @@ export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilli
 
 // responses can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
-  projects: z.number().nullable(),
+  workspaces: z.number().nullable(),
   monthly: z.object({
     responses: z.number().nullable(),
   }),
@@ -53,7 +53,7 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
   limits: ZOrganizationBillingPlanLimits.default({
-    projects: 3,
+    workspaces: 3,
     monthly: {
       responses: 1500,
     },
@@ -86,7 +86,6 @@ export const ZOrganization = z.object({
   whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling,
   isAISmartToolsEnabled: z.boolean().prefault(false),
-  isAIDataAnalysisEnabled: z.boolean().prefault(false),
 });
 
 export const ZOrganizationCreateInput = z.object({
@@ -101,7 +100,6 @@ export const ZOrganizationUpdateInput = z.object({
   whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling.optional(),
   isAISmartToolsEnabled: z.boolean().optional(),
-  isAIDataAnalysisEnabled: z.boolean().optional(),
 });
 
 export type TOrganizationUpdateInput = z.infer<typeof ZOrganizationUpdateInput>;

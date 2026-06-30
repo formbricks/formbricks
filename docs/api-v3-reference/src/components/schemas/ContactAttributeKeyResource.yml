@@ -1,0 +1,41 @@
+type: object
+description: >
+  A workspace contact-attribute key. Use `key` as
+  `targeting.filters[].root.contactAttributeKey` on an app survey; `dataType` indicates which
+  operators apply (e.g. `number`/`date` attributes support arithmetic/date operators).
+required:
+  - id
+  - key
+  - name
+  - description
+  - type
+  - dataType
+properties:
+  id:
+    type: string
+    format: cuid2
+  key:
+    type: string
+    description: The attribute key used in targeting filters (e.g. `plan`, `role`).
+  name:
+    type:
+      - string
+      - "null"
+    description: Human-readable display name, or null.
+  description:
+    type:
+      - string
+      - "null"
+  type:
+    type: string
+    enum:
+      - default
+      - custom
+    description: Whether this is a built-in (`default`) or workspace-defined (`custom`) attribute.
+  dataType:
+    type: string
+    enum:
+      - string
+      - number
+      - date
+additionalProperties: false

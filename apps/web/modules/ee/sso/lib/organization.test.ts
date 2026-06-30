@@ -1,6 +1,6 @@
-import { Organization, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Organization, Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getFirstOrganization } from "./organization";
 
@@ -25,20 +25,9 @@ describe("getFirstOrganization", () => {
       id: "org-1",
       name: "Test Org",
       createdAt: new Date(),
-      whitelabel: true,
+      whitelabel: null,
       updatedAt: new Date(),
-      billing: {
-        usageCycleAnchor: new Date(),
-        stripeCustomerId: "cus_123",
-        limits: {
-          monthly: {
-            responses: 1000,
-          },
-          projects: 3,
-        },
-      },
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: false,
     };
     vi.mocked(prisma.organization.findFirst).mockResolvedValue(org);
     const result = await getFirstOrganization();

@@ -37,7 +37,7 @@ vi.mock("@formbricks/database", () => ({
 
 const contactId = "contact-1";
 const userId = "user-1";
-const environmentId = "env-1";
+const workspaceId = "workspace-1";
 
 const attributeKeys: TContactAttributeKey[] = [
   {
@@ -50,7 +50,7 @@ const attributeKeys: TContactAttributeKey[] = [
     description: null,
     type: "default",
     dataType: "string",
-    environmentId,
+    workspaceId: workspaceId,
   },
   {
     id: "key-2",
@@ -62,7 +62,7 @@ const attributeKeys: TContactAttributeKey[] = [
     description: null,
     type: "default",
     dataType: "string",
-    environmentId,
+    workspaceId: workspaceId,
   },
   {
     id: "key-3",
@@ -74,7 +74,7 @@ const attributeKeys: TContactAttributeKey[] = [
     description: null,
     type: "custom",
     dataType: "string",
-    environmentId,
+    workspaceId: workspaceId,
   },
 ];
 
@@ -96,7 +96,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.success).toBe(true);
     expect(result.messages).toBeUndefined();
@@ -110,7 +110,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -130,7 +130,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "default",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
@@ -140,7 +140,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", userId: "duplicate-user-id" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -161,7 +161,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "default",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
@@ -175,7 +175,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "duplicate@example.com", userId: "duplicate-user-id" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -195,7 +195,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { name: "John", email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(prisma.$transaction).toHaveBeenCalled();
 
     expect(result.success).toBe(true);
@@ -211,7 +211,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     // Include email to satisfy the "at least one of email or userId" requirement
     const attributes = { name: "John", email: "john@example.com", new_attr: "val" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(result.success).toBe(true);
     expect(result.messages?.[0]).toEqual(
       expect.objectContaining({
@@ -219,6 +219,30 @@ describe("updateAttributes", () => {
         params: expect.objectContaining({ count: "1" }),
       })
     );
+  });
+
+  test("skips creating reserved future default attributes", async () => {
+    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]);
+    vi.mocked(getContactAttributes).mockResolvedValue({ email: "jane@example.com" });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
+
+    const result = await updateAttributes(contactId, userId, workspaceId, {
+      email: "john@example.com",
+      user_id: "future-safe",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.errors).toContainEqual({
+      code: "reserved_attribute_keys",
+      params: {
+        issue:
+          "Reserved attribute key(s): user_id. These keys are reserved for the v5.1 safe-identifier default attribute migration and cannot be created as custom attributes.",
+      },
+    });
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
   });
 
   test("returns success with only email attribute", async () => {
@@ -229,7 +253,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { email: "updated@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     expect(result.success).toBe(true);
     expect(result.messages).toBeUndefined();
   });
@@ -250,7 +274,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 1 });
     const attributes = { name: "John", email: "john@example.com" };
     // Pass deleteRemovedAttributes: true to enable deletion behavior
-    const result = await updateAttributes(contactId, userId, environmentId, attributes, true);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes, true);
     // Only customAttr (key-3) should be deleted, not name (key-1) or email (key-2)
     expect(prisma.contactAttribute.deleteMany).toHaveBeenCalledWith({
       where: {
@@ -278,7 +302,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
     const attributes = { name: "John", email: "john@example.com" };
     // Default behavior (deleteRemovedAttributes: false) should NOT delete existing attributes
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
     // deleteMany should NOT be called since we're merging, not replacing
     expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
     expect(result.success).toBe(true);
@@ -301,7 +325,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "default",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
       {
         id: "key-4",
@@ -313,7 +337,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "default",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
       {
         id: "key-5",
@@ -325,7 +349,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "default",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
       {
         id: "key-3",
@@ -337,7 +361,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "custom",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithDefaults);
@@ -352,7 +376,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     const attributes = { customAttr: "value" };
     // Pass deleteRemovedAttributes: true to test that default attributes are still preserved
-    const result = await updateAttributes(contactId, userId, environmentId, attributes, true);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes, true);
     // Should not delete default attributes (email, userId, firstName) - deleteMany should not be called
     // since all current attributes are default attributes
     expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
@@ -369,7 +393,7 @@ describe("updateAttributes", () => {
 
     // Attempt to clear email by submitting empty string
     const attributes = { name: "John", email: "" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
 
     // Verify that the transaction was called with the preserved email
     expect(prisma.$transaction).toHaveBeenCalled();
@@ -392,7 +416,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "default",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
@@ -404,7 +428,7 @@ describe("updateAttributes", () => {
 
     // Clear userId by submitting empty string - this should be allowed
     const attributes = { name: "John", userId: "" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
 
     // Verify that the transaction was called
     expect(prisma.$transaction).toHaveBeenCalled();
@@ -427,7 +451,7 @@ describe("updateAttributes", () => {
         description: null,
         type: "default",
         dataType: "string",
-        environmentId,
+        workspaceId: workspaceId,
       },
     ];
     vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithBoth);
@@ -443,7 +467,7 @@ describe("updateAttributes", () => {
 
     // Attempt to clear both email and userId
     const attributes = { name: "John", email: "", userId: "" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
 
     expect(result.success).toBe(true);
     expect(result.messages).toContainEqual({ code: "email_or_userid_required", params: {} });
@@ -458,7 +482,7 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
 
     const attributes = { name: true, email: "john@example.com" };
-    const result = await updateAttributes(contactId, userId, environmentId, attributes);
+    const result = await updateAttributes(contactId, userId, workspaceId, attributes);
 
     expect(result.success).toBe(true);
     expect(prisma.$transaction).toHaveBeenCalled();

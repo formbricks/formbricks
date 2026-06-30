@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export interface PublishedLinkSurvey {
@@ -10,10 +10,10 @@ export interface PublishedLinkSurvey {
 }
 
 export const getPublishedLinkSurveys = reactCache(
-  async (environmentId: string): Promise<PublishedLinkSurvey[]> => {
+  async (workspaceId: string): Promise<PublishedLinkSurvey[]> => {
     try {
       const surveys = await prisma.survey.findMany({
-        where: { environmentId, status: "inProgress", type: "link" },
+        where: { workspaceId, status: "inProgress", type: "link" },
         select: {
           id: true,
           name: true,

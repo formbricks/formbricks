@@ -43,7 +43,7 @@ export const exampleData = {
 
   embedSurveyPreviewEmail: {
     html: embedSurveyPreviewEmailHtml,
-    environmentId: "clxyz123456789",
+    workspaceId: "workspace-123",
   },
 
   responseFinishedEmail: {
@@ -114,7 +114,7 @@ export const exampleData = {
       displayId: null,
     } as unknown as TResponse,
     WEBAPP_URL: "https://app.formbricks.com",
-    environmentId: "env-123",
+    workspaceId: "workspace-123",
     organization: {
       id: "org-123",
       name: "Acme Corporation",
@@ -135,7 +135,6 @@ export const exampleData = {
         },
       },
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: false,
     } as unknown as TOrganization,
   },
 

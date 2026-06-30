@@ -66,6 +66,8 @@ import {
 } from "../lib/preview-email-template-styles";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
+const EMAIL_RATING_SMILEY_SIZE = 40;
+
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
   surveyUrl: string;
@@ -108,6 +110,8 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
         range={range}
         addColors={isColorCodingEnabled}
         baseUrl={WEBAPP_URL}
+        size={EMAIL_RATING_SMILEY_SIZE}
+        centered
       />
     );
   }
@@ -434,6 +438,7 @@ export async function PreviewEmailTemplate({
               <PreviewScaleLabels
                 defaultLanguageCode={defaultLanguageCode}
                 lowerLabel={firstQuestion.lowerLabel}
+                optionCount={npsOptionCount}
                 styleTokens={styleTokens}
                 upperLabel={firstQuestion.upperLabel}
               />
@@ -470,7 +475,9 @@ export async function PreviewEmailTemplate({
         </PreviewQuestionCard>
       );
     }
-    case TSurveyElementTypeEnum.Rating: {
+    case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES: {
       const isNumberRating = firstQuestion.scale === "number";
       let ratingOptionHeight: string | undefined;
 
@@ -498,7 +505,7 @@ export async function PreviewEmailTemplate({
                             : undefined,
                         height: ratingOptionHeight,
                         isConnected: isNumberRating,
-                        isTransparent: firstQuestion.scale === "star",
+                        isTransparent: firstQuestion.scale === "star" || firstQuestion.scale === "smiley",
                         optionCount: firstQuestion.range,
                         optionIndex: i,
                       })}>
@@ -515,6 +522,7 @@ export async function PreviewEmailTemplate({
               <PreviewScaleLabels
                 defaultLanguageCode={defaultLanguageCode}
                 lowerLabel={firstQuestion.lowerLabel}
+                optionCount={firstQuestion.range}
                 styleTokens={styleTokens}
                 upperLabel={firstQuestion.upperLabel}
               />
@@ -565,7 +573,7 @@ export async function PreviewEmailTemplate({
           <Section className="mx-0 mt-4">
             {firstQuestion.choices.map((choice) => (
               <Link
-                className="rounded-custom mb-3 mr-3 inline-block h-[150px] w-[250px]"
+                className="rounded-custom mr-3 mb-3 inline-block h-[150px] w-[250px]"
                 href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choice.id)}
                 key={choice.id}
                 target={PREVIEW_LINK_TARGET}>
@@ -611,11 +619,11 @@ export async function PreviewEmailTemplate({
           <Container className="mx-0">
             <Section className="w-full table-auto">
               <Row>
-                <Column className="w-40 break-words px-4 py-2" />
+                <Column className="w-40 px-4 py-2 wrap-break-word" />
                 {firstQuestion.columns.map((column) => {
                   return (
                     <Column
-                      className="text-question-color max-w-40 break-words px-4 py-2 text-center"
+                      className="text-question-color max-w-40 px-4 py-2 text-center wrap-break-word"
                       key={column.id}
                       style={{ ...getLightModeTextStyle(styleTokens), textAlign: "center" }}>
                       {getLocalizedValue(column.label, "default")}
@@ -635,7 +643,9 @@ export async function PreviewEmailTemplate({
                           }
                         : undefined
                     }>
-                    <Column className="w-40 break-words px-4 py-2" style={getLightModeTextStyle(styleTokens)}>
+                    <Column
+                      className="w-40 px-4 py-2 wrap-break-word"
+                      style={getLightModeTextStyle(styleTokens)}>
                       {getLocalizedValue(row.label, "default")}
                     </Column>
                     {firstQuestion.columns.map((column) => {
@@ -870,7 +880,7 @@ function PreviewFieldList({
       {fields.map((field) => (
         <Section className="mt-3 w-full" key={field.id}>
           <Text
-            className="text-question-color font-survey m-0 mb-2 text-sm font-normal leading-6"
+            className="text-question-color font-survey m-0 mb-2 text-sm leading-6 font-normal"
             style={getFieldLabelStyle(styleTokens)}>
             {field.label}
           </Text>
@@ -912,32 +922,35 @@ function PreviewScaleOptionColumn({
 function PreviewScaleLabels({
   defaultLanguageCode,
   lowerLabel,
+  optionCount,
   styleTokens,
   upperLabel,
 }: Readonly<{
   defaultLanguageCode: string;
   lowerLabel: Parameters<typeof getLocalizedValue>[0];
+  optionCount: number;
   styleTokens: PreviewEmailStyleTokens;
   upperLabel: Parameters<typeof getLocalizedValue>[0];
 }>): React.JSX.Element {
+  const columnStyle = getScaleColumnStyle(optionCount);
+  const labelTextStyle = { ...getHelperLabelTextStyle(styleTokens), textAlign: "center" as const };
+
   return (
     <Section className="mt-2 w-full">
       <Row>
-        <Column>
-          <Text className="m-0 text-xs leading-[18px]" style={getHelperLabelTextStyle(styleTokens)}>
-            {getLocalizedValue(lowerLabel, defaultLanguageCode)}
-          </Text>
-        </Column>
-        <Column style={{ textAlign: "right" }}>
-          <Text
-            className="m-0 text-xs leading-[18px]"
-            style={{
-              ...getHelperLabelTextStyle(styleTokens),
-              textAlign: "right",
-            }}>
-            {getLocalizedValue(upperLabel, defaultLanguageCode)}
-          </Text>
-        </Column>
+        {Array.from({ length: optionCount }, (_, i) => {
+          const isFirst = i === 0;
+          const isLast = i === optionCount - 1;
+          return (
+            <Column key={i} style={{ ...columnStyle, textAlign: "center" }}>
+              {isFirst || isLast ? (
+                <Text className="m-0 text-xs leading-[18px]" style={labelTextStyle}>
+                  {getLocalizedValue(isFirst ? lowerLabel : upperLabel, defaultLanguageCode)}
+                </Text>
+              ) : null}
+            </Column>
+          );
+        })}
       </Row>
     </Section>
   );

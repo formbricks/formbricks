@@ -60,6 +60,8 @@ const nextConfig = {
     "@opentelemetry/sdk-trace-base",
     "@opentelemetry/semantic-conventions",
     "@prisma/instrumentation",
+    "bullmq",
+    "ioredis",
     "pino",
     "pino-pretty",
     "pino-opentelemetry-transport",
@@ -79,7 +81,9 @@ const nextConfig = {
     ],
   },
   turbopack: {},
-  experimental: {},
+  experimental: {
+    proxyClientMaxBodySize: "16mb",
+  },
   transpilePackages: ["@formbricks/database"],
   images: {
     // Optimize image processing to reduce CPU time and prevent timeouts
@@ -145,11 +149,6 @@ const nextConfig = {
         destination: "/api/v1/management/me",
         permanent: true,
       },
-      {
-        source: "/api/v1/me",
-        destination: "/api/v1/management/me",
-        permanent: true,
-      },
       // Redirect old project URLs to new workspace URLs
       {
         source: "/environments/:environmentId/project/:path*",
@@ -165,6 +164,30 @@ const nextConfig = {
         source: "/projects/:projectId",
         destination: "/workspaces/:projectId",
         permanent: true,
+      },
+      // Redirect old workspace-scoped account settings to the account-scoped routes.
+      {
+        source: "/workspaces/:workspaceId/settings/account",
+        destination: "/account/settings/profile",
+        permanent: true,
+      },
+      {
+        source: "/workspaces/:workspaceId/settings/account/:path*",
+        destination: "/account/settings/:path*",
+        permanent: true,
+      },
+      // Old workspace-scoped org settings need workspaceId -> organizationId resolution, so they go
+      // through a server route shim (not a static redirect). Non-permanent: the target is resolved
+      // at request time.
+      {
+        source: "/workspaces/:workspaceId/settings/organization",
+        destination: "/legacy-organization-settings/:workspaceId",
+        permanent: false,
+      },
+      {
+        source: "/workspaces/:workspaceId/settings/organization/:path*",
+        destination: "/legacy-organization-settings/:workspaceId/:path*",
+        permanent: false,
       },
     ];
   },
@@ -445,40 +468,8 @@ const nextConfig = {
     return [
       ...posthogRewrites,
       {
-        source: "/api/packages/website",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/app",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/js",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/surveys",
-        destination: "/js/surveys.umd.cjs",
-      },
-      {
-        source: "/api/v1/client/:environmentId/website/environment",
-        destination: "/api/v1/client/:environmentId/environment",
-      },
-      {
-        source: "/api/v1/client/:environmentId/app/environment",
-        destination: "/api/v1/client/:environmentId/environment",
-      },
-      {
-        source: "/api/v1/management/people/:id*",
-        destination: "/api/v1/management/contacts/:id*",
-      },
-      {
-        source: "/api/v1/management/attribute-classes",
-        destination: "/api/v1/management/contact-attribute-keys",
-      },
-      {
-        source: "/api/v1/management/attribute-classes/:id*",
-        destination: "/api/v1/management/contact-attribute-keys/:id*",
+        source: "/api/v2/organizations/:organizationId/project-teams",
+        destination: "/api/v2/organizations/:organizationId/workspace-teams",
       },
     ];
   },

@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { deleteTeam, getTeam, updateTeam } from "../teams";
 
@@ -19,7 +19,7 @@ const mockTeam = {
   id: "team123",
   organizationId: "org456",
   name: "Test Team",
-  projectTeams: [{ projectId: "proj1" }, { projectId: "proj2" }],
+  workspaceTeams: [{ workspaceId: "proj1" }, { workspaceId: "proj2" }],
 };
 
 describe("Teams Lib", () => {
@@ -64,7 +64,7 @@ describe("Teams Lib", () => {
       const result = await deleteTeam("org456", "team123");
       expect(prisma.team.delete).toHaveBeenCalledWith({
         where: { id: "team123", organizationId: "org456" },
-        include: { projectTeams: { select: { projectId: true } } },
+        include: { workspaceTeams: { select: { workspaceId: true } } },
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -110,7 +110,7 @@ describe("Teams Lib", () => {
       expect(prisma.team.update).toHaveBeenCalledWith({
         where: { id: "team123", organizationId: "org456" },
         data: updateInput,
-        include: { projectTeams: { select: { projectId: true } } },
+        include: { workspaceTeams: { select: { workspaceId: true } } },
       });
       expect(result.ok).toBe(true);
       if (result.ok) {

@@ -1,7 +1,7 @@
-import { Prisma, Webhook } from "@prisma/client";
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma, Webhook } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { deleteWebhook, getWebhook } from "./webhook";
 
@@ -38,7 +38,7 @@ describe("deleteWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
       secret: null,
@@ -53,6 +53,9 @@ describe("deleteWebhook", () => {
       where: {
         id: "test-webhook-id",
       },
+      omit: {
+        secret: true,
+      },
     });
   });
 
@@ -64,7 +67,7 @@ describe("deleteWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
       secret: null,
@@ -78,6 +81,9 @@ describe("deleteWebhook", () => {
     expect(prisma.webhook.delete).toHaveBeenCalledWith({
       where: {
         id: "test-webhook-id",
+      },
+      omit: {
+        secret: true,
       },
     });
   });
@@ -136,7 +142,7 @@ describe("getWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
       secret: null,
@@ -151,6 +157,9 @@ describe("getWebhook", () => {
       where: {
         id: "test-webhook-id",
       },
+      omit: {
+        secret: true,
+      },
     });
   });
 
@@ -163,6 +172,9 @@ describe("getWebhook", () => {
     expect(prisma.webhook.findUnique).toHaveBeenCalledWith({
       where: {
         id: "non-existent-id",
+      },
+      omit: {
+        secret: true,
       },
     });
   });
@@ -203,7 +215,7 @@ describe("getWebhook", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       source: "user",
-      environmentId: "test-environment-id",
+      workspaceId: "test-workspace-id",
       triggers: [],
       surveyIds: [],
       secret: null,
@@ -217,6 +229,9 @@ describe("getWebhook", () => {
     expect(prisma.webhook.findUnique).toHaveBeenCalledWith({
       where: {
         id: "test-webhook-id",
+      },
+      omit: {
+        secret: true,
       },
     });
   });

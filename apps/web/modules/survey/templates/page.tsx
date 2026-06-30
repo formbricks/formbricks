@@ -1,42 +1,44 @@
 import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
+import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TemplateContainerWithPreview } from "./components/template-container";
 
 interface SurveyTemplateProps {
   params: Promise<{
-    environmentId: string;
+    workspaceId: string;
   }>;
 }
 
-export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
+export const SurveyTemplatesPage = async (props: Readonly<SurveyTemplateProps>) => {
   const t = await getTranslate();
   const params = await props.params;
-  const environmentId = params.environmentId;
+  const workspaceId = params.workspaceId;
 
-  const { session, environment, isReadOnly } = await getEnvironmentAuth(environmentId);
+  const { session, isReadOnly } = await getWorkspaceAuth(workspaceId);
 
-  const project = await getProjectWithTeamIdsByEnvironmentId(environmentId);
+  const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
-  if (!project) {
+  if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   if (isReadOnly) {
-    return redirect(`/environments/${environment.id}/surveys`);
+    return redirect(`/workspaces/${workspace.id}/surveys`);
   }
 
   const publicDomain = getPublicDomain();
+  const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
 
   return (
     <TemplateContainerWithPreview
-      userId={session.user.id}
-      environment={environment}
-      project={project}
+      workspace={workspace}
       publicDomain={publicDomain}
+      defaultLanguage={locale}
     />
   );
 };

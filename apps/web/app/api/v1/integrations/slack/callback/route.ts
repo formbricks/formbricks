@@ -7,10 +7,15 @@ import {
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, WEBAPP_URL } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import {
+  IntegrationOAuthStateError,
+  consumeIntegrationOAuthState,
+  getSafeOAuthCallbackError,
+} from "@/lib/oauth/integration-state";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -20,26 +25,55 @@ export const GET = withV1ApiWrapper({
 
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const state = queryParams.get("state");
     const code = queryParams.get("code");
     const error = queryParams.get("error");
 
-    if (!environmentId) {
+    let oauthState;
+    try {
+      oauthState = await consumeIntegrationOAuthState({
+        provider: "slack",
+        userId: authentication.user.id,
+        state,
+      });
+    } catch (err) {
+      if (err instanceof IntegrationOAuthStateError) {
+        return {
+          response: responses.badRequestResponse("Invalid OAuth state"),
+        };
+      }
+
+      throw err;
+    }
+
+    const workspaceId = oauthState.workspaceId;
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("Invalid environmentId"),
+        response: responses.badRequestResponse("Invalid workspaceId"),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
 
+    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
+    const redirectUrl = new URL(`${basePath}/integrations/slack`, WEBAPP_URL);
+    const safeError = getSafeOAuthCallbackError(error);
+
     if (code && typeof code !== "string") {
       return {
         response: responses.badRequestResponse("`code` must be a string"),
+      };
+    }
+
+    if (!code && safeError) {
+      redirectUrl.searchParams.set("error", safeError);
+      return {
+        response: Response.redirect(redirectUrl),
       };
     }
 
@@ -91,7 +125,7 @@ export const GET = withV1ApiWrapper({
         team: data.team,
       };
 
-      const slackIntegration = await getIntegrationByType(environmentId, "slack");
+      const slackIntegration = await getIntegrationByType(workspaceId, "slack");
 
       const slackConfiguration: TIntegrationSlackConfig = {
         data: (slackIntegration?.config.data as TIntegrationSlackConfigData[]) ?? [],
@@ -100,43 +134,32 @@ export const GET = withV1ApiWrapper({
 
       const integration = {
         type: "slack" as "slack",
-        environment: environmentId,
         config: slackConfiguration,
       };
 
-      const result = await createOrUpdateIntegration(environmentId, integration);
+      const result = await createOrUpdateIntegration(workspaceId, integration);
 
       if (result) {
         try {
-          const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-          const projectId = await getProjectIdFromEnvironmentId(environmentId);
+          const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
           capturePostHogEvent(
             authentication.user.id,
             "integration_connected",
             {
               integration_type: "slack",
               organization_id: organizationId,
-              workspace_id: projectId,
-              environment_id: environmentId,
+              workspace_id: workspaceId,
             },
-            { organizationId, workspaceId: projectId }
+            { organizationId, workspaceId }
           );
         } catch (err) {
           logger.error({ error: err }, "Failed to capture PostHog integration_connected event for slack");
         }
 
         return {
-          response: Response.redirect(
-            `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack`
-          ),
+          response: Response.redirect(redirectUrl),
         };
       }
-    } else if (error) {
-      return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack?error=${error}`
-        ),
-      };
     }
 
     return {

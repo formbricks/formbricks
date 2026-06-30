@@ -234,5 +234,7 @@ const NATIVE_NAMES: Record<Iso639Code, string> = {
  * Falls back to the raw code if the code is not in the map.
  */
 export function getLanguageDisplayName(code: string): string {
-  return NATIVE_NAMES[code as Iso639Code] ?? code;
+  const name = NATIVE_NAMES[code as Iso639Code] ?? code;
+  // Capitalize the first letter so names like "español" display as "Español"
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }

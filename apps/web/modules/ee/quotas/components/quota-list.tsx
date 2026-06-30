@@ -31,7 +31,7 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
           <div className="text-left">
             <Label className="text-sm font-medium text-slate-800">{quota.name}</Label>
             <div className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.quotas.limited_to_x_responses", {
+              {t("workspace.surveys.edit.quotas.limited_to_x_responses", {
                 limit: quota.limit.toLocaleString(),
               })}
             </div>
@@ -46,8 +46,8 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
                   e.stopPropagation();
                   deleteQuota(quota);
                 }}
-                className="h-8 w-8 p-0 text-slate-500">
-                <Trash2Icon className="h-4 w-4" />
+                className="size-8 p-0 text-slate-500">
+                <Trash2Icon className="size-4" />
               </Button>
             </TooltipRenderer>
             <TooltipRenderer tooltipContent={t("common.duplicate")}>
@@ -58,8 +58,8 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
                   e.stopPropagation();
                   duplicateQuota(quota);
                 }}
-                className="h-8 w-8 p-0 text-slate-500">
-                <CopyIcon className="h-4 w-4" />
+                className="size-8 p-0 text-slate-500">
+                <CopyIcon className="size-4" />
               </Button>
             </TooltipRenderer>
           </div>

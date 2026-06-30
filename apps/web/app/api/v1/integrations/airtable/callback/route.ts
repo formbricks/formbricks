@@ -4,10 +4,15 @@ import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import {
+  IntegrationOAuthStateError,
+  consumeIntegrationOAuthState,
+  getSafeOAuthCallbackError,
+} from "@/lib/oauth/integration-state";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -21,6 +26,97 @@ const getEmail = async (token: string) => {
   return z.string().parse(res_?.email);
 };
 
+const getSanitizedAirtableOAuthError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return { message: "Unknown Airtable OAuth callback error" };
+  }
+
+  const status = (error as { status?: unknown }).status;
+
+  return {
+    message: error.message,
+    name: error.name,
+    ...(typeof status === "number" ? { status } : {}),
+  };
+};
+
+const getAirtableOAuthState = async (state: string | null, userId: string) => {
+  try {
+    return await consumeIntegrationOAuthState({
+      provider: "airtable",
+      userId,
+      state,
+    });
+  } catch (err) {
+    if (err instanceof IntegrationOAuthStateError) {
+      return null;
+    }
+
+    throw err;
+  }
+};
+
+const captureAirtableConnectedEvent = async (userId: string, workspaceId: string) => {
+  try {
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    capturePostHogEvent(
+      userId,
+      "integration_connected",
+      {
+        integration_type: "airtable",
+        organization_id: organizationId,
+        workspace_id: workspaceId,
+      },
+      { organizationId, workspaceId }
+    );
+  } catch (err) {
+    logger.error({ error: err }, "Failed to capture PostHog integration_connected event for airtable");
+  }
+};
+
+const createAirtableIntegration = async ({
+  clientId,
+  code,
+  codeVerifier,
+  redirectUri,
+  workspaceId,
+}: {
+  clientId: string;
+  code: string;
+  codeVerifier: string;
+  redirectUri: string;
+  workspaceId: string;
+}) => {
+  const key = await fetchAirtableAuthToken({
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: redirectUri,
+    client_id: clientId,
+    code_verifier: codeVerifier,
+  });
+
+  if (!key) {
+    return responses.notFoundResponse("airtable auth token", key);
+  }
+
+  const email = await getEmail(key.access_token);
+
+  // Preserve existing integration data (survey-to-table mappings) when re-authorizing
+  const existingIntegration = await getIntegrationByType(workspaceId, "airtable");
+  const existingData = existingIntegration?.config?.data ?? [];
+
+  await createOrUpdateIntegration(workspaceId, {
+    type: "airtable" as const,
+    config: {
+      key,
+      data: existingData,
+      email,
+    },
+  });
+
+  return null;
+};
+
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
     if (!authentication || !("user" in authentication)) {
@@ -29,12 +125,40 @@ export const GET = withV1ApiWrapper({
 
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const state = queryParams.get("state");
     const code = queryParams.get("code");
+    const error = queryParams.get("error");
 
-    if (!environmentId) {
+    const oauthState = await getAirtableOAuthState(state, authentication.user.id);
+    if (!oauthState) {
       return {
-        response: responses.badRequestResponse("Invalid environmentId"),
+        response: responses.badRequestResponse("Invalid OAuth state"),
+      };
+    }
+
+    const workspaceId = oauthState.workspaceId;
+    const codeVerifier = oauthState.pkceCodeVerifier;
+    if (!workspaceId || !codeVerifier) {
+      return {
+        response: responses.badRequestResponse("Invalid OAuth state"),
+      };
+    }
+
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
+      return {
+        response: responses.unauthorizedResponse(),
+      };
+    }
+
+    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
+    const redirectUrl = new URL(`${basePath}/integrations/airtable`, WEBAPP_URL);
+    const safeError = getSafeOAuthCallbackError(error);
+
+    if (!code && safeError) {
+      redirectUrl.searchParams.set("error", safeError);
+      return {
+        response: Response.redirect(redirectUrl),
       };
     }
 
@@ -43,85 +167,40 @@ export const GET = withV1ApiWrapper({
         response: responses.badRequestResponse("`code` is missing"),
       };
     }
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
-      return {
-        response: responses.unauthorizedResponse(),
-      };
-    }
 
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
-    const code_verifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
-      "base64"
-    );
 
     if (!client_id)
       return {
         response: responses.internalServerErrorResponse("Airtable client id is missing"),
       };
 
-    const formData = {
-      grant_type: "authorization_code",
-      code,
-      redirect_uri,
-      client_id,
-      code_verifier,
-    };
-
     try {
-      const key = await fetchAirtableAuthToken(formData);
-      if (!key) {
-        return {
-          response: responses.notFoundResponse("airtable auth token", key),
-        };
+      const integrationErrorResponse = await createAirtableIntegration({
+        clientId: client_id,
+        code,
+        codeVerifier,
+        redirectUri: redirect_uri,
+        workspaceId,
+      });
+
+      if (integrationErrorResponse) {
+        return { response: integrationErrorResponse };
       }
-      const email = await getEmail(key.access_token);
 
-      // Preserve existing integration data (survey-to-table mappings) when re-authorizing
-      const existingIntegration = await getIntegrationByType(environmentId, "airtable");
-      const existingData = existingIntegration?.config?.data ?? [];
-
-      const airtableIntegrationInput = {
-        type: "airtable" as "airtable",
-        environment: environmentId,
-        config: {
-          key,
-          data: existingData,
-          email,
-        },
-      };
-      await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
-
-      try {
-        const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-        const projectId = await getProjectIdFromEnvironmentId(environmentId);
-        capturePostHogEvent(
-          authentication.user.id,
-          "integration_connected",
-          {
-            integration_type: "airtable",
-            organization_id: organizationId,
-            workspace_id: projectId,
-            environment_id: environmentId,
-          },
-          { organizationId, workspaceId: projectId }
-        );
-      } catch (err) {
-        logger.error({ error: err }, "Failed to capture PostHog integration_connected event for airtable");
-      }
+      await captureAirtableConnectedEvent(authentication.user.id, workspaceId);
 
       return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/airtable`
-        ),
+        response: Response.redirect(redirectUrl),
       };
     } catch (error) {
-      logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
+      logger.error(
+        { error: getSanitizedAirtableOAuthError(error) },
+        "Error in GET /api/v1/integrations/airtable/callback"
+      );
       return {
-        response: responses.internalServerErrorResponse(
-          error instanceof Error ? error.message : String(error)
-        ),
+        response: responses.internalServerErrorResponse("Unable to complete Airtable OAuth flow"),
       };
     }
   },

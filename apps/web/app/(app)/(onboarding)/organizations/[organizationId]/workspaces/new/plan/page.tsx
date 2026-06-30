@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { TCloudBillingPlan } from "@formbricks/types/organizations";
+import { getOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
+import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { SelectPlanOnboarding } from "./components/select-plan-onboarding";
@@ -17,13 +20,18 @@ const Page = async (props: PlanPageProps) => {
   const params = await props.params;
 
   if (!IS_FORMBRICKS_CLOUD) {
-    return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
+    return redirect(`/organizations/${params.organizationId}/workspaces/new/survey`);
   }
 
   const { session } = await getOrganizationAuth(params.organizationId);
 
   if (!session?.user) {
     return redirect(`/auth/login`);
+  }
+
+  const workspace = await getOnboardingWorkspace(session.user.id, params.organizationId);
+  if (workspace) {
+    await redirectIfOnboardingComplete(workspace.id);
   }
 
   // Users with an existing paid/trial subscription should not be shown the trial page.
@@ -33,10 +41,31 @@ const Page = async (props: PlanPageProps) => {
   const hasExistingSubscription = currentPlan !== undefined && PAID_PLANS.has(currentPlan);
 
   if (hasExistingSubscription) {
-    return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
+    return redirect(`/organizations/${params.organizationId}/workspaces/new/survey`);
   }
 
-  return <SelectPlanOnboarding organizationId={params.organizationId} />;
+  const [featureFlagValue, ctaFlagValue] = await Promise.all([
+    getPostHogFeatureFlag(session.user.id, "a-b_onboarding_trial-conversion-screen-feature-copy", {
+      organizationId: params.organizationId,
+    }),
+    getPostHogFeatureFlag(session.user.id, "a-b_onboarding_trial-conversion-screen-cta", {
+      organizationId: params.organizationId,
+    }),
+  ]);
+
+  const featureVariant = featureFlagValue === "variant_b" ? "variant_b" : "control";
+  const ctaVariant =
+    ctaFlagValue === "variant_b" || ctaFlagValue === "variant_c" || ctaFlagValue === "variant_d"
+      ? ctaFlagValue
+      : "control";
+
+  return (
+    <SelectPlanOnboarding
+      organizationId={params.organizationId}
+      featureVariant={featureVariant}
+      ctaVariant={ctaVariant}
+    />
+  );
 };
 
 export default Page;

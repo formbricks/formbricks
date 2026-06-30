@@ -9,7 +9,7 @@ describe("promises utilities", () => {
     const promise = delay(delayTime);
 
     vi.advanceTimersByTime(delayTime);
-    await promise;
+    await expect(promise).resolves.toBeUndefined();
 
     vi.useRealTimers();
   });

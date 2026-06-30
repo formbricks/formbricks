@@ -19,7 +19,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
         type={type}
         dir={dir}
         data-slot="input"
-        style={{ fontSize: "var(--fb-input-font-size)" }}
         className={cn(
           // Layout and behavior
           "flex min-w-0 border transition-[color,box-shadow] outline-none",
@@ -27,7 +26,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
           "w-input min-h-[var(--fb-input-height)]",
           "bg-input-bg border-input-border rounded-input",
           "font-input font-input-weight",
-          "text-input-text",
+          "text-input-text [font-size:var(--fb-input-font-size)]",
           "px-input-x py-input-y",
           "shadow-input",
           // Placeholder styling

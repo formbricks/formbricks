@@ -1,4 +1,4 @@
-import { Response, Survey } from "@prisma/client";
+import { Response, Survey } from "@formbricks/database/prisma";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const responseId = "goy9hd7uautij04aosslsplb";
@@ -25,7 +25,8 @@ export const response: Response = {
   ...responseInput,
 };
 
-export const survey: Pick<Survey, "questions" | "environmentId" | "blocks"> = {
+export const survey: Pick<Survey, "questions" | "blocks" | "workspaceId"> = {
+  workspaceId: "ws_mock_workspace_id",
   questions: [
     {
       id: "ggaw04zw7gx7uxodk5da7if8",
@@ -36,5 +37,4 @@ export const survey: Pick<Survey, "questions" | "environmentId" | "blocks"> = {
     },
   ],
   blocks: [],
-  environmentId: "z5t8e52wy6xvi61ubebs2e4i",
 };

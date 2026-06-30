@@ -1,4 +1,4 @@
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
@@ -26,7 +26,7 @@ export const isConditionGroup = (condition: TCondition): condition is TCondition
 };
 
 export const evaluateLogic = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
@@ -48,7 +48,7 @@ export const evaluateLogic = (
 };
 
 export const performActions = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TJsWorkspaceStateSurvey,
   actions: TSurveyBlockLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
@@ -82,7 +82,7 @@ export const performActions = (
 };
 
 const getLeftOperandValue = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   leftOperand: TSingleCondition["leftOperand"],
@@ -181,7 +181,7 @@ const getLeftOperandValue = (
 };
 
 const getRightOperandValue = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   rightOperand: TSingleCondition["rightOperand"]
@@ -204,7 +204,7 @@ const getRightOperandValue = (
 };
 
 const evaluateSingleCondition = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   condition: TSingleCondition,
@@ -448,7 +448,7 @@ const evaluateSingleCondition = (
 };
 
 const performCalculation = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate,
   data: TResponseData,
   calculations: Record<string, number | string>

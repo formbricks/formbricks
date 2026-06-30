@@ -26,7 +26,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
   return (
     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-        <div className="my-1 flex items-center space-x-2">
+        <div className="my-1 flex items-center gap-x-2">
           <label
             htmlFor="allSurveys"
             className={`flex items-center ${selectedAllSurveys ? "font-semibold" : ""} ${
@@ -41,13 +41,11 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
               onCheckedChange={onSelectAllSurveys}
               disabled={!allowChanges}
             />
-            <span className="ml-2">
-              {t("environments.integrations.webhooks.all_current_and_new_surveys")}
-            </span>
+            <span className="ml-2">{t("workspace.integrations.webhooks.all_current_and_new_surveys")}</span>
           </label>
         </div>
         {surveys.map((survey) => (
-          <div key={survey.id} className="my-1 flex items-center space-x-2">
+          <div key={survey.id} className="my-1 flex items-center gap-x-2">
             <label
               htmlFor={survey.id}
               className={`flex items-center ${

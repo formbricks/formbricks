@@ -3,11 +3,12 @@ import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { hasOrganizationAccess } from "@/lib/auth";
-import { getEnvironments } from "@/lib/environment/service";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getUserProjects } from "@/lib/project/service";
+import { getUserWorkspaces } from "@/lib/workspace/service";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 
 export const GET = async (_: Request, context: { params: Promise<{ organizationId: string }> }) => {
   const params = await context?.params;
@@ -22,20 +23,17 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  // redirect to first project's production environment
-  const projects = await getUserProjects(session.user.id, organizationId);
-  if (projects.length === 0) {
+  // redirect to first workspace
+  const workspaces = await getUserWorkspaces(session.user.id, organizationId);
+  if (workspaces.length === 0) {
     return redirect(`/organizations/${organizationId}/landing`);
   }
 
-  const firstProject = projects[0];
-  const environments = await getEnvironments(firstProject.id);
-  const prodEnvironment = environments.find((e) => e.type === "production");
-  if (!prodEnvironment) return notFound();
+  const firstWorkspace = workspaces[0];
 
   if (isBilling) {
-    return redirect(`/environments/${prodEnvironment.id}/settings/billing`);
+    return redirect(getOrganizationBillingPath(organizationId, IS_FORMBRICKS_CLOUD));
   }
 
-  return redirect(`/environments/${prodEnvironment.id}/`);
+  return redirect(`/workspaces/${firstWorkspace.id}/`);
 };

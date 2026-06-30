@@ -439,15 +439,19 @@ const transformBlockLogicToQuestionLogic = (
   });
 };
 
+const applyCtaButtonLabel = (element: Record<string, unknown>): void => {
+  if (element.type === "cta" && element.ctaButtonLabel) {
+    element.buttonLabel = element.ctaButtonLabel;
+  }
+};
+
 const applyBlockAttributesToElement = (
   element: Record<string, unknown>,
   block: TSurveyBlock,
   blockIdToQuestionId: Map<string, string>,
   endingIds: Set<string>
 ): void => {
-  if (element.type === "cta" && element.ctaButtonLabel) {
-    element.buttonLabel = element.ctaButtonLabel;
-  }
+  applyCtaButtonLabel(element);
 
   if (Array.isArray(block.logic) && block.logic.length > 0) {
     element.logic = transformBlockLogicToQuestionLogic(block.logic, blockIdToQuestionId, endingIds);
@@ -477,6 +481,7 @@ export const transformBlocksToQuestions = (
   const endingIds = new Set<string>(endings.map((ending) => ending.id));
   const questions: Record<string, unknown>[] = [];
 
+  // Jump targets resolve to a block; map them to the block's first element (its entry point).
   const blockIdToQuestionId = blocks.reduce((acc, block) => {
     if (block.elements.length === 0) return acc;
     acc.set(block.id, block.elements[0].id);
@@ -486,14 +491,45 @@ export const transformBlocksToQuestions = (
   for (const block of blocks) {
     if (block.elements.length === 0) continue;
 
-    const element = { ...block.elements[0] };
+    block.elements.forEach((blockElement, index) => {
+      const element = { ...blockElement };
+      const isLastElement = index === block.elements.length - 1;
 
-    applyBlockAttributesToElement(element, block, blockIdToQuestionId, endingIds);
+      // Block-level logic/labels describe the transition AFTER the whole block,
+      // so they only apply to the last element. Earlier elements keep default
+      // (next) behaviour and only need their own CTA button label resolved.
+      if (isLastElement) {
+        applyBlockAttributesToElement(element, block, blockIdToQuestionId, endingIds);
+      } else {
+        applyCtaButtonLabel(element);
+      }
 
-    questions.push(element);
+      questions.push(element);
+    });
   }
 
   return questions as TSurveyQuestion[];
+};
+
+/**
+ * Returns the survey with a `questions` array derived from `blocks` for API v1
+ * backwards compatibility, while keeping `blocks` intact so newer block-based
+ * surveys remain fully represented. Surveys that still store legacy `questions`
+ * (no blocks yet) are returned unchanged.
+ */
+export const withDerivedQuestions = <
+  T extends { blocks?: TSurveyBlock[]; questions?: TSurveyQuestion[]; endings?: TSurveyEnding[] },
+>(
+  survey: T
+): T => {
+  if (!survey.blocks || survey.blocks.length === 0) {
+    return survey;
+  }
+
+  return {
+    ...survey,
+    questions: transformBlocksToQuestions(survey.blocks, survey.endings ?? []),
+  };
 };
 
 export const validateSurveyInput = (input: {

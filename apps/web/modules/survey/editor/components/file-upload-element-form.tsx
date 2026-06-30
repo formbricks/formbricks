@@ -1,12 +1,12 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import { Workspace } from "@formbricks/database/prisma-browser";
 import type { TSurveyElement, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -20,7 +20,7 @@ import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
-  project: Project;
+  workspace: Workspace;
   element: TSurveyFileUploadElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
@@ -37,7 +37,7 @@ export const FileUploadElementForm = ({
   elementIdx,
   updateElement,
   isInvalid,
-  project,
+  workspace,
   isFormbricksCloud,
   locale,
   isStorageConfigured = true,
@@ -49,7 +49,7 @@ export const FileUploadElementForm = ({
     billingInfo,
     error: billingInfoError,
     isLoading: billingInfoLoading,
-  } = useGetBillingInfo(project.organizationId);
+  } = useGetBillingInfo(workspace.organizationId);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const maxSizeInMBLimit = useMemo(() => {
@@ -58,8 +58,8 @@ export const FileUploadElementForm = ({
     }
 
     const hasPaidCloudCapacity =
-      billingInfo.limits.projects === null ||
-      (typeof billingInfo.limits.projects === "number" && billingInfo.limits.projects > 1);
+      billingInfo.limits.workspaces === null ||
+      (typeof billingInfo.limits.workspaces === "number" && billingInfo.limits.workspaces > 1);
 
     if (hasPaidCloudCapacity) {
       // 1GB in MB
@@ -82,7 +82,7 @@ export const FileUploadElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -123,8 +123,8 @@ export const FileUploadElementForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            <PlusIcon className="mr-1 size-4" />
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -133,8 +133,8 @@ export const FileUploadElementForm = ({
           isChecked={element.allowMultipleFiles}
           onToggle={() => updateElement(elementIdx, { allowMultipleFiles: !element.allowMultipleFiles })}
           htmlId="allowMultipleFile"
-          title={t("environments.surveys.edit.allow_multiple_files")}
-          description={t("environments.surveys.edit.let_people_upload_up_to_25_files_at_the_same_time")}
+          title={t("workspace.surveys.edit.allow_multiple_files")}
+          description={t("workspace.surveys.edit.let_people_upload_up_to_25_files_at_the_same_time")}
           childBorder
           customContainerClass="p-0"></AdvancedOptionToggle>
 
@@ -142,14 +142,14 @@ export const FileUploadElementForm = ({
           isChecked={!!element.maxSizeInMB}
           onToggle={handleMaxSizeInMBToggle}
           htmlId="maxFileSize"
-          title={t("environments.surveys.edit.max_file_size")}
-          description={t("environments.surveys.edit.limit_the_maximum_file_size")}
+          title={t("workspace.surveys.edit.max_file_size")}
+          description={t("workspace.surveys.edit.limit_the_maximum_file_size")}
           childBorder
           customContainerClass="p-0">
           <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-700">
               <Trans
-                i18nKey="environments.surveys.edit.limit_upload_file_size_to_mb"
+                i18nKey="workspace.surveys.edit.limit_upload_file_size_to_mb"
                 components={{
                   fileSizeInput: (
                     <Input
@@ -162,7 +162,7 @@ export const FileUploadElementForm = ({
 
                         if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
                           toast.error(
-                            t("environments.surveys.edit.max_file_size_limit_is_mb", {
+                            t("workspace.surveys.edit.max_file_size_limit_is_mb", {
                               maxSize: maxSizeInMBLimit,
                             })
                           );
@@ -182,14 +182,14 @@ export const FileUploadElementForm = ({
             {isMaxSizeError && (
               <p className="text-xs text-red-500">
                 <Trans
-                  i18nKey="environments.surveys.edit.max_file_size_limit_is_mb_upgrade"
+                  i18nKey="workspace.surveys.edit.max_file_size_limit_is_mb_upgrade"
                   values={{ maxSize: maxSizeInMBLimit }}
                   components={{
                     upgradeLink: (
                       <Link
                         className="underline"
                         target="_blank"
-                        href={`/environments/${localSurvey.environmentId}/settings/billing`}
+                        href={`/organizations/${workspace.organizationId}/settings/billing`}
                       />
                     ),
                   }}

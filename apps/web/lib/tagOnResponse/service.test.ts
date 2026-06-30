@@ -1,9 +1,11 @@
-import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getResponse } from "../response/service";
 import { addTagToRespone, deleteTagOnResponse, getTagsOnResponsesCount } from "./service";
+
+vi.mock("server-only", () => ({}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -33,7 +35,7 @@ describe("TagOnResponse Service", () => {
 
     const mockTagOnResponse = {
       tag: {
-        environmentId: "env1",
+        workspaceId: "workspace1",
       },
     };
 
@@ -55,7 +57,7 @@ describe("TagOnResponse Service", () => {
       select: {
         tag: {
           select: {
-            environmentId: true,
+            workspaceId: true,
           },
         },
       },
@@ -71,7 +73,7 @@ describe("TagOnResponse Service", () => {
 
     const mockDeletedTag = {
       tag: {
-        environmentId: "env1",
+        workspaceId: "workspace1",
       },
     };
 
@@ -95,14 +97,14 @@ describe("TagOnResponse Service", () => {
       select: {
         tag: {
           select: {
-            environmentId: true,
+            workspaceId: true,
           },
         },
       },
     });
   });
 
-  test("getTagsOnResponsesCount should return tag counts for an environment", async () => {
+  test("getTagsOnResponsesCount should return tag counts for a workspace", async () => {
     const mockTagsCount = [
       { tagId: "tag1", _count: { _all: 5 } },
       { tagId: "tag2", _count: { _all: 3 } },
@@ -122,9 +124,7 @@ describe("TagOnResponse Service", () => {
       where: {
         response: {
           survey: {
-            environment: {
-              id: "env1",
-            },
+            workspaceId: "env1",
           },
         },
       },
@@ -134,8 +134,77 @@ describe("TagOnResponse Service", () => {
     });
   });
 
-  test("should throw DatabaseError when prisma operation fails", async () => {
+  test("addTagToRespone should be a no-op when the tag is already on the response (P2002)", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed on the fields: (`responseId`,`tagId`)",
+      {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["responseId", "tagId"] },
+      }
+    );
+    vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
+
+    const result = await addTagToRespone("response1", "tag1");
+
+    expect(result).toEqual({
+      responseId: "response1",
+      tagId: "tag1",
+    });
+  });
+
+  test("addTagToRespone should not throw when called twice with the same (responseId, tagId)", async () => {
+    const mockTagOnResponse = {
+      tag: {
+        workspaceId: "workspace1",
+      },
+    };
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed on the fields: (`responseId`,`tagId`)",
+      {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["responseId", "tagId"] },
+      }
+    );
+
+    vi.mocked(prisma.tagsOnResponses.create)
+      .mockResolvedValueOnce(mockTagOnResponse as any)
+      .mockRejectedValueOnce(prismaError);
+
+    const first = await addTagToRespone("response1", "tag1");
+    const second = await addTagToRespone("response1", "tag1");
+
+    expect(first).toEqual({ responseId: "response1", tagId: "tag1" });
+    expect(second).toEqual({ responseId: "response1", tagId: "tag1" });
+  });
+
+  test("addTagToRespone should throw DatabaseError for non-P2002 prisma errors", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+      code: "P2025",
+      clientVersion: "5.0.0",
+    });
+    vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
+
+    await expect(addTagToRespone("response1", "tag1")).rejects.toThrow(DatabaseError);
+  });
+
+  test("addTagToRespone should throw DatabaseError for P2002 on a different target", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed on the fields: (`someOtherField`)",
+      {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["someOtherField"] },
+      }
+    );
+    vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
+
+    await expect(addTagToRespone("response1", "tag1")).rejects.toThrow(DatabaseError);
+  });
+
+  test("addTagToRespone should throw DatabaseError for P2002 without meta.target", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
       code: "P2002",
       clientVersion: "5.0.0",
     });

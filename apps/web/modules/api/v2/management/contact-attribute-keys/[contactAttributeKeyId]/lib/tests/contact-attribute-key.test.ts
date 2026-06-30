@@ -1,6 +1,6 @@
-import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import {
@@ -30,7 +30,7 @@ const mockContactAttributeKey: ContactAttributeKey = {
   key: "email",
   name: "Email",
   description: "User's email address",
-  environmentId: "env123",
+  workspaceId: "workspace123",
   isUnique: true,
   type: "default",
   dataType: "string",

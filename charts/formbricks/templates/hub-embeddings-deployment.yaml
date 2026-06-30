@@ -1,0 +1,167 @@
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled }}
+{{- $embeddingsReplicas := int (.Values.hub.embeddings.replicas | default 1) -}}
+{{- $embeddingsMaxReplicas := int (.Values.hub.embeddings.autoscaling.maxReplicas | default 1) -}}
+{{- if and .Values.hub.embeddings.persistence.enabled (not .Values.hub.embeddings.persistence.existingClaim) (not (has "ReadWriteMany" .Values.hub.embeddings.persistence.accessModes)) (or (gt $embeddingsReplicas 1) (and .Values.hub.embeddings.autoscaling.enabled (gt $embeddingsMaxReplicas 1))) }}
+  {{- fail "hub.embeddings persistence with multiple replicas requires persistence.accessModes to include ReadWriteMany, or set hub.embeddings.persistence.enabled=false/use a ReadWriteMany existingClaim" }}
+{{- end }}
+{{- if and .Values.hub.embeddings.auth.existingSecret .Values.hub.embeddings.huggingFace.token (not .Values.hub.embeddings.huggingFace.existingSecret) }}
+  {{- fail "hub.embeddings.huggingFace.token cannot be stored when hub.embeddings.auth.existingSecret is set; put HF_TOKEN in the existing auth secret or set hub.embeddings.huggingFace.existingSecret" }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "formbricks.hubEmbeddingsName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embeddings
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  {{- if and .Values.hub.embeddings.persistence.enabled (not (has "ReadWriteMany" .Values.hub.embeddings.persistence.accessModes)) }}
+  strategy:
+    type: Recreate
+  {{- else }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  {{- end }}
+  {{- if not .Values.hub.embeddings.autoscaling.enabled }}
+  replicas: {{ .Values.hub.embeddings.replicas | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: hub-embeddings
+        {{- with .Values.hub.embeddings.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.hub.embeddings.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.hub.embeddings.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: hub-embeddings
+          image: "{{ .Values.hub.embeddings.image.repository }}:{{ .Values.hub.embeddings.image.tag }}"
+          imagePullPolicy: {{ .Values.hub.embeddings.image.pullPolicy }}
+          {{- with .Values.hub.embeddings.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.hub.embeddings.args }}
+          args:
+            {{- toYaml .Values.hub.embeddings.args | nindent 12 }}
+          {{- else }}
+          args:
+            - --model-id
+            - {{ .Values.hub.embeddings.model | quote }}
+            - --port
+            - {{ .Values.hub.embeddings.port | quote }}
+            - --huggingface-hub-cache
+            - {{ .Values.hub.embeddings.persistence.mountPath | quote }}
+            - --served-model-name
+            - {{ include "formbricks.hubEmbeddingsServedModelName" . | quote }}
+            {{- with .Values.hub.embeddings.revision }}
+            - --revision
+            - {{ . | quote }}
+            {{- end }}
+            {{- with .Values.hub.embeddings.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.hub.embeddings.port }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.hub.embeddings.prometheusPort }}
+              protocol: TCP
+          {{- if or .Values.hub.embeddings.auth.enabled .Values.hub.embeddings.huggingFace.existingSecret .Values.hub.embeddings.huggingFace.token (gt (len .Values.hub.embeddings.env) 0) }}
+          env:
+            {{- if .Values.hub.embeddings.auth.enabled }}
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.hubEmbeddingsSecretName" . }}
+                  key: {{ .Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" | quote }}
+            {{- end }}
+            {{- if or .Values.hub.embeddings.huggingFace.existingSecret .Values.hub.embeddings.huggingFace.token }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.hubEmbeddingsHuggingFaceSecretName" . }}
+                  key: {{ .Values.hub.embeddings.huggingFace.tokenKey | default "HF_TOKEN" | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.hub.embeddings.env }}
+            {{- if not (or (and $.Values.hub.embeddings.auth.enabled (eq $key "API_KEY")) (and (or $.Values.hub.embeddings.huggingFace.existingSecret $.Values.hub.embeddings.huggingFace.token) (eq $key "HF_TOKEN"))) }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.probes.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.probes.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.probes.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.hub.embeddings.persistence.enabled }}
+          volumeMounts:
+            - name: model-cache
+              mountPath: {{ .Values.hub.embeddings.persistence.mountPath }}
+          {{- end }}
+      {{- if .Values.hub.embeddings.persistence.enabled }}
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: {{ default (include "formbricks.hubEmbeddingsName" .) .Values.hub.embeddings.persistence.existingClaim }}
+      {{- end }}
+{{- end }}

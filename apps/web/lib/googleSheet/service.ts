@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZString } from "@formbricks/types/common";
 import {
   AuthenticationError,
@@ -191,7 +191,7 @@ const authorize = async (googleSheetIntegrationData: TIntegrationGoogleSheets) =
       ...credentials,
       refresh_token: credentials.refresh_token ?? key.refresh_token,
     };
-    await createOrUpdateIntegration(googleSheetIntegrationData.environmentId, {
+    await createOrUpdateIntegration(googleSheetIntegrationData.workspaceId, {
       type: "googleSheets",
       config: {
         data: googleSheetIntegrationData.config?.data ?? [],

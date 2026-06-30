@@ -1,14 +1,24 @@
 services:
+  # PostgreSQL must load the vector library so Hub (and Formbricks) can use the pgvector extension.
   postgres:
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
       - 5432:5432
+    command: >
+      postgres
+      -c shared_preload_libraries=vector
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
   mailhog:
     image: arjenz/mailhog
@@ -18,7 +28,7 @@ services:
 
   valkey:
     image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
-    command: "valkey-server"
+    command: "valkey-server --maxmemory-policy noeviction"
     ports:
       - 6379:6379
     volumes:
@@ -67,10 +77,218 @@ services:
       - /bin/sh
       - /usr/local/bin/rustfs-init.sh
 
+  # Create Hub's dedicated dev database before migrations run. Idempotent; runs on every compose up.
+  hub-db-create:
+    image: pgvector/pgvector:pg18
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      [
+        'if [ "$$(psql "$$POSTGRES_DATABASE_URL" -tAc "SELECT 1 FROM pg_database WHERE datname = ''hub''")" != "1" ]; then psql "$$POSTGRES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE hub"; fi',
+      ]
+    environment:
+      POSTGRES_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Run Hub DB migrations (goose + river) before the API starts. Idempotent; runs on every compose up.
+  # Hub image pinned via HUB_IMAGE_TAG so docker does not silently reuse a stale :latest cache.
+  # Keep hub, hub-migrate, and any future hub-worker on the same tag — they share one image and
+  # drift breaks migrations or job processing.
+  hub-migrate:
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      [
+        'if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres "$$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$$DATABASE_URL"; else echo ''Migration tools (goose/river) not in image.''; exit 1; fi',
+      ]
+    environment:
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/hub?sslmode=disable}
+    depends_on:
+      hub-db-create:
+        condition: service_completed_successfully
+
+  # Formbricks Hub API (ghcr.io/formbricks/hub). Uses a dedicated local Hub database by default.
+  hub:
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment: &hub-runtime-environment
+      API_KEY: ${HUB_API_KEY:-dev-api-key}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/hub?sslmode=disable}
+      # Explicit Postgres env so migrations and any libpq fallback use the service host, not localhost
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: hub
+      PGSSLMODE: disable
+      # Hub embeddings are disabled unless EMBEDDING_PROVIDER and EMBEDDING_MODEL are set.
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      EMBEDDING_PROVIDER_API_KEY: ${EMBEDDING_PROVIDER_API_KEY:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_MAX_CONCURRENT: ${EMBEDDING_MAX_CONCURRENT:-5}
+      EMBEDDING_MAX_ATTEMPTS: ${EMBEDDING_MAX_ATTEMPTS:-3}
+      EMBEDDING_NORMALIZE: ${EMBEDDING_NORMALIZE:-false}
+      EMBEDDING_GOOGLE_CLOUD_PROJECT: ${EMBEDDING_GOOGLE_CLOUD_PROJECT:-}
+      EMBEDDING_GOOGLE_CLOUD_LOCATION: ${EMBEDDING_GOOGLE_CLOUD_LOCATION:-}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+      TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
+      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+
+  # Hub worker processes async jobs enqueued by the API, including embeddings.
+  hub-worker:
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.6.0}
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/hub-worker"]
+    healthcheck:
+      disable: true
+    environment:
+      <<: *hub-runtime-environment
+
+  # Optional AI taxonomy beta service. Enable with COMPOSE_PROFILES=taxonomy.
+  taxonomy:
+    image: ghcr.io/formbricks/taxonomy${TAXONOMY_IMAGE_REF:-:latest}
+    profiles: ["taxonomy"]
+    depends_on:
+      hub:
+        condition: service_started
+    environment:
+      APP_ENV: production
+      TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
+      HUB_INTERNAL_API_URL: http://hub:8080
+      HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
+      TAXONOMY_LLM_PROVIDER: ${TAXONOMY_LLM_PROVIDER:-openai-compatible}
+      TAXONOMY_LLM_MODEL: ${TAXONOMY_LLM_MODEL:-}
+      TAXONOMY_LLM_BASE_URL: ${TAXONOMY_LLM_BASE_URL:-}
+      TAXONOMY_LLM_API_KEY: ${TAXONOMY_LLM_API_KEY:-}
+      TAXONOMY_VERTEX_PROJECT: ${TAXONOMY_VERTEX_PROJECT:-}
+      TAXONOMY_VERTEX_LOCATION: ${TAXONOMY_VERTEX_LOCATION:-}
+      TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON: ${TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_BEARER_TOKEN_BEDROCK: ${AWS_BEARER_TOKEN_BEDROCK:-}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # Optional bundled Qwen/vLLM OpenAI-compatible runtime. Enable with COMPOSE_PROFILES=qwen.
+  vllm:
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
+    profiles: ["qwen"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command:
+      - vllm
+      - serve
+      - ${QWEN_MODEL_ID:-Qwen/Qwen3-14B-AWQ}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --no-enable-prefix-caching
+      - --max-model-len
+      - ${QWEN_MAX_MODEL_LEN:-8192}
+      - --dtype
+      - ${QWEN_DTYPE:-float16}
+      - --tensor-parallel-size
+      - ${QWEN_TENSOR_PARALLEL_SIZE:-1}
+      - --max-num-seqs
+      - ${QWEN_MAX_NUM_SEQS:-8}
+      - --gpu_memory_utilization
+      - ${QWEN_GPU_MEMORY_UTILIZATION:-0.9}
+      - --served-model-name
+      - ${QWEN_SERVED_MODEL_NAME:-qwen3-14b-awq}
+      - --default-chat-template-kwargs
+      - '{"enable_thinking": false}'
+    environment:
+      HF_HOME: /data
+    volumes:
+      - qwen-model-cache:/data
+    ports:
+      - "${QWEN_VLLM_HOST:-127.0.0.1}:${QWEN_VLLM_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 40
+      start_period: 10m
+
+  cube:
+    image: cubejs/cube:v1.6.6
+    env_file:
+      - apps/web/.env
+    command:
+      - sh
+      - -c
+      - |
+        if [ -z "$$CUBEJS_API_SECRET" ]; then
+          echo "CUBEJS_API_SECRET is required for Cube JWT authentication" >&2
+          exit 1
+        fi
+        exec cubejs server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hub-migrate:
+        condition: service_completed_successfully
+    ports:
+      - 4000:4000
+      - 4001:4001 # Cube Playground UI (dev only)
+    environment:
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-postgres}
+      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-postgres}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-postgres}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-postgres}
+      CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
+      CUBEJS_DEV_MODE: "true"
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:-}
+      CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
+      CUBEJS_JWT_AUDIENCE: ${CUBEJS_JWT_AUDIENCE:-formbricks-cube}
+      CUBEJS_DEFAULT_API_SCOPES: meta,data
+      CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
+    volumes:
+      - ./docker/cube/cube.js:/cube/conf/cube.js:ro
+      - ./docker/cube/schema:/cube/conf/model:ro
+    restart: on-failure
+
 volumes:
   postgres:
     driver: local
   valkey-data:
     driver: local
   rustfs-data:
+    driver: local
+  qwen-model-cache:
     driver: local

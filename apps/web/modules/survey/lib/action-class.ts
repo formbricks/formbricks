@@ -1,23 +1,23 @@
-import { ActionClass } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { ActionClass } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
-export const getActionClasses = reactCache(async (environmentId: string): Promise<ActionClass[]> => {
-  validateInputs([environmentId, z.cuid2()]);
+export const getActionClasses = reactCache(async (workspaceId: string): Promise<ActionClass[]> => {
+  validateInputs([workspaceId, z.cuid2()]);
 
   try {
     return await prisma.actionClass.findMany({
       where: {
-        environmentId: environmentId,
+        workspaceId,
       },
       orderBy: {
         createdAt: "asc",
       },
     });
   } catch (error) {
-    throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
+    throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceId}`);
   }
 });

@@ -11,13 +11,15 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   "spam-protection": "spamProtection",
   contacts: "contacts",
   "ai-smart-tools": "aiSmartTools",
-  "ai-data-analysis": "aiDataAnalysis",
+  "feedback-directories": "feedbackDirectories",
+  dashboards: "dashboards",
 };
 
 const TRIAL_RESTRICTED_ENTITLEMENT_KEYS = [
   CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FOLLOW_UPS,
   CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CUSTOM_LINKS_IN_SURVEYS,
   CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CUSTOM_REDIRECT_URL,
+  CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.BULK_INVITE,
 ] as const satisfies readonly TEntitlementFeature[];
 
 const isTrialRestrictedEntitlement = (featureLookupKey: TEntitlementFeature): boolean =>

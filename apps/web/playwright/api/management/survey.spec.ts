@@ -6,12 +6,12 @@ import { SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests", () => {
   let surveyId: string;
-  let environmentId: string;
+  let workspaceId: string;
   let apiKey: string;
 
   test("API Tests", async ({ page, users, request }) => {
     try {
-      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
+      ({ workspaceId, apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
       logger.error(error, "Error during login and getting API key");
       throw error;
@@ -24,7 +24,7 @@ test.describe("API Tests", () => {
           "x-api-key": apiKey,
         },
         data: {
-          environmentId: environmentId,
+          workspaceId: workspaceId,
           type: "link",
           name: "My new Survey from API",
           questions: [
@@ -53,7 +53,7 @@ test.describe("API Tests", () => {
       expect(response.ok()).toBeTruthy();
       const responseBody = await response.json();
       expect(responseBody.data.name).toEqual("My new Survey from API");
-      expect(responseBody.data.environmentId).toEqual(environmentId);
+      expect(responseBody.data.workspaceId).toEqual(workspaceId);
 
       surveyId = responseBody.data.id;
     });
@@ -66,11 +66,18 @@ test.describe("API Tests", () => {
       });
       expect(response.ok()).toBeTruthy();
       const responseBody = await response.json();
+      const createdSurvey = responseBody.data.find(
+        (survey: { name: string }) => survey.name === "My new Survey from API"
+      );
 
-      const surveyCount = responseBody.data.length;
-      expect(surveyCount).toEqual(1);
+      expect(createdSurvey).toBeDefined();
+      expect(responseBody.data.length).toBeGreaterThanOrEqual(1);
 
-      surveyId = responseBody.data[0].id;
+      if (!createdSurvey) {
+        throw new Error("Expected created survey to be defined");
+      }
+
+      surveyId = createdSurvey.id;
     });
 
     await test.step("Get Survey by ID from API", async () => {

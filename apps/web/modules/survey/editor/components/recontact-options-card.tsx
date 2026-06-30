@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -36,20 +35,20 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
       {
         id: "respect",
         value: null,
-        name: t("environments.surveys.edit.respect_global_waiting_time"),
-        description: t("environments.surveys.edit.respect_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.respect_global_waiting_time"),
+        description: t("workspace.surveys.edit.respect_global_waiting_time_description"),
       },
       {
         id: "ignore",
         value: 0,
-        name: t("environments.surveys.edit.ignore_global_waiting_time"),
-        description: t("environments.surveys.edit.ignore_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.ignore_global_waiting_time"),
+        description: t("workspace.surveys.edit.ignore_global_waiting_time_description"),
       },
       {
         id: "overwrite",
         value: 1,
-        name: t("environments.surveys.edit.overwrite_global_waiting_time"),
-        description: t("environments.surveys.edit.overwrite_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.overwrite_global_waiting_time"),
+        description: t("workspace.surveys.edit.overwrite_global_waiting_time_description"),
       },
     ],
     [t]
@@ -59,27 +58,23 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
     () => [
       {
         id: "displayOnce",
-        name: t("environments.surveys.edit.show_only_once"),
-        description: t(
-          "environments.surveys.edit.the_survey_will_be_shown_once_even_if_person_doesnt_respond"
-        ),
+        name: t("workspace.surveys.edit.show_only_once"),
+        description: t("workspace.surveys.edit.the_survey_will_be_shown_once_even_if_person_doesnt_respond"),
       },
       {
         id: "displaySome",
-        name: t("environments.surveys.edit.show_multiple_times"),
-        description: t(
-          "environments.surveys.edit.the_survey_will_be_shown_multiple_times_until_they_respond"
-        ),
+        name: t("workspace.surveys.edit.show_multiple_times"),
+        description: t("workspace.surveys.edit.the_survey_will_be_shown_multiple_times_until_they_respond"),
       },
       {
         id: "displayMultiple",
-        name: t("environments.surveys.edit.until_they_submit_a_response"),
-        description: t("environments.surveys.edit.if_you_really_want_that_answer_ask_until_you_get_it"),
+        name: t("workspace.surveys.edit.until_they_submit_a_response"),
+        description: t("workspace.surveys.edit.if_you_really_want_that_answer_ask_until_you_get_it"),
       },
       {
         id: "respondMultiple",
-        name: t("environments.surveys.edit.keep_showing_while_conditions_match"),
-        description: t("environments.surveys.edit.even_after_they_submitted_a_response_e_g_feedback_box"),
+        name: t("workspace.surveys.edit.keep_showing_while_conditions_match"),
+        description: t("workspace.surveys.edit.even_after_they_submitted_a_response_e_g_feedback_box"),
       },
     ],
     [t]
@@ -99,7 +94,6 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
   };
 
   // Auto animate
-  const [parent] = useAutoAnimate();
 
   const handleWaitingTimeChange = (optionId: string) => {
     const option = waitingTimeOptions.find((opt) => opt.id === optionId);
@@ -161,38 +155,39 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50"
         id="recontactOptionsCardTrigger">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
           <div>
             <p className="font-semibold text-slate-800">
-              {t("environments.surveys.edit.visibility_and_recontact")}
+              {t("workspace.surveys.edit.visibility_and_recontact")}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.visibility_and_recontact_description")}
+              {t("workspace.surveys.edit.visibility_and_recontact_description")}
             </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className={`flex flex-col ${open && "pb-3"}`} ref={parent}>
+      <Collapsible.CollapsibleContent
+        className={`flex flex-col ${open && "pb-3"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           {/* Waiting Time Section */}
           <div className="mb-4 space-y-1 px-1">
             <h3 className="font-semibold text-slate-800">
-              {t("environments.surveys.edit.waiting_time_across_surveys")}
+              {t("workspace.surveys.edit.waiting_time_across_surveys")}
             </h3>
             <p className="text-sm text-slate-500">
-              {t("environments.surveys.edit.waiting_time_across_surveys_description")}
+              {t("workspace.surveys.edit.waiting_time_across_surveys_description")}
             </p>
           </div>
 
           <RadioGroup
             value={getWaitingTimeOption()}
-            className="flex flex-col space-y-3"
+            className="flex flex-col gap-y-3"
             onValueChange={handleWaitingTimeChange}>
             {waitingTimeOptions.map((option) => (
               <div key={option.id}>
@@ -215,7 +210,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                     <label htmlFor="overwriteDays">
                       <p className="text-sm text-slate-700">
                         <Trans
-                          i18nKey="environments.surveys.edit.wait_n_days_before_showing_this_survey_again"
+                          i18nKey="workspace.surveys.edit.wait_n_days_before_showing_this_survey_again"
                           components={{
                             daysInput: (
                               <Input
@@ -225,7 +220,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                                 id="overwriteDays"
                                 value={inputDays}
                                 onChange={handleOverwriteDaysChange}
-                                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                                className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                               />
                             ),
                           }}
@@ -245,16 +240,16 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           {/* Recontact Options Section */}
           <div className="mb-4 space-y-1 px-1">
             <h3 className="font-semibold text-slate-800">
-              {t("environments.surveys.edit.recontact_options_section")}
+              {t("workspace.surveys.edit.recontact_options_section")}
             </h3>
             <p className="text-sm text-slate-500">
-              {t("environments.surveys.edit.recontact_options_section_description")}
+              {t("workspace.surveys.edit.recontact_options_section_description")}
             </p>
           </div>
 
           <RadioGroup
             value={localSurvey.displayOption}
-            className="flex flex-col space-y-3"
+            className="flex flex-col gap-y-3"
             onValueChange={(v) => {
               if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
                 const updatedSurvey: TSurvey = { ...localSurvey, displayOption: v };
@@ -291,7 +286,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                     <label htmlFor="displayLimit">
                       <p className="text-sm text-slate-700">
                         <Trans
-                          i18nKey="environments.surveys.edit.show_survey_maximum_of_n_times"
+                          i18nKey="workspace.surveys.edit.show_survey_maximum_of_n_times"
                           components={{
                             displayLimitInput: (
                               <Input
@@ -300,7 +295,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
                                 id="displayLimit"
                                 value={displayLimit.toString()}
                                 onChange={(e) => handleDisplayLimitChange(e)}
-                                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                                className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                               />
                             ),
                           }}

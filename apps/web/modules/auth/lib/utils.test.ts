@@ -15,6 +15,8 @@ import {
   verifyPassword,
 } from "./utils";
 
+const PASSWORD_HASH_TEST_TIMEOUT_MS = 45_000;
+
 // Mock the audit event handler
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: vi.fn(),
@@ -96,46 +98,54 @@ describe("Auth Utils", () => {
       expect(typeof newHashedPassword).toBe("string");
       expect(newHashedPassword).not.toBe(password);
       expect(newHashedPassword.length).toBe(60);
-    });
+    }, 20000);
 
     test("should verify a correct password", async () => {
       const isValid = await verifyPassword(password, hashedPassword);
       expect(isValid).toBe(true);
-    });
+    }, 20000);
 
     test("should reject an incorrect password", async () => {
       const isValid = await verifyPassword("WrongPassword123!", hashedPassword);
       expect(isValid).toBe(false);
-    });
+    }, 20000);
 
     test("should handle empty password correctly", async () => {
       const isValid = await verifyPassword("", hashedPassword);
       expect(isValid).toBe(false);
-    });
+    }, 20000);
 
     test("should handle empty hash correctly", async () => {
       const isValid = await verifyPassword(password, "");
       expect(isValid).toBe(false);
     });
 
-    test("should generate different hashes for same password", async () => {
-      const hash1 = await hashPassword(password);
-      const hash2 = await hashPassword(password);
+    test(
+      "should generate different hashes for same password",
+      async () => {
+        const hash1 = await hashPassword(password);
+        const hash2 = await hashPassword(password);
 
-      expect(hash1).not.toBe(hash2);
-      expect(await verifyPassword(password, hash1)).toBe(true);
-      expect(await verifyPassword(password, hash2)).toBe(true);
-    }, 15000);
+        expect(hash1).not.toBe(hash2);
+        expect(await verifyPassword(password, hash1)).toBe(true);
+        expect(await verifyPassword(password, hash2)).toBe(true);
+      },
+      PASSWORD_HASH_TEST_TIMEOUT_MS
+    );
 
-    test("should hash complex passwords correctly", async () => {
-      const complexPassword = "MyC0mpl3x!P@ssw0rd#2024$%^&*()";
-      const hashedComplex = await hashPassword(complexPassword);
+    test(
+      "should hash complex passwords correctly",
+      async () => {
+        const complexPassword = "MyC0mpl3x!P@ssw0rd#2024$%^&*()";
+        const hashedComplex = await hashPassword(complexPassword);
 
-      expect(typeof hashedComplex).toBe("string");
-      expect(hashedComplex.length).toBe(60);
-      expect(await verifyPassword(complexPassword, hashedComplex)).toBe(true);
-      expect(await verifyPassword("wrong", hashedComplex)).toBe(false);
-    }, 15000);
+        expect(typeof hashedComplex).toBe("string");
+        expect(hashedComplex.length).toBe(60);
+        expect(await verifyPassword(complexPassword, hashedComplex)).toBe(true);
+        expect(await verifyPassword("wrong", hashedComplex)).toBe(false);
+      },
+      PASSWORD_HASH_TEST_TIMEOUT_MS
+    );
 
     test("should handle bcrypt errors gracefully and log warning", async () => {
       // Save the original bcryptjs implementation

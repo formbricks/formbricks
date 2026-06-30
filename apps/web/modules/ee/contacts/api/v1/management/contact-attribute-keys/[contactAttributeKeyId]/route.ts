@@ -1,5 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { handleErrorResponse } from "@/app/api/v1/auth";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -13,7 +14,7 @@ import { ZContactAttributeKeyUpdateInput } from "./types/contact-attribute-keys"
 
 async function fetchAndAuthorizeContactAttributeKey(
   attributeKeyId: string,
-  environmentPermissions: NonNullable<TApiKeyAuthentication>["environmentPermissions"],
+  workspacePermissions: NonNullable<TApiKeyAuthentication>["workspacePermissions"],
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
   const attributeKey = await getContactAttributeKey(attributeKeyId);
@@ -21,7 +22,7 @@ async function fetchAndAuthorizeContactAttributeKey(
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
 
-  if (!hasPermission(environmentPermissions, attributeKey.environmentId, requiredPermission)) {
+  if (!hasPermission(workspacePermissions, attributeKey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -41,7 +42,7 @@ export const GET = withV1ApiWrapper({
 
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication.environmentPermissions,
+        authentication.workspacePermissions,
         "GET"
       );
       if (result.error) {
@@ -86,7 +87,7 @@ export const DELETE = withV1ApiWrapper({
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication.environmentPermissions,
+        authentication.workspacePermissions,
         "DELETE"
       );
 
@@ -135,7 +136,7 @@ export const PUT = withV1ApiWrapper({
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication.environmentPermissions,
+        authentication.workspacePermissions,
         "PUT"
       );
       if (result.error) {
@@ -149,8 +150,14 @@ export const PUT = withV1ApiWrapper({
 
       let contactAttributeKeyUpdate;
       try {
-        contactAttributeKeyUpdate = await req.json();
+        contactAttributeKeyUpdate = await parseJsonBodyWithLimit(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),

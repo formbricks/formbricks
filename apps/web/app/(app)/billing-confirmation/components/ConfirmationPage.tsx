@@ -6,12 +6,12 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 
-const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
+const BILLING_CONFIRMATION_ORGANIZATION_ID_KEY = "billingConfirmationOrganizationId";
 
 export const ConfirmationPage = () => {
   const { t } = useTranslation();
   const [showConfetti, setShowConfetti] = useState(false);
-  const [resolvedEnvironmentId, setResolvedEnvironmentId] = useState<string | null>(null);
+  const [resolvedOrganizationId, setResolvedOrganizationId] = useState<string | null>(null);
 
   useEffect(() => {
     setShowConfetti(true);
@@ -20,11 +20,15 @@ export const ConfirmationPage = () => {
       return;
     }
 
-    const storedEnvironmentId = globalThis.window.sessionStorage.getItem(
-      BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY
+    // Prefer the organizationId Stripe appends to the return URL so the back link survives a
+    // fresh tab / cleared session storage; fall back to session storage otherwise.
+    const urlOrganizationId = new URLSearchParams(globalThis.window.location.search).get("organizationId");
+    const storedOrganizationId = globalThis.window.sessionStorage.getItem(
+      BILLING_CONFIRMATION_ORGANIZATION_ID_KEY
     );
-    if (storedEnvironmentId) {
-      setResolvedEnvironmentId(storedEnvironmentId);
+    const organizationId = urlOrganizationId || storedOrganizationId;
+    if (organizationId) {
+      setResolvedOrganizationId(organizationId);
     }
   }, []);
 
@@ -42,11 +46,7 @@ export const ConfirmationPage = () => {
         </div>
         <Button asChild className="w-full justify-center">
           <Link
-            href={
-              resolvedEnvironmentId
-                ? `/environments/${resolvedEnvironmentId}/settings/billing`
-                : "/environments"
-            }>
+            href={resolvedOrganizationId ? `/organizations/${resolvedOrganizationId}/settings/billing` : "/"}>
             {t("billing_confirmation.back_to_billing_overview")}
           </Link>
         </Button>

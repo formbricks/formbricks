@@ -1,10 +1,11 @@
 "use client";
 
-import { Project, Response } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
+import { Response, Workspace } from "@formbricks/database/prisma-browser";
+import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
@@ -13,7 +14,7 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
   surveyId: string;
-  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
@@ -26,16 +27,17 @@ interface PinScreenProps {
   isEmbed: boolean;
   isPreview: boolean;
   contactId?: string;
+  canReadUserIdFromUrl?: boolean;
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled?: boolean;
   responseCount?: number;
-  styling: TProjectStyling | TSurveyStyling;
+  styling: TWorkspaceStyling | TSurveyStyling;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
-    project,
+    workspace,
     publicDomain,
     singleUseId,
     singleUseResponse,
@@ -48,6 +50,7 @@ export const PinScreen = (props: PinScreenProps) => {
     isEmbed,
     isPreview,
     contactId,
+    canReadUserIdFromUrl = false,
     recaptchaSiteKey,
     isSpamProtectionEnabled = false,
     responseCount,
@@ -59,6 +62,8 @@ export const PinScreen = (props: PinScreenProps) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
+  const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
 
   const resetState = useCallback(() => {
     setError("");
@@ -99,7 +104,12 @@ export const PinScreen = (props: PinScreenProps) => {
 
   if (!survey) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
+      <div
+        className={cn(
+          "mx-auto flex h-full w-full items-center justify-center",
+          isCardless && "px-4 py-12 sm:px-6"
+        )}
+        style={{ maxWidth: linkSurveyCardMaxWidth }}>
         <div className="flex flex-col items-center justify-center">
           <div className="my-4 font-semibold">
             <h4>{t("s.enter_pin")}</h4>
@@ -121,7 +131,7 @@ export const PinScreen = (props: PinScreenProps) => {
   return (
     <SurveyClientWrapper
       survey={survey}
-      project={project}
+      workspace={workspace}
       styling={styling}
       publicDomain={publicDomain}
       responseCount={responseCount}
@@ -130,6 +140,7 @@ export const PinScreen = (props: PinScreenProps) => {
       singleUseId={singleUseId}
       singleUseResponseId={singleUseResponse?.id}
       contactId={contactId}
+      canReadUserIdFromUrl={canReadUserIdFromUrl}
       recaptchaSiteKey={recaptchaSiteKey}
       isSpamProtectionEnabled={isSpamProtectionEnabled}
       isPreview={isPreview}

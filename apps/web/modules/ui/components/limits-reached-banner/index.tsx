@@ -8,15 +8,10 @@ import { TOrganization } from "@formbricks/types/organizations";
 
 interface LimitsReachedBannerProps {
   organization: TOrganization;
-  environmentId: string;
   responseCount: number;
 }
 
-export const LimitsReachedBanner = ({
-  organization,
-  responseCount,
-  environmentId,
-}: LimitsReachedBannerProps) => {
+export const LimitsReachedBanner = ({ organization, responseCount }: LimitsReachedBannerProps) => {
   const { t } = useTranslation();
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
   const isResponseLimitReached = orgBillingResponseLimit !== null && responseCount >= orgBillingResponseLimit;
@@ -27,14 +22,14 @@ export const LimitsReachedBanner = ({
     return (
       <div
         aria-live="assertive"
-        className="pointer-events-none fixed inset-0 z-[100] flex min-w-80 items-end px-4 py-6 sm:items-start sm:p-6">
-        <div className="flex w-full flex-col items-center space-y-4 sm:items-end">
-          <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition">
+        className="pointer-events-none fixed inset-0 z-100 flex min-w-80 items-end px-4 py-6 sm:items-start sm:p-6">
+        <div className="flex w-full flex-col items-center gap-y-4 sm:items-end">
+          <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5 transition">
             <div className="p-4">
               <div className="relative flex flex-col">
                 <div className="flex">
-                  <div className="flex-shrink-0">
-                    <TriangleAlertIcon className="h-6 w-6 text-error" aria-hidden="true" />
+                  <div className="shrink-0">
+                    <TriangleAlertIcon className="size-6 text-error" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
                     <p className="text-base font-medium text-slate-900">{t("common.limits_reached")}</p>
@@ -45,19 +40,19 @@ export const LimitsReachedBanner = ({
                           })
                         : null}
                     </p>
-                    <Link href={`/environments/${environmentId}/settings/billing`}>
+                    <Link href={`/organizations/${organization.id}/settings/billing`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>
                 </div>
 
-                <div className="absolute right-0 top-0 ml-4 flex flex-shrink-0">
+                <div className="absolute top-0 right-0 ml-4 flex shrink-0">
                   <button
                     type="button"
-                    className="inline-flex rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="inline-flex rounded-md bg-white text-slate-400 hover:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-hidden"
                     onClick={() => setShow(false)}>
                     <span className="sr-only">Close</span>
-                    <XIcon className="h-5 w-5" aria-hidden="true" />
+                    <XIcon className="size-5" aria-hidden="true" />
                   </button>
                 </div>
               </div>

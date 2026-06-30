@@ -66,7 +66,7 @@ export const SaveAsNewSegmentModal = ({
     const createSegment = async () => {
       setIsLoading(true);
       const createdSegment = await onCreateSegment({
-        environmentId: localSurvey.environmentId,
+        workspaceId: localSurvey.workspaceId,
         surveyId: localSurvey.id,
         title: data.title,
         description: data.description ?? "",
@@ -78,7 +78,7 @@ export const SaveAsNewSegmentModal = ({
 
       setIsSegmentEditorOpen(false);
       setIsLoading(false);
-      toast.success(t("environments.segments.segment_created_successfully"));
+      toast.success(t("workspace.segments.segment_created_successfully"));
       handleReset();
     };
 
@@ -92,7 +92,7 @@ export const SaveAsNewSegmentModal = ({
           filters: segment?.filters,
         });
 
-        toast.success(t("environments.segments.segment_updated_successfully"));
+        toast.success(t("workspace.segments.segment_updated_successfully"));
         setSegment(updatedSegment);
 
         setIsSegmentEditorOpen(false);
@@ -134,10 +134,10 @@ export const SaveAsNewSegmentModal = ({
       }}>
       <DialogContent>
         <DialogHeader>
-          <UsersIcon className="h-5 w-5" />
-          <DialogTitle>{t("environments.segments.save_as_new_segment")}</DialogTitle>
+          <UsersIcon className="size-5" />
+          <DialogTitle>{t("workspace.segments.save_as_new_segment")}</DialogTitle>
           <DialogDescription>
-            {t("environments.segments.save_your_filters_as_a_segment_to_use_it_in_other_surveys")}
+            {t("workspace.segments.save_your_filters_as_a_segment_to_use_it_in_other_surveys")}
           </DialogDescription>
         </DialogHeader>
 
@@ -152,11 +152,11 @@ export const SaveAsNewSegmentModal = ({
                 {...register("title", {
                   required: {
                     value: true,
-                    message: t("environments.segments.title_is_required"),
+                    message: t("workspace.segments.title_is_required"),
                   },
                 })}
                 type="text"
-                placeholder={t("environments.segments.ex_power_users")}
+                placeholder={t("workspace.segments.ex_power_users")}
                 className="w-full p-2"
               />
               {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
@@ -169,7 +169,7 @@ export const SaveAsNewSegmentModal = ({
               <Input
                 {...register("description")}
                 type="text"
-                placeholder={t("environments.segments.most_active_users_in_the_last_30_days")}
+                placeholder={t("workspace.segments.most_active_users_in_the_last_30_days")}
                 className="w-full p-2"
               />
               {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}

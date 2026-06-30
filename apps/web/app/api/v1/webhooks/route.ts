@@ -1,6 +1,8 @@
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -13,10 +15,10 @@ export const GET = withV1ApiWrapper({
     }
 
     try {
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
-      const webhooks = await getWebhooks(environmentIds);
+      const workspaceIds = [
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
+      ];
+      const webhooks = await getWebhooks(workspaceIds);
       return {
         response: responses.successResponse(webhooks),
       };
@@ -37,7 +39,26 @@ export const POST = withV1ApiWrapper({
       return { response: responses.notAuthenticatedResponse() };
     }
 
-    const webhookInput = await req.json();
+    let webhookInput;
+    try {
+      webhookInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return {
+          response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+        };
+      }
+
+      return {
+        response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
+      };
+    }
+
+    // Accept workspaceId as alternative to environmentId
+    const resolved = await resolveBodyIds(webhookInput, authentication.workspacePermissions, "POST");
+    if (!resolved.ok) return { response: resolved.response };
+    webhookInput = resolved.body;
+
     const inputValidation = ZWebhookInput.safeParse(webhookInput);
 
     if (!inputValidation.success) {
@@ -50,14 +71,12 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const environmentId = inputValidation.data.environmentId;
-    if (!environmentId) {
-      return {
-        response: responses.badRequestResponse("Environment ID is required"),
-      };
-    }
+    const { workspaceId } = inputValidation.data;
 
-    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+    if (
+      !resolved.alreadyAuthorized &&
+      !hasPermission(authentication.workspacePermissions, workspaceId, "POST")
+    ) {
       return {
         response: responses.unauthorizedResponse(),
       };

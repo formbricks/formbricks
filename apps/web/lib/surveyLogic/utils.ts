@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
   TSurveyBlockLogic,
@@ -227,7 +227,7 @@ export const getUpdatedActionBody = (
 };
 
 export const evaluateLogic = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
@@ -249,7 +249,7 @@ export const evaluateLogic = (
 };
 
 const evaluateSingleCondition = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   condition: TSingleCondition,
@@ -504,7 +504,7 @@ const getVariableValue = (
 };
 
 const getLeftOperandValue = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   leftOperand: TSingleCondition["leftOperand"],
@@ -601,7 +601,7 @@ const getLeftOperandValue = (
 };
 
 const getRightOperandValue = (
-  localSurvey: TJsEnvironmentStateSurvey,
+  localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   rightOperand: TSingleCondition["rightOperand"]
@@ -624,7 +624,7 @@ const getRightOperandValue = (
 };
 
 export const performActions = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TJsWorkspaceStateSurvey,
   actions: TSurveyBlockLogicAction[] | TSurveyLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
@@ -658,7 +658,7 @@ export const performActions = (
 };
 
 const performCalculation = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate,
   data: TResponseData,
   calculations: Record<string, number | string>

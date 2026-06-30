@@ -24,13 +24,7 @@ const validateLabelForAllLanguages = (label: TI18nString, surveyLanguages: TSurv
     return textContent.length === 0;
   });
 
-  return invalidLanguageCodes.map((invalidLanguageCode) => {
-    if (invalidLanguageCode === "default") {
-      return surveyLanguages.find((lang) => lang.default)?.language.code ?? "default";
-    }
-
-    return invalidLanguageCode;
-  });
+  return invalidLanguageCodes;
 };
 
 // Map for element field names to user-friendly labels
@@ -52,6 +46,26 @@ export const validateElementLabels = (
   elementIndex: number,
   skipArticle = false
 ): z.core.$ZodRawIssue | null => {
+  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
+  const isDefaultMissing = invalidLanguageCodes.includes("default");
+
+  const messagePrefix = skipArticle ? "" : "The ";
+  const messageField = ELEMENT_FIELD_TO_LABEL_MAP[field] ? ELEMENT_FIELD_TO_LABEL_MAP[field] : field;
+  const messageSuffix = isDefaultMissing ? " is missing" : " is missing for the following languages: ";
+
+  const message = isDefaultMissing
+    ? `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix}`
+    : `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+
+  if (isDefaultMissing) {
+    return {
+      code: "custom",
+      input: fieldLabel,
+      message,
+      path: ["blocks", blockIndex, "elements", elementIndex, field],
+    };
+  }
+
   // fieldLabel should contain all the keys present in languages
   for (const language of languages) {
     if (
@@ -68,24 +82,13 @@ export const validateElementLabels = (
     }
   }
 
-  const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
-  const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-  const messagePrefix = skipArticle ? "" : "The ";
-  const messageField = ELEMENT_FIELD_TO_LABEL_MAP[field] ? ELEMENT_FIELD_TO_LABEL_MAP[field] : field;
-  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
-
-  const message = isDefaultOnly
-    ? `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix}`
-    : `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
-
   if (invalidLanguageCodes.length) {
     return {
       code: "custom",
       input: fieldLabel,
       message,
       path: ["blocks", blockIndex, "elements", elementIndex, field],
-      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+      params: { invalidLanguageCodes },
     };
   }
 

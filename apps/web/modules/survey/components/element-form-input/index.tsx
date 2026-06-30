@@ -412,9 +412,9 @@ export const ElementFormInput = ({
           <div className="mb-2 mt-3 flex items-center justify-between">
             <Label htmlFor={id}>{label}</Label>
             {id === "headline" && currentElement && updateElement && (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-x-2">
                 <Label htmlFor="required-toggle" className="text-sm">
-                  {t("environments.surveys.edit.required")}
+                  {t("workspace.surveys.edit.required")}
                 </Label>
                 <Switch
                   id="required-toggle"
@@ -433,7 +433,7 @@ export const ElementFormInput = ({
             <FileInput
               id="element-image"
               allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-              environmentId={localSurvey.environmentId}
+              workspaceId={localSurvey.workspaceId}
               onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                 if (url) {
                   const update =
@@ -479,7 +479,7 @@ export const ElementFormInput = ({
 
             {id === "headline" && !isWelcomeCard && (
               <TooltipRenderer
-                tooltipContent={t("environments.surveys.edit.add_photo_or_video")}
+                tooltipContent={t("workspace.surveys.edit.add_photo_or_video")}
                 delayDuration={100}>
                 <Button
                   variant="secondary"
@@ -496,7 +496,7 @@ export const ElementFormInput = ({
             )}
 
             {id === "subheader" && renderRemoveDescriptionButton() && (
-              <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+              <TooltipRenderer tooltipContent={t("workspace.surveys.edit.remove_description")}>
                 <Button
                   variant="secondary"
                   size="icon"
@@ -557,7 +557,7 @@ export const ElementFormInput = ({
         render={({ value, onChange, highlightedJSX, children: recallComponents, isRecallSelectVisible }) => {
           return (
             <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
-              <div className="flex w-full items-center space-x-2">
+              <div className="flex w-full items-center gap-x-2">
                 <div className="group relative w-full">
                   {/* The highlight container is absolutely positioned behind the input */}
                   <div className="h-10 w-full"></div>

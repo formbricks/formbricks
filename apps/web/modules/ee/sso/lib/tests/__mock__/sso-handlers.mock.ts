@@ -46,14 +46,13 @@ export const mockOrganization: TOrganization = {
   id: "org-123",
   name: "Test Organization",
   isAISmartToolsEnabled: false,
-  isAIDataAnalysisEnabled: false,
   whitelabel: {
     logoUrl: null,
     faviconUrl: null,
   },
   billing: {
     stripeCustomerId: null,
-    limits: { monthly: { responses: null }, projects: null },
+    limits: { monthly: { responses: null }, workspaces: null },
     usageCycleAnchor: new Date(),
   },
   createdAt: new Date(),

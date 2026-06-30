@@ -83,7 +83,7 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
                   showSearch
                   searchPlaceholder={t("common.search")}
                   comboboxClasses="flex-1 min-w-0 w-full"
-                  emptyDropdownText={t("environments.surveys.edit.no_option_found")}
+                  emptyDropdownText={t("workspace.surveys.edit.no_option_found")}
                 />
               </div>
               {error?.message && <FormError className="text-left">{error.message}</FormError>}
@@ -96,10 +96,10 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
         name={`members.${index}.role`}
         render={({ field }) => {
           const roleOptions = [
-            { value: ZTeamRole.enum.admin, label: t("environments.settings.teams.team_admin") },
+            { value: ZTeamRole.enum.admin, label: t("workspace.settings.teams.team_admin") },
             {
               value: ZTeamRole.enum.contributor,
-              label: t("environments.settings.teams.contributor"),
+              label: t("workspace.settings.teams.contributor"),
             },
           ];
 
@@ -128,7 +128,7 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
             className="shrink-0"
             disabled={!isOwnerOrManager && (!isTeamAdminMember || member.userId === currentUserId)}
             onClick={() => onRemoveMember(index)}>
-            <XIcon className="h-4 w-4" />
+            <XIcon className="size-4" />
           </Button>
         </TooltipRenderer>
       )}

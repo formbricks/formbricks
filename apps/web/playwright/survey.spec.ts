@@ -1,9 +1,14 @@
 import { type Locator, expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
-import { gotoSurveyList } from "./lib/utils";
 import * as helper from "./utils/helper";
-import { createSurvey, createSurveyWithLogic, uploadImageChoicesForPictureSelection } from "./utils/helper";
+import {
+  createSurvey,
+  createSurveyFromScratch,
+  createSurveyWithLogic,
+  isWorkspaceStorageConfigured,
+  uploadImageChoicesForPictureSelection,
+} from "./utils/helper";
 
 test.use({
   launchOptions: {
@@ -34,7 +39,15 @@ test.describe("Survey Create & Submit Response without logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await gotoSurveyList(page);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+
+    const workspaceId =
+      user.workspaceId ??
+      (() => {
+        throw new Error("Unable to get workspaceId from user fixture");
+      })();
+    const storageConfigured = await isWorkspaceStorageConfigured(page, workspaceId);
+    test.skip(!storageConfigured, "Storage-dependent survey E2E requires configured file storage.");
 
     await test.step("Create Survey", async () => {
       await createSurvey(page, surveys.createAndSubmit);
@@ -46,13 +59,13 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
       await page.locator("#howToSendCardOption-link").click();
 
-      // Wait for any auto-save to complete before publishing
-      await page.waitForTimeout(2000);
+      await page.getByRole("button", { name: "Save as draft", exact: true }).click();
+      await expect(page.getByText("Changes saved.")).toBeVisible();
 
-      await page.getByRole("button", { name: "Publish" }).click();
-
-      // Get URL - increase timeout for slower local environments
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
+      await Promise.all([
+        page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 120000 }),
+        page.getByRole("button", { name: "Publish", exact: true }).click(),
+      ]);
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -101,7 +114,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       // Multi Select Question
       await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.question)).toBeVisible();
       await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.description)).toBeVisible();
-      for (let i = 0; i < surveys.createAndSubmit.singleSelectQuestion.options.length; i++) {
+      for (let i = 0; i < surveys.createAndSubmit.multiSelectQuestion.options.length; i++) {
         await expect(
           page
             .locator("#questionCard-2 label")
@@ -260,11 +273,19 @@ test.describe("Multi Language Survey Create", async () => {
     const user = await users.create();
     await user.login();
 
-    await gotoSurveyList(page);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+
+    const workspaceId =
+      user.workspaceId ??
+      (() => {
+        throw new Error("Unable to get workspaceId from user fixture");
+      })();
+    const storageConfigured = await isWorkspaceStorageConfigured(page, workspaceId);
+    test.skip(!storageConfigured, "Storage-dependent survey E2E requires configured file storage.");
 
     // Add workspace languages (English + German)
-    await page.getByRole("link", { name: "Configuration" }).click();
-    await page.getByRole("link", { name: "Survey Languages" }).click();
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/languages`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/languages/);
     await page.getByRole("button", { name: "Edit languages" }).click();
     await page.getByRole("button", { name: "Add language" }).click();
     await page.getByRole("button", { name: "Select" }).click();
@@ -282,9 +303,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.waitForTimeout(2000);
 
     // Create survey and add all questions in English (default language)
-    await page.getByRole("link", { name: "Surveys" }).click();
-    await page.getByText("Start from scratch").click();
-    await page.getByRole("button", { name: "Create survey", exact: true }).click();
+    await page.goto(`/workspaces/${workspaceId}/surveys`);
+    await createSurveyFromScratch(page);
 
     // Enable welcome card
     await page.locator("#welcome-toggle").click();
@@ -371,17 +391,17 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator("#row-1").click();
     await page.locator("#row-1").fill(surveys.createAndSubmit.matrix.rows[1]);
     await page.getByRole("button", { name: "Add row" }).click();
-    await page.locator("#row-2").click();
+    await expect(page.locator("#row-2")).toBeEditable();
     await page.locator("#row-2").fill(surveys.createAndSubmit.matrix.rows[2]);
     await page.locator("#column-0").click();
     await page.locator("#column-0").fill(surveys.createAndSubmit.matrix.columns[0]);
     await page.locator("#column-1").click();
     await page.locator("#column-1").fill(surveys.createAndSubmit.matrix.columns[1]);
     await page.getByRole("button", { name: "Add column" }).click();
-    await page.locator("#column-2").click();
+    await expect(page.locator("#column-2")).toBeEditable();
     await page.locator("#column-2").fill(surveys.createAndSubmit.matrix.columns[2]);
     await page.getByRole("button", { name: "Add column" }).click();
-    await page.locator("#column-3").click();
+    await expect(page.locator("#column-3")).toBeEditable();
     await page.locator("#column-3").fill(surveys.createAndSubmit.matrix.columns[3]);
 
     await page
@@ -420,12 +440,21 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Navigate to Language tab to enable translations and add German
     await page.getByText("Language").click();
-    await page.locator("#activate-translations-toggle").click();
+    const translationsToggle = page.locator("#activate-translations-toggle");
+    await expect(translationsToggle).toBeVisible();
+    const translationsWereEnabled = (await translationsToggle.getAttribute("aria-checked")) === "true";
+    if (!translationsWereEnabled) {
+      await translationsToggle.click();
+      await expect(translationsToggle).toHaveAttribute("aria-checked", "true");
+    }
 
-    // Select English as default language
-    await page.locator("button", { hasText: "Select Language" }).click();
-    await page.getByText("English (en)", { exact: true }).click();
-    await page.getByRole("button", { name: "Confirm" }).click();
+    // Select English as default language if the survey does not already have one.
+    const defaultLanguageSelect = page.locator("button", { hasText: "Select Language" });
+    if (!translationsWereEnabled || (await defaultLanguageSelect.isVisible())) {
+      await defaultLanguageSelect.click();
+      await page.getByText("English (en)", { exact: true }).click();
+      await page.getByRole("button", { name: "Confirm" }).click();
+    }
 
     // Enable German by toggling its switch in the language table
     await page
@@ -700,13 +729,13 @@ test.describe("Multi Language Survey Create", async () => {
     await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
     await page.locator("#howToSendCardOption-link").click();
 
-    // Wait for any auto-save to complete before publishing
-    await page.waitForTimeout(2000);
+    await page.getByRole("button", { name: "Save as draft", exact: true }).click();
+    await expect(page.getByText("Changes saved.")).toBeVisible();
 
-    await page.getByRole("button", { name: "Publish" }).click();
-
-    await page.waitForTimeout(2000);
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
+    await Promise.all([
+      page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 120000 }),
+      page.getByRole("button", { name: "Publish", exact: true }).click(),
+    ]);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
     await page.getByLabel("Copy survey link to clipboard").click();
@@ -724,7 +753,15 @@ test.describe("Testing Survey with advanced logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await gotoSurveyList(page);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+
+    const workspaceId =
+      user.workspaceId ??
+      (() => {
+        throw new Error("Unable to get workspaceId from user fixture");
+      })();
+    const storageConfigured = await isWorkspaceStorageConfigured(page, workspaceId);
+    test.skip(!storageConfigured, "Storage-dependent survey E2E requires configured file storage.");
 
     await test.step("Create Survey", async () => {
       await createSurveyWithLogic(page, surveys.createWithLogicAndSubmit);
@@ -736,10 +773,15 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
       await page.locator("#howToSendCardOption-link").click();
 
-      await page.getByRole("button", { name: "Publish" }).click();
+      await page.getByRole("button", { name: "Save as draft", exact: true }).click();
+      await expect(page.getByText("Changes saved.")).toBeVisible();
+
+      await Promise.all([
+        page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 120000 }),
+        page.getByRole("button", { name: "Publish", exact: true }).click(),
+      ]);
 
       // Get URL
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -800,7 +842,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(
         page.getByText(surveys.createWithLogicAndSubmit.multiSelectQuestion.description)
       ).toBeVisible();
-      for (let i = 0; i < surveys.createWithLogicAndSubmit.singleSelectQuestion.options.length; i++) {
+      for (let i = 0; i < surveys.createWithLogicAndSubmit.multiSelectQuestion.options.length; i++) {
         await expect(
           page
             .locator("#questionCard-2 label")
@@ -987,10 +1029,10 @@ test.describe("Testing Survey with advanced logic", async () => {
 
     await test.step("Verify Survey Response", async () => {
       await page.goBack();
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 
       const currentUrl = page.url();
-      const updatedUrl = currentUrl.replace("summary?share=true", "responses");
+      const updatedUrl = currentUrl.replace(/summary(?:\?.*)?$/, "responses");
 
       await page.goto(updatedUrl);
       const responseTable = page.locator("table#response-table");

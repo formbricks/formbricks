@@ -83,7 +83,7 @@ const meta: Meta<StoryProps> = {
     // Story Options - Appearance Category
     width: {
       control: "select",
-      options: ["default", "wide"],
+      options: ["default", "wide", "full", "narrow"],
       description: "Width of the modal",
       table: {
         category: "Appearance",
@@ -258,7 +258,7 @@ const renderModal = (args: StoryProps) => {
         <DialogBody>{bodyContent}</DialogBody>
         {showFooter && footerButtonConfiguration === "3" && (
           <DialogFooter className="md:justify-between">
-            <div className="flex w-full flex-col space-y-2 md:hidden">
+            <div className="flex w-full flex-col gap-y-2 md:hidden">
               <Button className="w-full">{primaryButtonText}</Button>
               <Button className="w-full" variant="secondary">
                 {secondaryButtonText}
@@ -280,7 +280,7 @@ const renderModal = (args: StoryProps) => {
         )}
         {showFooter && footerButtonConfiguration !== "3" && (
           <DialogFooter>
-            <div className="flex w-full flex-col space-y-2 md:hidden">
+            <div className="flex w-full flex-col gap-y-2 md:hidden">
               <Button className="w-full">{primaryButtonText}</Button>
               {footerButtonConfiguration !== "1" && (
                 <Button className="w-full" variant="secondary">

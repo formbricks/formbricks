@@ -1,12 +1,11 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { SurveyBgSelectorTab } from "@/modules/ui/components/background-styling-card/survey-bg-selector-tab";
 import { Badge } from "@/modules/ui/components/badge";
@@ -19,9 +18,9 @@ interface BackgroundStylingCardProps {
   colors: string[];
   isSettingsPage?: boolean;
   disabled?: boolean;
-  environmentId: string;
+  workspaceId: string;
   isUnsplashConfigured: boolean;
-  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
+  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
   isStorageConfigured: boolean;
 }
 
@@ -31,13 +30,12 @@ export const BackgroundStylingCard = ({
   colors,
   isSettingsPage = false,
   disabled,
-  environmentId,
+  workspaceId,
   isUnsplashConfigured,
   form,
   isStorageConfigured = true,
 }: BackgroundStylingCardProps) => {
   const { t } = useTranslation();
-  const [parent] = useAutoAnimate();
 
   return (
     <Collapsible.Root
@@ -60,27 +58,27 @@ export const BackgroundStylingCard = ({
         )}>
         <div className="inline-flex px-4 py-4">
           {!isSettingsPage && (
-            <div className="flex items-center pl-2 pr-5">
+            <div className="flex items-center pr-5 pl-2">
               <CheckIcon
                 strokeWidth={3}
-                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               />
             </div>
           )}
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
-                {t("environments.surveys.edit.background_styling")}
+                {t("workspace.surveys.edit.background_styling")}
               </p>
               {isSettingsPage && <Badge type="gray" size="normal" text={t("common.link_surveys")} />}
             </div>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
-              {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}
+              {t("workspace.surveys.edit.change_the_background_to_a_color_image_or_animation")}
             </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
+      <Collapsible.CollapsibleContent className="flex flex-col overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         <hr className="pt-1 text-slate-600" />
         <div className="flex flex-col gap-6 p-6 pt-2">
           <FormField
@@ -89,9 +87,9 @@ export const BackgroundStylingCard = ({
             render={({ field }) => (
               <FormItem>
                 <div>
-                  <FormLabel>{t("environments.surveys.edit.change_background")}</FormLabel>
+                  <FormLabel>{t("workspace.surveys.edit.change_background")}</FormLabel>
                   <FormDescription>
-                    {t("environments.surveys.edit.pick_a_background_from_our_library_or_upload_your_own")}
+                    {t("workspace.surveys.edit.pick_a_background_from_our_library_or_upload_your_own")}
                   </FormDescription>
                 </div>
 
@@ -108,7 +106,7 @@ export const BackgroundStylingCard = ({
                     }}
                     colors={colors}
                     bgType={field.value?.bgType ?? "color"}
-                    environmentId={environmentId}
+                    workspaceId={workspaceId}
                     isUnsplashConfigured={isUnsplashConfigured}
                     isStorageConfigured={isStorageConfigured}
                   />
@@ -126,9 +124,9 @@ export const BackgroundStylingCard = ({
                   render={({ field }) => (
                     <FormItem>
                       <div>
-                        <FormLabel>{t("environments.surveys.edit.brightness")}</FormLabel>
+                        <FormLabel>{t("workspace.surveys.edit.brightness")}</FormLabel>
                         <FormDescription>
-                          {t("environments.surveys.edit.darken_or_lighten_background_of_your_choice")}
+                          {t("workspace.surveys.edit.darken_or_lighten_background_of_your_choice")}
                         </FormDescription>
                       </div>
 

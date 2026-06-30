@@ -9,9 +9,11 @@ import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreateOrganizationAction = z.object({
   organizationName: z.string(),
@@ -47,10 +49,15 @@ export const createOrganizationAction = authenticatedActionClient
         });
       }
 
+      const newWorkspace = await createWorkspace(newOrganization.id, {
+        name: DEFAULT_WORKSPACE_NAME,
+      });
+
       ctx.auditLoggingCtx.organizationId = newOrganization.id;
       ctx.auditLoggingCtx.newObject = newOrganization;
 
       groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });
+      groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
 
       capturePostHogEvent(
         ctx.user.id,
@@ -59,7 +66,18 @@ export const createOrganizationAction = authenticatedActionClient
           organization_id: newOrganization.id,
           is_first_org: hasNoOrganizations,
         },
-        { organizationId: newOrganization.id }
+        { organizationId: newOrganization.id, workspaceId: newWorkspace.id }
+      );
+
+      capturePostHogEvent(
+        ctx.user.id,
+        "workspace_created",
+        {
+          organization_id: newOrganization.id,
+          workspace_id: newWorkspace.id,
+          name: newWorkspace.name,
+        },
+        { organizationId: newOrganization.id, workspaceId: newWorkspace.id }
       );
 
       return newOrganization;

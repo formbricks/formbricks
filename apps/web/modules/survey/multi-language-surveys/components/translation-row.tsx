@@ -13,6 +13,7 @@ interface TranslationRowProps {
   onChange: (path: string, value: string) => void;
   localSurvey: TSurvey;
   languageCode: string;
+  disabled?: boolean;
 }
 
 const DefaultTextCell = ({
@@ -25,7 +26,7 @@ const DefaultTextCell = ({
   noTextLabel: string;
 }) => {
   if (!text) {
-    return <div className="text-sm italic text-slate-400">{noTextLabel}</div>;
+    return <div className="text-sm text-slate-400 italic">{noTextLabel}</div>;
   }
 
   if (isRichText) {
@@ -40,7 +41,14 @@ const DefaultTextCell = ({
   return <div className="text-sm text-slate-700">{text}</div>;
 };
 
-export const TranslationRow = ({ s, value, onChange, localSurvey, languageCode }: TranslationRowProps) => {
+export const TranslationRow = ({
+  s,
+  value,
+  onChange,
+  localSurvey,
+  languageCode,
+  disabled,
+}: TranslationRowProps) => {
   const { t } = useTranslation();
 
   const defaultText = s.value.default || "";
@@ -48,7 +56,7 @@ export const TranslationRow = ({ s, value, onChange, localSurvey, languageCode }
   return (
     <tr className="border-b last:border-b-0" data-testid={`translation-row-${s.path}`}>
       <td className="py-2 pr-2 align-top">
-        <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+        <span className="inline-block rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
           {s.displayId}
         </span>
         <div className="mt-0.5 text-[10px] text-slate-400">{s.fieldLabel}</div>
@@ -69,6 +77,7 @@ export const TranslationRow = ({ s, value, onChange, localSurvey, languageCode }
             localSurvey={localSurvey}
             languageCode={languageCode}
             elementId={s.elementId}
+            disabled={disabled}
           />
         ) : (
           <Input
@@ -77,6 +86,7 @@ export const TranslationRow = ({ s, value, onChange, localSurvey, languageCode }
             value={value}
             onChange={(e) => onChange(s.path, e.target.value)}
             placeholder=""
+            disabled={disabled}
           />
         )}
       </td>

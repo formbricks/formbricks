@@ -31,6 +31,14 @@ class ValidationError extends Error {
   }
 }
 
+class QueryExecutionError extends Error {
+  statusCode = 500;
+  constructor(message: string) {
+    super(message);
+    this.name = "QueryExecutionError";
+  }
+}
+
 class UnknownError extends Error {
   statusCode = 500;
   constructor(message: string) {
@@ -135,6 +143,7 @@ export {
   ResourceNotFoundError,
   InvalidInputError,
   ValidationError,
+  QueryExecutionError,
   DatabaseError,
   UniqueConstraintError,
   UnknownError,
@@ -163,11 +172,13 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "AuthorizationError",
   "InvalidInputError",
   "ValidationError",
+  "QueryExecutionError",
   "AuthenticationError",
   "OperationNotAllowedError",
   "TooManyRequestsError",
   "InvalidPasswordResetTokenError",
   "UniqueConstraintError",
+  "RequestBodyTooLargeError",
 ]);
 
 /**

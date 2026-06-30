@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
@@ -29,13 +29,13 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-const environmentId = "env_123";
+const workspaceId = "ws_123";
 
 function makeSurveyRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "survey_1",
     name: "Survey 1",
-    environmentId,
+    workspaceId,
     type: "link",
     status: "draft",
     createdAt: new Date("2025-01-01T00:00:00.000Z"),
@@ -91,7 +91,7 @@ describe("getSurveyListPage", () => {
       { surveyId: "survey_2", _count: { _all: 3 } },
     ] as never);
 
-    const page = await getSurveyListPage(environmentId, {
+    const page = await getSurveyListPage(workspaceId, {
       limit: 1,
       cursor: null,
       sortBy: "updatedAt",
@@ -99,7 +99,7 @@ describe("getSurveyListPage", () => {
 
     expect(buildWhereClause).toHaveBeenCalledWith(undefined);
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { environmentId, AND: [] },
+      where: { workspaceId: workspaceId, AND: [] },
       select: expect.any(Object),
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: 2,
@@ -134,7 +134,7 @@ describe("getSurveyListPage", () => {
       { surveyId: "survey_c", _count: { _all: 3 } },
     ] as never);
 
-    await getSurveyListPage(environmentId, {
+    await getSurveyListPage(workspaceId, {
       limit: 2,
       cursor,
       sortBy: "name",
@@ -142,7 +142,7 @@ describe("getSurveyListPage", () => {
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: workspaceId,
         AND: [],
         OR: [{ name: { gt: "Bravo" } }, { name: "Bravo", id: { gt: "survey_b" } }],
       },
@@ -178,7 +178,7 @@ describe("getSurveyListPage", () => {
       { surveyId: "survey_other_1", _count: { _all: 2 } },
     ] as never);
 
-    const page = await getSurveyListPage(environmentId, {
+    const page = await getSurveyListPage(workspaceId, {
       limit: 2,
       cursor: null,
       sortBy: "relevance",
@@ -186,7 +186,7 @@ describe("getSurveyListPage", () => {
 
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(1, {
       where: {
-        environmentId,
+        workspaceId: workspaceId,
         AND: [],
         status: "inProgress",
       },
@@ -196,7 +196,7 @@ describe("getSurveyListPage", () => {
     });
     expect(prisma.survey.findMany).toHaveBeenNthCalledWith(2, {
       where: {
-        environmentId,
+        workspaceId: workspaceId,
         AND: [],
         status: { not: "inProgress" },
       },
@@ -234,7 +234,7 @@ describe("getSurveyListPage", () => {
       { surveyId: "survey_in_progress", _count: { _all: 3 } },
     ] as never);
 
-    const page = await getSurveyListPage(environmentId, {
+    const page = await getSurveyListPage(workspaceId, {
       limit: 1,
       cursor: null,
       sortBy: "relevance",
@@ -273,7 +273,7 @@ describe("getSurveyListPage", () => {
       { surveyId: "survey_other_2", _count: { _all: 3 } },
     ] as never);
 
-    const page = await getSurveyListPage(environmentId, {
+    const page = await getSurveyListPage(workspaceId, {
       limit: 2,
       cursor,
       sortBy: "relevance",
@@ -282,7 +282,7 @@ describe("getSurveyListPage", () => {
     expect(prisma.survey.findMany).toHaveBeenCalledOnce();
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId,
+        workspaceId: workspaceId,
         AND: [],
         status: { not: "inProgress" },
         OR: [
@@ -309,7 +309,7 @@ describe("getSurveyListPage", () => {
     vi.mocked(prisma.survey.findMany).mockRejectedValue(prismaError);
 
     await expect(
-      getSurveyListPage(environmentId, {
+      getSurveyListPage(workspaceId, {
         limit: 1,
         cursor: null,
         sortBy: "updatedAt",
@@ -323,7 +323,7 @@ describe("getSurveyListPage", () => {
     vi.mocked(prisma.survey.findMany).mockRejectedValue(invalidInputError);
 
     await expect(
-      getSurveyListPage(environmentId, {
+      getSurveyListPage(workspaceId, {
         limit: 1,
         cursor: null,
         sortBy: "updatedAt",
@@ -336,7 +336,7 @@ describe("getSurveyListPage", () => {
     vi.mocked(prisma.survey.findMany).mockRejectedValue(unexpectedError);
 
     await expect(
-      getSurveyListPage(environmentId, {
+      getSurveyListPage(workspaceId, {
         limit: 1,
         cursor: null,
         sortBy: "updatedAt",

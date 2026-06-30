@@ -1,6 +1,6 @@
-import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { TContactAttributeKey, TContactAttributeKeyType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TContactAttributeKeyUpdateInput } from "../types/contact-attribute-keys";
@@ -33,7 +33,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 
 // Constants used in tests
 const mockContactAttributeKeyId = "drw0gc3oa67q113w68wdif0x";
-const mockEnvironmentId = "fndlzrzlqw8c6zu9jfwxf34k";
+const mockWorkspaceId = "fndlzrzlqw8c6zu9jfwxf34k";
 const mockKey = "testKey";
 const mockName = "Test Key";
 
@@ -43,7 +43,7 @@ const mockContactAttributeKey: TContactAttributeKey = {
   updatedAt: new Date(),
   name: mockName,
   key: mockKey,
-  environmentId: mockEnvironmentId,
+  workspaceId: mockWorkspaceId,
   type: "custom" as TContactAttributeKeyType,
   description: "A test key",
   isUnique: false,

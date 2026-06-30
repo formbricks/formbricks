@@ -6,10 +6,10 @@ import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
 import {
+  EMAIL_VERIFICATION_DISABLED,
   IS_FORMBRICKS_CLOUD,
   IS_TURNSTILE_CONFIGURED,
   TURNSTILE_SECRET_KEY,
-  WEBAPP_URL,
 } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -17,6 +17,7 @@ import { createOrganization, getOrganization } from "@/lib/organization/service"
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
@@ -28,6 +29,7 @@ import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreatedUser = ZUser.pick({
   name: true,
@@ -45,7 +47,6 @@ const ZCreateUserAction = z.object({
   password: ZUserPassword,
   inviteToken: z.string().optional(),
   userLocale: ZUserLocale.optional(),
-  emailVerificationDisabled: z.boolean().optional(),
   turnstileToken: z
     .string()
     .optional()
@@ -53,7 +54,6 @@ const ZCreateUserAction = z.object({
       (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
       "CAPTCHA verification required"
     ),
-  isFormbricksCloud: z.boolean(),
   subscribeToSecurityUpdates: z.boolean().optional(),
   subscribeToProductUpdates: z.boolean().optional(),
 });
@@ -175,7 +175,12 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     });
   }
 
+  const workspace = await createWorkspace(organization.id, {
+    name: DEFAULT_WORKSPACE_NAME,
+  });
+
   groupIdentifyPostHog("organization", organization.id, { name: organization.name });
+  groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
 
   capturePostHogEvent(
     user.id,
@@ -184,7 +189,18 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
       organization_id: organization.id,
       is_first_org: true,
     },
-    { organizationId: organization.id }
+    { organizationId: organization.id, workspaceId: workspace.id }
+  );
+
+  capturePostHogEvent(
+    user.id,
+    "workspace_created",
+    {
+      organization_id: organization.id,
+      workspace_id: workspace.id,
+      name: workspace.name,
+    },
+    { organizationId: organization.id, workspaceId: workspace.id }
   );
 
   await updateUser(user.id, {
@@ -202,8 +218,7 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
 async function handlePostUserCreation(
   ctx: ActionClientCtx,
   user: TCreatedUser,
-  inviteToken: string | undefined,
-  emailVerificationDisabled: boolean | undefined
+  inviteToken: string | undefined
 ): Promise<void> {
   if (inviteToken) {
     await handleInviteAcceptance(ctx, inviteToken, user);
@@ -211,20 +226,15 @@ async function handlePostUserCreation(
     await handleOrganizationCreation(ctx, user);
   }
 
-  if (!emailVerificationDisabled) {
-    let inviteCallbackUrl: string | undefined;
-
-    if (inviteToken) {
-      const inviteUrl = new URL("/invite", WEBAPP_URL);
-      inviteUrl.searchParams.set("token", inviteToken);
-      inviteCallbackUrl = inviteUrl.toString();
-    }
-
+  if (!EMAIL_VERIFICATION_DISABLED) {
+    // Do NOT point the post-verification callback back at /invite for invite signups: the invite is
+    // already accepted and deleted in handleInviteAcceptance above, so /invite would render
+    // "Invite Not Found" (ENG-1527). Leaving callbackUrl undefined lands the freshly verified —
+    // and already provisioned — user on the app home instead.
     await sendVerificationEmail({
       id: user.id,
       email: user.email,
       locale: user.locale,
-      callbackUrl: inviteCallbackUrl,
     });
   }
 }
@@ -243,11 +253,11 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     );
 
     if (!userAlreadyExisted && user) {
-      await handlePostUserCreation(ctx, user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
+      await handlePostUserCreation(ctx, user, parsedInput.inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
-        isFormbricksCloud: parsedInput.isFormbricksCloud,
+        isFormbricksCloud: IS_FORMBRICKS_CLOUD,
         subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
       });

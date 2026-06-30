@@ -1,6 +1,6 @@
-import { WebhookSource } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { WebhookSource } from "@formbricks/database/prisma";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
@@ -22,14 +22,14 @@ vi.mock("@/lib/utils/validate-webhook-url", () => ({
 }));
 
 describe("getWebhooks", () => {
-  const environmentId = "env1";
+  const workspaceId = "ws1";
   const params = {
     limit: 10,
     skip: 0,
   };
   const fakeWebhooks = [
-    { id: "w1", environmentId, name: "Webhook One" },
-    { id: "w2", environmentId, name: "Webhook Two" },
+    { id: "w1", workspaceId, name: "Webhook One" },
+    { id: "w2", workspaceId, name: "Webhook Two" },
   ];
   const count = fakeWebhooks.length;
 
@@ -39,7 +39,7 @@ describe("getWebhooks", () => {
       number,
     ]);
 
-    const result = await getWebhooks([environmentId], params as TGetWebhooksFilter);
+    const result = await getWebhooks([workspaceId], params as TGetWebhooksFilter);
     expect(result.ok).toBe(true);
 
     if (result.ok) {
@@ -55,7 +55,7 @@ describe("getWebhooks", () => {
   test("returns error when prisma.$transaction throws", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("Test error"));
 
-    const result = await getWebhooks([environmentId], params as TGetWebhooksFilter);
+    const result = await getWebhooks([workspaceId], params as TGetWebhooksFilter);
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
@@ -66,7 +66,7 @@ describe("getWebhooks", () => {
 
 describe("createWebhook", () => {
   const inputWebhook = {
-    environmentId: "env1",
+    workspaceId: "workspace-1",
     name: "New Webhook",
     url: "http://example.com",
     source: "user" as WebhookSource,
@@ -76,7 +76,7 @@ describe("createWebhook", () => {
 
   const createdWebhook = {
     id: "w100",
-    environmentId: inputWebhook.environmentId,
+    workspaceId: inputWebhook.workspaceId,
     name: inputWebhook.name,
     url: inputWebhook.url,
     source: inputWebhook.source,

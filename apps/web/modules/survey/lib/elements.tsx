@@ -7,6 +7,7 @@ import {
   ContactIcon,
   FileDigitIcon,
   FileType2Icon,
+  GaugeIcon,
   Grid3X3Icon,
   HomeIcon,
   ImageIcon,
@@ -17,6 +18,7 @@ import {
   PhoneIcon,
   PresentationIcon,
   Rows3Icon,
+  SmilePlusIcon,
   StarIcon,
 } from "lucide-react";
 import type { JSX } from "react";
@@ -122,6 +124,32 @@ export const getElementTypes = (t: TFunction): TElement[] => [
       headline: createI18nString("", []),
       lowerLabel: createI18nString(t("templates.nps_lower_label"), []),
       upperLabel: createI18nString(t("templates.nps_upper_label"), []),
+    },
+  },
+  {
+    id: TSurveyElementTypeEnum.CSAT,
+    label: t("templates.csat"),
+    description: t("templates.csat_description"),
+    icon: SmilePlusIcon,
+    preset: {
+      headline: createI18nString("", []),
+      scale: "smiley",
+      range: 5,
+      lowerLabel: createI18nString(t("templates.csat_lower_label"), []),
+      upperLabel: createI18nString(t("templates.csat_upper_label"), []),
+    },
+  },
+  {
+    id: TSurveyElementTypeEnum.CES,
+    label: t("templates.ces"),
+    description: t("templates.ces_description"),
+    icon: GaugeIcon,
+    preset: {
+      headline: createI18nString("", []),
+      scale: "number",
+      range: 5,
+      lowerLabel: createI18nString(t("templates.ces_lower_label"), []),
+      upperLabel: createI18nString(t("templates.ces_upper_label"), []),
     },
   },
   {
@@ -253,6 +281,8 @@ export const getCXElementTypes = (t: TFunction) =>
       TSurveyElementTypeEnum.MultipleChoiceMulti,
       TSurveyElementTypeEnum.Rating,
       TSurveyElementTypeEnum.NPS,
+      TSurveyElementTypeEnum.CSAT,
+      TSurveyElementTypeEnum.CES,
       TSurveyElementTypeEnum.Consent,
       TSurveyElementTypeEnum.CTA,
     ].includes(elementType.id as TSurveyElementTypeEnum);
@@ -262,7 +292,7 @@ export const getElementIconMap = (t: TFunction): Record<TSurveyElementTypeEnum, 
   getElementTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
-      [curr.id]: <curr.icon className="h-4 w-4" />,
+      [curr.id]: <curr.icon className="size-4" />,
     }),
     {} as Record<TSurveyElementTypeEnum, JSX.Element>
   );
@@ -281,8 +311,8 @@ export const getElementIcon = (type: TSurveyElementTypeEnum, t: TFunction) => {
 };
 
 export const VARIABLES_ICON_MAP = {
-  text: <FileType2Icon className="h-4 w-4" />,
-  number: <FileDigitIcon className="h-4 w-4" />,
+  text: <FileType2Icon className="size-4" />,
+  number: <FileDigitIcon className="size-4" />,
 };
 
 export const getCXElementNameMap = (t: TFunction) =>
@@ -298,9 +328,9 @@ export const universalElementPresets = {
   required: false,
 };
 
-export const getElementDefaults = (id: string, project: any, t: TFunction) => {
+export const getElementDefaults = (id: string, workspace: any, t: TFunction) => {
   const elementType = getElementTypes(t).find((elementType) => elementType.id === id);
-  return replaceElementPresetPlaceholders(elementType?.preset, project);
+  return replaceElementPresetPlaceholders(elementType?.preset, workspace);
 };
 
 export const getTSurveyElementTypeEnumName = (id: string, t: TFunction) => {
