@@ -517,6 +517,7 @@
     "verified_email": "Подтверждённый email",
     "video": "Видео",
     "view": "Просмотреть",
+    "view_workflow": "Посмотреть рабочий процесс",
     "warning": "Предупреждение",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "Не удалось проверить вашу лицензию, так как сервер лицензий недоступен.",
     "webhook": "Webhook",

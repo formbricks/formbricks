@@ -59,8 +59,11 @@ export interface WorkflowRunRow {
   finishedAt: Date | null;
 }
 
-/** A workflow row with its most recent run eagerly loaded (for `lastRun`). */
-export type WorkflowRowWithLastRun = WorkflowRow & { runs: WorkflowRunRow[] };
+/** A workflow row with its most recent run eagerly loaded (for `lastRun`) and its total run count. */
+export type WorkflowRowWithLastRun = WorkflowRow & {
+  runs: WorkflowRunRow[];
+  _count: { runs: number };
+};
 
 /** A run-list row: the slim run plus its workflow's name, joined for the runs-list display. */
 export interface WorkflowRunListRow extends WorkflowRunRow {
@@ -75,6 +78,7 @@ export interface WorkflowRunListRow extends WorkflowRunRow {
 export interface LastRunInclude {
   runs: { take: number; orderBy: { createdAt: "desc" } };
   creator: { select: { name: true } };
+  _count: { select: { runs: true } };
 }
 
 /** Narrow `where` filter the service builds — a deliberately small slice of Prisma's WhereInput. */

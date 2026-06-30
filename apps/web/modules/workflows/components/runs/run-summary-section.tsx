@@ -5,14 +5,15 @@ import { timeSince } from "@/lib/time";
 import { Badge } from "@/modules/ui/components/badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { getWorkflowRunStatusBadge } from "@/modules/workflows/lib/display";
-import { type TWorkflowRunListItem } from "@/modules/workflows/types";
+import { type TWorkflowRunSummary } from "@/modules/workflows/types";
 
 interface RunSummarySectionProps {
-  run: TWorkflowRunListItem;
+  run: TWorkflowRunSummary;
   locale: string;
 }
 
-// Summary is built entirely from the list row, so it renders instantly without waiting on the detail fetch.
+// Renders from the list row for an instant paint, then from fetched detail once available (the
+// drawer passes detail ?? run); both share the summary shape so every field below resolves.
 export const RunSummarySection = ({ run, locale }: Readonly<RunSummarySectionProps>) => {
   const { t } = useTranslation();
   const statusBadge = getWorkflowRunStatusBadge(run.status, t);

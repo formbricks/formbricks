@@ -20,7 +20,7 @@ const WorkflowDetailLayout = async (
     <WorkflowEditorProvider>
       <PageContentWrapper>
         <PageHeader
-          pageTitle={<WorkflowPageTitle />}
+          pageTitle={<WorkflowPageTitle workflowId={params.workflowId} />}
           cta={<WorkflowHeaderCta workflowId={params.workflowId} isReadOnly={isReadOnly} />}>
           <WorkflowSecondaryNavigation workspaceId={params.workspaceId} workflowId={params.workflowId} />
         </PageHeader>

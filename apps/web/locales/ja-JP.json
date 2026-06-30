@@ -517,6 +517,7 @@
     "verified_email": "認証済みメールアドレス",
     "video": "動画",
     "view": "表示",
+    "view_workflow": "ワークフローを表示",
     "warning": "警告",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "ライセンスサーバーにアクセスできないため、ライセンスを認証できませんでした。",
     "webhook": "Webhook",

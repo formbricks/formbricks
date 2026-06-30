@@ -517,6 +517,7 @@
     "verified_email": "Email verificado",
     "video": "Vídeo",
     "view": "Ver",
+    "view_workflow": "Ver fluxo de trabalho",
     "warning": "Aviso",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "Não foi possível verificar a sua licença porque o servidor de licenças está inacessível.",
     "webhook": "Webhook",

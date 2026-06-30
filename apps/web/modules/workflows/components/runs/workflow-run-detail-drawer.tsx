@@ -1,6 +1,9 @@
 "use client";
 
+import { SquareArrowOutUpRight } from "lucide-react";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/modules/ui/components/button";
 import {
   Sheet,
   SheetContent,
@@ -44,11 +47,21 @@ export const WorkflowRunDetailDrawer = ({
         <SheetHeader>
           <SheetTitle>{run?.workflowName ?? t("common.workflow_runs")}</SheetTitle>
           <SheetDescription>{run ? getWorkflowTriggerTypeLabel(run.triggerType, t) : null}</SheetDescription>
+          {run ? (
+            <Button asChild variant="link" className="mt-2 h-auto w-fit justify-start p-0 text-sm">
+              <Link href={`/workspaces/${run.workspaceId}/workflows/${run.workflowId}`}>
+                <SquareArrowOutUpRight />
+                {t("common.view_workflow")}
+              </Link>
+            </Button>
+          ) : null}
         </SheetHeader>
 
         {run ? (
           <div className="space-y-6 py-4">
-            <RunSummarySection run={run} locale={locale} />
+            {/* Prefer fetched detail once loaded so the summary can't show stale list values while
+                the step timeline below shows fresh data; fall back to the list row before it resolves. */}
+            <RunSummarySection run={detail ?? run} locale={locale} />
 
             <section className="rounded-lg border border-slate-200 bg-white p-5">
               <h2 className="mb-4 text-lg font-semibold text-slate-900">{t("common.steps")}</h2>

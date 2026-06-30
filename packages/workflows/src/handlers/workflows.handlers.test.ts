@@ -56,6 +56,7 @@ const makeRow = (overrides: Partial<WorkflowRowWithLastRun> = {}): WorkflowRowWi
   creator: null,
   definition,
   runs: [],
+  _count: { runs: 0 },
   ...overrides,
 });
 

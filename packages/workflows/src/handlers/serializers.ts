@@ -88,6 +88,7 @@ export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListIt
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     lastRun: row.runs[0] ? toWorkflowRunSummary(row.runs[0]) : null,
+    runCount: row._count.runs,
   };
 };
 

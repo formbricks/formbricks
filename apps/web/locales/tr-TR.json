@@ -517,6 +517,7 @@
     "verified_email": "Doğrulanmış E-posta",
     "video": "Video",
     "view": "Görüntüle",
+    "view_workflow": "İş akışını görüntüle",
     "warning": "Uyarı",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "Lisans sunucusuna erişilemediği için lisansınızı doğrulayamadık.",
     "webhook": "Webhook",

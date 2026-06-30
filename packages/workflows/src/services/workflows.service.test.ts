@@ -55,6 +55,7 @@ const makeRow = (overrides: Partial<WorkflowRowWithLastRun> = {}): WorkflowRowWi
   creator: null,
   definition,
   runs: [],
+  _count: { runs: 0 },
   ...overrides,
 });
 
@@ -142,6 +143,7 @@ describe("createWorkflow", () => {
     expect(createArgs.include).toEqual({
       runs: { take: 1, orderBy: { createdAt: "desc" } },
       creator: { select: { name: true } },
+      _count: { select: { runs: true } },
     });
     expect(result).toBe(row);
   });
@@ -209,7 +211,11 @@ describe("getWorkflowById", () => {
     expect(await service.getWorkflowById(row.id)).toBe(row);
     expect(findUnique).toHaveBeenCalledWith({
       where: { id: row.id },
-      include: { runs: { take: 1, orderBy: { createdAt: "desc" } }, creator: { select: { name: true } } },
+      include: {
+        runs: { take: 1, orderBy: { createdAt: "desc" } },
+        creator: { select: { name: true } },
+        _count: { select: { runs: true } },
+      },
     });
   });
 

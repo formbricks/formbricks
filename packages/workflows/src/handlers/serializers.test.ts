@@ -77,6 +77,7 @@ const baseRow: WorkflowRowWithLastRun = {
   creator: { name: "Ada Lovelace" },
   definition,
   runs: [],
+  _count: { runs: 0 },
 };
 
 describe("serializers", () => {
@@ -98,6 +99,11 @@ describe("serializers", () => {
     const item = toWorkflowListItem({ ...baseRow, runs: [run] });
     expect(item.lastRun?.id).toBe(run.id);
     expect(item.lastRun?.startedAt).toBe("2026-06-12T10:00:30.000Z");
+  });
+
+  test("maps the total run count through from _count", () => {
+    expect(toWorkflowListItem(baseRow).runCount).toBe(0);
+    expect(toWorkflowListItem({ ...baseRow, _count: { runs: 7 } }).runCount).toBe(7);
   });
 
   test("run summary maps nullable timestamps explicitly", () => {

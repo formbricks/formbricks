@@ -490,6 +490,7 @@ checksums:
     common/verified_email: d4a9e5e47d622c6ef2fede44233076c7
     common/video: 8050c90e4289b105a0780f0fdda6ff66
     common/view: 36a9b5e3dc153c036d320460d72a03c3
+    common/view_workflow: c3d3675fc33f5793cfe5fa86155224bb
     common/warning: 6618da2c7e5e93bb4ea0e16d29ab8c4c
     common/we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable: f29f2e0286195dab170b9806bcd74fc9
     common/webhook: 70f95b2c27f2c3840b500fcaf79ee83c

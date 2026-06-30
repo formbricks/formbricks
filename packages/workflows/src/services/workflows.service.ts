@@ -51,6 +51,7 @@ export interface WorkflowUpdateInput {
 const LAST_RUN_INCLUDE: LastRunInclude = {
   runs: { take: 1, orderBy: { createdAt: "desc" } },
   creator: { select: { name: true } },
+  _count: { select: { runs: true } },
 };
 
 /** Every field a workflow update may set; mirrors the injected delegate's `update` data shape. */

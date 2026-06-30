@@ -517,6 +517,7 @@
     "verified_email": "Ellenőrzött e-mail-cím",
     "video": "Videó",
     "view": "Megtekintés",
+    "view_workflow": "Munkafolyamat megtekintése",
     "warning": "Figyelmeztetés",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "Nem tudtuk ellenőrizni a licencét, mert a licenckiszolgáló nem érhető el.",
     "webhook": "Webhorog",

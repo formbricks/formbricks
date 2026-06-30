@@ -517,6 +517,7 @@
     "verified_email": "Verifierad e-post",
     "video": "Video",
     "view": "Visa",
+    "view_workflow": "Visa arbetsflöde",
     "warning": "Varning",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "Vi kunde inte verifiera din licens eftersom licensservern inte kan nås.",
     "webhook": "Webhook",

@@ -96,6 +96,11 @@ export const ZWorkflowListItem = z
     lastRun: ZWorkflowRunSummary.nullable().describe(
       "Most recent run summary (dry runs included). Null when the workflow has never run."
     ),
+    runCount: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe("Total number of runs (dry runs included) for this workflow."),
   })
   .describe("Slim workflow shape returned by the workflow list. Excludes the definition.");
 export type TWorkflowListItem = z.infer<typeof ZWorkflowListItem>;

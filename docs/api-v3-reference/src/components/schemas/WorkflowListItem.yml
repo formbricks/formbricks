@@ -21,6 +21,7 @@ required:
   - createdAt
   - updatedAt
   - lastRun
+  - runCount
 properties:
   id:
     type: string
@@ -77,3 +78,7 @@ properties:
     description: >-
       Most recent run summary (dry runs included). `null` when the workflow has
       never run.
+  runCount:
+    type: integer
+    minimum: 0
+    description: Total number of runs (dry runs included) for this workflow.

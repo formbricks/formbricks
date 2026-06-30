@@ -517,6 +517,7 @@
     "verified_email": "已验证 电子邮件",
     "video": "视频",
     "view": "查看",
+    "view_workflow": "查看工作流",
     "warning": "警告",
     "we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable": "我们无法验证您的许可证，因为许可证服务器无法访问。",
     "webhook": "Webhook",

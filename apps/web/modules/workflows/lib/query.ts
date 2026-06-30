@@ -19,6 +19,8 @@ export const workflowKeys = {
   all: ["workflows"] as const,
   lists: () => [...workflowKeys.all, "list"] as const,
   list: (input: TWorkflowListKeyInput) => [...workflowKeys.lists(), input] as const,
+  details: () => [...workflowKeys.all, "detail"] as const,
+  detail: (workflowId: string) => [...workflowKeys.details(), workflowId] as const,
 };
 
 export function flattenWorkflowPages(data?: InfiniteData<TWorkflowListPage>): TWorkflowListItem[] {

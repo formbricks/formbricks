@@ -1,14 +1,26 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
+import { getWorkflow } from "@/modules/workflows/lib/api-client";
+import { workflowKeys } from "@/modules/workflows/lib/query";
 import { workflowAtom } from "@/modules/workflows/state/editor";
 
-// Reads the persisted workflow name from `workflowAtom.name`, NOT the live draft
-// (`workflowNameAtom`). The header title is meant to reflect what's actually saved on the
-// server — typing in the inspector should leave the title alone until Save resolves and
-// `setWorkflowAtom` swaps in the server-returned resource. Names are required so the atom
-// always carries a non-empty string once the workflow has loaded.
-export const WorkflowPageTitle = () => {
+interface WorkflowPageTitleProps {
+  workflowId: string;
+}
+
+// Prefers the persisted name from `workflowAtom` (hydrated by the builder, NOT the live draft, so
+// typing in the inspector leaves the title alone until Save resolves). On a fresh load of a
+// sub-route like /runs the builder never mounts to hydrate the atom, so fetch the name directly;
+// the query stays disabled once the atom carries a name, so the builder page never double-fetches.
+export const WorkflowPageTitle = ({ workflowId }: Readonly<WorkflowPageTitleProps>) => {
   const workflow = useAtomValue(workflowAtom);
-  return <>{workflow?.name}</>;
+  const { data } = useQuery({
+    queryKey: workflowKeys.detail(workflowId),
+    queryFn: ({ signal }) => getWorkflow(workflowId, signal),
+    enabled: !workflow?.name,
+  });
+
+  return <>{workflow?.name ?? data?.name ?? null}</>;
 };
