@@ -1,5 +1,5 @@
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { ApiErrorResponse } from "@formbricks/types/errors";
+import { ApiErrorResponse, RESPONSE_ALREADY_FINISHED_ERROR_CODE } from "@formbricks/types/errors";
 import { TQuotaFullResponse } from "@formbricks/types/quota";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/lib/constants";
@@ -210,29 +210,36 @@ export class ResponseQueue {
    * Re-sending the identical payload will keep failing, so these must not be retried
    * (neither automatic backoff nor manual Retry) and the item must be dropped from the queue.
    *
-   * Excluded (kept for retry): 401 (auth may recover after a token refresh), 404 (the offline
-   * sync path treats it as "create never reached the server" and retries as a fresh
-   * createResponse), and 429 (rate limited — transient).
+   * Excluded (kept for retry) — the semantically transient/recoverable 4xx codes:
+   *   401 (auth may recover after a token refresh),
+   *   404 (the offline sync path treats it as "create never reached the server" and retries
+   *        as a fresh createResponse),
+   *   408 (Request Timeout) and 425 (Too Early) — explicitly retryable,
+   *   429 (rate limited — transient).
    */
+  private static readonly RETRYABLE_CLIENT_ERROR_STATUSES = new Set([401, 404, 408, 425, 429]);
+
   private isTerminalClientError(error?: ApiErrorResponse): boolean {
     if (!error) return false;
     return (
       error.status >= 400 &&
       error.status < 500 &&
-      error.status !== 401 &&
-      error.status !== 404 &&
-      error.status !== 429
+      !ResponseQueue.RETRYABLE_CLIENT_ERROR_STATUSES.has(error.status)
     );
   }
 
   /**
    * The response can no longer be updated because it was already finalized out-of-band
    * (e.g. a second tab / email link scanner finished the same single-use response).
-   * Server returns 400 "Response is already finished" or 409 on a stale update.
+   *
+   * Primary signal is the stable, locale-independent marker the server sets in details.code.
+   * The 409 status and the legacy English-message check are kept as fallbacks so detection
+   * still works against older servers that predate the marker.
    */
   private isResponseAlreadyCompletedError(error?: ApiErrorResponse): boolean {
     if (!error) return false;
     return (
+      error.details?.code === RESPONSE_ALREADY_FINISHED_ERROR_CODE ||
       error.status === 409 ||
       (error.status === 400 &&
         typeof error.message === "string" &&

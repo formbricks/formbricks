@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
+import { RESPONSE_ALREADY_FINISHED_ERROR_CODE } from "@formbricks/types/errors";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { ResponseQueue, _syncLocks, delay } from "./response-queue";
@@ -190,6 +191,28 @@ describe("ResponseQueue", () => {
       TResponseErrorCodesEnum.ResponseAlreadyCompleted
     );
     expect(queue["isRequestInProgress"]).toBe(false);
+  });
+
+  test("processQueue detects already-completed via the stable details.code marker, ignoring message wording", async () => {
+    queue.queue.push(responseUpdate);
+    const sendSpy = vi.spyOn(queue, "sendResponse").mockResolvedValue(
+      err({
+        code: "bad_request",
+        // Deliberately NOT the English "already finished" wording — detection must rely on the marker.
+        message: "Réponse déjà terminée",
+        status: 400,
+        details: { code: RESPONSE_ALREADY_FINISHED_ERROR_CODE },
+      })
+    );
+
+    await queue.processQueue();
+
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    expect(queue.queue).toHaveLength(0);
+    expect(config.onResponseSendingFailed).toHaveBeenCalledWith(
+      responseUpdate,
+      TResponseErrorCodesEnum.ResponseAlreadyCompleted
+    );
   });
 
   test("processQueue treats 409 as already-completed and drops the item", async () => {
