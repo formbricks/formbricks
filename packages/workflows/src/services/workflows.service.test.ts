@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { WorkflowConflictError } from "../errors";
-import type { WorkflowDelegate, WorkflowRowWithLastRun, WorkflowVersionDelegate, WorkflowsDb } from "./ports";
+import type { TWorkflowTriggerRunPayload } from "../types/runs";
+import type {
+  WorkflowDelegate,
+  WorkflowRowWithLastRun,
+  WorkflowRunDelegate,
+  WorkflowRunRow,
+  WorkflowRunWithLogsRow,
+  WorkflowVersionDelegate,
+  WorkflowsDb,
+} from "./ports";
 import { createWorkflowsService } from "./workflows.service";
 
 const surveyId = "cm9zr4q7i000108l84gozfggr";
@@ -56,14 +65,50 @@ const deleteFn = vi.fn<WorkflowDelegate["delete"]>();
 const updateMany = vi.fn<WorkflowDelegate["updateMany"]>();
 const versionFindFirst = vi.fn<WorkflowVersionDelegate["findFirst"]>();
 const versionCreate = vi.fn<WorkflowVersionDelegate["create"]>();
+const runFindMany = vi.fn<WorkflowRunDelegate["findMany"]>();
+const runFindUnique = vi.fn<WorkflowRunDelegate["findUnique"]>();
 const workflow = { findMany, findUnique, create, update, delete: deleteFn, updateMany };
 const workflowVersion = { findFirst: versionFindFirst, create: versionCreate };
+const workflowRun = { findMany: runFindMany, findUnique: runFindUnique };
 const prisma: WorkflowsDb = {
   workflow,
   workflowVersion,
+  workflowRun,
   $transaction: (fn) => fn({ workflow, workflowVersion }),
 };
 const service = createWorkflowsService({ prisma });
+
+const runId = "cm9zr4w9d000308l8c5n8xk7e";
+
+const makeRunRow = (overrides: Partial<WorkflowRunRow> = {}): WorkflowRunRow => ({
+  id: runId,
+  createdAt: new Date("2026-06-12T10:00:00.000Z"),
+  updatedAt: new Date("2026-06-12T10:01:00.000Z"),
+  workflowId: "cm9zr4t2b000208l8h2m1aq3c",
+  workspaceId,
+  workflowVersionId: null,
+  responseId: null,
+  status: "completed",
+  triggerType: "response.completed",
+  surveyId,
+  isDryRun: false,
+  attempt: 0,
+  error: null,
+  startedAt: null,
+  finishedAt: null,
+  ...overrides,
+});
+
+const makeRunDetail = (overrides: Partial<WorkflowRunWithLogsRow> = {}): WorkflowRunWithLogsRow => ({
+  ...makeRunRow(),
+  triggerPayload: { triggeredAt: "2026-06-12T10:00:00.000Z" } as unknown as TWorkflowTriggerRunPayload,
+  data: { steps: [] },
+  idempotencyKey: null,
+  nextAttemptAt: null,
+  lastErrorAt: null,
+  logs: [],
+  ...overrides,
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -363,5 +408,161 @@ describe("disableWorkflow", () => {
     const args = update.mock.calls[0][0];
     expect(args.where).toEqual({ id_workspaceId: { id: "cm9zr4t2b000208l8h2m1aq3c", workspaceId } });
     expect(args.data).toEqual({ status: "disabled" });
+  });
+});
+
+describe("listWorkflowRuns", () => {
+  test("scopes to the workspace, orders newest-first with an id tie-breaker, and over-fetches by one", async () => {
+    runFindMany.mockResolvedValue([makeRunRow()]);
+
+    await service.listWorkflowRuns({ workspaceId, limit: 20 });
+
+    const args = runFindMany.mock.calls[0][0];
+    expect(args.where).toEqual({ workspaceId });
+    expect(args.orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
+    expect(args.take).toBe(21);
+  });
+
+  test("applies workflowId, responseId, statusIn, and isDryRun filters", async () => {
+    runFindMany.mockResolvedValue([]);
+
+    await service.listWorkflowRuns({
+      workspaceId,
+      limit: 20,
+      workflowId: "cm9zr4t2b000208l8h2m1aq3c",
+      responseId: "cm9zr5resp0000000000000000",
+      statusIn: ["failed", "completed"],
+      isDryRun: true,
+    });
+
+    expect(runFindMany.mock.calls[0][0].where).toEqual({
+      workspaceId,
+      workflowId: "cm9zr4t2b000208l8h2m1aq3c",
+      responseId: "cm9zr5resp0000000000000000",
+      status: { in: ["failed", "completed"] },
+      isDryRun: true,
+    });
+  });
+
+  test("isDryRun: false is forwarded (excludes dry runs), not dropped", async () => {
+    runFindMany.mockResolvedValue([]);
+    await service.listWorkflowRuns({ workspaceId, limit: 20, isDryRun: false });
+    expect(runFindMany.mock.calls[0][0].where.isDryRun).toBe(false);
+  });
+
+  test("combines responseId with isDryRun: false (both forwarded)", async () => {
+    runFindMany.mockResolvedValue([]);
+    await service.listWorkflowRuns({
+      workspaceId,
+      limit: 20,
+      responseId: "cm9zr5resp0000000000000000",
+      isDryRun: false,
+    });
+    expect(runFindMany.mock.calls[0][0].where).toEqual({
+      workspaceId,
+      responseId: "cm9zr5resp0000000000000000",
+      isDryRun: false,
+    });
+  });
+
+  test("returns no cursor when the page is not full", async () => {
+    runFindMany.mockResolvedValue([makeRunRow()]);
+    const page = await service.listWorkflowRuns({ workspaceId, limit: 20 });
+    expect(page.runs).toHaveLength(1);
+    expect(page.nextCursor).toBeNull();
+  });
+
+  test("trims the over-fetched row and emits a next cursor from the last returned row", async () => {
+    const older = makeRunRow({
+      id: "cm9zr5b0000000000000000001",
+      createdAt: new Date("2026-06-12T09:00:00.000Z"),
+    });
+    const newest = makeRunRow({
+      id: "cm9zr5a0000000000000000002",
+      createdAt: new Date("2026-06-12T10:00:00.000Z"),
+    });
+    // limit 1 → service over-fetches 2; only the first is returned, cursor points at it.
+    runFindMany.mockResolvedValue([newest, older]);
+
+    const page = await service.listWorkflowRuns({ workspaceId, limit: 1 });
+
+    expect(page.runs).toHaveLength(1);
+    expect(page.runs[0].id).toBe(newest.id);
+    const { nextCursor } = page;
+    if (nextCursor === null) {
+      throw new Error("expected nextCursor to be present");
+    }
+    const decoded = JSON.parse(Buffer.from(nextCursor, "base64url").toString("utf8")) as {
+      value: string;
+      id: string;
+    };
+    expect(decoded).toEqual({ version: 1, value: "2026-06-12T10:00:00.000Z", id: newest.id });
+  });
+
+  test("at the page-size boundary (limit+1 rows) trims the extra row and points the cursor at the last kept row", async () => {
+    const rows = [
+      makeRunRow({ id: "cm9zr5c0000000000000000003", createdAt: new Date("2026-06-12T10:00:00.000Z") }),
+      makeRunRow({ id: "cm9zr5c0000000000000000002", createdAt: new Date("2026-06-12T09:00:00.000Z") }),
+      makeRunRow({ id: "cm9zr5c0000000000000000001", createdAt: new Date("2026-06-12T08:00:00.000Z") }),
+    ];
+    // limit 2 → service over-fetches 3; exactly `limit` rows are returned and hasMore is true.
+    runFindMany.mockResolvedValue(rows);
+
+    const page = await service.listWorkflowRuns({ workspaceId, limit: 2 });
+
+    expect(page.runs).toHaveLength(2);
+    expect(page.runs.map((r) => r.id)).toEqual([rows[0].id, rows[1].id]);
+    const { nextCursor } = page;
+    if (nextCursor === null) {
+      throw new Error("expected nextCursor to be present");
+    }
+    const decoded = JSON.parse(Buffer.from(nextCursor, "base64url").toString("utf8")) as {
+      value: string;
+      id: string;
+    };
+    expect(decoded).toEqual({ version: 1, value: "2026-06-12T09:00:00.000Z", id: rows[1].id });
+  });
+
+  test("decodes an incoming cursor into a keyset where-clause (older rows only)", async () => {
+    runFindMany.mockResolvedValue([]);
+    const cursor = Buffer.from(
+      JSON.stringify({ version: 1, value: "2026-06-12T10:00:00.000Z", id: "cm9zr5a0000000000000000002" }),
+      "utf8"
+    ).toString("base64url");
+
+    await service.listWorkflowRuns({ workspaceId, limit: 20, cursor });
+
+    expect(runFindMany.mock.calls[0][0].where).toEqual({
+      workspaceId,
+      OR: [
+        { createdAt: { lt: new Date("2026-06-12T10:00:00.000Z") } },
+        { createdAt: new Date("2026-06-12T10:00:00.000Z"), id: { lt: "cm9zr5a0000000000000000002" } },
+      ],
+    });
+  });
+
+  test("rejects a malformed cursor before hitting the database", async () => {
+    await expect(service.listWorkflowRuns({ workspaceId, limit: 20, cursor: "garbage" })).rejects.toThrow();
+    expect(runFindMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("getWorkflowRun", () => {
+  test("loads a run by id and eager-loads its logs ordered by sequence", async () => {
+    const detail = makeRunDetail({ logs: [] });
+    runFindUnique.mockResolvedValue(detail);
+
+    const result = await service.getWorkflowRun(runId);
+
+    expect(runFindUnique.mock.calls[0][0]).toEqual({
+      where: { id: runId },
+      include: { logs: { orderBy: { sequence: "asc" } } },
+    });
+    expect(result).toBe(detail);
+  });
+
+  test("returns null when the run does not exist", async () => {
+    runFindUnique.mockResolvedValue(null);
+    expect(await service.getWorkflowRun(runId)).toBeNull();
   });
 });

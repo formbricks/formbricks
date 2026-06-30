@@ -1,13 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { WorkflowConflictError } from "../errors";
-import type { WorkflowRowWithLastRun, WorkflowsLogger } from "../services/ports";
+import { WorkflowConflictError, WorkflowInvalidInputError } from "../errors";
+import type {
+  WorkflowRowWithLastRun,
+  WorkflowRunRow,
+  WorkflowRunWithLogsRow,
+  WorkflowsLogger,
+} from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
+import type { TWorkflowTriggerRunPayload } from "../types/runs";
 import type { AuthorizedWorkspace, WorkflowApiContext } from "./context";
 import { createWorkflowsHandlers } from "./workflows.handlers";
 
 const surveyId = "cm9zr4q7i000108l84gozfggr";
 const workspaceId = "cm9zr4mps000008l8btfy1vtz";
 const workflowId = "cm9zr4t2b000208l8h2m1aq3c";
+const responseId = "cm9zr4rsp000708l8bqccpfrx";
 
 const definition = {
   schemaVersion: 1 as const,
@@ -61,6 +68,8 @@ const service = {
   setStatus: vi.fn<WorkflowsService["setStatus"]>(),
   enableWorkflow: vi.fn<WorkflowsService["enableWorkflow"]>(),
   disableWorkflow: vi.fn<WorkflowsService["disableWorkflow"]>(),
+  listWorkflowRuns: vi.fn<WorkflowsService["listWorkflowRuns"]>(),
+  getWorkflowRun: vi.fn<WorkflowsService["getWorkflowRun"]>(),
 };
 const handlers = createWorkflowsHandlers(service);
 
@@ -777,5 +786,231 @@ describe("recordAudit (audit-sink port)", () => {
     expect(res.status).toBe(201);
     expect(throwingSink).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalled();
+  });
+});
+
+const runId = "cm9zr4w9d000308l8c5n8xk7e";
+
+const makeRunRow = (overrides: Partial<WorkflowRunRow> = {}): WorkflowRunRow => ({
+  id: runId,
+  createdAt: new Date("2026-06-12T10:00:00.000Z"),
+  updatedAt: new Date("2026-06-12T10:01:00.000Z"),
+  workflowId,
+  workspaceId,
+  workflowVersionId: null,
+  responseId: null,
+  status: "completed",
+  triggerType: "response.completed",
+  surveyId,
+  isDryRun: false,
+  attempt: 0,
+  error: null,
+  startedAt: new Date("2026-06-12T10:00:30.000Z"),
+  finishedAt: new Date("2026-06-12T10:01:00.000Z"),
+  ...overrides,
+});
+
+// Mirrors the canonical run-data fixture's trigger payload (a valid TWorkflowTriggerRunPayload), so
+// the handler's output validation against ZWorkflowRunResource passes.
+const validTriggerPayload = {
+  type: "response.completed",
+  surveyId,
+  responseId: "cm9zr4rsp000708l8bqccpfrx",
+  endingCardId: "cm9zr4q7i000108l84gozfggr",
+  workspaceId,
+  data: { response: { email: "jane@example.com", score: 9 } },
+  triggeredAt: "2026-06-09T12:01:00.000Z",
+} as unknown as TWorkflowTriggerRunPayload;
+
+const makeRunDetail = (overrides: Partial<WorkflowRunWithLogsRow> = {}): WorkflowRunWithLogsRow => ({
+  ...makeRunRow(),
+  triggerPayload: validTriggerPayload,
+  data: { steps: [] },
+  idempotencyKey: null,
+  nextAttemptAt: null,
+  lastErrorAt: null,
+  logs: [
+    {
+      id: "cm9zr5log0000000000000000a",
+      runId,
+      sequence: 0,
+      stepId: "send-email",
+      stepType: "send_email",
+      status: "succeeded",
+      input: { to: "jane@example.com" },
+      output: { messageId: "msg_1" },
+      error: null,
+      startedAt: new Date("2026-06-12T10:00:30.000Z"),
+      finishedAt: new Date("2026-06-12T10:00:31.000Z"),
+    },
+  ],
+  ...overrides,
+});
+
+describe("listRuns", () => {
+  const runsRequest = (query: string): Request =>
+    new Request(`http://localhost/api/v3/workflows/runs?${query}`);
+
+  test("returns 200 with a cursor-paginated envelope of run summaries", async () => {
+    service.listWorkflowRuns.mockResolvedValue({ runs: [makeRunRow()], nextCursor: null });
+
+    const res = await handlers.listRuns({ req: runsRequest(`workspaceId=${workspaceId}`), ctx: makeCtx() });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<{
+      data: { id: string }[];
+      meta: { limit: number; nextCursor: string | null };
+    }>(res);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].id).toBe(runId);
+    expect(body.meta.limit).toBe(20);
+    expect(body.meta.nextCursor).toBeNull();
+    expect(authorizeAllow).toHaveBeenCalledWith(workspaceId, "read");
+  });
+
+  test("forwards workflowId / responseId / status / isDryRun filters to the service", async () => {
+    service.listWorkflowRuns.mockResolvedValue({ runs: [], nextCursor: null });
+
+    await handlers.listRuns({
+      req: runsRequest(
+        `workspaceId=${workspaceId}&workflowId=${workflowId}&responseId=${responseId}&filter[status][in]=failed,completed&filter[isDryRun][eq]=true`
+      ),
+      ctx: makeCtx(),
+    });
+
+    expect(service.listWorkflowRuns).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId,
+        workflowId,
+        responseId,
+        statusIn: ["failed", "completed"],
+        isDryRun: true,
+      })
+    );
+  });
+
+  test("forwards isDryRun=false alongside a status filter (falsy boolean not dropped)", async () => {
+    service.listWorkflowRuns.mockResolvedValue({ runs: [], nextCursor: null });
+
+    await handlers.listRuns({
+      req: runsRequest(`workspaceId=${workspaceId}&filter[isDryRun][eq]=false&filter[status][in]=failed`),
+      ctx: makeCtx(),
+    });
+
+    expect(service.listWorkflowRuns).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, isDryRun: false, statusIn: ["failed"] })
+    );
+  });
+
+  test("returns an empty data array and null nextCursor for an empty page", async () => {
+    service.listWorkflowRuns.mockResolvedValue({ runs: [], nextCursor: null });
+
+    const res = await handlers.listRuns({ req: runsRequest(`workspaceId=${workspaceId}`), ctx: makeCtx() });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<{ data: unknown[]; meta: { nextCursor: string | null } }>(res);
+    expect(body.data).toEqual([]);
+    expect(body.meta.nextCursor).toBeNull();
+  });
+
+  test("maps a WorkflowInvalidInputError from the service (e.g. malformed cursor) to 400", async () => {
+    service.listWorkflowRuns.mockRejectedValue(new WorkflowInvalidInputError("malformed cursor"));
+
+    const res = await handlers.listRuns({
+      req: runsRequest(`workspaceId=${workspaceId}&cursor=not-base64url-json`),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await readJson<{ code: string }>(res);
+    expect(body.code).toBe("bad_request");
+  });
+
+  test("rejects a missing workspaceId with 400 and never calls the service", async () => {
+    const res = await handlers.listRuns({ req: runsRequest("limit=20"), ctx: makeCtx() });
+
+    expect(res.status).toBe(400);
+    expect(service.listWorkflowRuns).not.toHaveBeenCalled();
+  });
+
+  test("rejects an out-of-range limit with 400", async () => {
+    const res = await handlers.listRuns({
+      req: runsRequest(`workspaceId=${workspaceId}&limit=500`),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    expect(service.listWorkflowRuns).not.toHaveBeenCalled();
+  });
+
+  test("rejects limit below the minimum (limit=0) with 400", async () => {
+    const res = await handlers.listRuns({
+      req: runsRequest(`workspaceId=${workspaceId}&limit=0`),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    expect(service.listWorkflowRuns).not.toHaveBeenCalled();
+  });
+
+  test("accepts the minimum limit (limit=1)", async () => {
+    service.listWorkflowRuns.mockResolvedValue({ runs: [makeRunRow()], nextCursor: null });
+
+    const res = await handlers.listRuns({
+      req: runsRequest(`workspaceId=${workspaceId}&limit=1`),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(200);
+    expect(service.listWorkflowRuns).toHaveBeenCalledWith(expect.objectContaining({ limit: 1 }));
+  });
+
+  test("returns the authorize denial (403) and never calls the service", async () => {
+    authorizeAllow.mockResolvedValue(deniedResponse());
+
+    const res = await handlers.listRuns({ req: runsRequest(`workspaceId=${workspaceId}`), ctx: makeCtx() });
+
+    expect(res.status).toBe(403);
+    expect(service.listWorkflowRuns).not.toHaveBeenCalled();
+  });
+});
+
+describe("getRun", () => {
+  test("returns 200 with the full run resource including ordered logs", async () => {
+    service.getWorkflowRun.mockResolvedValue(makeRunDetail());
+
+    const res = await handlers.getRun({ ctx: makeCtx(), params: { runId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<{ data: { id: string; logs: { id: string }[]; triggerPayload: unknown } }>(
+      res
+    );
+    expect(body.data.id).toBe(runId);
+    expect(body.data.logs).toHaveLength(1);
+    expect(body.data.triggerPayload).toMatchObject({ type: "response.completed", surveyId });
+    expect(authorizeAllow).toHaveBeenCalledWith(workspaceId, "read");
+  });
+
+  test("returns 403 (not 404) when the run does not exist, without authorizing", async () => {
+    service.getWorkflowRun.mockResolvedValue(null);
+
+    const res = await handlers.getRun({ ctx: makeCtx(), params: { runId } });
+
+    expect(res.status).toBe(403);
+    expect(authorizeAllow).not.toHaveBeenCalled();
+    const body = await readJson<{ code: string }>(res);
+    expect(body.code).toBe("forbidden");
+  });
+
+  test("authorizes against the loaded run's workspace and returns its denial on mismatch", async () => {
+    service.getWorkflowRun.mockResolvedValue(makeRunDetail({ workspaceId: "cm9zr4other00000000000000x" }));
+    authorizeAllow.mockResolvedValue(deniedResponse());
+
+    const res = await handlers.getRun({ ctx: makeCtx(), params: { runId } });
+
+    expect(res.status).toBe(403);
+    expect(authorizeAllow).toHaveBeenCalledWith("cm9zr4other00000000000000x", "read");
+    const body = await readJson<{ code: string }>(res);
+    expect(body.code).toBe("forbidden");
   });
 });

@@ -3,6 +3,9 @@ import type {
   TPatchWorkflowInput,
   TWorkflowListItem,
   TWorkflowResource,
+  TWorkflowRunResource,
+  TWorkflowRunStatus,
+  TWorkflowRunSummary,
   TWorkflowSortBy,
   TWorkflowStatus,
 } from "@formbricks/workflows";
@@ -183,4 +186,102 @@ export async function deleteWorkflow(workflowId: string): Promise<void> {
   if (!response.ok) {
     throw await parseV3ApiError(response);
   }
+}
+
+export interface TWorkflowRunListPage {
+  data: TWorkflowRunSummary[];
+  meta: {
+    limit: number;
+    nextCursor: string | null;
+  };
+}
+
+export interface TWorkflowRunListFilters {
+  workflowId?: string;
+  responseId?: string;
+  statusIn?: TWorkflowRunStatus[];
+  isDryRun?: boolean;
+}
+
+export function buildWorkflowRunListSearchParams({
+  workspaceId,
+  limit,
+  cursor,
+  filters,
+}: {
+  workspaceId: string;
+  limit: number;
+  cursor?: string | null;
+  filters?: TWorkflowRunListFilters;
+}): URLSearchParams {
+  const searchParams = new URLSearchParams();
+
+  searchParams.set("workspaceId", workspaceId);
+  searchParams.set("limit", String(limit));
+
+  if (cursor) {
+    searchParams.set("cursor", cursor);
+  }
+
+  if (filters?.workflowId) {
+    searchParams.set("workflowId", filters.workflowId);
+  }
+
+  if (filters?.responseId) {
+    searchParams.set("responseId", filters.responseId);
+  }
+
+  if (filters?.isDryRun !== undefined) {
+    searchParams.set("filter[isDryRun][eq]", String(filters.isDryRun));
+  }
+
+  filters?.statusIn?.forEach((status) => {
+    searchParams.append("filter[status][in]", status);
+  });
+
+  return searchParams;
+}
+
+export async function listWorkflowRuns({
+  workspaceId,
+  limit,
+  cursor,
+  filters,
+  signal,
+}: {
+  workspaceId: string;
+  limit: number;
+  cursor?: string | null;
+  filters?: TWorkflowRunListFilters;
+  signal?: AbortSignal;
+}): Promise<TWorkflowRunListPage> {
+  const response = await fetch(
+    `/api/v3/workflows/runs?${buildWorkflowRunListSearchParams({ workspaceId, limit, cursor, filters }).toString()}`,
+    {
+      method: "GET",
+      cache: "no-store",
+      signal,
+    }
+  );
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  return (await response.json()) as TWorkflowRunListPage;
+}
+
+export async function getWorkflowRun(runId: string, signal?: AbortSignal): Promise<TWorkflowRunResource> {
+  const response = await fetch(`/api/v3/workflows/runs/${runId}`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const body = (await response.json()) as { data: TWorkflowRunResource };
+  return body.data;
 }
