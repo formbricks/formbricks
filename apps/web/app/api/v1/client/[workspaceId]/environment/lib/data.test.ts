@@ -315,4 +315,52 @@ describe("getWorkspaceStateData", () => {
     // "de" already present → only "en" gets appended
     expect(codes).toEqual(["en-US", "de-DE", "de", "en"]);
   });
+
+  test("appends real legacy aliases (not a region-strip) for alias-mapped codes", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          // fil-PH's legacy alias is "tl" (not "fil"); ak-GH has two aliases ("ak", "tw")
+          languages: [buildLanguage("en-US", true), buildLanguage("fil-PH"), buildLanguage("ak-GH")],
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const codes = result.surveys[0].languages.map((sl) => sl.language.code);
+
+    expect(codes).toEqual(["en-US", "fil-PH", "ak-GH", "en", "tl", "ak", "tw"]);
+  });
+
+  test("distinguishes Simplified and Traditional Chinese (script preserved, not a bare 'zh')", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          languages: [buildLanguage("en-US", true), buildLanguage("zh-Hans-CN"), buildLanguage("zh-Hant-TW")],
+        },
+      ],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+    const codes = result.surveys[0].languages.map((sl) => sl.language.code);
+
+    // Each script keeps its own legacy aliases, so a deployed Chinese client matches whichever code it
+    // holds: Simplified -> zh / zh-CN / zh-Hans, Traditional -> zh-Hant / zh-TW. A region-strip would have
+    // emitted a single bare "zh" for both — which no Chinese client holds and can't tell the two apart.
+    expect(codes).toEqual([
+      "en-US",
+      "zh-Hans-CN",
+      "zh-Hant-TW",
+      "en",
+      "zh",
+      "zh-CN",
+      "zh-Hans",
+      "zh-Hant",
+      "zh-TW",
+    ]);
+  });
 });

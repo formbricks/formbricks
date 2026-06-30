@@ -46,6 +46,7 @@ const MESSAGE_TEMPLATES: Record<string, string> = {
   attribute_limit_exceeded:
     "Could not create {count} new attribute(s) as it would exceed the maximum limit of {limit} attribute classes. Existing attributes were updated successfully.",
   new_attribute_created: "Created new attribute '{key}' with type '{dataType}'",
+  invalid_language_ignored: "Ignored invalid language code '{language}'. The existing value was preserved.",
 };
 
 /**

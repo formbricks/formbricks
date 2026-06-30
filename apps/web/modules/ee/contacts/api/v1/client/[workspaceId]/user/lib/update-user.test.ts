@@ -119,7 +119,7 @@ describe("updateUser", () => {
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
     // `en` is stored as its canonical BCP-47 tag `en-US`, but echoed back to the SDK in its bare legacy
-    // form `en` (transitional SDK back-compat — see toLegacyLanguageCode).
+    // form `en` (transitional SDK back-compat — see toLegacyLanguageCodes).
     expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
       email: "new@example.com",
       language: "en-US",
@@ -142,17 +142,47 @@ describe("updateUser", () => {
     expect(result.state.data?.language).toBe("de");
   });
 
-  test("should preserve an unresolvable language value as-is", async () => {
+  test("should drop an invalid (unresolvable) language but keep other attributes", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { email: "new@example.com", language: "123" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
 
+    // invalid language is removed from the write payload; the rest of the attributes still persist
     expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
       email: "new@example.com",
-      language: "123",
     });
-    expect(result.state.data?.language).toBe("123");
+    expect(result.state.data?.language).toBeUndefined();
+    // ...and the caller is told the language was ignored
+    expect(result.messages).toContain(
+      "Ignored invalid language code '123'. The existing value was preserved."
+    );
+  });
+
+  test("surfaces a falsy-but-real invalid language (e.g. 0) instead of silently dropping it", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    const newAttributes = { email: "new@example.com", language: 0 };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+    });
+    expect(result.state.data?.language).toBeUndefined();
+    expect(result.messages).toContain("Ignored invalid language code '0'. The existing value was preserved.");
+  });
+
+  test("silently drops a blank / whitespace-only language (no message)", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    const newAttributes = { email: "new@example.com", language: "   " };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+    });
+    expect(result.state.data?.language).toBeUndefined();
+    expect(result.messages).toBeUndefined();
   });
 
   test("should not update attributes if they are the same", async () => {

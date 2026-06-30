@@ -36,6 +36,18 @@ export const canonicalizeLanguageCodes: MigrationScript = {
       unresolvedCodes: new Set<string>(),
     };
 
+    // Snapshot multi-language survey IDs BEFORE Step 1 mutates SurveyLanguage. A survey that links two
+    // codes collapsing to the same canonical (e.g. `de` + `de-DE`) gets deduped down to a single link by
+    // the merge below; querying `COUNT(*) > 1` afterwards would then skip it and leave its legacy content
+    // key un-rewritten. Pre-merge `COUNT(*) > 1` is a superset of the post-merge set (a merge only ever
+    // reduces a survey's link count) and single-language surveys only hold the never-rewritten `default`
+    // key — so this is exactly the set Step 2 must process.
+    const multiLanguageSurveyIds = (
+      await tx.$queryRaw<{ surveyId: string }[]>`
+        SELECT "surveyId" FROM "SurveyLanguage" GROUP BY "surveyId" HAVING COUNT(*) > 1
+      `
+    ).map((row) => row.surveyId);
+
     // ---------------------------------------------------------------------------------------------
     // 1. Language catalog rows
     // ---------------------------------------------------------------------------------------------
@@ -138,11 +150,15 @@ export const canonicalizeLanguageCodes: MigrationScript = {
     // 2. Survey content i18n keys (only multi-language surveys can have non-`default` keys)
     // ---------------------------------------------------------------------------------------------
     logger.info("Canonicalizing survey content i18n keys...");
-    const surveys = await tx.$queryRaw<SurveyContentRow[]>`
-      SELECT id, "welcomeCard", blocks, endings, metadata, "surveyClosedMessage", questions
-      FROM "Survey"
-      WHERE id IN (SELECT "surveyId" FROM "SurveyLanguage" GROUP BY "surveyId" HAVING COUNT(*) > 1)
-    `;
+    const surveys =
+      multiLanguageSurveyIds.length > 0
+        ? await tx.$queryRawUnsafe<SurveyContentRow[]>(
+            `SELECT id, "welcomeCard", blocks, endings, metadata, "surveyClosedMessage", questions
+             FROM "Survey"
+             WHERE id = ANY($1::text[])`,
+            multiLanguageSurveyIds
+          )
+        : [];
     logger.info(`Loaded ${surveys.length.toString()} multi-language surveys`);
 
     interface SurveyUpdate {
@@ -169,8 +185,11 @@ export const canonicalizeLanguageCodes: MigrationScript = {
         const paramIndex = params.length + 1;
         params.push(JSON.stringify(result.value));
         if (field.kind === "jsonArray") {
+          // array_agg over a function scan isn't guaranteed to preserve element order, and `blocks`/
+          // `endings` are order-sensitive (their sequence is the survey's logic). Aggregate explicitly by
+          // ordinality so the rebuilt array keeps the original order.
           setClauses.push(
-            `"${field.column}" = COALESCE((SELECT array_agg(elem) FROM jsonb_array_elements($${paramIndex.toString()}::jsonb) elem), ARRAY[]::jsonb[])`
+            `"${field.column}" = COALESCE((SELECT array_agg(elem ORDER BY ord) FROM jsonb_array_elements($${paramIndex.toString()}::jsonb) WITH ORDINALITY AS t(elem, ord)), ARRAY[]::jsonb[])`
           );
         } else {
           setClauses.push(`"${field.column}" = $${paramIndex.toString()}::jsonb`);

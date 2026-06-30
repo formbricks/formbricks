@@ -127,10 +127,11 @@ export function normalizeV3SurveyWriteLanguageCode(
         (requestedKey === allowedIdentifier || requestedIdentifier === allowedIdentifier)) ||
       (requestedCanonical && requestedCanonical === allowedCanonical)
     ) {
-      // PATCH-only compatibility: write to the survey's existing stored code as-is, falling back to its
-      // canonical form. Pre-migration this preserves a legacy code; post-migration it resolves to the
-      // canonical one the survey now stores.
-      return normalizedAllowedLanguageCode ?? allowedLanguageCode;
+      // PATCH-only compatibility: write to the survey's existing stored code as-is — its content i18n
+      // keys are keyed by exactly this code. Pre-migration this preserves a legacy code (e.g. "pt"/"hi");
+      // post-migration the stored code is already canonical. Never rewrite it to the canonical form here,
+      // or a pre-migration survey would get a new key that doesn't match its content.
+      return allowedLanguageCode;
     }
   }
 

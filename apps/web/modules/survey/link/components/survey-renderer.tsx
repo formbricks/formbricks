@@ -212,17 +212,26 @@ function computeStyling(
 function getLanguageCode(langParam: string | undefined, survey: TSurvey): string {
   if (!langParam) return "default";
 
-  // Match the URL `?lang=` value against the survey's languages by canonical equivalence, so a shared
-  // link with a legacy code (`?lang=pt`) still resolves to a migrated survey language (`pt-BR`), and a
-  // canonical link resolves a not-yet-migrated survey. Returns the survey's stored code so it lines up
-  // with the survey's i18n content keys.
+  // Match the URL `?lang=` value against the survey's languages in strict precedence so selection is
+  // deterministic regardless of array order: (1) an exact stored `code`, then (2) a custom `alias`, then
+  // (3) canonical equivalence. Code beats alias because an exact code always lines up with the survey's
+  // i18n content keys — without this, one row's alias could shadow another row's exact code. The canonical
+  // pass lets a shared link with a legacy code (`?lang=pt`) still resolve to a migrated language (`pt-BR`).
+  // Returns the survey's stored code so it lines up with its content keys.
+  const langParamLower = langParam.toLowerCase();
   const langParamCanonical = normalizeLanguageCode(langParam);
-  const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    const surveyCode = surveyLanguage.language.code;
-    if (surveyCode.toLowerCase() === langParam.toLowerCase()) return true;
-    if (surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()) return true;
-    return Boolean(langParamCanonical) && langParamCanonical === normalizeLanguageCode(surveyCode);
-  });
+  const selectedLanguage =
+    survey.languages.find(
+      (surveyLanguage) => surveyLanguage.language.code.toLowerCase() === langParamLower
+    ) ??
+    survey.languages.find(
+      (surveyLanguage) => surveyLanguage.language.alias?.toLowerCase() === langParamLower
+    ) ??
+    (langParamCanonical
+      ? survey.languages.find(
+          (surveyLanguage) => normalizeLanguageCode(surveyLanguage.language.code) === langParamCanonical
+        )
+      : undefined);
 
   if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
     return "default";

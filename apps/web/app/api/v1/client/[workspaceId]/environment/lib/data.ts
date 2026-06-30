@@ -9,7 +9,7 @@ import {
   TJsWorkspaceStateSurvey,
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
-import { toLegacyLanguageCode } from "@/lib/i18n/utils";
+import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
@@ -56,11 +56,14 @@ const appendLegacyLanguageCodes = <
   const legacyEntries: T[] = [];
 
   for (const surveyLanguage of languages) {
-    const bareCode = toLegacyLanguageCode(surveyLanguage.language.code);
-    // Skip if the code is already bare, or a real language in this survey already uses that code.
-    if (!bareCode || seenCodes.has(bareCode)) continue;
-    seenCodes.add(bareCode);
-    legacyEntries.push({ ...surveyLanguage, language: { ...surveyLanguage.language, code: bareCode } });
+    // Expose every known legacy alias of this language (reverse of the canonical map), skipping any
+    // real language in this survey already uses, so older clients keep matching whichever code they hold.
+    for (const legacyCode of toLegacyLanguageCodes(surveyLanguage.language.code)) {
+      const legacyKey = legacyCode.toLowerCase();
+      if (seenCodes.has(legacyKey)) continue;
+      seenCodes.add(legacyKey);
+      legacyEntries.push({ ...surveyLanguage, language: { ...surveyLanguage.language, code: legacyCode } });
+    }
   }
 
   return [...languages, ...legacyEntries];
