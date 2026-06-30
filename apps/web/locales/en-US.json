@@ -3662,7 +3662,7 @@
       "csv_columns": "CSV Columns",
       "csv_data_preview": "Data preview",
       "csv_empty_column_headers": "CSV contains empty column headers. All columns must have a name.",
-      "csv_file_too_large": "CSV file is too large. Maximum size is 2MB.",
+      "csv_file_too_large": "CSV file is too large. Maximum size is 15MB.",
       "csv_files_only": "CSV files only",
       "csv_first_value": "Example: {value}",
       "csv_fixed_value_action": "Set a fixed value…",
