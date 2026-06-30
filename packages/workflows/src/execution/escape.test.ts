@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { escapeHtml, isValidEmail } from "./escape";
+import { escapeHtml, isValidEmail, stripControlChars } from "./escape";
 
 describe("escapeHtml", () => {
   test("escapes all HTML-significant characters", () => {
@@ -24,4 +24,15 @@ describe("isValidEmail", () => {
       expect(isValidEmail(value)).toBe(false);
     }
   );
+});
+
+describe("stripControlChars", () => {
+  test("strips CR/LF and other control chars", () => {
+    expect(stripControlChars("Subject\r\nBcc: evil@example.com")).toBe("SubjectBcc: evil@example.com");
+    expect(stripControlChars("a\x07b\tc\x00d")).toBe("abcd");
+  });
+
+  test("leaves a clean string untouched", () => {
+    expect(stripControlChars("Thanks for your response")).toBe("Thanks for your response");
+  });
 });

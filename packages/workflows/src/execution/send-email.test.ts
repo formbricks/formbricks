@@ -111,4 +111,16 @@ describe("resolveWorkflowEmail", () => {
     const email = resolveWorkflowEmail(baseConfig, payload);
     expect(email.recipientValid).toBe(false);
   });
+
+  test("strips control characters from a respondent-controlled subject (header-injection defense)", () => {
+    const payload: TWorkflowTriggerRunPayload = {
+      ...triggerPayload,
+      data: { response: { email: "jane@example.com", topic: "Hi\r\nBcc: evil@example.com" } },
+    };
+    const email = resolveWorkflowEmail({ ...baseConfig, subject: "Re: {{response.topic}}" }, payload);
+
+    expect(email.subject).toBe("Re: HiBcc: evil@example.com");
+    expect(email.subject).not.toContain("\r");
+    expect(email.subject).not.toContain("\n");
+  });
 });

@@ -1,6 +1,6 @@
 import type { TWorkflowSendEmailActionConfig } from "../types/actions/send-email";
 import type { TWorkflowTriggerRunPayload } from "../types/runs";
-import { escapeHtml, isValidEmail } from "./escape";
+import { escapeHtml, isValidEmail, stripControlChars } from "./escape";
 import { resolvePlaceholders } from "./templating";
 
 /** A fully resolved email ready to hand to the host app's `sendEmail`. No I/O happens here. */
@@ -73,7 +73,9 @@ export const resolveWorkflowEmail = (
   config: TWorkflowSendEmailActionConfig,
   triggerPayload: TWorkflowTriggerRunPayload
 ): TResolvedWorkflowEmail => {
-  const subject = resolvePlaceholders(config.subject, triggerPayload);
+  // Strip control chars (CR/LF, etc.) from the resolved subject — defense-in-depth against header
+  // injection via respondent-controlled placeholder values.
+  const subject = stripControlChars(resolvePlaceholders(config.subject, triggerPayload));
   const to = resolvePlaceholders(config.to, triggerPayload);
 
   // Author-controlled template structure stays intact; only the interpolated dynamic values are escaped for html.

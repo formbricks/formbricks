@@ -101,7 +101,11 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
     const emailDefaults = {
       from: `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
     };
-    await transporter.sendMail({ ...emailDefaults, ...emailData });
+    await transporter.sendMail({
+      ...emailDefaults,
+      ...emailData,
+      from: emailData.from ?? emailDefaults.from,
+    });
 
     return true;
   } catch (error) {
