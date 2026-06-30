@@ -82,7 +82,7 @@ get:
               data:
                 type: array
                 items:
-                  $ref: ../components/schemas/WorkflowRunSummary.yml
+                  $ref: ../components/schemas/WorkflowRunListItem.yml
               meta:
                 $ref: ../components/schemas/CursorPaginationMeta.yml
     '400':

@@ -1,5 +1,10 @@
 import type { TFunction } from "i18next";
-import type { TWorkflowRunStatus, TWorkflowStatus, TWorkflowTriggerType } from "@formbricks/workflows";
+import type {
+  TWorkflowRunLogStatus,
+  TWorkflowRunStatus,
+  TWorkflowStatus,
+  TWorkflowTriggerType,
+} from "@formbricks/workflows";
 
 type TBadgeType = "warning" | "success" | "error" | "gray";
 
@@ -36,6 +41,26 @@ export const getWorkflowRunStatusBadge = (status: TWorkflowRunStatus, t: TFuncti
     default:
       return { label: t("common.queued"), type: "gray" };
   }
+};
+
+export const getWorkflowRunLogStatusBadge = (status: TWorkflowRunLogStatus, t: TFunction): TStatusBadge => {
+  switch (status) {
+    case "succeeded":
+      return { label: t("common.succeeded"), type: "success" };
+    case "failed":
+      return { label: t("common.failed"), type: "error" };
+    case "running":
+      return { label: t("common.running"), type: "warning" };
+    case "skipped":
+      return { label: t("common.skipped"), type: "gray" };
+    case "pending":
+      return { label: t("common.pending"), type: "gray" };
+  }
+
+  // Exhaustive: a new TWorkflowRunLogStatus from the contract fails to compile here
+  // instead of being silently mislabeled as "pending".
+  const exhaustiveCheck: never = status;
+  return exhaustiveCheck;
 };
 
 export const getWorkflowTriggerTypeLabel = (triggerType: TWorkflowTriggerType, t: TFunction): string => {

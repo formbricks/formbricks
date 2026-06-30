@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type {
   WorkflowRowWithLastRun,
+  WorkflowRunListRow,
   WorkflowRunLogRow,
   WorkflowRunRow,
   WorkflowRunWithLogsRow,
@@ -9,6 +10,7 @@ import type { TWorkflowTriggerRunPayload } from "../types/runs";
 import {
   toWorkflowListItem,
   toWorkflowResource,
+  toWorkflowRunListItem,
   toWorkflowRunLogResource,
   toWorkflowRunResource,
   toWorkflowRunSummary,
@@ -75,6 +77,7 @@ const baseRow: WorkflowRowWithLastRun = {
   creator: { name: "Ada Lovelace" },
   definition,
   runs: [],
+  _count: { runs: 0 },
 };
 
 describe("serializers", () => {
@@ -98,10 +101,24 @@ describe("serializers", () => {
     expect(item.lastRun?.startedAt).toBe("2026-06-12T10:00:30.000Z");
   });
 
+  test("maps the total run count through from _count", () => {
+    expect(toWorkflowListItem(baseRow).runCount).toBe(0);
+    expect(toWorkflowListItem({ ...baseRow, _count: { runs: 7 } }).runCount).toBe(7);
+  });
+
   test("run summary maps nullable timestamps explicitly", () => {
     const summary = toWorkflowRunSummary({ ...run, startedAt: null, finishedAt: null });
     expect(summary.startedAt).toBeNull();
     expect(summary.finishedAt).toBeNull();
+  });
+
+  test("run list item spreads the summary and joins the workflow name", () => {
+    const listRow: WorkflowRunListRow = { ...run, workflow: { name: "Notify team" } };
+    const item = toWorkflowRunListItem(listRow);
+    expect(item.id).toBe(run.id);
+    expect(item.workflowName).toBe("Notify team");
+    // Inherits the summary projection.
+    expect(item.startedAt).toBe("2026-06-12T10:00:30.000Z");
   });
 
   test("the full resource includes the definition", () => {

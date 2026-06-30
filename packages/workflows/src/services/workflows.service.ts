@@ -24,7 +24,7 @@ import type {
   WorkflowDelegate,
   WorkflowOrderByInput,
   WorkflowRowWithLastRun,
-  WorkflowRunRow,
+  WorkflowRunListRow,
   WorkflowRunWhereInput,
   WorkflowRunWithLogsRow,
   WorkflowWhereInput,
@@ -51,6 +51,7 @@ export interface WorkflowUpdateInput {
 const LAST_RUN_INCLUDE: LastRunInclude = {
   runs: { take: 1, orderBy: { createdAt: "desc" } },
   creator: { select: { name: true } },
+  _count: { select: { runs: true } },
 };
 
 /** Every field a workflow update may set; mirrors the injected delegate's `update` data shape. */
@@ -143,7 +144,7 @@ const buildRunListWhere = (
 });
 
 export interface WorkflowRunListPage {
-  runs: WorkflowRunRow[];
+  runs: WorkflowRunListRow[];
   nextCursor: string | null;
 }
 
@@ -341,6 +342,8 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
       // List summaries never use these large JSON columns; skip them so PG doesn't read/ship
       // up to 100 big blobs per page. The detail `findUnique` still loads them.
       omit: { triggerPayload: true, data: true },
+      // Join the workflow's name so the workspace-wide runs table can label rows without an N+1.
+      include: { workflow: { select: { name: true } } },
     });
 
     const hasMore = rows.length > input.limit;

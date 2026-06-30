@@ -3,9 +3,9 @@ import type {
   TPatchWorkflowInput,
   TWorkflowListItem,
   TWorkflowResource,
+  TWorkflowRunListItem,
   TWorkflowRunResource,
   TWorkflowRunStatus,
-  TWorkflowRunSummary,
   TWorkflowSortBy,
   TWorkflowStatus,
 } from "@formbricks/workflows";
@@ -189,7 +189,7 @@ export async function deleteWorkflow(workflowId: string): Promise<void> {
 }
 
 export interface TWorkflowRunListPage {
-  data: TWorkflowRunSummary[];
+  data: TWorkflowRunListItem[];
   meta: {
     limit: number;
     nextCursor: string | null;

@@ -3,21 +3,63 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { timeSince } from "@/lib/time";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/modules/workflows/lib/display";
 import { type TWorkflowRunListItem } from "@/modules/workflows/types";
+import { RunsTableSkeleton } from "../../loading";
 import { WorkflowRunDetailDrawer } from "./workflow-run-detail-drawer";
 
 interface WorkflowRunsTableProps {
   runs: TWorkflowRunListItem[];
   showWorkflowColumn?: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+  error?: unknown;
+  onRetry?: () => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  isFetchNextPageError?: boolean;
+  onLoadMore?: () => void;
 }
 
-export const WorkflowRunsTable = ({ runs, showWorkflowColumn = false }: Readonly<WorkflowRunsTableProps>) => {
+export const WorkflowRunsTable = ({
+  runs,
+  showWorkflowColumn = false,
+  isLoading = false,
+  isError = false,
+  error,
+  onRetry,
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  isFetchNextPageError = false,
+  onLoadMore,
+}: Readonly<WorkflowRunsTableProps>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language;
-  const [selectedRun, setSelectedRun] = useState<TWorkflowRunListItem | null>(null);
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const selectedRun = runs.find((run) => run.id === selectedRunId) ?? null;
+
+  // Initial fetch with nothing yet to show: render the skeleton instead of an empty table.
+  if (isLoading && runs.length === 0) {
+    return <RunsTableSkeleton />;
+  }
+
+  // Hard error with no rows to fall back on: surface the message and a retry affordance.
+  if (isError && runs.length === 0) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
+        <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
+        {onRetry ? (
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            {t("common.try_again")}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -39,7 +81,18 @@ export const WorkflowRunsTable = ({ runs, showWorkflowColumn = false }: Readonly
               const triggerLabel = getWorkflowTriggerTypeLabel(run.triggerType, t);
 
               return (
-                <TableRow key={run.id} onClick={() => setSelectedRun(run)} className="cursor-pointer">
+                <TableRow
+                  key={run.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedRunId(run.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedRunId(run.id);
+                    }
+                  }}
+                  className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
                   <TableCell className="min-w-0 px-4 py-2">
                     {showWorkflowColumn ? (
                       <>
@@ -73,12 +126,27 @@ export const WorkflowRunsTable = ({ runs, showWorkflowColumn = false }: Readonly
         </Table>
       </div>
 
+      {hasNextPage ? (
+        <div className="flex flex-col items-center gap-2 py-5">
+          {/* A failed load-more keeps the already-loaded rows; surface the error inline so it
+              isn't swallowed, and let the same button retry the next page. */}
+          {isFetchNextPageError ? (
+            <p className="text-sm text-red-600">
+              {getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}
+            </p>
+          ) : null}
+          <Button variant="secondary" size="sm" loading={isFetchingNextPage} onClick={onLoadMore}>
+            {t("common.load_more")}
+          </Button>
+        </div>
+      ) : null}
+
       <WorkflowRunDetailDrawer
         run={selectedRun}
         open={selectedRun !== null}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
-            setSelectedRun(null);
+            setSelectedRunId(null);
           }
         }}
       />

@@ -140,6 +140,7 @@ describe("workflow resources", () => {
     createdAt: "2026-06-11T09:30:00.000Z",
     updatedAt: "2026-06-11T09:30:00.000Z",
     lastRun: null,
+    runCount: 0,
   };
 
   test("parses a workflow list item and full resource", () => {

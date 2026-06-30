@@ -6,8 +6,8 @@ import {
   ZPatchWorkflowInput,
   ZWorkflowListItem,
   ZWorkflowResource,
+  ZWorkflowRunListItem,
   ZWorkflowRunResource,
-  ZWorkflowRunSummary,
   zCursorPage,
 } from "../contracts";
 import {
@@ -29,15 +29,15 @@ import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-lis
 import {
   toWorkflowListItem,
   toWorkflowResource,
+  toWorkflowRunListItem,
   toWorkflowRunResource,
-  toWorkflowRunSummary,
 } from "./serializers";
 
 // Matches the v3 API's default request-body limit (apps/web `request-body.ts`) for consistency.
 const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
 
 const ZWorkflowListPage = zCursorPage(ZWorkflowListItem);
-const ZWorkflowRunListPage = zCursorPage(ZWorkflowRunSummary);
+const ZWorkflowRunListPage = zCursorPage(ZWorkflowRunListItem);
 
 const readJsonBody = async (req: Request, options?: { allowEmpty?: boolean }): Promise<unknown> => {
   // Reject oversized payloads up front via Content-Length so we never buffer them into memory.
@@ -442,7 +442,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const runPage = await service.listWorkflowRuns({ ...input, workspaceId: authorized.workspaceId });
 
       const page = validateOutput(ZWorkflowRunListPage, {
-        data: runPage.runs.map(toWorkflowRunSummary),
+        data: runPage.runs.map(toWorkflowRunListItem),
         meta: { limit: input.limit, nextCursor: runPage.nextCursor },
       });
 

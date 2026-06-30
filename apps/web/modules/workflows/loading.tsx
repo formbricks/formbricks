@@ -1,6 +1,6 @@
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
-const RunsTableSkeleton = () => (
+export const RunsTableSkeleton = () => (
   <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
     <div className="grid grid-cols-12 gap-4 border-b border-slate-200 px-4 py-3">
       <Skeleton className="col-span-6 h-4 rounded-md" />
