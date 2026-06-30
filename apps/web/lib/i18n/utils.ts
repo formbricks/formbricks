@@ -274,4 +274,6 @@ const LEGACY_CODES_BY_CANONICAL: Readonly<Record<string, string[]>> = Object.ent
  *   `ak-GH` → `["ak","tw"]`); empty when the code has no legacy aliases.
  */
 export const toLegacyLanguageCodes = (canonicalCode: string): string[] =>
-  LEGACY_CODES_BY_CANONICAL[canonicalCode] ?? [];
+  // Return a fresh copy, never the cached array by reference, so a caller mutating the result
+  // (sort/push/etc.) can't corrupt LEGACY_CODES_BY_CANONICAL and poison every later lookup.
+  [...(LEGACY_CODES_BY_CANONICAL[canonicalCode] ?? [])];

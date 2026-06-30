@@ -159,6 +159,32 @@ describe("updateUser", () => {
     );
   });
 
+  test("surfaces a falsy-but-real invalid language (e.g. 0) instead of silently dropping it", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    const newAttributes = { email: "new@example.com", language: 0 };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+    });
+    expect(result.state.data?.language).toBeUndefined();
+    expect(result.messages).toContain("Ignored invalid language code '0'. The existing value was preserved.");
+  });
+
+  test("silently drops a blank / whitespace-only language (no message)", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    const newAttributes = { email: "new@example.com", language: "   " };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+    });
+    expect(result.state.data?.language).toBeUndefined();
+    expect(result.messages).toBeUndefined();
+  });
+
   test("should not update attributes if they are the same", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const existingAttributes = { email: "test@example.com" }; // Same as in mockContactData

@@ -167,13 +167,18 @@ export const updateUser = async (
   let droppedInvalidLanguage: string | null = null;
   if (attributes && "language" in attributes) {
     const { language: rawLanguage, ...otherAttributes } = attributes;
-    const canonicalLanguage = rawLanguage ? normalizeLanguageCode(String(rawLanguage)) : null;
+    // `rawLanguage` is string | number | boolean — stringify once, then decide on the *trimmed* content,
+    // so falsy-but-real values (0, false, "0") are treated like any other invalid code while blank or
+    // whitespace-only input stays silent (truthiness alone would drop 0/false without a message).
+    const languageStr = String(rawLanguage);
+    const trimmedLanguage = languageStr.trim();
+    const canonicalLanguage = trimmedLanguage ? normalizeLanguageCode(languageStr) : null;
     if (canonicalLanguage) {
       normalizedAttributes = { ...otherAttributes, language: canonicalLanguage };
     } else {
       normalizedAttributes = otherAttributes;
-      // Surface a non-empty but unparseable value back to the caller; blank/absent isn't worth a message.
-      if (rawLanguage) droppedInvalidLanguage = String(rawLanguage);
+      // Surface a non-blank but unparseable value back to the caller; blank/whitespace-only stays silent.
+      if (trimmedLanguage) droppedInvalidLanguage = languageStr;
     }
   }
 
