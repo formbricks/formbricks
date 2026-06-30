@@ -60,7 +60,8 @@ export const matchWorkflowsForResponse = (
   candidates
     .filter(({ definition }) => {
       const config = readResponseCompletedTriggerConfig(definition);
-      if (!config || config.surveyId !== surveyId) return false;
+      if (!config) return false;
+      if (config.surveyId !== surveyId) return false;
       return config.endingCardIds.length === 0 || config.endingCardIds.includes(endingId);
     })
     .map(({ workflowId, publishedVersionId }) => ({ workflowId, publishedVersionId }));
