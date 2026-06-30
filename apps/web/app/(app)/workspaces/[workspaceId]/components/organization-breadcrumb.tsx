@@ -76,15 +76,6 @@ export const OrganizationBreadcrumb = ({
     t,
   ]);
 
-  // Report only when context exists but its org is missing. Absent context (e.g. the
-  // landing page) is expected — render from the prop instead of hitting Sentry.
-  if (workspaceContext && !workspaceContext.organization) {
-    const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
-    logger.error(errorMessage);
-    Sentry.captureException(new Error(errorMessage));
-    return;
-  }
-
   const handleOrganizationChange = (organizationId: string) => {
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
