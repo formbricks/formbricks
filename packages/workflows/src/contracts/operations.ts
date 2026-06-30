@@ -18,15 +18,15 @@ import type {
 import {
   ZWorkflowListItem,
   ZWorkflowResource,
+  ZWorkflowRunListItem,
   ZWorkflowRunResource,
-  ZWorkflowRunSummary,
   ZWorkflowTestResult,
 } from "./resources";
 import type {
   TWorkflowListItem,
   TWorkflowResource,
+  TWorkflowRunListItem,
   TWorkflowRunResource,
-  TWorkflowRunSummary,
   TWorkflowTestResult,
 } from "./resources";
 
@@ -95,7 +95,7 @@ export const WORKFLOW_API_OPERATIONS = {
   listWorkflowRunsV3: {
     params: null,
     input: ZListWorkflowRunsInput,
-    output: zCursorPage(ZWorkflowRunSummary),
+    output: zCursorPage(ZWorkflowRunListItem),
   },
   getWorkflowRunV3: {
     params: ZWorkflowRunIdInput,
@@ -127,6 +127,6 @@ export interface TWorkflowsApiContract {
   archiveWorkflow: (params: TWorkflowIdInput) => Promise<TWorkflowResource>;
   unarchiveWorkflow: (params: TWorkflowIdInput) => Promise<TWorkflowResource>;
   testWorkflow: (params: TWorkflowIdInput) => Promise<TWorkflowTestResult>;
-  listWorkflowRuns: (input: TListWorkflowRunsInput) => Promise<TCursorPage<TWorkflowRunSummary>>;
+  listWorkflowRuns: (input: TListWorkflowRunsInput) => Promise<TCursorPage<TWorkflowRunListItem>>;
   getWorkflowRun: (params: TWorkflowRunIdInput) => Promise<TWorkflowRunResource>;
 }

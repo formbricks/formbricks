@@ -1,4 +1,9 @@
-import type { TCreateWorkflowInput, TListWorkflowsInput, TWorkflowSortBy } from "../contracts";
+import type {
+  TCreateWorkflowInput,
+  TListWorkflowRunsInput,
+  TListWorkflowsInput,
+  TWorkflowSortBy,
+} from "../contracts";
 import { WorkflowConflictError, isUniqueConstraintViolation } from "../errors";
 import {
   type TWorkflowListCursor,
@@ -6,6 +11,12 @@ import {
   decodeWorkflowListCursor,
   encodeWorkflowListCursor,
 } from "../handlers/cursor";
+import {
+  type TWorkflowRunListCursor,
+  buildNextWorkflowRunListCursor,
+  decodeWorkflowRunListCursor,
+  encodeWorkflowRunListCursor,
+} from "../handlers/runs-cursor";
 import type { TWorkflowStatus } from "../types/common";
 import type { TWorkflowDefinition, TWorkflowExecutableDefinition } from "../types/document";
 import type {
@@ -13,6 +24,9 @@ import type {
   WorkflowDelegate,
   WorkflowOrderByInput,
   WorkflowRowWithLastRun,
+  WorkflowRunListRow,
+  WorkflowRunWhereInput,
+  WorkflowRunWithLogsRow,
   WorkflowWhereInput,
   WorkflowsDb,
 } from "./ports";
@@ -37,6 +51,7 @@ export interface WorkflowUpdateInput {
 const LAST_RUN_INCLUDE: LastRunInclude = {
   runs: { take: 1, orderBy: { createdAt: "desc" } },
   creator: { select: { name: true } },
+  _count: { select: { runs: true } },
 };
 
 /** Every field a workflow update may set; mirrors the injected delegate's `update` data shape. */
@@ -107,6 +122,32 @@ export interface WorkflowListPage {
   nextCursor: string | null;
 }
 
+/** Eager-load shape for a run's step logs, ordered by sequence; mirrors the injected delegate. */
+const RUN_LOG_INCLUDE = { logs: { orderBy: { sequence: "asc" } } } as const;
+
+/** Keyset page for newest-first run listing (`createdAt desc`, `id desc` tie-breaker). */
+const buildRunCursorWhere = (cursor: TWorkflowRunListCursor): WorkflowRunWhereInput => {
+  const value = new Date(cursor.value);
+  return { OR: [{ createdAt: { lt: value } }, { createdAt: value, id: { lt: cursor.id } }] };
+};
+
+const buildRunListWhere = (
+  input: TListWorkflowRunsInput,
+  cursor: TWorkflowRunListCursor | null
+): WorkflowRunWhereInput => ({
+  workspaceId: input.workspaceId,
+  ...(input.workflowId ? { workflowId: input.workflowId } : {}),
+  ...(input.responseId ? { responseId: input.responseId } : {}),
+  ...(input.statusIn ? { status: { in: input.statusIn } } : {}),
+  ...(input.isDryRun !== undefined ? { isDryRun: input.isDryRun } : {}),
+  ...(cursor ? buildRunCursorWhere(cursor) : {}),
+});
+
+export interface WorkflowRunListPage {
+  runs: WorkflowRunListRow[];
+  nextCursor: string | null;
+}
+
 export interface WorkflowsService {
   listWorkflows: (input: TListWorkflowsInput) => Promise<WorkflowListPage>;
   createWorkflow: (
@@ -129,6 +170,8 @@ export interface WorkflowsService {
     options: { definition: TWorkflowExecutableDefinition; publishedBy: string | null }
   ) => Promise<WorkflowRowWithLastRun>;
   disableWorkflow: (params: WorkflowScopedParams) => Promise<WorkflowRowWithLastRun>;
+  listWorkflowRuns: (input: TListWorkflowRunsInput) => Promise<WorkflowRunListPage>;
+  getWorkflowRun: (runId: string) => Promise<WorkflowRunWithLogsRow | null>;
 }
 
 /**
@@ -287,5 +330,36 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
 
   async disableWorkflow({ workflowId, workspaceId }) {
     return updateWorkflowRow(prisma.workflow, { workflowId, workspaceId }, { status: "disabled" });
+  },
+
+  async listWorkflowRuns(input) {
+    const cursor = input.cursor ? decodeWorkflowRunListCursor(input.cursor) : null;
+
+    const rows = await prisma.workflowRun.findMany({
+      where: buildRunListWhere(input, cursor),
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: input.limit + 1,
+      // List summaries never use these large JSON columns; skip them so PG doesn't read/ship
+      // up to 100 big blobs per page. The detail `findUnique` still loads them.
+      omit: { triggerPayload: true, data: true },
+      // Join the workflow's name so the workspace-wide runs table can label rows without an N+1.
+      include: { workflow: { select: { name: true } } },
+    });
+
+    const hasMore = rows.length > input.limit;
+    const runs = hasMore ? rows.slice(0, input.limit) : rows;
+    const lastRow = runs.at(-1);
+
+    return {
+      runs,
+      nextCursor:
+        hasMore && lastRow ? encodeWorkflowRunListCursor(buildNextWorkflowRunListCursor(lastRow)) : null,
+    };
+  },
+
+  async getWorkflowRun(runId) {
+    // Workspace scoping is enforced by the handler: it authorizes against the loaded run's
+    // workspaceId (a cross-workspace runId surfaces as 403), mirroring getWorkflowById.
+    return prisma.workflowRun.findUnique({ where: { id: runId }, include: RUN_LOG_INCLUDE });
   },
 });

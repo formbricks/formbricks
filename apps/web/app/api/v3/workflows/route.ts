@@ -18,6 +18,9 @@ export const POST = withV3ApiWrapper({
   auth: "both",
   action: "created",
   targetType: "workflow",
-  handler: async ({ req, authentication, requestId, instance }) =>
-    workflowsHandlers.create({ req, ctx: buildWorkflowApiContext(authentication, requestId, instance) }),
+  handler: async ({ req, authentication, auditLog, requestId, instance }) =>
+    workflowsHandlers.create({
+      req,
+      ctx: buildWorkflowApiContext(authentication, requestId, instance, auditLog),
+    }),
 });

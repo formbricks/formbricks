@@ -1,0 +1,17 @@
+description: >
+  Run-list row returned by `GET /api/v3/workflows/runs`: the slim run summary plus the resolved
+
+  `workflowName`, joined so the workspace-wide runs table can label each row. Distinct from the
+
+  `lastRun` summary embedded in workflow resources, which omits the name (the parent workflow
+
+  already carries it). Excludes `triggerPayload`, `data`, and `logs`.
+allOf:
+  - $ref: ./WorkflowRunSummary.yml
+  - type: object
+    required:
+      - workflowName
+    properties:
+      workflowName:
+        type: string
+        description: Name of the workflow this run belongs to, joined for the runs-list display.

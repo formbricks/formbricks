@@ -11,10 +11,10 @@ export const POST = withV3ApiWrapper({
   action: "created",
   targetType: "workflow",
   schemas: { params: ZWorkflowIdInput },
-  handler: async ({ req, parsedInput, authentication, requestId, instance }) =>
+  handler: async ({ req, parsedInput, authentication, auditLog, requestId, instance }) =>
     workflowsHandlers.duplicate({
       req,
-      ctx: buildWorkflowApiContext(authentication, requestId, instance),
+      ctx: buildWorkflowApiContext(authentication, requestId, instance, auditLog),
       params: parsedInput.params,
     }),
 });

@@ -191,8 +191,7 @@ export const WorkflowsListPage = ({
               <div className="col-span-1">
                 <WorkflowStatusPill status={workflow.status} />
               </div>
-              {/* Runs count is hardcoded to 0 until the runs-count API lands (tracked separately). */}
-              <div className="col-span-1 text-sm text-slate-600">0</div>
+              <div className="col-span-1 text-sm text-slate-600">{workflow.runCount}</div>
               <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
                 {timeSince(workflow.createdAt, locale)}
               </div>

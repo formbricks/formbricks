@@ -7,12 +7,15 @@ import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   archiveWorkflow,
   buildWorkflowListSearchParams,
+  buildWorkflowRunListSearchParams,
   createWorkflow,
   deleteWorkflow,
   disableWorkflow,
   duplicateWorkflow,
   enableWorkflow,
   getWorkflow,
+  getWorkflowRun,
+  listWorkflowRuns,
   listWorkflows,
   testWorkflow,
   unarchiveWorkflow,
@@ -297,5 +300,119 @@ describe("workflows api-client requests", () => {
       code: "bad_request",
       message: "The request payload is invalid.",
     });
+  });
+});
+
+describe("buildWorkflowRunListSearchParams", () => {
+  test("encodes workspace, limit, cursor and the run filter family", () => {
+    const params = buildWorkflowRunListSearchParams({
+      workspaceId: "ws_1",
+      limit: 25,
+      cursor: "cursor_1",
+      filters: {
+        workflowId: "wf_1",
+        responseId: "rsp_1",
+        statusIn: ["failed", "completed"],
+        isDryRun: false,
+      },
+    });
+
+    expect(params.get("workspaceId")).toBe("ws_1");
+    expect(params.get("limit")).toBe("25");
+    expect(params.get("cursor")).toBe("cursor_1");
+    expect(params.get("workflowId")).toBe("wf_1");
+    expect(params.get("responseId")).toBe("rsp_1");
+    expect(params.get("filter[isDryRun][eq]")).toBe("false");
+    expect(params.getAll("filter[status][in]")).toEqual(["failed", "completed"]);
+  });
+
+  test("omits cursor and filters when not provided", () => {
+    const params = buildWorkflowRunListSearchParams({ workspaceId: "ws_1", limit: 20 });
+
+    expect(params.has("cursor")).toBe(false);
+    expect(params.has("workflowId")).toBe(false);
+    expect(params.has("responseId")).toBe(false);
+    expect(params.has("filter[isDryRun][eq]")).toBe(false);
+    expect(params.has("filter[status][in]")).toBe(false);
+  });
+});
+
+describe("workflow runs api-client requests", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("listWorkflowRuns requests the runs endpoint and returns the cursor page unchanged", async () => {
+    const page = { data: [{ id: "run_1" }], meta: { limit: 20, nextCursor: null } };
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse(page));
+
+    const result = await listWorkflowRuns({
+      workspaceId: "ws_1",
+      limit: 20,
+      filters: { workflowId: "wf_1" },
+    });
+
+    expect(result).toEqual(page);
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    expect(url).toBe("/api/v3/workflows/runs?workspaceId=ws_1&limit=20&workflowId=wf_1");
+    expect(init).toMatchObject({ method: "GET", cache: "no-store" });
+  });
+
+  test("getWorkflowRun GETs the run-detail endpoint and unwraps the resource", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse({ data: { id: "run_1", logs: [] } }));
+
+    const result = await getWorkflowRun("run_1");
+
+    expect(result).toEqual({ id: "run_1", logs: [] });
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v3/workflows/runs/run_1",
+      expect.objectContaining({ method: "GET", cache: "no-store" })
+    );
+  });
+
+  test("getWorkflowRun preserves nullable timestamp fields through the round-trip", async () => {
+    const resource = {
+      id: "run_1",
+      logs: [],
+      nextAttemptAt: "2026-06-12T11:00:00.000Z",
+      lastErrorAt: null,
+    };
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse({ data: resource }));
+
+    const result = await getWorkflowRun("run_1");
+
+    expect(result).toEqual(resource);
+  });
+
+  test("listWorkflowRuns maps a problem response to a V3ApiError", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      problemResponse(403, {
+        title: "Forbidden",
+        status: 403,
+        detail: "denied",
+        code: "forbidden",
+        requestId: "req_1",
+      })
+    );
+
+    await expect(listWorkflowRuns({ workspaceId: "ws_1", limit: 20 })).rejects.toBeInstanceOf(V3ApiError);
+  });
+
+  test("getWorkflowRun maps a 403 problem response to a V3ApiError", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      problemResponse(403, {
+        title: "Forbidden",
+        status: 403,
+        detail: "denied",
+        code: "forbidden",
+        requestId: "req_1",
+      })
+    );
+
+    await expect(getWorkflowRun("run_x")).rejects.toBeInstanceOf(V3ApiError);
   });
 });

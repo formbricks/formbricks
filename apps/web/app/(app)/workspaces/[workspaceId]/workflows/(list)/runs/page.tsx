@@ -1,6 +1,8 @@
 import { WorkspaceWorkflowRunsPage } from "@/modules/workflows/pages/workspace-workflow-runs-page";
 
-// Real runs API client lands with ENG-1226 — until then the runs tab renders the empty state.
-const WorkflowRunsPage = () => <WorkspaceWorkflowRunsPage runs={[]} />;
+const WorkflowRunsPage = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
+  const { workspaceId } = await props.params;
+  return <WorkspaceWorkflowRunsPage workspaceId={workspaceId} />;
+};
 
 export default WorkflowRunsPage;

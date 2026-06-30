@@ -1414,7 +1414,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/WorkflowRunSummary'
+                      $ref: '#/components/schemas/WorkflowRunListItem'
                   meta:
                     $ref: '#/components/schemas/CursorPaginationMeta'
         '400':
@@ -3759,8 +3759,8 @@ components:
     WorkflowRunSummary:
       type: object
       description: |
-        Slim run shape returned by `GET /api/v3/workflows/runs` and embedded as `lastRun` in
-        workflow resources. Excludes `triggerPayload`, `data`, and `logs`.
+        Slim run shape embedded as `lastRun` in workflow resources. The runs list (`GET /api/v3/workflows/runs`)
+        returns `WorkflowRunListItem`, which extends this with `workflowName`. Excludes `triggerPayload`, `data`, and `logs`.
       required:
         - id
         - workflowId
@@ -3860,6 +3860,7 @@ components:
         - createdAt
         - updatedAt
         - lastRun
+        - runCount
       properties:
         id:
           type: string
@@ -3911,6 +3912,10 @@ components:
             - $ref: '#/components/schemas/WorkflowRunSummary'
             - type: 'null'
           description: Most recent run summary (dry runs included). `null` when the workflow has never run.
+        runCount:
+          type: integer
+          minimum: 0
+          description: Total number of runs (dry runs included) for this workflow.
     CursorPaginationMeta:
       type: object
       required:
@@ -4168,6 +4173,21 @@ components:
           properties:
             definition:
               $ref: '#/components/schemas/WorkflowDefinition'
+    WorkflowRunListItem:
+      description: |
+        Run-list row returned by `GET /api/v3/workflows/runs`: the slim run summary plus the resolved
+        `workflowName`, joined so the workspace-wide runs table can label each row. Distinct from the
+        `lastRun` summary embedded in workflow resources, which omits the name (the parent workflow
+        already carries it). Excludes `triggerPayload`, `data`, and `logs`.
+      allOf:
+        - $ref: '#/components/schemas/WorkflowRunSummary'
+        - type: object
+          required:
+            - workflowName
+          properties:
+            workflowName:
+              type: string
+              description: Name of the workflow this run belongs to, joined for the runs-list display.
     WorkflowTriggerPayload:
       type: object
       description: |
