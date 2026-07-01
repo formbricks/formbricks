@@ -50,9 +50,9 @@ describe("Better Auth two-factor (real Postgres)", () => {
 
     await auth.api.verifyTOTP({ body: { code: totp(secretFromUri(totpURI)) }, headers: { cookie } });
 
-    const user = await prisma.user.findUnique({ where: { id: userId }, include: { twoFactors: true } });
+    const user = await prisma.user.findUnique({ where: { id: userId }, include: { twoFactor: true } });
     expect(user?.twoFactorEnabled).toBe(true);
-    expect(user?.twoFactors).toHaveLength(1);
+    expect(user?.twoFactor).not.toBeNull(); // one TwoFactor row per user (one-to-one, @@unique(userId))
   });
 
   test("an enabled second factor gates sign-in: password yields a challenge, TOTP issues the session", async () => {
