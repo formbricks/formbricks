@@ -1,72 +1,29 @@
 post:
   operationId: testWorkflowV3
-  summary: Test a workflow with a dry run
+  summary: Dry-run (validate) a workflow
   description: >
-    Creates a dry-run workflow run for configuration validation and debugging.
-    Dry runs validate
-
-    the definition, evaluate the trigger against sample data, and mock action
-    execution — they
-
-    never send email or perform real side effects. The run is persisted with
-    `isDryRun: true`.
+    Validates a workflow without running it or causing any side effect. It checks that the
+    workflow's current definition is executable and that the trigger's referenced survey and ending
+    cards still exist in the workspace. **No** workflow run is created and **no** email or webhook is
+    sent.
 
 
-    Testing works in `draft`, `enabled`, and `disabled` states so workflows can
-    be verified
-
-    before they go live; testing an `archived` workflow returns **422** with
-    code
-
-    `invalid_workflow_state`. Definitions that cannot execute return **422**
-    with code
-
-    `workflow_not_executable` and structured `invalid_params`.
+    The response is always `200` with `{ data: { workflowId, ok, problems } }`. `data.ok` is `true`
+    when the workflow would execute; otherwise `data.problems` lists every issue found — each with a
+    machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
 
 
-    By default the server synthesizes a sample `response.completed` payload from
-    the configured
-
-    survey; pass `responseId` to replay an existing response instead. Execution
-    is asynchronous:
-
-    the endpoint returns the created run (initially `queued`) and clients poll
-
-    `GET /api/v3/workflows/runs/{runId}` for step results and logs.
+    Only `enabled` and `disabled` workflows can be tested. Testing a `draft` or `archived` workflow
+    returns **422** with code `invalid_workflow_state`.
   tags:
     - V3 Workflows
   parameters:
     - $ref: ../components/parameters/WorkflowIdPath.yml
-    - in: header
-      name: Idempotency-Key
-      required: false
-      schema:
-        type: string
-        maxLength: 255
-      description: >
-        Optional client-generated key that makes dry-run creation retry-safe
-        (IETF
-
-        `draft-ietf-httpapi-idempotency-key-header` semantics). Keys are unique
-        per workflow; a
-
-        retried request with the same key returns the previously created run
-        instead of creating
-
-        a duplicate. A retry that arrives while the original request is still
-        being processed
-
-        is rejected with **409 Conflict**; retry after the first request
-        completes.
-  requestBody:
-    required: false
-    content:
-      application/json:
-        schema:
-          $ref: ../components/schemas/TestWorkflowRequest.yml
   responses:
-    '201':
-      description: Dry-run workflow run created successfully
+    '200':
+      description: >
+        Validation result. The request succeeded; inspect `data.ok` to see whether the workflow is
+        ready, and `data.problems` for any issues.
       headers:
         X-Request-Id:
           schema:
@@ -76,10 +33,6 @@ post:
           schema:
             type: string
           example: private, no-store
-        Location:
-          schema:
-            type: string
-          example: /api/v3/workflows/runs/clworkflowrun000000000
       content:
         application/json:
           schema:
@@ -88,48 +41,32 @@ post:
               - data
             properties:
               data:
-                $ref: ../components/schemas/WorkflowRunResource.yml
+                $ref: ../components/schemas/WorkflowTestResult.yml
           examples:
-            queuedDryRun:
-              summary: Newly created dry run (poll the run endpoint for results)
+            ok:
+              summary: Workflow is valid and ready to enable
               value:
                 data:
-                  id: clworkflowrun0000000000000
                   workflowId: clworkflow0000000000000000
-                  workspaceId: clworkspace000000000000000
-                  workflowVersionId: null
-                  status: queued
-                  isDryRun: true
-                  triggerType: response.completed
-                  surveyId: clsurvey000000000000000000
-                  responseId: null
-                  error: null
-                  attempt: 0
-                  createdAt: '2026-06-11T09:30:00.000Z'
-                  updatedAt: '2026-06-11T09:30:00.000Z'
-                  startedAt: null
-                  finishedAt: null
-                  idempotencyKey: null
-                  nextAttemptAt: null
-                  lastErrorAt: null
-                  triggerPayload:
-                    type: response.completed
-                    workspaceId: clworkspace000000000000000
-                    surveyId: clsurvey000000000000000000
-                    responseId: clresponse0000000000000000
-                    endingCardId: clending000000000000000000
-                    triggeredAt: '2026-06-11T09:30:00.000Z'
-                  data:
-                    steps: []
-                  logs: []
-    '400':
-      $ref: ../components/responses/V3BadRequest.yml
+                  ok: true
+                  problems: []
+            problems:
+              summary: Workflow has unresolved trigger references
+              value:
+                data:
+                  workflowId: clworkflow0000000000000000
+                  ok: false
+                  problems:
+                    - code: survey_not_found
+                      field: definition.trigger.config.surveyId
+                      message: The referenced survey does not exist in this workspace.
+                    - code: ending_card_not_found
+                      field: definition.trigger.config.endingCardIds
+                      message: Ending card clending000000000000000000 does not exist on the survey.
     '401':
       $ref: ../components/responses/V3Unauthorized.yml
     '403':
       $ref: ../components/responses/V3Forbidden.yml
-    '409':
-      $ref: ../components/responses/V3Conflict.yml
     '422':
       $ref: ../components/responses/V3UnprocessableContent.yml
     '429':

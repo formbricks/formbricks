@@ -17,6 +17,7 @@ import {
   getWorkflowRun,
   listWorkflowRuns,
   listWorkflows,
+  testWorkflow,
   unarchiveWorkflow,
   updateWorkflow,
 } from "./api-client";
@@ -104,6 +105,40 @@ const jsonResponse = (body: unknown, status = 200): Response =>
 
 const problemResponse = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/problem+json" } });
+
+describe("testWorkflow", () => {
+  test("POSTs /:id/test and returns the validation result", async () => {
+    const result = {
+      workflowId: "wf1",
+      ok: false,
+      problems: [{ code: "survey_not_found", field: "f", message: "m" }],
+    };
+    fetchMock.mockResolvedValueOnce(okResponse(result));
+
+    await expect(testWorkflow("wf1")).resolves.toEqual(result);
+    expect(fetchMock).toHaveBeenCalledWith("/api/v3/workflows/wf1/test", {
+      method: "POST",
+      cache: "no-store",
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  test("throws V3ApiError on a non-ok response (e.g. 422 draft/archived)", async () => {
+    fetchMock.mockResolvedValueOnce(
+      problemResponse(422, {
+        code: "invalid_workflow_state",
+        detail: "Only enabled or disabled workflows can be tested.",
+      })
+    );
+
+    await expect(testWorkflow("wf1")).rejects.toMatchObject({
+      name: "V3ApiError",
+      status: 422,
+      code: "invalid_workflow_state",
+      detail: "Only enabled or disabled workflows can be tested.",
+    });
+  });
+});
 
 describe("buildWorkflowListSearchParams", () => {
   test("encodes workspace, limit, cursor, sort and the filter[...] family", () => {

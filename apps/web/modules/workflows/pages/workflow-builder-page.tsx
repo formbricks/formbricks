@@ -35,7 +35,7 @@ export const WorkflowBuilderPage = ({
   return (
     <div className="flex flex-col gap-4">
       <section className="flex min-h-[calc(100vh-220px)] gap-4">
-        <WorkflowCanvas isEditable={builder.canEditDefinition} />
+        <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
         <WorkflowInspectorPanel
           canEditMetadata={builder.canEditMetadata}
           isEditingNode={builder.canEditDefinition}
