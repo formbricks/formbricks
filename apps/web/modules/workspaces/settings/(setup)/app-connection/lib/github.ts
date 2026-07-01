@@ -1,5 +1,4 @@
 import { logger } from "@formbricks/logger";
-import { GITHUB_TOKEN } from "@/lib/constants";
 
 const LATEST_RELEASE_URL = "https://api.github.com/repos/formbricks/formbricks/releases/latest";
 // Cache successful lookups for one hour so we don't hit GitHub on every navigation load.
@@ -22,8 +21,8 @@ let cachedRelease: CachedRelease | null = null;
  * when GitHub is rate-limited, returns an HTML error page, or is otherwise
  * unavailable, it returns `null` and the caller simply hides the version badge.
  *
- * A `GITHUB_TOKEN` (when configured) raises the unauthenticated rate limit
- * (~60/hr) to the authenticated one (~5000/hr).
+ * The result is cached (see TTLs above) so we stay well under GitHub's
+ * unauthenticated rate limit (~60/hr) without needing a token.
  */
 export const getLatestStableFbRelease = async (): Promise<string | null> => {
   if (cachedRelease) {
@@ -34,15 +33,9 @@ export const getLatestStableFbRelease = async (): Promise<string | null> => {
   }
 
   try {
-    const headers: Record<string, string> = {
-      Accept: "application/vnd.github+json",
-    };
-
-    if (GITHUB_TOKEN) {
-      headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
-    }
-
-    const res = await fetch(LATEST_RELEASE_URL, { headers });
+    const res = await fetch(LATEST_RELEASE_URL, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
 
     const contentType = res.headers.get("content-type") ?? "";
     if (!res.ok || !contentType.includes("application/json")) {

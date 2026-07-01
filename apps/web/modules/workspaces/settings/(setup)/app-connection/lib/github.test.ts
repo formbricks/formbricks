@@ -1,17 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 
-vi.mock("@/lib/constants", () => ({
-  GITHUB_TOKEN: "test-token",
-}));
-
 vi.mock("@formbricks/logger", () => ({
   logger: {
     warn: vi.fn(),
   },
 }));
-
-const RELEASE_URL = "https://api.github.com/repos/formbricks/formbricks/releases/latest";
 
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -43,31 +37,6 @@ describe("getLatestStableFbRelease", () => {
     const result = await getLatestStableFbRelease();
 
     expect(result).toBe("v3.0.0");
-  });
-
-  test("sends the Authorization header when GITHUB_TOKEN is set", async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse({ tag_name: "v3.0.0" }));
-
-    const { getLatestStableFbRelease } = await import("./github");
-    await getLatestStableFbRelease();
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      RELEASE_URL,
-      expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: "Bearer test-token" }),
-      })
-    );
-  });
-
-  test("omits the Authorization header when GITHUB_TOKEN is not set", async () => {
-    vi.doMock("@/lib/constants", () => ({ GITHUB_TOKEN: undefined }));
-    vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse({ tag_name: "v3.0.0" }));
-
-    const { getLatestStableFbRelease } = await import("./github");
-    await getLatestStableFbRelease();
-
-    const callArgs = vi.mocked(global.fetch).mock.calls[0][1];
-    expect(callArgs?.headers).not.toHaveProperty("Authorization");
   });
 
   test("returns null and warns when GitHub returns a non-ok status", async () => {
