@@ -114,5 +114,6 @@ model WorkflowRunLog {
   startedAt  DateTime?
   finishedAt DateTime?
 
+  @@unique([runId, stepId])
   @@index([runId, sequence])
 }
