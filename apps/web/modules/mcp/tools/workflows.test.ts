@@ -142,6 +142,28 @@ describe("registerWorkflowTools", () => {
     });
   });
 
+  test("list_workflow_runs delegates to listRuns with a synthetic query request", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.listRuns).mockResolvedValue(
+      successListResponse([{ id: RUN_ID }], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("list_workflow_runs")!
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20, workflowId: WORKFLOW_ID }, { authInfo });
+
+    const callArg = vi.mocked(workflowsHandlers.listRuns).mock.calls[0][0];
+    expect(callArg.ctx).toEqual({ __ctx: true });
+    const params = new URL(callArg.req.url).searchParams;
+    expect(params.get("workspaceId")).toBe(WORKSPACE_ID);
+    expect(params.get("workflowId")).toBe(WORKFLOW_ID);
+    expect(result.structuredContent).toEqual({
+      data: [{ id: RUN_ID }],
+      meta: { limit: 20, nextCursor: null },
+      requestId: "req_tool",
+    });
+  });
+
   test("get_workflow delegates to the handler with params (no request)", async () => {
     const { tools } = createToolServer();
     vi.mocked(workflowsHandlers.get).mockResolvedValue(
