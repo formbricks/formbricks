@@ -2,10 +2,12 @@ import "server-only";
 import { createMcpHandler } from "mcp-handler";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
 import { registerSurveyTools } from "./tools/surveys";
+import { registerWorkflowTools } from "./tools/workflows";
 
 export const mcpHandler = createMcpHandler(
   (server) => {
     registerSurveyTools(server);
+    registerWorkflowTools(server);
   },
   {
     serverInfo: {

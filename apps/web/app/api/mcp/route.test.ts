@@ -160,6 +160,19 @@ describe("POST /api/mcp", () => {
       "validate_survey",
       "patch_survey",
       "delete_survey",
+      "list_workflows",
+      "get_workflow",
+      "list_workflow_runs",
+      "get_workflow_run",
+      "test_workflow",
+      "create_workflow",
+      "patch_workflow",
+      "duplicate_workflow",
+      "delete_workflow",
+      "enable_workflow",
+      "disable_workflow",
+      "archive_workflow",
+      "unarchive_workflow",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(
