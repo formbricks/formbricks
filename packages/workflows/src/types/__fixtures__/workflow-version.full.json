@@ -14,13 +14,13 @@
         "actionType": "send_email",
         "config": {
           "attachResponseData": true,
-          "body": "We received your response.",
+          "body": "<p>Hi #recall:cm9zr4mps000008l8name/fallback:there#, we received your response.</p>",
           "from": "noreply@example.com",
           "includeHiddenFields": true,
           "includeVariables": true,
           "replyTo": ["support@example.com"],
           "subject": "Thanks for your response",
-          "to": "{{response.email}}"
+          "to": "cm9zr4mps000008l8email"
         },
         "id": "send-email",
         "label": "Send thank you email",

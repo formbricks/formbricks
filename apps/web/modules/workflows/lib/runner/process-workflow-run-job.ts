@@ -3,8 +3,10 @@ import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { type JobHandler, type TWorkflowRunJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import type { TResponse } from "@formbricks/types/responses";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import {
-  type TResolvedWorkflowEmail,
   type TWorkflowExecutableStep,
   type TWorkflowRunData,
   type TWorkflowStepResult,
@@ -13,10 +15,27 @@ import {
   ZWorkflowRunData,
   ZWorkflowTriggerRunPayload,
   planExecutableSteps,
-  resolveWorkflowEmail,
 } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { getResponse } from "@/lib/response/service";
+import { getSurvey } from "@/lib/survey/service";
 import { sendEmail } from "@/modules/email";
+import {
+  buildSurveyResponseEmailHtml,
+  resolveResponseRecipient,
+} from "@/modules/email/lib/survey-response-email";
+
+/** Strips CR/LF and other control chars from the subject — defense against SMTP header injection. */
+// eslint-disable-next-line no-control-regex -- intentionally matching control chars to strip them
+const CONTROL_CHARS_PATTERN = /[\x00-\x1f]/g;
+const stripControlChars = (value: string): string => value.replace(CONTROL_CHARS_PATTERN, "");
+
+/** Coerces a response's free-form `language` to a supported locale, falling back to undefined (→ default). */
+const toResponseLocale = (language: string | null): TUserLocale | undefined => {
+  const parsed = ZUserLocale.safeParse(language);
+  return parsed.success ? parsed.data : undefined;
+};
 
 /** Run states from which there is no further work — replays/redeliveries on these are no-ops. */
 const TERMINAL_STATUSES = new Set(["completed", "failed", "canceled"]);
@@ -126,69 +145,94 @@ interface StepOutcome {
   output: Record<string, unknown>;
 }
 
+/** The survey/response/branding context, loaded once per run, that every step renders against. */
+interface RunEmailContext {
+  survey: TSurvey;
+  response: TResponse;
+  logoUrl: string;
+}
+
 /**
- * Resolves and sends one email, returning the step outcome. The resolved recipient is validated first
- * (respondent-controlled data must never reach SMTP invalid), then the send is performed with a stable
- * `Message-ID` recorded both on the sent header and the step output.
+ * Resolves and sends one `send_email` step, Follow-Ups parity: resolves the recipient from the
+ * response (literal email or question/hidden-field id), renders the branded HTML via
+ * `buildSurveyResponseEmailHtml` (recall body + optional response-data blocks), and sends HTML-only.
+ * The subject is sanitized (control chars stripped) and a stable RFC `Message-ID` is recorded on both
+ * the sent header and the step output. Any resolution/send failure returns a failed outcome; the
+ * caller fails the whole run so it propagates to the run lifecycle.
  */
 const sendResolvedEmail = async (
-  email: TResolvedWorkflowEmail,
+  config: TWorkflowExecutableStep["node"]["config"],
+  emailContext: RunEmailContext,
   workflowRunId: string,
   stepId: string
 ): Promise<StepOutcome> => {
-  if (email.recipientValid) {
-    const messageId = buildMessageId(workflowRunId, stepId, email.from);
-    try {
-      const sent = await sendEmail({
-        to: email.to,
-        from: email.from,
-        replyTo: email.replyTo.length > 0 ? email.replyTo.join(", ") : undefined,
-        subject: email.subject,
-        text: email.text,
-        html: email.html,
-        messageId,
-      });
-
-      if (sent) {
-        return { status: "succeeded", error: null, output: { messageId, provider: EMAIL_PROVIDER } };
-      }
-      return { status: "failed", error: "SMTP is not configured; workflow email was not sent", output: {} };
-    } catch (sendError) {
-      return {
-        status: "failed",
-        error: toError(sendError, "Failed to send workflow email").message,
-        output: {},
-      };
-    }
+  const recipient = resolveResponseRecipient(config.to, emailContext.response);
+  if (!recipient.ok) {
+    return { status: "failed", error: recipient.error, output: {} };
   }
 
-  // The recipient is templated from respondent-controlled data; never hand an invalid address to SMTP.
-  return { status: "failed", error: "Resolved email recipient is not a valid address", output: {} };
+  const messageId = buildMessageId(workflowRunId, stepId, config.from);
+  const subject = stripControlChars(config.subject);
+
+  try {
+    const html = await buildSurveyResponseEmailHtml({
+      body: config.body,
+      survey: emailContext.survey,
+      response: emailContext.response,
+      attachResponseData: config.attachResponseData,
+      includeVariables: config.includeVariables,
+      includeHiddenFields: config.includeHiddenFields,
+      logoUrl: emailContext.logoUrl,
+      locale: toResponseLocale(emailContext.response.language),
+    });
+
+    const sent = await sendEmail({
+      to: recipient.email,
+      from: config.from,
+      replyTo: config.replyTo.length > 0 ? config.replyTo.join(", ") : undefined,
+      subject,
+      html,
+      messageId,
+    });
+
+    if (sent) {
+      return { status: "succeeded", error: null, output: { messageId, provider: EMAIL_PROVIDER } };
+    }
+    return { status: "failed", error: "SMTP is not configured; workflow email was not sent", output: {} };
+  } catch (sendError) {
+    return {
+      status: "failed",
+      error: toError(sendError, "Failed to send workflow email").message,
+      output: {},
+    };
+  }
 };
 
 /**
- * Executes one `send_email` step: resolves placeholders against the trigger payload, validates the
- * resolved recipient, and performs the send. Returns a per-step result + log row. An invalid resolved
- * recipient, a `false` return from `sendEmail` (SMTP unconfigured), and a thrown send failure all
- * produce a `failed` step; the caller fails the whole run on a failed step so the error propagates to
- * the run lifecycle.
+ * Executes one `send_email` step and returns a per-step result + log row. Delegates the resolve/render/
+ * send to `sendResolvedEmail`; the caller fails the whole run on a failed step so the error propagates
+ * to the run lifecycle.
  */
 const executeSendEmailStep = async ({
   step,
   sequence,
-  triggerPayload,
+  emailContext,
   workflowRunId,
 }: {
   step: TWorkflowExecutableStep;
   sequence: number;
-  triggerPayload: TWorkflowTriggerRunPayload;
+  emailContext: RunEmailContext;
   workflowRunId: string;
 }): Promise<ExecutedStep> => {
   const startedAt = new Date();
-  const email: TResolvedWorkflowEmail = resolveWorkflowEmail(step.node.config, triggerPayload);
-  const input = { to: email.to, subject: email.subject };
+  const input = { to: step.node.config.to, subject: step.node.config.subject };
 
-  const { status, error, output } = await sendResolvedEmail(email, workflowRunId, step.stepId);
+  const { status, error, output } = await sendResolvedEmail(
+    step.node.config,
+    emailContext,
+    workflowRunId,
+    step.stepId
+  );
 
   const finishedAt = new Date();
 
@@ -287,6 +331,33 @@ const claimRun = async (
 };
 
 /**
+ * Loads the survey/response/branding context a run's emails render against. Uses the same loaders the
+ * response-pipeline job uses (worker-safe, no request scope). Missing survey or response is
+ * unrecoverable for this run and fails it.
+ */
+const loadRunEmailContext = async (
+  triggerPayload: TWorkflowTriggerRunPayload,
+  workspaceId: string
+): Promise<RunEmailContext> => {
+  const [response, survey] = await Promise.all([
+    getResponse(triggerPayload.responseId),
+    getSurvey(triggerPayload.surveyId),
+  ]);
+
+  if (!response) {
+    throw new WorkflowRunNotExecutableError(`Response ${triggerPayload.responseId} not found`);
+  }
+  if (!survey) {
+    throw new WorkflowRunNotExecutableError(`Survey ${triggerPayload.surveyId} not found`);
+  }
+
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
+  const logoUrl = organization?.whitelabel?.logoUrl ?? "";
+
+  return { survey, response, logoUrl };
+};
+
+/**
  * Runs the planned steps in order, resuming any that already have a `succeeded` log (no re-send, no
  * duplicate log row) and executing the rest. Returns the per-step results and the first failure
  * message, if any.
@@ -294,7 +365,7 @@ const claimRun = async (
 const runSteps = async (
   steps: TWorkflowExecutableStep[],
   runId: string,
-  triggerPayload: TWorkflowTriggerRunPayload
+  emailContext: RunEmailContext
 ): Promise<{ stepResults: TWorkflowStepResult[]; failure: string | null }> => {
   const succeededLogs: SucceededStepLog[] = await prisma.workflowRunLog.findMany({
     where: { runId, status: "succeeded" },
@@ -315,7 +386,7 @@ const runSteps = async (
     const executed = await executeSendEmailStep({
       step,
       sequence: index + 1,
-      triggerPayload,
+      emailContext,
       workflowRunId: runId,
     });
 
@@ -339,7 +410,8 @@ const executeClaimedRun = async (
   const definition = resolveExecutableDefinition(run);
   const steps = planExecutableSteps(definition);
 
-  const { stepResults, failure } = await runSteps(steps, run.id, triggerPayload);
+  const emailContext = await loadRunEmailContext(triggerPayload, workspaceId);
+  const { stepResults, failure } = await runSteps(steps, run.id, emailContext);
 
   const runData: TWorkflowRunData = ZWorkflowRunData.parse({ trigger: triggerPayload, steps: stepResults });
 

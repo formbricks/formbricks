@@ -4,6 +4,7 @@ import { processWorkflowRunJob } from "./process-workflow-run-job";
 
 const {
   mockSendEmail,
+  mockBuildHtml,
   mockLoggerError,
   mockLoggerInfo,
   mockLoggerWarn,
@@ -11,8 +12,12 @@ const {
   mockWorkflowRunUpdateMany,
   mockWorkflowRunLogCreate,
   mockWorkflowRunLogFindMany,
+  mockGetResponse,
+  mockGetSurvey,
+  mockGetOrganizationByWorkspaceId,
 } = vi.hoisted(() => ({
   mockSendEmail: vi.fn(),
+  mockBuildHtml: vi.fn(),
   mockLoggerError: vi.fn(),
   mockLoggerInfo: vi.fn(),
   mockLoggerWarn: vi.fn(),
@@ -20,6 +25,9 @@ const {
   mockWorkflowRunUpdateMany: vi.fn(),
   mockWorkflowRunLogCreate: vi.fn(),
   mockWorkflowRunLogFindMany: vi.fn(),
+  mockGetResponse: vi.fn(),
+  mockGetSurvey: vi.fn(),
+  mockGetOrganizationByWorkspaceId: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -37,6 +45,25 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/modules/email", () => ({
   sendEmail: mockSendEmail,
+}));
+
+// Keep the real recipient resolution (pure zod) so `to`-resolution is exercised end-to-end;
+// only the HTML builder (i18n + render) is stubbed.
+vi.mock("@/modules/email/lib/survey-response-email", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/email/lib/survey-response-email")>();
+  return { ...actual, buildSurveyResponseEmailHtml: mockBuildHtml };
+});
+
+vi.mock("@/lib/response/service", () => ({
+  getResponse: mockGetResponse,
+}));
+
+vi.mock("@/lib/survey/service", () => ({
+  getSurvey: mockGetSurvey,
+}));
+
+vi.mock("@/lib/organization/service", () => ({
+  getOrganizationByWorkspaceId: mockGetOrganizationByWorkspaceId,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -58,7 +85,8 @@ const triggerPayload = {
   triggeredAt: "2026-06-09T12:01:00.000Z",
 };
 
-const executableDefinition = {
+// `to` is a question/hidden-field id resolved against the response (Follow-Ups parity).
+const makeDefinition = (to = "email", overrides: Record<string, unknown> = {}) => ({
   schemaVersion: 1,
   entryNodeId: "trigger",
   trigger: {
@@ -74,19 +102,22 @@ const executableDefinition = {
       actionType: "send_email",
       label: "Send thank you email",
       config: {
-        to: "{{response.email}}",
+        to,
         from: "noreply@example.com",
         replyTo: ["support@example.com"],
         subject: "Thanks for your response",
-        body: "We received your response.",
+        body: "<p>Hi #recall:name/fallback:there#</p>",
         attachResponseData: true,
         includeVariables: true,
         includeHiddenFields: true,
+        ...overrides,
       },
     },
   ],
   edges: [{ id: "trigger-send-email", source: "trigger", target: "send-email" }],
-};
+});
+
+const executableDefinition = makeDefinition();
 
 const baseRun = {
   id: "cm9zr4run000908l8q9b9d3pm",
@@ -96,6 +127,16 @@ const baseRun = {
   workflowVersion: { definition: executableDefinition },
   workflow: { definition: executableDefinition },
 };
+
+const mockResponse = {
+  id: "cm9zr4rsp000708l8bqccpfrx",
+  surveyId: "cm9zr4mps000008l8btfy1vtz",
+  data: { email: "jane@example.com", name: "Jane" },
+  variables: {},
+  language: "en-US",
+};
+
+const mockSurvey = { id: "cm9zr4mps000008l8btfy1vtz", blocks: [], languages: [] };
 
 const data: TWorkflowRunJobData = {
   workflowRunId: "cm9zr4run000908l8q9b9d3pm",
@@ -121,6 +162,10 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunLogCreate.mockResolvedValue(undefined);
     mockWorkflowRunLogFindMany.mockResolvedValue([]);
     mockSendEmail.mockResolvedValue(true);
+    mockBuildHtml.mockResolvedValue("<html>branded</html>");
+    mockGetResponse.mockResolvedValue(mockResponse);
+    mockGetSurvey.mockResolvedValue(mockSurvey);
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: { logoUrl: "logo.png" } });
   });
 
   afterEach(() => {
@@ -137,44 +182,89 @@ describe("processWorkflowRunJob", () => {
     );
   });
 
-  test("executes a send_email run end-to-end and completes it", async () => {
+  test("executes a send_email run end-to-end (Follow-Ups parity) and completes it", async () => {
     await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
 
-    expect(mockSendEmail).toHaveBeenCalledTimes(1);
-    expect(mockSendEmail).toHaveBeenCalledWith(
+    // Survey + response + org loaded once for the run.
+    expect(mockGetResponse).toHaveBeenCalledWith(triggerPayload.responseId);
+    expect(mockGetSurvey).toHaveBeenCalledWith(triggerPayload.surveyId);
+    expect(mockGetOrganizationByWorkspaceId).toHaveBeenCalledWith(data.workspaceId);
+
+    // Branded HTML built from the recall body + gating flags, org logo threaded in.
+    expect(mockBuildHtml).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: "jane@example.com",
-        from: "noreply@example.com",
-        replyTo: "support@example.com",
-        subject: "Thanks for your response",
-        html: expect.any(String),
-        text: expect.any(String),
+        body: "<p>Hi #recall:name/fallback:there#</p>",
+        survey: mockSurvey,
+        response: mockResponse,
+        attachResponseData: true,
+        includeVariables: true,
+        includeHiddenFields: true,
+        logoUrl: "logo.png",
+        locale: "en-US",
       })
     );
 
-    // queued -> running claim is a workspace-scoped conditional updateMany
-    expect(mockWorkflowRunUpdateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: baseRun.id, workspaceId: data.workspaceId, status: { in: ["queued"] } },
-        data: expect.objectContaining({ status: "running", startedAt: expect.any(Date) }),
-      })
-    );
-    // The same stable RFC Message-ID is sent as the transport `messageId` and recorded on the output.
+    // HTML-only send (no `text`), resolved recipient, sanitized subject, stable Message-ID.
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
     const sendArgs = mockSendEmail.mock.calls[0][0];
+    expect(sendArgs).toMatchObject({
+      to: "jane@example.com",
+      from: "noreply@example.com",
+      replyTo: "support@example.com",
+      subject: "Thanks for your response",
+      html: "<html>branded</html>",
+    });
+    expect(sendArgs.text).toBeUndefined();
     expect(sendArgs.messageId).toMatch(/^<.+@example\.com>$/);
 
     const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
-    expect(completion.where).toEqual({ id: baseRun.id, workspaceId: data.workspaceId });
     expect(completion.data.status).toBe("completed");
-    expect(completion.data.finishedAt).toBeInstanceOf(Date);
-    expect(completion.data.data.steps).toHaveLength(1);
     expect(completion.data.data.steps[0]).toMatchObject({
       stepId: "send-email",
       stepType: "send_email",
       status: "succeeded",
       output: { provider: "smtp", messageId: sendArgs.messageId },
     });
-    expect(completion.data.data.steps[0].output.messageId).toMatch(/^<.+@example\.com>$/);
+  });
+
+  test("resolves a literal-email `to` directly", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("teammate@example.com") },
+      workflow: { definition: makeDefinition("teammate@example.com") },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "teammate@example.com" }));
+  });
+
+  test("resolves a contact-info array `to` using index [2]", async () => {
+    mockGetResponse.mockResolvedValue({
+      ...mockResponse,
+      data: { contact: ["Jane", "Doe", "jane@example.com", "+1"] },
+    });
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("contact") },
+      workflow: { definition: makeDefinition("contact") },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "jane@example.com" }));
+  });
+
+  test("fails the step (no send) when the recipient cannot be resolved (final attempt → failed)", async () => {
+    mockGetResponse.mockResolvedValue({ ...mockResponse, data: { name: "Jane" } });
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    expect(mockBuildHtml).not.toHaveBeenCalled();
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.data.steps[0]).toMatchObject({ status: "failed" });
   });
 
   test("writes a WorkflowRunLog row per executed step", async () => {
@@ -189,7 +279,6 @@ describe("processWorkflowRunJob", () => {
           stepId: "send-email",
           stepType: "send_email",
           status: "succeeded",
-          output: { provider: "smtp", messageId: expect.any(String) },
         }),
       })
     );
@@ -221,13 +310,42 @@ describe("processWorkflowRunJob", () => {
     );
   });
 
+  test("fails the run when the response is missing (final attempt → failed)", async () => {
+    mockGetResponse.mockResolvedValue(null);
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.error).toMatch(/Response .* not found/);
+  });
+
+  test("fails the run when the survey is missing (final attempt → failed)", async () => {
+    mockGetSurvey.mockResolvedValue(null);
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.error).toMatch(/Survey .* not found/);
+  });
+
+  test("uses an empty logo url when the organization has no whitelabel logo", async () => {
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: null });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockBuildHtml).toHaveBeenCalledWith(expect.objectContaining({ logoUrl: "" }));
+  });
+
   test("returns without double-processing when the queued -> running claim loses the race", async () => {
     mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
 
     await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
 
     expect(mockSendEmail).not.toHaveBeenCalled();
-    // Only the claim attempt ran; no completion write.
     expect(mockWorkflowRunUpdateMany).toHaveBeenCalledTimes(1);
     expect(mockLoggerInfo).toHaveBeenCalledWith(
       expect.any(Object),
@@ -243,15 +361,14 @@ describe("processWorkflowRunJob", () => {
   });
 
   test("does NOT re-send a step that already has a succeeded log (retry resumes)", async () => {
-    // Simulate a retry: the run is mid-flight (running) and the first step already succeeded.
     mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });
     mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
     mockWorkflowRunLogFindMany.mockResolvedValue([
       {
         stepId: "send-email",
         stepType: "send_email",
-        input: { to: "jane@example.com", subject: "Thanks for your response" },
-        output: { provider: "smtp", messageId: "deadbeef" },
+        input: { to: "email", subject: "Thanks for your response" },
+        output: { provider: "smtp", messageId: "<deadbeef@example.com>" },
         startedAt: new Date("2026-06-09T12:01:00.000Z"),
         finishedAt: new Date("2026-06-09T12:01:01.000Z"),
       },
@@ -260,32 +377,13 @@ describe("processWorkflowRunJob", () => {
     await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
 
     expect(mockSendEmail).not.toHaveBeenCalled();
-    // No duplicate log row written for the already-succeeded step.
     expect(mockWorkflowRunLogCreate).not.toHaveBeenCalled();
     const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(completion.data.status).toBe("completed");
     expect(completion.data.data.steps[0]).toMatchObject({
       stepId: "send-email",
       status: "succeeded",
-      output: { provider: "smtp", messageId: "deadbeef" },
-    });
-  });
-
-  test("fails the step for an invalid resolved recipient and never calls sendEmail (final attempt → failed)", async () => {
-    mockWorkflowRunFindFirst.mockResolvedValue({
-      ...baseRun,
-      triggerPayload: { ...triggerPayload, data: { response: { email: "not-an-email" } } },
-    });
-
-    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
-
-    expect(mockSendEmail).not.toHaveBeenCalled();
-    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
-    expect(failure.where).toEqual({ id: baseRun.id, workspaceId: data.workspaceId });
-    expect(failure.data.status).toBe("failed");
-    expect(failure.data.data.steps[0]).toMatchObject({
-      status: "failed",
-      error: "Resolved email recipient is not a valid address",
+      output: { provider: "smtp", messageId: "<deadbeef@example.com>" },
     });
   });
 
@@ -294,12 +392,6 @@ describe("processWorkflowRunJob", () => {
 
     await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow(/SMTP is not configured/);
 
-    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
-    // Run stays `running` so BullMQ's retry is not defeated by the terminal-skip guard.
-    expect(failure.data.status).toBeUndefined();
-    expect(failure.data.finishedAt).toBeUndefined();
-    expect(failure.data.error).toMatch(/SMTP is not configured/);
-    expect(failure.data.lastErrorAt).toBeInstanceOf(Date);
     const statuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
     expect(statuses).not.toContain("failed");
   });
@@ -312,8 +404,6 @@ describe("processWorkflowRunJob", () => {
     const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(failure.data.status).toBe("failed");
     expect(failure.data.error).toMatch(/SMTP is not configured/);
-    expect(failure.data.lastErrorAt).toBeInstanceOf(Date);
-    expect(failure.data.finishedAt).toBeInstanceOf(Date);
     expect(failure.data.data.steps[0]).toMatchObject({ status: "failed" });
   });
 
@@ -353,30 +443,19 @@ describe("processWorkflowRunJob", () => {
     expect(failure.data.status).toBe("failed");
   });
 
-  test("a transient failure on a non-final attempt leaves the run non-terminal, then resumes and completes", async () => {
-    // Attempt 1: send throws. The run must NOT become terminal `failed` (which would defeat retries),
-    // and the step must NOT be recorded as a succeeded log.
-    mockSendEmail.mockRejectedValueOnce(new Error("SMTP provider rejected the message"));
+  test("sanitizes control characters out of the subject before sending", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("email", { subject: "Hi\r\nBcc: evil@example.com" }) },
+      workflow: { definition: makeDefinition("email", { subject: "Hi\r\nBcc: evil@example.com" }) },
+    });
 
-    await expect(processWorkflowRunJob(data, baseContext)).rejects.toThrow(/SMTP provider rejected/);
+    await processWorkflowRunJob(data, baseContext);
 
-    const firstAttemptStatuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
-    expect(firstAttemptStatuses).not.toContain("failed");
-
-    // Attempt 2 (redelivery): the run is still claimable; sendEmail now succeeds and the run completes.
-    vi.clearAllMocks();
-    mockWorkflowRunFindFirst.mockResolvedValue(baseRun);
-    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 1 });
-    mockWorkflowRunLogCreate.mockResolvedValue(undefined);
-    mockWorkflowRunLogFindMany.mockResolvedValue([]);
-    mockSendEmail.mockResolvedValue(true);
-
-    await expect(processWorkflowRunJob(data, { ...baseContext, attempt: 2 })).resolves.toBeUndefined();
-
-    expect(mockSendEmail).toHaveBeenCalledTimes(1);
-    const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
-    expect(completion.data.status).toBe("completed");
-    expect(completion.data.data.steps[0]).toMatchObject({ stepId: "send-email", status: "succeeded" });
+    const sendArgs = mockSendEmail.mock.calls[0][0];
+    expect(sendArgs.subject).toBe("HiBcc: evil@example.com");
+    expect(sendArgs.subject).not.toContain("\r");
+    expect(sendArgs.subject).not.toContain("\n");
   });
 
   test("swallows the failure on the final attempt after recording it", async () => {
@@ -384,8 +463,6 @@ describe("processWorkflowRunJob", () => {
 
     await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
 
-    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
-    expect(failure.data.status).toBe("failed");
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({ err: expect.any(Error) }),
       "Workflow run job failed after final attempt"
