@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
 import {
@@ -11,7 +10,7 @@ import { CsvImportValidationError, importCsvFile } from "@/lib/feedback-source/c
 import { getUser } from "@/lib/user/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromFeedbackSourceId } from "@/lib/utils/helper";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import {
   CSV_FILE_TOO_LARGE_ERROR_CODE,
   CSV_IMPORT_FAILED_ERROR_CODE,
@@ -53,7 +52,7 @@ export const POST = async (request: Request) => {
       });
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (!session?.user) {
       throw new AuthenticationError("Not authenticated");
     }

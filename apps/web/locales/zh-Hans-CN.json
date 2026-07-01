@@ -65,6 +65,7 @@
       "new_to_formbricks": "新用户 Formbricks ?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "please_verify_your_email_to_continue": "请验证您的电子邮件地址。我们已向您发送了一个验证链接。",
       "use_a_backup_code": "使用 备用代码"
     },
     "saml_connection_error": "出了问题。请查看应用 控制台 以获取更多详情。",
@@ -98,10 +99,6 @@
       "verification_email_resent_successfully": "验证 电子邮件 已 发送！请 检查 您的 收件箱。",
       "verification_email_successfully_sent_info": "如果有一个 账户 与 {email} 相关 联，我们已将 验证 链接 发送到该 地址 。请查看您的 收件箱 以完成 注册 。",
       "you_didnt_receive_an_email_or_your_link_expired": "您 没 有 收 到 电 子 邮 件 或者 链接 已 过 期 ?"
-    },
-    "verify": {
-      "no_token_provided": "未提供 Token",
-      "verifying": "验证 ..."
     }
   },
   "billing_confirmation": {
@@ -522,6 +519,13 @@
   "emails": {
     "accept": "接受",
     "click_or_drag_to_upload_files": "点击 或 拖动 上传 文件",
+    "delete_account_email_confirm_deletion": "确认删除账户",
+    "delete_account_email_did_not_request": "如果这不是您发起的，请忽略此邮件，您的账户将保持有效。",
+    "delete_account_email_heading": "确认删除您的账户",
+    "delete_account_email_link_valid_for_minutes": "该链接在 {minutes} 分钟内有效。",
+    "delete_account_email_subject": "确认删除您的 Formbricks 账户",
+    "delete_account_email_text": "您已请求删除您的 Formbricks 账户。如需确认，请点击下方按钮：",
+    "delete_account_email_warning": "这将永久删除您的账户及所有相关数据。此操作无法撤销。",
     "email_customization_preview_email_heading": "嘿 {userName}",
     "email_customization_preview_email_subject": "Formbricks 电子邮件自定义预览",
     "email_customization_preview_email_text": "这 是 一封 电子邮件 预览，展示 哪个 徽标 将在 电子邮件 中 渲染。",
@@ -2598,17 +2602,16 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "帐户 删除 后果",
+        "account_deletion_email_sent": "请查收您的电子邮件以确认删除账户。我们已向 {email} 发送了一个链接——点击后，您的账户将被删除。",
         "backup_code": "备用代码",
         "confirm_delete_account": "删除您的账户以及所有个人信息和数据",
         "confirm_delete_my_account": "删除我的账户",
         "confirm_your_current_password_to_get_started": "确认 您 的 当前 密码 以 开始。",
         "delete_account": "删除账号",
-        "delete_account_confirmation_required": "Email confirmation is required to delete your account.",
         "disable_two_factor_authentication": "禁用 双因素 认证",
         "disable_two_factor_authentication_description": "如果你需要禁用 2FA ，我们建议尽快重新启用。",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "每个备用代码只能使用一次，以在没有您的身份验证器的情况下授予访问权限。",
         "email_change_initiated": "您的 邮箱 更改 请求 已启动。",
-        "email_confirmation_does_not_match": "Email confirmation does not match.",
         "enable_two_factor_authentication": "启用 双因素 认证",
         "enter_the_code_from_your_authenticator_app_below": "从 你的 身份验证 应用 中 输入 代码 。",
         "lost_access": "失去访问",
@@ -2621,8 +2624,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "请 将 以下 备份 代码 保存在 安全地 方。",
         "scan_the_qr_code_below_with_your_authenticator_app": "用 你的 身份验证 应用 扫描 下方 的 二维码。",
         "security_description": "管理你的密码和其他安全设置，如双因素认证 (2FA)。",
-        "sso_identity_confirmation_failed": "SSO 身份确认失败。请尝试再次删除您的账户。",
-        "sso_identity_confirmation_may_be_required_for_deletion": "对于 SSO 账户，选择删除可能会将您重定向到身份提供商以确认此账户。如果确认的是同一账户，删除将自动继续。",
         "two_factor_authentication": "双因素 认证",
         "two_factor_authentication_description": "为你的账户增加额外的安全层，以防密码被盗。",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "双因素 认证 已启用 。 请输入 从 你的 身份验证 应用 中 的 六 位 数 字 代码 。",

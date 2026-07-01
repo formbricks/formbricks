@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
-import { deleteSessionsByUserId } from "./auth-session-repository";
+import { deleteSessionBySessionToken } from "./auth-session-repository";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -13,44 +13,44 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 describe("auth-session-repository", () => {
-  const userId = "cm8z6bn2q000008l34h8g7k9m";
+  const sessionToken = "session-token-cm8z6bn2q000008l34h8g7k9m";
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  test("deletes all sessions for the target user", async () => {
-    vi.mocked(prisma.session.deleteMany).mockResolvedValue({ count: 2 });
+  test("deletes the session matching the given token", async () => {
+    vi.mocked(prisma.session.deleteMany).mockResolvedValue({ count: 1 });
 
-    const result = await deleteSessionsByUserId(userId);
+    const result = await deleteSessionBySessionToken(sessionToken);
 
-    expect(result).toBe(2);
+    expect(result).toBe(1);
     expect(prisma.session.deleteMany).toHaveBeenCalledWith({
-      where: { userId },
+      where: { sessionToken },
     });
   });
 
-  test("returns zero when the user has no sessions", async () => {
+  test("returns zero when no session matches the token", async () => {
     vi.mocked(prisma.session.deleteMany).mockResolvedValue({ count: 0 });
 
-    const result = await deleteSessionsByUserId(userId);
+    const result = await deleteSessionBySessionToken(sessionToken);
 
     expect(result).toBe(0);
   });
 
   test("uses the provided transaction client when available", async () => {
-    const txDeleteMany = vi.fn().mockResolvedValue({ count: 3 });
+    const txDeleteMany = vi.fn().mockResolvedValue({ count: 1 });
     const tx = {
       session: {
         deleteMany: txDeleteMany,
       },
     } as unknown as Prisma.TransactionClient;
 
-    const result = await deleteSessionsByUserId(userId, tx);
+    const result = await deleteSessionBySessionToken(sessionToken, tx);
 
-    expect(result).toBe(3);
+    expect(result).toBe(1);
     expect(txDeleteMany).toHaveBeenCalledWith({
-      where: { userId },
+      where: { sessionToken },
     });
     expect(prisma.session.deleteMany).not.toHaveBeenCalled();
   });
@@ -63,6 +63,6 @@ describe("auth-session-repository", () => {
       })
     );
 
-    await expect(deleteSessionsByUserId(userId)).rejects.toThrow(DatabaseError);
+    await expect(deleteSessionBySessionToken(sessionToken)).rejects.toThrow(DatabaseError);
   });
 });

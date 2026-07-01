@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
@@ -7,6 +8,7 @@ import { WEBAPP_URL } from "@/lib/constants";
 import { verifySsoRelinkIntent } from "@/lib/jwt";
 import { actionClient } from "@/lib/utils/action-client";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { TVerificationRequestPurpose } from "@/modules/auth/lib/verification-links";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -69,13 +71,26 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
       };
     }
     ctx.auditLoggingCtx.userId = user.id;
-    await sendVerificationEmail({
-      id: user.id,
-      email: user.email,
-      locale: user.locale,
-      callbackUrl: validatedCallbackUrl,
-      purpose,
-    });
+    if (purpose === "sso_recovery") {
+      // SSO recovery keeps the app-minted JWT and the recovery magic link (now routed to Better Auth's
+      // /sso-recovery/sign-in endpoint via buildVerificationLinks).
+      await sendVerificationEmail({
+        id: user.id,
+        email: user.email,
+        locale: user.locale,
+        callbackUrl: validatedCallbackUrl,
+        purpose,
+      });
+    } else {
+      // Email verification is Better Auth-native (ENG-1054 decommission): BA mints its own verification
+      // token and sends the verify link through the emailVerification.sendVerificationEmail callback in
+      // auth.ts. The user is unverified here (the guard above returned for verified users), so BA takes
+      // its no-session, enumeration-safe path.
+      await auth.api.sendVerificationEmail({
+        body: { email: user.email, callbackURL: validatedCallbackUrl },
+        headers: await headers(),
+      });
+    }
     return {
       success: true,
     };

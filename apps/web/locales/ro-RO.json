@@ -65,6 +65,7 @@
       "new_to_formbricks": "Nou în Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "please_verify_your_email_to_continue": "Te rugăm să îți verifici adresa de e-mail. Ți-am trimis un link de verificare.",
       "use_a_backup_code": "Folosiți un cod de rezervă"
     },
     "saml_connection_error": "Ceva nu a mers. Vă rugăm să verificați consola aplicației pentru mai multe detalii.",
@@ -98,10 +99,6 @@
       "verification_email_resent_successfully": "Email de verificare trimis! Vă rugăm să verificați căsuța de email.",
       "verification_email_successfully_sent_info": "Dacă există un cont asociat cu {email}, am trimis un link de verificare la acea adresă. Vă rugăm să verificați inboxul pentru a finaliza înscrierea.",
       "you_didnt_receive_an_email_or_your_link_expired": "Nu ați primit un email sau link-ul dvs. a expirat?"
-    },
-    "verify": {
-      "no_token_provided": "Niciun token furnizat",
-      "verifying": "Verificare..."
     }
   },
   "billing_confirmation": {
@@ -522,6 +519,13 @@
   "emails": {
     "accept": "Acceptă",
     "click_or_drag_to_upload_files": "Faceți clic sau trageți pentru a încărca fișiere.",
+    "delete_account_email_confirm_deletion": "Confirmă ștergerea contului",
+    "delete_account_email_did_not_request": "Dacă nu ai solicitat acest lucru, ignoră acest e-mail, iar contul tău va rămâne activ.",
+    "delete_account_email_heading": "Confirmă ștergerea contului tău",
+    "delete_account_email_link_valid_for_minutes": "Linkul este valabil {minutes} minute.",
+    "delete_account_email_subject": "Confirmă ștergerea contului tău Formbricks",
+    "delete_account_email_text": "Ai solicitat ștergerea contului tău Formbricks. Pentru a confirma, dă clic pe butonul de mai jos:",
+    "delete_account_email_warning": "Aceasta va șterge definitiv contul tău și toate datele asociate. Această acțiune nu poate fi anulată.",
     "email_customization_preview_email_heading": "Salut {userName}",
     "email_customization_preview_email_subject": "Previzualizare Personalizare Email Formbricks",
     "email_customization_preview_email_text": "Acesta este o previzualizare a emailului pentru a vă arăta ce logo va fi afișat în emailurile viitoare.",
@@ -2598,17 +2602,16 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Consecințele ștergerii contului",
+        "account_deletion_email_sent": "Verifică-ți e-mailul pentru a confirma ștergerea contului. Am trimis un link către {email} — contul tău va fi șters după ce dai clic pe el.",
         "backup_code": "Cod de rezervă",
         "confirm_delete_account": "Șterge contul tău cu toate informațiile personale și datele tale",
         "confirm_delete_my_account": "Șterge contul meu",
         "confirm_your_current_password_to_get_started": "Confirmaţi parola curentă pentru a începe.",
         "delete_account": "Șterge cont",
-        "delete_account_confirmation_required": "Email confirmation is required to delete your account.",
         "disable_two_factor_authentication": "Dezactivează autentificarea în doi pași",
         "disable_two_factor_authentication_description": "Dacă este nevoie să dezactivați autentificarea în doi pași, vă recomandăm să o reactivați cât mai curând posibil.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Fiecare cod de rezervă poate fi utilizat o singură dată pentru a acorda acces fără autentificatorul tău.",
         "email_change_initiated": "Cererea dvs. de schimbare a e-mailului a fost inițiată.",
-        "email_confirmation_does_not_match": "Email confirmation does not match.",
         "enable_two_factor_authentication": "Activează autentificarea în doi pași",
         "enter_the_code_from_your_authenticator_app_below": "Introduceți codul din aplicația dvs. de autentificare mai jos.",
         "lost_access": "Acces pierdut",
@@ -2621,8 +2624,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "Salvează următoarele coduri de rezervă într-un loc sigur.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Scanați codul QR de mai jos cu aplicația dvs. de autentificare.",
         "security_description": "Gestionează parola și alte setări de securitate, precum autentificarea în doi pași (2FA).",
-        "sso_identity_confirmation_failed": "Confirmarea identității SSO a eșuat. Te rugăm să încerci să ștergi contul din nou.",
-        "sso_identity_confirmation_may_be_required_for_deletion": "Pentru conturile SSO, selectarea opțiunii Șterge te poate redirecționa către furnizorul tău de identitate pentru a confirma acest cont. Dacă același cont este confirmat, ștergerea continuă automat.",
         "two_factor_authentication": "Autentificare în doi pași",
         "two_factor_authentication_description": "Adăugați un strat suplimentar de securitate la contul dvs. în cazul în care parola este furată.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Autentificare în doi pași activată. Introduceți codul de șase cifre din aplicația dvs. de autentificare.",
