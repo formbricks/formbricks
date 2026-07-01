@@ -39,69 +39,73 @@ const buildResponseData = (
   survey: TSurvey,
   response: TResponse,
   attachResponseData: boolean
-): ProcessedResponseElement[] =>
-  attachResponseData
-    ? getElementResponseMapping(survey, response).map((e) => {
-        // Resolve relative storage URLs to absolute URLs for picture selection and file upload responses.
-        if (
-          (e.type === TSurveyElementTypeEnum.PictureSelection ||
-            e.type === TSurveyElementTypeEnum.FileUpload) &&
-          Array.isArray(e.response)
-        ) {
-          return {
-            element: e.element,
-            response: e.response.map((url) => resolveStorageUrl(url)),
-            type: e.type,
-          };
-        }
-        return {
-          element: e.element,
-          response: e.response,
-          type: e.type,
-        };
-      })
-    : [];
+): ProcessedResponseElement[] => {
+  if (!attachResponseData) return [];
+
+  return getElementResponseMapping(survey, response).map((e) => {
+    // Resolve relative storage URLs to absolute URLs for picture selection and file upload responses.
+    if (
+      (e.type === TSurveyElementTypeEnum.PictureSelection || e.type === TSurveyElementTypeEnum.FileUpload) &&
+      Array.isArray(e.response)
+    ) {
+      return {
+        element: e.element,
+        response: e.response.map((url) => resolveStorageUrl(url)),
+        type: e.type,
+      };
+    }
+    return {
+      element: e.element,
+      response: e.response,
+      type: e.type,
+    };
+  });
+};
 
 const buildVariables = (
   survey: TSurvey,
   response: TResponse,
   attachResponseData: boolean,
   includeVariables: boolean
-): ProcessedVariable[] =>
-  attachResponseData && includeVariables
-    ? survey.variables
-        .filter((variable) => {
-          const variableResponse = response.variables[variable.id];
-          return (
-            (typeof variableResponse === "string" || typeof variableResponse === "number") &&
-            variableResponse !== undefined
-          );
-        })
-        .map((variable) => ({
-          id: variable.id,
-          name: variable.name,
-          type: variable.type,
-          value: response.variables[variable.id],
-        }))
-    : [];
+): ProcessedVariable[] => {
+  if (!attachResponseData || !includeVariables) return [];
+
+  return survey.variables
+    .filter((variable) => {
+      const variableResponse = response.variables[variable.id];
+      return (
+        (typeof variableResponse === "string" || typeof variableResponse === "number") &&
+        variableResponse !== undefined
+      );
+    })
+    .map((variable) => ({
+      id: variable.id,
+      name: variable.name,
+      type: variable.type,
+      value: response.variables[variable.id],
+    }));
+};
 
 const buildHiddenFields = (
   survey: TSurvey,
   response: TResponse,
   attachResponseData: boolean,
   includeHiddenFields: boolean
-): ProcessedHiddenField[] =>
-  attachResponseData && includeHiddenFields
-    ? (survey.hiddenFields.fieldIds
-        ?.filter((hiddenFieldId) => {
-          const hiddenFieldResponse = response.data[hiddenFieldId];
-          return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
-        })
-        .map((hiddenFieldId) => ({
-          id: hiddenFieldId,
-          value: response.data[hiddenFieldId] as string,
-        })) ?? [])
-    : [];
+): ProcessedHiddenField[] => {
+  if (!attachResponseData || !includeHiddenFields) return [];
+
+  return (
+    survey.hiddenFields.fieldIds
+      ?.filter((hiddenFieldId) => {
+        const hiddenFieldResponse = response.data[hiddenFieldId];
+        return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
+      })
+      .map((hiddenFieldId) => ({
+        id: hiddenFieldId,
+        value: response.data[hiddenFieldId] as string,
+      })) ?? []
+  );
+};
 
 /**
  * Builds the branded HTML for a survey-response email (Follow-Ups template): recall-expanded +

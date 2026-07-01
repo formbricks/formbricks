@@ -34,7 +34,8 @@ const stripControlChars = (value: string): string => value.replace(CONTROL_CHARS
 /** Coerces a response's free-form `language` to a supported locale, falling back to undefined (→ default). */
 const toResponseLocale = (language: string | null): TUserLocale | undefined => {
   const parsed = ZUserLocale.safeParse(language);
-  return parsed.success ? parsed.data : undefined;
+  if (!parsed.success) return undefined;
+  return parsed.data;
 };
 
 /** Run states from which there is no further work — replays/redeliveries on these are no-ops. */
@@ -75,8 +76,10 @@ class WorkflowStepFailedError extends Error {
   }
 }
 
-const toError = (error: unknown, fallbackMessage: string): Error =>
-  error instanceof Error ? error : new Error(fallbackMessage);
+const toError = (error: unknown, fallbackMessage: string): Error => {
+  if (error instanceof Error) return error;
+  return new Error(fallbackMessage);
+};
 
 const getWorkflowRunLogContext = (
   data: TWorkflowRunJobData,

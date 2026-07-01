@@ -17,7 +17,8 @@ const workflowsService = createWorkflowsService({ prisma });
 /** Reads the bound survey id from a workflow row's (untrusted JSON) definition trigger, if any. */
 const readTriggerSurveyId = (definition: unknown): string | null => {
   const parsed = ZWorkflowDefinition.safeParse(definition);
-  return parsed.success ? parsed.data.trigger.config.surveyId : null;
+  if (!parsed.success) return null;
+  return parsed.data.trigger.config.surveyId;
 };
 
 /**
