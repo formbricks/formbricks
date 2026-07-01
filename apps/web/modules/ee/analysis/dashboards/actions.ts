@@ -147,6 +147,8 @@ export const updateWidgetLayoutsAction = authenticatedActionClient
 
         const updatedDashboard = await getDashboard(parsedInput.dashboardId, workspaceId);
 
+        revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
+
         ctx.auditLoggingCtx.organizationId = organizationId;
         ctx.auditLoggingCtx.workspaceId = workspaceId;
         ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
@@ -311,6 +313,9 @@ export const addChartToDashboardAction = authenticatedActionClient
           respectY: parsedInput.respectY,
         });
 
+        revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
+        revalidatePath(`/workspaces/${workspaceId}/dashboards`);
+
         ctx.auditLoggingCtx.organizationId = organizationId;
         ctx.auditLoggingCtx.workspaceId = workspaceId;
         ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
@@ -342,6 +347,9 @@ export const removeWidgetFromDashboardAction = authenticatedActionClient
         workspaceId,
         parsedInput.widgetId
       );
+
+      revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
+      revalidatePath(`/workspaces/${workspaceId}/dashboards`);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.workspaceId = workspaceId;

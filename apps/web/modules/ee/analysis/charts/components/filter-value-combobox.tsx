@@ -5,15 +5,15 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getDimensionValuesAction } from "@/modules/ee/analysis/charts/actions";
-import { Button } from "@/modules/ui/components/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/modules/ui/components/command";
+import { Input } from "@/modules/ui/components/input";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { cn } from "@/modules/ui/lib/utils";
 
@@ -48,6 +48,7 @@ export function FilterValueCombobox({
   const [error, setError] = useState<string | null>(null);
   // Only the latest in-flight lookup may apply its result.
   const seqRef = useRef(0);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -87,50 +88,84 @@ export function FilterValueCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
+        <button
           type="button"
-          variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between bg-white font-normal">
-          <span className={cn("truncate", !value && "text-slate-500")}>
+          onKeyDown={(event) => {
+            if (event.key === "Tab") {
+              setOpen(false);
+            }
+          }}
+          className={cn(
+            "flex h-9 w-[200px] items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:ring-2 data-[state=open]:ring-slate-400 data-[state=open]:ring-offset-1"
+          )}>
+          <span className={cn("truncate", !value && "text-slate-500")} title={value || undefined}>
             {value || t("workspace.analysis.charts.select_value")}
           </span>
-          <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
-        </Button>
+          <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
+        </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder={t("workspace.analysis.charts.search_value")}
-            value={search}
-            onValueChange={setSearch}
-          />
-          <CommandList>
-            {isLoading && (
-              <div className="py-6 text-center text-sm text-slate-500">{t("common.loading")}</div>
-            )}
-            {!isLoading && error && <div className="py-6 text-center text-sm text-red-500">{error}</div>}
-            {!isLoading && !error && (
-              <CommandEmpty>{t("workspace.analysis.charts.no_values_found")}</CommandEmpty>
-            )}
-            {!isLoading && !error && values.length > 0 && (
-              <CommandGroup>
-                {values.map((item) => (
-                  <CommandItem
-                    key={item}
-                    value={item}
-                    onSelect={() => {
-                      onChange(item);
-                      setOpen(false);
-                    }}>
-                    <CheckIcon className={cn("mr-2 size-4", value === item ? "opacity-100" : "opacity-0")} />
-                    <span className="truncate">{item}</span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
+      <PopoverContent
+        className="w-[200px] overflow-hidden border-slate-300 p-0"
+        align="start"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onWheel={(event) => {
+          const list = listRef.current;
+          if (!list?.contains(event.target as Node)) return;
+
+          const { scrollTop, scrollHeight, clientHeight } = list;
+          const canScrollUp = scrollTop > 0;
+          const canScrollDown = scrollTop + clientHeight < scrollHeight;
+
+          if ((event.deltaY > 0 && canScrollDown) || (event.deltaY < 0 && canScrollUp)) {
+            list.scrollTop += event.deltaY;
+            event.preventDefault();
+          }
+        }}>
+        <Command shouldFilter={false} className="overflow-hidden">
+          <div className="shrink-0 border-b border-slate-200 px-3 py-2">
+            <Input
+              type="search"
+              placeholder={t("workspace.analysis.charts.search_value")}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="h-8 border-none bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+          </div>
+          <div ref={listRef} className="max-h-[200px] min-h-0 overflow-y-auto overscroll-contain p-1">
+            <CommandList className="max-h-none overflow-visible border-0 bg-transparent p-0 shadow-none">
+              {isLoading && (
+                <div className="py-6">
+                  <LoadingSpinner className="h-5 w-5" />
+                </div>
+              )}
+              {!isLoading && error && <div className="py-6 text-center text-sm text-red-500">{error}</div>}
+              {!isLoading && !error && (
+                <CommandEmpty>{t("workspace.analysis.charts.no_values_found")}</CommandEmpty>
+              )}
+              {!isLoading && !error && values.length > 0 && (
+                <CommandGroup className="overflow-visible">
+                  {values.map((item) => (
+                    <CommandItem
+                      key={item}
+                      value={item}
+                      onSelect={() => {
+                        onChange(item);
+                        setOpen(false);
+                      }}>
+                      <CheckIcon
+                        className={cn("mr-2 size-4", value === item ? "opacity-100" : "opacity-0")}
+                      />
+                      <span className="truncate" title={item}>
+                        {item}
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </div>
         </Command>
       </PopoverContent>
     </Popover>
