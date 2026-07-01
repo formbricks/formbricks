@@ -17,7 +17,7 @@ export const ATTRIBUTION_PARAM_KEYS = [
   "utm_term",
   "utm_content",
   "initial_source",
-  "initial_pathname",
+  "entry_page",
 ] as const;
 
 export type TAttributionKey = (typeof ATTRIBUTION_PARAM_KEYS)[number];
