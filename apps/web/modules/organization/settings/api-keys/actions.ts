@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromApiKeyId } from "@/lib/utils/helper";
@@ -63,6 +64,12 @@ export const createApiKeyAction = authenticatedActionClient.inputSchema(ZCreateA
     const result = await createApiKey(parsedInput.organizationId, ctx.user.id, parsedInput.apiKeyData);
     ctx.auditLoggingCtx.newObject = parsedInput.apiKeyData;
     ctx.auditLoggingCtx.apiKeyId = result.id;
+    capturePostHogEvent(
+      ctx.user.id,
+      "api_key_created",
+      { api_key_id: result.id },
+      { organizationId: parsedInput.organizationId }
+    );
     return result;
   })
 );
