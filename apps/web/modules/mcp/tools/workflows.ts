@@ -72,11 +72,12 @@ export function buildListWorkflowRunsSearchParams(input: TMcpListWorkflowRunsInp
 
 /**
  * The framework-agnostic workflow list handlers read query params off a `Request` (via
- * `new URL(req.url).searchParams`). MCP has no incoming HTTP request, so build a synthetic one — the
- * handler only reads the search params, so the (absolute, required by `new URL`) host is irrelevant.
+ * `new URL(req.url).searchParams`). MCP has no incoming HTTP request, so build a synthetic one that
+ * is never dispatched — the handler only reads the search params, so the scheme/host are inert
+ * placeholders (an absolute base is required solely to satisfy `new URL`).
  */
 function buildWorkflowsListRequest(searchParams: URLSearchParams): Request {
-  const url = new URL(MCP_API_ROUTE, "http://mcp.internal");
+  const url = new URL(MCP_API_ROUTE, "https://mcp.internal");
   url.search = searchParams.toString();
   return new Request(url);
 }
