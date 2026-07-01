@@ -414,7 +414,8 @@ export function registerWorkflowTools(server: McpServer): void {
       inputSchema: ZMcpWorkflowIdInput.shape,
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        // Archiving soft-deletes and excludes the workflow from default reads.
+        destructiveHint: true,
         idempotentHint: false,
         openWorldHint: true,
       },

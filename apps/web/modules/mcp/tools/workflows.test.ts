@@ -160,6 +160,13 @@ describe("registerWorkflowTools", () => {
     expect(tools.get("disable_workflow")?.config).toMatchObject({
       annotations: { readOnlyHint: false, destructiveHint: false },
     });
+    // Archive soft-deletes (hidden from default reads) -> destructive; unarchive restores.
+    expect(tools.get("archive_workflow")?.config).toMatchObject({
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    });
+    expect(tools.get("unarchive_workflow")?.config).toMatchObject({
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    });
   });
 
   test("list_workflows delegates to the handler with a synthetic query request", async () => {
@@ -328,7 +335,82 @@ describe("registerWorkflowTools", () => {
     const result = await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
 
     expect(result.isError).toBe(true);
+    // Audit defaults to "failure" (buildAuditLogBaseObject); only success flips it, so a failed
+    // mutation is queued with failure status + the requestId as eventId.
     expect(auditLog).toMatchObject({ status: "failure", eventId: "req_tool" });
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
+  test("patch_workflow sends a body request with params and queues an updated audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.patch).mockResolvedValue(
+      successResponse({ id: WORKFLOW_ID, name: "Renamed" }, { requestId: "req_tool" })
+    );
+
+    await tools
+      .get("patch_workflow")!
+      .handler({ workflowId: WORKFLOW_ID, data: { name: "Renamed" } }, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    const callArg = vi.mocked(workflowsHandlers.patch).mock.calls[0][0];
+    expect(callArg.params).toEqual({ workflowId: WORKFLOW_ID });
+    expect(JSON.parse(await callArg.req.text())).toEqual({ name: "Renamed" });
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
+  test("duplicate_workflow sends the optional name body and queues a created audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.duplicate).mockResolvedValue(
+      createdResponse({ id: "wf2222222222222222222222ab" }, { requestId: "req_tool", location: "/wf" })
+    );
+
+    await tools.get("duplicate_workflow")!.handler({ workflowId: WORKFLOW_ID, name: "Copy" }, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", "/api/mcp");
+    const callArg = vi.mocked(workflowsHandlers.duplicate).mock.calls[0][0];
+    expect(callArg.params).toEqual({ workflowId: WORKFLOW_ID });
+    expect(JSON.parse(await callArg.req.text())).toEqual({ name: "Copy" });
+    expect(auditLog.status).toBe("success");
+  });
+
+  test("archive_workflow delegates by id and queues an updated audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.archive).mockResolvedValue(
+      successResponse({ id: WORKFLOW_ID, status: "archived" }, { requestId: "req_tool" })
+    );
+
+    await tools.get("archive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    expect(workflowsHandlers.archive).toHaveBeenCalledWith({
+      ctx: { __ctx: true },
+      params: { workflowId: WORKFLOW_ID },
+    });
+    expect(auditLog.status).toBe("success");
+  });
+
+  test("unarchive_workflow delegates by id and queues an updated audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.unarchive).mockResolvedValue(
+      successResponse({ id: WORKFLOW_ID, status: "draft" }, { requestId: "req_tool" })
+    );
+
+    await tools.get("unarchive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    expect(workflowsHandlers.unarchive).toHaveBeenCalledWith({
+      ctx: { __ctx: true },
+      params: { workflowId: WORKFLOW_ID },
+    });
+    expect(auditLog.status).toBe("success");
   });
 });
