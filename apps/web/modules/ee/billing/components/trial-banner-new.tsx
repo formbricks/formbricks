@@ -3,7 +3,6 @@
 import Link from "next/link";
 import posthog from "posthog-js";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/modules/ui/components/button";
 
 export const TRIAL_BASE_RESPONSE_LIMIT = 250;
 
@@ -32,7 +31,10 @@ export const TrialBannerNew = ({
   const planLabel = planName.charAt(0).toUpperCase() + planName.slice(1);
 
   return (
-    <div className="m-2 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-xs">
+    <Link
+      href={billingHref}
+      onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}
+      className="m-2 block rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-xs transition-colors hover:border-slate-300 hover:bg-slate-50">
       <div className="mb-1 flex items-center gap-2">
         <span className="font-semibold text-slate-800">
           {trialDaysRemaining > 0
@@ -50,20 +52,12 @@ export const TrialBannerNew = ({
         {effectiveLimit.toLocaleString(locale)} {t("common.responses")}
       </p>
 
-      <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
           className="h-full rounded-full bg-slate-600 transition-all"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
-
-      <Button
-        variant="secondary"
-        size="sm"
-        className="w-full"
-        onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}>
-        <Link href={billingHref}>{t("workspace.settings.billing.go_to_billing")}</Link>
-      </Button>
-    </div>
+    </Link>
   );
 };
