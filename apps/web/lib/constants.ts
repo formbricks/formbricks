@@ -43,6 +43,7 @@ export const SAML_XML_DIR = "./saml-connection";
 
 export const GITHUB_ID = env.GITHUB_ID;
 export const GITHUB_SECRET = env.GITHUB_SECRET;
+export const GITHUB_TOKEN = env.GITHUB_TOKEN;
 export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
