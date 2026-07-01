@@ -1,7 +1,6 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 import {
-  applyPendingUpgradeFromSetupCheckout,
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
@@ -25,10 +24,10 @@ const relevantEvents = new Set([
 ]);
 
 /**
- * When a setup-mode Checkout Session completes, the customer has just provided a
- * payment method + billing address.  We attach that payment method as the default
- * on the customer (for future invoices) and on the trial subscription so Stripe
- * can charge it when the trial ends.
+ * Setup-mode Checkout completed: save the provided card as the default on the customer
+ * and subscription. We deliberately do NOT apply the upgrade here — the prorated charge
+ * may need on-session 3D Secure, which a background webhook can't do; the billing page
+ * drives the upgrade (via changeBillingPlanAction) after redirect.
  */
 const handleSetupCheckoutCompleted = async (
   session: Stripe.Checkout.Session,
@@ -63,44 +62,28 @@ const handleSetupCheckoutCompleted = async (
       default_payment_method: paymentMethodId,
     });
   }
-
-  const organizationId = session.metadata?.organizationId;
-  if (organizationId && customerId) {
-    try {
-      await applyPendingUpgradeFromSetupCheckout({
-        organizationId,
-        customerId,
-        targetPlan: session.metadata?.targetPlan,
-        targetInterval: session.metadata?.targetInterval,
-      });
-    } catch (error) {
-      // The payment method is already attached above; the prorated upgrade invoice
-      // failed to collect (declined card, SCA required, etc.). updateSubscriptionItems
-      // uses `error_if_incomplete`, so the subscription is left unchanged (atomic).
-      // We deliberately don't rethrow: failing the webhook would make Stripe retry the
-      // whole event, re-attaching the payment method and re-attempting a charge that
-      // won't succeed. The snapshot sync below still runs and keeps its retry behavior.
-      logger.error(
-        { error, organizationId, customerId, targetPlan: session.metadata?.targetPlan },
-        "Failed to apply pending plan upgrade after setup checkout"
-      );
-    }
-  }
 };
 
-const handlePaymentIntentRequiresAction = async (paymentIntent: Stripe.PaymentIntent): Promise<void> => {
+const handlePaymentIntentRequiresAction = async (
+  paymentIntent: Stripe.PaymentIntent,
+  event: { id: string; created: number }
+): Promise<void> => {
   const customerId = typeof paymentIntent.customer === "string" ? paymentIntent.customer : null;
   if (!customerId) return;
 
   const organizationId = await findOrganizationIdByStripeCustomerId(customerId);
   if (!organizationId) return;
 
-  await setOrganizationPaymentAttemptError(organizationId, {
-    type: "requires_action",
-    paymentIntentId: paymentIntent.id,
-    message: "Payment requires additional authentication. Please complete verification or contact support.",
-    createdAt: new Date().toISOString(),
-  });
+  await setOrganizationPaymentAttemptError(
+    organizationId,
+    {
+      type: "requires_action",
+      paymentIntentId: paymentIntent.id,
+      message: "Payment requires additional authentication. Please complete verification or contact support.",
+      createdAt: new Date().toISOString(),
+    },
+    event
+  );
 
   logger.info(
     { paymentIntentId: paymentIntent.id, organizationId },
@@ -108,7 +91,10 @@ const handlePaymentIntentRequiresAction = async (paymentIntent: Stripe.PaymentIn
   );
 };
 
-const handlePaymentIntentCanceled = async (paymentIntent: Stripe.PaymentIntent): Promise<void> => {
+const handlePaymentIntentCanceled = async (
+  paymentIntent: Stripe.PaymentIntent,
+  event: { id: string; created: number }
+): Promise<void> => {
   const customerId = typeof paymentIntent.customer === "string" ? paymentIntent.customer : null;
   if (!customerId) return;
 
@@ -119,12 +105,16 @@ const handlePaymentIntentCanceled = async (paymentIntent: Stripe.PaymentIntent):
   const organizationId = await findOrganizationIdByStripeCustomerId(customerId);
   if (!organizationId) return;
 
-  await setOrganizationPaymentAttemptError(organizationId, {
-    type: "failed_invoice",
-    paymentIntentId: paymentIntent.id,
-    message: "Payment was canceled. Please contact support to complete your upgrade.",
-    createdAt: new Date().toISOString(),
-  });
+  await setOrganizationPaymentAttemptError(
+    organizationId,
+    {
+      type: "failed_invoice",
+      paymentIntentId: paymentIntent.id,
+      message: "Payment was canceled. Please contact support to complete your upgrade.",
+      createdAt: new Date().toISOString(),
+    },
+    event
+  );
 
   logger.info(
     {
@@ -215,12 +205,18 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
 
   try {
     if (event.type === "payment_intent.requires_action") {
-      await handlePaymentIntentRequiresAction(event.data.object as Stripe.PaymentIntent);
+      await handlePaymentIntentRequiresAction(event.data.object as Stripe.PaymentIntent, {
+        id: event.id,
+        created: event.created,
+      });
       return { status: 200, message: { received: true } };
     }
 
     if (event.type === "payment_intent.canceled") {
-      await handlePaymentIntentCanceled(event.data.object as Stripe.PaymentIntent);
+      await handlePaymentIntentCanceled(event.data.object as Stripe.PaymentIntent, {
+        id: event.id,
+        created: event.created,
+      });
       return { status: 200, message: { received: true } };
     }
 

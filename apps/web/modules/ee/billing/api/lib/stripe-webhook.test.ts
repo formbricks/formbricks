@@ -79,41 +79,27 @@ describe("webhookHandler setup checkout upgrade", () => {
     mocks.syncOrganizationBillingFromStripe.mockResolvedValue(undefined);
   });
 
-  test("returns 200 and does not retry when the upgrade charge fails", async () => {
-    mocks.applyPendingUpgradeFromSetupCheckout.mockRejectedValue(new Error("card_declined"));
-
+  test("attaches the saved card as default but does not apply the upgrade", async () => {
     const result = await webhookHandler("body", "sig");
 
-    // Webhook must NOT 500 — a retry would re-attach the payment method and
-    // re-attempt a charge that cannot succeed.
     expect(result.status).toBe(200);
-    expect(mocks.loggerError).toHaveBeenCalledWith(
-      expect.objectContaining({ organizationId: "org_1", customerId: "cus_1", targetPlan: "pro" }),
-      "Failed to apply pending plan upgrade after setup checkout"
-    );
-    // Payment method attach + snapshot sync still run.
-    expect(mocks.customersUpdate).toHaveBeenCalled();
+    // Card saved as default on both the customer (future invoices) and the subscription.
+    expect(mocks.customersUpdate).toHaveBeenCalledWith("cus_1", {
+      invoice_settings: { default_payment_method: "pm_1" },
+    });
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_1", {
+      default_payment_method: "pm_1",
+    });
+    // The prorated upgrade charge is intentionally NOT attempted from the webhook — it
+    // may require on-session 3D Secure, so the billing page drives it after redirect.
+    expect(mocks.applyPendingUpgradeFromSetupCheckout).not.toHaveBeenCalled();
+    // Snapshot sync still runs and no error is logged.
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalled();
-  });
-
-  test("returns 200 on a successful upgrade", async () => {
-    mocks.applyPendingUpgradeFromSetupCheckout.mockResolvedValue(true);
-
-    const result = await webhookHandler("body", "sig");
-
-    expect(result.status).toBe(200);
-    expect(mocks.applyPendingUpgradeFromSetupCheckout).toHaveBeenCalledWith({
-      organizationId: "org_1",
-      customerId: "cus_1",
-      targetPlan: "pro",
-      targetInterval: "monthly",
-    });
     expect(mocks.loggerError).not.toHaveBeenCalled();
   });
 
   test("still 500s when the snapshot sync fails (retryable)", async () => {
-    mocks.applyPendingUpgradeFromSetupCheckout.mockResolvedValue(true);
     mocks.syncOrganizationBillingFromStripe.mockRejectedValue(new Error("transient"));
 
     const result = await webhookHandler("body", "sig");
@@ -151,7 +137,8 @@ describe("webhookHandler payment intent failures", () => {
     expect(result.status).toBe(200);
     expect(mocks.setOrganizationPaymentAttemptError).toHaveBeenCalledWith(
       "org_1",
-      expect.objectContaining({ type: "requires_action", paymentIntentId: "pi_1" })
+      expect.objectContaining({ type: "requires_action", paymentIntentId: "pi_1" }),
+      expect.objectContaining({ id: "evt_pi", created: 1739923200 })
     );
     // payment-intent events short-circuit before the full snapshot sync.
     expect(mocks.syncOrganizationBillingFromStripe).not.toHaveBeenCalled();
@@ -170,7 +157,8 @@ describe("webhookHandler payment intent failures", () => {
     expect(result.status).toBe(200);
     expect(mocks.setOrganizationPaymentAttemptError).toHaveBeenCalledWith(
       "org_1",
-      expect.objectContaining({ type: "failed_invoice", paymentIntentId: "pi_1" })
+      expect.objectContaining({ type: "failed_invoice", paymentIntentId: "pi_1" }),
+      expect.objectContaining({ id: "evt_pi", created: 1739923200 })
     );
   });
 
