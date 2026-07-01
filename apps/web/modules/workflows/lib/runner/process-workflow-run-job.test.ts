@@ -214,11 +214,12 @@ describe("processWorkflowRunJob", () => {
     const sendArgs = mockSendEmail.mock.calls[0][0];
     expect(sendArgs).toMatchObject({
       to: "jane@example.com",
-      from: "noreply@example.com",
       replyTo: "support@example.com",
       subject: "Thanks for your response",
       html: "<html>branded</html>",
     });
+    // No `from` — the deployment MAIL_FROM default applies (Follow-Ups parity).
+    expect(sendArgs.from).toBeUndefined();
     expect(sendArgs.text).toBeUndefined();
     expect(sendArgs.messageId).toMatch(/^<.+@example\.com>$/);
 

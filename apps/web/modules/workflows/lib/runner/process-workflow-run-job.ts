@@ -186,9 +186,10 @@ const sendResolvedEmail = async (
       locale: toResponseLocale(emailContext.response.language),
     });
 
+    // No `from` — the deployment MAIL_FROM default applies, exactly like survey Follow-Ups. `config.from`
+    // is only used to derive the stable Message-ID domain, never as the actual sender.
     const sent = await sendEmail({
       to: recipient.email,
-      from: config.from,
       replyTo: config.replyTo.length > 0 ? config.replyTo.join(", ") : undefined,
       subject,
       html,
