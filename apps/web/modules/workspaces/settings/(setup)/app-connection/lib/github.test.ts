@@ -59,6 +59,17 @@ describe("getLatestStableFbRelease", () => {
     );
   });
 
+  test("omits the Authorization header when GITHUB_TOKEN is not set", async () => {
+    vi.doMock("@/lib/constants", () => ({ GITHUB_TOKEN: undefined }));
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonResponse({ tag_name: "v3.0.0" }));
+
+    const { getLatestStableFbRelease } = await import("./github");
+    await getLatestStableFbRelease();
+
+    const callArgs = vi.mocked(global.fetch).mock.calls[0][1];
+    expect(callArgs?.headers).not.toHaveProperty("Authorization");
+  });
+
   test("returns null and warns when GitHub returns a non-ok status", async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(htmlResponse(403));
 
@@ -110,5 +121,32 @@ describe("getLatestStableFbRelease", () => {
     expect(first).toBe("v3.0.0");
     expect(second).toBe("v3.0.0");
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("re-fetches after a failure once the shorter failure TTL elapses", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce(htmlResponse(403))
+      .mockResolvedValueOnce(jsonResponse({ tag_name: "v3.0.0" }));
+
+    const { getLatestStableFbRelease } = await import("./github");
+
+    // First call fails and caches null.
+    expect(await getLatestStableFbRelease()).toBeNull();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    // Within the failure TTL (5 min) the cached null is reused.
+    vi.setSystemTime(new Date("2026-01-01T00:04:00Z"));
+    expect(await getLatestStableFbRelease()).toBeNull();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    // After the failure TTL elapses, GitHub is queried again and recovers.
+    vi.setSystemTime(new Date("2026-01-01T00:06:00Z"));
+    expect(await getLatestStableFbRelease()).toBe("v3.0.0");
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    vi.useRealTimers();
   });
 });

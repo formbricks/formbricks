@@ -2,8 +2,11 @@ import { logger } from "@formbricks/logger";
 import { GITHUB_TOKEN } from "@/lib/constants";
 
 const LATEST_RELEASE_URL = "https://api.github.com/repos/formbricks/formbricks/releases/latest";
-// Cache the result for one hour so we don't hit GitHub on every navigation load.
-const CACHE_TTL_MS = 60 * 60 * 1000;
+// Cache successful lookups for one hour so we don't hit GitHub on every navigation load.
+const SUCCESS_TTL_MS = 60 * 60 * 1000;
+// Cache failures (rate limit, timeout, outage) for a much shorter window so the
+// version badge reappears soon after GitHub recovers instead of staying hidden for an hour.
+const FAILURE_TTL_MS = 5 * 60 * 1000;
 
 interface CachedRelease {
   tagName: string | null;
@@ -23,8 +26,11 @@ let cachedRelease: CachedRelease | null = null;
  * (~60/hr) to the authenticated one (~5000/hr).
  */
 export const getLatestStableFbRelease = async (): Promise<string | null> => {
-  if (cachedRelease && Date.now() - cachedRelease.fetchedAt < CACHE_TTL_MS) {
-    return cachedRelease.tagName;
+  if (cachedRelease) {
+    const ttl = cachedRelease.tagName ? SUCCESS_TTL_MS : FAILURE_TTL_MS;
+    if (Date.now() - cachedRelease.fetchedAt < ttl) {
+      return cachedRelease.tagName;
+    }
   }
 
   try {
