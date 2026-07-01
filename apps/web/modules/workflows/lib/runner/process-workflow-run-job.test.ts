@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import type { TWorkflowRunJobData } from "@formbricks/jobs";
 import { processWorkflowRunJob } from "./process-workflow-run-job";
 
@@ -11,7 +12,9 @@ const {
   mockWorkflowRunFindFirst,
   mockWorkflowRunUpdateMany,
   mockWorkflowRunLogCreate,
-  mockWorkflowRunLogFindMany,
+  mockWorkflowRunLogUpdate,
+  mockWorkflowRunLogUpdateMany,
+  mockWorkflowRunLogFindFirst,
   mockGetResponse,
   mockGetSurvey,
   mockGetOrganizationByWorkspaceId,
@@ -24,7 +27,9 @@ const {
   mockWorkflowRunFindFirst: vi.fn(),
   mockWorkflowRunUpdateMany: vi.fn(),
   mockWorkflowRunLogCreate: vi.fn(),
-  mockWorkflowRunLogFindMany: vi.fn(),
+  mockWorkflowRunLogUpdate: vi.fn(),
+  mockWorkflowRunLogUpdateMany: vi.fn(),
+  mockWorkflowRunLogFindFirst: vi.fn(),
   mockGetResponse: vi.fn(),
   mockGetSurvey: vi.fn(),
   mockGetOrganizationByWorkspaceId: vi.fn(),
@@ -38,9 +43,28 @@ vi.mock("@formbricks/database", () => ({
     },
     workflowRunLog: {
       create: mockWorkflowRunLogCreate,
-      findMany: mockWorkflowRunLogFindMany,
+      update: mockWorkflowRunLogUpdate,
+      updateMany: mockWorkflowRunLogUpdateMany,
+      findFirst: mockWorkflowRunLogFindFirst,
     },
   },
+}));
+
+// Prisma's known-request-error shape the claim path checks for a P2002 unique-constraint conflict.
+vi.mock("@formbricks/database/prisma", () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string;
+      constructor(message: string, { code }: { code: string }) {
+        super(message);
+        this.code = code;
+      }
+    },
+  },
+}));
+
+vi.mock("@formbricks/database/types/error", () => ({
+  PrismaErrorType: { UniqueConstraintViolation: "P2002" },
 }));
 
 vi.mock("@/modules/email", () => ({
@@ -159,13 +183,38 @@ const baseContext = {
 
 const finalAttemptContext = { ...baseContext, attempt: baseContext.maxAttempts };
 
+// A single-attempt context — the real prod queue config (attempts: 1), where attempt 1 IS the final one.
+const singleAttemptContext = { ...baseContext, attempt: 1, maxAttempts: 1 };
+
+const makeP2002 = (): Error =>
+  new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+    code: "P2002",
+    clientVersion: "test",
+  });
+
+// A persisted WorkflowRunLog row for `(runId, "send-email")` in a given state, as findFirst returns it.
+const existingStepLog = (status: string, overrides: Record<string, unknown> = {}) => ({
+  stepId: "send-email",
+  stepType: "send_email",
+  status,
+  input: { to: "email", subject: "Thanks for your response" },
+  output: status === "succeeded" ? { provider: "smtp", messageId: "<deadbeef@example.com>" } : {},
+  error: null,
+  startedAt: new Date("2026-06-09T12:01:00.000Z"),
+  finishedAt: status === "succeeded" ? new Date("2026-06-09T12:01:01.000Z") : null,
+  ...overrides,
+});
+
 describe("processWorkflowRunJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockWorkflowRunFindFirst.mockResolvedValue(baseRun);
     mockWorkflowRunUpdateMany.mockResolvedValue({ count: 1 });
+    // No prior step log by default → the step gets claimed via create({status:"running"}) then sent.
+    mockWorkflowRunLogFindFirst.mockResolvedValue(null);
     mockWorkflowRunLogCreate.mockResolvedValue(undefined);
-    mockWorkflowRunLogFindMany.mockResolvedValue([]);
+    mockWorkflowRunLogUpdate.mockResolvedValue(undefined);
+    mockWorkflowRunLogUpdateMany.mockResolvedValue({ count: 1 });
     mockSendEmail.mockResolvedValue(true);
     mockBuildHtml.mockResolvedValue("<html>branded</html>");
     mockGetResponse.mockResolvedValue(mockResponse);
@@ -223,6 +272,25 @@ describe("processWorkflowRunJob", () => {
     expect(sendArgs.text).toBeUndefined();
     expect(sendArgs.messageId).toMatch(/^<.+@example\.com>$/);
 
+    // Claim-before-send: the step row is created `running` first, then updated to `succeeded` on the
+    // same row (never a second create).
+    expect(mockWorkflowRunLogCreate).toHaveBeenCalledTimes(1);
+    expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ runId: baseRun.id, stepId: "send-email", status: "running" }),
+      })
+    );
+    expect(mockWorkflowRunLogUpdate).toHaveBeenCalledTimes(1);
+    expect(mockWorkflowRunLogUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { runId_stepId: { runId: baseRun.id, stepId: "send-email" } },
+        data: expect.objectContaining({
+          status: "succeeded",
+          output: { provider: "smtp", messageId: sendArgs.messageId },
+        }),
+      })
+    );
+
     const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(completion.data.status).toBe("completed");
     expect(completion.data.data.steps[0]).toMatchObject({
@@ -273,9 +341,10 @@ describe("processWorkflowRunJob", () => {
     expect(failure.data.data.steps[0]).toMatchObject({ status: "failed" });
   });
 
-  test("writes a WorkflowRunLog row per executed step", async () => {
+  test("claims a WorkflowRunLog row per executed step (running → succeeded, no duplicate create)", async () => {
     await processWorkflowRunJob(data, baseContext);
 
+    // Exactly one row claimed (create running) and one terminal update — never two creates for a step.
     expect(mockWorkflowRunLogCreate).toHaveBeenCalledTimes(1);
     expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -284,10 +353,12 @@ describe("processWorkflowRunJob", () => {
           sequence: 1,
           stepId: "send-email",
           stepType: "send_email",
-          status: "succeeded",
+          status: "running",
         }),
       })
     );
+    expect(mockWorkflowRunLogUpdate).toHaveBeenCalledTimes(1);
+    expect(mockWorkflowRunLogUpdate.mock.calls[0][0].data.status).toBe("succeeded");
   });
 
   test("no-ops on a run that is already terminal (replay safe)", async () => {
@@ -388,24 +459,18 @@ describe("processWorkflowRunJob", () => {
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
   });
 
-  test("does NOT re-send a step that already has a succeeded log (retry resumes)", async () => {
+  test("resume: does NOT re-send a step that already has a succeeded log", async () => {
+    // Retry of a run mid-flight: run already `running`, its only step already `succeeded`.
     mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });
     mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
-    mockWorkflowRunLogFindMany.mockResolvedValue([
-      {
-        stepId: "send-email",
-        stepType: "send_email",
-        input: { to: "email", subject: "Thanks for your response" },
-        output: { provider: "smtp", messageId: "<deadbeef@example.com>" },
-        startedAt: new Date("2026-06-09T12:01:00.000Z"),
-        finishedAt: new Date("2026-06-09T12:01:01.000Z"),
-      },
-    ]);
+    mockWorkflowRunLogFindFirst.mockResolvedValue(existingStepLog("succeeded"));
 
     await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
 
     expect(mockSendEmail).not.toHaveBeenCalled();
+    // No claim create and no re-update for an already-succeeded step.
     expect(mockWorkflowRunLogCreate).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogUpdate).not.toHaveBeenCalled();
     const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(completion.data.status).toBe("completed");
     expect(completion.data.data.steps[0]).toMatchObject({
@@ -413,6 +478,92 @@ describe("processWorkflowRunJob", () => {
       status: "succeeded",
       output: { provider: "smtp", messageId: "<deadbeef@example.com>" },
     });
+  });
+
+  test("retry of a failed send: claims the failed row and re-sends (it never went out)", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(existingStepLog("failed", { error: "prev SMTP error" }));
+    mockWorkflowRunLogUpdateMany.mockResolvedValue({ count: 1 });
+
+    await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+    // Claimed the failed row via updateMany (failed→running), then re-sent, then updated to succeeded.
+    expect(mockWorkflowRunLogUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { runId: baseRun.id, stepId: "send-email", status: { in: ["failed", "pending"] } },
+        data: expect.objectContaining({ status: "running" }),
+      })
+    );
+    expect(mockWorkflowRunLogCreate).not.toHaveBeenCalled();
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(completion.data.status).toBe("completed");
+    expect(completion.data.data.steps[0]).toMatchObject({ status: "succeeded" });
+  });
+
+  test("crash-mid-send / concurrent: a running row → bail (no send, run left running, NOT finalized)", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(existingStepLog("running"));
+
+    await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+    // At-most-once: never re-send a step already claimed (running). And bail: never finalize a run the
+    // owner still holds — no completed/failed write, so it's left `running` for the owner to finish.
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogCreate).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogUpdate).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogUpdateMany).not.toHaveBeenCalled();
+    const runStatuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
+    expect(runStatuses).not.toContain("completed");
+    expect(runStatuses).not.toContain("failed");
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ stepId: "send-email" }),
+      "Workflow step already in-flight (running); another delivery owns this run — bailing"
+    );
+    expect(mockLoggerInfo).toHaveBeenCalledWith(
+      expect.any(Object),
+      "Workflow run owned by another delivery; leaving it running without finalizing"
+    );
+  });
+
+  test("concurrent claim lost (create P2002): bail, no send, run not finalized", async () => {
+    // No row on first read → attempt create → a concurrent worker created it first (P2002) → bail.
+    mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(null);
+    mockWorkflowRunLogCreate.mockRejectedValueOnce(makeP2002());
+
+    await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    const runStatuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
+    expect(runStatuses).not.toContain("completed");
+    expect(runStatuses).not.toContain("failed");
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ stepId: "send-email" }),
+      "Workflow step claim lost to a concurrent delivery — bailing"
+    );
+  });
+
+  test("concurrent claim lost (failed row, updateMany count 0): bail, no send, run not finalized", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(existingStepLog("failed"));
+    mockWorkflowRunLogUpdateMany.mockResolvedValue({ count: 0 });
+
+    await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogCreate).not.toHaveBeenCalled();
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ stepId: "send-email" }),
+      "Workflow step claim lost to a concurrent delivery — bailing"
+    );
+    const runStatuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
+    expect(runStatuses).not.toContain("completed");
+    expect(runStatuses).not.toContain("failed");
   });
 
   test("keeps the run non-terminal and rethrows on a non-final attempt when SMTP is not configured", async () => {
@@ -513,5 +664,27 @@ describe("processWorkflowRunJob", () => {
     );
     const statuses = mockWorkflowRunUpdateMany.mock.calls.map((call) => call[0].data.status);
     expect(statuses).not.toContain("failed");
+  });
+
+  test("maxAttempts:1 — pool exhaustion on the only attempt records failed (never stuck running)", async () => {
+    // The real prod config: attempts:1, so the first attempt is also the final one. A pool-exhaustion
+    // here must be recorded terminal `failed`, not rethrown into the void leaving the run `running`.
+    mockWorkflowRunUpdateMany.mockImplementation(({ data: updateData }: { data: { status?: string } }) => {
+      if (updateData.status === "running") {
+        return Promise.reject(new Error("Timed out fetching a new connection from the connection pool"));
+      }
+      return Promise.resolve({ count: 1 });
+    });
+
+    // Swallowed on the final attempt (no rethrow into BullMQ with nothing left to retry).
+    await expect(processWorkflowRunJob(data, singleAttemptContext)).resolves.toBeUndefined();
+
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.finishedAt).toBeInstanceOf(Date);
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "Workflow run job failed after final attempt"
+    );
   });
 });

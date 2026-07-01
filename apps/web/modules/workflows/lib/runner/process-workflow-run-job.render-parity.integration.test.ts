@@ -43,7 +43,9 @@ const {
   mockWorkflowRunFindFirst,
   mockWorkflowRunUpdateMany,
   mockWorkflowRunLogCreate,
-  mockWorkflowRunLogFindMany,
+  mockWorkflowRunLogUpdate,
+  mockWorkflowRunLogUpdateMany,
+  mockWorkflowRunLogFindFirst,
   mockGetResponse,
   mockGetSurvey,
   mockGetOrganizationByWorkspaceId,
@@ -58,7 +60,9 @@ const {
     mockWorkflowRunFindFirst: vi.fn(),
     mockWorkflowRunUpdateMany: vi.fn(),
     mockWorkflowRunLogCreate: vi.fn(),
-    mockWorkflowRunLogFindMany: vi.fn(),
+    mockWorkflowRunLogUpdate: vi.fn(),
+    mockWorkflowRunLogUpdateMany: vi.fn(),
+    mockWorkflowRunLogFindFirst: vi.fn(),
     mockGetResponse: vi.fn(),
     mockGetSurvey: vi.fn(),
     mockGetOrganizationByWorkspaceId: vi.fn(),
@@ -80,7 +84,9 @@ vi.mock("@formbricks/database", () => ({
     },
     workflowRunLog: {
       create: mockWorkflowRunLogCreate,
-      findMany: mockWorkflowRunLogFindMany,
+      update: mockWorkflowRunLogUpdate,
+      updateMany: mockWorkflowRunLogUpdateMany,
+      findFirst: mockWorkflowRunLogFindFirst,
     },
   },
 }));
@@ -255,7 +261,9 @@ describe("processWorkflowRunJob — send_email Follow-Ups render parity (integra
     mockWorkflowRunFindFirst.mockResolvedValue(makeRun());
     mockWorkflowRunUpdateMany.mockResolvedValue({ count: 1 });
     mockWorkflowRunLogCreate.mockResolvedValue(undefined);
-    mockWorkflowRunLogFindMany.mockResolvedValue([]);
+    mockWorkflowRunLogUpdate.mockResolvedValue(undefined);
+    mockWorkflowRunLogUpdateMany.mockResolvedValue({ count: 1 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(null);
     mockGetResponse.mockResolvedValue(response);
     mockGetSurvey.mockResolvedValue(survey);
     mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: { logoUrl: "" } });
@@ -342,17 +350,20 @@ describe("processWorkflowRunJob — send_email Follow-Ups render parity (integra
         status: "succeeded",
       });
 
-      // WorkflowRunLog send_email row = succeeded.
+      // Claim-before-send: the step row is created `running` first, then updated to `succeeded` on the
+      // same row (never a second create — the (runId, stepId) unique constraint forbids it).
       expect(mockWorkflowRunLogCreate).toHaveBeenCalledTimes(1);
       expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             stepId: "send-email",
             stepType: "send_email",
-            status: "succeeded",
+            status: "running",
           }),
         })
       );
+      expect(mockWorkflowRunLogUpdate).toHaveBeenCalledTimes(1);
+      expect(mockWorkflowRunLogUpdate.mock.calls[0][0].data.status).toBe("succeeded");
     });
   });
 

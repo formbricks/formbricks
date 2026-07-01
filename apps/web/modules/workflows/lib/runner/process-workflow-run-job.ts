@@ -1,6 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { type JobHandler, type TWorkflowRunJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import type { TResponse } from "@formbricks/types/responses";
@@ -39,7 +41,8 @@ const toResponseLocale = (language: string | null): TUserLocale | undefined => {
 };
 
 /** Run states from which there is no further work — replays/redeliveries on these are no-ops. */
-const TERMINAL_STATUSES = new Set(["completed", "failed", "canceled"]);
+const TERMINAL_STATUS_LIST = ["completed", "failed", "canceled"] as const;
+const TERMINAL_STATUSES = new Set<string>(TERMINAL_STATUS_LIST);
 
 /** Run states a delivery may claim by transitioning to `running`. */
 const CLAIMABLE_STATUSES = ["queued"] as const;
@@ -127,21 +130,6 @@ const resolveExecutableDefinition = (run: {
   return parsed.data;
 };
 
-interface ExecutedStep {
-  result: TWorkflowStepResult;
-  log: {
-    sequence: number;
-    stepId: string;
-    stepType: string;
-    status: TWorkflowStepResult["status"];
-    input: Record<string, unknown>;
-    output: Record<string, unknown>;
-    error: string | null;
-    startedAt: Date | null;
-    finishedAt: Date | null;
-  };
-}
-
 interface StepOutcome {
   status: TWorkflowStepResult["status"];
   error: string | null;
@@ -212,102 +200,188 @@ const sendResolvedEmail = async (
   }
 };
 
-/**
- * Executes one `send_email` step and returns a per-step result + log row. Delegates the resolve/render/
- * send to `sendResolvedEmail`; the caller fails the whole run on a failed step so the error propagates
- * to the run lifecycle.
- */
-const executeSendEmailStep = async ({
-  step,
-  sequence,
-  emailContext,
-  workflowRunId,
-}: {
-  step: TWorkflowExecutableStep;
-  sequence: number;
-  emailContext: RunEmailContext;
-  workflowRunId: string;
-}): Promise<ExecutedStep> => {
-  const startedAt = new Date();
-  const input = { to: step.node.config.to, subject: step.node.config.subject };
+/** A persisted `WorkflowRunLog` row, as much of it as the claim/resume logic needs. */
+interface StepLogRow {
+  stepId: string;
+  stepType: string;
+  status: TWorkflowStepResult["status"];
+  input: unknown;
+  output: unknown;
+  error: string | null;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+}
 
+const stepLogSelect = {
+  stepId: true,
+  stepType: true,
+  status: true,
+  input: true,
+  output: true,
+  error: true,
+  startedAt: true,
+  finishedAt: true,
+} as const;
+
+/** Reconstructs a step result from its persisted log row (used to resume a `succeeded` step, or record a `skipped` one). */
+const resultFromLogRow = (log: StepLogRow, status: TWorkflowStepResult["status"]): TWorkflowStepResult => ({
+  stepId: log.stepId,
+  stepType: log.stepType,
+  status,
+  input: (log.input as Record<string, unknown>) ?? {},
+  output: (log.output as Record<string, unknown>) ?? {},
+  ...(log.error ? { error: log.error } : {}),
+  startedAt: log.startedAt?.toISOString() ?? new Date().toISOString(),
+  finishedAt: log.finishedAt?.toISOString() ?? new Date().toISOString(),
+});
+
+const isUniqueConstraintError = (error: unknown): boolean =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === PrismaErrorType.UniqueConstraintViolation;
+
+/**
+ * Sends an owned step (we hold its `running` log row) and records the terminal outcome onto that same
+ * row via `update` (never a second `create` — the `(runId, stepId)` unique constraint forbids it).
+ *
+ * At-most-once tradeoff: we claim (`running`) BEFORE calling `sendEmail`, so if the process crashes
+ * between a successful SMTP handoff and the `succeeded` update, the retry sees `running` and will NOT
+ * re-send — that email is potentially lost rather than duplicated. This is the accepted policy: never
+ * send the same step twice.
+ */
+const sendOwnedStep = async (
+  step: TWorkflowExecutableStep,
+  runId: string,
+  emailContext: RunEmailContext
+): Promise<TWorkflowStepResult> => {
+  const input = { to: step.node.config.to, subject: step.node.config.subject };
   const { status, error, output } = await sendResolvedEmail(
     step.node.config,
     emailContext,
-    workflowRunId,
+    runId,
     step.stepId
   );
-
   const finishedAt = new Date();
 
-  const result: TWorkflowStepResult = {
+  await prisma.workflowRunLog.update({
+    where: { runId_stepId: { runId, stepId: step.stepId } },
+    data: { status, output, error, finishedAt },
+  });
+
+  return {
     stepId: step.stepId,
     stepType: step.stepType,
     status,
     input,
     output,
     ...(error ? { error } : {}),
-    startedAt: startedAt.toISOString(),
+    startedAt: finishedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
-  };
-
-  return {
-    result,
-    log: {
-      sequence,
-      stepId: step.stepId,
-      stepType: step.stepType,
-      status,
-      input,
-      output,
-      error,
-      startedAt,
-      finishedAt,
-    },
   };
 };
 
-/** The subset of a persisted `succeeded` `WorkflowRunLog` needed to resume a step without re-sending. */
-interface SucceededStepLog {
-  stepId: string;
-  stepType: string;
-  input: unknown;
-  output: unknown;
-  startedAt: Date | null;
-  finishedAt: Date | null;
-}
+/**
+ * Claims a not-yet-succeeded step and sends it. Two claim paths:
+ *  - no row: `create` a `running` row. A P2002 means a concurrent worker created it first — re-read and
+ *    defer to the resume/skip logic in `runStep`.
+ *  - existing `failed`/`pending` row: flip it to `running` via a conditional `updateMany`; `count===0`
+ *    means another worker already claimed it, so skip (at-most-once).
+ * Returns `null` when the claim was lost (caller re-reads / skips).
+ */
+const claimAndSendStep = async (
+  step: TWorkflowExecutableStep,
+  sequence: number,
+  runId: string,
+  existing: StepLogRow | null,
+  emailContext: RunEmailContext
+): Promise<TWorkflowStepResult | null> => {
+  const startedAt = new Date();
 
-/** Reconstructs a succeeded step result from a previously persisted succeeded log row, so a retry resumes. */
-const resultFromSucceededLog = (log: SucceededStepLog): TWorkflowStepResult => ({
-  stepId: log.stepId,
-  stepType: log.stepType,
-  status: "succeeded",
-  input: (log.input as Record<string, unknown>) ?? {},
-  output: (log.output as Record<string, unknown>) ?? {},
-  startedAt: log.startedAt?.toISOString() ?? new Date().toISOString(),
-  finishedAt: log.finishedAt?.toISOString() ?? new Date().toISOString(),
-});
+  if (!existing) {
+    try {
+      await prisma.workflowRunLog.create({
+        data: {
+          runId,
+          sequence,
+          stepId: step.stepId,
+          stepType: step.stepType,
+          status: "running",
+          input: { to: step.node.config.to, subject: step.node.config.subject },
+          startedAt,
+        },
+      });
+    } catch (error) {
+      if (isUniqueConstraintError(error)) {
+        return null; // Concurrent create won; caller re-reads and resumes/skips.
+      }
+      throw error;
+    }
+    return sendOwnedStep(step, runId, emailContext);
+  }
+
+  // A prior attempt left a `failed`/`pending` row — take it over only if it is still in that state.
+  const claim = await prisma.workflowRunLog.updateMany({
+    where: { runId, stepId: step.stepId, status: { in: ["failed", "pending"] } },
+    data: { status: "running", startedAt, output: {}, error: null, finishedAt: null },
+  });
+  if (claim.count === 0) {
+    return null; // Another worker claimed it first; skip per at-most-once.
+  }
+  return sendOwnedStep(step, runId, emailContext);
+};
 
 /**
- * Persists a step's log row. The caller skips already-`succeeded` steps before reaching here, so a
- * retry never accumulates duplicate rows for an already-completed step. The run is already proven to
- * belong to the workspace, so `runId` is the tenant-scoped key here.
+ * Sentinel: another live delivery (or a stalled prior attempt) owns this run. The current execution
+ * must stop and leave the run `running` rather than finalize it — otherwise a second worker could
+ * `complete` the run while the owner's in-flight send is still resolving (possibly to `failed`),
+ * masking the failure. The owner finishes the run; a future orphan-reconciler recovers a truly stuck one.
  */
-const persistStepLog = async (runId: string, log: ExecutedStep["log"]): Promise<void> => {
-  await prisma.workflowRunLog.create({
-    data: {
-      runId,
-      sequence: log.sequence,
-      stepId: log.stepId,
-      stepType: log.stepType,
-      status: log.status,
-      input: log.input,
-      output: log.output,
-      error: log.error,
-      startedAt: log.startedAt,
-      finishedAt: log.finishedAt,
-    },
+const STEP_BAIL = Symbol("workflow-step-bail");
+
+/**
+ * Runs one planned step with a per-step claim guard:
+ *  - `succeeded` row → resume (no send).
+ *  - `running` row → owned by a concurrent delivery / stalled attempt → BAIL (no send, don't finalize).
+ *  - no row / `failed` / `pending` → claim, then send (a `failed` send never went out, so re-sending is safe).
+ *    A lost claim (concurrent `create`/`updateMany` won) also BAILs.
+ */
+const runStep = async (
+  step: TWorkflowExecutableStep,
+  sequence: number,
+  runId: string,
+  emailContext: RunEmailContext,
+  logContext: ReturnType<typeof getWorkflowRunLogContext>
+): Promise<TWorkflowStepResult | typeof STEP_BAIL> => {
+  const existing: StepLogRow | null = await prisma.workflowRunLog.findFirst({
+    where: { runId, stepId: step.stepId },
+    select: stepLogSelect,
   });
+
+  if (existing?.status === "succeeded") {
+    return resultFromLogRow(existing, "succeeded");
+  }
+
+  if (existing?.status === "running") {
+    // A `running` row we did NOT just create means another live delivery (or a stalled prior attempt)
+    // owns this run. At-most-once: never re-send; and don't finalize the run — bail and let the owner.
+    logger.warn(
+      { ...logContext, stepId: step.stepId },
+      "Workflow step already in-flight (running); another delivery owns this run — bailing"
+    );
+    return STEP_BAIL;
+  }
+
+  const result = await claimAndSendStep(step, sequence, runId, existing, emailContext);
+  if (result) {
+    return result;
+  }
+
+  // Claim lost to a concurrent delivery after we read the row — bail rather than risk a double-send or
+  // prematurely finalizing a run the winner still owns.
+  logger.warn(
+    { ...logContext, stepId: step.stepId },
+    "Workflow step claim lost to a concurrent delivery — bailing"
+  );
+  return STEP_BAIL;
 };
 
 /**
@@ -375,77 +449,82 @@ const loadRunEmailContext = async (
 };
 
 /**
- * Runs the planned steps in order, resuming any that already have a `succeeded` log (no re-send, no
- * duplicate log row) and executing the rest. Returns the per-step results and the first failure
- * message, if any.
+ * Runs the planned steps in order under the per-step claim guard (`runStep`). Three outcomes:
+ *  - `bail`: a step is owned by a concurrent delivery / stalled attempt → stop, do NOT finalize the run
+ *    (the owner does). The per-step `WorkflowRunLog` rows remain the source of truth for the run's state.
+ *  - `failure`: a step's send definitively failed this attempt → fail the whole run (row stays `failed`,
+ *    which is retryable).
+ *  - success: all steps resolved.
  */
 const runSteps = async (
   steps: TWorkflowExecutableStep[],
   runId: string,
-  emailContext: RunEmailContext
-): Promise<{ stepResults: TWorkflowStepResult[]; failure: string | null }> => {
-  const succeededLogs: SucceededStepLog[] = await prisma.workflowRunLog.findMany({
-    where: { runId, status: "succeeded" },
-    select: { stepId: true, stepType: true, input: true, output: true, startedAt: true, finishedAt: true },
-  });
-  const succeededByStepId = new Map(succeededLogs.map((log) => [log.stepId, log]));
-
+  emailContext: RunEmailContext,
+  logContext: ReturnType<typeof getWorkflowRunLogContext>
+): Promise<{ bail: true } | { bail: false; stepResults: TWorkflowStepResult[]; failure: string | null }> => {
   const stepResults: TWorkflowStepResult[] = [];
 
   for (const [index, step] of steps.entries()) {
-    const alreadySucceeded = succeededByStepId.get(step.stepId);
-    if (alreadySucceeded) {
-      // Resume: do not re-send and do not write a duplicate log row; just advance the plan.
-      stepResults.push(resultFromSucceededLog(alreadySucceeded));
-      continue;
+    const result = await runStep(step, index + 1, runId, emailContext, logContext);
+    if (result === STEP_BAIL) {
+      return { bail: true };
     }
+    stepResults.push(result);
 
-    const executed = await executeSendEmailStep({
-      step,
-      sequence: index + 1,
-      emailContext,
-      workflowRunId: runId,
-    });
-
-    await persistStepLog(runId, executed.log);
-    stepResults.push(executed.result);
-
-    if (executed.result.status === "failed") {
-      return { stepResults, failure: executed.result.error ?? "Workflow step failed" };
+    if (result.status === "failed") {
+      return { bail: false, stepResults, failure: result.error ?? "Workflow step failed" };
     }
   }
 
-  return { stepResults, failure: null };
+  return { bail: false, stepResults, failure: null };
 };
 
 /** Walks the claimed run to completion, throwing `WorkflowStepFailedError` (with the trace) on a failed step. */
 const executeClaimedRun = async (
   run: { id: string; workflowVersion: { definition: unknown } | null; workflow: { definition: unknown } },
   workspaceId: string,
-  triggerPayload: TWorkflowTriggerRunPayload
+  triggerPayload: TWorkflowTriggerRunPayload,
+  logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
   const definition = resolveExecutableDefinition(run);
   const steps = planExecutableSteps(definition);
 
   const emailContext = await loadRunEmailContext(triggerPayload, workspaceId);
-  const { stepResults, failure } = await runSteps(steps, run.id, emailContext);
+  const outcome = await runSteps(steps, run.id, emailContext, logContext);
 
-  const runData: TWorkflowRunData = ZWorkflowRunData.parse({ trigger: triggerPayload, steps: stepResults });
-
-  if (failure) {
-    throw new WorkflowStepFailedError(failure, runData);
+  if (outcome.bail) {
+    // Another live delivery / stalled attempt owns this run; leave it `running` for the owner to finish.
+    logger.info(logContext, "Workflow run owned by another delivery; leaving it running without finalizing");
+    return;
   }
 
-  await prisma.workflowRun.updateMany({
-    where: { id: run.id, workspaceId },
+  const runData: TWorkflowRunData = ZWorkflowRunData.parse({
+    trigger: triggerPayload,
+    steps: outcome.stepResults,
+  });
+
+  if (outcome.failure) {
+    throw new WorkflowStepFailedError(outcome.failure, runData);
+  }
+
+  // Status-guarded terminal write: only finalize a run that is still `running`. A 0-row result means
+  // another delivery already finalized it — don't clobber its verdict.
+  const completed = await prisma.workflowRun.updateMany({
+    where: { id: run.id, workspaceId, status: "running" },
     data: { status: "completed", finishedAt: new Date(), data: runData },
   });
+  if (completed.count === 0) {
+    logger.info(logContext, "Workflow run already finalized by another delivery; skipping completion write");
+  }
 };
 
 /**
- * Handles a run-execution error: transient DB pool exhaustion is rethrown untouched so BullMQ retries.
- * Otherwise the failure trace is recorded (terminal `failed` only on the final attempt, so earlier
- * attempts stay non-terminal and can retry) and rethrown before the final attempt.
+ * Handles a run-execution error. On a non-final attempt the run stays non-terminal (only the error
+ * trace is recorded) and the error is rethrown so BullMQ retries — this holds for both transient DB
+ * pool exhaustion and definitive execution failures. On the FINAL attempt (including the prod
+ * `maxAttempts:1` config, where the first attempt IS the final one) a terminal `failed` is recorded
+ * and the error is swallowed, so a pool-exhaustion or any other failure never strands the run in
+ * `running` with no retry left.
  */
 const handleRunError = async (
   error: unknown,
@@ -454,20 +533,22 @@ const handleRunError = async (
   context: Parameters<JobHandler<TWorkflowRunJobData>>[1],
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
-  if (isDatabasePoolExhaustionError(error)) {
-    logger.warn({ ...logContext, err: error }, "Workflow run job hit database pool exhaustion; will retry");
-    throw error;
-  }
-
   const runData = error instanceof WorkflowStepFailedError ? error.runData : undefined;
   const isFinalAttempt = context.attempt >= context.maxAttempts;
 
-  await recordRunFailure(runId, workspaceId, error, runData, isFinalAttempt, logContext);
-
   if (!isFinalAttempt) {
+    // Retryable: don't write a terminal status (would defeat the retry via the terminal-skip guard).
+    // Record the error trace for observability, then rethrow so BullMQ retries the whole job.
+    if (isDatabasePoolExhaustionError(error)) {
+      logger.warn({ ...logContext, err: error }, "Workflow run job hit database pool exhaustion; will retry");
+    }
+    await recordRunFailure(runId, workspaceId, error, runData, false, logContext);
     throw toError(error, "Workflow run job failed");
   }
 
+  // Final attempt: commit a terminal `failed` and swallow. Pool exhaustion on the last attempt must be
+  // recorded here rather than rethrown into the void, or the run would stay stuck `running` forever.
+  await recordRunFailure(runId, workspaceId, error, runData, true, logContext);
   logger.error({ ...logContext, err: error }, "Workflow run job failed after final attempt");
 };
 
@@ -480,11 +561,13 @@ const handleRunError = async (
  * Tenant-scoped: every read and write is constrained by `data.workspaceId`; a run that does not match
  * the job's workspace is treated as not found and the job is dropped (no retry).
  *
- * Replay/retry-safe: a run already terminal is a no-op; the `queued → running` claim is a conditional
- * `updateMany` so concurrent deliveries cannot both process it; and a step that already has a
- * `succeeded` log is skipped (resumed) rather than re-sent, so a retry after a partial run does not
- * double-send. On transient DB pool exhaustion the error is rethrown so BullMQ retries; a definitive
- * execution failure is recorded on the run and only rethrown before the final attempt.
+ * Replay/retry-safe (at-most-once email delivery): a run already terminal is a no-op; the
+ * `queued → running` claim is a conditional `updateMany` so concurrent deliveries can't both process
+ * it; and beneath that, each step is claimed BEFORE its send via a `(runId, stepId)`-unique
+ * `WorkflowRunLog` row — a `succeeded` step resumes, a `running` (already-attempted) step is skipped
+ * (never re-sent), and only a definitively `failed` step is re-sent (it never went out). On a non-final
+ * attempt any failure (incl. DB pool exhaustion) is rethrown so BullMQ retries; on the final attempt a
+ * terminal `failed` is recorded and swallowed so the run never stays stuck `running`.
  */
 export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (data, context) => {
   const logContext = getWorkflowRunLogContext(data, context);
@@ -514,7 +597,7 @@ export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (dat
       return;
     }
 
-    await executeClaimedRun(run, data.workspaceId, triggerPayload);
+    await executeClaimedRun(run, data.workspaceId, triggerPayload, logContext);
   } catch (error) {
     await handleRunError(error, run.id, data.workspaceId, context, logContext);
   }
@@ -537,8 +620,10 @@ const recordRunFailure = async (
 ): Promise<void> => {
   const now = new Date();
   try {
-    await prisma.workflowRun.updateMany({
-      where: { id: runId, workspaceId },
+    // Status-guarded: only touch a run that is still non-terminal. A 0-row result means another delivery
+    // already finalized it (completed/failed) — don't clobber that verdict with a stale failure.
+    const updated = await prisma.workflowRun.updateMany({
+      where: { id: runId, workspaceId, status: { notIn: [...TERMINAL_STATUS_LIST] } },
       data: {
         error: toError(error, "Workflow run job failed").message,
         lastErrorAt: now,
@@ -546,6 +631,12 @@ const recordRunFailure = async (
         ...(runData ? { data: runData } : {}),
       },
     });
+    if (updated.count === 0) {
+      logger.info(
+        { ...logContext },
+        "Workflow run already finalized by another delivery; skipping failure write"
+      );
+    }
   } catch (persistError) {
     logger.error({ ...logContext, err: persistError }, "Failed to persist workflow run failure state");
   }
