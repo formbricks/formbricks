@@ -136,7 +136,12 @@ const mockResponse = {
   language: "en-US",
 };
 
-const mockSurvey = { id: "cm9zr4mps000008l8btfy1vtz", blocks: [], languages: [] };
+const mockSurvey = {
+  id: "cm9zr4mps000008l8btfy1vtz",
+  workspaceId: "cm9zr4wsp000508l8y6nh9r2v",
+  blocks: [],
+  languages: [],
+};
 
 const data: TWorkflowRunJobData = {
   workflowRunId: "cm9zr4run000908l8q9b9d3pm",
@@ -330,6 +335,28 @@ describe("processWorkflowRunJob", () => {
     const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(failure.data.status).toBe("failed");
     expect(failure.data.error).toMatch(/Survey .* not found/);
+  });
+
+  test("fails the run when the survey belongs to another workspace (final attempt → failed)", async () => {
+    mockGetSurvey.mockResolvedValue({ ...mockSurvey, workspaceId: "cm9zr4wsp000000000foreign" });
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.error).toMatch(/does not belong to workspace/);
+  });
+
+  test("fails the run when the response belongs to another survey (final attempt → failed)", async () => {
+    mockGetResponse.mockResolvedValue({ ...mockResponse, surveyId: "cm9zr4mps00000000foreign" });
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.error).toMatch(/does not belong to survey/);
   });
 
   test("uses an empty logo url when the organization has no whitelabel logo", async () => {

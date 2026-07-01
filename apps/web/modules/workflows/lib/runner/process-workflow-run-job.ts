@@ -28,7 +28,7 @@ import {
 
 /** Strips CR/LF and other control chars from the subject — defense against SMTP header injection. */
 // eslint-disable-next-line no-control-regex -- intentionally matching control chars to strip them
-const CONTROL_CHARS_PATTERN = /[\x00-\x1f]/g;
+const CONTROL_CHARS_PATTERN = /[\x00-\x1f\x7f\u2028\u2029]/g;
 const stripControlChars = (value: string): string => value.replace(CONTROL_CHARS_PATTERN, "");
 
 /** Coerces a response's free-form `language` to a supported locale, falling back to undefined (→ default). */
@@ -349,6 +349,19 @@ const loadRunEmailContext = async (
   }
   if (!survey) {
     throw new WorkflowRunNotExecutableError(`Survey ${triggerPayload.surveyId} not found`);
+  }
+
+  // Tenant-integrity guard: the survey/response ids come from the (untrusted) stored trigger payload,
+  // so confirm they belong to this run's workspace/survey before rendering an email from their data.
+  if (survey.workspaceId !== workspaceId) {
+    throw new WorkflowRunNotExecutableError(
+      `Survey ${triggerPayload.surveyId} does not belong to workspace ${workspaceId}`
+    );
+  }
+  if (response.surveyId !== triggerPayload.surveyId) {
+    throw new WorkflowRunNotExecutableError(
+      `Response ${triggerPayload.responseId} does not belong to survey ${triggerPayload.surveyId}`
+    );
   }
 
   const organization = await getOrganizationByWorkspaceId(workspaceId);
