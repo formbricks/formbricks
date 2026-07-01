@@ -34,6 +34,24 @@ interface WorkflowEmailActionFormProps {
 // The internal "default language" slot recall/headline resolution uses when no language is selected.
 const DEFAULT_LANGUAGE_CODE = "default";
 
+const HTML_TAG_PATTERN = /<[a-z][\s\S]*>/i;
+
+const escapeHtml = (value: string): string =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// The recall Editor loads its initial value as HTML (root can only hold block nodes). Recall-token
+// bodies are already `<p>…</p>` HTML and pass through untouched; legacy plain-text bodies (e.g. the
+// seed's "Hi there…") are escaped and wrapped in paragraphs so Lexical doesn't crash on a bare text
+// node ("Only element or decorator nodes can be inserted to the root node").
+const toEditorHtml = (body: string): string => {
+  if (!body) return "";
+  if (HTML_TAG_PATTERN.test(body)) return body;
+  return body
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+};
+
 export const WorkflowEmailActionForm = ({
   node,
   isEditable,
@@ -230,7 +248,7 @@ export const WorkflowEmailActionForm = ({
           <Editor
             disableLists
             excludedToolbarItems={["blockType"]}
-            getText={() => node.config.body}
+            getText={() => toEditorHtml(node.config.body)}
             setText={(value: string) => updateConfig({ body: value })}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
