@@ -467,27 +467,31 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         }
       }
 
-      // Trigger references are checked against the persisted definition regardless of executability,
-      // so a missing survey / ending is reported even when the graph also has problems.
-      const { surveyId, endingCardIds } = loaded.definition.trigger.config;
-      const surveyCheck = await ctx.verifyTriggerSurvey({
-        workspaceId: loaded.workspaceId,
-        surveyId,
-        endingCardIds,
-      });
-      if (!surveyCheck.surveyExists) {
-        problems.push({
-          code: "survey_not_found",
-          field: "definition.trigger.config.surveyId",
-          message: "The referenced survey does not exist in this workspace.",
+      // Trigger references are only checked when the definition parses, reading from the validated
+      // `executable.data` (never the raw persisted JSON): a malformed/legacy row already surfaced as
+      // `definition_not_executable` above, and dereferencing its unparsed config here would throw and
+      // turn the dry-run into a 500 — the opposite of the collected-problems contract. Mirrors `enable`.
+      if (executable.success) {
+        const { surveyId, endingCardIds } = executable.data.trigger.config;
+        const surveyCheck = await ctx.verifyTriggerSurvey({
+          workspaceId: loaded.workspaceId,
+          surveyId,
+          endingCardIds,
         });
-      }
-      for (const endingCardId of surveyCheck.missingEndingCardIds) {
-        problems.push({
-          code: "ending_card_not_found",
-          field: "definition.trigger.config.endingCardIds",
-          message: `Ending card ${endingCardId} does not exist on the survey.`,
-        });
+        if (!surveyCheck.surveyExists) {
+          problems.push({
+            code: "survey_not_found",
+            field: "definition.trigger.config.surveyId",
+            message: "The referenced survey does not exist in this workspace.",
+          });
+        }
+        for (const endingCardId of surveyCheck.missingEndingCardIds) {
+          problems.push({
+            code: "ending_card_not_found",
+            field: "definition.trigger.config.endingCardIds",
+            message: `Ending card ${endingCardId} does not exist on the survey.`,
+          });
+        }
       }
 
       const result = validateOutput(ZWorkflowTestResult, {

@@ -630,7 +630,20 @@ describe("testWorkflow", () => {
     }
   );
 
-  test("collects every problem in one pass (non-executable AND missing survey)", async () => {
+  test("collects every executability issue in one pass without throwing", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({ status: "enabled", definition: { ...definition, nodes: [], edges: [] } })
+    );
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    expect(body.data.problems.map((p) => p.code)).toContain("definition_not_executable");
+  });
+
+  test("skips the survey check when the definition is not executable", async () => {
     service.getWorkflowById.mockResolvedValue(
       makeRow({ status: "enabled", definition: { ...definition, nodes: [], edges: [] } })
     );
@@ -638,12 +651,13 @@ describe("testWorkflow", () => {
 
     const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
 
+    // The trigger config is read from the validated `executable.data`, never the raw persisted
+    // JSON, so an unparseable definition never reaches (and never throws in) the survey check.
     expect(res.status).toBe(200);
-    const body = await readJson<TestResultBody>(res);
-    expect(body.data.ok).toBe(false);
-    const codes = body.data.problems.map((p) => p.code);
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+    const codes = (await readJson<TestResultBody>(res)).data.problems.map((p) => p.code);
     expect(codes).toContain("definition_not_executable");
-    expect(codes).toContain("survey_not_found");
+    expect(codes).not.toContain("survey_not_found");
   });
 
   test("reports a missing ending card", async () => {

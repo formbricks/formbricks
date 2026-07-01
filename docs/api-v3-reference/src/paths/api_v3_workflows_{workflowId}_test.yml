@@ -8,9 +8,9 @@ post:
     sent.
 
 
-    The response is always `200` with `{ ok, problems }`. `ok` is `true` when the workflow would
-    execute; otherwise `problems` lists every issue found — each with a machine-readable `code` and
-    the offending `field` — so they can be fixed in a single pass.
+    The response is always `200` with `{ data: { workflowId, ok, problems } }`. `data.ok` is `true`
+    when the workflow would execute; otherwise `data.problems` lists every issue found — each with a
+    machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
 
 
     Only `enabled` and `disabled` workflows can be tested. Testing a `draft` or `archived` workflow
