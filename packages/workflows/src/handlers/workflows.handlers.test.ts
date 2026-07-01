@@ -590,6 +590,109 @@ describe("disable", () => {
   });
 });
 
+interface TestResultBody {
+  data: { workflowId: string; ok: boolean; problems: { code: string; field: string }[] };
+}
+
+describe("testWorkflow", () => {
+  test("returns ok=true for an executable enabled workflow with a valid trigger survey", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    expect(verifyTriggerSurvey).toHaveBeenCalledWith({ workspaceId, surveyId, endingCardIds: [] });
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data).toEqual({ workflowId, ok: true, problems: [] });
+  });
+
+  test("tests a disabled workflow", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled" }));
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(true);
+  });
+
+  test.each([["draft"], ["archived"]] as const)(
+    "rejects a %s workflow with 422 invalid_workflow_state without checking the survey",
+    async (status) => {
+      service.getWorkflowById.mockResolvedValue(makeRow({ status }));
+
+      const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+      expect(res.status).toBe(422);
+      const body = await readJson<{ code: string }>(res);
+      expect(body.code).toBe("invalid_workflow_state");
+      expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+    }
+  );
+
+  test("collects every executability issue in one pass without throwing", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({ status: "enabled", definition: { ...definition, nodes: [], edges: [] } })
+    );
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    expect(body.data.problems.map((p) => p.code)).toContain("definition_not_executable");
+  });
+
+  test("skips the survey check when the definition is not executable", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({ status: "enabled", definition: { ...definition, nodes: [], edges: [] } })
+    );
+    verifyTriggerSurvey.mockResolvedValue({ surveyExists: false, missingEndingCardIds: [] });
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    // The trigger config is read from the validated `executable.data`, never the raw persisted
+    // JSON, so an unparseable definition never reaches (and never throws in) the survey check.
+    expect(res.status).toBe(200);
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+    const codes = (await readJson<TestResultBody>(res)).data.problems.map((p) => p.code);
+    expect(codes).toContain("definition_not_executable");
+    expect(codes).not.toContain("survey_not_found");
+  });
+
+  test("reports a missing ending card", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
+    verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: ["ec_missing"] });
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    const problem = body.data.problems.find((p) => p.code === "ending_card_not_found");
+    expect(problem?.field).toBe("definition.trigger.config.endingCardIds");
+  });
+
+  test("returns 403 for an unknown workflow without checking the survey", async () => {
+    service.getWorkflowById.mockResolvedValue(null);
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(403);
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+
+  test("returns the authorization denial without checking the survey", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
+    const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
+
+    const res = await handlers.testWorkflow({ ctx, params: { workflowId } });
+
+    expect(res.status).toBe(403);
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+});
+
 describe("recordAudit (audit-sink port)", () => {
   const copyId = "cm9zr4t2b000208l8h2m1xyz9";
   const recordAudit = vi.fn<NonNullable<WorkflowApiContext["recordAudit"]>>();

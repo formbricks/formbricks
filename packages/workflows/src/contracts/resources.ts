@@ -77,6 +77,38 @@ export const ZWorkflowRunResource = ZWorkflowRunSummary.extend({
 }).describe("Full debug-oriented run shape returned by run detail and dry-run creation.");
 export type TWorkflowRunResource = z.infer<typeof ZWorkflowRunResource>;
 
+/** Categories of problem a dry-run validation can surface, so callers (or agents) can branch on `code`. */
+export const ZWorkflowTestProblemCode = z.enum([
+  "definition_not_executable",
+  "survey_not_found",
+  "ending_card_not_found",
+]);
+export type TWorkflowTestProblemCode = z.infer<typeof ZWorkflowTestProblemCode>;
+
+export const ZWorkflowTestProblem = z
+  .object({
+    code: ZWorkflowTestProblemCode,
+    field: z
+      .string()
+      .describe("Dotted path to the offending field, e.g. definition.trigger.config.surveyId."),
+    message: z.string().describe("Human-readable explanation of the problem."),
+  })
+  .describe("A single problem found while validating a workflow for a dry run.");
+export type TWorkflowTestProblem = z.infer<typeof ZWorkflowTestProblem>;
+
+export const ZWorkflowTestResult = z
+  .object({
+    workflowId: z.cuid2(),
+    ok: z.boolean().describe("True when the definition is executable and every trigger reference resolves."),
+    problems: z
+      .array(ZWorkflowTestProblem)
+      .describe("Every problem found, so all issues can be fixed at once. Empty when ok is true."),
+  })
+  .describe(
+    "Result of dry-running (testing) a workflow: whether it would execute and, if not, why not. No run is created and no side effects occur."
+  );
+export type TWorkflowTestResult = z.infer<typeof ZWorkflowTestResult>;
+
 export const ZWorkflowListItem = z
   .object({
     id: z.cuid2(),
