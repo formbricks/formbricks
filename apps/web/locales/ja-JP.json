@@ -3569,6 +3569,7 @@
         "no_identified_impressions": "識別済みコンタクトからのインプレッションはありません",
         "no_responses_found": "回答が見つかりません",
         "nps_promoters_tooltip": "回答者の{percentage}%が9または10の評価をしました（NPSプロモーター）。",
+        "open_response_details": "自由回答の詳細",
         "other_values_found": "他の値が見つかりました",
         "overall": "全体",
         "promoters": "推奨者",
