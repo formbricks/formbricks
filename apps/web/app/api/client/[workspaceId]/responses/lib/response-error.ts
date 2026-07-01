@@ -5,3 +5,8 @@ export const isSingleUseIdUniqueConstraintError = (error: PrismaClientKnownReque
   isUniqueConstraintError(error) &&
   Array.isArray(error.meta?.target) &&
   error.meta.target.includes("singleUseId");
+
+export const isDisplayIdUniqueConstraintError = (error: PrismaClientKnownRequestError): boolean =>
+  isUniqueConstraintError(error) &&
+  Array.isArray(error.meta?.target) &&
+  error.meta.target.includes("displayId");

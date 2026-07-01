@@ -14,13 +14,16 @@ import {
   buildClientResponse,
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
-import { isSingleUseIdUniqueConstraintError } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
+import {
+  isDisplayIdUniqueConstraintError,
+  isSingleUseIdUniqueConstraintError,
+} from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import { isPrismaKnownRequestError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 
@@ -117,11 +120,7 @@ export const createResponse = async (
     return buildClientResponse(responsePrisma, contact);
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
-      if (
-        isUniqueConstraintError(error) &&
-        Array.isArray(error.meta?.target) &&
-        error.meta.target.includes("displayId")
-      ) {
+      if (isDisplayIdUniqueConstraintError(error)) {
         throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
       }
       if (isSingleUseIdUniqueConstraintError(error)) {
