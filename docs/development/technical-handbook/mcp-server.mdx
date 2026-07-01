@@ -1,13 +1,13 @@
 ---
 title: "MCP Server"
-description: "Configure and use the Formbricks v3 Surveys MCP server"
+description: "Configure and use the Formbricks v3 Surveys and Workflows MCP server"
 icon: "robot"
 ---
 
 ## Overview
 
-The Formbricks MCP server exposes a small v3 Surveys tool surface for AI agents. It runs inside the
-Formbricks web app at `/api/mcp` and reuses the same v3 Surveys API authentication, authorization,
+The Formbricks MCP server exposes v3 Surveys and Workflows tool surfaces for AI agents. It runs inside
+the Formbricks web app at `/api/mcp` and reuses the same v3 API authentication, authorization,
 rate limiting, response handling, and audit logging paths as the REST routes.
 
 <Note>
@@ -59,6 +59,23 @@ API key permissions are enforced through the same workspace access checks as the
 | `validate_survey` | `write` or `manage` when the validation request checks write access |
 | `patch_survey`    | `write` or `manage`                                                 |
 | `delete_survey`   | `write` or `manage`                                                 |
+| `list_workflows`      | `read`              |
+| `get_workflow`        | `read`              |
+| `list_workflow_runs`  | `read`              |
+| `get_workflow_run`    | `read`              |
+| `test_workflow`       | `read`              |
+| `create_workflow`     | `write` or `manage` |
+| `patch_workflow`      | `write` or `manage` |
+| `duplicate_workflow`  | `write` or `manage` |
+| `delete_workflow`     | `write` or `manage` |
+| `enable_workflow`     | `write` or `manage` |
+| `disable_workflow`    | `write` or `manage` |
+| `archive_workflow`    | `write` or `manage` |
+| `unarchive_workflow`  | `write` or `manage` |
+
+Advertised MCP scopes: `surveys:read` + `workflows:read` always; `surveys:write` + `workflows:write`
+when the key has `write` or `manage` on any workspace. Scopes are advisory — the per-workspace access
+check above is the real enforcement.
 
 <Warning>
   Store MCP API keys as environment variables or client secrets. Do not commit API keys into MCP client config
@@ -470,6 +487,159 @@ so callers can correlate the audit trail:
 }
 ```
 
+### Workflow tools
+
+Workflow tools operate on the v3 Workflows API (trigger → condition → action automations). They reuse
+the same authentication, authorization, audit logging, and error mapping as the survey tools.
+
+#### list_workflows
+
+Lists workflows in one workspace. Read-only and idempotent.
+
+Input:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "limit": 20,
+  "cursor": "opaque-cursor-from-previous-response",
+  "sortBy": "updatedAt",
+  "filter": {
+    "name": { "contains": "welcome" },
+    "status": { "in": ["draft", "enabled"] }
+  }
+}
+```
+
+Output mirrors the v3 list envelope: `{ "data": [...], "meta": { "limit", "nextCursor" }, "requestId" }`.
+Omitting `filter.status.in` returns every status except archived.
+
+#### get_workflow
+
+Gets one workflow by ID. Read-only and idempotent. Unknown or cross-workspace ids return `403`
+(never `404`) so existence is not leaked.
+
+```json
+{ "workflowId": "clwf1234567890123456789012" }
+```
+
+#### list_workflow_runs
+
+Lists workflow runs for a workspace, newest first. Read-only and idempotent.
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "limit": 20,
+  "workflowId": "clwf1234567890123456789012",
+  "responseId": "clrs1234567890123456789012",
+  "filter": { "status": { "in": ["completed"] }, "isDryRun": false }
+}
+```
+
+Only `workspaceId` is required. Omit `filter.isDryRun` to return both real and dry runs.
+
+#### get_workflow_run
+
+Gets one workflow run with its ordered step logs. Read-only and idempotent.
+
+```json
+{ "runId": "clrn1234567890123456789012" }
+```
+
+#### test_workflow
+
+Dry-runs a workflow: validates its live definition would execute and resolves the trigger's survey +
+ending cards. No run is persisted and no side effects occur; the result reports `{ ok, problems }`.
+Annotated read-only (no world mutation).
+
+```json
+{ "workflowId": "clwf1234567890123456789012" }
+```
+
+#### create_workflow
+
+Creates a workflow, always as a draft (only `enable_workflow` makes it live). Writes data; not
+idempotent. Takes the full v3 create payload:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "name": "Notify on churn survey completion",
+  "definition": {
+    "schemaVersion": 1,
+    "entryNodeId": "trigger",
+    "trigger": {
+      "id": "trigger",
+      "type": "trigger",
+      "triggerType": "response.completed",
+      "config": { "surveyId": "clsv1234567890123456789012", "endingCardIds": ["ending-1"] }
+    },
+    "nodes": [],
+    "edges": []
+  }
+}
+```
+
+#### patch_workflow
+
+Updates a workflow (v3 PATCH contract: top-level partial merge, no deep merge). Destructive; not
+idempotent. `definition` edits are only accepted while the workflow is draft or disabled.
+
+```json
+{
+  "workflowId": "clwf1234567890123456789012",
+  "data": { "name": "Renamed workflow" }
+}
+```
+
+#### duplicate_workflow
+
+Duplicates a workflow as a new draft with empty run and version history. Writes data; not idempotent.
+
+```json
+{ "workflowId": "clwf1234567890123456789012", "name": "Copy of workflow" }
+```
+
+`name` is optional; if omitted the server picks a non-conflicting copy name.
+
+#### Lifecycle tools
+
+`delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, and `unarchive_workflow`
+each take only a workflow id:
+
+```json
+{ "workflowId": "clwf1234567890123456789012" }
+```
+
+- `enable_workflow` — validates executability, snapshots an immutable version, and makes the workflow
+  live. **Once live it runs on matching survey responses and can send emails.** A non-executable
+  definition is refused with `422 workflow_not_executable`.
+- `disable_workflow` — stops future runs.
+- `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
+- `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
+
+## Relationship To V3 Workflows API
+
+Like the survey tools, workflow tools run no custom database queries — each calls the shared,
+framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
+
+| MCP Tool             | REST Contract                                    |
+| -------------------- | ------------------------------------------------ |
+| `list_workflows`     | `GET /api/v3/workflows`                          |
+| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`             |
+| `list_workflow_runs` | `GET /api/v3/workflows/runs`                     |
+| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`             |
+| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`       |
+| `create_workflow`    | `POST /api/v3/workflows`                         |
+| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`           |
+| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate`  |
+| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`          |
+| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`     |
+| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`    |
+| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`    |
+| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive`  |
+
 ## Relationship To V3 Surveys API
 
 The MCP server does not run custom survey database queries. Each tool calls the shared server-only v3
@@ -490,8 +660,12 @@ v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
 ## Limitations
 
 - Authentication is API-key only. OAuth-based MCP authorization is a separate follow-up.
-- The MCP server exposes only the v3 survey operations listed on this page.
-- Tool coverage depends on the current v3 Surveys REST endpoint coverage.
+- The MCP server exposes only the v3 survey and workflow operations listed on this page.
+- Tool coverage depends on the current v3 Surveys and Workflows REST endpoint coverage.
+- `enable_workflow` makes a workflow live and can trigger email sending; treat it as a high-impact
+  mutation when granting agents write access.
+- `create_workflow` requires a complete workflow `definition` (schema version, trigger, entry node);
+  it is created as a draft and only `enable_workflow` can make it live.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
   part of the current v3 create operation.
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
@@ -509,4 +683,7 @@ v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
 - `apps/web/modules/mcp/server.ts`
 - `apps/web/modules/mcp/tools/surveys.ts`
 - `apps/web/modules/mcp/tools/schemas.ts`
+- `apps/web/modules/mcp/tools/workflows.ts`
+- `apps/web/modules/mcp/tools/workflow-schemas.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`
+- `apps/web/app/api/v3/workflows/lib/context.ts` (adapter to the `@formbricks/workflows` handlers)
