@@ -248,10 +248,11 @@ export const enqueueWorkflowRunJob = async (
   options?: { jobId: string }
 ): Promise<Job> => {
   try {
-    // Run-level retry/backoff is modelled on the WorkflowRun row, so override the BullMQ default of 3
-    // attempts to 1. A deterministic jobId (the run id) makes a re-enqueue idempotent (no duplicate job).
+    // Inherit the shared retry policy (attempts + backoff from the queue's defaultJobOptions): the
+    // executor is idempotent per step (claim-before-send + @@unique([runId, stepId]), ENG-1228), so a
+    // BullMQ retry resumes without re-sending. The deterministic jobId (the run id) keeps a re-enqueue
+    // idempotent (no duplicate job) — e.g. when the reconciler re-dispatches an orphaned run.
     return await enqueueBackgroundJob(JOB_NAMES.workflowRun, data, {
-      attempts: 1,
       ...(options?.jobId ? { jobId: options.jobId } : {}),
     });
   } catch (error) {
