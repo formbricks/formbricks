@@ -28,19 +28,19 @@ export const LegalFooter = ({
     <footer className={cn("z-1500 w-full", isInFlow ? "shrink-0 py-4" : "absolute bottom-0 h-10")}>
       <div className="mx-auto flex h-full max-w-2xl items-center justify-center p-2 text-center text-xs text-slate-500">
         {IMPRINT_URL && (
-          <Link href={IMPRINT_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+          <Link href={IMPRINT_URL} target="_blank" className="hover:underline">
             {t("common.imprint")}
           </Link>
         )}
         {IMPRINT_URL && PRIVACY_URL && <span className="px-2">|</span>}
         {PRIVACY_URL && (
-          <Link href={PRIVACY_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+          <Link href={PRIVACY_URL} target="_blank" className="hover:underline">
             {t("common.privacy")}
           </Link>
         )}
         {(IMPRINT_URL || PRIVACY_URL) && TERMS_URL && <span className="px-2">|</span>}
         {TERMS_URL && (
-          <Link href={TERMS_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+          <Link href={TERMS_URL} target="_blank" className="hover:underline">
             {t("common.terms_of_service")}
           </Link>
         )}
@@ -49,8 +49,7 @@ export const LegalFooter = ({
           <Link
             href={`https://app.formbricks.com/s/clxbivtla014iye2vfrn436xd?surveyUrl=${surveyUrl}`}
             target="_blank"
-            className="hover:underline"
-            tabIndex={-1}>
+            className="hover:underline">
             {t("common.report_survey")}
           </Link>
         )}

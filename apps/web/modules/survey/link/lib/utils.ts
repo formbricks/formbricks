@@ -56,6 +56,20 @@ export const getElementsFromSurveyBlocks = (blocks: TSurveyBlock[]): TSurveyElem
   blocks.flatMap((block) => block.elements);
 
 /**
+ * Resolves the survey's active language to a BCP-47 tag for the <html lang> attribute.
+ * A real code (e.g. "en-AU", "he") is returned as-is; "default" resolves to the survey's
+ * default language code. Returns null when no language is configured, so the caller can
+ * leave the existing lang untouched rather than guessing.
+ */
+export const getSurveyLanguageTag = (
+  survey: TJsWorkspaceStateSurvey,
+  languageCode: string
+): string | null => {
+  if (languageCode && languageCode !== "default") return languageCode;
+  return survey.languages.find((language) => language.default)?.language.code ?? null;
+};
+
+/**
  * Maps survey language codes to web app locale codes.
  * Falls back to "en-US" if the language is not available in web app locales.
  */

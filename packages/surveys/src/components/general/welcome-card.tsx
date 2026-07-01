@@ -171,7 +171,6 @@ export function WelcomeCard({
             variablesData,
             languageCode
           )}
-          elementId="welcomeCard"
         />
         <div className="mt-4 flex gap-4 pt-4">
           <SubmitButton

@@ -232,9 +232,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("radio", { name: "Roses-0" }).click();
-      await page.getByRole("radio", { name: "Trees-0" }).click();
-      await page.getByRole("radio", { name: "Ocean-0" }).click();
+      await page.getByRole("radio", { name: "Roses 0" }).check({ force: true });
+      await page.getByRole("radio", { name: "Trees 0" }).check({ force: true });
+      await page.getByRole("radio", { name: "Ocean 0" }).check({ force: true });
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // Address Question
@@ -948,9 +948,9 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("radio", { name: "Roses-0" }).click();
-      await page.getByRole("radio", { name: "Trees-0" }).click();
-      await page.getByRole("radio", { name: "Ocean-0" }).click();
+      await page.getByRole("radio", { name: "Roses 0" }).check({ force: true });
+      await page.getByRole("radio", { name: "Trees 0" }).check({ force: true });
+      await page.getByRole("radio", { name: "Ocean 0" }).check({ force: true });
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question
