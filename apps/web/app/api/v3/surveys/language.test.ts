@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import {
-  normalizeV3SurveyLanguageIdentifier,
   normalizeV3SurveyLanguageTag,
   normalizeV3SurveyLocaleCode,
   normalizeV3SurveyWriteLanguageCode,
@@ -44,22 +43,6 @@ describe("normalizeV3SurveyLocaleCode", () => {
 
   test.each(["de", "zh_Hans", "not a locale"])("rejects non-region-qualified write locale %s", (input) => {
     expect(normalizeV3SurveyLocaleCode(input)).toBeNull();
-  });
-});
-
-describe("normalizeV3SurveyLanguageIdentifier", () => {
-  test.each([
-    ["hi", "hi-IN"],
-    ["HI", "hi-IN"],
-    ["de", "de-DE"],
-    ["hi_in", "hi-IN"],
-  ])("normalizes legacy identifier %s to %s", (input, expected) => {
-    expect(normalizeV3SurveyLanguageIdentifier(input)).toBe(expected);
-  });
-
-  test("resolves bare codes to their CLDR default region (ENG-1067 canonical)", () => {
-    expect(normalizeV3SurveyLanguageIdentifier("pt")).toBe("pt-BR");
-    expect(normalizeV3SurveyLanguageIdentifier("ar")).toBe("ar-EG");
   });
 });
 
@@ -177,23 +160,18 @@ describe("resolveV3SurveyLanguageCode", () => {
     });
   });
 
-  test("matches configured script-only languages case-insensitively and normalizes underscores", () => {
-    expect(resolveV3SurveyLanguageCode("ZH_hans", [{ code: "zh-Hans", enabled: true }])).toEqual({
-      ok: true,
-      code: "zh-Hans",
-    });
-  });
-
   test("resolves disabled configured languages for management reads", () => {
     expect(resolveV3SurveyLanguageCode("fr-FR", languages)).toEqual({ ok: true, code: "fr-FR" });
   });
 
-  test("resolves legacy stored language codes and canonical selectors", () => {
-    const legacyLanguages = [{ code: "hi", enabled: true, alias: null }];
+  test("resolves legacy and canonical selectors to the canonical survey language", () => {
+    // Post-migration the survey stores the canonical tag; a client sending the legacy bare code, the
+    // canonical tag, or an underscore variant all resolve to the stored code.
+    const languages = [{ code: "hi-IN", enabled: true, alias: null }];
 
-    expect(resolveV3SurveyLanguageCode("hi", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
-    expect(resolveV3SurveyLanguageCode("hi-IN", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
-    expect(resolveV3SurveyLanguageCode("HI_in", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("hi", languages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("hi-IN", languages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("HI_in", languages)).toEqual({ ok: true, code: "hi-IN" });
   });
 
   test("resolves legacy/script Chinese selectors to a migrated canonical survey language (ENG-1067)", () => {
