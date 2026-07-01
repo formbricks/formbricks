@@ -159,6 +159,10 @@ describe("processWorkflowRunJob", () => {
         data: expect.objectContaining({ status: "running", startedAt: expect.any(Date) }),
       })
     );
+    // The same stable RFC Message-ID is sent as the transport `messageId` and recorded on the output.
+    const sendArgs = mockSendEmail.mock.calls[0][0];
+    expect(sendArgs.messageId).toMatch(/^<.+@example\.com>$/);
+
     const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(completion.where).toEqual({ id: baseRun.id, workspaceId: data.workspaceId });
     expect(completion.data.status).toBe("completed");
@@ -168,8 +172,9 @@ describe("processWorkflowRunJob", () => {
       stepId: "send-email",
       stepType: "send_email",
       status: "succeeded",
-      output: { provider: "smtp", messageId: expect.any(String) },
+      output: { provider: "smtp", messageId: sendArgs.messageId },
     });
+    expect(completion.data.data.steps[0].output.messageId).toMatch(/^<.+@example\.com>$/);
   });
 
   test("writes a WorkflowRunLog row per executed step", async () => {

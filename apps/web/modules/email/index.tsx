@@ -67,6 +67,8 @@ interface SendEmailDataProps {
   subject: string;
   text?: string;
   html: string;
+  /** Optional RFC 5322 Message-ID; nodemailer emits it as the `Message-ID` header. */
+  messageId?: string;
 }
 
 export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &

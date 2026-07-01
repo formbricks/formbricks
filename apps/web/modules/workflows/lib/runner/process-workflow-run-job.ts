@@ -73,12 +73,20 @@ const getWorkflowRunLogContext = (
   workspaceId: data.workspaceId,
 });
 
+const MESSAGE_ID_FALLBACK_DOMAIN = "formbricks.com";
+
+/** Extracts the domain from a validated email address, falling back to a stable default. */
+const domainFromEmail = (from: string): string => from.split("@")[1]?.trim() || MESSAGE_ID_FALLBACK_DOMAIN;
+
 /**
- * Builds the deterministic message id stored on a step output. Stable across retries for the same
- * run + step, so a replayed send is traceable to the same logical message.
+ * Builds the deterministic RFC 5322 Message-ID (`<hash@domain>`) stored on a step output and sent as
+ * the `Message-ID` header. Stable across retries for the same run + step, so a replayed send carries
+ * the same id — enabling protocol-level dedup and traceability to the same logical message.
  */
-const buildMessageId = (workflowRunId: string, stepId: string): string =>
-  createHash("sha256").update(`${workflowRunId}:${stepId}`).digest("hex");
+const buildMessageId = (workflowRunId: string, stepId: string, from: string): string => {
+  const hash = createHash("sha256").update(`${workflowRunId}:${stepId}`).digest("hex");
+  return `<${hash}@${domainFromEmail(from)}>`;
+};
 
 /**
  * Resolve the run's executable definition: prefer the immutable `workflowVersion.definition`
@@ -112,6 +120,52 @@ interface ExecutedStep {
   };
 }
 
+interface StepOutcome {
+  status: TWorkflowStepResult["status"];
+  error: string | null;
+  output: Record<string, unknown>;
+}
+
+/**
+ * Resolves and sends one email, returning the step outcome. The resolved recipient is validated first
+ * (respondent-controlled data must never reach SMTP invalid), then the send is performed with a stable
+ * `Message-ID` recorded both on the sent header and the step output.
+ */
+const sendResolvedEmail = async (
+  email: TResolvedWorkflowEmail,
+  workflowRunId: string,
+  stepId: string
+): Promise<StepOutcome> => {
+  if (email.recipientValid) {
+    const messageId = buildMessageId(workflowRunId, stepId, email.from);
+    try {
+      const sent = await sendEmail({
+        to: email.to,
+        from: email.from,
+        replyTo: email.replyTo.length > 0 ? email.replyTo.join(", ") : undefined,
+        subject: email.subject,
+        text: email.text,
+        html: email.html,
+        messageId,
+      });
+
+      if (sent) {
+        return { status: "succeeded", error: null, output: { messageId, provider: EMAIL_PROVIDER } };
+      }
+      return { status: "failed", error: "SMTP is not configured; workflow email was not sent", output: {} };
+    } catch (sendError) {
+      return {
+        status: "failed",
+        error: toError(sendError, "Failed to send workflow email").message,
+        output: {},
+      };
+    }
+  }
+
+  // The recipient is templated from respondent-controlled data; never hand an invalid address to SMTP.
+  return { status: "failed", error: "Resolved email recipient is not a valid address", output: {} };
+};
+
 /**
  * Executes one `send_email` step: resolves placeholders against the trigger payload, validates the
  * resolved recipient, and performs the send. Returns a per-step result + log row. An invalid resolved
@@ -134,36 +188,7 @@ const executeSendEmailStep = async ({
   const email: TResolvedWorkflowEmail = resolveWorkflowEmail(step.node.config, triggerPayload);
   const input = { to: email.to, subject: email.subject };
 
-  let status: TWorkflowStepResult["status"] = "succeeded";
-  let error: string | null = null;
-  let output: Record<string, unknown> = {};
-
-  if (!email.recipientValid) {
-    // The recipient is templated from respondent-controlled data; never hand an invalid address to SMTP.
-    status = "failed";
-    error = "Resolved email recipient is not a valid address";
-  } else {
-    try {
-      const sent = await sendEmail({
-        to: email.to,
-        from: email.from,
-        replyTo: email.replyTo.length > 0 ? email.replyTo.join(", ") : undefined,
-        subject: email.subject,
-        text: email.text,
-        html: email.html,
-      });
-
-      if (!sent) {
-        status = "failed";
-        error = "SMTP is not configured; workflow email was not sent";
-      } else {
-        output = { messageId: buildMessageId(workflowRunId, step.stepId), provider: EMAIL_PROVIDER };
-      }
-    } catch (sendError) {
-      status = "failed";
-      error = toError(sendError, "Failed to send workflow email").message;
-    }
-  }
+  const { status, error, output } = await sendResolvedEmail(email, workflowRunId, step.stepId);
 
   const finishedAt = new Date();
 
@@ -194,15 +219,18 @@ const executeSendEmailStep = async ({
   };
 };
 
-/** Reconstructs a succeeded step result from a previously persisted succeeded log row, so a retry resumes. */
-const resultFromSucceededLog = (log: {
+/** The subset of a persisted `succeeded` `WorkflowRunLog` needed to resume a step without re-sending. */
+interface SucceededStepLog {
   stepId: string;
   stepType: string;
   input: unknown;
   output: unknown;
   startedAt: Date | null;
   finishedAt: Date | null;
-}): TWorkflowStepResult => ({
+}
+
+/** Reconstructs a succeeded step result from a previously persisted succeeded log row, so a retry resumes. */
+const resultFromSucceededLog = (log: SucceededStepLog): TWorkflowStepResult => ({
   stepId: log.stepId,
   stepType: log.stepType,
   status: "succeeded",
@@ -232,6 +260,126 @@ const persistStepLog = async (runId: string, log: ExecutedStep["log"]): Promise<
       finishedAt: log.finishedAt,
     },
   });
+};
+
+/**
+ * Claims the run with a conditional, tenant-scoped `queued → running` transition so two concurrent
+ * deliveries cannot both process it. Returns `false` when the claim loses the race (0 rows updated
+ * while the loaded status was still `queued`); a loaded `running` status is a legitimate retry and
+ * still claims (so the resume path runs).
+ */
+const claimRun = async (
+  run: { id: string; status: string },
+  workspaceId: string,
+  attempt: number,
+  logContext: ReturnType<typeof getWorkflowRunLogContext>
+): Promise<boolean> => {
+  const claim = await prisma.workflowRun.updateMany({
+    where: { id: run.id, workspaceId, status: { in: [...CLAIMABLE_STATUSES] } },
+    data: { status: "running", startedAt: new Date(), attempt },
+  });
+
+  if (claim.count === 0 && run.status === "queued") {
+    logger.info(logContext, "Workflow run already claimed by another delivery; skipping");
+    return false;
+  }
+  return true;
+};
+
+/**
+ * Runs the planned steps in order, resuming any that already have a `succeeded` log (no re-send, no
+ * duplicate log row) and executing the rest. Returns the per-step results and the first failure
+ * message, if any.
+ */
+const runSteps = async (
+  steps: TWorkflowExecutableStep[],
+  runId: string,
+  triggerPayload: TWorkflowTriggerRunPayload
+): Promise<{ stepResults: TWorkflowStepResult[]; failure: string | null }> => {
+  const succeededLogs: SucceededStepLog[] = await prisma.workflowRunLog.findMany({
+    where: { runId, status: "succeeded" },
+    select: { stepId: true, stepType: true, input: true, output: true, startedAt: true, finishedAt: true },
+  });
+  const succeededByStepId = new Map(succeededLogs.map((log) => [log.stepId, log]));
+
+  const stepResults: TWorkflowStepResult[] = [];
+
+  for (const [index, step] of steps.entries()) {
+    const alreadySucceeded = succeededByStepId.get(step.stepId);
+    if (alreadySucceeded) {
+      // Resume: do not re-send and do not write a duplicate log row; just advance the plan.
+      stepResults.push(resultFromSucceededLog(alreadySucceeded));
+      continue;
+    }
+
+    const executed = await executeSendEmailStep({
+      step,
+      sequence: index + 1,
+      triggerPayload,
+      workflowRunId: runId,
+    });
+
+    await persistStepLog(runId, executed.log);
+    stepResults.push(executed.result);
+
+    if (executed.result.status === "failed") {
+      return { stepResults, failure: executed.result.error ?? "Workflow step failed" };
+    }
+  }
+
+  return { stepResults, failure: null };
+};
+
+/** Walks the claimed run to completion, throwing `WorkflowStepFailedError` (with the trace) on a failed step. */
+const executeClaimedRun = async (
+  run: { id: string; workflowVersion: { definition: unknown } | null; workflow: { definition: unknown } },
+  workspaceId: string,
+  triggerPayload: TWorkflowTriggerRunPayload
+): Promise<void> => {
+  const definition = resolveExecutableDefinition(run);
+  const steps = planExecutableSteps(definition);
+
+  const { stepResults, failure } = await runSteps(steps, run.id, triggerPayload);
+
+  const runData: TWorkflowRunData = ZWorkflowRunData.parse({ trigger: triggerPayload, steps: stepResults });
+
+  if (failure) {
+    throw new WorkflowStepFailedError(failure, runData);
+  }
+
+  await prisma.workflowRun.updateMany({
+    where: { id: run.id, workspaceId },
+    data: { status: "completed", finishedAt: new Date(), data: runData },
+  });
+};
+
+/**
+ * Handles a run-execution error: transient DB pool exhaustion is rethrown untouched so BullMQ retries.
+ * Otherwise the failure trace is recorded (terminal `failed` only on the final attempt, so earlier
+ * attempts stay non-terminal and can retry) and rethrown before the final attempt.
+ */
+const handleRunError = async (
+  error: unknown,
+  runId: string,
+  workspaceId: string,
+  context: Parameters<JobHandler<TWorkflowRunJobData>>[1],
+  logContext: ReturnType<typeof getWorkflowRunLogContext>
+): Promise<void> => {
+  if (isDatabasePoolExhaustionError(error)) {
+    logger.warn({ ...logContext, err: error }, "Workflow run job hit database pool exhaustion; will retry");
+    throw error;
+  }
+
+  const runData = error instanceof WorkflowStepFailedError ? error.runData : undefined;
+  const isFinalAttempt = context.attempt >= context.maxAttempts;
+
+  await recordRunFailure(runId, workspaceId, error, runData, isFinalAttempt, logContext);
+
+  if (!isFinalAttempt) {
+    throw toError(error, "Workflow run job failed");
+  }
+
+  logger.error({ ...logContext, err: error }, "Workflow run job failed after final attempt");
 };
 
 /**
@@ -271,90 +419,15 @@ export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (dat
 
   try {
     const triggerPayload = ZWorkflowTriggerRunPayload.parse(run.triggerPayload);
-    const definition = resolveExecutableDefinition(run);
-    const steps = planExecutableSteps(definition);
 
-    // Claim the run with a conditional, tenant-scoped transition so two concurrent deliveries cannot
-    // both flip queued -> running and double-process. 0 rows means another delivery already claimed it.
-    const claim = await prisma.workflowRun.updateMany({
-      where: { id: run.id, workspaceId: data.workspaceId, status: { in: [...CLAIMABLE_STATUSES] } },
-      data: { status: "running", startedAt: new Date(), attempt: context.attempt },
-    });
-
-    if (claim.count === 0 && run.status === "queued") {
-      logger.info(logContext, "Workflow run already claimed by another delivery; skipping");
+    const claimed = await claimRun(run, data.workspaceId, context.attempt, logContext);
+    if (!claimed) {
       return;
     }
 
-    // Steps that already have a succeeded log (from a prior attempt) are resumed, not re-sent.
-    const succeededLogs = await prisma.workflowRunLog.findMany({
-      where: { runId: run.id, status: "succeeded" },
-      select: { stepId: true, stepType: true, input: true, output: true, startedAt: true, finishedAt: true },
-    });
-    const succeededByStepId = new Map(succeededLogs.map((log) => [log.stepId, log]));
-
-    const stepResults: TWorkflowStepResult[] = [];
-    let failure: string | null = null;
-
-    for (const [index, step] of steps.entries()) {
-      const alreadySucceeded = succeededByStepId.get(step.stepId);
-      if (alreadySucceeded) {
-        // Resume: do not re-send and do not write a duplicate log row; just advance the plan.
-        stepResults.push(resultFromSucceededLog(alreadySucceeded));
-        continue;
-      }
-
-      const executed = await executeSendEmailStep({
-        step,
-        sequence: index + 1,
-        triggerPayload,
-        workflowRunId: run.id,
-      });
-
-      await persistStepLog(run.id, executed.log);
-      stepResults.push(executed.result);
-
-      if (executed.result.status === "failed") {
-        failure = executed.result.error ?? "Workflow step failed";
-        break;
-      }
-    }
-
-    const runData: TWorkflowRunData = ZWorkflowRunData.parse({
-      trigger: triggerPayload,
-      steps: stepResults,
-    });
-
-    if (failure) {
-      throw new WorkflowStepFailedError(failure, runData);
-    }
-
-    await prisma.workflowRun.updateMany({
-      where: { id: run.id, workspaceId: data.workspaceId },
-      data: { status: "completed", finishedAt: new Date(), data: runData },
-    });
+    await executeClaimedRun(run, data.workspaceId, triggerPayload);
   } catch (error) {
-    // Transient DB pool exhaustion is always retryable: rethrow so BullMQ retries the whole job.
-    if (isDatabasePoolExhaustionError(error)) {
-      logger.warn({ ...logContext, err: error }, "Workflow run job hit database pool exhaustion; will retry");
-      throw error;
-    }
-
-    const runData = error instanceof WorkflowStepFailedError ? error.runData : undefined;
-    const isFinalAttempt = context.attempt >= context.maxAttempts;
-
-    // Writing the terminal `failed` status before the final attempt would defeat retries: the next
-    // redelivery would hit the terminal-skip guard and return immediately. So on non-final attempts the
-    // run stays `running` (only the error trace is recorded) and we rethrow so BullMQ retries — the
-    // resume path then re-runs the failed step (succeeded steps are already durably logged). Only the
-    // final attempt commits the terminal `failed` state.
-    await recordRunFailure(run.id, data.workspaceId, error, runData, isFinalAttempt, logContext);
-
-    if (!isFinalAttempt) {
-      throw toError(error, "Workflow run job failed");
-    }
-
-    logger.error({ ...logContext, err: error }, "Workflow run job failed after final attempt");
+    await handleRunError(error, run.id, data.workspaceId, context, logContext);
   }
 };
 
