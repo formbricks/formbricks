@@ -24,6 +24,7 @@ import {
   type TSurveySchedulingJobData,
   type TTestLogJobData,
   type TWorkflowRunJobData,
+  type TWorkflowRunReconcileJobData,
 } from "@/src/types";
 
 export interface JobsQueueHandle {
@@ -392,6 +393,52 @@ export const removeRecurringSurveySchedulingJobSchedule = async (
   }
 };
 
+export const upsertRecurringWorkflowRunReconcileJobSchedule = async (
+  identity: TBackgroundJobScheduleIdentity,
+  schedule: TRecurringBackgroundJobSchedule,
+  data: TWorkflowRunReconcileJobData
+): Promise<Job> => {
+  try {
+    return await upsertRecurringBackgroundJobSchedule(
+      JOB_NAMES.workflowRunReconcile,
+      identity,
+      schedule,
+      data
+    );
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        jobName: JOB_NAMES.workflowRunReconcile,
+        schedule,
+        scheduleId: identity.scheduleId,
+        scope: identity.scope,
+      },
+      "Failed to upsert BullMQ workflow run reconcile schedule"
+    );
+    throw error;
+  }
+};
+
+export const removeRecurringWorkflowRunReconcileJobSchedule = async (
+  identity: TBackgroundJobScheduleIdentity
+): Promise<boolean> => {
+  try {
+    return await removeRecurringBackgroundJobSchedule(JOB_NAMES.workflowRunReconcile, identity);
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        jobName: JOB_NAMES.workflowRunReconcile,
+        scheduleId: identity.scheduleId,
+        scope: identity.scope,
+      },
+      "Failed to remove BullMQ workflow run reconcile schedule"
+    );
+    throw error;
+  }
+};
+
 export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
   enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),
   enqueueSurveyScheduling: async (data) => toEnqueuedJob(await enqueueSurveySchedulingJob(data)),
@@ -415,6 +462,11 @@ export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
   upsertRecurringTestLogSchedule: async (identity, schedule, data) =>
     toUpsertedRecurringJobSchedule(
       await upsertRecurringTestLogJobSchedule(identity, schedule, data),
+      identity
+    ),
+  upsertRecurringWorkflowRunReconcileSchedule: async (identity, schedule, data) =>
+    toUpsertedRecurringJobSchedule(
+      await upsertRecurringWorkflowRunReconcileJobSchedule(identity, schedule, data),
       identity
     ),
 });
