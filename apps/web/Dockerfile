@@ -444,6 +444,13 @@ RUN chown -R nextjs:nextjs /home/nextjs \
         throw new Error('uuid v7 missing in migration image'); \
       }"
 
+# Build-time smoke test: boot the Prisma CLI so an incomplete @prisma/config loader
+# closure (the hand-listed c12/effect/valibot/jiti/… chain above) fails THIS build
+# rather than a production migration run. `prisma -v` loads the CLI entrypoint and
+# @prisma/config without touching a database; a missing module throws MODULE_NOT_FOUND
+# here. The full deploy path is exercised against a live database in CI.
+RUN node ./node_modules/.bin/prisma -v
+
 ENV NODE_ENV=production
 USER nextjs
 

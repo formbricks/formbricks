@@ -44,7 +44,7 @@ Formbricks ships database migrations in a **dedicated migration image**,
 its config-loader dependencies; the web image is kept slim and runs with
 `SKIP_STARTUP_MIGRATION=true`. Run migrations as a one-shot step **before** the web
 app serves traffic. The migration image and the web image must always be deployed
-at the **same version tag**.
+at the **same version**.
 
 ### Docker Compose (default)
 
@@ -52,6 +52,12 @@ No action needed — the bundled `docker-compose.yml` already wires this up: the
 `formbricks-migrate` one-shot service runs `prisma migrate deploy` plus the
 data-migration runner and must complete before `formbricks` starts. Migrations are
 idempotent, so a repeated `docker compose up` reports no pending work.
+
+The `formbricks` and `formbricks-migrate` services share a single `FORMBRICKS_IMAGE_REF`
+reference (mirroring `HUB_IMAGE_REF`) so the two images can never drift. It defaults to
+`:latest`; to pin an immutable version, set `FORMBRICKS_IMAGE_REF` in `docker/.env` to
+either a tag (e.g. `:0.23.0`) or a digest (e.g. `@sha256:14db7b3d...`). Both services
+resolve to the same value.
 
 ### Single container (`docker run`)
 

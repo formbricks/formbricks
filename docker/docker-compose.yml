@@ -270,10 +270,13 @@ services:
 
   # Run Formbricks Prisma migrations before Hub writes tables to the shared database.
   # Uses the dedicated migration image (ENG-1153), which bundles the Prisma CLI and
-  # the @prisma/config loader chain that the slim web image (`formbricks` below)
-  # leaves out. Keep this tag aligned with the `formbricks` web image tag.
+  # the @prisma/config loader chain so migrations never depend on the web image (and
+  # so the web image can drop that chain — ENG-1153 phase 2).
+  # `formbricks` and `formbricks-migrate` share FORMBRICKS_IMAGE_REF so the two images
+  # can never drift; set it in docker/.env to a tag (e.g. `:0.23.0`) or a digest
+  # (e.g. `@sha256:...`) to pin. Defaults to `:latest`.
   formbricks-migrate:
-    image: ghcr.io/formbricks/formbricks-migrate:latest
+    image: ghcr.io/formbricks/formbricks-migrate${FORMBRICKS_IMAGE_REF:-:latest}
     restart: "no"
     entrypoint: ["sh", "-c"]
     command:
@@ -287,7 +290,7 @@ services:
 
   formbricks:
     restart: always
-    image: ghcr.io/formbricks/formbricks:latest
+    image: ghcr.io/formbricks/formbricks${FORMBRICKS_IMAGE_REF:-:latest}
     env_file:
       - path: .env
         required: false
