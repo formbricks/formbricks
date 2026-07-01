@@ -181,15 +181,16 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, undefined);
   });
 
-  test("enqueues the workflow run job with attempts:1 and a deterministic jobId", async () => {
+  test("enqueues the workflow run job with a deterministic jobId and the shared retry policy", async () => {
     const mockJob = { id: "job-workflow-run-1" };
     mockQueueAdd.mockResolvedValue(mockJob);
 
     const job = await enqueueWorkflowRunJob(workflowRunJobData, { jobId: workflowRunJobData.workflowRunId });
 
     expect(job).toBe(mockJob);
+    // No per-job attempts override: the job inherits attempts + backoff from the queue's
+    // defaultJobOptions (retries are safe now that execution is idempotent per step — ENG-1228).
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, {
-      attempts: 1,
       jobId: workflowRunJobData.workflowRunId,
     });
   });
