@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
-import { problemForbidden, successListResponse, successResponse } from "@/app/api/v3/lib/response";
+import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import {
+  createdResponse,
+  noContentResponse,
+  problemForbidden,
+  successListResponse,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
 import {
   buildListWorkflowRunsSearchParams,
@@ -16,7 +23,24 @@ vi.mock("@/app/api/v3/workflows/lib/context", () => ({
     listRuns: vi.fn(),
     getRun: vi.fn(),
     testWorkflow: vi.fn(),
+    create: vi.fn(),
+    patch: vi.fn(),
+    duplicate: vi.fn(),
+    delete: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+    archive: vi.fn(),
+    unarchive: vi.fn(),
   },
+}));
+
+vi.mock("@/app/api/v3/lib/audit", () => ({
+  buildV3AuditLog: vi.fn(),
+  queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn() })) },
 }));
 
 const WORKSPACE_ID = "clxx1234567890123456789012";
@@ -102,12 +126,13 @@ describe("registerWorkflowTools", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+    vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
-  test("registers the five read/test tools with read-only annotations", () => {
+  test("registers all read + mutation tools with correct annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(5);
+    expect(server.registerTool).toHaveBeenCalledTimes(13);
     for (const name of [
       "list_workflows",
       "get_workflow",
@@ -119,6 +144,22 @@ describe("registerWorkflowTools", () => {
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
       });
     }
+    // Mutations are not read-only; patch/delete/enable are the destructive ones.
+    expect(tools.get("create_workflow")?.config).toMatchObject({
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    });
+    expect(tools.get("patch_workflow")?.config).toMatchObject({
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    });
+    expect(tools.get("delete_workflow")?.config).toMatchObject({
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    });
+    expect(tools.get("enable_workflow")?.config).toMatchObject({
+      annotations: { readOnlyHint: false, destructiveHint: true },
+    });
+    expect(tools.get("disable_workflow")?.config).toMatchObject({
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    });
   });
 
   test("list_workflows delegates to the handler with a synthetic query request", async () => {
@@ -221,5 +262,73 @@ describe("registerWorkflowTools", () => {
       code: "forbidden",
       requestId: "req_forbidden",
     });
+  });
+
+  test("create_workflow sends a body request and queues a success audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.create).mockResolvedValue(
+      createdResponse({ id: WORKFLOW_ID }, { requestId: "req_tool", location: "/wf" })
+    );
+    const body = { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } };
+
+    const result = await tools.get("create_workflow")!.handler(body, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", "/api/mcp");
+    expect(buildWorkflowApiContext).toHaveBeenCalledWith(apiKeyAuth, "req_tool", "/api/mcp", auditLog);
+    const callArg = vi.mocked(workflowsHandlers.create).mock.calls[0][0];
+    expect(callArg.ctx).toEqual({ __ctx: true });
+    expect(JSON.parse(await callArg.req.text())).toMatchObject({ workspaceId: WORKSPACE_ID, name: "WF" });
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+    expect(result.structuredContent).toEqual({ data: { id: WORKFLOW_ID }, requestId: "req_tool" });
+  });
+
+  test("enable_workflow delegates by id and queues an updated audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.enable).mockResolvedValue(
+      successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
+    );
+
+    await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    expect(workflowsHandlers.enable).toHaveBeenCalledWith({
+      ctx: { __ctx: true },
+      params: { workflowId: WORKFLOW_ID },
+    });
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
+  test("delete_workflow queues a deleted audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.delete).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
+
+    const result = await tools.get("delete_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "workflow", "/api/mcp");
+    expect(auditLog.status).toBe("success");
+    expect(result.structuredContent).toEqual({ requestId: "req_tool" });
+  });
+
+  test("a failed mutation marks the audit eventId and returns an error (no leak)", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(workflowsHandlers.enable).mockResolvedValue(
+      problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
+    );
+
+    const result = await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(result.isError).toBe(true);
+    expect(auditLog).toMatchObject({ status: "failure", eventId: "req_tool" });
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
   });
 });

@@ -1,20 +1,33 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { logger } from "@formbricks/logger";
+import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
+  type TMcpCreateWorkflowInput,
+  type TMcpDuplicateWorkflowInput,
   type TMcpGetWorkflowInput,
   type TMcpGetWorkflowRunInput,
   type TMcpListWorkflowRunsInput,
   type TMcpListWorkflowsInput,
+  type TMcpPatchWorkflowInput,
   type TMcpTestWorkflowInput,
+  type TMcpWorkflowIdInput,
+  ZMcpCreateWorkflowInput,
+  ZMcpDuplicateWorkflowInput,
   ZMcpGetWorkflowInput,
   ZMcpGetWorkflowRunInput,
   ZMcpListWorkflowRunsInput,
   ZMcpListWorkflowsInput,
+  ZMcpPatchWorkflowInput,
   ZMcpTestWorkflowInput,
+  ZMcpWorkflowIdInput,
 } from "./workflow-schemas";
+
+type WorkflowApiContext = ReturnType<typeof buildWorkflowApiContext>;
 
 export function buildListWorkflowsSearchParams(input: TMcpListWorkflowsInput): URLSearchParams {
   const searchParams = new URLSearchParams();
@@ -80,6 +93,58 @@ function buildWorkflowsListRequest(searchParams: URLSearchParams): Request {
   const url = new URL(MCP_API_ROUTE, "https://mcp.internal");
   url.search = searchParams.toString();
   return new Request(url);
+}
+
+/**
+ * The create/patch/duplicate handlers read + validate a JSON body off `req.text()`. Build a
+ * synthetic (never-dispatched) POST carrying the body; an empty object is sent for optional-body
+ * operations so the handler never sees an empty string.
+ */
+function buildWorkflowsBodyRequest(body: unknown): Request {
+  return new Request(new URL(MCP_API_ROUTE, "https://mcp.internal"), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body ?? {}),
+  });
+}
+
+/**
+ * Run a workflow mutation with the same audit lifecycle the v3 route wrapper provides: build the
+ * audit log, inject it into the context (the handlers populate it via ctx.recordAudit post-mutation),
+ * mark success/failure, and always queue it. Mirrors the survey mutation tools.
+ */
+async function runWorkflowMutation(
+  extra: { authInfo?: Parameters<typeof getMcpAuthentication>[0] },
+  action: Parameters<typeof buildV3AuditLog>[1],
+  run: (ctx: WorkflowApiContext) => Promise<Response>
+): Promise<CallToolResult> {
+  const requestId = getMcpRequestId(extra.authInfo);
+  const authentication = getMcpAuthentication(extra.authInfo);
+  const log = logger.withContext({ requestId });
+  const auditLog = buildV3AuditLog(authentication, action, "workflow", MCP_API_ROUTE);
+
+  try {
+    const ctx = buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined);
+    const response = await run(ctx);
+
+    if (auditLog) {
+      if (response.ok) {
+        auditLog.status = "success";
+      } else {
+        auditLog.eventId = requestId;
+      }
+    }
+
+    await queueV3AuditLog(auditLog, requestId, log);
+    return await responseToMcpToolResult(response, requestId);
+  } catch (error) {
+    if (auditLog) {
+      auditLog.eventId = requestId;
+      await queueV3AuditLog(auditLog, requestId, log);
+    }
+
+    throw error;
+  }
 }
 
 export function registerWorkflowTools(server: McpServer): void {
@@ -207,5 +272,175 @@ export function registerWorkflowTools(server: McpServer): void {
 
       return await responseToMcpToolResult(response, requestId);
     }
+  );
+
+  server.registerTool(
+    "create_workflow",
+    {
+      title: "Create workflow",
+      description: "Create a Formbricks workflow (always as a draft) using the v3 Workflows API contract.",
+      inputSchema: ZMcpCreateWorkflowInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpCreateWorkflowInput, extra) =>
+      runWorkflowMutation(extra, "created", (ctx) =>
+        workflowsHandlers.create({ req: buildWorkflowsBodyRequest(input), ctx })
+      )
+  );
+
+  server.registerTool(
+    "patch_workflow",
+    {
+      title: "Patch workflow",
+      description: [
+        "Update a Formbricks workflow using the v3 Workflows API patch contract.",
+        "Provided top-level fields replace that whole subtree; definition edits are only accepted while draft or disabled.",
+      ].join(" "),
+      inputSchema: ZMcpPatchWorkflowInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpPatchWorkflowInput, extra) =>
+      runWorkflowMutation(extra, "updated", (ctx) =>
+        workflowsHandlers.patch({
+          req: buildWorkflowsBodyRequest(input.data),
+          ctx,
+          params: { workflowId: input.workflowId },
+        })
+      )
+  );
+
+  server.registerTool(
+    "duplicate_workflow",
+    {
+      title: "Duplicate workflow",
+      description:
+        "Duplicate a Formbricks workflow as a new draft (empty run + version history) using the v3 Workflows API contract.",
+      inputSchema: ZMcpDuplicateWorkflowInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpDuplicateWorkflowInput, extra) =>
+      runWorkflowMutation(extra, "created", (ctx) =>
+        workflowsHandlers.duplicate({
+          req: buildWorkflowsBodyRequest(input.name ? { name: input.name } : {}),
+          ctx,
+          params: { workflowId: input.workflowId },
+        })
+      )
+  );
+
+  server.registerTool(
+    "delete_workflow",
+    {
+      title: "Delete workflow",
+      description: "Delete a Formbricks workflow using the v3 Workflows API contract.",
+      inputSchema: ZMcpWorkflowIdInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpWorkflowIdInput, extra) =>
+      runWorkflowMutation(extra, "deleted", (ctx) =>
+        workflowsHandlers.delete({ ctx, params: { workflowId: input.workflowId } })
+      )
+  );
+
+  server.registerTool(
+    "enable_workflow",
+    {
+      title: "Enable workflow",
+      description: [
+        "Enable a Formbricks workflow using the v3 Workflows API contract:",
+        "validate executability, snapshot an immutable version, and make it live.",
+        "Once live it runs on matching survey responses and can send emails.",
+      ].join(" "),
+      inputSchema: ZMcpWorkflowIdInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        // Enabling activates a live, email-sending workflow — high impact.
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpWorkflowIdInput, extra) =>
+      runWorkflowMutation(extra, "updated", (ctx) =>
+        workflowsHandlers.enable({ ctx, params: { workflowId: input.workflowId } })
+      )
+  );
+
+  server.registerTool(
+    "disable_workflow",
+    {
+      title: "Disable workflow",
+      description:
+        "Disable a live Formbricks workflow (stops future runs) using the v3 Workflows API contract.",
+      inputSchema: ZMcpWorkflowIdInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpWorkflowIdInput, extra) =>
+      runWorkflowMutation(extra, "updated", (ctx) =>
+        workflowsHandlers.disable({ ctx, params: { workflowId: input.workflowId } })
+      )
+  );
+
+  server.registerTool(
+    "archive_workflow",
+    {
+      title: "Archive workflow",
+      description: "Archive a Formbricks workflow using the v3 Workflows API contract.",
+      inputSchema: ZMcpWorkflowIdInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpWorkflowIdInput, extra) =>
+      runWorkflowMutation(extra, "updated", (ctx) =>
+        workflowsHandlers.archive({ ctx, params: { workflowId: input.workflowId } })
+      )
+  );
+
+  server.registerTool(
+    "unarchive_workflow",
+    {
+      title: "Unarchive workflow",
+      description: "Unarchive a Formbricks workflow (back to draft) using the v3 Workflows API contract.",
+      inputSchema: ZMcpWorkflowIdInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpWorkflowIdInput, extra) =>
+      runWorkflowMutation(extra, "updated", (ctx) =>
+        workflowsHandlers.unarchive({ ctx, params: { workflowId: input.workflowId } })
+      )
   );
 }

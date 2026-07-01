@@ -77,6 +77,7 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
     )
   ) {
     scopes.add("surveys:write");
+    scopes.add("workflows:write");
   }
 
   return Array.from(scopes);

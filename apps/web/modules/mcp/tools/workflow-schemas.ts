@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { ZWorkflowRunStatus, ZWorkflowSortBy, ZWorkflowStatus } from "@formbricks/workflows";
+import {
+  ZCreateWorkflowInput,
+  ZPatchWorkflowInput,
+  ZWorkflowRunStatus,
+  ZWorkflowSortBy,
+  ZWorkflowStatus,
+} from "@formbricks/workflows";
 
 export const ZMcpListWorkflowsInput = z.object({
   workspaceId: z.cuid2().describe("Workspace ID whose workflows should be listed."),
@@ -96,3 +102,35 @@ export const ZMcpTestWorkflowInput = z.object({
   workflowId: z.cuid2().describe("Workflow ID to dry-run (validate + mock execute, no side effects)."),
 });
 export type TMcpTestWorkflowInput = z.infer<typeof ZMcpTestWorkflowInput>;
+
+// --- Mutations ---
+
+// Reuse the v3 create contract verbatim: workspaceId, name, optional description, and the full
+// workflow definition graph. Workflows are always created as drafts (enable makes them live).
+export const ZMcpCreateWorkflowInput = ZCreateWorkflowInput;
+export type TMcpCreateWorkflowInput = z.infer<typeof ZMcpCreateWorkflowInput>;
+
+export const ZMcpPatchWorkflowInput = z.object({
+  workflowId: z.cuid2().describe("Workflow ID to update."),
+  data: ZPatchWorkflowInput.describe(
+    "Partial update. Provided top-level fields replace that whole subtree; definition edits are only accepted while draft or disabled."
+  ),
+});
+export type TMcpPatchWorkflowInput = z.infer<typeof ZMcpPatchWorkflowInput>;
+
+export const ZMcpDuplicateWorkflowInput = z.object({
+  workflowId: z.cuid2().describe("Workflow ID to duplicate as a new draft."),
+  name: z
+    .string()
+    .min(1)
+    .max(120)
+    .optional()
+    .describe("Optional name for the copy. If omitted, the server picks a non-conflicting name."),
+});
+export type TMcpDuplicateWorkflowInput = z.infer<typeof ZMcpDuplicateWorkflowInput>;
+
+// Shared shape for the id-only lifecycle mutations (delete / enable / disable / archive / unarchive).
+export const ZMcpWorkflowIdInput = z.object({
+  workflowId: z.cuid2().describe("Workflow ID."),
+});
+export type TMcpWorkflowIdInput = z.infer<typeof ZMcpWorkflowIdInput>;
