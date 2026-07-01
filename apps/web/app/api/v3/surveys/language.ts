@@ -97,42 +97,42 @@ export function normalizeV3SurveyWriteLanguageCode(
   value: string,
   allowedLanguageCodes?: Iterable<string>
 ): string | null {
+  // PATCH: if the request resolves to a language ALREADY configured on the survey, write that survey's
+  // STORED code as-is — its content i18n keys are keyed by exactly that code. Pre-migration this preserves
+  // a legacy code (e.g. "pt"/"zh-CN"); post-migration the stored code is already canonical. Never rewrite
+  // it here (even when the client sends the canonical/script-complete form), or the write would orphan the
+  // survey's existing content keys. This match runs BEFORE canonicalization so the preserve rule wins.
+  if (allowedLanguageCodes) {
+    const requestedKey = value.trim().toLowerCase();
+    const requestedIdentifier = normalizeV3SurveyLanguageIdentifier(value)?.toLowerCase() ?? null;
+    // Full CLDR canonical form of the request, covering codes outside the curated map (e.g. `gu`), so a
+    // client still sending a legacy code keeps matching the now-canonical stored survey language.
+    const requestedCanonical = normalizeLanguageCode(value)?.toLowerCase() ?? null;
+
+    for (const allowedLanguageCode of allowedLanguageCodes) {
+      const allowedKey = allowedLanguageCode.toLowerCase();
+      const allowedIdentifier =
+        normalizeV3SurveyLanguageIdentifier(allowedLanguageCode)?.toLowerCase() ?? null;
+      const allowedCanonical = normalizeLanguageCode(allowedLanguageCode)?.toLowerCase() ?? null;
+
+      if (
+        requestedKey === allowedKey ||
+        (requestedIdentifier && requestedIdentifier === allowedKey) ||
+        (allowedIdentifier &&
+          (requestedKey === allowedIdentifier || requestedIdentifier === allowedIdentifier)) ||
+        (requestedCanonical && requestedCanonical === allowedCanonical)
+      ) {
+        return allowedLanguageCode;
+      }
+    }
+  }
+
+  // CREATE (or a genuinely new language added via PATCH): accept a full locale and CANONICALIZE it, so a
+  // newly stored code is always canonical (`zh-CN` -> `zh-Hans-CN`) while legitimate non-default regions
+  // are preserved (`de-AT` stays `de-AT`, `en-GB` stays `en-GB`). Bare/invalid codes stay rejected (null).
   const normalizedLocale = normalizeV3SurveyLocaleCode(value);
   if (normalizedLocale) {
-    return normalizedLocale;
-  }
-
-  if (!allowedLanguageCodes) {
-    return null;
-  }
-
-  const requestedKey = value.trim().toLowerCase();
-  const requestedIdentifier = normalizeV3SurveyLanguageIdentifier(value)?.toLowerCase() ?? null;
-  // Full CLDR canonical form of the request, covering codes outside the curated map (e.g. `gu`). This
-  // is the inbound back-compat path: once the data migration flips a stored code to its canonical tag
-  // (`gu` -> `gu-IN`), a client still sending the legacy `gu` keeps matching the now-canonical survey
-  // language instead of being rejected.
-  const requestedCanonical = normalizeLanguageCode(value)?.toLowerCase() ?? null;
-
-  for (const allowedLanguageCode of allowedLanguageCodes) {
-    const allowedKey = allowedLanguageCode.toLowerCase();
-    const normalizedAllowedLanguageCode = normalizeV3SurveyLanguageIdentifier(allowedLanguageCode);
-    const allowedIdentifier = normalizedAllowedLanguageCode?.toLowerCase() ?? null;
-    const allowedCanonical = normalizeLanguageCode(allowedLanguageCode)?.toLowerCase() ?? null;
-
-    if (
-      requestedKey === allowedKey ||
-      (requestedIdentifier && requestedIdentifier === allowedKey) ||
-      (allowedIdentifier &&
-        (requestedKey === allowedIdentifier || requestedIdentifier === allowedIdentifier)) ||
-      (requestedCanonical && requestedCanonical === allowedCanonical)
-    ) {
-      // PATCH-only compatibility: write to the survey's existing stored code as-is — its content i18n
-      // keys are keyed by exactly this code. Pre-migration this preserves a legacy code (e.g. "pt"/"hi");
-      // post-migration the stored code is already canonical. Never rewrite it to the canonical form here,
-      // or a pre-migration survey would get a new key that doesn't match its content.
-      return allowedLanguageCode;
-    }
+    return normalizeLanguageCode(normalizedLocale) ?? normalizedLocale;
   }
 
   return null;
@@ -254,6 +254,21 @@ export function resolveV3SurveyLanguageCode(
         (language.code.toLowerCase() === normalizedRequestedLanguage.toLowerCase() ||
           language.normalizedAlias?.toLowerCase() === normalizedRequestedLanguage.toLowerCase()))
   );
+
+  // Canonical-equivalence fallback (ENG-1067): only when nothing matched by exact code/alias/tag, resolve a
+  // request whose canonical BCP-47 form equals a configured language's canonical form. Mirrors the write
+  // path (normalizeV3SurveyWriteLanguageCode) so a legacy/script selector still hits a MIGRATED survey
+  // language — e.g. ?lang=zh-Hans or ?lang=zh-CN against a stored zh-Hans-CN. Runs only on zero exact
+  // matches, so an exact stored-code match always wins (no regression, no broadened ambiguity for exact hits).
+  if (matches.length === 0) {
+    const requestedCanonical =
+      normalizeLanguageCode(normalizedRequestedLanguage ?? requestedLanguageValue)?.toLowerCase() ?? null;
+    if (requestedCanonical) {
+      matches = normalizedLanguages.filter(
+        (language) => normalizeLanguageCode(language.originalCode)?.toLowerCase() === requestedCanonical
+      );
+    }
+  }
 
   if (matches.length === 0 && isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
     matches = normalizedLanguages.filter(

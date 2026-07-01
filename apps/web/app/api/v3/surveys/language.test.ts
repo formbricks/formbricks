@@ -82,6 +82,28 @@ describe("normalizeV3SurveyWriteLanguageCode", () => {
     expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu-IN", "en-US"])).toBe("gu-IN");
   });
 
+  test("canonicalizes a script-incomplete locale on create (ENG-1067)", () => {
+    // A new survey language given a region-only Chinese tag is stored script-complete/canonical.
+    expect(normalizeV3SurveyWriteLanguageCode("zh-CN")).toBe("zh-Hans-CN");
+    expect(normalizeV3SurveyWriteLanguageCode("zh-TW")).toBe("zh-Hant-TW");
+  });
+
+  test("preserves legitimate non-default regions on create", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("de-AT")).toBe("de-AT");
+    expect(normalizeV3SurveyWriteLanguageCode("en-GB")).toBe("en-GB");
+  });
+
+  test("preserves a survey's stored legacy code on patch even when the canonical/script form is sent", () => {
+    // Survey stores legacy zh-CN (content keyed by zh-CN); sending canonical zh-Hans-CN must still write
+    // the stored zh-CN so the existing content keys are not orphaned.
+    expect(normalizeV3SurveyWriteLanguageCode("zh-Hans-CN", ["zh-CN", "en-US"])).toBe("zh-CN");
+    expect(normalizeV3SurveyWriteLanguageCode("zh-CN", ["zh-CN", "en-US"])).toBe("zh-CN");
+  });
+
+  test("writes the canonical stored code on patch when the survey is already canonical", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("zh-CN", ["zh-Hans-CN", "en-US"])).toBe("zh-Hans-CN");
+  });
+
   test("returns the survey's stored legacy code on match, not its canonical form (pre-migration)", () => {
     // `pt` and `hi` are in the curated map, so the identifier resolves to `pt-BR`/`hi-IN`. A survey that
     // still stores the bare code (not yet migrated) keys its content by `pt`/`hi`, so the write must
@@ -172,6 +194,25 @@ describe("resolveV3SurveyLanguageCode", () => {
     expect(resolveV3SurveyLanguageCode("hi", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
     expect(resolveV3SurveyLanguageCode("hi-IN", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
     expect(resolveV3SurveyLanguageCode("HI_in", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
+  });
+
+  test("resolves legacy/script Chinese selectors to a migrated canonical survey language (ENG-1067)", () => {
+    // Survey stored zh-Hans-CN post-migration. A client still sending the legacy script/region tag must
+    // keep resolving (was HTTP 400 before the canonical-equivalence fallback).
+    const migrated = [{ code: "zh-Hans-CN", enabled: true }];
+    expect(resolveV3SurveyLanguageCode("zh-Hans", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh_Hans", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh-CN", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh-Hans-CN", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+  });
+
+  test("keeps Simplified and Traditional Chinese distinct through canonical equivalence", () => {
+    const both = [
+      { code: "zh-Hans-CN", enabled: true },
+      { code: "zh-Hant-TW", enabled: true },
+    ];
+    expect(resolveV3SurveyLanguageCode("zh-CN", both)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh-TW", both)).toEqual({ ok: true, code: "zh-Hant-TW" });
   });
 
   test("resolves configured language aliases", () => {
