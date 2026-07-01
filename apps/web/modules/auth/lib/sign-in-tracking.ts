@@ -18,9 +18,11 @@ const getIsFirstLoginToday = (lastLoginAt: Date | null | undefined) =>
 const consumeAttributionProperties = async (): Promise<Record<string, string>> => {
   try {
     const cookieStore = await cookies();
+    const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
     const properties = getAttributionPropertiesFromCookies(cookieStore);
-    if (Object.keys(properties).length > 0) {
-      // Clear once consumed so it can't bleed onto a later (or different) user's events.
+    // Clear whenever a cookie is present (even malformed/empty) so it can't bleed onto a
+    // later user's events and a stale/legacy value can't block future first-touch capture.
+    if (hasAttributionCookie) {
       try {
         cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
       } catch {

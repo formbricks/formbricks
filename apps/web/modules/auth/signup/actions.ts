@@ -265,6 +265,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       });
 
       const cookieStore = await cookies();
+      const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
       const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
 
       capturePostHogEvent(
@@ -283,8 +284,9 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           : undefined
       );
 
-      // Clear the attribution cookie once consumed so it cannot bleed onto later events.
-      if (Object.keys(attributionProperties).length > 0) {
+      // Clear whenever a cookie is present (even malformed/empty) so it cannot bleed onto
+      // later events and a stale/legacy value cannot block future first-touch capture.
+      if (hasAttributionCookie) {
         try {
           cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
         } catch {

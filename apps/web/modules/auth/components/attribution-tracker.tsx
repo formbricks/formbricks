@@ -24,7 +24,7 @@ export const AttributionTracker = () => {
       .some((cookie) => cookie.trim().startsWith(`${ATTRIBUTION_COOKIE_NAME}=`));
     if (alreadySet) return;
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     const attribution = pickAttributionParams(params);
     if (Object.keys(attribution).length === 0) return;
 
@@ -36,7 +36,7 @@ export const AttributionTracker = () => {
 
     // Add Secure on HTTPS so the cookie is not written/sent over plaintext in production.
     // Omit it on http (localhost) where Secure cookies are rejected.
-    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    const secure = globalThis.location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `${ATTRIBUTION_COOKIE_NAME}=${value}; path=/; max-age=${ATTRIBUTION_COOKIE_MAX_AGE}; SameSite=Lax${secure}`;
   }, []);
 
