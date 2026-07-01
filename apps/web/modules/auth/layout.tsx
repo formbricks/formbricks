@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 import { getIsFreshInstance } from "@/lib/instance/service";
+import { AttributionTracker } from "@/modules/auth/components/attribution-tracker";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -22,6 +23,7 @@ export const AuthLayout = async ({ children }: { children: React.ReactNode }) =>
   return (
     <>
       <Toaster />
+      <AttributionTracker />
       <div className="min-h-screen bg-slate-50">
         <div className="isolate bg-white">
           <div className="flex min-h-screen bg-gradient-radial from-slate-200 to-slate-50">{children}</div>

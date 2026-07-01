@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
+import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import {
   type AuthMethodId,
   getAuthMethodButtonVariant,
@@ -89,9 +90,17 @@ export const LoginForm = ({
   resolvedCallbackUrl,
 }: LoginFormProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked";
   const { t } = useTranslation();
+
+  const signupHref = useMemo(() => {
+    const base = inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup";
+    const attributionSuffix = buildAttributionQuerySuffix(searchParams);
+    if (!attributionSuffix) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${attributionSuffix}`;
+  }, [inviteToken, searchParams]);
 
   const form = useForm<TLoginForm>({
     defaultValues: {
@@ -392,9 +401,7 @@ export const LoginForm = ({
           <div className="mt-9 text-center text-xs">
             <span className="leading-5 text-slate-500">{t("auth.login.new_to_formbricks")}</span>
             <br />
-            <Link
-              href={inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
-              className="font-semibold text-slate-600 underline hover:text-slate-700">
+            <Link href={signupHref} className="font-semibold text-slate-600 underline hover:text-slate-700">
               {t("auth.login.create_an_account")}
             </Link>
           </div>

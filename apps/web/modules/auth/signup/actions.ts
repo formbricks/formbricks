@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
@@ -18,6 +19,7 @@ import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
+import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
@@ -262,10 +264,15 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
       });
 
+      const cookieStore = await cookies();
+      const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
+
       capturePostHogEvent(
         user.id,
         "user_signed_up",
         {
+          // Spread attribution first so trusted, server-computed props always win on a name clash.
+          ...attributionProperties,
           auth_provider: "credentials",
           email_domain: user.email.split("@")[1],
           signup_source: parsedInput.inviteToken ? "invite" : "direct",
@@ -275,6 +282,15 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           ? { organizationId: ctx.auditLoggingCtx.organizationId }
           : undefined
       );
+
+      // Clear the attribution cookie once consumed so it cannot bleed onto later events.
+      if (Object.keys(attributionProperties).length > 0) {
+        try {
+          cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
+        } catch {
+          // Best-effort; the short cookie lifetime is the backstop.
+        }
+      }
     }
 
     if (user) {
