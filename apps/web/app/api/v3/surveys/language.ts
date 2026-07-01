@@ -160,8 +160,17 @@ export function resolveV3SurveyLanguageCode(
   const normalizedRequestedLanguage = normalizeV3SurveyLanguageTag(requestedLanguageValue);
   const requestedLanguageBase = getLanguageBase(requestedLanguageValue);
 
-  // A bare language selector that matches more than one configured region/script is ambiguous.
-  if (isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
+  // 1. Exact stored code or alias (case-insensitive) — always wins, even over the ambiguity heuristic below.
+  let matches = languages.filter(
+    (language) =>
+      language.code.toLowerCase() === requestedLanguageKey ||
+      getV3SurveyLanguageAlias(language.alias)?.toLowerCase() === requestedLanguageKey
+  );
+
+  // 2. No exact hit: a bare language selector matching more than one configured region/script is ambiguous
+  // (`?lang=en` against both `en-US` and `en-GB`). Runs AFTER the exact/alias match so an exact stored code
+  // or a configured alias (e.g. `en-US` aliased `en`) is never short-circuited by this heuristic.
+  if (matches.length === 0 && isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
     const baseMatchCodes = Array.from(
       new Set(
         languages
@@ -179,14 +188,7 @@ export function resolveV3SurveyLanguageCode(
     }
   }
 
-  // 1. Exact stored code or alias (case-insensitive) — always wins.
-  let matches = languages.filter(
-    (language) =>
-      language.code.toLowerCase() === requestedLanguageKey ||
-      getV3SurveyLanguageAlias(language.alias)?.toLowerCase() === requestedLanguageKey
-  );
-
-  // 2. Canonical equivalence — a legacy/script/region/underscore selector resolves to the language whose
+  // 3. Canonical equivalence — a legacy/script/region/underscore selector resolves to the language whose
   // canonical BCP-47 form matches (`?lang=zh-Hans` or `?lang=zh-CN` -> a stored `zh-Hans-CN`; `?lang=DE_de`
   // -> `de-DE`). Runs only on zero exact matches, so an exact stored-code match always wins.
   if (matches.length === 0) {
@@ -202,7 +204,7 @@ export function resolveV3SurveyLanguageCode(
     }
   }
 
-  // 3. Base-language fallback for a bare selector (`?lang=pt` -> the single `pt-*` language).
+  // 4. Base-language fallback for a bare selector (`?lang=pt` -> the single `pt-*` language).
   if (matches.length === 0 && isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
     matches = languages.filter((language) => getLanguageBase(language.code) === requestedLanguageBase);
   }

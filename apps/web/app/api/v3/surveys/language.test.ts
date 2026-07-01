@@ -212,6 +212,16 @@ describe("resolveV3SurveyLanguageCode", () => {
     });
   });
 
+  test("an exact alias match wins over the bare-selector ambiguity heuristic", () => {
+    // en-US carries the alias "en" and en-GB shares the base; the exact alias match must win, not 400.
+    expect(
+      resolveV3SurveyLanguageCode("en", [
+        { code: "en-US", enabled: true, alias: "en" },
+        { code: "en-GB", enabled: true },
+      ])
+    ).toEqual({ ok: true, code: "en-US" });
+  });
+
   test("reports the user's input rather than a guessed locale when unknown", () => {
     expect(resolveV3SurveyLanguageCode("en", [{ code: "de-DE", enabled: true }])).toEqual({
       ok: false,

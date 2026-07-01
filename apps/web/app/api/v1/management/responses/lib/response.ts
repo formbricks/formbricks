@@ -11,7 +11,7 @@ import { TTag } from "@formbricks/types/tags";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getResponseContact } from "@/lib/response/service";
-import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
+import { calculateTtcTotal } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
@@ -59,20 +59,18 @@ export const responseSelection = {
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponse> => {
-  // Quota evaluation must see the SAME canonical language that gets persisted on the response
-  // (buildPrismaResponseData canonicalizes it), so a legacy code from a stale client still matches
-  // language-scoped quotas. Mirrors the v2/management path.
-  const canonicalLanguage = normalizeResponseLanguage(responseInput.language);
-
   const txResponse = await prisma.$transaction(async (tx) => {
     const response = await createResponse(responseInput, tx);
 
+    // Feed quota evaluation the language actually PERSISTED on the response (createResponse ->
+    // buildPrismaResponseData canonicalizes it), so the stored value is the single source of truth and a
+    // legacy code from a stale client still matches language-scoped quotas. Mirrors the v2/management path.
     const quotaResult = await evaluateResponseQuotas({
       surveyId: responseInput.surveyId,
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
-      language: canonicalLanguage || "default",
+      language: response.language || "default",
       responseFinished: response.finished,
       tx,
     });
