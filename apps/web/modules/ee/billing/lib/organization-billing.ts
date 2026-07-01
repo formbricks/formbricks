@@ -9,6 +9,7 @@ import {
   type TCloudBillingInterval,
   type TCloudBillingPlan,
   type TOrganizationBilling,
+  type TOrganizationStripeBilling,
   type TOrganizationStripePendingChange,
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
@@ -1206,6 +1207,8 @@ export const syncOrganizationBillingFromStripe = async (
       hasPaymentMethod: subscription?.default_payment_method != null,
       features: featureLookupKeys,
       pendingChange,
+      // Subscription settled → clear any prior payment-failure banner.
+      paymentAttemptError: null,
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
       lastSyncedEventId: event?.id ?? existingStripeSnapshot?.lastSyncedEventId ?? null,
@@ -1257,6 +1260,33 @@ export const addOptimisticBillingFeature = async (organizationId: string, featur
   await prisma.organizationBilling.update({
     where: { organizationId },
     data: { stripe: updatedStripe },
+  });
+
+  await invalidateOrganizationBillingCache(organizationId);
+};
+
+/**
+ * Set (or clear, via `null`) the payment-failure banner on the billing page.
+ * Preserves the rest of the stripe snapshot and invalidates the billing cache.
+ */
+export const setOrganizationPaymentAttemptError = async (
+  organizationId: string,
+  paymentAttemptError: TOrganizationStripeBilling["paymentAttemptError"]
+): Promise<void> => {
+  const billing = await ensureOrganizationBillingRecord(organizationId);
+  if (!billing) return;
+
+  const nextStripeSnapshot = billing.stripe ? { ...billing.stripe } : {};
+
+  await prisma.organizationBilling.update({
+    where: { organizationId },
+    data: {
+      stripe: {
+        ...nextStripeSnapshot,
+        paymentAttemptError,
+        lastSyncedAt: new Date().toISOString(),
+      },
+    },
   });
 
   await invalidateOrganizationBillingCache(organizationId);

@@ -12,8 +12,10 @@ const mocks = vi.hoisted(() => ({
   findOrganizationIdByStripeCustomerId: vi.fn(),
   reconcileCloudStripeSubscriptionsForOrganization: vi.fn(),
   syncOrganizationBillingFromStripe: vi.fn(),
+  setOrganizationPaymentAttemptError: vi.fn(),
   loggerError: vi.fn(),
   loggerWarn: vi.fn(),
+  loggerInfo: vi.fn(),
 }));
 
 const stripeClient = {
@@ -33,12 +35,14 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   findOrganizationIdByStripeCustomerId: mocks.findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization: mocks.reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe: mocks.syncOrganizationBillingFromStripe,
+  setOrganizationPaymentAttemptError: mocks.setOrganizationPaymentAttemptError,
 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mocks.loggerError,
     warn: mocks.loggerWarn,
+    info: mocks.loggerInfo,
   },
 }));
 
@@ -115,5 +119,99 @@ describe("webhookHandler setup checkout upgrade", () => {
     const result = await webhookHandler("body", "sig");
 
     expect(result.status).toBe(500);
+  });
+});
+
+const buildPaymentIntentEvent = (
+  type: "payment_intent.requires_action" | "payment_intent.canceled",
+  object: Partial<{ id: string; customer: unknown; status: string; cancellation_reason: string | null }>
+) => ({
+  id: "evt_pi",
+  type,
+  created: 1739923200,
+  data: { object: { id: "pi_1", customer: "cus_1", ...object } },
+});
+
+describe("webhookHandler payment intent failures", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getStripeClient.mockReturnValue(stripeClient);
+    mocks.getStripeWebhookSecret.mockReturnValue("whsec_test");
+    mocks.findOrganizationIdByStripeCustomerId.mockResolvedValue("org_1");
+    mocks.setOrganizationPaymentAttemptError.mockResolvedValue(undefined);
+  });
+
+  test("records a requires_action error and skips the subscription sync", async () => {
+    mocks.constructEvent.mockReturnValue(
+      buildPaymentIntentEvent("payment_intent.requires_action", { status: "requires_action" })
+    );
+
+    const result = await webhookHandler("body", "sig");
+
+    expect(result.status).toBe(200);
+    expect(mocks.setOrganizationPaymentAttemptError).toHaveBeenCalledWith(
+      "org_1",
+      expect.objectContaining({ type: "requires_action", paymentIntentId: "pi_1" })
+    );
+    // payment-intent events short-circuit before the full snapshot sync.
+    expect(mocks.syncOrganizationBillingFromStripe).not.toHaveBeenCalled();
+  });
+
+  test("records a failed_invoice error when a payment is canceled for that reason", async () => {
+    mocks.constructEvent.mockReturnValue(
+      buildPaymentIntentEvent("payment_intent.canceled", {
+        status: "canceled",
+        cancellation_reason: "failed_invoice",
+      })
+    );
+
+    const result = await webhookHandler("body", "sig");
+
+    expect(result.status).toBe(200);
+    expect(mocks.setOrganizationPaymentAttemptError).toHaveBeenCalledWith(
+      "org_1",
+      expect.objectContaining({ type: "failed_invoice", paymentIntentId: "pi_1" })
+    );
+  });
+
+  test("ignores a cancellation with a benign reason (no false error banner)", async () => {
+    mocks.constructEvent.mockReturnValue(
+      buildPaymentIntentEvent("payment_intent.canceled", {
+        status: "canceled",
+        cancellation_reason: "abandoned",
+      })
+    );
+
+    const result = await webhookHandler("body", "sig");
+
+    expect(result.status).toBe(200);
+    expect(mocks.setOrganizationPaymentAttemptError).not.toHaveBeenCalled();
+  });
+
+  test("ignores a payment intent with no string customer", async () => {
+    mocks.constructEvent.mockReturnValue(
+      buildPaymentIntentEvent("payment_intent.requires_action", { customer: null })
+    );
+
+    const result = await webhookHandler("body", "sig");
+
+    expect(result.status).toBe(200);
+    expect(mocks.findOrganizationIdByStripeCustomerId).not.toHaveBeenCalled();
+    expect(mocks.setOrganizationPaymentAttemptError).not.toHaveBeenCalled();
+  });
+
+  test("ignores a payment intent whose customer maps to no organization", async () => {
+    mocks.findOrganizationIdByStripeCustomerId.mockResolvedValue(null);
+    mocks.constructEvent.mockReturnValue(
+      buildPaymentIntentEvent("payment_intent.canceled", {
+        status: "canceled",
+        cancellation_reason: "failed_invoice",
+      })
+    );
+
+    const result = await webhookHandler("body", "sig");
+
+    expect(result.status).toBe(200);
+    expect(mocks.setOrganizationPaymentAttemptError).not.toHaveBeenCalled();
   });
 });

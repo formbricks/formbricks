@@ -8,6 +8,7 @@ import {
   findOrganizationIdByStripeCustomerId,
   getOrganizationBillingWithReadThroughSync,
   reconcileCloudStripeSubscriptionsForOrganization,
+  setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
   syncOrganizationBillingFromStripe,
   undoPendingOrganizationPlanChange,
@@ -505,6 +506,71 @@ describe("organization-billing", () => {
     });
     expect(result?.stripe?.plan).toBe("hobby");
     expect(result?.stripe?.subscriptionStatus).toBeNull();
+  });
+
+  test("syncOrganizationBillingFromStripe clears a prior payment-failure banner on success", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        lastSyncedEventId: null,
+        paymentAttemptError: {
+          type: "failed_invoice",
+          paymentIntentId: "pi_1",
+          message: "x",
+          createdAt: "t",
+        },
+      },
+    });
+    mocks.subscriptionsList.mockResolvedValue({ data: [] });
+    mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+    await syncOrganizationBillingFromStripe("org_1");
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        stripe: expect.objectContaining({ paymentAttemptError: null }),
+      }),
+    });
+  });
+
+  test("setOrganizationPaymentAttemptError stores the marker and invalidates the cache", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: { plan: "pro" },
+    });
+
+    const error = { type: "requires_action" as const, paymentIntentId: "pi_1", message: "x", createdAt: "t" };
+    await setOrganizationPaymentAttemptError("org_1", error);
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      // Preserves the rest of the snapshot (plan) while setting the marker.
+      data: {
+        stripe: expect.objectContaining({ plan: "pro", paymentAttemptError: error }),
+      },
+    });
+    expect(mocks.cacheDel).toHaveBeenCalled();
+  });
+
+  test("setOrganizationPaymentAttemptError with null clears the marker", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: { plan: "pro", paymentAttemptError: { type: "failed_invoice" } },
+    });
+
+    await setOrganizationPaymentAttemptError("org_1", null);
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: { stripe: expect.objectContaining({ paymentAttemptError: null }) },
+    });
   });
 
   test("syncOrganizationBillingFromStripe ignores duplicate webhook events", async () => {
