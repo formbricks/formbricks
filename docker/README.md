@@ -41,10 +41,12 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
 Formbricks ships database migrations in a **dedicated migration image**,
 `ghcr.io/formbricks/formbricks-migrate`, separate from the web runtime image
 (`ghcr.io/formbricks/formbricks`). The migration image bundles the Prisma CLI and
-its config-loader dependencies; the web image is kept slim and runs with
-`SKIP_STARTUP_MIGRATION=true`. Run migrations as a one-shot step **before** the web
-app serves traffic. The migration image and the web image must always be deployed
-at the **same version**.
+its config-loader dependencies so the web image no longer has to run migrations
+itself: the web service runs with `SKIP_STARTUP_MIGRATION=true` and the migration
+image applies migrations as a one-shot step **before** the web app serves traffic.
+(A follow-up, ENG-1153 phase 2, then drops the Prisma CLI from the web image
+entirely.) The migration image and the web image must always be deployed at the
+**same version**.
 
 ### Docker Compose (default)
 

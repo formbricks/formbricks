@@ -183,9 +183,10 @@ Formbricks application image reference. A configured digest takes precedence ove
 Image used by the migration Job (ENG-1153). This is the dedicated, Prisma-CLI-
 bearing migration image, kept separate so the web runtime image can stay slim.
 When migration.image.repository is left empty it falls back to the application
-image, preserving the previous behaviour for consumers (e.g. private registries)
-that have not published a separate migration image. A configured digest takes
-precedence over the tag.
+image. That fallback is only valid while the web image still bundles the Prisma
+CLI; once the web image is slimmed (ENG-1153 phase 2) it will lack the CLI, so an
+empty repository must then be replaced with an explicit migration image. A
+configured digest takes precedence over the tag.
 */}}
 {{- define "formbricks.migrationImage" -}}
 {{- if .Values.migration.image.repository -}}

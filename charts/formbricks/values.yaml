@@ -38,11 +38,15 @@ migration:
   enabled: true
 
   # Dedicated migration image (ENG-1153). This image bundles the Prisma CLI and
-  # the @prisma/config loader chain needed to run `prisma migrate deploy`, which
-  # is being removed from the slim web runtime image. Leave `repository` empty to
-  # fall back to deployment.image (the previous behaviour) — useful if you mirror
-  # only the application image into a private registry and have not published a
-  # separate migration image yet.
+  # the @prisma/config loader chain needed to run `prisma migrate deploy`. Keeping
+  # `repository` set (the default) is the supported configuration.
+  #
+  # Leaving `repository` empty falls back to deployment.image. That is safe ONLY
+  # while the web image still bundles the Prisma CLI. Once the web runtime image is
+  # slimmed (ENG-1153 phase 2 removes the CLI/@prisma/config chain from it), an
+  # empty `repository` would run the migration Job on a CLI-less image and fail —
+  # so mirror this migration image into your registry rather than relying on the
+  # fallback.
   image:
     repository: "ghcr.io/formbricks/formbricks-migrate"
     tag: "" # Defaults to appVersion if not set
