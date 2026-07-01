@@ -114,7 +114,7 @@ function buildWorkflowsBodyRequest(body: unknown): Request {
  * mark success/failure, and always queue it. Mirrors the survey mutation tools.
  */
 async function runWorkflowMutation(
-  extra: { authInfo?: Parameters<typeof getMcpAuthentication>[0] },
+  extra: { authInfo?: NonNullable<Parameters<typeof getMcpAuthentication>[0]> },
   action: Parameters<typeof buildV3AuditLog>[1],
   run: (ctx: WorkflowApiContext) => Promise<Response>
 ): Promise<CallToolResult> {
