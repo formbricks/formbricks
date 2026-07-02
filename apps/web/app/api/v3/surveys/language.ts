@@ -22,27 +22,39 @@ type TResolveV3SurveyLanguageCodeResult =
 
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
-const V3_SURVEY_LANGUAGE_TAG_REGEX = /^[a-z]{2}(?:-[A-Z]{2}|-[A-Z][a-z]{3}(?:-[A-Z]{2})?)$/;
-const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/;
+// A region-qualified locale: 2-3 letter base language, optional 4-letter script, and a region that is
+// either a 2-letter country or a 3-digit UN M.49 area. The 3-letter base + numeric region forms matter
+// because canonical catalog codes include them (e.g. `fil-PH`, `bho-IN`, `eo-001`, `vo-001`); the old
+// 2-letter-only pattern rejected those on write even though the picker/`createLanguage` accept them.
+const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2,3}(?:-[A-Z][a-z]{3})?-(?:[A-Z]{2}|\d{3})$/;
+// A script-only tag with no region (e.g. `zh-Hans`). Kept as its own small regex so the tag check below is
+// just "region-qualified OR script-only" — two simple patterns instead of one nested mega-regex.
+const V3_SURVEY_SCRIPT_ONLY_REGEX = /^[a-z]{2,3}-[A-Z][a-z]{3}$/;
 
-// Validate + case/separator-normalize a fully region/script-qualified BCP-47 tag. This only recognises a
-// valid tag — it does NOT canonicalize or complete it (`zh-Hans` stays `zh-Hans`, `zh-CN` stays `zh-CN`).
-// Canonicalization is `normalizeLanguageCode`'s job; this is used for tag recognition and query dedup.
-// Returns null for bare/underspecified/invalid input.
+// Validate + case/separator-normalize a valid region/script-qualified BCP-47 tag (region-qualified OR
+// script-only). This only recognises a valid tag — it does NOT canonicalize or complete it (`zh-Hans`
+// stays `zh-Hans`, `zh-CN` stays `zh-CN`); canonicalization is `normalizeLanguageCode`'s job. Used for tag
+// recognition and query dedup. Bare/underspecified/invalid input returns null.
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
-  return normalizeV3SurveyLanguageCode(value, V3_SURVEY_LANGUAGE_TAG_REGEX);
+  return normalizeV3SurveyLanguageCode(
+    value,
+    (code) => V3_SURVEY_LOCALE_CODE_REGEX.test(code) || V3_SURVEY_SCRIPT_ONLY_REGEX.test(code)
+  );
 }
 
 export function normalizeV3SurveyLocaleCode(value: string): string | null {
-  return normalizeV3SurveyLanguageCode(value, V3_SURVEY_LOCALE_CODE_REGEX);
+  return normalizeV3SurveyLanguageCode(value, (code) => V3_SURVEY_LOCALE_CODE_REGEX.test(code));
 }
 
-function normalizeV3SurveyLanguageCode(value: string, pattern: RegExp): string | null {
+function normalizeV3SurveyLanguageCode(
+  value: string,
+  isAcceptedTag: (code: string) => boolean
+): string | null {
   const normalizedSeparators = value.trim().replaceAll("_", "-");
 
   try {
     const normalizedLanguage = Intl.getCanonicalLocales(normalizedSeparators)[0] ?? null;
-    if (!normalizedLanguage || !pattern.test(normalizedLanguage)) {
+    if (!normalizedLanguage || !isAcceptedTag(normalizedLanguage)) {
       return null;
     }
 
