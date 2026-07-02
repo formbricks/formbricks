@@ -1,9 +1,11 @@
 import "server-only";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import { getFeedbackSourcesByFeedbackDirectoryId } from "@/lib/feedback-source/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { assertCanWriteDirectoryRecords } from "@/modules/ee/feedback-directory/lib/access";
-import { getAccessibleWorkspaceIds } from "@/modules/ee/teams/lib/roles";
+import { getAccessibleWorkspaceIds, getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
@@ -104,6 +106,35 @@ const buildSurveyWorkspaceMap = async (
 };
 
 /**
+ * The CSV "Import via …" affordance uploads into a specific workspace, so only surface CSV sources
+ * in workspaces the viewer can actually write to. Owner/manager may write to any; other roles need
+ * readWrite/manage on that source's workspace. Without this a member could see (and click, only to
+ * get a 403) import entries for sibling workspaces they can't upload to — a dead-end action and a
+ * minor cross-workspace source-name leak. The CSV import route re-checks write access server-side,
+ * so this is a UX/disclosure guard, not the security boundary.
+ */
+const filterWritableCsvSources = async (
+  userId: string,
+  organizationId: string,
+  csvSources: TDatasetCsvSource[]
+): Promise<TDatasetCsvSource[]> => {
+  if (csvSources.length === 0) return [];
+
+  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+  const { isOwner, isManager } = getAccessFlags(membership?.role);
+  if (isOwner || isManager) return csvSources;
+
+  const workspaceIds = Array.from(new Set(csvSources.map((source) => source.workspaceId)));
+  const permissions = await Promise.all(
+    workspaceIds.map((workspaceId) => getWorkspacePermissionByUserId(userId, workspaceId))
+  );
+  const writableWorkspaceIds = new Set(
+    workspaceIds.filter((_, index) => permissions[index] === "readWrite" || permissions[index] === "manage")
+  );
+  return csvSources.filter((source) => writableWorkspaceIds.has(source.workspaceId));
+};
+
+/**
  * Fetches the full dataset view for a single tenant. Tolerates a Hub outage on the record list: the
  * records fall back to empty (the table shows its own empty state) while the overview still renders
  * "—" placeholders. Callers must have already authorized the dataset (assertCanViewDirectory).
@@ -132,6 +163,15 @@ export const getFeedbackDatasetView = async (
       workspaceId: source.workspaceId,
       fieldMappings: source.fieldMappings,
     }));
+  const writableCsvSources = await filterWritableCsvSources(userId, organizationId, csvSources);
 
-  return { records, cursor, overview, sourceOptions, csvSources, surveyWorkspaceMap, canWrite };
+  return {
+    records,
+    cursor,
+    overview,
+    sourceOptions,
+    csvSources: writableCsvSources,
+    surveyWorkspaceMap,
+    canWrite,
+  };
 };

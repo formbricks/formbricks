@@ -17,9 +17,9 @@ interface DatasetSelectorProps {
 }
 
 /**
- * Org-scoped dataset picker for the Feedback Records view. Unlike the dead {@link file://./frd-picker.tsx}
- * reference it takes no workspace context — the datasets are supplied by the SSR page. Follows the same
- * 0/1/many shape: nothing to pick when there are fewer than two datasets, a Select otherwise.
+ * Org-scoped dataset picker for the Feedback Records view. It takes no workspace context — the
+ * datasets are supplied by the SSR page. Follows a 0/1/many shape: nothing to pick when there are
+ * fewer than two datasets, a Select otherwise.
  */
 export const DatasetSelector = ({ datasets, selectedId, onChange }: Readonly<DatasetSelectorProps>) => {
   const { t } = useTranslation();
