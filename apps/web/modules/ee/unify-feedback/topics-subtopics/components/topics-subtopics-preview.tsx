@@ -5,6 +5,7 @@ import {
   ChevronRightIcon,
   FileTextIcon,
   GitBranchIcon,
+  LanguagesIcon,
   Loader2Icon,
   PencilIcon,
   PlayIcon,
@@ -16,6 +17,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type {
   TaxonomyFieldOption,
@@ -53,7 +55,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/modules/ui/components/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
+import { resolveFeedbackDisplayText } from "../../lib/utils";
 import {
   getTaxonomyFieldsAction,
   getTaxonomyNodeRecordsAction,
@@ -1156,23 +1160,52 @@ const RecordsSheet = ({
 const FeedbackRecordCard = ({
   record,
 }: Readonly<{ record: TaxonomyNodeRecordsResponse["data"][number] }>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  // Prefer translated text (ENG-1253); keep the original reachable via the badge tooltip title.
+  const { text, isTranslated, original, langKey } = resolveFeedbackDisplayText(record);
+  const translatedLangLabel = langKey ? (getLanguageLabel(langKey, locale) ?? langKey) : null;
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-xs">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Badge
           text={record.source_type || t("workspace.unify.taxonomy_feedback_source_fallback")}
           type="gray"
           size="tiny"
         />
         {record.field_type && <Badge text={record.field_type} type="gray" size="tiny" />}
+        {isTranslated && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="h-auto shrink-0 cursor-default gap-1 px-1.5 py-0.5 text-xs font-normal [&_svg]:size-3"
+                  aria-label={
+                    translatedLangLabel
+                      ? `${t("workspace.unify.translated")}: ${translatedLangLabel}`
+                      : t("workspace.unify.translated")
+                  }>
+                  <LanguagesIcon aria-hidden="true" />
+                  {translatedLangLabel ?? t("workspace.unify.translated")}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
+                <span className="font-medium">{t("workspace.unify.original_text")}: </span>
+                {original ?? "—"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
       <p className="mt-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
         {record.field_label || record.field_id}
       </p>
       <p className="mt-1 text-sm leading-6 whitespace-pre-wrap text-slate-700">
-        {record.value_text || t("workspace.unify.taxonomy_no_text_value")}
+        {text ?? t("workspace.unify.taxonomy_no_text_value")}
       </p>
     </div>
   );

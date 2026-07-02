@@ -49,6 +49,7 @@ interface SummaryPageProps {
   locale: TUserLocale;
   initialSurveySummary?: TSurveySummary;
   isQuotasAllowed: boolean;
+  isReadOnly: boolean;
 }
 
 export const SummaryPage = ({
@@ -57,7 +58,8 @@ export const SummaryPage = ({
   locale,
   initialSurveySummary,
   isQuotasAllowed,
-}: SummaryPageProps) => {
+  isReadOnly,
+}: Readonly<SummaryPageProps>) => {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
 
@@ -225,6 +227,7 @@ export const SummaryPage = ({
         responseCount={surveySummary.meta.totalResponses}
         survey={surveyMemoized}
         locale={locale}
+        isReadOnly={isReadOnly}
       />
     </>
   );

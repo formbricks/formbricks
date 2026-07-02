@@ -29,7 +29,7 @@ const contact = {
 
 describe("getContactByUserId", () => {
   test("returns the first contact whose userId attribute exactly matches in the workspace", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue({ id: contact.id });
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(contact);
 
     const result = await getContactByUserId(workspaceId, userId);
 
@@ -47,7 +47,7 @@ describe("getContactByUserId", () => {
       },
       select: { id: true },
     });
-    expect(result).toEqual({ id: contact.id });
+    expect(result).toEqual(contact);
   });
 
   test("returns null when no contact matches", async () => {

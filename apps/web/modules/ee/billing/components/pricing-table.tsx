@@ -18,11 +18,13 @@ import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   changeBillingPlanAction,
   createPlanCheckoutAction,
   createTrialPaymentCheckoutAction,
   finalizeSetupCheckoutUpgradeAction,
+  getUpgradeChargePreviewAction,
   manageSubscriptionAction,
   reportUpgradePaymentIssueAction,
   retryStripeSetupAction,
@@ -225,6 +227,14 @@ export const PricingTable = ({
   const upgradeDriveRef = useRef(false);
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
+  // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
+  const [upgradeConfirmation, setUpgradeConfirmation] = useState<{
+    plan: Exclude<TStandardPlan, "hobby">;
+    interval: TCloudBillingInterval;
+  } | null>(null);
+  // Prorated amount Stripe would charge now for the pending upgrade confirmation, fetched lazily.
+  const [upgradePreview, setUpgradePreview] = useState<{ amountDue: number; currency: string } | null>(null);
+  const [isLoadingUpgradePreview, setIsLoadingUpgradePreview] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
     currentBillingInterval ?? "monthly"
   );
@@ -710,6 +720,44 @@ export const PricingTable = ({
     }
   };
 
+  // True only for the in-place upgrade that charges the card immediately (the path with no prior confirmation).
+  const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
+    hasPaymentMethod &&
+    plan !== "hobby" &&
+    currentPlanLevel !== null &&
+    STANDARD_PLAN_LEVEL[plan] > currentPlanLevel &&
+    !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval) &&
+    !canCancelCurrentPaidPlanAtPeriodEnd(
+      plan,
+      interval,
+      currentCloudPlan,
+      currentBillingInterval,
+      isTrialingWithoutPayment,
+      pendingChange
+    );
+
+  // Gate the immediate-charge upgrade behind a confirmation modal; everything else runs as before.
+  const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    if (plan !== "hobby" && willChargeImmediately(plan, interval)) {
+      setUpgradeConfirmation({ plan, interval });
+      // Fetch the prorated charge to show in the modal. On failure we fall back to the generic copy.
+      setUpgradePreview(null);
+      setIsLoadingUpgradePreview(true);
+      getUpgradeChargePreviewAction({ organizationId, targetPlan: plan, targetInterval: interval })
+        .then((response) => setUpgradePreview(response?.data ?? null))
+        .catch(() => setUpgradePreview(null))
+        .finally(() => setIsLoadingUpgradePreview(false));
+      return;
+    }
+    void handlePlanAction(plan, interval);
+  };
+
+  const closeUpgradeConfirmation = () => {
+    setUpgradeConfirmation(null);
+    setUpgradePreview(null);
+    setIsLoadingUpgradePreview(false);
+  };
+
   const undoPendingChange = async () => {
     setIsPlanActionPending("undo");
     try {
@@ -787,6 +835,31 @@ export const PricingTable = ({
     return STANDARD_PLAN_LEVEL[plan] > currentPlanLevel
       ? t("workspace.settings.billing.upgrade_now")
       : t("workspace.settings.billing.switch_at_period_end");
+  };
+
+  // Upgrade modal body: calculating placeholder, real prorated charge once previewed, or generic fallback.
+  const getUpgradeConfirmationBody = () => {
+    if (!upgradeConfirmation) return "";
+    const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
+    const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
+
+    if (isLoadingUpgradePreview) {
+      return t("workspace.settings.billing.confirm_upgrade_calculating");
+    }
+
+    if (upgradePreview) {
+      return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
+        plan,
+        period,
+        chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+      });
+    }
+
+    const amount =
+      planCards.find(
+        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
+      )?.amount ?? "";
+    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount, period });
   };
 
   return (
@@ -1034,7 +1107,7 @@ export const PricingTable = ({
                         className="mt-4 w-full"
                         disabled={isDisabled}
                         loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
-                        onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
+                        onClick={() => requestPlanAction(planCard.plan, planCard.interval)}>
                         {getCtaLabel(planCard.plan, planCard.interval)}
                       </Button>
 
@@ -1072,6 +1145,28 @@ export const PricingTable = ({
           </SettingsCard>
         )}
       </div>
+
+      {upgradeConfirmation && (
+        <ConfirmationModal
+          open
+          setOpen={(value) => {
+            if (!value) closeUpgradeConfirmation();
+          }}
+          title={t("workspace.settings.billing.confirm_upgrade_title")}
+          description={t("workspace.settings.billing.confirm_upgrade_description")}
+          body={getUpgradeConfirmationBody()}
+          buttonText={t("workspace.settings.billing.confirm_upgrade_button")}
+          buttonVariant="default"
+          buttonLoading={isLoadingUpgradePreview}
+          isButtonDisabled={isLoadingUpgradePreview}
+          cancelButtonText={t("common.cancel")}
+          onConfirm={() => {
+            const { plan, interval } = upgradeConfirmation;
+            closeUpgradeConfirmation();
+            void handlePlanAction(plan, interval);
+          }}
+        />
+      )}
     </main>
   );
 };

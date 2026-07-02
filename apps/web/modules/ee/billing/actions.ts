@@ -20,6 +20,7 @@ import {
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
+  previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
@@ -118,6 +119,45 @@ export const createPlanCheckoutAction = authenticatedActionClient
       return checkoutUrl;
     })
   );
+
+const ZGetUpgradeChargePreviewAction = z.object({
+  organizationId: ZId,
+  targetPlan: z.enum(["pro", "scale"]),
+  targetInterval: ZCloudBillingInterval,
+});
+
+// Read-only proration preview for the upgrade confirmation modal; no audit logging since it mutates nothing.
+export const getUpgradeChargePreviewAction = authenticatedActionClient
+  .inputSchema(ZGetUpgradeChargePreviewAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const { organizationId } = parsedInput;
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", organizationId);
+    }
+
+    if (!organization.billing.stripeCustomerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+    }
+
+    return previewImmediateUpgradeCharge({
+      organizationId,
+      customerId: organization.billing.stripeCustomerId,
+      targetPlan: parsedInput.targetPlan,
+      targetInterval: parsedInput.targetInterval,
+    });
+  });
 
 const ZRetryStripeSetupAction = z.object({
   organizationId: ZId,

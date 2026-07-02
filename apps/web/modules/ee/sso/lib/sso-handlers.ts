@@ -1,7 +1,7 @@
-import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Organization } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import type { Account } from "@formbricks/types/auth";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -375,7 +375,7 @@ const provisionNewSsoUser = async ({
             .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
             .trim(),
         email: user.email,
-        emailVerified: new Date(Date.now()),
+        emailVerified: true,
         identityProvider: provider,
         identityProviderAccountId: account.providerAccountId,
         locale: matchedLocale,

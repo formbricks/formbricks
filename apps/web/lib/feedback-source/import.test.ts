@@ -33,6 +33,7 @@ const mockFeedbackSource: TFeedbackSourceWithMappings = {
   type: "formbricks_survey",
   status: "active",
   workspaceId: ENV_ID,
+  feedbackDirectoryId: "clxxxxxxxxxxxxxxxx004",
   lastSyncAt: null,
   createdBy: null,
   creatorName: null,

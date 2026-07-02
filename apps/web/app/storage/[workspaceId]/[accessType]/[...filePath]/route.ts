@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
@@ -6,7 +5,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[workspaceId]/[accessType]/[...filePath]/lib/auth";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { deleteFile, getFileStreamForDownload } from "@/modules/storage/service";
@@ -110,7 +109,7 @@ export const DELETE = async (
     return responses.notFoundResponse("Workspace", idParam);
   }
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   const authResult = await authorizePrivateDownload(request, resolved.workspaceId, "DELETE");
 

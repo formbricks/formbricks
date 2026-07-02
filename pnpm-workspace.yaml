@@ -74,9 +74,6 @@ overrides:
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
   js-yaml@4: 4.2.0
 
-patchedDependencies:
-  next-auth@4.24.13: patches/next-auth@4.24.13.patch
-
 autoInstallPeers: true
 linkWorkspacePackages: true
 shamefullyHoist: true
