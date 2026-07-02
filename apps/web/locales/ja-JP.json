@@ -3814,6 +3814,7 @@
       "source_type_label_usability_test": "Usability test",
       "source_updated_successfully": "フィードバックソースが正常に更新されました",
       "sources": "フィードバックソース",
+      "sources_nav_label": "フィードバックソース",
       "status_error": "エラー",
       "status_live_sync": "リアルタイム同期",
       "status_ready": "準備完了",

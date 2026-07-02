@@ -3814,6 +3814,7 @@
       "source_type_label_usability_test": "Usability test",
       "source_updated_successfully": "Geri bildirim kaynağı başarıyla güncellendi",
       "sources": "Geri bildirim kaynakları",
+      "sources_nav_label": "Feedback Sources",
       "status_error": "Hata",
       "status_live_sync": "Live sync",
       "status_ready": "Ready",

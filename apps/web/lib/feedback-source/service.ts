@@ -80,6 +80,16 @@ const mapFeedbackSourceWithMappings = (
   return { ...rest, creatorName: creator?.name ?? null } as TFeedbackSourceWithMappings;
 };
 
+/**
+ * A feedback source enriched with the display names of the workspace it is bound to and the dataset
+ * (feedback directory) it feeds. The org-scoped Feedback Sources view lists sources across every
+ * workspace in the organization, so each row needs to show which workspace and dataset it belongs to.
+ */
+export type TFeedbackSourceWithMappingsAndContext = TFeedbackSourceWithMappings & {
+  workspaceName: string;
+  feedbackDirectoryName: string;
+};
+
 export const getFeedbackSourcesWithMappings = reactCache(
   async (workspaceId: string, page?: number): Promise<TFeedbackSourceWithMappings[]> => {
     validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
@@ -129,6 +139,61 @@ export const getFeedbackSourcesByFeedbackDirectoryId = reactCache(
       });
 
       return feedbackSources.map(mapFeedbackSourceWithMappings);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
+const selectFeedbackSourceWithContext = {
+  ...selectFeedbackSourceWithMappings,
+  workspace: { select: { name: true } },
+  feedbackDirectory: { select: { name: true } },
+} satisfies Prisma.FeedbackSourceSelect;
+
+type PrismaFeedbackSourceWithContext = Prisma.FeedbackSourceGetPayload<{
+  select: typeof selectFeedbackSourceWithContext;
+}>;
+
+const mapFeedbackSourceWithContext = (
+  feedbackSource: PrismaFeedbackSourceWithContext
+): TFeedbackSourceWithMappingsAndContext => {
+  const { creator, workspace, feedbackDirectory, ...rest } = feedbackSource;
+  return {
+    ...rest,
+    creatorName: creator?.name ?? null,
+    workspaceName: workspace.name,
+    feedbackDirectoryName: feedbackDirectory.name,
+  } as TFeedbackSourceWithMappingsAndContext;
+};
+
+/**
+ * Lists every feedback source (with mappings) across all workspaces of an organization, enriched with
+ * its workspace and dataset names. Backs the org-scoped Feedback Sources settings view, where sources
+ * from every workspace are shown together. Mirrors {@link getFeedbackSourcesByFeedbackDirectoryId} but
+ * scoped to the organization rather than a single dataset.
+ */
+export const getFeedbackSourcesByOrganizationId = reactCache(
+  async (organizationId: string): Promise<TFeedbackSourceWithMappingsAndContext[]> => {
+    validateInputs([organizationId, ZId]);
+
+    try {
+      const feedbackSources = await prisma.feedbackSource.findMany({
+        where: {
+          workspace: {
+            organizationId,
+          },
+        },
+        select: selectFeedbackSourceWithContext,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return feedbackSources.map(mapFeedbackSourceWithContext);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

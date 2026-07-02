@@ -28,6 +28,7 @@ import type {
   TaxonomyScope,
   TaxonomyTreeResponse,
 } from "@/modules/hub/types";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -71,6 +72,7 @@ import {
 
 interface TopicsSubtopicsPreviewProps {
   workspaceId: string;
+  organizationId: string;
   directoryMap: Record<string, string>;
   canWrite: boolean;
 }
@@ -209,6 +211,7 @@ const getNodeRecordEstimate = (node: TaxonomyNode): number | null => {
 
 export const TopicsSubtopicsPreview = ({
   workspaceId,
+  organizationId,
   directoryMap,
   canWrite,
 }: Readonly<TopicsSubtopicsPreviewProps>) => {
@@ -650,7 +653,7 @@ export const TopicsSubtopicsPreview = ({
           <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-xs">
             <p className="text-sm text-slate-600">{t("workspace.unify.taxonomy_no_directory")}</p>
             <Button className="mt-4" size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/feedback-sources`}>
+              <Link href={organizationSettingsPath(organizationId, "unify-feedback/sources")}>
                 {t("workspace.unify.manage_feedback_sources")}
               </Link>
             </Button>

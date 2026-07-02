@@ -83,6 +83,7 @@ export const UnifyTopicsSubtopicsPage = async (
   return (
     <TopicsSubtopicsPreview
       workspaceId={params.workspaceId}
+      organizationId={organization.id}
       directoryMap={directoryMap}
       canWrite={canWrite}
     />

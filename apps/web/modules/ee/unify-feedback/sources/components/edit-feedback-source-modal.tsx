@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { getSurveysForUnifyAction } from "../actions";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
   CSV_PROTECTED_TARGET_IDS,
@@ -64,7 +65,7 @@ interface EditFeedbackSourceModalProps {
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<boolean>;
-  surveys: TUnifySurvey[];
+  organizationId: string;
   onOpenCsvImport?: () => void;
   isReadOnly?: boolean;
 }
@@ -74,7 +75,7 @@ export const EditFeedbackSourceModal = ({
   open,
   onOpenChange,
   onUpdateFeedbackSource,
-  surveys,
+  organizationId,
   onOpenCsvImport,
   isReadOnly = false,
 }: EditFeedbackSourceModalProps) => {
@@ -82,6 +83,7 @@ export const EditFeedbackSourceModal = ({
   const [csvFeedbackSourceName, setCsvFeedbackSourceName] = useState("");
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
+  const [surveys, setSurveys] = useState<TUnifySurvey[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const formbricksForm = useForm<TFormbricksFeedbackSourceForm>({
@@ -156,6 +158,28 @@ export const EditFeedbackSourceModal = ({
       }
     }
   }, [feedbackSource, formbricksForm]);
+
+  // Survey elements are needed to render the (read-only) question list when editing a Formbricks
+  // source. Since the org-scoped page no longer SSR-loads surveys, fetch the source's own workspace
+  // surveys on open. Requires readWrite on that workspace — the same tier editing itself needs.
+  useEffect(() => {
+    if (!open || feedbackSource?.type !== "formbricks_survey") {
+      setSurveys([]);
+      return;
+    }
+
+    let cancelled = false;
+    const directoryId = feedbackSource.feedbackDirectoryId;
+    const workspaceId = feedbackSource.workspaceId;
+    void getSurveysForUnifyAction({ organizationId, directoryId, workspaceId }).then((result) => {
+      if (cancelled) return;
+      setSurveys(result?.data ?? []);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, feedbackSource, organizationId]);
 
   const resetForm = () => {
     setCsvFeedbackSourceName("");

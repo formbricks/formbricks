@@ -10,7 +10,6 @@ import {
   TFeedbackSourceWithMappings,
   THubTargetField,
 } from "@formbricks/types/feedback-source";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
   createFeedbackSourceWithMappingsAction,
@@ -18,33 +17,43 @@ import {
   duplicateFeedbackSourceAction,
   updateFeedbackSourceWithMappingsAction,
 } from "@/lib/feedback-source/actions";
+import type { TFeedbackSourceWithMappingsAndContext } from "@/lib/feedback-source/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
+import { TFieldMapping, getTranslatedFeedbackSourceError } from "../types";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
 import { EditFeedbackSourceModal } from "./edit-feedback-source-modal";
 import { FeedbackSourcesTable } from "./feedback-sources-table";
 
+export interface TFeedbackSourcesDataset {
+  id: string;
+  name: string;
+  // Workspaces this dataset is assigned to that the current user may also create a source in. The
+  // create modal offers exactly these as the source's target workspace.
+  workspaceIds: string[];
+}
+
 interface FeedbackSourcesSectionProps {
-  workspaceId: string;
-  initialFeedbackSources: TFeedbackSourceWithMappings[];
-  initialSurveys: TUnifySurvey[];
-  directories: { id: string; name: string }[];
+  organizationId: string;
+  initialFeedbackSources: TFeedbackSourceWithMappingsAndContext[];
+  datasets: TFeedbackSourcesDataset[];
+  // Names for every workspace the user can reach in this org, used to label the workspace picker.
+  workspaces: { id: string; name: string }[];
   isReadOnly: boolean;
 }
 
 export function FeedbackSourcesSection({
-  workspaceId,
+  organizationId,
   initialFeedbackSources,
-  initialSurveys,
-  directories,
+  datasets,
+  workspaces,
   isReadOnly,
 }: Readonly<FeedbackSourcesSectionProps>) {
   const { t } = useTranslation();
-  const { workspace } = useWorkspace();
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingFeedbackSource, setEditingFeedbackSource] = useState<TFeedbackSourceWithMappings | null>(
@@ -53,9 +62,10 @@ export function FeedbackSourcesSection({
   const [csvImportFeedbackSource, setCsvImportFeedbackSource] = useState<TFeedbackSourceWithMappings | null>(
     null
   );
-  const directoryNames = directories.map((directory) => directory.name).join(", ");
+
+  const directoryNames = datasets.map((dataset) => dataset.name).join(", ");
   const feedbackDirectoryAccessText =
-    directories.length === 1
+    datasets.length === 1
       ? t("workspace.unify.feedback_sources_directory_access_single", {
           directoryNames,
         })
@@ -66,12 +76,13 @@ export function FeedbackSourcesSection({
   const handleCreateFeedbackSource = async (data: {
     name: string;
     type: TFeedbackSourceType;
+    workspaceId: string;
     feedbackDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
     const result = await createFeedbackSourceWithMappingsAction({
-      workspaceId: workspaceId,
+      workspaceId: data.workspaceId,
       feedbackSourceInput: {
         name: data.name,
         type: data.type,
@@ -107,7 +118,7 @@ export function FeedbackSourcesSection({
   }): Promise<boolean> => {
     const result = await updateFeedbackSourceWithMappingsAction({
       feedbackSourceId: data.feedbackSourceId,
-      workspaceId: workspaceId,
+      workspaceId: data.workspaceId,
       feedbackSourceInput: {
         name: data.name,
       },
@@ -131,8 +142,11 @@ export function FeedbackSourcesSection({
     return true;
   };
 
-  const handleDeleteFeedbackSource = async (feedbackSourceId: string): Promise<void> => {
-    const result = await deleteFeedbackSourceAction({ feedbackSourceId, workspaceId: workspaceId });
+  const handleDeleteFeedbackSource = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
+    const result = await deleteFeedbackSourceAction({
+      feedbackSourceId: feedbackSource.id,
+      workspaceId: feedbackSource.workspaceId,
+    });
 
     if (!result?.data) {
       toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
@@ -148,7 +162,7 @@ export function FeedbackSourcesSection({
   ): Promise<void> => {
     const result = await duplicateFeedbackSourceAction({
       feedbackSourceId: feedbackSource.id,
-      workspaceId: workspaceId,
+      workspaceId: feedbackSource.workspaceId,
     });
 
     if (!result?.data) {
@@ -164,7 +178,7 @@ export function FeedbackSourcesSection({
     const newStatus = feedbackSource.status === "active" ? "paused" : "active";
     const result = await updateFeedbackSourceWithMappingsAction({
       feedbackSourceId: feedbackSource.id,
-      workspaceId: workspaceId,
+      workspaceId: feedbackSource.workspaceId,
       feedbackSourceInput: { status: newStatus },
     });
 
@@ -203,12 +217,12 @@ export function FeedbackSourcesSection({
           isLoading={false}
           isReadOnly={isReadOnly}
         />
-        {directories.length > 0 && (
+        {datasets.length > 0 && (
           <Alert size="small" className="mt-4">
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
-            {!isReadOnly && workspace?.organizationId && (
+            {!isReadOnly && (
               <AlertButton asChild>
-                <Link href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
+                <Link href={organizationSettingsPath(organizationId, "feedback-directories")}>
                   {t("workspace.unify.manage_directories")}
                 </Link>
               </AlertButton>
@@ -221,19 +235,19 @@ export function FeedbackSourcesSection({
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
         onCreateFeedbackSource={handleCreateFeedbackSource}
-        surveys={initialSurveys}
-        workspaceId={workspaceId}
-        directories={directories}
+        organizationId={organizationId}
+        datasets={datasets}
+        workspaces={workspaces}
         showTrigger={false}
       />
 
       <EditFeedbackSourceModal
         feedbackSource={editingFeedbackSource}
         isReadOnly={isReadOnly}
+        organizationId={organizationId}
         open={editingFeedbackSource !== null}
         onOpenChange={(open) => !open && setEditingFeedbackSource(null)}
         onUpdateFeedbackSource={handleUpdateFeedbackSource}
-        surveys={initialSurveys}
         onOpenCsvImport={() => {
           if (editingFeedbackSource) {
             setCsvImportFeedbackSource(editingFeedbackSource);

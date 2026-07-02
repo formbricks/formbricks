@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { TFeedbackSourceOptionId, getFeedbackSourceOptions } from "../utils";
@@ -9,8 +9,6 @@ import { TFeedbackSourceOptionId, getFeedbackSourceOptions } from "../utils";
 interface FeedbackSourceTypeSelectorProps {
   selectedType: TFeedbackSourceOptionId | null;
   onSelectType: (type: TFeedbackSourceOptionId) => void;
-  workspaceId: string;
-  surveyCount: number;
 }
 
 const getOptionClassName = (
@@ -32,8 +30,6 @@ const getOptionClassName = (
 export function FeedbackSourceTypeSelector({
   selectedType,
   onSelectType,
-  workspaceId,
-  surveyCount,
 }: Readonly<FeedbackSourceTypeSelectorProps>) {
   const { t } = useTranslation();
   const feedbackSourceOptions = getFeedbackSourceOptions(t);
@@ -42,8 +38,6 @@ export function FeedbackSourceTypeSelector({
     <div className="space-y-3">
       <div className="space-y-2">
         {feedbackSourceOptions.map((option) => {
-          const showNoSurveysAlert =
-            surveyCount === 0 && option.id === "formbricks_survey" && selectedType === "formbricks_survey";
           const showApiIngestionSetupAlert =
             option.id === "api_ingestion" && selectedType === "api_ingestion";
           return (
@@ -59,7 +53,7 @@ export function FeedbackSourceTypeSelector({
                 )}`}>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium leading-5 text-slate-900">{option.name}</span>
+                    <span className="leading-5 font-medium text-slate-900">{option.name}</span>
                     {option.badge && <Badge text={option.badge.text} type={option.badge.type} size="tiny" />}
                   </div>
                   <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
@@ -75,7 +69,6 @@ export function FeedbackSourceTypeSelector({
                   )}
                 </div>
               </button>
-              {showNoSurveysAlert && <NoFormbricksSurveysAlert workspaceId={workspaceId} />}
               {showApiIngestionSetupAlert && <ApiIngestionSetupAlert />}
             </div>
           );
@@ -107,23 +100,6 @@ const ApiIngestionSetupAlert = () => {
           <p>{t("workspace.unify.api_ingestion_setup_description")}</p>
         </AlertDescription>
       </div>
-    </Alert>
-  );
-};
-
-const NoFormbricksSurveysAlert = ({ workspaceId }: Readonly<{ workspaceId: string }>) => {
-  return (
-    <Alert variant="info" size="small">
-      <AlertDescription className="overflow-visible whitespace-normal">
-        <Trans
-          i18nKey="workspace.unify.no_formbricks_surveys_available_description"
-          components={{
-            surveyLink: (
-              <Link href={`/workspaces/${workspaceId}/surveys/templates`} className="font-medium underline" />
-            ),
-          }}
-        />
-      </AlertDescription>
     </Alert>
   );
 };

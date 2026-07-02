@@ -6,15 +6,15 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
   TFeedbackSourceType,
   UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
 } from "@formbricks/types/feedback-source";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Alert } from "@/modules/ui/components/alert";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { getSurveysForUnifyAction } from "../actions";
 import { importCsvFile } from "../csv-import-client";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
@@ -70,6 +71,12 @@ import { FormbricksQuestionList } from "./formbricks-question-list";
 const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/rest-api";
 const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/mcp";
 
+interface CreateFeedbackSourceDataset {
+  id: string;
+  name: string;
+  workspaceIds: string[];
+}
+
 interface CreateFeedbackSourceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -77,13 +84,17 @@ interface CreateFeedbackSourceModalProps {
   onCreateFeedbackSource: (data: {
     name: string;
     type: TFeedbackSourceType;
+    workspaceId: string;
     feedbackDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<string | undefined>;
-  surveys: TUnifySurvey[];
-  workspaceId: string;
-  directories: { id: string; name: string }[];
+  organizationId: string;
+  // Datasets the user can create a source in, each carrying the workspaces (already narrowed to the
+  // user's writable ones) it is assigned to.
+  datasets: CreateFeedbackSourceDataset[];
+  // Names for every workspace the user can reach, used to label the workspace picker.
+  workspaces: { id: string; name: string }[];
 }
 
 const getDialogTitle = (
@@ -130,12 +141,22 @@ export const CreateFeedbackSourceModal = ({
   onOpenChange,
   showTrigger = true,
   onCreateFeedbackSource,
-  surveys,
-  workspaceId,
-  directories,
+  organizationId,
+  datasets,
+  workspaces,
 }: CreateFeedbackSourceModalProps) => {
   const { t } = useTranslation();
-  const { workspace } = useWorkspace();
+
+  const workspaceNameById = useMemo(
+    () => new Map(workspaces.map((workspace) => [workspace.id, workspace.name])),
+    [workspaces]
+  );
+
+  // Only datasets with at least one workspace the user can create in are selectable.
+  const selectableDatasets = useMemo(
+    () => datasets.filter((dataset) => dataset.workspaceIds.length > 0),
+    [datasets]
+  );
 
   const defaultFeedbackSourceName = useMemo<Record<TFeedbackSourceType, string>>(
     () => ({
@@ -167,8 +188,26 @@ export const CreateFeedbackSourceModal = ({
   const [responseCountBySurvey, setResponseCountBySurvey] = useState<Record<string, number | null>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories[0]?.id ?? null);
+  const [selectedDatasetId, setSelectedDatasetId] = useState<string>(selectableDatasets[0]?.id ?? "");
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>("");
+  const [surveys, setSurveys] = useState<TUnifySurvey[]>([]);
+  const [isLoadingSurveys, setIsLoadingSurveys] = useState(false);
   const userEditedFeedbackSourceNameRef = useRef(false);
+
+  const selectedDataset = useMemo(
+    () => selectableDatasets.find((dataset) => dataset.id === selectedDatasetId) ?? null,
+    [selectableDatasets, selectedDatasetId]
+  );
+
+  // The workspaces offered for the chosen dataset (assigned ∩ writable, resolved on the server).
+  const eligibleWorkspaces = useMemo(
+    () =>
+      (selectedDataset?.workspaceIds ?? []).map((workspaceId) => ({
+        id: workspaceId,
+        name: workspaceNameById.get(workspaceId) ?? workspaceId,
+      })),
+    [selectedDataset, workspaceNameById]
+  );
 
   const formbricksValues = formbricksForm.watch();
   const selectedSurveyId = formbricksValues.surveyId;
@@ -186,7 +225,7 @@ export const CreateFeedbackSourceModal = ({
 
   const showFeedbackRecordsSuccessToast = useCallback(
     (message: string) => {
-      const feedbackRecordsHref = `/workspaces/${workspaceId}/unify/feedback-records`;
+      const feedbackRecordsHref = organizationSettingsPath(organizationId, "unify-feedback/datasets");
       toast.success(() => (
         <div className="flex flex-col gap-1">
           <span>{message}</span>
@@ -196,14 +235,37 @@ export const CreateFeedbackSourceModal = ({
         </div>
       ));
     },
-    [t, workspaceId]
+    [organizationId, t]
+  );
+
+  // Loads the chosen workspace's surveys for the Formbricks flow (replaces the old page-level SSR load).
+  const loadSurveys = useCallback(
+    async (directoryId: string, workspaceId: string) => {
+      setIsLoadingSurveys(true);
+      try {
+        const result = await getSurveysForUnifyAction({ organizationId, directoryId, workspaceId });
+        if (result?.data) {
+          setSurveys(result.data);
+        } else {
+          setSurveys([]);
+          const message = getFormattedErrorMessage(result);
+          if (message) toast.error(message);
+        }
+      } catch {
+        setSurveys([]);
+        toast.error(t("common.something_went_wrong"));
+      } finally {
+        setIsLoadingSurveys(false);
+      }
+    },
+    [organizationId, t]
   );
 
   const fetchResponseCount = useCallback(
     async (surveyId: string) => {
-      if (responseCountBySurvey[surveyId] !== undefined) return;
+      if (!selectedWorkspaceId || responseCountBySurvey[surveyId] !== undefined) return;
       try {
-        const result = await getResponseCountAction({ surveyId, workspaceId });
+        const result = await getResponseCountAction({ surveyId, workspaceId: selectedWorkspaceId });
         if (result?.data !== undefined) {
           setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: result.data ?? null }));
         }
@@ -211,7 +273,7 @@ export const CreateFeedbackSourceModal = ({
         setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: null }));
       }
     },
-    [responseCountBySurvey, workspaceId]
+    [responseCountBySurvey, selectedWorkspaceId]
   );
 
   useEffect(() => {
@@ -256,13 +318,36 @@ export const CreateFeedbackSourceModal = ({
     userEditedFeedbackSourceNameRef.current = false;
     setIsImporting(false);
     setIsCreating(false);
-    setSelectedDirectoryId(directories[0]?.id ?? null);
+    setSelectedDatasetId(selectableDatasets[0]?.id ?? "");
+    setSelectedWorkspaceId("");
+    setSurveys([]);
+    setIsLoadingSurveys(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (isImporting) return;
     if (!newOpen) resetForm();
     onOpenChange(newOpen);
+  };
+
+  const handleDatasetChange = (datasetId: string) => {
+    setSelectedDatasetId(datasetId);
+    setSelectedWorkspaceId("");
+    setSurveys([]);
+    setResponseCountBySurvey({});
+    formbricksForm.setValue("surveyId", "", { shouldDirty: true, shouldValidate: true });
+    formbricksForm.setValue("selectedQuestionIds", [], { shouldDirty: true, shouldValidate: true });
+  };
+
+  const handleWorkspaceChange = (workspaceId: string) => {
+    setSelectedWorkspaceId(workspaceId);
+    setSurveys([]);
+    setResponseCountBySurvey({});
+    formbricksForm.setValue("surveyId", "", { shouldDirty: true, shouldValidate: true });
+    formbricksForm.setValue("selectedQuestionIds", [], { shouldDirty: true, shouldValidate: true });
+    if (selectedType === "formbricks_survey" && selectedDatasetId) {
+      void loadSurveys(selectedDatasetId, workspaceId);
+    }
   };
 
   const handleNextStep = () => {
@@ -302,6 +387,8 @@ export const CreateFeedbackSourceModal = ({
       setCsvFile(null);
       setCsvParsedData([]);
       setEnumValidationErrors([]);
+      setSurveys([]);
+      setSelectedWorkspaceId("");
     }
   };
 
@@ -310,12 +397,12 @@ export const CreateFeedbackSourceModal = ({
     surveyId: string
   ): Promise<TImportState> => {
     const responseCount = responseCountBySurvey[surveyId] ?? 0;
-    if (responseCount <= 0) return "skipped";
+    if (responseCount <= 0 || !selectedWorkspaceId) return "skipped";
     setIsImporting(true);
     try {
       const importResult = await importHistoricalResponsesAction({
         feedbackSourceId,
-        workspaceId,
+        workspaceId: selectedWorkspaceId,
         surveyId,
       });
 
@@ -341,13 +428,13 @@ export const CreateFeedbackSourceModal = ({
   };
 
   const handleCsvImport = async (feedbackSourceId: string): Promise<TImportState> => {
-    if (!csvFile) return "skipped";
+    if (!csvFile || !selectedWorkspaceId) return "skipped";
 
     setIsImporting(true);
     try {
       const importResult = await importCsvFile({
         feedbackSourceId,
-        workspaceId,
+        workspaceId: selectedWorkspaceId,
         file: csvFile,
       });
 
@@ -386,13 +473,14 @@ export const CreateFeedbackSourceModal = ({
   };
 
   const handleCreateFormbricksFeedbackSource = async (values: TFormbricksFeedbackSourceForm) => {
-    if (!selectedDirectoryId) return;
+    if (!selectedDatasetId || !selectedWorkspaceId) return;
     setIsCreating(true);
 
     const feedbackSourceId = await onCreateFeedbackSource({
       name: values.sourceName.trim(),
       type: "formbricks_survey",
-      feedbackDirectoryId: selectedDirectoryId,
+      workspaceId: selectedWorkspaceId,
+      feedbackDirectoryId: selectedDatasetId,
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
     });
 
@@ -414,7 +502,9 @@ export const CreateFeedbackSourceModal = ({
   };
 
   const handleCreateCsvFeedbackSource = async () => {
-    if (!selectedDirectoryId || !isFeedbackSourceNameValid(csvFeedbackSourceName)) return;
+    if (!selectedDatasetId || !selectedWorkspaceId || !isFeedbackSourceNameValid(csvFeedbackSourceName)) {
+      return;
+    }
 
     const requiredCheck = areAllRequiredCsvFieldsMapped(mappings);
     if (!requiredCheck.valid) {
@@ -444,7 +534,8 @@ export const CreateFeedbackSourceModal = ({
     const feedbackSourceId = await onCreateFeedbackSource({
       name: csvFeedbackSourceName.trim(),
       type: "csv",
-      feedbackDirectoryId: selectedDirectoryId,
+      workspaceId: selectedWorkspaceId,
+      feedbackDirectoryId: selectedDatasetId,
       fieldMappings,
     });
 
@@ -476,6 +567,12 @@ export const CreateFeedbackSourceModal = ({
     setCsvFeedbackSourceName(value);
   };
 
+  const showNoSurveysAlert =
+    selectedType === "formbricks_survey" &&
+    !!selectedWorkspaceId &&
+    !isLoadingSurveys &&
+    surveys.length === 0;
+
   return (
     <>
       {showTrigger && (
@@ -505,12 +602,7 @@ export const CreateFeedbackSourceModal = ({
 
           <DialogBody>
             {currentStep === "selectType" && (
-              <FeedbackSourceTypeSelector
-                selectedType={selectedType}
-                onSelectType={setSelectedType}
-                surveyCount={surveys.length}
-                workspaceId={workspaceId}
-              />
+              <FeedbackSourceTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
             )}
             {currentStep === "mapping" && selectedType === "formbricks_survey" && (
               <FormProvider {...formbricksForm}>
@@ -537,9 +629,16 @@ export const CreateFeedbackSourceModal = ({
                     )}
                   />
 
-                  {directories.length === 0 && (
-                    <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} t={t} />
-                  )}
+                  <DatasetWorkspacePickers
+                    datasets={selectableDatasets}
+                    selectedDatasetId={selectedDatasetId}
+                    onDatasetChange={handleDatasetChange}
+                    eligibleWorkspaces={eligibleWorkspaces}
+                    selectedWorkspaceId={selectedWorkspaceId}
+                    onWorkspaceChange={handleWorkspaceChange}
+                  />
+
+                  {showNoSurveysAlert && <NoFormbricksSurveysAlert workspaceId={selectedWorkspaceId} />}
 
                   <FormField
                     control={formbricksForm.control}
@@ -548,7 +647,10 @@ export const CreateFeedbackSourceModal = ({
                       <FormItem>
                         <FormLabel>{t("workspace.unify.select_survey")}</FormLabel>
                         <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            disabled={!selectedWorkspaceId || isLoadingSurveys || surveys.length === 0}>
                             <SelectTrigger>
                               <SelectValue placeholder={t("workspace.unify.select_survey")} />
                             </SelectTrigger>
@@ -626,9 +728,14 @@ export const CreateFeedbackSourceModal = ({
                   <p className="text-xs text-slate-500">{t("workspace.unify.source_name_hint")}</p>
                 </div>
 
-                {directories.length === 0 && (
-                  <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} t={t} />
-                )}
+                <DatasetWorkspacePickers
+                  datasets={selectableDatasets}
+                  selectedDatasetId={selectedDatasetId}
+                  onDatasetChange={handleDatasetChange}
+                  eligibleWorkspaces={eligibleWorkspaces}
+                  selectedWorkspaceId={selectedWorkspaceId}
+                  onWorkspaceChange={handleWorkspaceChange}
+                />
 
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
                   <CsvFeedbackSourceUI
@@ -685,9 +792,7 @@ export const CreateFeedbackSourceModal = ({
               </Button>
             )}
             {currentStep === "selectType" ? (
-              <Button
-                onClick={handleNextStep}
-                disabled={!selectedType || (selectedType === "formbricks_survey" && surveys.length === 0)}>
+              <Button onClick={handleNextStep} disabled={!selectedType}>
                 {getNextStepButtonLabel(selectedType, t)}
               </Button>
             ) : (
@@ -700,7 +805,8 @@ export const CreateFeedbackSourceModal = ({
                 disabled={
                   isCreating ||
                   isImporting ||
-                  !selectedDirectoryId ||
+                  !selectedDatasetId ||
+                  !selectedWorkspaceId ||
                   (selectedType === "formbricks_survey"
                     ? !isFeedbackSourceNameValid(formbricksValues.sourceName ?? "") ||
                       !formbricksValues.surveyId ||
@@ -720,24 +826,77 @@ export const CreateFeedbackSourceModal = ({
   );
 };
 
-interface NoFeedbackDirectoryAlertProps {
-  organizationId?: string;
-  t: (key: string) => string;
+interface DatasetWorkspacePickersProps {
+  datasets: CreateFeedbackSourceDataset[];
+  selectedDatasetId: string;
+  onDatasetChange: (datasetId: string) => void;
+  eligibleWorkspaces: { id: string; name: string }[];
+  selectedWorkspaceId: string;
+  onWorkspaceChange: (workspaceId: string) => void;
 }
 
-const NoFeedbackDirectoryAlert = ({ organizationId, t }: NoFeedbackDirectoryAlertProps) => {
+const DatasetWorkspacePickers = ({
+  datasets,
+  selectedDatasetId,
+  onDatasetChange,
+  eligibleWorkspaces,
+  selectedWorkspaceId,
+  onWorkspaceChange,
+}: DatasetWorkspacePickersProps) => {
+  const { t } = useTranslation();
+
   return (
-    <Alert variant="error" size="small">
-      <div>
-        <p>{t("workspace.unify.no_feedback_directory_available")}</p>
-        {organizationId && (
-          <a
-            className="mt-1 inline-block font-medium underline"
-            href={`/organizations/${organizationId}/settings/feedback-directories`}>
-            {t("workspace.unify.go_to_feedback_directories")}
-          </a>
-        )}
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="space-y-2">
+        <Label>{t("workspace.settings.feedback_directories.directory_name")}</Label>
+        <Select value={selectedDatasetId} onValueChange={onDatasetChange}>
+          <SelectTrigger>
+            <SelectValue placeholder={t("common.select")} />
+          </SelectTrigger>
+          <SelectContent>
+            {datasets.map((dataset) => (
+              <SelectItem key={dataset.id} value={dataset.id}>
+                {dataset.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+      <div className="space-y-2">
+        <Label>{t("common.workspace")}</Label>
+        <Select
+          value={selectedWorkspaceId}
+          onValueChange={onWorkspaceChange}
+          disabled={!selectedDatasetId || eligibleWorkspaces.length === 0}>
+          <SelectTrigger>
+            <SelectValue placeholder={t("common.select")} />
+          </SelectTrigger>
+          <SelectContent>
+            {eligibleWorkspaces.map((workspace) => (
+              <SelectItem key={workspace.id} value={workspace.id}>
+                {workspace.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+};
+
+const NoFormbricksSurveysAlert = ({ workspaceId }: Readonly<{ workspaceId: string }>) => {
+  return (
+    <Alert variant="info" size="small">
+      <AlertDescription className="overflow-visible whitespace-normal">
+        <Trans
+          i18nKey="workspace.unify.no_formbricks_surveys_available_description"
+          components={{
+            surveyLink: (
+              <Link href={`/workspaces/${workspaceId}/surveys/templates`} className="font-medium underline" />
+            ),
+          }}
+        />
+      </AlertDescription>
     </Alert>
   );
 };

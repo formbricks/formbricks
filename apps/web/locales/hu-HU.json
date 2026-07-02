@@ -3814,6 +3814,7 @@
       "source_type_label_usability_test": "Használhatósági teszt",
       "source_updated_successfully": "A visszajelzési forrás sikeresen frissítve",
       "sources": "Visszajelzési források",
+      "sources_nav_label": "Visszajelzési források",
       "status_error": "Hiba",
       "status_live_sync": "Élő szinkronizálás",
       "status_ready": "Kész",

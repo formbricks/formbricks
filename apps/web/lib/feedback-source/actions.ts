@@ -23,8 +23,12 @@ import {
   getOrganizationIdFromFeedbackSourceId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { assertCanViewDirectory } from "@/modules/ee/feedback-directory/lib/access";
+import {
+  assertCanViewDirectory,
+  assertDirectoryAssignedToWorkspace,
+} from "@/modules/ee/feedback-directory/lib/access";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importHistoricalResponses } from "./import";
@@ -191,24 +195,26 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
       ],
     });
 
-    // Verify FRD belongs to same org
-    const frd = await prisma.feedbackDirectory.findUnique({
-      where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
-      select: { organizationId: true },
-    });
-    if (frd?.organizationId !== organizationId) {
-      throw new AuthorizationError("Invalid feedback directory");
-    }
+    // The source stays bound to its own workspace: the target dataset must be assigned to that
+    // workspace (this replaces the old same-org-only check, closing the loophole where a source could
+    // write into a dataset that its workspace could not read).
+    await assertDirectoryAssignedToWorkspace(
+      parsedInput.feedbackSourceInput.feedbackDirectoryId,
+      parsedInput.workspaceId,
+      organizationId
+    );
 
     let mappingsInput: TMappingsInput | undefined;
 
     const { formbricksMappings, fieldMappings } = parsedInput;
 
     if (formbricksMappings?.length) {
+      // Every mapped survey must live in the source's own workspace (the mapping's composite FK
+      // enforces this at write time, but checking here yields a clean authorization error).
       await Promise.all(
         formbricksMappings.map(async ({ surveyId }) => {
-          const orgId = await getOrganizationIdFromSurveyId(surveyId);
-          if (orgId !== organizationId) {
+          const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(surveyId);
+          if (surveyWorkspaceId !== parsedInput.workspaceId) {
             throw new AuthorizationError("You are not authorized to access this survey");
           }
         })

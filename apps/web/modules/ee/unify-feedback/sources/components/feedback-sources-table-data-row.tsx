@@ -1,11 +1,8 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import {
-  TFeedbackSourceStatus,
-  TFeedbackSourceType,
-  TFeedbackSourceWithMappings,
-} from "@formbricks/types/feedback-source";
+import { TFeedbackSourceStatus, TFeedbackSourceType } from "@formbricks/types/feedback-source";
+import type { TFeedbackSourceWithMappingsAndContext } from "@/lib/feedback-source/service";
 import { Badge } from "@/modules/ui/components/badge";
 import { getFeedbackSourceIcon, getFeedbackSourceTypeLabelKey } from "./feedback-source-display";
 import { FeedbackSourceRowDropdown } from "./feedback-source-row-dropdown";
@@ -35,7 +32,7 @@ function getRelativeTime(date: Date, locale: string) {
 }
 
 interface FeedbackSourcesTableDataRowProps {
-  feedbackSource: TFeedbackSourceWithMappings;
+  feedbackSource: TFeedbackSourceWithMappingsAndContext;
   onEdit: () => void;
   onCsvImport?: () => void;
   onDuplicate: () => Promise<void>;
@@ -94,10 +91,16 @@ export function FeedbackSourcesTableDataRow({
           title={t(getFeedbackSourceTypeLabelKey(feedbackSource.type))}>
           {getFeedbackSourceIcon(feedbackSource.type, "h-4 w-4 text-slate-500")}
         </div>
-        <div className="col-span-4 flex items-center">
+        <div className="col-span-3 flex items-center">
           <span className="truncate text-sm font-medium text-slate-900">{feedbackSource.name}</span>
         </div>
-        <div className="col-span-2 hidden items-center justify-center sm:flex">
+        <div className="col-span-2 hidden items-center text-sm text-slate-500 sm:flex">
+          <span className="truncate">{feedbackSource.workspaceName}</span>
+        </div>
+        <div className="col-span-2 hidden items-center text-sm text-slate-500 sm:flex">
+          <span className="truncate">{feedbackSource.feedbackDirectoryName}</span>
+        </div>
+        <div className="col-span-1 hidden items-center justify-center sm:flex">
           <Badge
             text={getStatusLabel(feedbackSource.status, feedbackSource.type)}
             type={STATUS_BADGE_TYPE[feedbackSource.status]}
@@ -106,9 +109,6 @@ export function FeedbackSourcesTableDataRow({
         </div>
         <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
           {getRelativeTime(feedbackSource.updatedAt, i18n.language)}
-        </div>
-        <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
-          <span className="truncate">{feedbackSource.creatorName ?? "—"}</span>
         </div>
       </button>
       <div className="col-span-1 flex items-center justify-end pr-2">

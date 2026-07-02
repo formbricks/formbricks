@@ -3814,6 +3814,7 @@
       "source_type_label_usability_test": "Usability test",
       "source_updated_successfully": "Source de retours mise à jour avec succès",
       "sources": "Sources de retours",
+      "sources_nav_label": "Sources de feedback",
       "status_error": "Erreur",
       "status_live_sync": "Synchronisation en direct",
       "status_ready": "Prêt",

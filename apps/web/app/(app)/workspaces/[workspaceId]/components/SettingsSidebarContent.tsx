@@ -288,13 +288,6 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "feedback-sources",
-      label: t("workspace.unify.feedback_sources"),
-      href: workspaceSettingsPath(workspaceId, "feedback-sources"),
-      icon: <ShapesIcon className={iconClassName} />,
-      disabled: isBilling,
-    },
-    {
       id: "integrations",
       label: t("common.integrations"),
       href: workspaceSettingsPath(workspaceId, "integrations"),
@@ -348,6 +341,16 @@ export const SettingsSidebarContent = ({
       label: t("workspace.settings.feedback_directories.nav_label"),
       href: organizationSettingsPath(organizationId, "unify-feedback/datasets"),
       icon: <FoldersIcon className={iconClassName} />,
+      hidden: !canViewUnifyFeedback,
+      disabled: isBilling,
+    },
+    {
+      // Feedback Sources relocated from workspace settings to org-level Unify Feedback (Stage 3). Same
+      // VIEW gating as the datasets item; server actions re-check write access per source/workspace.
+      id: "org-unify-sources",
+      label: t("workspace.unify.sources_nav_label"),
+      href: organizationSettingsPath(organizationId, "unify-feedback/sources"),
+      icon: <ShapesIcon className={iconClassName} />,
       hidden: !canViewUnifyFeedback,
       disabled: isBilling,
     },

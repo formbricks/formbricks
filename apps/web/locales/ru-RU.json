@@ -3814,6 +3814,7 @@
       "source_type_label_usability_test": "Usability test",
       "source_updated_successfully": "Источник отзывов успешно обновлён",
       "sources": "Источники отзывов",
+      "sources_nav_label": "Источники обратной связи",
       "status_error": "Ошибка",
       "status_live_sync": "Синхронизация в реальном времени",
       "status_ready": "Готово",

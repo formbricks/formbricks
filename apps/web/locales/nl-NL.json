@@ -3814,6 +3814,7 @@
       "source_type_label_usability_test": "Usability test",
       "source_updated_successfully": "Feedbackbron succesvol bijgewerkt",
       "sources": "Feedbackbronnen",
+      "sources_nav_label": "Feedbackbronnen",
       "status_error": "Fout",
       "status_live_sync": "Live synchronisatie",
       "status_ready": "Klaar",
