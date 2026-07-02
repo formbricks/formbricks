@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { captureSsoIdentity, getPendingSsoIdentity, runWithSsoRequestContext } from "./sso-request-context";
+import {
+  captureSsoIdentity,
+  getPendingSsoIdentity,
+  getSsoAttributionProperties,
+  runWithSsoRequestContext,
+  setSsoAttributionProperties,
+} from "./sso-request-context";
 
 describe("captureSsoIdentity", () => {
   test("stashes a complete identity for verify-before-link recovery", () => {
@@ -29,5 +35,24 @@ describe("captureSsoIdentity", () => {
   test("no-ops (does not throw) when called outside a request context", () => {
     expect(() => captureSsoIdentity({ email: "user@example.com", providerAccountId: "acc-1" })).not.toThrow();
     expect(getPendingSsoIdentity()).toBeUndefined();
+  });
+});
+
+describe("SSO attribution properties", () => {
+  test("stashes attribution for the user.create.after hook to read back", () => {
+    const stashed = runWithSsoRequestContext(() => {
+      setSsoAttributionProperties({ utm_source: "twitter", entry_page: "/pricing" });
+      return getSsoAttributionProperties();
+    });
+    expect(stashed).toEqual({ utm_source: "twitter", entry_page: "/pricing" });
+  });
+
+  test("defaults to an empty object when none was stashed", () => {
+    expect(runWithSsoRequestContext(() => getSsoAttributionProperties())).toEqual({});
+  });
+
+  test("no-ops (does not throw) and returns {} outside a request context", () => {
+    expect(() => setSsoAttributionProperties({ utm_source: "x" })).not.toThrow();
+    expect(getSsoAttributionProperties()).toEqual({});
   });
 });
