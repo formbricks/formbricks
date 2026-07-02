@@ -37,6 +37,10 @@ describe("normalizeV3SurveyLocaleCode", () => {
   test.each([
     ["EN_us", "en-US"],
     ["zh_hans_cn", "zh-Hans-CN"],
+    // 3-letter base and UN M.49 numeric region — canonical catalog codes the old 2-letter-only regex rejected.
+    ["fil-PH", "fil-PH"],
+    ["bho-IN", "bho-IN"],
+    ["eo-001", "eo-001"],
   ])("normalizes write locale %s to %s", (input, expected) => {
     expect(normalizeV3SurveyLocaleCode(input)).toBe(expected);
   });

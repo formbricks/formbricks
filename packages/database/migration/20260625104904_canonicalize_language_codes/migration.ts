@@ -1,10 +1,15 @@
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { LANGUAGE_CANONICAL_MAP, normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 import type { LanguageRow, MigrationStats, SurveyContentRow, SurveyLanguageRow } from "./types";
 import { planLanguageMerges, planSurveyLanguageMoves, rewriteI18nKeys, toCanonical } from "./utils";
 
 const SURVEY_BATCH_SIZE = 150;
+// The two highest-volume tables are migrated OUTSIDE the mega-transaction in committed chunks (see steps
+// 3 & 4). `Response` is walked by primary key; `ContactAttribute` by its `[attributeKeyId, value]` index.
+const RESPONSE_BATCH_SIZE = 5000;
+const CONTACT_ATTRIBUTE_BATCH_SIZE = 5000;
+const PROGRESS_LOG_EVERY_BATCHES = 20;
 
 // Survey content columns that can hold i18nStrings. `blocks` and `endings` are `Json[]` (Postgres
 // array of jsonb); the rest are single `Json`.
@@ -21,7 +26,10 @@ export const canonicalizeLanguageCodes: MigrationScript = {
   type: "data",
   id: "wu5owuszcu0ge717a5vodm0p",
   name: "20260625104904_canonicalize_language_codes",
-  run: async ({ tx }) => {
+  // `tx` is the runner's mega-transaction (used for the small, bounded catalog + survey-content steps).
+  // `prisma` is the autocommit handle used for the two high-volume tables so their work commits in small
+  // chunks — see steps 3 & 4 for why (lock footprint + timeout/convergence).
+  run: async ({ prisma, tx }) => {
     const stats: MigrationStats = {
       languageRelabels: 0,
       languageMerges: 0,
@@ -220,76 +228,87 @@ export const canonicalizeLanguageCodes: MigrationScript = {
     stats.surveysContentUpdated = surveyUpdates.length;
 
     // ---------------------------------------------------------------------------------------------
-    // 3. Response.language (skip NULL, the "default" sentinel, and already-canonical values)
+    // 3. Response.language + the contactAttributes 'language' snapshot.
+    //
+    // `Response` is the highest-volume table and has NO index on `language`, so the old approach — one
+    // `UPDATE ... WHERE language = ANY(...)` inside the 30-min mega-transaction — risked (a) exceeding the
+    // timeout on a large table, which rolls back EVERY step so the deploy never converges, and (b) holding
+    // row locks long enough to stall response ingestion. Instead we walk the table by primary key in fixed
+    // chunks and commit each chunk via the autocommit `prisma` handle (NOT `tx`): locks release per chunk
+    // and committed progress survives a timeout, since the migration is idempotent (a retry just resumes).
+    //
+    // The remap set comes from the shared canonical map rather than a `SELECT DISTINCT language` full scan
+    // (itself an unindexed full-table read). It covers every known legacy code; an exotic code outside the
+    // map is left as-is and still resolves at read time (the renderer canonicalizes on read).
     // ---------------------------------------------------------------------------------------------
-    logger.info("Canonicalizing Response.language...");
-    const responseCodes = await tx.$queryRaw<{ language: string }[]>`
-      SELECT DISTINCT language FROM "Response"
-      WHERE language IS NOT NULL AND language <> 'default'
-    `;
-    const responsePairs = buildCanonicalPairs(
-      responseCodes.map((r) => r.language),
-      stats
-    );
+    logger.info("Canonicalizing Response.language + contactAttributes snapshot...");
+    const responsePairs = buildRemapPairsFromMap();
     if (responsePairs.olds.length > 0) {
-      const updated = await tx.$executeRawUnsafe(
-        `UPDATE "Response" AS r
-         SET language = data.canon
-         FROM (SELECT unnest($1::text[]) AS old, unnest($2::text[]) AS canon) AS data
-         WHERE r.language = data.old`,
-        responsePairs.olds,
-        responsePairs.canons
-      );
-      stats.responsesUpdated = typeof updated === "number" ? updated : 0;
-    }
-    logger.info(
-      `Response.language: ${responsePairs.olds.length.toString()} distinct codes remapped, ${stats.responsesUpdated.toString()} rows updated`
-    );
+      let lastId = "";
+      let batchCount = 0;
+      for (;;) {
+        const rows = await prisma.$queryRawUnsafe<{ id: string }[]>(
+          `SELECT id FROM "Response" WHERE id > $1 ORDER BY id LIMIT $2`,
+          lastId,
+          RESPONSE_BATCH_SIZE
+        );
+        if (rows.length === 0) break;
+        const ids = rows.map((row) => row.id);
 
-    // 3b. Response.contactAttributes snapshot `language` key. This JSON is a point-in-time copy of the
-    // contact's attributes; it isn't used to pick the render language, but we still canonicalize it so the
-    // stored value stays consistent with the contact attribute and Response.language.
-    const responseSnapshotCodes = await tx.$queryRaw<{ language: string }[]>`
-      SELECT DISTINCT "contactAttributes" ->> 'language' AS language
-      FROM "Response"
-      WHERE "contactAttributes" ? 'language'
-        AND "contactAttributes" ->> 'language' NOT IN ('', 'default')
-    `;
-    const snapshotPairs = buildCanonicalPairs(
-      responseSnapshotCodes.map((r) => r.language),
-      stats
-    );
-    if (snapshotPairs.olds.length > 0) {
-      const updated = await tx.$executeRawUnsafe(
-        `UPDATE "Response" AS r
-         SET "contactAttributes" = jsonb_set(r."contactAttributes", '{language}', to_jsonb(data.canon))
-         FROM (SELECT unnest($1::text[]) AS old, unnest($2::text[]) AS canon) AS data
-         WHERE r."contactAttributes" ->> 'language' = data.old`,
-        snapshotPairs.olds,
-        snapshotPairs.canons
-      );
-      stats.responseContactAttributesUpdated = typeof updated === "number" ? updated : 0;
+        const languageUpdated = await prisma.$executeRawUnsafe(
+          `UPDATE "Response" AS r
+           SET language = data.canon
+           FROM (SELECT unnest($1::text[]) AS old, unnest($2::text[]) AS canon) AS data
+           WHERE r.id = ANY($3::text[]) AND r.language = data.old`,
+          responsePairs.olds,
+          responsePairs.canons,
+          ids
+        );
+        stats.responsesUpdated += typeof languageUpdated === "number" ? languageUpdated : 0;
+
+        const snapshotUpdated = await prisma.$executeRawUnsafe(
+          `UPDATE "Response" AS r
+           SET "contactAttributes" = jsonb_set(r."contactAttributes", '{language}', to_jsonb(data.canon))
+           FROM (SELECT unnest($1::text[]) AS old, unnest($2::text[]) AS canon) AS data
+           WHERE r.id = ANY($3::text[])
+             AND r."contactAttributes" ->> 'language' = data.old`,
+          responsePairs.olds,
+          responsePairs.canons,
+          ids
+        );
+        stats.responseContactAttributesUpdated += typeof snapshotUpdated === "number" ? snapshotUpdated : 0;
+
+        lastId = ids[ids.length - 1];
+        batchCount += 1;
+        if (batchCount % PROGRESS_LOG_EVERY_BATCHES === 0) {
+          logger.info(
+            `Response progress: ~${(batchCount * RESPONSE_BATCH_SIZE).toString()} scanned, ${stats.responsesUpdated.toString()} language + ${stats.responseContactAttributesUpdated.toString()} snapshot rows updated`
+          );
+        }
+      }
     }
     logger.info(
-      `Response.contactAttributes language: ${snapshotPairs.olds.length.toString()} distinct codes remapped, ${stats.responseContactAttributesUpdated.toString()} rows updated`
+      `Response.language: ${stats.responsesUpdated.toString()} rows updated; contactAttributes snapshot: ${stats.responseContactAttributesUpdated.toString()} rows updated`
     );
 
     // ---------------------------------------------------------------------------------------------
-    // 4. Contact `language` attribute value
+    // 4. Contact `language` attribute value.
+    //
+    // Uses the `[attributeKeyId, value]` index to touch only language rows (never a full-table join to
+    // ContactAttributeKey). Runs via the autocommit `prisma` handle and updates each legacy value in
+    // index-backed chunks that commit per batch, so a code held by millions of contacts never sits under
+    // one long lock.
     // ---------------------------------------------------------------------------------------------
     logger.info("Canonicalizing contact language attribute values...");
-    // Resolve the workspace-scoped `language` attribute keys up front so the queries below can hit the
-    // `[attributeKeyId, value]` index directly (attributeKeyId = ANY + value =), instead of joining the
-    // whole (potentially millions-of-rows) ContactAttribute table to ContactAttributeKey — that join
-    // planned badly and made this step crawl.
-    const languageKeyRows = await tx.$queryRaw<{ id: string }[]>`
+    const languageKeyRows = await prisma.$queryRaw<{ id: string }[]>`
       SELECT id FROM "ContactAttributeKey" WHERE key = 'language'
     `;
     const languageKeyIds = languageKeyRows.map((row) => row.id);
     logger.info(`Found ${languageKeyIds.length.toString()} language attribute keys`);
 
     if (languageKeyIds.length > 0) {
-      const contactCodes = await tx.$queryRawUnsafe<{ value: string }[]>(
+      // Scoped to language rows via the index (not a full-table scan) and returns a handful of codes.
+      const contactCodes = await prisma.$queryRawUnsafe<{ value: string }[]>(
         `SELECT DISTINCT value FROM "ContactAttribute"
          WHERE "attributeKeyId" = ANY($1::text[]) AND value <> '' AND value <> 'default'`,
         languageKeyIds
@@ -298,16 +317,26 @@ export const canonicalizeLanguageCodes: MigrationScript = {
         contactCodes.map((c) => c.value),
         stats
       );
-      // One UPDATE per distinct code, so each hits the index and we get visible progress.
       for (let i = 0; i < contactPairs.olds.length; i++) {
-        const updated = await tx.$executeRawUnsafe(
-          `UPDATE "ContactAttribute" SET value = $1
-           WHERE "attributeKeyId" = ANY($2::text[]) AND value = $3`,
-          contactPairs.canons[i],
-          languageKeyIds,
-          contactPairs.olds[i]
-        );
-        stats.contactAttributesUpdated += typeof updated === "number" ? updated : 0;
+        // Index-backed batched update: each pass updates up to CONTACT_ATTRIBUTE_BATCH_SIZE rows still at
+        // the legacy value and commits, until fewer than a full batch remain.
+        for (;;) {
+          const updated = await prisma.$executeRawUnsafe(
+            `UPDATE "ContactAttribute" SET value = $1
+             WHERE id IN (
+               SELECT id FROM "ContactAttribute"
+               WHERE "attributeKeyId" = ANY($2::text[]) AND value = $3
+               LIMIT $4
+             )`,
+            contactPairs.canons[i],
+            languageKeyIds,
+            contactPairs.olds[i],
+            CONTACT_ATTRIBUTE_BATCH_SIZE
+          );
+          const rowsUpdated = typeof updated === "number" ? updated : 0;
+          stats.contactAttributesUpdated += rowsUpdated;
+          if (rowsUpdated < CONTACT_ATTRIBUTE_BATCH_SIZE) break;
+        }
         logger.info(
           `Contact language attribute progress: ${(i + 1).toString()}/${contactPairs.olds.length.toString()} (${contactPairs.olds[i]} -> ${contactPairs.canons[i]})`
         );
@@ -337,6 +366,21 @@ const asLinkArray = (rows: SurveyLanguageRow[]): SurveyLanguageRow[] =>
     default: Boolean(row.default),
     enabled: Boolean(row.enabled),
   }));
+
+// The full legacy -> canonical remap from the shared canonical map, excluding identity entries. Used for
+// the Response steps so we never full-scan the huge, unindexed-on-`language` table just to discover which
+// codes exist; the batched UPDATE simply no-ops on any row whose value isn't a known legacy code.
+const buildRemapPairsFromMap = (): { olds: string[]; canons: string[] } => {
+  const olds: string[] = [];
+  const canons: string[] = [];
+  for (const [legacy, canonical] of Object.entries(LANGUAGE_CANONICAL_MAP)) {
+    if (legacy !== canonical) {
+      olds.push(legacy);
+      canons.push(canonical);
+    }
+  }
+  return { olds, canons };
+};
 
 // Build parallel old/canonical arrays for a batched UNNEST remap, keeping only codes that actually
 // change and recording codes that don't resolve to a canonical form.

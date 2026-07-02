@@ -23,7 +23,11 @@ type TResolveV3SurveyLanguageCodeResult =
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
 const V3_SURVEY_LANGUAGE_TAG_REGEX = /^[a-z]{2}(?:-[A-Z]{2}|-[A-Z][a-z]{3}(?:-[A-Z]{2})?)$/;
-const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/;
+// A region-qualified write locale: 2-3 letter base language, optional 4-letter script, and a region that
+// is either a 2-letter country or a 3-digit UN M.49 area. The 3-letter base + numeric region forms matter
+// because canonical catalog codes include them (e.g. `fil-PH`, `bho-IN`, `eo-001`, `vo-001`); the old
+// 2-letter-only pattern rejected those on write even though the picker/`createLanguage` accept them.
+const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2,3}(?:-[A-Z][a-z]{3})?-(?:[A-Z]{2}|\d{3})$/;
 
 // Validate + case/separator-normalize a fully region/script-qualified BCP-47 tag. This only recognises a
 // valid tag — it does NOT canonicalize or complete it (`zh-Hans` stays `zh-Hans`, `zh-CN` stays `zh-CN`).
