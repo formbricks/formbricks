@@ -69,6 +69,40 @@ const ctx = {
   user: { id: "user_1" },
 };
 
+type MockedActionCall<TInput, TResult> = (args: { ctx: typeof ctx; parsedInput: TInput }) => Promise<TResult>;
+
+const callAction = <TInput, TResult>(
+  action: (input: TInput) => Promise<TResult>,
+  parsedInput: TInput
+): Promise<TResult> => {
+  const handler = action as unknown as MockedActionCall<TInput, TResult>;
+  return handler({ ctx, parsedInput });
+};
+
+const callGetTaxonomyFieldsAction = (parsedInput: Parameters<typeof getTaxonomyFieldsAction>[0]) =>
+  callAction(getTaxonomyFieldsAction, parsedInput);
+
+const callGetTaxonomyStateAction = (parsedInput: Parameters<typeof getTaxonomyStateAction>[0]) =>
+  callAction(getTaxonomyStateAction, parsedInput);
+
+const callGetTaxonomyRunAction = (parsedInput: Parameters<typeof getTaxonomyRunAction>[0]) =>
+  callAction(getTaxonomyRunAction, parsedInput);
+
+const callGetTaxonomyTreeAction = (parsedInput: Parameters<typeof getTaxonomyTreeAction>[0]) =>
+  callAction(getTaxonomyTreeAction, parsedInput);
+
+const callGetTaxonomyNodeRecordsAction = (parsedInput: Parameters<typeof getTaxonomyNodeRecordsAction>[0]) =>
+  callAction(getTaxonomyNodeRecordsAction, parsedInput);
+
+const callTriggerTaxonomyRunAction = (parsedInput: Parameters<typeof triggerTaxonomyRunAction>[0]) =>
+  callAction(triggerTaxonomyRunAction, parsedInput);
+
+const callRenameTaxonomyNodeAction = (parsedInput: Parameters<typeof renameTaxonomyNodeAction>[0]) =>
+  callAction(renameTaxonomyNodeAction, parsedInput);
+
+const callRemoveTaxonomyNodeAction = (parsedInput: Parameters<typeof removeTaxonomyNodeAction>[0]) =>
+  callAction(removeTaxonomyNodeAction, parsedInput);
+
 const organizationId = "org_1";
 const workspaceId = "workspace_1";
 const tenantId = "tenant_1";
@@ -106,6 +140,7 @@ const taxonomyNode = {
 };
 
 const expectAuthorization = (minPermission: "read" | "readWrite") => {
+  expect(mocks.checkAuthorizationUpdated).toHaveBeenCalledTimes(1);
   expect(mocks.checkAuthorizationUpdated).toHaveBeenCalledWith({
     userId: ctx.user.id,
     organizationId,
@@ -121,6 +156,11 @@ const expectAuthorization = (minPermission: "read" | "readWrite") => {
       },
     ],
   });
+};
+
+const expectDirectoryAccess = () => {
+  expect(mocks.getFeedbackDirectoriesByWorkspaceId).toHaveBeenCalledTimes(1);
+  expect(mocks.getFeedbackDirectoriesByWorkspaceId).toHaveBeenCalledWith(workspaceId);
 };
 
 const expectNoHubCalls = () => {
@@ -169,131 +209,234 @@ describe("taxonomy topics server actions", () => {
     });
   });
 
-  test("allows read actions with workspace read access and assigned feedback directory", async () => {
+  test("allows taxonomy field reads with workspace read access and assigned feedback directory", async () => {
+    await expect(callGetTaxonomyFieldsAction({ workspaceId, directoryId: tenantId })).resolves.toMatchObject({
+      unavailable: false,
+    });
+
+    expectAuthorization("read");
+    expectDirectoryAccess();
+    expect(mocks.listTaxonomyFields).toHaveBeenCalledTimes(1);
+    expect(mocks.listTaxonomyFields).toHaveBeenCalledWith(tenantId);
+  });
+
+  test("allows taxonomy state reads with workspace read access and assigned feedback directory", async () => {
+    await expect(callGetTaxonomyStateAction({ workspaceId, scope })).resolves.toMatchObject({
+      activeTree: { run: taxonomyRun },
+      runs: [taxonomyRun],
+      unavailable: false,
+    });
+
+    expectAuthorization("read");
+    expectDirectoryAccess();
+    expect(mocks.getActiveTaxonomyTree).toHaveBeenCalledTimes(1);
+    expect(mocks.getActiveTaxonomyTree).toHaveBeenCalledWith(scope);
+    expect(mocks.listTaxonomyRuns).toHaveBeenCalledTimes(1);
+    expect(mocks.listTaxonomyRuns).toHaveBeenCalledWith({ ...scope, limit: 5 });
+  });
+
+  test("allows taxonomy run reads with workspace read access and assigned feedback directory", async () => {
+    await expect(callGetTaxonomyRunAction({ workspaceId, scope, runId })).resolves.toEqual(taxonomyRun);
+
+    expectAuthorization("read");
+    expectDirectoryAccess();
+    expect(mocks.getTaxonomyRun).toHaveBeenCalledTimes(1);
+    expect(mocks.getTaxonomyRun).toHaveBeenCalledWith(runId, tenantId);
+  });
+
+  test("allows taxonomy tree reads with workspace read access and assigned feedback directory", async () => {
+    await expect(callGetTaxonomyTreeAction({ workspaceId, scope, runId })).resolves.toMatchObject({
+      run: taxonomyRun,
+      root: taxonomyNode,
+    });
+
+    expectAuthorization("read");
+    expectDirectoryAccess();
+    expect(mocks.getTaxonomyTree).toHaveBeenCalledTimes(1);
+    expect(mocks.getTaxonomyTree).toHaveBeenCalledWith(runId, tenantId);
+  });
+
+  test("allows taxonomy node record reads with workspace read access and assigned feedback directory", async () => {
     await expect(
-      getTaxonomyFieldsAction({ ctx, parsedInput: { workspaceId, directoryId: tenantId } } as any)
-    ).resolves.toMatchObject({ unavailable: false });
-    await expect(
-      getTaxonomyStateAction({ ctx, parsedInput: { workspaceId, scope } } as any)
-    ).resolves.toMatchObject({ activeTree: { run: taxonomyRun }, runs: [taxonomyRun], unavailable: false });
-    await expect(
-      getTaxonomyRunAction({ ctx, parsedInput: { workspaceId, scope, runId } } as any)
-    ).resolves.toEqual(taxonomyRun);
-    await expect(
-      getTaxonomyTreeAction({ ctx, parsedInput: { workspaceId, scope, runId } } as any)
-    ).resolves.toMatchObject({ run: taxonomyRun, root: taxonomyNode });
-    await expect(
-      getTaxonomyNodeRecordsAction({
-        ctx,
-        parsedInput: { workspaceId, tenantId, nodeId, limit: 25 },
-      } as any)
+      callGetTaxonomyNodeRecordsAction({ workspaceId, tenantId, nodeId, limit: 25 })
     ).resolves.toEqual({ data: [], limit: 25 });
 
     expectAuthorization("read");
-    expect(mocks.listTaxonomyFields).toHaveBeenCalledWith(tenantId);
-    expect(mocks.getActiveTaxonomyTree).toHaveBeenCalledWith(scope);
-    expect(mocks.listTaxonomyRuns).toHaveBeenCalledWith({ ...scope, limit: 5 });
-    expect(mocks.getTaxonomyRun).toHaveBeenCalledWith(runId, tenantId);
-    expect(mocks.getTaxonomyTree).toHaveBeenCalledWith(runId, tenantId);
+    expectDirectoryAccess();
+    expect(mocks.listTaxonomyNodeRecords).toHaveBeenCalledTimes(1);
     expect(mocks.listTaxonomyNodeRecords).toHaveBeenCalledWith(nodeId, { tenant_id: tenantId, limit: 25 });
   });
 
-  test("blocks read actions when the user has no workspace access", async () => {
-    mocks.checkAuthorizationUpdated.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
-
+  test("allows taxonomy generation with workspace write access and assigned feedback directory", async () => {
     await expect(
-      getTaxonomyFieldsAction({ ctx, parsedInput: { workspaceId, directoryId: tenantId } } as any)
-    ).rejects.toThrow(AuthorizationError);
-
-    expectAuthorization("read");
-    expect(mocks.getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
-    expectNoHubCalls();
-  });
-
-  test("blocks taxonomy actions when Unify Feedback is not enabled", async () => {
-    mocks.getIsFeedbackDirectoriesEnabled.mockResolvedValueOnce(false);
-
-    await expect(
-      getTaxonomyFieldsAction({ ctx, parsedInput: { workspaceId, directoryId: tenantId } } as any)
-    ).rejects.toThrow(OperationNotAllowedError);
-
-    expect(mocks.checkAuthorizationUpdated).not.toHaveBeenCalled();
-    expect(mocks.getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
-    expectNoHubCalls();
-  });
-
-  test("blocks cross-directory taxonomy reads before calling Hub", async () => {
-    await expect(
-      getTaxonomyStateAction({
-        ctx,
-        parsedInput: { workspaceId, scope: { ...scope, tenant_id: otherTenantId } },
-      } as any)
-    ).rejects.toThrow(OperationNotAllowedError);
-
-    expectAuthorization("read");
-    expect(mocks.getFeedbackDirectoriesByWorkspaceId).toHaveBeenCalledWith(workspaceId);
-    expectNoHubCalls();
-  });
-
-  test("allows generation, rename, and remove only with write permission", async () => {
-    await expect(
-      triggerTaxonomyRunAction({
-        ctx,
-        parsedInput: { workspaceId, scope, fieldLabel: "What do you think?" },
-      } as any)
+      callTriggerTaxonomyRunAction({ workspaceId, scope, fieldLabel: "What do you think?" })
     ).resolves.toEqual({ run: taxonomyRun, inProgress: false });
-    await expect(
-      renameTaxonomyNodeAction({
-        ctx,
-        parsedInput: { workspaceId, tenantId, nodeId, label: "Renamed topic" },
-      } as any)
-    ).resolves.toMatchObject({ label: "Renamed topic" });
-    await expect(
-      removeTaxonomyNodeAction({ ctx, parsedInput: { workspaceId, tenantId, nodeId } } as any)
-    ).resolves.toMatchObject({ removed_at: "2026-06-29T00:00:00.000Z" });
 
     expectAuthorization("readWrite");
+    expectDirectoryAccess();
+    expect(mocks.createTaxonomyRun).toHaveBeenCalledTimes(1);
     expect(mocks.createTaxonomyRun).toHaveBeenCalledWith({
       ...scope,
       field_label: "What do you think?",
       actor_id: ctx.user.id,
     });
+  });
+
+  test("allows taxonomy node renames with workspace write access and assigned feedback directory", async () => {
+    await expect(
+      callRenameTaxonomyNodeAction({ workspaceId, tenantId, nodeId, label: "Renamed topic" })
+    ).resolves.toMatchObject({ label: "Renamed topic" });
+
+    expectAuthorization("readWrite");
+    expectDirectoryAccess();
+    expect(mocks.renameTaxonomyNode).toHaveBeenCalledTimes(1);
     expect(mocks.renameTaxonomyNode).toHaveBeenCalledWith(nodeId, {
       tenant_id: tenantId,
       actor_id: ctx.user.id,
       label: "Renamed topic",
     });
+  });
+
+  test("allows taxonomy node removals with workspace write access and assigned feedback directory", async () => {
+    await expect(callRemoveTaxonomyNodeAction({ workspaceId, tenantId, nodeId })).resolves.toMatchObject({
+      removed_at: "2026-06-29T00:00:00.000Z",
+    });
+
+    expectAuthorization("readWrite");
+    expectDirectoryAccess();
+    expect(mocks.removeTaxonomyNode).toHaveBeenCalledTimes(1);
     expect(mocks.removeTaxonomyNode).toHaveBeenCalledWith(nodeId, {
       tenant_id: tenantId,
       actor_id: ctx.user.id,
     });
   });
 
-  test("blocks write actions for read-only users before calling Hub", async () => {
-    mocks.checkAuthorizationUpdated.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
+  test("blocks taxonomy actions when Unify Feedback is not enabled", async () => {
+    mocks.getIsFeedbackDirectoriesEnabled.mockResolvedValueOnce(false);
 
-    await expect(
-      triggerTaxonomyRunAction({
-        ctx,
-        parsedInput: { workspaceId, scope, fieldLabel: "What do you think?" },
-      } as any)
-    ).rejects.toThrow(AuthorizationError);
+    await expect(callGetTaxonomyFieldsAction({ workspaceId, directoryId: tenantId })).rejects.toThrow(
+      OperationNotAllowedError
+    );
 
-    expectAuthorization("readWrite");
+    expect(mocks.checkAuthorizationUpdated).not.toHaveBeenCalled();
     expect(mocks.getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
     expectNoHubCalls();
   });
 
-  test("blocks write actions for unassigned feedback directories before calling Hub", async () => {
-    await expect(
-      renameTaxonomyNodeAction({
-        ctx,
-        parsedInput: { workspaceId, tenantId: otherTenantId, nodeId, label: "Renamed topic" },
-      } as any)
-    ).rejects.toThrow(OperationNotAllowedError);
+  test.each([
+    {
+      name: "getTaxonomyFieldsAction",
+      minPermission: "read" as const,
+      run: () => callGetTaxonomyFieldsAction({ workspaceId, directoryId: tenantId }),
+    },
+    {
+      name: "getTaxonomyStateAction",
+      minPermission: "read" as const,
+      run: () => callGetTaxonomyStateAction({ workspaceId, scope }),
+    },
+    {
+      name: "getTaxonomyRunAction",
+      minPermission: "read" as const,
+      run: () => callGetTaxonomyRunAction({ workspaceId, scope, runId }),
+    },
+    {
+      name: "getTaxonomyTreeAction",
+      minPermission: "read" as const,
+      run: () => callGetTaxonomyTreeAction({ workspaceId, scope, runId }),
+    },
+    {
+      name: "getTaxonomyNodeRecordsAction",
+      minPermission: "read" as const,
+      run: () => callGetTaxonomyNodeRecordsAction({ workspaceId, tenantId, nodeId, limit: 25 }),
+    },
+    {
+      name: "triggerTaxonomyRunAction",
+      minPermission: "readWrite" as const,
+      run: () => callTriggerTaxonomyRunAction({ workspaceId, scope, fieldLabel: "What do you think?" }),
+    },
+    {
+      name: "renameTaxonomyNodeAction",
+      minPermission: "readWrite" as const,
+      run: () => callRenameTaxonomyNodeAction({ workspaceId, tenantId, nodeId, label: "Renamed topic" }),
+    },
+    {
+      name: "removeTaxonomyNodeAction",
+      minPermission: "readWrite" as const,
+      run: () => callRemoveTaxonomyNodeAction({ workspaceId, tenantId, nodeId }),
+    },
+  ])("blocks $name when the user has no workspace access", async ({ minPermission, run }) => {
+    mocks.checkAuthorizationUpdated.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
 
-    expectAuthorization("readWrite");
-    expect(mocks.getFeedbackDirectoriesByWorkspaceId).toHaveBeenCalledWith(workspaceId);
+    await expect(run()).rejects.toThrow(AuthorizationError);
+
+    expectAuthorization(minPermission);
+    expect(mocks.getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
     expectNoHubCalls();
   });
+
+  test.each([
+    {
+      name: "getTaxonomyFieldsAction",
+      minPermission: "read" as const,
+      run: () => callGetTaxonomyFieldsAction({ workspaceId, directoryId: otherTenantId }),
+    },
+    {
+      name: "getTaxonomyStateAction",
+      minPermission: "read" as const,
+      run: () => callGetTaxonomyStateAction({ workspaceId, scope: { ...scope, tenant_id: otherTenantId } }),
+    },
+    {
+      name: "getTaxonomyRunAction",
+      minPermission: "read" as const,
+      run: () =>
+        callGetTaxonomyRunAction({ workspaceId, scope: { ...scope, tenant_id: otherTenantId }, runId }),
+    },
+    {
+      name: "getTaxonomyTreeAction",
+      minPermission: "read" as const,
+      run: () =>
+        callGetTaxonomyTreeAction({ workspaceId, scope: { ...scope, tenant_id: otherTenantId }, runId }),
+    },
+    {
+      name: "getTaxonomyNodeRecordsAction",
+      minPermission: "read" as const,
+      run: () =>
+        callGetTaxonomyNodeRecordsAction({ workspaceId, tenantId: otherTenantId, nodeId, limit: 25 }),
+    },
+    {
+      name: "triggerTaxonomyRunAction",
+      minPermission: "readWrite" as const,
+      run: () =>
+        callTriggerTaxonomyRunAction({
+          workspaceId,
+          scope: { ...scope, tenant_id: otherTenantId },
+          fieldLabel: "What do you think?",
+        }),
+    },
+    {
+      name: "renameTaxonomyNodeAction",
+      minPermission: "readWrite" as const,
+      run: () =>
+        callRenameTaxonomyNodeAction({
+          workspaceId,
+          tenantId: otherTenantId,
+          nodeId,
+          label: "Renamed topic",
+        }),
+    },
+    {
+      name: "removeTaxonomyNodeAction",
+      minPermission: "readWrite" as const,
+      run: () => callRemoveTaxonomyNodeAction({ workspaceId, tenantId: otherTenantId, nodeId }),
+    },
+  ])(
+    "blocks $name for unassigned feedback directories before calling Hub",
+    async ({ minPermission, run }) => {
+      await expect(run()).rejects.toThrow(OperationNotAllowedError);
+
+      expectAuthorization(minPermission);
+      expectDirectoryAccess();
+      expectNoHubCalls();
+    }
+  );
 });
