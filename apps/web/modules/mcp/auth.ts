@@ -3,6 +3,7 @@ import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resourc
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { JWTPayload } from "jose";
 import type { NextRequest } from "next/server";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -162,6 +163,15 @@ function createOAuthMcpAuthInfo(payload: JWTPayload, requestId: string): TMcpAut
   };
 }
 
+async function isOAuthUserActive(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true },
+  });
+
+  return user?.isActive === true;
+}
+
 export function getMcpAuthentication(authInfo?: AuthInfo): TV3Authentication {
   const authentication = authInfo?.extra?.formbricksAuthentication;
   if (!authentication || typeof authentication !== "object") {
@@ -291,68 +301,16 @@ async function authenticateMcpOAuthBearer(
   instance: string,
   log: ReturnType<typeof logger.withContext>
 ): Promise<TMcpAuthenticationResult> {
+  let payload: JWTPayload;
+
   try {
-    const payload = await oauthResourceClient.getActions().verifyAccessToken(token, {
+    payload = await oauthResourceClient.getActions().verifyAccessToken(token, {
       verifyOptions: {
         audience: getMcpResourceUrl(),
         issuer: getAuthIssuerUrl(),
       },
       jwksUrl: `${getAuthIssuerUrl()}/jwks`,
     });
-    const authInfo = createOAuthMcpAuthInfo(payload, requestId);
-
-    if (!authInfo) {
-      const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-      if (rateLimitResponse) {
-        return { ok: false, requestId, response: rateLimitResponse };
-      }
-
-      log.warn({ statusCode: 401 }, "MCP OAuth token has no user subject");
-      return {
-        ok: false,
-        requestId,
-        response: withOAuthChallenge(
-          problemUnauthorized(requestId, "User OAuth access token required", instance)
-        ),
-      };
-    }
-
-    if (!hasMcpScopes(authInfo, [DEFAULT_OAUTH_SCOPE])) {
-      log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing read scope");
-      return {
-        ok: false,
-        requestId,
-        response: withInsufficientScopeChallenge(
-          problemForbidden(requestId, "OAuth token does not include the required MCP scope", instance),
-          [DEFAULT_OAUTH_SCOPE]
-        ),
-      };
-    }
-
-    try {
-      const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
-      await applyRateLimit(
-        rateLimitConfigs.api.v3,
-        `oauth:${sessionAuthentication.user.id}:${authInfo.clientId}`
-      );
-    } catch (error) {
-      log.warn({ error, statusCode: 429, clientId: authInfo.clientId }, "MCP OAuth rate limit exceeded");
-      return {
-        ok: false,
-        requestId,
-        response: problemTooManyRequests(
-          requestId,
-          error instanceof Error ? error.message : "Rate limit exceeded",
-          error instanceof TooManyRequestsError ? error.retryAfter : undefined
-        ),
-      };
-    }
-
-    return {
-      ok: true,
-      requestId,
-      authInfo,
-    };
   } catch {
     const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
     if (rateLimitResponse) {
@@ -366,6 +324,75 @@ async function authenticateMcpOAuthBearer(
       response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
     };
   }
+
+  const authInfo = createOAuthMcpAuthInfo(payload, requestId);
+
+  if (!authInfo) {
+    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+    if (rateLimitResponse) {
+      return { ok: false, requestId, response: rateLimitResponse };
+    }
+
+    log.warn({ statusCode: 401 }, "MCP OAuth token has no user subject");
+    return {
+      ok: false,
+      requestId,
+      response: withOAuthChallenge(
+        problemUnauthorized(requestId, "User OAuth access token required", instance)
+      ),
+    };
+  }
+
+  const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
+  if (!(await isOAuthUserActive(sessionAuthentication.user.id))) {
+    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+    if (rateLimitResponse) {
+      return { ok: false, requestId, response: rateLimitResponse };
+    }
+
+    log.warn({ statusCode: 401, clientId: authInfo.clientId }, "MCP OAuth token user is inactive");
+    return {
+      ok: false,
+      requestId,
+      response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
+    };
+  }
+
+  if (!hasMcpScopes(authInfo, [DEFAULT_OAUTH_SCOPE])) {
+    log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing read scope");
+    return {
+      ok: false,
+      requestId,
+      response: withInsufficientScopeChallenge(
+        problemForbidden(requestId, "OAuth token does not include the required MCP scope", instance),
+        [DEFAULT_OAUTH_SCOPE]
+      ),
+    };
+  }
+
+  try {
+    await applyRateLimit(
+      rateLimitConfigs.api.v3,
+      `oauth:${sessionAuthentication.user.id}:${authInfo.clientId}`
+    );
+  } catch (error) {
+    log.warn({ error, statusCode: 429, clientId: authInfo.clientId }, "MCP OAuth rate limit exceeded");
+    return {
+      ok: false,
+      requestId,
+      response: problemTooManyRequests(
+        requestId,
+        error instanceof Error ? error.message : "Rate limit exceeded",
+        error instanceof TooManyRequestsError ? error.retryAfter : undefined
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    requestId,
+    authInfo,
+  };
 }
 
 export function hasMcpScopes(authInfo: AuthInfo | undefined, requiredScopes: string[]): boolean {

@@ -11,7 +11,10 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
-const verifyAccessTokenMock = vi.hoisted(() => vi.fn());
+const { verifyAccessTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+  verifyAccessTokenMock: vi.fn(),
+  userFindUniqueMock: vi.fn(),
+}));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
   oauthProviderResourceClient: vi.fn(() => ({
@@ -19,6 +22,14 @@ vi.mock("@better-auth/oauth-provider/resource-client", () => ({
       verifyAccessToken: verifyAccessTokenMock,
     }),
   })),
+}));
+
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    user: {
+      findUnique: userFindUniqueMock,
+    },
+  },
 }));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -81,6 +92,7 @@ describe("authenticateMcpRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     verifyAccessTokenMock.mockReset();
+    userFindUniqueMock.mockResolvedValue({ isActive: true });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   });
@@ -257,10 +269,46 @@ describe("authenticateMcpRequest", () => {
       },
       jwksUrl: "https://app.example.com/api/auth/jwks",
     });
+    expect(userFindUniqueMock).toHaveBeenCalledWith({
+      where: { id: "user_1" },
+      select: { isActive: true },
+    });
     expect(applyRateLimit).toHaveBeenCalledWith(
       expect.objectContaining({ namespace: "api:v3" }),
       "oauth:user_1:client_1"
     );
+  });
+
+  test("rejects OAuth bearer tokens for inactive users", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read surveys:write",
+    });
+    userFindUniqueMock.mockResolvedValue({ isActive: false });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+      expect(result.response.headers.get("WWW-Authenticate")).toContain(
+        'resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp"'
+      );
+      expect(await result.response.json()).toMatchObject({
+        detail: "Invalid OAuth access token",
+      });
+    }
+    expect(userFindUniqueMock).toHaveBeenCalledWith({
+      where: { id: "user_1" },
+      select: { isActive: true },
+    });
+    expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
   test("rejects OAuth bearer tokens without the read scope", async () => {
