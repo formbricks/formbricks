@@ -24,7 +24,7 @@ export const NoMobileOverlay = () => {
           {t("common.mobile_overlay_surveys_look_good")}
         </p>
         <Button variant="default" asChild className="mt-8">
-          <a href="https://formbricks.com/docs/xm-and-surveys/overview">
+          <a href="https://formbricks.com/docs/surveys/overview">
             {t("common.learn_more")}
             <ExternalLinkIcon />
           </a>
