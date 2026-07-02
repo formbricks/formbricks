@@ -145,7 +145,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
             did,
             t("common.other_placeholder"),
             eid,
-            t("environments.surveys.edit.please_specify")
+            t("workspace.surveys.edit.please_specify")
           );
           break;
         }
@@ -249,7 +249,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
             did,
             t("common.other_placeholder"),
             eid,
-            t("environments.surveys.edit.please_specify")
+            t("workspace.surveys.edit.please_specify")
           );
           break;
         }

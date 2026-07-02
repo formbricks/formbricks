@@ -177,7 +177,7 @@ export const MultipleChoiceElementForm = ({
       ...(choiceId === "other" &&
         !element.otherOptionPlaceholder && {
           otherOptionPlaceholder: createI18nString(
-            t("environments.surveys.edit.please_specify"),
+            t("workspace.surveys.edit.please_specify"),
             surveyLanguageCodes
           ),
         }),

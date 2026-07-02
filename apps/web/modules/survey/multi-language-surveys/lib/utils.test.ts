@@ -9,7 +9,7 @@ const t = ((key: string, options?: Record<string, unknown>) => {
     "common.choice_n": `Choice ${options?.n}`,
     "common.headline": "Headline",
     "common.other_placeholder": "Other Placeholder",
-    "environments.surveys.edit.please_specify": "Please specify",
+    "workspace.surveys.edit.please_specify": "Please specify",
   };
 
   return translations[key] ?? key;
@@ -69,6 +69,41 @@ describe("multi-language survey utils", () => {
         }),
         expect.objectContaining({
           path: "blocks.0.elements.1.otherOptionPlaceholder",
+          fieldLabel: "Other Placeholder",
+          value: { default: "Please specify" },
+        }),
+      ])
+    );
+  });
+
+  test("extracts a missing other option placeholder for ranking elements", () => {
+    const survey = createSurvey({
+      blocks: [
+        {
+          id: "block-1",
+          elements: [
+            {
+              id: "ranking",
+              type: TSurveyElementTypeEnum.Ranking,
+              headline: { default: "Rank these" },
+              required: true,
+              choices: [
+                { id: "choice-1", label: { default: "One" } },
+                { id: "choice-2", label: { default: "Two" } },
+                { id: "other", label: { default: "Other" } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const strings = extractTranslatableStrings(survey, t);
+
+    expect(strings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "blocks.0.elements.0.otherOptionPlaceholder",
           fieldLabel: "Other Placeholder",
           value: { default: "Please specify" },
         }),
