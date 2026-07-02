@@ -65,9 +65,10 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
 <Warning>
   **Two things to know about the Claude apps:**
 
-  - **Custom connectors are a paid-plan feature.** On **Team/Enterprise**, an **organization owner**
-    must add the connector under **Organization settings → Connectors** first; members then connect
-    to it individually.
+  - **Custom connectors depend on your Claude plan.** They're available on Free, Pro, Max, Team, and
+    Enterprise, but the Free plan is limited to a single connector. On **Team/Enterprise**, an
+    **organization owner** must add the connector under **Organization settings → Connectors** first;
+    members then connect to it individually.
   - **The connection runs from Anthropic's servers, not your machine.** A custom connector therefore
     **cannot reach a `localhost` server** — the MCP URL must be a **public HTTPS** address. Formbricks
     Cloud works out of the box; if you self-host, expose your instance on a public HTTPS domain (a
