@@ -49,12 +49,8 @@ vi.mock("@/app/api/v1/auth", () => ({
   authenticateRequest: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/authOptions", () => ({
-  authOptions: {},
-}));
-
-vi.mock("next-auth", () => ({
-  getServerSession: vi.fn(),
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: vi.fn(),
 }));
 
 vi.mock("@/app/middleware/endpoint-validator", async () => {
@@ -199,12 +195,12 @@ describe("withV1ApiWrapper", () => {
 
   test("prefers bearer API keys over session auth on both-auth routes", async () => {
     const { authenticateRequest } = await import("@/app/api/v1/auth");
-    const { getServerSession } = await import("next-auth");
+    const { getSession } = await import("@/modules/auth/lib/session");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
 
     vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
-    vi.mocked(getServerSession).mockResolvedValue({
+    vi.mocked(getSession).mockResolvedValue({
       user: { id: "session-user-id" },
       expires: "2026-01-01",
     } as any);
@@ -229,7 +225,7 @@ describe("withV1ApiWrapper", () => {
     await wrapped(req, undefined);
 
     expect(authenticateRequest).toHaveBeenCalledOnce();
-    expect(getServerSession).not.toHaveBeenCalled();
+    expect(getSession).not.toHaveBeenCalled();
     expect(handler).toHaveBeenCalledWith(
       expect.objectContaining({
         authentication: expect.objectContaining({ apiKeyId: "api-key-1" }),
@@ -634,7 +630,7 @@ describe("withV1ApiWrapper", () => {
   test("uses unauthenticatedResponse when provided instead of default 401", async () => {
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
-    const { getServerSession } = await import("next-auth");
+    const { getSession } = await import("@/modules/auth/lib/session");
 
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
@@ -642,7 +638,7 @@ describe("withV1ApiWrapper", () => {
       authenticationMethod: AuthMethod.Session,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    vi.mocked(getServerSession).mockResolvedValue(null);
+    vi.mocked(getSession).mockResolvedValue(null);
 
     const custom401 = new Response(JSON.stringify({ title: "Custom", status: 401 }), {
       status: 401,
@@ -667,7 +663,7 @@ describe("withV1ApiWrapper", () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
-    const { getServerSession } = await import("next-auth");
+    const { getSession } = await import("@/modules/auth/lib/session");
 
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
@@ -675,7 +671,10 @@ describe("withV1ApiWrapper", () => {
       authenticationMethod: AuthMethod.Both,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: "user-1" },
+      expires: "2999-01-01T00:00:00.000Z",
+    });
     vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Rate limit exceeded"));
 
     const handler = vi.fn();

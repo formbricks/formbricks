@@ -1,5 +1,4 @@
 import { google } from "googleapis";
-import { getServerSession } from "next-auth";
 import { logger } from "@formbricks/logger";
 import { TIntegrationGoogleSheetsConfig } from "@formbricks/types/integration/google-sheet";
 import { responses } from "@/app/lib/api/response";
@@ -18,7 +17,7 @@ import {
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 
 const getGoogleSheetsRedirectUrl = (workspaceId: string) =>
   new URL(`/workspaces/${workspaceId}/settings/workspace/integrations/google-sheets`, WEBAPP_URL);
@@ -87,7 +86,7 @@ export const GET = async (req: Request) => {
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error");
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) {
     return responses.notAuthenticatedResponse();
   }

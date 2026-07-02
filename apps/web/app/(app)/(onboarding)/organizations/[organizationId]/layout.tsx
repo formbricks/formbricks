@@ -1,11 +1,10 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { canUserAccessOrganization } from "@/lib/organization/auth";
 import { getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
 const WorkspaceOnboardingLayout = async (props: {
@@ -17,7 +16,7 @@ const WorkspaceOnboardingLayout = async (props: {
   const { children } = props;
 
   const t = await getTranslate();
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session?.user) {
     return redirect(`/auth/login`);

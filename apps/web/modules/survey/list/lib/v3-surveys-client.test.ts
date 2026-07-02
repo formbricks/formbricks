@@ -192,10 +192,11 @@ describe("deleteSurvey", () => {
       )
     );
 
-    await expect(deleteSurvey("survey_1")).rejects.toMatchObject<V3ApiError>({
+    const expectedError: Partial<V3ApiError> = {
       status: 403,
       detail: "You are not authorized to access this resource",
       code: "forbidden",
-    });
+    };
+    await expect(deleteSurvey("survey_1")).rejects.toMatchObject(expectedError);
   });
 });

@@ -65,6 +65,7 @@
       "new_to_formbricks": "Formbricksを初めてご利用ですか？",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "please_verify_your_email_to_continue": "メールアドレスを確認してください。確認リンクをお送りしました。",
       "use_a_backup_code": "バックアップコードを使用"
     },
     "saml_connection_error": "問題が発生しました。詳細については、アプリのコンソールを確認してください。",
@@ -98,10 +99,6 @@
       "verification_email_resent_successfully": "確認メールを送信しました！受信トレイを確認してください。",
       "verification_email_successfully_sent_info": "もし {email} に関連するアカウントがあれば、確認リンクがそのアドレスに送信されました。受信トレイを確認してサインアップを完了してください。",
       "you_didnt_receive_an_email_or_your_link_expired": "メールを受け取っていないか、リンクが期限切れですか？"
-    },
-    "verify": {
-      "no_token_provided": "トークンが提供されていません",
-      "verifying": "認証中..."
     }
   },
   "billing_confirmation": {
@@ -522,6 +519,13 @@
   "emails": {
     "accept": "承認",
     "click_or_drag_to_upload_files": "クリックまたはドラッグしてファイルをアップロードしてください。",
+    "delete_account_email_confirm_deletion": "アカウント削除を確認",
+    "delete_account_email_did_not_request": "心当たりがない場合は、このメールを無視してください。アカウントは引き続き有効です。",
+    "delete_account_email_heading": "アカウントの削除を確認してください",
+    "delete_account_email_link_valid_for_minutes": "このリンクは {minutes} 分間有効です。",
+    "delete_account_email_subject": "Formbricks アカウントの削除を確認してください",
+    "delete_account_email_text": "Formbricks アカウントの削除をリクエストしました。確認するには、下のボタンをクリックしてください:",
+    "delete_account_email_warning": "これにより、アカウントと関連するすべてのデータが完全に削除されます。この操作は取り消せません。",
     "email_customization_preview_email_heading": "こんにちは、{userName}さん",
     "email_customization_preview_email_subject": "Formbricks メールカスタマイズプレビュー",
     "email_customization_preview_email_text": "これは、メールに表示されるロゴを確認するためのプレビューメールです。",
@@ -2299,6 +2303,12 @@
       "billing": {
         "billing_interval_toggle": "請求間隔",
         "cancel_at_period_end": "期間終了時にキャンセル",
+        "confirm_upgrade_body": "{plan}プランに{amount} {period}でアップグレードしようとしています。現在の請求期間の残り日数分の日割り料金が直ちに請求され、該当する税金は支払い時に計算されます。",
+        "confirm_upgrade_body_with_charge": "{plan}プラン({period})へのアップグレードを行います。現在の請求期間の残り期間分として{chargeNow}が今すぐ請求され、該当する税金は支払い時に計算されます。",
+        "confirm_upgrade_button": "アップグレードを確認",
+        "confirm_upgrade_calculating": "日割り請求額を計算中…",
+        "confirm_upgrade_description": "プランはいつでも変更できます。",
+        "confirm_upgrade_title": "アップグレードの確認",
         "continue_with_plan_after_trial": "トライアル後もProプランを継続",
         "current_plan_badge": "現在のプラン",
         "current_plan_cta": "現在のプラン",
@@ -2592,17 +2602,16 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "アカウント削除の結果",
+        "account_deletion_email_sent": "アカウントの削除を確認するには、メールをご確認ください。{email} にリンクを送信しました。クリックするとアカウントが削除されます。",
         "backup_code": "バックアップコード",
         "confirm_delete_account": "あなたの個人情報とデータを含むアカウントをすべて削除する",
         "confirm_delete_my_account": "アカウントを削除",
         "confirm_your_current_password_to_get_started": "始めるには、現在のパスワードを確認してください。",
         "delete_account": "アカウントを削除",
-        "delete_account_confirmation_required": "Email confirmation is required to delete your account.",
         "disable_two_factor_authentication": "二段階認証を無効にする",
         "disable_two_factor_authentication_description": "2FAを無効にする必要がある場合は、できるだけ早く再有効にすることをお勧めします。",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "各バックアップコードは、認証アプリなしでアクセスを許可するために一度だけ使用できます。",
         "email_change_initiated": "メールアドレスの変更リクエストが開始されました。",
-        "email_confirmation_does_not_match": "Email confirmation does not match.",
         "enable_two_factor_authentication": "二段階認証を有効にする",
         "enter_the_code_from_your_authenticator_app_below": "認証アプリからコードを以下に入力してください。",
         "lost_access": "アクセスを紛失しましたか",
@@ -2615,8 +2624,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "以下のバックアップコードを安全な場所に保存してください。",
         "scan_the_qr_code_below_with_your_authenticator_app": "以下のQRコードを認証アプリでスキャンしてください。",
         "security_description": "パスワードや二段階認証（2FA）などの他のセキュリティ設定を管理します。",
-        "sso_identity_confirmation_failed": "SSO本人確認に失敗しました。もう一度アカウントの削除をお試しください。",
-        "sso_identity_confirmation_may_be_required_for_deletion": "SSOアカウントの場合、「削除」を選択すると、このアカウントを確認するためにIDプロバイダーにリダイレクトされる場合があります。同じアカウントが確認されると、削除が自動的に続行されます。",
         "two_factor_authentication": "二段階認証",
         "two_factor_authentication_description": "パスワードが盗まれた場合に備えて、アカウントにセキュリティの追加レイヤーを追加します。",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "二段階認証が有効になりました。認証アプリから6桁のコードを入力してください。",
@@ -3563,6 +3570,7 @@
         "no_identified_impressions": "識別済みコンタクトからのインプレッションはありません",
         "no_responses_found": "回答が見つかりません",
         "nps_promoters_tooltip": "回答者の{percentage}%が9または10の評価をしました（NPSプロモーター）。",
+        "open_response_details": "自由回答の詳細",
         "other_values_found": "他の値が見つかりました",
         "overall": "全体",
         "promoters": "推奨者",

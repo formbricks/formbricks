@@ -2204,6 +2204,12 @@ checksums:
     workspace/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
     workspace/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     workspace/settings/billing/cancel_at_period_end: c252f54e4ee6f9419a945f3cb7c31e80
+    workspace/settings/billing/confirm_upgrade_body: 9447dbe94ab2b6c7d4ed257c0dcf8197
+    workspace/settings/billing/confirm_upgrade_body_with_charge: 33dbf8f505a7a13f2bfe8af0d37e6770
+    workspace/settings/billing/confirm_upgrade_button: 0c91db4f2f989972d493fed2311cbbc0
+    workspace/settings/billing/confirm_upgrade_calculating: a738aa8430b5e2e8022784078d2c4ec3
+    workspace/settings/billing/confirm_upgrade_description: 802d3a25618fa1922fdb5ffca0594817
+    workspace/settings/billing/confirm_upgrade_title: 0c91db4f2f989972d493fed2311cbbc0
     workspace/settings/billing/continue_with_plan_after_trial: 96f01459c998341b8467fe239e890875
     workspace/settings/billing/current_plan_badge: 27f172f76ac28e72cb062f80002b0ad5
     workspace/settings/billing/current_plan_cta: 53ac259fd40a361274861ee7c7498424
@@ -3416,6 +3422,7 @@ checksums:
     workspace/surveys/summary/no_identified_impressions: c3bc42e6feb9010ced905ded51c5afc4
     workspace/surveys/summary/no_responses_found: f10190cffdda4ca1bed479acbb89b13f
     workspace/surveys/summary/nps_promoters_tooltip: dea6a683c0c36189e325656d5a7596b8
+    workspace/surveys/summary/open_response_details: 0e5de115b5e605f68ea857cf8ef5533a
     workspace/surveys/summary/other_values_found: 48a74ee68c05f7fb162072b50c683b6a
     workspace/surveys/summary/overall: 6c6d6533013d4739766af84b2871bca6
     workspace/surveys/summary/promoters: 41fbb8d0439227661253a82fda39f521
