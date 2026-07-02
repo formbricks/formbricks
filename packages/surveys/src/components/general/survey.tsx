@@ -1081,6 +1081,7 @@ export function Survey({
           );
         case TResponseErrorCodesEnum.RecaptchaError:
         case TResponseErrorCodesEnum.InvalidDeviceError:
+        case TResponseErrorCodesEnum.ResponseAlreadyCompleted:
           return (
             <>
               {localSurvey.type !== "link" ? (

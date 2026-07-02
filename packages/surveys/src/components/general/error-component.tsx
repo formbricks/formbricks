@@ -2,7 +2,10 @@ import { useTranslation } from "react-i18next";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
 interface ErrorComponentProps {
-  readonly errorType: TResponseErrorCodesEnum.RecaptchaError | TResponseErrorCodesEnum.InvalidDeviceError;
+  readonly errorType:
+    | TResponseErrorCodesEnum.RecaptchaError
+    | TResponseErrorCodesEnum.InvalidDeviceError
+    | TResponseErrorCodesEnum.ResponseAlreadyCompleted;
 }
 
 export function ErrorComponent({ errorType }: ErrorComponentProps) {
@@ -15,6 +18,10 @@ export function ErrorComponent({ errorType }: ErrorComponentProps) {
     [TResponseErrorCodesEnum.InvalidDeviceError]: {
       title: t("errors.invalid_device_error.title"),
       message: t("errors.invalid_device_error.message"),
+    },
+    [TResponseErrorCodesEnum.ResponseAlreadyCompleted]: {
+      title: t("errors.response_already_completed.title"),
+      message: t("errors.response_already_completed.message"),
     },
   };
 

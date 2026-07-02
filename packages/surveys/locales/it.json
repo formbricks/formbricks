@@ -83,6 +83,10 @@
       "message": "La tua risposta non può essere inviata perché è stata segnalata come attività automatizzata. Se respiri, riprova.",
       "title": "Non siamo riusciti a verificare che sei umano."
     },
+    "response_already_completed": {
+      "message": "Questa risposta è già stata completata e non può più essere modificata. Puoi chiudere questa finestra in tutta tranquillità.",
+      "title": "Questa risposta è già stata completata."
+    },
     "value_must_contain": "Il valore deve contenere {value}",
     "value_must_equal": "Il valore deve essere uguale a {value}",
     "value_must_not_contain": "Il valore non deve contenere {value}",

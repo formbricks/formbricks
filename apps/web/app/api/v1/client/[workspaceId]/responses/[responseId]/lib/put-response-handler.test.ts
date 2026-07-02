@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  RESPONSE_ALREADY_FINISHED_ERROR_CODE,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { putResponseHandler } from "./put-response-handler";
 
@@ -306,7 +311,8 @@ describe("putResponseHandler", () => {
     await expect(result.response.json()).resolves.toEqual({
       code: "bad_request",
       message: "Response is already finished",
-      details: {},
+      // Stable, locale-independent marker the surveys client keys off (see isResponseAlreadyCompletedError)
+      details: { code: RESPONSE_ALREADY_FINISHED_ERROR_CODE },
     });
     expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
   });

@@ -83,6 +83,10 @@
       "message": "Ditt svar kunde inte skickas eftersom det flaggades som automatiserad aktivitet. Om du andas, försök igen.",
       "title": "Vi kunde inte verifiera att du är en människa."
     },
+    "response_already_completed": {
+      "message": "Detta svar har redan slutförts och kan inte längre ändras. Du kan tryggt stänga det här fönstret.",
+      "title": "Detta svar har redan slutförts."
+    },
     "value_must_contain": "Värdet måste innehålla {value}",
     "value_must_equal": "Värdet måste vara {value}",
     "value_must_not_contain": "Värdet får inte innehålla {value}",
