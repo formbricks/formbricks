@@ -17,7 +17,10 @@ import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { POST } from "./route";
 
-const verifyAccessTokenMock = vi.hoisted(() => vi.fn());
+const { verifyAccessTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+  verifyAccessTokenMock: vi.fn(),
+  userFindUniqueMock: vi.fn(),
+}));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
   oauthProviderResourceClient: vi.fn(() => ({
@@ -29,6 +32,14 @@ vi.mock("@better-auth/oauth-provider/resource-client", () => ({
 
 vi.mock("@/modules/auth/lib/auth", () => ({
   auth: {},
+}));
+
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    user: {
+      findUnique: userFindUniqueMock,
+    },
+  },
 }));
 
 vi.mock("@/modules/auth/lib/oauth-urls", () => ({
@@ -120,6 +131,7 @@ describe("POST /api/mcp", () => {
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+    userFindUniqueMock.mockResolvedValue({ isActive: true });
     verifyAccessTokenMock.mockResolvedValue({
       sub: "user_1",
       email: "person@example.com",
