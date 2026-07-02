@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
@@ -15,7 +15,11 @@ import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
-import { DASHBOARD_WIDGET_LOAD_ERROR, type TDashboardWidgetError } from "../lib/widget-errors";
+import {
+  DASHBOARD_WIDGET_DATASET_UNAVAILABLE,
+  DASHBOARD_WIDGET_LOAD_ERROR,
+  type TDashboardWidgetError,
+} from "../lib/widget-errors";
 
 type TDashboardDetail = Awaited<ReturnType<typeof getDashboard>>;
 type TDashboardWidget = TDashboardDetail["widgets"][number];
@@ -34,6 +38,12 @@ async function executeWidgetQuery(
   userId: string
 ): Promise<WidgetQueryResult | { error: TDashboardWidgetError }> {
   try {
+    // Dashboards are workspace-scoped for ACCESS only: this gate decides who may VIEW the
+    // widget's chart. The bound dataset (feedbackDirectory) may aggregate feedback across
+    // multiple workspaces, so passing the workspace does NOT filter or partition the
+    // dataset's rows — the chart still reads every row of the dataset it points at. The
+    // check throws AuthorizationError when the dataset is archived, deleted, or unassigned
+    // from this workspace, which we surface below as a neutral "dataset unavailable" state.
     const tenant = await checkFeedbackDirectoryAccess({
       feedbackDirectoryId,
       organizationId,
@@ -51,6 +61,16 @@ async function executeWidgetQuery(
     });
     return { data: Array.isArray(data) ? data : [], query };
   } catch (error) {
+    // A widget's chart can outlive the dataset it points at (archived/deleted/unassigned).
+    // checkFeedbackDirectoryAccess throws AuthorizationError in that case; render it as a
+    // neutral empty state rather than a generic load error.
+    if (error instanceof AuthorizationError) {
+      logger.warn(
+        { feedbackDirectoryId, workspaceId, organizationId },
+        "Dashboard widget dataset is no longer available"
+      );
+      return { error: DASHBOARD_WIDGET_DATASET_UNAVAILABLE };
+    }
     logger.error(error, "Failed to load dashboard widget data");
     return { error: DASHBOARD_WIDGET_LOAD_ERROR };
   }

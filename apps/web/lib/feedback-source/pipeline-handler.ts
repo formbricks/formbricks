@@ -90,7 +90,9 @@ const processFeedbackSource = async (
  *
  * @param response - The survey response
  * @param survey - The survey
- * @param workspaceId - The workspace ID (used as tenant_id)
+ * @param workspaceId - The workspace ID. This is NOT the Hub tenant; the tenant is the
+ *   feedbackDirectoryId (set per FeedbackRecord). workspaceId is only used to stamp the
+ *   feedbackSource's lastSyncAt via updateFeedbackSource.
  */
 export const handleFeedbackSourcePipeline = async (
   response: TResponse,

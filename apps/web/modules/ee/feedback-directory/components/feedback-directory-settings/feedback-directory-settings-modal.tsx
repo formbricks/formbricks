@@ -24,6 +24,7 @@ import {
   getTranslatedFeedbackDirectoryError,
 } from "@/modules/ee/feedback-directory/types/feedback-directory";
 import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -365,7 +366,7 @@ export const FeedbackDirectorySettingsModal = ({
                           </div>
                           <a
                             className="text-xs font-medium text-slate-700 hover:text-slate-900 hover:underline"
-                            href={`/workspaces/${c.workspaceId}/settings/workspace/feedback-sources`}>
+                            href={organizationSettingsPath(organizationId, "unify-feedback/sources")}>
                             {t("common.view")}
                           </a>
                         </li>

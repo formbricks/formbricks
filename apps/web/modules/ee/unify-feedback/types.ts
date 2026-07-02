@@ -57,22 +57,28 @@ export const ZFeedbackRecordUpdateInput = z
 
 export type TFeedbackRecordUpdateInput = z.infer<typeof ZFeedbackRecordUpdateInput>;
 
+// The manual-record CRUD actions are now org-scoped: the dataset (feedback directory) is the unit
+// of access, resolved via its owning organization. `directoryId` is authorized with the org-context
+// guards (assertCanViewDirectory / assertCanWriteDirectoryRecords) instead of the old workspace check.
 export const ZRetrieveFeedbackRecordAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
+  directoryId: ZId,
   recordId: ZFeedbackRecordId,
 });
 
 export type TRetrieveFeedbackRecordAction = z.infer<typeof ZRetrieveFeedbackRecordAction>;
 
 export const ZCreateFeedbackRecordAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
+  directoryId: ZId,
   recordInput: ZFeedbackRecordCreateInput,
 });
 
 export type TCreateFeedbackRecordAction = z.infer<typeof ZCreateFeedbackRecordAction>;
 
 export const ZUpdateFeedbackRecordAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
+  directoryId: ZId,
   recordId: ZFeedbackRecordId,
   updateInput: ZFeedbackRecordUpdateInput,
 });
@@ -80,7 +86,8 @@ export const ZUpdateFeedbackRecordAction = z.object({
 export type TUpdateFeedbackRecordAction = z.infer<typeof ZUpdateFeedbackRecordAction>;
 
 export const ZDeleteFeedbackRecordAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
+  directoryId: ZId,
   recordId: ZFeedbackRecordId,
 });
 

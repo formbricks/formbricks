@@ -16,6 +16,7 @@ import {
   ShapesIcon,
   ShieldIcon,
   TagIcon,
+  TagsIcon,
   UnplugIcon,
   UserCircleIcon,
   UsersIcon,
@@ -48,6 +49,9 @@ interface SettingsSidebarContentProps {
   organizationName: string;
   membershipRole?: TOrganizationRole;
   isFormbricksCloud: boolean;
+  // Whether the "Feedback Datasets" (Unify Feedback records) org item is shown: owner/manager always,
+  // or a member who can reach at least one dataset. Computed once by getSettingsLayoutData.
+  canViewUnifyFeedback: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
   // Hidden when the user has no workspace (org/account settings still render).
@@ -233,6 +237,7 @@ export const SettingsSidebarContent = ({
   organizationName,
   membershipRole,
   isFormbricksCloud,
+  canViewUnifyFeedback,
   isCollapsed,
   isTextVisible,
   hideWorkspaceSection = false,
@@ -284,13 +289,6 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "feedback-sources",
-      label: t("workspace.unify.feedback_sources"),
-      href: workspaceSettingsPath(workspaceId, "feedback-sources"),
-      icon: <ShapesIcon className={iconClassName} />,
-      disabled: isBilling,
-    },
-    {
       id: "integrations",
       label: t("common.integrations"),
       href: workspaceSettingsPath(workspaceId, "integrations"),
@@ -336,12 +334,37 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "org-feedback-directories",
+      // Repointed from the old management-only "org-feedback-directories" entry to the relocated
+      // Unify Feedback records view (Stage 2). Records + dataset management now live behind one nav
+      // entry: this opens the records view, which links owners/managers on to dataset management.
+      // Visible to any member who can reach a dataset, not just owner/manager.
+      id: "org-unify-datasets",
       label: t("workspace.settings.feedback_directories.nav_label"),
-      href: organizationSettingsPath(organizationId, "feedback-directories"),
+      href: organizationSettingsPath(organizationId, "unify-feedback/datasets"),
       icon: <FoldersIcon className={iconClassName} />,
-      hidden: isMember,
-      disabled: !isOwnerOrManager,
+      hidden: !canViewUnifyFeedback,
+      disabled: isBilling,
+    },
+    {
+      // Feedback Sources relocated from workspace settings to org-level Unify Feedback (Stage 3). Same
+      // VIEW gating as the datasets item; server actions re-check write access per source/workspace.
+      id: "org-unify-sources",
+      label: t("workspace.unify.sources_nav_label"),
+      href: organizationSettingsPath(organizationId, "unify-feedback/sources"),
+      icon: <ShapesIcon className={iconClassName} />,
+      hidden: !canViewUnifyFeedback,
+      disabled: isBilling,
+    },
+    {
+      // Topics & Subtopics (AI taxonomy) relocated from the workspace-scoped Unify config to org-level
+      // Unify Feedback (Stage 4). Same VIEW gating as datasets/sources; taxonomy write actions re-check
+      // write access per dataset.
+      id: "org-unify-topics",
+      label: t("workspace.unify.topics_nav_label"),
+      href: organizationSettingsPath(organizationId, "unify-feedback/topics"),
+      icon: <TagsIcon className={iconClassName} />,
+      hidden: !canViewUnifyFeedback,
+      disabled: isBilling,
     },
     {
       id: "org-api-keys",

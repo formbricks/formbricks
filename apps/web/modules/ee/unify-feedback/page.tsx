@@ -1,46 +1,34 @@
-import { notFound } from "next/navigation";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getFeedbackDirectoriesForUser } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
-import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
-import { listFeedbackRecords } from "@/modules/hub/service";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
+import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackRecordsPageClient } from "./components/feedback-records-page-client";
+import { getFeedbackDatasetView } from "./lib/dataset-view";
 
-const INITIAL_PAGE_SIZE = 50;
-
-export default async function UnifyFeedbackRecordsPage(
-  props: Readonly<{ params: Promise<{ workspaceId: string }> }>
-) {
-  const t = await getTranslate();
+export const UnifyFeedbackRecordsPage = async (props: { params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
+  const t = await getTranslate();
 
-  const { isOwner, isManager, hasReadAccess, hasReadWriteAccess, hasManageAccess, session, organization } =
-    await getWorkspaceAuth(params.workspaceId);
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
 
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
+  const { session, currentUserMembership, organization } = await getOrganizationAuth(params.organizationId);
 
-  const hasAccess = isOwner || isManager || hasReadAccess || hasReadWriteAccess || hasManageAccess;
-  const canWrite = isOwner || isManager || hasReadWriteAccess || hasManageAccess;
-  if (!hasAccess) {
-    return notFound();
-  }
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership.role);
+  const isOwnerOrManager = isOwner || isManager;
 
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organization.id);
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
-        </PageHeader>
+        <PageHeader pageTitle={t("workspace.unify.feedback_records")} />
         <div className="flex items-center justify-center">
           <UpgradePrompt
             title={t("workspace.unify.upgrade_prompt_title")}
@@ -50,7 +38,7 @@ export default async function UnifyFeedbackRecordsPage(
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/organizations/${organization.id}/settings/billing`
+                  ? getOrganizationBillingPath(organization.id, IS_FORMBRICKS_CLOUD)
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
@@ -64,62 +52,30 @@ export default async function UnifyFeedbackRecordsPage(
     );
   }
 
-  const [frds, feedbackSources] = await Promise.all([
-    getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
-    getFeedbackSourcesWithMappings(params.workspaceId),
-  ]);
-
-  if (frds.length === 0) {
+  // Datasets the user may VIEW: owner/manager see all; members see only datasets reachable through a
+  // workspace they belong to. An empty list means the page shows the no-dataset state — a non-owner
+  // member with zero reachable datasets simply sees the member-facing empty state (no leak).
+  const datasets = await getFeedbackDirectoriesForUser(session.user.id, organization.id);
+  if (datasets.length === 0) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
-        </PageHeader>
-        <NoFeedbackDirectoryEmptyState
-          organizationId={organization.id}
-          isOwnerOrManager={isOwner || isManager}
-        />
+        <PageHeader pageTitle={t("workspace.unify.feedback_records")} />
+        <NoFeedbackDirectoryEmptyState organizationId={organization.id} isOwnerOrManager={isOwnerOrManager} />
       </PageContentWrapper>
     );
   }
 
-  const results = await Promise.all(
-    frds.map((frd) => listFeedbackRecords({ tenant_id: frd.id, limit: INITIAL_PAGE_SIZE }))
-  );
-
-  // Don't crash if Hub is unreachable — show empty state
-  const successfulResults = results.filter((r) => !r.error);
-
-  const merged = successfulResults
-    .flatMap((r) => r.data?.data ?? [])
-    .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
-
-  // Build per-FRD cursor map so the client can paginate
-  const initialCursors: Record<string, string> = {};
-  for (let i = 0; i < frds.length; i++) {
-    const cursor = results[i]?.data?.next_cursor;
-    if (cursor) {
-      initialCursors[frds[i].id] = cursor;
-    }
-  }
-
-  const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
-  const csvSources = feedbackSources
-    .filter((feedbackSource) => feedbackSource.type === "csv")
-    .map((feedbackSource) => ({
-      id: feedbackSource.id,
-      name: feedbackSource.name,
-      fieldMappings: feedbackSource.fieldMappings,
-    }));
+  // SSR the default (first) dataset's full view; further datasets load client-side on selection.
+  const defaultDatasetId = datasets[0].id;
+  const initialView = await getFeedbackDatasetView(session.user.id, organization.id, defaultDatasetId);
 
   return (
     <FeedbackRecordsPageClient
-      workspaceId={params.workspaceId}
-      initialRecords={merged}
-      initialCursors={initialCursors}
-      frdMap={frdMap}
-      csvSources={csvSources}
-      canWrite={canWrite}
+      organizationId={organization.id}
+      datasets={datasets.map((dataset) => ({ id: dataset.id, name: dataset.name }))}
+      initialDatasetId={defaultDatasetId}
+      initialView={initialView}
+      isOwnerOrManager={isOwnerOrManager}
     />
   );
-}
+};

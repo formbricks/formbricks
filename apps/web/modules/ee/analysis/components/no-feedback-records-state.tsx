@@ -1,6 +1,8 @@
 import { MessageSquareDashedIcon } from "lucide-react";
 import Link from "next/link";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Button } from "@/modules/ui/components/button";
 
 interface NoFeedbackRecordsStateProps {
@@ -13,6 +15,8 @@ export const NoFeedbackRecordsState = async ({
   hasFeedbackSources = false,
 }: Readonly<NoFeedbackRecordsStateProps>) => {
   const t = await getTranslate();
+  // Feedback Sources now live under org-level Unify Feedback settings (Stage 3).
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-xs">
@@ -24,7 +28,7 @@ export const NoFeedbackRecordsState = async ({
             : t("workspace.analysis.no_feedback_records_message")}
         </p>
         <Button asChild size="sm">
-          <Link href={`/workspaces/${workspaceId}/settings/workspace/feedback-sources`}>
+          <Link href={organizationSettingsPath(organizationId, "unify-feedback/sources")}>
             {hasFeedbackSources
               ? t("workspace.analysis.manage_feedback_sources")
               : t("workspace.analysis.setup_feedback_source")}

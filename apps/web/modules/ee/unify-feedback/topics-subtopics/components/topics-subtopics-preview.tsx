@@ -13,7 +13,6 @@ import {
   RefreshCwIcon,
   Trash2Icon,
 } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,6 +27,7 @@ import type {
   TaxonomyScope,
   TaxonomyTreeResponse,
 } from "@/modules/hub/types";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -56,7 +56,8 @@ import {
   SheetTitle,
 } from "@/modules/ui/components/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
+import { DatasetSelector } from "../../components/dataset-selector";
+import { UnifyFeedbackNavigation } from "../../components/unify-feedback-navigation";
 import { resolveFeedbackDisplayText } from "../../lib/utils";
 import {
   getTaxonomyFieldsAction,
@@ -70,9 +71,12 @@ import {
 } from "../actions";
 
 interface TopicsSubtopicsPreviewProps {
-  workspaceId: string;
-  directoryMap: Record<string, string>;
-  canWrite: boolean;
+  organizationId: string;
+  datasets: { id: string; name: string }[];
+  // Per-dataset write capability (taxonomy generation, node rename/remove). Write access is
+  // per-dataset, so this maps each viewable dataset id to whether the current user may write to it;
+  // the selected dataset's flag drives the write controls. Server actions re-check regardless.
+  canWriteMap: Record<string, boolean>;
 }
 
 const RUNNING_STATUSES = new Set(["pending", "running"]);
@@ -208,13 +212,12 @@ const getNodeRecordEstimate = (node: TaxonomyNode): number | null => {
 };
 
 export const TopicsSubtopicsPreview = ({
-  workspaceId,
-  directoryMap,
-  canWrite,
+  organizationId,
+  datasets,
+  canWriteMap,
 }: Readonly<TopicsSubtopicsPreviewProps>) => {
   const { t } = useTranslation();
-  const directoryIds = useMemo(() => Object.keys(directoryMap), [directoryMap]);
-  const [directoryId, setDirectoryId] = useState(directoryIds[0] ?? "");
+  const [directoryId, setDirectoryId] = useState(datasets[0]?.id ?? "");
   const [fields, setFields] = useState<TaxonomyFieldOption[]>([]);
   const [selectedSourceKey, setSelectedSourceKey] = useState("");
   const [selectedFieldKey, setSelectedFieldKey] = useState("");
@@ -225,6 +228,7 @@ export const TopicsSubtopicsPreview = ({
   const [editNode, setEditNode] = useState<TaxonomyNode | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [isRecordsDrawerOpen, setIsRecordsDrawerOpen] = useState(false);
+  const [isConfirmGenerateOpen, setIsConfirmGenerateOpen] = useState(false);
   const [isLoadingFields, setIsLoadingFields] = useState(false);
   const [isLoadingState, setIsLoadingState] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -232,6 +236,10 @@ export const TopicsSubtopicsPreview = ({
   const [isSavingNode, setIsSavingNode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Write capability follows the selected dataset (a member may write to one dataset but only read
+  // another). Unknown dataset id => read-only.
+  const canWrite = canWriteMap[directoryId] ?? false;
 
   const sourceOptions = useMemo(() => {
     const options = new Map<string, TaxonomyFieldOption>();
@@ -265,7 +273,12 @@ export const TopicsSubtopicsPreview = ({
   const latestRun = runs[0] ?? null;
   const latestRunError = latestRun ? runErrorMessage(latestRun) : null;
   const hasRunningRun = latestRun ? RUNNING_STATUSES.has(latestRun.status) : false;
-  const canGenerate = Boolean(selectedField && canWrite && !hasRunningRun && !isGenerating);
+  // A run needs embedded records to cluster; the Hub rejects a field with none. Disable Generate up
+  // front (with an explanatory tooltip) rather than letting the run fail with insufficient_data.
+  const hasEmbeddedRecords = (selectedField?.embedding_count ?? 0) > 0;
+  const canGenerate = Boolean(
+    selectedField && canWrite && hasEmbeddedRecords && !hasRunningRun && !isGenerating
+  );
   const selectedPath = useMemo(
     () => (selectedNode ? findNodePath(activeTree?.root, selectedNode.id) : []),
     [activeTree?.root, selectedNode]
@@ -297,7 +310,7 @@ export const TopicsSubtopicsPreview = ({
       setIsRecordsDrawerOpen(false);
 
       try {
-        const response = await getTaxonomyFieldsAction({ workspaceId, directoryId: nextDirectoryId });
+        const response = await getTaxonomyFieldsAction({ organizationId, directoryId: nextDirectoryId });
         if (!response?.data) {
           setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_load_fields_failed"));
           return;
@@ -308,10 +321,15 @@ export const TopicsSubtopicsPreview = ({
           setNotice(response.data.unavailableMessage ?? t("workspace.unify.taxonomy_fields_unavailable"));
         }
 
-        const firstField = response.data.fields[0];
-        if (firstField) {
-          setSelectedSourceKey(sourceKey(firstField));
-          setSelectedFieldKey(fieldKey(firstField));
+        // Default to the field with the most embedded records — it's the one most likely to produce a
+        // useful taxonomy, and it can be generated immediately (Generate is disabled at 0 embeddings).
+        const defaultField = response.data.fields.reduce<TaxonomyFieldOption | null>(
+          (best, field) => (best === null || field.embedding_count > best.embedding_count ? field : best),
+          null
+        );
+        if (defaultField) {
+          setSelectedSourceKey(sourceKey(defaultField));
+          setSelectedFieldKey(fieldKey(defaultField));
         }
       } catch {
         setError(t("workspace.unify.taxonomy_load_fields_failed"));
@@ -319,7 +337,7 @@ export const TopicsSubtopicsPreview = ({
         setIsLoadingFields(false);
       }
     },
-    [t, workspaceId]
+    [organizationId, t]
   );
 
   const loadState = useCallback(async () => {
@@ -334,7 +352,7 @@ export const TopicsSubtopicsPreview = ({
     setIsRecordsDrawerOpen(false);
 
     try {
-      const response = await getTaxonomyStateAction({ workspaceId, scope: selectedScope });
+      const response = await getTaxonomyStateAction({ organizationId, scope: selectedScope });
       if (!response?.data) {
         setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_load_failed"));
         return;
@@ -350,7 +368,7 @@ export const TopicsSubtopicsPreview = ({
     } finally {
       setIsLoadingState(false);
     }
-  }, [selectedScope, t, workspaceId]);
+  }, [organizationId, selectedScope, t]);
 
   useEffect(() => {
     void loadFields(directoryId);
@@ -368,7 +386,11 @@ export const TopicsSubtopicsPreview = ({
     const interval = window.setInterval(async () => {
       if (abortController.signal.aborted) return;
 
-      const response = await getTaxonomyRunAction({ workspaceId, scope: selectedScope, runId: latestRun.id });
+      const response = await getTaxonomyRunAction({
+        organizationId,
+        scope: selectedScope,
+        runId: latestRun.id,
+      });
       const run = response?.data;
       if (!run || abortController.signal.aborted) return;
 
@@ -376,7 +398,7 @@ export const TopicsSubtopicsPreview = ({
       if (!RUNNING_STATUSES.has(run.status)) {
         if (run.status === "succeeded") {
           const treeResponse = await getTaxonomyTreeAction({
-            workspaceId,
+            organizationId,
             scope: selectedScope,
             runId: run.id,
           });
@@ -392,24 +414,31 @@ export const TopicsSubtopicsPreview = ({
       abortController.abort();
       window.clearInterval(interval);
     };
-  }, [latestRun, selectedScope, workspaceId]);
+  }, [latestRun, organizationId, selectedScope]);
 
   const handleSourceChange = (value: string) => {
     setSelectedSourceKey(value);
-    const firstField = fields.find((field) => sourceKey(field) === value);
-    setSelectedFieldKey(firstField ? fieldKey(firstField) : "");
+    // Within the chosen source, default to the field with the most embedded records (see loadFields).
+    const defaultField = fields
+      .filter((field) => sourceKey(field) === value)
+      .reduce<TaxonomyFieldOption | null>(
+        (best, field) => (best === null || field.embedding_count > best.embedding_count ? field : best),
+        null
+      );
+    setSelectedFieldKey(defaultField ? fieldKey(defaultField) : "");
   };
 
   const handleGenerate = async () => {
     if (!selectedField || !selectedScope) return;
 
+    setIsConfirmGenerateOpen(false);
     setIsGenerating(true);
     setError(null);
     setNotice(null);
 
     try {
       const response = await triggerTaxonomyRunAction({
-        workspaceId,
+        organizationId,
         scope: selectedScope,
         fieldLabel: selectedField.field_label,
       });
@@ -440,7 +469,7 @@ export const TopicsSubtopicsPreview = ({
 
       try {
         const response = await getTaxonomyNodeRecordsAction({
-          workspaceId,
+          organizationId,
           tenantId: selectedScope.tenant_id,
           nodeId: node.id,
           limit: 50,
@@ -457,7 +486,7 @@ export const TopicsSubtopicsPreview = ({
         setIsLoadingRecords(false);
       }
     },
-    [selectedScope, t, workspaceId]
+    [organizationId, selectedScope, t]
   );
 
   useEffect(() => {
@@ -474,7 +503,7 @@ export const TopicsSubtopicsPreview = ({
     if (!activeTree || !selectedScope) return;
 
     const response = await getTaxonomyTreeAction({
-      workspaceId,
+      organizationId,
       scope: selectedScope,
       runId: activeTree.run.id,
     });
@@ -495,7 +524,7 @@ export const TopicsSubtopicsPreview = ({
     setError(null);
     try {
       const response = await renameTaxonomyNodeAction({
-        workspaceId,
+        organizationId,
         tenantId: selectedScope.tenant_id,
         nodeId: editNode.id,
         label: editLabel.trim(),
@@ -524,7 +553,7 @@ export const TopicsSubtopicsPreview = ({
     setError(null);
     try {
       const response = await removeTaxonomyNodeAction({
-        workspaceId,
+        organizationId,
         tenantId: selectedScope.tenant_id,
         nodeId: editNode.id,
       });
@@ -546,35 +575,17 @@ export const TopicsSubtopicsPreview = ({
     }
   };
 
-  const hasDirectories = directoryIds.length > 0;
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
-        <UnifyConfigNavigation workspaceId={workspaceId} activeId="topics-subtopics" />
+        <UnifyFeedbackNavigation organizationId={organizationId} />
       </PageHeader>
 
       <div className="space-y-4">
+        <DatasetSelector datasets={datasets} selectedId={directoryId} onChange={setDirectoryId} />
+
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-            <Selector label={t("workspace.unify.feedback_directory")}>
-              <Select
-                value={directoryId}
-                onValueChange={setDirectoryId}
-                disabled={!hasDirectories || isLoadingFields}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("workspace.unify.select_feedback_directory")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {directoryIds.map((id) => (
-                    <SelectItem key={id} value={id}>
-                      {directoryMap[id]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Selector>
-
             <Selector label={t("workspace.unify.taxonomy_source")}>
               <Select
                 value={selectedSourceKey}
@@ -612,15 +623,15 @@ export const TopicsSubtopicsPreview = ({
               </Select>
             </Selector>
 
-            <Button
-              type="button"
-              className="h-9 shrink-0"
-              disabled={!canGenerate}
-              loading={isGenerating}
-              onClick={handleGenerate}>
-              {activeTree ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
-              {activeTree ? t("workspace.unify.taxonomy_regenerate") : t("workspace.unify.taxonomy_generate")}
-            </Button>
+            <GenerateButton
+              isRegenerate={Boolean(activeTree)}
+              canGenerate={canGenerate}
+              // Only the "no embeddings" reason gets an explanatory tooltip; other disabled reasons
+              // (read-only, a run already in progress) are already conveyed by the badges/run panel.
+              showNoEmbeddingsTooltip={Boolean(selectedField) && canWrite && !hasEmbeddedRecords}
+              isGenerating={isGenerating}
+              onClick={() => setIsConfirmGenerateOpen(true)}
+            />
           </div>
 
           {selectedField && (
@@ -645,17 +656,6 @@ export const TopicsSubtopicsPreview = ({
             </div>
           )}
         </div>
-
-        {!hasDirectories && (
-          <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-xs">
-            <p className="text-sm text-slate-600">{t("workspace.unify.taxonomy_no_directory")}</p>
-            <Button className="mt-4" size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/feedback-sources`}>
-                {t("workspace.unify.manage_feedback_sources")}
-              </Link>
-            </Button>
-          </div>
-        )}
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
@@ -765,6 +765,28 @@ export const TopicsSubtopicsPreview = ({
         selectedNodeRecordCount={selectedNodeRecordCount}
         isLoadingRecords={isLoadingRecords}
       />
+
+      <AlertDialog
+        open={isConfirmGenerateOpen}
+        setOpen={setIsConfirmGenerateOpen}
+        headerText={
+          activeTree
+            ? t("workspace.unify.taxonomy_confirm_regenerate_title")
+            : t("workspace.unify.taxonomy_confirm_generate_title")
+        }
+        mainText={
+          activeTree
+            ? t("workspace.unify.taxonomy_confirm_regenerate_description")
+            : t("workspace.unify.taxonomy_confirm_generate_description")
+        }
+        confirmBtnLabel={
+          activeTree ? t("workspace.unify.taxonomy_regenerate") : t("workspace.unify.taxonomy_generate")
+        }
+        declineBtnLabel={t("common.cancel")}
+        declineBtnVariant="ghost"
+        onDecline={() => setIsConfirmGenerateOpen(false)}
+        onConfirm={handleGenerate}
+      />
     </PageContentWrapper>
   );
 };
@@ -775,6 +797,52 @@ const Selector = ({ label, children }: Readonly<{ label: string; children: React
     {children}
   </label>
 );
+
+const GenerateButton = ({
+  isRegenerate,
+  canGenerate,
+  showNoEmbeddingsTooltip,
+  isGenerating,
+  onClick,
+}: Readonly<{
+  isRegenerate: boolean;
+  canGenerate: boolean;
+  showNoEmbeddingsTooltip: boolean;
+  isGenerating: boolean;
+  onClick: () => void;
+}>) => {
+  const { t } = useTranslation();
+
+  const button = (
+    <Button
+      type="button"
+      className="h-9 shrink-0"
+      disabled={!canGenerate}
+      loading={isGenerating}
+      onClick={onClick}>
+      {isRegenerate ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
+      {isRegenerate ? t("workspace.unify.taxonomy_regenerate") : t("workspace.unify.taxonomy_generate")}
+    </Button>
+  );
+
+  // A disabled button swallows pointer events, so wrap it in a focusable span for the tooltip trigger.
+  if (!showNoEmbeddingsTooltip) {
+    return button;
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span tabIndex={0} className="shrink-0">
+            {button}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top">{t("workspace.unify.taxonomy_no_embedded_records")}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 const TaxonomyColumnView = ({
   column,

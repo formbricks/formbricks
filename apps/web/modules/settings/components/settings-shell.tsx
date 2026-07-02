@@ -49,6 +49,7 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
           organizationName={data.organization.name}
           membershipRole={data.membershipRole}
           isFormbricksCloud={data.isFormbricksCloud}
+          canViewUnifyFeedback={data.canViewUnifyFeedback}
           publicDomain={data.publicDomain}
           backUrl={data.backUrl}
         />

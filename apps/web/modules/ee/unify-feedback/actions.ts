@@ -1,12 +1,18 @@
 "use server";
 
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
+import {
+  assertCanViewDirectory,
+  assertCanWriteDirectoryRecords,
+} from "@/modules/ee/feedback-directory/lib/access";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getAccessibleWorkspaceIds } from "@/modules/ee/teams/lib/roles";
 import {
   createFeedbackRecord,
   deleteFeedbackRecord,
@@ -14,6 +20,7 @@ import {
   updateFeedbackRecord,
 } from "@/modules/hub/service";
 import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/modules/hub/types";
+import { type TFeedbackDatasetView, getFeedbackDatasetView } from "./lib/dataset-view";
 import {
   TCreateFeedbackRecordAction,
   TRetrieveFeedbackRecordAction,
@@ -24,45 +31,24 @@ import {
   ZUpdateFeedbackRecordAction,
 } from "./types";
 
-const ensureAccess = async (
-  userId: string,
-  workspaceId: string,
-  minPermission: "read" | "readWrite"
-): Promise<void> => {
-  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+/**
+ * Gate the manual-record CRUD on the Unify Feedback entitlement. The record view is org-scoped, so
+ * the check keys off the organization rather than a workspace's organization.
+ */
+const ensureFeedbackDirectoriesEnabled = async (organizationId: string): Promise<void> => {
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
   if (!isFeedbackDirectoriesAllowed) {
     throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
   }
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-      {
-        type: "workspaceTeam",
-        minPermission,
-        workspaceId,
-      },
-    ],
-  });
 };
 
-const getWorkspaceDirectoryIds = async (workspaceId: string): Promise<Set<string>> => {
-  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
-  return new Set(directories.map((directory) => directory.id));
-};
-
-const assertRecordBelongsToWorkspace = (
-  directoryIds: Set<string>,
-  tenantId: string,
-  recordId: string | null
-): void => {
-  if (!directoryIds.has(tenantId)) {
-    // Same error shape as a genuine "not found" to prevent IDOR via response differences
+/**
+ * Confirms a Hub record belongs to the dataset the caller was authorized against. Throwing the same
+ * {@link ResourceNotFoundError} shape as a genuine miss keeps the action from becoming an IDOR oracle
+ * (a record in another tenant is indistinguishable from one that doesn't exist).
+ */
+const assertRecordBelongsToDirectory = (tenantId: string, directoryId: string, recordId: string): void => {
+  if (tenantId !== directoryId) {
     throw new ResourceNotFoundError("Feedback record", recordId);
   }
 };
@@ -77,19 +63,17 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: TRetrieveFeedbackRecordAction;
     }) => {
-      const [, workspaceDirectoryIds] = await Promise.all([
-        ensureAccess(ctx.user.id, parsedInput.workspaceId, "read"),
-        getWorkspaceDirectoryIds(parsedInput.workspaceId),
-      ]);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
 
       const recordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!recordResult.data || recordResult.error) {
         throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
       }
 
-      assertRecordBelongsToWorkspace(
-        workspaceDirectoryIds,
+      assertRecordBelongsToDirectory(
         recordResult.data.tenant_id,
+        parsedInput.directoryId,
         parsedInput.recordId
       );
 
@@ -107,10 +91,11 @@ export const createFeedbackRecordAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: TCreateFeedbackRecordAction;
     }) => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanWriteDirectoryRecords(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
 
-      const workspaceDirectoryIds = await getWorkspaceDirectoryIds(parsedInput.workspaceId);
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, parsedInput.recordInput.tenant_id, null);
+      // The record must be written into the dataset the caller was authorized against.
+      assertRecordBelongsToDirectory(parsedInput.recordInput.tenant_id, parsedInput.directoryId, "");
 
       const { recordInput } = parsedInput;
       const createParams: FeedbackRecordCreateParams = {
@@ -153,19 +138,17 @@ export const updateFeedbackRecordAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: TUpdateFeedbackRecordAction;
     }) => {
-      const [, workspaceDirectoryIds] = await Promise.all([
-        ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
-        getWorkspaceDirectoryIds(parsedInput.workspaceId),
-      ]);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanWriteDirectoryRecords(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
 
       const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!currentRecordResult.data || currentRecordResult.error) {
         throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
       }
 
-      assertRecordBelongsToWorkspace(
-        workspaceDirectoryIds,
+      assertRecordBelongsToDirectory(
         currentRecordResult.data.tenant_id,
+        parsedInput.directoryId,
         parsedInput.recordId
       );
 
@@ -198,19 +181,17 @@ export const updateFeedbackRecordAction = authenticatedActionClient
 export const deleteFeedbackRecordAction = authenticatedActionClient
   .inputSchema(ZDeleteFeedbackRecordAction)
   .action(async ({ ctx, parsedInput }) => {
-    const [, workspaceDirectoryIds] = await Promise.all([
-      ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
-      getWorkspaceDirectoryIds(parsedInput.workspaceId),
-    ]);
+    await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+    await assertCanWriteDirectoryRecords(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
 
     const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
     if (!currentRecordResult.data || currentRecordResult.error) {
       throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
     }
 
-    assertRecordBelongsToWorkspace(
-      workspaceDirectoryIds,
+    assertRecordBelongsToDirectory(
       currentRecordResult.data.tenant_id,
+      parsedInput.directoryId,
       parsedInput.recordId
     );
 
@@ -221,3 +202,75 @@ export const deleteFeedbackRecordAction = authenticatedActionClient
 
     return { recordId: parsedInput.recordId };
   });
+
+const ZResolveSurveyWorkspaceAction = z.object({
+  organizationId: ZId,
+  surveyId: ZId,
+});
+
+/**
+ * Resolves a Formbricks survey (a record's `source_id`) to its owning workspace and whether the
+ * caller can reach it (decision #6). The Records view is org-scoped, so a per-row survey deep-link
+ * must resolve the record's OWN workspace and only link when the viewer can access it — otherwise the
+ * source name renders as plain text. Used for load-more rows; the initial SSR page precomputes a map.
+ *
+ * Returns `{ workspaceId: null, accessible: false }` (rather than throwing) when the survey is gone
+ * or lives in another organization, so an unresolvable link degrades to plain text without leaking.
+ */
+export const resolveSurveyWorkspaceAction = authenticatedActionClient
+  .inputSchema(ZResolveSurveyWorkspaceAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZResolveSurveyWorkspaceAction>;
+    }): Promise<{ workspaceId: string | null; accessible: boolean }> => {
+      const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+      if (!membership) {
+        return { workspaceId: null, accessible: false };
+      }
+
+      let workspaceId: string;
+      try {
+        workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+      } catch {
+        return { workspaceId: null, accessible: false };
+      }
+
+      const accessibleWorkspaceIds = await getAccessibleWorkspaceIds(ctx.user.id, parsedInput.organizationId);
+      const accessible = accessibleWorkspaceIds.includes(workspaceId);
+
+      // A survey in a workspace the viewer can't reach (including a different org) is not linkable.
+      return { workspaceId: accessible ? workspaceId : null, accessible };
+    }
+  );
+
+const ZGetFeedbackDatasetViewAction = z.object({
+  organizationId: ZId,
+  directoryId: ZId,
+});
+
+/**
+ * Loads the full view bundle (first page of records + overview stats + source-filter options +
+ * survey deep-link map) for a dataset. Backs client-side dataset switches so the overview header,
+ * filters, and links all stay consistent with the records in view — the SSR page assembles the same
+ * bundle for the default dataset. VIEW-guarded, so a member can only load datasets they can reach.
+ */
+export const getFeedbackDatasetViewAction = authenticatedActionClient
+  .inputSchema(ZGetFeedbackDatasetViewAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZGetFeedbackDatasetViewAction>;
+    }): Promise<TFeedbackDatasetView> => {
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
+
+      return getFeedbackDatasetView(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
+    }
+  );

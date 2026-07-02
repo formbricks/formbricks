@@ -23,8 +23,12 @@ import {
   getOrganizationIdFromFeedbackSourceId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import {
+  assertCanViewDirectory,
+  assertDirectoryAssignedToWorkspace,
+} from "@/modules/ee/feedback-directory/lib/access";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importHistoricalResponses } from "./import";
@@ -191,24 +195,26 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
       ],
     });
 
-    // Verify FRD belongs to same org
-    const frd = await prisma.feedbackDirectory.findUnique({
-      where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
-      select: { organizationId: true },
-    });
-    if (frd?.organizationId !== organizationId) {
-      throw new AuthorizationError("Invalid feedback directory");
-    }
+    // The source stays bound to its own workspace: the target dataset must be assigned to that
+    // workspace (this replaces the old same-org-only check, closing the loophole where a source could
+    // write into a dataset that its workspace could not read).
+    await assertDirectoryAssignedToWorkspace(
+      parsedInput.feedbackSourceInput.feedbackDirectoryId,
+      parsedInput.workspaceId,
+      organizationId
+    );
 
     let mappingsInput: TMappingsInput | undefined;
 
     const { formbricksMappings, fieldMappings } = parsedInput;
 
     if (formbricksMappings?.length) {
+      // Every mapped survey must live in the source's own workspace (the mapping's composite FK
+      // enforces this at write time, but checking here yields a clean authorization error).
       await Promise.all(
         formbricksMappings.map(async ({ surveyId }) => {
-          const orgId = await getOrganizationIdFromSurveyId(surveyId);
-          if (orgId !== organizationId) {
+          const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(surveyId);
+          if (surveyWorkspaceId !== parsedInput.workspaceId) {
             throw new AuthorizationError("You are not authorized to access this survey");
           }
         })
@@ -471,8 +477,8 @@ export const importHistoricalResponsesAction = authenticatedActionClient
   );
 
 const ZListFeedbackRecordsAction = z.object({
-  workspaceId: ZId,
-  frdId: ZId,
+  organizationId: ZId,
+  directoryId: ZId,
   limit: z.number().min(1).max(1000).optional(),
   cursor: z.string().optional(),
   sourceType: z.string().optional(),
@@ -493,31 +499,13 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZListFeedbackRecordsAction>;
     }): Promise<FeedbackRecordListResponse> => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "read",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
-      });
-
-      // Verify FRD belongs to workspace's accessible FRDs
-      const frds = await getFeedbackDirectoriesByWorkspaceId(parsedInput.workspaceId);
-      if (!frds.some((f) => f.id === parsedInput.frdId)) {
-        throw new Error("Feedback directory not accessible");
-      }
+      // Org-scoped VIEW guard: reproduces the pre-relocation outcome (owner/manager, or a member who
+      // shares a workspace with the dataset) while keeping the dataset as the unit of access instead
+      // of a URL workspace. Denies with a uniform not-found so it isn't a dataset-existence oracle.
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
 
       const params: FeedbackRecordListParams = {
-        tenant_id: parsedInput.frdId,
+        tenant_id: parsedInput.directoryId,
         limit: parsedInput.limit ?? 50,
       };
       if (parsedInput.cursor) params.cursor = parsedInput.cursor;

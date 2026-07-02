@@ -142,6 +142,12 @@ export function CreateChartView({
             {hasSelectedDirectory ? (
               <div className="grid gap-6 lg:grid-cols-2">
                 <div className="flex min-w-0 flex-col gap-4">
+                  {/* Charts read from a dataset (feedbackDirectory) that may aggregate feedback
+                      collected across multiple workspaces; the workspace only gates access. */}
+                  <p className="text-xs text-slate-500">
+                    {t("workspace.analysis.charts.cross_workspace_note")}
+                  </p>
+
                   {!isEditing && (
                     <AIQuerySection
                       workspaceId={workspaceId}

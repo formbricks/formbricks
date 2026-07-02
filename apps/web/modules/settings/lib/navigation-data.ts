@@ -11,6 +11,7 @@ import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/orga
 import { getUser } from "@/lib/user/service";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import { getFeedbackDirectoriesForUser } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import {
   getAccessControlPermission,
@@ -28,6 +29,10 @@ export interface TSettingsLayoutData {
   membershipRole?: TOrganizationRole;
   isAccessControlAllowed: boolean;
   isOwnerOrManager: boolean;
+  // Whether the "Unify Feedback" settings category should be visible: owner/manager always, or a
+  // member who can reach at least one feedback dataset through a workspace they belong to. Computed
+  // once here so the sidebar doesn't run an access query on every render.
+  canViewUnifyFeedback: boolean;
   isMultiOrgEnabled: boolean;
   organizationWorkspacesLimit: number;
   license: TLicense;
@@ -84,6 +89,11 @@ export const getSettingsLayoutData = async (
   // Full workspace object (not just id/name) so the shell can supply the WorkspaceContext.
   const currentWorkspace = workspaces[0] ? await getWorkspace(workspaces[0].id) : null;
   const isOwnerOrManager = membership.role === "owner" || membership.role === "manager";
+  // Owner/manager short-circuits (they always see the category); otherwise check whether the member
+  // can reach any dataset. getFeedbackDirectoriesForUser is reactCache'd, so a page that later needs
+  // the same list reuses this result within the render.
+  const canViewUnifyFeedback =
+    isOwnerOrManager || (await getFeedbackDirectoriesForUser(userId, organization.id)).length > 0;
 
   return {
     session,
@@ -92,6 +102,7 @@ export const getSettingsLayoutData = async (
     membershipRole: membership.role,
     isAccessControlAllowed,
     isOwnerOrManager,
+    canViewUnifyFeedback,
     isMultiOrgEnabled: license.features?.isMultiOrgEnabled ?? false,
     organizationWorkspacesLimit,
     license,

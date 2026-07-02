@@ -4,10 +4,11 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import {
+  assertCanViewDirectory,
+  assertCanWriteDirectoryRecords,
+} from "@/modules/ee/feedback-directory/lib/access";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   createTaxonomyRun,
@@ -38,13 +39,13 @@ const ZTaxonomyScope = z.object({
   field_id: z.string().trim().min(1).max(255),
 });
 
-const ZWorkspaceDirectory = z.object({
-  workspaceId: ZId,
+const ZOrganizationDirectory = z.object({
+  organizationId: ZId,
   directoryId: ZId,
 });
 
 const ZScopedTaxonomyInput = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
   scope: ZTaxonomyScope,
 });
 
@@ -61,38 +62,14 @@ export type TTaxonomyStateActionResult = {
   unavailableMessage?: string;
 };
 
-const ensureAccess = async (
-  userId: string,
-  workspaceId: string,
-  minPermission: "read" | "readWrite"
-): Promise<void> => {
-  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+/**
+ * Gate the taxonomy actions on the Unify Feedback entitlement. The taxonomy view is org-scoped, so
+ * the check keys off the organization rather than a workspace's organization.
+ */
+const ensureFeedbackDirectoriesEnabled = async (organizationId: string): Promise<void> => {
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
   if (!isFeedbackDirectoriesAllowed) {
     throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
-  }
-
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-      {
-        type: "workspaceTeam",
-        minPermission,
-        workspaceId,
-      },
-    ],
-  });
-};
-
-const ensureDirectoryAccess = async (workspaceId: string, directoryId: string): Promise<void> => {
-  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
-  if (!directories.some((directory) => directory.id === directoryId)) {
-    throw new OperationNotAllowedError("Feedback directory is not assigned to this workspace");
   }
 };
 
@@ -104,17 +81,17 @@ const unavailableResult = (message: string) => ({
 const hubErrorMessage = (message: string | undefined, fallback: string) => message || fallback;
 
 export const getTaxonomyFieldsAction = authenticatedActionClient
-  .inputSchema(ZWorkspaceDirectory)
+  .inputSchema(ZOrganizationDirectory)
   .action(
     async ({
       ctx,
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZWorkspaceDirectory>;
+      parsedInput: z.infer<typeof ZOrganizationDirectory>;
     }): Promise<TTaxonomyFieldsActionResult> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.directoryId);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
 
       const result = await listTaxonomyFields(parsedInput.directoryId);
       if (result.error) {
@@ -138,8 +115,10 @@ export const getTaxonomyStateAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZScopedTaxonomyInput>;
     }): Promise<TTaxonomyStateActionResult> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      // Authorize against the scope's tenant_id so the directory the user is granted is exactly the one
+      // the Hub is queried for — a mismatched tenant cannot be smuggled past a different directory.
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.scope.tenant_id);
 
       const [activeTree, runs] = await Promise.all([
         getActiveTaxonomyTree(parsedInput.scope),
@@ -180,8 +159,12 @@ export const triggerTaxonomyRunAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZScopedTaxonomyInput> & { fieldLabel?: string };
     }): Promise<{ run: TaxonomyRun; inProgress: boolean }> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanWriteDirectoryRecords(
+        ctx.user.id,
+        parsedInput.organizationId,
+        parsedInput.scope.tenant_id
+      );
 
       const result = await createTaxonomyRun({
         ...parsedInput.scope,
@@ -210,8 +193,8 @@ export const getTaxonomyRunAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZScopedTaxonomyInput> & { runId: string };
     }): Promise<TaxonomyRun> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.scope.tenant_id);
 
       const result = await getTaxonomyRun(parsedInput.runId, parsedInput.scope.tenant_id);
       if (result.error || !result.data) {
@@ -236,8 +219,8 @@ export const getTaxonomyTreeAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZScopedTaxonomyInput> & { runId: string };
     }): Promise<TaxonomyTreeResponse> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.scope.tenant_id);
 
       const result = await getTaxonomyTree(parsedInput.runId, parsedInput.scope.tenant_id);
       if (result.error || !result.data) {
@@ -251,7 +234,7 @@ export const getTaxonomyTreeAction = authenticatedActionClient
 export const getTaxonomyNodeRecordsAction = authenticatedActionClient
   .inputSchema(
     z.object({
-      workspaceId: ZId,
+      organizationId: ZId,
       tenantId: ZId,
       nodeId: z.string().uuid(),
       limit: z.number().min(1).max(100).optional(),
@@ -263,10 +246,10 @@ export const getTaxonomyNodeRecordsAction = authenticatedActionClient
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: { workspaceId: string; tenantId: string; nodeId: string; limit?: number };
+      parsedInput: { organizationId: string; tenantId: string; nodeId: string; limit?: number };
     }): Promise<TaxonomyNodeRecordsResponse> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.tenantId);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.tenantId);
 
       const result = await listTaxonomyNodeRecords(parsedInput.nodeId, {
         tenant_id: parsedInput.tenantId,
@@ -283,7 +266,7 @@ export const getTaxonomyNodeRecordsAction = authenticatedActionClient
 export const renameTaxonomyNodeAction = authenticatedActionClient
   .inputSchema(
     z.object({
-      workspaceId: ZId,
+      organizationId: ZId,
       tenantId: ZId,
       nodeId: z.string().uuid(),
       label: z.string().trim().min(1).max(1000),
@@ -295,10 +278,10 @@ export const renameTaxonomyNodeAction = authenticatedActionClient
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: { workspaceId: string; tenantId: string; nodeId: string; label: string };
+      parsedInput: { organizationId: string; tenantId: string; nodeId: string; label: string };
     }): Promise<TaxonomyNode> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.tenantId);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanWriteDirectoryRecords(ctx.user.id, parsedInput.organizationId, parsedInput.tenantId);
 
       const result = await renameTaxonomyNode(parsedInput.nodeId, {
         tenant_id: parsedInput.tenantId,
@@ -316,7 +299,7 @@ export const renameTaxonomyNodeAction = authenticatedActionClient
 export const removeTaxonomyNodeAction = authenticatedActionClient
   .inputSchema(
     z.object({
-      workspaceId: ZId,
+      organizationId: ZId,
       tenantId: ZId,
       nodeId: z.string().uuid(),
     })
@@ -327,10 +310,10 @@ export const removeTaxonomyNodeAction = authenticatedActionClient
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: { workspaceId: string; tenantId: string; nodeId: string };
+      parsedInput: { organizationId: string; tenantId: string; nodeId: string };
     }): Promise<TaxonomyNode> => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
-      await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.tenantId);
+      await ensureFeedbackDirectoriesEnabled(parsedInput.organizationId);
+      await assertCanWriteDirectoryRecords(ctx.user.id, parsedInput.organizationId, parsedInput.tenantId);
 
       const result = await removeTaxonomyNode(parsedInput.nodeId, {
         tenant_id: parsedInput.tenantId,

@@ -8,7 +8,6 @@ import {
   FoldersIcon,
   Loader2,
   MessageCircle,
-  MessageSquareTextIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
@@ -39,7 +38,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -69,6 +67,8 @@ interface NavigationProps {
   isAccessControlAllowed: boolean;
   responseCount: number;
   newTrialBannerVariant: string | boolean;
+  // Controls visibility of the "Feedback Datasets" org settings item (threaded to the settings sidebar).
+  canViewUnifyFeedback: boolean;
 }
 
 export const MainNavigation = ({
@@ -84,6 +84,7 @@ export const MainNavigation = ({
   isAccessControlAllowed,
   responseCount,
   newTrialBannerVariant,
+  canViewUnifyFeedback,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -144,31 +145,9 @@ export const MainNavigation = ({
               pathname?.includes("/attributes"),
             disabled: isMembershipPending || isBilling,
           },
-        ],
-      },
-      {
-        id: "unify-feedback",
-        name: (
-          <span className="inline-flex items-center gap-2">
-            <span>{t("workspace.unify.unify_feedback")}</span>
-            <Badge
-              text="Beta"
-              type="gray"
-              size="tiny"
-              className="text-[10px] font-semibold tracking-normal normal-case"
-            />
-          </span>
-        ),
-        items: [
           {
-            name: t("workspace.unify.feedback_records"),
-            href: `/workspaces/${workspace.id}/unify/feedback-records`,
-            icon: MessageSquareTextIcon,
-            isActive: pathname?.includes("/unify/"),
-            isHidden: false,
-            disabled: isMembershipPending || isBilling,
-          },
-          {
+            // Feedback Records moved to org settings (Stage 2); Dashboards now lives in the "ask"
+            // section alongside surveys and contacts.
             name: t("common.dashboards"),
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,
@@ -452,6 +431,7 @@ export const MainNavigation = ({
                 organizationName={organization.name}
                 membershipRole={membershipRole}
                 isFormbricksCloud={isFormbricksCloud}
+                canViewUnifyFeedback={canViewUnifyFeedback}
                 isCollapsed={false}
                 isTextVisible={false}
                 workspaces={workspaces}

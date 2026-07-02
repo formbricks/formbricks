@@ -1,14 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
+import type { TFeedbackSourceWithMappingsAndContext } from "@/lib/feedback-source/service";
 import { FeedbackSourcesTableDataRow } from "./feedback-sources-table-data-row";
 
 interface FeedbackSourcesTableRowsContainerProps {
-  feedbackSources: TFeedbackSourceWithMappings[];
+  feedbackSources: TFeedbackSourceWithMappingsAndContext[];
   onFeedbackSourceClick: (feedbackSource: TFeedbackSourceWithMappings) => void;
   onCsvImport: (feedbackSource: TFeedbackSourceWithMappings) => void;
   onDuplicate: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   onToggleStatus: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
-  onDelete: (feedbackSourceId: string) => Promise<void>;
+  onDelete: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   isReadOnly?: boolean;
 }
 
@@ -41,7 +42,7 @@ export const FeedbackSourcesTableRowsContainer = ({
           onCsvImport={feedbackSource.type === "csv" ? () => onCsvImport(feedbackSource) : undefined}
           onDuplicate={() => onDuplicate(feedbackSource)}
           onToggleStatus={() => onToggleStatus(feedbackSource)}
-          onDelete={() => onDelete(feedbackSource.id)}
+          onDelete={() => onDelete(feedbackSource)}
           isReadOnly={isReadOnly}
         />
       ))}
