@@ -5,6 +5,8 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -52,6 +54,53 @@ export const getWorkspacePermissionByUserId = reactCache(
       }
 
       throw new UnknownError("Error while fetching membership");
+    }
+  }
+);
+
+/**
+ * Lists the ids of every workspace a user can reach within an organization.
+ *
+ * Org owners/managers can reach all workspaces in the organization. Other roles (member) can
+ * reach a workspace only through a team they belong to (any permission level counts as access).
+ * Billing users — and users with no membership — reach nothing.
+ *
+ * Mirrors the role-aware access rule used by `getWorkspacesByUserId`, exposed as a plain id list
+ * for org-scoped Unify Feedback authorization (which needs the set without a membership object).
+ */
+export const getAccessibleWorkspaceIds = reactCache(
+  async (userId: string, organizationId: string): Promise<string[]> => {
+    validateInputs([userId, ZId], [organizationId, ZId]);
+
+    try {
+      const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+      if (!membership) return [];
+
+      const { isOwner, isManager } = getAccessFlags(membership.role);
+
+      if (isOwner || isManager) {
+        const workspaces = await prisma.workspace.findMany({
+          where: { organizationId },
+          select: { id: true },
+        });
+        return workspaces.map((workspace) => workspace.id);
+      }
+
+      const workspaceTeams = await prisma.workspaceTeam.findMany({
+        where: {
+          workspace: { organizationId },
+          team: { teamUsers: { some: { userId } } },
+        },
+        select: { workspaceId: true },
+        distinct: ["workspaceId"],
+      });
+      return workspaceTeams.map((workspaceTeam) => workspaceTeam.workspaceId);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error fetching accessible workspace ids");
+        throw new DatabaseError(error.message);
+      }
+      throw new UnknownError("Error while fetching accessible workspaces");
     }
   }
 );

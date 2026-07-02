@@ -6,6 +6,8 @@ import { Prisma, type PrismaClient } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TFeedbackDirectory,
@@ -14,6 +16,7 @@ import {
   TWorkspaceFeedbackDirectoryAccess,
   ZFeedbackDirectoryUpdateInput,
 } from "@/modules/ee/feedback-directory/types/feedback-directory";
+import { getAccessibleWorkspaceIds } from "@/modules/ee/teams/lib/roles";
 
 type FeedbackDirectoryPrismaClient = Pick<
   PrismaClient,
@@ -51,6 +54,66 @@ export const getFeedbackDirectories = reactCache(
         orderBy: {
           createdAt: "desc",
         },
+      });
+
+      return directories.map((dir) => ({
+        id: dir.id,
+        name: dir.name,
+        isArchived: dir.isArchived,
+        workspaceCount: dir._count.workspaces,
+        feedbackSourceCount: dir._count.feedbackSources,
+      }));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
+/**
+ * Retrieves the feedback directories a specific user may VIEW within an organization.
+ *
+ * Org owners/managers see every directory (including archived), matching {@link getFeedbackDirectories}.
+ * Other roles see only active directories assigned to a workspace they can reach — this backs the
+ * org-level dataset selector without leaking the existence of datasets tied to inaccessible
+ * workspaces. Members with no reachable workspace (and non-members) get an empty list.
+ */
+export const getFeedbackDirectoriesForUser = reactCache(
+  async (userId: string, organizationId: string): Promise<TFeedbackDirectory[]> => {
+    validateInputs([userId, ZId], [organizationId, ZId]);
+
+    const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+    if (!membership) return [];
+
+    const { isOwner, isManager } = getAccessFlags(membership.role);
+    if (isOwner || isManager) {
+      return getFeedbackDirectories(organizationId);
+    }
+
+    const accessibleWorkspaceIds = await getAccessibleWorkspaceIds(userId, organizationId);
+    if (accessibleWorkspaceIds.length === 0) return [];
+
+    try {
+      const directories = await prisma.feedbackDirectory.findMany({
+        where: {
+          organizationId,
+          isArchived: false,
+          workspaces: { some: { workspaceId: { in: accessibleWorkspaceIds } } },
+        },
+        select: {
+          id: true,
+          name: true,
+          isArchived: true,
+          _count: {
+            select: {
+              workspaces: true,
+              feedbackSources: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
       });
 
       return directories.map((dir) => ({
