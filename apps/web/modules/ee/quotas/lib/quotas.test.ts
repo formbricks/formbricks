@@ -199,14 +199,18 @@ describe("Quota Service", () => {
       });
     });
 
-    test("should throw DatabaseError when quota not found", async () => {
+    test("should throw ResourceNotFoundError when quota not found", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "1.0.0",
       });
       vi.mocked(prisma.surveyQuota.update).mockRejectedValue(prismaError);
 
-      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toThrow(ResourceNotFoundError);
+      await expect(updateQuota(updateInput, mockQuotaId)).rejects.toMatchObject({
+        name: "ResourceNotFoundError",
+        resourceType: "Quota",
+        resourceId: mockQuotaId,
+      });
     });
 
     test("should throw DatabaseError on other Prisma errors", async () => {
@@ -237,14 +241,18 @@ describe("Quota Service", () => {
       });
     });
 
-    test("should throw DatabaseError when quota not found", async () => {
+    test("should throw ResourceNotFoundError when quota not found", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "1.0.0",
       });
       vi.mocked(prisma.surveyQuota.delete).mockRejectedValue(prismaError);
 
-      await expect(deleteQuota(mockQuotaId)).rejects.toThrow(ResourceNotFoundError);
+      await expect(deleteQuota(mockQuotaId)).rejects.toMatchObject({
+        name: "ResourceNotFoundError",
+        resourceType: "Quota",
+        resourceId: mockQuotaId,
+      });
     });
 
     test("should throw DatabaseError on other Prisma errors", async () => {
