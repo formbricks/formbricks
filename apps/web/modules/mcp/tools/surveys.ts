@@ -10,7 +10,12 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import { getMcpAuthentication, getMcpRequestId } from "../auth";
+import {
+  createMcpInsufficientScopeResponse,
+  getMcpAuthentication,
+  getMcpRequestId,
+  hasMcpScopes,
+} from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
   type TMcpCreateSurveyInput,
@@ -76,6 +81,13 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpListSurveysInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
+      if (!hasMcpScopes(extra.authInfo, ["surveys:read"])) {
+        return await responseToMcpToolResult(
+          createMcpInsufficientScopeResponse(requestId, ["surveys:read"]),
+          requestId
+        );
+      }
+
       const response = await listV3Surveys({
         searchParams: buildListSurveysSearchParams(input),
         authentication: getMcpAuthentication(extra.authInfo),
@@ -102,6 +114,13 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpGetSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
+      if (!hasMcpScopes(extra.authInfo, ["surveys:read"])) {
+        return await responseToMcpToolResult(
+          createMcpInsufficientScopeResponse(requestId, ["surveys:read"]),
+          requestId
+        );
+      }
+
       const response = await getV3Survey({
         surveyId: input.surveyId,
         lang: input.lang,
@@ -129,6 +148,13 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpCreateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
+      if (!hasMcpScopes(extra.authInfo, ["surveys:write"])) {
+        return await responseToMcpToolResult(
+          createMcpInsufficientScopeResponse(requestId, ["surveys:write"]),
+          requestId
+        );
+      }
+
       const authentication = getMcpAuthentication(extra.authInfo);
       const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
       const auditLog = buildV3AuditLog(authentication, "created", "survey", MCP_API_ROUTE);
@@ -178,6 +204,16 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpValidateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
+      const requiredScopes =
+        input.operation === "patch" || input.operation === "create" ? ["surveys:write"] : ["surveys:read"];
+
+      if (!hasMcpScopes(extra.authInfo, requiredScopes)) {
+        return await responseToMcpToolResult(
+          createMcpInsufficientScopeResponse(requestId, requiredScopes),
+          requestId
+        );
+      }
+
       const response = await validateV3SurveyFromRawInput({
         body: input,
         authentication: getMcpAuthentication(extra.authInfo),
@@ -207,6 +243,13 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpPatchSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
+      if (!hasMcpScopes(extra.authInfo, ["surveys:write"])) {
+        return await responseToMcpToolResult(
+          createMcpInsufficientScopeResponse(requestId, ["surveys:write"]),
+          requestId
+        );
+      }
+
       const authentication = getMcpAuthentication(extra.authInfo);
       const log = logger.withContext({ requestId, surveyId: input.surveyId });
       const auditLog = buildV3AuditLog(authentication, "updated", "survey", MCP_API_ROUTE);
@@ -257,6 +300,13 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpDeleteSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
+      if (!hasMcpScopes(extra.authInfo, ["surveys:write"])) {
+        return await responseToMcpToolResult(
+          createMcpInsufficientScopeResponse(requestId, ["surveys:write"]),
+          requestId
+        );
+      }
+
       const authentication = getMcpAuthentication(extra.authInfo);
       const log = logger.withContext({ requestId, surveyId: input.surveyId });
       const auditLog = buildV3AuditLog(authentication, "deleted", "survey", MCP_API_ROUTE);

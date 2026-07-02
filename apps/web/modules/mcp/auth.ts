@@ -1,8 +1,10 @@
 import "server-only";
+import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import type { JWTPayload } from "jose";
 import type { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import type { TAuthenticationApiKey } from "@formbricks/types/auth";
+import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import {
   problemBadRequest,
@@ -11,9 +13,17 @@ import {
   problemTooManyRequests,
   problemUnauthorized,
 } from "@/app/api/v3/lib/response";
-import { getPublicDomain } from "@/lib/getPublicUrl";
-import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { parseApiKeyV2 } from "@/lib/crypto";
+import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
+import { auth } from "@/modules/auth/lib/auth";
+import {
+  getAuthIssuerUrl,
+  getMcpOrigin,
+  getMcpProtectedResourceMetadataUrl,
+  getMcpResourceUrl,
+} from "@/modules/auth/lib/oauth-urls";
+import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
 const QUERY_CREDENTIAL_PARAMS = new Set([
@@ -25,10 +35,14 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
+const DEFAULT_OAUTH_SCOPE = "surveys:read";
+const oauthResourceClient = oauthProviderResourceClient(auth);
+
 export type TMcpAuthInfo = AuthInfo & {
   extra: {
-    formbricksAuthentication: TAuthenticationApiKey;
+    formbricksAuthentication: TV3Authentication;
     requestId: string;
+    authMethod: "apiKey" | "oauth";
   };
 };
 
@@ -49,7 +63,7 @@ function getRequestId(request: NextRequest): string {
 }
 
 function getPublicOrigin(): string {
-  return new URL(getPublicDomain()).origin;
+  return getMcpOrigin();
 }
 
 function hasQueryCredentials(searchParams: URLSearchParams): boolean {
@@ -82,7 +96,7 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
   return Array.from(scopes);
 }
 
-function createMcpAuthInfo(authentication: TAuthenticationApiKey, requestId: string): TMcpAuthInfo {
+function createApiKeyMcpAuthInfo(authentication: TAuthenticationApiKey, requestId: string): TMcpAuthInfo {
   return {
     token: authentication.apiKeyId,
     clientId: authentication.apiKeyId,
@@ -90,17 +104,71 @@ function createMcpAuthInfo(authentication: TAuthenticationApiKey, requestId: str
     extra: {
       formbricksAuthentication: authentication,
       requestId,
+      authMethod: "apiKey",
     },
   };
 }
 
-export function getMcpAuthentication(authInfo?: AuthInfo): TAuthenticationApiKey | null {
-  const authentication = authInfo?.extra?.formbricksAuthentication;
-  if (!authentication || typeof authentication !== "object" || !("apiKeyId" in authentication)) {
+function getOAuthScopes(payload: JWTPayload): string[] {
+  return typeof payload.scope === "string" ? payload.scope.split(" ").filter(Boolean) : [];
+}
+
+function getOAuthClientId(payload: JWTPayload): string | null {
+  const azp = payload.azp;
+  if (typeof azp === "string" && azp.length > 0) {
+    return azp;
+  }
+
+  const clientId = payload.client_id;
+  return typeof clientId === "string" && clientId.length > 0 ? clientId : null;
+}
+
+function payloadToSession(payload: JWTPayload): Session | null {
+  if (typeof payload.sub !== "string" || payload.sub.length === 0) {
     return null;
   }
 
-  return authentication as TAuthenticationApiKey;
+  const expires =
+    typeof payload.exp === "number" && Number.isFinite(payload.exp)
+      ? new Date(payload.exp * 1000).toISOString()
+      : new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+  return {
+    user: {
+      id: payload.sub,
+      email: typeof payload.email === "string" ? payload.email : null,
+      name: typeof payload.name === "string" ? payload.name : null,
+    },
+    expires,
+  };
+}
+
+function createOAuthMcpAuthInfo(payload: JWTPayload, requestId: string): TMcpAuthInfo | null {
+  const authentication = payloadToSession(payload);
+  if (!authentication) {
+    return null;
+  }
+
+  const clientId = getOAuthClientId(payload) ?? "unknown";
+  return {
+    token: `oauth:${authentication.user.id}:${clientId}`,
+    clientId,
+    scopes: getOAuthScopes(payload),
+    extra: {
+      formbricksAuthentication: authentication,
+      requestId,
+      authMethod: "oauth",
+    },
+  };
+}
+
+export function getMcpAuthentication(authInfo?: AuthInfo): TV3Authentication {
+  const authentication = authInfo?.extra?.formbricksAuthentication;
+  if (!authentication || typeof authentication !== "object") {
+    return null;
+  }
+
+  return authentication as TV3Authentication;
 }
 
 export function getMcpRequestId(authInfo?: AuthInfo): string {
@@ -118,6 +186,198 @@ export function withMcpResponseHeaders(response: Response, requestId: string): R
     statusText: response.statusText,
     headers,
   });
+}
+
+function withOAuthChallenge(response: Response, scope = DEFAULT_OAUTH_SCOPE): Response {
+  const headers = new Headers(response.headers);
+  headers.set(
+    "WWW-Authenticate",
+    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}" scope="${scope}"`
+  );
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+export function withInsufficientScopeChallenge(response: Response, scopes: string[]): Response {
+  const headers = new Headers(response.headers);
+  const requiredScopes = scopes.join(" ");
+  headers.set(
+    "WWW-Authenticate",
+    [
+      'Bearer error="insufficient_scope"',
+      `scope="${requiredScopes}"`,
+      `resource_metadata="${getMcpProtectedResourceMetadataUrl()}"`,
+      'error_description="The OAuth access token does not include the required MCP scope."',
+    ].join(", ")
+  );
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+async function rateLimitUnauthenticatedMcpRequest(
+  requestId: string,
+  log: ReturnType<typeof logger.withContext>
+): Promise<Response | null> {
+  try {
+    await applyIPRateLimit(rateLimitConfigs.api.mcpAuth);
+    return null;
+  } catch (error) {
+    log.warn({ error, statusCode: 429 }, "MCP unauthenticated rate limit exceeded");
+    return problemTooManyRequests(
+      requestId,
+      error instanceof Error ? error.message : "Rate limit exceeded",
+      error instanceof TooManyRequestsError ? error.retryAfter : undefined
+    );
+  }
+}
+
+async function authenticateMcpApiKey(
+  request: NextRequest,
+  requestId: string,
+  log: ReturnType<typeof logger.withContext>
+): Promise<TMcpAuthenticationResult> {
+  const instance = request.nextUrl.pathname;
+  const authentication = await authenticateApiKeyFromHeaders(request.headers);
+
+  if (!authentication) {
+    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+    if (rateLimitResponse) {
+      return { ok: false, requestId, response: rateLimitResponse };
+    }
+
+    log.warn({ statusCode: 401 }, "MCP API key authentication failed");
+    return {
+      ok: false,
+      requestId,
+      response: withOAuthChallenge(
+        problemUnauthorized(requestId, "API key or OAuth access token required", instance)
+      ),
+    };
+  }
+
+  try {
+    await applyRateLimit(rateLimitConfigs.api.v3, authentication.apiKeyId);
+  } catch (error) {
+    log.warn({ error, statusCode: 429, apiKeyId: authentication.apiKeyId }, "MCP API rate limit exceeded");
+    return {
+      ok: false,
+      requestId,
+      response: problemTooManyRequests(
+        requestId,
+        error instanceof Error ? error.message : "Rate limit exceeded",
+        error instanceof TooManyRequestsError ? error.retryAfter : undefined
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    requestId,
+    authInfo: createApiKeyMcpAuthInfo(authentication, requestId),
+  };
+}
+
+async function authenticateMcpOAuthBearer(
+  token: string,
+  requestId: string,
+  instance: string,
+  log: ReturnType<typeof logger.withContext>
+): Promise<TMcpAuthenticationResult> {
+  try {
+    const payload = await oauthResourceClient.getActions().verifyAccessToken(token, {
+      verifyOptions: {
+        audience: getMcpResourceUrl(),
+        issuer: getAuthIssuerUrl(),
+      },
+      jwksUrl: `${getAuthIssuerUrl()}/jwks`,
+    });
+    const authInfo = createOAuthMcpAuthInfo(payload, requestId);
+
+    if (!authInfo) {
+      const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+      if (rateLimitResponse) {
+        return { ok: false, requestId, response: rateLimitResponse };
+      }
+
+      log.warn({ statusCode: 401 }, "MCP OAuth token has no user subject");
+      return {
+        ok: false,
+        requestId,
+        response: withOAuthChallenge(
+          problemUnauthorized(requestId, "User OAuth access token required", instance)
+        ),
+      };
+    }
+
+    if (!hasMcpScopes(authInfo, [DEFAULT_OAUTH_SCOPE])) {
+      log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing read scope");
+      return {
+        ok: false,
+        requestId,
+        response: withInsufficientScopeChallenge(
+          problemForbidden(requestId, "OAuth token does not include the required MCP scope", instance),
+          [DEFAULT_OAUTH_SCOPE]
+        ),
+      };
+    }
+
+    try {
+      const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
+      await applyRateLimit(
+        rateLimitConfigs.api.v3,
+        `oauth:${sessionAuthentication.user.id}:${authInfo.clientId}`
+      );
+    } catch (error) {
+      log.warn({ error, statusCode: 429, clientId: authInfo.clientId }, "MCP OAuth rate limit exceeded");
+      return {
+        ok: false,
+        requestId,
+        response: problemTooManyRequests(
+          requestId,
+          error instanceof Error ? error.message : "Rate limit exceeded",
+          error instanceof TooManyRequestsError ? error.retryAfter : undefined
+        ),
+      };
+    }
+
+    return {
+      ok: true,
+      requestId,
+      authInfo,
+    };
+  } catch {
+    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+    if (rateLimitResponse) {
+      return { ok: false, requestId, response: rateLimitResponse };
+    }
+
+    log.warn({ statusCode: 401 }, "MCP OAuth authentication failed");
+    return {
+      ok: false,
+      requestId,
+      response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
+    };
+  }
+}
+
+export function hasMcpScopes(authInfo: AuthInfo | undefined, requiredScopes: string[]): boolean {
+  const scopes = authInfo?.scopes ?? [];
+  return requiredScopes.every((scope) => scopes.includes(scope));
+}
+
+export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
+  return withInsufficientScopeChallenge(
+    problemForbidden(requestId, "OAuth token does not include the required MCP scope", "/api/mcp"),
+    scopes
+  );
 }
 
 export async function authenticateMcpRequest(request: NextRequest): Promise<TMcpAuthenticationResult> {
@@ -152,36 +412,33 @@ export async function authenticateMcpRequest(request: NextRequest): Promise<TMcp
   }
 
   try {
-    const authentication = await authenticateApiKeyFromHeaders(request.headers);
-    if (!authentication) {
-      log.warn({ statusCode: 401 }, "MCP API authentication failed");
-      return {
-        ok: false,
-        requestId,
-        response: problemUnauthorized(requestId, "API key required", instance),
-      };
+    const xApiKey = request.headers.get("x-api-key")?.trim();
+    if (xApiKey) {
+      return await authenticateMcpApiKey(request, requestId, log);
     }
 
-    try {
-      await applyRateLimit(rateLimitConfigs.api.v3, authentication.apiKeyId);
-    } catch (error) {
-      log.warn({ error, statusCode: 429, apiKeyId: authentication.apiKeyId }, "MCP API rate limit exceeded");
+    const bearerToken = getBearerTokenFromHeaders(request.headers);
+    if (!bearerToken) {
+      const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+      if (rateLimitResponse) {
+        return { ok: false, requestId, response: rateLimitResponse };
+      }
+
+      log.warn({ statusCode: 401 }, "MCP authentication credentials missing");
       return {
         ok: false,
         requestId,
-        response: problemTooManyRequests(
-          requestId,
-          error instanceof Error ? error.message : "Rate limit exceeded",
-          error instanceof TooManyRequestsError ? error.retryAfter : undefined
+        response: withOAuthChallenge(
+          problemUnauthorized(requestId, "API key or OAuth access token required", instance)
         ),
       };
     }
 
-    return {
-      ok: true,
-      requestId,
-      authInfo: createMcpAuthInfo(authentication, requestId),
-    };
+    if (parseApiKeyV2(bearerToken)) {
+      return await authenticateMcpApiKey(request, requestId, log);
+    }
+
+    return await authenticateMcpOAuthBearer(bearerToken, requestId, instance, log);
   } catch (error) {
     log.error({ error, statusCode: 500 }, "MCP API authentication unexpected error");
     return {

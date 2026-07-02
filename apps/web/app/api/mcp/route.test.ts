@@ -14,14 +14,40 @@ import {
 } from "@/app/api/v3/surveys/lib/operations";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { POST } from "./route";
+
+const verifyAccessTokenMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@better-auth/oauth-provider/resource-client", () => ({
+  oauthProviderResourceClient: vi.fn(() => ({
+    getActions: () => ({
+      verifyAccessToken: verifyAccessTokenMock,
+    }),
+  })),
+}));
+
+vi.mock("@/modules/auth/lib/auth", () => ({
+  auth: {},
+}));
+
+vi.mock("@/modules/auth/lib/oauth-urls", () => ({
+  getAuthIssuerUrl: () => "http://localhost/api/auth",
+  getMcpOrigin: () => "http://localhost",
+  getMcpProtectedResourceMetadataUrl: () => "http://localhost/.well-known/oauth-protected-resource/api/mcp",
+  getMcpResourceUrl: () => "http://localhost/api/mcp",
+}));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
   authenticateApiKeyFromHeaders: vi.fn(),
+  getBearerTokenFromHeaders: vi.fn((headers: Headers) => {
+    const authorization = headers.get("authorization");
+    return authorization?.startsWith("Bearer ") ? authorization.slice("Bearer ".length) : null;
+  }),
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyIPRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
   applyRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
 }));
 
@@ -93,6 +119,15 @@ describe("POST /api/mcp", () => {
     vi.resetAllMocks();
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+    verifyAccessTokenMock.mockResolvedValue({
+      sub: "user_1",
+      email: "person@example.com",
+      name: "Person",
+      scope: "openid profile email surveys:read surveys:write",
+      exp: Math.floor(Date.now() / 1000) + 900,
+      azp: "client_1",
+    });
     vi.mocked(listV3Surveys).mockResolvedValue(
       successListResponse([], { limit: 20, nextCursor: null, totalCount: 0 }, { requestId: "req_mcp" })
     );
@@ -112,6 +147,10 @@ describe("POST /api/mcp", () => {
 
     expect(response.status).toBe(401);
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
+    expect(response.headers.get("WWW-Authenticate")).toBe(
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read"'
+    );
+    expect(applyIPRateLimit).toHaveBeenCalled();
   });
 
   test("returns 413 before MCP handling when content-length exceeds the v3 body limit", async () => {
@@ -249,6 +288,159 @@ describe("POST /api/mcp", () => {
         instance: "/api/mcp",
       })
     );
+  });
+
+  test("authenticates an API key from an Authorization bearer token", async () => {
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: {
+            name: "list_surveys",
+            arguments: {
+              workspaceId: "clxx1234567890123456789012",
+            },
+          },
+        },
+        {
+          authorization: "Bearer fbk_secret-with-hyphens",
+          "x-api-key": "",
+          "x-request-id": "req_bearer_api_key",
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(authenticateApiKeyFromHeaders).toHaveBeenCalledTimes(1);
+    expect(verifyAccessTokenMock).not.toHaveBeenCalled();
+    expect(listV3Surveys).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authentication: apiKeyAuth,
+        requestId: "req_bearer_api_key",
+      })
+    );
+  });
+
+  test("authenticates OAuth bearer tokens without API-key lookup", async () => {
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 7,
+          method: "tools/call",
+          params: {
+            name: "list_surveys",
+            arguments: {
+              workspaceId: "clxx1234567890123456789012",
+              limit: 20,
+              includeTotalCount: true,
+            },
+          },
+        },
+        {
+          authorization: "Bearer eyJhbGciOiJFZERTQSJ9.payload.signature",
+          "x-api-key": "",
+          "x-request-id": "req_oauth",
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+    expect(verifyAccessTokenMock).toHaveBeenCalledWith(
+      "eyJhbGciOiJFZERTQSJ9.payload.signature",
+      expect.objectContaining({
+        verifyOptions: expect.objectContaining({
+          audience: "http://localhost/api/mcp",
+          issuer: "http://localhost/api/auth",
+        }),
+      })
+    );
+    expect(applyRateLimit).toHaveBeenCalledWith(expect.any(Object), "oauth:user_1:client_1");
+    expect(listV3Surveys).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authentication: {
+          user: {
+            id: "user_1",
+            email: "person@example.com",
+            name: "Person",
+          },
+          expires: expect.any(String),
+        },
+        requestId: "req_oauth",
+        instance: "/api/mcp",
+      })
+    );
+  });
+
+  test("rejects invalid OAuth bearer tokens with an OAuth challenge", async () => {
+    verifyAccessTokenMock.mockRejectedValueOnce(new Error("invalid token"));
+
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 8,
+          method: "tools/list",
+          params: {},
+        },
+        {
+          authorization: "Bearer eyJhbGciOiJFZERTQSJ9.invalid.signature",
+          "x-api-key": "",
+          "x-request-id": "req_invalid_oauth",
+        }
+      )
+    );
+
+    expect(response.status).toBe(401);
+    expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+    expect(applyIPRateLimit).toHaveBeenCalled();
+    expect(response.headers.get("WWW-Authenticate")).toBe(
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read"'
+    );
+  });
+
+  test("blocks write tools for read-only OAuth tokens", async () => {
+    verifyAccessTokenMock.mockResolvedValueOnce({
+      sub: "user_1",
+      email: "person@example.com",
+      scope: "openid profile email surveys:read",
+      exp: Math.floor(Date.now() / 1000) + 900,
+      azp: "client_read_only",
+    });
+
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 9,
+          method: "tools/call",
+          params: {
+            name: "delete_survey",
+            arguments: {
+              surveyId: "clsv1234567890123456789012",
+            },
+          },
+        },
+        {
+          authorization: "Bearer eyJhbGciOiJFZERTQSJ9.readonly.signature",
+          "x-api-key": "",
+          "x-request-id": "req_read_only",
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const message = await readMcpResponse(response);
+    expect(message.result.isError).toBe(true);
+    expect(message.result.structuredContent.error).toMatchObject({
+      status: 403,
+      code: "forbidden",
+      detail: "OAuth token does not include the required MCP scope",
+      requestId: "req_read_only",
+    });
   });
 
   test("calls create_survey through the MCP route", async () => {

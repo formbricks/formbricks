@@ -68,6 +68,24 @@ const authInfo = {
   },
 };
 
+const readOnlyOAuthAuthInfo = {
+  token: "oauth:user_1:client_1",
+  clientId: "client_1",
+  scopes: ["surveys:read"],
+  extra: {
+    formbricksAuthentication: {
+      user: {
+        id: "user_1",
+        email: "person@example.com",
+        name: "Person",
+      },
+      expires: "2026-07-01T00:00:00.000Z",
+    },
+    requestId: "req_tool",
+    authMethod: "oauth",
+  },
+};
+
 function createToolServer() {
   const tools = new Map<
     string,
@@ -458,5 +476,25 @@ describe("registerSurveyTools", () => {
       eventId: "req_tool",
     });
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
+  test("write tools return MCP errors for read-only OAuth scopes", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools.get("delete_survey")!.handler(
+      {
+        surveyId: "clxx1234567890123456789012",
+      },
+      { authInfo: readOnlyOAuthAuthInfo }
+    );
+
+    expect(deleteV3Survey).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 403,
+      code: "forbidden",
+      detail: "OAuth token does not include the required MCP scope",
+      requestId: "req_tool",
+    });
   });
 });

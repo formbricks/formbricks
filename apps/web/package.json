@@ -22,6 +22,7 @@
     "i18n:generate": "npx lingo.dev@latest run && npx lingo.dev@latest lockfile --force"
   },
   "dependencies": {
+    "@better-auth/oauth-provider": "1.6.18",
     "@boxyhq/saml-jackson": "26.2.0",
     "@cubejs-client/core": "1.6.6",
     "@dnd-kit/core": "6.3.1",
