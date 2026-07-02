@@ -22,7 +22,7 @@ import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/l
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
 import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
-import { calculateTtcTotal } from "@/lib/response/utils";
+import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContact } from "./contact";
@@ -49,7 +49,7 @@ const buildPrismaResponseData = (
     display: displayId ? { connect: { id: displayId } } : undefined,
     finished: finished,
     data: data,
-    language: language,
+    language: normalizeResponseLanguage(language),
     ...(contact?.id && {
       contact: {
         connect: {

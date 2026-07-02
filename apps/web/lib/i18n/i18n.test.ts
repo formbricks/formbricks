@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createI18nString } from "./utils";
+import { createI18nString, toLegacyLanguageCodes } from "./utils";
 
 describe("createI18nString", () => {
   test("should create an i18n string from a regular string", () => {
@@ -30,5 +30,23 @@ describe("createI18nString", () => {
     expect(result).toEqual({
       default: "Hello",
     });
+  });
+});
+
+describe("toLegacyLanguageCodes", () => {
+  test("maps a canonical code to its known legacy aliases", () => {
+    expect(toLegacyLanguageCodes("de-DE")).toEqual(["de"]);
+    expect(toLegacyLanguageCodes("zh-Hans-CN")).toEqual(["zh", "zh-CN", "zh-Hans"]);
+  });
+
+  test("returns an empty array for a code with no legacy aliases", () => {
+    expect(toLegacyLanguageCodes("xx-YY")).toEqual([]);
+  });
+
+  test("returns a fresh copy so a caller can't corrupt the shared cache", () => {
+    const aliases = toLegacyLanguageCodes("de-DE");
+    aliases.push("MUTATED");
+    // A later lookup must be unaffected by the mutation above.
+    expect(toLegacyLanguageCodes("de-DE")).toEqual(["de"]);
   });
 });

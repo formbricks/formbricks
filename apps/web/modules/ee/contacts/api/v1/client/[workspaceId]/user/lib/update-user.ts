@@ -1,6 +1,8 @@
 import { prisma } from "@formbricks/database";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
+import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
@@ -156,36 +158,82 @@ export const updateUser = async (
   let errors: string[] = [];
   let language = contactAttributes.language;
 
+  // Standardize the contact's `language` attribute to its canonical BCP-47 tag on write (ENG-1067), so a
+  // legacy SDK `setLanguage("de")` lands as `de-DE`. An invalid or blank language is dropped from the
+  // payload — the rest of the attributes still persist — rather than stored verbatim. (The SDK never
+  // validated `setLanguage`, so callers could send anything; this keeps junk out of the column going
+  // forward. Pre-existing invalid values are left as-is; they simply don't match any survey language.)
+  let normalizedAttributes = attributes;
+  let droppedInvalidLanguage: string | null = null;
+  if (attributes && "language" in attributes) {
+    const { language: rawLanguage, ...otherAttributes } = attributes;
+    // `rawLanguage` is string | number | boolean — stringify once, then decide on the *trimmed* content,
+    // so falsy-but-real values (0, false, "0") are treated like any other invalid code while blank or
+    // whitespace-only input stays silent (truthiness alone would drop 0/false without a message).
+    const languageStr = String(rawLanguage);
+    const trimmedLanguage = languageStr.trim();
+    const canonicalLanguage = trimmedLanguage ? normalizeLanguageCode(languageStr) : null;
+    if (canonicalLanguage) {
+      normalizedAttributes = { ...otherAttributes, language: canonicalLanguage };
+    } else {
+      normalizedAttributes = otherAttributes;
+      // Surface a non-blank but unparseable value back to the caller; blank/whitespace-only stays silent.
+      if (trimmedLanguage) droppedInvalidLanguage = languageStr;
+    }
+  }
+
   // Handle attribute updates efficiently
-  if (attributes && Object.keys(attributes).length > 0) {
+  if (normalizedAttributes && Object.keys(normalizedAttributes).length > 0) {
     // Single pass comparison - check if any attribute has changed
-    const hasChanges = Object.entries(attributes).some(([key, value]) => value !== contactAttributes[key]);
+    const hasChanges = Object.entries(normalizedAttributes).some(
+      ([key, value]) => value !== contactAttributes[key]
+    );
 
     if (hasChanges) {
       const {
         success,
         messages: updateAttrMessages,
         errors: updateAttrErrors,
-      } = await updateAttributes(contactData.id, userId, workspaceId, attributes);
+      } = await updateAttributes(contactData.id, userId, workspaceId, normalizedAttributes);
 
       messages = updateAttrMessages?.map(formatAttributeMessage) ?? [];
       errors = updateAttrErrors?.map(formatAttributeMessage) ?? [];
 
       // Update language if provided (used in response state)
-      if (success && attributes.language) {
-        language = String(attributes.language);
+      if (success && normalizedAttributes.language) {
+        language = String(normalizedAttributes.language);
       }
     }
+  }
+
+  // Tell the caller we ignored an invalid language (mirrors how skipped/invalid attributes are surfaced).
+  if (droppedInvalidLanguage) {
+    messages.push(
+      formatAttributeMessage({
+        code: "invalid_language_ignored",
+        params: { language: droppedInvalidLanguage },
+      })
+    );
   }
 
   // Build user state from already-fetched data (no additional query needed)
   const userStateData = await buildUserStateFromContact(contactData, workspaceId, userId, device);
 
+  // Transitional SDK back-compat (ENG-1067): echo the language to the SDK in a legacy form (the first
+  // known alias), matching the legacy codes the client environment serializer exposes, so SDK clients
+  // that match the display language by exact code keep working until the canonical-aware versions are
+  // adopted (notably older React Native apps). Only a value that canonicalizes is echoed — a stored junk
+  // code resolves to `undefined` rather than being passed through. Remove once those clients have drained.
+  const storedCanonicalLanguage = language ? normalizeLanguageCode(String(language)) : null;
+  const responseLanguage = storedCanonicalLanguage
+    ? (toLegacyLanguageCodes(storedCanonicalLanguage)[0] ?? storedCanonicalLanguage)
+    : undefined;
+
   return {
     state: {
       data: {
         ...userStateData,
-        language,
+        language: responseLanguage,
       },
       expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
     },

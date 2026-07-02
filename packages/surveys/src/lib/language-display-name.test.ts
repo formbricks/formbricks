@@ -29,6 +29,13 @@ describe("getLanguageDisplayName", () => {
     expect(getLanguageDisplayName("bo")).toBe("བོད་སྐད་");
   });
 
+  test("falls back to the bare/script native name for region-tagged canonical codes", () => {
+    // no exact entry for these canonical codes → fall back to language(+script)
+    expect(getLanguageDisplayName("hi-IN")).toBe("हिन्दी");
+    expect(getLanguageDisplayName("zh-Hans-CN")).toBe("简体中文");
+    expect(getLanguageDisplayName("da-DK")).toBe("Dansk");
+  });
+
   test("returns raw code for unknown codes", () => {
     expect(getLanguageDisplayName("xx")).toBe("Xx");
     expect(getLanguageDisplayName("unknown")).toBe("Unknown");
