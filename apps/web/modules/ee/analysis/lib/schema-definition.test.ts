@@ -3,9 +3,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import {
   FEEDBACK_FIELDS,
+  SELECTABLE_VALUE_DIMENSION_IDS,
   formatCubeColumnHeader,
   getFieldById,
   getFilterOperatorsForType,
+  isSelectableValueDimension,
 } from "./schema-definition";
 
 const chartCubeSchemaPath = fileURLToPath(
@@ -121,6 +123,64 @@ describe("schema-definition", () => {
 
     test("keeps the Helm and Docker Cube schemas in sync", () => {
       expect(readChartCubeSchema()).toBe(readDockerCubeSchema());
+    });
+  });
+
+  describe("isSelectableValueDimension", () => {
+    test("accepts low-cardinality string dimensions", () => {
+      expect(isSelectableValueDimension("FeedbackRecords.sourceName")).toBe(true);
+      expect(isSelectableValueDimension("FeedbackRecords.sourceType")).toBe(true);
+      expect(isSelectableValueDimension("FeedbackRecords.language")).toBe(true);
+      expect(isSelectableValueDimension("FeedbackRecords.fieldLabel")).toBe(true);
+    });
+
+    test("rejects free-text, numeric, time, and unknown fields", () => {
+      expect(isSelectableValueDimension("FeedbackRecords.valueText")).toBe(false);
+      expect(isSelectableValueDimension("FeedbackRecords.valueNumber")).toBe(false);
+      expect(isSelectableValueDimension("FeedbackRecords.collectedAt")).toBe(false);
+      expect(isSelectableValueDimension("FeedbackRecords.userId")).toBe(false);
+      expect(isSelectableValueDimension("Unknown.field")).toBe(false);
+    });
+
+    test("every selectable dimension is a defined string dimension", () => {
+      for (const id of SELECTABLE_VALUE_DIMENSION_IDS) {
+        const field = getFieldById(id);
+        expect(field).toBeDefined();
+        expect(field?.type).toBe("string");
+      }
+    });
+  });
+
+  describe("normalized companion dimensions", () => {
+    // Hidden LOWER(TRIM(...)) companions selected by the Cube queryRewrite for
+    // case-insensitive equals/notEquals. Must exist in the deployed schema.
+    const normalizedMembers = [
+      "sourceTypeNormalized",
+      "sourceNameNormalized",
+      "fieldTypeNormalized",
+      "fieldLabelNormalized",
+      "fieldGroupLabelNormalized",
+      "languageNormalized",
+      "valueTextNormalized",
+    ];
+
+    test("are present in both Cube schemas with a LOWER(TRIM(...)) sql and hidden", () => {
+      const dockerSchema = readDockerCubeSchema();
+      const chartSchema = readChartCubeSchema();
+
+      for (const member of normalizedMembers) {
+        expect(dockerSchema).toContain(`    ${member}: {`);
+        expect(chartSchema).toContain(`    ${member}: {`);
+      }
+      expect(dockerSchema).toContain("LOWER(TRIM(source_name))");
+      expect(dockerSchema).toContain("shown: false");
+    });
+
+    test("are not exposed as user-facing dimensions", () => {
+      const exposedIds = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
+      for (const member of normalizedMembers) {
+        expect(exposedIds).not.toContain(`FeedbackRecords.${member}`);
+      }
     });
   });
 });

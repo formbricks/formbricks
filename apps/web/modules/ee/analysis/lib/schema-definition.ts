@@ -222,6 +222,26 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
   .filter((d) => d.type === "time")
   .map((d) => d.id);
 
+/**
+ * String dimensions whose distinct values are low-cardinality enough to offer as a
+ * pick-list in the filter UI instead of free-text entry. Picking a stored value
+ * guarantees an exact match for the `equals` / `notEquals` operators. High-cardinality
+ * free-text dimensions (e.g. valueText) are intentionally excluded.
+ */
+export const SELECTABLE_VALUE_DIMENSION_IDS = [
+  "FeedbackRecords.sourceName",
+  "FeedbackRecords.sourceType",
+  "FeedbackRecords.language",
+  "FeedbackRecords.fieldType",
+  "FeedbackRecords.fieldLabel",
+  "FeedbackRecords.fieldGroupLabel",
+] as const;
+
+export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS)[number];
+
+export const isSelectableValueDimension = (id: string): id is TSelectableValueDimensionId =>
+  (SELECTABLE_VALUE_DIMENSION_IDS as readonly string[]).includes(id);
+
 export type FilterOperator =
   | "equals"
   | "notEquals"
