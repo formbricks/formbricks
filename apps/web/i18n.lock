@@ -110,6 +110,7 @@ checksums:
     common/add_workspace: 17b0856283b433b848ce9bf4c03c6ae5
     common/all: 5e2e93f8e2a5f315b6fecdd0a0e6f55f
     common/all_questions: e13634cf510cc6e89b65a6394ea96a21
+    common/all_roles: 6582ccd0a2349c162a7ae1574cdf76be
     common/allow: 3e39cc5940255e6bff0fea95c817dd43
     common/allow_users_to_exit_by_clicking_outside_the_survey: 1c09db6e85214f1b1c3d4774c4c5cd56
     common/an_unknown_error_occurred_while_deleting_table_items: 06be3fd128aeb51eed4fba9a079ecee2
@@ -177,7 +178,7 @@ checksums:
     common/created: 6045b4ff97fb7dca19ebadfa2e34a700
     common/created_at: f98a3c3bc73494df9bbc14e4e47a018c
     common/created_by: 6775c2fa7d495fea48f1ad816daea93b
-    common/customer_success: 2b0c99a5f57e1d16cf0a998f9bb116c4
+    common/customer_success: 9b8100f7cc9078702012617237f5b884
     common/dark_overlay: 173e84b526414dbc70dbf9737e443b60
     common/dashboard: c9380ea68c8c76ea451bd9613329a07c
     common/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
@@ -332,7 +333,7 @@ checksums:
     common/password: 223a61cf906ab9c40d22612c588dff48
     common/paused: edb1f7b7219e1c9b7aa67159090d6991
     common/pending_downgrade: d6796fc1d4df21591c69fbbd39ba53ff
-    common/people_manager: bc7aad9d28d75491cb8024b5cd5172ea
+    common/people_manager: c1a2f206157ec618f9fe74bf99a06b85
     common/person: b6e3064ca6b67285dc1ebb2590d6094f
     common/phone: b9537ee90fc5b0116942e0af29d926cc
     common/photo_by: 3b96aa11f830dc89d6975ccbc93ad359
@@ -1717,6 +1718,7 @@ checksums:
     workspace/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
     workspace/app-connection/cache_update_delay_description: 3368e4a8090b7684117a16c94f0c409c
     workspace/app-connection/cache_update_delay_title: 60e4a0fcfbd8850bddf29b5c3f59550c
+    workspace/app-connection/connect_with_ai: 5373f6dd1fc23c2052b88868189187b3
     workspace/app-connection/environment_id_legacy: d5c701874d34b4591e780755f7ac7a58
     workspace/app-connection/environment_id_legacy_alert: 09ac96821ff99fad4590c661503fa0cd
     workspace/app-connection/environment_id_legacy_alert_link: 25c529078a115d1ff044a321dd8ee01b
@@ -1731,6 +1733,7 @@ checksums:
     workspace/app-connection/sdk_connection_details_description: 2d6824466039672fa002d72da95b4637
     workspace/app-connection/setup_alert_description: 6d676044d01dc2147731ffab7df6c259
     workspace/app-connection/setup_alert_title: 9561cca2b391e0df81e8a982921ff2bb
+    workspace/app-connection/view_code_snippet: b3c332e0e715f01d360a66ea993c4224
     workspace/app-connection/webapp_url: d64d8cc3c4c4ecce780d94755f7e4de9
     workspace/app-connection/workspace_id: 49141af65970ea79e22ecedb97ceb2e4
     workspace/app-connection/workspace_id_description: 77e5219be241e9973741f138787ccbb8
@@ -2222,6 +2225,15 @@ checksums:
     workspace/settings/billing/dynamic_pricing_unlimited: 1762c0cfba36e1229b5cb5f22c08aeb8
     workspace/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
     workspace/settings/billing/go_to_billing: cd3ec8ecd7af2e724b44a61b29517ee7
+    workspace/settings/billing/hobby_confirm_description: f9fc023eb49423eef508bcc98fcd9e5c
+    workspace/settings/billing/hobby_confirm_downgrade: 77a35281775a0e2bac9c27ae0d28e4bf
+    workspace/settings/billing/hobby_confirm_feature_ai: a780f0b9c8e8ce9bfc1612e4774f3977
+    workspace/settings/billing/hobby_confirm_feature_branding: a5c71d43cd3ed25e6e48bca64e8ffc9f
+    workspace/settings/billing/hobby_confirm_feature_contacts: 6d8e29d34939ed98f1fd6694345f111b
+    workspace/settings/billing/hobby_confirm_feature_responses: d1e6c1d83f5e57cbae2a09e6a818a25d
+    workspace/settings/billing/hobby_confirm_feature_workspaces: 02a34669419ed7f30f728980f54d42ef
+    workspace/settings/billing/hobby_confirm_start_trial: 56dc65bc46b1fddfba62c5f4bf482daf
+    workspace/settings/billing/hobby_confirm_title: 6d5cd13628a7887711fd0c29f1123652
     workspace/settings/billing/keep_current_plan: 57ac15ffa2c29ac364dd405669eeb7f6
     workspace/settings/billing/manage_billing_details: 40448f0b5ed4b3bb1d864ba6e1bb6a3b
     workspace/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
@@ -2296,7 +2308,16 @@ checksums:
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
     workspace/settings/billing/trial_alert_description: e8c20d27d8cd41690db0373463c2eacb
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
+    workspace/settings/billing/trial_ending_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
+    workspace/settings/billing/trial_ending_description: 8be0ee811be739704ce92391593ca544
+    workspace/settings/billing/trial_ending_title: 3c2b88e6693450a7f38255076414eed5
     workspace/settings/billing/trial_payment_method_added_description: 917727553a379d52b8a9c8ebce370061
+    workspace/settings/billing/trial_warning_200_description: b62a8996f7002340e1ed89e37ca713d2
+    workspace/settings/billing/trial_warning_200_title: 804fae1197fba14b15e2d697e62f34cd
+    workspace/settings/billing/trial_warning_250_description: 8142e4b105b47443895a315e4b4a156e
+    workspace/settings/billing/trial_warning_250_title: 93d34846276f30d6b394a8a3a626a291
+    workspace/settings/billing/trial_warning_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
+    workspace/settings/billing/trial_warning_remind_me_later: a12f38fb4352c31ca0d43c05303b7257
     workspace/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     workspace/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     workspace/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
@@ -2583,6 +2604,7 @@ checksums:
     workspace/surveys/ai_create/choose_template: dc3f22a8178d5aef8bdac9d3fc7cc268
     workspace/surveys/ai_create/create: 757ccd28dd533ff3a933355273c1e32a
     workspace/surveys/ai_create/create_with_ai: 5d8c659f559f1343bb23fd191a6556ad
+    workspace/surveys/ai_create/create_with_ai_description: 7aa3fe0237ead1066e01f3e1abd7c0ad
     workspace/surveys/ai_create/creating: c949fe6aa47b326f345b405fe9c4d6e7
     workspace/surveys/ai_create/dialog_description: 2c93d5a3152989234ed3819308037a53
     workspace/surveys/ai_create/dialog_title: eefbf4e47f6df699e89f4996a5f925f8
@@ -3188,6 +3210,15 @@ checksums:
     workspace/surveys/edit/zip: 228fedb7d75304d2a3fcd9f1d1aaccee
     workspace/surveys/error_deleting_survey: 5a113f1cc0a430b54b21dd1fd4e65e00
     workspace/surveys/error_updating_status: f163ee51d64903a0c994d39008bf7fe4
+    workspace/surveys/featured_templates/churn_description: 095b315526140f3633b3da354b766ed4
+    workspace/surveys/featured_templates/churn_title: 5ecbb56a7bc54e945fff08fed017a545
+    workspace/surveys/featured_templates/csat_description: 0e64d5594f961e5070a95f715594549e
+    workspace/surveys/featured_templates/csat_title: fdfc1dc6214cce661dcdc32a71d80337
+    workspace/surveys/featured_templates/hide: 6820df416c78abdd8a71e576345856a9
+    workspace/surveys/featured_templates/nps_description: a0967386c2e53a3df5a165ff16a8fbda
+    workspace/surveys/featured_templates/nps_title: 94ef35c2e6ed7061f8a533c9e61b155b
+    workspace/surveys/featured_templates/see_all_templates: 33e04d0dca427418ed386bb9b38a6443
+    workspace/surveys/featured_templates/templates_for: 9eb1a1e51222f809c980910dfe7424ef
     workspace/surveys/filter/complete_and_partial_responses: 3c272e4b148421da0027c35562b969db
     workspace/surveys/filter/complete_responses: cd495765bf63f5bfdb341eadc4f60ac7
     workspace/surveys/filter/partial_responses: cc88893d0defaf64f46f17a1cb8c886d
@@ -3512,7 +3543,7 @@ checksums:
     workspace/unify/csv_columns: 280c5ba0b19ae5fa6d42f4d05a1771cb
     workspace/unify/csv_data_preview: 1b8670586f6ad3933c625711bad429d6
     workspace/unify/csv_empty_column_headers: 6e9af154be54778cfca32296fbd23ecb
-    workspace/unify/csv_file_too_large: e94c7a7c26096aae9eddb2db30c5cfc1
+    workspace/unify/csv_file_too_large: aabae389661ff650808a76d415b9451b
     workspace/unify/csv_files_only: 920612b537521b14c154f1ac9843e947
     workspace/unify/csv_first_value: 16e8163a372aa766c45303a6853eb268
     workspace/unify/csv_fixed_value_action: d5f0e61e17cb06416ddc17ac2109e261

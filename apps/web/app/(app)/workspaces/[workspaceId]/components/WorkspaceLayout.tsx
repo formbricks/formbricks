@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
@@ -6,6 +7,8 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
+import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
+import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -15,6 +18,40 @@ interface WorkspaceLayoutProps {
   layoutData: TWorkspaceLayoutData;
   children?: React.ReactNode;
 }
+
+type TCookieStore = Awaited<ReturnType<typeof cookies>>;
+
+// Response-limit warning for Hobby (free) plan: 200 = 80% of the 250/mo cap, 250 = limit reached.
+const getResponseWarningThreshold = (
+  responseCount: number,
+  cookieStore: TCookieStore
+): "200" | "250" | null => {
+  if (responseCount >= 250 && !cookieStore.get("trial_warning_shown_250")) {
+    return "250";
+  }
+  if (
+    responseCount >= 200 &&
+    !cookieStore.get("trial_warning_shown_200") &&
+    !cookieStore.get("trial_warning_shown_250")
+  ) {
+    return "200";
+  }
+  return null;
+};
+
+// Show the loss-aversion trial-ending modal once on each of the last 3 days of the trial.
+const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCookieStore): number | null => {
+  const MS_PER_DAY = 86_400_000;
+  const trialEndTime = new Date(trialEnd).getTime();
+  if (!Number.isFinite(trialEndTime)) {
+    return null;
+  }
+  const daysRemaining = Math.ceil((trialEndTime - Date.now()) / MS_PER_DAY);
+  if (daysRemaining >= 1 && daysRemaining <= 3 && !cookieStore.get(`trial_ending_shown_${daysRemaining}`)) {
+    return daysRemaining;
+  }
+  return null;
+};
 
 export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutProps) => {
   const t = await getTranslate();
@@ -37,8 +74,24 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
   const { features, lastChecked, isPendingDowngrade, active, status } = license;
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
-  const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
-  const newTrialBannerVariant = await getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner");
+  const isTrialing = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.subscriptionStatus === "trialing";
+  // Hobby (free) plan only — excludes trial and paid (Pro/Scale) orgs.
+  const isHobby = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.plan === "hobby";
+
+  const [
+    organizationWorkspacesLimit,
+    newTrialBannerVariant,
+    responseWarningVariant,
+    trialEndingVariant,
+    cookieStore,
+  ] = await Promise.all([
+    getOrganizationWorkspacesLimit(organization.id),
+    getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner"),
+    isHobby ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning") : Promise.resolve(null),
+    isTrialing ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-ending-warning") : Promise.resolve(null),
+    isTrialing || isHobby ? cookies() : Promise.resolve(null),
+  ]);
+
   const isOwnerOrManager = isOwner || isManager;
 
   // Validate that workspace permission exists for members
@@ -46,9 +99,24 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
     throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
+  // (Hobby response warning and trial-ending target mutually exclusive audiences, so no stacking.)
+  const responseWarningThreshold =
+    isHobby && responseWarningVariant === "test" && cookieStore
+      ? getResponseWarningThreshold(responseCount, cookieStore)
+      : null;
+
+  const trialEnd = organization.billing?.stripe?.trialEnd;
+  const trialEndingDaysRemaining =
+    isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd
+      ? getTrialEndingDaysRemaining(trialEnd, cookieStore)
+      : null;
+
+  const billingHref = `/workspaces/${workspace.id}/settings/organization/billing`;
+
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
-      {IS_FORMBRICKS_CLOUD && (
+      {/* Hide the limits-reached toast for Hobby users in the response-warning test variant — the modal replaces it with richer copy + CTAs. */}
+      {IS_FORMBRICKS_CLOUD && !isTrialing && !(isHobby && responseWarningVariant === "test") && (
         <LimitsReachedBanner organization={organization} responseCount={responseCount} />
       )}
 
@@ -60,6 +128,18 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
         locale={user.locale}
         status={status}
       />
+
+      {responseWarningThreshold && (
+        <TrialResponseWarningModal
+          threshold={responseWarningThreshold}
+          billingHref={billingHref}
+          responseCount={responseCount}
+        />
+      )}
+
+      {trialEndingDaysRemaining && (
+        <TrialEndingWarningModal daysRemaining={trialEndingDaysRemaining} billingHref={billingHref} />
+      )}
 
       <div className="flex h-full">
         <MainNavigation
