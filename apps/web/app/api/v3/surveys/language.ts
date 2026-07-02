@@ -22,9 +22,15 @@ type TResolveV3SurveyLanguageCodeResult =
 
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
-const V3_SURVEY_LANGUAGE_TAG_REGEX = /^[a-z]{2}(?:-[A-Z]{2}|-[A-Z][a-z]{3}(?:-[A-Z]{2})?)$/;
-// A region-qualified write locale: 2-3 letter base language, optional 4-letter script, and a region that
-// is either a 2-letter country or a 3-digit UN M.49 area. The 3-letter base + numeric region forms matter
+// A valid BCP-47 tag: 2-3 letter base, then either a region (2-letter country or 3-digit UN M.49 area) or a
+// 4-letter script optionally followed by a region. Widened alongside the write locale regex below so the
+// six 3-letter-base / numeric-region catalog codes (e.g. `fil-PH`, `eo-001`) are recognised on READ too —
+// otherwise the resolver mis-reports "not a valid locale code" (invalid) instead of "not configured"
+// (unknown) when such a code is queried on a survey that doesn't have it.
+const V3_SURVEY_LANGUAGE_TAG_REGEX =
+  /^[a-z]{2,3}(?:-(?:[A-Z]{2}|\d{3})|-[A-Z][a-z]{3}(?:-(?:[A-Z]{2}|\d{3}))?)$/;
+// A region-qualified write locale: 2-3 letter base language, optional 4-letter script, and a region that is
+// either a 2-letter country or a 3-digit UN M.49 area. The 3-letter base + numeric region forms matter
 // because canonical catalog codes include them (e.g. `fil-PH`, `bho-IN`, `eo-001`, `vo-001`); the old
 // 2-letter-only pattern rejected those on write even though the picker/`createLanguage` accept them.
 const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2,3}(?:-[A-Z][a-z]{3})?-(?:[A-Z]{2}|\d{3})$/;

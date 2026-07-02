@@ -251,6 +251,35 @@ describe("resolveV3SurveyLanguageCode", () => {
     });
   });
 
+  test("classifies a widened 3-letter / numeric-region tag as unknown (not invalid) when not configured", () => {
+    // fil-PH / eo-001 became writable; the read resolver must recognise them as valid tags so an
+    // unconfigured survey reports "not configured" (unknown), not "not a valid locale code" (invalid).
+    expect(resolveV3SurveyLanguageCode("fil-PH", [{ code: "en-US", enabled: true }])).toEqual({
+      ok: false,
+      reason: "unknown",
+      normalizedCode: "fil-PH",
+      message: "Language 'fil-PH' is not configured for this survey",
+    });
+    expect(resolveV3SurveyLanguageCode("eo-001", [{ code: "en-US", enabled: true }])).toEqual({
+      ok: false,
+      reason: "unknown",
+      normalizedCode: "eo-001",
+      message: "Language 'eo-001' is not configured for this survey",
+    });
+  });
+
+  test("resolves a configured 3-letter-base language and its legacy selector", () => {
+    expect(resolveV3SurveyLanguageCode("fil-PH", [{ code: "fil-PH", enabled: true }])).toEqual({
+      ok: true,
+      code: "fil-PH",
+    });
+    // legacy `tl` selector still resolves to a migrated fil-PH via canonical equivalence
+    expect(resolveV3SurveyLanguageCode("tl", [{ code: "fil-PH", enabled: true }])).toEqual({
+      ok: true,
+      code: "fil-PH",
+    });
+  });
+
   test("returns unknown for languages not configured on the survey", () => {
     expect(resolveV3SurveyLanguageCode("ZH_hant_tw", languages)).toEqual({
       ok: false,

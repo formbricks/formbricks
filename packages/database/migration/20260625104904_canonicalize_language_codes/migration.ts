@@ -230,16 +230,19 @@ export const canonicalizeLanguageCodes: MigrationScript = {
     // ---------------------------------------------------------------------------------------------
     // 3. Response.language + the contactAttributes 'language' snapshot.
     //
-    // `Response` is the highest-volume table and has NO index on `language`, so the old approach — one
-    // `UPDATE ... WHERE language = ANY(...)` inside the 30-min mega-transaction — risked (a) exceeding the
-    // timeout on a large table, which rolls back EVERY step so the deploy never converges, and (b) holding
-    // row locks long enough to stall response ingestion. Instead we walk the table by primary key in fixed
-    // chunks and commit each chunk via the autocommit `prisma` handle (NOT `tx`): locks release per chunk
-    // and committed progress survives a timeout, since the migration is idempotent (a retry just resumes).
+    // `Response` is the highest-volume table and has NO index on `language`. The write walks the table by
+    // PRIMARY KEY in fixed chunks, each chunk committed via the autocommit `prisma` handle (NOT `tx`).
+    // Committing per chunk means the big write never holds one long lock and its progress survives a
+    // failure — the migration is idempotent, so a retry resumes and converges instead of rolling the whole
+    // thing back. (Caveat: the runner still wraps `run()` in its own `$transaction`, so the 30-min budget
+    // applies to the migration as a whole and steps 1-2's locks are held until `run()` returns; fully
+    // decoupling the big-table phases from that transaction is a follow-up — a runner opt-out or a split.)
     //
-    // The remap set comes from the shared canonical map rather than a `SELECT DISTINCT language` full scan
-    // (itself an unindexed full-table read). It covers every known legacy code; an exotic code outside the
-    // map is left as-is and still resolves at read time (the renderer canonicalizes on read).
+    // The remap comes from the shared canonical map, not a `SELECT DISTINCT language` full scan. Matching is
+    // case/underscore-insensitive (`lower(replace(..., '_', '-'))` vs lowercased map keys) so variants like
+    // `EN` / `de_DE` / `pt-br` are canonicalized too, and `<> canon` skips rows already at the exact
+    // canonical value (no dead-tuple rewrites). A code outside the map is left as-is and still resolves at
+    // read time (the renderer canonicalizes on read).
     // ---------------------------------------------------------------------------------------------
     logger.info("Canonicalizing Response.language + contactAttributes snapshot...");
     const responsePairs = buildRemapPairsFromMap();
@@ -259,7 +262,9 @@ export const canonicalizeLanguageCodes: MigrationScript = {
           `UPDATE "Response" AS r
            SET language = data.canon
            FROM (SELECT unnest($1::text[]) AS old, unnest($2::text[]) AS canon) AS data
-           WHERE r.id = ANY($3::text[]) AND r.language = data.old`,
+           WHERE r.id = ANY($3::text[])
+             AND lower(replace(r.language, '_', '-')) = data.old
+             AND r.language <> data.canon`,
           responsePairs.olds,
           responsePairs.canons,
           ids
@@ -271,7 +276,8 @@ export const canonicalizeLanguageCodes: MigrationScript = {
            SET "contactAttributes" = jsonb_set(r."contactAttributes", '{language}', to_jsonb(data.canon))
            FROM (SELECT unnest($1::text[]) AS old, unnest($2::text[]) AS canon) AS data
            WHERE r.id = ANY($3::text[])
-             AND r."contactAttributes" ->> 'language' = data.old`,
+             AND lower(replace(r."contactAttributes" ->> 'language', '_', '-')) = data.old
+             AND r."contactAttributes" ->> 'language' <> data.canon`,
           responsePairs.olds,
           responsePairs.canons,
           ids
@@ -367,17 +373,17 @@ const asLinkArray = (rows: SurveyLanguageRow[]): SurveyLanguageRow[] =>
     enabled: Boolean(row.enabled),
   }));
 
-// The full legacy -> canonical remap from the shared canonical map, excluding identity entries. Used for
-// the Response steps so we never full-scan the huge, unindexed-on-`language` table just to discover which
-// codes exist; the batched UPDATE simply no-ops on any row whose value isn't a known legacy code.
+// Every known code form -> its canonical, keyed by a LOWERCASED map key. Used for the Response steps so we
+// never full-scan the huge, unindexed-on-`language` table to discover which codes exist. Identity entries
+// (canonical -> canonical) are included so a case/underscore variant of a canonical code (`de_DE` -> `de-DE`)
+// is normalized too; the step-3 UPDATE's `r.language <> canon` guard then skips rows already at the exact
+// canonical value (no dead-tuple rewrites). Lowercased map keys are unique, so the remap is unambiguous.
 const buildRemapPairsFromMap = (): { olds: string[]; canons: string[] } => {
   const olds: string[] = [];
   const canons: string[] = [];
-  for (const [legacy, canonical] of Object.entries(LANGUAGE_CANONICAL_MAP)) {
-    if (legacy !== canonical) {
-      olds.push(legacy);
-      canons.push(canonical);
-    }
+  for (const [code, canonical] of Object.entries(LANGUAGE_CANONICAL_MAP)) {
+    olds.push(code.toLowerCase());
+    canons.push(canonical);
   }
   return { olds, canons };
 };
