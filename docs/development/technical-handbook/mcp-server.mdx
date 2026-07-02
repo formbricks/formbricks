@@ -615,13 +615,16 @@ each take only a workflow id:
 ```
 
 - `enable_workflow` — validates executability, snapshots an immutable version, and makes the workflow
-  live. **Once live it runs on matching survey responses and can send emails.** A non-executable
-  definition is refused with `422 workflow_not_executable`.
+  live. A non-executable definition is refused with `422 workflow_not_executable`.
+
+  <Warning>
+    Once live, the workflow runs on matching survey responses and can send emails.
+  </Warning>
 - `disable_workflow` — stops future runs.
 - `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
 - `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
 
-## Relationship To V3 Workflows API
+## Relationship to V3 Workflows API
 
 Like the survey tools, workflow tools run no custom database queries — each calls the shared,
 framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
