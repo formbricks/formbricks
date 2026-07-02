@@ -514,12 +514,14 @@ describe("organization-billing", () => {
     expect(result?.stripe?.subscriptionStatus).toBeNull();
   });
 
-  test("syncOrganizationBillingFromStripe clears a prior payment-failure banner on success", async () => {
+  test("syncOrganizationBillingFromStripe clears a prior payment-failure banner when the plan changes", async () => {
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",
       limits: { workspaces: 3, monthly: { responses: 1500 } },
       usageCycleAnchor: new Date(),
       stripe: {
+        // Snapshot says "pro"; Stripe (no subscription) resolves to "hobby" → plan changed.
+        plan: "pro",
         lastSyncedEventId: null,
         paymentAttemptError: {
           type: "failed_invoice",
@@ -538,6 +540,63 @@ describe("organization-billing", () => {
       where: { organizationId: "org_1" },
       data: expect.objectContaining({
         stripe: expect.objectContaining({ paymentAttemptError: null }),
+      }),
+    });
+  });
+
+  test("syncOrganizationBillingFromStripe clears a prior payment-failure banner on an event-driven sync", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        plan: "hobby",
+        lastSyncedEventId: null,
+        paymentAttemptError: {
+          type: "failed_invoice",
+          paymentIntentId: "pi_1",
+          message: "x",
+          createdAt: "t",
+        },
+      },
+    });
+    mocks.subscriptionsList.mockResolvedValue({ data: [] });
+    mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+    await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923200 });
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        stripe: expect.objectContaining({ paymentAttemptError: null }),
+      }),
+    });
+  });
+
+  test("syncOrganizationBillingFromStripe preserves the banner on a read-through sync with no plan change", async () => {
+    const paymentAttemptError = {
+      type: "failed_invoice",
+      paymentIntentId: "pi_1",
+      message: "x",
+      createdAt: "t",
+    };
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      // No subscription resolves back to "hobby", so this staleness-triggered sync
+      // observes no settlement and must not dismiss the unresolved failure.
+      stripe: { plan: "hobby", lastSyncedEventId: null, paymentAttemptError },
+    });
+    mocks.subscriptionsList.mockResolvedValue({ data: [] });
+    mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+    await syncOrganizationBillingFromStripe("org_1");
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: expect.objectContaining({
+        stripe: expect.objectContaining({ paymentAttemptError }),
       }),
     });
   });

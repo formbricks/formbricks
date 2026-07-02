@@ -1323,8 +1323,13 @@ export const syncOrganizationBillingFromStripe = async (
       hasPaymentMethod: subscription?.default_payment_method != null,
       features: featureLookupKeys,
       pendingChange,
-      // Subscription settled → clear any prior payment-failure banner.
-      paymentAttemptError: null,
+      // Clear the payment-failure banner only when this sync reflects a real settlement:
+      // an authoritative webhook event or an observed plan change. A read-through sync
+      // triggered by snapshot staleness must not silently dismiss an unresolved failure.
+      paymentAttemptError:
+        event || cloudPlan !== existingStripeSnapshot?.plan
+          ? null
+          : (existingStripeSnapshot?.paymentAttemptError ?? null),
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
       lastSyncedEventId: event?.id ?? existingStripeSnapshot?.lastSyncedEventId ?? null,
