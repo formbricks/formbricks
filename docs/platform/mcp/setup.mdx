@@ -143,6 +143,13 @@ periodically for safety.
     The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
     with the scopes the server advertises (`surveys:read`, `surveys:write`, `offline_access`).
   </Accordion>
+  <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
+    Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same
+    browser the client opens, and that third-party-cookie blocking or a private window isn't
+    discarding the session. If it persists, revoke the app under **Account settings → Authorized
+    apps**, clear the client's stored credentials for the server, and reconnect. Self-hosters: an
+    incorrect base URL (see below) also causes repeated redirects.
+  </Accordion>
   <Accordion title="A tool call fails even though you're connected">
     Scopes don't override your workspace role. Creating, editing, or deleting surveys requires
     `write` or `manage` permission on that workspace — ask a workspace owner/manager to grant it.
