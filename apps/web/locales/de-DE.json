@@ -2189,11 +2189,13 @@
       "generate_theme_btn": "Generieren",
       "generate_theme_confirmation": "Möchtest du ein passendes Farbschema basierend auf deiner Markenfarbe generieren? Dies überschreibt deine aktuellen Farbeinstellungen.",
       "generate_theme_header": "Farbschema generieren?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Logo erfolgreich entfernt",
       "logo_settings_description": "Lade dein Firmenlogo hoch, um Umfragen und Link-Vorschauen zu branden.",
       "logo_updated_successfully": "Logo erfolgreich aktualisiert",
       "logo_upload_failed": "Logo-Upload fehlgeschlagen. Bitte versuche es erneut.",
       "placement_updated_successfully": "Platzierung erfolgreich aktualisiert",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Entferne Branding mit einem höheren Tarif",
       "remove_logo": "Logo entfernen",
       "remove_logo_confirmation": "Bist du sicher, dass du das Logo entfernen möchtest?",
@@ -2206,7 +2208,8 @@
       "suggest_colors": "Farben vorschlagen",
       "suggested_colors_applied_please_save": "Vorgeschlagene Farben erfolgreich generiert. Drücke „Speichern“, um die Änderungen zu übernehmen.",
       "theme": "Theme",
-      "theme_settings_description": "Erstelle ein Style-Theme für alle Umfragen. Du kannst für jede Umfrage individuelles Styling aktivieren."
+      "theme_settings_description": "Erstelle ein Style-Theme für alle Umfragen. Du kannst für jede Umfrage individuelles Styling aktivieren.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Filter darunter hinzufügen",

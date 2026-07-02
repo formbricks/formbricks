@@ -2189,11 +2189,13 @@
       "generate_theme_btn": "Сгенерировать",
       "generate_theme_confirmation": "Сгенерировать подходящую цветовую тему на основе цвета твоего бренда? Это перезапишет текущие цветовые настройки.",
       "generate_theme_header": "Сгенерировать цветовую тему?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Логотип успешно удалён",
       "logo_settings_description": "Загрузите логотип вашей компании для брендирования опросов и предпросмотра ссылок.",
       "logo_updated_successfully": "Логотип успешно обновлён",
       "logo_upload_failed": "Не удалось загрузить логотип. Пожалуйста, попробуйте ещё раз.",
       "placement_updated_successfully": "Размещение успешно обновлено",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Удалите брендинг с помощью более высокого тарифа",
       "remove_logo": "Удалить логотип",
       "remove_logo_confirmation": "Вы уверены, что хотите удалить логотип?",
@@ -2206,7 +2208,8 @@
       "suggest_colors": "Предложить цвета",
       "suggested_colors_applied_please_save": "Рекомендованные цвета успешно сгенерированы. Нажмите «Сохранить», чтобы применить изменения.",
       "theme": "Тема",
-      "theme_settings_description": "Создайте стиль для всех опросов. Вы можете включить индивидуальное оформление для каждого опроса."
+      "theme_settings_description": "Создайте стиль для всех опросов. Вы можете включить индивидуальное оформление для каждого опроса.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Добавить фильтр ниже",

@@ -2193,7 +2193,9 @@
       "logo_settings_description": "Upload your company logo to brand surveys and link previews.",
       "logo_updated_successfully": "Logo updated successfully",
       "logo_upload_failed": "Logo upload failed. Please try again.",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "placement_updated_successfully": "Placement updated successfully",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Remove branding with a higher plan",
       "remove_logo": "Remove Logo",
       "remove_logo_confirmation": "Are you sure you want to remove the logo?",
@@ -2206,6 +2208,7 @@
       "suggest_colors": "Suggest colors",
       "suggested_colors_applied_please_save": "Suggested colors generated successfully. Press “Save” to persist the changes.",
       "theme": "Theme",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free.",
       "theme_settings_description": "Create a style theme for all surveys. You can enable custom styling for each survey."
     },
     "segments": {

@@ -2189,11 +2189,13 @@
       "generate_theme_btn": "Generează",
       "generate_theme_confirmation": "Vrei să generezi o temă de culori potrivită pe baza culorii brandului tău? Aceasta va suprascrie setările actuale de culoare.",
       "generate_theme_header": "Generezi temă de culori?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Sigla a fost eliminată cu succes",
       "logo_settings_description": "Încarcă sigla companiei pentru a personaliza sondajele și previzualizările de linkuri.",
       "logo_updated_successfully": "Sigla a fost actualizată cu succes",
       "logo_upload_failed": "Încărcarea siglei a eșuat. Vă rugăm să încercați din nou.",
       "placement_updated_successfully": "Poziționarea a fost actualizată cu succes",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Elimină brandingul cu un plan superior",
       "remove_logo": "Elimină sigla",
       "remove_logo_confirmation": "Sigur doriți să eliminați sigla?",
@@ -2206,7 +2208,8 @@
       "suggest_colors": "Sugerează culori",
       "suggested_colors_applied_please_save": "Culorile sugerate au fost generate cu succes. Apăsați „Save” pentru a salva modificările.",
       "theme": "Temă",
-      "theme_settings_description": "Creează o temă de stil pentru toate sondajele. Poți activa stilizare personalizată pentru fiecare sondaj."
+      "theme_settings_description": "Creează o temă de stil pentru toate sondajele. Poți activa stilizare personalizată pentru fiecare sondaj.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Adăugați un filtru mai jos",

@@ -2189,11 +2189,13 @@
       "generate_theme_btn": "產生",
       "generate_theme_confirmation": "你想根據品牌色產生一組相符的主題色嗎？這將會覆蓋你目前的顏色設定。",
       "generate_theme_header": "要產生主題色嗎？",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "標誌已成功移除",
       "logo_settings_description": "上傳您的公司標誌，以用於問卷和連結預覽的品牌展示。",
       "logo_updated_successfully": "標誌已成功更新",
       "logo_upload_failed": "標誌上傳失敗。請再試一次。",
       "placement_updated_successfully": "位置已成功更新",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "升級方案以移除品牌標示",
       "remove_logo": "移除標誌",
       "remove_logo_confirmation": "您確定要移除標誌嗎？",
@@ -2206,7 +2208,8 @@
       "suggest_colors": "建議顏色",
       "suggested_colors_applied_please_save": "已成功產生建議色彩。請按「Save」以儲存變更。",
       "theme": "主題",
-      "theme_settings_description": "為所有調查建立樣式主題。您可以為每個調查啟用自訂樣式。"
+      "theme_settings_description": "為所有調查建立樣式主題。您可以為每個調查啟用自訂樣式。",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "在下方新增篩選器",

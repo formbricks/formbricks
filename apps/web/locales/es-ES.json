@@ -2189,11 +2189,13 @@
       "generate_theme_btn": "Generar",
       "generate_theme_confirmation": "¿Te gustaría generar un tema de colores que combine con el color de tu marca? Esto sobrescribirá tu configuración de colores actual.",
       "generate_theme_header": "¿Generar tema de colores?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Logotipo eliminado correctamente",
       "logo_settings_description": "Sube el logotipo de tu empresa para personalizar las encuestas y las vistas previas de enlaces.",
       "logo_updated_successfully": "Logotipo actualizado correctamente",
       "logo_upload_failed": "Error al subir el logotipo. Por favor, inténtalo de nuevo.",
       "placement_updated_successfully": "Ubicación actualizada correctamente",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Elimina la marca con un plan superior",
       "remove_logo": "Eliminar logotipo",
       "remove_logo_confirmation": "¿Estás seguro de que quieres eliminar el logotipo?",
@@ -2206,7 +2208,8 @@
       "suggest_colors": "Sugerir colores",
       "suggested_colors_applied_please_save": "Colores sugeridos generados correctamente. Pulsa “Guardar” para conservar los cambios.",
       "theme": "Tema",
-      "theme_settings_description": "Crea un tema de estilo para todas las encuestas. Puedes activar el estilo personalizado para cada encuesta."
+      "theme_settings_description": "Crea un tema de estilo para todas las encuestas. Puedes activar el estilo personalizado para cada encuesta.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Añadir filtro abajo",

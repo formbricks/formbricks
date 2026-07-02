@@ -2189,11 +2189,13 @@
       "generate_theme_btn": "Oluştur",
       "generate_theme_confirmation": "Marka rengine uygun bir renk teması oluşturmak ister misin? Bu işlem mevcut renk ayarlarının üzerine yazacak.",
       "generate_theme_header": "Renk Teması Oluşturulsun mu?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Logo başarıyla kaldırıldı",
       "logo_settings_description": "Anketleri ve bağlantı önizlemelerini markalamak için şirket logonu yükle.",
       "logo_updated_successfully": "Logo başarıyla güncellendi",
       "logo_upload_failed": "Logo yüklenemedi. Lütfen tekrar dene.",
       "placement_updated_successfully": "Yerleşim başarıyla güncellendi",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Daha yüksek bir planla markalaşmayı kaldır",
       "remove_logo": "Logoyu Kaldır",
       "remove_logo_confirmation": "Logoyu kaldırmak istediğinden emin misin?",
@@ -2206,7 +2208,8 @@
       "suggest_colors": "Renk öner",
       "suggested_colors_applied_please_save": "Önerilen renkler başarıyla oluşturuldu. Değişiklikleri kaydetmek için \"Kaydet\" butonuna bas.",
       "theme": "Theme",
-      "theme_settings_description": "Create a style theme for all surveys. You can enable custom styling for each survey."
+      "theme_settings_description": "Create a style theme for all surveys. You can enable custom styling for each survey.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Aşağıya filtre ekle",

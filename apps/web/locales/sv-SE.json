@@ -2189,11 +2189,13 @@
       "generate_theme_btn": "Generera",
       "generate_theme_confirmation": "Vill du generera ett matchande färgtema baserat på din varumärkesfärg? Detta kommer att skriva över dina nuvarande färginställningar.",
       "generate_theme_header": "Generera färgtema?",
+      "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
       "logo_removed_successfully": "Logotyp borttagen",
       "logo_settings_description": "Ladda upp företagets logotyp för att profilera enkäter och länkförhandsvisningar.",
       "logo_updated_successfully": "Logotyp uppdaterad",
       "logo_upload_failed": "Uppladdning av logotyp misslyckades. Försök igen.",
       "placement_updated_successfully": "Placering uppdaterad",
+      "remove_branding_license_request_cta": "Request Lite License",
       "remove_branding_with_a_higher_plan": "Ta bort varumärke med ett högre abonnemang",
       "remove_logo": "Ta bort logotyp",
       "remove_logo_confirmation": "Är du säker på att du vill ta bort logotypen?",
@@ -2206,7 +2208,8 @@
       "suggest_colors": "Föreslå färger",
       "suggested_colors_applied_please_save": "Föreslagna färger har genererats. Tryck på ”Spara” för att spara ändringarna.",
       "theme": "Tema",
-      "theme_settings_description": "Skapa ett stilmall för alla undersökningar. Du kan aktivera anpassad stil för varje undersökning."
+      "theme_settings_description": "Skapa ett stilmall för alla undersökningar. Du kan aktivera anpassad stil för varje undersökning.",
+      "unlock_remove_branding_with_lite_license": "Remove branding for free."
     },
     "segments": {
       "add_filter_below": "Lägg till filter nedan",
