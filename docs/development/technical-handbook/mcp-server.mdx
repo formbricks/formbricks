@@ -63,7 +63,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `get_workflow`        | `read`              |
 | `list_workflow_runs`  | `read`              |
 | `get_workflow_run`    | `read`              |
-| `test_workflow`       | `read`              |
+| `test_workflow`       | `write` or `manage` — the tool mutates nothing, but the handler authorizes it like a write |
 | `create_workflow`     | `write` or `manage` |
 | `patch_workflow`      | `write` or `manage` |
 | `duplicate_workflow`  | `write` or `manage` |
@@ -551,7 +551,9 @@ Gets one workflow run with its ordered step logs. Read-only and idempotent.
 
 Dry-runs a workflow: validates its live definition would execute and resolves the trigger's survey +
 ending cards. No run is persisted and no side effects occur; the result reports `{ ok, problems }`.
-Annotated read-only (no world mutation).
+Annotated read-only (no world mutation). Only **enabled or disabled** workflows can be tested — a
+draft or archived workflow is rejected with `422 invalid_workflow_state`, so after `create_workflow`
+(which always creates a draft), enable the workflow before testing it.
 
 ```json
 { "workflowId": "clwf1234567890123456789012" }
