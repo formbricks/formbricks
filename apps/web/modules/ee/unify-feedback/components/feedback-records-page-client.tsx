@@ -14,6 +14,7 @@ import type { TFeedbackDatasetView } from "../lib/dataset-view";
 import { DatasetOverviewHeader } from "./dataset-overview-header";
 import { DatasetSelector } from "./dataset-selector";
 import { FeedbackRecordsTable } from "./feedback-records-table";
+import { UnifyFeedbackNavigation } from "./unify-feedback-navigation";
 
 interface FeedbackRecordsPageClientProps {
   organizationId: string;
@@ -67,8 +68,9 @@ export function FeedbackRecordsPageClient({
               </Link>
             </Button>
           ) : undefined
-        }
-      />
+        }>
+        <UnifyFeedbackNavigation organizationId={organizationId} />
+      </PageHeader>
 
       <div className="space-y-4">
         <DatasetSelector datasets={datasets} selectedId={selectedDatasetId} onChange={handleDatasetChange} />

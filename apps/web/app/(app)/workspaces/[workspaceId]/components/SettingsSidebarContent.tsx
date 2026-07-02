@@ -16,6 +16,7 @@ import {
   ShapesIcon,
   ShieldIcon,
   TagIcon,
+  TagsIcon,
   UnplugIcon,
   UserCircleIcon,
   UsersIcon,
@@ -351,6 +352,17 @@ export const SettingsSidebarContent = ({
       label: t("workspace.unify.sources_nav_label"),
       href: organizationSettingsPath(organizationId, "unify-feedback/sources"),
       icon: <ShapesIcon className={iconClassName} />,
+      hidden: !canViewUnifyFeedback,
+      disabled: isBilling,
+    },
+    {
+      // Topics & Subtopics (AI taxonomy) relocated from the workspace-scoped Unify config to org-level
+      // Unify Feedback (Stage 4). Same VIEW gating as datasets/sources; taxonomy write actions re-check
+      // write access per dataset.
+      id: "org-unify-topics",
+      label: t("workspace.unify.topics_nav_label"),
+      href: organizationSettingsPath(organizationId, "unify-feedback/topics"),
+      icon: <TagsIcon className={iconClassName} />,
       hidden: !canViewUnifyFeedback,
       disabled: isBilling,
     },

@@ -1,40 +1,40 @@
-import { notFound } from "next/navigation";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { assertCanWriteDirectoryRecords } from "@/modules/ee/feedback-directory/lib/access";
+import { getFeedbackDirectoriesForUser } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
-import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
+import { UnifyFeedbackNavigation } from "@/modules/ee/unify-feedback/components/unify-feedback-navigation";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { redirectBillingRoleFromRestrictedOrgSettings } from "@/modules/settings/lib/redirect-billing-role";
+import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TopicsSubtopicsPreview } from "./components/topics-subtopics-preview";
 
 export const UnifyTopicsSubtopicsPage = async (
-  props: Readonly<{ params: Promise<{ workspaceId: string }> }>
+  props: Readonly<{ params: Promise<{ organizationId: string }> }>
 ) => {
   const t = await getTranslate();
   const params = await props.params;
 
-  const { isOwner, isManager, hasReadAccess, hasReadWriteAccess, hasManageAccess, session, organization } =
-    await getWorkspaceAuth(params.workspaceId);
+  await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
 
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
+  const { session, currentUserMembership, organization } = await getOrganizationAuth(params.organizationId);
 
-  const hasAccess = isOwner || isManager || hasReadAccess || hasReadWriteAccess || hasManageAccess;
-  if (!hasAccess) {
-    return notFound();
-  }
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership.role);
+  const isOwnerOrManager = isOwner || isManager;
+
+  const pageTitle = t("workspace.unify.feedback_records");
 
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organization.id);
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+        <PageHeader pageTitle={pageTitle}>
+          <UnifyFeedbackNavigation organizationId={organization.id} />
         </PageHeader>
         <div className="flex items-center justify-center">
           <UpgradePrompt
@@ -45,14 +45,12 @@ export const UnifyTopicsSubtopicsPage = async (
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/organizations/${organization.id}/settings/billing`
+                  ? getOrganizationBillingPath(organization.id, IS_FORMBRICKS_CLOUD)
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `/organizations/${organization.id}/settings/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                href: "https://formbricks.com/docs/unify-feedback/overview",
               },
             ]}
           />
@@ -61,31 +59,46 @@ export const UnifyTopicsSubtopicsPage = async (
     );
   }
 
-  const directories = await getFeedbackDirectoriesByWorkspaceId(params.workspaceId);
+  // Datasets the user may VIEW: owner/manager see all (getFeedbackDirectoriesForUser returns archived
+  // ones for them too), members see only active datasets reachable through a workspace they belong to.
+  // Archived datasets are dropped here regardless of role — generating a taxonomy against a dataset that
+  // no longer ingests feedback isn't useful, so the topics view only offers active datasets.
+  const datasets = (await getFeedbackDirectoriesForUser(session.user.id, organization.id)).filter(
+    (dataset) => !dataset.isArchived
+  );
 
-  if (directories.length === 0) {
+  if (datasets.length === 0) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+        <PageHeader pageTitle={pageTitle}>
+          <UnifyFeedbackNavigation organizationId={organization.id} />
         </PageHeader>
-        <NoFeedbackDirectoryEmptyState
-          organizationId={organization.id}
-          isOwnerOrManager={isOwner || isManager}
-        />
+        <NoFeedbackDirectoryEmptyState organizationId={organization.id} isOwnerOrManager={isOwnerOrManager} />
       </PageContentWrapper>
     );
   }
 
-  const directoryMap = Object.fromEntries(directories.map((directory) => [directory.id, directory.name]));
-  const canWrite = isOwner || isManager || hasReadWriteAccess || hasManageAccess;
+  // Write access (taxonomy generation, node rename/remove) is per-dataset: a member can write to one
+  // dataset but only read another. Resolve it once per viewable dataset here so the client can gate its
+  // write controls on the selected dataset. The taxonomy actions re-check write access regardless, so
+  // this map is a UX gate, not the security boundary.
+  const canWriteEntries = await Promise.all(
+    datasets.map(async (dataset): Promise<[string, boolean]> => {
+      try {
+        await assertCanWriteDirectoryRecords(session.user.id, organization.id, dataset.id);
+        return [dataset.id, true];
+      } catch {
+        return [dataset.id, false];
+      }
+    })
+  );
+  const canWriteMap = Object.fromEntries(canWriteEntries);
 
   return (
     <TopicsSubtopicsPreview
-      workspaceId={params.workspaceId}
       organizationId={organization.id}
-      directoryMap={directoryMap}
-      canWrite={canWrite}
+      datasets={datasets.map((dataset) => ({ id: dataset.id, name: dataset.name }))}
+      canWriteMap={canWriteMap}
     />
   );
 };
