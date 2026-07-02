@@ -1,0 +1,74 @@
+---
+title: "Connect AI Agents (MCP)"
+description: "Let AI assistants like Claude and Codex read and manage your Formbricks surveys through the Model Context Protocol (MCP), authorized securely with your own login."
+icon: "robot"
+---
+
+Formbricks ships a **Model Context Protocol (MCP) server** that lets AI assistants — Claude Code, the Claude apps, Codex, and other MCP-capable clients — work with the surveys in your workspace: list and read surveys, create link surveys, and update or delete them. The agent calls the same v3 Surveys API you use in the app, so it always respects your permissions.
+
+You connect a client **with your own Formbricks login over OAuth 2.1** — there are no API keys to generate, copy, or paste. You approve the connection once on a consent screen, and you can revoke it at any time.
+
+<Note>
+  Prefer to use a long-lived token instead (for scripts, CI, or a client that doesn't support OAuth
+  yet)? Formbricks API keys still work as a fallback — see the
+  [MCP server technical handbook](/development/technical-handbook/mcp-server).
+</Note>
+
+## The MCP server URL
+
+Point your client at your Formbricks app's `/api/mcp` endpoint:
+
+| Instance | MCP server URL |
+| --- | --- |
+| Formbricks Cloud | `https://app.formbricks.com/api/mcp` |
+| Self-hosted | `https://<your-formbricks-domain>/api/mcp` |
+
+## How the connection works
+
+You don't need to understand the details to connect, but here's what happens under the hood when you add the server to a client:
+
+1. **Discovery** — the client reads the server's OAuth metadata to find where to sign in.
+2. **Registration** — the client registers itself automatically using Dynamic Client Registration (DCR). There's no client ID or secret for you to manage.
+3. **Sign in & consent** — your browser opens to Formbricks. You log in (if you aren't already) and **approve** the requested access on a consent screen.
+4. **Token** — the client receives a short-lived access token it sends on every request, plus a refresh token so it can stay connected without asking you to sign in again.
+
+The whole flow uses Authorization Code + PKCE, the standard the [MCP authorization spec](https://modelcontextprotocol.io/specification/draft/basic/authorization) requires.
+
+## What the agent can do
+
+The MCP server exposes six survey tools, grouped into two scopes you approve on the consent screen:
+
+| Scope | Tools | What it allows |
+| --- | --- | --- |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` | Read surveys and validate survey documents |
+| `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` | Create, update, and delete surveys |
+
+<Warning>
+  Scopes are only a coarse gate. **Access is always bounded by your Formbricks workspace role**: even
+  if a client holds `surveys:write`, a call only succeeds if you have write/manage permission on the
+  target workspace. An agent can never do more than you can.
+</Warning>
+
+## Prerequisites
+
+- A **Formbricks account** with access to the workspace whose surveys you want to work with. Read-only tasks need `read`; creating or editing surveys needs `write` or `manage`.
+- The **MCP server URL** for your instance (see the table above).
+- An **MCP client** that supports remote HTTP servers with OAuth — see the [setup guides](/platform/mcp/setup) for Claude Code, the Claude apps, and Codex.
+
+<Note>
+  **Self-hosting?** The OAuth provider is built in and enabled automatically — there's nothing extra
+  to turn on. It just needs your instance to be served from a correct, public **HTTPS** base URL
+  (set via `WEBAPP_URL` / `BETTER_AUTH_URL`). The discovery metadata and browser redirects are built
+  from that URL, so an `http://localhost` or misconfigured origin will break the OAuth flow for
+  remote clients. See the [self-hosting configuration](/self-hosting/configuration/environment-variables).
+</Note>
+
+## Next steps
+
+<Card title="Set up your MCP client" icon="plug" href="/platform/mcp/setup">
+  Copy-paste guides for Claude Code, the Claude apps (custom connectors), and Codex — plus how to
+  manage and revoke access.
+</Card>
+
+For the tool schemas, response formats, discovery endpoints, and the API-key fallback, see the
+[MCP server technical handbook](/development/technical-handbook/mcp-server).
