@@ -9,6 +9,7 @@ import type {
   TSurveySchedulingJobData,
   TTestLogJobData,
   TWorkflowRunJobData,
+  TWorkflowRunReconcileJobData,
 } from "@/src/types";
 
 export interface JobExecutionContext {
@@ -84,5 +85,10 @@ export interface BackgroundJobProducer {
     identity: TBackgroundJobScheduleIdentity,
     schedule: TRecurringBackgroundJobSchedule,
     data: TTestLogJobData
+  ) => Promise<UpsertedRecurringJobSchedule>;
+  upsertRecurringWorkflowRunReconcileSchedule: (
+    identity: TBackgroundJobScheduleIdentity,
+    schedule: TRecurringBackgroundJobSchedule,
+    data: TWorkflowRunReconcileJobData
   ) => Promise<UpsertedRecurringJobSchedule>;
 }

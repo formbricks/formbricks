@@ -17,6 +17,7 @@ import {
   getBackgroundJobProducer,
   getJobsQueue,
   removeRecurringSurveySchedulingJobSchedule,
+  removeRecurringWorkflowRunReconcileJobSchedule,
   resetJobsQueueFactory,
   scheduleResponsePipelineJobAt,
   scheduleSurveySchedulingJobAt,
@@ -24,6 +25,7 @@ import {
   upsertRecurringResponsePipelineJobSchedule,
   upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
+  upsertRecurringWorkflowRunReconcileJobSchedule,
 } from "./queue";
 import { getRecurringJobSchedulerId } from "./schedules";
 
@@ -181,15 +183,16 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, undefined);
   });
 
-  test("enqueues the workflow run job with attempts:1 and a deterministic jobId", async () => {
+  test("enqueues the workflow run job with a deterministic jobId and the shared retry policy", async () => {
     const mockJob = { id: "job-workflow-run-1" };
     mockQueueAdd.mockResolvedValue(mockJob);
 
     const job = await enqueueWorkflowRunJob(workflowRunJobData, { jobId: workflowRunJobData.workflowRunId });
 
     expect(job).toBe(mockJob);
+    // No per-job attempts override: the job inherits attempts + backoff from the queue's
+    // defaultJobOptions (retries are safe now that execution is idempotent per step — ENG-1228).
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, {
-      attempts: 1,
       jobId: workflowRunJobData.workflowRunId,
     });
   });
@@ -308,6 +311,73 @@ describe("@formbricks/jobs queue helpers", () => {
         opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
       }
     );
+  });
+
+  test("upserts a recurring workflow run reconcile scheduler using an every schedule", async () => {
+    mockQueueUpsertJobScheduler.mockResolvedValue({
+      id: "job-reconcile-1",
+      name: JOB_NAMES.workflowRunReconcile,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    await upsertRecurringWorkflowRunReconcileJobSchedule(
+      { scheduleId: "workflow-run-reconcile", scope: "global" },
+      { everyMs: 180_000, kind: "every" },
+      { scope: "global" }
+    );
+
+    expect(mockQueueUpsertJobScheduler).toHaveBeenCalledWith(
+      getRecurringJobSchedulerId(JOB_NAMES.workflowRunReconcile, {
+        scheduleId: "workflow-run-reconcile",
+        scope: "global",
+      }),
+      { endDate: undefined, every: 180_000, limit: undefined, startDate: undefined },
+      {
+        data: { scope: "global" },
+        name: JOB_NAMES.workflowRunReconcile,
+        opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
+      }
+    );
+  });
+
+  test("removes the recurring workflow run reconcile scheduler", async () => {
+    mockQueueRemoveJobScheduler.mockResolvedValue(true);
+
+    const removed = await removeRecurringWorkflowRunReconcileJobSchedule({
+      scheduleId: "workflow-run-reconcile",
+      scope: "global",
+    });
+
+    expect(removed).toBe(true);
+    expect(mockQueueRemoveJobScheduler).toHaveBeenCalledWith(
+      getRecurringJobSchedulerId(JOB_NAMES.workflowRunReconcile, {
+        scheduleId: "workflow-run-reconcile",
+        scope: "global",
+      })
+    );
+  });
+
+  test("exposes workflow run reconcile scheduling through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueUpsertJobScheduler.mockResolvedValue({
+      id: "job-reconcile-2",
+      name: JOB_NAMES.workflowRunReconcile,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const schedule = await producer.upsertRecurringWorkflowRunReconcileSchedule(
+      { scheduleId: "workflow-run-reconcile", scope: "global" },
+      { everyMs: 180_000, kind: "every" },
+      { scope: "global" }
+    );
+
+    expect(schedule).toEqual({
+      jobId: "job-reconcile-2",
+      jobName: JOB_NAMES.workflowRunReconcile,
+      queueName: JOBS_QUEUE_NAME,
+      scheduleId: "workflow-run-reconcile",
+      scope: "global",
+    });
   });
 
   test("exposes scheduling through the engine-neutral producer interface", async () => {
