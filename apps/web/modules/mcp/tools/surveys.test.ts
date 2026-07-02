@@ -86,6 +86,11 @@ const readOnlyOAuthAuthInfo = {
   },
 };
 
+const writeOnlyOAuthAuthInfo = {
+  ...readOnlyOAuthAuthInfo,
+  scopes: ["surveys:write"],
+};
+
 function createToolServer() {
   const tools = new Map<
     string,
@@ -489,6 +494,50 @@ describe("registerSurveyTools", () => {
     );
 
     expect(deleteV3Survey).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 403,
+      code: "forbidden",
+      detail: "OAuth token does not include the required MCP scope",
+      requestId: "req_tool",
+    });
+  });
+
+  test("validate_survey rejects write validations for read-only OAuth scopes", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools.get("validate_survey")!.handler(
+      {
+        operation: "patch",
+        surveyId: "clxx1234567890123456789012",
+        data: {
+          name: "Updated survey",
+        },
+      },
+      { authInfo: readOnlyOAuthAuthInfo }
+    );
+
+    expect(validateV3SurveyFromRawInput).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 403,
+      code: "forbidden",
+      detail: "OAuth token does not include the required MCP scope",
+      requestId: "req_tool",
+    });
+  });
+
+  test("read tools return MCP errors for OAuth tokens without read scope", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools.get("list_surveys")!.handler(
+      {
+        workspaceId: "clxx1234567890123456789012",
+      },
+      { authInfo: writeOnlyOAuthAuthInfo }
+    );
+
+    expect(listV3Surveys).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
     expect(result.structuredContent.error).toMatchObject({
       status: 403,

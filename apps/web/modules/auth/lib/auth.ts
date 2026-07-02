@@ -313,6 +313,9 @@ export const auth = betterAuth({
       scopeExpirations: {
         "surveys:write": "15m",
       },
+      // Store opaque access-token and refresh-token lookup values as hashes. JWT access tokens are
+      // stateless and bounded by the short 15-minute lifetime above.
+      storeTokens: "hashed",
       prefix: {
         opaqueAccessToken: "fboa_",
         refreshToken: "fbor_",

@@ -5,6 +5,11 @@ import { getUser } from "@/lib/user/service";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getTranslate } from "@/lingodotdev/server";
 import { auth } from "@/modules/auth/lib/auth";
+import {
+  getHostFromUrl,
+  getOAuthScopeLabel,
+  type TOAuthPublicClient,
+} from "@/modules/auth/lib/oauth-client-metadata";
 import { getSession } from "@/modules/auth/lib/session";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -19,27 +24,9 @@ type TOAuthConsent = {
   updatedAt: Date | string;
 };
 
-type TOAuthPublicClient = {
-  client_id?: string;
-  client_name?: string;
-  client_uri?: string;
-};
-
 type TAuthorizedApp = {
   consent: TOAuthConsent;
   client: TOAuthPublicClient | null;
-};
-
-const getHostFromUrl = (value?: string): string | null => {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    return new URL(value).host;
-  } catch {
-    return null;
-  }
 };
 
 const getAuthorizedApps = async (): Promise<TAuthorizedApp[]> => {
@@ -117,7 +104,7 @@ const Page = async () => {
                           <span
                             key={scope}
                             className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">
-                            {scope}
+                            {getOAuthScopeLabel(scope, t)}
                           </span>
                         ))}
                       </div>

@@ -943,7 +943,8 @@ model oauthClient {
   @@index([userId])
 }
 
-/// Better Auth opaque access token records. JWT access tokens are verified through JWKS.
+/// Better Auth opaque access token records. The token column stores Better Auth's hashed lookup value.
+/// JWT access tokens are verified through JWKS and bounded by the configured short lifetime.
 model oauthAccessToken {
   id          String             @id @default(cuid())
   token       String             @unique
@@ -966,7 +967,7 @@ model oauthAccessToken {
   @@index([refreshId])
 }
 
-/// Better Auth OAuth refresh tokens used by delegated MCP clients.
+/// Better Auth OAuth refresh tokens used by delegated MCP clients. The token column stores a hashed lookup value.
 model oauthRefreshToken {
   id           String             @id @default(cuid())
   token        String             @unique

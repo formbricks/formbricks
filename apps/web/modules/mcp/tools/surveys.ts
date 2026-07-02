@@ -1,4 +1,6 @@
+import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -65,6 +67,18 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
   return searchParams;
 }
 
+async function guardMcpScopes(
+  authInfo: AuthInfo | undefined,
+  requiredScopes: string[],
+  requestId: string
+): Promise<CallToolResult | null> {
+  if (hasMcpScopes(authInfo, requiredScopes)) {
+    return null;
+  }
+
+  return await responseToMcpToolResult(createMcpInsufficientScopeResponse(requestId, requiredScopes), requestId);
+}
+
 export function registerSurveyTools(server: McpServer): void {
   server.registerTool(
     "list_surveys",
@@ -81,11 +95,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpListSurveysInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      if (!hasMcpScopes(extra.authInfo, ["surveys:read"])) {
-        return await responseToMcpToolResult(
-          createMcpInsufficientScopeResponse(requestId, ["surveys:read"]),
-          requestId
-        );
+      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
+      if (scopeError) {
+        return scopeError;
       }
 
       const response = await listV3Surveys({
@@ -114,11 +126,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpGetSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      if (!hasMcpScopes(extra.authInfo, ["surveys:read"])) {
-        return await responseToMcpToolResult(
-          createMcpInsufficientScopeResponse(requestId, ["surveys:read"]),
-          requestId
-        );
+      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
+      if (scopeError) {
+        return scopeError;
       }
 
       const response = await getV3Survey({
@@ -148,11 +158,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpCreateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      if (!hasMcpScopes(extra.authInfo, ["surveys:write"])) {
-        return await responseToMcpToolResult(
-          createMcpInsufficientScopeResponse(requestId, ["surveys:write"]),
-          requestId
-        );
+      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:write"], requestId);
+      if (scopeError) {
+        return scopeError;
       }
 
       const authentication = getMcpAuthentication(extra.authInfo);
@@ -207,11 +215,9 @@ export function registerSurveyTools(server: McpServer): void {
       const requiredScopes =
         input.operation === "patch" || input.operation === "create" ? ["surveys:write"] : ["surveys:read"];
 
-      if (!hasMcpScopes(extra.authInfo, requiredScopes)) {
-        return await responseToMcpToolResult(
-          createMcpInsufficientScopeResponse(requestId, requiredScopes),
-          requestId
-        );
+      const scopeError = await guardMcpScopes(extra.authInfo, requiredScopes, requestId);
+      if (scopeError) {
+        return scopeError;
       }
 
       const response = await validateV3SurveyFromRawInput({
@@ -243,11 +249,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpPatchSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      if (!hasMcpScopes(extra.authInfo, ["surveys:write"])) {
-        return await responseToMcpToolResult(
-          createMcpInsufficientScopeResponse(requestId, ["surveys:write"]),
-          requestId
-        );
+      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:write"], requestId);
+      if (scopeError) {
+        return scopeError;
       }
 
       const authentication = getMcpAuthentication(extra.authInfo);
@@ -300,11 +304,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpDeleteSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      if (!hasMcpScopes(extra.authInfo, ["surveys:write"])) {
-        return await responseToMcpToolResult(
-          createMcpInsufficientScopeResponse(requestId, ["surveys:write"]),
-          requestId
-        );
+      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:write"], requestId);
+      if (scopeError) {
+        return scopeError;
       }
 
       const authentication = getMcpAuthentication(extra.authInfo);

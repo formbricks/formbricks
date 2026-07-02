@@ -2,18 +2,17 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslate } from "@/lingodotdev/server";
 import { auth } from "@/modules/auth/lib/auth";
+import {
+  getHostFromUrl,
+  getOAuthScopeLabel,
+  isLocalhostHost,
+  type TOAuthPublicClient,
+} from "@/modules/auth/lib/oauth-client-metadata";
 import { getSession } from "@/modules/auth/lib/session";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { OAuthConsentActions } from "./components/OAuthConsentActions";
 
 type TSearchParams = Record<string, string | string[] | undefined>;
-
-type TOAuthPublicClient = {
-  client_id?: string;
-  client_name?: string;
-  client_uri?: string;
-  contacts?: string[];
-};
 
 const getSearchParam = (searchParams: TSearchParams, key: string): string | null => {
   const value = searchParams[key];
@@ -46,40 +45,6 @@ const getRequestedScopes = (scope: string | null): string[] =>
     ?.split(" ")
     .map((item) => item.trim())
     .filter(Boolean) ?? [];
-
-const getHostFromUrl = (value: string | null): string | null => {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    return new URL(value).host;
-  } catch {
-    return null;
-  }
-};
-
-const isLocalhostHost = (host: string | null): boolean =>
-  Boolean(host && (host.startsWith("localhost") || host.startsWith("127.0.0.1") || host.startsWith("[::1]")));
-
-const getScopeLabel = (scope: string, t: Awaited<ReturnType<typeof getTranslate>>): string => {
-  switch (scope) {
-    case "openid":
-      return t("auth.oauth.scopes.openid");
-    case "profile":
-      return t("auth.oauth.scopes.profile");
-    case "email":
-      return t("auth.oauth.scopes.email");
-    case "offline_access":
-      return t("auth.oauth.scopes.offline_access");
-    case "surveys:read":
-      return t("auth.oauth.scopes.surveys_read");
-    case "surveys:write":
-      return t("auth.oauth.scopes.surveys_write");
-    default:
-      return scope;
-  }
-};
 
 const getPublicOAuthClient = async (clientId: string): Promise<TOAuthPublicClient | null> => {
   try {
@@ -162,7 +127,7 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
                   <span
                     key={requestedScope}
                     className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">
-                    {getScopeLabel(requestedScope, t)}
+                    {getOAuthScopeLabel(requestedScope, t)}
                   </span>
                 ))}
               </dd>

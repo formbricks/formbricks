@@ -17,13 +17,17 @@ export const OAuthConsentActions = () => {
     try {
       const response = await authClient.oauth2.consent({ accept });
       if (response.error) {
-        toast.error(response.error.message ?? t("auth.oauth.consent_failed"));
+        toast.error(t("auth.oauth.consent_failed"));
         return;
       }
 
       const redirectUri =
-        response.data && typeof response.data === "object" && "redirect_uri" in response.data
-          ? String(response.data.redirect_uri)
+        response.data &&
+        typeof response.data === "object" &&
+        "redirect_uri" in response.data &&
+        typeof response.data.redirect_uri === "string" &&
+        response.data.redirect_uri.length > 0
+          ? response.data.redirect_uri
           : null;
 
       if (!redirectUri) {

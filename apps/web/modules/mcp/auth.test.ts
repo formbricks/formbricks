@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import {
   authenticateMcpRequest,
   getMcpAuthentication,
@@ -11,16 +11,38 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
+const verifyAccessTokenMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@better-auth/oauth-provider/resource-client", () => ({
+  oauthProviderResourceClient: vi.fn(() => ({
+    getActions: () => ({
+      verifyAccessToken: verifyAccessTokenMock,
+    }),
+  })),
+}));
+
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
   authenticateApiKeyFromHeaders: vi.fn(),
+  getBearerTokenFromHeaders: vi.fn((headers: Headers) => {
+    const authorization = headers.get("authorization");
+    return authorization?.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : null;
+  }),
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyIPRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/lib/getPublicUrl", () => ({
-  getPublicDomain: vi.fn(() => "https://app.example.com"),
+vi.mock("@/modules/auth/lib/oauth-urls", () => ({
+  MCP_OAUTH_SCOPES: ["openid", "profile", "email", "offline_access", "surveys:read", "surveys:write"],
+  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write"],
+  getAuthIssuerUrl: vi.fn(() => "https://app.example.com/api/auth"),
+  getMcpOrigin: vi.fn(() => "https://app.example.com"),
+  getMcpProtectedResourceMetadataUrl: vi.fn(
+    () => "https://app.example.com/.well-known/oauth-protected-resource/api/mcp"
+  ),
+  getMcpResourceUrl: vi.fn(() => "https://app.example.com/api/mcp"),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -57,8 +79,10 @@ function createRequest(url = "http://localhost/api/mcp", headers: Record<string,
 
 describe("authenticateMcpRequest", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
+    verifyAccessTokenMock.mockReset();
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   });
 
   test("returns 401 when no API key authenticates", async () => {
@@ -71,9 +95,22 @@ describe("authenticateMcpRequest", () => {
       expect(result.response.status).toBe(401);
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
-        detail: "API key required",
+        detail: "API key or OAuth access token required",
       });
     }
+  });
+
+  test("returns 429 when missing credentials exceed the unauthenticated MCP rate limit", async () => {
+    vi.mocked(applyIPRateLimit).mockRejectedValue(new TooManyRequestsError("Too many auth requests", 45));
+
+    const result = await authenticateMcpRequest(createRequest());
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(429);
+      expect(result.response.headers.get("Retry-After")).toBe("45");
+    }
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
   test("rejects API keys in query parameters", async () => {
@@ -169,7 +206,11 @@ describe("authenticateMcpRequest", () => {
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
     vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Too many requests", 30));
 
-    const result = await authenticateMcpRequest(createRequest());
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        "x-api-key": "fbk_test",
+      })
+    );
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -177,12 +218,148 @@ describe("authenticateMcpRequest", () => {
       expect(result.response.headers.get("Retry-After")).toBe("30");
     }
   });
+
+  test("authenticates OAuth bearer tokens and rate limits by user and client", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      sub: "user_1",
+      email: "user@example.com",
+      name: "Test User",
+      exp: 2_000_000_000,
+      azp: "client_1",
+      scope: "openid profile email surveys:read surveys:write",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+        "x-request-id": "req_oauth",
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.authInfo.clientId).toBe("client_1");
+      expect(result.authInfo.scopes).toEqual(["openid", "profile", "email", "surveys:read", "surveys:write"]);
+      expect(result.authInfo.extra.authMethod).toBe("oauth");
+      expect(getMcpAuthentication(result.authInfo)).toMatchObject({
+        user: {
+          id: "user_1",
+          email: "user@example.com",
+          name: "Test User",
+        },
+      });
+    }
+    expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+    expect(verifyAccessTokenMock).toHaveBeenCalledWith("oauth_access_token", {
+      verifyOptions: {
+        audience: "https://app.example.com/api/mcp",
+        issuer: "https://app.example.com/api/auth",
+      },
+      jwksUrl: "https://app.example.com/api/auth/jwks",
+    });
+    expect(applyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:v3" }),
+      "oauth:user_1:client_1"
+    );
+  });
+
+  test("rejects OAuth bearer tokens without the read scope", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      sub: "user_1",
+      client_id: "client_2",
+      scope: "surveys:write",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(403);
+      expect(result.response.headers.get("WWW-Authenticate")).toContain('error="insufficient_scope"');
+      expect(result.response.headers.get("WWW-Authenticate")).toContain('scope="surveys:read"');
+    }
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("rejects OAuth bearer tokens without a user subject", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      azp: "client_1",
+      scope: "surveys:read",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+      expect(await result.response.json()).toMatchObject({
+        detail: "User OAuth access token required",
+      });
+    }
+    expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
+  });
+
+  test("rejects invalid OAuth bearer tokens with an OAuth challenge", async () => {
+    verifyAccessTokenMock.mockRejectedValue(new Error("Invalid token"));
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+      expect(result.response.headers.get("WWW-Authenticate")).toContain(
+        'resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp"'
+      );
+      expect(await result.response.json()).toMatchObject({
+        detail: "Invalid OAuth access token",
+      });
+    }
+    expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
+  });
+
+  test("returns 429 when OAuth requests are rate limited", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read",
+    });
+    vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Too many requests", 30));
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(429);
+      expect(result.response.headers.get("Retry-After")).toBe("30");
+    }
+    expect(applyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:v3" }),
+      "oauth:user_1:client_1"
+    );
+  });
 });
 
 describe("handleAuthenticatedMcpRequest", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   });
 
   test("attaches MCP auth info and request headers to handler response", async () => {
