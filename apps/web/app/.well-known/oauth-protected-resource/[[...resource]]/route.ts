@@ -1,5 +1,9 @@
 import type { NextRequest } from "next/server";
-import { MCP_RESOURCE_SCOPES, getAuthIssuerUrl, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+import {
+  MCP_PROTECTED_RESOURCE_SCOPES,
+  getAuthIssuerUrl,
+  getMcpResourceUrl,
+} from "@/modules/auth/lib/oauth-urls";
 
 export const runtime = "nodejs";
 export const fetchCache = "force-no-store";
@@ -21,7 +25,7 @@ export async function GET(
     {
       resource: getMcpResourceUrl(),
       authorization_servers: [getAuthIssuerUrl()],
-      scopes_supported: [...MCP_RESOURCE_SCOPES],
+      scopes_supported: [...MCP_PROTECTED_RESOURCE_SCOPES],
       bearer_methods_supported: ["header"],
     },
     {

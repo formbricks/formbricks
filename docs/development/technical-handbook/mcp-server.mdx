@@ -80,6 +80,12 @@ Supported scopes:
 | `email`           | User email claim                                                          |
 | `offline_access`  | Refresh tokens for MCP clients                                            |
 
+The authorization server supports all of the above, but the MCP protected-resource metadata
+(`/.well-known/oauth-protected-resource/api/mcp`) advertises only `surveys:read`, `surveys:write`,
+and `offline_access` — the scopes an MCP client needs. Clients derive their Dynamic Client
+Registration scopes from that list, so `offline_access` must be advertised there for clients to be
+issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
+
 OAuth scopes only gate MCP tool categories. Actual workspace access is still evaluated at tool
 execution through the existing v3 authorization checks for the signed-in Formbricks user.
 
@@ -154,6 +160,16 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
     "scope": "openid profile email offline_access surveys:read surveys:write"
   }'
 ```
+
+<Note>
+  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
+  clients register with the scopes from the protected-resource metadata's `scopes_supported`
+  (`surveys:read surveys:write offline_access`). Because the authorization server validates the
+  `/authorize` request against the client's **registered** scopes, a client that registers with a
+  narrower set than it later requests (e.g. it registers surveys-only but requests `offline_access`)
+  is rejected with `invalid_scope`. To smoke-test the real path, omit `scope` and let the client
+  adopt the advertised set, or pass exactly what the metadata advertises.
+</Note>
 
 The consent screen is served at `/account/authorize`. Users can revoke approved MCP clients from
 `/account/settings/authorized-apps`.
@@ -259,13 +275,12 @@ Add the remote HTTP MCP server:
 claude mcp add --transport http formbricks-local http://localhost:3000/api/mcp
 ```
 
-Claude Code should discover the MCP protected-resource metadata, dynamically register a public
-client, and launch the browser-based OAuth flow. Request the scopes needed by the workflow when
-Claude prompts for authentication. For write-capable survey workflows, grant:
-
-```text
-openid profile email offline_access surveys:read surveys:write
-```
+Run `/mcp` and authenticate `formbricks-local`. Claude Code discovers the MCP protected-resource
+metadata, registers a public client whose scopes are taken from that metadata's `scopes_supported`
+(`surveys:read surveys:write offline_access`), and launches the browser-based OAuth flow — there is
+no scope-entry step. You approve the requested scopes on the Formbricks consent screen. Workspace
+role determines whether `surveys:write` tools actually succeed at execution time (see
+[Authentication](#authentication)), regardless of the granted scope.
 
 Verify it:
 

@@ -50,3 +50,13 @@ export const MCP_OAUTH_SCOPES = [
 ] as const;
 
 export const MCP_RESOURCE_SCOPES = ["surveys:read", "surveys:write"] as const;
+
+// Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their
+// Dynamic Client Registration + authorize scopes from this list (NOT from the AS metadata),
+// and the oauth-provider plugin validates authorize requests against the client's REGISTERED
+// scopes — so offline_access (required for refresh tokens) must be advertised here or DCR
+// clients can never be granted it. `satisfies` enforces that everything advertised is grantable.
+export const MCP_PROTECTED_RESOURCE_SCOPES = [
+  ...MCP_RESOURCE_SCOPES,
+  "offline_access",
+] as const satisfies readonly (typeof MCP_OAUTH_SCOPES)[number][];

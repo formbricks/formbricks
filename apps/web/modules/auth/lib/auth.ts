@@ -36,7 +36,8 @@ import {
   betterAuthLogger,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
-import { MCP_OAUTH_SCOPES, getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
+import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
@@ -296,42 +297,9 @@ export const auth = betterAuth({
         audience: getMcpResourceUrl(),
       },
     }),
-    oauthProvider({
-      loginPage: "/auth/login",
-      consentPage: "/account/authorize",
-      scopes: [...MCP_OAUTH_SCOPES],
-      advertisedMetadata: {
-        scopes_supported: [...MCP_OAUTH_SCOPES],
-      },
-      validAudiences: [getMcpResourceUrl()],
-      allowDynamicClientRegistration: true,
-      allowUnauthenticatedClientRegistration: true,
-      clientRegistrationDefaultScopes: ["openid", "profile", "email", "offline_access", "surveys:read"],
-      clientRegistrationAllowedScopes: ["surveys:write"],
-      accessTokenExpiresIn: 15 * 60,
-      refreshTokenExpiresIn: 30 * 24 * 60 * 60,
-      scopeExpirations: {
-        "surveys:write": "15m",
-      },
-      // Store opaque access-token and refresh-token lookup values as hashes. JWT access tokens are
-      // stateless and bounded by the short 15-minute lifetime above.
-      storeTokens: "hashed",
-      prefix: {
-        opaqueAccessToken: "fboa_",
-        refreshToken: "fbor_",
-        clientSecret: "fbocs_",
-      },
-      customAccessTokenClaims: ({ user }) => ({
-        ...(user?.email ? { email: user.email } : {}),
-        ...(user?.name ? { name: user.name } : {}),
-      }),
-      rateLimit: {
-        register: { window: 60, max: 5 },
-        token: { window: 60, max: 20 },
-        introspect: { window: 60, max: 60 },
-        revoke: { window: 60, max: 30 },
-      },
-    }),
+    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
+    // integration-testable against a throwaway Better Auth instance.
+    oauthProvider(getMcpOauthProviderOptions()),
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
     // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
     // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
