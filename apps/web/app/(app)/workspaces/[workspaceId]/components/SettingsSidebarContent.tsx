@@ -48,6 +48,9 @@ interface SettingsSidebarContentProps {
   organizationName: string;
   membershipRole?: TOrganizationRole;
   isFormbricksCloud: boolean;
+  // Whether the "Feedback Datasets" (Unify Feedback records) org item is shown: owner/manager always,
+  // or a member who can reach at least one dataset. Computed once by getSettingsLayoutData.
+  canViewUnifyFeedback: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
   // Hidden when the user has no workspace (org/account settings still render).
@@ -233,6 +236,7 @@ export const SettingsSidebarContent = ({
   organizationName,
   membershipRole,
   isFormbricksCloud,
+  canViewUnifyFeedback,
   isCollapsed,
   isTextVisible,
   hideWorkspaceSection = false,
@@ -336,12 +340,16 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "org-feedback-directories",
+      // Repointed from the old management-only "org-feedback-directories" entry to the relocated
+      // Unify Feedback records view (Stage 2). Records + dataset management now live behind one nav
+      // entry: this opens the records view, which links owners/managers on to dataset management.
+      // Visible to any member who can reach a dataset, not just owner/manager.
+      id: "org-unify-datasets",
       label: t("workspace.settings.feedback_directories.nav_label"),
-      href: organizationSettingsPath(organizationId, "feedback-directories"),
+      href: organizationSettingsPath(organizationId, "unify-feedback/datasets"),
       icon: <FoldersIcon className={iconClassName} />,
-      hidden: isMember,
-      disabled: !isOwnerOrManager,
+      hidden: !canViewUnifyFeedback,
+      disabled: isBilling,
     },
     {
       id: "org-api-keys",

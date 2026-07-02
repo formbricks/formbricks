@@ -69,8 +69,10 @@ interface FeedbackRecordFormDrawerProps {
   mode: FeedbackRecordDrawerMode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  workspaceId: string;
-  directories: { id: string; name: string }[];
+  organizationId: string;
+  // The dataset the drawer writes into is locked to the currently-selected dataset (decision #5).
+  datasetId: string;
+  datasetName: string;
   canWrite: boolean;
   recordId?: string;
   onSuccess: () => Promise<void> | void;
@@ -80,8 +82,9 @@ export const FeedbackRecordFormDrawer = ({
   mode,
   open,
   onOpenChange,
-  workspaceId,
-  directories,
+  organizationId,
+  datasetId,
+  datasetName,
   canWrite,
   recordId,
   onSuccess,
@@ -95,7 +98,7 @@ export const FeedbackRecordFormDrawer = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const defaultValues = useMemo(() => getCreateDefaults(directories), [directories]);
+  const defaultValues = useMemo(() => getCreateDefaults(datasetId), [datasetId]);
 
   const form = useForm<TFeedbackRecordFormValues>({
     resolver: zodResolver(ZFeedbackRecordFormValues),
@@ -129,12 +132,12 @@ export const FeedbackRecordFormDrawer = ({
     : null;
 
   const resetForCreate = useCallback(() => {
-    const nextDefaults = getCreateDefaults(directories);
+    const nextDefaults = getCreateDefaults(datasetId);
     form.reset(nextDefaults);
     setRecord(null);
     setSourceTypeMode(nextDefaults.source_type);
     setCustomSourceType("");
-  }, [directories, form]);
+  }, [datasetId, form]);
 
   useEffect(() => {
     if (!open) return;
@@ -148,7 +151,11 @@ export const FeedbackRecordFormDrawer = ({
 
     const loadRecord = async () => {
       setIsLoadingRecord(true);
-      const result = await retrieveFeedbackRecordAction({ workspaceId, recordId });
+      const result = await retrieveFeedbackRecordAction({
+        organizationId,
+        directoryId: datasetId,
+        recordId,
+      });
 
       if (!result?.data) {
         toast.error(getFormattedErrorMessage(result) || t("workspace.unify.failed_to_load_feedback_records"));
@@ -166,7 +173,7 @@ export const FeedbackRecordFormDrawer = ({
     };
 
     void loadRecord();
-  }, [form, mode, onOpenChange, open, recordId, resetForCreate, t, workspaceId]);
+  }, [form, mode, onOpenChange, open, recordId, resetForCreate, t, organizationId, datasetId]);
 
   const requestClose = useCallback(() => {
     if (form.formState.isDirty && !isSubmitting) {
@@ -246,7 +253,8 @@ export const FeedbackRecordFormDrawer = ({
       sourceTypeMode === SOURCE_TYPE_CUSTOM_VALUE ? customSourceType.trim() : values.source_type;
 
     const result = await createFeedbackRecordAction({
-      workspaceId,
+      organizationId,
+      directoryId: datasetId,
       recordInput: {
         submission_id: values.submission_id.trim(),
         tenant_id: values.tenant_id,
@@ -284,7 +292,8 @@ export const FeedbackRecordFormDrawer = ({
     );
 
     const result = await updateFeedbackRecordAction({
-      workspaceId,
+      organizationId,
+      directoryId: datasetId,
       recordId,
       updateInput: {
         language: values.language?.trim() || null,
@@ -305,7 +314,11 @@ export const FeedbackRecordFormDrawer = ({
     if (!recordId) return;
     setIsDeleting(true);
     try {
-      const result = await deleteFeedbackRecordAction({ workspaceId, recordId });
+      const result = await deleteFeedbackRecordAction({
+        organizationId,
+        directoryId: datasetId,
+        recordId,
+      });
       if (!result?.data) {
         toast.error(getFormattedErrorMessage(result));
         return;
@@ -392,30 +405,14 @@ export const FeedbackRecordFormDrawer = ({
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="tenant_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("workspace.unify.feedback_directory")}</FormLabel>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange} disabled>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("workspace.unify.select_feedback_directory")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {directories.map((directory) => (
-                                <SelectItem key={directory.id} value={directory.id}>
-                                  {directory.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormError />
-                      </FormItem>
-                    )}
-                  />
+                  <FormItem>
+                    <FormLabel>{t("workspace.unify.feedback_directory")}</FormLabel>
+                    <FormControl>
+                      {/* The dataset is locked to the currently-selected dataset (decision #5): shown
+                          read-only so the record is always written into the dataset in view. */}
+                      <Input value={datasetName} disabled readOnly />
+                    </FormControl>
+                  </FormItem>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

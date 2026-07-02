@@ -107,6 +107,37 @@ export const getFeedbackSourcesWithMappings = reactCache(
   }
 );
 
+/**
+ * Lists feedback sources (with mappings) that write into a given feedback directory (dataset),
+ * across every workspace the dataset is assigned to. Backs the org-scoped Feedback Records view,
+ * where the dataset — not a single workspace — is the unit of selection. Each source carries its
+ * own `workspaceId`, which the CSV import flow needs to scope the upload.
+ */
+export const getFeedbackSourcesByFeedbackDirectoryId = reactCache(
+  async (feedbackDirectoryId: string): Promise<TFeedbackSourceWithMappings[]> => {
+    validateInputs([feedbackDirectoryId, ZId]);
+
+    try {
+      const feedbackSources = await prisma.feedbackSource.findMany({
+        where: {
+          feedbackDirectoryId,
+        },
+        select: selectFeedbackSourceWithMappings,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return feedbackSources.map(mapFeedbackSourceWithMappings);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const getFeedbackSourceWithMappingsById = reactCache(
   async (feedbackSourceId: string, workspaceId: string): Promise<TFeedbackSourceWithMappings | null> => {
     validateInputs([feedbackSourceId, ZId], [workspaceId, ZId]);

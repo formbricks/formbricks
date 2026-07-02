@@ -13,7 +13,7 @@ import {
   TypeIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
@@ -33,14 +33,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { deleteFeedbackRecordAction } from "../actions";
-import { formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
+import { deleteFeedbackRecordAction, resolveSurveyWorkspaceAction } from "../actions";
+import { formatSourceType, resolveFeedbackDisplayText, toISOOrUndefined } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
 import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolbar-left";
 
 const RECORDS_PER_PAGE = 50;
+
+// Sentinel for the "All sources" option — a radix Select item can't have an empty-string value.
+const ALL_SOURCES_VALUE = "__all__";
 
 const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
   text: <TypeIcon className="size-3.5" />,
@@ -53,6 +65,11 @@ const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
   boolean: <ToggleLeftIcon className="size-3.5" />,
   date: <CalendarIcon className="size-3.5" />,
 };
+
+// Resolution of a Formbricks survey source_id to its owning workspace and whether the viewer can
+// reach it. Precomputed for the SSR page and lazily filled for load-more rows (decision #6).
+type SurveyWorkspaceResolution = { workspaceId: string | null; accessible: boolean };
+export type SurveyWorkspaceMap = Record<string, SurveyWorkspaceResolution>;
 
 // resolvedText (translation-preferred) is computed once by the caller; null falls through to other types.
 const formatValue = (
@@ -68,18 +85,35 @@ const formatValue = (
   return "—";
 };
 
-interface FeedbackRecordsTableProps {
+const isFormbricksSurveyRecord = (record: FeedbackRecordData): boolean =>
+  (record.source_type === "formbricks" || record.source_type === "formbricks_survey") && !!record.source_id;
+
+// CSV source assigned to the dataset; `workspaceId` scopes the (still workspace-bound) CSV upload.
+interface CsvSource {
+  id: string;
+  name: string;
+  fieldMappings: TFeedbackSourceFieldMapping[];
   workspaceId: string;
+}
+
+interface FeedbackRecordsTableProps {
+  organizationId: string;
+  // Single dataset (Hub tenant) in view; the selector lives one level up in the page client.
+  datasetId: string;
+  datasetName: string;
   initialRecords: FeedbackRecordData[];
-  initialCursors: Record<string, string>;
-  frdMap: Record<string, string>;
-  csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
+  initialCursor: string | null;
+  // Distinct source types present in the dataset, used to populate the Source filter.
+  sourceOptions: { sourceType: string }[];
+  csvSources: CsvSource[];
   canWrite: boolean;
+  // source_id -> owning workspace resolution, precomputed on the server for the initial page.
+  surveyWorkspaceMap: SurveyWorkspaceMap;
 }
 
 interface FeedbackRecordRowProps {
   record: FeedbackRecordData;
-  workspaceId: string;
+  surveyResolution: SurveyWorkspaceResolution | undefined;
   locale: string;
   t: TFunction;
   isSelected: boolean;
@@ -88,35 +122,45 @@ interface FeedbackRecordRowProps {
 }
 
 export const FeedbackRecordsTable = ({
-  workspaceId,
+  organizationId,
+  datasetId,
+  datasetName,
   initialRecords,
-  initialCursors,
-  frdMap,
+  initialCursor,
+  sourceOptions,
   csvSources,
   canWrite,
+  surveyWorkspaceMap,
 }: Readonly<FeedbackRecordsTableProps>) => {
   const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
-  const [cursors, setCursors] = useState<Record<string, string>>(initialCursors);
+  const [cursor, setCursor] = useState<string | null>(initialCursor);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("edit");
   const [drawerRecordId, setDrawerRecordId] = useState<string | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [csvImportSource, setCsvImportSource] = useState<{
-    id: string;
-    name: string;
-    fieldMappings: TFeedbackSourceFieldMapping[];
-  } | null>(null);
+  const [csvImportSource, setCsvImportSource] = useState<CsvSource | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const hasMore = Object.keys(cursors).length > 0;
+  // Filters (Hub-side): a single source_type plus a collected_at range. Empty means unfiltered.
+  const [sourceFilter, setSourceFilter] = useState<string>("");
+  const [sinceFilter, setSinceFilter] = useState<string>("");
+  const [untilFilter, setUntilFilter] = useState<string>("");
+
+  // Locally-resolved survey workspace map, seeded from the server precomputation and extended for
+  // load-more rows. Kept in state so newly-resolved rows re-render as links.
+  const [surveyResolutions, setSurveyResolutions] = useState<SurveyWorkspaceMap>(surveyWorkspaceMap);
+
+  const hasMore = cursor !== null;
   const selectedCount = selectedIds.size;
   const allOnPageSelected = records.length > 0 && records.every((record) => selectedIds.has(record.id));
   const someOnPageSelected = records.some((record) => selectedIds.has(record.id));
+  const hasActiveFilters = sourceFilter !== "" || sinceFilter !== "" || untilFilter !== "";
 
   const toggleAllOnPage = (checked: boolean) => {
     setSelectedIds((prev) => {
@@ -144,57 +188,50 @@ export const FeedbackRecordsTable = ({
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const directories = useMemo(
-    () =>
-      Object.entries(frdMap)
-        .map(([id, name]) => ({ id, name }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [frdMap]
-  );
-
   type FetchResult =
-    | { ok: true; records: FeedbackRecordData[]; newCursors: Record<string, string> }
+    | { ok: true; records: FeedbackRecordData[]; nextCursor: string | null }
     | { ok: false; errorMessage: string };
 
-  const fetchRecords = async (mode: "refresh" | "loadMore"): Promise<FetchResult> => {
-    const directoryIds = Object.keys(frdMap);
-    const frdIdsToFetch = mode === "refresh" ? directoryIds : directoryIds.filter((id) => cursors[id]);
+  // Single-tenant fetch. "refresh" restarts from the first page with the current filters; "loadMore"
+  // continues from the stored cursor. Filter overrides let a filter change fetch immediately without
+  // waiting for the state update to flush.
+  const fetchRecords = useCallback(
+    async (
+      mode: "refresh" | "loadMore",
+      filterOverrides?: { source?: string; since?: string; until?: string }
+    ): Promise<FetchResult> => {
+      const source = filterOverrides?.source ?? sourceFilter;
+      const since = filterOverrides?.since ?? sinceFilter;
+      const until = filterOverrides?.until ?? untilFilter;
 
-    if (frdIdsToFetch.length === 0) {
-      return { ok: true, records: [], newCursors: {} };
-    }
+      const result = await listFeedbackRecordsAction({
+        organizationId,
+        directoryId: datasetId,
+        limit: RECORDS_PER_PAGE,
+        ...(mode === "loadMore" && cursor ? { cursor } : {}),
+        ...(source ? { sourceType: source } : {}),
+        ...(toISOOrUndefined(since) ? { since: toISOOrUndefined(since) } : {}),
+        ...(toISOOrUndefined(until) ? { until: toISOOrUndefined(until) } : {}),
+      });
 
-    const results = await Promise.all(
-      frdIdsToFetch.map((frdId) =>
-        listFeedbackRecordsAction({
-          workspaceId,
-          frdId,
-          limit: RECORDS_PER_PAGE,
-          ...(mode === "loadMore" && cursors[frdId] ? { cursor: cursors[frdId] } : {}),
-        })
-      )
-    );
-
-    const firstFailure = results.find((result) => !result?.data);
-    if (firstFailure) {
-      return {
-        ok: false,
-        errorMessage:
-          getFormattedErrorMessage(firstFailure) ?? t("workspace.unify.failed_to_load_feedback_records"),
-      };
-    }
-
-    const fetchedRecords = results.flatMap((result) => result?.data?.data ?? []);
-
-    const newCursors: Record<string, string> = {};
-    for (let i = 0; i < frdIdsToFetch.length; i++) {
-      const nextCursor = results[i]?.data?.next_cursor;
-      if (nextCursor) {
-        newCursors[frdIdsToFetch[i]] = nextCursor;
+      if (!result?.data) {
+        return {
+          ok: false,
+          errorMessage:
+            getFormattedErrorMessage(result) ?? t("workspace.unify.failed_to_load_feedback_records"),
+        };
       }
-    }
 
-    return { ok: true, records: fetchedRecords, newCursors };
+      return { ok: true, records: result.data.data, nextCursor: result.data.next_cursor ?? null };
+    },
+    [organizationId, datasetId, cursor, sourceFilter, sinceFilter, untilFilter, t]
+  );
+
+  const applyRefreshResult = (result: Extract<FetchResult, { ok: true }>) => {
+    const sorted = result.records.toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
+    setRecords(sorted);
+    setCursor(result.nextCursor);
+    setSelectedIds(new Set());
   };
 
   const handleRefresh = async () => {
@@ -211,12 +248,26 @@ export const FeedbackRecordsTable = ({
       return;
     }
 
-    const mergedRecords = result.records.toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
-    setRecords(mergedRecords);
-    setCursors(result.newCursors);
-    setSelectedIds(new Set());
+    applyRefreshResult(result);
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
+  };
+
+  // Silent reload (no toast) used when a filter changes. Fetches immediately with the new filter set.
+  const reloadWithFilters = async (overrides: { source?: string; since?: string; until?: string }) => {
+    if (isRefreshing || isLoadingMore) return;
+    setIsRefreshing(true);
+    setError(null);
+
+    const result = await fetchRecords("refresh", overrides);
+    if (!result.ok) {
+      setError(result.errorMessage);
+      setIsRefreshing(false);
+      return;
+    }
+
+    applyRefreshResult(result);
+    setIsRefreshing(false);
   };
 
   const handleLoadMore = async () => {
@@ -234,9 +285,68 @@ export const FeedbackRecordsTable = ({
     setRecords((prev) =>
       [...prev, ...result.records].toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
     );
-    setCursors(result.newCursors);
+    setCursor(result.nextCursor);
     setIsLoadingMore(false);
   };
+
+  const handleSourceFilterChange = (value: string) => {
+    const nextSource = value === ALL_SOURCES_VALUE ? "" : value;
+    setSourceFilter(nextSource);
+    void reloadWithFilters({ source: nextSource });
+  };
+
+  const handleSinceChange = (value: string) => {
+    setSinceFilter(value);
+    void reloadWithFilters({ since: value });
+  };
+
+  const handleUntilChange = (value: string) => {
+    setUntilFilter(value);
+    void reloadWithFilters({ until: value });
+  };
+
+  const clearFilters = () => {
+    setSourceFilter("");
+    setSinceFilter("");
+    setUntilFilter("");
+    void reloadWithFilters({ source: "", since: "", until: "" });
+  };
+
+  // Lazily resolve survey workspaces for any Formbricks rows not already in the map (e.g. load-more
+  // rows). Unresolved rows render as plain text until this fills them in.
+  useEffect(() => {
+    const unresolvedSourceIds = Array.from(
+      new Set(
+        records
+          .filter((record) => isFormbricksSurveyRecord(record))
+          .map((record) => record.source_id as string)
+          .filter((sourceId) => !(sourceId in surveyResolutions))
+      )
+    );
+    if (unresolvedSourceIds.length === 0) return;
+
+    let cancelled = false;
+    void (async () => {
+      const resolved = await Promise.all(
+        unresolvedSourceIds.map(async (sourceId) => {
+          const result = await resolveSurveyWorkspaceAction({ organizationId, surveyId: sourceId });
+          return [sourceId, result?.data ?? { workspaceId: null, accessible: false }] as const;
+        })
+      );
+      if (cancelled) return;
+      setSurveyResolutions((prev) => {
+        const next = { ...prev };
+        for (const [sourceId, resolution] of resolved) {
+          next[sourceId] = resolution;
+        }
+        return next;
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [records, surveyResolutions, organizationId]);
 
   if (error) {
     return (
@@ -266,7 +376,7 @@ export const FeedbackRecordsTable = ({
         const results = await Promise.all(
           chunk.map(async (recordId) => ({
             recordId,
-            result: await deleteFeedbackRecordAction({ workspaceId, recordId }),
+            result: await deleteFeedbackRecordAction({ organizationId, directoryId: datasetId, recordId }),
           }))
         );
         results.forEach(({ recordId, result }) => {
@@ -328,6 +438,54 @@ export const FeedbackRecordsTable = ({
   return (
     <>
       <div className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="source-filter">{t("workspace.unify.filter_by_source")}</Label>
+              <Select
+                value={sourceFilter === "" ? ALL_SOURCES_VALUE : sourceFilter}
+                onValueChange={handleSourceFilterChange}>
+                <SelectTrigger id="source-filter" className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_SOURCES_VALUE}>{t("workspace.unify.filter_all_sources")}</SelectItem>
+                  {sourceOptions.map((option) => (
+                    <SelectItem key={option.sourceType} value={option.sourceType}>
+                      {formatSourceType(option.sourceType, t)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="since-filter">{t("workspace.unify.filter_from_date")}</Label>
+              <Input
+                id="since-filter"
+                type="datetime-local"
+                className="w-52"
+                value={sinceFilter}
+                onChange={(event) => handleSinceChange(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="until-filter">{t("workspace.unify.filter_to_date")}</Label>
+              <Input
+                id="until-filter"
+                type="datetime-local"
+                className="w-52"
+                value={untilFilter}
+                onChange={(event) => handleUntilChange(event.target.value)}
+              />
+            </div>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                {t("workspace.unify.clear_filters")}
+              </Button>
+            )}
+          </div>
+        </div>
+
         <div className="flex items-center justify-between">
           <FeedbackRecordsTableToolbarLeft
             selectedCount={selectedCount}
@@ -369,11 +527,6 @@ export const FeedbackRecordsTable = ({
                   {t("workspace.unify.add_feedback_record")}
                 </Button>
               ))}
-            <Button size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/workspace/feedback-sources`}>
-                {t("workspace.unify.manage_feedback_sources")}
-              </Link>
-            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -432,8 +585,8 @@ export const FeedbackRecordsTable = ({
                     <FeedbackRecordRow
                       key={record.id}
                       record={record}
-                      workspaceId={workspaceId}
-                      locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
+                      surveyResolution={record.source_id ? surveyResolutions[record.source_id] : undefined}
+                      locale={locale}
                       t={t}
                       isSelected={selectedIds.has(record.id)}
                       onSelectChange={(checked) => toggleOne(record.id, checked)}
@@ -464,8 +617,9 @@ export const FeedbackRecordsTable = ({
         mode={drawerMode}
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
-        workspaceId={workspaceId}
-        directories={directories}
+        organizationId={organizationId}
+        datasetId={datasetId}
+        datasetName={datasetName}
         canWrite={canWrite}
         recordId={drawerMode === "edit" ? drawerRecordId : undefined}
         onSuccess={handleRefresh}
@@ -489,7 +643,7 @@ export const FeedbackRecordsTable = ({
             }
           }}
           feedbackSourceId={csvImportSource.id}
-          workspaceId={workspaceId}
+          workspaceId={csvImportSource.workspaceId}
           fieldMappings={csvImportSource.fieldMappings}
         />
       )}
@@ -499,7 +653,7 @@ export const FeedbackRecordsTable = ({
 
 const FeedbackRecordRow = ({
   record,
-  workspaceId,
+  surveyResolution,
   locale,
   t,
   isSelected,
@@ -511,9 +665,13 @@ const FeedbackRecordRow = ({
   const isLongValue = value.length > 60;
   const translatedLangLabel = langKey ? (getLanguageLabel(langKey, locale) ?? langKey) : null;
   const collectedAt = formatDateTimeForDisplay(new Date(record.collected_at), locale);
-  const isFormbricksSurveySource =
-    (record.source_type === "formbricks" || record.source_type === "formbricks_survey") && !!record.source_id;
-  const surveySummaryHref = `/workspaces/${workspaceId}/surveys/${record.source_id}/summary`;
+  // Link only a Formbricks survey source whose owning workspace the viewer can reach (decision #6);
+  // otherwise the source name is plain, non-clickable text.
+  const surveyLinkWorkspaceId =
+    isFormbricksSurveyRecord(record) && surveyResolution?.accessible ? surveyResolution.workspaceId : null;
+  const surveySummaryHref = surveyLinkWorkspaceId
+    ? `/workspaces/${surveyLinkWorkspaceId}/surveys/${record.source_id}/summary`
+    : null;
 
   return (
     <tr
@@ -545,7 +703,7 @@ const FeedbackRecordRow = ({
         <Badge text={formatSourceType(record.source_type, t)} type="gray" size="tiny" />
       </td>
       <td className="px-4 py-3" title={record.source_name ?? undefined}>
-        {isFormbricksSurveySource ? (
+        {surveySummaryHref ? (
           <Link
             href={surveySummaryHref}
             className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900"

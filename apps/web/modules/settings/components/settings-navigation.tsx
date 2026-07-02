@@ -21,6 +21,7 @@ interface SettingsNavigationProps {
   organizationName: string;
   membershipRole?: TOrganizationRole;
   isFormbricksCloud: boolean;
+  canViewUnifyFeedback: boolean;
   publicDomain: string;
   // Where the back arrow returns to (the surveys list of the current workspace).
   backUrl: string;
@@ -37,6 +38,7 @@ export const SettingsNavigation = ({
   organizationName,
   membershipRole,
   isFormbricksCloud,
+  canViewUnifyFeedback,
   publicDomain,
   backUrl,
 }: Readonly<SettingsNavigationProps>) => {
@@ -111,6 +113,7 @@ export const SettingsNavigation = ({
           organizationName={organizationName}
           membershipRole={membershipRole}
           isFormbricksCloud={isFormbricksCloud}
+          canViewUnifyFeedback={canViewUnifyFeedback}
           isCollapsed={false}
           isTextVisible={false}
           hideWorkspaceSection={!workspaceId}

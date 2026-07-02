@@ -24,7 +24,7 @@ import {
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
 } from "@/lib/utils/helper";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { assertCanViewDirectory } from "@/modules/ee/feedback-directory/lib/access";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importHistoricalResponses } from "./import";
@@ -471,8 +471,8 @@ export const importHistoricalResponsesAction = authenticatedActionClient
   );
 
 const ZListFeedbackRecordsAction = z.object({
-  workspaceId: ZId,
-  frdId: ZId,
+  organizationId: ZId,
+  directoryId: ZId,
   limit: z.number().min(1).max(1000).optional(),
   cursor: z.string().optional(),
   sourceType: z.string().optional(),
@@ -493,31 +493,13 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZListFeedbackRecordsAction>;
     }): Promise<FeedbackRecordListResponse> => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "read",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
-      });
-
-      // Verify FRD belongs to workspace's accessible FRDs
-      const frds = await getFeedbackDirectoriesByWorkspaceId(parsedInput.workspaceId);
-      if (!frds.some((f) => f.id === parsedInput.frdId)) {
-        throw new Error("Feedback directory not accessible");
-      }
+      // Org-scoped VIEW guard: reproduces the pre-relocation outcome (owner/manager, or a member who
+      // shares a workspace with the dataset) while keeping the dataset as the unit of access instead
+      // of a URL workspace. Denies with a uniform not-found so it isn't a dataset-existence oracle.
+      await assertCanViewDirectory(ctx.user.id, parsedInput.organizationId, parsedInput.directoryId);
 
       const params: FeedbackRecordListParams = {
-        tenant_id: parsedInput.frdId,
+        tenant_id: parsedInput.directoryId,
         limit: parsedInput.limit ?? 50,
       };
       if (parsedInput.cursor) params.cursor = parsedInput.cursor;

@@ -6,6 +6,7 @@ import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
+import { getFeedbackDirectoriesForUser } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -40,6 +41,11 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
   const newTrialBannerVariant = await getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner");
   const isOwnerOrManager = isOwner || isManager;
+  // Mirrors getSettingsLayoutData: owner/manager always see the "Feedback Datasets" org item;
+  // members only when they can reach at least one dataset. getFeedbackDirectoriesForUser is
+  // reactCache'd, so this is cheap and consistent with the org-settings computation.
+  const canViewUnifyFeedback =
+    isOwnerOrManager || (await getFeedbackDirectoriesForUser(user.id, organization.id)).length > 0;
 
   // Validate that workspace permission exists for members
   if (isMember && !workspacePermission) {
@@ -75,6 +81,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isAccessControlAllowed={isAccessControlAllowed}
           responseCount={responseCount}
           newTrialBannerVariant={newTrialBannerVariant}
+          canViewUnifyFeedback={canViewUnifyFeedback}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar
