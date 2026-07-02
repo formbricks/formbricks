@@ -65,6 +65,7 @@
       "new_to_formbricks": "Új a Formbicksen?",
       "oauth_account_not_linked_description": "Ez az SSO-szolgáltató nincs összekapcsolva egy meglévő Formbricks-fiókkal. Jelentkezzen be az eredetileg használt módszerrel. Ha ez e-mail és jelszó páros volt, akkor először végezze el az e-mail-ellenőrzést, ha a rendszer erre kéri.",
       "oauth_account_not_linked_title": "Ezt az SSO-bejelentkezést nem sikerült összekapcsolni",
+      "please_verify_your_email_to_continue": "Kérjük, erősítsd meg az e-mail-címedet. Küldtünk egy megerősítő linket.",
       "use_a_backup_code": "Visszaszerzési kód használata"
     },
     "saml_connection_error": "Valami probléma történt. A további részletekért nézze meg az alkalmazás konzolját.",
@@ -98,10 +99,6 @@
       "verification_email_resent_successfully": "Az ellenőrző e-mail elküldve! Nézze meg a beérkezett üzeneteit.",
       "verification_email_successfully_sent_info": "Ha létezik a(z) {email} címhez rendelt fiók, akkor elküldtünk egy ellenőrző hivatkozást arra a címre. Nézze meg a beérkezett üzeneteit a regisztráció befejezéséhez.",
       "you_didnt_receive_an_email_or_your_link_expired": "Nem kapott e-mailt vagy a hivatkozása lejárt?"
-    },
-    "verify": {
-      "no_token_provided": "Nincs token megadva",
-      "verifying": "Ellenőrzés…"
     }
   },
   "billing_confirmation": {
@@ -522,6 +519,13 @@
   "emails": {
     "accept": "Elfogadás",
     "click_or_drag_to_upload_files": "Kattintson vagy húzza ide a fájlok feltöltéséhez.",
+    "delete_account_email_confirm_deletion": "Fiók törlésének megerősítése",
+    "delete_account_email_did_not_request": "Ha nem te kérted ezt, hagyd figyelmen kívül ezt az e-mailt, és a fiókod aktív marad.",
+    "delete_account_email_heading": "Erősítsd meg a fiókod törlését",
+    "delete_account_email_link_valid_for_minutes": "A link {minutes} percig érvényes.",
+    "delete_account_email_subject": "Erősítsd meg a Formbricks-fiókod törlését",
+    "delete_account_email_text": "A Formbricks-fiókod törlését kérted. A megerősítéshez kattints az alábbi gombra:",
+    "delete_account_email_warning": "Ezzel véglegesen törlöd a fiókodat és minden kapcsolódó adatot. Ez a művelet nem vonható vissza.",
     "email_customization_preview_email_heading": "Helló {userName}",
     "email_customization_preview_email_subject": "Formbricks e-mail személyre szabási előnézet",
     "email_customization_preview_email_text": "Ez egy e-mail előnézet, amely azt mutatja meg, hogy melyik logó fog megjelenni az e-mailekben.",
@@ -2598,17 +2602,16 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Fiók törlésének következményei",
+        "account_deletion_email_sent": "Ellenőrizd az e-mailjeidet a fiók törlésének megerősítéséhez. Küldtünk egy linket a következő címre: {email} – a fiókod törlődik, amint rákattintasz.",
         "backup_code": "Visszaszerzési kód",
         "confirm_delete_account": "A fiókja törlése az összes személyes információjával és adatával együtt",
         "confirm_delete_my_account": "Saját fiók törlése",
         "confirm_your_current_password_to_get_started": "Erősítse meg a jelenlegi jelszavát a kezdéshez.",
         "delete_account": "Fiók törlése",
-        "delete_account_confirmation_required": "E-mailes megerősítés szükséges a fiókja törléséhez.",
         "disable_two_factor_authentication": "Kétfaktoros hitelesítés letiltása",
         "disable_two_factor_authentication_description": "Ha le kell tiltania a kétfaktoros hitelesítést, akkor azt javasoljuk, hogy engedélyezze újra, amint lehetséges.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Minden visszaszerzési kód pontosan egyszer használható a hitelesítő nélküli hozzáférés megszerzéséhez.",
         "email_change_initiated": "Az e-mail-címe megváltoztatása iránti kérelme kezdeményezve lett.",
-        "email_confirmation_does_not_match": "Az e-mail-cím megerősítése nem egyezik.",
         "enable_two_factor_authentication": "Kétfaktoros hitelesítés engedélyezése",
         "enter_the_code_from_your_authenticator_app_below": "Adja meg a hitelesítő alkalmazásból származó kódot lent.",
         "lost_access": "Elvesztett hozzáférés",
@@ -2621,8 +2624,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "Mentse el a következő visszaszerzési kódokat egy biztonságos helyre.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Olvassa be a lenti QR-kódot a hitelesítő alkalmazásával.",
         "security_description": "A jelszava és egyéb biztonsági beállítások, például a kétfaktoros hitelesítés (2FA) kezelése.",
-        "sso_identity_confirmation_failed": "Az SSO-személyazonosság megerősítése nem sikerült. Próbálja meg újra törölni a fiókját.",
-        "sso_identity_confirmation_may_be_required_for_deletion": "SSO-fiókoknál a Törlés kiválasztása átirányíthatja Önt a személyazonosság-szolgáltatójához, hogy megerősítse ezt a fiókot. Ha ugyanaz a fiók megerősítésre került, akkor a törlés automatikusan folytatódik.",
         "two_factor_authentication": "Kétfaktoros hitelesítés",
         "two_factor_authentication_description": "További biztonsági réteg hozzáadása a fiókjához arra az esetre, ha a jelszavát ellopnák.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "A kétfaktoros hitelesítés engedélyezve van. Adja a meg a 6 számjegyű kódot a hitelesítő alkalmazásából.",
@@ -3569,6 +3570,7 @@
         "no_identified_impressions": "Nincsenek azonosított partnerektől származó megtekintések",
         "no_responses_found": "Nem találhatók válaszok",
         "nps_promoters_tooltip": "A válaszadók {percentage}%-a 9-es vagy 10-es értékelést adott (NPS-támogatók).",
+        "open_response_details": "Nyitott válasz részletei",
         "other_values_found": "Más értékek találhatók",
         "overall": "Összesen",
         "promoters": "Népszerűsítők",

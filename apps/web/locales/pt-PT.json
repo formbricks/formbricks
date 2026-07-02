@@ -65,6 +65,7 @@
       "new_to_formbricks": "Novo no Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "please_verify_your_email_to_continue": "Verifique o seu endereço de e-mail. Enviámos-lhe um link de verificação.",
       "use_a_backup_code": "Use um código de backup"
     },
     "saml_connection_error": "Algo correu mal. Por favor, verifique a consola da aplicação para mais detalhes.",
@@ -98,10 +99,6 @@
       "verification_email_resent_successfully": "Email de verificação enviado! Por favor, verifique a sua caixa de entrada.",
       "verification_email_successfully_sent_info": "Se houver uma conta associada a {email}, enviámos um link de verificação para esse endereço. Por favor, verifique a sua caixa de entrada para completar o registo.",
       "you_didnt_receive_an_email_or_your_link_expired": "Não recebeu um email ou o seu link expirou?"
-    },
-    "verify": {
-      "no_token_provided": "Nenhum token fornecido",
-      "verifying": "A verificar..."
     }
   },
   "billing_confirmation": {
@@ -522,6 +519,13 @@
   "emails": {
     "accept": "Aceitar",
     "click_or_drag_to_upload_files": "Clique ou arraste para carregar ficheiros.",
+    "delete_account_email_confirm_deletion": "Confirmar eliminação da conta",
+    "delete_account_email_did_not_request": "Se não solicitou isto, ignore este e-mail e a sua conta permanecerá ativa.",
+    "delete_account_email_heading": "Confirme a eliminação da sua conta",
+    "delete_account_email_link_valid_for_minutes": "O link é válido durante {minutes} minutos.",
+    "delete_account_email_subject": "Confirme a eliminação da sua conta Formbricks",
+    "delete_account_email_text": "Solicitou a eliminação da sua conta Formbricks. Para confirmar, clique no botão abaixo:",
+    "delete_account_email_warning": "Isto eliminará permanentemente a sua conta e todos os dados associados. Esta ação não pode ser anulada.",
     "email_customization_preview_email_heading": "Olá {userName}",
     "email_customization_preview_email_subject": "Pré-visualização da Personalização de E-mail do Formbricks",
     "email_customization_preview_email_text": "Esta é uma pré-visualização de email para mostrar qual logotipo será exibido nos emails.",
@@ -2598,17 +2602,16 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Consequências da eliminação da conta",
+        "account_deletion_email_sent": "Verifique o seu e-mail para confirmar a eliminação da conta. Enviámos um link para {email} — a sua conta será eliminada assim que clicar nele.",
         "backup_code": "Código de Backup",
         "confirm_delete_account": "Elimine a sua conta junto com todas as suas informações e dados pessoais",
         "confirm_delete_my_account": "Eliminar a Minha Conta",
         "confirm_your_current_password_to_get_started": "Confirme a sua palavra-passe atual para começar.",
         "delete_account": "Eliminar Conta",
-        "delete_account_confirmation_required": "Email confirmation is required to delete your account.",
         "disable_two_factor_authentication": "Desativar autenticação de dois fatores",
         "disable_two_factor_authentication_description": "Se precisar de desativar a autenticação de dois fatores, recomendamos que a reative o mais rapidamente possível.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Cada código de backup pode ser usado exatamente uma vez para conceder acesso sem o seu autenticador.",
         "email_change_initiated": "O seu pedido de alteração de email foi iniciado.",
-        "email_confirmation_does_not_match": "Email confirmation does not match.",
         "enable_two_factor_authentication": "Ativar autenticação de dois fatores",
         "enter_the_code_from_your_authenticator_app_below": "Introduza o código da sua aplicação de autenticação abaixo.",
         "lost_access": "Perdeu o acesso",
@@ -2621,8 +2624,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "Guarde os seguintes códigos de backup num local seguro.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Digitalize o código QR abaixo com a sua aplicação de autenticação.",
         "security_description": "Gerir a sua palavra-passe e outras definições de segurança, como a autenticação de dois fatores (2FA).",
-        "sso_identity_confirmation_failed": "A confirmação de identidade SSO falhou. Por favor, tenta eliminar a tua conta novamente.",
-        "sso_identity_confirmation_may_be_required_for_deletion": "Para contas SSO, ao selecionares Eliminar podes ser redirecionado para o teu fornecedor de identidade para confirmares esta conta. Se a mesma conta for confirmada, a eliminação continua automaticamente.",
         "two_factor_authentication": "Autenticação de dois fatores",
         "two_factor_authentication_description": "Adicione uma camada extra de segurança à sua conta caso a sua palavra-passe seja roubada.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Autenticação de dois fatores ativada. Introduza o código de seis dígitos da sua aplicação de autenticação.",
@@ -3569,6 +3570,7 @@
         "no_identified_impressions": "Sem impressões de contactos identificados",
         "no_responses_found": "Nenhuma resposta encontrada",
         "nps_promoters_tooltip": "{percentage}% dos inquiridos deram uma classificação de 9 ou 10 (promotores NPS).",
+        "open_response_details": "Detalhes de respostas abertas",
         "other_values_found": "Outros valores encontrados",
         "overall": "Geral",
         "promoters": "Promotores",

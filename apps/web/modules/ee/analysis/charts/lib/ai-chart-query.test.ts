@@ -179,7 +179,22 @@ describe("generateAIChartQuery", () => {
 
   test("converts AI structured-output failures into a prompt error", async () => {
     mocks.generateOrganizationAIObject.mockRejectedValueOnce(
-      new NoObjectGeneratedError({ message: "No object generated" })
+      new NoObjectGeneratedError({
+        message: "No object generated",
+        response: { id: "test-id", timestamp: new Date(0), modelId: "test-model" },
+        usage: {
+          inputTokens: undefined,
+          inputTokenDetails: {
+            noCacheTokens: undefined,
+            cacheReadTokens: undefined,
+            cacheWriteTokens: undefined,
+          },
+          outputTokens: undefined,
+          outputTokenDetails: { textTokens: undefined, reasoningTokens: undefined },
+          totalTokens: undefined,
+        },
+        finishReason: "stop",
+      })
     );
 
     await expect(

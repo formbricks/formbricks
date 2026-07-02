@@ -1,8 +1,7 @@
-import type { Account } from "next-auth";
-import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Organization } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import type { Account } from "@formbricks/types/auth";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -11,7 +10,6 @@ import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { redactPII } from "@/lib/utils/logger-helpers";
-import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
@@ -377,7 +375,7 @@ const provisionNewSsoUser = async ({
             .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
             .trim(),
         email: user.email,
-        emailVerified: new Date(Date.now()),
+        emailVerified: true,
         identityProvider: provider,
         identityProviderAccountId: account.providerAccountId,
         locale: matchedLocale,
@@ -446,11 +444,7 @@ const provisionNewSsoUser = async ({
 
   createBrevoCustomer({ id: userProfile.id, email: userProfile.email });
 
-  const attributionProperties = getAttributionPropertiesFromCookies(await cookies());
-
   capturePostHogEvent(userProfile.id, "user_signed_up", {
-    // Spread attribution first so trusted, server-computed props always win on a name clash.
-    ...attributionProperties,
     auth_provider: provider,
     email_domain: userProfile.email.split("@")[1],
     signup_source: callbackUrl?.includes("token=") ? "invite" : "direct",

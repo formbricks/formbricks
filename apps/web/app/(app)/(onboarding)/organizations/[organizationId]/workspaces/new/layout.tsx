@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -6,7 +5,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { invalidateOrganizationBillingCache } from "@/modules/ee/billing/lib/organization-billing";
 
 const OnboardingLayout = async (props: {
@@ -18,7 +17,7 @@ const OnboardingLayout = async (props: {
   const { children } = props;
   const t = await getTranslate();
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user) {
     return redirect(`/auth/login`);
   }

@@ -1,8 +1,7 @@
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getWorkspace } from "@/lib/workspace/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 
 // Back-compat shim for the old workspace-scoped org settings URLs
@@ -15,7 +14,7 @@ export const GET = async (
 ) => {
   const { workspaceId, path } = await context.params;
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user) return redirect("/auth/login");
 
   const workspace = await getWorkspace(workspaceId);

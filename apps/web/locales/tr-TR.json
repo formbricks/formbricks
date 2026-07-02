@@ -65,6 +65,7 @@
       "new_to_formbricks": "Formbricks'te yeni misiniz?",
       "oauth_account_not_linked_description": "Bu SSO sağlayıcı mevcut bir Formbricks hesabına bağlı değil. Lütfen başlangıçta kullandığınız yöntemle giriş yap. E-posta ve şifre kullandıysan, istenirse önce e-posta doğrulamasını tamamla.",
       "oauth_account_not_linked_title": "Bu SSO girişi bağlanamadı",
+      "please_verify_your_email_to_continue": "Lütfen e-posta adresinizi doğrulayın. Size bir doğrulama bağlantısı gönderdik.",
       "use_a_backup_code": "Yedek kod kullan"
     },
     "saml_connection_error": "Bir sorun oluştu. Daha fazla bilgi için uygulama konsolunuzu kontrol edin.",
@@ -98,10 +99,6 @@
       "verification_email_resent_successfully": "Doğrulama email'i gönderildi! Lütfen gelen kutunuzu kontrol edin.",
       "verification_email_successfully_sent_info": "{email} ile ilişkili bir hesap varsa, o adrese bir doğrulama bağlantısı gönderdik. Kayıt işlemini tamamlamak için lütfen gelen kutunuzu kontrol edin.",
       "you_didnt_receive_an_email_or_your_link_expired": "Email almadınız mı veya bağlantınızın süresi mi doldu?"
-    },
-    "verify": {
-      "no_token_provided": "Token sağlanmadı",
-      "verifying": "Doğrulanıyor..."
     }
   },
   "billing_confirmation": {
@@ -522,6 +519,13 @@
   "emails": {
     "accept": "Kabul Et",
     "click_or_drag_to_upload_files": "Dosya yüklemek için tıklayın veya sürükleyin.",
+    "delete_account_email_confirm_deletion": "Hesap silmeyi onayla",
+    "delete_account_email_did_not_request": "Bu talebi siz oluşturmadıysanız bu e-postayı yoksayın; hesabınız etkin kalır.",
+    "delete_account_email_heading": "Hesabınızın silinmesini onaylayın",
+    "delete_account_email_link_valid_for_minutes": "Bağlantı {minutes} dakika boyunca geçerlidir.",
+    "delete_account_email_subject": "Formbricks hesabınızın silinmesini onaylayın",
+    "delete_account_email_text": "Formbricks hesabınızı silmeyi talep ettiniz. Onaylamak için aşağıdaki düğmeye tıklayın:",
+    "delete_account_email_warning": "Bu işlem, hesabınızı ve ilişkili tüm verileri kalıcı olarak siler. Bu işlem geri alınamaz.",
     "email_customization_preview_email_heading": "Merhaba {userName}",
     "email_customization_preview_email_subject": "Formbricks Email Özelleştirme Önizlemesi",
     "email_customization_preview_email_text": "Bu, email'lerde hangi logonun gösterileceğini gösteren bir email önizlemesidir.",
@@ -2598,17 +2602,16 @@
       },
       "profile": {
         "account_deletion_consequences_warning": "Hesap silme sonuçları",
+        "account_deletion_email_sent": "Hesap silme işlemini onaylamak için e-postanızı kontrol edin. {email} adresine bir bağlantı gönderdik — bağlantıya tıkladığınızda hesabınız silinir.",
         "backup_code": "Yedek Kod",
         "confirm_delete_account": "Tüm kişisel bilgilerin ve verilerin ile birlikte hesabını sil",
         "confirm_delete_my_account": "Hesabımı Sil",
         "confirm_your_current_password_to_get_started": "Başlamak için mevcut şifreni onayla.",
         "delete_account": "Hesabı Sil",
-        "delete_account_confirmation_required": "Hesabınızı silmek için e-posta onayı gereklidir.",
         "disable_two_factor_authentication": "İki faktörlü kimlik doğrulamayı devre dışı bırak",
         "disable_two_factor_authentication_description": "2FA'yı devre dışı bırakman gerekiyorsa, mümkün olan en kısa sürede yeniden etkinleştirmeni öneririz.",
         "each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator": "Her yedekleme kodu, kimlik doğrulayıcın olmadan erişim sağlamak için tam olarak bir kez kullanılabilir.",
         "email_change_initiated": "E-posta değişiklik talebiniz başlatıldı.",
-        "email_confirmation_does_not_match": "E-posta onayı eşleşmiyor.",
         "enable_two_factor_authentication": "İki faktörlü kimlik doğrulamayı etkinleştir",
         "enter_the_code_from_your_authenticator_app_below": "Kimlik doğrulayıcı uygulamandaki kodu aşağıya gir.",
         "lost_access": "Erişimi kaybettim",
@@ -2621,8 +2624,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "Aşağıdaki yedekleme kodlarını güvenli bir yerde sakla.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Aşağıdaki QR kodunu kimlik doğrulayıcı uygulamanla tara.",
         "security_description": "Şifreni ve iki faktörlü kimlik doğrulama (2FA) gibi diğer güvenlik ayarlarını yönet.",
-        "sso_identity_confirmation_failed": "SSO kimlik doğrulaması başarısız oldu. Lütfen hesabınızı tekrar silmeyi deneyin.",
-        "sso_identity_confirmation_may_be_required_for_deletion": "SSO hesapları için Sil seçeneğine tıkladığınızda, bu hesabı onaylamak için kimlik sağlayıcınıza yönlendirilebilirsiniz. Aynı hesap onaylanırsa, silme işlemi otomatik olarak devam eder.",
         "two_factor_authentication": "İki faktörlü kimlik doğrulama",
         "two_factor_authentication_description": "Şifren çalınması durumunda hesabına ekstra bir güvenlik katmanı ekle.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "İki faktörlü kimlik doğrulama etkinleştirildi. Lütfen kimlik doğrulayıcı uygulamandaki altı haneli kodu gir.",
@@ -3569,6 +3570,7 @@
         "no_identified_impressions": "Tanımlanmış kişilerden gösterim yok",
         "no_responses_found": "Yanıt bulunamadı",
         "nps_promoters_tooltip": "Yanıt verenlerin %{percentage}'si 9 veya 10 puan verdi (NPS tavsiye edenler).",
+        "open_response_details": "Açık yanıt detayları",
         "other_values_found": "Diğer değerler bulundu",
         "overall": "Genel",
         "promoters": "Tavsiye edenler",
