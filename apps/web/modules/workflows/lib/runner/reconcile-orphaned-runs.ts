@@ -33,6 +33,13 @@ export interface ReconcileOrphanedWorkflowRunsResult {
  * - **Ceiling:** a run still `queued` past `WORKFLOW_RUN_ORPHAN_MAX_AGE_MS` is treated as permanently
  *   un-dispatchable and marked `failed` (bounds the loop; surfaces the stuck run) instead of being
  *   re-dispatched forever.
+ * - **Re-dispatch vs. ceiling:** the deterministic `jobId` makes re-dispatch a no-op while a job of
+ *   that id still exists in *any* state — including a terminally `failed` one (kept by `removeOnFail`
+ *   for 7d, longer than the 24h ceiling). So re-dispatch genuinely recovers only runs whose job was
+ *   never created (or has since been evicted); a run dispatched but whose job failed while the row
+ *   stayed `queued` is cleaned up by the ceiling instead. (The executor marks its own runs terminal on
+ *   the final attempt, so this is only reachable when claiming never reached the `queued → running`
+ *   write.)
  * - **Bounded:** one batch per tick; a larger backlog drains over subsequent ticks (re-dispatch is
  *   idempotent, so re-selecting the same still-`queued` run next tick is harmless).
  * - **Safe under concurrency:** every write is status-guarded (`status: "queued"`) so a run claimed
