@@ -1,10 +1,11 @@
 import "server-only";
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { createId } from "@paralleldrive/cuid2";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
-import { genericOAuth, twoFactor } from "better-auth/plugins";
+import { genericOAuth, jwt, twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
@@ -35,6 +36,8 @@ import {
   betterAuthLogger,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
+import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
@@ -78,6 +81,7 @@ export const auth = betterAuth({
   // still signs app JWTs (lib/jwt.ts).
   secret: env.BETTER_AUTH_SECRET ?? env.NEXTAUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL,
+  disabledPaths: ["/token"],
   trustedOrigins: [env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url)),
   telemetry: { enabled: false },
 
@@ -256,6 +260,10 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 60, max: 3 },
       "/request-password-reset": { window: 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
+      "/oauth2/register": { window: 60, max: 5 },
+      "/oauth2/token": { window: 60, max: 20 },
+      "/oauth2/introspect": { window: 60, max: 60 },
+      "/oauth2/revoke": { window: 60, max: 30 },
       "/two-factor/*": { window: 60, max: 5 },
       "/sso-recovery/*": { window: 60, max: 5 }, // brute-force defense on the recovery magic-link sign-in
       // Account deletion: re-auths the password (credential) / consumes the email token (SSO). Restore
@@ -282,6 +290,16 @@ export const auth = betterAuth({
   logger: betterAuthLogger,
 
   plugins: [
+    jwt({
+      disableSettingJwtHeader: true,
+      jwt: {
+        issuer: getAuthIssuerUrl(),
+        audience: getMcpResourceUrl(),
+      },
+    }),
+    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
+    // integration-testable against a throwaway Better Auth instance.
+    oauthProvider(getMcpOauthProviderOptions()),
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
     // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
     // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
