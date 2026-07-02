@@ -2232,6 +2232,10 @@ checksums:
     workspace/settings/billing/manage_billing_details: 40448f0b5ed4b3bb1d864ba6e1bb6a3b
     workspace/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
     workspace/settings/billing/most_popular: 03051978338d93d9abdd999bc06284f9
+    workspace/settings/billing/payment_authentication_failed: c5ca722ae0fea1635d3a69c9ba82278b
+    workspace/settings/billing/payment_error_contact_support: 3145080022ff17d06e41afe78363a6cc
+    workspace/settings/billing/payment_error_failed_invoice: 5344b45e2acaf0287b69b043d37a964d
+    workspace/settings/billing/payment_error_requires_action: 934ac70b26f53819314add46305b6d87
     workspace/settings/billing/pending_change_removed: c80cc7f1f83f28db186e897fb18282a3
     workspace/settings/billing/pending_plan_badge: 1283929a2810dcf6110765f387dc118e
     workspace/settings/billing/pending_plan_change_description: 6923bada769d33cadcad557521362c1f
