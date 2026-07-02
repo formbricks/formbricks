@@ -45,7 +45,7 @@ export const ActionSettingsTab = ({
   currentSurveyId,
   onActionUpdated,
 }: Readonly<ActionSettingsTabProps>) => {
-  const actionDocsHref = "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions";
+  const actionDocsHref = "https://formbricks.com/docs/surveys/website-app-surveys/actions";
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);

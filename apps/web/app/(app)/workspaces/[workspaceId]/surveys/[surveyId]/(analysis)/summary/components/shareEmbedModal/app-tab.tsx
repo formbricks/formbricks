@@ -21,23 +21,23 @@ import { DocumentationLinksSection } from "./documentation-links-section";
 
 const createDocumentationLinks = (t: ReturnType<typeof useTranslation>["t"]) => [
   {
-    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#html",
+    href: "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides#html",
     title: t("workspace.surveys.summary.in_app.html_embed"),
   },
   {
-    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-js",
+    href: "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides#react-js",
     title: t("workspace.surveys.summary.in_app.javascript_sdk"),
   },
   {
-    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#swift",
+    href: "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides#swift",
     title: t("workspace.surveys.summary.in_app.ios_sdk"),
   },
   {
-    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#android",
+    href: "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides#android",
     title: t("workspace.surveys.summary.in_app.kotlin_sdk"),
   },
   {
-    href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-native",
+    href: "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides#react-native",
     title: t("workspace.surveys.summary.in_app.react_native_sdk"),
   },
 ];
