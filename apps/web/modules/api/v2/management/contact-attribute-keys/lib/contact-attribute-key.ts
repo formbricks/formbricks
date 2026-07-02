@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { getContactAttributeKeysQuery } from "@/modules/api/v2/management/contact-attribute-keys/lib/utils";
 import {
@@ -75,27 +76,25 @@ export const createContactAttributeKey = async (
 
     return ok(createdContactAttributeKey);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (
-        error.code === PrismaErrorType.RecordDoesNotExist ||
-        error.code === PrismaErrorType.RelatedRecordDoesNotExist
-      ) {
-        return err({
-          type: "not_found",
-          details: [{ field: "contactAttributeKey", issue: "not found" }],
-        });
-      }
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        return err({
-          type: "conflict",
-          details: [
-            {
-              field: "contactAttributeKey",
-              issue: `Contact attribute key with "${contactAttributeKey.key}" already exists`,
-            },
-          ],
-        });
-      }
+    if (
+      isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist) ||
+      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)
+    ) {
+      return err({
+        type: "not_found",
+        details: [{ field: "contactAttributeKey", issue: "not found" }],
+      });
+    }
+    if (isUniqueConstraintError(error)) {
+      return err({
+        type: "conflict",
+        details: [
+          {
+            field: "contactAttributeKey",
+            issue: `Contact attribute key with "${contactAttributeKey.key}" already exists`,
+          },
+        ],
+      });
     }
     return err({
       type: "internal_server_error",

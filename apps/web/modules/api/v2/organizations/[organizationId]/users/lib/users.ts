@@ -1,8 +1,8 @@
 import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
   TGetUsersFilter,
@@ -143,10 +143,7 @@ export const createUser = async (
 
     return ok(returnedUser);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.UniqueConstraintViolation
-    ) {
+    if (isUniqueConstraintError(error)) {
       const target = error.meta?.target as string[] | undefined;
 
       if (target?.includes("email")) {

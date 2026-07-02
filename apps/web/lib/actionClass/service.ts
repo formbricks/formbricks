@@ -4,10 +4,10 @@ import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ActionClass, Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -97,7 +97,7 @@ export const deleteActionClass = async (actionClassId: string): Promise<TActionC
 
     return actionClass;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -127,10 +127,7 @@ export const createActionClass = async (actionClass: TActionClassInput): Promise
 
     return actionClassPrisma;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.UniqueConstraintViolation
-    ) {
+    if (isUniqueConstraintError(error)) {
       const targetField = (error.meta?.target as string[] | undefined)?.[0];
       throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
@@ -176,17 +173,14 @@ export const updateActionClass = async (
 
     return result;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.UniqueConstraintViolation
-    ) {
+    if (isUniqueConstraintError(error)) {
       const targetField = (error.meta?.target as string[] | undefined)?.[0];
       throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (inputActionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
