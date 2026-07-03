@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "Biztosan törölni szeretné ezt a nyelvet? Ezt a műveletet nem lehet visszavonni.",
       "duplicate_language_or_language_id": "Kettőzött nyelv vagy nyelvazonosító",
       "edit_languages": "Nyelvek szerkesztése",
-      "identifier": "Azonosító (ISO)",
+      "identifier": "Azonosító (BCP-47)",
       "language": "Nyelv",
       "language_deleted_successfully": "A nyelv sikeresen törölve",
       "languages_updated_successfully": "A nyelvek sikeresen frissítve",

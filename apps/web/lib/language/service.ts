@@ -152,9 +152,14 @@ export const updateLanguage = async (
     validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate], [workspaceId, ZId]);
     const workspace = await getWorkspace(workspaceId);
     if (!workspace) throw new ResourceNotFoundError("Workspace not found", workspaceId);
+    // Only the alias is mutable on update — the `code` is immutable, so `Language.code` stays canonical
+    // regardless of caller (createLanguage enforces the canonical catalog; a code change means delete +
+    // create). Write `alias` explicitly rather than spreading `languageInput`: a caller can pass a `code`
+    // in the runtime object even though the declared type is alias-only, and spreading it would persist an
+    // arbitrary, non-canonical code — the exact hole the create-side hardening closed.
     const prismaLanguage = await prisma.language.update({
       where: { id: languageId },
-      data: { ...languageInput, updatedAt: new Date() },
+      data: { alias: languageInput.alias, updatedAt: new Date() },
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
     });
 

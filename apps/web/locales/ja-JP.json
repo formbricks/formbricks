@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "この言語を削除してもよろしいですか？このアクションは元に戻せません。",
       "duplicate_language_or_language_id": "重複する言語または言語ID",
       "edit_languages": "言語を編集",
-      "identifier": "識別子（ISO）",
+      "identifier": "識別子（BCP-47）",
       "language": "言語",
       "language_deleted_successfully": "言語を正常に削除しました",
       "languages_updated_successfully": "言語を正常に更新しました",
