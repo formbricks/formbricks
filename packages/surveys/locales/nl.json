@@ -87,6 +87,10 @@
       "message": "Deze reactie is al voltooid en kan niet meer worden gewijzigd. Je kunt dit venster veilig sluiten.",
       "title": "Deze reactie is al voltooid."
     },
+    "response_sending_error_permanent": {
+      "message": "Je reactie kon niet worden verzonden en kan niet opnieuw worden geprobeerd. Neem contact op met de eigenaar van de enquête als dit blijft gebeuren.",
+      "title": "Je reactie kon niet worden verzonden."
+    },
     "value_must_contain": "Waarde moet {value} bevatten",
     "value_must_equal": "Waarde moet gelijk zijn aan {value}",
     "value_must_not_contain": "Waarde mag {value} niet bevatten",

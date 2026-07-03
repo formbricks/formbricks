@@ -87,6 +87,10 @@
       "message": "Bu javob allaqachon yakunlangan va endi o'zgartirib bo'lmaydi. Ushbu oynani xavfsiz yopishingiz mumkin.",
       "title": "Bu javob allaqachon yakunlangan."
     },
+    "response_sending_error_permanent": {
+      "message": "Javobingizni yuborib bo'lmadi va qayta urinib bo'lmaydi. Agar bu holat takrorlansa, so'rovnoma egasi bilan bog'laning.",
+      "title": "Javobingizni yuborib bo'lmadi."
+    },
     "value_must_contain": "Qiymatda {value} bo‘lishi kerak",
     "value_must_equal": "Qiymat {value} ga teng bo‘lishi kerak",
     "value_must_not_contain": "Qiymatda {value} bo‘lmasligi kerak",

@@ -87,6 +87,10 @@
       "message": "Dette svar er allerede gennemført og kan ikke længere ændres. Du kan trygt lukke dette vindue.",
       "title": "Dette svar er allerede gennemført."
     },
+    "response_sending_error_permanent": {
+      "message": "Dit svar kunne ikke indsendes og kan ikke forsøges igen. Kontakt venligst ejeren af undersøgelsen, hvis dette fortsætter.",
+      "title": "Dit svar kunne ikke indsendes."
+    },
     "value_must_contain": "Værdien skal indeholde {value}",
     "value_must_equal": "Værdien skal være lig med {value}",
     "value_must_not_contain": "Værdien må ikke indeholde {value}",

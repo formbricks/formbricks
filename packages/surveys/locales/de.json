@@ -87,6 +87,10 @@
       "message": "Diese Antwort wurde bereits abgeschlossen und kann nicht mehr geändert werden. Du kannst dieses Fenster jetzt schließen.",
       "title": "Diese Antwort wurde bereits abgeschlossen."
     },
+    "response_sending_error_permanent": {
+      "message": "Deine Antwort konnte nicht übermittelt werden und kann nicht erneut versucht werden. Bitte kontaktiere den Umfrage-Ersteller, falls das weiterhin passiert.",
+      "title": "Deine Antwort konnte nicht übermittelt werden."
+    },
     "value_must_contain": "Wert muss {value} enthalten",
     "value_must_equal": "Wert muss {value} entsprechen",
     "value_must_not_contain": "Wert darf {value} nicht enthalten",

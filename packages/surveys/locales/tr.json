@@ -87,6 +87,10 @@
       "message": "Bu yanıt zaten tamamlandı ve artık değiştirilemez. Bu pencereyi güvenle kapatabilirsin.",
       "title": "Bu yanıt zaten tamamlandı."
     },
+    "response_sending_error_permanent": {
+      "message": "Yanıtınız gönderilemedi ve yeniden denenemez. Bu sorun devam ederse lütfen anket sahibiyle iletişime geçin.",
+      "title": "Yanıtınız gönderilemedi."
+    },
     "value_must_contain": "Değer {value} içermelidir",
     "value_must_equal": "Değer {value} olmalıdır",
     "value_must_not_contain": "Değer {value} içermemelidir",

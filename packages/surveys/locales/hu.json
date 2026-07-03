@@ -87,6 +87,10 @@
       "message": "Ez a válasz már lezárásra került, és többé nem módosítható. Nyugodtan bezárhatja ezt az ablakot.",
       "title": "Ez a válasz már lezárásra került."
     },
+    "response_sending_error_permanent": {
+      "message": "Az Ön válaszát nem sikerült elküldeni, és az újrapróbálkozás nem lehetséges. Kérjük, lépjen kapcsolatba a felmérés tulajdonosával, amennyiben ez a probléma továbbra is fennáll.",
+      "title": "Az Ön válaszát nem sikerült elküldeni."
+    },
     "value_must_contain": "Az értéknek tartalmaznia kell ezt: {value}",
     "value_must_equal": "Az értéknek egyenlőnek kell lennie ezzel: {value}",
     "value_must_not_contain": "Az érték nem tartalmazhatja ezt: {value}",

@@ -78,6 +78,8 @@ checksums:
     errors/recaptcha_error/title: eb8f1106e0b4cb6756c5a76fd9400e67
     errors/response_already_completed/message: 28289877d4bb16c73ddc76e777761153
     errors/response_already_completed/title: 27449cb28a3147a4a285c80ea203f724
+    errors/response_sending_error_permanent/message: be8f30bc8ffb61de059c198013f16f1d
+    errors/response_sending_error_permanent/title: e0e12f6d79bb88f55567d17d51983142
     errors/value_must_contain: cd555796372f06b42f42f6b304f98e92
     errors/value_must_equal: 227b5c87bb7761714ab9bc5a8adc6607
     errors/value_must_not_contain: 5349a544135c7d7fc6e01c4221004236

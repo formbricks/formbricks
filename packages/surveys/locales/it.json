@@ -87,6 +87,10 @@
       "message": "Questa risposta è già stata completata e non può più essere modificata. Puoi chiudere questa finestra in tutta tranquillità.",
       "title": "Questa risposta è già stata completata."
     },
+    "response_sending_error_permanent": {
+      "message": "La tua risposta non può essere inviata e non è possibile riprovare. Contatta il proprietario del sondaggio se il problema persiste.",
+      "title": "La tua risposta non può essere inviata."
+    },
     "value_must_contain": "Il valore deve contenere {value}",
     "value_must_equal": "Il valore deve essere uguale a {value}",
     "value_must_not_contain": "Il valore non deve contenere {value}",
