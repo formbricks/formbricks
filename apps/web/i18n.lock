@@ -55,6 +55,34 @@ checksums:
     auth/login/oauth_account_not_linked_title: 2eb8e132ed37b3b87c1dec392c224933
     auth/login/please_verify_your_email_to_continue: 743d89b04fbd995955312d020bcb9c0e
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
+    auth/oauth/allow_access: 5eec574c92b23a33fa6e938ae55754ef
+    auth/oauth/authorization_request: 6d8eb57099973efaa1c9a7a77e494d7f
+    auth/oauth/authorize_description: 7f444eb5f25da4be3f051801c9a79cf5
+    auth/oauth/authorize_title: 5eaa94202f80888bf44a411134a2262a
+    auth/oauth/authorized_apps_description: df1dfe7f7499d590f72405f4f879b2ba
+    auth/oauth/authorized_apps_title: 4f7da2cd10a8f71d3262dcf82851af80
+    auth/oauth/client: 59db31dfaf498183184421a0a1725711
+    auth/oauth/client_uri: 39d52c7cfea1185b843e6388d65df4bd
+    auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
+    auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
+    auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
+    auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900
+    auth/oauth/invalid_oauth_request_description: 39322e962c0c20c766ae82d0b8917ebb
+    auth/oauth/localhost_redirect_warning: e0368262d25dc98ea02158eebd0066c1
+    auth/oauth/localhost_redirect_warning_description: 39fae40369bcfc0befb9fac263730436
+    auth/oauth/no_authorized_apps: ace2f8aab84860bab39e96368531981d
+    auth/oauth/permissions: 2160be68b1d6b6577e64634e9feba2ed
+    auth/oauth/redirect_host: de1344fc555eea56791de81a90295bf5
+    auth/oauth/requested_permissions: 7cd285529a4e57f46975b2623ec87681
+    auth/oauth/revoke: be57685a85b6dfeaeb6eab4e9560b520
+    auth/oauth/revoke_confirmation: 9f2ef40fac22fe48e39d81de2b677345
+    auth/oauth/scopes/email: c28cf6b6c6221b0045539a5f7712230f
+    auth/oauth/scopes/offline_access: 5086c8bd3685a21f691d81d50dc0a4e0
+    auth/oauth/scopes/openid: 557e91a8b41497cf95b1434aefcb72ea
+    auth/oauth/scopes/profile: ea073dc28851ee1a00365047be103d50
+    auth/oauth/scopes/surveys_read: 8280264457fe7c3b759c82422052aed2
+    auth/oauth/scopes/surveys_write: fb128cebe62dfd5685d086d706c432c2
+    auth/oauth/unknown_client: 561bc5afdb90606fbc1ed97f20698ead
     auth/saml_connection_error: 03c69c534e7eaafcb2c22b7daf9f3efc
     auth/signup/captcha_failed: 4e1ed87800585b8c1da1514fa86ab943
     auth/signup/have_an_account: 6f9c2d441e93cb6df9ef7dc898e80e05
@@ -124,6 +152,7 @@ checksums:
     common/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
     common/ask: 24150ae04c60dcd8688d93a8a3a2d238
     common/attributes: 86d0ae6fea0fbb119722ed3841f8385a
+    common/authorized_apps: ffed21922e6e9c0975ddcde28e0a266b
     common/back: f541015a827e37cb3b1234e56bc2aa3c
     common/billing: b01dbdd049ebbd4a349fa64d6ce65a3b
     common/booked: 77603a7aca80b8b333023c5cf39fec4d
@@ -1514,6 +1543,7 @@ checksums:
     workspace/analysis/charts/ai_query_placeholder: 24c3d18f514cb3a9953f04c3b04503a2
     workspace/analysis/charts/ai_query_section_description: 66d06342f29bf6658793403856521fd7
     workspace/analysis/charts/ai_query_section_title: c0e450a47af7c2a516b77f73cf54db1b
+    workspace/analysis/charts/ai_quota_exceeded: 8918815da9c8d49a154f4b387ecfcc6c
     workspace/analysis/charts/ai_upgrade_plan: 81c9e7a593c0e9290f7078ecdc1c6693
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
     workspace/analysis/charts/and_filter_logic: 53e8eb67a396fcb5e419bb4cbf0008df
