@@ -47,8 +47,6 @@ interface SignupFormProps {
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
-  samlTenant: string;
-  samlProduct: string;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
 }
@@ -69,8 +67,6 @@ export const SignupForm = ({
   isSsoEnabled,
   samlSsoEnabled,
   isTurnstileConfigured,
-  samlTenant,
-  samlProduct,
   turnstileSiteKey,
   isFormbricksCloud,
 }: SignupFormProps) => {
@@ -312,8 +308,6 @@ export const SignupForm = ({
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
           samlSsoEnabled={samlSsoEnabled}
-          samlTenant={samlTenant}
-          samlProduct={samlProduct}
           returnToUrl={returnToUrl}
           source="signup"
         />

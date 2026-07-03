@@ -72,6 +72,7 @@ PUBLIC_URL=https://surveys.example.com
 When PUBLIC_URL is configured:
 
 - **Admin Interface**: All admin/management functions are served from `WEBAPP_URL`
+- **MCP and OAuth**: MCP (`/api/mcp`) and Better Auth OAuth/OIDC discovery and token endpoints are served from `WEBAPP_URL`
 - **Public Surveys**: All survey links and public APIs use `PUBLIC_URL`
 - **SDK Integration**: The public domain is used for all client-side SDK connections
 - **Email Links**: Survey invitation emails use the public domain

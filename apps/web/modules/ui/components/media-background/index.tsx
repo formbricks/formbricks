@@ -162,7 +162,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   const renderContent = () => (
     <div
       className={cn(
-        "absolute no-scrollbar flex h-full w-full overflow-hidden",
+        "absolute flex h-full w-full no-scrollbar overflow-hidden",
         useNaturalHeight
           ? "flex-col items-stretch overflow-hidden"
           : "items-center justify-center overflow-hidden"
