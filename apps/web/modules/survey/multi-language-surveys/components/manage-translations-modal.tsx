@@ -119,7 +119,7 @@ export const ManageTranslationsModal = ({
     for (const s of strings) {
       const val = draftTranslations[s.path] ?? "";
       if (val) {
-        setTranslationAtPathMutable(clone, s.path, languageCode, val);
+        setTranslationAtPathMutable(clone, s.path, languageCode, val, s.value.default);
       }
     }
     return clone;
@@ -205,7 +205,7 @@ export const ManageTranslationsModal = ({
       // visually empty but a non-empty string, so without normalization it would survive
       // save and downstream checks would treat the field as translated.
       const val = s.isRichText && getTextContent(draft).trim() === "" ? "" : draft;
-      setTranslationAtPathMutable(updatedSurvey, s.path, languageCode, val);
+      setTranslationAtPathMutable(updatedSurvey, s.path, languageCode, val, s.value.default);
     }
     setLocalSurvey(updatedSurvey);
     setOpen(false);

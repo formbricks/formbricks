@@ -1,3 +1,4 @@
+import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { genericOAuthClient, twoFactorClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
@@ -7,7 +8,7 @@ import { createAuthClient } from "better-auth/react";
  * plugins in auth.ts (genericOAuth providers are added in Phase 5).
  */
 export const authClient = createAuthClient({
-  plugins: [twoFactorClient(), genericOAuthClient()],
+  plugins: [twoFactorClient(), genericOAuthClient(), oauthProviderClient()],
 });
 
 export const { signIn, signUp, signOut, useSession } = authClient;

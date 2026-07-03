@@ -174,6 +174,13 @@ export const MultipleChoiceElementForm = ({
 
     updateElement(elementIdx, {
       choices: newChoices,
+      ...(choiceId === "other" &&
+        !element.otherOptionPlaceholder && {
+          otherOptionPlaceholder: createI18nString(
+            t("workspace.surveys.edit.please_specify"),
+            surveyLanguageCodes
+          ),
+        }),
       ...(element.shuffleOption === shuffleOptionsTypes.all.id && {
         shuffleOption: shuffleOptionsTypes.exceptLast.id,
       }),
