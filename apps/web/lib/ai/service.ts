@@ -3,12 +3,17 @@ import {
   AIConfigurationError,
   type TGenerateObjectOptions,
   type TGenerateObjectResult,
+  classifyAIProviderError,
   generateObject,
   generateText,
   isAiConfigured,
 } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { env } from "@/lib/env";
 import { getOrganization } from "@/lib/organization/service";
 import { getIsAISmartToolsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -17,6 +22,7 @@ export const AI_ERROR_CODES = {
   FEATURES_NOT_ENABLED: "ai_features_not_enabled",
   SMART_TOOLS_DISABLED: "ai_smart_tools_disabled",
   INSTANCE_NOT_CONFIGURED: "ai_instance_not_configured",
+  QUOTA_EXCEEDED: "ai_quota_exceeded",
 } as const;
 
 export type TAIErrorCode = (typeof AI_ERROR_CODES)[keyof typeof AI_ERROR_CODES];
@@ -91,15 +97,22 @@ export const generateOrganizationAIText = async ({
   try {
     return await generateText(options, env);
   } catch (error) {
+    const providerError = classifyAIProviderError(error);
     logger.error(
       {
         organizationId,
         isInstanceConfigured: aiConfig.isInstanceConfigured,
         errorCode: error instanceof AIConfigurationError ? error.code : undefined,
+        statusCode: providerError?.statusCode,
+        isQuotaExhausted: providerError?.isQuotaExhausted,
+        isRetryable: providerError?.isRetryable,
         err: error,
       },
       "Failed to generate organization AI text"
     );
+    if (providerError?.isQuotaExhausted) {
+      throw new TooManyRequestsError(AI_ERROR_CODES.QUOTA_EXCEEDED, providerError.retryAfterSeconds);
+    }
     throw error;
   }
 };
@@ -117,15 +130,22 @@ export const generateOrganizationAIObject = async <T = unknown>({
   try {
     return await generateObject<T>(options, env);
   } catch (error) {
+    const providerError = classifyAIProviderError(error);
     logger.error(
       {
         organizationId,
         isInstanceConfigured: aiConfig.isInstanceConfigured,
         errorCode: error instanceof AIConfigurationError ? error.code : undefined,
+        statusCode: providerError?.statusCode,
+        isQuotaExhausted: providerError?.isQuotaExhausted,
+        isRetryable: providerError?.isRetryable,
         err: error,
       },
       "Failed to generate organization AI object"
     );
+    if (providerError?.isQuotaExhausted) {
+      throw new TooManyRequestsError(AI_ERROR_CODES.QUOTA_EXCEEDED, providerError.retryAfterSeconds);
+    }
     throw error;
   }
 };

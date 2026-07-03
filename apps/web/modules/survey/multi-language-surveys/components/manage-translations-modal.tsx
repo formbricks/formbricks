@@ -146,8 +146,10 @@ export const ManageTranslationsModal = ({
         ai_features_not_enabled: t("workspace.surveys.edit.ai_features_not_enabled"),
         ai_smart_tools_disabled: t("workspace.surveys.edit.ai_smart_tools_disabled"),
         ai_instance_not_configured: t("workspace.surveys.edit.ai_instance_not_configured"),
+        ai_quota_exceeded: t("workspace.surveys.edit.ai_translation_quota_exceeded"),
       };
-      return errorMessages[errorCode] ?? errorCode;
+      // Fall back to the generic failure message rather than leaking a raw error code to the user.
+      return errorMessages[errorCode] ?? t("workspace.surveys.edit.ai_translation_failed");
     },
     [t]
   );
@@ -185,6 +187,9 @@ export const ManageTranslationsModal = ({
       setDraftTranslations((prev) => ({ ...prev, ...result.data?.translations }));
       toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
     } catch {
+      // The action surfaces server-side failures via result.serverError (handled above). This catch
+      // only fires on genuine client-side throws (e.g. network) whose messages aren't error codes,
+      // so show the generic failure message.
       toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
     } finally {
       setIsTranslating(false);

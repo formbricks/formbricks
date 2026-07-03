@@ -1543,6 +1543,7 @@ checksums:
     workspace/analysis/charts/ai_query_placeholder: 24c3d18f514cb3a9953f04c3b04503a2
     workspace/analysis/charts/ai_query_section_description: 66d06342f29bf6658793403856521fd7
     workspace/analysis/charts/ai_query_section_title: c0e450a47af7c2a516b77f73cf54db1b
+    workspace/analysis/charts/ai_quota_exceeded: 8918815da9c8d49a154f4b387ecfcc6c
     workspace/analysis/charts/ai_upgrade_plan: 81c9e7a593c0e9290f7078ecdc1c6693
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
     workspace/analysis/charts/and_filter_logic: 53e8eb67a396fcb5e419bb4cbf0008df
@@ -2702,6 +2703,7 @@ checksums:
     workspace/surveys/edit/ai_translation_instance_not_configured: 6deeb8aeaff3982d07e1d5a045e06d2d
     workspace/surveys/edit/ai_translation_not_available: 2f060bf93a558e6d12ec90988fdd162e
     workspace/surveys/edit/ai_translation_not_enabled: 9066bc85f62ea0e96620c058a4004388
+    workspace/surveys/edit/ai_translation_quota_exceeded: 2ac177158ac498c3b9de31992c775a35
     workspace/surveys/edit/all_are_true: 05d02c5afac857da530b73dcf18dd8e4
     workspace/surveys/edit/all_other_answers_will_continue_to_fallback: 81841a9911236672ed262e520c24e821
     workspace/surveys/edit/allow_multi_select: 7b4b83f7a0205e2a0a8971671a69a174
