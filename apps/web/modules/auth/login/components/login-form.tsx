@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
@@ -73,11 +74,19 @@ export const LoginForm = ({
   resolvedCallbackUrl,
 }: LoginFormProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   // Better Auth surfaces the collision as `account_not_linked`; NextAuth used `OAuthAccountNotLinked`.
   // Accept both so the "not linked" alert survives the cutover.
   const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
   const { t } = useTranslation();
+
+  const signupHref = useMemo(() => {
+    const base = inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup";
+    const attributionSuffix = buildAttributionQuerySuffix(searchParams);
+    if (!attributionSuffix) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${attributionSuffix}`;
+  }, [inviteToken, searchParams]);
 
   const form = useForm<TLoginForm>({
     defaultValues: {
@@ -296,9 +305,7 @@ export const LoginForm = ({
           <div className="mt-9 text-center text-xs">
             <span className="leading-5 text-slate-500">{t("auth.login.new_to_formbricks")}</span>
             <br />
-            <Link
-              href={inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
-              className="font-semibold text-slate-600 underline hover:text-slate-700">
+            <Link href={signupHref} className="font-semibold text-slate-600 underline hover:text-slate-700">
               {t("auth.login.create_an_account")}
             </Link>
           </div>

@@ -16,6 +16,10 @@ interface SsoRequestStore {
   /** Set by each provider's `mapProfileToUser`; read by the collision-detect after-hook on a
    *  no-account-linked collision to start verify-before-link recovery. */
   pendingIdentity?: PendingSsoIdentity;
+  /** Marketing attribution read from the `fb_attribution` cookie in `user.create.before` (request
+   *  scope), consumed by `user.create.after` for the `user_signed_up` event — the after-hook runs
+   *  post-commit where re-reading the cookie is unreliable. */
+  attributionProperties?: Record<string, string>;
 }
 
 const ssoRequestContext = new AsyncLocalStorage<SsoRequestStore>();
@@ -43,6 +47,19 @@ export const setSsoProvisioningDecision = (decision: SsoProvisionDecision): void
 
 export const getSsoProvisioningDecision = (): SsoProvisionDecision | undefined =>
   ssoRequestContext.getStore()?.provisioningDecision;
+
+/**
+ * Stash marketing attribution resolved in `user.create.before` so `user.create.after` can attach it
+ * to the `user_signed_up` event. Best-effort: attribution is non-critical, so a missing request
+ * context (unlike the provisioning decision) is silently ignored rather than failing loud.
+ */
+export const setSsoAttributionProperties = (properties: Record<string, string>): void => {
+  const store = ssoRequestContext.getStore();
+  if (store) store.attributionProperties = properties;
+};
+
+export const getSsoAttributionProperties = (): Record<string, string> =>
+  ssoRequestContext.getStore()?.attributionProperties ?? {};
 
 /**
  * Capture the resolved SSO identity (email + provider account id) during `mapProfileToUser`, so the

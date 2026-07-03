@@ -128,6 +128,7 @@ export const provisionSsoUserMemberships = async ({
   organizationId,
   assignToDefaultTeam,
   signupSource,
+  attributionProperties = {},
 }: {
   userId: string;
   email: string;
@@ -135,6 +136,8 @@ export const provisionSsoUserMemberships = async ({
   organizationId: string | null;
   assignToDefaultTeam: boolean;
   signupSource: "invite" | "direct";
+  /** Marketing attribution read from the request cookie in `user.create.before`. */
+  attributionProperties?: Record<string, string>;
 }): Promise<void> => {
   if (organizationId) {
     const MAX_ATTEMPTS = 2;
@@ -181,6 +184,8 @@ export const provisionSsoUserMemberships = async ({
   // Best-effort analytics + CRM sync, regardless of org assignment (parity with provisionNewSsoUser).
   createBrevoCustomer({ id: userId, email });
   capturePostHogEvent(userId, "user_signed_up", {
+    // Spread attribution first so trusted, server-computed props always win on a name clash.
+    ...attributionProperties,
     auth_provider: provider,
     email_domain: email.split("@")[1],
     signup_source: signupSource,
