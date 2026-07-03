@@ -110,6 +110,24 @@ describe("updateLanguage", () => {
     expect(result).toEqual(mockUpdatedLanguage);
   });
 
+  test("never writes `code` — only alias is mutable (invariant regardless of caller)", async () => {
+    const mockUpdatedLanguageWithSurveyLanguage = {
+      ...mockUpdatedLanguage,
+      surveyLanguages: [{ id: "surveyLanguageId" }],
+    };
+    vi.mocked(prisma.language.update).mockResolvedValue(mockUpdatedLanguageWithSurveyLanguage);
+    // Sneak a `code` into the runtime object (its declared type is alias-only) — it must be ignored so
+    // Language.code can't drift to an arbitrary, non-canonical value on update.
+    await updateLanguage(mockWorkspaceId, mockLanguageId, {
+      code: "anything-non-canonical",
+      alias: "New alias",
+    } as unknown as typeof mockLanguageUpdate);
+
+    const updateArg = vi.mocked(prisma.language.update).mock.calls[0][0];
+    expect(updateArg.data).toEqual({ alias: "New alias", updatedAt: expect.any(Date) });
+    expect(updateArg.data).not.toHaveProperty("code");
+  });
+
   describe("sad path", () => {
     testInputValidation(updateLanguage, "bad-id", mockLanguageId, {});
 

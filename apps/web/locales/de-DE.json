@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "Bist du sicher, dass du diese Sprache löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
       "duplicate_language_or_language_id": "Doppelte Sprache oder Sprach-ID",
       "edit_languages": "Sprachen bearbeiten",
-      "identifier": "Kennung (ISO)",
+      "identifier": "Kennung (BCP-47)",
       "language": "Sprache",
       "language_deleted_successfully": "Sprache erfolgreich gelöscht",
       "languages_updated_successfully": "Sprachen erfolgreich aktualisiert",

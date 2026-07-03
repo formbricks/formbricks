@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "Är du säker på att du vill ta bort detta språk? Denna åtgärd kan inte ångras.",
       "duplicate_language_or_language_id": "Duplicerat språk eller språk-ID",
       "edit_languages": "Redigera språk",
-      "identifier": "Identifierare (ISO)",
+      "identifier": "Identifierare (BCP-47)",
       "language": "Språk",
       "language_deleted_successfully": "Språket har tagits bort",
       "languages_updated_successfully": "Språken har uppdaterats",

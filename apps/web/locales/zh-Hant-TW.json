@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "確定要刪除此語言嗎？此操作無法復原。",
       "duplicate_language_or_language_id": "語言或語言 ID 重複",
       "edit_languages": "編輯語言",
-      "identifier": "識別碼（ISO）",
+      "identifier": "識別碼（BCP-47）",
       "language": "語言",
       "language_deleted_successfully": "語言已成功刪除",
       "languages_updated_successfully": "語言已成功更新",

@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "Sigur vrei să ștergi această limbă? Această acțiune nu poate fi anulată.",
       "duplicate_language_or_language_id": "Limbă sau ID de limbă duplicat",
       "edit_languages": "Editați limbile",
-      "identifier": "Identificator (ISO)",
+      "identifier": "Identificator (BCP-47)",
       "language": "Limba",
       "language_deleted_successfully": "Limba a fost ștearsă cu succes",
       "languages_updated_successfully": "Limbile au fost actualizate cu succes",

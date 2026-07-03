@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "Weet je zeker dat je deze taal wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "duplicate_language_or_language_id": "Dubbele taal of taal-ID",
       "edit_languages": "Talen bewerken",
-      "identifier": "Identifier (ISO)",
+      "identifier": "Identifier (BCP-47)",
       "language": "Taal",
       "language_deleted_successfully": "Taal succesvol verwijderd",
       "languages_updated_successfully": "Talen succesvol bijgewerkt",

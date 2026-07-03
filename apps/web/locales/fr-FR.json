@@ -2089,7 +2089,7 @@
       "delete_language_confirmation": "Êtes-vous sûr de vouloir supprimer cette langue ? Cette action ne peut pas être annulée.",
       "duplicate_language_or_language_id": "Langue ou identifiant de langue en double",
       "edit_languages": "Modifier les langues",
-      "identifier": "Identifiant (ISO)",
+      "identifier": "Identifiant (BCP-47)",
       "language": "Langue",
       "language_deleted_successfully": "Langue supprimée avec succès",
       "languages_updated_successfully": "Langues mises à jour avec succès",
