@@ -948,7 +948,14 @@ export function Survey({
 
     pushVariableState(firstRespondedElementId);
 
-    const { nextBlockId, calculatedVariables } = evaluateLogicAndGetNextBlockId(surveyResponseData);
+    const { nextBlockId: rawNextBlockId, calculatedVariables } =
+      evaluateLogicAndGetNextBlockId(surveyResponseData);
+    // A jump target may reference a deleted block or ending; treat such stale ids as "no target"
+    // so the shown ending and the persisted endingId stay in sync
+    const targetIsBlock = localSurvey.blocks.some((block) => block.id === rawNextBlockId);
+    const targetIsEnding = localSurvey.endings.some((ending) => ending.id === rawNextBlockId);
+    const isValidTarget = targetIsBlock || targetIsEnding;
+    const nextBlockId = isValidTarget ? rawNextBlockId : undefined;
     const finished =
       nextBlockId === undefined || !localSurvey.blocks.map((block) => block.id).includes(nextBlockId);
 
