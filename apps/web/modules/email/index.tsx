@@ -62,10 +62,13 @@ const legalProps: TEmailTemplateLegalProps = {
 
 interface SendEmailDataProps {
   to: string;
+  from?: string;
   replyTo?: string;
   subject: string;
   text?: string;
   html: string;
+  /** Optional RFC 5322 Message-ID; nodemailer emits it as the `Message-ID` header. */
+  messageId?: string;
 }
 
 export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
@@ -100,7 +103,11 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
     const emailDefaults = {
       from: `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
     };
-    await transporter.sendMail({ ...emailDefaults, ...emailData });
+    await transporter.sendMail({
+      ...emailDefaults,
+      ...emailData,
+      from: emailData.from ?? emailDefaults.from,
+    });
 
     return true;
   } catch (error) {

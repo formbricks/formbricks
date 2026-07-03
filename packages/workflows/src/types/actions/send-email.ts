@@ -2,6 +2,17 @@ import { z } from "zod";
 import { ZWorkflowNodeBase } from "../common";
 import { WORKFLOW_ACTIONS } from "./enum";
 
+/**
+ * Send-email action config, 1:1 field parity with survey Follow-ups (`ZSurveyFollowUpAction`). The
+ * runtime renders it exactly like Follow-ups:
+ *  - `to`: a literal email address OR the element id of a survey question / hidden field whose answer
+ *    holds the respondent's email (contact-info elements resolve index `[2]`).
+ *  - `body`: HTML with recall tokens (`#recall:[elementId]/fallback:x#`) expanded against the response,
+ *    then sanitized to a narrow allowlist and wrapped in the branded Follow-ups email template.
+ *  - `subject`: used verbatim (recall is not applied to the subject).
+ *  - `from`: vestigial seed value, NOT the actual sender. Emails always send from the deployment
+ *    `MAIL_FROM` (parity with Follow-ups); `from` is only used to derive the stable Message-ID domain.
+ */
 export const ZWorkflowSendEmailActionConfig = z.object({
   to: z.string(),
   from: z.email(),
