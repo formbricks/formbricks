@@ -1606,6 +1606,7 @@
         "ai_query_placeholder": "e.g. How many users signed up last week?",
         "ai_query_section_description": "Describe what you want to see and let AI build the chart.",
         "ai_query_section_title": "Ask your data",
+        "ai_quota_exceeded": "AI is temporarily unavailable due to high demand. Please try again shortly.",
         "ai_upgrade_plan": "Upgrade plan",
         "already_on_dashboard": "Already on dashboard",
         "and_filter_logic": "AND",

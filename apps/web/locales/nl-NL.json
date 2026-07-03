@@ -1606,6 +1606,7 @@
         "ai_query_placeholder": "bijv. Hoeveel gebruikers hebben zich vorige week aangemeld?",
         "ai_query_section_description": "Beschrijf wat je wilt zien en laat AI de grafiek bouwen.",
         "ai_query_section_title": "Vraag het aan je data",
+        "ai_quota_exceeded": "AI is tijdelijk niet beschikbaar vanwege grote vraag. Probeer het over een moment opnieuw.",
         "ai_upgrade_plan": "Abonnement upgraden",
         "already_on_dashboard": "Al op dashboard",
         "and_filter_logic": "EN",

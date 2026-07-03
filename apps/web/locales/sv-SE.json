@@ -1606,6 +1606,7 @@
         "ai_query_placeholder": "t.ex. Hur många användare registrerade sig förra veckan?",
         "ai_query_section_description": "Beskriv vad du vill se så bygger AI diagrammet åt dig.",
         "ai_query_section_title": "Fråga din data",
+        "ai_quota_exceeded": "AI är tillfälligt otillgänglig på grund av hög efterfrågan. Försök igen om en liten stund.",
         "ai_upgrade_plan": "Uppgradera plan",
         "already_on_dashboard": "Redan på instrumentpanelen",
         "and_filter_logic": "OCH",

@@ -1606,6 +1606,7 @@
         "ai_query_placeholder": "例: 先週何人のユーザーが登録しましたか?",
         "ai_query_section_description": "表示したい内容を説明すると、AIがチャートを作成します。",
         "ai_query_section_title": "データに質問する",
+        "ai_quota_exceeded": "需要が高いため、AIは一時的にご利用いただけません。しばらくしてからもう一度お試しください。",
         "ai_upgrade_plan": "プランをアップグレード",
         "already_on_dashboard": "すでにダッシュボードに追加済み",
         "and_filter_logic": "AND",

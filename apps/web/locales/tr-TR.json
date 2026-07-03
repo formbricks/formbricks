@@ -1606,6 +1606,7 @@
         "ai_query_placeholder": "örn. Geçen hafta kaç kullanıcı kaydoldu?",
         "ai_query_section_description": "Ne görmek istediğini anlat, AI grafiği oluştursun.",
         "ai_query_section_title": "Verilerine sor",
+        "ai_quota_exceeded": "Yoğun talep nedeniyle yapay zeka geçici olarak kullanılamıyor. Lütfen kısa bir süre sonra tekrar deneyin.",
         "ai_upgrade_plan": "Planı yükselt",
         "already_on_dashboard": "Zaten panoda",
         "and_filter_logic": "VE",

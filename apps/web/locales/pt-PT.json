@@ -1606,6 +1606,7 @@
         "ai_query_placeholder": "ex: Quantos utilizadores se registaram na semana passada?",
         "ai_query_section_description": "Descreve o que queres ver e deixa a IA construir o gráfico.",
         "ai_query_section_title": "Pergunta aos teus dados",
+        "ai_quota_exceeded": "A IA está temporariamente indisponível devido à elevada procura. Por favor, tenta novamente em breve.",
         "ai_upgrade_plan": "Atualizar plano",
         "already_on_dashboard": "Já está no painel",
         "and_filter_logic": "E",
