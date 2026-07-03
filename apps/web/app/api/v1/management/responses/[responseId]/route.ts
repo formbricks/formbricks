@@ -4,45 +4,18 @@ import { handleErrorResponse } from "@/app/api/v1/auth";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TApiV1Authentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { deleteResponse, getResponse } from "@/lib/response/service";
-import { getSurvey } from "@/lib/survey/service";
+import { deleteResponse } from "@/lib/response/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
+import { fetchAndAuthorizeResponse } from "./lib/authorize";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 type TUncheckedResponseUpdate = Record<string, unknown> & {
   data: TResponseData;
   language?: string;
 };
-
-async function fetchAndAuthorizeResponse(
-  responseId: string,
-  authentication: TApiV1Authentication | undefined,
-  requiredPermission: "GET" | "PUT" | "DELETE"
-) {
-  if (!authentication || !("apiKeyId" in authentication)) {
-    return { error: responses.notAuthenticatedResponse() };
-  }
-
-  const response = await getResponse(responseId);
-  if (!response) {
-    return { error: responses.notFoundResponse("Response", responseId) };
-  }
-
-  const survey = await getSurvey(response.surveyId);
-  if (!survey) {
-    return { error: responses.notFoundResponse("Survey", response.surveyId, true) };
-  }
-
-  if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, requiredPermission)) {
-    return { error: responses.unauthorizedResponse() };
-  }
-
-  return { response, survey };
-}
 
 export const GET = withV1ApiWrapper({
   handler: async ({ props, authentication }: THandlerParams<{ params: Promise<{ responseId: string }> }>) => {

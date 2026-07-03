@@ -37,6 +37,7 @@ interface SurveyClientWrapperProps {
   PRIVACY_URL?: string;
   TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
+  serverPrefillData?: TResponseData;
 }
 
 let setBlockId = (_: string) => {};
@@ -62,6 +63,7 @@ export const SurveyClientWrapper = ({
   PRIVACY_URL,
   TERMS_URL,
   IS_FORMBRICKS_CLOUD,
+  serverPrefillData,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
   const { i18n } = useTranslation();
@@ -102,7 +104,9 @@ export const SurveyClientWrapper = ({
     return isValid;
   }, [welcomeCardEnabled, elements, startAt]);
 
-  const prefillValue = getPrefillValue(survey, searchParams, languageCode);
+  // A prefill token (resolved server-side) fully prefills the survey from a
+  // previous response and takes precedence over URL query-param prefill.
+  const prefillValue = serverPrefillData ?? getPrefillValue(survey, searchParams, languageCode);
   const [autoFocus, setAutoFocus] = useState(false);
 
   // Enable autofocus only when not in iframe

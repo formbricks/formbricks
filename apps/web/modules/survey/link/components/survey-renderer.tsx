@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { type Response } from "@formbricks/database/prisma-browser";
+import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -35,6 +36,8 @@ interface SurveyRendererProps {
   workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
   responseCount?: number;
+  // Response data resolved from a prefill token (server-side), used to prefill answers
+  prefillResponseData?: TResponseData;
 }
 
 /**
@@ -59,6 +62,7 @@ export const renderSurvey = async ({
   workspaceContext,
   locale,
   responseCount,
+  prefillResponseData,
 }: SurveyRendererProps) => {
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
@@ -159,6 +163,7 @@ export const renderSurvey = async ({
         recaptchaSiteKey={RECAPTCHA_SITE_KEY}
         isSpamProtectionEnabled={isSpamProtectionEnabled}
         responseCount={responseCount}
+        serverPrefillData={prefillResponseData}
       />
     );
   }
@@ -185,6 +190,7 @@ export const renderSurvey = async ({
       PRIVACY_URL={PRIVACY_URL}
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      serverPrefillData={prefillResponseData}
     />
   );
 };

@@ -9,6 +9,7 @@ import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
+import { getPrefillResponseDataFromToken } from "@/modules/survey/link/lib/prefill-survey-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
@@ -101,14 +102,19 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     singleUseId = validatedSingleUseId;
   }
 
+  // Resolve prefill token (best-effort) alongside the other data fetches
+  const prefillToken = typeof searchParams.prefillToken === "string" ? searchParams.prefillToken : undefined;
+
   // Stage 2: Parallel fetch of all remaining data
-  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+  const [workspaceContext, locale, singleUseResponse, prefillResponseData] = await Promise.all([
     getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
     // Only fetch single-use response if we have a validated ID
     isSingleUseSurvey && singleUseId
       ? getResponseBySingleUseId(survey.id, singleUseId)()
       : Promise.resolve(undefined),
+    // Only resolve prefill data if a prefill token is present
+    prefillToken ? getPrefillResponseDataFromToken(prefillToken, survey) : Promise.resolve(undefined),
   ]);
 
   // Fetch responseCount only if needed (depends on survey config)
@@ -127,5 +133,6 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     workspaceContext,
     locale,
     responseCount,
+    prefillResponseData,
   });
 };
