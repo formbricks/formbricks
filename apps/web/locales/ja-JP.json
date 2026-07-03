@@ -2353,7 +2353,6 @@
         "dynamic_pricing_per_unit": "単位あたり",
         "dynamic_pricing_unlimited": "∞",
         "failed_to_start_trial": "トライアルの開始に失敗しました。もう一度お試しください。",
-        "go_to_billing": "請求情報へ移動",
         "keep_current_plan": "現在のプランを継続",
         "manage_billing_details": "カード情報と請求書を管理",
         "monthly": "月払い",
