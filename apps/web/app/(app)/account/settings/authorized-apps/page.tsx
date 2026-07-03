@@ -6,9 +6,9 @@ import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getTranslate } from "@/lingodotdev/server";
 import { auth } from "@/modules/auth/lib/auth";
 import {
+  type TOAuthPublicClient,
   getHostFromUrl,
   getOAuthScopeLabel,
-  type TOAuthPublicClient,
 } from "@/modules/auth/lib/oauth-client-metadata";
 import { getSession } from "@/modules/auth/lib/session";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";

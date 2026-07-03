@@ -75,7 +75,7 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
 
   return (
     <>
-      <h1 className={`leading-2 mb-4 text-center font-bold ${status === "error" ? "text-red-600" : ""}`}>
+      <h1 className={`mb-4 text-center leading-2 font-bold ${status === "error" ? "text-red-600" : ""}`}>
         {text.heading[status]}
       </h1>
       <p className="text-center text-sm">{text.description[status]}</p>

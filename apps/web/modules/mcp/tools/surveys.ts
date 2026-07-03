@@ -76,7 +76,10 @@ async function guardMcpScopes(
     return null;
   }
 
-  return await responseToMcpToolResult(createMcpInsufficientScopeResponse(requestId, requiredScopes), requestId);
+  return await responseToMcpToolResult(
+    createMcpInsufficientScopeResponse(requestId, requiredScopes),
+    requestId
+  );
 }
 
 export function registerSurveyTools(server: McpServer): void {

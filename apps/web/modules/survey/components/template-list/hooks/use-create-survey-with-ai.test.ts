@@ -106,7 +106,7 @@ describe("useCreateSurveyWithAI", () => {
       language: "en-US",
     });
     expect(validateSurveyCreatePayload).toHaveBeenCalledWith(payload);
-    expect(createV3Survey).toHaveBeenCalledWith(payload);
+    expect(createV3Survey).toHaveBeenCalledWith(payload, "ai");
     expect(onSuccess).toHaveBeenCalledWith("survey1");
     expect(result.current.submitLabel).toBe("workspace.surveys.ai_create.opening_editor");
   });
