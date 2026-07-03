@@ -11,7 +11,9 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { AI_ERROR_CODES, type TAIErrorCode } from "@/lib/ai/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getSessionUserId } from "../lib/operations";
 import { ZV3SurveyGenerateBody } from "./schemas";
 import {
   V3SurveyGeneratePromptError,
@@ -54,6 +56,16 @@ export const POST = withV3ApiWrapper({
         organizationId: workspaceAccess.organizationId,
         input: body,
       });
+
+      const userId = getSessionUserId(authentication);
+      if (userId) {
+        capturePostHogEvent(
+          userId,
+          "ai_survey_generated",
+          { prompt_length: body.prompt.length },
+          { organizationId: workspaceAccess.organizationId, workspaceId: workspaceAccess.workspaceId }
+        );
+      }
 
       return successResponse(result, { requestId });
     } catch (error) {

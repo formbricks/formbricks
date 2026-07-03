@@ -30,8 +30,10 @@ export const createSetupCheckoutSession = async (
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const currency = subscription.currency ?? "usd";
 
+  // {CHECKOUT_SESSION_ID} is substituted by Stripe; the billing page uses it to finalize
+  // the upgrade on-session (attach card + charge) without racing the webhook.
   const successUrl = upgradeIntent
-    ? `${returnUrl}?checkout_success=1&upgrade_pending=1`
+    ? `${returnUrl}?checkout_success=1&upgrade_pending=1&session_id={CHECKOUT_SESSION_ID}`
     : `${returnUrl}?checkout_success=1`;
 
   const session = await stripe.checkout.sessions.create({

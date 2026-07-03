@@ -312,25 +312,31 @@ export const CreateFeedbackSourceModal = ({
     const responseCount = responseCountBySurvey[surveyId] ?? 0;
     if (responseCount <= 0) return "skipped";
     setIsImporting(true);
-    const importResult = await importHistoricalResponsesAction({
-      feedbackSourceId,
-      workspaceId,
-      surveyId,
-    });
-    setIsImporting(false);
+    try {
+      const importResult = await importHistoricalResponsesAction({
+        feedbackSourceId,
+        workspaceId,
+        surveyId,
+      });
 
-    if (importResult?.data) {
-      showFeedbackRecordsSuccessToast(
-        t("workspace.unify.historical_import_complete", {
-          successes: importResult.data.successes,
-          failures: importResult.data.failures,
-          skipped: importResult.data.skipped,
-        })
-      );
-      return "success";
-    } else {
+      if (importResult?.data) {
+        showFeedbackRecordsSuccessToast(
+          t("workspace.unify.historical_import_complete", {
+            successes: importResult.data.successes,
+            failures: importResult.data.failures,
+            skipped: importResult.data.skipped,
+          })
+        );
+        return "success";
+      }
+
       toast.error(getFormattedErrorMessage(importResult));
       return "error";
+    } catch {
+      toast.error(t("common.something_went_wrong"));
+      return "error";
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -338,23 +344,24 @@ export const CreateFeedbackSourceModal = ({
     if (!csvFile) return "skipped";
 
     setIsImporting(true);
-    const importResult = await importCsvFile({
-      feedbackSourceId,
-      workspaceId,
-      file: csvFile,
-    });
-    setIsImporting(false);
+    try {
+      const importResult = await importCsvFile({
+        feedbackSourceId,
+        workspaceId,
+        file: csvFile,
+      });
 
-    if (importResult?.data) {
-      showFeedbackRecordsSuccessToast(
-        t("workspace.unify.csv_import_complete", {
-          successes: importResult.data.successes,
-          failures: importResult.data.failures,
-          skipped: importResult.data.skipped,
-        })
-      );
-      return "success";
-    } else {
+      if (importResult?.data) {
+        showFeedbackRecordsSuccessToast(
+          t("workspace.unify.csv_import_complete", {
+            successes: importResult.data.successes,
+            failures: importResult.data.failures,
+            skipped: importResult.data.skipped,
+          })
+        );
+        return "success";
+      }
+
       toast.error(
         getTranslatedFeedbackSourceError(importResult.error.error, t, {
           row: importResult.error.row,
@@ -362,6 +369,11 @@ export const CreateFeedbackSourceModal = ({
         })
       );
       return "error";
+    } catch {
+      toast.error(t("common.something_went_wrong"));
+      return "error";
+    } finally {
+      setIsImporting(false);
     }
   };
 

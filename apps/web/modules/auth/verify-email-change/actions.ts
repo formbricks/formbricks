@@ -15,7 +15,7 @@ export const verifyEmailChangeAction = actionClient.inputSchema(z.object({ token
       throw new Error("Email not found in token");
     }
     const oldObject = await getUser(id);
-    const user = await updateUser(id, { email, emailVerified: new Date() });
+    const user = await updateUser(id, { email, emailVerified: true });
     if (!user) {
       throw new Error("User not found or email update failed");
     }

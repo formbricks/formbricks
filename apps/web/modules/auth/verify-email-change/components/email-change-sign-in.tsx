@@ -1,8 +1,9 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
+import { authClient } from "@/modules/auth/lib/auth-client";
 import { verifyEmailChangeAction } from "@/modules/auth/verify-email-change/actions";
 
 interface EmailChangeSignInProps {
@@ -37,7 +38,25 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
 
   useEffect(() => {
     if (status === "success") {
-      signOut({ redirect: false });
+      // Email changed server-side; drop the now-stale session so the user re-authenticates with
+      // their new address. Best-effort — the email change itself already succeeded. The BA client
+      // resolves HTTP failures as { error } rather than throwing, so handle both shapes.
+      authClient
+        .signOut()
+        .then(({ error }) => {
+          if (error) {
+            logger.error(
+              new Error(error.message ?? "signOut returned an error"),
+              "Email-change signOut failed"
+            );
+          }
+        })
+        .catch((error) => {
+          logger.error(
+            error instanceof Error ? error : new Error(String(error)),
+            "Email-change signOut failed"
+          );
+        });
     }
   }, [status]);
 
@@ -56,7 +75,7 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
 
   return (
     <>
-      <h1 className={`leading-2 mb-4 text-center font-bold ${status === "error" ? "text-red-600" : ""}`}>
+      <h1 className={`mb-4 text-center leading-2 font-bold ${status === "error" ? "text-red-600" : ""}`}>
         {text.heading[status]}
       </h1>
       <p className="text-center text-sm">{text.description[status]}</p>
