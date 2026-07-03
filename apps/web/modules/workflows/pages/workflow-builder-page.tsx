@@ -3,19 +3,23 @@
 import { useTranslation } from "react-i18next";
 import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
+import { WorkflowEmailAuthoringProvider } from "@/modules/workflows/components/workflow-email-authoring-context";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
+import type { TWorkflowEmailAuthoringContext } from "@/modules/workflows/types/email-authoring-context";
 
 interface WorkflowBuilderPageProps {
   workspaceId: string;
   workflowId: string;
   isReadOnly: boolean;
+  emailAuthoringContext: TWorkflowEmailAuthoringContext;
 }
 
 export const WorkflowBuilderPage = ({
   workspaceId,
   workflowId,
   isReadOnly,
+  emailAuthoringContext,
 }: Readonly<WorkflowBuilderPageProps>) => {
   const { t } = useTranslation();
   const builder = useWorkflowBuilder({ workspaceId, workflowId, isReadOnly });
@@ -36,12 +40,14 @@ export const WorkflowBuilderPage = ({
     <div className="flex flex-col gap-4">
       <section className="flex min-h-[calc(100vh-220px)] gap-4">
         <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
-        <WorkflowInspectorPanel
-          canEditMetadata={builder.canEditMetadata}
-          isEditingNode={builder.canEditDefinition}
-          onSaveNode={builder.save}
-          isSavingNode={builder.isSaving}
-        />
+        <WorkflowEmailAuthoringProvider value={emailAuthoringContext}>
+          <WorkflowInspectorPanel
+            canEditMetadata={builder.canEditMetadata}
+            isEditingNode={builder.canEditDefinition}
+            onSaveNode={builder.save}
+            isSavingNode={builder.isSaving}
+          />
+        </WorkflowEmailAuthoringProvider>
       </section>
     </div>
   );

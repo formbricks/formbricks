@@ -3,6 +3,7 @@ import {
   type JobsRuntimeHandle,
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
+  type TWorkflowRunJobData,
   type TWorkflowRunReconcileJobData,
   removeRecurringSurveySchedulingJobSchedule,
   removeRecurringWorkflowRunReconcileJobSchedule,
@@ -20,6 +21,7 @@ import {
   SURVEY_SCHEDULING_TIME_ZONE,
 } from "@/modules/survey/scheduling/lib/constants";
 import { processSurveySchedulingJob } from "@/modules/survey/scheduling/lib/process-survey-scheduling-job";
+import { processWorkflowRunJob } from "@/modules/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/workflows/lib/runner/process-workflow-run-reconcile-job";
 import {
   WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE,
@@ -41,6 +43,7 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 const RESPONSE_PIPELINE_JOB_NAME = "response-pipeline.process";
 const SURVEY_SCHEDULING_JOB_NAME = "survey-scheduling.reconcile";
+const WORKFLOW_RUN_JOB_NAME = "workflow-run.process";
 const WORKFLOW_RUN_RECONCILE_JOB_NAME = "workflow-run.reconcile";
 
 const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
@@ -48,6 +51,9 @@ const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = asy
 };
 const surveySchedulingJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processSurveySchedulingJob(data as TSurveySchedulingJobData, context);
+};
+const workflowRunJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
+  await processWorkflowRunJob(data as TWorkflowRunJobData, context);
 };
 const workflowRunReconcileJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processWorkflowRunReconcileJob(data as TWorkflowRunReconcileJobData, context);
@@ -205,11 +211,13 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
         ...runtimeOptions.jobHandlerOverrides,
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
         [WORKFLOW_RUN_RECONCILE_JOB_NAME]: workflowRunReconcileJobHandler,
       }
     : {
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
         [WORKFLOW_RUN_RECONCILE_JOB_NAME]: workflowRunReconcileJobHandler,
       };
 

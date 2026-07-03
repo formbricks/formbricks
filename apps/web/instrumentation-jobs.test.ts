@@ -10,6 +10,7 @@ const mockGetJobsQueueingConfig = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const mockProcessResponsePipelineJob = vi.fn();
 const mockProcessSurveySchedulingJob = vi.fn();
+const mockProcessWorkflowRunJob = vi.fn();
 const mockRemoveRecurringWorkflowRunReconcileJobSchedule = vi.fn();
 const mockUpsertRecurringWorkflowRunReconcileJobSchedule = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
@@ -47,6 +48,10 @@ vi.mock("@/modules/response-pipeline/lib/process-response-pipeline-job", () => (
 
 vi.mock("@/modules/survey/scheduling/lib/process-survey-scheduling-job", () => ({
   processSurveySchedulingJob: mockProcessSurveySchedulingJob,
+}));
+
+vi.mock("@/modules/workflows/lib/runner/process-workflow-run-job", () => ({
+  processWorkflowRunJob: mockProcessWorkflowRunJob,
 }));
 
 vi.mock("@/modules/workflows/lib/runner/process-workflow-run-reconcile-job", () => ({
@@ -118,6 +123,7 @@ describe("instrumentation-jobs", () => {
       jobHandlerOverrides: {
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
+        "workflow-run.process": expect.any(Function),
         "test-log.process": mockExistingOverride,
         "workflow-run.reconcile": expect.any(Function),
       },
@@ -127,6 +133,7 @@ describe("instrumentation-jobs", () => {
     const overrides = mockStartJobsRuntime.mock.calls[0]?.[0]?.jobHandlerOverrides;
     const responsePipelineOverride = overrides?.["response-pipeline.process"];
     const surveySchedulingOverride = overrides?.["survey-scheduling.reconcile"];
+    const workflowRunOverride = overrides?.["workflow-run.process"];
 
     await responsePipelineOverride?.(
       {
@@ -151,6 +158,20 @@ describe("instrumentation-jobs", () => {
         attempt: 1,
         jobId: "job_456",
         jobName: "survey-scheduling.reconcile",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
+    await workflowRunOverride?.(
+      {
+        workflowRunId: "run_123",
+        workflowId: "wf_123",
+        workspaceId: "ws_123",
+      },
+      {
+        attempt: 1,
+        jobId: "job_789",
+        jobName: "workflow-run.process",
         maxAttempts: 3,
         queueName: "background-jobs",
       }
@@ -191,6 +212,20 @@ describe("instrumentation-jobs", () => {
         attempt: 1,
         jobId: "job_789",
         jobName: "workflow-run.reconcile",
+        maxAttempts: 3,
+        queueName: "background-jobs",
+      }
+    );
+    expect(mockProcessWorkflowRunJob).toHaveBeenCalledWith(
+      {
+        workflowRunId: "run_123",
+        workflowId: "wf_123",
+        workspaceId: "ws_123",
+      },
+      {
+        attempt: 1,
+        jobId: "job_789",
+        jobName: "workflow-run.process",
         maxAttempts: 3,
         queueName: "background-jobs",
       }

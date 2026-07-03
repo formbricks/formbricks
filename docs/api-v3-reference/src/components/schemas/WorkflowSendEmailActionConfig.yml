@@ -17,10 +17,11 @@ properties:
       Recipient: either a literal email address (e.g. a teammate) or the element
       id of a
 
-      survey question whose answer contains the respondent's email address — the
-      same
+      survey question / hidden field whose answer contains the respondent's email
+      address
 
-      semantics as the Follow-ups `to` field.
+      (contact-info elements resolve index [2]) — the same semantics as the
+      Follow-ups `to` field.
   from:
     type: string
     format: email
@@ -32,9 +33,21 @@ properties:
   subject:
     type: string
     minLength: 1
+    description: >
+      Email subject. Used verbatim (recall tokens are not expanded in the
+      subject), the same as Follow-ups.
   body:
     type: string
     minLength: 1
+    description: >
+      Email body as HTML with recall tokens (`#recall:[elementId]/fallback:x#`).
+      Recall tokens
+
+      are expanded against the response, the result is sanitized to a narrow HTML
+      allowlist,
+
+      and it is wrapped in the branded Follow-ups email template — identical
+      rendering to survey Follow-ups.
   attachResponseData:
     type: boolean
   includeVariables:
