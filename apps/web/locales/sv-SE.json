@@ -2316,6 +2316,7 @@
         "dynamic_pricing_per_unit": "Per enhet",
         "dynamic_pricing_unlimited": "∞",
         "failed_to_start_trial": "Kunde inte starta provperioden. Försök igen.",
+        "go_to_billing": "Gå till fakturering",
         "keep_current_plan": "Behåll nuvarande abonnemang",
         "manage_billing_details": "Hantera kortuppgifter & fakturor",
         "monthly": "Månatlig",
