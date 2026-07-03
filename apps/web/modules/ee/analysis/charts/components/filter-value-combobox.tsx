@@ -48,17 +48,29 @@ export function FilterValueCombobox({
   const [error, setError] = useState<string | null>(null);
   // Only the latest in-flight lookup may apply its result.
   const seqRef = useRef(0);
+  // Stale-while-revalidate cache: previously fetched values per lookup key, kept for the
+  // lifetime of the filter row so reopening the popover shows the list instantly while a
+  // background refresh picks up any new values.
+  const cacheRef = useRef(new Map<string, string[]>());
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
 
     const seq = ++seqRef.current;
-    setIsLoading(true);
-    setError(null);
+    const trimmedSearch = search.trim();
+    const cacheKey = JSON.stringify([workspaceId, feedbackDirectoryId, dimension, trimmedSearch]);
+    const cached = cacheRef.current.get(cacheKey);
 
-    const timer = setTimeout(() => {
-      const trimmedSearch = search.trim();
+    setError(null);
+    if (cached) {
+      setValues(cached);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
+    const fetchValues = () => {
       void getDimensionValuesAction({
         workspaceId,
         feedbackDirectoryId,
@@ -68,15 +80,28 @@ export function FilterValueCombobox({
         if (seq !== seqRef.current) return;
 
         if (result?.serverError || result?.validationErrors) {
-          setError(getFormattedErrorMessage(result));
-          setValues([]);
+          // A failed background refresh keeps showing the cached list; only surface the
+          // error when there is nothing to show instead.
+          if (!cached) {
+            setError(getFormattedErrorMessage(result));
+            setValues([]);
+          }
         } else {
-          setValues(Array.isArray(result?.data) ? result.data : []);
+          const nextValues = Array.isArray(result?.data) ? result.data : [];
+          cacheRef.current.set(cacheKey, nextValues);
+          setValues(nextValues);
         }
         setIsLoading(false);
       });
-    }, SEARCH_DEBOUNCE_MS);
+    };
 
+    // Debounce only narrows typed searches; the initial open fetches immediately.
+    if (!trimmedSearch) {
+      fetchValues();
+      return;
+    }
+
+    const timer = setTimeout(fetchValues, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [open, search, workspaceId, feedbackDirectoryId, dimension]);
 
