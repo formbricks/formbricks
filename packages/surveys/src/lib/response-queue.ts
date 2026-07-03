@@ -248,9 +248,12 @@ export class ResponseQueue {
   }
 
   private getTerminalClientErrorCode(error?: ApiErrorResponse): TResponseErrorCodesEnum {
+    // Terminal 4xx items are dropped from the queue, so a manual Retry is pointless — return a
+    // non-retryable code (never ResponseSendingError, which renders the retryable "servers
+    // cannot be reached" UI).
     return this.isResponseAlreadyCompletedError(error)
       ? TResponseErrorCodesEnum.ResponseAlreadyCompleted
-      : TResponseErrorCodesEnum.ResponseSendingError;
+      : TResponseErrorCodesEnum.ResponseSendingErrorPermanent;
   }
 
   add(responseUpdate: TResponseUpdate) {

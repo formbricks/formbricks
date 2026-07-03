@@ -5,7 +5,8 @@ interface ErrorComponentProps {
   readonly errorType:
     | TResponseErrorCodesEnum.RecaptchaError
     | TResponseErrorCodesEnum.InvalidDeviceError
-    | TResponseErrorCodesEnum.ResponseAlreadyCompleted;
+    | TResponseErrorCodesEnum.ResponseAlreadyCompleted
+    | TResponseErrorCodesEnum.ResponseSendingErrorPermanent;
 }
 
 export function ErrorComponent({ errorType }: ErrorComponentProps) {
@@ -22,6 +23,10 @@ export function ErrorComponent({ errorType }: ErrorComponentProps) {
     [TResponseErrorCodesEnum.ResponseAlreadyCompleted]: {
       title: t("errors.response_already_completed.title"),
       message: t("errors.response_already_completed.message"),
+    },
+    [TResponseErrorCodesEnum.ResponseSendingErrorPermanent]: {
+      title: t("errors.response_sending_error_permanent.title"),
+      message: t("errors.response_sending_error_permanent.message"),
     },
   };
 
