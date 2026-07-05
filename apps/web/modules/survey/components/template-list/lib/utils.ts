@@ -16,8 +16,8 @@ export const getIndustryMapping = (t: TFunction): { value: TWorkspaceConfigIndus
 
 export const getRoleMapping = (t: TFunction): { value: TTemplateRole; label: string }[] => [
   { value: "productManager", label: t("common.product_manager") },
-  { value: "customerSuccess", label: t("common.customer_success") },
   { value: "marketing", label: t("common.marketing") },
-  { value: "sales", label: t("common.sales") },
+  { value: "customerSuccess", label: t("common.customer_success") },
   { value: "peopleManager", label: t("common.people_manager") },
+  { value: "sales", label: t("common.sales") },
 ];
