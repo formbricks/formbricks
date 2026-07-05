@@ -24,7 +24,7 @@ export const NoFeedbackRecordsState = async ({
             : t("workspace.analysis.no_feedback_records_message")}
         </p>
         <Button asChild size="sm">
-          <Link href={`/workspaces/${workspaceId}/settings/workspace/feedback-sources`}>
+          <Link href={`/workspaces/${workspaceId}/unify/sources`}>
             {hasFeedbackSources
               ? t("workspace.analysis.manage_feedback_sources")
               : t("workspace.analysis.setup_feedback_source")}

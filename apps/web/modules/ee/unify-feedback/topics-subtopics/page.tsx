@@ -33,7 +33,7 @@ export const UnifyTopicsSubtopicsPage = async (
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
         </PageHeader>
         <div className="flex items-center justify-center">
@@ -66,7 +66,7 @@ export const UnifyTopicsSubtopicsPage = async (
   if (directories.length === 0) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
         </PageHeader>
         <NoFeedbackDirectoryEmptyState

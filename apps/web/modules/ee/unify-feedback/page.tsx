@@ -6,6 +6,7 @@ import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/c
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
+import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -38,7 +39,7 @@ export default async function UnifyFeedbackRecordsPage(
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
         </PageHeader>
         <div className="flex items-center justify-center">
@@ -72,7 +73,7 @@ export default async function UnifyFeedbackRecordsPage(
   if (frds.length === 0) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
         </PageHeader>
         <NoFeedbackDirectoryEmptyState
@@ -112,11 +113,19 @@ export default async function UnifyFeedbackRecordsPage(
       fieldMappings: feedbackSource.fieldMappings,
     }));
 
+  // Resolve the initial page's user_ids to contact ids in one batched query so records can
+  // deep-link to the matching contact (in this workspace) without a per-record lookup.
+  const initialContactIdByUserId = await getContactIdsByUserIds(
+    params.workspaceId,
+    merged.map((record) => record.user_id).filter((id): id is string => Boolean(id))
+  );
+
   return (
     <FeedbackRecordsPageClient
       workspaceId={params.workspaceId}
       initialRecords={merged}
       initialCursors={initialCursors}
+      initialContactIdByUserId={initialContactIdByUserId}
       frdMap={frdMap}
       csvSources={csvSources}
       canWrite={canWrite}

@@ -36,13 +36,15 @@ export const getFeedbackSourceOptions = (t: TFunction): TFeedbackSourceOption[] 
     id: "api_ingestion",
     name: t("workspace.unify.api_ingestion"),
     description: t("workspace.unify.api_ingestion_settings_description"),
-    disabled: false,
+    disabled: true,
+    badge: { text: t("common.coming_soon"), type: "gray" },
   },
   {
     id: "feedback_record_mcp",
     name: t("workspace.unify.feedback_record_mcp"),
     description: t("workspace.unify.source_connect_feedback_record_mcp_description"),
-    disabled: false,
+    disabled: true,
+    badge: { text: t("common.coming_soon"), type: "gray" },
   },
 ];
 

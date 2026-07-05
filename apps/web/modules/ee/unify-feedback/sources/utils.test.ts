@@ -24,9 +24,15 @@ describe("getFeedbackSourceOptions", () => {
     expect(options[3].id).toBe("feedback_record_mcp");
   });
 
-  test("both options are enabled by default", () => {
+  test("formbricks and csv are enabled; api ingestion and mcp are coming soon (disabled)", () => {
     const options = getFeedbackSourceOptions(mockT as never);
-    expect(options.every((o) => !o.disabled)).toBe(true);
+    const byId = Object.fromEntries(options.map((o) => [o.id, o]));
+    expect(byId.formbricks_survey.disabled).toBe(false);
+    expect(byId.csv.disabled).toBe(false);
+    expect(byId.api_ingestion.disabled).toBe(true);
+    expect(byId.api_ingestion.badge?.text).toBe("common.coming_soon");
+    expect(byId.feedback_record_mcp.disabled).toBe(true);
+    expect(byId.feedback_record_mcp.badge?.text).toBe("common.coming_soon");
   });
 
   test("uses translation keys for name and description", () => {

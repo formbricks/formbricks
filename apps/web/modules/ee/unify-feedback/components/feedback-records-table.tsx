@@ -13,12 +13,12 @@ import {
   TypeIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
-import { listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
+import { getFeedbackRecordContactsAction, listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
@@ -72,6 +72,7 @@ interface FeedbackRecordsTableProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
   initialCursors: Record<string, string>;
+  initialContactIdByUserId: Record<string, string>;
   frdMap: Record<string, string>;
   csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
   canWrite: boolean;
@@ -80,6 +81,7 @@ interface FeedbackRecordsTableProps {
 interface FeedbackRecordRowProps {
   record: FeedbackRecordData;
   workspaceId: string;
+  contactId?: string;
   locale: string;
   t: TFunction;
   isSelected: boolean;
@@ -91,6 +93,7 @@ export const FeedbackRecordsTable = ({
   workspaceId,
   initialRecords,
   initialCursors,
+  initialContactIdByUserId,
   frdMap,
   csvSources,
   canWrite,
@@ -98,6 +101,8 @@ export const FeedbackRecordsTable = ({
   const { t, i18n } = useTranslation();
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
   const [cursors, setCursors] = useState<Record<string, string>>(initialCursors);
+  const [contactIdByUserId, setContactIdByUserId] =
+    useState<Record<string, string>>(initialContactIdByUserId);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -197,6 +202,22 @@ export const FeedbackRecordsTable = ({
     return { ok: true, records: fetchedRecords, newCursors };
   };
 
+  // Resolve any not-yet-known user_ids from a freshly fetched page to contact ids (one batched query).
+  const resolveContactsForRecords = useCallback(
+    async (recs: FeedbackRecordData[]) => {
+      const missing = [
+        ...new Set(recs.map((record) => record.user_id).filter((id): id is string => Boolean(id))),
+      ].filter((id) => !(id in contactIdByUserId));
+      if (missing.length === 0) return;
+
+      const result = await getFeedbackRecordContactsAction({ workspaceId, userIds: missing });
+      if (result?.data) {
+        setContactIdByUserId((prev) => ({ ...prev, ...result.data }));
+      }
+    },
+    [contactIdByUserId, workspaceId]
+  );
+
   const handleRefresh = async () => {
     if (isRefreshing || isLoadingMore) return;
     setIsRefreshing(true);
@@ -217,6 +238,7 @@ export const FeedbackRecordsTable = ({
     setSelectedIds(new Set());
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
+    void resolveContactsForRecords(mergedRecords);
   };
 
   const handleLoadMore = async () => {
@@ -236,6 +258,7 @@ export const FeedbackRecordsTable = ({
     );
     setCursors(result.newCursors);
     setIsLoadingMore(false);
+    void resolveContactsForRecords(result.records);
   };
 
   if (error) {
@@ -370,7 +393,7 @@ export const FeedbackRecordsTable = ({
                 </Button>
               ))}
             <Button size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/workspace/feedback-sources`}>
+              <Link href={`/workspaces/${workspaceId}/unify/sources`}>
                 {t("workspace.unify.manage_feedback_sources")}
               </Link>
             </Button>
@@ -391,7 +414,7 @@ export const FeedbackRecordsTable = ({
               <colgroup>
                 <col className="w-10" />
                 <col className="w-40" />
-                <col className="w-32" />
+                <col className="w-40" />
                 <col className="w-40" />
                 <col className="w-52" />
                 <col className="w-28" />
@@ -433,6 +456,7 @@ export const FeedbackRecordsTable = ({
                       key={record.id}
                       record={record}
                       workspaceId={workspaceId}
+                      contactId={record.user_id ? contactIdByUserId[record.user_id] : undefined}
                       locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
                       t={t}
                       isSelected={selectedIds.has(record.id)}
@@ -500,6 +524,7 @@ export const FeedbackRecordsTable = ({
 const FeedbackRecordRow = ({
   record,
   workspaceId,
+  contactId,
   locale,
   t,
   isSelected,
@@ -541,8 +566,13 @@ const FeedbackRecordRow = ({
       <td className="px-4 py-3 text-slate-500" title={collectedAt}>
         <span className="block min-w-0 truncate">{collectedAt}</span>
       </td>
-      <td className="px-4 py-3 whitespace-nowrap">
-        <Badge text={formatSourceType(record.source_type, t)} type="gray" size="tiny" />
+      <td className="px-4 py-3" title={formatSourceType(record.source_type, t)}>
+        <Badge
+          text={formatSourceType(record.source_type, t)}
+          type="gray"
+          size="tiny"
+          className="inline-block max-w-40 truncate align-middle"
+        />
       </td>
       <td className="px-4 py-3" title={record.source_name ?? undefined}>
         {isFormbricksSurveySource ? (
@@ -611,7 +641,16 @@ const FeedbackRecordRow = ({
         </div>
       </td>
       <td className="px-4 py-3 text-slate-500" title={record.user_id}>
-        <span className="block min-w-0 truncate">{record.user_id ?? "—"}</span>
+        {record.user_id && contactId ? (
+          <Link
+            href={`/workspaces/${workspaceId}/contacts/${contactId}`}
+            className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900"
+            onClick={(event) => event.stopPropagation()}>
+            {record.user_id}
+          </Link>
+        ) : (
+          <span className="block min-w-0 truncate">{record.user_id ?? "—"}</span>
+        )}
       </td>
     </tr>
   );

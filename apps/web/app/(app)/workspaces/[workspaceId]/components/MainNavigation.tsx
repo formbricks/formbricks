@@ -162,7 +162,7 @@ export const MainNavigation = ({
         ),
         items: [
           {
-            name: t("workspace.unify.feedback_records"),
+            name: t("workspace.unify.feedback_data"),
             href: `/workspaces/${workspace.id}/unify/feedback-records`,
             icon: MessageSquareTextIcon,
             isActive: pathname?.includes("/unify/"),
@@ -170,7 +170,7 @@ export const MainNavigation = ({
             disabled: isMembershipPending || isBilling,
           },
           {
-            name: t("common.dashboards"),
+            name: t("common.analysis"),
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,
             isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
