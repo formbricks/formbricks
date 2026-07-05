@@ -6,7 +6,7 @@ import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
-import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days — long enough to outlive the trial's final days
 
@@ -48,12 +48,12 @@ export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEnd
             </div>
 
             <div className="space-y-1.5">
-              <h2 className="text-lg font-semibold text-slate-900">
+              <DialogTitle className="text-lg font-semibold text-slate-900">
                 {t("workspace.settings.billing.trial_ending_title", { count: daysRemaining })}
-              </h2>
-              <p className="text-sm text-slate-500">
+              </DialogTitle>
+              <DialogDescription>
                 {t("workspace.settings.billing.trial_ending_description")}
-              </p>
+              </DialogDescription>
             </div>
           </div>
 
