@@ -1,11 +1,10 @@
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@/lib/constants";
 import { verifyUserRoleAccess } from "@/lib/organization/auth";
 import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { InviteMembers } from "@/modules/setup/organization/[organizationId]/invite/components/invite-members";
 
 export const metadata: Metadata = {
@@ -21,7 +20,7 @@ export const InvitePage = async (props: InvitePageProps) => {
   const params = await props.params;
   const t = await getTranslate();
   const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD);
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) throw new AuthenticationError(t("common.session_not_found"));
 
   const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(

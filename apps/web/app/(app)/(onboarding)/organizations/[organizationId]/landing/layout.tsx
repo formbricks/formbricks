@@ -1,8 +1,7 @@
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getUserWorkspaces } from "@/lib/workspace/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 
 const LandingLayout = async (props: {
   params: Promise<{ organizationId: string }>;
@@ -12,7 +11,7 @@ const LandingLayout = async (props: {
 
   const { children } = props;
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session || !session.user) {
     return redirect(`/auth/login`);
   }

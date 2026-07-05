@@ -86,12 +86,11 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
     cookieStore,
   ] = await Promise.all([
     getOrganizationWorkspacesLimit(organization.id),
-    getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner"),
+    getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner-v2"),
     isHobby ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning") : Promise.resolve(null),
     isTrialing ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-ending-warning") : Promise.resolve(null),
     isTrialing || isHobby ? cookies() : Promise.resolve(null),
   ]);
-
   const isOwnerOrManager = isOwner || isManager;
 
   // Validate that workspace permission exists for members

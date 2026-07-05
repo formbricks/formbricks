@@ -191,13 +191,13 @@ const SectionHeader = ({
   return (
     <div
       className={cn(
-        "mb-1 mt-4 flex min-w-0 items-center gap-2 px-4",
+        "mt-4 mb-1 flex min-w-0 items-center gap-2 px-4",
         isTextVisible ? "opacity-0" : "opacity-100"
       )}>
-      <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</span>
+      <span className="shrink-0 text-xs font-semibold tracking-wider text-slate-500 uppercase">{label}</span>
       {switcherName && switcherItems && onSwitcherChange && (
         <DropdownMenu onOpenChange={(open) => open && onSwitcherOpen?.()}>
-          <DropdownMenuTrigger className="ml-auto flex min-w-0 max-w-[50%] items-center gap-1 rounded-md border border-slate-200 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50">
+          <DropdownMenuTrigger className="ml-auto flex max-w-[50%] min-w-0 items-center gap-1 rounded-md border border-slate-200 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50">
             <span className="truncate">{switcherName}</span>
             <ChevronDownIcon className="size-3" />
           </DropdownMenuTrigger>
@@ -386,6 +386,13 @@ export const SettingsSidebarContent = ({
       label: t("common.notifications"),
       href: accountSettingsPath("notifications"),
       icon: <BellIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
+    {
+      id: "authorized-apps",
+      label: t("common.authorized_apps"),
+      href: accountSettingsPath("authorized-apps"),
+      icon: <UnplugIcon className={iconClassName} />,
       disabled: isBilling,
     },
   ];

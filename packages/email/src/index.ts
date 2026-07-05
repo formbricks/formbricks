@@ -1,5 +1,6 @@
 export { VerificationEmail } from "../emails/auth/verification-email";
 export { ForgotPasswordEmail } from "../emails/auth/forgot-password-email";
+export { DeleteAccountEmail } from "../emails/auth/delete-account-email";
 export { NewEmailVerification } from "../emails/auth/new-email-verification";
 export { PasswordResetNotifyEmail } from "../emails/auth/password-reset-notify-email";
 export { InviteEmail } from "../emails/invite/invite-email";
@@ -18,6 +19,7 @@ export { ElementHeader } from "./components/email-element-header";
 export {
   renderVerificationEmail,
   renderForgotPasswordEmail,
+  renderAccountDeletionEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderInviteEmail,

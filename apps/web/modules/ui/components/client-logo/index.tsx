@@ -72,7 +72,7 @@ export const ClientLogo = ({
           )}
           width={256}
           height={64}
-          alt="Company Logo"
+          alt={t("workspace.surveys.edit.company_logo")}
         />
       ) : disableLinks ? (
         <span className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-xs">

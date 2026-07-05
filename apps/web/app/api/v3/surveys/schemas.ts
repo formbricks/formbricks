@@ -1245,6 +1245,12 @@ export const ZV3CreateSurveyBody = z
   })
   .pipe(ZV3CreateSurveyBodyBase);
 
+export const ZV3CreateSurveyQuery = z.object({
+  createdFrom: z.enum(["blank", "template", "xm-template", "ai"]).optional(),
+});
+
+export type TV3CreateSurveyQuery = z.infer<typeof ZV3CreateSurveyQuery>;
+
 function createV3PatchSurveyBodyBase(
   defaultLanguage: string,
   options?: TV3LanguageCompatibilityOptions,

@@ -9,7 +9,7 @@ interface AccountSettingsNavbarProps {
   loading?: boolean;
 }
 
-export const AccountSettingsNavbar = ({ activeId, loading }: AccountSettingsNavbarProps) => {
+export const AccountSettingsNavbar = ({ activeId, loading }: Readonly<AccountSettingsNavbarProps>) => {
   const pathname = usePathname();
   const { t } = useTranslation();
   const navigation = [
@@ -24,6 +24,12 @@ export const AccountSettingsNavbar = ({ activeId, loading }: AccountSettingsNavb
       label: t("common.notifications"),
       href: `/account/settings/notifications`,
       current: pathname?.includes("/notifications"),
+    },
+    {
+      id: "authorized-apps",
+      label: t("common.authorized_apps"),
+      href: `/account/settings/authorized-apps`,
+      current: pathname?.includes("/authorized-apps"),
     },
   ];
 
