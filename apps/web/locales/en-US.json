@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Collect website feedback from visitors who just reviewed the pricing page",
         "prompt_helper_website_label": "Website feedback",
         "prompt_label": "Describe the survey you need",
-        "prompt_placeholder": "e.g. Understand why new users stop during onboarding and what would help them finish setup",
+        "prompt_placeholder": "Describe the survey you need, e.g. Understand why new users stop during onboarding and what would help them finish setup",
         "shortcut_hint": "⌘/Ctrl + Enter to create",
         "start_from_scratch": "Start from scratch",
         "try_prompt": "See example prompt",

@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Colete feedback do site de visitantes que acabaram de revisar a página de preços",
         "prompt_helper_website_label": "Feedback do site",
         "prompt_label": "Descreva a pesquisa que você precisa",
-        "prompt_placeholder": "ex: Entender por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",
+        "prompt_placeholder": "Descreva a pesquisa que você precisa, ex: Entender por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",
         "shortcut_hint": "⌘/Ctrl + Enter para criar",
         "start_from_scratch": "Começar do zero",
         "try_prompt": "Ver exemplo de prompt",

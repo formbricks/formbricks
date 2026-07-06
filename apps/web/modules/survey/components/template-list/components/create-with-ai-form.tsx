@@ -114,9 +114,6 @@ export const CreateWithAIForm = ({
       )}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="ai-survey-prompt">
-          {t("workspace.surveys.ai_create.prompt_label")}
-        </label>
         <textarea
           ref={promptInputRef}
           id="ai-survey-prompt"
@@ -127,6 +124,7 @@ export const CreateWithAIForm = ({
           disabled={isBusy || !isAIAvailable}
           onChange={(event) => setPrompt(event.target.value)}
           onKeyDown={handlePromptKeyDown}
+          aria-label={t("workspace.surveys.ai_create.prompt_label")}
         />
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
           <span>

@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "收集刚查看过定价页面的访客对网站的反馈",
         "prompt_helper_website_label": "网站反馈",
         "prompt_label": "描述你需要的问卷",
-        "prompt_placeholder": "例如：了解新用户为什么在引导过程中流失，以及哪些帮助能让他们完成设置",
+        "prompt_placeholder": "描述你需要的问卷，例如：了解新用户为什么在引导过程中流失，以及哪些帮助能让他们完成设置",
         "shortcut_hint": "⌘/Ctrl + Enter 创建",
         "start_from_scratch": "从头开始",
         "try_prompt": "查看示例提示",
