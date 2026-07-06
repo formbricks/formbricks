@@ -223,7 +223,7 @@ const SectionHeader = ({
           <DropdownMenuCheckboxItem
             key={item.id}
             checked={item.id === currentId}
-            onClick={() => onSwitcherChange(item.id)}
+            onClick={() => onSwitcherChange?.(item.id)}
             className="cursor-pointer text-sm">
             {item.name}
           </DropdownMenuCheckboxItem>
