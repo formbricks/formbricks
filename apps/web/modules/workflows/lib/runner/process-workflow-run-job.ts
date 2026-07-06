@@ -333,7 +333,9 @@ const claimAndSendStep = async (
  * Sentinel: another live delivery (or a stalled prior attempt) owns this run. The current execution
  * must stop and leave the run `running` rather than finalize it — otherwise a second worker could
  * `complete` the run while the owner's in-flight send is still resolving (possibly to `failed`),
- * masking the failure. The owner finishes the run; a future orphan-reconciler recovers a truly stuck one.
+ * masking the failure. The owner finishes the run; a truly stuck one is recovered by the
+ * execution-side reconciler (`reconcile-stuck-running-runs.ts`), which fails the run and skips its
+ * orphaned steps.
  */
 const STEP_BAIL = Symbol("workflow-step-bail");
 

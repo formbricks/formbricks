@@ -28,8 +28,9 @@ export interface ReconcileOrphanedWorkflowRunsResult {
  * re-dispatches them through the same idempotent port (`dispatchWorkflowRunViaJobs`, deterministic
  * `jobId = run.id`): a no-op if a job still exists, a genuine recovery if it was lost.
  *
- * - **Scope:** only real runs (`isDryRun: false`); `running` / `completed` / `failed` / `canceled` are
- *   never touched (execution-failure retry is the executor's concern, not the reconciler's).
+ * - **Scope:** only real runs (`isDryRun: false`); `running` is the sibling sweep's concern
+ *   (`reconcile-stuck-running-runs.ts`), and `completed` / `failed` / `canceled` are terminal and never
+ *   touched (execution-failure retry is the executor's concern, not the reconciler's).
  * - **Ceiling:** a run still `queued` past `WORKFLOW_RUN_ORPHAN_MAX_AGE_MS` is treated as permanently
  *   un-dispatchable and marked `failed` (bounds the loop; surfaces the stuck run) instead of being
  *   re-dispatched forever.
