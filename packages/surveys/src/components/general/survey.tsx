@@ -113,11 +113,12 @@ export function Survey({
   isSpamProtectionEnabled,
   dir = "auto",
   setDir,
+  onLanguageChange,
   placement,
   offlineSupport = false,
   onOfflineStatusChange,
   showCardlessPreviewLogoSlot = false,
-}: SurveyContainerProps) {
+}: Readonly<SurveyContainerProps>) {
   const workspaceId = workspaceIdProp ?? environmentId;
   let apiClient: ApiClient | null = null;
 
@@ -438,6 +439,13 @@ export function Survey({
   useEffect(() => {
     setSelectedLanguage(languageCode);
   }, [languageCode]);
+
+  // Report the active language (initial value + every switch) so a link-survey
+  // host can keep the page lang/dir in sync (WCAG 3.1.1). Embedded widgets pass
+  // no callback, so the host page is never touched.
+  useEffect(() => {
+    onLanguageChange?.(selectedLanguage);
+  }, [selectedLanguage, onLanguageChange]);
 
   // --- Offline support: restore progress from IndexedDB on mount ---
   useEffect(() => {

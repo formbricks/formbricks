@@ -3,7 +3,6 @@ checksums:
   55dc377b5e931bfc64e4add83e35d9ea:
     common/and: ce8b9bb44f031705708a70e068bb73c8
     common/apply: eb61ee65aa06a70b2bc908cf0e9f2104
-    common/auto_close_wrapper: fd0948e4d47150513e2b354c7685c1a7
     common/back: f541015a827e37cb3b1234e56bc2aa3c
     common/close_survey: 36e6aaa19051cb253aa155ad69a9edbc
     common/company_logo: 82d5c0d5994508210ee02d684819f4b8

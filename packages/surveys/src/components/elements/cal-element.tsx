@@ -58,10 +58,7 @@ export function CalElement({
           elementId={element.id}
           required={element.required}
         />
-        <Subheader
-          subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
-          elementId={element.id}
-        />
+        <Subheader subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""} />
         <CalEmbed key={element.id} element={element} onSuccessfulBooking={onSuccessfulBooking} />
         {errorMessage ? (
           <span className="text-red-500" role="alert" aria-live="assertive" aria-atomic="true">
