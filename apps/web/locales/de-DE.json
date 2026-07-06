@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Sammle Website-Feedback von Besuchern, die sich gerade die Preisseite angesehen haben",
         "prompt_helper_website_label": "Website-Feedback",
         "prompt_label": "Beschreibe die Umfrage, die du brauchst",
-        "prompt_placeholder": "Beschreibe die Umfrage, die du brauchst, z. B. Verstehen, warum neue Nutzer während des Onboardings abbrechen und was ihnen helfen würde, die Einrichtung abzuschließen",
+        "prompt_placeholder": "Beschreib die Umfrage, die du brauchst, z. B. Verstehen, warum neue Nutzer beim Onboarding abbrechen und was ihnen helfen würde, die Einrichtung abzuschließen",
         "shortcut_hint": "⌘/Strg + Enter zum Erstellen",
         "start_from_scratch": "Von vorne beginnen",
         "try_prompt": "Beispiel-Prompt ansehen",

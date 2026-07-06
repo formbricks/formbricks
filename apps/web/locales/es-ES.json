@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Recoge feedback del sitio web de visitantes que acaban de revisar la página de precios",
         "prompt_helper_website_label": "Feedback del sitio web",
         "prompt_label": "Describe la encuesta que necesitas",
-        "prompt_placeholder": "Describe la encuesta que necesitas, p. ej. Entender por qué los nuevos usuarios abandonan durante el onboarding y qué les ayudaría a completar la configuración",
+        "prompt_placeholder": "Describe la encuesta que necesitas, por ejemplo: Entender por qué los nuevos usuarios abandonan durante la incorporación y qué les ayudaría a completar la configuración",
         "shortcut_hint": "⌘/Ctrl + Enter para crear",
         "start_from_scratch": "Empezar desde cero",
         "try_prompt": "Ver ejemplo de instrucción",

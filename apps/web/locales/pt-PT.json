@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Recolhe feedback do website de visitantes que acabaram de ver a página de preços",
         "prompt_helper_website_label": "Feedback do website",
         "prompt_label": "Descreve o inquérito de que precisas",
-        "prompt_placeholder": "Descreve o inquérito de que precisas, ex: Perceber porque é que os novos utilizadores desistem durante o onboarding e o que os ajudaria a concluir a configuração",
+        "prompt_placeholder": "Descreve o inquérito que precisas, por exemplo: Perceber porque é que os novos utilizadores param durante o onboarding e o que os ajudaria a terminar a configuração",
         "shortcut_hint": "⌘/Ctrl + Enter para criar",
         "start_from_scratch": "Começar do zero",
         "try_prompt": "Ver exemplo de prompt",

@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "料金ページを閲覧した訪問者からウェブサイトのフィードバックを収集",
         "prompt_helper_website_label": "ウェブサイトフィードバック",
         "prompt_label": "必要なアンケートを説明",
-        "prompt_placeholder": "必要なアンケートを説明。例:新規ユーザーがオンボーディング中に離脱する理由と、セットアップ完了に必要なサポートを理解する",
+        "prompt_placeholder": "必要なアンケートを説明してください。例：新規ユーザーがオンボーディング中に離脱する理由と、セットアップを完了させるために必要なことを理解する",
         "shortcut_hint": "⌘/Ctrl + Enterで作成",
         "start_from_scratch": "ゼロから作成",
         "try_prompt": "プロンプト例を見る",
