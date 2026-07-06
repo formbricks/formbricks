@@ -98,6 +98,19 @@ describe("reconcileStuckRunningWorkflowRuns", () => {
     expect(result).toEqual({ scanned: 2, recovered: 1, stepsSkipped: 1 });
   });
 
+  test("still counts the run as recovered when the step-skip write fails after a won claim", async () => {
+    // The documented cosmetic gap: run already marked failed, step flip dies. The failed run is
+    // unreachable (terminal-status guard), so the sweep just logs and moves on — no retry, no warn.
+    runFindMany.mockResolvedValue([runRow("run1", stale)]);
+    logUpdateMany.mockRejectedValueOnce(new Error("db down"));
+
+    const result = await reconcile();
+
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(warn).not.toHaveBeenCalled();
+    expect(result).toEqual({ scanned: 1, recovered: 1, stepsSkipped: 0 });
+  });
+
   test("does nothing when there are no stuck running runs", async () => {
     runFindMany.mockResolvedValue([]);
 
