@@ -1,7 +1,9 @@
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
+import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
@@ -140,10 +142,19 @@ const buildUserStateFromContact = async (
  */
 const isWorkspaceLanguageIdentifier = async (workspaceId: string, value: string): Promise<boolean> => {
   const target = value.toLowerCase();
-  const languages = await prisma.language.findMany({
-    where: { workspaceId },
-    select: { code: true, alias: true },
-  });
+  // Cache the workspace's language list (rarely-changing config) so repeated non-canonical writes don't
+  // each hit the DB. TTL matches the environment-state cache (createCacheKey.workspace.state) which serves
+  // these same languages to SDKs, so this adds no staleness beyond what already exists for this data — a
+  // newly-added alias is likewise picked up within the TTL.
+  const languages = await cache.withCache(
+    () =>
+      prisma.language.findMany({
+        where: { workspaceId },
+        select: { code: true, alias: true },
+      }),
+    createCacheKey.workspace.languages(workspaceId),
+    60 * 1000 // 1 minute in milliseconds
+  );
   return languages.some((l) => l.code.toLowerCase() === target || l.alias?.toLowerCase() === target);
 };
 
