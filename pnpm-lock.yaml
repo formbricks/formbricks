@@ -806,6 +806,9 @@ importers:
       glob:
         specifier: ^13.0.6
         version: 13.0.6
+      object-hash:
+        specifier: ^3.0.0
+        version: 3.0.0
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -816,6 +819,9 @@ importers:
       '@types/node':
         specifier: ^25.4.0
         version: 25.4.0
+      '@types/object-hash':
+        specifier: ^3.0.6
+        version: 3.0.6
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -5991,6 +5997,9 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  '@types/object-hash@3.0.6':
+    resolution: {integrity: sha512-fOBV8C1FIu2ELinoILQ+ApxcUKz4ngq+IWUYrxSGjXzzjUALijilampwkMgEtJ+h2njAW3pi853QpzNVCHB73w==}
 
   '@types/oracledb@6.5.2':
     resolution: {integrity: sha512-kK1eBS/Adeyis+3OlBDMeQQuasIDLUYXsi2T15ccNJ0iyUpQ4xDF7svFu3+bGVrI0CMBUclPciz+lsQR3JX3TQ==}
@@ -18613,6 +18622,8 @@ snapshots:
       '@types/node': 22.19.13
 
   '@types/normalize-package-data@2.4.4': {}
+
+  '@types/object-hash@3.0.6': {}
 
   '@types/oracledb@6.5.2':
     dependencies:
