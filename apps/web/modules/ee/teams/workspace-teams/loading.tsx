@@ -12,17 +12,17 @@ export const TeamsLoading = () => {
       <PageHeader pageTitle={t("common.team_access")} />
       <div className="p-4">
         <div className="mb-4">
-          <div className="h-6 w-1/3 animate-pulse rounded bg-slate-200" />
+          <div className="h-6 w-1/3 animate-pulse rounded-sm bg-slate-200" />
         </div>
         <div className="space-y-4">
           {[...Array(3)].map((_, idx) => (
             <div
               key={`team-skeleton-${idx}`}
-              className="flex animate-pulse items-center gap-x-4 rounded border border-slate-200 p-4">
+              className="flex animate-pulse items-center gap-x-4 rounded-sm border border-slate-200 p-4">
               <div className="size-10 rounded-full bg-slate-300" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 rounded bg-slate-200" />
-                <div className="h-4 w-1/2 rounded bg-slate-200" />
+                <div className="h-4 w-3/4 rounded-sm bg-slate-200" />
+                <div className="h-4 w-1/2 rounded-sm bg-slate-200" />
               </div>
             </div>
           ))}

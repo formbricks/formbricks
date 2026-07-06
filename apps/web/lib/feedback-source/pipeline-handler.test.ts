@@ -58,6 +58,7 @@ function createFeedbackSource(
     workspaceId: "env-1",
     feedbackDirectoryId: "frd-1",
     lastSyncAt: null,
+    createdBy: null,
     formbricksMappings: [
       {
         id: "map-1",

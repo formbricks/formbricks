@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckIcon, GiftIcon } from "lucide-react";
+import { CheckIcon, GiftIcon, XCircleIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import posthog from "posthog-js";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import calLogo from "@/images/customer-logos/cal-logo-light.svg";
@@ -11,8 +12,17 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
+import { getPostHogClientFeatureFlag } from "@/lib/posthog/client";
 import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 
 interface SelectPlanCardProps {
   nextUrl: string;
@@ -38,6 +48,13 @@ export const SelectPlanCard = ({
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
+  const [showHobbyConfirm, setShowHobbyConfirm] = useState(false);
+  const [hobbyConfirmEnabled, setHobbyConfirmEnabled] = useState(false);
+  useEffect(() => {
+    return posthog.onFeatureFlags(() => {
+      setHobbyConfirmEnabled(getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test");
+    });
+  }, []);
   const { t } = useTranslation();
   let ctaCopy: string;
   if (ctaVariant === "variant_b") {
@@ -122,7 +139,7 @@ export const SelectPlanCard = ({
           <ul className="my-3 w-full space-y-3 text-left">
             {SELECT_PLAN_FEATURE_KEYS.map((key) => (
               <li key={key} className="flex items-center gap-3 text-slate-700">
-                <CheckIcon className="size-5 flex-shrink-0 text-slate-900" />
+                <CheckIcon className="size-5 shrink-0 text-slate-900" />
                 <span>{key}</span>
               </li>
             ))}
@@ -139,7 +156,7 @@ export const SelectPlanCard = ({
         </div>
 
         <div className="w-full overflow-hidden border-t border-slate-100 bg-slate-50 py-4">
-          <div className="flex w-max animate-logo-scroll gap-12 hover:[animation-play-state:paused]">
+          <div className="flex w-max animate-logo-scroll gap-12 hover:paused">
             {[...CUSTOMER_LOGOS, ...CUSTOMER_LOGOS].map((logo, index) => (
               <div
                 key={`${logo.alt}-${index}`}
@@ -159,11 +176,65 @@ export const SelectPlanCard = ({
 
       <button
         type="button"
-        onClick={handleContinueHobby}
+        onClick={() => (hobbyConfirmEnabled ? setShowHobbyConfirm(true) : void handleContinueHobby())}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {isStartingHobby ? t("common.loading") : copy.skip}
+        {isStartingHobby && !hobbyConfirmEnabled ? t("common.loading") : copy.skip}
       </button>
+
+      <Dialog open={showHobbyConfirm} onOpenChange={setShowHobbyConfirm}>
+        <DialogContent width="narrow" hideCloseButton>
+          <DialogHeader>
+            <DialogTitle>{t("workspace.settings.billing.hobby_confirm_title")}</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <p className="text-slate-500">{t("workspace.settings.billing.hobby_confirm_description")}</p>
+            <ul className="mt-4 space-y-1.5">
+              {[
+                { from: "2,000", to: t("workspace.settings.billing.hobby_confirm_feature_responses") },
+                { from: "3", to: t("workspace.settings.billing.hobby_confirm_feature_workspaces") },
+              ].map((item) => (
+                <li key={item.to} className="flex items-center gap-2 text-sm text-slate-700">
+                  <XCircleIcon className="size-3.5 shrink-0 text-primary" />
+                  <span>
+                    <span className="text-slate-400 line-through">{item.from}</span>{" "}
+                    <span aria-hidden="true">→</span> {item.to}
+                  </span>
+                </li>
+              ))}
+              {[
+                t("workspace.settings.billing.hobby_confirm_feature_branding"),
+                t("workspace.settings.billing.hobby_confirm_feature_contacts"),
+                t("workspace.settings.billing.hobby_confirm_feature_ai"),
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                  <XCircleIcon className="size-3.5 shrink-0 text-primary" />
+                  <span className="text-slate-400 line-through">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              loading={isStartingHobby}
+              onClick={() => {
+                posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "downgrade_hobby" });
+                void handleContinueHobby();
+              }}>
+              {t("workspace.settings.billing.hobby_confirm_downgrade")}
+            </Button>
+            <Button
+              onClick={() => {
+                posthog.capture("billing_onboarding_hobby_confirm_cta_clicked", { cta: "start_trial" });
+                setShowHobbyConfirm(false);
+                void handleStartTrial();
+              }}>
+              {t("workspace.settings.billing.hobby_confirm_start_trial")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

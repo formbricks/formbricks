@@ -110,7 +110,7 @@ export const mockUser: TUser = {
   id: mockId,
   name: "mock User",
   email: "test@unit.com",
-  emailVerified: currentDate,
+  emailVerified: true,
   createdAt: currentDate,
   updatedAt: currentDate,
   twoFactorEnabled: false,

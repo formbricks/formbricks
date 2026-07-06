@@ -13,8 +13,9 @@ test.describe("Invite, accept and remove organization member", async () => {
   test("Invite organization member", async ({ page }) => {
     await test.step("Invite User", async () => {
       const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+      // Old workspace-scoped org settings URL is redirected to the org-scoped route.
       await page.goto(`/workspaces/${workspaceId}/settings/organization/teams`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/organization\/teams/);
+      await page.waitForURL(/\/organizations\/[^/]+\/settings\/teams/);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
@@ -121,8 +122,9 @@ test.describe("Create, update and delete team", async () => {
 
   test("Create and update team", async ({ page }) => {
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    // Old workspace-scoped org settings URL is redirected to the org-scoped route.
     await page.goto(`/workspaces/${workspaceId}/settings/organization/teams`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/organization\/teams/);
+    await page.waitForURL(/\/organizations\/[^/]+\/settings\/teams/);
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");

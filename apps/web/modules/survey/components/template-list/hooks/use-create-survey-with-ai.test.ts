@@ -3,8 +3,10 @@
  */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
+  type TV3CreateSurveyValidationResponse,
   createV3Survey,
   generateSurveyCreatePayload,
   validateSurveyCreatePayload,
@@ -25,9 +27,10 @@ vi.mock("@/modules/survey/list/lib/v3-surveys-client", () => ({
 
 const submitEvent = {
   preventDefault: vi.fn(),
-} as Parameters<ReturnType<typeof useCreateSurveyWithAI>["handleGenerate"]>[0];
-const payload = { name: "Generated survey" };
+} as unknown as Parameters<ReturnType<typeof useCreateSurveyWithAI>["handleGenerate"]>[0];
+const payload = { name: "Generated survey" } as unknown as TV3CreateSurveyBody;
 const validGeneratedSurvey = {
+  language: "en-US",
   payload,
   validation: {
     valid: true,
@@ -35,7 +38,7 @@ const validGeneratedSurvey = {
     languages: [],
   },
 };
-const validCreateValidation = {
+const validCreateValidation: TV3CreateSurveyValidationResponse = {
   valid: true,
   operation: "create",
   invalid_params: [],
@@ -103,7 +106,7 @@ describe("useCreateSurveyWithAI", () => {
       language: "en-US",
     });
     expect(validateSurveyCreatePayload).toHaveBeenCalledWith(payload);
-    expect(createV3Survey).toHaveBeenCalledWith(payload);
+    expect(createV3Survey).toHaveBeenCalledWith(payload, "ai");
     expect(onSuccess).toHaveBeenCalledWith("survey1");
     expect(result.current.submitLabel).toBe("workspace.surveys.ai_create.opening_editor");
   });

@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
@@ -6,7 +5,7 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
@@ -153,7 +152,7 @@ async function authenticateV3Request(req: NextRequest, authMode: TV3AuthMode): P
   }
 
   if (authMode === "session" || authMode === "both") {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     if (session?.user?.id) {
       return session;
     }

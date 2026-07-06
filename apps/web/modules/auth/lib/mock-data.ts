@@ -4,7 +4,7 @@ export const mockUser: TUser = {
   id: "cm5xj580r00000cmgdj9ohups",
   name: "mock User",
   email: "john.doe@example.com",
-  emailVerified: new Date("2024-01-01T00:00:00.000Z"),
+  emailVerified: true,
   createdAt: new Date("2024-01-01T00:00:00.000Z"),
   updatedAt: new Date("2024-01-01T00:00:00.000Z"),
   twoFactorEnabled: false,

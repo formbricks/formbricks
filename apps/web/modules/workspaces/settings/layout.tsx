@@ -16,10 +16,10 @@ export const WorkspaceSettingsLayout = async (props: {
   const { children } = props;
 
   try {
-    const { isBilling } = await getWorkspaceAuth(params.workspaceId);
+    const { isBilling, organization } = await getWorkspaceAuth(params.workspaceId);
 
     if (isBilling) {
-      return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
+      return redirect(getBillingFallbackPath(organization.id, IS_FORMBRICKS_CLOUD));
     }
 
     return children;

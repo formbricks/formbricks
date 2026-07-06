@@ -113,7 +113,7 @@ export const SurveyLoadingAnimation = ({
   return (
     <div
       className={cn(
-        "absolute inset-0 z-[5000] flex items-center justify-center transition-colors duration-1000",
+        "absolute inset-0 z-5000 flex items-center justify-center transition-colors duration-1000",
         isReadyToTransition ? "bg-transparent" : "bg-white",
         isHidden && "hidden"
       )}>

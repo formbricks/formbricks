@@ -16,7 +16,7 @@ export const ColorPicker = ({ color, onChange, containerClass, disabled = false 
       <div className="flex h-10 w-full items-center gap-2 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-400">
         #
         <HexColorInput
-          className="min-w-0 flex-1 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
+          className="min-w-0 flex-1 border-0 bg-transparent text-slate-500 outline-hidden focus:border-none"
           color={color}
           onChange={onChange}
           id="color"

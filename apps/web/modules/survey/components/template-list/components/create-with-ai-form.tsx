@@ -5,24 +5,17 @@ import Link from "next/link";
 import { type KeyboardEvent, type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getAIUnavailableAction } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
 import {
   AI_SURVEY_PROMPT_MAX_LENGTH,
-  SURVEY_TYPE_OPTIONS,
   getHelperPrompts,
   getUnavailableMessageKey,
 } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
 
 export type TCreateWithAIFormFooterProps = {
   isBusy: boolean;
@@ -38,7 +31,6 @@ type CreateWithAIFormProps = {
   onSuccess: (surveyId: string) => void;
   onCancel?: () => void;
   showCancel?: boolean;
-  showSurveyType?: boolean;
   renderFooter?: (props: TCreateWithAIFormFooterProps) => ReactNode;
   promptInputRef?: React.Ref<HTMLTextAreaElement>;
 };
@@ -51,31 +43,23 @@ export const CreateWithAIForm = ({
   onSuccess,
   onCancel,
   showCancel = true,
-  showSurveyType = true,
   renderFooter,
   promptInputRef,
 }: Readonly<CreateWithAIFormProps>) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
 
-  const {
-    prompt,
-    setPrompt,
-    surveyType,
-    setSurveyType,
-    isBusy,
-    canCreate,
-    errorMessage,
-    handleGenerate,
-    clearError,
-    submitLabel,
-  } = useCreateSurveyWithAI({
-    workspaceId,
-    language,
-    isAIAvailable,
-    onSuccess,
-  });
+  const { prompt, setPrompt, isBusy, canCreate, errorMessage, handleGenerate, clearError, submitLabel } =
+    useCreateSurveyWithAI({
+      workspaceId,
+      language,
+      isAIAvailable,
+      onSuccess,
+    });
 
-  const unavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
+  const unavailableAction = workspace?.organizationId
+    ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
+    : undefined;
   let unavailableActionLabel: string | undefined;
   if (unavailableAction?.type === "enable_ai") {
     unavailableActionLabel = t("workspace.surveys.ai_create.enable_ai_in_settings");
@@ -129,46 +113,18 @@ export const CreateWithAIForm = ({
         </Alert>
       )}
 
-      {showSurveyType && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="ai-survey-type">
-            {t("workspace.surveys.ai_create.survey_type_label")}
-          </label>
-          <Select
-            value={surveyType}
-            onValueChange={(value) => setSurveyType(value as typeof surveyType)}
-            disabled={isBusy || !isAIAvailable || SURVEY_TYPE_OPTIONS.length <= 1}>
-            <SelectTrigger id="ai-survey-type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SURVEY_TYPE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.value === "app"
-                    ? t("workspace.surveys.ai_create.app_survey")
-                    : t("workspace.surveys.ai_create.link_survey")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-slate-500">{t("workspace.surveys.ai_create.survey_type_help")}</p>
-        </div>
-      )}
-
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="ai-survey-prompt">
-          {t("workspace.surveys.ai_create.prompt_label")}
-        </label>
         <textarea
           ref={promptInputRef}
           id="ai-survey-prompt"
-          className="min-h-24 w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+          className="min-h-24 w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
           maxLength={AI_SURVEY_PROMPT_MAX_LENGTH}
           placeholder={t("workspace.surveys.ai_create.prompt_placeholder")}
           value={prompt}
           disabled={isBusy || !isAIAvailable}
           onChange={(event) => setPrompt(event.target.value)}
           onKeyDown={handlePromptKeyDown}
+          aria-label={t("workspace.surveys.ai_create.prompt_label")}
         />
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
           <span>

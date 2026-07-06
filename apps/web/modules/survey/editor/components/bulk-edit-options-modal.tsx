@@ -176,7 +176,7 @@ export const BulkEditOptionsModal = ({
               }
             }}
             rows={15}
-            className="w-full rounded-md border border-slate-300 bg-white p-3 font-mono text-sm focus:border-brand focus:outline-none"
+            className="w-full rounded-md border border-slate-300 bg-white p-3 font-mono text-sm focus:border-brand focus:outline-hidden"
             placeholder={t("workspace.surveys.edit.bulk_edit_description")}
           />
           {validationError && <div className="text-sm text-red-600">{validationError}</div>}

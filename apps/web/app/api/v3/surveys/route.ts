@@ -4,7 +4,7 @@
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { createV3SurveyResponse, listV3Surveys } from "./lib/operations";
-import { ZV3CreateSurveyBody } from "./schemas";
+import { ZV3CreateSurveyBody, ZV3CreateSurveyQuery } from "./schemas";
 
 export const GET = withV3ApiWrapper({
   auth: "both",
@@ -22,6 +22,7 @@ export const POST = withV3ApiWrapper({
   auth: "both",
   schemas: {
     body: ZV3CreateSurveyBody,
+    query: ZV3CreateSurveyQuery,
   },
   action: "created",
   targetType: "survey",
@@ -32,6 +33,7 @@ export const POST = withV3ApiWrapper({
       requestId,
       instance,
       auditLog,
+      createdFrom: parsedInput.query?.createdFrom,
     });
   },
 });

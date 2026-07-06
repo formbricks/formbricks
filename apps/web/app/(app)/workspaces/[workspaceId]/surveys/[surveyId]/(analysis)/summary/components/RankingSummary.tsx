@@ -18,9 +18,9 @@ export const RankingSummary = ({ elementSummary, survey }: RankingSummaryProps) 
   });
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => {
           const choiceId = getChoiceIdByValue(result.value, elementSummary.element);
           return (
@@ -30,7 +30,7 @@ export const RankingSummary = ({ elementSummary, survey }: RankingSummaryProps) 
                   <div className="flex w-full items-center">
                     <div className="flex items-center gap-x-2">
                       <span className="mr-2 text-slate-400">#{resultsIdx + 1}</span>
-                      <div className="rounded bg-slate-100 px-2 py-1">{result.value}</div>
+                      <div className="rounded-sm bg-slate-100 px-2 py-1">{result.value}</div>
                       {choiceId && <IdBadge id={choiceId} />}
                     </div>
                     <span className="ml-auto flex items-center gap-x-1">

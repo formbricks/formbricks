@@ -68,7 +68,7 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${workspaceId}/settings/organization/billing`
+                  ? `/organizations/${organization.id}/settings/billing`
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
