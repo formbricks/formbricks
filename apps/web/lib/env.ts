@@ -276,6 +276,11 @@ const parsedEnv = createEnv({
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     CHATWOOT_WEBSITE_TOKEN: z.string().optional(),
     CHATWOOT_BASE_URL: z.url().optional(),
+    // Formbricks-in-Formbricks: dogfood in-app surveys. Points at the Formbricks
+    // instance that hosts the surveys (defaults to Formbricks Cloud). When
+    // FORMBRICKS_WORKSPACE_ID is set, the survey widget is mounted in the app.
+    FORMBRICKS_WORKSPACE_ID: z.string().optional(),
+    FORMBRICKS_APP_URL: z.url().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     POSTHOG_KEY: z.string().optional(),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "fatal"]).optional(),
@@ -445,6 +450,8 @@ const parsedEnv = createEnv({
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     CHATWOOT_WEBSITE_TOKEN: process.env.CHATWOOT_WEBSITE_TOKEN,
     CHATWOOT_BASE_URL: process.env.CHATWOOT_BASE_URL,
+    FORMBRICKS_WORKSPACE_ID: process.env.FORMBRICKS_WORKSPACE_ID,
+    FORMBRICKS_APP_URL: process.env.FORMBRICKS_APP_URL,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
     POSTHOG_KEY: process.env.POSTHOG_KEY,
     LOG_LEVEL: process.env.LOG_LEVEL,

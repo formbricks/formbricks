@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
@@ -24,7 +25,7 @@ import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
+import { getPublishedSurveyCountAction, updateSurveyAction, updateSurveyDraftAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
@@ -481,6 +482,24 @@ export const SurveyMenuBar = ({
 
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+
+      // Fire an in-app code action when the user publishes their second survey, so a
+      // Formbricks survey can be triggered from the dashboard. Non-blocking: never let
+      // this delay or break navigation to the summary page.
+      try {
+        const publishedCountResult = await getPublishedSurveyCountAction({ surveyId: localSurvey.id });
+        const publishedCount = publishedCountResult?.data;
+        // eslint-disable-next-line no-console -- diagnostic for the second-survey trigger
+        console.debug(`🧱 Formbricks trigger — published survey count: ${publishedCount}`);
+        if (publishedCount === 2) {
+          // eslint-disable-next-line no-console -- diagnostic for the second-survey trigger
+          console.debug('🧱 Formbricks trigger — firing code action "second_survey_published"');
+          void formbricks.track("second_survey_published");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?success=true`);

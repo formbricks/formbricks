@@ -36,6 +36,7 @@
     "@formbricks/hub": "0.5.0",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/jobs": "workspace:*",
+    "@formbricks/js": "5.0.0",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/logger": "workspace:*",
     "@formbricks/storage": "workspace:*",

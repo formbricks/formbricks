@@ -7,6 +7,7 @@ import {
   Cog,
   FoldersIcon,
   Loader2,
+  MegaphoneIcon,
   MessageCircle,
   MessageSquareTextIcon,
   PanelLeftCloseIcon,
@@ -31,6 +32,11 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
+import {
+  WhatsNewModal,
+  getUnreadWhatsNewCount,
+  markWhatsNewSeen,
+} from "@/app/(app)/workspaces/[workspaceId]/components/whats-new-modal";
 import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
@@ -111,6 +117,11 @@ export const MainNavigation = ({
   useEffect(() => {
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
     setIsCollapsed(isCollapsedValueFromLocalStorage);
+  }, []);
+
+  // Read the unread "What's New" count from the cookie after mount (avoids SSR mismatch).
+  useEffect(() => {
+    setWhatsNewUnread(getUnreadWhatsNewCount());
   }, []);
 
   useEffect(() => {
@@ -205,6 +216,8 @@ export const MainNavigation = ({
   const [organizationLoadError, setOrganizationLoadError] = useState<string | null>(null);
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = useState(false);
   const [openWorkspaceLimitModal, setOpenWorkspaceLimitModal] = useState(false);
+  const [openWhatsNewModal, setOpenWhatsNewModal] = useState(false);
+  const [whatsNewUnread, setWhatsNewUnread] = useState(0);
 
   const renderSwitcherError = (error: string, onRetry: () => void, retryLabel: string) => (
     <div className="px-2 py-4">
@@ -591,6 +604,39 @@ export const MainNavigation = ({
             )}
 
             <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenWhatsNewModal(true);
+                  markWhatsNewSeen();
+                  setWhatsNewUnread(0);
+                }}
+                aria-label="What's New"
+                className={cn(
+                  switcherTriggerClasses,
+                  "flex items-center gap-3",
+                  isCollapsed && "justify-center"
+                )}>
+                <span className={cn(switcherIconClasses, "relative")}>
+                  <MegaphoneIcon className="size-4" strokeWidth={1.5} />
+                  {isCollapsed && whatsNewUnread > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-slate-900 ring-2 ring-white" />
+                  )}
+                </span>
+                {!isCollapsed && !isTextVisible && (
+                  <>
+                    <div className="grow overflow-hidden">
+                      <p className="truncate text-sm font-bold text-slate-700">What&apos;s New</p>
+                    </div>
+                    {whatsNewUnread > 0 && (
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">
+                        {whatsNewUnread}
+                      </span>
+                    )}
+                  </>
+                )}
+              </button>
+
               {!isSettingsMode && (
                 <>
                   <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
@@ -760,6 +806,7 @@ export const MainNavigation = ({
           </div>
         </aside>
       )}
+      <WhatsNewModal open={openWhatsNewModal} setOpen={setOpenWhatsNewModal} />
       {openWorkspaceLimitModal && (
         <WorkspaceLimitModal
           open={openWorkspaceLimitModal}

@@ -1,9 +1,16 @@
 "use client";
 
-import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon, UserCircleIcon } from "lucide-react";
+import {
+  ArrowUpRightIcon,
+  ChevronRightIcon,
+  LogOutIcon,
+  MessageSquareTextIcon,
+  UserCircleIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import formbricks from "@formbricks/js";
 import type { TUser } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
@@ -49,12 +56,6 @@ export const UserDropdown = ({
     {
       label: t("common.documentation"),
       href: "https://formbricks.com/docs",
-      target: "_blank",
-      icon: ArrowUpRightIcon,
-    },
-    {
-      label: t("common.share_feedback"),
-      href: "https://github.com/formbricks/formbricks/issues",
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
@@ -113,6 +114,11 @@ export const UserDropdown = ({
             </DropdownMenuItem>
           </Link>
         ))}
+        <DropdownMenuItem
+          onClick={() => formbricks.track("share_feedback_clicked")}
+          icon={<MessageSquareTextIcon className="mr-2 size-4" strokeWidth={1.5} />}>
+          {t("common.share_feedback")}
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={async () => {
             const loginUrl = `${publicDomain}/auth/login`;

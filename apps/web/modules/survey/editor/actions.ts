@@ -24,6 +24,7 @@ import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/ut
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
+import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getWorkspace, getWorkspaceLanguages } from "./lib/workspace";
 
 type SurveyEditDiffContext = {
@@ -320,6 +321,37 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     return result;
   })
 );
+
+const ZGetPublishedSurveyCountAction = z.object({
+  surveyId: ZId,
+});
+
+// Returns how many surveys in the survey's workspace have been published (i.e. gone
+// live at least once). Used by the editor to fire an in-app code action when a user
+// publishes their Nth survey. Read-only, so it only requires read access.
+export const getPublishedSurveyCountAction = authenticatedActionClient
+  .inputSchema(ZGetPublishedSurveyCountAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          workspaceId,
+          minPermission: "read",
+        },
+      ],
+    });
+
+    return getSurveyCount(workspaceId, { status: ["inProgress", "paused", "completed"] });
+  });
 
 const ZRefetchWorkspaceAction = z.object({
   workspaceId: z.cuid2(),

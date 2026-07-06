@@ -168,6 +168,9 @@ importers:
       '@formbricks/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@formbricks/js':
+        specifier: 5.0.0
+        version: 5.0.0
       '@formbricks/js-core':
         specifier: workspace:*
         version: link:../../packages/js-core
@@ -2305,6 +2308,9 @@ packages:
 
   '@formbricks/hub@0.5.0':
     resolution: {integrity: sha512-INdGJsB1UcrYsFLCbepYhMdt++i/M1ZukIaLEnDHI/TniL1h3NzoPtIiAyLShvPxLGik5NEAye0n5xypINDITw==}
+
+  '@formbricks/js@5.0.0':
+    resolution: {integrity: sha512-mQGngmTKFP+x6rxTsqHawT0eDc1txHzSuyJvEZyG69cs7ACxBfesMRamBmabmw4LdMRODZ2J8WaBLuzck3v9Ig==}
 
   '@formkit/auto-animate@0.9.0':
     resolution: {integrity: sha512-VhP4zEAacXS3dfTpJpJ88QdLqMTcabMg0jwpOSxZ/VzfQVfl3GkZSCZThhGC5uhq/TxPHPzW0dzr4H9Bb1OgKA==}
@@ -14382,6 +14388,8 @@ snapshots:
 
   '@formbricks/hub@0.5.0': {}
 
+  '@formbricks/js@5.0.0': {}
+
   '@formkit/auto-animate@0.9.0': {}
 
   '@gar/promisify@1.1.3':
@@ -25439,7 +25447,7 @@ snapshots:
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.0.16(@types/node@25.4.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0

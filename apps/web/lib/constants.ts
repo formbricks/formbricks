@@ -197,6 +197,12 @@ export const CHATWOOT_WEBSITE_TOKEN = env.CHATWOOT_WEBSITE_TOKEN;
 export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.com";
 export const IS_CHATWOOT_CONFIGURED = Boolean(env.CHATWOOT_WEBSITE_TOKEN);
 
+// Formbricks-in-Formbricks: in-app surveys served by a Formbricks instance
+// (defaults to Formbricks Cloud). The widget only mounts when a workspace id is set.
+export const FORMBRICKS_WORKSPACE_ID = env.FORMBRICKS_WORKSPACE_ID;
+export const FORMBRICKS_APP_URL = env.FORMBRICKS_APP_URL || "https://app.formbricks.com";
+export const IS_FORMBRICKS_SURVEYS_CONFIGURED = Boolean(env.FORMBRICKS_WORKSPACE_ID);
+
 export const POSTHOG_KEY = env.POSTHOG_KEY;
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
