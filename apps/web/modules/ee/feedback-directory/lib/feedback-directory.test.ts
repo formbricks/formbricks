@@ -36,7 +36,6 @@ vi.mock("@formbricks/database", () => {
     },
     feedbackSource: {
       count: vi.fn().mockResolvedValue(0),
-      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     $transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) => cb(prismaMock)),
   };
@@ -473,30 +472,25 @@ describe("FeedbackDirectory Service", () => {
       });
     });
 
-    test("pauses feedbackSources in removed workspaces when requested", async () => {
+    test("blocks removing a workspace that still has feedback sources", async () => {
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
-      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
+      // The removed workspace (workspace2) still owns feedback sources in this directory.
+      vi.mocked(prisma.feedbackSource.count).mockResolvedValueOnce(2);
 
-      const result = await updateFeedbackDirectory(
-        mockDirectoryId,
-        mockOrganizationId,
-        {
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
           workspaceIds: [mockWorkspaceId1],
-        },
-        { pauseFeedbackSourcesInRemovedWorkspaces: true }
-      );
+        })
+      ).rejects.toThrow(InvalidInputError);
 
-      expect(result).toBe(true);
-      expect(prisma.feedbackSource.updateMany).toHaveBeenCalledWith({
+      expect(prisma.feedbackSource.count).toHaveBeenCalledWith({
         where: {
           feedbackDirectoryId: mockDirectoryId,
           workspaceId: { in: [mockWorkspaceId2] },
         },
-        data: {
-          status: "paused",
-        },
       });
+      expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
     });
 
     test("throws ResourceNotFoundError when directory does not exist (P2025)", async () => {

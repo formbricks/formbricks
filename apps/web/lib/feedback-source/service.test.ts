@@ -36,6 +36,10 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
+vi.mock("@formbricks/logger", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
 const FEEDBACK_SOURCE_ID = "clxxxxxxxxxxxxxxxx002";
 const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
@@ -448,6 +452,42 @@ describe("createFeedbackSourceWithMappings", () => {
         feedbackDirectoryId: FRD_ID,
       })
     ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE"));
+  });
+
+  test("throws FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE on composite FK violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+        code: "P2003",
+        clientVersion: "5.0.0",
+        meta: { constraint: "FeedbackSource_feedbackDirectoryId_workspaceId_fkey" },
+      })
+    );
+
+    await expect(
+      createFeedbackSourceWithMappings(ENV_ID, {
+        name: "Unassigned directory",
+        type: "csv",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE"));
+  });
+
+  test("throws DatabaseError on an unrelated foreign-key violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+        code: "P2003",
+        clientVersion: "5.0.0",
+        meta: { constraint: "FeedbackSourceFormbricksMapping_surveyId_workspaceId_fkey" },
+      })
+    );
+
+    await expect(
+      createFeedbackSourceWithMappings(ENV_ID, {
+        name: "Bad survey",
+        type: "formbricks_survey",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(DatabaseError);
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
