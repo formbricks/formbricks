@@ -2536,7 +2536,7 @@
         "teams_and_access_roles": "Teams & toegangsrollen",
         "two_factor_authentication": "Tweefactorauthenticatie",
         "unify_feedback_inbox": "Uniforme Feedback Inbox",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Ontgrendel de volledige kracht van Formbricks. 30 dagen gratis.",
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Ontgrendel de volledige kracht van Formbricks.",
         "white_glove_onboarding": "White-glove onboarding",
         "whitelabel_email_follow_ups": "Whitelabel e-mail follow-ups"
       },
@@ -2776,7 +2776,7 @@
         "prompt_helper_website": "Verzamel website feedback van bezoekers die net de prijzenpagina hebben bekeken",
         "prompt_helper_website_label": "Website feedback",
         "prompt_label": "Beschrijf de enquête die je nodig hebt",
-        "prompt_placeholder": "Beschrijf de enquête die je nodig hebt, bijv. Begrijp waarom nieuwe gebruikers afhaken tijdens onboarding en wat hen zou helpen om de setup af te ronden",
+        "prompt_placeholder": "Beschrijf de enquête die je nodig hebt, bijvoorbeeld: Begrijp waarom nieuwe gebruikers stoppen tijdens onboarding en wat hen zou helpen om de setup af te ronden",
         "shortcut_hint": "⌘/Ctrl + Enter om aan te maken",
         "start_from_scratch": "Begin vanaf nul",
         "try_prompt": "Bekijk voorbeeldprompt",

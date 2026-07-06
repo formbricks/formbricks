@@ -2536,7 +2536,7 @@
         "teams_and_access_roles": "Équipes et rôles d'accès",
         "two_factor_authentication": "Authentification à deux facteurs",
         "unify_feedback_inbox": "Boîte de réception de feedback unifiée",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Débloquez tout le potentiel de Formbricks. Gratuit pendant 30 jours.",
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Débloquez tout le potentiel de Formbricks.",
         "white_glove_onboarding": "Accompagnement personnalisé à l'intégration",
         "whitelabel_email_follow_ups": "Suivis par e-mail en marque blanche"
       },
@@ -2776,7 +2776,7 @@
         "prompt_helper_website": "Collecte les retours des visiteurs qui viennent de consulter la page tarifs",
         "prompt_helper_website_label": "Retours sur le site web",
         "prompt_label": "Décris le questionnaire dont tu as besoin",
-        "prompt_placeholder": "Décris le questionnaire dont tu as besoin, ex. Comprendre pourquoi les nouveaux utilisateurs abandonnent pendant l'onboarding et ce qui les aiderait à terminer la configuration",
+        "prompt_placeholder": "Décrivez l'enquête dont vous avez besoin, par exemple : Comprendre pourquoi les nouveaux utilisateurs abandonnent lors de l'onboarding et ce qui les aiderait à finaliser la configuration",
         "shortcut_hint": "⌘/Ctrl + Entrée pour créer",
         "start_from_scratch": "Partir de zéro",
         "try_prompt": "Voir un exemple d'instruction",

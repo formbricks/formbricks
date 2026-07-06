@@ -2536,7 +2536,7 @@
         "teams_and_access_roles": "Team & åtkomstroller",
         "two_factor_authentication": "Tvåfaktorsautentisering",
         "unify_feedback_inbox": "Enhetlig feedbackinkorg",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Lås upp Formbricks fulla kraft. Gratis i 30 dagar.",
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Lås upp Formbricks fulla potential.",
         "white_glove_onboarding": "Personlig onboarding",
         "whitelabel_email_follow_ups": "White label-uppföljningar via e-post"
       },
@@ -2776,7 +2776,7 @@
         "prompt_helper_website": "Samla in feedback från besökare som precis har tittat på prissidan",
         "prompt_helper_website_label": "Webbplatsfeedback",
         "prompt_label": "Beskriv enkäten du behöver",
-        "prompt_placeholder": "Beskriv enkäten du behöver, t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra installationen",
+        "prompt_placeholder": "Beskriv den enkät du behöver, t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra konfigurationen",
         "shortcut_hint": "⌘/Ctrl + Enter för att skapa",
         "start_from_scratch": "Börja från början",
         "try_prompt": "Se exempelprompt",

@@ -2536,7 +2536,7 @@
         "teams_and_access_roles": "Ekipler ve erişim rolleri",
         "two_factor_authentication": "İki faktörlü kimlik doğrulama",
         "unify_feedback_inbox": "Birleşik Geri Bildirim Kutusu",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricks'in tüm gücünün kilidini aç. 30 gün boyunca ücretsiz.",
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricks'in tüm gücünü ortaya çıkarın.",
         "white_glove_onboarding": "Kapsamlı başlangıç desteği",
         "whitelabel_email_follow_ups": "Beyaz etiketli e-posta takipleri"
       },
@@ -2776,7 +2776,7 @@
         "prompt_helper_website": "Fiyatlandırma sayfasını yeni inceleyen ziyaretçilerden web sitesi geri bildirimi toplayın",
         "prompt_helper_website_label": "Web sitesi geri bildirimi",
         "prompt_label": "İhtiyacın olan anketi açıkla",
-        "prompt_placeholder": "İhtiyacın olan anketi açıkla, örn. Yeni kullanıcıların onboarding sırasında neden ayrıldığını ve kurulumu tamamlamalarına neyin yardımcı olacağını anlamak",
+        "prompt_placeholder": "İhtiyacınız olan anketi tanımlayın, örneğin: Yeni kullanıcıların onboarding sırasında neden durduğunu ve kurulumu tamamlamalarına neyin yardımcı olacağını anlamak",
         "shortcut_hint": "Oluşturmak için ⌘/Ctrl + Enter",
         "start_from_scratch": "Sıfırdan başla",
         "try_prompt": "Örnek komutu gör",

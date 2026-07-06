@@ -2536,7 +2536,7 @@
         "teams_and_access_roles": "Csapatok és hozzáférési szerepkörök",
         "two_factor_authentication": "Kétfaktoros hitelesítés",
         "unify_feedback_inbox": "Egyesített visszajelzési postaláda",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "A Formbricks teljes erejének feloldása. 30 napig ingyen.",
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Használja ki a Formbricks teljes erejét.",
         "white_glove_onboarding": "Prémium bevezetés",
         "whitelabel_email_follow_ups": "Whitelabel e-mail követések"
       },
@@ -2776,7 +2776,7 @@
         "prompt_helper_website": "Gyűjts visszajelzéseket a weboldal látogatóitól, akik épp az árképzési oldalt nézték meg",
         "prompt_helper_website_label": "Weboldal visszajelzés",
         "prompt_label": "Írd le, milyen kérdőívre van szükséged",
-        "prompt_placeholder": "Írd le, milyen kérdőívre van szükséged, pl. Megérteni, miért hagyják abba az új felhasználók a regisztrációt, és mi segítené őket a beállítás befejezésében",
+        "prompt_placeholder": "Írja le a szükséges felmérést, például: Értse meg, miért hagynak fel az új felhasználók a regisztráció során, és mi segítené őket a beállítás befejezésében",
         "shortcut_hint": "⌘/Ctrl + Enter a létrehozáshoz",
         "start_from_scratch": "Kezdés a nulláról",
         "try_prompt": "Példa promptra",

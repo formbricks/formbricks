@@ -2536,7 +2536,7 @@
         "teams_and_access_roles": "Equipos y roles de acceso",
         "two_factor_authentication": "Autenticación de dos factores",
         "unify_feedback_inbox": "Bandeja de Entrada de Comentarios Unificada",
-        "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloquea todo el potencial de Formbricks. Gratis durante 30 días.",
+        "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloquea todo el potencial de Formbricks.",
         "white_glove_onboarding": "Incorporación personalizada",
         "whitelabel_email_follow_ups": "Seguimientos por correo de marca blanca"
       },
@@ -2776,7 +2776,7 @@
         "prompt_helper_website": "Recoge feedback del sitio web de visitantes que acaban de revisar la página de precios",
         "prompt_helper_website_label": "Feedback del sitio web",
         "prompt_label": "Describe la encuesta que necesitas",
-        "prompt_placeholder": "Describe la encuesta que necesitas, p. ej. Entender por qué los nuevos usuarios abandonan durante el onboarding y qué les ayudaría a completar la configuración",
+        "prompt_placeholder": "Describe la encuesta que necesitas, por ejemplo: Entender por qué los nuevos usuarios se detienen durante la incorporación y qué les ayudaría a completar la configuración",
         "shortcut_hint": "⌘/Ctrl + Enter para crear",
         "start_from_scratch": "Empezar desde cero",
         "try_prompt": "Ver ejemplo de instrucción",
