@@ -34,12 +34,15 @@ export interface ReconcileOrphanedWorkflowRunsResult {
  *   un-dispatchable and marked `failed` (bounds the loop; surfaces the stuck run) instead of being
  *   re-dispatched forever.
  * - **Re-dispatch vs. ceiling:** the deterministic `jobId` makes re-dispatch a no-op while a job of
- *   that id still exists in *any* state — including a terminally `failed` one (kept by `removeOnFail`
- *   for 7d, longer than the 24h ceiling). So re-dispatch genuinely recovers only runs whose job was
- *   never created (or has since been evicted); a run dispatched but whose job failed while the row
- *   stayed `queued` is cleaned up by the ceiling instead. (The executor marks its own runs terminal on
- *   the final attempt, so this is only reachable when claiming never reached the `queued → running`
- *   write.)
+ *   that id is still retained, including a terminally `failed` one. Retention is not absolute:
+ *   `removeOnFail` is age 7d *and* `count: 5000` (`packages/jobs/src/constants.ts`), so under a large
+ *   failure backlog a failed job can be count-evicted well inside the 24h ceiling, and a later
+ *   re-dispatch then genuinely re-runs it instead of leaving it to age out. That re-run is safe —
+ *   per-step send idempotency plus the terminal-status guard make it a clean resume or a no-op. So the
+ *   boundary is: re-dispatch recovers a run whose job is gone (never created, or evicted) and no-ops
+ *   while the job is retained, with the ceiling as the backstop — not an absolute 7d-vs-24h rule. (The
+ *   executor marks its own runs terminal on the final attempt, so a job coexisting with a still-`queued`
+ *   row is only reachable when claiming never reached the `queued → running` write.)
  * - **Bounded:** one batch per tick; a larger backlog drains over subsequent ticks (re-dispatch is
  *   idempotent, so re-selecting the same still-`queued` run next tick is harmless).
  * - **Safe under concurrency:** every write is status-guarded (`status: "queued"`) so a run claimed

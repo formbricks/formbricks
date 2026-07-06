@@ -30,7 +30,9 @@ export const processWorkflowRunReconcileJob: JobHandler<TWorkflowRunReconcileJob
   });
 
   if (result.redispatched > 0 || result.agedOutFailed > 0) {
-    logger.info({ ...logContext, ...result }, "Workflow run reconciliation re-dispatched orphaned runs");
+    // Neutral wording: a ceiling-only sweep re-dispatches nothing, so the message must not claim a
+    // re-dispatch — the `redispatched` / `agedOutFailed` counts in the payload carry the specifics.
+    logger.info({ ...logContext, ...result }, "Workflow run reconciliation acted on orphaned runs");
   } else {
     logger.debug({ ...logContext, ...result }, "Workflow run reconciliation found no orphaned runs");
   }
