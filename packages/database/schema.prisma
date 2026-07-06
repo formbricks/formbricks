@@ -824,7 +824,7 @@ model Account {
   updatedAt         DateTime @updatedAt @map(name: "updated_at")
   user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId            String
-  type              String
+  type              String?
   provider          String
   providerAccountId String
   access_token      String?  @db.Text
@@ -835,6 +835,13 @@ model Account {
   scope             String?
   id_token          String?  @db.Text
   session_state     String?
+
+  // Better Auth (ENG-1054): credential password hash + OAuth token expiry timestamps.
+  // BA maps providerId←provider, accountId←providerAccountId, accessToken←access_token,
+  // refreshToken←refresh_token, idToken←id_token via account.fields in auth.ts.
+  password              String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -854,6 +861,13 @@ model Session {
   userId       String
   expires      DateTime
 
+  // Better Auth (ENG-1054): token←sessionToken, expiresAt←expires (mapped via session.fields); ipAddress + userAgent below are new BA columns.
+  ipAddress String?
+  userAgent String?
+
+  oauthAccessTokens  oauthAccessToken[]  @relation("OAuthAccessTokenSession")
+  oauthRefreshTokens oauthRefreshToken[] @relation("OAuthRefreshTokenSession")
+
   @@index([userId])
 }
 
@@ -864,6 +878,132 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Better Auth (ENG-1054) two-factor secrets. Supersedes the legacy User.twoFactorSecret /
+/// User.backupCodes columns (kept until cutover). `secret` and `backupCodes` are encrypted
+/// at rest by Better Auth using BETTER_AUTH_SECRET.
+model TwoFactor {
+  id          String  @id @default(cuid())
+  secret      String
+  backupCodes String
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified    Boolean @default(true)
+
+  @@unique([userId])
+}
+
+/// Better Auth JWT signing keys for OAuth/OIDC access and ID tokens.
+model jwks {
+  id         String    @id @default(cuid())
+  publicKey  String
+  privateKey String
+  createdAt  DateTime
+  expiresAt  DateTime?
+}
+
+/// Better Auth OAuth 2.1 client registrations for MCP and future OAuth clients.
+model oauthClient {
+  id                      String              @id @default(cuid())
+  clientId                String              @unique
+  clientSecret            String?
+  disabled                Boolean?            @default(false)
+  skipConsent             Boolean?
+  enableEndSession        Boolean?
+  subjectType             String?
+  scopes                  String[]            @default([])
+  userId                  String?
+  user                    User?               @relation("OAuthClientUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt               DateTime?
+  updatedAt               DateTime?
+  name                    String?
+  uri                     String?
+  icon                    String?
+  contacts                String[]            @default([])
+  tos                     String?
+  policy                  String?
+  softwareId              String?
+  softwareVersion         String?
+  softwareStatement       String?
+  redirectUris            String[]
+  postLogoutRedirectUris  String[]            @default([])
+  tokenEndpointAuthMethod String?
+  grantTypes              String[]            @default([])
+  responseTypes           String[]            @default([])
+  public                  Boolean?
+  type                    String?
+  requirePKCE             Boolean?
+  referenceId             String?
+  metadata                Json?
+  accessTokens            oauthAccessToken[]
+  refreshTokens           oauthRefreshToken[]
+  consents                oauthConsent[]
+
+  @@index([userId])
+}
+
+/// Better Auth opaque access token records. The token column stores Better Auth's hashed lookup value.
+/// JWT access tokens are verified through JWKS and bounded by the configured short lifetime.
+model oauthAccessToken {
+  id          String             @id @default(cuid())
+  token       String             @unique
+  clientId    String
+  client      oauthClient        @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  sessionId   String?
+  session     Session?           @relation("OAuthAccessTokenSession", fields: [sessionId], references: [id], onDelete: SetNull)
+  userId      String?
+  user        User?              @relation("OAuthAccessTokenUser", fields: [userId], references: [id], onDelete: Cascade)
+  referenceId String?
+  refreshId   String?
+  refresh     oauthRefreshToken? @relation(fields: [refreshId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime
+  scopes      String[]
+
+  @@index([clientId])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([refreshId])
+}
+
+/// Better Auth OAuth refresh tokens used by delegated MCP clients. The token column stores a hashed lookup value.
+model oauthRefreshToken {
+  id           String             @id @default(cuid())
+  token        String             @unique
+  clientId     String
+  client       oauthClient        @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  sessionId    String?
+  session      Session?           @relation("OAuthRefreshTokenSession", fields: [sessionId], references: [id], onDelete: SetNull)
+  userId       String
+  user         User               @relation("OAuthRefreshTokenUser", fields: [userId], references: [id], onDelete: Cascade)
+  referenceId  String?
+  expiresAt    DateTime
+  createdAt    DateTime
+  revoked      DateTime?
+  authTime     DateTime?
+  scopes       String[]
+  accessTokens oauthAccessToken[]
+
+  @@index([clientId])
+  @@index([sessionId])
+  @@index([userId])
+}
+
+/// Better Auth OAuth user consent grants for delegated clients.
+model oauthConsent {
+  id          String      @id @default(cuid())
+  clientId    String
+  client      oauthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  userId      String?
+  user        User?       @relation("OAuthConsentUser", fields: [userId], references: [id], onDelete: Cascade)
+  referenceId String?
+  scopes      String[]
+  createdAt   DateTime
+  updatedAt   DateTime
+
+  @@index([clientId])
+  @@index([userId])
 }
 
 /// Stores the active password reset token for a user.
@@ -890,12 +1030,12 @@ model PasswordResetToken {
 /// @property memberships - Organizations the user belongs to
 /// @property notificationSettings - User's notification preferences
 model User {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @updatedAt @map(name: "updated_at")
   name          String
-  email         String    @unique
-  emailVerified DateTime? @map(name: "email_verified")
+  email         String   @unique
+  emailVerified Boolean  @default(false) @map(name: "email_verified")
 
   twoFactorSecret           String?
   twoFactorEnabled          Boolean             @default(false)
@@ -906,6 +1046,11 @@ model User {
   memberships               Membership[]
   accounts                  Account[]
   sessions                  Session[]
+  twoFactor                 TwoFactor?
+  oauthClients              oauthClient[]       @relation("OAuthClientUser")
+  oauthAccessTokens         oauthAccessToken[]  @relation("OAuthAccessTokenUser")
+  oauthRefreshTokens        oauthRefreshToken[] @relation("OAuthRefreshTokenUser")
+  oauthConsents             oauthConsent[]      @relation("OAuthConsentUser")
   passwordResetToken        PasswordResetToken?
   groupId                   String?
   invitesCreated            Invite[]            @relation("inviteCreatedBy")

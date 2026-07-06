@@ -98,6 +98,8 @@ const mockSurvey: TSurvey = {
   blocks: [],
   isCaptureIpEnabled: false,
   isAutoProgressingEnabled: true,
+  publishOn: null,
+  closeOn: null,
   metadata: {},
   slug: null,
 };

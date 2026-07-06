@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -54,6 +55,12 @@ export const createFeedbackDirectoryAction = authenticatedActionClient
       ctx.auditLoggingCtx.newObject = {
         ...(await getFeedbackDirectoryDetails(result)),
       };
+      capturePostHogEvent(
+        ctx.user.id,
+        "feedback_directory_created",
+        { feedback_directory_id: result },
+        { organizationId: parsedInput.organizationId }
+      );
       return result;
     })
   );

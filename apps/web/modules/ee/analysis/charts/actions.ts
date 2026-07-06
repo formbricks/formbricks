@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -72,6 +73,12 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
       ctx.auditLoggingCtx.workspaceId = workspaceId;
       ctx.auditLoggingCtx.chartId = chart.id;
       ctx.auditLoggingCtx.newObject = chart;
+      capturePostHogEvent(
+        ctx.user.id,
+        "chart_created",
+        { chart_id: chart.id },
+        { organizationId, workspaceId }
+      );
       return chart;
     }
   )

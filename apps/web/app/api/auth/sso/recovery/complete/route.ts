@@ -1,17 +1,16 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
 import { verifySsoRelinkIntent } from "@/lib/jwt";
 import { deleteSessionBySessionToken } from "@/modules/auth/lib/auth-session-repository";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import {
-  NEXT_AUTH_SESSION_COOKIE_NAMES,
+  BETTER_AUTH_SESSION_COOKIE_NAMES,
   getSessionTokenFromCookieHeader,
 } from "@/modules/auth/lib/session-cookie";
 import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/sso-recovery";
 
 const clearSessionCookies = (response: NextResponse) => {
-  for (const cookieName of NEXT_AUTH_SESSION_COOKIE_NAMES) {
+  for (const cookieName of BETTER_AUTH_SESSION_COOKIE_NAMES) {
     response.cookies.set({
       name: cookieName,
       value: "",
@@ -49,7 +48,7 @@ export const GET = async (request: Request) => {
   }
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
     const callbackUrl = await completeSsoRecovery({
       intentToken,
       sessionUserId: session?.user.id,

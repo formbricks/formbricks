@@ -1,9 +1,8 @@
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 
 export const GET = async (
   _: Request,
@@ -14,7 +13,7 @@ export const GET = async (
   if (!environmentId) return notFound();
 
   // check auth
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) throw new AuthenticationError("Not authenticated");
 
   const workspace = await findWorkspaceByIdOrLegacyEnvId(environmentId);
