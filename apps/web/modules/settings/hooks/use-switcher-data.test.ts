@@ -96,4 +96,38 @@ describe("useSwitcherData", () => {
     expect(loader).toHaveBeenCalledTimes(2);
     expect(result.current.error).toBeNull();
   });
+
+  test("uses fallbackError for unexpected thrown errors in catch block", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const loader = vi.fn().mockRejectedValue(new Error("raw DB error"));
+    const { result } = renderHook(() => useSwitcherData(loader, FALLBACK));
+
+    await act(async () => {
+      await result.current.load();
+    });
+
+    expect(result.current.error).toBe(FALLBACK);
+    consoleSpy.mockRestore();
+  });
+
+  test("avoids duplicate fetches when load() is called in rapid succession", async () => {
+    let resolveLoader: (value: any) => void = () => {};
+    const loaderPromise = new Promise((resolve) => {
+      resolveLoader = resolve;
+    });
+    const loader = vi.fn().mockReturnValue(loaderPromise);
+    const { result } = renderHook(() => useSwitcherData(loader, FALLBACK));
+
+    act(() => {
+      void result.current.load();
+      void result.current.load();
+    });
+
+    await act(async () => {
+      resolveLoader({ data: [{ id: "1", name: "Alpha" }] });
+      await loaderPromise;
+    });
+
+    expect(loader).toHaveBeenCalledTimes(1);
+  });
 });

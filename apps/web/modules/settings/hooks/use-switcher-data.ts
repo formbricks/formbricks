@@ -33,6 +33,11 @@ export const useSwitcherData = (
   // initial "never opened" state from "loaded, possibly empty".
   const [hasLoaded, setHasLoaded] = useState(false);
 
+  // Synchronous guards to prevent duplicate fetches from rapid back-to-back calls
+  const isLoadingRef = useRef(false);
+  const hasDataRef = useRef(false);
+  const hasErrorRef = useRef(false);
+
   // Hold the latest loader/onError in refs so callers can pass inline closures (e.g. ones that close
   // over organizationId) without memoizing them and without churning `load`'s identity every render.
   const loaderRef = useRef(loader);
@@ -44,31 +49,41 @@ export const useSwitcherData = (
     async (force = false) => {
       // Load once: skip if already populated, in flight, or currently showing an error (call retry()
       // to clear and reload). `force` bypasses the guard for explicit retries.
-      if (!force && (items.length > 0 || isLoading || error)) return;
+      if (!force && (hasDataRef.current || isLoadingRef.current || hasErrorRef.current)) return;
+      isLoadingRef.current = true;
+      hasErrorRef.current = false;
       setIsLoading(true);
       setError(null);
       try {
         const result = await loaderRef.current();
         if (result?.data) {
-          setItems([...result.data].sort((a, b) => a.name.localeCompare(b.name)));
+          const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
+          setItems(sorted);
+          hasDataRef.current = sorted.length > 0;
         } else {
           const message = (result ? getFormattedErrorMessage(result) : "") || fallbackError;
           setError(message);
+          hasErrorRef.current = true;
           onErrorRef.current?.(message);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : fallbackError;
+        console.error(err);
+        const message = fallbackError;
         setError(message);
+        hasErrorRef.current = true;
         onErrorRef.current?.(message);
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
         setHasLoaded(true);
       }
     },
-    [items.length, isLoading, error, fallbackError]
+    [fallbackError]
   );
 
   const retry = useCallback(() => {
+    hasDataRef.current = false;
+    hasErrorRef.current = false;
     void load(true);
   }, [load]);
 

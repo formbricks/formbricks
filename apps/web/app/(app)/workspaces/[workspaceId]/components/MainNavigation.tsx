@@ -373,11 +373,19 @@ export const MainNavigation = ({
                 workspaces={workspaceSwitcher.items}
                 isLoadingWorkspaces={workspaceSwitcher.isLoading}
                 onWorkspaceChange={handleSettingsWorkspaceChange}
-                onWorkspaceDropdownOpen={() => workspaceSwitcher.load()}
+                onWorkspaceDropdownOpen={() =>
+                  workspaceSwitcher.error ? workspaceSwitcher.retry() : workspaceSwitcher.load()
+                }
+                errorWorkspaces={workspaceSwitcher.error}
+                onWorkspaceRetry={workspaceSwitcher.retry}
                 organizations={organizationSwitcher.items}
                 isLoadingOrganizations={organizationSwitcher.isLoading}
                 onOrganizationChange={handleSettingsOrganizationChange}
-                onOrganizationDropdownOpen={() => organizationSwitcher.load()}
+                onOrganizationDropdownOpen={() =>
+                  organizationSwitcher.error ? organizationSwitcher.retry() : organizationSwitcher.load()
+                }
+                errorOrganizations={organizationSwitcher.error}
+                onOrganizationRetry={organizationSwitcher.retry}
               />
             </div>
           ) : (

@@ -89,6 +89,7 @@ export const LandingSidebar = ({ user, organization, publicDomain }: Readonly<La
               items={organizationSwitcher.items}
               selectedId={organization.id}
               onSelect={handleOrganizationChange}
+              showSettings={false}
             />
           </DropdownMenuContent>
         </DropdownMenu>

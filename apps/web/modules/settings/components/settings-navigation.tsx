@@ -93,11 +93,19 @@ export const SettingsNavigation = ({
           workspaces={workspaceSwitcher.items}
           isLoadingWorkspaces={workspaceSwitcher.isLoading}
           onWorkspaceChange={handleWorkspaceChange}
-          onWorkspaceDropdownOpen={() => workspaceSwitcher.load()}
+          onWorkspaceDropdownOpen={() =>
+            workspaceSwitcher.error ? workspaceSwitcher.retry() : workspaceSwitcher.load()
+          }
+          errorWorkspaces={workspaceSwitcher.error}
+          onWorkspaceRetry={workspaceSwitcher.retry}
           organizations={organizationSwitcher.items}
           isLoadingOrganizations={organizationSwitcher.isLoading}
           onOrganizationChange={handleOrganizationChange}
-          onOrganizationDropdownOpen={() => organizationSwitcher.load()}
+          onOrganizationDropdownOpen={() =>
+            organizationSwitcher.error ? organizationSwitcher.retry() : organizationSwitcher.load()
+          }
+          errorOrganizations={organizationSwitcher.error}
+          onOrganizationRetry={organizationSwitcher.retry}
         />
       </div>
       <UserDropdown user={user} organizationId={organizationId} publicDomain={publicDomain} />

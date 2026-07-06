@@ -94,8 +94,10 @@ export const WorkspaceBreadcrumb = ({
       router.push(targetPath);
     });
   };
-
   const handleAddWorkspace = () => {
+    if (!workspaceSwitcher.hasLoaded || workspaceSwitcher.isLoading) {
+      return;
+    }
     if (workspaceSwitcher.items.length >= organizationWorkspacesLimit) {
       setOpenLimitModal(true);
       return;
