@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
+import { TResponseData } from "@formbricks/types/responses";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -32,6 +33,7 @@ interface PinScreenProps {
   isSpamProtectionEnabled?: boolean;
   responseCount?: number;
   styling: TWorkspaceStyling | TSurveyStyling;
+  serverPrefillData?: TResponseData;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -55,6 +57,7 @@ export const PinScreen = (props: PinScreenProps) => {
     isSpamProtectionEnabled = false,
     responseCount,
     styling,
+    serverPrefillData,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -149,6 +152,7 @@ export const PinScreen = (props: PinScreenProps) => {
       PRIVACY_URL={PRIVACY_URL}
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      serverPrefillData={serverPrefillData}
     />
   );
 };
