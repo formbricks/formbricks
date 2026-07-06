@@ -80,7 +80,6 @@ export const SettingsView = ({
           ) : (
             <TargetingLockedCard
               isFormbricksCloud={isFormbricksCloud}
-              workspaceId={localSurvey.workspaceId}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
             />
           )}

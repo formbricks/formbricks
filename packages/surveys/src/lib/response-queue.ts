@@ -8,9 +8,9 @@ import { ApiClient } from "./api-client";
 import {
   type SerializedSurveyState,
   addPendingResponse,
-  countPendingResponses,
-  getPendingResponses,
-  removePendingResponse,
+  countPendingResponsesStrict,
+  getPendingResponsesStrict,
+  removePendingResponseStrict,
 } from "./offline-storage";
 import { SurveyState } from "./survey-state";
 
@@ -38,12 +38,14 @@ export const delay = (ms: number): Promise<void> => {
 // so that only one sync/send runs at a time per survey, even across instances.
 const syncingBySurvey = new Map<string, boolean>();
 const requestInProgressBySurvey = new Map<string, boolean>();
+const processedDbIdsPendingRemovalBySurvey = new Map<string, Set<number>>();
 
 /** @internal Exposed for tests only. */
 export const _syncLocks = {
   clear: () => {
     syncingBySurvey.clear();
     requestInProgressBySurvey.clear();
+    processedDbIdsPendingRemovalBySurvey.clear();
   },
   set: (surveyId: string, value: boolean) => syncingBySurvey.set(surveyId, value),
   get: (surveyId: string) => syncingBySurvey.get(surveyId) ?? false,
@@ -57,7 +59,7 @@ export class ResponseQueue {
   private surveyState: SurveyState;
   readonly api: ApiClient;
   private responseRecaptchaToken?: string;
-  // Maps in-memory queue index → IndexedDB id for cleanup after successful send
+  // Maps queued response objects to their IndexedDB ids for cleanup after successful sends.
   private readonly pendingDbIds: Map<TResponseUpdate, number> = new Map();
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
@@ -105,6 +107,108 @@ export class ResponseQueue {
     };
   }
 
+  private logOfflinePersistenceError(message: string, error: unknown) {
+    console.error(`Formbricks: ${message}`, {
+      error,
+      surveyId: this.config.surveyId,
+    });
+  }
+
+  private processQueueInBackground(context: string) {
+    void this.processQueue().catch((error) => {
+      this.logOfflinePersistenceError(context, error);
+    });
+  }
+
+  private syncPersistedResponsesInBackground(context: string) {
+    void this.syncPersistedResponses().catch((error) => {
+      this.logOfflinePersistenceError(context, error);
+    });
+  }
+
+  private async countPersistedResponses(): Promise<number> {
+    if (!this.config.surveyId) return 0;
+
+    try {
+      const pendingCount = await countPendingResponsesStrict(this.config.surveyId);
+      return Math.max(0, pendingCount - this.getProcessedDbIdsPendingRemoval().size);
+    } catch (error) {
+      this.logOfflinePersistenceError("Failed to count pending responses in IndexedDB", error);
+      throw error;
+    }
+  }
+
+  private getProcessedDbIdsPendingRemoval(): Set<number> {
+    if (!this.config.surveyId) return new Set();
+
+    const existingIds = processedDbIdsPendingRemovalBySurvey.get(this.config.surveyId);
+    if (existingIds) return existingIds;
+
+    const ids = new Set<number>();
+    processedDbIdsPendingRemovalBySurvey.set(this.config.surveyId, ids);
+    return ids;
+  }
+
+  private removePendingDbId(dbId: number) {
+    for (const [responseUpdate, pendingDbId] of this.pendingDbIds.entries()) {
+      if (pendingDbId === dbId) {
+        this.pendingDbIds.delete(responseUpdate);
+        return;
+      }
+    }
+  }
+
+  private async removePendingResponseFromIndexedDB(
+    dbId: number,
+    context: string,
+    options: { removeTrackedDbIdOnSuccess?: boolean } = {}
+  ): Promise<boolean> {
+    try {
+      await removePendingResponseStrict(dbId);
+      this.getProcessedDbIdsPendingRemoval().delete(dbId);
+      if (options.removeTrackedDbIdOnSuccess ?? true) {
+        this.removePendingDbId(dbId);
+      }
+      return true;
+    } catch (error) {
+      this.getProcessedDbIdsPendingRemoval().add(dbId);
+      this.logOfflinePersistenceError(context, error);
+      return false;
+    }
+  }
+
+  private async retryProcessedDbIdCleanup() {
+    for (const dbId of Array.from(this.getProcessedDbIdsPendingRemoval())) {
+      await this.removePendingResponseFromIndexedDB(
+        dbId,
+        "Failed to remove processed response from IndexedDB"
+      );
+    }
+  }
+
+  private removeProcessedQueueItemsByDbId(processedDbIds: Set<number>) {
+    if (processedDbIds.size === 0) return;
+
+    for (let index = this.queue.length - 1; index >= 0; index--) {
+      const item = this.queue[index];
+      const pendingDbId = this.pendingDbIds.get(item);
+
+      if (pendingDbId !== undefined && processedDbIds.has(pendingDbId)) {
+        this.queue.splice(index, 1);
+      }
+    }
+
+    for (const [item, pendingDbId] of this.pendingDbIds.entries()) {
+      if (processedDbIds.has(pendingDbId)) {
+        this.pendingDbIds.delete(item);
+      }
+    }
+  }
+
+  private isTerminalStaleResponseError(error: ApiErrorResponse): boolean {
+    return error.status === 409;
+  }
+
   add(responseUpdate: TResponseUpdate) {
     // update survey state
     this.surveyState.accumulateResponse(responseUpdate);
@@ -122,14 +226,19 @@ export class ResponseQueue {
         responseUpdate,
         surveyStateSnapshot: this.serializeSurveyState(),
         createdAt: Date.now(),
-      }).then((dbId) => {
-        if (dbId > 0) {
-          this.pendingDbIds.set(responseUpdate, dbId);
-        }
-        this.processQueue();
-      });
+      })
+        .then((dbId) => {
+          if (dbId > 0) {
+            this.pendingDbIds.set(responseUpdate, dbId);
+          }
+          this.processQueueInBackground("Failed to process queue after persisting response");
+        })
+        .catch((error) => {
+          this.logOfflinePersistenceError("Failed to persist pending response to IndexedDB", error);
+          this.processQueueInBackground("Failed to process queue after IndexedDB persistence failure");
+        });
     } else {
-      this.processQueue();
+      this.processQueueInBackground("Failed to process queue after adding response");
     }
   }
 
@@ -153,7 +262,13 @@ export class ResponseQueue {
     // This prevents processQueue and syncPersistedResponses from racing to
     // create the same response concurrently (duplicate POSTs).
     if (this.config.persistOffline && this.config.surveyId) {
-      const pendingCount = await countPendingResponses(this.config.surveyId);
+      let pendingCount: number;
+      try {
+        await this.retryProcessedDbIdCleanup();
+        pendingCount = await this.countPersistedResponses();
+      } catch {
+        return { success: false };
+      }
 
       // Re-check after await — another processQueue/sync may have started during the yield
       if (this.isSyncing || this.isRequestInProgress || this.queue.length === 0) {
@@ -161,7 +276,7 @@ export class ResponseQueue {
       }
 
       if (pendingCount > 1) {
-        void this.syncPersistedResponses();
+        this.syncPersistedResponsesInBackground("Failed to sync persisted responses in background");
         return { success: false };
       }
     }
@@ -174,8 +289,7 @@ export class ResponseQueue {
       // Remove from IndexedDB on successful send
       const dbId = this.pendingDbIds.get(responseUpdate);
       if (dbId !== undefined) {
-        void removePendingResponse(dbId);
-        this.pendingDbIds.delete(responseUpdate);
+        await this.removePendingResponseFromIndexedDB(dbId, "Failed to remove sent response from IndexedDB");
       }
 
       this.handleSuccessfulResponse(responseUpdate, result.quotaFullResponse);
@@ -196,13 +310,17 @@ export class ResponseQueue {
    * Does NOT populate the in-memory queue — syncPersistedResponses reads directly from IndexedDB.
    */
   async loadPersistedQueue(): Promise<number> {
-    if (!this.config.persistOffline || !this.config.surveyId) return 0;
-    return countPendingResponses(this.config.surveyId);
+    return this.getPendingCount();
   }
 
   async getPendingCount(): Promise<number> {
     if (!this.config.persistOffline || !this.config.surveyId) return 0;
-    return countPendingResponses(this.config.surveyId);
+    try {
+      await this.retryProcessedDbIdCleanup();
+      return await this.countPersistedResponses();
+    } catch {
+      return 0;
+    }
   }
 
   /**
@@ -229,17 +347,19 @@ export class ResponseQueue {
     if (this.isRequestInProgress) return { success: false, syncedCount: 0 };
 
     this.isSyncing = true;
+    let syncedCount = 0;
 
     try {
-      const entries = await getPendingResponses(this.config.surveyId);
-      if (entries.length === 0) return { success: true, syncedCount: 0 };
+      await this.retryProcessedDbIdCleanup();
+      const entries = await getPendingResponsesStrict(this.config.surveyId);
+      const entriesToSync = entries.filter((entry) => {
+        return entry.id === undefined || !this.getProcessedDbIdsPendingRemoval().has(entry.id);
+      });
+      if (entriesToSync.length === 0) return { success: true, syncedCount: 0 };
 
-      // Snapshot queue length before sync — entries added during async sync must be preserved.
-      const queueLengthBeforeSync = this.queue.length;
+      const processedDbIds = new Set<number>();
 
-      let syncedCount = 0;
-
-      for (const entry of entries) {
+      for (const entry of entriesToSync) {
         // Only restore responseId from snapshot when it was set at capture time.
         // Otherwise, let the responseId from the previous sendResponse carry forward
         // (i.e., a create response in the previous iteration sets the responseId for updates).
@@ -259,37 +379,56 @@ export class ResponseQueue {
           result = await this.sendResponse(entry.responseUpdate);
         }
 
-        if (entry.id !== undefined) {
-          if (result.ok) {
-            await removePendingResponse(entry.id);
-          } else if (result.error && result.error.status >= 400 && result.error.status < 500) {
+        if (result.ok) {
+          if (entry.id !== undefined) {
+            const removed = await this.removePendingResponseFromIndexedDB(
+              entry.id,
+              "Failed to remove synced response from IndexedDB",
+              { removeTrackedDbIdOnSuccess: false }
+            );
+            processedDbIds.add(entry.id);
+            if (!removed) {
+              this.removeProcessedQueueItemsByDbId(processedDbIds);
+              return { success: false, syncedCount };
+            }
+          }
+        } else {
+          if (entry.id !== undefined && result.error && this.isTerminalStaleResponseError(result.error)) {
             // Client error (e.g., 409 "already completed") —
             // this entry is stale, remove it and continue with the next one.
-            await removePendingResponse(entry.id);
+            const removed = await this.removePendingResponseFromIndexedDB(
+              entry.id,
+              "Failed to remove stale response from IndexedDB",
+              { removeTrackedDbIdOnSuccess: false }
+            );
+            processedDbIds.add(entry.id);
+            if (!removed) {
+              this.removeProcessedQueueItemsByDbId(processedDbIds);
+              return { success: false, syncedCount };
+            }
             continue;
-          } else {
-            // Server/network error — stop syncing, remaining entries stay for next attempt
-            return { success: false, syncedCount };
           }
+
+          // Server/network error — stop syncing, remaining entries stay for next attempt
+          this.removeProcessedQueueItemsByDbId(processedDbIds);
+          return { success: false, syncedCount };
         }
 
         syncedCount++;
-        onProgress?.(syncedCount, entries.length);
+        onProgress?.(syncedCount, entriesToSync.length);
       }
 
-      // Only remove pre-sync entries from the in-memory queue.
-      // Entries added by add() during the async sync loop must be preserved.
-      const removed = this.queue.splice(0, queueLengthBeforeSync);
-      for (const item of removed) {
-        this.pendingDbIds.delete(item);
-      }
+      this.removeProcessedQueueItemsByDbId(processedDbIds);
 
       // Kick off processQueue for any entries added during sync
       if (this.queue.length > 0) {
-        this.processQueue();
+        this.processQueueInBackground("Failed to process queue after persisted response sync");
       }
 
       return { success: true, syncedCount };
+    } catch (error) {
+      this.logOfflinePersistenceError("Failed to sync persisted responses from IndexedDB", error);
+      return { success: false, syncedCount };
     } finally {
       this.isSyncing = false;
     }
@@ -401,7 +540,7 @@ export class ResponseQueue {
       this.config.onQuotaFull?.(quotaFullResponse);
     }
 
-    this.processQueue(); // process the next item in the queue if any
+    this.processQueueInBackground("Failed to process next queued response");
   }
 
   private handleFailedResponse(responseUpdate: TResponseUpdate, isRecaptchaError?: boolean) {

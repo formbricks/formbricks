@@ -1,9 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -11,9 +10,8 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createEmailTokenAction } from "@/modules/auth/actions";
-import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
+import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
+import { authClient } from "@/modules/auth/lib/auth-client";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
@@ -50,8 +48,6 @@ interface LoginFormProps {
   isMultiOrgEnabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
-  samlTenant: string;
-  samlProduct: string;
   oauthError?: string;
   prefilledEmail?: string;
   inviteToken?: string | null;
@@ -71,8 +67,6 @@ export const LoginForm = ({
   isMultiOrgEnabled,
   isSsoEnabled,
   samlSsoEnabled,
-  samlTenant,
-  samlProduct,
   oauthError,
   prefilledEmail,
   inviteToken,
@@ -80,9 +74,19 @@ export const LoginForm = ({
   resolvedCallbackUrl,
 }: LoginFormProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
-  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked";
+  // Better Auth surfaces the collision as `account_not_linked`; NextAuth used `OAuthAccountNotLinked`.
+  // Accept both so the "not linked" alert survives the cutover.
+  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
   const { t } = useTranslation();
+
+  const signupHref = useMemo(() => {
+    const base = inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup";
+    const attributionSuffix = buildAttributionQuerySuffix(searchParams);
+    if (!attributionSuffix) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${attributionSuffix}`;
+  }, [inviteToken, searchParams]);
 
   const form = useForm<TLoginForm>({
     defaultValues: {
@@ -99,44 +103,51 @@ export const LoginForm = ({
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Email");
     }
     try {
-      const signInResponse = await signIn("credentials", {
-        callbackUrl: resolvedCallbackUrl || "/",
+      // Step 2 — the user is answering a two-factor challenge. Better Auth issued a partial
+      // session on the first step; verifying the TOTP or backup code promotes it to a full session.
+      if (totpLogin || totpBackup) {
+        const { error } = totpBackup
+          ? await authClient.twoFactor.verifyBackupCode({ code: data.backupCode ?? "" })
+          : await authClient.twoFactor.verifyTotp({ code: data.totpCode ?? "" });
+
+        if (error) {
+          toast.error(error.message ?? t("common.something_went_wrong"));
+          return;
+        }
+
+        router.push(resolvedCallbackPath || "/");
+        return;
+      }
+
+      // Step 1 — email + password.
+      const { data: signInData, error } = await authClient.signIn.email({
         email: data.email.toLowerCase(),
         password: data.password,
-        ...(totpLogin && { totpCode: data.totpCode }),
-        ...(totpBackup && { backupCode: data.backupCode }),
-        redirect: false,
+        // For an unverified address Better Auth (sendOnSignIn) resends the verification email and builds
+        // its link around this callbackURL; without it the post-verify redirect falls back to "/", so an
+        // unverified user signing in from an invite/deep-link would lose the original destination.
+        callbackURL: resolvedCallbackUrl,
       });
 
-      if (signInResponse?.error === "second factor required") {
+      if (error) {
+        // Better Auth (re)sends its own verification email for an unverified address, so we only
+        // point the user at their inbox instead of minting a verification token ourselves.
+        if (error.code === "EMAIL_NOT_VERIFIED") {
+          toast.error(t("auth.login.please_verify_your_email_to_continue"));
+          return;
+        }
+        toast.error(error.message ?? t("common.something_went_wrong"));
+        return;
+      }
+
+      // Two-factor is enabled: Better Auth returns `twoFactorRedirect` instead of a session. No
+      // client `twoFactorPage` is configured, so surface the inline TOTP/backup challenge here.
+      if (signInData && "twoFactorRedirect" in signInData && signInData.twoFactorRedirect) {
         setTotpLogin(true);
         return;
       }
 
-      if (signInResponse?.error === "Email Verification is Pending") {
-        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
-        if (emailTokenActionResponse?.data) {
-          router.push(
-            buildVerificationRequestedPath({
-              token: emailTokenActionResponse.data,
-              callbackUrl: resolvedCallbackUrl,
-            })
-          );
-        } else {
-          const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-          toast.error(errorMessage);
-        }
-        return;
-      }
-
-      if (signInResponse?.error) {
-        toast.error(signInResponse.error);
-        return;
-      }
-
-      if (!signInResponse?.error) {
-        router.push(resolvedCallbackPath || "/");
-      }
+      router.push(resolvedCallbackPath || "/");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
     }
@@ -211,7 +222,7 @@ export const LoginForm = ({
                             value={field.value}
                             onChange={(email) => field.onChange(email)}
                             placeholder="work@email.com"
-                            className="block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                           />
                           {error?.message && <FormError className="text-left">{error.message}</FormError>}
                         </div>
@@ -234,7 +245,7 @@ export const LoginForm = ({
                             aria-label="password"
                             aria-required="true"
                             required
-                            className="block w-full rounded-md border-slate-300 pr-8 shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
+                            className="block w-full rounded-md border-slate-300 pr-8 shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                             value={field.value}
                             onChange={(password) => field.onChange(password)}
                           />
@@ -284,8 +295,6 @@ export const LoginForm = ({
               oidcOAuthEnabled={oidcOAuthEnabled}
               oidcDisplayName={oidcDisplayName}
               samlSsoEnabled={samlSsoEnabled}
-              samlTenant={samlTenant}
-              samlProduct={samlProduct}
               returnToUrl={resolvedCallbackUrl}
               source="signin"
             />
@@ -296,9 +305,7 @@ export const LoginForm = ({
           <div className="mt-9 text-center text-xs">
             <span className="leading-5 text-slate-500">{t("auth.login.new_to_formbricks")}</span>
             <br />
-            <Link
-              href={inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
-              className="font-semibold text-slate-600 underline hover:text-slate-700">
+            <Link href={signupHref} className="font-semibold text-slate-600 underline hover:text-slate-700">
               {t("auth.login.create_an_account")}
             </Link>
           </div>

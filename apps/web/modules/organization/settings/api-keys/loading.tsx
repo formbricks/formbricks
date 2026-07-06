@@ -7,9 +7,9 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 const LoadingCard = () => {
   const { t } = useTranslation();
   return (
-    <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-sm">
+    <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-xs">
       <div className="grid content-center border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
-        <h3 className="h-6 w-full max-w-56 animate-pulse rounded-lg bg-slate-100 text-lg font-medium leading-6">
+        <h3 className="h-6 w-full max-w-56 animate-pulse rounded-lg bg-slate-100 text-lg leading-6 font-medium">
           <span className="sr-only">{t("common.loading")}</span>
         </h3>
         <p className="mt-3 h-4 w-full max-w-80 animate-pulse rounded-lg bg-slate-100 text-sm text-slate-500">
@@ -48,7 +48,7 @@ const Loading = () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.api_keys")} />
-      <div className="mt-4 flex max-w-4xl animate-pulse items-center gap-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:gap-y-0 md:text-base"></div>
+      <div className="mt-4 flex max-w-4xl animate-pulse items-center gap-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-xs md:gap-y-0 md:text-base"></div>
       <LoadingCard />
     </PageContentWrapper>
   );

@@ -90,7 +90,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
                 <source src={`${key}`} type="video/mp4" />
               </video>
               <input
-                className="absolute right-2 top-2 size-4 cursor-pointer rounded-sm bg-white"
+                className="absolute top-2 right-2 size-4 cursor-pointer rounded-xs bg-white"
                 type="checkbox"
                 checked={animation === value}
                 onChange={() => handleBg(value)}

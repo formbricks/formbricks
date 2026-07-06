@@ -218,6 +218,43 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
   }
 });
 
+export const getResponseWithQuotas = reactCache(
+  async (responseId: string): Promise<TResponseWithQuotas | null> => {
+    validateInputs([responseId, ZId]);
+
+    try {
+      const responsePrisma = await prisma.response.findUnique({
+        where: {
+          id: responseId,
+        },
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: { status: "screenedIn" },
+            include: { quota: { select: { id: true, name: true } } },
+          },
+        },
+      });
+
+      if (!responsePrisma) {
+        return null;
+      }
+
+      const { quotaLinks, ...rest } = responsePrisma;
+      return {
+        ...mapResponsePrismaToResponse(rest),
+        quotas: quotaLinks.map((ql) => ql.quota),
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
 export const getResponseSnapshotForPipeline = async (responseId: string): Promise<TResponse | null> => {
   validateInputs([responseId, ZId]);
 

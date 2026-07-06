@@ -9,7 +9,6 @@ import { Button } from "@/modules/ui/components/button";
 
 interface RemovedFromOrganizationProps {
   isFormbricksCloud: boolean;
-  isSsoIdentityConfirmationDisabled: boolean;
   requiresPasswordConfirmation: boolean;
   user: TUser;
 }
@@ -17,7 +16,6 @@ interface RemovedFromOrganizationProps {
 export const RemovedFromOrganization = ({
   user,
   isFormbricksCloud,
-  isSsoIdentityConfirmationDisabled,
   requiresPasswordConfirmation,
 }: Readonly<RemovedFromOrganizationProps>) => {
   const { t } = useTranslation();
@@ -37,7 +35,6 @@ export const RemovedFromOrganization = ({
         user={user}
         isFormbricksCloud={isFormbricksCloud}
         organizationsWithSingleOwner={[]}
-        isSsoIdentityConfirmationDisabled={isSsoIdentityConfirmationDisabled}
       />
       <Button
         onClick={() => {

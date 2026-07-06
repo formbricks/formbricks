@@ -474,7 +474,7 @@ describe("serializeV3SurveyResource", () => {
           ],
         },
       ],
-    });
+    } as unknown as Partial<TSurvey>);
 
     const resource = serializeV3SurveyResource(survey, { lang: ["hi-IN"] });
 

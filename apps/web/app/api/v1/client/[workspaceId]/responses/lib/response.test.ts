@@ -138,6 +138,24 @@ describe("createResponse", () => {
     );
   });
 
+  test("should persist endingId when provided", async () => {
+    await createResponse({ ...mockResponseInput, finished: true, endingId: "ending-card-id" }, prisma);
+    expect(prisma.response.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ finished: true, endingId: "ending-card-id" }),
+      })
+    );
+  });
+
+  test("should default endingId to null when not provided", async () => {
+    await createResponse(mockResponseInput, prisma);
+    expect(prisma.response.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ endingId: null }),
+      })
+    );
+  });
+
   test("should throw ResourceNotFoundError if organization not found", async () => {
     vi.mocked(getOrganization).mockResolvedValue(null);
     await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(ResourceNotFoundError);

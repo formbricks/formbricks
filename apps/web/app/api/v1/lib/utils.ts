@@ -12,6 +12,7 @@ export const buildPrismaResponseData = (
     surveyId,
     displayId,
     finished,
+    endingId,
     data,
     language,
     meta,
@@ -29,6 +30,7 @@ export const buildPrismaResponseData = (
     },
     display: displayId ? { connect: { id: displayId } } : undefined,
     finished: finished,
+    endingId: endingId ?? null,
     data: data,
     language: normalizeResponseLanguage(language),
     ...(contact?.id && {

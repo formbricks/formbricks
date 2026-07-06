@@ -35,7 +35,7 @@ export function DashboardWidget({
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm ring-2 ring-transparent",
+        "flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-xs ring-2 ring-transparent",
         isEditing && "ring-brand-dark/20 transition-shadow hover:ring-brand-dark/40"
       )}>
       <div
@@ -50,7 +50,7 @@ export function DashboardWidget({
               <button
                 type="button"
                 aria-label={t("common.more_options")}
-                className="ml-2 shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="ml-2 shrink-0 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}>
                 <MoreVerticalIcon className="size-4" />

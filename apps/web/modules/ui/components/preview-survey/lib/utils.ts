@@ -11,7 +11,7 @@ export const getPlacementStyle = (placement: TPlacement) => {
     case "bottomLeft":
       return "bottom-3 sm:left-3";
     case "center":
-      return "top-1/2 left-1/2 transform !-translate-x-1/2 -translate-y-1/2";
+      return "top-1/2 left-1/2 transform -translate-x-1/2! -translate-y-1/2";
     default:
       return "bottom-3 sm:right-3";
   }

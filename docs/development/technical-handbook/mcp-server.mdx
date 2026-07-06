@@ -11,8 +11,13 @@ Formbricks web app at `/api/mcp` and reuses the same v3 Surveys API authenticati
 rate limiting, response handling, and audit logging paths as the REST routes.
 
 <Note>
-  This page documents the current API-key MVP. OAuth-based MCP authorization is not part of the current
-  implementation.
+  OAuth 2.1 is the preferred authentication path for MCP clients. Formbricks API keys remain supported as a
+  backwards-compatible fallback for local development, self-hosters, and clients that do not support MCP OAuth yet.
+</Note>
+
+<Note>
+  Looking for step-by-step setup guides for Claude Code, the Claude apps, and Codex? See
+  [Connect AI agents (MCP)](/platform/mcp/overview). This handbook covers the technical internals.
 </Note>
 
 ## Endpoint
@@ -30,11 +35,68 @@ http://localhost:3000/api/mcp
 ```
 
 The route supports `POST` requests, runs with the Next.js Node.js runtime, and sets private no-store
-response headers. Browser-origin MCP requests must come from the configured public Formbricks origin.
+response headers. Browser-origin MCP requests must come from the configured Formbricks app origin.
+
+OAuth clients discover the protected resource metadata here:
+
+```text
+https://app.formbricks.com/.well-known/oauth-protected-resource/api/mcp
+```
+
+The metadata advertises `/api/mcp` as the protected resource and points clients to the Better Auth
+issuer under `/api/auth`.
 
 ## Authentication
 
-Authenticate with a Formbricks API key in a request header:
+### OAuth 2.1
+
+OAuth clients use Authorization Code + PKCE with Dynamic Client Registration. The MCP protected
+resource is:
+
+```text
+https://app.formbricks.com/api/mcp
+```
+
+The authorization server issuer is:
+
+```text
+https://app.formbricks.com/api/auth
+```
+
+Discovery endpoints:
+
+| Endpoint                                                           | Purpose                              |
+| ------------------------------------------------------------------ | ------------------------------------ |
+| `/api/auth/.well-known/oauth-authorization-server`                 | Better Auth authorization metadata   |
+| `/api/auth/.well-known/openid-configuration`                       | OpenID Connect metadata              |
+| `/.well-known/oauth-authorization-server/api/auth`                 | RFC 8414 path-insertion alias        |
+| `/.well-known/openid-configuration/api/auth`                       | RFC 8414 OpenID path-insertion alias |
+| `/.well-known/oauth-protected-resource`                            | MCP protected resource metadata      |
+| `/.well-known/oauth-protected-resource/api/mcp`                    | MCP resource-specific metadata       |
+
+Supported scopes:
+
+| Scope             | Use                                                                       |
+| ----------------- | ------------------------------------------------------------------------- |
+| `surveys:read`    | `list_surveys`, `get_survey`, and read-only validation paths              |
+| `surveys:write`   | `create_survey`, `patch_survey`, `delete_survey`, and write validations   |
+| `openid`          | OpenID Connect subject interoperability                                   |
+| `profile`         | User profile claims                                                       |
+| `email`           | User email claim                                                          |
+| `offline_access`  | Refresh tokens for MCP clients                                            |
+
+The authorization server supports all of the above, but the MCP protected-resource metadata
+(`/.well-known/oauth-protected-resource/api/mcp`) advertises only `surveys:read`, `surveys:write`,
+and `offline_access` — the scopes an MCP client needs. Clients derive their Dynamic Client
+Registration scopes from that list, so `offline_access` must be advertised there for clients to be
+issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
+
+OAuth scopes only gate MCP tool categories. Actual workspace access is still evaluated at tool
+execution through the existing v3 authorization checks for the signed-in Formbricks user.
+
+### API-key fallback
+
+API-key MCP access remains supported. Authenticate with a Formbricks API key in a request header:
 
 ```http
 Authorization: Bearer fbk_...
@@ -61,8 +123,8 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_survey`   | `write` or `manage`                                                 |
 
 <Warning>
-  Store MCP API keys as environment variables or client secrets. Do not commit API keys into MCP client config
-  files.
+  Store fallback MCP API keys as environment variables or client secrets. Do not commit API keys into MCP client
+  config files.
 </Warning>
 
 ## Local Setup
@@ -75,8 +137,50 @@ pnpm db:migrate:dev
 pnpm --filter @formbricks/web dev
 ```
 
-Create an API key in the Formbricks app with access to the target workspace. Use the least privileged
-permission needed by the agent workflow.
+Verify OAuth discovery:
+
+```bash
+curl -sS http://localhost:3000/.well-known/oauth-protected-resource/api/mcp
+curl -sS http://localhost:3000/.well-known/oauth-authorization-server/api/auth
+```
+
+OAuth-capable MCP clients should dynamically register a public client and request `resource` equal to
+the MCP URL:
+
+```text
+http://localhost:3000/api/mcp
+```
+
+Manual Dynamic Client Registration smoke test:
+
+```bash
+curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
+  -H "Content-Type: application/json" \
+  --data '{
+    "client_name": "MCP Inspector",
+    "redirect_uris": ["http://127.0.0.1:6274/oauth/callback"],
+    "token_endpoint_auth_method": "none",
+    "grant_types": ["authorization_code", "refresh_token"],
+    "response_types": ["code"],
+    "scope": "openid profile email offline_access surveys:read surveys:write"
+  }'
+```
+
+<Note>
+  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
+  clients register with the scopes from the protected-resource metadata's `scopes_supported`
+  (`surveys:read surveys:write offline_access`). Because the authorization server validates the
+  `/authorize` request against the client's **registered** scopes, a client that registers with a
+  narrower set than it later requests (e.g. it registers surveys-only but requests `offline_access`)
+  is rejected with `invalid_scope`. To smoke-test the real path, omit `scope` and let the client
+  adopt the advertised set, or pass exactly what the metadata advertises.
+</Note>
+
+The consent screen is served at `/account/authorize`. Users can revoke approved MCP clients from
+`/account/settings/authorized-apps`.
+
+For API-key fallback, create an API key in the Formbricks app with access to the target workspace.
+Use the least privileged permission needed by the agent workflow.
 
 Verify that the MCP endpoint can list tools:
 
@@ -92,32 +196,41 @@ curl -sS -X POST http://localhost:3000/api/mcp \
 
 ## Codex Configuration
 
-Store the API key in the shell environment:
+### OAuth
 
-```bash
-export FORMBRICKS_MCP_API_KEY="fbk_..."
-```
-
-For Codex Desktop on macOS, persist the value in the launch environment and restart Codex Desktop:
-
-```bash
-launchctl setenv FORMBRICKS_MCP_API_KEY "fbk_..."
-```
-
-Register the local MCP server:
+Add the HTTP MCP server. Include `--oauth-resource` so the OAuth access token is audience-bound to
+the MCP resource URL:
 
 ```bash
 codex mcp add formbricks-local \
   --url http://localhost:3000/api/mcp \
-  --bearer-token-env-var FORMBRICKS_MCP_API_KEY
+  --oauth-resource http://localhost:3000/api/mcp
 ```
 
-Equivalent Codex config:
+Authenticate and request the scopes the agent needs:
+
+```bash
+codex mcp login formbricks-local \
+  --scopes openid,profile,email,offline_access,surveys:read,surveys:write
+```
+
+For read-only usage, omit `surveys:write`:
+
+```bash
+codex mcp login formbricks-local \
+  --scopes openid,profile,email,offline_access,surveys:read
+```
+
+Codex opens the browser to Formbricks, completes Dynamic Client Registration, and stores the OAuth
+client and tokens in Codex's credential store. The user approves the requested scopes on the
+Formbricks consent screen.
+
+Equivalent Codex config for the server entry:
 
 ```toml
 [mcp_servers.formbricks-local]
 url = "http://localhost:3000/api/mcp"
-bearer_token_env_var = "FORMBRICKS_MCP_API_KEY"
+oauth_resource = "http://localhost:3000/api/mcp"
 ```
 
 Verify the registration:
@@ -133,9 +246,71 @@ Then ask Codex to use the configured server:
 Use the formbricks-local MCP server to list surveys for workspace clxx1234567890123456789012.
 ```
 
+### API-key fallback
+
+Store the API key in the shell environment:
+
+```bash
+export FORMBRICKS_MCP_API_KEY="fbk_..."
+```
+
+For Codex Desktop on macOS, persist the value in the launch environment and restart Codex Desktop:
+
+```bash
+launchctl setenv FORMBRICKS_MCP_API_KEY "fbk_..."
+```
+
+Register the local MCP server with a bearer-token environment variable:
+
+```bash
+codex mcp add formbricks-local-api-key \
+  --url http://localhost:3000/api/mcp \
+  --bearer-token-env-var FORMBRICKS_MCP_API_KEY
+```
+
 ## Claude Configuration
 
 ### Claude Code
+
+#### OAuth
+
+Add the remote HTTP MCP server:
+
+```bash
+claude mcp add --transport http formbricks-local http://localhost:3000/api/mcp
+```
+
+Run `/mcp` and authenticate `formbricks-local`. Claude Code discovers the MCP protected-resource
+metadata, registers a public client whose scopes are taken from that metadata's `scopes_supported`
+(`surveys:read surveys:write offline_access`), and launches the browser-based OAuth flow — there is
+no scope-entry step. You approve the requested scopes on the Formbricks consent screen. Workspace
+role determines whether `surveys:write` tools actually succeed at execution time (see
+[Authentication](#authentication)), regardless of the granted scope.
+
+Verify it:
+
+```bash
+claude mcp list
+claude mcp get formbricks-local
+```
+
+For project-shared Claude Code configuration, use `.mcp.json` without static credentials:
+
+```json
+{
+  "mcpServers": {
+    "formbricks-local": {
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp"
+    }
+  }
+}
+```
+
+If the installed Claude Code version does not start the OAuth flow for remote HTTP servers, use the
+API-key fallback below until that client is updated.
+
+#### API-key fallback
 
 Set the API key:
 
@@ -146,23 +321,16 @@ export FORMBRICKS_MCP_API_KEY="fbk_..."
 Add the HTTP MCP server:
 
 ```bash
-claude mcp add --transport http formbricks-local http://localhost:3000/api/mcp \
+claude mcp add --transport http formbricks-local-api-key http://localhost:3000/api/mcp \
   --header "Authorization: Bearer $FORMBRICKS_MCP_API_KEY"
 ```
 
-Verify it:
-
-```bash
-claude mcp list
-claude mcp get formbricks-local
-```
-
-For a project-shared Claude Code configuration, use `.mcp.json` and keep the API key outside git:
+For a project-shared fallback configuration, keep the API key outside git:
 
 ```json
 {
   "mcpServers": {
-    "formbricks-local": {
+    "formbricks-local-api-key": {
       "headers": {
         "Authorization": "Bearer ${FORMBRICKS_MCP_API_KEY}"
       },
@@ -173,12 +341,13 @@ For a project-shared Claude Code configuration, use `.mcp.json` and keep the API
 }
 ```
 
-Claude Code will fail to parse this config if `FORMBRICKS_MCP_API_KEY` is not set.
+Claude Code will fail to parse this fallback config if `FORMBRICKS_MCP_API_KEY` is not set.
 
 ### Claude Desktop
 
 If the installed Claude Desktop build supports remote HTTP MCP server entries, add the same server
-definition to the Claude Desktop config file and restart Claude Desktop.
+definition to the Claude Desktop config file and restart Claude Desktop. Prefer the OAuth entry
+without headers when supported; use the API-key header entry only as a fallback.
 
 macOS config path:
 
@@ -192,6 +361,19 @@ Example config:
 {
   "mcpServers": {
     "formbricks-local": {
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp"
+    }
+  }
+}
+```
+
+Fallback config with an API key:
+
+```json
+{
+  "mcpServers": {
+    "formbricks-local-api-key": {
       "headers": {
         "Authorization": "Bearer ${FORMBRICKS_MCP_API_KEY}"
       },
@@ -202,7 +384,8 @@ Example config:
 }
 ```
 
-Set the API key in the Desktop launch environment before opening Claude Desktop:
+Set the API key in the Desktop launch environment before opening Claude Desktop when using the
+fallback config:
 
 ```bash
 launchctl setenv FORMBRICKS_MCP_API_KEY "fbk_..."
@@ -489,7 +672,10 @@ v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
 
 ## Limitations
 
-- Authentication is API-key only. OAuth-based MCP authorization is a separate follow-up.
+- OAuth is user-delegated only. Machine-to-machine client credentials for MCP are not supported.
+- OAuth access tokens must be JWTs audience-bound to `/api/mcp`; opaque MCP access token introspection is not
+  accepted by the MCP route.
+- API-key authentication remains supported for compatibility and fallback use.
 - The MCP server exposes only the v3 survey operations listed on this page.
 - Tool coverage depends on the current v3 Surveys REST endpoint coverage.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not

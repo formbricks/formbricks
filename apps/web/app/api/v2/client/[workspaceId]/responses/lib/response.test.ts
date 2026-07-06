@@ -261,6 +261,34 @@ describe("createResponse V2", () => {
     expect(result.tags).toEqual([mockTag]);
   });
 
+  test("should persist endingId when provided", async () => {
+    await createResponse(
+      { ...mockResponseInput, finished: true, endingId: "ending-card-id" },
+      mockTx as unknown as Prisma.TransactionClient
+    );
+
+    expect(mockTx.response.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          finished: true,
+          endingId: "ending-card-id",
+        }),
+      })
+    );
+  });
+
+  test("should default endingId to null when not provided", async () => {
+    await createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient);
+
+    expect(mockTx.response.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          endingId: null,
+        }),
+      })
+    );
+  });
+
   test("should create response with contact when contact belongs to the workspace", async () => {
     const responseInputWithContact = {
       ...mockResponseInput,

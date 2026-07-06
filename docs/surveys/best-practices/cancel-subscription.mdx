@@ -33,7 +33,7 @@ To run the Churn Survey in your app you want to proceed as follows:
 
   Formbricks Widget in your web app. It’s required to display messages and
   surveys in your app. If not, please follow the [Quick Start Guide (takes
-  15mins max.)](/xm-and-surveys/surveys/website-app-surveys/quickstart)
+  15mins max.)](/surveys/website-app-surveys/quickstart)
 </Note>
 
 ### 1. Create new Churn Survey
@@ -42,13 +42,13 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template [Churn Survey](https://formbricks.com/survey-templates/churn-survey):
 
-![Create churn survey by template](/images/xm-and-surveys/xm/best-practices/cancel-subscription/create-cancel-flow.webp)
+![Create churn survey by template](/images/surveys/best-practices/cancel-subscription/create-cancel-flow.webp)
 
 ### 2. Update questions (if you like)
 
 You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊
 
-![Change text content](/images/xm-and-surveys/xm/best-practices/cancel-subscription/change-text.webp)
+![Change text content](/images/surveys/best-practices/cancel-subscription/change-text.webp)
 
 *Want to change the button color? You can do so in the Workspace settings.*
 
@@ -64,40 +64,40 @@ To create the trigger for your Churn Survey, you have three options to choose fr
 
 * **Trigger by Inner Text:** You likely have a “Cancel Subscription” button in your app. You can setup a user Action with the according `Inner Text` to trigger the survey, like so:
 
-![Set the trigger by inner Text](/images/xm-and-surveys/xm/best-practices/cancel-subscription/trigger-inner-text.webp)
+![Set the trigger by inner Text](/images/surveys/best-practices/cancel-subscription/trigger-inner-text.webp)
 
 * **Trigger by CSS Selector:** In case you have more than one button saying “Cancel Subscription” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“cancel-subscription”` and set your user action up like so:
 
-![Set the trigger by CSS Selector](/images/xm-and-surveys/xm/best-practices/cancel-subscription/trigger-css-selector.webp)
+![Set the trigger by CSS Selector](/images/surveys/best-practices/cancel-subscription/trigger-css-selector.webp)
 
 * **Trigger by page view filters:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type `Page View` and add select `Limit to specific pages` to add url filters, with the following settings:
 
-![Set the trigger by page URL](/images/xm-and-surveys/xm/best-practices/cancel-subscription/trigger-page-url.webp)
+![Set the trigger by page URL](/images/surveys/best-practices/cancel-subscription/trigger-page-url.webp)
 
 Whenever a user visits this page, matches the filter conditions above and the recontact options (below) the survey will be displayed ✅
 
-Here is our complete [Actions manual](/xm-and-surveys/surveys/website-app-surveys/actions/) covering [No-Code](/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-no-code-actions) and [Code](/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions) Actions.
+Here is our complete [Actions manual](/surveys/website-app-surveys/actions/) covering [No-Code](/surveys/website-app-surveys/actions#setting-up-no-code-actions) and [Code](/surveys/website-app-surveys/actions#setting-up-code-actions) Actions.
 
 ### 5. Select Action in the “When to ask” card
 
-![Select feedback button action](/images/xm-and-surveys/xm/best-practices/cancel-subscription/select-action.webp)
+![Select feedback button action](/images/surveys/best-practices/cancel-subscription/select-action.webp)
 
 ### 6. Last step: Set Recontact Options correctly
 
 Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure you milk these super valuable insights. You want to make sure that this survey is always displayed, no matter if the user has already seen a survey in the past days:
 
-![Set recontact options](/images/xm-and-surveys/xm/best-practices/cancel-subscription/recontact-options.webp)
+![Set recontact options](/images/surveys/best-practices/cancel-subscription/recontact-options.webp)
 
 These settings make sure the survey is always displayed, when a user wants to Cancel their subscription.
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-![Publish survey](/images/xm-and-surveys/xm/best-practices/cancel-subscription/publish-survey.webp)
+![Publish survey](/images/surveys/best-practices/cancel-subscription/publish-survey.webp)
 
 <Note>
   Formbricks Widget running? You need to have the Formbricks Widget installed
   to display the Churn Survey in your app. Please follow [this tutorial (Step 4
-  onwards)](/xm-and-surveys/surveys/website-app-surveys/quickstart) to install the widget.
+  onwards)](/surveys/website-app-surveys/quickstart) to install the widget.
 </Note>
 
 ### **Get those insights! 🎉**

@@ -9,33 +9,34 @@ import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getWorkspace } from "@/lib/workspace/service";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
 import {
   addOptimisticBillingFeature,
+  applySetupCheckoutUpgrade,
   createPaidPlanCheckoutSession,
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
+  previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
+  setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
   syncOrganizationBillingFromStripe,
   undoPendingOrganizationPlanChange,
 } from "@/modules/ee/billing/lib/organization-billing";
 
 const ZManageSubscriptionAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
 });
 
 export const manageSubscriptionAction = authenticatedActionClient
   .inputSchema(ZManageSubscriptionAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -57,13 +58,9 @@ export const manageSubscriptionAction = authenticatedActionClient
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      const workspace = await getWorkspace(parsedInput.workspaceId);
-      if (!workspace) {
-        throw new ResourceNotFoundError("workspace", parsedInput.workspaceId);
-      }
       const result = await createCustomerPortalSession(
         organization.billing.stripeCustomerId,
-        `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`
+        `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`
       );
       ctx.auditLoggingCtx.newObject = { portalSessionCreated: true };
       return result;
@@ -71,7 +68,7 @@ export const manageSubscriptionAction = authenticatedActionClient
   );
 
 const ZCreatePlanCheckoutAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
   targetPlan: z.enum(["pro", "scale"]),
   targetInterval: ZCloudBillingInterval,
 });
@@ -80,7 +77,7 @@ export const createPlanCheckoutAction = authenticatedActionClient
   .inputSchema(ZCreatePlanCheckoutAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -108,7 +105,6 @@ export const createPlanCheckoutAction = authenticatedActionClient
       const checkoutUrl = await createPaidPlanCheckoutSession({
         organizationId,
         customerId: organization.billing.stripeCustomerId,
-        workspaceId: parsedInput.workspaceId,
         plan: parsedInput.targetPlan,
         interval: parsedInput.targetInterval,
       });
@@ -123,6 +119,45 @@ export const createPlanCheckoutAction = authenticatedActionClient
       return checkoutUrl;
     })
   );
+
+const ZGetUpgradeChargePreviewAction = z.object({
+  organizationId: ZId,
+  targetPlan: z.enum(["pro", "scale"]),
+  targetInterval: ZCloudBillingInterval,
+});
+
+// Read-only proration preview for the upgrade confirmation modal; no audit logging since it mutates nothing.
+export const getUpgradeChargePreviewAction = authenticatedActionClient
+  .inputSchema(ZGetUpgradeChargePreviewAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const { organizationId } = parsedInput;
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
+    });
+
+    const organization = await getOrganization(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("organization", organizationId);
+    }
+
+    if (!organization.billing.stripeCustomerId) {
+      throw new ResourceNotFoundError("OrganizationBilling", organizationId);
+    }
+
+    return previewImmediateUpgradeCharge({
+      organizationId,
+      customerId: organization.billing.stripeCustomerId,
+      targetPlan: parsedInput.targetPlan,
+      targetInterval: parsedInput.targetInterval,
+    });
+  });
 
 const ZRetryStripeSetupAction = z.object({
   organizationId: ZId,
@@ -147,7 +182,7 @@ export const retryStripeSetupAction = authenticatedActionClient
   });
 
 const ZCreateTrialPaymentCheckoutAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
   targetPlan: z.enum(["pro", "scale"]).optional(),
   targetInterval: ZCloudBillingInterval.optional(),
 });
@@ -156,7 +191,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
   .inputSchema(ZCreateTrialPaymentCheckoutAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -183,11 +218,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
       }
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      const workspace = await getWorkspace(parsedInput.workspaceId);
-      if (!workspace) {
-        throw new ResourceNotFoundError("workspace", parsedInput.workspaceId);
-      }
-      const returnUrl = `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`;
+      const returnUrl = `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`;
       const upgradeIntent =
         parsedInput.targetPlan !== undefined
           ? {
@@ -323,12 +354,12 @@ export const startProTrialAction = authenticatedActionClient
 
 const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
   z.object({
-    workspaceId: ZId,
+    organizationId: ZId,
     targetPlan: z.literal("hobby"),
     targetInterval: z.literal("monthly"),
   }),
   z.object({
-    workspaceId: ZId,
+    organizationId: ZId,
     targetPlan: z.enum(["pro", "scale"]),
     targetInterval: ZCloudBillingInterval,
   }),
@@ -336,7 +367,7 @@ const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
 
 export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZChangeBillingPlanAction).action(
   withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    const { organizationId } = parsedInput;
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -364,11 +395,12 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       targetInterval: parsedInput.targetInterval,
     });
 
-    if (result.mode === "immediate") {
+    // Skip when SCA is pending: the plan is unchanged until the client confirms payment,
+    // and a resync would clear the payment-failure banner. The client calls
+    // waitForBillingPlanAction after confirming. Scheduled downgrades resync via webhook.
+    if (result.mode === "immediate" && !result.requiresAction) {
       await syncOrganizationBillingFromStripe(organizationId);
     }
-    // Scheduled downgrades already persist the pending snapshot locally and
-    // the ensuing subscription_schedule webhook performs the full Stripe resync.
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.newObject = {
@@ -381,15 +413,128 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
   })
 );
 
+const ZReportUpgradePaymentIssueAction = z.object({
+  organizationId: ZId,
+  paymentIntentId: z.string().min(1),
+});
+
+// Persists a payment-failure banner when on-session SCA is abandoned/declined (Stripe
+// does not promptly emit payment_intent.canceled on modal-close).
+export const reportUpgradePaymentIssueAction = authenticatedActionClient
+  .inputSchema(ZReportUpgradePaymentIssueAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId, paymentIntentId } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      await setOrganizationPaymentAttemptError(organizationId, {
+        type: "requires_action",
+        paymentIntentId,
+        message: "Payment authentication was not completed. Please try again or contact support.",
+        createdAt: new Date().toISOString(),
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.newObject = { paymentAttemptError: "requires_action" };
+      return { success: true };
+    })
+  );
+
+const ZFinalizeSetupCheckoutUpgradeAction = z.object({
+  organizationId: ZId,
+  checkoutSessionId: z.string().min(1),
+});
+
+// Finalizes an upgrade right after the setup-checkout redirect: attaches the saved card
+// and applies the upgrade in one server call, returning any client_secret for on-session SCA.
+export const finalizeSetupCheckoutUpgradeAction = authenticatedActionClient
+  .inputSchema(ZFinalizeSetupCheckoutUpgradeAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId, checkoutSessionId } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      const result = await applySetupCheckoutUpgrade({ organizationId, checkoutSessionId });
+
+      if (result.mode === "immediate" && !result.requiresAction) {
+        await syncOrganizationBillingFromStripe(organizationId);
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.newObject = { targetPlan: result.targetPlan, mode: result.mode };
+      return result;
+    })
+  );
+
+const ZWaitForBillingPlanAction = z.object({
+  organizationId: ZId,
+  targetPlan: z.enum(["hobby", "pro", "scale"]),
+});
+
+// Stripe applies the pending upgrade a beat after the invoice PaymentIntent succeeds, and
+// the billing snapshot is cached. Resync (which invalidates the cache) a few times until
+// the plan reflects, so the page shows the new plan without a manual refresh.
+const BILLING_PLAN_SYNC_ATTEMPTS = 5;
+const BILLING_PLAN_SYNC_DELAY_MS = 1200;
+
+export const waitForBillingPlanAction = authenticatedActionClient
+  .inputSchema(ZWaitForBillingPlanAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId, targetPlan } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      let plan: string | null = null;
+      for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
+        const billing = await syncOrganizationBillingFromStripe(organizationId);
+        plan = billing?.stripe?.plan ?? null;
+        if (plan === targetPlan) break;
+        if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
+        }
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      return { plan };
+    })
+  );
+
 const ZUndoPendingPlanChangeAction = z.object({
-  workspaceId: ZId,
+  organizationId: ZId,
 });
 
 export const undoPendingPlanChangeAction = authenticatedActionClient
   .inputSchema(ZUndoPendingPlanChangeAction)
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      const { organizationId } = parsedInput;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
