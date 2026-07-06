@@ -46,7 +46,7 @@ export const SurveyVariablesCard = ({
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg border-t border-b border-l group-aria-expanded:rounded-bl-none"
         )}>
         <div className="flex w-full justify-center">
           <FileDigitIcon className="size-4" />
@@ -67,7 +67,8 @@ export const SurveyVariablesCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
+        <Collapsible.CollapsibleContent
+          className={`flex flex-col px-4 ${open && "pb-6"} overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down`}>
           <div className="flex flex-col gap-2" ref={parent}>
             {localSurvey.variables.length > 0 ? (
               localSurvey.variables.map((variable) => (
@@ -81,7 +82,7 @@ export const SurveyVariablesCard = ({
                 />
               ))
             ) : (
-              <p className="mt-2 text-sm italic text-slate-500">
+              <p className="mt-2 text-sm text-slate-500 italic">
                 {t("workspace.surveys.edit.no_variables_yet_add_first_one_below")}
               </p>
             )}

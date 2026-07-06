@@ -46,7 +46,7 @@ export const generateAttributeTableColumns = (
     cell: ({ row }) => {
       const description = row.original.description;
       return description ? (
-        <div className={isExpanded ? "whitespace-normal break-words" : "truncate"}>
+        <div className={isExpanded ? "wrap-break-word whitespace-normal" : "truncate"}>
           <HighlightedText value={description} searchValue={searchValue} />
         </div>
       ) : (

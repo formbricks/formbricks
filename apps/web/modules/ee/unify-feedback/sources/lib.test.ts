@@ -95,7 +95,7 @@ describe("transformToUnifySurvey", () => {
           ],
         },
       ],
-    } as Partial<TSurvey>);
+    } as unknown as Partial<TSurvey>);
 
     const result = transformToUnifySurvey(survey);
 
@@ -116,7 +116,7 @@ describe("transformToUnifySurvey", () => {
           ],
         },
       ],
-    } as Partial<TSurvey>);
+    } as unknown as Partial<TSurvey>);
 
     const result = transformToUnifySurvey(survey);
     expect(result.elements[0].required).toBe(false);
@@ -136,7 +136,7 @@ describe("transformToUnifySurvey", () => {
           ],
         },
       ],
-    } as Partial<TSurvey>);
+    } as unknown as Partial<TSurvey>);
 
     const result = transformToUnifySurvey(survey);
     expect(result.elements[0].headline).toBe("Untitled");
@@ -164,7 +164,9 @@ describe("transformToUnifySurvey", () => {
     });
 
     test("maps unknown status to 'draft'", () => {
-      const result = transformToUnifySurvey(createMockSurvey({ status: "archived" } as Partial<TSurvey>));
+      const result = transformToUnifySurvey(
+        createMockSurvey({ status: "archived" } as unknown as Partial<TSurvey>)
+      );
       expect(result.status).toBe("draft");
     });
   });
@@ -188,7 +190,7 @@ describe("transformToUnifySurvey", () => {
           ],
         },
       ],
-    } as Partial<TSurvey>);
+    } as unknown as Partial<TSurvey>);
 
     const result = transformToUnifySurvey(survey);
     expect(result.elements).toHaveLength(2);
@@ -232,7 +234,7 @@ describe("transformToUnifySurvey", () => {
           })),
         },
       ],
-    } as Partial<TSurvey>);
+    } as unknown as Partial<TSurvey>);
 
     const result = transformToUnifySurvey(survey);
     const resultTypes = result.elements.map((e) => e.type);

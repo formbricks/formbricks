@@ -114,6 +114,17 @@ value: {{ include "formbricks.tplvalues.render" (dict "value" (toString $value) 
 {{- end }}
 
 {{/*
+Default OpenAI-compatible base URL for the bundled vLLM router.
+*/}}
+{{- define "formbricks.llmBaseUrl" -}}
+{{- if .Values.llm.formbricks.baseUrl -}}
+{{- include "formbricks.tplvalues.render" (dict "value" .Values.llm.formbricks.baseUrl "context" .) -}}
+{{- else -}}
+{{- printf "http://%s-router-service:%s/v1" .Release.Name (toString .Values.llm.routerSpec.servicePort) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Allow the release namespace to be overridden.
 If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `.Release.Namespace`.
 */}}
@@ -195,6 +206,152 @@ Hub worker resource name.
 {{- define "formbricks.hubWorkerName" -}}
 {{- $base := include "formbricks.name" . | trunc 52 | trimSuffix "-" }}
 {{- printf "%s-hub-worker" $base | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Taxonomy service resource name.
+*/}}
+{{- define "formbricks.taxonomyName" -}}
+{{- $base := include "formbricks.name" . | trunc 54 | trimSuffix "-" }}
+{{- printf "%s-taxonomy" $base | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Taxonomy service image reference. A configured digest takes precedence over the tag.
+*/}}
+{{- define "formbricks.taxonomyImage" -}}
+{{- if .Values.taxonomy.image.digest -}}
+{{- printf "%s@%s" .Values.taxonomy.image.repository .Values.taxonomy.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.taxonomy.image.repository (.Values.taxonomy.image.tag | default "latest") -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyManagedSecretName" -}}
+{{- printf "%s-secret" (include "formbricks.taxonomyName" .) -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyAuthSecretName" -}}
+{{- default (include "formbricks.taxonomyManagedSecretName" .) .Values.taxonomy.auth.existingSecret -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyLlmSecretName" -}}
+{{- default (include "formbricks.taxonomyManagedSecretName" .) .Values.taxonomy.llm.existingSecret -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyVertexSecretName" -}}
+{{- default (include "formbricks.taxonomyManagedSecretName" .) .Values.taxonomy.llm.vertex.existingSecret -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyServiceUrl" -}}
+{{- printf "http://%s:%v" (include "formbricks.taxonomyName" .) (.Values.taxonomy.service.port | default .Values.taxonomy.port) -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyLlmBaseUrl" -}}
+{{- if .Values.taxonomy.llm.baseUrl -}}
+{{- include "formbricks.tplvalues.render" (dict "value" .Values.taxonomy.llm.baseUrl "context" .) -}}
+{{- else if .Values.llm.enabled -}}
+{{- include "formbricks.llmBaseUrl" . -}}
+{{- else -}}
+{{- "" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyServiceToken" -}}
+{{- $secretName := include "formbricks.taxonomyManagedSecretName" . }}
+{{- $secretKey := .Values.taxonomy.auth.serviceTokenKey | default "TAXONOMY_SERVICE_TOKEN" }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData $secretKey }}
+    {{- index $secretData $secretKey | b64dec -}}
+{{- else if .Values.taxonomy.auth.serviceToken }}
+    {{- .Values.taxonomy.auth.serviceToken -}}
+{{- else }}
+    {{- randAlphaNum 48 -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyHubInternalApiToken" -}}
+{{- $secretName := include "formbricks.taxonomyManagedSecretName" . }}
+{{- $secretKey := .Values.taxonomy.auth.hubInternalApiTokenKey | default "HUB_INTERNAL_API_TOKEN" }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData $secretKey }}
+    {{- index $secretData $secretKey | b64dec -}}
+{{- else if .Values.taxonomy.auth.hubInternalApiToken }}
+    {{- .Values.taxonomy.auth.hubInternalApiToken -}}
+{{- else }}
+    {{- randAlphaNum 48 -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyLlmApiKey" -}}
+{{- $secretName := include "formbricks.taxonomyManagedSecretName" . }}
+{{- $secretKey := .Values.taxonomy.llm.apiKeySecretKey | default "TAXONOMY_LLM_API_KEY" }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData $secretKey }}
+    {{- index $secretData $secretKey | b64dec -}}
+{{- else if .Values.taxonomy.llm.apiKey }}
+    {{- .Values.taxonomy.llm.apiKey -}}
+{{- else }}
+    {{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.taxonomyVertexCredentialsJson" -}}
+{{- $secretName := include "formbricks.taxonomyManagedSecretName" . }}
+{{- $secretKey := .Values.taxonomy.llm.vertex.credentialsJsonSecretKey | default "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secretData := dig "data" dict $secret }}
+{{- if .Values.taxonomy.llm.vertex.credentialsJson }}
+    {{- .Values.taxonomy.llm.vertex.credentialsJson -}}
+{{- else if index $secretData $secretKey }}
+    {{- index $secretData $secretKey | b64dec -}}
+{{- else }}
+    {{- "" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Hub env managed by taxonomy when the optional taxonomy service is enabled.
+*/}}
+{{- define "formbricks.taxonomyHubEnv" -}}
+{{- $root := .root -}}
+{{- if and $root.Values.taxonomy.enabled $root.Values.taxonomy.autoConfigureHub }}
+- name: TAXONOMY_SERVICE_URL
+  value: {{ include "formbricks.taxonomyServiceUrl" $root | quote }}
+- name: TAXONOMY_SERVICE_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.taxonomyAuthSecretName" $root }}
+      key: {{ $root.Values.taxonomy.auth.serviceTokenKey | default "TAXONOMY_SERVICE_TOKEN" }}
+- name: HUB_INTERNAL_API_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.taxonomyAuthSecretName" $root }}
+      key: {{ $root.Values.taxonomy.auth.hubInternalApiTokenKey | default "HUB_INTERNAL_API_TOKEN" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Returns true when an env var is managed by taxonomy auto-configuration and should not be rendered from hub.env.
+*/}}
+{{- define "formbricks.taxonomyHubEnvManaged" -}}
+{{- $key := .key -}}
+{{- if has $key (list "TAXONOMY_SERVICE_URL" "TAXONOMY_SERVICE_TOKEN" "HUB_INTERNAL_API_TOKEN") -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+Returns true when an env var is managed by the taxonomy deployment and should not be rendered from taxonomy.env.
+*/}}
+{{- define "formbricks.taxonomyEnvManaged" -}}
+{{- $key := .key -}}
+{{- if has $key (list "APP_ENV" "HUB_INTERNAL_API_URL" "HUB_INTERNAL_API_TOKEN" "TAXONOMY_SERVICE_TOKEN" "TAXONOMY_LLM_PROVIDER" "TAXONOMY_LLM_MODEL" "TAXONOMY_LLM_BASE_URL" "TAXONOMY_LLM_API_KEY" "TAXONOMY_VERTEX_PROJECT" "TAXONOMY_VERTEX_LOCATION" "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" "TAXONOMY_LLM_TEMPERATURE" "TAXONOMY_LLM_MAX_ATTEMPTS" "TAXONOMY_LLM_TIMEOUT_SECONDS" "HUB_CLIENT_TIMEOUT_SECONDS" "TAXONOMY_EMBEDDING_DIMENSION" "TAXONOMY_MIN_EMBEDDED_RECORDS" "TAXONOMY_MAX_RECORDS" "TAXONOMY_MAX_CLUSTERS" "TAXONOMY_RANDOM_SEED") -}}
+true
+{{- end -}}
 {{- end }}
 
 {{/*

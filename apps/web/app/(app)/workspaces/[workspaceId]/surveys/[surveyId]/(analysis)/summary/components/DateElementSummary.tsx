@@ -44,7 +44,7 @@ export const DateElementSummary = ({ elementSummary, survey, locale }: DateEleme
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader elementSummary={elementSummary} survey={survey} />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
@@ -83,7 +83,7 @@ export const DateElementSummary = ({ elementSummary, survey, locale }: DateEleme
                     </div>
                   )}
                 </div>
-                <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
+                <div className="ph-no-capture col-span-2 pl-6 font-semibold whitespace-pre-wrap">
                   {renderResponseValue(response.value)}
                 </div>
                 <div className="px-4 md:px-6">

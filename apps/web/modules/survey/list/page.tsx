@@ -4,6 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
@@ -35,14 +36,15 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const { session, isBilling, isReadOnly } = await getWorkspaceAuth(params.workspaceId);
 
   if (isBilling) {
-    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
+    return redirect(getBillingFallbackPath(workspace.organizationId, IS_FORMBRICKS_CLOUD));
   }
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
-  const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
-  const { isAIAvailable, aiUnavailableReason } = await getSurveyAIAvailability(workspace.organizationId, {
-    isReadOnly,
-  });
+  const [locale, featuredTemplatesVariant, { isAIAvailable, aiUnavailableReason }] = await Promise.all([
+    getUserLocale(session.user.id).then((l) => l ?? DEFAULT_LOCALE),
+    getPostHogFeatureFlag(session.user.id, "a-b_surveys_featured-templates-create-with-ai"),
+    getSurveyAIAvailability(workspace.organizationId, { isReadOnly }),
+  ]);
   const workspaceWithRequiredProps = {
     ...workspace,
     brandColor: workspace.styling?.brandColor?.light ?? null,
@@ -59,6 +61,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       locale={locale}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
+      showFeaturedTemplates={featuredTemplatesVariant === "test"}
     />
   );
 };

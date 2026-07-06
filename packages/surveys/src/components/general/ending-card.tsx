@@ -25,6 +25,7 @@ interface EndingCardProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   isPreviewMode: boolean;
   fullSizeCards: boolean;
+  isCardless?: boolean;
   isOfflineWithPending?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function EndingCard({
   onOpenExternalURL,
   isPreviewMode,
   fullSizeCards,
+  isCardless = false,
   isOfflineWithPending = false,
 }: Readonly<EndingCardProps>) {
   const { t } = useTranslation();
@@ -131,7 +133,7 @@ export function EndingCard({
   ]);
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
+    <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
       <div className="text-center">
         {isResponseSendingFinished ? (
           <>

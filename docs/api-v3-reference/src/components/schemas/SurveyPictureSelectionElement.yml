@@ -1,0 +1,21 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - choices
+    properties:
+      type:
+        type: string
+        enum:
+          - pictureSelection
+      allowMulti:
+        type: boolean
+        default: false
+      choices:
+        type: array
+        minItems: 2
+        items:
+          $ref: ./SurveyPictureChoice.yml
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

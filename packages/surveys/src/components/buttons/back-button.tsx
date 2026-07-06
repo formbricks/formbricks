@@ -7,7 +7,7 @@ interface BackButtonProps {
   tabIndex?: number;
 }
 
-export function BackButton({ onClick, backButtonLabel, tabIndex = 2 }: Readonly<BackButtonProps>) {
+export function BackButton({ onClick, backButtonLabel, tabIndex = 0 }: Readonly<BackButtonProps>) {
   const { t } = useTranslation();
   return (
     <Button dir="auto" tabIndex={tabIndex} type="button" variant="ghost" onClick={onClick}>

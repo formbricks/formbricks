@@ -228,7 +228,7 @@ export const AddApiKeyModal = ({
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                               <span className="flex w-4/5 flex-1">
                                 <span className="w-full truncate text-left">{permission.workspaceName}</span>
                               </span>
@@ -237,7 +237,7 @@ export const AddApiKeyModal = ({
                               </span>
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto">
+                          <DropdownMenuContent className="max-h-[300px] min-w-32 overflow-y-auto">
                             {workspaceOptions.map((option) => (
                               <DropdownMenuItem
                                 key={option.id}
@@ -257,7 +257,7 @@ export const AddApiKeyModal = ({
                           <DropdownMenuTrigger asChild>
                             <button
                               type="button"
-                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                               <span className="flex w-4/5 flex-1">
                                 <span className="w-full truncate text-left capitalize">
                                   {permission.permission}
@@ -268,7 +268,7 @@ export const AddApiKeyModal = ({
                               </span>
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="min-w-[8rem] capitalize">
+                          <DropdownMenuContent className="min-w-32 capitalize">
                             {permissionOptions.map((option) => (
                               <DropdownMenuItem
                                 key={option}

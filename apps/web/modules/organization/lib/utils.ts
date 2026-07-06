@@ -1,11 +1,10 @@
-import { getServerSession } from "next-auth";
 import { cache as reactCache } from "react";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { TOrganizationAuth } from "../types/organization-auth";
 
 /**
@@ -18,10 +17,7 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
   const t = await getTranslate();
 
   // Perform all fetches in parallel
-  const [session, organization] = await Promise.all([
-    getServerSession(authOptions),
-    getOrganization(organizationId),
-  ]);
+  const [session, organization] = await Promise.all([getSession(), getOrganization(organizationId)]);
 
   if (!session) {
     throw new AuthenticationError(t("common.not_authenticated"));

@@ -1,0 +1,16 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - calUserName
+    properties:
+      type:
+        type: string
+        enum:
+          - cal
+      calUserName:
+        type: string
+        minLength: 1
+      calHost:
+        type: string
+unevaluatedProperties: false

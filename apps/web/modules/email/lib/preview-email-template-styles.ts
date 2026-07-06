@@ -495,5 +495,5 @@ export const getChoiceMarkerStyle = (
 
 export const getChoiceMarkerClassName = (marker: PreviewMarkerVariant, withLabelGap = true): string =>
   `${withLabelGap ? "mr-3 " : ""}${CHOICE_MARKER_CLASSNAME} ${
-    marker === "checkbox" ? "rounded" : "rounded-full"
+    marker === "checkbox" ? "rounded-sm" : "rounded-full"
   }`;

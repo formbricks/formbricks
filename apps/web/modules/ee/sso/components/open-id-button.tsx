@@ -1,15 +1,16 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { authClient } from "@/modules/auth/lib/auth-client";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 
 interface OpenIdButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
+  variant?: "default" | "secondary";
   directRedirect?: boolean;
   text?: string;
   source: "signin" | "signup";
@@ -18,10 +19,11 @@ interface OpenIdButtonProps {
 export const OpenIdButton = ({
   returnToUrl,
   lastUsed,
+  variant = "secondary",
   directRedirect = false,
   text,
   source,
-}: OpenIdButtonProps) => {
+}: Readonly<OpenIdButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {
@@ -29,9 +31,11 @@ export const OpenIdButton = ({
     }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    await signIn("openid", {
-      redirect: true,
-      callbackUrl: returnToUrlWithSource,
+    await authClient.signIn.oauth2({
+      providerId: "openid",
+      callbackURL: returnToUrlWithSource,
+      // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
+      errorCallbackURL: "/auth/login",
     });
   }, [returnToUrl, source]);
 
@@ -45,7 +49,7 @@ export const OpenIdButton = ({
     <Button
       type="button"
       onClick={handleLogin}
-      variant="secondary"
+      variant={variant}
       className="w-full items-center justify-center gap-2 px-2">
       <span className="truncate">{text || t("auth.continue_with_openid")}</span>
       {lastUsed && <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span>}

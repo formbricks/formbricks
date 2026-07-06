@@ -189,6 +189,257 @@ deployment:
       exposed: true
 
 ##########################################################
+# Optional bundled web LLM runtime
+##########################################################
+llm:
+  # Deploy Formbricks-provided Qwen through the vLLM OpenAI-compatible runtime.
+  # Disabled by default; keep using deployment.env for Google Vertex, Azure, Bedrock,
+  # or externally managed OpenAI-compatible providers.
+  enabled: false
+
+  # When enabled, automatically points the Formbricks app at the bundled vLLM router.
+  # Any AI_* value explicitly set in deployment.env takes precedence over these defaults.
+  autoConfigureApp: true
+
+  # Formbricks app-facing settings for the bundled runtime.
+  formbricks:
+    # Defaults to http://<release-name>-router-service:<llm.routerSpec.servicePort>/v1 when empty.
+    baseUrl: ""
+    model: qwen3-14b-awq
+    providerName: vllm
+    supportsStructuredOutputs: "1"
+
+  servingEngineSpec:
+    enableEngine: true
+    labels:
+      environment: llm
+      release: vllm
+    imagePullPolicy: IfNotPresent
+    servicePort: 8000
+    runtimeClassName: ""
+    strategy:
+      type: Recreate
+    modelSpec:
+      - name: qwen
+        enabled: true
+        repository: vllm/vllm-openai
+        tag: v0.14.0
+        modelURL: Qwen/Qwen3-14B-AWQ
+        replicaCount: 1
+        requestCPU: 4
+        requestMemory: 24Gi
+        limitCPU: 8
+        limitMemory: 32Gi
+        requestGPU: 1
+        requestGPUType: nvidia.com/gpu
+        pvcStorage: 100Gi
+        runtimeClassName: ""
+        shmSize: 8Gi
+        vllmConfig:
+          maxModelLen: 8192
+          dtype: float16
+          tensorParallelSize: 1
+          maxNumSeqs: 8
+          gpuMemoryUtilization: 0.9
+          extraArgs:
+            - --served-model-name
+            - qwen3-14b-awq
+            - --default-chat-template-kwargs
+            - '{"enable_thinking": false}'
+        lmcacheConfig:
+          enabled: false
+        keda:
+          enabled: false
+    startupProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 180
+      httpGet:
+        path: /health
+        port: 8000
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        path: /health
+        port: 8000
+    readinessProbe:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 12
+      httpGet:
+        path: /health
+        port: 8000
+
+  routerSpec:
+    enableRouter: true
+    imagePullPolicy: IfNotPresent
+    serviceType: ClusterIP
+    servicePort: 8000
+    serviceDiscovery: k8s
+    k8sServiceDiscoveryType: service-name
+    resources:
+      requests:
+        cpu: 400m
+        memory: 1Gi
+      limits:
+        memory: 2Gi
+    startupProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 120
+      httpGet:
+        path: /health
+        port: router-port
+    livenessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      failureThreshold: 6
+      httpGet:
+        path: /health
+        port: router-port
+    readinessProbe:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 30
+      httpGet:
+        path: /health
+        port: router-port
+
+##########################################################
+# Optional AI taxonomy service
+##########################################################
+taxonomy:
+  # Deploy the standalone taxonomy service. Disabled by default.
+  enabled: false
+  replicas: 1
+
+  # When enabled, automatically points Hub API at the in-cluster taxonomy service.
+  # Disable only when you want to wire Hub manually through hub.env.
+  autoConfigureHub: true
+
+  image:
+    repository: "ghcr.io/formbricks/taxonomy"
+    tag: "v0.1.0"
+    digest: ""
+    pullPolicy: IfNotPresent
+
+  port: 8000
+
+  service:
+    type: ClusterIP
+    port: 8000
+    annotations: {}
+    additionalLabels: {}
+
+  auth:
+    # Existing secret must contain serviceTokenKey and hubInternalApiTokenKey.
+    existingSecret: ""
+    serviceTokenKey: TAXONOMY_SERVICE_TOKEN
+    hubInternalApiTokenKey: HUB_INTERNAL_API_TOKEN
+    serviceToken: ""
+    hubInternalApiToken: ""
+
+  llm:
+    provider: openai-compatible
+    model: qwen3-14b-awq
+    # Defaults to the bundled vLLM router URL when llm.enabled=true. Required otherwise.
+    baseUrl: ""
+    # Existing secret must contain apiKeySecretKey. When unset, the chart creates a non-empty dummy key.
+    existingSecret: ""
+    apiKeySecretKey: TAXONOMY_LLM_API_KEY
+    apiKey: ""
+    temperature: "0.1"
+    maxAttempts: "4"
+    timeoutSeconds: "60"
+    vertex:
+      project: ""
+      location: ""
+      # Existing secret must contain credentialsJsonSecretKey.
+      existingSecret: ""
+      credentialsJsonSecretKey: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON
+      credentialsJson: ""
+
+  embeddingDimension: "768"
+  minEmbeddedRecords: "20"
+  maxRecords: "50000"
+  maxClusters: "80"
+  randomSeed: "42"
+  hubClientTimeoutSeconds: "120"
+
+  envFrom: []
+  env: {}
+
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      memory: 4Gi
+
+  autoscaling:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minReplicas: 1
+    maxReplicas: 3
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: Resource
+        resource:
+          name: memory
+          target:
+            type: Utilization
+            averageUtilization: 80
+    behavior: {}
+
+  # Disabled by default because the default taxonomy replica count is 1.
+  pdb:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minAvailable: 1
+    # maxUnavailable: 1
+    # unhealthyPodEvictionPolicy: AlwaysAllow
+
+  probes:
+    startupProbe:
+      failureThreshold: 30
+      periodSeconds: 10
+      httpGet:
+        path: /health
+        port: http
+    readinessProbe:
+      failureThreshold: 6
+      periodSeconds: 10
+      timeoutSeconds: 5
+      httpGet:
+        path: /health
+        port: http
+    livenessProbe:
+      failureThreshold: 6
+      periodSeconds: 20
+      timeoutSeconds: 5
+      httpGet:
+        path: /health
+        port: http
+
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+##########################################################
 # Horizontal Pod Autoscaler (HPA)
 ##########################################################
 autoscaling:
@@ -680,10 +931,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.5.0.
-    digest: "sha256:7d8633cfa0bfa8becc8ff6596fc707333cd3b11f1284dbacb3d4cbe80a86a436"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.6.0.
+    digest: "sha256:b22c5f8d1e2dd79224574f526a6714a3cc5372d18f4c047eaa9d18fe6ab75591"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.5.0"
+    tag: "0.6.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.

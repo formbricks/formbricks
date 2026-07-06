@@ -9,17 +9,22 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { cn } from "@/lib/cn";
 import type { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { CsvTable } from "@/modules/ui/components/csv-table";
 import { DialogFooter } from "@/modules/ui/components/dialog";
+import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]) => void;
   teams: TOrganizationTeam[];
+  organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
+  isBulkInviteAllowed: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 type BulkCsvRow = Record<string, string | undefined>;
@@ -46,9 +51,12 @@ export const BulkInviteTab = ({
   setOpen,
   onSubmit,
   teams,
+  organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
-}: BulkInviteTabProps) => {
+  isBulkInviteAllowed,
+  enterpriseLicenseRequestFormUrl,
+}: Readonly<BulkInviteTabProps>) => {
   const { t } = useTranslation();
   const [csvFile, setCSVFile] = useState<File>();
   const [previewRows, setPreviewRows] = useState<BulkCsvRow[]>([]);
@@ -104,7 +112,7 @@ export const BulkInviteTab = ({
   };
 
   const onImport = () => {
-    if (!csvFile || !previewRows.length) {
+    if (!csvFile || !previewRows.length || !isBulkInviteAllowed) {
       return;
     }
 
@@ -163,6 +171,30 @@ export const BulkInviteTab = ({
   const previewCount = previewRows.length;
   const extraRowCount = Math.max(previewCount - PREVIEW_ROW_LIMIT, 0);
 
+  if (!isBulkInviteAllowed) {
+    const upgradeButtons: [ModalButton, ModalButton] = [
+      {
+        text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
+        href: isFormbricksCloud
+          ? organizationSettingsPath(organizationId, "billing")
+          : enterpriseLicenseRequestFormUrl,
+      },
+      {
+        text: t("common.learn_more"),
+        href: "https://formbricks.com/docs/self-hosting/license",
+      },
+    ];
+
+    return (
+      <UpgradePrompt
+        title={t("workspace.settings.teams.bulk_invite_scale_only_title")}
+        description={t("workspace.settings.teams.bulk_invite_scale_only_description")}
+        buttons={upgradeButtons}
+        feature="bulk-invite"
+      />
+    );
+  }
+
   return (
     <>
       <div className="flex flex-col gap-4">
@@ -203,7 +235,7 @@ export const BulkInviteTab = ({
                 )}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}>
-                <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <ArrowUpFromLineIcon className="h-6 text-slate-500" />
                   <p className="mt-2 text-center text-sm text-slate-500">
                     <span className="font-semibold">{t("common.upload_input_description")}</span>

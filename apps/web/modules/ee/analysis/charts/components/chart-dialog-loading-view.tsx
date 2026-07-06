@@ -14,7 +14,7 @@ export function ChartDialogLoadingView({ open, onClose }: Readonly<ChartDialogLo
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent width="wide">
+      <DialogContent width="full">
         <DialogTitle className="sr-only">{t("common.loading")}</DialogTitle>
         <div className="flex h-64 items-center justify-center">
           <LoadingSpinner />

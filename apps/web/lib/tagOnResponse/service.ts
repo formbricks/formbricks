@@ -31,6 +31,16 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      const target = error.meta?.target;
+      const isTagsOnResponsesUniqueViolation =
+        Array.isArray(target) && target.includes("responseId") && target.includes("tagId");
+
+      if (error.code === "P2002" && isTagsOnResponsesUniqueViolation) {
+        return {
+          responseId,
+          tagId,
+        };
+      }
       throw new DatabaseError(error.message);
     }
 

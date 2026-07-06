@@ -120,4 +120,5 @@ export interface AnalyticsResponse {
   chartType: TChartType;
   data?: TChartDataRow[];
   error?: string;
+  suggestedName?: string;
 }

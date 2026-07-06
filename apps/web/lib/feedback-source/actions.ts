@@ -27,14 +27,12 @@ import {
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
-import { importCsvData } from "./csv-import";
 import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
   createFeedbackSourceWithMappings,
   deleteFeedbackSource,
   getFeedbackSourceWithMappingsById,
-  updateFeedbackSource,
   updateFeedbackSourceWithMappings,
 } from "./service";
 import {
@@ -469,59 +467,6 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       }
 
       return importHistoricalResponses(feedbackSource, survey);
-    }
-  );
-
-const ZImportCsvDataAction = z.object({
-  feedbackSourceId: ZId,
-  workspaceId: ZId,
-  csvData: z.array(z.record(z.string(), z.string())).min(1),
-});
-
-export const importCsvDataAction = authenticatedActionClient
-  .inputSchema(ZImportCsvDataAction)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZImportCsvDataAction>;
-    }) => {
-      const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
-      });
-
-      const feedbackSource = await getFeedbackSourceWithMappingsById(
-        parsedInput.feedbackSourceId,
-        parsedInput.workspaceId
-      );
-      if (!feedbackSource) {
-        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
-      }
-
-      const result = await importCsvData(feedbackSource, parsedInput.csvData);
-
-      if (result.successes > 0) {
-        await updateFeedbackSource(parsedInput.feedbackSourceId, parsedInput.workspaceId, {
-          lastSyncAt: new Date(),
-        });
-      }
-
-      return result;
     }
   );
 

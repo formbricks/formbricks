@@ -37,7 +37,7 @@ export const SettingsCard = ({
   return (
     <div
       className={cn(
-        "relative my-4 w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 text-left shadow-sm",
+        "relative my-4 w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 text-left shadow-xs",
         className
       )}
       id={title}>

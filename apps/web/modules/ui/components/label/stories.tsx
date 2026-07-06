@@ -108,7 +108,7 @@ export const Required: Story = {
 export const WithCheckbox: Story = {
   render: (args) => (
     <div className="flex items-center gap-x-2">
-      <input id="terms" type="checkbox" className="size-4 rounded border-slate-300 text-blue-600" />
+      <input id="terms" type="checkbox" className="size-4 rounded-sm border-slate-300 text-blue-600" />
       <Label {...args} htmlFor="terms">
         I agree to the terms and conditions
       </Label>

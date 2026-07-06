@@ -1,5 +1,6 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
+import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
 import { isInternalI18nString, isPlainObject } from "./guards";
 import {
   type TV3SurveyResolverLanguage,
@@ -236,5 +237,10 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     endings: serializeValue(survey.endings),
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    // App-only runtime/distribution + targeting, via the shared survey→public mappers. Omitted
+    // entirely for link surveys to keep the contract clean.
+    ...(survey.type === "app"
+      ? { distribution: surveyToV3Distribution(survey), targeting: surveyToV3Targeting(survey) }
+      : {}),
   };
 }

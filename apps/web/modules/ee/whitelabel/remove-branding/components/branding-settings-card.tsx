@@ -18,13 +18,11 @@ export const BrandingSettingsCard = async ({
   isReadOnly,
 }: BrandingSettingsCardProps) => {
   const t = await getTranslate();
-  const workspaceBasePath = `/workspaces/${workspace.id}`;
-
   const buttons: [ModalButton, ModalButton] = [
     {
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
-        ? `${workspaceBasePath}/settings/organization/billing`
+        ? `/organizations/${workspace.organizationId}/settings/billing`
         : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
     },
     {

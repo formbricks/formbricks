@@ -10,7 +10,7 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { TSegment } from "@formbricks/types/segment";
+import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -58,6 +58,10 @@ vi.mock("@/lib/actionClass/service", () => ({
 
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
+  // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
+  // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
+  vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
+    callback(prisma)) as typeof prisma.$transaction);
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {
@@ -487,7 +491,6 @@ describe("Tests for handleTriggerUpdates", () => {
   });
 
   test("returns empty object when no triggers provided", () => {
-    // @ts-expect-error -- This is a test case to check the empty input
     const result = handleTriggerUpdates(undefined, [], mockActionClasses);
     expect(result).toEqual({});
   });
@@ -686,6 +689,44 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.update).toHaveBeenCalled();
     });
 
+    test("seeds the private segment with the provided filters for app surveys", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        type: "app",
+      });
+      prisma.segment.create.mockResolvedValueOnce({
+        id: "segment-123",
+        workspaceId: mockWorkspaceId,
+        title: mockSurveyOutput.id,
+        isPrivate: true,
+        filters: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as unknown as TSegment);
+
+      const filters = [
+        {
+          id: "clf01234567890123456789012",
+          connector: null,
+          resource: {
+            id: "clf11234567890123456789012",
+            root: { type: "attribute", contactAttributeKey: "plan" },
+            qualifier: { operator: "equals" },
+            value: "pro",
+          },
+        },
+      ] as unknown as TBaseFilters;
+
+      await createSurvey(mockWorkspaceId, { ...mockCreateSurveyInput, type: "app" }, filters);
+
+      expect(prisma.segment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ filters, isPrivate: true }),
+        })
+      );
+    });
+
     test("creates survey with follow-ups", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       const followUp = {
@@ -782,7 +823,14 @@ describe("Tests for createSurvey", () => {
     test("preserves an explicitly provided segment relation for existing callers", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.segment.findUnique.mockResolvedValueOnce({
+        id: "clseg123456789012345678901",
+        title: "Segment",
+        description: null,
+        isPrivate: false,
+        filters: [],
         workspaceId: mockWorkspaceId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
@@ -818,7 +866,14 @@ describe("Tests for createSurvey", () => {
 
     test("rejects an explicitly provided segment from another workspace", async () => {
       prisma.segment.findUnique.mockResolvedValueOnce({
+        id: "clseg123456789012345678901",
+        title: "Segment",
+        description: null,
+        isPrivate: false,
+        filters: [],
         workspaceId: "clotherworkspace1234567890",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       await expect(

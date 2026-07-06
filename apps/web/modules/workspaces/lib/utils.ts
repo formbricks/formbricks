@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
@@ -19,7 +18,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -34,7 +33,7 @@ import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types
 export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> => {
   const t = await getTranslate();
 
-  const [workspace, session] = await Promise.all([getWorkspace(workspaceId), getServerSession(authOptions)]);
+  const [workspace, session] = await Promise.all([getWorkspace(workspaceId), getSession()]);
 
   if (!workspace) {
     throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
@@ -85,7 +84,7 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
  */
 export const workspaceIdLayoutChecks = async (workspaceId: string) => {
   const t = await getTranslate();
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!session?.user) {
     return { t, session: null, user: null, organization: null };
@@ -244,7 +243,7 @@ export const getWorkspaceLayoutData = reactCache(
     validateInputs([userId, ZId]);
 
     const t = await getTranslate();
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
     if (!session?.user) {
       throw new AuthenticationError(t("common.not_authenticated"));

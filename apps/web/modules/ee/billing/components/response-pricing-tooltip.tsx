@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { Trans, useTranslation } from "react-i18next";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import type { TResponseOverageDisplay } from "../lib/stripe-billing-catalog";
@@ -29,10 +30,10 @@ const ResponsePricingTable = ({
     <table className="w-full text-left text-xs">
       <thead>
         <tr className="border-b border-slate-200 text-slate-500">
-          <th className="pb-2 pr-4 font-medium">
+          <th className="pr-4 pb-2 font-medium">
             {t("workspace.settings.billing.dynamic_pricing_first_unit")}
           </th>
-          <th className="pb-2 pr-4 font-medium">
+          <th className="pr-4 pb-2 font-medium">
             {t("workspace.settings.billing.dynamic_pricing_last_unit")}
           </th>
           <th className="pb-2 font-medium">{t("workspace.settings.billing.dynamic_pricing_per_unit")}</th>
@@ -61,6 +62,7 @@ interface PlanResponseFeatureProps {
   plan: TResponsePricingPlan;
   locale: string;
   overage: TResponseOverageDisplay | null;
+  t: TFunction;
 }
 
 // The <span /> placeholder child is replaced by react-i18next's <Trans> with
@@ -80,11 +82,11 @@ const dynamicPricingComponent = (overage: TResponseOverageDisplay | null, locale
   );
 };
 
-export const PlanResponseFeature = ({ plan, locale, overage }: Readonly<PlanResponseFeatureProps>) => {
+export const PlanResponseFeature = ({ plan, locale, overage, t }: Readonly<PlanResponseFeatureProps>) => {
   const i18nKey =
     plan === "pro"
-      ? "workspace.settings.billing.plan_pro_feature_responses"
-      : "workspace.settings.billing.plan_scale_feature_responses";
+      ? t("workspace.settings.billing.plan_pro_feature_responses")
+      : t("workspace.settings.billing.plan_scale_feature_responses");
 
   return (
     <Trans i18nKey={i18nKey} components={{ dynamicPricing: dynamicPricingComponent(overage, locale) }} />

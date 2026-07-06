@@ -14,8 +14,10 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
@@ -24,7 +26,11 @@ import {
   getMembershipsByUserId,
   getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
+import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
+
+// Hard cap on a single bulk import to bound payload size and email fan-out.
+const BULK_INVITE_MAX_INVITEES = 500;
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
@@ -304,6 +310,9 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
 
+    // Bound invite-spam abuse: cap invites per organization regardless of who triggers them.
+    await applyRateLimit(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
+
     const inviteId = await inviteUser({
       organizationId: parsedInput.organizationId,
       invitee: {
@@ -339,6 +348,110 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
     );
 
     return inviteId;
+  })
+);
+
+const ZBulkInviteUsersAction = z.object({
+  organizationId: ZId,
+  invitees: ZInvitees,
+});
+
+export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulkInviteUsersAction).action(
+  withAuditLogging("created", "invite", async ({ ctx, parsedInput }) => {
+    if (INVITE_DISABLED) {
+      throw new AuthenticationError("Invite disabled");
+    }
+
+    const { organizationId, invitees } = parsedInput;
+
+    if (invitees.length === 0) {
+      throw new ValidationError("No invitees provided");
+    }
+
+    if (invitees.length > BULK_INVITE_MAX_INVITEES) {
+      throw new ValidationError(`A bulk invite is limited to ${BULK_INVITE_MAX_INVITEES} members at a time`);
+    }
+
+    // Bulk invite is restricted to organization owners and managers.
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(ctx.user.id, organizationId);
+    if (!currentUserMembership) {
+      throw new AuthenticationError("User not a member of this organization");
+    }
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    });
+
+    // Entitlement gate: bulk invite is a paid feature. Mitigates the invite-spam abuse vector by
+    // keeping high-volume invites behind the bulk-invite entitlement (Stripe on cloud, license
+    // feature on self-hosted) rather than hardcoding plan names.
+    const isBulkInviteAllowed = await getBulkInvitePermission(organizationId);
+    if (!isBulkInviteAllowed) {
+      throw new OperationNotAllowedError("Bulk invite is not available on your current plan");
+    }
+
+    // Validate roles for the whole batch up front.
+    if (!IS_FORMBRICKS_CLOUD && invitees.some((invitee) => invitee.role === OrganizationRole.billing)) {
+      throw new ValidationError("Billing role is not allowed");
+    }
+
+    if (currentUserMembership.role === "manager" && invitees.some((invitee) => invitee.role !== "member")) {
+      throw new OperationNotAllowedError("Managers can only invite users as members");
+    }
+
+    if (invitees.some((invitee) => invitee.role !== "owner" || (invitee.teamIds ?? []).length > 0)) {
+      await checkRoleManagementPermission(organizationId);
+    }
+
+    // Bound bulk imports per organization as defense-in-depth even for allowed plans.
+    await applyRateLimit(rateLimitConfigs.actions.bulkInviteMembers, organizationId);
+
+    const results: { email: string; success: boolean }[] = [];
+    const invitedEmails: string[] = [];
+
+    for (const invitee of invitees) {
+      const email = invitee.email.toLowerCase();
+      try {
+        const inviteId = await inviteUser({
+          organizationId,
+          invitee: { ...invitee, email },
+          currentUserId: ctx.user.id,
+        });
+
+        if (inviteId) {
+          await sendInviteMemberEmail(inviteId, email, ctx.user.name ?? "", invitee.name ?? "");
+          invitedEmails.push(email);
+          results.push({ email, success: true });
+        } else {
+          results.push({ email, success: false });
+        }
+      } catch {
+        // Skip individual failures (e.g. duplicate invite) so one bad row does not abort the batch.
+        results.push({ email, success: false });
+      }
+    }
+
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.newObject = {
+      invitedCount: invitedEmails.length,
+      totalCount: invitees.length,
+      emails: invitedEmails,
+    };
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "team_members_bulk_invited",
+      {
+        organization_id: organizationId,
+        invited_count: invitedEmails.length,
+        total_count: invitees.length,
+      },
+      { organizationId }
+    );
+
+    return results;
   })
 );
 

@@ -54,7 +54,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
     integrations.some((integration) => integration.type === type);
 
   if (isBilling) {
-    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
+    return redirect(getBillingFallbackPath(workspace.organizationId, IS_FORMBRICKS_CLOUD));
   }
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");

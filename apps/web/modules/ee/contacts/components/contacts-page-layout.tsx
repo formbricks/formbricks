@@ -10,6 +10,7 @@ interface ContactsPageLayoutProps {
   pageTitle: string;
   activeId: string;
   workspaceId: string;
+  organizationId: string;
   isContactsEnabled: boolean;
   isReadOnly: boolean;
   cta?: ReactNode;
@@ -23,6 +24,7 @@ export const ContactsPageLayout = async ({
   pageTitle,
   activeId,
   workspaceId,
+  organizationId,
   isContactsEnabled,
   isReadOnly,
   cta,
@@ -32,7 +34,7 @@ export const ContactsPageLayout = async ({
   upgradeFeature = "contacts",
 }: ContactsPageLayoutProps) => {
   const t = await getTranslate();
-  const workspaceBasePath = `/workspaces/${workspaceId}`;
+  const organizationBillingPath = `/organizations/${organizationId}/settings/billing`;
 
   return (
     <PageContentWrapper>
@@ -51,14 +53,12 @@ export const ContactsPageLayout = async ({
             buttons={[
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `${workspaceBasePath}/settings/organization/billing`
-                  : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+                href: IS_FORMBRICKS_CLOUD ? organizationBillingPath : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `${workspaceBasePath}/settings/organization/billing`
+                  ? organizationBillingPath
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}
