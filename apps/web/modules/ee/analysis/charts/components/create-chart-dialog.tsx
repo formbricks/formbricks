@@ -1,6 +1,7 @@
 "use client";
 
 import { CreateChartView } from "@/modules/ee/analysis/charts/components/create-chart-view";
+import { ChartsQueryClientProvider } from "@/modules/ee/analysis/charts/components/query-client-provider";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
@@ -30,17 +31,19 @@ export function CreateChartDialog({
   aiUnavailableReason,
 }: Readonly<CreateChartDialogProps>) {
   return (
-    <CreateChartView
-      open={open}
-      onOpenChange={onOpenChange}
-      workspaceId={workspaceId}
-      chartId={chartId}
-      initialChart={initialChart}
-      autoAddToDashboardId={autoAddToDashboardId}
-      onSuccess={onSuccess}
-      directories={directories}
-      isAIAvailable={isAIAvailable}
-      aiUnavailableReason={aiUnavailableReason}
-    />
+    <ChartsQueryClientProvider>
+      <CreateChartView
+        open={open}
+        onOpenChange={onOpenChange}
+        workspaceId={workspaceId}
+        chartId={chartId}
+        initialChart={initialChart}
+        autoAddToDashboardId={autoAddToDashboardId}
+        onSuccess={onSuccess}
+        directories={directories}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
+      />
+    </ChartsQueryClientProvider>
   );
 }

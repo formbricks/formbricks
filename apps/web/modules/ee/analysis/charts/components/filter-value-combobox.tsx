@@ -1,5 +1,6 @@
 "use client";
 
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,6 +28,22 @@ interface FilterValueComboboxProps {
 
 const SEARCH_DEBOUNCE_MS = 250;
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 /**
  * Pick-list for a filter value, backed by the distinct stored values of a low-cardinality
  * string dimension. Selecting a real stored value guarantees an exact match for the
@@ -43,67 +60,35 @@ export function FilterValueCombobox({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [values, setValues] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // Only the latest in-flight lookup may apply its result.
-  const seqRef = useRef(0);
-  // Stale-while-revalidate cache: previously fetched values per lookup key, kept for the
-  // lifetime of the filter row so reopening the popover shows the list instantly while a
-  // background refresh picks up any new values.
-  const cacheRef = useRef(new Map<string, string[]>());
   const listRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
+  const trimmedSearch = search.trim();
+  const debouncedSearch = useDebounce(trimmedSearch, SEARCH_DEBOUNCE_MS);
 
-    const seq = ++seqRef.current;
-    const trimmedSearch = search.trim();
-    const cacheKey = JSON.stringify([workspaceId, feedbackDirectoryId, dimension, trimmedSearch]);
-    const cached = cacheRef.current.get(cacheKey);
-
-    setError(null);
-    if (cached) {
-      setValues(cached);
-      setIsLoading(false);
-    } else {
-      setIsLoading(true);
-    }
-
-    const fetchValues = () => {
-      void getDimensionValuesAction({
+  const {
+    data: values = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["dimensionValues", workspaceId, feedbackDirectoryId, dimension, debouncedSearch],
+    queryFn: async () => {
+      const result = await getDimensionValuesAction({
         workspaceId,
         feedbackDirectoryId,
         dimension,
-        ...(trimmedSearch ? { search: trimmedSearch } : {}),
-      }).then((result) => {
-        if (seq !== seqRef.current) return;
-
-        if (result?.serverError || result?.validationErrors) {
-          // A failed background refresh keeps showing the cached list; only surface the
-          // error when there is nothing to show instead.
-          if (!cached) {
-            setError(getFormattedErrorMessage(result));
-            setValues([]);
-          }
-        } else {
-          const nextValues = Array.isArray(result?.data) ? result.data : [];
-          cacheRef.current.set(cacheKey, nextValues);
-          setValues(nextValues);
-        }
-        setIsLoading(false);
+        ...(debouncedSearch ? { search: debouncedSearch } : {}),
       });
-    };
 
-    // Debounce only narrows typed searches; the initial open fetches immediately.
-    if (!trimmedSearch) {
-      fetchValues();
-      return;
-    }
+      if (result?.serverError || result?.validationErrors) {
+        throw new Error(getFormattedErrorMessage(result));
+      }
 
-    const timer = setTimeout(fetchValues, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [open, search, workspaceId, feedbackDirectoryId, dimension]);
+      return Array.isArray(result?.data) ? result.data : [];
+    },
+    enabled: open,
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache validity
+  });
 
   // Reset the transient search term whenever the popover closes.
   useEffect(() => {
@@ -165,7 +150,9 @@ export function FilterValueCombobox({
                   <LoadingSpinner className="h-5 w-5" />
                 </div>
               )}
-              {!isLoading && error && <div className="py-6 text-center text-sm text-red-500">{error}</div>}
+              {!isLoading && error && (
+                <div className="py-6 text-center text-sm text-red-500">{error.message}</div>
+              )}
               {!isLoading && !error && (
                 <CommandEmpty>{t("workspace.analysis.charts.no_values_found")}</CommandEmpty>
               )}
