@@ -46,14 +46,13 @@ const HIGHLIGHT = "bg-[#D1EFED]/60";
 export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn[] }>) => {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
-  const b = (key: string) => t(`workspace.settings.billing.${key}`);
 
   const renderValue = (value: ComparisonValue): ReactNode => {
     if (value === true) {
       return (
         <>
           <CheckIcon className="size-5 text-emerald-600" strokeWidth={3} aria-hidden="true" />
-          <span className="sr-only">{b("comparison_included")}</span>
+          <span className="sr-only">{t("workspace.settings.billing.comparison_included")}</span>
         </>
       );
     }
@@ -63,64 +62,199 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
           <span aria-hidden="true" className="text-slate-300">
             —
           </span>
-          <span className="sr-only">{b("comparison_not_included")}</span>
+          <span className="sr-only">{t("workspace.settings.billing.comparison_not_included")}</span>
         </>
       );
     }
-    if (value === "addon") return <span className="text-slate-500">{b("comparison_addon")}</span>;
+    if (value === "addon")
+      return <span className="text-slate-500">{t("workspace.settings.billing.comparison_addon")}</span>;
     return <span className="text-slate-700">{value}</span>;
   };
 
   const proUnlocks: ComparisonDisplayRow[] = [
-    { type: "feature", label: b("comparison_row_hide_branding"), values: [false, true, true] },
-    { type: "feature", label: b("comparison_row_contact_management"), values: [false, true, true] },
-    { type: "feature", label: b("comparison_row_attribute_segmentation"), values: [false, true, true] },
-    { type: "feature", label: b("comparison_row_email_followups"), values: [false, true, true] },
-    { type: "feature", label: b("comparison_row_ai_translations"), values: [false, true, true] },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_hide_branding"),
+      values: [false, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_contact_management"),
+      values: [false, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_attribute_segmentation"),
+      values: [false, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_email_followups"),
+      values: [false, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_ai_translations"),
+      values: [false, true, true],
+    },
   ];
 
   const allPlans: ComparisonDisplayRow[] = [
-    { type: "feature", label: b("comparison_row_link_surveys"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_inproduct_surveys"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_question_types"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_conditional_logic"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_hidden_fields"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_partial_responses"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_recall"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_backgrounds"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_file_uploads"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_single_use_links"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_api"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_frankfurt"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_unlimited_seats"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_respondent_id"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_all_integrations"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_custom_webhooks"), values: [true, true, true] },
-    { type: "feature", label: b("comparison_row_mobile_sdks"), values: [true, true, true] },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_link_surveys"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_inproduct_surveys"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_question_types"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_conditional_logic"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_hidden_fields"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_partial_responses"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_recall"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_backgrounds"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_file_uploads"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_single_use_links"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_api"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_frankfurt"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_unlimited_seats"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_respondent_id"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_all_integrations"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_custom_webhooks"),
+      values: [true, true, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_mobile_sdks"),
+      values: [true, true, true],
+    },
   ];
 
   const scaleUnlocks: ComparisonDisplayRow[] = [
-    { type: "feature", label: b("comparison_row_teams_roles"), values: [false, false, true] },
-    { type: "feature", label: b("comparison_row_quota"), values: [false, false, true] },
-    { type: "feature", label: b("comparison_row_unify_feedback"), values: [false, false, "addon"] },
-    { type: "feature", label: b("comparison_row_topic_labeling"), values: [false, false, "addon"] },
-    { type: "feature", label: b("comparison_row_custom_dashboards"), values: [false, false, "addon"] },
-    { type: "feature", label: b("comparison_row_two_factor_auth"), values: [false, false, "addon"] },
-    { type: "feature", label: b("comparison_row_spam"), values: [false, false, "addon"] },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_teams_roles"),
+      values: [false, false, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_quota"),
+      values: [false, false, true],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_unify_feedback"),
+      values: [false, false, "addon"],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_topic_labeling"),
+      values: [false, false, "addon"],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_custom_dashboards"),
+      values: [false, false, "addon"],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_two_factor_auth"),
+      values: [false, false, "addon"],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_spam"),
+      values: [false, false, "addon"],
+    },
   ];
 
   const displayRows: ComparisonDisplayRow[] = [
-    { type: "section", label: b("comparison_section_basic_usage") },
-    { type: "feature", label: b("comparison_row_workspaces"), values: ["1", "3", "5"] },
-    { type: "feature", label: b("comparison_row_responses"), values: ["250", "2,000", "5,000"] },
-    { type: "feature", label: b("comparison_row_overage"), values: [false, true, true] },
-    { type: "section", label: b("comparison_section_pro_unlocks") },
+    { type: "section", label: t("workspace.settings.billing.comparison_section_basic_usage") },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_workspaces"),
+      values: ["1", "3", "5"],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_responses"),
+      values: ["250", "2,000", "5,000"],
+    },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_overage"),
+      values: [false, true, true],
+    },
+    { type: "section", label: t("workspace.settings.billing.comparison_section_pro_unlocks") },
     ...proUnlocks,
     ...(showDetails
       ? [
-          { type: "section", label: b("comparison_section_all_plans") } as ComparisonDisplayRow,
+          {
+            type: "section",
+            label: t("workspace.settings.billing.comparison_section_all_plans"),
+          } as ComparisonDisplayRow,
           ...allPlans,
-          { type: "section", label: b("comparison_section_scale_unlocks") } as ComparisonDisplayRow,
+          {
+            type: "section",
+            label: t("workspace.settings.billing.comparison_section_scale_unlocks"),
+          } as ComparisonDisplayRow,
           ...scaleUnlocks,
         ]
       : []),
@@ -130,7 +264,7 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
     <div className="overflow-x-auto">
       <div
         role="table"
-        aria-label={b("plan_selection_title")}
+        aria-label={t("workspace.settings.billing.plan_selection_title")}
         className="grid min-w-[42rem] grid-cols-[minmax(0,0.5fr)_repeat(3,minmax(0,1fr))]">
         {/* Plan header row — badges, name, price, aligned CTA */}
         <div role="row" className="contents">
@@ -183,7 +317,7 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
         {/* Best for (plan descriptions right below the CTAs, above the separator) */}
         <div role="row" className="contents">
           <div role="rowheader" className={cn(LABEL_CELL, "pt-6 pb-6 text-sm font-medium text-slate-600")}>
-            {b("comparison_best_for")}
+            {t("workspace.settings.billing.comparison_best_for")}
           </div>
           {columns.map((col) => (
             <div
