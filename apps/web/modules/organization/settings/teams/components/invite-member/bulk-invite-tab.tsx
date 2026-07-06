@@ -213,7 +213,7 @@ export const BulkInviteTab = ({
     <>
       <div className="flex flex-col gap-4">
         {error ? (
-          <Alert variant="default" size="small">
+          <Alert variant="error">
             <AlertDescription className="break-words whitespace-normal">{error}</AlertDescription>
           </Alert>
         ) : null}
