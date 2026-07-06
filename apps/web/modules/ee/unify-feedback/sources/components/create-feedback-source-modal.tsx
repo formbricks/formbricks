@@ -537,10 +537,14 @@ export const CreateFeedbackSourceModal = ({
                               // They can still rename it later in the Edit modal.
                               const survey = surveys.find((item) => item.id === value);
                               if (survey) {
-                                formbricksForm.setValue("sourceName", `${survey.name} Connector`, {
-                                  shouldValidate: true,
-                                  shouldDirty: true,
-                                });
+                                formbricksForm.setValue(
+                                  "sourceName",
+                                  t("workspace.unify.source_connector_name", { surveyName: survey.name }),
+                                  {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                  }
+                                );
                               }
                             }}>
                             <SelectTrigger>

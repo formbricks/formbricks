@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -114,11 +115,18 @@ export default async function UnifyFeedbackRecordsPage(
     }));
 
   // Resolve the initial page's user_ids to contact ids in one batched query so records can
-  // deep-link to the matching contact (in this workspace) without a per-record lookup.
-  const initialContactIdByUserId = await getContactIdsByUserIds(
-    params.workspaceId,
-    merged.map((record) => record.user_id).filter((id): id is string => Boolean(id))
-  );
+  // deep-link to the matching contact (in this workspace) without a per-record lookup. Contact
+  // links are a non-critical enhancement, so a transient DB failure falls back to no links
+  // rather than taking down the whole Feedback Data page.
+  let initialContactIdByUserId: Record<string, string> = {};
+  try {
+    initialContactIdByUserId = await getContactIdsByUserIds(
+      params.workspaceId,
+      merged.map((record) => record.user_id).filter((id): id is string => Boolean(id))
+    );
+  } catch (error) {
+    logger.error({ error, workspaceId: params.workspaceId }, "Failed to resolve feedback record contacts");
+  }
 
   return (
     <FeedbackRecordsPageClient

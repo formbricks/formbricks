@@ -38,6 +38,12 @@ export const UnifyConfigNavigation = ({
   ];
 
   return (
-    <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} variant="steps" />
+    <SecondaryNavigation
+      navigation={navigation}
+      activeId={activeId}
+      loading={loading}
+      variant="steps"
+      ariaLabel={t("workspace.unify.unify_feedback")}
+    />
   );
 };

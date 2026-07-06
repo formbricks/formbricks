@@ -23,6 +23,12 @@ interface SecondaryNavbarProps {
    * step-by-step guide with chevron separators between items (wizard style).
    */
   variant?: "tabs" | "steps";
+  /**
+   * Accessible name for the nav landmark. This is a shared, server-renderable primitive, so it
+   * can't translate itself — callers pass an already-translated label (especially for the "steps"
+   * variant, which shouldn't be announced as "Tabs"). Defaults to "Tabs".
+   */
+  ariaLabel?: string;
 }
 
 const getTabTextClassName = (isActive: boolean) =>
@@ -106,6 +112,7 @@ export const SecondaryNavigation = ({
   activeId,
   loading,
   variant = "tabs",
+  ariaLabel = "Tabs",
   ...props
 }: SecondaryNavbarProps) => {
   const visibleNavigation = navigation.filter((navElem) => !navElem.hidden);
@@ -143,7 +150,9 @@ export const SecondaryNavigation = ({
 
   return (
     <div {...props}>
-      <nav className={cn("flex h-10 w-full items-center", isSteps ? "gap-x-2" : "gap-x-4")} aria-label="Tabs">
+      <nav
+        className={cn("flex h-10 w-full items-center", isSteps ? "gap-x-2" : "gap-x-4")}
+        aria-label={ariaLabel}>
         {visibleNavigation.map((navElem, index) => (
           <Fragment key={navElem.id}>
             {isSteps && index > 0 && (

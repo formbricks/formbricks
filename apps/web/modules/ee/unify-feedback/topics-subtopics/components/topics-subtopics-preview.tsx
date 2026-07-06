@@ -89,13 +89,6 @@ const fieldKey = (field: TaxonomyFieldOption) =>
 
 const sourceKey = (field: TaxonomyFieldOption) => `${field.source_type}::${field.source_id}`;
 
-const scopeFromField = (field: TaxonomyFieldOption): TaxonomyScope => ({
-  tenant_id: field.tenant_id,
-  source_type: field.source_type,
-  source_id: field.source_id,
-  field_id: field.field_id,
-});
-
 const statusBadgeType = (status: TaxonomyRun["status"]): "warning" | "success" | "error" | "info" => {
   if (status === "succeeded") return "success";
   if (status === "failed" || status === "canceled") return "error";
@@ -260,9 +253,28 @@ export const TopicsSubtopicsPreview = ({
     [fields, selectedFieldKey]
   );
 
-  const selectedScope = useMemo(
-    () => (selectedField ? scopeFromField(selectedField) : null),
-    [selectedField]
+  // Key the scope on its primitive fields, not the selectedField object. The embedding poll
+  // replaces `fields` (hence selectedField's identity) every second, but the scope of a given
+  // field never changes — keeping selectedScope stable prevents the run poller effect below (which
+  // depends on it) from tearing down and recreating its interval on every embedding tick.
+  const scopeTenantId = selectedField?.tenant_id;
+  const scopeSourceType = selectedField?.source_type;
+  const scopeSourceId = selectedField?.source_id;
+  const scopeFieldId = selectedField?.field_id;
+  const selectedScope = useMemo<TaxonomyScope | null>(
+    () =>
+      scopeTenantId !== undefined &&
+      scopeSourceType !== undefined &&
+      scopeSourceId !== undefined &&
+      scopeFieldId !== undefined
+        ? {
+            tenant_id: scopeTenantId,
+            source_type: scopeSourceType,
+            source_id: scopeSourceId,
+            field_id: scopeFieldId,
+          }
+        : null,
+    [scopeTenantId, scopeSourceType, scopeSourceId, scopeFieldId]
   );
   const runErrorMessage = useCallback(
     (run: TaxonomyRun) => run.error ?? (run.error_code ? runFailureMessage(run.error_code, t) : null),
@@ -368,39 +380,64 @@ export const TopicsSubtopicsPreview = ({
     void loadState();
   }, [loadState]);
 
-  useEffect(() => {
-    if (!latestRun || !selectedScope || !RUNNING_STATUSES.has(latestRun.status)) return;
+  // Poll a running run until it reaches a terminal state. Keyed on the run *id* (not the whole
+  // run object) so per-tick status refreshes don't tear the effect down and recreate the interval.
+  // Crucially, on success we fetch the tree *before* recording the terminal status — otherwise the
+  // very setRuns that flips the run to "succeeded" re-runs this effect, whose cleanup would cancel
+  // the in-flight tree fetch and leave the tree unset until a manual page refresh.
+  const runningRunId = latestRun && RUNNING_STATUSES.has(latestRun.status) ? latestRun.id : null;
 
-    const abortController = new AbortController();
+  useEffect(() => {
+    if (!runningRunId || !selectedScope) return;
+
+    let cancelled = false;
 
     const interval = window.setInterval(async () => {
-      if (abortController.signal.aborted) return;
+      try {
+        const response = await getTaxonomyRunAction({
+          workspaceId,
+          scope: selectedScope,
+          runId: runningRunId,
+        });
+        const run = response?.data;
+        if (!run || cancelled) return;
 
-      const response = await getTaxonomyRunAction({ workspaceId, scope: selectedScope, runId: latestRun.id });
-      const run = response?.data;
-      if (!run || abortController.signal.aborted) return;
+        if (RUNNING_STATUSES.has(run.status)) {
+          setRuns((prev) => [run, ...prev.filter((existingRun) => existingRun.id !== run.id)]);
+          return;
+        }
 
-      setRuns((prev) => [run, ...prev.filter((existingRun) => existingRun.id !== run.id)]);
-      if (!RUNNING_STATUSES.has(run.status)) {
-        if (run.status === "succeeded") {
-          const treeResponse = await getTaxonomyTreeAction({
-            workspaceId,
-            scope: selectedScope,
-            runId: run.id,
-          });
-          if (treeResponse?.data && !abortController.signal.aborted) {
-            setActiveTree(treeResponse.data);
+        window.clearInterval(interval);
+        // Fetch the tree first (the run still reads as running, so this effect isn't torn down and
+        // can't cancel the in-flight fetch), then record the terminal status in `finally`. Doing it
+        // in `finally` guarantees the run leaves the "running" state even if the tree fetch throws —
+        // otherwise the spinner would freeze and re-generation would be blocked until a manual refresh.
+        try {
+          if (run.status === "succeeded") {
+            const treeResponse = await getTaxonomyTreeAction({
+              workspaceId,
+              scope: selectedScope,
+              runId: run.id,
+            });
+            if (treeResponse?.data && !cancelled) {
+              setActiveTree(treeResponse.data);
+            }
+          }
+        } finally {
+          if (!cancelled) {
+            setRuns((prev) => [run, ...prev.filter((existingRun) => existingRun.id !== run.id)]);
           }
         }
-        window.clearInterval(interval);
+      } catch {
+        // Transient failure — keep polling; the next tick retries.
       }
     }, 5000);
 
     return () => {
-      abortController.abort();
+      cancelled = true;
       window.clearInterval(interval);
     };
-  }, [latestRun, selectedScope, workspaceId]);
+  }, [runningRunId, selectedScope, workspaceId]);
 
   const handleSourceChange = (value: string) => {
     setSelectedSourceKey(value);
@@ -577,18 +614,36 @@ export const TopicsSubtopicsPreview = ({
         ? "embedding"
         : null;
 
-  // While embeddings are still being generated, poll the field counts every second.
+  // While embeddings are still being generated, poll the field counts. Uses a self-scheduling
+  // timeout rather than setInterval so at most one request is ever in flight — otherwise a slow
+  // response could resolve after a fresher one and flicker the gate backward. A `cancelled` flag
+  // drops any response that lands after the directory changed or the effect was torn down.
   useEffect(() => {
     if (gateVariant !== "embedding" || !directoryId) return;
 
-    const interval = window.setInterval(async () => {
-      const response = await getTaxonomyFieldsAction({ workspaceId, directoryId });
-      if (response?.data && !response.data.unavailable) {
-        setFields(response.data.fields);
-      }
-    }, EMBEDDING_POLL_INTERVAL_MS);
+    let cancelled = false;
+    let timeout: number;
 
-    return () => window.clearInterval(interval);
+    const poll = async () => {
+      try {
+        const response = await getTaxonomyFieldsAction({ workspaceId, directoryId });
+        if (!cancelled && response?.data && !response.data.unavailable) {
+          setFields(response.data.fields);
+        }
+      } catch {
+        // Ignore transient failures and keep polling — the gate stays until counts catch up.
+      }
+      if (!cancelled) {
+        timeout = window.setTimeout(poll, EMBEDDING_POLL_INTERVAL_MS);
+      }
+    };
+
+    timeout = window.setTimeout(poll, EMBEDDING_POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
   }, [gateVariant, directoryId, workspaceId]);
 
   return (

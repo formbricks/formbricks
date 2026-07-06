@@ -41,6 +41,8 @@ import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
 import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolbar-left";
 
 const RECORDS_PER_PAGE = 50;
+// Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
+const CONTACT_RESOLVE_BATCH_SIZE = 1000;
 
 const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
   text: <TypeIcon className="size-3.5" />,
@@ -202,7 +204,9 @@ export const FeedbackRecordsTable = ({
     return { ok: true, records: fetchedRecords, newCursors };
   };
 
-  // Resolve any not-yet-known user_ids from a freshly fetched page to contact ids (one batched query).
+  // Resolve any not-yet-known user_ids from a freshly fetched page to contact ids. Chunked to stay
+  // within the action's input cap, and failures are swallowed since contact links are a non-critical
+  // enhancement — the records still render without them.
   const resolveContactsForRecords = useCallback(
     async (recs: FeedbackRecordData[]) => {
       const missing = [
@@ -210,9 +214,16 @@ export const FeedbackRecordsTable = ({
       ].filter((id) => !(id in contactIdByUserId));
       if (missing.length === 0) return;
 
-      const result = await getFeedbackRecordContactsAction({ workspaceId, userIds: missing });
-      if (result?.data) {
-        setContactIdByUserId((prev) => ({ ...prev, ...result.data }));
+      try {
+        for (let i = 0; i < missing.length; i += CONTACT_RESOLVE_BATCH_SIZE) {
+          const batch = missing.slice(i, i + CONTACT_RESOLVE_BATCH_SIZE);
+          const result = await getFeedbackRecordContactsAction({ workspaceId, userIds: batch });
+          if (result?.data) {
+            setContactIdByUserId((prev) => ({ ...prev, ...result.data }));
+          }
+        }
+      } catch {
+        // Ignore — contact deep-links are best-effort.
       }
     },
     [contactIdByUserId, workspaceId]
