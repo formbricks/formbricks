@@ -32,28 +32,66 @@ vi.mock("@/lib/workspace/service", () => ({
 const mockOrganization = {
   id: "org1",
   name: "Acme",
+  createdAt: new Date("2024-01-01"),
+  updatedAt: new Date("2024-01-01"),
+  billing: {
+    stripeCustomerId: null,
+    limits: {
+      workspaces: 3,
+      monthly: {
+        responses: 1500,
+      },
+    },
+    usageCycleAnchor: null,
+  },
   isAISmartToolsEnabled: false,
 };
 
+const baseWorkspace = {
+  organizationId: "org1",
+  updatedAt: new Date("2024-01-02"),
+  styling: { allowStyleOverwrite: true },
+  recontactDays: 0,
+  inAppSurveyBranding: false,
+  linkSurveyBranding: false,
+  config: { channel: null, industry: null },
+  placement: "bottomRight" as const,
+  clickOutsideClose: false,
+  overlay: "none" as const,
+  languages: [],
+  appSetupCompleted: false,
+  logo: null,
+};
+
 const mockWorkspace = {
+  ...baseWorkspace,
   id: "ws1",
   name: "My workspace",
-  organizationId: "org1",
   createdAt: new Date("2024-01-02"),
 };
 
 const olderWorkspace = {
+  ...baseWorkspace,
   id: "ws-old",
   name: "Acme Old",
-  organizationId: "org1",
   createdAt: new Date("2024-01-01"),
 };
 
 describe("onboarding-workspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" });
-    vi.mocked(getAccessFlags).mockReturnValue({ isOwner: true, isManager: false });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({
+      organizationId: "org1",
+      userId: "user1",
+      accepted: true,
+      role: "owner",
+    });
+    vi.mocked(getAccessFlags).mockReturnValue({
+      isOwner: true,
+      isManager: false,
+      isBilling: false,
+      isMember: false,
+    });
     vi.mocked(getOrganization).mockResolvedValue(mockOrganization);
     vi.mocked(getIsAISmartToolsEnabled).mockResolvedValue(true);
     vi.mocked(updateOrganization).mockResolvedValue({
@@ -84,9 +122,9 @@ describe("onboarding-workspace", () => {
 
   test("reuses organization workspace when one already exists", async () => {
     const existingWorkspace = {
+      ...baseWorkspace,
       id: "ws-existing",
       name: "Acme",
-      organizationId: "org1",
       createdAt: new Date("2024-01-01"),
     };
     vi.mocked(getWorkspaces).mockResolvedValueOnce([existingWorkspace]);
@@ -135,7 +173,12 @@ describe("onboarding-workspace", () => {
   });
 
   test("throws when user is not owner or manager", async () => {
-    vi.mocked(getAccessFlags).mockReturnValueOnce({ isOwner: false, isManager: false });
+    vi.mocked(getAccessFlags).mockReturnValueOnce({
+      isOwner: false,
+      isManager: false,
+      isBilling: false,
+      isMember: false,
+    });
 
     await expect(getOnboardingWorkspaceContext({ userId: "user1", organizationId: "org1" })).rejects.toThrow(
       AuthorizationError

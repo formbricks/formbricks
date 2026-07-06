@@ -1,5 +1,4 @@
 import { google } from "googleapis";
-import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
@@ -10,7 +9,7 @@ import {
 } from "@/lib/constants";
 import { createIntegrationOAuthState } from "@/lib/oauth/integration-state";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -19,7 +18,7 @@ const scopes = [
 
 export const GET = async (req: NextRequest) => {
   const workspaceId = req.headers.get("workspaceId");
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
   if (!workspaceId) {
     return responses.badRequestResponse("workspaceId is missing");

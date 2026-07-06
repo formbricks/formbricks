@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
 import {
-  createAccountDeletionSsoReauthIntent,
   createEmailChangeToken,
   createEmailToken,
   createFeedbackRecordsGatewayToken,
@@ -13,7 +12,6 @@ import {
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
-  verifyAccountDeletionSsoReauthIntent,
   verifyEmailChangeToken,
   verifyFeedbackRecordsGatewayToken,
   verifyGatewayServiceToken,
@@ -139,7 +137,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should accept custom options", () => {
-      const customOptions = { expiresIn: "1h" };
+      const customOptions = { expiresIn: "1h" as const };
       const token = createToken(mockUser.id, customOptions);
       expect(token).toBeDefined();
 
@@ -1123,125 +1121,6 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
         const tamperedIntent = `${intent.slice(0, -1)}x`;
         expect(() => verifySsoRelinkIntent(tamperedIntent)).toThrow();
-      });
-    });
-
-    describe("account deletion SSO identity confirmation intents", () => {
-      const accountDeletionIntent = {
-        id: "intent-id",
-        userId: mockUser.id,
-        email: mockUser.email,
-        provider: "google",
-        providerAccountId: "provider-123",
-        purpose: "account_deletion_sso_reauth" as const,
-        returnToUrl: "http://localhost:3000/environments/env-1/settings/profile",
-      };
-
-      test("round-trips encrypted account deletion SSO identity confirmation intents", () => {
-        const token = createAccountDeletionSsoReauthIntent(accountDeletionIntent);
-
-        expect(verifyAccountDeletionSsoReauthIntent(token)).toEqual(accountDeletionIntent);
-        expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.id, TEST_ENCRYPTION_KEY);
-        expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.userId, TEST_ENCRYPTION_KEY);
-        expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.email, TEST_ENCRYPTION_KEY);
-        expect(mockSymmetricEncrypt).toHaveBeenCalledWith(
-          accountDeletionIntent.providerAccountId,
-          TEST_ENCRYPTION_KEY
-        );
-        expect(mockSymmetricEncrypt).toHaveBeenCalledWith(
-          accountDeletionIntent.returnToUrl,
-          TEST_ENCRYPTION_KEY
-        );
-      });
-
-      test("creates account deletion SSO identity confirmation intents with a ten minute default expiry", () => {
-        const token = createAccountDeletionSsoReauthIntent(accountDeletionIntent);
-        const decoded = jwt.decode(token) as any;
-
-        expect(decoded.exp - decoded.iat).toBe(10 * 60);
-      });
-
-      test("rejects account deletion SSO identity confirmation intents with the wrong purpose", () => {
-        const token = jwt.sign(
-          {
-            id: crypto.symmetricEncrypt(accountDeletionIntent.id, TEST_ENCRYPTION_KEY),
-            userId: crypto.symmetricEncrypt(accountDeletionIntent.userId, TEST_ENCRYPTION_KEY),
-            email: crypto.symmetricEncrypt(accountDeletionIntent.email, TEST_ENCRYPTION_KEY),
-            provider: accountDeletionIntent.provider,
-            providerAccountId: crypto.symmetricEncrypt(
-              accountDeletionIntent.providerAccountId,
-              TEST_ENCRYPTION_KEY
-            ),
-            purpose: "sso_recovery",
-            returnToUrl: crypto.symmetricEncrypt(accountDeletionIntent.returnToUrl, TEST_ENCRYPTION_KEY),
-          },
-          TEST_NEXTAUTH_SECRET
-        );
-
-        expect(() => verifyAccountDeletionSsoReauthIntent(token)).toThrow(
-          "Token is invalid or missing required fields"
-        );
-      });
-
-      test("rejects account deletion SSO identity confirmation intents missing required fields", () => {
-        const token = jwt.sign(
-          {
-            id: crypto.symmetricEncrypt(accountDeletionIntent.id, TEST_ENCRYPTION_KEY),
-            userId: crypto.symmetricEncrypt(accountDeletionIntent.userId, TEST_ENCRYPTION_KEY),
-            email: crypto.symmetricEncrypt(accountDeletionIntent.email, TEST_ENCRYPTION_KEY),
-            provider: accountDeletionIntent.provider,
-            providerAccountId: crypto.symmetricEncrypt(
-              accountDeletionIntent.providerAccountId,
-              TEST_ENCRYPTION_KEY
-            ),
-            purpose: accountDeletionIntent.purpose,
-          },
-          TEST_NEXTAUTH_SECRET
-        );
-
-        expect(() => verifyAccountDeletionSsoReauthIntent(token)).toThrow(
-          "Token is invalid or missing required fields"
-        );
-      });
-
-      test("rejects expired account deletion SSO identity confirmation intents", () => {
-        const expiredToken = jwt.sign(
-          {
-            id: crypto.symmetricEncrypt(accountDeletionIntent.id, TEST_ENCRYPTION_KEY),
-            userId: crypto.symmetricEncrypt(accountDeletionIntent.userId, TEST_ENCRYPTION_KEY),
-            email: crypto.symmetricEncrypt(accountDeletionIntent.email, TEST_ENCRYPTION_KEY),
-            provider: accountDeletionIntent.provider,
-            providerAccountId: crypto.symmetricEncrypt(
-              accountDeletionIntent.providerAccountId,
-              TEST_ENCRYPTION_KEY
-            ),
-            purpose: accountDeletionIntent.purpose,
-            returnToUrl: crypto.symmetricEncrypt(accountDeletionIntent.returnToUrl, TEST_ENCRYPTION_KEY),
-            exp: Math.floor(Date.now() / 1000) - 3600,
-          },
-          TEST_NEXTAUTH_SECRET
-        );
-
-        expect(() => verifyAccountDeletionSsoReauthIntent(expiredToken)).toThrow();
-      });
-
-      test("throws when account deletion SSO identity confirmation intent secrets are missing", async () => {
-        await testMissingSecretsError(createAccountDeletionSsoReauthIntent, [accountDeletionIntent]);
-
-        const token = jwt.sign(
-          {
-            id: accountDeletionIntent.id,
-            userId: accountDeletionIntent.userId,
-            email: accountDeletionIntent.email,
-            provider: accountDeletionIntent.provider,
-            providerAccountId: accountDeletionIntent.providerAccountId,
-            purpose: accountDeletionIntent.purpose,
-            returnToUrl: accountDeletionIntent.returnToUrl,
-          },
-          TEST_NEXTAUTH_SECRET
-        );
-
-        await testMissingSecretsError(verifyAccountDeletionSsoReauthIntent, [token]);
       });
     });
   });

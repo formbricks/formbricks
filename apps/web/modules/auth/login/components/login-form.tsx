@@ -1,9 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -11,19 +10,9 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createEmailTokenAction } from "@/modules/auth/actions";
-import {
-  type AuthMethodId,
-  getAuthMethodButtonVariant,
-  sortAuthMethodsByLastUsed,
-} from "@/modules/auth/lib/sort-auth-methods";
-import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
-import { AzureButton } from "@/modules/ee/sso/components/azure-button";
-import { GithubButton } from "@/modules/ee/sso/components/github-button";
-import { GoogleButton } from "@/modules/ee/sso/components/google-button";
-import { OpenIdButton } from "@/modules/ee/sso/components/open-id-button";
-import { SamlButton } from "@/modules/ee/sso/components/saml-button";
+import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
+import { authClient } from "@/modules/auth/lib/auth-client";
+import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -59,8 +48,6 @@ interface LoginFormProps {
   isMultiOrgEnabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
-  samlTenant: string;
-  samlProduct: string;
   oauthError?: string;
   prefilledEmail?: string;
   inviteToken?: string | null;
@@ -80,8 +67,6 @@ export const LoginForm = ({
   isMultiOrgEnabled,
   isSsoEnabled,
   samlSsoEnabled,
-  samlTenant,
-  samlProduct,
   oauthError,
   prefilledEmail,
   inviteToken,
@@ -89,9 +74,19 @@ export const LoginForm = ({
   resolvedCallbackUrl,
 }: LoginFormProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
-  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked";
+  // Better Auth surfaces the collision as `account_not_linked`; NextAuth used `OAuthAccountNotLinked`.
+  // Accept both so the "not linked" alert survives the cutover.
+  const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
   const { t } = useTranslation();
+
+  const signupHref = useMemo(() => {
+    const base = inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup";
+    const attributionSuffix = buildAttributionQuerySuffix(searchParams);
+    if (!attributionSuffix) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${attributionSuffix}`;
+  }, [inviteToken, searchParams]);
 
   const form = useForm<TLoginForm>({
     defaultValues: {
@@ -108,44 +103,51 @@ export const LoginForm = ({
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Email");
     }
     try {
-      const signInResponse = await signIn("credentials", {
-        callbackUrl: resolvedCallbackUrl || "/",
+      // Step 2 — the user is answering a two-factor challenge. Better Auth issued a partial
+      // session on the first step; verifying the TOTP or backup code promotes it to a full session.
+      if (totpLogin || totpBackup) {
+        const { error } = totpBackup
+          ? await authClient.twoFactor.verifyBackupCode({ code: data.backupCode ?? "" })
+          : await authClient.twoFactor.verifyTotp({ code: data.totpCode ?? "" });
+
+        if (error) {
+          toast.error(error.message ?? t("common.something_went_wrong"));
+          return;
+        }
+
+        router.push(resolvedCallbackPath || "/");
+        return;
+      }
+
+      // Step 1 — email + password.
+      const { data: signInData, error } = await authClient.signIn.email({
         email: data.email.toLowerCase(),
         password: data.password,
-        ...(totpLogin && { totpCode: data.totpCode }),
-        ...(totpBackup && { backupCode: data.backupCode }),
-        redirect: false,
+        // For an unverified address Better Auth (sendOnSignIn) resends the verification email and builds
+        // its link around this callbackURL; without it the post-verify redirect falls back to "/", so an
+        // unverified user signing in from an invite/deep-link would lose the original destination.
+        callbackURL: resolvedCallbackUrl,
       });
 
-      if (signInResponse?.error === "second factor required") {
+      if (error) {
+        // Better Auth (re)sends its own verification email for an unverified address, so we only
+        // point the user at their inbox instead of minting a verification token ourselves.
+        if (error.code === "EMAIL_NOT_VERIFIED") {
+          toast.error(t("auth.login.please_verify_your_email_to_continue"));
+          return;
+        }
+        toast.error(error.message ?? t("common.something_went_wrong"));
+        return;
+      }
+
+      // Two-factor is enabled: Better Auth returns `twoFactorRedirect` instead of a session. No
+      // client `twoFactorPage` is configured, so surface the inline TOTP/backup challenge here.
+      if (signInData && "twoFactorRedirect" in signInData && signInData.twoFactorRedirect) {
         setTotpLogin(true);
         return;
       }
 
-      if (signInResponse?.error === "Email Verification is Pending") {
-        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
-        if (emailTokenActionResponse?.data) {
-          router.push(
-            buildVerificationRequestedPath({
-              token: emailTokenActionResponse.data,
-              callbackUrl: resolvedCallbackUrl,
-            })
-          );
-        } else {
-          const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-          toast.error(errorMessage);
-        }
-        return;
-      }
-
-      if (signInResponse?.error) {
-        toast.error(signInResponse.error);
-        return;
-      }
-
-      if (!signInResponse?.error) {
-        router.push(resolvedCallbackPath || "/");
-      }
+      router.push(resolvedCallbackPath || "/");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
     }
@@ -185,126 +187,6 @@ export const LoginForm = ({
 
     return null;
   }, [form, totpBackup, totpLogin]);
-
-  const enabledAuthMethods = useMemo(() => {
-    const methods: AuthMethodId[] = [];
-
-    if (emailAuthEnabled) {
-      methods.push("Email");
-    }
-
-    if (isSsoEnabled) {
-      if (googleOAuthEnabled) {
-        methods.push("Google");
-      }
-      if (githubOAuthEnabled) {
-        methods.push("Github");
-      }
-      if (azureOAuthEnabled) {
-        methods.push("Azure");
-      }
-      if (oidcOAuthEnabled) {
-        methods.push("OpenID");
-      }
-      if (samlSsoEnabled) {
-        methods.push("Saml");
-      }
-    }
-
-    return sortAuthMethodsByLastUsed(methods, lastLoggedInWith);
-  }, [
-    emailAuthEnabled,
-    isSsoEnabled,
-    googleOAuthEnabled,
-    githubOAuthEnabled,
-    azureOAuthEnabled,
-    oidcOAuthEnabled,
-    samlSsoEnabled,
-    lastLoggedInWith,
-  ]);
-
-  const renderAuthMethodButton = (method: AuthMethodId) => {
-    const isLastUsed = lastLoggedInWith === method;
-    const variant = getAuthMethodButtonVariant(method, lastLoggedInWith);
-
-    switch (method) {
-      case "Email":
-        return (
-          <Button
-            key="Email"
-            type={showLogin ? "submit" : "button"}
-            onClick={
-              showLogin
-                ? undefined
-                : () => {
-                    setShowLogin(true);
-                    setTimeout(() => emailRef.current?.focus(), 100);
-                  }
-            }
-            variant={variant}
-            className="w-full justify-center"
-            loading={form.formState.isSubmitting}>
-            {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
-            {isLastUsed ? <span className="shrink-0 text-xs opacity-50">{t("auth.last_used")}</span> : null}
-          </Button>
-        );
-      case "Google":
-        return (
-          <GoogleButton
-            key="Google"
-            returnToUrl={resolvedCallbackUrl}
-            lastUsed={isLastUsed}
-            variant={variant}
-            source="signin"
-          />
-        );
-      case "Github":
-        return (
-          <GithubButton
-            key="Github"
-            returnToUrl={resolvedCallbackUrl}
-            lastUsed={isLastUsed}
-            variant={variant}
-            source="signin"
-          />
-        );
-      case "Azure":
-        return (
-          <AzureButton
-            key="Azure"
-            returnToUrl={resolvedCallbackUrl}
-            lastUsed={isLastUsed}
-            variant={variant}
-            source="signin"
-          />
-        );
-      case "OpenID":
-        return (
-          <OpenIdButton
-            key="OpenID"
-            returnToUrl={resolvedCallbackUrl}
-            lastUsed={isLastUsed}
-            variant={variant}
-            text={t("auth.continue_with_oidc", { oidcDisplayName })}
-            source="signin"
-          />
-        );
-      case "Saml":
-        return (
-          <SamlButton
-            key="Saml"
-            returnToUrl={resolvedCallbackUrl}
-            lastUsed={isLastUsed}
-            variant={variant}
-            samlTenant={samlTenant}
-            samlProduct={samlProduct}
-            source="signin"
-          />
-        );
-      default:
-        return null;
-    }
-  };
 
   return (
     <FormProvider {...form}>
@@ -384,17 +266,46 @@ export const LoginForm = ({
                 )}
               </div>
             )}
-            {enabledAuthMethods.map(renderAuthMethodButton)}
+            {emailAuthEnabled && (
+              <Button
+                type={showLogin ? "submit" : "button"}
+                onClick={
+                  showLogin
+                    ? undefined
+                    : () => {
+                        setShowLogin(true);
+                        // Add a slight delay before focusing the input field to ensure it's visible
+                        setTimeout(() => emailRef.current?.focus(), 100);
+                      }
+                }
+                className="relative w-full justify-center"
+                loading={form.formState.isSubmitting}>
+                {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
+                {lastLoggedInWith && lastLoggedInWith === "Email" ? (
+                  <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>
+                ) : null}
+              </Button>
+            )}
           </form>
+          {isSsoEnabled && (
+            <SSOOptions
+              googleOAuthEnabled={googleOAuthEnabled}
+              githubOAuthEnabled={githubOAuthEnabled}
+              azureOAuthEnabled={azureOAuthEnabled}
+              oidcOAuthEnabled={oidcOAuthEnabled}
+              oidcDisplayName={oidcDisplayName}
+              samlSsoEnabled={samlSsoEnabled}
+              returnToUrl={resolvedCallbackUrl}
+              source="signin"
+            />
+          )}
         </div>
 
         {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (
           <div className="mt-9 text-center text-xs">
             <span className="leading-5 text-slate-500">{t("auth.login.new_to_formbricks")}</span>
             <br />
-            <Link
-              href={inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
-              className="font-semibold text-slate-600 underline hover:text-slate-700">
+            <Link href={signupHref} className="font-semibold text-slate-600 underline hover:text-slate-700">
               {t("auth.login.create_an_account")}
             </Link>
           </div>

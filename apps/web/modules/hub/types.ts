@@ -1,10 +1,19 @@
 import type FormbricksHub from "@formbricks/hub";
 
 export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams;
-export type FeedbackRecordData = FormbricksHub.FeedbackRecordData;
 export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
-export type FeedbackRecordListResponse = FormbricksHub.FeedbackRecordListResponse;
 export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
+
+// Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge
+// them as optional reads; drop once the SDK ships them. May be null when translation is off/pending.
+export type FeedbackRecordData = FormbricksHub.FeedbackRecordData & {
+  value_text_translated?: string | null;
+  translation_lang_key?: string | null;
+};
+
+export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListResponse, "data"> & {
+  data: FeedbackRecordData[];
+};
 
 export type SemanticSearchInput = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchParams;
 export type SemanticSearchResponse = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse;

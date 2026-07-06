@@ -255,7 +255,7 @@ describe("ActionClass Service", () => {
   });
 
   describe("updateActionClass", () => {
-    const updateInput: Partial<TActionClassInput> = {
+    const updateInput: TActionClassInput = {
       name: "Renamed Action",
       description: "updated desc",
       type: "code",

@@ -41,9 +41,16 @@ interface SummaryListProps {
   responseCount: number | null;
   survey: TSurvey;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
-export const SummaryList = ({ summary, responseCount, survey, locale }: SummaryListProps) => {
+export const SummaryList = ({
+  summary,
+  responseCount,
+  survey,
+  locale,
+  isReadOnly,
+}: Readonly<SummaryListProps>) => {
   const { workspace } = useWorkspaceContext();
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const { t } = useTranslation();
@@ -116,6 +123,7 @@ export const SummaryList = ({ summary, responseCount, survey, locale }: SummaryL
                 elementSummary={elementSummary}
                 survey={survey}
                 locale={locale}
+                isReadOnly={isReadOnly}
               />
             );
           }

@@ -1,4 +1,5 @@
 import { render } from "@react-email/render";
+import { DeleteAccountEmail } from "../../emails/auth/delete-account-email";
 import { ForgotPasswordEmail } from "../../emails/auth/forgot-password-email";
 import { NewEmailVerification } from "../../emails/auth/new-email-verification";
 import { PasswordResetNotifyEmail } from "../../emails/auth/password-reset-notify-email";
@@ -34,6 +35,16 @@ export async function renderForgotPasswordEmail(
   } & TEmailTemplateLegalProps
 ): Promise<string> {
   return await render(ForgotPasswordEmail(props));
+}
+
+export async function renderAccountDeletionEmail(
+  props: {
+    deleteLink: string;
+    linkValidityInMinutes: number;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(DeleteAccountEmail(props));
 }
 
 export async function renderNewEmailVerification(

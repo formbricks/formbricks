@@ -84,6 +84,7 @@ export const updateActionClassAction = authenticatedActionClient.inputSchema(ZUp
 
 const ZGetActiveInactiveSurveysAction = z.object({
   actionClassId: ZId,
+  excludeSurveyId: ZId.optional(),
 });
 
 export const getActiveInactiveSurveysAction = authenticatedActionClient
@@ -106,9 +107,16 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
     });
 
     const surveys = await getSurveysByActionClassId(parsedInput.actionClassId);
+    const filteredSurveys = parsedInput.excludeSurveyId
+      ? surveys.filter((survey) => survey.id !== parsedInput.excludeSurveyId)
+      : surveys;
     const response = {
-      activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
-      inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
+      activeSurveys: filteredSurveys
+        .filter((survey) => survey.status === "inProgress")
+        .map((survey) => survey.name),
+      inactiveSurveys: filteredSurveys
+        .filter((survey) => survey.status !== "inProgress")
+        .map((survey) => survey.name),
     };
     return response;
   });

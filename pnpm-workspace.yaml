@@ -1,5 +1,6 @@
 packages:
   - "apps/*"
+  - "docker"
   - "packages/*"
 
 allowBuilds:
@@ -72,9 +73,6 @@ overrides:
   # DoS via merge keys / repeated aliases (dev-only, via @redocly/cli). No 4.1.2 published; 4.2.0 is the
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
   js-yaml@4: 4.2.0
-
-patchedDependencies:
-  next-auth@4.24.13: patches/next-auth@4.24.13.patch
 
 autoInstallPeers: true
 linkWorkspacePackages: true

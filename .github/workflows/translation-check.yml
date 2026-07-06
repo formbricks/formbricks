@@ -37,6 +37,8 @@ jobs:
               - 'packages/surveys/src/**/*.{ts,tsx}'
               - 'packages/surveys/locales/**/*.json'
               - 'packages/email/**/*.{ts,tsx}'
+              - 'packages/i18n-utils/**'
+              - '**/i18n.lock'
 
       - name: Setup Node.js 22.x
         if: steps.changes.outputs.translations == 'true'

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { env } from "@/lib/env";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -55,6 +56,7 @@ export const PricingPage = async (props: { params: Promise<{ organizationId: str
         isStripeSetupIncomplete={!organizationWithSyncedBilling.billing.stripeCustomerId}
         trialDaysRemaining={cloudBillingDisplayContext.trialDaysRemaining}
         billingCatalog={billingCatalog}
+        stripePublishableKey={env.STRIPE_PUBLISHABLE_KEY ?? null}
       />
     </PageContentWrapper>
   );

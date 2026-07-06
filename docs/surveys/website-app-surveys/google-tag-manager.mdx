@@ -46,28 +46,28 @@ icon: "tags"
 </script>
 ```
 
-![Add GTM Custom HTML tag](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-a-tag.webp)
+![Add GTM Custom HTML tag](/images/surveys/website-app-surveys/google-tag-manager/create-a-tag.webp)
 
   </Step>
 
   <Step title="Set trigger">
     1. Trigger: **All Pages** - Page View (default) or use case specific event
     2. Save and publish
-    ![Add a trigger](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-a-trigger.webp)
+    ![Add a trigger](/images/surveys/website-app-surveys/google-tag-manager/create-a-trigger.webp)
 
   </Step>
 
   <Step title="Test">
     1. Use GTM Preview mode
     2. Verify the tag fires
-    3. Add `?formbricksDebug=true` to the URL to see test logs in browser console (see [Debugging Mode](/xm-and-surveys/surveys/website-app-surveys/framework-guides#debugging-formbricks-integration) for more details)
+    3. Add `?formbricksDebug=true` to the URL to see test logs in browser console (see [Debugging Mode](/surveys/website-app-surveys/framework-guides#debugging-formbricks-integration) for more details)
   </Step>
 </Steps>
 
 
 ## User Identification
 
-Identify users to enable targeting and attributes. Learn more about [user identification](/xm-and-surveys/surveys/website-app-surveys/user-identification).
+Identify users to enable targeting and attributes. Learn more about [user identification](/surveys/website-app-surveys/user-identification).
 
 <Note>
   User identification is part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). 
@@ -83,7 +83,7 @@ Identify users to enable targeting and attributes. Learn more about [user identi
    6. Save and publish
    7. Repeat for attributes you want to track e.g. "userEmail" and "userPlan" (optional)
 
-  ![Create a variable](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-a-variable.webp)
+  ![Create a variable](/images/surveys/website-app-surveys/google-tag-manager/create-a-variable.webp)
   </Step>
 
   <Step title="Create identification tag">
@@ -121,7 +121,7 @@ Identify users to enable targeting and attributes. Learn more about [user identi
     4. Attach this trigger to your "Formbricks - User" tag
     5. Save and publish
 
-    ![User Login Trigger](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/user-login-trigger.webp)
+    ![User Login Trigger](/images/surveys/website-app-surveys/google-tag-manager/user-login-trigger.webp)
 
     6. In your code, push data with the same event name:
 
@@ -144,7 +144,7 @@ window.dataLayer.push({
   <Step title="Create code action in Formbricks">
     Add code action via Formbricks UI
 
-    ![Add a code action to open source in app survey](/images/xm-and-surveys/surveys/website-app-surveys/actions/code-action.webp "Add a code action to open source in app survey")
+    ![Add a code action to open source in app survey](/images/surveys/website-app-surveys/actions/code-action.webp "Add a code action to open source in app survey")
   </Step>
 
   <Step title="Create GTM variable for Event Name">
@@ -155,7 +155,7 @@ window.dataLayer.push({
     5. Data Layer Variable: "eventName"
     6. Save and publish
 
-    ![Create Event Variable](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/create-event-variable.webp)
+    ![Create Event Variable](/images/surveys/website-app-surveys/google-tag-manager/create-event-variable.webp)
   
   </Step>
 
@@ -179,7 +179,7 @@ if (window.formbricks && window.formbricks.track) {
     4. Attach this trigger to your event tracking tag
     5. Save and publish
 
-    ![Track Event Trigger](/images/xm-and-surveys/surveys/website-app-surveys/google-tag-manager/track-event-trigger.webp)
+    ![Track Event Trigger](/images/surveys/website-app-surveys/google-tag-manager/track-event-trigger.webp)
 
   </Step>
 
@@ -217,7 +217,7 @@ window.dataLayer.push({
 ## Need Help?
 
 - [GitHub Discussions](https://github.com/formbricks/formbricks/discussions)
-- [Framework Guides](/xm-and-surveys/surveys/website-app-surveys/framework-guides)
-- [Actions](/xm-and-surveys/surveys/website-app-surveys/actions)
-- [User Identification](/xm-and-surveys/surveys/website-app-surveys/user-identification)
+- [Framework Guides](/surveys/website-app-surveys/framework-guides)
+- [Actions](/surveys/website-app-surveys/actions)
+- [User Identification](/surveys/website-app-surveys/user-identification)
 

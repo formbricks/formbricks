@@ -19,6 +19,7 @@ import {
   isSingleUseIdUniqueConstraintError,
 } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
+import { buildPrismaResponseData as buildV1PrismaResponseData } from "@/app/api/v1/lib/utils";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
 import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
@@ -38,30 +39,12 @@ const buildPrismaResponseData = (
   contact: { id: string; attributes: TContactAttributes } | null,
   ttc: Record<string, number>
 ): Prisma.ResponseCreateInput => {
-  const { surveyId, displayId, finished, data, language, meta, singleUseId, variables } = responseInput;
-
+  // Reuses the v1 builder but drops caller-supplied timestamps: unlike the v1 management create,
+  // the public client create must not let respondents backdate responses
   return {
-    survey: {
-      connect: {
-        id: surveyId,
-      },
-    },
-    display: displayId ? { connect: { id: displayId } } : undefined,
-    finished: finished,
-    data: data,
-    language: language,
-    ...(contact?.id && {
-      contact: {
-        connect: {
-          id: contact.id,
-        },
-      },
-      contactAttributes: contact.attributes,
-    }),
-    ...(meta && ({ meta } as Prisma.JsonObject)),
-    singleUseId,
-    ...(variables && { variables }),
-    ttc: ttc,
+    ...buildV1PrismaResponseData(responseInput, contact, ttc),
+    createdAt: undefined,
+    updatedAt: undefined,
   };
 };
 
