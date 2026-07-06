@@ -1,7 +1,9 @@
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
+import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
@@ -131,6 +133,38 @@ const buildUserStateFromContact = async (
   };
 };
 
+/**
+ * A contact `language` value that doesn't canonicalize (normalizeLanguageCode -> null) may still be a
+ * legitimate, user-configured survey-language ALIAS (the documented `setLanguage("<alias>")`), not junk.
+ * Match it (case-insensitively) against the workspace's configured languages and return the CONFIGURED
+ * form — the alias exactly as stored (or the code) — so the persisted value stays consistent with the
+ * workspace config regardless of the caller's casing, mirroring how codes are canonicalized. Returns null for genuine junk.
+ * Only called on the rare non-canonical branch, so the common language-code path pays no extra query.
+ */
+const resolveWorkspaceLanguageIdentifier = async (
+  workspaceId: string,
+  value: string
+): Promise<string | null> => {
+  const target = value.toLowerCase();
+  // Cache the workspace's language list (rarely-changing config) so repeated non-canonical writes don't
+  // each hit the DB. TTL matches the environment-state cache (createCacheKey.workspace.state) which serves
+  // these same languages to SDKs, so this adds no staleness beyond what already exists for this data — a
+  // newly-added alias is likewise picked up within the TTL.
+  const languages = await cache.withCache(
+    () =>
+      prisma.language.findMany({
+        where: { workspaceId },
+        select: { code: true, alias: true },
+      }),
+    createCacheKey.workspace.languages(workspaceId),
+    60 * 1000 // 1 minute in milliseconds
+  );
+  const match = languages.find((l) => l.code.toLowerCase() === target || l.alias?.toLowerCase() === target);
+  if (!match) return null;
+  // Return the configured casing: the alias if the value matched the alias, otherwise the code.
+  return match.alias && match.alias.toLowerCase() === target ? match.alias : match.code;
+};
+
 export const updateUser = async (
   workspaceId: string,
   userId: string,
@@ -173,11 +207,20 @@ export const updateUser = async (
     const languageStr = String(rawLanguage);
     const trimmedLanguage = languageStr.trim();
     const canonicalLanguage = trimmedLanguage ? normalizeLanguageCode(languageStr) : null;
+    const configuredLanguage =
+      !canonicalLanguage && trimmedLanguage
+        ? await resolveWorkspaceLanguageIdentifier(workspaceId, trimmedLanguage)
+        : null;
     if (canonicalLanguage) {
       normalizedAttributes = { ...otherAttributes, language: canonicalLanguage };
+    } else if (configuredLanguage) {
+      // Not a canonicalizable code, but it matches a configured survey-language alias in this workspace
+      // (documented setLanguage("<alias>")). Store the configured form (not the caller's casing) so the
+      // persisted/echoed value is consistent with the workspace config, and alias matching keeps working.
+      normalizedAttributes = { ...otherAttributes, language: configuredLanguage };
     } else {
       normalizedAttributes = otherAttributes;
-      // Surface a non-blank but unparseable value back to the caller; blank/whitespace-only stays silent.
+      // Surface a non-blank, unrecognized value back to the caller; blank/whitespace-only stays silent.
       if (trimmedLanguage) droppedInvalidLanguage = languageStr;
     }
   }
@@ -222,12 +265,14 @@ export const updateUser = async (
   // Transitional SDK back-compat (ENG-1067): echo the language to the SDK in a legacy form (the first
   // known alias), matching the legacy codes the client environment serializer exposes, so SDK clients
   // that match the display language by exact code keep working until the canonical-aware versions are
-  // adopted (notably older React Native apps). Only a value that canonicalizes is echoed — a stored junk
-  // code resolves to `undefined` rather than being passed through. Remove once those clients have drained.
+  // adopted (notably older React Native apps). A canonicalizable code is echoed in its legacy form; a
+  // non-canonicalizable stored value is a verified survey-language alias (the write path only stores those
+  // or canonical codes), so echo it verbatim so the SDK still matches the aliased language. Remove once
+  // those clients have drained.
   const storedCanonicalLanguage = language ? normalizeLanguageCode(String(language)) : null;
   const responseLanguage = storedCanonicalLanguage
     ? (toLegacyLanguageCodes(storedCanonicalLanguage)[0] ?? storedCanonicalLanguage)
-    : undefined;
+    : (language ?? undefined);
 
   return {
     state: {

@@ -42,6 +42,10 @@ export interface LanguageMerge {
   // Alias to copy onto the survivor when it has none of its own (preserves user-entered aliases).
   aliasToSet: string | null;
   absorbedIds: string[];
+  // Absorbed rows' aliases that can't be kept (a Language row has a single alias field, so when the
+  // survivor already carries one, the rest are lost). Surfaced only for logging — real data currently has
+  // no such case, but a merge that discards a user alias should not do so silently.
+  droppedAliases: string[];
 }
 
 export interface LanguageMergePlan {

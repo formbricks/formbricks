@@ -151,6 +151,7 @@ describe("planLanguageMerges", () => {
         survivorNeedsRelabel: false,
         aliasToSet: null,
         absorbedIds: ["l1"],
+        droppedAliases: [],
       },
     ]);
   });
@@ -165,6 +166,7 @@ describe("planLanguageMerges", () => {
         survivorNeedsRelabel: true,
         aliasToSet: null,
         absorbedIds: ["l2"],
+        droppedAliases: [],
       },
     ]);
   });
@@ -185,6 +187,26 @@ describe("planLanguageMerges", () => {
         lang("l2", "de", "2024-01-01", "Absorbed"),
       ]).merges[0].aliasToSet
     ).toBeNull();
+  });
+
+  test("records an absorbed alias that can't be kept as droppedAliases (survivor already has one)", () => {
+    // Both rows carry a distinct alias; the survivor keeps its own, so the absorbed alias is dropped.
+    const [merge] = planLanguageMerges([
+      lang("l1", "de-DE", "2024-02-01", "german"),
+      lang("l2", "de", "2024-01-01", "deutsch"),
+    ]).merges;
+    expect(merge.aliasToSet).toBeNull();
+    expect(merge.droppedAliases).toEqual(["deutsch"]);
+  });
+
+  test("does not report a dropped alias when the absorbed alias is promoted to the survivor", () => {
+    // Survivor has no alias, so the absorbed alias is promoted (kept), not dropped.
+    const [merge] = planLanguageMerges([
+      lang("l1", "de-DE", "2024-02-01", null),
+      lang("l2", "de", "2024-01-01", "deutsch"),
+    ]).merges;
+    expect(merge.aliasToSet).toBe("deutsch");
+    expect(merge.droppedAliases).toEqual([]);
   });
 
   test("groups per workspace: the same code in two workspaces is two independent relabels, not a merge", () => {

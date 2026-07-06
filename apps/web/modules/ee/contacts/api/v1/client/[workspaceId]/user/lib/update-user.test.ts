@@ -25,6 +25,9 @@ vi.mock("@formbricks/database", () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
     },
+    language: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -53,6 +56,8 @@ describe("updateUser", () => {
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: [] });
     // Mock segments
     vi.mocked(getPersonSegmentIds).mockResolvedValue(["segment1"]);
+    // Default: workspace has no configured languages, so a non-canonical value is treated as junk.
+    vi.mocked(prisma.language.findMany).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -157,6 +162,43 @@ describe("updateUser", () => {
     expect(result.messages).toContain(
       "Ignored invalid language code '123'. The existing value was preserved."
     );
+  });
+
+  test("keeps a non-canonical value that is a configured survey-language alias (setLanguage(alias))", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    // Workspace has a German language whose custom alias is the human word "deutsch".
+    vi.mocked(prisma.language.findMany).mockResolvedValue([{ code: "de-DE", alias: "deutsch" }] as any);
+    const newAttributes = { email: "new@example.com", language: "deutsch" };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    // The alias doesn't canonicalize, but it matches a configured language -> stored verbatim, not dropped.
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+      language: "deutsch",
+    });
+    // ...and it is echoed back verbatim so the SDK still matches the survey's "deutsch" alias.
+    expect(result.state.data?.language).toBe("deutsch");
+    expect(result.messages).toBeUndefined();
+  });
+
+  test("matches a configured alias case-insensitively and stores the configured casing", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    // Configured alias is lowercase "deutsch"; the SDK sends "DEUTSCH". Matching is case-insensitive
+    // everywhere, so it's kept — and normalized to the CONFIGURED casing ("deutsch"), not the caller's
+    // ("DEUTSCH"), so the persisted/echoed value stays consistent with the workspace config (mirrors how
+    // codes are canonicalized).
+    vi.mocked(prisma.language.findMany).mockResolvedValue([{ code: "de-DE", alias: "deutsch" }] as any);
+    const newAttributes = { email: "new@example.com", language: "DEUTSCH" };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+      language: "deutsch",
+    });
+    expect(result.state.data?.language).toBe("deutsch");
+    expect(result.messages).toBeUndefined();
   });
 
   test("surfaces a falsy-but-real invalid language (e.g. 0) instead of silently dropping it", async () => {

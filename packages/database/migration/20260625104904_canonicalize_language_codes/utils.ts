@@ -158,6 +158,14 @@ export const planLanguageMerges = (languages: LanguageRow[]): LanguageMergePlan 
     const absorbed = group.filter((row) => row.id !== survivor.id);
     const aliasToSet = survivor.alias ? null : (absorbed.find((row) => row.alias)?.alias ?? null);
 
+    // The survivor ends up with a single alias (its own, else the promoted `aliasToSet`). Any other
+    // non-empty absorbed alias can't be kept — record it so the migration can log the loss.
+    const survivorFinalAlias = survivor.alias ?? aliasToSet;
+    const droppedAliases = absorbed
+      .map((row) => row.alias)
+      .filter((alias): alias is string => Boolean(alias && alias.trim() !== ""))
+      .filter((alias) => alias !== survivorFinalAlias);
+
     plan.merges.push({
       workspaceId: survivor.workspaceId,
       canonical,
@@ -165,6 +173,7 @@ export const planLanguageMerges = (languages: LanguageRow[]): LanguageMergePlan 
       survivorNeedsRelabel: survivor.code !== canonical,
       aliasToSet,
       absorbedIds: absorbed.map((row) => row.id),
+      droppedAliases,
     });
   }
 
