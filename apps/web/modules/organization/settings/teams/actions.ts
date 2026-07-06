@@ -14,7 +14,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { assertRateLimitAvailable, recordRateLimitUsage } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -28,6 +28,7 @@ import {
 } from "@/modules/organization/settings/teams/lib/membership";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
+import { type TBulkInviteResult, getInviteFailureReason } from "./lib/invite-failure";
 
 // Hard cap on a single bulk import to bound payload size and email fan-out.
 const BULK_INVITE_MAX_INVITEES = 500;
@@ -310,8 +311,7 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
 
-    // Bound invite-spam abuse: cap invites per organization regardless of who triggers them.
-    await applyRateLimit(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
+    await assertRateLimitAvailable(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
 
     const inviteId = await inviteUser({
       organizationId: parsedInput.organizationId,
@@ -334,6 +334,7 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
     };
 
     if (inviteId) {
+      await recordRateLimitUsage(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
       await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
     }
 
@@ -405,10 +406,9 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       await checkRoleManagementPermission(organizationId);
     }
 
-    // Bound bulk imports per organization as defense-in-depth even for allowed plans.
-    await applyRateLimit(rateLimitConfigs.actions.bulkInviteMembers, organizationId);
+    await assertRateLimitAvailable(rateLimitConfigs.actions.bulkInviteMembers, organizationId);
 
-    const results: { email: string; success: boolean }[] = [];
+    const results: TBulkInviteResult[] = [];
     const invitedEmails: string[] = [];
 
     for (const invitee of invitees) {
@@ -425,12 +425,15 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
           invitedEmails.push(email);
           results.push({ email, success: true });
         } else {
-          results.push({ email, success: false });
+          results.push({ email, success: false, failureReason: "unknown" });
         }
-      } catch {
-        // Skip individual failures (e.g. duplicate invite) so one bad row does not abort the batch.
-        results.push({ email, success: false });
+      } catch (error) {
+        results.push({ email, success: false, failureReason: getInviteFailureReason(error) });
       }
+    }
+
+    if (invitedEmails.length > 0) {
+      await recordRateLimitUsage(rateLimitConfigs.actions.bulkInviteMembers, organizationId);
     }
 
     ctx.auditLoggingCtx.organizationId = organizationId;

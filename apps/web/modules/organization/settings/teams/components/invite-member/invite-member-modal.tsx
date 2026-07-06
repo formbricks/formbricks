@@ -20,7 +20,7 @@ import { IndividualInviteTab } from "./individual-invite-tab";
 interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: TInvitee[]) => void;
+  onSubmit: (data: TInvitee[]) => Promise<boolean>;
   teams: TOrganizationTeam[];
   organizationId: string;
   isAccessControlAllowed: boolean;

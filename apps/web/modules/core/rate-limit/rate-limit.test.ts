@@ -1,13 +1,15 @@
 // Import modules after mocking
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // Import after mocking
-import { checkRateLimit } from "./rate-limit";
+import { checkRateLimit, peekRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
-const { mockEval, mockRedisClient, mockCache } = vi.hoisted(() => {
+const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
   const _mockEval = vi.fn();
+  const _mockGet = vi.fn();
   const _mockRedisClient = {
     eval: _mockEval,
+    get: _mockGet,
   } as any;
 
   const _mockCache = {
@@ -16,6 +18,7 @@ const { mockEval, mockRedisClient, mockCache } = vi.hoisted(() => {
 
   return {
     mockEval: _mockEval,
+    mockGet: _mockGet,
     mockRedisClient: _mockRedisClient,
     mockCache: _mockCache,
   };
@@ -350,5 +353,54 @@ describe("checkRateLimit", () => {
         }),
       })
     );
+  });
+});
+
+describe("peekRateLimit", () => {
+  const testConfig: TRateLimitConfig = {
+    interval: 300,
+    allowedPerInterval: 5,
+    namespace: "test",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCache.getRedisClient.mockResolvedValue(mockRedisClient);
+  });
+
+  test("should allow request when current usage is below the limit", async () => {
+    mockGet.mockResolvedValue("2");
+
+    const result = await peekRateLimit(testConfig, "test-user");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.allowed).toBe(true);
+    }
+    expect(mockGet).toHaveBeenCalledWith(expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/));
+    expect(mockEval).not.toHaveBeenCalled();
+  });
+
+  test("should deny request when current usage reached the limit", async () => {
+    mockGet.mockResolvedValue("5");
+
+    const result = await peekRateLimit(testConfig, "test-user");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.allowed).toBe(false);
+      expect(result.data.retryAfter).toBeGreaterThan(0);
+    }
+  });
+
+  test("should treat missing redis key as zero usage", async () => {
+    mockGet.mockResolvedValue(null);
+
+    const result = await peekRateLimit(testConfig, "test-user");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.allowed).toBe(true);
+    }
   });
 });

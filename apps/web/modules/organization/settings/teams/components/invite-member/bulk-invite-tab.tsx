@@ -18,7 +18,9 @@ import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prom
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]) => void;
+  onSubmit: (
+    data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]
+  ) => Promise<boolean>;
   teams: TOrganizationTeam[];
   organizationId: string;
   isAccessControlAllowed: boolean;
@@ -61,6 +63,7 @@ export const BulkInviteTab = ({
   const [csvFile, setCSVFile] = useState<File>();
   const [previewRows, setPreviewRows] = useState<BulkCsvRow[]>([]);
   const [error, setError] = useState<string>("");
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleFileSelected = (file: File | undefined) => {
     if (!file) return;
@@ -114,8 +117,8 @@ export const BulkInviteTab = ({
     setError("");
   };
 
-  const onImport = () => {
-    if (!csvFile || !previewRows.length || !isBulkInviteAllowed) {
+  const onImport = async () => {
+    if (!csvFile || !previewRows.length || !isBulkInviteAllowed || isImporting) {
       return;
     }
 
@@ -125,7 +128,7 @@ export const BulkInviteTab = ({
 
     const members = previewRows.map((csv) => {
       const email = readCell(csv, "Email Address", "email").trim();
-      const roleCell = readCell(csv, "Role", "role");
+      const roleCell = readCell(csv, "Organization Role", "Role", "role");
       const orgRole = isAccessControlAllowed ? roleCell.trim().toLowerCase() : "owner";
       if (!isFormbricksCloud && orgRole === "billing") {
         billingRoleEmails.add(email);
@@ -178,8 +181,15 @@ export const BulkInviteTab = ({
       return;
     }
 
-    onSubmit(parsed.data);
-    setOpen(false);
+    setIsImporting(true);
+    try {
+      const success = await onSubmit(parsed.data);
+      if (success) {
+        setOpen(false);
+      }
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const previewCount = previewRows.length;
@@ -300,7 +310,10 @@ export const BulkInviteTab = ({
             {t("workspace.contacts.upload_contacts_modal_pick_different_file")}
           </Button>
         ) : null}
-        <Button onClick={onImport} disabled={!csvFile || !previewCount}>
+        <Button
+          onClick={() => void onImport()}
+          disabled={!csvFile || !previewCount || isImporting}
+          loading={isImporting}>
           {t("common.import")}
         </Button>
       </DialogFooter>
