@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -129,7 +129,7 @@ export const FeedbackDirectorySettingsModal = ({
     setValue,
     reset,
   } = form;
-  const watchedWorkspaceIds = form.watch("workspaceIds");
+  const watchedWorkspaceIds = useWatch({ control, name: "workspaceIds" });
   const selectedWorkspaceIds = useMemo(() => watchedWorkspaceIds ?? [], [watchedWorkspaceIds]);
 
   const workspaceNameById = useMemo(() => {

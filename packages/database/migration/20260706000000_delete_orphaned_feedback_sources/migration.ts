@@ -26,33 +26,34 @@ export const deleteOrphanedFeedbackSources: MigrationScript = {
   id: "qdh478rqi7dppzqzdmben9nk",
   name: "20260706000000_delete_orphaned_feedback_sources",
   run: async ({ tx }) => {
-    const orphans = await tx.$queryRaw<OrphanedFeedbackSource[]>`
-      SELECT fs."id",
-             fs."name",
-             fs."type"::text   AS "type",
-             fs."status"::text AS "status",
-             fs."workspaceId",
-             fs."feedbackDirectoryId"
-      FROM "FeedbackSource" fs
-      LEFT JOIN "FeedbackDirectoryWorkspace" fdw
-        ON fdw."feedbackDirectoryId" = fs."feedbackDirectoryId"
-       AND fdw."workspaceId" = fs."workspaceId"
-      WHERE fdw."feedbackDirectoryId" IS NULL
+    // Delete-and-return in one statement so we only remove rows that are still orphaned at delete
+    // time (a concurrent re-assignment during the deploy window can't cause us to delete a
+    // now-valid source), and the audit log reflects exactly what was deleted. Mirrors the atomic
+    // anti-join cleanup in the follow-up SQL migration.
+    const deleted = await tx.$queryRaw<OrphanedFeedbackSource[]>`
+      DELETE FROM "FeedbackSource" fs
+      WHERE NOT EXISTS (
+        SELECT 1 FROM "FeedbackDirectoryWorkspace" fdw
+        WHERE fdw."feedbackDirectoryId" = fs."feedbackDirectoryId"
+          AND fdw."workspaceId" = fs."workspaceId"
+      )
+      RETURNING fs."id",
+                fs."name",
+                fs."type"::text   AS "type",
+                fs."status"::text AS "status",
+                fs."workspaceId",
+                fs."feedbackDirectoryId"
     `;
 
-    if (orphans.length === 0) {
+    if (deleted.length === 0) {
       logger.info("No orphaned FeedbackSources found; nothing to delete");
       return;
     }
 
-    for (const orphan of orphans) {
-      logger.warn(orphan, "Deleting orphaned FeedbackSource without directory-workspace assignment");
+    for (const orphan of deleted) {
+      logger.warn(orphan, "Deleted orphaned FeedbackSource without directory-workspace assignment");
     }
 
-    const deleted = await tx.feedbackSource.deleteMany({
-      where: { id: { in: orphans.map((orphan) => orphan.id) } },
-    });
-
-    logger.info(`Deleted ${deleted.count.toString()} orphaned FeedbackSources`);
+    logger.info(`Deleted ${deleted.length.toString()} orphaned FeedbackSources`);
   },
 };

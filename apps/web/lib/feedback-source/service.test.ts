@@ -489,6 +489,26 @@ describe("createFeedbackSourceWithMappings", () => {
     ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE"));
   });
 
+  test("maps the column-only fallback shape (no exact constraint name) to the typed error", async () => {
+    // Some Prisma/meta shapes expose the columns + model but not the constraint name; the anchored
+    // fallback (FeedbackSource + feedbackDirectoryId + workspaceId) must still classify it.
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+        code: "P2003",
+        clientVersion: "7.8.0",
+        meta: { modelName: "FeedbackSource", field_name: "feedbackDirectoryId_workspaceId" },
+      })
+    );
+
+    await expect(
+      createFeedbackSourceWithMappings(ENV_ID, {
+        name: "Column-only meta",
+        type: "csv",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE"));
+  });
+
   test("throws DatabaseError on an unrelated foreign-key violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       makeForeignKeyError("FeedbackSourceFormbricksMapping_surveyId_workspaceId_fkey")
