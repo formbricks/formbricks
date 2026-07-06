@@ -2131,7 +2131,7 @@
       "delete_language_confirmation": "Are you sure you want to delete this language? This action cannot be undone.",
       "duplicate_language_or_language_id": "Duplicate language or language ID",
       "edit_languages": "Edit languages",
-      "identifier": "Identifier (ISO)",
+      "identifier": "Identifier (BCP-47)",
       "language": "Language",
       "language_deleted_successfully": "Language deleted successfully",
       "languages_updated_successfully": "Languages updated successfully",

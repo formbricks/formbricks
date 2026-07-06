@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import type { TContactAttributes } from "@formbricks/types/contact-attribute";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TTag } from "@formbricks/types/tags";
+import { normalizeResponseLanguage } from "@/lib/response/utils";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 
 type TQuotaEvaluationResponseInput = {
@@ -31,6 +32,9 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
   responseInput: TInput,
   createResponse: (responseInput: TInput, tx: Prisma.TransactionClient) => Promise<TResponse>
 ) => {
+  // Canonicalize once so quota evaluation uses the same code persisted on the response (createResponse
+  // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
+  const canonicalLanguage = normalizeResponseLanguage(responseInput.language) ?? undefined;
   return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const response = await createResponse(responseInput, tx);
 
@@ -39,7 +43,7 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
-      language: responseInput.language,
+      language: canonicalLanguage,
       responseFinished: response.finished,
       tx,
     });

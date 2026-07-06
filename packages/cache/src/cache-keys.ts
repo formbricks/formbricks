@@ -20,6 +20,7 @@ export const createCacheKey = {
     state: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "state"),
     config: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "config"),
     segments: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "segments"),
+    languages: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "languages"),
   },
 
   // Organization-related keys

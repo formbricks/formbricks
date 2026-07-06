@@ -2131,7 +2131,7 @@
       "delete_language_confirmation": "确定要删除此语言吗？此操作无法撤销。",
       "duplicate_language_or_language_id": "语言或语言 ID 重复",
       "edit_languages": "编辑语言",
-      "identifier": "标识符（ISO）",
+      "identifier": "标识符 (BCP-47)",
       "language": "语言",
       "language_deleted_successfully": "语言删除成功",
       "languages_updated_successfully": "语言更新成功",

@@ -2131,7 +2131,7 @@
       "delete_language_confirmation": "Bu dili silmek istediğinden emin misin? Bu işlem geri alınamaz.",
       "duplicate_language_or_language_id": "Tekrarlanan dil veya dil kimliği",
       "edit_languages": "Dilleri düzenle",
-      "identifier": "Tanımlayıcı (ISO)",
+      "identifier": "Tanımlayıcı (BCP-47)",
       "language": "Dil",
       "language_deleted_successfully": "Dil başarıyla silindi",
       "languages_updated_successfully": "Diller başarıyla güncellendi",
