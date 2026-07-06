@@ -3,8 +3,10 @@ import { CSV_HIDDEN_STATIC_MAPPINGS, MAX_CSV_VALUES, TFieldMapping, TSourceField
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
+  getCsvIdentityMappingAlert,
   getFeedbackSourceOptions,
   inferFieldType,
+  isCsvUserDefinedStaticValueMapping,
   isFeedbackSourceNameValid,
   parseCSVColumnsToFields,
   titleizeFromFileName,
@@ -162,6 +164,58 @@ describe("isFeedbackSourceNameValid", () => {
 
   test("returns true for single character", () => {
     expect(isFeedbackSourceNameValid("a")).toBe(true);
+  });
+});
+
+describe("getCsvIdentityMappingAlert", () => {
+  test("returns both_fixed when submission_id and field_id use fixed values", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", staticValue: "batch-1" },
+        { targetFieldId: "field_id", staticValue: "nps-score" },
+      ])
+    ).toEqual({ type: "both_fixed" });
+  });
+
+  test("returns submission_id when only submission_id uses a fixed value", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", staticValue: "batch-1" },
+        { targetFieldId: "field_id", sourceFieldId: "question_id" },
+      ])
+    ).toEqual({ type: "single_fixed", field: "submission_id" });
+  });
+
+  test("returns field_id when only field_id uses a fixed value", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", sourceFieldId: "response_id" },
+        { targetFieldId: "field_id", staticValue: "nps-score" },
+      ])
+    ).toEqual({ type: "single_fixed", field: "field_id" });
+  });
+
+  test("returns null when both identity fields are column-mapped", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", sourceFieldId: "response_id" },
+        { targetFieldId: "field_id", sourceFieldId: "question_id" },
+      ])
+    ).toBeNull();
+  });
+});
+
+describe("isCsvUserDefinedStaticValueMapping", () => {
+  test("returns false for $now timestamp mappings", () => {
+    expect(isCsvUserDefinedStaticValueMapping({ targetFieldId: "collected_at", staticValue: "$now" })).toBe(
+      false
+    );
+  });
+
+  test("returns false for column mappings", () => {
+    expect(
+      isCsvUserDefinedStaticValueMapping({ targetFieldId: "submission_id", sourceFieldId: "response_id" })
+    ).toBe(false);
   });
 });
 

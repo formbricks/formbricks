@@ -491,7 +491,7 @@ export const CreateFeedbackSourceModal = ({
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent width="wide">
           {isImporting && (
             <div className="absolute inset-0 z-50 flex items-center justify-center rounded-lg bg-white/80">
               <div className="flex flex-col items-center gap-3">

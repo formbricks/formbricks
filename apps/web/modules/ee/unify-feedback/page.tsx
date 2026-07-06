@@ -3,9 +3,9 @@ import { logger } from "@formbricks/logger";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { listFeedbackRecords } from "@/modules/hub/service";
@@ -77,7 +77,8 @@ export default async function UnifyFeedbackRecordsPage(
         <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
         </PageHeader>
-        <NoFeedbackDirectoryEmptyState
+        <FeedbackDataEmptyState
+          variant="no-directory"
           organizationId={organization.id}
           isOwnerOrManager={isOwner || isManager}
         />

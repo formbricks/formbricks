@@ -313,6 +313,36 @@ export const autoMapCsvSourceFields = ({
   return { mappings, confidence };
 };
 
+export const isCsvUserDefinedStaticValueMapping = (mapping: TFieldMapping | undefined | null): boolean =>
+  Boolean(mapping?.staticValue?.trim() && mapping.staticValue !== "$now");
+
+export type TCsvIdentityMappingAlert =
+  | { type: "both_fixed" }
+  | { type: "single_fixed"; field: "submission_id" | "field_id" };
+
+export const getCsvIdentityMappingAlert = (mappings: TFieldMapping[]): TCsvIdentityMappingAlert | null => {
+  const submissionIdFixed = isCsvUserDefinedStaticValueMapping(
+    mappings.find((mapping) => mapping.targetFieldId === "submission_id")
+  );
+  const fieldIdFixed = isCsvUserDefinedStaticValueMapping(
+    mappings.find((mapping) => mapping.targetFieldId === "field_id")
+  );
+
+  if (submissionIdFixed && fieldIdFixed) {
+    return { type: "both_fixed" };
+  }
+
+  if (submissionIdFixed) {
+    return { type: "single_fixed", field: "submission_id" };
+  }
+
+  if (fieldIdFixed) {
+    return { type: "single_fixed", field: "field_id" };
+  }
+
+  return null;
+};
+
 export const areAllRequiredCsvFieldsMapped = (
   mappings: TFieldMapping[]
 ): { valid: boolean; missing: string[] } => {
