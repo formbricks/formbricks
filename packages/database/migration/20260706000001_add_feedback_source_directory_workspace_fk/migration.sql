@@ -35,6 +35,13 @@ BEGIN
   END IF;
 END $$;
 
+-- Standard (non-CONCURRENTLY, no NOT VALID) index rebuild and FK add: this repo applies schema
+-- migrations through `prisma migrate deploy`, which runs inside a transaction block and cannot
+-- execute CREATE INDEX CONCURRENTLY (see the note in 20260417120000_add_survey_publish_pause_scheduling).
+-- FeedbackSource is a new table (introduced in this epic, not yet on main), so it is empty/tiny at
+-- rollout and the brief write-blocking locks are negligible; the cleanup above also guarantees the
+-- constraint validates with no violating rows.
+
 -- DropIndex
 DROP INDEX "FeedbackSource_feedbackDirectoryId_idx";
 

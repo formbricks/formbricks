@@ -482,7 +482,7 @@ describe("FeedbackDirectory Service", () => {
         updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
           workspaceIds: [mockWorkspaceId1],
         })
-      ).rejects.toThrow(InvalidInputError);
+      ).rejects.toThrow(new InvalidInputError("DIRECTORY_WORKSPACE_HAS_FEEDBACK_SOURCES"));
 
       expect(prisma.feedbackSource.count).toHaveBeenCalledWith({
         where: {

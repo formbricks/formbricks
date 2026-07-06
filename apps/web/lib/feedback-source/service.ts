@@ -236,8 +236,10 @@ const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): Invalid
 /**
  * Detects a foreign-key violation of the composite FeedbackSource -> FeedbackDirectoryWorkspace
  * constraint (ENG-1148). The Prisma P2003 `meta` shape varies by version, so we scan every string
- * value in it for the composite-FK column/constraint names. Other FK violations fall through to
- * the caller's generic handling.
+ * value in it for the composite-FK constraint name; the substring fallback (for meta shapes that
+ * only expose columns) is anchored to the `FeedbackSource` table so an unrelated future junction
+ * table carrying both column names can't be misclassified. Other FK violations fall through to the
+ * caller's generic handling.
  */
 export const isDirectoryWorkspaceFkViolation = (error: PrismaClientKnownRequestError): boolean => {
   if (error.code !== PrismaErrorType.ForeignKeyConstraintViolation) {
@@ -249,7 +251,9 @@ export const isDirectoryWorkspaceFkViolation = (error: PrismaClientKnownRequestE
     .join(" ");
   return (
     haystack.includes("FeedbackSource_feedbackDirectoryId_workspaceId_fkey") ||
-    (haystack.includes("feedbackDirectoryId") && haystack.includes("workspaceId"))
+    (haystack.includes("FeedbackSource") &&
+      haystack.includes("feedbackDirectoryId") &&
+      haystack.includes("workspaceId"))
   );
 };
 
