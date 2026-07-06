@@ -230,28 +230,6 @@ interface TAutoMapInput {
   fileName: string;
 }
 
-const findBestSourceMatch = (
-  targetId: string,
-  sourceFields: TSourceField[]
-): { sourceField: TSourceField; confidence: TMappingConfidence } | null => {
-  const aliases = CSV_COLUMN_ALIASES[targetId];
-  if (!aliases) return null;
-
-  for (const pattern of aliases.high) {
-    const match = sourceFields.find((f) => pattern.test(f.name));
-    if (match) return { sourceField: match, confidence: "high" };
-  }
-  for (const pattern of aliases.medium) {
-    const match = sourceFields.find((f) => pattern.test(f.name));
-    if (match) return { sourceField: match, confidence: "medium" };
-  }
-  const idToken = targetId.split("_").pop() ?? targetId;
-  const fuzzy = sourceFields.find((f) => f.name.toLowerCase().includes(idToken.toLowerCase()));
-  if (fuzzy) return { sourceField: fuzzy, confidence: "low" };
-
-  return null;
-};
-
 export const autoMapCsvSourceFields = ({
   sourceFields,
   sampleRow,
@@ -263,11 +241,17 @@ export const autoMapCsvSourceFields = ({
 
   const orderedTargets = CSV_TARGET_FIELDS.map((t) => t.id);
 
+  // Binding a target to a column that has no data makes every row fail the transform (e.g. an
+  // empty "Zone ID" column auto-mapped to the required submission_id skips the whole import).
+  // Only auto-map columns that actually carry a value in the sample row; otherwise leave the
+  // target unmapped so the required-fields check forces an explicit, data-bearing choice.
+  const mappableFields = sourceFields.filter((f) => (sampleRow[f.id] ?? "").trim() !== "");
+
   for (const targetId of orderedTargets) {
     const aliases = CSV_COLUMN_ALIASES[targetId];
     if (!aliases) continue;
     for (const pattern of aliases.high) {
-      const match = sourceFields.find((f) => !claimedSources.has(f.id) && pattern.test(f.name));
+      const match = mappableFields.find((f) => !claimedSources.has(f.id) && pattern.test(f.name));
       if (match) {
         mappings.push({ targetFieldId: targetId, sourceFieldId: match.id });
         confidence[targetId] = "high";
@@ -282,24 +266,13 @@ export const autoMapCsvSourceFields = ({
     const aliases = CSV_COLUMN_ALIASES[targetId];
     if (!aliases) continue;
     for (const pattern of aliases.medium) {
-      const match = sourceFields.find((f) => !claimedSources.has(f.id) && pattern.test(f.name));
+      const match = mappableFields.find((f) => !claimedSources.has(f.id) && pattern.test(f.name));
       if (match) {
         mappings.push({ targetFieldId: targetId, sourceFieldId: match.id });
         confidence[targetId] = "medium";
         claimedSources.add(match.id);
         break;
       }
-    }
-  }
-
-  for (const targetId of orderedTargets) {
-    if (confidence[targetId]) continue;
-    const remaining = sourceFields.filter((f) => !claimedSources.has(f.id));
-    const guess = findBestSourceMatch(targetId, remaining);
-    if (guess && guess.confidence === "low") {
-      mappings.push({ targetFieldId: targetId, sourceFieldId: guess.sourceField.id });
-      confidence[targetId] = "low";
-      claimedSources.add(guess.sourceField.id);
     }
   }
 

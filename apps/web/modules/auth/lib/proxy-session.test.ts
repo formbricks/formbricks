@@ -1,7 +1,9 @@
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getProxySession, getSessionTokenFromRequest } from "./proxy-session";
 
-const { mockFindUnique } = vi.hoisted(() => ({
+const { TEST_SECRET, mockFindUnique } = vi.hoisted(() => ({
+  TEST_SECRET: "proxy-session-test-secret-at-least-32-characters",
   mockFindUnique: vi.fn(),
 }));
 
@@ -12,6 +14,20 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+
+vi.mock("@/lib/env", () => ({
+  env: { BETTER_AUTH_SECRET: TEST_SECRET },
+}));
+
+// Mirror better-call's serializeSignedCookie: `${token}.${base64(HMAC-SHA256(token, secret))}`.
+const sign = (token: string, secret = TEST_SECRET): string =>
+  `${token}.${createHmac("sha256", secret).update(token).digest("base64")}`;
+
+const SELECT = {
+  userId: true,
+  expires: true,
+  user: { select: { isActive: true } },
+};
 
 const createRequest = (cookies: Record<string, string> = {}) => ({
   cookies: {
@@ -27,19 +43,22 @@ describe("proxy-session", () => {
     vi.clearAllMocks();
   });
 
-  test("reads the secure session cookie when present", () => {
-    const request = createRequest({
-      "__Secure-next-auth.session-token": "secure-token",
-    });
-
+  test("extracts the verified session token from a signed Better Auth cookie", () => {
+    const request = createRequest({ "__Secure-formbricks.session_token": sign("secure-token") });
     expect(getSessionTokenFromRequest(request)).toBe("secure-token");
   });
 
+  test("rejects a tampered cookie signature without hitting the database", async () => {
+    const request = createRequest({
+      "__Secure-formbricks.session_token": "valid-token.not-a-valid-signature",
+    });
+    expect(getSessionTokenFromRequest(request)).toBeNull();
+    expect(await getProxySession(request)).toBeNull();
+    expect(mockFindUnique).not.toHaveBeenCalled();
+  });
+
   test("returns null when no session cookie is present", async () => {
-    const request = createRequest();
-
-    const session = await getProxySession(request);
-
+    const session = await getProxySession(createRequest());
     expect(session).toBeNull();
     expect(mockFindUnique).not.toHaveBeenCalled();
   });
@@ -48,68 +67,39 @@ describe("proxy-session", () => {
     mockFindUnique.mockResolvedValue({
       userId: "user-1",
       expires: new Date(Date.now() - 60_000),
-      user: {
-        isActive: true,
-      },
+      user: { isActive: true },
     });
 
-    const request = createRequest({
-      "next-auth.session-token": "expired-token",
-    });
-
+    const request = createRequest({ "formbricks.session_token": sign("expired-token") });
     const session = await getProxySession(request);
 
     expect(session).toBeNull();
-    expect(mockFindUnique).toHaveBeenCalledWith({
-      where: {
-        sessionToken: "expired-token",
-      },
-      select: {
-        userId: true,
-        expires: true,
-        user: {
-          select: {
-            isActive: true,
-          },
-        },
-      },
-    });
+    expect(mockFindUnique).toHaveBeenCalledWith({ where: { sessionToken: "expired-token" }, select: SELECT });
   });
 
   test("returns null when the session belongs to an inactive user", async () => {
     mockFindUnique.mockResolvedValue({
       userId: "user-1",
       expires: new Date(Date.now() + 60_000),
-      user: {
-        isActive: false,
-      },
+      user: { isActive: false },
     });
 
-    const request = createRequest({
-      "next-auth.session-token": "inactive-user-token",
-    });
-
-    const session = await getProxySession(request);
-
-    expect(session).toBeNull();
+    const request = createRequest({ "formbricks.session_token": sign("inactive-user-token") });
+    expect(await getProxySession(request)).toBeNull();
   });
 
-  test("returns the session when the cookie maps to a valid session", async () => {
+  test("returns the session when the signed cookie maps to a valid session", async () => {
     const validSession = {
       userId: "user-1",
       expires: new Date(Date.now() + 60_000),
-      user: {
-        isActive: true,
-      },
+      user: { isActive: true },
     };
     mockFindUnique.mockResolvedValue(validSession);
 
-    const request = createRequest({
-      "next-auth.session-token": "valid-token",
-    });
-
+    const request = createRequest({ "__Secure-formbricks.session_token": sign("valid-token") });
     const session = await getProxySession(request);
 
     expect(session).toEqual(validSession);
+    expect(mockFindUnique).toHaveBeenCalledWith({ where: { sessionToken: "valid-token" }, select: SELECT });
   });
 });

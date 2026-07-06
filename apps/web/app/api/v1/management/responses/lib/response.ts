@@ -62,12 +62,15 @@ export const createResponseWithQuotaEvaluation = async (
   const txResponse = await prisma.$transaction(async (tx) => {
     const response = await createResponse(responseInput, tx);
 
+    // Feed quota evaluation the language actually PERSISTED on the response (createResponse ->
+    // buildPrismaResponseData canonicalizes it), so the stored value is the single source of truth and a
+    // legacy code from a stale client still matches language-scoped quotas. Mirrors the v2/management path.
     const quotaResult = await evaluateResponseQuotas({
       surveyId: responseInput.surveyId,
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
-      language: responseInput.language,
+      language: response.language || "default",
       responseFinished: response.finished,
       tx,
     });

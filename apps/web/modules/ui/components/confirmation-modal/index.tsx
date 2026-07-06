@@ -109,7 +109,7 @@ export const ConfirmationModal = ({
       <DialogContent
         hideCloseButton={hideCloseButton}
         disableCloseOnOutsideClick={!closeOnOutsideClick}
-        className="max-w-[540px] space-y-4">
+        className="max-w-[540px]">
         <DialogHeader className="flex justify-center gap-2">
           {Icon ? (
             <Icon className="size-4 text-slate-500" />

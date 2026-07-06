@@ -8,7 +8,9 @@ export default defineConfig({
   test: {
     environment: "node",
     environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
-    exclude: ["playwright/**", "node_modules/**", ".next/**"],
+    // Integration tests run only via `pnpm test:integration` (vitest.integration.config.mts) against a
+    // real Postgres + Redis; the unit config mocks the DB, so they must be excluded here (ENG-1054).
+    exclude: ["playwright/**", "node_modules/**", ".next/**", "**/*.integration.test.ts"],
     setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
     coverage: {
@@ -95,12 +97,24 @@ export default defineConfig({
 
         // Specific components
         "modules/auth/lib/mock-data.ts", // Mock data for authentication
+        // Better Auth instance + wiring — exercised by the integration suite (real Postgres), not unit
+        // tests, so they are excluded from the unit-coverage gate below (ENG-1054).
+        "modules/auth/lib/auth.ts",
+        "modules/auth/lib/auth-client.ts",
+        "modules/auth/lib/secondary-storage.ts",
+        "modules/auth/lib/better-auth-email-verification.ts",
         "packages/js-core/src/index.ts", // JS Core index file
 
         // Other
         "**/scripts/**", // Utility scripts
+        "modules/auth/lib/cutover/**", // One-time ENG-1054 cutover migration scripts (run once, not app runtime)
         "**/*.mjs", // ES modules
       ],
+      thresholds: {
+        // ENG-1054: keep the new Better Auth code well-tested. Glob aggregate (not perFile) so a single
+        // thin file can't trip the gate; the integration-only BA instance/wiring is excluded above.
+        "modules/auth/lib/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
+      },
     },
   },
   plugins: [tsconfigPaths(), react() as PluginOption],

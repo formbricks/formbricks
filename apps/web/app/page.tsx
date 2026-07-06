@@ -1,6 +1,5 @@
-import type { Session } from "next-auth";
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import type { Session } from "@formbricks/types/auth";
 import { getOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { getOnboardingRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import ClientWorkspaceRedirect from "@/app/ClientWorkspaceRedirect";
@@ -10,11 +9,11 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getUserWorkspaces } from "@/lib/workspace/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 
 const Page = async () => {
-  const session: Session | null = await getServerSession(authOptions);
+  const session: Session | null = await getSession();
   const isFreshInstance = await getIsFreshInstance();
 
   if (!session) {

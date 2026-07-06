@@ -86,6 +86,11 @@
                   "platform/features/user-management/two-factor-auth"
                 ]
               },
+              {
+                "group": "MCP",
+                "icon": "robot",
+                "pages": ["platform/mcp/overview", "platform/mcp/setup"]
+              },
               "platform/features/styling-theme",
               "platform/features/email-customization"
             ]

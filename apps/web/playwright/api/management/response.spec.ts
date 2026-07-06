@@ -180,7 +180,7 @@ test.describe("API Tests for Responses", () => {
         updatedAt: "2021-01-01T00:00:00.000Z",
         surveyId: surveyId,
         finished: true,
-        language: "en",
+        language: "en-US", // canonicalized on write from "en"
         data: {
           jpvm9b73u06xdrhzi11k2h76: "answer1",
         },
@@ -210,7 +210,7 @@ test.describe("API Tests for Responses", () => {
         updatedAt: "2021-01-02T00:00:00.000Z",
         surveyId: surveyId,
         finished: true,
-        language: "en",
+        language: "en-US", // canonicalized on write from "en"
         data: {
           jpvm9b73u06xdrhzi11k2h76: "answer2",
         },
@@ -373,7 +373,7 @@ test.describe("API Tests for Responses", () => {
         updatedAt: "2021-01-03T00:00:00.000Z",
         surveyId: surveyId,
         finished: false,
-        language: "fr",
+        language: "fr-FR", // canonicalized on write from "fr"
         endingId: null,
         contactId: null,
         contactAttributes: null,

@@ -39,6 +39,7 @@ import {
   getResponseMeta,
   getResponsesFileName,
   getResponsesJson,
+  normalizeResponseLanguage,
 } from "./utils";
 import { buildWhereClause } from "./where-clause";
 
@@ -216,6 +217,43 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
     throw error;
   }
 });
+
+export const getResponseWithQuotas = reactCache(
+  async (responseId: string): Promise<TResponseWithQuotas | null> => {
+    validateInputs([responseId, ZId]);
+
+    try {
+      const responsePrisma = await prisma.response.findUnique({
+        where: {
+          id: responseId,
+        },
+        select: {
+          ...responseSelection,
+          quotaLinks: {
+            where: { status: "screenedIn" },
+            include: { quota: { select: { id: true, name: true } } },
+          },
+        },
+      });
+
+      if (!responsePrisma) {
+        return null;
+      }
+
+      const { quotaLinks, ...rest } = responsePrisma;
+      return {
+        ...mapResponsePrismaToResponse(rest),
+        quotas: quotaLinks.map((ql) => ql.quota),
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
 
 export const getResponseSnapshotForPipeline = async (responseId: string): Promise<TResponse | null> => {
   validateInputs([responseId, ZId]);
@@ -538,7 +576,8 @@ export const updateResponse = async (
       : currentTtc;
     // Calculate total only when finished
     const ttc = responseInput.finished ? calculateTtcTotal(mergedTtc) : mergedTtc;
-    const language = responseInput.language;
+    // Canonicalize on write (ENG-1067), same as response creation — see normalizeResponseLanguage.
+    const language = normalizeResponseLanguage(responseInput.language);
     const variables = {
       ...currentResponse.variables,
       ...responseInput.variables,

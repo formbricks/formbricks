@@ -27,6 +27,7 @@ interface CsvFeedbackSourceUIProps {
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
   onSourceFieldsChange: (fields: TSourceField[]) => void;
+  onFileChange?: (file: File | null) => void;
   onParsedDataChange?: (data: Record<string, string>[]) => void;
   onSuggestFeedbackSourceName?: (name: string) => void;
 }
@@ -36,6 +37,7 @@ export function CsvFeedbackSourceUI({
   mappings,
   onMappingsChange,
   onSourceFieldsChange,
+  onFileChange,
   onParsedDataChange,
   onSuggestFeedbackSourceName,
 }: Readonly<CsvFeedbackSourceUIProps>) {
@@ -124,6 +126,7 @@ export function CsvFeedbackSourceUI({
 
   const processCSVFile = async (file: File) => {
     setCsvError("");
+    onFileChange?.(null);
 
     const validateCSVFileResult = validateCsvFile(file, t);
 
@@ -134,7 +137,7 @@ export function CsvFeedbackSourceUI({
 
     try {
       const csv = await file.text();
-      const records = parse(csv, { columns: true, skip_empty_lines: true });
+      const records = parse(csv, { columns: true, relax_column_count: true, skip_empty_lines: true });
 
       const result = createFeedbackCSVDataSchema(t).safeParse(records);
       if (!result.success) {
@@ -157,6 +160,7 @@ export function CsvFeedbackSourceUI({
         sampleValue: validRecords[0][header] ?? "",
       }));
       onSourceFieldsChange(fields);
+      onFileChange?.(file);
       onParsedDataChange?.(validRecords);
       setSampleRow(validRecords[0]);
 
@@ -222,6 +226,7 @@ export function CsvFeedbackSourceUI({
               userEditedSourceNameRef.current = false;
               lastAutoSourceNameRef.current = undefined;
               onSourceFieldsChange([]);
+              onFileChange?.(null);
               onParsedDataChange?.([]);
             }}>
             {t("workspace.unify.change_file")}

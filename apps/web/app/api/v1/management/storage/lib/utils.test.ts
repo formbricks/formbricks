@@ -1,6 +1,5 @@
-import { Session } from "next-auth";
 import { describe, expect, test, vi } from "vitest";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
 import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";

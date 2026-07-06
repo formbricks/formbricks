@@ -72,6 +72,7 @@ PUBLIC_URL=https://surveys.example.com
 When PUBLIC_URL is configured:
 
 - **Admin Interface**: All admin/management functions are served from `WEBAPP_URL`
+- **MCP and OAuth**: MCP (`/api/mcp`) and Better Auth OAuth/OIDC discovery and token endpoints are served from `WEBAPP_URL`
 - **Public Surveys**: All survey links and public APIs use `PUBLIC_URL`
 - **SDK Integration**: The public domain is used for all client-side SDK connections
 - **Email Links**: Survey invitation emails use the public domain
@@ -134,7 +135,7 @@ Formbricks.setup({
 });
 ```
 
-Please refer to the [Framework Guides](/xm-and-surveys/surveys/website-app-surveys/framework-guides) for step-by-step instructions specific to your platform.
+Please refer to the [Framework Guides](/surveys/website-app-surveys/framework-guides) for step-by-step instructions specific to your platform.
 
 ### DNS and SSL Configuration
 

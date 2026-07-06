@@ -20,7 +20,7 @@ export const ZAccount = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   userId: z.string(),
-  type: z.string(),
+  type: z.string().nullable(), // Better Auth-created accounts set no `type` (column nullable, ENG-1054 cutover)
   provider: z.string(),
   providerAccountId: z.string(),
   access_token: z.string().nullable(),
