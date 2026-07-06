@@ -193,12 +193,18 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
       ],
     });
 
-    // Verify FRD belongs to same org
-    const frd = await prisma.feedbackDirectory.findUnique({
-      where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
-      select: { organizationId: true },
+    // Verify the directory is actually assigned to this workspace (and belongs to the same org).
+    // The composite FK enforces this at the DB level too; this check returns a friendlier error first.
+    const assignment = await prisma.feedbackDirectoryWorkspace.findUnique({
+      where: {
+        feedbackDirectoryId_workspaceId: {
+          feedbackDirectoryId: parsedInput.feedbackSourceInput.feedbackDirectoryId,
+          workspaceId: parsedInput.workspaceId,
+        },
+      },
+      select: { feedbackDirectory: { select: { organizationId: true } } },
     });
-    if (frd?.organizationId !== organizationId) {
+    if (assignment?.feedbackDirectory.organizationId !== organizationId) {
       throw new AuthorizationError("Invalid feedback directory");
     }
 

@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import type { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -232,6 +233,26 @@ const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): Invalid
   return new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE");
 };
 
+/**
+ * Detects a foreign-key violation of the composite FeedbackSource -> FeedbackDirectoryWorkspace
+ * constraint (ENG-1148). The Prisma P2003 `meta` shape varies by version, so we scan every string
+ * value in it for the composite-FK column/constraint names. Other FK violations on this path
+ * (survey, creator) fall through to a generic DatabaseError.
+ */
+const isDirectoryWorkspaceFkViolation = (error: PrismaClientKnownRequestError): boolean => {
+  if (error.code !== PrismaErrorType.ForeignKeyConstraintViolation) {
+    return false;
+  }
+  const haystack = Object.values(error.meta ?? {})
+    .flat()
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+  return (
+    haystack.includes("FeedbackSource_feedbackDirectoryId_workspaceId_fkey") ||
+    (haystack.includes("feedbackDirectoryId") && haystack.includes("workspaceId"))
+  );
+};
+
 export type TFormbricksMappingsInput = {
   type: "formbricks_survey";
   mappings: TFeedbackSourceFormbricksMappingCreateInput[];
@@ -305,6 +326,13 @@ export const createFeedbackSourceWithMappings = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         throw mapUniqueConstraintError(error);
+      }
+      if (isDirectoryWorkspaceFkViolation(error)) {
+        logger.error(
+          { workspaceId, feedbackDirectoryId: data.feedbackDirectoryId, meta: error.meta },
+          "FeedbackSource create violated directory-workspace assignment FK"
+        );
+        throw new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE");
       }
       throw new DatabaseError(error.message);
     }
