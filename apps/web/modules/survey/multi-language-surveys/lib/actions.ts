@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZLanguageInput } from "@formbricks/types/workspace";
+import { ZLanguageInput, ZLanguageUpdate } from "@formbricks/types/workspace";
 import {
   createLanguage,
   deleteLanguage,
@@ -137,7 +137,9 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
 const ZUpdateLanguageAction = z.object({
   workspaceId: ZId,
   languageId: ZId,
-  languageInput: ZLanguageInput,
+  // Alias-only: a language's `code` is immutable (it stays canonical). Using ZLanguageUpdate strips any
+  // `code` a caller sends before it reaches the service.
+  languageInput: ZLanguageUpdate,
 });
 
 export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdateLanguageAction).action(
@@ -156,7 +158,7 @@ export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdat
       access: [
         {
           type: "organization",
-          schema: ZLanguageInput,
+          schema: ZLanguageUpdate,
           data: parsedInput.languageInput,
           roles: ["owner", "manager"],
         },
