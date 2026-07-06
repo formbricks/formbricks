@@ -14,13 +14,13 @@ icon: "road-circle-check"
 | **Delivery** | Email, SMS, push, or webview | Triggered in-app by SDK |
 | **Segmentation** | You control externally | Built-in via Formbricks |
 | **Survey fatigue prevention** | You control externally | Automatic |
-| **User identification** | [Personal Links](/xm-and-surveys/surveys/link-surveys/personal-links) | [SDK user attributes](/xm-and-surveys/surveys/website-app-surveys/user-identification) |
+| **User identification** | [Personal Links](/surveys/link-surveys/personal-links) | [SDK user attributes](/surveys/website-app-surveys/user-identification) |
 
 ## Link Surveys
 
 Also known as **invitation-based surveys**. No SDK needed. You control when and who receives the survey, often through CRMs, marketing tools, or similar platforms.
 
-![Link survey example](/images/xm-and-surveys/xm/best-practices/link-surveys-vs-in-app-surveys/link-surveys-example.webp)
+![Link survey example](/images/surveys/best-practices/link-surveys-vs-in-app-surveys/link-surveys-example.webp)
 
 ### Delivery channels
 
@@ -32,9 +32,9 @@ Also known as **invitation-based surveys**. No SDK needed. You control when and 
 
 ### URL features
 
-- **[Hidden Fields](/xm-and-surveys/surveys/general-features/hidden-fields)**: Pass user ID, order ID, or any identifier
-- **[Data prefilling](/xm-and-surveys/surveys/link-surveys/data-prefilling)**: Pre-populate answers and optionally skip prefilled questions
-- **[Personal Links](/xm-and-surveys/surveys/link-surveys/personal-links)**: Generate unique survey links for individual contacts
+- **[Hidden Fields](/surveys/general-features/hidden-fields)**: Pass user ID, order ID, or any identifier
+- **[Data prefilling](/surveys/link-surveys/data-prefilling)**: Pre-populate answers and optionally skip prefilled questions
+- **[Personal Links](/surveys/link-surveys/personal-links)**: Generate unique survey links for individual contacts
 
 ### Webview with Embed mode
 
@@ -62,7 +62,7 @@ This approach gives you full control:
 - **Display**: Survey renders inside your app
 - **Dismissal**: Close the webview on completion or user exit
 
-Learn more in the [Embed Surveys guide](/xm-and-surveys/surveys/link-surveys/embed-surveys).
+Learn more in the [Embed Surveys guide](/surveys/link-surveys/embed-surveys).
 
 ### When to use
 
@@ -77,11 +77,11 @@ Learn more in the [Embed Surveys guide](/xm-and-surveys/surveys/link-surveys/emb
 
 Also known as **intercept surveys**. Requires SDK integration. Formbricks handles targeting, triggering, and survey fatigue.
 
-![In-app survey example](/images/xm-and-surveys/xm/best-practices/link-surveys-vs-in-app-surveys/in-app-surveys.webp)
+![In-app survey example](/images/surveys/best-practices/link-surveys-vs-in-app-surveys/in-app-surveys.webp)
 
 ### In-app features
 
-**[Action tracking](/xm-and-surveys/surveys/website-app-surveys/actions)**
+**[Action tracking](/surveys/website-app-surveys/actions)**
 
 Track in-app events and trigger surveys based on them:
 
@@ -94,7 +94,7 @@ formbricks.track("action_name");
 - Global waiting time (e.g., show max 1 survey every 7 days per user)
 - Per-survey overrides for high-priority surveys
 
-**[Segment-based targeting](/xm-and-surveys/surveys/website-app-surveys/advanced-targeting)**
+**[Segment-based targeting](/surveys/website-app-surveys/advanced-targeting)**
 
 Target surveys based on user attributes (plan type, language, feature flags).
 

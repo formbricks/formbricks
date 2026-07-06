@@ -28,7 +28,7 @@ To run the Feature Chaser survey in your app you want to proceed as follows:
 - Setup a user action to display survey at the right point in time
 
 <Note>
- Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins max.)](/xm-and-surveys/surveys/website-app-surveys/quickstart)
+ Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins max.)](/surveys/website-app-surveys/quickstart)
 </Note>
 
 ### 1. Create new Feature Chaser
@@ -37,13 +37,13 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template [Feature Chaser](https://formbricks.com/survey-templates/feature-chaser):
 
-![Create survey by template](/images/xm-and-surveys/xm/best-practices/feature-chaser/create-survey.webp)
+![Create survey by template](/images/surveys/best-practices/feature-chaser/create-survey.webp)
 
 ### 2. Update questions
 
 The questions you want to ask are dependent on your feature and can be very specific. In the template, we suggest a high-level check on how easy it was for the user to achieve their goal. We also add an opportunity to provide context:
 
-![Change text content](/images/xm-and-surveys/xm/best-practices/feature-chaser/change-text.webp)
+![Change text content](/images/surveys/best-practices/feature-chaser/change-text.webp)
 
 Save, and move over to where the magic happens: The “Audience” tab.
 
@@ -51,36 +51,36 @@ Save, and move over to where the magic happens: The “Audience” tab.
 
 Before setting the right trigger, you need to identify a user action in your app which signals, that they have just used the feature you want to understand better. In most cases, it is clicking a specific button in your product.
 
-You can create [Code Actions](/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions) and [No Code Actions](/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-no-code-actions) to follow users through your app. In this example, we will create a No Code Action.
+You can create [Code Actions](/surveys/website-app-surveys/actions#setting-up-code-actions) and [No Code Actions](/surveys/website-app-surveys/actions#setting-up-no-code-actions) to follow users through your app. In this example, we will create a No Code Action.
 
 There are two ways to track a button:
 
 1. **Trigger by Inner Text:** You might have a button with a unique text at the end of your feature e.g. "Export Report". You can setup a user Action with the according `Inner Text` to trigger the survey, like so:
 
-![Set the trigger by inner Text](/images/xm-and-surveys/xm/best-practices/feature-chaser/action-innertext.webp)
+![Set the trigger by inner Text](/images/surveys/best-practices/feature-chaser/action-innertext.webp)
 
 1. **Trigger by CSS Selector:** In case you have more than one button saying “Export Report” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“export-report-featurename”` and set your user action up like so:
 
-![Set the trigger by CSS Selector](/images/xm-and-surveys/xm/best-practices/feature-chaser/action-css.webp)
+![Set the trigger by CSS Selector](/images/surveys/best-practices/feature-chaser/action-css.webp)
 
-Please follow our [Actions manual](/xm-and-surveys/surveys/website-app-surveys/actions) for an in-depth description of how Actions work.
+Please follow our [Actions manual](/surveys/website-app-surveys/actions) for an in-depth description of how Actions work.
 
 ### 4. Select Action in the “When to ask” card
 
-![Select PMF trigger button action](/images/xm-and-surveys/xm/best-practices/feature-chaser/select-action.webp)
+![Select PMF trigger button action](/images/surveys/best-practices/feature-chaser/select-action.webp)
 
 ### 5. Last step: Set Recontact Options correctly
 
 Lastly, scroll down to “Recontact Options”. Here you have full freedom to decide who you want to ask. Generally, you only want to ask every user once and prevent survey fatigue. It's up to you to decide if you want to ask again, when the user did not yet reply:
 
-![Set recontact options](/images/xm-and-surveys/xm/best-practices/feature-chaser/recontact-options.webp)
+![Set recontact options](/images/surveys/best-practices/feature-chaser/recontact-options.webp)
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-![Publish survey](/images/xm-and-surveys/xm/best-practices/feature-chaser/publish.webp)
+![Publish survey](/images/surveys/best-practices/feature-chaser/publish.webp)
 
 <Note>
   Formbricks Widget running? You need to have the Formbricks Widget installed
   to display the Feature Chaser in your app. Please follow [this tutorial (Step
-  4 onwards)](/xm-and-surveys/surveys/website-app-surveys/quickstart) to install the widget.
+  4 onwards)](/surveys/website-app-surveys/quickstart) to install the widget.
 </Note>

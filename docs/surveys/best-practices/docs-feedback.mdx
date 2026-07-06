@@ -29,11 +29,11 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 - Then, create a survey using the template [Docs Feedback](https://formbricks.com/survey-templates/docs-feedback):
 
-![select docs template](/images/xm-and-surveys/xm/best-practices/docs-feedback/docs-template.webp)
+![select docs template](/images/surveys/best-practices/docs-feedback/docs-template.webp)
 
 - Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
 
-![change id](/images/xm-and-surveys/xm/best-practices/docs-feedback/change-id.webp)
+![change id](/images/surveys/best-practices/docs-feedback/change-id.webp)
 
 - Similarly, you can change the Internal Question ID of the *Please elaborate* question to **“additionalFeedback”** and the one of the *Page URL* question to **“pageUrl”**.
 
@@ -43,15 +43,15 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 - Click on “Continue to Settings or select the audience tab manually. Scroll down to “Survey Trigger” and create a new Action:
 
-![set up when to ask card](/images/xm-and-surveys/xm/best-practices/docs-feedback/survey-trigger.webp)
+![set up when to ask card](/images/surveys/best-practices/docs-feedback/survey-trigger.webp)
 
 - Our goal is to create an event that never triggers. This might seem odd, but it's a necessary workaround. Fill out the action as shown in the screenshot:
 
-![add action](/images/xm-and-surveys/xm/best-practices/docs-feedback/add-action.webp)
+![add action](/images/surveys/best-practices/docs-feedback/add-action.webp)
 
 - Select the Non-Event in the dropdown. Now you see that the “Publish survey” button is active. Publish your survey 🤝
 
-![select nonevent](/images/xm-and-surveys/xm/best-practices/docs-feedback/select-action.webp)
+![select nonevent](/images/surveys/best-practices/docs-feedback/select-action.webp)
 
 **You’re all setup in Formbricks Cloud for now 👍**
 
@@ -77,7 +77,7 @@ This allows us to capture and analyze partial feedback where the user is not wil
 
 - Likely, you have a template file or similar which renders the navigation at the bottom of the page:
 
-![doc navigation](/images/xm-and-surveys/xm/best-practices/docs-feedback/docs-navi.webp)
+![doc navigation](/images/surveys/best-practices/docs-feedback/docs-navi.webp)
 
 Locate that file. We are using the [Tailwind Template “Syntax”](https://tailwindui.com/templates/syntax) in this case.
 
@@ -339,7 +339,7 @@ Before you roll it out in production, you want to test it. To do so, you need tw
 
 When you are on the survey detail page, you’ll find both of them in the URL:
 
-![copy IDs](/images/xm-and-surveys/xm/best-practices/docs-feedback/copy-ids.webp)
+![copy IDs](/images/surveys/best-practices/docs-feedback/copy-ids.webp)
 
 Now, you have to replace the IDs and the API host accordingly in your `handleFeedbackSubmit`:
 
