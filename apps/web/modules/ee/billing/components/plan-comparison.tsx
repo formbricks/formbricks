@@ -26,8 +26,9 @@ export interface TPlanColumn {
 }
 
 // A comparison cell value: true → included (check), false → not included (—),
-// "addon" → available as a paid add-on, or a plain string (e.g. "3", "2,000").
-type ComparisonValue = boolean | "addon" | string;
+// the sentinel string "addon" → available as a paid add-on, or any other plain
+// string (e.g. "3", "2,000"). ("addon" is a string, so the union stays boolean | string.)
+type ComparisonValue = boolean | string;
 
 type ComparisonDisplayRow =
   | { type: "feature"; label: string; values: ComparisonValue[] }
