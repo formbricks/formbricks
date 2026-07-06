@@ -136,11 +136,15 @@ const buildUserStateFromContact = async (
 /**
  * A contact `language` value that doesn't canonicalize (normalizeLanguageCode -> null) may still be a
  * legitimate, user-configured survey-language ALIAS (the documented `setLanguage("<alias>")`), not junk.
- * Check it against the workspace's configured languages (code OR alias, case-insensitive) so a real alias
- * is kept while genuine junk is still dropped. Only called on the rare non-canonical branch, so the common
- * language-code path pays no extra query.
+ * Match it (case-insensitively) against the workspace's configured languages and return the CONFIGURED
+ * form — the alias exactly as stored (or the code) — so the persisted value stays consistent with the
+ * workspace config regardless of the caller's casing, mirroring how codes are canonicalized. Returns null for genuine junk.
+ * Only called on the rare non-canonical branch, so the common language-code path pays no extra query.
  */
-const isWorkspaceLanguageIdentifier = async (workspaceId: string, value: string): Promise<boolean> => {
+const resolveWorkspaceLanguageIdentifier = async (
+  workspaceId: string,
+  value: string
+): Promise<string | null> => {
   const target = value.toLowerCase();
   // Cache the workspace's language list (rarely-changing config) so repeated non-canonical writes don't
   // each hit the DB. TTL matches the environment-state cache (createCacheKey.workspace.state) which serves
@@ -155,7 +159,10 @@ const isWorkspaceLanguageIdentifier = async (workspaceId: string, value: string)
     createCacheKey.workspace.languages(workspaceId),
     60 * 1000 // 1 minute in milliseconds
   );
-  return languages.some((l) => l.code.toLowerCase() === target || l.alias?.toLowerCase() === target);
+  const match = languages.find((l) => l.code.toLowerCase() === target || l.alias?.toLowerCase() === target);
+  if (!match) return null;
+  // Return the configured casing: the alias if the value matched the alias, otherwise the code.
+  return match.alias && match.alias.toLowerCase() === target ? match.alias : match.code;
 };
 
 export const updateUser = async (
@@ -200,12 +207,17 @@ export const updateUser = async (
     const languageStr = String(rawLanguage);
     const trimmedLanguage = languageStr.trim();
     const canonicalLanguage = trimmedLanguage ? normalizeLanguageCode(languageStr) : null;
+    const configuredLanguage =
+      !canonicalLanguage && trimmedLanguage
+        ? await resolveWorkspaceLanguageIdentifier(workspaceId, trimmedLanguage)
+        : null;
     if (canonicalLanguage) {
       normalizedAttributes = { ...otherAttributes, language: canonicalLanguage };
-    } else if (trimmedLanguage && (await isWorkspaceLanguageIdentifier(workspaceId, trimmedLanguage))) {
-      // Not a canonicalizable code, but it IS a configured survey-language alias in this workspace
-      // (documented setLanguage("<alias>")). Store it verbatim so alias-based matching keeps working.
-      normalizedAttributes = { ...otherAttributes, language: trimmedLanguage };
+    } else if (configuredLanguage) {
+      // Not a canonicalizable code, but it matches a configured survey-language alias in this workspace
+      // (documented setLanguage("<alias>")). Store the configured form (not the caller's casing) so the
+      // persisted/echoed value is consistent with the workspace config, and alias matching keeps working.
+      normalizedAttributes = { ...otherAttributes, language: configuredLanguage };
     } else {
       normalizedAttributes = otherAttributes;
       // Surface a non-blank, unrecognized value back to the caller; blank/whitespace-only stays silent.
