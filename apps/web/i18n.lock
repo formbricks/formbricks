@@ -2260,7 +2260,6 @@ checksums:
     workspace/settings/billing/dynamic_pricing_per_unit: 67e4d330b97b8b2e089558ea8148d708
     workspace/settings/billing/dynamic_pricing_unlimited: 1762c0cfba36e1229b5cb5f22c08aeb8
     workspace/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
-    workspace/settings/billing/go_to_billing: cd3ec8ecd7af2e724b44a61b29517ee7
     workspace/settings/billing/hobby_confirm_description: f9fc023eb49423eef508bcc98fcd9e5c
     workspace/settings/billing/hobby_confirm_downgrade: 80b85d47ccb480a1b6429294d1679f0a
     workspace/settings/billing/hobby_confirm_feature_ai: a780f0b9c8e8ce9bfc1612e4774f3977

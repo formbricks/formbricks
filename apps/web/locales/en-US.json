@@ -2357,7 +2357,6 @@
         "dynamic_pricing_per_unit": "Per unit",
         "dynamic_pricing_unlimited": "∞",
         "failed_to_start_trial": "Failed to start trial. Please try again.",
-        "go_to_billing": "Go to Billing",
         "hobby_confirm_description": "Test-drive every feature, risk-free. No credit card required.",
         "hobby_confirm_downgrade": "Return to Hobby plan",
         "hobby_confirm_feature_ai": "AI functionality",
@@ -2367,7 +2366,6 @@
         "hobby_confirm_feature_workspaces": "1 workspace",
         "hobby_confirm_start_trial": "Continue with 'Pro' trial",
         "hobby_confirm_title": "Are you sure?",
-
         "keep_current_plan": "Keep current plan",
         "manage_billing_details": "Manage card details & invoices",
         "monthly": "Monthly",
