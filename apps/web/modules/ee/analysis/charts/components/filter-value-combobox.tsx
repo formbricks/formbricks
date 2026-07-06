@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getDimensionValuesAction } from "@/modules/ee/analysis/charts/actions";
@@ -61,6 +61,7 @@ export function FilterValueCombobox({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   const trimmedSearch = search.trim();
   const debouncedSearch = useDebounce(trimmedSearch, SEARCH_DEBOUNCE_MS);
@@ -100,8 +101,9 @@ export function FilterValueCombobox({
       <PopoverTrigger asChild>
         <button
           type="button"
-          role="combobox"
+          aria-haspopup="listbox"
           aria-expanded={open}
+          aria-controls={open ? listboxId : undefined}
           onKeyDown={(event) => {
             if (event.key === "Tab") {
               setOpen(false);
@@ -143,7 +145,10 @@ export function FilterValueCombobox({
               className="h-8 border-none bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
-          <div ref={listRef} className="max-h-[200px] min-h-0 overflow-y-auto overscroll-contain p-1">
+          <div
+            ref={listRef}
+            id={listboxId}
+            className="max-h-[200px] min-h-0 overflow-y-auto overscroll-contain p-1">
             <CommandList className="max-h-none overflow-visible border-0 bg-transparent p-0 shadow-none">
               {isLoading && (
                 <div className="py-6">
