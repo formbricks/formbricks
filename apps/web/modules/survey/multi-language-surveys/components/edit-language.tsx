@@ -175,7 +175,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
           : updateLanguageAction({
               workspaceId: workspace.id,
               languageId: lang.id,
-              languageInput: { code: lang.code, alias: lang.alias },
+              languageInput: { alias: lang.alias },
             });
       })
     );

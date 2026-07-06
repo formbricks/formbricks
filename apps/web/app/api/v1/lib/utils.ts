@@ -1,6 +1,7 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TResponseInput } from "@formbricks/types/responses";
+import { normalizeResponseLanguage } from "@/lib/response/utils";
 
 export const buildPrismaResponseData = (
   responseInput: TResponseInput,
@@ -31,7 +32,7 @@ export const buildPrismaResponseData = (
     finished: finished,
     endingId: endingId ?? null,
     data: data,
-    language: language,
+    language: normalizeResponseLanguage(language),
     ...(contact?.id && {
       contact: {
         connect: {

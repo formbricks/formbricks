@@ -1,3 +1,4 @@
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 
 export type TV3SurveyResolverLanguage = {
@@ -21,47 +22,39 @@ type TResolveV3SurveyLanguageCodeResult =
 
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
-const V3_SURVEY_LANGUAGE_TAG_REGEX = /^[a-z]{2}(?:-[A-Z]{2}|-[A-Z][a-z]{3}(?:-[A-Z]{2})?)$/;
-const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/;
-const V3_LEGACY_LANGUAGE_CODE_MAP: Record<string, string> = {
-  ar: "ar-SA",
-  cs: "cs-CZ",
-  da: "da-DK",
-  de: "de-DE",
-  en: "en-US",
-  es: "es-ES",
-  fi: "fi-FI",
-  fr: "fr-FR",
-  he: "he-IL",
-  hi: "hi-IN",
-  hu: "hu-HU",
-  it: "it-IT",
-  ja: "ja-JP",
-  ko: "ko-KR",
-  nb: "nb-NO",
-  nl: "nl-NL",
-  no: "nb-NO",
-  pl: "pl-PL",
-  ro: "ro-RO",
-  ru: "ru-RU",
-  sv: "sv-SE",
-  tr: "tr-TR",
-};
+// A region-qualified locale: 2-3 letter base language, optional 4-letter script, and a region that is
+// either a 2-letter country or a 3-digit UN M.49 area. The 3-letter base + numeric region forms matter
+// because canonical catalog codes include them (e.g. `fil-PH`, `bho-IN`, `eo-001`, `vo-001`); the old
+// 2-letter-only pattern rejected those on write even though the picker/`createLanguage` accept them.
+const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2,3}(?:-[A-Z][a-z]{3})?-(?:[A-Z]{2}|\d{3})$/;
+// A script-only tag with no region (e.g. `zh-Hans`). Kept as its own small regex so the tag check below is
+// just "region-qualified OR script-only" — two simple patterns instead of one nested mega-regex.
+const V3_SURVEY_SCRIPT_ONLY_REGEX = /^[a-z]{2,3}-[A-Z][a-z]{3}$/;
 
+// Validate + case/separator-normalize a valid region/script-qualified BCP-47 tag (region-qualified OR
+// script-only). This only recognises a valid tag — it does NOT canonicalize or complete it (`zh-Hans`
+// stays `zh-Hans`, `zh-CN` stays `zh-CN`); canonicalization is `normalizeLanguageCode`'s job. Used for tag
+// recognition and query dedup. Bare/underspecified/invalid input returns null.
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
-  return normalizeV3SurveyLanguageCode(value, V3_SURVEY_LANGUAGE_TAG_REGEX);
+  return normalizeV3SurveyLanguageCode(
+    value,
+    (code) => V3_SURVEY_LOCALE_CODE_REGEX.test(code) || V3_SURVEY_SCRIPT_ONLY_REGEX.test(code)
+  );
 }
 
 export function normalizeV3SurveyLocaleCode(value: string): string | null {
-  return normalizeV3SurveyLanguageCode(value, V3_SURVEY_LOCALE_CODE_REGEX);
+  return normalizeV3SurveyLanguageCode(value, (code) => V3_SURVEY_LOCALE_CODE_REGEX.test(code));
 }
 
-function normalizeV3SurveyLanguageCode(value: string, pattern: RegExp): string | null {
+function normalizeV3SurveyLanguageCode(
+  value: string,
+  isAcceptedTag: (code: string) => boolean
+): string | null {
   const normalizedSeparators = value.trim().replaceAll("_", "-");
 
   try {
     const normalizedLanguage = Intl.getCanonicalLocales(normalizedSeparators)[0] ?? null;
-    if (!normalizedLanguage || !pattern.test(normalizedLanguage)) {
+    if (!normalizedLanguage || !isAcceptedTag(normalizedLanguage)) {
       return null;
     }
 
@@ -71,41 +64,37 @@ function normalizeV3SurveyLanguageCode(value: string, pattern: RegExp): string |
   }
 }
 
-export function normalizeV3SurveyLanguageIdentifier(value: string): string | null {
-  return (
-    normalizeV3SurveyLanguageTag(value) ?? V3_LEGACY_LANGUAGE_CODE_MAP[value.trim().toLowerCase()] ?? null
-  );
-}
+const canonicalKey = (value: string): string | null => normalizeLanguageCode(value)?.toLowerCase() ?? null;
 
 export function normalizeV3SurveyWriteLanguageCode(
   value: string,
   allowedLanguageCodes?: Iterable<string>
 ): string | null {
+  // PATCH: if the request resolves to a language ALREADY configured on the survey, write that survey's
+  // STORED code as-is — its content i18n keys are keyed by exactly that code. Post-migration the stored
+  // code is already canonical; a client still sending a legacy/script form matches by canonical
+  // equivalence. Never rewrite it here (even for a canonical/script-complete input), or the write would
+  // orphan the survey's existing content keys. This match runs BEFORE canonicalization so preserve wins.
+  if (allowedLanguageCodes) {
+    const requestedKey = value.trim().toLowerCase();
+    const requestedCanonical = canonicalKey(value);
+
+    for (const allowedLanguageCode of allowedLanguageCodes) {
+      if (
+        requestedKey === allowedLanguageCode.toLowerCase() ||
+        (requestedCanonical && requestedCanonical === canonicalKey(allowedLanguageCode))
+      ) {
+        return allowedLanguageCode;
+      }
+    }
+  }
+
+  // CREATE (or a genuinely new language added via PATCH): accept a full locale and canonicalize it, so a
+  // newly stored code is always canonical (`zh-CN` -> `zh-Hans-CN`) while legitimate non-default regions
+  // are preserved (`de-AT` stays `de-AT`, `en-GB` stays `en-GB`). Bare/invalid codes stay rejected (null).
   const normalizedLocale = normalizeV3SurveyLocaleCode(value);
   if (normalizedLocale) {
-    return normalizedLocale;
-  }
-
-  if (!allowedLanguageCodes) {
-    return null;
-  }
-
-  const requestedKey = value.trim().toLowerCase();
-  const requestedIdentifier = normalizeV3SurveyLanguageIdentifier(value)?.toLowerCase() ?? null;
-
-  for (const allowedLanguageCode of allowedLanguageCodes) {
-    const allowedKey = allowedLanguageCode.toLowerCase();
-    const normalizedAllowedLanguageCode = normalizeV3SurveyLanguageIdentifier(allowedLanguageCode);
-    const allowedIdentifier = normalizedAllowedLanguageCode?.toLowerCase() ?? null;
-
-    if (
-      requestedKey === allowedKey ||
-      (requestedIdentifier && requestedIdentifier === allowedKey) ||
-      (allowedIdentifier && (requestedKey === allowedIdentifier || requestedIdentifier === allowedIdentifier))
-    ) {
-      // PATCH-only compatibility: preserve legacy stored codes that are not safely canonicalizable.
-      return normalizedAllowedLanguageCode ?? allowedLanguageCode;
-    }
+    return normalizeLanguageCode(normalizedLocale) ?? normalizedLocale;
   }
 
   return null;
@@ -144,31 +133,15 @@ export function parseV3SurveyLanguageQuery(
   return { ok: true, languages };
 }
 
+// Base language subtag (`de-AT` -> `de`, `zh-Hans-CN` -> `zh`), or null when there's no valid 2-3 letter
+// base. Map-independent: only used to resolve/deduplicate bare language selectors.
 function getLanguageBase(code: string): string | null {
-  const normalizedCode = normalizeV3SurveyLanguageIdentifier(code);
-
-  if (normalizedCode) {
-    return normalizedCode.split("-")[0].toLowerCase();
-  }
-
-  return /^[a-z]{2,3}$/i.test(code) ? code.toLowerCase() : null;
+  const base = code.trim().toLowerCase().split(/[-_]/)[0];
+  return /^[a-z]{2,3}$/.test(base) ? base : null;
 }
 
 function isLanguageOnlySelector(code: string): boolean {
   return /^[a-z]{2,3}$/i.test(code);
-}
-
-function getNormalizedLanguage(language: TV3SurveyResolverLanguage) {
-  const code = normalizeV3SurveyLanguageIdentifier(language.code) ?? language.code;
-  const alias = getV3SurveyLanguageAlias(language.alias);
-
-  return {
-    ...language,
-    code,
-    originalCode: language.code,
-    alias,
-    normalizedAlias: alias ? normalizeV3SurveyLanguageIdentifier(alias) : null,
-  };
 }
 
 function getV3SurveyLanguageAlias(alias: string | null | undefined): string | null {
@@ -197,14 +170,22 @@ export function resolveV3SurveyLanguageCode(
   const requestedLanguageValue = requestedLanguage.trim();
   const requestedLanguageKey = requestedLanguageValue.toLowerCase();
   const normalizedRequestedLanguage = normalizeV3SurveyLanguageTag(requestedLanguageValue);
-
-  const normalizedLanguages = languages.map(getNormalizedLanguage);
   const requestedLanguageBase = getLanguageBase(requestedLanguageValue);
 
-  if (isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
+  // 1. Exact stored code or alias (case-insensitive) — always wins, even over the ambiguity heuristic below.
+  let matches = languages.filter(
+    (language) =>
+      language.code.toLowerCase() === requestedLanguageKey ||
+      getV3SurveyLanguageAlias(language.alias)?.toLowerCase() === requestedLanguageKey
+  );
+
+  // 2. No exact hit: a bare language selector matching more than one configured region/script is ambiguous
+  // (`?lang=en` against both `en-US` and `en-GB`). Runs AFTER the exact/alias match so an exact stored code
+  // or a configured alias (e.g. `en-US` aliased `en`) is never short-circuited by this heuristic.
+  if (matches.length === 0 && isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
     const baseMatchCodes = Array.from(
       new Set(
-        normalizedLanguages
+        languages
           .filter((language) => getLanguageBase(language.code) === requestedLanguageBase)
           .map((language) => language.code)
       )
@@ -219,21 +200,30 @@ export function resolveV3SurveyLanguageCode(
     }
   }
 
-  let matches = normalizedLanguages.filter(
-    (language) =>
-      language.originalCode.toLowerCase() === requestedLanguageKey ||
-      language.alias?.toLowerCase() === requestedLanguageKey ||
-      (normalizedRequestedLanguage &&
-        (language.code.toLowerCase() === normalizedRequestedLanguage.toLowerCase() ||
-          language.normalizedAlias?.toLowerCase() === normalizedRequestedLanguage.toLowerCase()))
-  );
-
-  if (matches.length === 0 && isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
-    matches = normalizedLanguages.filter(
-      (language) => getLanguageBase(language.code) === requestedLanguageBase
-    );
+  // 3. Canonical equivalence — a legacy/script/region/underscore selector resolves to the language whose
+  // canonical BCP-47 form matches (`?lang=zh-Hans` or `?lang=zh-CN` -> a stored `zh-Hans-CN`; `?lang=DE_de`
+  // -> `de-DE`). Runs only on zero exact matches, so an exact stored-code match always wins.
+  if (matches.length === 0) {
+    const requestedCanonical = canonicalKey(normalizedRequestedLanguage ?? requestedLanguageValue);
+    if (requestedCanonical) {
+      matches = languages.filter((language) => {
+        const alias = getV3SurveyLanguageAlias(language.alias);
+        return (
+          canonicalKey(language.code) === requestedCanonical ||
+          (alias ? canonicalKey(alias) === requestedCanonical : false)
+        );
+      });
+    }
   }
 
+  // 4. Base-language fallback for a bare selector (`?lang=pt` -> the single `pt-*` language).
+  if (matches.length === 0 && isLanguageOnlySelector(requestedLanguageValue) && requestedLanguageBase) {
+    matches = languages.filter((language) => getLanguageBase(language.code) === requestedLanguageBase);
+  }
+
+  // Return the survey's STORED code (canonical post-migration) so it lines up exactly with its content
+  // i18n keys. Matching above already canonicalized the request; we only rewrite what we store, never
+  // what we hand back for an existing survey.
   const matchCodes = Array.from(new Set(matches.map((language) => language.code)));
 
   if (matchCodes.length === 1) {
@@ -273,16 +263,12 @@ export function getV3SurveyLanguages(
   survey: Pick<TInternalSurvey, "languages">,
   fallbackLanguage: string
 ): TV3SurveyLanguage[] {
-  const languages = (survey.languages ?? []).map((surveyLanguage) => {
-    const alias = getV3SurveyLanguageAlias(surveyLanguage.language.alias);
-
-    return {
-      code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
-      default: surveyLanguage.default,
-      enabled: surveyLanguage.enabled,
-      alias,
-    };
-  });
+  const languages = (survey.languages ?? []).map((surveyLanguage) => ({
+    code: surveyLanguage.language.code,
+    default: surveyLanguage.default,
+    enabled: surveyLanguage.enabled,
+    alias: getV3SurveyLanguageAlias(surveyLanguage.language.alias),
+  }));
 
   if (languages.length === 0) {
     return [{ code: fallbackLanguage, default: true, enabled: true }];
@@ -296,7 +282,7 @@ export function getV3SurveyResolverLanguages(
   fallbackLanguage: string
 ): TV3SurveyResolverLanguage[] {
   const languages = (survey.languages ?? []).map((surveyLanguage) => ({
-    code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
+    code: surveyLanguage.language.code,
     enabled: surveyLanguage.enabled,
     alias: getV3SurveyLanguageAlias(surveyLanguage.language.alias),
   }));
@@ -315,7 +301,5 @@ export function getV3SurveyDefaultLanguage(
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => surveyLanguage.default)?.language
     .code;
 
-  return defaultLanguageCode
-    ? (normalizeV3SurveyLanguageIdentifier(defaultLanguageCode) ?? defaultLanguageCode)
-    : fallbackLanguage;
+  return defaultLanguageCode ?? fallbackLanguage;
 }

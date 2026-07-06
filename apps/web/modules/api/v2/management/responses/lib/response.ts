@@ -4,7 +4,7 @@ import { Prisma, Response } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { calculateTtcTotal } from "@/lib/response/utils";
+import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
 import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
   getMonthlyOrganizationResponseCount,
@@ -107,7 +107,7 @@ export const createResponse = async (
       }),
       finished,
       data,
-      language,
+      language: normalizeResponseLanguage(language),
       meta,
       singleUseId,
       variables,
@@ -157,6 +157,9 @@ export const createResponseWithQuotaEvaluation = async (
   workspaceId: string,
   responseInput: TResponseInput
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
+  // Canonicalize once so quota evaluation uses the same code persisted on the response (createResponse
+  // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
+  const canonicalLanguage = normalizeResponseLanguage(responseInput.language);
   const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
     const responseResult = await createResponse(workspaceId, responseInput, tx);
     if (!responseResult.ok) {
@@ -170,7 +173,7 @@ export const createResponseWithQuotaEvaluation = async (
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
-      language: responseInput.language || "default",
+      language: canonicalLanguage || "default",
       responseFinished: response.finished,
       tx,
     });
