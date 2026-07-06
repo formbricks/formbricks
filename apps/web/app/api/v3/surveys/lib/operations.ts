@@ -58,7 +58,7 @@ type TCreateV3SurveyParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
-  createdFrom?: "blank" | "template" | "xm-template";
+  createdFrom?: "blank" | "template" | "xm-template" | "ai";
   createOptions?: TV3SurveyCreateOptions;
   authResult?: V3WorkspaceContext;
 };
@@ -107,7 +107,7 @@ const createWorkspaceIdSchema = z.object({
   workspaceId: z.cuid2(),
 });
 
-function getSessionUserId(authentication: TV3Authentication): string | null {
+export function getSessionUserId(authentication: TV3Authentication): string | null {
   if (authentication && "user" in authentication && authentication.user?.id) {
     return authentication.user.id;
   }

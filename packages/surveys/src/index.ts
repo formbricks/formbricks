@@ -26,6 +26,12 @@ export const renderSurvey = (props: SurveyContainerProps) => {
 
   const language = getI18nLanguage(languageCode, props.survey.languages);
 
+  // SDK clients may request a legacy code (e.g. "hi") that is no longer a survey content key after
+  // canonicalization (content is keyed "hi-IN"). Render the survey under the resolved canonical code so
+  // content lookups — and recall parsing, which indexes content directly — don't hit `undefined`. The
+  // "default" sentinel is preserved (content stores its value under the "default" key).
+  const surveyLanguageCode = languageCode === "default" ? languageCode : language;
+
   if (mode === "inline") {
     if (!containerId) {
       throw new Error("renderSurvey: containerId is required for inline mode");
@@ -46,6 +52,7 @@ export const renderSurvey = (props: SurveyContainerProps) => {
           { language },
           h(RenderSurvey, {
             ...surveyInlineProps,
+            languageCode: surveyLanguageCode,
           })
         ),
         element
@@ -60,6 +67,7 @@ export const renderSurvey = (props: SurveyContainerProps) => {
           { language },
           h(RenderSurvey, {
             ...surveyInlineProps,
+            languageCode: surveyLanguageCode,
           })
         ),
         element
@@ -76,6 +84,7 @@ export const renderSurvey = (props: SurveyContainerProps) => {
         { language },
         h(RenderSurvey, {
           ...props,
+          languageCode: surveyLanguageCode,
         })
       ),
       modalContainer

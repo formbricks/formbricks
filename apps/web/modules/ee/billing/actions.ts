@@ -15,12 +15,14 @@ import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
 import {
   addOptimisticBillingFeature,
+  applySetupCheckoutUpgrade,
   createPaidPlanCheckoutSession,
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
   previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
+  setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
   syncOrganizationBillingFromStripe,
   undoPendingOrganizationPlanChange,
@@ -393,11 +395,12 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       targetInterval: parsedInput.targetInterval,
     });
 
-    if (result.mode === "immediate") {
+    // Skip when SCA is pending: the plan is unchanged until the client confirms payment,
+    // and a resync would clear the payment-failure banner. The client calls
+    // waitForBillingPlanAction after confirming. Scheduled downgrades resync via webhook.
+    if (result.mode === "immediate" && !result.requiresAction) {
       await syncOrganizationBillingFromStripe(organizationId);
     }
-    // Scheduled downgrades already persist the pending snapshot locally and
-    // the ensuing subscription_schedule webhook performs the full Stripe resync.
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.newObject = {
@@ -409,6 +412,119 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
     return result;
   })
 );
+
+const ZReportUpgradePaymentIssueAction = z.object({
+  organizationId: ZId,
+  paymentIntentId: z.string().min(1),
+});
+
+// Persists a payment-failure banner when on-session SCA is abandoned/declined (Stripe
+// does not promptly emit payment_intent.canceled on modal-close).
+export const reportUpgradePaymentIssueAction = authenticatedActionClient
+  .inputSchema(ZReportUpgradePaymentIssueAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId, paymentIntentId } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      await setOrganizationPaymentAttemptError(organizationId, {
+        type: "requires_action",
+        paymentIntentId,
+        message: "Payment authentication was not completed. Please try again or contact support.",
+        createdAt: new Date().toISOString(),
+      });
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.newObject = { paymentAttemptError: "requires_action" };
+      return { success: true };
+    })
+  );
+
+const ZFinalizeSetupCheckoutUpgradeAction = z.object({
+  organizationId: ZId,
+  checkoutSessionId: z.string().min(1),
+});
+
+// Finalizes an upgrade right after the setup-checkout redirect: attaches the saved card
+// and applies the upgrade in one server call, returning any client_secret for on-session SCA.
+export const finalizeSetupCheckoutUpgradeAction = authenticatedActionClient
+  .inputSchema(ZFinalizeSetupCheckoutUpgradeAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId, checkoutSessionId } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      const result = await applySetupCheckoutUpgrade({ organizationId, checkoutSessionId });
+
+      if (result.mode === "immediate" && !result.requiresAction) {
+        await syncOrganizationBillingFromStripe(organizationId);
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.newObject = { targetPlan: result.targetPlan, mode: result.mode };
+      return result;
+    })
+  );
+
+const ZWaitForBillingPlanAction = z.object({
+  organizationId: ZId,
+  targetPlan: z.enum(["hobby", "pro", "scale"]),
+});
+
+// Stripe applies the pending upgrade a beat after the invoice PaymentIntent succeeds, and
+// the billing snapshot is cached. Resync (which invalidates the cache) a few times until
+// the plan reflects, so the page shows the new plan without a manual refresh.
+const BILLING_PLAN_SYNC_ATTEMPTS = 5;
+const BILLING_PLAN_SYNC_DELAY_MS = 1200;
+
+export const waitForBillingPlanAction = authenticatedActionClient
+  .inputSchema(ZWaitForBillingPlanAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId, targetPlan } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      let plan: string | null = null;
+      for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
+        const billing = await syncOrganizationBillingFromStripe(organizationId);
+        plan = billing?.stripe?.plan ?? null;
+        if (plan === targetPlan) break;
+        if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
+        }
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      return { plan };
+    })
+  );
 
 const ZUndoPendingPlanChangeAction = z.object({
   organizationId: ZId,

@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { UnknownError } from "@formbricks/types/errors";
@@ -13,6 +14,7 @@ import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
+import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { auth } from "@/modules/auth/lib/auth";
 import { updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
@@ -262,10 +264,16 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
       });
 
+      const cookieStore = await cookies();
+      const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
+      const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
+
       capturePostHogEvent(
         user.id,
         "user_signed_up",
         {
+          // Spread attribution first so trusted, server-computed props always win on a name clash.
+          ...attributionProperties,
           auth_provider: "credentials",
           email_domain: user.email.split("@")[1],
           signup_source: parsedInput.inviteToken ? "invite" : "direct",
@@ -275,6 +283,16 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           ? { organizationId: ctx.auditLoggingCtx.organizationId }
           : undefined
       );
+
+      // Clear whenever a cookie is present (even malformed/empty) so it cannot bleed onto
+      // later events and a stale/legacy value cannot block future first-touch capture.
+      if (hasAttributionCookie) {
+        try {
+          cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
+        } catch {
+          // Best-effort; the short cookie lifetime is the backstop.
+        }
+      }
     }
 
     if (user) {

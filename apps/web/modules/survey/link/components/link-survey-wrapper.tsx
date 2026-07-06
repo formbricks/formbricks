@@ -74,7 +74,7 @@ export const LinkSurveyWrapper = ({
         isWelcomeCardEnabled={isWelcomeCardEnabled}
         isBrandingEnabled={isBrandingEnabled}
       />
-      <div
+      <main
         className={cn(
           "flex h-full w-full flex-col",
           isCardless && "overflow-hidden",
@@ -84,7 +84,7 @@ export const LinkSurveyWrapper = ({
         )}
         style={cardMaxWidthStyle}>
         {children}
-      </div>
+      </main>
     </div>
   );
 
@@ -108,12 +108,14 @@ export const LinkSurveyWrapper = ({
               : "max-h-dvh min-h-dvh items-center overflow-clip"
           )}>
           {!showCardlessLogo && hasLogo && (
-            <ClientLogo
-              workspaceLogo={workspace.logo}
-              workspaceId={workspaceId}
-              surveyLogo={styling.logo}
-              dir={dir}
-            />
+            <header>
+              <ClientLogo
+                workspaceLogo={workspace.logo}
+                workspaceId={workspaceId}
+                surveyLogo={styling.logo}
+                dir={dir}
+              />
+            </header>
           )}
           <div
             className={cn(
@@ -128,14 +130,14 @@ export const LinkSurveyWrapper = ({
                 <ResetProgressButton onClick={handleResetSurvey} />
               </div>
             )}
-            <div
+            <main
               className={cn(
                 "flex min-h-0 w-full flex-1 flex-col",
                 isPreview && isCardless && "pt-8",
                 !isCardless && "justify-center"
               )}>
               {children}
-            </div>
+            </main>
             {isCardless && (
               <LegalFooter
                 IMPRINT_URL={IMPRINT_URL}

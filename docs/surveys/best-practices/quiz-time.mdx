@@ -24,7 +24,7 @@ First, make sure you have a Formbricks account. If not, you can create one [here
 3. Go to the settings and select form type as **Link Survey**
 4. In the form editor, click the three dots next to a question, then select Change Question Type and choose **Single-Select**.
 
-![Change Question type to Single-Select](/images/xm-and-surveys/xm/best-practices/quiz-time/single-select.webp)
+![Change Question type to Single-Select](/images/surveys/best-practices/quiz-time/single-select.webp)
 
 5. Add a welcoming statement to greet your users and explain the Quiz's purpose.
 6. Personalize the greeting to make it inviting and encourage engagement.
@@ -41,7 +41,7 @@ B) Japan
 C) India
 D) Nepal
 
-![Sample Question](/images/xm-and-surveys/xm/best-practices/quiz-time/quiz.webp)
+![Sample Question](/images/surveys/best-practices/quiz-time/quiz.webp)
 
 ## Calculate Score
 
@@ -50,19 +50,19 @@ Now that we have our question ready, let’s add the logic to calculate scores.
 1. Scroll down in the editor and click on variables.
 2. Create a new variable named `score` with a default value of 0
 
-![Create Variable named Score image](/images/xm-and-surveys/xm/best-practices/quiz-time/score.webp)
+![Create Variable named Score image](/images/surveys/best-practices/quiz-time/score.webp)
 
 3. Now go back to the question and expand the advanced settings by clicking on `> Show Advanced Settings`.
 4. Under the conditional logic you should see the option to `Add Logic`. Click on that.
 
-![Add Logic Button](/images/xm-and-surveys/xm/best-practices/quiz-time/conditional-logic.webp)
+![Add Logic Button](/images/surveys/best-practices/quiz-time/conditional-logic.webp)
 
 
 5. Now you should see conditional logic. Customize the logic to match your needs for example:
 
 **When** `question` equals `YOUR_ANSWER_HERE` **Then** `Calculate` `score` `Add +` `01`. So it should look something like this.
 
-![When-Then Conditional Logic](/images/xm-and-surveys/xm/best-practices/quiz-time/when-then.webp)
+![When-Then Conditional Logic](/images/surveys/best-practices/quiz-time/when-then.webp)
 
 6. Let's duplicate and customize these questions. Click on the duplicate icon at the top of the question.
 7. Now edit the questions, options, and answers in the **conditional logic**
@@ -77,11 +77,11 @@ Once you have all the questions and the calculation logic in place, it’s time 
 
 **When** `score` >= `03` **Then** `Jump to` `Pass`. So it should look something like this.
 
-![Conditional Logic for ending card](/images/xm-and-surveys/xm/best-practices/quiz-time/ending-logic.webp)
+![Conditional Logic for ending card](/images/surveys/best-practices/quiz-time/ending-logic.webp)
 
 4. Ensure that the Fail card is positioned above the Pass card. This allows any condition that does not meet the criteria of being greater than or equal to 3 to jump to the Fail card.
 
-![Pass or Fail ending Cards](/images/xm-and-surveys/xm/best-practices/quiz-time/pass-fail.webp)
+![Pass or Fail ending Cards](/images/surveys/best-practices/quiz-time/pass-fail.webp)
 
 5. That's it! Now you can save and publish the quiz.
 

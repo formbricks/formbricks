@@ -240,7 +240,7 @@ export const WebhookSettingsTab = ({
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transform"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 transform"
                   onClick={() => setShowSecret(!showSecret)}>
                   {showSecret ? (
                     <EyeOff className="size-5 text-slate-400" />
@@ -271,7 +271,7 @@ export const WebhookSettingsTab = ({
               {t("workspace.integrations.webhooks.secret_description")}
             </p>
             <Link
-              href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks#webhook-security-with-standard-webhooks"
+              href="https://formbricks.com/docs/platform/features/integrations/webhooks#webhook-security-with-standard-webhooks"
               target="_blank"
               className="mt-1 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
               {t("workspace.integrations.webhooks.learn_to_verify")}
@@ -312,7 +312,7 @@ export const WebhookSettingsTab = ({
 
             <Button variant="secondary" asChild>
               <Link
-                href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks"
+                href="https://formbricks.com/docs/platform/features/integrations/webhooks"
                 target="_blank">
                 {t("common.read_docs")}
               </Link>
