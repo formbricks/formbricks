@@ -191,13 +191,25 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
       ],
     });
 
-    // Verify FRD belongs to same org
+    // Verify the directory belongs to the same org and is actually assigned to this workspace.
+    // The composite FK enforces the assignment at the DB level too; these checks return the
+    // friendlier errors first: a generic auth error for missing/cross-org directories, a typed
+    // error for a same-org directory that just isn't assigned to the workspace.
     const frd = await prisma.feedbackDirectory.findUnique({
       where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
-      select: { organizationId: true },
+      select: {
+        organizationId: true,
+        workspaces: {
+          where: { workspaceId: parsedInput.workspaceId },
+          select: { workspaceId: true },
+        },
+      },
     });
     if (frd?.organizationId !== organizationId) {
       throw new AuthorizationError("Invalid feedback directory");
+    }
+    if (frd.workspaces.length === 0) {
+      throw new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE");
     }
 
     let mappingsInput: TMappingsInput | undefined;
