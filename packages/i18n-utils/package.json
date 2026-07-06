@@ -36,7 +36,8 @@
     "scan-translations": "tsx src/scan-translations.ts"
   },
   "dependencies": {
-    "glob": "^13.0.6"
+    "glob": "^13.0.6",
+    "object-hash": "^3.0.0"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

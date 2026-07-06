@@ -18,6 +18,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import objectHash from "object-hash";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -68,6 +69,12 @@ export interface TranslationKeys {
   [key: string]: string | TranslationKeys;
 }
 
+interface LockfileValidationResults {
+  missing: string[];
+  outOfSync: string[];
+  extra: string[];
+}
+
 interface ScanResults {
   usedKeys: Set<string>;
   translationKeys: Set<string>;
@@ -75,6 +82,7 @@ interface ScanResults {
   unusedKeys: Set<string>;
   incompleteTranslations: Map<string, string[]>; // locale -> missing keys
   keysWithSpaces: Set<string>; // keys that contain spaces
+  lockfileValidation: LockfileValidationResults | null;
 }
 
 /**
@@ -375,11 +383,19 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
   console.log(`              ${packageName} VALIDATION RESULTS              `);
   console.log("═══════════════════════════════════════════════════════════\n");
 
+  const hasLockfileIssues =
+    results.lockfileValidation &&
+    (results.lockfileValidation.missing.length > 0 ||
+      results.lockfileValidation.outOfSync.length > 0 ||
+      results.lockfileValidation.extra.length > 0);
+
   const hasIssues =
     results.missingKeys.size > 0 ||
     results.unusedKeys.size > 0 ||
     results.incompleteTranslations.size > 0 ||
-    results.keysWithSpaces.size > 0;
+    results.keysWithSpaces.size > 0 ||
+    !results.lockfileValidation ||
+    hasLockfileIssues;
 
   if (!hasIssues) {
     console.log("✅ All translation keys are valid!\n");
@@ -442,8 +458,120 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
     console.log("\n   Please remove spaces from these keys or use valid key names.\n");
   }
 
+  if (results.lockfileValidation) {
+    const { missing, outOfSync, extra } = results.lockfileValidation;
+    const hasLockfileIssues = missing.length > 0 || outOfSync.length > 0 || extra.length > 0;
+
+    if (hasLockfileIssues) {
+      console.log(`❌ LOCKFILE OUT OF SYNC:\n`);
+      console.log(`   Please run "pnpm i" and then "pnpm i18n" to regenerate i18n.lock.\n`);
+
+      if (missing.length > 0) {
+        console.log(`   • Keys missing from lockfile (${missing.length.toString()}):`);
+        missing.slice(0, 10).forEach((key) => console.log(`      - ${key}`));
+        if (missing.length > 10) console.log(`      ... and ${missing.length - 10} more`);
+      }
+
+      if (outOfSync.length > 0) {
+        console.log(`   • Keys out of sync/stale in lockfile (${outOfSync.length.toString()}):`);
+        outOfSync.slice(0, 10).forEach((key) => console.log(`      - ${key}`));
+        if (outOfSync.length > 10) console.log(`      ... and ${outOfSync.length - 10} more`);
+      }
+
+      if (extra.length > 0) {
+        console.log(`   • Unused/extra keys in lockfile (${extra.length.toString()}):`);
+        extra.slice(0, 10).forEach((key) => console.log(`      - ${key}`));
+        if (extra.length > 10) console.log(`      ... and ${extra.length - 10} more`);
+      }
+      console.log();
+    }
+  } else {
+    console.log(`❌ LOCKFILE MISSING:\n`);
+    console.log(`   Could not find i18n.lock file. Please run "pnpm i18n" to generate it.\n`);
+  }
+
   console.log("═══════════════════════════════════════════════════════════\n");
 }
+function parseLockfile(content: string): Record<string, string> {
+  const checksums: Record<string, string> = {};
+  const lines = content.split(/\r?\n/);
+  for (const line of lines) {
+    const match = line.match(/^\s{4}(?<key>[^:]+):\s*(?<hash>[a-f0-9]{32})\s*$/);
+    if (match && match.groups) {
+      const key = match.groups.key;
+      const hash = match.groups.hash;
+      checksums[key] = hash;
+    }
+  }
+  return checksums;
+}
+
+async function loadDefaultLocaleWithValues(
+  localesDir: string,
+  defaultLocale: string
+): Promise<Record<string, string>> {
+  const localePath = path.join(localesDir, `${defaultLocale}.json`);
+  const content = await fs.promises.readFile(localePath, "utf-8");
+  const translations = JSON.parse(content) as TranslationKeys;
+
+  const flattened: Record<string, string> = {};
+
+  function recurse(obj: TranslationKeys, prefix = "") {
+    for (const key in obj) {
+      const fullKey = prefix ? `${prefix}/${key}` : key;
+      const value = obj[key];
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        recurse(value, fullKey);
+      } else if (typeof value === "string") {
+        flattened[fullKey] = value;
+      }
+    }
+  }
+
+  recurse(translations);
+  return flattened;
+}
+
+async function validateLockfile(
+  localesDir: string,
+  defaultLocale: string,
+  packageName: string
+): Promise<LockfileValidationResults | null> {
+  const lockfilePath = path.join(localesDir, "..", "i18n.lock");
+
+  try {
+    await fs.promises.access(lockfilePath);
+  } catch {
+    return null;
+  }
+
+  const lockfileContent = await fs.promises.readFile(lockfilePath, "utf-8");
+  const lockChecksums = parseLockfile(lockfileContent);
+  const sourceKeysWithValues = await loadDefaultLocaleWithValues(localesDir, defaultLocale);
+
+  const missing: string[] = [];
+  const outOfSync: string[] = [];
+  const extra: string[] = [];
+
+  for (const [key, val] of Object.entries(sourceKeysWithValues)) {
+    const expected = objectHash.MD5(val);
+    const actual = lockChecksums[key];
+    if (!actual) {
+      missing.push(key);
+    } else if (actual !== expected) {
+      outOfSync.push(key);
+    }
+  }
+
+  for (const key of Object.keys(lockChecksums)) {
+    if (sourceKeysWithValues[key] === undefined) {
+      extra.push(key);
+    }
+  }
+
+  return { missing, outOfSync, extra };
+}
+
 /**
  * Validate translations for a single package
  */
@@ -467,10 +595,17 @@ async function validatePackage(
   // Compare and find issues
   const results = compareKeys(usedKeys, defaultKeys, translationsByLocale, defaultLocale, packageName);
 
-  // Display results
-  displayResults(results, packageName, defaultLocale);
+  // Run lockfile validation
+  const lockfileValidation = await validateLockfile(localesDir, defaultLocale, packageName);
+  const resultsWithLockfile: ScanResults = {
+    ...results,
+    lockfileValidation,
+  };
 
-  return results;
+  // Display results
+  displayResults(resultsWithLockfile, packageName, defaultLocale);
+
+  return resultsWithLockfile;
 }
 
 /**
@@ -501,17 +636,31 @@ async function main(): Promise<void> {
     );
 
     // Check if any package has issues
+    const hasWebAppLockfileIssues =
+      !webAppResults.lockfileValidation ||
+      webAppResults.lockfileValidation.missing.length > 0 ||
+      webAppResults.lockfileValidation.outOfSync.length > 0 ||
+      webAppResults.lockfileValidation.extra.length > 0;
+
+    const hasSurveysLockfileIssues =
+      !surveysResults.lockfileValidation ||
+      surveysResults.lockfileValidation.missing.length > 0 ||
+      surveysResults.lockfileValidation.outOfSync.length > 0 ||
+      surveysResults.lockfileValidation.extra.length > 0;
+
     const hasWebAppIssues =
       webAppResults.missingKeys.size > 0 ||
       webAppResults.unusedKeys.size > 0 ||
       webAppResults.incompleteTranslations.size > 0 ||
-      webAppResults.keysWithSpaces.size > 0;
+      webAppResults.keysWithSpaces.size > 0 ||
+      hasWebAppLockfileIssues;
 
     const hasSurveysIssues =
       surveysResults.missingKeys.size > 0 ||
       surveysResults.unusedKeys.size > 0 ||
       surveysResults.incompleteTranslations.size > 0 ||
-      surveysResults.keysWithSpaces.size > 0;
+      surveysResults.keysWithSpaces.size > 0 ||
+      hasSurveysLockfileIssues;
 
     // Exit with error if validation failed for any package
     if (hasWebAppIssues || hasSurveysIssues) {
@@ -530,6 +679,9 @@ async function main(): Promise<void> {
       }
       if (webAppResults.incompleteTranslations.size > 0 || surveysResults.incompleteTranslations.size > 0) {
         console.error("   • Complete missing translations in target language files");
+      }
+      if (hasWebAppLockfileIssues || hasSurveysLockfileIssues) {
+        console.error("   • Rebuild and update your lockfiles (run 'pnpm i18n')");
       }
       console.error();
       process.exit(1);

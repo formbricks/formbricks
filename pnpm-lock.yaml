@@ -806,6 +806,9 @@ importers:
       glob:
         specifier: ^13.0.6
         version: 13.0.6
+      object-hash:
+        specifier: ^3.0.0
+        version: 3.0.0
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
