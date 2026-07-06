@@ -1,9 +1,9 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 import {
-  applyPendingUpgradeFromSetupCheckout,
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
+  setOrganizationPaymentAttemptError,
   syncOrganizationBillingFromStripe,
 } from "@/modules/ee/billing/lib/organization-billing";
 import { getStripeClient, getStripeWebhookSecret } from "./stripe-client";
@@ -19,13 +19,15 @@ const relevantEvents = new Set([
   "subscription_schedule.released",
   "subscription_schedule.canceled",
   "subscription_schedule.completed",
+  "payment_intent.requires_action",
+  "payment_intent.canceled",
 ]);
 
 /**
- * When a setup-mode Checkout Session completes, the customer has just provided a
- * payment method + billing address.  We attach that payment method as the default
- * on the customer (for future invoices) and on the trial subscription so Stripe
- * can charge it when the trial ends.
+ * Setup-mode Checkout completed: save the provided card as the default on the customer
+ * and subscription. We deliberately do NOT apply the upgrade here — the prorated charge
+ * may need on-session 3D Secure, which a background webhook can't do; the billing page
+ * drives the upgrade (via changeBillingPlanAction) after redirect.
  */
 const handleSetupCheckoutCompleted = async (
   session: Stripe.Checkout.Session,
@@ -60,29 +62,68 @@ const handleSetupCheckoutCompleted = async (
       default_payment_method: paymentMethodId,
     });
   }
+};
 
-  const organizationId = session.metadata?.organizationId;
-  if (organizationId && customerId) {
-    try {
-      await applyPendingUpgradeFromSetupCheckout({
-        organizationId,
-        customerId,
-        targetPlan: session.metadata?.targetPlan,
-        targetInterval: session.metadata?.targetInterval,
-      });
-    } catch (error) {
-      // The payment method is already attached above; the prorated upgrade invoice
-      // failed to collect (declined card, SCA required, etc.). updateSubscriptionItems
-      // uses `error_if_incomplete`, so the subscription is left unchanged (atomic).
-      // We deliberately don't rethrow: failing the webhook would make Stripe retry the
-      // whole event, re-attaching the payment method and re-attempting a charge that
-      // won't succeed. The snapshot sync below still runs and keeps its retry behavior.
-      logger.error(
-        { error, organizationId, customerId, targetPlan: session.metadata?.targetPlan },
-        "Failed to apply pending plan upgrade after setup checkout"
-      );
-    }
-  }
+const handlePaymentIntentRequiresAction = async (
+  paymentIntent: Stripe.PaymentIntent,
+  event: { id: string; created: number }
+): Promise<void> => {
+  const customerId = typeof paymentIntent.customer === "string" ? paymentIntent.customer : null;
+  if (!customerId) return;
+
+  const organizationId = await findOrganizationIdByStripeCustomerId(customerId);
+  if (!organizationId) return;
+
+  await setOrganizationPaymentAttemptError(
+    organizationId,
+    {
+      type: "requires_action",
+      paymentIntentId: paymentIntent.id,
+      message: "Payment requires additional authentication. Please complete verification or contact support.",
+      createdAt: new Date().toISOString(),
+    },
+    event
+  );
+
+  logger.info(
+    { paymentIntentId: paymentIntent.id, organizationId },
+    "Payment intent requires action for organization"
+  );
+};
+
+const handlePaymentIntentCanceled = async (
+  paymentIntent: Stripe.PaymentIntent,
+  event: { id: string; created: number }
+): Promise<void> => {
+  const customerId = typeof paymentIntent.customer === "string" ? paymentIntent.customer : null;
+  if (!customerId) return;
+
+  // Only failed-invoice cancellations are real failures; other reasons are benign (avoids a
+  // false banner — every canceled event already has status "canceled").
+  if (paymentIntent.cancellation_reason !== "failed_invoice") return;
+
+  const organizationId = await findOrganizationIdByStripeCustomerId(customerId);
+  if (!organizationId) return;
+
+  await setOrganizationPaymentAttemptError(
+    organizationId,
+    {
+      type: "failed_invoice",
+      paymentIntentId: paymentIntent.id,
+      message: "Payment was canceled. Please contact support to complete your upgrade.",
+      createdAt: new Date().toISOString(),
+    },
+    event
+  );
+
+  logger.info(
+    {
+      paymentIntentId: paymentIntent.id,
+      organizationId,
+      cancellationReason: paymentIntent.cancellation_reason,
+    },
+    "Payment intent canceled for organization"
+  );
 };
 
 const getMetadataOrganizationId = (eventObject: Stripe.Event.Data.Object): string | null => {
@@ -162,14 +203,30 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     return { status: 200, message: { received: true } };
   }
 
-  const eventObject = event.data.object as Stripe.Event.Data.Object;
-  const organizationId = await resolveOrganizationId(eventObject);
-
-  if (!organizationId) {
-    return getUnresolvedOrganizationResponse(event);
-  }
-
   try {
+    if (event.type === "payment_intent.requires_action") {
+      await handlePaymentIntentRequiresAction(event.data.object as Stripe.PaymentIntent, {
+        id: event.id,
+        created: event.created,
+      });
+      return { status: 200, message: { received: true } };
+    }
+
+    if (event.type === "payment_intent.canceled") {
+      await handlePaymentIntentCanceled(event.data.object as Stripe.PaymentIntent, {
+        id: event.id,
+        created: event.created,
+      });
+      return { status: 200, message: { received: true } };
+    }
+
+    const eventObject = event.data.object as Stripe.Event.Data.Object;
+    const organizationId = await resolveOrganizationId(eventObject);
+
+    if (!organizationId) {
+      return getUnresolvedOrganizationResponse(event);
+    }
+
     if (event.type === "checkout.session.completed") {
       await handleSetupCheckoutCompleted(event.data.object, stripe);
     }
@@ -180,10 +237,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
       created: event.created,
     });
   } catch (error) {
-    logger.error(
-      { error, eventId: event.id, organizationId, eventType: event.type },
-      "Failed to sync billing snapshot from Stripe webhook"
-    );
+    logger.error({ error, eventId: event.id, eventType: event.type }, "Failed to process Stripe webhook");
     return { status: 500, message: "Stripe webhook processing failed; please retry." };
   }
 

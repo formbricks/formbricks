@@ -21,7 +21,7 @@ export const NoFeedbackDirectoryEmptyState = async ({
         <h3 className="text-base font-semibold text-slate-900">
           {t("workspace.unify.no_feedback_directory_linked_title")}
         </h3>
-        <p className="text-balance text-sm text-slate-600">
+        <p className="text-sm text-balance text-slate-600">
           {isOwnerOrManager
             ? t("workspace.unify.no_feedback_directory_linked_admin_description")
             : t("workspace.unify.no_feedback_directory_linked_member_description")}

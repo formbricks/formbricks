@@ -1,6 +1,5 @@
 import "server-only";
-import { getServerSession } from "next-auth";
-import type { Session } from "next-auth";
+import type { Session } from "@formbricks/types/auth";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
@@ -11,7 +10,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getWorkspace } from "@/lib/workspace/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import {
   getAccessControlPermission,
@@ -56,7 +55,7 @@ export const getSettingsLayoutData = async (
   userId: string,
   organizationId?: string
 ): Promise<TSettingsLayoutData | null> => {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user) return null;
 
   let orgId = organizationId;

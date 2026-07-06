@@ -81,7 +81,9 @@ const nextConfig = {
     ],
   },
   turbopack: {},
-  experimental: {},
+  experimental: {
+    proxyClientMaxBodySize: "16mb",
+  },
   transpilePackages: ["@formbricks/database"],
   images: {
     // Optimize image processing to reduce CPU time and prevent timeouts

@@ -1,11 +1,10 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { getHasNoOrganizations, getIsFreshInstance } from "@/lib/instance/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 
 const Page = async () => {
   const [session, isFreshInstance, hasNoOrganizations] = await Promise.all([
-    getServerSession(authOptions),
+    getSession(),
     getIsFreshInstance(),
     getHasNoOrganizations(),
   ]);

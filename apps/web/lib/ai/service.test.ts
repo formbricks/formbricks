@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import {
   assertOrganizationAIConfigured,
   generateOrganizationAIObject,
@@ -13,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   generateObject: vi.fn(),
   generateText: vi.fn(),
   isAiConfigured: vi.fn(),
+  classifyAIProviderError: vi.fn(),
   getOrganization: vi.fn(),
   getIsAISmartToolsEnabled: vi.fn(),
   loggerError: vi.fn(),
@@ -32,6 +37,7 @@ vi.mock("@formbricks/ai", () => ({
   generateObject: mocks.generateObject,
   generateText: mocks.generateText,
   isAiConfigured: mocks.isAiConfigured,
+  classifyAIProviderError: mocks.classifyAIProviderError,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -72,6 +78,7 @@ describe("AI organization service", () => {
     vi.clearAllMocks();
 
     mocks.isAiConfigured.mockReturnValue(true);
+    mocks.classifyAIProviderError.mockReturnValue(undefined);
     mocks.getOrganization.mockResolvedValue({
       id: "org_1",
       isAISmartToolsEnabled: true,
@@ -181,6 +188,9 @@ describe("AI organization service", () => {
         organizationId: "org_1",
         isInstanceConfigured: true,
         errorCode: undefined,
+        statusCode: undefined,
+        isQuotaExhausted: undefined,
+        isRetryable: undefined,
         err: modelError,
       },
       "Failed to generate organization AI text"
@@ -203,10 +213,69 @@ describe("AI organization service", () => {
         organizationId: "org_1",
         isInstanceConfigured: true,
         errorCode: undefined,
+        statusCode: undefined,
+        isQuotaExhausted: undefined,
+        isRetryable: undefined,
         err: modelError,
       },
       "Failed to generate organization AI object"
     );
+  });
+
+  test("converts a provider 429 from text generation into a TooManyRequestsError", async () => {
+    const quotaError = new Error("Resource exhausted");
+    mocks.generateText.mockRejectedValueOnce(quotaError);
+    mocks.classifyAIProviderError.mockReturnValueOnce({
+      isQuotaExhausted: true,
+      isRetryable: true,
+      statusCode: 429,
+    });
+
+    await expect(
+      generateOrganizationAIText({ organizationId: "org_1", prompt: "Translate this survey" })
+    ).rejects.toMatchObject({ name: "TooManyRequestsError", message: "ai_quota_exceeded" });
+  });
+
+  test("converts a provider 429 into a TooManyRequestsError with the quota code", async () => {
+    const quotaError = new Error("Resource exhausted");
+    mocks.generateObject.mockRejectedValueOnce(quotaError);
+    mocks.classifyAIProviderError.mockReturnValueOnce({
+      isQuotaExhausted: true,
+      isRetryable: true,
+      statusCode: 429,
+      retryAfterSeconds: 30,
+    });
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: { type: "object" },
+        prompt: "Generate a survey",
+      } as any)
+    ).rejects.toMatchObject({ name: "TooManyRequestsError", message: "ai_quota_exceeded", retryAfter: 30 });
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ statusCode: 429, isQuotaExhausted: true, isRetryable: true }),
+      "Failed to generate organization AI object"
+    );
+  });
+
+  test("rethrows non-quota provider errors unchanged", async () => {
+    const serverError = new Error("provider 500");
+    mocks.generateObject.mockRejectedValueOnce(serverError);
+    mocks.classifyAIProviderError.mockReturnValueOnce({
+      isQuotaExhausted: false,
+      isRetryable: true,
+      statusCode: 500,
+    });
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: { type: "object" },
+        prompt: "Generate a survey",
+      } as any)
+    ).rejects.toBe(serverError);
   });
 
   describe("getAISmartToolsUnavailableReason", () => {

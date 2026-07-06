@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 const mocks = {
-  getServerSession: vi.fn(),
+  getSession: vi.fn(),
   getOrganizationsByUserId: vi.fn(),
   getWorkspacesByUserId: vi.fn(),
   getMembershipByUserIdOrganizationId: vi.fn(),
@@ -17,8 +17,9 @@ const mocks = {
   getPublicDomain: vi.fn(),
 };
 
-vi.mock("next-auth", () => ({ getServerSession: (...args: unknown[]) => mocks.getServerSession(...args) }));
-vi.mock("@/modules/auth/lib/authOptions", () => ({ authOptions: {} }));
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: (...args: unknown[]) => mocks.getSession(...args),
+}));
 vi.mock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true, IS_DEVELOPMENT: false }));
 vi.mock("@/lib/getPublicUrl", () => ({ getPublicDomain: () => mocks.getPublicDomain() }));
 vi.mock("@/app/(app)/workspaces/[workspaceId]/lib/organization", () => ({
@@ -47,7 +48,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 const { getSettingsLayoutData } = await import("./navigation-data");
 
 const seedSuccess = () => {
-  mocks.getServerSession.mockResolvedValue({ user: { id: "user-1" } });
+  mocks.getSession.mockResolvedValue({ user: { id: "user-1" } });
   mocks.getUser.mockResolvedValue({ id: "user-1", name: "Test" });
   mocks.getOrganization.mockResolvedValue({ id: "org-1", name: "Org", billing: {} });
   mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "owner" });
@@ -62,12 +63,12 @@ describe("getSettingsLayoutData", () => {
   afterEach(() => vi.clearAllMocks());
 
   test("returns null when there is no session", async () => {
-    mocks.getServerSession.mockResolvedValue(null);
+    mocks.getSession.mockResolvedValue(null);
     expect(await getSettingsLayoutData("user-1")).toBeNull();
   });
 
   test("returns null when no organization can be resolved", async () => {
-    mocks.getServerSession.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.getSession.mockResolvedValue({ user: { id: "user-1" } });
     mocks.getOrganizationsByUserId.mockResolvedValue([]);
     expect(await getSettingsLayoutData("user-1")).toBeNull();
   });

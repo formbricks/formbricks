@@ -12,6 +12,7 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth" }, // 30 per minute
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,

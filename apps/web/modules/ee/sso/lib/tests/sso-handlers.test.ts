@@ -514,7 +514,7 @@ describe("handleSsoCallback", () => {
       {
         name: mockUser.name,
         email: mockUser.email,
-        emailVerified: expect.any(Date),
+        emailVerified: true,
         identityProvider: "google",
         identityProviderAccountId: mockAccount.providerAccountId,
         locale: "en-US",
