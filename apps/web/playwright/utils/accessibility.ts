@@ -26,13 +26,15 @@ import { loginAndGetApiKey } from "../lib/utils";
  * updatedAt and a cuid2 id that must already exist in the workspace), so the
  * language is attached directly through the database — the same boundary the
  * `users` fixture already writes through. Arabic translation keys are patched into
- * the stored blocks so axe scans genuine RTL content; `?lang=ar` then renders the
+ * the stored blocks so axe scans genuine RTL content; `?lang=ar-EG` then renders the
  * survey with `dir="rtl"` (see packages/surveys/src/lib/utils.ts `isRTLLanguage`).
  */
 
 type I18n = { default: string; [lang: string]: string };
 
-const t = (value: string): I18n => ({ default: value });
+// Named so the i18n scanner's t(...) pattern does not treat these fixture
+// strings as translation keys (this file is scanned; *.spec.ts files are not).
+const i18nValue = (value: string): I18n => ({ default: value });
 
 // A stable, valid storage URL for picture-selection choices. Public assets under
 // apps/web/public are always served by the app and satisfy ZStorageUrl, so the
@@ -48,9 +50,9 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
   {
     id: createId(),
     type: "openText",
-    headline: t("What feedback do you have for us?"),
-    subheader: t("Share anything that comes to mind."),
-    placeholder: t("Type your answer here..."),
+    headline: i18nValue("What feedback do you have for us?"),
+    subheader: i18nValue("Share anything that comes to mind."),
+    placeholder: i18nValue("Type your answer here..."),
     required: true,
     inputType: "text",
     charLimit: { enabled: false },
@@ -58,87 +60,82 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
   {
     id: createId(),
     type: "multipleChoiceSingle",
-    headline: t("Which plan are you on?"),
+    headline: i18nValue("Which plan are you on?"),
     required: true,
     choices: [
-      { id: createId(), label: t("Free") },
-      { id: createId(), label: t("Pro") },
-      { id: createId(), label: t("Enterprise") },
+      { id: createId(), label: i18nValue("Free") },
+      { id: createId(), label: i18nValue("Pro") },
+      { id: createId(), label: i18nValue("Enterprise") },
     ],
   },
   {
     id: createId(),
     type: "multipleChoiceMulti",
-    headline: t("Which features do you use? (select all that apply)"),
+    headline: i18nValue("Which features do you use? (select all that apply)"),
     required: true,
     choices: [
-      { id: createId(), label: t("Surveys") },
-      { id: createId(), label: t("Contacts") },
-      { id: createId(), label: t("Integrations") },
+      { id: createId(), label: i18nValue("Surveys") },
+      { id: createId(), label: i18nValue("Contacts") },
+      { id: createId(), label: i18nValue("Integrations") },
     ],
   },
   {
     id: createId(),
     type: "rating",
-    headline: t("How would you rate your experience?"),
+    headline: i18nValue("How would you rate your experience?"),
     required: true,
     scale: "star",
     range: 5,
-    lowerLabel: t("Poor"),
-    upperLabel: t("Excellent"),
+    lowerLabel: i18nValue("Poor"),
+    upperLabel: i18nValue("Excellent"),
   },
   {
     id: createId(),
     type: "ranking",
-    headline: t("Rank these in order of importance"),
+    headline: i18nValue("Rank these in order of importance"),
     required: true,
     choices: [
-      { id: createId(), label: t("Speed") },
-      { id: createId(), label: t("Reliability") },
-      { id: createId(), label: t("Support") },
+      { id: createId(), label: i18nValue("Speed") },
+      { id: createId(), label: i18nValue("Reliability") },
+      { id: createId(), label: i18nValue("Support") },
     ],
   },
   {
     id: createId(),
     type: "matrix",
-    headline: t("How much do you agree?"),
+    headline: i18nValue("How much do you agree?"),
     required: true,
     rows: [
-      { id: createId(), label: t("The product is easy to use") },
-      { id: createId(), label: t("Support is responsive") },
+      { id: createId(), label: i18nValue("The product is easy to use") },
+      { id: createId(), label: i18nValue("Support is responsive") },
     ],
     columns: [
-      { id: createId(), label: t("Agree") },
-      { id: createId(), label: t("Neutral") },
-      { id: createId(), label: t("Disagree") },
+      { id: createId(), label: i18nValue("Agree") },
+      { id: createId(), label: i18nValue("Neutral") },
+      { id: createId(), label: i18nValue("Disagree") },
     ],
   },
   {
     id: createId(),
     type: "date",
-    headline: t("When did you start using us?"),
+    headline: i18nValue("When did you start using us?"),
     required: true,
     format: "M-d-y",
   },
   {
     id: createId(),
     type: "fileUpload",
-    headline: t("Upload a screenshot (optional)"),
+    headline: i18nValue("Upload a screenshot (optional)"),
     required: false,
     allowMultipleFiles: false,
   },
-  {
-    id: createId(),
-    type: "cal",
-    headline: t("Book a call with us"),
-    required: false,
-    calUserName: "rick/get-rick-rolled",
-    calHost: "cal.com",
-  },
+  // NOTE: no `cal` question on purpose — the Cal.com embed loads a live third-party
+  // iframe, which would make the unattended axe walk depend on external network and
+  // markup we do not control (its violations would all be wontfix-allowlisted anyway).
   {
     id: createId(),
     type: "pictureSelection",
-    headline: t("Pick the image you prefer"),
+    headline: i18nValue("Pick the image you prefer"),
     required: true,
     allowMulti: false,
     choices: [
@@ -149,8 +146,8 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
   {
     id: createId(),
     type: "cta",
-    headline: t("Thanks for the detail!"),
-    subheader: t("Tap continue to wrap up."),
+    headline: i18nValue("Thanks for the detail!"),
+    subheader: i18nValue("Tap continue to wrap up."),
     required: false,
     buttonExternal: false,
   },
@@ -158,18 +155,24 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
 
 const buildWelcomeCard = () => ({
   enabled: true,
-  headline: t("Welcome to our feedback survey"),
-  subheader: t("It only takes a minute."),
+  headline: i18nValue("Welcome to our feedback survey"),
+  subheader: i18nValue("It only takes a minute."),
   timeToFinish: true,
   showResponseCount: false,
 });
+
+/**
+ * Ending-card headline, exported so the spec can positively detect survey completion
+ * via the rendered `<h1>` (the ending card no longer carries a dedicated DOM hook).
+ */
+export const ENDING_CARD_HEADLINE = "Thank you!";
 
 const buildEndings = () => [
   {
     id: createId(),
     type: "endScreen" as const,
-    headline: t("Thank you!"),
-    subheader: t("We appreciate your feedback."),
+    headline: i18nValue(ENDING_CARD_HEADLINE),
+    subheader: i18nValue("We appreciate your feedback."),
   },
 ];
 
@@ -229,16 +232,19 @@ const publishSurveyViaApi = async (
  * exist in the workspace.
  */
 const attachArabicLanguage = async (surveyId: string, workspaceId: string): Promise<void> => {
+  // Canonical BCP-47 codes (post language-code canonicalization, PR #8390): stored
+  // language codes are canonical (`ar-EG`), and survey content i18n keys must match
+  // the stored code exactly.
   const [english, arabic] = await Promise.all([
     prisma.language.upsert({
-      where: { workspaceId_code: { workspaceId, code: "en" } },
+      where: { workspaceId_code: { workspaceId, code: "en-US" } },
       update: {},
-      create: { id: createId(), code: "en", workspaceId },
+      create: { id: createId(), code: "en-US", workspaceId },
     }),
     prisma.language.upsert({
-      where: { workspaceId_code: { workspaceId, code: "ar" } },
+      where: { workspaceId_code: { workspaceId, code: "ar-EG" } },
       update: {},
-      create: { id: createId(), code: "ar", workspaceId },
+      create: { id: createId(), code: "ar-EG", workspaceId },
     }),
   ]);
 
@@ -250,19 +256,34 @@ const attachArabicLanguage = async (surveyId: string, workspaceId: string): Prom
     skipDuplicates: true,
   });
 
-  // Patch Arabic translations into the headline/subheader/labels of every block
-  // element so axe scans real RTL text. Falls back to the default text for keys we
-  // do not translate; rendering direction is driven by the `ar` code regardless.
+  // Patch Arabic translations into every label-bearing field of every block element
+  // (headline, subheader, placeholder, rating lower/upper labels, choice / matrix
+  // row / matrix column labels) so axe scans real RTL text everywhere. Falls back to
+  // the default text for keys we do not translate; rendering direction is driven by
+  // the `ar` code regardless.
   const survey = await prisma.survey.findUnique({ where: { id: surveyId }, select: { blocks: true } });
-  const blocks = (survey?.blocks ?? []) as Prisma.JsonArray;
+  const blocks = (survey?.blocks ?? []) as Prisma.JsonValue[];
 
   const localize = (value: unknown): unknown => {
     if (value && typeof value === "object" && "default" in (value as Record<string, unknown>)) {
       const i18n = value as Record<string, string>;
-      return { ...i18n, ar: `${i18n.default} (مرحبا)` };
+      return { ...i18n, "ar-EG": `${i18n.default} (مرحبا)` };
     }
     return value;
   };
+
+  // Fields on an element that hold a single i18n string.
+  const I18N_FIELDS = ["headline", "subheader", "placeholder", "lowerLabel", "upperLabel", "buttonLabel"];
+  // Fields on an element that hold arrays of `{ label: i18n }` entries.
+  const I18N_LIST_FIELDS = ["choices", "rows", "columns"];
+
+  const localizeList = (list: unknown[]): unknown[] =>
+    list.map((item) => {
+      if (!item || typeof item !== "object") return item;
+      const entry = { ...(item as Record<string, unknown>) };
+      if (entry.label) entry.label = localize(entry.label);
+      return entry;
+    });
 
   const patchedBlocks = blocks.map((block) => {
     if (!block || typeof block !== "object") return block;
@@ -271,15 +292,11 @@ const attachArabicLanguage = async (surveyId: string, workspaceId: string): Prom
     const patchedElements = elements.map((element) => {
       if (!element || typeof element !== "object") return element;
       const e = { ...(element as Record<string, unknown>) };
-      if (e.headline) e.headline = localize(e.headline);
-      if (e.subheader) e.subheader = localize(e.subheader);
-      if (Array.isArray(e.choices)) {
-        e.choices = e.choices.map((choice) => {
-          if (!choice || typeof choice !== "object") return choice;
-          const c = { ...(choice as Record<string, unknown>) };
-          if (c.label) c.label = localize(c.label);
-          return c;
-        });
+      for (const field of I18N_FIELDS) {
+        if (e[field]) e[field] = localize(e[field]);
+      }
+      for (const field of I18N_LIST_FIELDS) {
+        if (Array.isArray(e[field])) e[field] = localizeList(e[field] as unknown[]);
       }
       return e;
     });
@@ -296,7 +313,7 @@ export interface SeededAccessibilitySurveys {
   workspaceId: string;
   /** Published single-language kitchen-sink survey link, e.g. `/s/<id>`. */
   surveyUrl: string;
-  /** Published multi-language kitchen-sink survey link forced to Arabic, e.g. `/s/<id>?lang=ar`. */
+  /** Published multi-language kitchen-sink survey link forced to Arabic, e.g. `/s/<id>?lang=ar-EG`. */
   rtlSurveyUrl: string;
 }
 
@@ -328,6 +345,6 @@ export const seedAccessibilitySurveys = async (
   return {
     workspaceId,
     surveyUrl: `/s/${mainSurveyId}`,
-    rtlSurveyUrl: `/s/${rtlSurveyId}?lang=ar`,
+    rtlSurveyUrl: `/s/${rtlSurveyId}?lang=ar-EG`,
   };
 };

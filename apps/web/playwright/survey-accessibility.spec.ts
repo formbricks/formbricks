@@ -2,7 +2,11 @@ import AxeBuilder from "@axe-core/playwright";
 import { type Locator, type Page, expect } from "@playwright/test";
 import { logger } from "@formbricks/logger";
 import { test } from "./lib/fixtures";
-import { type SeededAccessibilitySurveys, seedAccessibilitySurveys } from "./utils/accessibility";
+import {
+  ENDING_CARD_HEADLINE,
+  type SeededAccessibilitySurveys,
+  seedAccessibilitySurveys,
+} from "./utils/accessibility";
 import { mockStorageUploads } from "./utils/helper";
 
 /**
@@ -19,9 +23,11 @@ import { mockStorageUploads } from "./utils/helper";
  * only and does not exclude it from discovery.
  */
 
-// Only WCAG 2.1 / 2.2 AA conformance tags fail the build. These are the levels we
-// commit to for the survey surface.
-const FAIL_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+// Only WCAG 2.1 / 2.2 A + AA conformance tags fail the build. These are the levels
+// we commit to for the survey surface. Each spec version's A and AA tags are listed
+// separately because axe tags rules with exactly one of them (e.g. `wcag22a` rules
+// are NOT also tagged `wcag22aa`).
+const FAIL_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
 
 // Everything else axe can emit is informational here: opinionated best-practice
 // rules, experimental checks, and other standards (ACT, US Section 508, EN 301 549)
@@ -45,20 +51,6 @@ interface AllowlistEntry {
 }
 
 const ALLOWLIST: AllowlistEntry[] = [
-  {
-    // The Cal.com scheduler is an embedded third-party iframe we do not control; its
-    // internal a11y (e.g. frame title, contrast) is the vendor's responsibility. wontfix.
-    ruleId: "frame-title",
-    targets: ["iframe", "cal-embed", "cal.com"],
-    justification: "Cal.com embed is a third-party iframe (wontfix — not our DOM).",
-  },
-  {
-    // Same third-party Cal.com iframe: any nested-interactive / aria issues raised
-    // against the embed container itself are out of our control.
-    ruleId: "nested-interactive",
-    targets: ["cal-embed", "cal.com", "iframe"],
-    justification: "Cal.com embed is a third-party iframe (wontfix — not our DOM).",
-  },
   {
     // File-upload control renders a <button> nested inside the dropzone <label>. This
     // is a known structural issue in the file-upload element (tracked separately);
@@ -131,29 +123,31 @@ const scan = async (page: Page, variant: string, card: string, failSink: Violati
 };
 
 /**
- * Selects a radio/checkbox control regardless of how it is implemented. Single- and
- * multi-select render Radix role="radio"/"checkbox" *buttons* (click them); rating
- * renders native, visually-hidden `<input type="radio">` inside a <fieldset> (the
- * input is sr-only, so `check({ force })` is used since a plain click would fail the
- * visibility/stability check). We branch on the underlying tag rather than guessing.
+ * Selects a radio/checkbox control regardless of how it is implemented. All survey
+ * choice controls render a native, visually-hidden (sr-only) `<input>` wrapped in a
+ * visible `<label>`; the input itself never passes Playwright's actionability checks,
+ * so we click the wrapping label — the same thing a real pointer user does. Non-input
+ * role="radio"/"checkbox" elements (if any) are clicked directly.
  */
 const selectControl = async (control: Locator): Promise<void> => {
   if ((await control.count()) === 0) return;
   const tagName = await control.evaluate((el) => el.tagName.toLowerCase()).catch(() => "");
   if (tagName === "input") {
-    await control.check({ force: true, timeout: ACTION_TIMEOUT }).catch(() => undefined);
+    const label = control.locator("xpath=ancestor::label[1]");
+    if ((await label.count()) > 0) {
+      await label.click({ timeout: ACTION_TIMEOUT }).catch(() => undefined);
+    }
   } else {
-    await control.click({ force: true, timeout: ACTION_TIMEOUT }).catch(() => undefined);
+    await control.click({ timeout: ACTION_TIMEOUT }).catch(() => undefined);
   }
 };
 
 /**
  * Answers every answerable control on the current card so the walker can advance.
- * Single/multi-select render as Radix role="radio"/"checkbox" buttons; rating is a
- * <fieldset> of native radios; matrix rows are radiogroups; ranking is a set of
- * "Add … to ranking" buttons. We interact via role/accessible-name, not brittle CSS,
- * so locators stay aligned with the accessibility tree. Cal.com (iframe) and file
- * upload are optional cards we intentionally skip answering but still advance past.
+ * Single-select, multi-select, rating and matrix all render native, visually-hidden
+ * inputs wrapped in visible labels (one radio group per matrix ROW, keyed by the
+ * input `name`); ranking is a set of "Add … to ranking" buttons. File upload is an
+ * optional card we intentionally skip answering but still advance past.
  */
 const answerCurrentCard = async (page: Page, card: Locator): Promise<void> => {
   // Text-like inputs (open text, "other" fields). Skip file inputs.
@@ -170,17 +164,19 @@ const answerCurrentCard = async (page: Page, card: Locator): Promise<void> => {
     await input.fill(value, { timeout: ACTION_TIMEOUT });
   }
 
-  // Single-select + matrix rows expose role="radio". Pick the first radio of each
-  // radiogroup so every matrix row (each its own group) gets answered. Rating is a
-  // <fieldset> of native radios (exposed as a "group", not "radiogroup"), so when no
-  // radiogroup is present we still answer the first radio on the card.
-  const radioGroups = card.getByRole("radiogroup");
-  const groupCount = await radioGroups.count();
-  if (groupCount > 0) {
-    for (let g = 0; g < groupCount; g++) {
-      await selectControl(radioGroups.nth(g).getByRole("radio").first());
-    }
-  } else {
+  // All choice questions render native radios grouped by their `name` attribute:
+  // single-select and rating are one group per card, and the matrix is one group per
+  // ROW (with no radiogroup role on the row). Answering the first radio of every
+  // distinct name therefore satisfies each matrix row as well as the simple groups.
+  const nativeRadios = card.locator('input[type="radio"]');
+  const radioNames: string[] = await nativeRadios.evaluateAll((els) => [
+    ...new Set(els.map((el) => (el as HTMLInputElement).name)),
+  ]);
+  for (const name of radioNames) {
+    await selectControl(card.locator(`input[type="radio"][name="${name}"]`).first());
+  }
+  if (radioNames.length === 0) {
+    // Fallback for any non-native role="radio" implementation.
     await selectControl(card.getByRole("radio").first());
   }
 
@@ -220,7 +216,7 @@ const answerCurrentCard = async (page: Page, card: Locator): Promise<void> => {
     const preferredIndex = dayCount > 10 ? 10 : 0;
     const target = dayCells.nth(preferredIndex);
     if (await target.isVisible().catch(() => false)) {
-      await target.click({ force: true, timeout: ACTION_TIMEOUT }).catch(() => undefined);
+      await target.click({ timeout: ACTION_TIMEOUT }).catch(() => undefined);
     }
   }
 };
@@ -252,16 +248,46 @@ const getActiveCardId = async (page: Page): Promise<string | null> => {
 
 const advanceButton = (card: Locator): Locator => card.locator(ADVANCE_BUTTON_SELECTOR);
 
-// The ending card renders its headline as <label for="EndingCard">; that is a stable
-// positive signal that the survey completed (unlike "no nav button", which is also
-// briefly true during the 600ms card transition animation).
-const endingCardLocator = (page: Page): Locator => page.locator('label[for="EndingCard"]');
+// The ending card renders its (fixture-controlled) headline as the page's <h1>; that
+// is a stable positive signal that the survey completed (unlike "no nav button",
+// which is also briefly true during the 600ms card transition animation). The welcome
+// card also renders an <h1>, so the ending is matched by its exact headline text —
+// endings are not language-patched, so this holds in the RTL variant too.
+const endingCardLocator = (page: Page): Locator =>
+  page.getByRole("heading", { level: 1, name: ENDING_CARD_HEADLINE });
 
 const isOnEndingCard = (page: Page): Promise<boolean> =>
   endingCardLocator(page)
     .first()
     .isVisible()
     .catch(() => false);
+
+/**
+ * Waits until the card and all its ancestors are fully opaque. The renderer fades
+ * cards in with `transition-opacity duration-500`; scanning mid-fade makes axe blend
+ * the semi-transparent text into the background and report contrast failures that do
+ * not exist in the settled UI (observed as flaky `color-contrast` findings).
+ */
+const waitForSettled = async (page: Page, selector: string): Promise<void> => {
+  await page
+    .waitForFunction(
+      (sel) => {
+        let el: HTMLElement | null = document.querySelector(sel);
+        if (!el) return false;
+        while (el) {
+          if (getComputedStyle(el).opacity !== "1") return false;
+          el = el.parentElement;
+        }
+        return true;
+      },
+      selector,
+      { timeout: 5000 }
+    )
+    .catch(() => undefined);
+};
+
+const waitForCardSettled = (page: Page, cardId: string): Promise<void> =>
+  waitForSettled(page, `[id="${cardId}"]`);
 
 /**
  * After clicking advance, wait for a STABLE next state: either a different active card
@@ -346,7 +372,9 @@ const walkAndScan = async (
 
     if (!seenCards.has(cardId)) {
       seenCards.add(cardId);
-      // Label the welcome card (block index -1) clearly in scan output.
+      // Scan only once the fade-in has settled, and label the welcome card (block
+      // index -1) clearly in scan output.
+      await waitForCardSettled(page, cardId);
       await scan(page, variant, cardId === "questionCard--1" ? "welcome-card" : cardId, failSink);
     }
 
@@ -383,12 +411,35 @@ const walkAndScan = async (
     `Walker did not reach the ending card for variant "${variant}" — a stall must fail, not pass as clean`
   ).toBe(true);
 
-  // The ending card is the concrete proof of completion; scan it too.
+  // The ending card is the concrete proof of completion; scan it too (settled, so the
+  // fade-in cannot skew axe's contrast math).
   await expect(
     endingCardLocator(page).first(),
     `ending card should be visible for variant "${variant}"`
   ).toBeVisible({ timeout: CARD_TIMEOUT });
+  await waitForSettled(page, "#fbjs h1");
   await scan(page, variant, "ending-card", failSink);
+};
+
+/**
+ * Opens the survey and advances past the welcome card, waiting for the card
+ * transition to SETTLE before reading the active card id. Clicking Next and
+ * immediately reading the active card would still see the welcome card
+ * mid-animation, so both state tests use this instead of racing the transition.
+ */
+const openFirstQuestionCard = async (page: Page, surveyUrl: string): Promise<string> => {
+  await page.goto(surveyUrl, { waitUntil: "domcontentloaded" });
+  const welcomeCard = activeCard(page).first();
+  await expect(welcomeCard, "welcome card should render").toBeVisible({ timeout: CARD_TIMEOUT });
+  const welcomeCardId = await welcomeCard.getAttribute("id");
+  expect(welcomeCardId, "welcome card should have an id").toBeTruthy();
+
+  await advanceButton(welcomeCard).first().click({ timeout: ACTION_TIMEOUT });
+
+  const firstCardId = await waitForCardTransition(page, welcomeCardId ?? "");
+  expect(firstCardId, "should land on the first question card after the welcome card").toBeTruthy();
+  expect(firstCardId).not.toBe(welcomeCardId);
+  return firstCardId ?? "";
 };
 
 const reportAndAssert = (variant: string, failSink: ViolationRow[]): void => {
@@ -408,7 +459,11 @@ const TABLET_VIEWPORT = { width: 820, height: 1180 };
 const SEED_VIEWPORT = { width: 1280, height: 900 };
 
 test.describe("Survey accessibility (axe-core) @slow", () => {
-  let seeded: SeededAccessibilitySurveys;
+  // Seeded once per WORKER process and reused by every test in it: the tests only
+  // read the published surveys (responses never mutate them), and per-test seeding
+  // would run the signup + login + API-key flow up to nine times concurrently
+  // (fullyParallel), hammering the auth endpoints for no added isolation.
+  let seeded: SeededAccessibilitySurveys | undefined;
 
   test.beforeEach(async ({ page, request, users, baseURL }) => {
     // Seed at a desktop size: loginAndGetApiKey drives the app dashboard, which renders
@@ -416,7 +471,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     // "Add API Key" clicks. Variant tests resize to mobile/tablet AFTER seeding.
     await page.setViewportSize(SEED_VIEWPORT);
     await mockStorageUploads(page);
-    seeded = await seedAccessibilitySurveys(page, request, users, baseURL ?? "http://localhost:3000");
+    seeded ??= await seedAccessibilitySurveys(page, request, users, baseURL ?? "http://localhost:3000");
   });
 
   test("desktop: full walk has no WCAG AA violations", async ({ page }) => {
@@ -428,14 +483,8 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
 
   test("desktop: empty-submit validation state has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto(seeded.surveyUrl, { waitUntil: "domcontentloaded" });
-    const welcomeStart = page.getByRole("button", { name: /^(Start|Next|Begin)$/ }).first();
-    await expect(welcomeStart).toBeVisible({ timeout: CARD_TIMEOUT });
-    await welcomeStart.click({ timeout: ACTION_TIMEOUT });
-
-    const firstCard = activeCard(page).first();
-    await expect(firstCard).toBeVisible({ timeout: CARD_TIMEOUT });
-    const firstCardId = await firstCard.getAttribute("id");
+    const firstCardId = await openFirstQuestionCard(page, seeded.surveyUrl);
+    const firstCard = page.locator(`[id="${firstCardId}"]`);
 
     // Submit the (required) first card empty to surface validation error states.
     const nextBtn = advanceButton(firstCard).first();
@@ -447,28 +496,21 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
       firstCardId
     );
     const violations: ViolationRow[] = [];
+    await waitForCardSettled(page, firstCardId);
     await scan(page, "desktop-empty-submit", "first-card-validation", violations);
     reportAndAssert("desktop-empty-submit", violations);
   });
 
   test("desktop: back-navigation state has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto(seeded.surveyUrl, { waitUntil: "domcontentloaded" });
-    const welcomeStart = page.getByRole("button", { name: /^(Start|Next|Begin)$/ }).first();
-    await expect(welcomeStart).toBeVisible({ timeout: CARD_TIMEOUT });
-    await welcomeStart.click({ timeout: ACTION_TIMEOUT });
-
-    const firstCard = activeCard(page).first();
-    await expect(firstCard).toBeVisible({ timeout: CARD_TIMEOUT });
-    const firstCardId = await firstCard.getAttribute("id");
+    const firstCardId = await openFirstQuestionCard(page, seeded.surveyUrl);
+    const firstCard = page.locator(`[id="${firstCardId}"]`);
 
     await answerCurrentCard(page, firstCard);
     await advanceButton(firstCard).first().click({ timeout: ACTION_TIMEOUT });
 
     // Wait until the active card changes (we moved forward), then go Back.
-    if (firstCardId) {
-      await waitForCardTransition(page, firstCardId);
-    }
+    await waitForCardTransition(page, firstCardId);
 
     const backBtn = page.getByRole("button", { name: "Back" }).first();
     await expect(backBtn, "back button should be available after advancing").toBeVisible({
@@ -484,6 +526,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
       })
       .toBe(firstCardId);
     const violations: ViolationRow[] = [];
+    await waitForCardSettled(page, firstCardId);
     await scan(page, "desktop-back-nav", "first-card-after-back", violations);
     reportAndAssert("desktop-back-nav", violations);
   });
