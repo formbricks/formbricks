@@ -36,6 +36,10 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
+vi.mock("@formbricks/logger", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
 const FEEDBACK_SOURCE_ID = "clxxxxxxxxxxxxxxxx002";
 const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
@@ -78,6 +82,27 @@ const mockFeedbackSourceWithMappings = {
   formbricksMappings: mockFeedbackSourceWithMappingsFromDb.formbricksMappings,
   fieldMappings: [],
 };
+
+// Mirrors the real P2003 `meta` produced by Prisma 7 with the @prisma/adapter-pg driver: the
+// constraint name is nested under driverAdapterError.cause, NOT at the top level. Tests must use
+// this shape so the FK-mapping logic is exercised against what the DB layer actually emits.
+const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRequestError =>
+  new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+    code: "P2003",
+    clientVersion: "7.8.0",
+    meta: {
+      modelName: "FeedbackSource",
+      driverAdapterError: {
+        name: "DriverAdapterError",
+        cause: {
+          kind: "ForeignKeyConstraintViolation",
+          originalCode: "23503",
+          originalMessage: `insert or update on table "FeedbackSource" violates foreign key constraint "${constraintName}"`,
+          constraint: { index: constraintName },
+        },
+      },
+    },
+  });
 
 describe("getFeedbackSourcesWithMappings", () => {
   beforeEach(() => {
@@ -448,6 +473,34 @@ describe("createFeedbackSourceWithMappings", () => {
         feedbackDirectoryId: FRD_ID,
       })
     ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE"));
+  });
+
+  test("throws FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE on composite FK violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      makeForeignKeyError("FeedbackSource_feedbackDirectoryId_workspaceId_fkey")
+    );
+
+    await expect(
+      createFeedbackSourceWithMappings(ENV_ID, {
+        name: "Unassigned directory",
+        type: "csv",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE"));
+  });
+
+  test("throws DatabaseError on an unrelated foreign-key violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      makeForeignKeyError("FeedbackSourceFormbricksMapping_surveyId_workspaceId_fkey")
+    );
+
+    await expect(
+      createFeedbackSourceWithMappings(ENV_ID, {
+        name: "Bad survey",
+        type: "formbricks_survey",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(DatabaseError);
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
