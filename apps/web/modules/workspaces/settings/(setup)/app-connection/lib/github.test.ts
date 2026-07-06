@@ -7,6 +7,38 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
+let mockCacheStore = new Map<string, any>();
+
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    get: vi.fn(async (key: string) => {
+      const data = mockCacheStore.get(key);
+      return { ok: true, data };
+    }),
+    del: vi.fn(async (keys: string[]) => {
+      keys.forEach((key) => mockCacheStore.delete(key));
+      return { ok: true };
+    }),
+    withCacheNullable: vi.fn(async (fn: () => Promise<any>, key: string, ttlMs: number) => {
+      const existing = mockCacheStore.get(key);
+      if (existing !== undefined) {
+        return existing;
+      }
+      const fresh = await fn();
+      if (fresh !== undefined) {
+        mockCacheStore.set(key, fresh);
+      }
+      return fresh;
+    }),
+  },
+}));
+
+vi.mock("@formbricks/cache", () => ({
+  createCacheKey: {
+    custom: (...args: string[]) => args.join(":"),
+  },
+}));
+
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
     status,
@@ -21,6 +53,7 @@ const htmlResponse = (status = 403): Response =>
 
 describe("getLatestStableFbRelease", () => {
   beforeEach(() => {
+    mockCacheStore.clear();
     vi.resetModules();
     vi.clearAllMocks();
     global.fetch = vi.fn();
