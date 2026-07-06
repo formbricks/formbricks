@@ -1,7 +1,7 @@
-import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import type { Account } from "@formbricks/types/auth";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken, createSsoRelinkIntent, verifySsoRelinkIntent } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
@@ -92,7 +92,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     },
     data: {
       backupCodes: null,
-      emailVerified: new Date(),
+      emailVerified: true,
       password: null,
       twoFactorEnabled: false,
       twoFactorSecret: null,

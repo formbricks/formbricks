@@ -29,6 +29,7 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             workspaceId: "env_1",
             type: "link",
             status: "draft",
+            publishOn: null,
             createdAt: new Date("2026-04-15T10:00:00.000Z"),
             updatedAt: new Date("2026-04-15T10:00:00.000Z"),
             responseCount: 0,

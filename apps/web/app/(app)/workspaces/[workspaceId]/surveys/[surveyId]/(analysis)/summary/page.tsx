@@ -23,7 +23,9 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-const SurveyPage = async (props: { params: Promise<{ workspaceId: string; surveyId: string }> }) => {
+const SurveyPage = async (
+  props: Readonly<{ params: Promise<{ workspaceId: string; surveyId: string }> }>
+) => {
   const params = await props.params;
   const t = await getTranslate();
 
@@ -93,6 +95,7 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
         locale={user.locale ?? DEFAULT_LOCALE}
         initialSurveySummary={initialSurveySummary}
         isQuotasAllowed={isQuotasAllowed}
+        isReadOnly={isReadOnly}
       />
 
       <IdBadge id={surveyId} label={t("common.survey_id")} variant="column" />

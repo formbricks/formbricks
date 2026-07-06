@@ -1,10 +1,12 @@
 "use client";
 
+import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
 import { CheckIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import posthog from "posthog-js";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
   type TCloudBillingInterval,
   type TOrganization,
@@ -22,10 +24,13 @@ import {
   changeBillingPlanAction,
   createPlanCheckoutAction,
   createTrialPaymentCheckoutAction,
+  finalizeSetupCheckoutUpgradeAction,
   getUpgradeChargePreviewAction,
   manageSubscriptionAction,
+  reportUpgradePaymentIssueAction,
   retryStripeSetupAction,
   undoPendingPlanChangeAction,
+  waitForBillingPlanAction,
 } from "../actions";
 import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
 import { PlanResponseFeature } from "./response-pricing-tooltip";
@@ -35,8 +40,11 @@ import { UsageCard } from "./usage-card";
 const BILLING_CONFIRMATION_ORGANIZATION_ID_KEY = "billingConfirmationOrganizationId";
 const BILLING_PENDING_UPGRADE_PLAN_KEY = "billingPendingUpgradePlan";
 const BILLING_PENDING_UPGRADE_INTERVAL_KEY = "billingPendingUpgradeInterval";
-const UPGRADE_CHECKOUT_POLL_INTERVAL_MS = 2000;
-const UPGRADE_CHECKOUT_POLL_TIMEOUT_MS = 30000;
+
+// Stripe.js is loaded lazily and memoized across renders (one publishable key per deploy).
+let stripeJsPromise: Promise<StripeJs | null> | null = null;
+const getStripeJs = (publishableKey: string): Promise<StripeJs | null> =>
+  (stripeJsPromise ??= loadStripe(publishableKey));
 
 type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
@@ -55,6 +63,7 @@ interface PricingTableProps {
   isStripeSetupIncomplete: boolean;
   trialDaysRemaining: number | null;
   billingCatalog: TStripeBillingCatalogDisplay;
+  stripePublishableKey: string | null;
 }
 
 const STANDARD_PLAN_LEVEL: Record<TStandardPlan, number> = {
@@ -210,11 +219,13 @@ export const PricingTable = ({
   isStripeSetupIncomplete,
   trialDaysRemaining,
   billingCatalog,
+  stripePublishableKey,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
   const organizationId = organization.id;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const upgradeDriveRef = useRef(false);
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
   // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
@@ -272,65 +283,182 @@ export const PricingTable = ({
     globalThis.window.sessionStorage.setItem(BILLING_PENDING_UPGRADE_INTERVAL_KEY, interval);
   };
 
+  // On-session 3D Secure for the upgrade invoice PaymentIntent (uses the saved default card).
+  const confirmUpgradeSca = async (
+    clientSecret: string
+  ): Promise<{ status: "succeeded" | "processing" | "failed"; paymentIntentId: string | null }> => {
+    if (!stripePublishableKey) {
+      return { status: "failed", paymentIntentId: null };
+    }
+    const stripe = await getStripeJs(stripePublishableKey);
+    if (!stripe) {
+      return { status: "failed", paymentIntentId: null };
+    }
+    const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret);
+    if (error) {
+      return { status: "failed", paymentIntentId: error.payment_intent?.id ?? null };
+    }
+    if (paymentIntent?.status === "succeeded") {
+      return { status: "succeeded", paymentIntentId: paymentIntent.id };
+    }
+    if (paymentIntent?.status === "processing") {
+      return { status: "processing", paymentIntentId: paymentIntent.id };
+    }
+    return { status: "failed", paymentIntentId: paymentIntent?.id ?? null };
+  };
+
+  // Completes any required SCA; returns whether the upgrade is applied (succeeded/processing).
+  const settleUpgradeConfirmation = async (data: {
+    requiresAction?: boolean;
+    clientSecret?: string | null;
+  }): Promise<{ applied: boolean; message: string | null }> => {
+    if (!data.requiresAction || !data.clientSecret) {
+      return { applied: true, message: null };
+    }
+
+    const outcome = await confirmUpgradeSca(data.clientSecret);
+    if (outcome.status === "succeeded" || outcome.status === "processing") {
+      return { applied: true, message: null };
+    }
+
+    // Abandoned/declined: persist the banner directly (webhook cancel fires late).
+    if (outcome.paymentIntentId) {
+      await reportUpgradePaymentIssueAction({
+        organizationId,
+        paymentIntentId: outcome.paymentIntentId,
+      });
+    }
+    return {
+      applied: false,
+      message: t("workspace.settings.billing.payment_authentication_failed"),
+    };
+  };
+
   useEffect(() => {
     if (searchParams.get("checkout_success") !== "1") {
       return;
     }
 
-    if (searchParams.get("upgrade_pending") === "1") {
-      const toastId = toast.loading(t("workspace.settings.billing.upgrade_checkout_pending"));
-      const pollInterval = setInterval(() => router.refresh(), UPGRADE_CHECKOUT_POLL_INTERVAL_MS);
-      const pollTimeout = setTimeout(() => {
-        clearInterval(pollInterval);
-        toast.dismiss(toastId);
-        clearUpgradeIntent();
-      }, UPGRADE_CHECKOUT_POLL_TIMEOUT_MS);
-
-      return () => {
-        clearInterval(pollInterval);
-        clearTimeout(pollTimeout);
-        toast.dismiss(toastId);
-      };
+    if (searchParams.get("upgrade_pending") !== "1") {
+      const timer = setTimeout(() => router.refresh(), 2500);
+      return () => clearTimeout(timer);
     }
 
-    const timer = setTimeout(() => router.refresh(), 2500);
-    return () => clearTimeout(timer);
-  }, [searchParams, router, t]);
-
-  useEffect(() => {
-    if (searchParams.get("checkout_success") !== "1" || searchParams.get("upgrade_pending") !== "1") {
+    // Setup checkout saved the card; finalize the (SCA-capable, on-session) upgrade here.
+    if (globalThis.window === undefined || upgradeDriveRef.current) {
       return;
     }
 
-    if (globalThis.window === undefined) {
+    const checkoutSessionId = searchParams.get("session_id");
+    if (!checkoutSessionId) {
       return;
     }
 
+    // Read only for the success-toast label; the finalize action is the source of truth.
     const pendingPlan = globalThis.window.sessionStorage.getItem(BILLING_PENDING_UPGRADE_PLAN_KEY) as Exclude<
       TStandardPlan,
       "hobby"
     > | null;
-    if (!pendingPlan) {
+
+    upgradeDriveRef.current = true;
+    let cancelled = false;
+    const toastId = toast.loading(t("workspace.settings.billing.upgrade_checkout_pending"));
+
+    const finish = (
+      kind: "success" | "error",
+      plan: Exclude<TStandardPlan, "hobby"> | null,
+      message?: string
+    ) => {
+      toast.dismiss(toastId);
+      if (kind === "success") {
+        toast.success(
+          t("workspace.settings.billing.upgrade_checkout_success", {
+            plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
+          })
+        );
+      } else {
+        toast.error(message ?? t("common.something_went_wrong_please_try_again"));
+      }
+      clearUpgradeIntent();
+      router.replace(`/organizations/${organizationId}/settings/billing`);
+      router.refresh();
+    };
+
+    const run = async () => {
+      // Finalize attaches the card and applies the upgrade in one call, so it never races the webhook.
+      const response = await finalizeSetupCheckoutUpgradeAction({ organizationId, checkoutSessionId });
+      if (cancelled) return;
+
+      if (response?.serverError) {
+        finish("error", pendingPlan, getActionErrorMessage(response.serverError, t));
+        return;
+      }
+
+      const resolvedPlan =
+        (response?.data && "targetPlan" in response.data ? response.data.targetPlan : null) ?? pendingPlan;
+
+      if (response?.data) {
+        const settled = await settleUpgradeConfirmation(response.data);
+        if (cancelled) return;
+        if (!settled.applied) {
+          finish("error", resolvedPlan, settled.message ?? undefined);
+          return;
+        }
+      }
+
+      if (resolvedPlan) {
+        await waitForBillingPlanAction({ organizationId, targetPlan: resolvedPlan });
+        if (cancelled) return;
+      }
+      finish("success", resolvedPlan);
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+      toast.dismiss(toastId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, router, t, organizationId]);
+
+  const paymentError = organization.billing.stripe?.paymentAttemptError;
+
+  useEffect(() => {
+    if (!paymentError) {
       return;
     }
 
-    const pendingInterval = globalThis.window.sessionStorage.getItem(
-      BILLING_PENDING_UPGRADE_INTERVAL_KEY
-    ) as TCloudBillingInterval | null;
-    const planMatches = currentCloudPlan === pendingPlan && currentBillingInterval === pendingInterval;
+    const paymentErrorMessage =
+      paymentError.type === "requires_action"
+        ? t("workspace.settings.billing.payment_error_requires_action")
+        : t("workspace.settings.billing.payment_error_failed_invoice");
 
-    if (!planMatches) {
-      return;
-    }
-
-    toast.success(
-      t("workspace.settings.billing.upgrade_checkout_success", {
-        plan: getCurrentCloudPlanLabel(pendingPlan, t),
-      })
+    const toastId = toast.error(
+      <div>
+        <div className="font-medium">{paymentErrorMessage}</div>
+        <div className="mt-2 text-sm">
+          <Trans
+            i18nKey="workspace.settings.billing.payment_error_contact_support"
+            components={{
+              supportLink: <a href="mailto:hola@formbricks.com" className="font-medium underline" />,
+            }}
+          />
+        </div>
+      </div>,
+      {
+        duration: 10000,
+        icon: "⚠️",
+      }
     );
-    clearUpgradeIntent();
-    router.replace(`/organizations/${organizationId}/settings/billing`);
-  }, [currentBillingInterval, currentCloudPlan, router, searchParams, t, organizationId]);
+
+    return () => {
+      toast.dismiss(toastId);
+    };
+    // Keyed on scalar fields: the billing snapshot object gets a new reference on every
+    // server render (router.refresh), which would re-fire the toast for the same error.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentError?.type, paymentError?.paymentIntentId, paymentError?.createdAt, t]);
 
   const planCards = useMemo<TPlanCardData[]>(() => {
     return [
@@ -528,6 +656,12 @@ export const PricingTable = ({
   };
 
   const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    posthog.capture("billing_pricing_cta_clicked", {
+      plan,
+      interval,
+      cta: getCtaKey(plan, interval),
+    });
+
     const actionKey = `${plan}-${interval}`;
     setIsPlanActionPending(actionKey);
 
@@ -572,6 +706,21 @@ export const PricingTable = ({
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
       }
+
+      if (response?.data) {
+        const settled = await settleUpgradeConfirmation(response.data);
+        if (!settled.applied) {
+          if (settled.message) {
+            toast.error(settled.message);
+          }
+          router.refresh();
+          return;
+        }
+        if (response.data.mode === "immediate") {
+          await waitForBillingPlanAction({ organizationId, targetPlan: plan });
+        }
+      }
+
       toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
       router.refresh();
     } catch (error) {
@@ -641,6 +790,37 @@ export const PricingTable = ({
     } finally {
       setIsPlanActionPending(null);
     }
+  };
+
+  const getCtaKey = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    const isCurrentSelection = isCurrentPlanSelection(
+      plan,
+      interval,
+      currentCloudPlan,
+      currentBillingInterval
+    );
+
+    if (isCurrentSelection && isTrialingWithoutPayment) return "continue_with_plan_after_trial";
+    if (isTrialingWithoutPayment && plan === "hobby") return "downgrade_to_hobby";
+    if (
+      canCancelCurrentPaidPlanAtPeriodEnd(
+        plan,
+        interval,
+        currentCloudPlan,
+        currentBillingInterval,
+        isTrialingWithoutPayment,
+        pendingChange
+      )
+    )
+      return "cancel_at_period_end";
+    if (isCurrentSelection && pendingChange?.targetPlan === "hobby") return "pending_plan_cta";
+    if (isCurrentSelection) return "current_plan_cta";
+    const isPendingSelection =
+      pendingChange?.targetPlan === plan && (plan === "hobby" || pendingChange.targetInterval === interval);
+    if (isPendingSelection) return "pending_plan_cta";
+    if (!hasPaymentMethod && plan !== "hobby") return "upgrade_now";
+    if (currentPlanLevel === null) return "switch_plan_now";
+    return STANDARD_PLAN_LEVEL[plan] > currentPlanLevel ? "upgrade_now" : "switch_at_period_end";
   };
 
   const getCtaLabel = (plan: TStandardPlan, interval: TCloudBillingInterval) => {

@@ -214,7 +214,7 @@ export const ElementFilterComboBox = ({
     }
 
     return (
-      <div className="no-scrollbar flex grow gap-2 overflow-auto">
+      <div className="flex grow no-scrollbar gap-2 overflow-auto">
         {filterComboBoxValue.map((value, index) => renderTag(value, index))}
       </div>
     );

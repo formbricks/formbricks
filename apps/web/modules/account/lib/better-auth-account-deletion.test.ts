@@ -1,0 +1,167 @@
+import { APIError } from "better-auth/api";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
+import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
+import {
+  accountDeletionAfterDelete,
+  accountDeletionBeforeDelete,
+  accountDeletionConfig,
+  requireDeletionConfirmationBeforeHandler,
+} from "./better-auth-account-deletion";
+
+vi.mock("@formbricks/database", () => ({ prisma: { invite: { deleteMany: vi.fn() } } }));
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
+vi.mock("@/lib/organization/service", () => ({
+  deleteOrganization: vi.fn(),
+  getOrganizationsWhereUserIsSingleOwner: vi.fn(),
+}));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+vi.mock("@/modules/auth/lib/brevo", () => ({ deleteBrevoCustomerByEmail: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
+vi.mock("./account-deletion-audit", () => ({ queueAccountDeletionAuditEvent: vi.fn() }));
+
+const user = { id: "user-1", email: "ada@example.com", name: "Ada" } as Parameters<
+  typeof accountDeletionBeforeDelete
+>[0];
+
+describe("accountDeletionBeforeDelete", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(deleteOrganization).mockResolvedValue(true as never);
+  });
+
+  test("blocks deletion on a single-org instance when the user is a sole org owner", async () => {
+    vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([{ id: "org-1" }] as never);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+
+    await expect(accountDeletionBeforeDelete(user)).rejects.toBeInstanceOf(APIError);
+    // records the blocked attempt as a failure-path audit before surfacing the error
+    expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      status: "failure",
+      targetUserId: "user-1",
+      oldUser: expect.objectContaining({ id: "user-1" }),
+    });
+    // throws before any destructive cleanup
+    expect(deleteOrganization).not.toHaveBeenCalled();
+    expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
+  });
+
+  test("multi-org: deletes every sole-owner org and the creator's invites, no block", async () => {
+    vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([
+      { id: "org-1" },
+      { id: "org-2" },
+    ] as never);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+
+    await expect(accountDeletionBeforeDelete(user)).resolves.toBeUndefined();
+
+    expect(deleteOrganization).toHaveBeenCalledTimes(2);
+    expect(deleteOrganization).toHaveBeenCalledWith("org-1");
+    expect(deleteOrganization).toHaveBeenCalledWith("org-2");
+    expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user-1" } });
+  });
+
+  test("no sole-owner orgs: skips the license check and deletes only the creator's invites", async () => {
+    vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([] as never);
+
+    await expect(accountDeletionBeforeDelete(user)).resolves.toBeUndefined();
+
+    expect(getIsMultiOrgEnabled).not.toHaveBeenCalled();
+    expect(deleteOrganization).not.toHaveBeenCalled();
+    expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user-1" } });
+  });
+});
+
+describe("accountDeletionAfterDelete", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(deleteBrevoCustomerByEmail).mockResolvedValue(undefined as never);
+    vi.mocked(queueAccountDeletionAuditEvent).mockResolvedValue(undefined as never);
+  });
+
+  test("deletes the Brevo customer and queues a success audit event with the deleted user", async () => {
+    await accountDeletionAfterDelete(user);
+
+    expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });
+    expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      oldUser: user,
+      status: "success",
+      targetUserId: "user-1",
+    });
+    expect(capturePostHogEvent).toHaveBeenCalledWith("user-1", "delete_account");
+  });
+
+  test("logs and swallows a Brevo failure, then still emits the audit event", async () => {
+    vi.mocked(deleteBrevoCustomerByEmail).mockRejectedValue(new Error("brevo unreachable"));
+
+    await expect(accountDeletionAfterDelete(user)).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalled();
+    expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "success", targetUserId: "user-1" })
+    );
+  });
+});
+
+describe("accountDeletionConfig", () => {
+  test("is enabled, wires both hooks, and sets no global delete-verification email", () => {
+    expect(accountDeletionConfig.enabled).toBe(true);
+    expect(accountDeletionConfig.beforeDelete).toBe(accountDeletionBeforeDelete);
+    expect(accountDeletionConfig.afterDelete).toBe(accountDeletionAfterDelete);
+    expect("sendDeleteAccountVerification" in accountDeletionConfig).toBe(false);
+  });
+});
+
+const makeDeleteCtx = (overrides: {
+  path?: string;
+  body?: unknown;
+}): Parameters<typeof requireDeletionConfirmationBeforeHandler>[0] =>
+  ({ path: overrides.path ?? "/delete-user", body: overrides.body }) as unknown as Parameters<
+    typeof requireDeletionConfirmationBeforeHandler
+  >[0];
+
+describe("requireDeletionConfirmationBeforeHandler (delete-user freshAge guard)", () => {
+  test("allows the request when a password is supplied", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: { password: "pw" } }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("allows the request when a deletion token is supplied", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: { token: "tok" } }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("blocks a confirmation-less delete (closes the freshAge password bypass)", async () => {
+    await expect(requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: {} }))).rejects.toThrow(
+      "Password confirmation is required"
+    );
+  });
+
+  test("blocks when the request has no body", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ body: undefined }))
+    ).rejects.toThrow("Password confirmation is required");
+  });
+
+  test("exempts the SSO email-link callback (/delete-user/callback)", async () => {
+    // SSO deletion completes via the emailed GET callback (carrying its own token), not a password —
+    // the guard must let it through, or the SSO email-link flow breaks.
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ path: "/delete-user/callback", body: {} }))
+    ).resolves.toBeUndefined();
+  });
+
+  test("ignores non-delete-user paths", async () => {
+    await expect(
+      requireDeletionConfirmationBeforeHandler(makeDeleteCtx({ path: "/sign-out", body: {} }))
+    ).resolves.toBeUndefined();
+  });
+});
