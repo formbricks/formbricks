@@ -3,6 +3,7 @@
 import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
 import { CheckIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
@@ -655,6 +656,12 @@ export const PricingTable = ({
   };
 
   const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    posthog.capture("billing_pricing_cta_clicked", {
+      plan,
+      interval,
+      cta: getCtaKey(plan, interval),
+    });
+
     const actionKey = `${plan}-${interval}`;
     setIsPlanActionPending(actionKey);
 
@@ -783,6 +790,37 @@ export const PricingTable = ({
     } finally {
       setIsPlanActionPending(null);
     }
+  };
+
+  const getCtaKey = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
+    const isCurrentSelection = isCurrentPlanSelection(
+      plan,
+      interval,
+      currentCloudPlan,
+      currentBillingInterval
+    );
+
+    if (isCurrentSelection && isTrialingWithoutPayment) return "continue_with_plan_after_trial";
+    if (isTrialingWithoutPayment && plan === "hobby") return "downgrade_to_hobby";
+    if (
+      canCancelCurrentPaidPlanAtPeriodEnd(
+        plan,
+        interval,
+        currentCloudPlan,
+        currentBillingInterval,
+        isTrialingWithoutPayment,
+        pendingChange
+      )
+    )
+      return "cancel_at_period_end";
+    if (isCurrentSelection && pendingChange?.targetPlan === "hobby") return "pending_plan_cta";
+    if (isCurrentSelection) return "current_plan_cta";
+    const isPendingSelection =
+      pendingChange?.targetPlan === plan && (plan === "hobby" || pendingChange.targetInterval === interval);
+    if (isPendingSelection) return "pending_plan_cta";
+    if (!hasPaymentMethod && plan !== "hobby") return "upgrade_now";
+    if (currentPlanLevel === null) return "switch_plan_now";
+    return STANDARD_PLAN_LEVEL[plan] > currentPlanLevel ? "upgrade_now" : "switch_at_period_end";
   };
 
   const getCtaLabel = (plan: TStandardPlan, interval: TCloudBillingInterval) => {

@@ -87,7 +87,7 @@ export const CreateWithAIDialog = ({
           <DialogDescription>{t("workspace.surveys.ai_create.dialog_description")}</DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="-mx-1 space-y-4 px-1 pb-1">
+        <DialogBody className="-mx-1 -mt-1 space-y-4 px-1 pt-1 pb-1">
           <CreateWithAIForm
             workspaceId={workspaceId}
             language={language}
