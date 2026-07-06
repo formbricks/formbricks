@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
@@ -65,6 +66,12 @@ export const createDashboardAction = authenticatedActionClient.inputSchema(ZCrea
       ctx.auditLoggingCtx.workspaceId = workspaceId;
       ctx.auditLoggingCtx.dashboardId = dashboard.id;
       ctx.auditLoggingCtx.newObject = dashboard;
+      capturePostHogEvent(
+        ctx.user.id,
+        "dashboard_created",
+        { dashboard_id: dashboard.id },
+        { organizationId, workspaceId }
+      );
       return dashboard;
     }
   )

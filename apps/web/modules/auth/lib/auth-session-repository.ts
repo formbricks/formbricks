@@ -2,7 +2,6 @@ import "server-only";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma, PrismaClient } from "@formbricks/database/prisma";
-import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
@@ -16,25 +15,6 @@ const handleDatabaseError = (error: unknown): never => {
   }
 
   throw error;
-};
-
-export const deleteSessionsByUserId = async (
-  userId: string,
-  tx?: Prisma.TransactionClient
-): Promise<number> => {
-  validateInputs([userId, ZId]);
-
-  try {
-    const result = await getDbClient(tx).session.deleteMany({
-      where: {
-        userId,
-      },
-    });
-
-    return result.count;
-  } catch (error) {
-    return handleDatabaseError(error);
-  }
 };
 
 export const deleteSessionBySessionToken = async (

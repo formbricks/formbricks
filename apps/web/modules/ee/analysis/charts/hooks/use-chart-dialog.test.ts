@@ -73,7 +73,7 @@ const baseProps = {
 };
 
 const sampleChartData: AnalyticsResponse = {
-  query: { foo: "bar" },
+  query: { measures: ["FeedbackRecords.count"] },
   chartType: "bar",
   data: [],
 };

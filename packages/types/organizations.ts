@@ -37,6 +37,15 @@ export const ZOrganizationStripeBilling = z.object({
   lastSyncedEventId: z.string().nullable().optional(),
   trialEnd: z.string().nullable().optional(),
   pendingChange: ZOrganizationStripePendingChange.nullable().optional(),
+  paymentAttemptError: z
+    .object({
+      type: z.enum(["requires_action", "failed_invoice"]),
+      paymentIntentId: z.string(),
+      message: z.string(),
+      createdAt: z.string(),
+    })
+    .nullable()
+    .optional(),
 });
 export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 

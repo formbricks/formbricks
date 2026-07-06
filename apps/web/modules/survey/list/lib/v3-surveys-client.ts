@@ -239,8 +239,14 @@ export async function validateSurveyCreatePayload(
   return responseBody.data;
 }
 
-export async function createV3Survey(payload: TV3CreateSurveyBody): Promise<TV3CreateSurveyResponse["data"]> {
-  const response = await fetch("/api/v3/surveys", {
+export async function createV3Survey(
+  payload: TV3CreateSurveyBody,
+  createdFrom?: "blank" | "template" | "xm-template" | "ai"
+): Promise<TV3CreateSurveyResponse["data"]> {
+  const url = createdFrom
+    ? `/api/v3/surveys?createdFrom=${encodeURIComponent(createdFrom)}`
+    : "/api/v3/surveys";
+  const response = await fetch(url, {
     method: "POST",
     cache: "no-store",
     headers: {

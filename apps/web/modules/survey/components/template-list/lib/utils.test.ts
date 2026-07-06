@@ -90,10 +90,10 @@ describe("Template utils", () => {
 
     expect(result).toEqual([
       { value: "productManager", label: "common.product_manager" },
-      { value: "customerSuccess", label: "common.customer_success" },
       { value: "marketing", label: "common.marketing" },
-      { value: "sales", label: "common.sales" },
+      { value: "customerSuccess", label: "common.customer_success" },
       { value: "peopleManager", label: "common.people_manager" },
+      { value: "sales", label: "common.sales" },
     ]);
     expect(mockT).toHaveBeenCalledWith("common.product_manager");
     expect(mockT).toHaveBeenCalledWith("common.customer_success");

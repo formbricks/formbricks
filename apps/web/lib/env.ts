@@ -218,7 +218,6 @@ const parsedEnv = createEnv({
     BREVO_API_KEY: z.string().optional(),
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
-    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: z.enum(["1", "0"]).optional(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
     // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here
@@ -283,6 +282,11 @@ const parsedEnv = createEnv({
     MAIL_FROM: z.email().optional(),
     NEXTAUTH_URL: z.url().optional(),
     NEXTAUTH_SECRET: z.string().optional(),
+    // Better Auth (ENG-1054). Optional during the additive migration; BA requires a strong
+    // (>=32 char) secret in production and throws if unset there. Enforce the floor when set so a
+    // weak secret can't silently ship (it stays optional for the pre-cutover rollout).
+    BETTER_AUTH_SECRET: z.string().min(32).optional(),
+    BETTER_AUTH_URL: z.url().optional(),
     MAIL_FROM_NAME: z.string().optional(),
     NOTION_OAUTH_CLIENT_ID: z.string().optional(),
     NOTION_OAUTH_CLIENT_SECRET: z.string().optional(),
@@ -381,11 +385,12 @@ const parsedEnv = createEnv({
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     BREVO_LIST_ID: process.env.BREVO_LIST_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: process.env.DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
     DEBUG: process.env.DEBUG,
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,

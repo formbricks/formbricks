@@ -20,7 +20,7 @@ assets, and sign-in redirects honor the prefix.
 
 - `BASE_PATH` must be present during `pnpm build`; changing it afterward requires a rebuild.
 - Official Formbricks Docker images do **not** accept this flag for technical reasons, so you must build your own image.
-- All public URLs (`WEBAPP_URL`, `NEXTAUTH_URL`, webhook targets, OAuth callbacks, etc.) need the same prefix.
+- All Formbricks URLs (`WEBAPP_URL`, `NEXTAUTH_URL`, webhook targets, OAuth callbacks, MCP clients, etc.) need the same prefix.
 - Your proxy must rewrite `/custom-path/*` to the Formbricks container while keeping the prefix visible to clients.
 
 ### Configure environment variables
@@ -30,10 +30,13 @@ Add the following variables to the environment you use for builds (local, CI, or
 ```bash
 BASE_PATH="/custom-path"
 WEBAPP_URL="https://yourdomain.com/custom-path"
-NEXTAUTH_URL="https://yourdomain.com/custom-path/api/auth"
+NEXTAUTH_URL="https://yourdomain.com/custom-path"
+BETTER_AUTH_URL="https://yourdomain.com/custom-path"
 ```
 
 If you use email links, webhooks, or third-party OAuth providers, ensure every URL you register includes the prefix.
+MCP clients must use `https://yourdomain.com/custom-path/api/mcp`, and OAuth discovery is served from
+`https://yourdomain.com/custom-path/.well-known/oauth-authorization-server/api/auth`.
 
 ### Build a Docker image with a custom subpath
 
@@ -81,10 +84,9 @@ docker build \
 - Confirm your build pipeline actually passes `BASE_PATH` (and, if needed, `WEBAPP_URL`/`NEXTAUTH_URL`) into the build
   stage—check CI logs for the `BASE PATH /your-prefix` line and make sure custom Dockerfiles or wrappers forward
   `--build-arg BASE_PATH=...` correctly.
-- If you cannot log in, double-check that `NEXTAUTH_URL` includes the prefix and uses the full route to the API as stated above. NextAuth rejects callbacks that do not
-  match exactly.
+- If you cannot log in, double-check that `WEBAPP_URL`, `NEXTAUTH_URL`, and `BETTER_AUTH_URL` (if set)
+  include the prefix. Formbricks derives Better Auth OAuth endpoints under `/api/auth`.
 - Re-run the Docker build when changing `BASE_PATH`; simply editing the container environment is not sufficient.
 - Inspect your proxy configuration to ensure it does not rewrite paths internally (e.g., `strip_prefix` needs to stay
   disabled).
 - When in doubt, rebuild locally with `--progress=plain` and verify that the `BASE PATH` line reflects your prefix.
-

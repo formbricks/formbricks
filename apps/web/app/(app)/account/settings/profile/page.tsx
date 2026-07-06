@@ -1,11 +1,9 @@
-import { getServerSession } from "next-auth";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { AccountSecurity } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/AccountSecurity";
 import { DeleteAccount } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/DeleteAccount";
 import { EditProfileDetailsForm } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/EditProfileDetailsForm";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
-  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
   EMAIL_VERIFICATION_DISABLED,
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
   IS_FORMBRICKS_CLOUD,
@@ -15,7 +13,7 @@ import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/servi
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
 import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
@@ -24,14 +22,11 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
-const Page = async (
-  props: Readonly<{ searchParams: Promise<{ accountDeletionError?: string | string[] }> }>
-) => {
+const Page = async () => {
   const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const searchParams = await props.searchParams;
   const t = await getTranslate();
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user) {
     throw new AuthenticationError(t("common.not_authenticated"));
   }
@@ -100,9 +95,7 @@ const Page = async (
             user={user}
             organizationsWithSingleOwner={organizationsWithSingleOwner}
             isMultiOrgEnabled={isMultiOrgEnabled}
-            accountDeletionError={searchParams.accountDeletionError}
             requiresPasswordConfirmation={requiresPasswordConfirmation}
-            isSsoIdentityConfirmationDisabled={DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION}
           />
         </SettingsCard>
         <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />
