@@ -11,19 +11,11 @@ import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
 import {
   AI_SURVEY_PROMPT_MAX_LENGTH,
-  SURVEY_TYPE_OPTIONS,
   getHelperPrompts,
   getUnavailableMessageKey,
 } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
 
 export type TCreateWithAIFormFooterProps = {
   isBusy: boolean;
@@ -39,7 +31,6 @@ type CreateWithAIFormProps = {
   onSuccess: (surveyId: string) => void;
   onCancel?: () => void;
   showCancel?: boolean;
-  showSurveyType?: boolean;
   renderFooter?: (props: TCreateWithAIFormFooterProps) => ReactNode;
   promptInputRef?: React.Ref<HTMLTextAreaElement>;
 };
@@ -52,30 +43,19 @@ export const CreateWithAIForm = ({
   onSuccess,
   onCancel,
   showCancel = true,
-  showSurveyType = true,
   renderFooter,
   promptInputRef,
 }: Readonly<CreateWithAIFormProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
 
-  const {
-    prompt,
-    setPrompt,
-    surveyType,
-    setSurveyType,
-    isBusy,
-    canCreate,
-    errorMessage,
-    handleGenerate,
-    clearError,
-    submitLabel,
-  } = useCreateSurveyWithAI({
-    workspaceId,
-    language,
-    isAIAvailable,
-    onSuccess,
-  });
+  const { prompt, setPrompt, isBusy, canCreate, errorMessage, handleGenerate, clearError, submitLabel } =
+    useCreateSurveyWithAI({
+      workspaceId,
+      language,
+      isAIAvailable,
+      onSuccess,
+    });
 
   const unavailableAction = workspace?.organizationId
     ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
@@ -131,32 +111,6 @@ export const CreateWithAIForm = ({
           <AlertTitle>{t("common.error")}</AlertTitle>
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
-      )}
-
-      {showSurveyType && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="ai-survey-type">
-            {t("workspace.surveys.ai_create.survey_type_label")}
-          </label>
-          <Select
-            value={surveyType}
-            onValueChange={(value) => setSurveyType(value as typeof surveyType)}
-            disabled={isBusy || !isAIAvailable || SURVEY_TYPE_OPTIONS.length <= 1}>
-            <SelectTrigger id="ai-survey-type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SURVEY_TYPE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.value === "app"
-                    ? t("workspace.surveys.ai_create.app_survey")
-                    : t("workspace.surveys.ai_create.link_survey")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-slate-500">{t("workspace.surveys.ai_create.survey_type_help")}</p>
-        </div>
       )}
 
       <div className="space-y-2">

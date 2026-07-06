@@ -4,10 +4,7 @@ import { type SyntheticEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import {
-  AI_SURVEY_PROMPT_MIN_LENGTH,
-  type TSurveyGenerationType,
-} from "@/modules/survey/components/template-list/lib/ai-create-utils";
+import { AI_SURVEY_PROMPT_MIN_LENGTH } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 import {
   createV3Survey,
   generateSurveyCreatePayload,
@@ -29,7 +26,6 @@ export const useCreateSurveyWithAI = ({
 }: UseCreateSurveyWithAIProps) => {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState("");
-  const [surveyType, setSurveyType] = useState<TSurveyGenerationType>("link");
   const [isCreatingSurvey, setIsCreatingSurvey] = useState(false);
   const [isNavigatingToEditor, setIsNavigatingToEditor] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -79,7 +75,7 @@ export const useCreateSurveyWithAI = ({
         const generatedSurvey = await generateSurveyCreatePayload({
           workspaceId,
           prompt: trimmedPrompt,
-          type: surveyType,
+          type: "link",
           language,
         });
         const validation = await validateSurveyCreatePayload(generatedSurvey.payload);
@@ -99,7 +95,7 @@ export const useCreateSurveyWithAI = ({
         setIsCreatingSurvey(false);
       }
     },
-    [canCreate, getErrorMessage, language, onSuccess, prompt, surveyType, t, workspaceId]
+    [canCreate, getErrorMessage, language, onSuccess, prompt, t, workspaceId]
   );
 
   const clearError = useCallback(() => setErrorMessage(null), []);
@@ -117,8 +113,6 @@ export const useCreateSurveyWithAI = ({
   return {
     prompt,
     setPrompt,
-    surveyType,
-    setSurveyType,
     isBusy,
     canCreate,
     errorMessage,

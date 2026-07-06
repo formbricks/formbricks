@@ -3,16 +3,14 @@ import { describe, expect, test, vi } from "vitest";
 import {
   AI_SURVEY_PROMPT_MAX_LENGTH,
   AI_SURVEY_PROMPT_MIN_LENGTH,
-  SURVEY_TYPE_OPTIONS,
   getHelperPrompts,
   getUnavailableMessageKey,
 } from "./ai-create-utils";
 
 describe("ai-create-utils", () => {
-  test("defines prompt limits and supported survey types", () => {
+  test("defines prompt limits", () => {
     expect(AI_SURVEY_PROMPT_MIN_LENGTH).toBe(4);
     expect(AI_SURVEY_PROMPT_MAX_LENGTH).toBe(1200);
-    expect(SURVEY_TYPE_OPTIONS).toEqual([{ value: "link" }, { value: "app" }]);
   });
 
   test("returns the unavailable message key for each AI reason", () => {
