@@ -460,7 +460,6 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
 
   if (results.lockfileValidation) {
     const { missing, outOfSync, extra } = results.lockfileValidation;
-    const hasLockfileIssues = missing.length > 0 || outOfSync.length > 0 || extra.length > 0;
 
     if (hasLockfileIssues) {
       console.log(`❌ LOCKFILE OUT OF SYNC:\n`);
@@ -468,20 +467,32 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
 
       if (missing.length > 0) {
         console.log(`   • Keys missing from lockfile (${missing.length.toString()}):`);
-        missing.slice(0, 10).forEach((key) => console.log(`      - ${key}`));
-        if (missing.length > 10) console.log(`      ... and ${missing.length - 10} more`);
+        missing.slice(0, 10).forEach((key) => {
+          console.log(`      - ${key}`);
+        });
+        if (missing.length > 10) {
+          console.log(`      ... and ${(missing.length - 10).toString()} more`);
+        }
       }
 
       if (outOfSync.length > 0) {
         console.log(`   • Keys out of sync/stale in lockfile (${outOfSync.length.toString()}):`);
-        outOfSync.slice(0, 10).forEach((key) => console.log(`      - ${key}`));
-        if (outOfSync.length > 10) console.log(`      ... and ${outOfSync.length - 10} more`);
+        outOfSync.slice(0, 10).forEach((key) => {
+          console.log(`      - ${key}`);
+        });
+        if (outOfSync.length > 10) {
+          console.log(`      ... and ${(outOfSync.length - 10).toString()} more`);
+        }
       }
 
       if (extra.length > 0) {
         console.log(`   • Unused/extra keys in lockfile (${extra.length.toString()}):`);
-        extra.slice(0, 10).forEach((key) => console.log(`      - ${key}`));
-        if (extra.length > 10) console.log(`      ... and ${extra.length - 10} more`);
+        extra.slice(0, 10).forEach((key) => {
+          console.log(`      - ${key}`);
+        });
+        if (extra.length > 10) {
+          console.log(`      ... and ${(extra.length - 10).toString()} more`);
+        }
       }
       console.log();
     }
@@ -495,9 +506,10 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
 function parseLockfile(content: string): Record<string, string> {
   const checksums: Record<string, string> = {};
   const lines = content.split(/\r?\n/);
+  const regex = /^\s{4}(?<key>[^:]+):\s*(?<hash>[a-f0-9]{32})\s*$/;
   for (const line of lines) {
-    const match = line.match(/^\s{4}(?<key>[^:]+):\s*(?<hash>[a-f0-9]{32})\s*$/);
-    if (match && match.groups) {
+    const match = regex.exec(line);
+    if (match?.groups) {
       const key = match.groups.key;
       const hash = match.groups.hash;
       checksums[key] = hash;
@@ -516,7 +528,7 @@ async function loadDefaultLocaleWithValues(
 
   const flattened: Record<string, string> = {};
 
-  function recurse(obj: TranslationKeys, prefix = "") {
+  function recurse(obj: TranslationKeys, prefix = ""): void {
     for (const key in obj) {
       const fullKey = prefix ? `${prefix}/${key}` : key;
       const value = obj[key];
@@ -532,10 +544,13 @@ async function loadDefaultLocaleWithValues(
   return flattened;
 }
 
+interface ObjectHash {
+  MD5: (val: unknown) => string;
+}
+
 async function validateLockfile(
   localesDir: string,
-  defaultLocale: string,
-  packageName: string
+  defaultLocale: string
 ): Promise<LockfileValidationResults | null> {
   const lockfilePath = path.join(localesDir, "..", "i18n.lock");
 
@@ -554,7 +569,7 @@ async function validateLockfile(
   const extra: string[] = [];
 
   for (const [key, val] of Object.entries(sourceKeysWithValues)) {
-    const expected = objectHash.MD5(val);
+    const expected = (objectHash as unknown as ObjectHash).MD5(val);
     const actual = lockChecksums[key];
     if (!actual) {
       missing.push(key);
@@ -564,7 +579,7 @@ async function validateLockfile(
   }
 
   for (const key of Object.keys(lockChecksums)) {
-    if (sourceKeysWithValues[key] === undefined) {
+    if (!(key in sourceKeysWithValues)) {
       extra.push(key);
     }
   }
@@ -596,7 +611,7 @@ async function validatePackage(
   const results = compareKeys(usedKeys, defaultKeys, translationsByLocale, defaultLocale, packageName);
 
   // Run lockfile validation
-  const lockfileValidation = await validateLockfile(localesDir, defaultLocale, packageName);
+  const lockfileValidation = await validateLockfile(localesDir, defaultLocale);
   const resultsWithLockfile: ScanResults = {
     ...results,
     lockfileValidation,
