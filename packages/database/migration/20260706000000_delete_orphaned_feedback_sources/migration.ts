@@ -15,10 +15,11 @@ interface OrphanedFeedbackSource {
  * FeedbackDirectoryWorkspace assignment. Such rows could previously exist because unassigning a
  * workspace from a directory deleted the join row but only *paused* the workspace's sources.
  *
- * This must run before the composite FK migration
- * (20260706000001_add_feedback_source_directory_workspace_fk), which would otherwise fail.
- * Mappings (FeedbackSourceFormbricksMapping / FeedbackSourceFieldMapping) cascade-delete with the
- * source. Each deleted row is logged for the audit trail.
+ * This is the primary, logged cleanup pass before the composite FK migration
+ * (20260706000001_add_feedback_source_directory_workspace_fk); that migration also deletes (and
+ * logs via RAISE WARNING) any straggler created in the deploy window between the two, so the pair
+ * stays convergent. Mappings (FeedbackSourceFormbricksMapping / FeedbackSourceFieldMapping)
+ * cascade-delete with the source. Each deleted row is logged for the audit trail.
  */
 export const deleteOrphanedFeedbackSources: MigrationScript = {
   type: "data",

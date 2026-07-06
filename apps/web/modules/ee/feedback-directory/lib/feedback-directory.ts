@@ -6,6 +6,7 @@ import { Prisma, type PrismaClient } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { isDirectoryWorkspaceFkViolation } from "@/lib/feedback-source/service";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TFeedbackDirectory,
@@ -596,8 +597,9 @@ export const updateFeedbackDirectory = async (
         throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
       }
       // Defense-in-depth: the composite FeedbackSource FK fires on the join-row deletion if the
-      // pre-flight count above was bypassed (e.g. a concurrent source create).
-      if (error.code === PrismaErrorType.ForeignKeyConstraintViolation) {
+      // pre-flight count above was bypassed (e.g. a concurrent source create). Other FK violations
+      // in this transaction (e.g. a concurrently deleted workspace) fall through to DatabaseError.
+      if (isDirectoryWorkspaceFkViolation(error)) {
         throw new InvalidInputError("DIRECTORY_WORKSPACE_HAS_FEEDBACK_SOURCES");
       }
       throw new DatabaseError(error.message);

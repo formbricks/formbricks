@@ -3,21 +3,35 @@
 -- FeedbackDirectoryWorkspace, so a source can never reference an unassigned (directory, workspace)
 -- pair even if the action-layer check regresses.
 
--- Safety check: abort if any orphaned FeedbackSource rows remain. The data migration
--- 20260706000000_delete_orphaned_feedback_sources must have removed them first.
+-- Last-chance cleanup: the data migration 20260706000000_delete_orphaned_feedback_sources removes
+-- (and logs) orphaned rows first, but an orphan can still appear in the window before this DDL runs
+-- (an old-version pod unassigning a workspace mid-deploy). Deleting the stragglers here keeps the
+-- migration convergent — aborting instead would crash-loop, since the data migration is marked
+-- applied and never re-runs. Same class of rows, same approved delete semantics; each is logged.
 DO $$
 DECLARE
-  orphan_count bigint;
+  orphan RECORD;
+  orphan_count bigint := 0;
 BEGIN
-  SELECT COUNT(*) INTO orphan_count
-  FROM "FeedbackSource" fs
-  LEFT JOIN "FeedbackDirectoryWorkspace" fdw
-    ON fdw."feedbackDirectoryId" = fs."feedbackDirectoryId"
-   AND fdw."workspaceId" = fs."workspaceId"
-  WHERE fdw."feedbackDirectoryId" IS NULL;
+  FOR orphan IN
+    WITH deleted AS (
+      DELETE FROM "FeedbackSource" fs
+      WHERE NOT EXISTS (
+        SELECT 1 FROM "FeedbackDirectoryWorkspace" fdw
+        WHERE fdw."feedbackDirectoryId" = fs."feedbackDirectoryId"
+          AND fdw."workspaceId" = fs."workspaceId"
+      )
+      RETURNING fs."id", fs."name", fs."workspaceId", fs."feedbackDirectoryId"
+    )
+    SELECT * FROM deleted
+  LOOP
+    orphan_count := orphan_count + 1;
+    RAISE WARNING 'Deleted orphaned FeedbackSource % (name: %, workspaceId: %, feedbackDirectoryId: %) without directory-workspace assignment',
+      orphan."id", orphan."name", orphan."workspaceId", orphan."feedbackDirectoryId";
+  END LOOP;
 
   IF orphan_count > 0 THEN
-    RAISE EXCEPTION 'Cannot add composite FK: % FeedbackSource rows have no FeedbackDirectoryWorkspace assignment', orphan_count;
+    RAISE WARNING 'Deleted % orphaned FeedbackSource rows before adding the composite FK', orphan_count;
   END IF;
 END $$;
 

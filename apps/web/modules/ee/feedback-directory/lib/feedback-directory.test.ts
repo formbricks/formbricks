@@ -493,6 +493,42 @@ describe("FeedbackDirectory Service", () => {
       expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
     });
 
+    test("maps a composite-FK violation (concurrent source create) to the blocked error", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+          code: "P2003",
+          clientVersion: "0.0.1",
+          meta: { constraint: "FeedbackSource_feedbackDirectoryId_workspaceId_fkey" },
+        })
+      );
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
+          workspaceIds: [mockWorkspaceId1],
+        })
+      ).rejects.toThrow(new InvalidInputError("DIRECTORY_WORKSPACE_HAS_FEEDBACK_SOURCES"));
+    });
+
+    test("throws DatabaseError on an unrelated foreign-key violation", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+          code: "P2003",
+          clientVersion: "0.0.1",
+          meta: { constraint: "FeedbackDirectoryWorkspace_workspaceId_fkey" },
+        })
+      );
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
+          workspaceIds: [mockWorkspaceId1],
+        })
+      ).rejects.toThrow(DatabaseError);
+    });
+
     test("throws ResourceNotFoundError when directory does not exist (P2025)", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
         code: "P2025",
