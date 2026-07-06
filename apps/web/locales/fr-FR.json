@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Collecte les retours des visiteurs qui viennent de consulter la page tarifs",
         "prompt_helper_website_label": "Retours sur le site web",
         "prompt_label": "Décris le questionnaire dont tu as besoin",
-        "prompt_placeholder": "Décris le questionnaire dont tu as besoin, ex. Comprendre pourquoi les nouveaux utilisateurs abandonnent pendant l'onboarding et ce qui les aiderait à terminer la configuration",
+        "prompt_placeholder": "Décris l'enquête dont tu as besoin, par exemple Comprendre pourquoi les nouveaux utilisateurs abandonnent lors de l'onboarding et ce qui les aiderait à terminer la configuration",
         "shortcut_hint": "⌘/Ctrl + Entrée pour créer",
         "start_from_scratch": "Partir de zéro",
         "try_prompt": "Voir un exemple d'instruction",

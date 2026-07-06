@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "向剛瀏覽完定價頁面的訪客收集網站意見回饋",
         "prompt_helper_website_label": "網站意見回饋",
         "prompt_label": "描述你需要的問卷",
-        "prompt_placeholder": "描述你需要的問卷，例如：了解新用戶為何在引導過程中停止，以及什麼能幫助他們完成設定",
+        "prompt_placeholder": "描述您需要的問卷調查，例如：了解新用戶在引導過程中為何中途離開，以及什麼能幫助他們完成設定",
         "shortcut_hint": "⌘/Ctrl + Enter 建立",
         "start_from_scratch": "從零開始",
         "try_prompt": "查看範例提示",

@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Colectează feedback de pe site de la vizitatorii care tocmai au consultat pagina de prețuri",
         "prompt_helper_website_label": "Feedback site web",
         "prompt_label": "Descrie chestionarul de care ai nevoie",
-        "prompt_placeholder": "Descrie chestionarul de care ai nevoie, ex. Înțelege de ce utilizatorii noi renunță în timpul procesului de onboarding și ce i-ar ajuta să finalizeze configurarea",
+        "prompt_placeholder": "Descrie sondajul de care ai nevoie, de ex. Să înțeleg de ce utilizatorii noi abandonează în timpul onboarding-ului și ce i-ar ajuta să finalizeze configurarea",
         "shortcut_hint": "⌘/Ctrl + Enter pentru a crea",
         "start_from_scratch": "Începe de la zero",
         "try_prompt": "Vezi exemplu de solicitare",

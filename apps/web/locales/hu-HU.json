@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Gyűjts visszajelzéseket a weboldal látogatóitól, akik épp az árképzési oldalt nézték meg",
         "prompt_helper_website_label": "Weboldal visszajelzés",
         "prompt_label": "Írd le, milyen kérdőívre van szükséged",
-        "prompt_placeholder": "Írd le, milyen kérdőívre van szükséged, pl. Megérteni, miért hagyják abba az új felhasználók a regisztrációt, és mi segítené őket a beállítás befejezésében",
+        "prompt_placeholder": "Írja le a szükséges felmérést, például: Megérteni, miért hagyják abba az új felhasználók a regisztrációs folyamatot, és mi segítené őket a beállítás befejezésében",
         "shortcut_hint": "⌘/Ctrl + Enter a létrehozáshoz",
         "start_from_scratch": "Kezdés a nulláról",
         "try_prompt": "Példa promptra",
