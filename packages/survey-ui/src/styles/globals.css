@@ -258,7 +258,10 @@
   /* A visually-hidden radio/checkbox drives a visible label: paint the ring on the label. */
   #fbjs label:has(input[type="radio"]:focus-visible),
   #fbjs label:has(input[type="checkbox"]:focus-visible),
-  #fbjs [data-fb-focus-ring]:has(:focus-visible) {
+  #fbjs [data-fb-focus-ring]:has(:focus-visible),
+  /* Ring carrier as the hidden input's direct sibling (e.g. the matrix's round indicator),
+     for controls where the wrapping label is not the right shape to ring. */
+  #fbjs input:focus-visible + [data-fb-focus-ring] {
     /* Transparent outline is upgraded to the system focus color under forced-colors. */
     outline: 2px solid transparent !important;
     outline-offset: 2px !important;
@@ -266,6 +269,15 @@
       0 0 0 var(--fb-focus-ring-inner-width) var(--fb-focus-ring-inner-color),
       0 0 0 calc(var(--fb-focus-ring-inner-width) + var(--fb-focus-ring-outer-width))
         var(--fb-focus-ring-outer-color) !important;
+  }
+
+  /* Matrix cells: the label spans the whole cell, so a label-level ring renders as a wide
+     sharp rectangle around a 16px circle. Suppress it; the round indicator (the input's
+     direct sibling, tagged data-fb-focus-ring) carries the ring and matches the control's
+     shape (WCAG 2.4.7 stays satisfied by the indicator ring). */
+  #fbjs table label:has(input[type="radio"]:focus-visible) {
+    box-shadow: none !important;
+    outline: none !important;
   }
 
   /* The hidden input is 1px and clipped; its visible label paints the ring instead.
@@ -285,7 +297,8 @@
     #fbjs [tabindex]:focus-visible,
     #fbjs label:has(input[type="radio"]:focus-visible),
     #fbjs label:has(input[type="checkbox"]:focus-visible),
-    #fbjs [data-fb-focus-ring]:has(:focus-visible) {
+    #fbjs [data-fb-focus-ring]:has(:focus-visible),
+    #fbjs input:focus-visible + [data-fb-focus-ring] {
       outline-color: Highlight !important;
     }
   }

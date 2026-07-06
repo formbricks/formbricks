@@ -279,7 +279,7 @@ function Rating({
       <div key={number} className="flex flex-1 items-center justify-center">
         <label
           className={cn(
-            "flex min-h-[48px] w-full max-w-[74px] cursor-pointer items-center justify-center transition-opacity",
+            "flex min-h-[48px] w-full max-w-[74px] cursor-pointer items-center justify-center rounded-lg transition-opacity",
             disabled && "cursor-not-allowed opacity-50"
           )}
           onMouseEnter={() => {
@@ -334,7 +334,7 @@ function Rating({
       <div key={number} className="flex flex-1 items-center justify-center">
         <label
           className={cn(
-            "relative flex max-h-16 min-h-9 w-full max-w-[74px] cursor-pointer justify-center transition-colors",
+            "relative flex max-h-16 min-h-9 w-full max-w-[74px] cursor-pointer justify-center rounded-lg transition-colors",
             isActive ? "stroke-brand text-brand" : "stroke-muted-foreground text-muted-foreground",
             disabled && "cursor-not-allowed opacity-50"
           )}

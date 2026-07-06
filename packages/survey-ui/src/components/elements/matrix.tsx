@@ -56,6 +56,7 @@ function MatrixRadioIndicator(): React.JSX.Element {
   return (
     <span
       aria-hidden="true"
+      data-fb-focus-ring
       className={cn(
         "border-input-border relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
         "peer-checked:border-brand",
