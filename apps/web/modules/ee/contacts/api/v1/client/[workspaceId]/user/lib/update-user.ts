@@ -131,6 +131,22 @@ const buildUserStateFromContact = async (
   };
 };
 
+/**
+ * A contact `language` value that doesn't canonicalize (normalizeLanguageCode -> null) may still be a
+ * legitimate, user-configured survey-language ALIAS (the documented `setLanguage("<alias>")`), not junk.
+ * Check it against the workspace's configured languages (code OR alias, case-insensitive) so a real alias
+ * is kept while genuine junk is still dropped. Only called on the rare non-canonical branch, so the common
+ * language-code path pays no extra query.
+ */
+const isWorkspaceLanguageIdentifier = async (workspaceId: string, value: string): Promise<boolean> => {
+  const target = value.toLowerCase();
+  const languages = await prisma.language.findMany({
+    where: { workspaceId },
+    select: { code: true, alias: true },
+  });
+  return languages.some((l) => l.code.toLowerCase() === target || l.alias?.toLowerCase() === target);
+};
+
 export const updateUser = async (
   workspaceId: string,
   userId: string,
@@ -175,9 +191,13 @@ export const updateUser = async (
     const canonicalLanguage = trimmedLanguage ? normalizeLanguageCode(languageStr) : null;
     if (canonicalLanguage) {
       normalizedAttributes = { ...otherAttributes, language: canonicalLanguage };
+    } else if (trimmedLanguage && (await isWorkspaceLanguageIdentifier(workspaceId, trimmedLanguage))) {
+      // Not a canonicalizable code, but it IS a configured survey-language alias in this workspace
+      // (documented setLanguage("<alias>")). Store it verbatim so alias-based matching keeps working.
+      normalizedAttributes = { ...otherAttributes, language: trimmedLanguage };
     } else {
       normalizedAttributes = otherAttributes;
-      // Surface a non-blank but unparseable value back to the caller; blank/whitespace-only stays silent.
+      // Surface a non-blank, unrecognized value back to the caller; blank/whitespace-only stays silent.
       if (trimmedLanguage) droppedInvalidLanguage = languageStr;
     }
   }
@@ -222,12 +242,14 @@ export const updateUser = async (
   // Transitional SDK back-compat (ENG-1067): echo the language to the SDK in a legacy form (the first
   // known alias), matching the legacy codes the client environment serializer exposes, so SDK clients
   // that match the display language by exact code keep working until the canonical-aware versions are
-  // adopted (notably older React Native apps). Only a value that canonicalizes is echoed — a stored junk
-  // code resolves to `undefined` rather than being passed through. Remove once those clients have drained.
+  // adopted (notably older React Native apps). A canonicalizable code is echoed in its legacy form; a
+  // non-canonicalizable stored value is a verified survey-language alias (the write path only stores those
+  // or canonical codes), so echo it verbatim so the SDK still matches the aliased language. Remove once
+  // those clients have drained.
   const storedCanonicalLanguage = language ? normalizeLanguageCode(String(language)) : null;
   const responseLanguage = storedCanonicalLanguage
     ? (toLegacyLanguageCodes(storedCanonicalLanguage)[0] ?? storedCanonicalLanguage)
-    : undefined;
+    : (language ?? undefined);
 
   return {
     state: {

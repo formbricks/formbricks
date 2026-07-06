@@ -144,6 +144,15 @@ export const canonicalizeLanguageCodes: MigrationScript = {
         );
       }
 
+      // A Language row holds a single alias, so when both survivor and an absorbed row carry a (different)
+      // alias, the absorbed one can't be kept. Don't drop it silently — log so an operator can re-add it if
+      // a link/SDK relied on it.
+      if (merge.droppedAliases.length > 0) {
+        logger.warn(
+          `Merge for canonical '${merge.canonical}' (workspace ${merge.workspaceId}) dropped ${merge.droppedAliases.length.toString()} absorbed alias(es) that can't fit on the single survivor row: ${merge.droppedAliases.join(", ")}. A link/SDK using a dropped alias falls back to the survey default — re-add it manually if needed.`
+        );
+      }
+
       // Delete absorbed rows (their links have all been moved/deleted).
       await tx.$executeRawUnsafe(`DELETE FROM "Language" WHERE id = ANY($1::text[])`, merge.absorbedIds);
       stats.languagesDeleted += merge.absorbedIds.length;
@@ -152,6 +161,19 @@ export const canonicalizeLanguageCodes: MigrationScript = {
 
     logger.info(
       `Language rows: ${stats.languageRelabels.toString()} relabelled, ${stats.languageMerges.toString()} merges (${stats.languagesDeleted.toString()} rows absorbed, ${stats.surveyLanguageRepoints.toString()} links moved, ${stats.surveyLanguageDeletes.toString()} links deduped)`
+    );
+
+    // Clear self-referential aliases created by the relabel: canonicalizing a code can make it equal a
+    // user's alias (e.g. code `de` -> `de-DE` while the alias was already "de-DE"). The workspace Languages
+    // editor's validateLanguages rejects any alias equal to a code, which would block EVERY save in that
+    // editor. A self-referential alias only duplicates the code (adds no matchable value), so null it.
+    // Matches validateLanguages' comparison (lower + trim, no underscore normalization) so we touch only
+    // the rows that would actually trigger the lock.
+    const selfReferentialAliasesCleared = await tx.$executeRawUnsafe(
+      `UPDATE "Language" SET alias = NULL WHERE alias IS NOT NULL AND lower(trim(alias)) = lower(code)`
+    );
+    logger.info(
+      `Cleared ${(typeof selfReferentialAliasesCleared === "number" ? selfReferentialAliasesCleared : 0).toString()} self-referential alias(es) (alias == canonical code)`
     );
 
     // ---------------------------------------------------------------------------------------------
