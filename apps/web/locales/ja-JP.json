@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "期間終了時にキャンセル",
         "comparison_addon": "アドオン",
         "comparison_best_for": "最適な用途",
+        "comparison_included": "含まれています",
+        "comparison_not_included": "含まれていません",
         "comparison_row_ai_translations": "AI翻訳",
         "comparison_row_all_integrations": "すべての連携機能",
         "comparison_row_api": "完全なAPIアクセス（MCPを含む）",

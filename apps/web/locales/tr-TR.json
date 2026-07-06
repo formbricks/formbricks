@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "Dönem sonunda iptal et",
         "comparison_addon": "Eklenti",
         "comparison_best_for": "En uygun",
+        "comparison_included": "Dahil",
+        "comparison_not_included": "Dahil değil",
         "comparison_row_ai_translations": "Yapay zeka çevirileri",
         "comparison_row_all_integrations": "Tüm entegrasyonlar",
         "comparison_row_api": "Tam API erişimi (MCP dahil)",

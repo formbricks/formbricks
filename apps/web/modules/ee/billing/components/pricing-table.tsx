@@ -983,7 +983,8 @@ export const PricingTable = ({
   };
 
   // Plan columns for the comparison table (test variant), reusing the same CTA state as the cards.
-  const planComparisonColumns: TPlanColumn[] = planCards.map((planCard) => {
+  // Shared CTA/plan-state derivation used by both the comparison table and the card grid.
+  const getPlanCtaState = (planCard: TPlanCardData) => {
     const isCurrentSelection = isCurrentPlanSelection(
       planCard.plan,
       planCard.interval,
@@ -1019,6 +1020,20 @@ export const PricingTable = ({
       isStripeSetupIncomplete;
 
     return {
+      isCurrentSelection,
+      isPendingSelection,
+      isCancelAtPeriodEndCta,
+      isSwitchAtPeriodEndCtaForCard,
+      isSecondaryPlanCta,
+      isDisabled,
+    };
+  };
+
+  const planComparisonColumns: TPlanColumn[] = planCards.map((planCard) => {
+    const { isCurrentSelection, isPendingSelection, isSecondaryPlanCta, isDisabled } =
+      getPlanCtaState(planCard);
+
+    return {
       key: `${planCard.plan}-${planCard.interval}`,
       name: getCurrentCloudPlanLabel(planCard.plan, t),
       description: planCard.description,
@@ -1042,39 +1057,8 @@ export const PricingTable = ({
   const planCardGrid = (
     <div className="grid gap-4 lg:grid-cols-3">
       {planCards.map((planCard) => {
-        const isCurrentSelection = isCurrentPlanSelection(
-          planCard.plan,
-          planCard.interval,
-          currentCloudPlan,
-          currentBillingInterval
-        );
-        const isPendingSelection =
-          pendingChange?.targetPlan === planCard.plan &&
-          (planCard.plan === "hobby" || pendingChange.targetInterval === planCard.interval);
-        const isCancelAtPeriodEndCta = canCancelCurrentPaidPlanAtPeriodEnd(
-          planCard.plan,
-          planCard.interval,
-          currentCloudPlan,
-          currentBillingInterval,
-          isTrialingWithoutPayment,
-          pendingChange
-        );
-        const isSwitchAtPeriodEndCtaForCard = isSwitchAtPeriodEndCta(
-          planCard.plan,
-          planCard.interval,
-          currentCloudPlan,
-          currentBillingInterval,
-          currentPlanLevel,
-          isTrialingWithoutPayment,
-          hasPaymentMethod,
-          pendingChange
-        );
-        const isSecondaryPlanCta = isCancelAtPeriodEndCta || isSwitchAtPeriodEndCtaForCard;
-        const isDisabled =
-          !hasBillingRights ||
-          (isCurrentSelection && !isTrialingWithoutPayment && !isCancelAtPeriodEndCta) ||
-          isPendingSelection ||
-          isStripeSetupIncomplete;
+        const { isCurrentSelection, isPendingSelection, isSecondaryPlanCta, isDisabled } =
+          getPlanCtaState(planCard);
 
         return (
           <div

@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "Cancelar ao final do período",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",
+        "comparison_included": "Incluído",
+        "comparison_not_included": "Não incluído",
         "comparison_row_ai_translations": "Traduções com IA",
         "comparison_row_all_integrations": "Todas as integrações",
         "comparison_row_api": "Acesso completo à API (incl. MCP)",

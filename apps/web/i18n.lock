@@ -2248,6 +2248,8 @@ checksums:
     workspace/settings/billing/cancel_at_period_end: c252f54e4ee6f9419a945f3cb7c31e80
     workspace/settings/billing/comparison_addon: 4f35a82638402eb9dcb31e00be8997be
     workspace/settings/billing/comparison_best_for: f08508c34b7d27068257186ad96c77f2
+    workspace/settings/billing/comparison_included: e6e289fa98e3bf88fb381ebedcade7b7
+    workspace/settings/billing/comparison_not_included: fb505f3984ea5f5881786a55f4bd817a
     workspace/settings/billing/comparison_row_ai_translations: cd22a6972d3bddf7987abf3775860a99
     workspace/settings/billing/comparison_row_all_integrations: 7605d915dd24362c1cb9ec769dee3888
     workspace/settings/billing/comparison_row_api: 76d71c05fae94bed31c5bf789e40313a

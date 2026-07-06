@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "Opzeggen aan het einde van de periode",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Het beste voor",
+        "comparison_included": "Inbegrepen",
+        "comparison_not_included": "Niet inbegrepen",
         "comparison_row_ai_translations": "AI-vertalingen",
         "comparison_row_all_integrations": "Alle integraties",
         "comparison_row_api": "Volledige API-toegang (incl. MCP)",

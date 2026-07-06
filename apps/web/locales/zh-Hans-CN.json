@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "在周期结束时取消",
         "comparison_addon": "附加功能",
         "comparison_best_for": "最适合",
+        "comparison_included": "包含",
+        "comparison_not_included": "不包含",
         "comparison_row_ai_translations": "AI 翻译",
         "comparison_row_all_integrations": "所有集成",
         "comparison_row_api": "完整 API 访问（包括 MCP）",

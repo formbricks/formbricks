@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "Отменить в конце периода",
         "comparison_addon": "Дополнение",
         "comparison_best_for": "Подходит для",
+        "comparison_included": "Включено",
+        "comparison_not_included": "Не включено",
         "comparison_row_ai_translations": "AI-переводы",
         "comparison_row_all_integrations": "Все интеграции",
         "comparison_row_api": "Полный доступ к API (вкл. MCP)",

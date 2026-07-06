@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "Lemondás az időszak végén",
         "comparison_addon": "Bővítmény",
         "comparison_best_for": "Legmegfelelőbb",
+        "comparison_included": "Tartalmazza",
+        "comparison_not_included": "Nem tartalmazza",
         "comparison_row_ai_translations": "Mesterséges intelligencia alapú fordítások",
         "comparison_row_all_integrations": "Valamennyi integráció",
         "comparison_row_api": "Teljes körű API hozzáférés (beleértve az MCP-t)",

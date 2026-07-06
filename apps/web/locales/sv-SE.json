@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "Avsluta vid periodens slut",
         "comparison_addon": "Tillägg",
         "comparison_best_for": "Bäst för",
+        "comparison_included": "Ingår",
+        "comparison_not_included": "Ingår ej",
         "comparison_row_ai_translations": "AI-översättningar",
         "comparison_row_all_integrations": "Alla integrationer",
         "comparison_row_api": "Full API-åtkomst (inkl. MCP)",

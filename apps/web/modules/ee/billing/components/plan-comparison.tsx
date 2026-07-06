@@ -43,14 +43,30 @@ const HIGHLIGHT = "bg-[#D1EFED]/60";
 // Plan headers (badges, price, CTA) sit on top, a "Best for" row below the CTAs, and the full
 // feature matrix below that with the Pro plan highlighted. "Compare all details" reveals the
 // features shared by every plan.
-export const PlanComparisonTable = ({ columns }: { columns: TPlanColumn[] }) => {
+export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn[] }>) => {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
   const b = (key: string) => t(`workspace.settings.billing.${key}`);
 
   const renderValue = (value: ComparisonValue): ReactNode => {
-    if (value === true) return <CheckIcon className="size-4 text-emerald-600" />;
-    if (value === false) return <span className="text-slate-300">—</span>;
+    if (value === true) {
+      return (
+        <>
+          <CheckIcon className="size-5 text-emerald-600" strokeWidth={3} aria-hidden="true" />
+          <span className="sr-only">{b("comparison_included")}</span>
+        </>
+      );
+    }
+    if (value === false) {
+      return (
+        <>
+          <span aria-hidden="true" className="text-slate-300">
+            —
+          </span>
+          <span className="sr-only">{b("comparison_not_included")}</span>
+        </>
+      );
+    }
     if (value === "addon") return <span className="text-slate-500">{b("comparison_addon")}</span>;
     return <span className="text-slate-700">{value}</span>;
   };
@@ -101,71 +117,87 @@ export const PlanComparisonTable = ({ columns }: { columns: TPlanColumn[] }) => 
     { type: "section", label: b("comparison_section_pro_unlocks") },
     ...proUnlocks,
     ...(showDetails
-      ? [{ type: "section", label: b("comparison_section_all_plans") } as ComparisonDisplayRow, ...allPlans]
+      ? [
+          { type: "section", label: b("comparison_section_all_plans") } as ComparisonDisplayRow,
+          ...allPlans,
+          { type: "section", label: b("comparison_section_scale_unlocks") } as ComparisonDisplayRow,
+          ...scaleUnlocks,
+        ]
       : []),
-    { type: "section", label: b("comparison_section_scale_unlocks") },
-    ...scaleUnlocks,
   ];
 
   return (
     <div className="overflow-x-auto">
-      <div className="grid min-w-[42rem] grid-cols-[minmax(0,0.5fr)_repeat(3,minmax(0,1fr))]">
+      <div
+        role="table"
+        aria-label={b("plan_selection_title")}
+        className="grid min-w-[42rem] grid-cols-[minmax(0,0.5fr)_repeat(3,minmax(0,1fr))]">
         {/* Plan header row — badges, name, price, aligned CTA */}
-        <div aria-hidden className={LABEL_CELL} />
-        {columns.map((col) => (
-          <div
-            key={col.key}
-            className={cn("flex flex-col pt-6", PLAN_CELL, col.isPopular && cn(HIGHLIGHT, "rounded-t-2xl"))}>
-            <div className="mb-4 flex min-h-7 items-start gap-2">
-              {col.isPopular && (
-                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                  {col.mostPopularLabel}
+        <div role="row" className="contents">
+          <div role="columnheader" className={LABEL_CELL} />
+          {columns.map((col) => (
+            <div
+              key={col.key}
+              role="columnheader"
+              className={cn(
+                "flex flex-col pt-6",
+                PLAN_CELL,
+                col.isPopular && cn(HIGHLIGHT, "rounded-t-2xl")
+              )}>
+              <div className="mb-4 flex min-h-7 items-start gap-2">
+                {col.isPopular && (
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                    {col.mostPopularLabel}
+                  </span>
+                )}
+                {col.currentBadge && (
+                  <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
+                    {col.currentBadgeLabel}
+                  </span>
+                )}
+                {col.pendingBadge && (
+                  <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                    {col.pendingBadgeLabel}
+                  </span>
+                )}
+              </div>
+              <h3 className="text-2xl font-semibold text-slate-900 sm:text-3xl">{col.name}</h3>
+              <div className="mt-4 flex min-h-12 flex-wrap items-end gap-x-2">
+                <span className="text-2xl font-normal tracking-tight text-slate-900 sm:text-3xl">
+                  {col.amount}
                 </span>
-              )}
-              {col.currentBadge && (
-                <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                  {col.currentBadgeLabel}
-                </span>
-              )}
-              {col.pendingBadge && (
-                <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-                  {col.pendingBadgeLabel}
-                </span>
-              )}
+                <span className="pb-1 text-sm text-slate-500">{col.periodLabel}</span>
+              </div>
+              <Button
+                variant={col.ctaVariant}
+                className="mt-4 w-full"
+                disabled={col.ctaDisabled}
+                loading={col.ctaLoading}
+                onClick={col.onCtaClick}>
+                {col.ctaLabel}
+              </Button>
             </div>
-            <h3 className="text-2xl font-semibold text-slate-900 sm:text-3xl">{col.name}</h3>
-            <div className="mt-4 flex min-h-12 flex-wrap items-end gap-x-2">
-              <span className="text-2xl font-normal tracking-tight text-slate-900 sm:text-3xl">
-                {col.amount}
-              </span>
-              <span className="pb-1 text-sm text-slate-500">{col.periodLabel}</span>
-            </div>
-            <Button
-              variant={col.ctaVariant}
-              className="mt-4 w-full"
-              disabled={col.ctaDisabled}
-              loading={col.ctaLoading}
-              onClick={col.onCtaClick}>
-              {col.ctaLabel}
-            </Button>
-          </div>
-        ))}
+          ))}
+        </div>
 
         {/* Best for (plan descriptions right below the CTAs, above the separator) */}
-        <div className={cn(LABEL_CELL, "pt-6 pb-6 text-sm font-medium text-slate-600")}>
-          {b("comparison_best_for")}
-        </div>
-        {columns.map((col) => (
-          <div
-            key={col.key}
-            className={cn(
-              PLAN_CELL,
-              "pt-6 pb-6 text-sm leading-6 text-slate-500",
-              col.isPopular && HIGHLIGHT
-            )}>
-            {col.description}
+        <div role="row" className="contents">
+          <div role="rowheader" className={cn(LABEL_CELL, "pt-6 pb-6 text-sm font-medium text-slate-600")}>
+            {b("comparison_best_for")}
           </div>
-        ))}
+          {columns.map((col) => (
+            <div
+              key={col.key}
+              role="cell"
+              className={cn(
+                PLAN_CELL,
+                "pt-6 pb-6 text-sm leading-6 text-slate-500",
+                col.isPopular && HIGHLIGHT
+              )}>
+              {col.description}
+            </div>
+          ))}
+        </div>
 
         {/* Feature comparison rows (grouped by section) */}
         {displayRows.map((row, rowIndex) => {
@@ -173,8 +205,9 @@ export const PlanComparisonTable = ({ columns }: { columns: TPlanColumn[] }) => 
           const isSection = row.type === "section";
           const isLastRow = rowIndex === displayRows.length - 1;
           return (
-            <div key={`${row.type}-${row.label}-${rowIndex}`} className="contents">
+            <div key={`${row.type}-${row.label}-${rowIndex}`} role="row" className="contents">
               <div
+                role="rowheader"
                 className={cn(
                   LABEL_CELL,
                   hasTopBorder && "border-t border-slate-100",
@@ -188,8 +221,10 @@ export const PlanComparisonTable = ({ columns }: { columns: TPlanColumn[] }) => 
               {columns.map((col, columnIndex) => (
                 <div
                   key={col.key}
+                  role="cell"
                   className={cn(
                     PLAN_CELL,
+                    "flex justify-center text-center",
                     hasTopBorder && "border-t border-slate-100",
                     isSection ? "pt-8 pb-2" : "py-3 text-sm",
                     isLastRow && "pb-6",

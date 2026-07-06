@@ -2345,6 +2345,8 @@
         "cancel_at_period_end": "Anulează la sfârșitul perioadei",
         "comparison_addon": "Supliment",
         "comparison_best_for": "Ideal pentru",
+        "comparison_included": "Inclus",
+        "comparison_not_included": "Neinclusă",
         "comparison_row_ai_translations": "Traduceri AI",
         "comparison_row_all_integrations": "Toate integrările",
         "comparison_row_api": "Acces complet API (incl. MCP)",
