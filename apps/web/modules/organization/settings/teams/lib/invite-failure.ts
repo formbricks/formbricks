@@ -41,18 +41,23 @@ export const getInviteFailureReason = (error: unknown): TBulkInviteFailureReason
 export const getInviteFailureReasonFromMessage = (message: string): TBulkInviteFailureReason =>
   MESSAGE_TO_REASON[message] ?? "unknown";
 
-const FAILURE_REASON_I18N_KEY: Record<TBulkInviteFailureReason, string> = {
-  invite_already_exists: "workspace.settings.general.invite_failure_invite_exists",
-  user_already_member: "workspace.settings.general.invite_failure_already_member",
-  duplicate_team_ids: "workspace.settings.general.invite_failure_duplicate_teams",
-  invalid_team_ids: "workspace.settings.general.invite_failure_invalid_teams",
-  unknown: "workspace.settings.general.invite_failure_unknown",
-};
-
 export const formatInviteFailureMessage = (
   t: TFunction,
   params: { email: string; failureReason: TBulkInviteFailureReason }
-): string => t(FAILURE_REASON_I18N_KEY[params.failureReason], { email: params.email });
+): string => {
+  switch (params.failureReason) {
+    case "invite_already_exists":
+      return t("workspace.settings.general.invite_failure_invite_exists", { email: params.email });
+    case "user_already_member":
+      return t("workspace.settings.general.invite_failure_already_member", { email: params.email });
+    case "duplicate_team_ids":
+      return t("workspace.settings.general.invite_failure_duplicate_teams", { email: params.email });
+    case "invalid_team_ids":
+      return t("workspace.settings.general.invite_failure_invalid_teams", { email: params.email });
+    case "unknown":
+      return t("workspace.settings.general.invite_failure_unknown", { email: params.email });
+  }
+};
 
 const MAX_FAILURE_LINES = 5;
 

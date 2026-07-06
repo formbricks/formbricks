@@ -2508,7 +2508,13 @@ checksums:
     workspace/settings/general/invitation_sent_once_more: e6e5ea066810f9dcb65788aa4f05d6e2
     workspace/settings/general/invite_deleted_successfully: 1c7dca6d0f6870d945288e38cfd2f943
     workspace/settings/general/invite_expires_on: 6fd2356ad91a5f189070c43855904bb4
-    workspace/settings/general/invites_failed: 180ffb8db417050227cc2b2ea74b7aae
+    workspace/settings/general/invite_failure_already_member: f1a66c4b23a4c1fb20e4cd99241461a1
+    workspace/settings/general/invite_failure_duplicate_teams: f8a0243a3f688d8175d02b5d0f6942c0
+    workspace/settings/general/invite_failure_invalid_teams: ce74983a06ec93ecf89a70d4b29d0826
+    workspace/settings/general/invite_failure_invite_exists: 129e4bcc8ffdd69bb8e490af63b15e62
+    workspace/settings/general/invite_failure_unknown: e966c995eb860a1221f3287213ae4102
+    workspace/settings/general/invite_failures_more: 837a21435b933390c58d0280b67032b2
+    workspace/settings/general/inviting_member: 8463fde5489446a0efef4e93a8708fe5
     workspace/settings/general/leave_organization: e74132cb4a0dc98c41e61ea3b2dd268b
     workspace/settings/general/leave_organization_description: 2d0cd65e4e78a9b2835cf88c4de407fb
     workspace/settings/general/leave_organization_ok_btn_text: 0863275f254df5b31a1f25bacc5e54b9
@@ -2520,6 +2526,7 @@ checksums:
     workspace/settings/general/manage_members_description: 9080af8ae6ce0f3c9866524f3a69f4fa
     workspace/settings/general/member_deleted_successfully: 41446978af02c27066852a06902843b6
     workspace/settings/general/member_invited_successfully: dc9c4838d2e8cec8f89c60aeaecafc33
+    workspace/settings/general/members_invited_successfully: b09ec346350871b8a5759426c1940b53
     workspace/settings/general/once_its_gone_its_gone: 6c844e583dd2c0e07337cc758df385b3
     workspace/settings/general/only_org_owner_can_perform_action: 0244ff3c6de787935e592eac4c5e4f0b
     workspace/settings/general/organization_created_successfully: 1ce874980bdd7d5de8402c276fb97a57

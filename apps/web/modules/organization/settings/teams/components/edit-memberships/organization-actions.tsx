@@ -112,7 +112,7 @@ export const OrganizationActions = ({
 
         if (inviteUserActionResult?.data) {
           router.refresh();
-          toast.success(t("workspace.settings.general.members_invited_successfully", { count: 1 }), {
+          toast.success(t("workspace.settings.general.member_invited_successfully"), {
             id: toastId,
           });
           return true;

@@ -2619,7 +2619,6 @@
         "invite_failure_invite_exists": "An invite for {email} already exists",
         "invite_failure_unknown": "Could not invite {email}",
         "invite_failures_more": "+{count} more failed invites",
-        "invites_failed": "Invites failed",
         "inviting_member": "{count, plural, one {Inviting member...} other {Inviting members...}}",
         "leave_organization": "Leave organization",
         "leave_organization_description": "You wil leave this organization and loose access to all surveys and responses. You can only rejoin if you are invited again.",
