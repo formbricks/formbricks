@@ -142,7 +142,7 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
               <p className="mt-2 grow text-sm text-slate-500">
                 {t("workspace.settings.enterprise.full_feature_trial_description")}
               </p>
-              <Button asChild className="mt-6 w-fit">
+              <Button asChild variant="secondary" className="mt-6 w-fit">
                 <Link
                   href={trialLicenseUrl.toString()}
                   target="_blank"
