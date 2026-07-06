@@ -182,6 +182,24 @@ describe("updateUser", () => {
     expect(result.messages).toBeUndefined();
   });
 
+  test("matches a configured alias case-insensitively and preserves the caller's casing", async () => {
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    // Configured alias is lowercase "deutsch"; the SDK sends "DEUTSCH". Matching is case-insensitive
+    // everywhere (SDK/renderer/v3), so it must be kept — and stored verbatim (not lowercased to the config
+    // value), since downstream matchers lowercase both sides anyway.
+    vi.mocked(prisma.language.findMany).mockResolvedValue([{ code: "de-DE", alias: "deutsch" }] as any);
+    const newAttributes = { email: "new@example.com", language: "DEUTSCH" };
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
+
+    expect(updateAttributes).toHaveBeenCalledWith(mockContactId, mockUserId, mockWorkspaceId, {
+      email: "new@example.com",
+      language: "DEUTSCH",
+    });
+    expect(result.state.data?.language).toBe("DEUTSCH");
+    expect(result.messages).toBeUndefined();
+  });
+
   test("surfaces a falsy-but-real invalid language (e.g. 0) instead of silently dropping it", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     const newAttributes = { email: "new@example.com", language: 0 };
