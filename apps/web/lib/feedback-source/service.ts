@@ -233,10 +233,27 @@ const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): Invalid
   return new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE");
 };
 
+// Recursively collect every string in a Prisma error `meta`. Prisma 7's driver adapters (this repo
+// uses @prisma/adapter-pg) nest the real constraint name deep under
+// `meta.driverAdapterError.cause` (constraint.index / originalMessage), so a shallow scan of
+// `Object.values(meta)` would only see `modelName` and miss it — mis-mapping the violation.
+const collectMetaStrings = (value: unknown): string[] => {
+  if (typeof value === "string") {
+    return [value];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap(collectMetaStrings);
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).flatMap(collectMetaStrings);
+  }
+  return [];
+};
+
 /**
  * Detects a foreign-key violation of the composite FeedbackSource -> FeedbackDirectoryWorkspace
- * constraint (ENG-1148). The Prisma P2003 `meta` shape varies by version, so we scan every string
- * value in it for the composite-FK constraint name; the substring fallback (for meta shapes that
+ * constraint (ENG-1148). The Prisma P2003 `meta` shape varies by version/adapter, so we deep-scan
+ * every string in it for the composite-FK constraint name; the substring fallback (for shapes that
  * only expose columns) is anchored to the `FeedbackSource` table so an unrelated future junction
  * table carrying both column names can't be misclassified. Other FK violations fall through to the
  * caller's generic handling.
@@ -245,10 +262,7 @@ export const isDirectoryWorkspaceFkViolation = (error: PrismaClientKnownRequestE
   if (error.code !== PrismaErrorType.ForeignKeyConstraintViolation) {
     return false;
   }
-  const haystack = Object.values(error.meta ?? {})
-    .flat()
-    .filter((value): value is string => typeof value === "string")
-    .join(" ");
+  const haystack = collectMetaStrings(error.meta).join(" ");
   return (
     haystack.includes("FeedbackSource_feedbackDirectoryId_workspaceId_fkey") ||
     (haystack.includes("FeedbackSource") &&

@@ -83,6 +83,27 @@ const mockFeedbackSourceWithMappings = {
   fieldMappings: [],
 };
 
+// Mirrors the real P2003 `meta` produced by Prisma 7 with the @prisma/adapter-pg driver: the
+// constraint name is nested under driverAdapterError.cause, NOT at the top level. Tests must use
+// this shape so the FK-mapping logic is exercised against what the DB layer actually emits.
+const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRequestError =>
+  new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+    code: "P2003",
+    clientVersion: "7.8.0",
+    meta: {
+      modelName: "FeedbackSource",
+      driverAdapterError: {
+        name: "DriverAdapterError",
+        cause: {
+          kind: "ForeignKeyConstraintViolation",
+          originalCode: "23503",
+          originalMessage: `insert or update on table "FeedbackSource" violates foreign key constraint "${constraintName}"`,
+          constraint: { index: constraintName },
+        },
+      },
+    },
+  });
+
 describe("getFeedbackSourcesWithMappings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -456,11 +477,7 @@ describe("createFeedbackSourceWithMappings", () => {
 
   test("throws FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE on composite FK violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
-        code: "P2003",
-        clientVersion: "5.0.0",
-        meta: { constraint: "FeedbackSource_feedbackDirectoryId_workspaceId_fkey" },
-      })
+      makeForeignKeyError("FeedbackSource_feedbackDirectoryId_workspaceId_fkey")
     );
 
     await expect(
@@ -474,11 +491,7 @@ describe("createFeedbackSourceWithMappings", () => {
 
   test("throws DatabaseError on an unrelated foreign-key violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
-        code: "P2003",
-        clientVersion: "5.0.0",
-        meta: { constraint: "FeedbackSourceFormbricksMapping_surveyId_workspaceId_fkey" },
-      })
+      makeForeignKeyError("FeedbackSourceFormbricksMapping_surveyId_workspaceId_fkey")
     );
 
     await expect(

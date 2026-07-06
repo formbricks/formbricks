@@ -66,6 +66,26 @@ const mockDirectoryDetailsDbRow = {
   feedbackSources: [],
 };
 
+// Mirrors the real P2003 `meta` produced by Prisma 7 with the @prisma/adapter-pg driver: the
+// constraint name is nested under driverAdapterError.cause, not at the top level.
+const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRequestError =>
+  new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+    code: "P2003",
+    clientVersion: "7.8.0",
+    meta: {
+      modelName: "FeedbackDirectoryWorkspace",
+      driverAdapterError: {
+        name: "DriverAdapterError",
+        cause: {
+          kind: "ForeignKeyConstraintViolation",
+          originalCode: "23503",
+          originalMessage: `update or delete on table "FeedbackDirectoryWorkspace" violates foreign key constraint "${constraintName}"`,
+          constraint: { index: constraintName },
+        },
+      },
+    },
+  });
+
 describe("FeedbackDirectory Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -497,11 +517,7 @@ describe("FeedbackDirectory Service", () => {
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
-          code: "P2003",
-          clientVersion: "0.0.1",
-          meta: { constraint: "FeedbackSource_feedbackDirectoryId_workspaceId_fkey" },
-        })
+        makeForeignKeyError("FeedbackSource_feedbackDirectoryId_workspaceId_fkey")
       );
 
       await expect(
@@ -515,11 +531,7 @@ describe("FeedbackDirectory Service", () => {
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
-          code: "P2003",
-          clientVersion: "0.0.1",
-          meta: { constraint: "FeedbackDirectoryWorkspace_workspaceId_fkey" },
-        })
+        makeForeignKeyError("FeedbackDirectoryWorkspace_workspaceId_fkey")
       );
 
       await expect(
