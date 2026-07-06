@@ -2,6 +2,7 @@
 
 import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
 import { CheckIcon } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -33,6 +34,7 @@ import {
   waitForBillingPlanAction,
 } from "../actions";
 import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
+import { PlanComparisonTable, type TPlanColumn } from "./plan-comparison";
 import { PlanResponseFeature } from "./response-pricing-tooltip";
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
@@ -53,6 +55,10 @@ interface PricingTableProps {
   organization: TOrganization;
   responseCount: number;
   workspaceCount: number;
+  surveyCount: number;
+  memberCount: number;
+  isSubscriptionRedesign: boolean;
+  isPlanComparison: boolean;
   usageCycleStart: Date;
   usageCycleEnd: Date;
   hasBillingRights: boolean;
@@ -205,10 +211,46 @@ const isSwitchAtPeriodEndCta = (
   return STANDARD_PLAN_LEVEL[plan] <= currentPlanLevel;
 };
 
+// Single metric tile in the redesigned "Usage Overview" card (experiment test variant).
+const UsageStat = ({
+  label,
+  value,
+  limit,
+  unlimited,
+  t,
+}: {
+  label: string;
+  value: number;
+  limit?: number | null;
+  unlimited?: boolean;
+  t?: (key: string, options?: Record<string, unknown>) => string;
+}) => {
+  let limitLabel = "\u00A0";
+  if (t) {
+    if (unlimited) {
+      limitLabel = t("workspace.settings.billing.usage_of_unlimited");
+    } else if (limit != null) {
+      limitLabel = t("workspace.settings.billing.usage_of_limit", { limit: limit.toLocaleString() });
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-4 text-center">
+      <span className="text-sm font-medium text-slate-500">{label}</span>
+      <span className="text-2xl font-semibold text-slate-900">{value.toLocaleString()}</span>
+      <span className="min-h-4 text-xs text-slate-400">{limitLabel}</span>
+    </div>
+  );
+};
+
 export const PricingTable = ({
   organization,
   responseCount,
   workspaceCount,
+  surveyCount,
+  memberCount,
+  isSubscriptionRedesign,
+  isPlanComparison,
   usageCycleStart,
   usageCycleEnd,
   hasBillingRights,
@@ -264,6 +306,42 @@ export const PricingTable = ({
     currentCloudPlan === "hobby" || currentCloudPlan === "pro" || currentCloudPlan === "scale"
       ? STANDARD_PLAN_LEVEL[currentCloudPlan]
       : null;
+
+  // Derived values for the redesigned "Current Subscription" card (experiment test variant).
+  const currentPlanInterval: TCloudBillingInterval = currentBillingInterval ?? "monthly";
+  const currentPlanCatalogEntry =
+    currentCloudPlan === "pro"
+      ? billingCatalog.pro[currentPlanInterval]
+      : currentCloudPlan === "scale"
+        ? billingCatalog.scale[currentPlanInterval]
+        : currentCloudPlan === "hobby"
+          ? billingCatalog.hobby.monthly
+          : null;
+  const currentPlanAmount = currentPlanCatalogEntry
+    ? formatMoney(currentPlanCatalogEntry.currency, currentPlanCatalogEntry.unitAmount, locale)
+    : null;
+  const trialEndValue = organization.billing.stripe?.trialEnd ?? null;
+  const trialEndDate = trialEndValue ? new Date(trialEndValue) : null;
+  const trialEndLabel =
+    trialEndDate && Number.isFinite(trialEndDate.getTime())
+      ? formatDateForDisplay(trialEndDate, locale, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          timeZone: "UTC",
+        })
+      : null;
+  // The redesigned card's "Upgrade" CTA jumps to the plan selector below (SettingsCard sets
+  // its root element id to the card title).
+  const handleUpgradeCtaClick = () => {
+    posthog.capture("upgrade_cta_clicked", {
+      source: "current_subscription_card",
+      plan: currentCloudPlan,
+    });
+    document
+      .getElementById(t("workspace.settings.billing.plan_selection_title"))
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const clearUpgradeIntent = () => {
     if (globalThis.window === undefined) {
@@ -904,18 +982,192 @@ export const PricingTable = ({
     return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount, period });
   };
 
+  // Plan columns for the comparison table (test variant), reusing the same CTA state as the cards.
+  const planComparisonColumns: TPlanColumn[] = planCards.map((planCard) => {
+    const isCurrentSelection = isCurrentPlanSelection(
+      planCard.plan,
+      planCard.interval,
+      currentCloudPlan,
+      currentBillingInterval
+    );
+    const isPendingSelection =
+      pendingChange?.targetPlan === planCard.plan &&
+      (planCard.plan === "hobby" || pendingChange.targetInterval === planCard.interval);
+    const isCancelAtPeriodEndCta = canCancelCurrentPaidPlanAtPeriodEnd(
+      planCard.plan,
+      planCard.interval,
+      currentCloudPlan,
+      currentBillingInterval,
+      isTrialingWithoutPayment,
+      pendingChange
+    );
+    const isSwitchAtPeriodEndCtaForCard = isSwitchAtPeriodEndCta(
+      planCard.plan,
+      planCard.interval,
+      currentCloudPlan,
+      currentBillingInterval,
+      currentPlanLevel,
+      isTrialingWithoutPayment,
+      hasPaymentMethod,
+      pendingChange
+    );
+    const isSecondaryPlanCta = isCancelAtPeriodEndCta || isSwitchAtPeriodEndCtaForCard;
+    const isDisabled =
+      !hasBillingRights ||
+      (isCurrentSelection && !isTrialingWithoutPayment && !isCancelAtPeriodEndCta) ||
+      isPendingSelection ||
+      isStripeSetupIncomplete;
+
+    return {
+      key: `${planCard.plan}-${planCard.interval}`,
+      name: getCurrentCloudPlanLabel(planCard.plan, t),
+      description: planCard.description,
+      amount: planCard.amount,
+      periodLabel: getPlanPeriodLabel(planCard.plan, planCard.interval, t),
+      isPopular: planCard.plan === "pro",
+      currentBadge: isCurrentSelection,
+      pendingBadge: isPendingSelection,
+      mostPopularLabel: t("workspace.settings.billing.most_popular"),
+      currentBadgeLabel: t("workspace.settings.billing.current_plan_badge"),
+      pendingBadgeLabel: t("workspace.settings.billing.pending_plan_badge"),
+      ctaLabel: getCtaLabel(planCard.plan, planCard.interval),
+      ctaVariant: isSecondaryPlanCta || planCard.plan !== "pro" ? "secondary" : "default",
+      ctaDisabled: isDisabled,
+      ctaLoading: isPlanActionPending === `${planCard.plan}-${planCard.interval}`,
+      onCtaClick: () => requestPlanAction(planCard.plan, planCard.interval),
+    };
+  });
+
+  // Plan cards grid (control everywhere; mobile fallback for the comparison test variant).
+  const planCardGrid = (
+    <div className="grid gap-4 lg:grid-cols-3">
+      {planCards.map((planCard) => {
+        const isCurrentSelection = isCurrentPlanSelection(
+          planCard.plan,
+          planCard.interval,
+          currentCloudPlan,
+          currentBillingInterval
+        );
+        const isPendingSelection =
+          pendingChange?.targetPlan === planCard.plan &&
+          (planCard.plan === "hobby" || pendingChange.targetInterval === planCard.interval);
+        const isCancelAtPeriodEndCta = canCancelCurrentPaidPlanAtPeriodEnd(
+          planCard.plan,
+          planCard.interval,
+          currentCloudPlan,
+          currentBillingInterval,
+          isTrialingWithoutPayment,
+          pendingChange
+        );
+        const isSwitchAtPeriodEndCtaForCard = isSwitchAtPeriodEndCta(
+          planCard.plan,
+          planCard.interval,
+          currentCloudPlan,
+          currentBillingInterval,
+          currentPlanLevel,
+          isTrialingWithoutPayment,
+          hasPaymentMethod,
+          pendingChange
+        );
+        const isSecondaryPlanCta = isCancelAtPeriodEndCta || isSwitchAtPeriodEndCtaForCard;
+        const isDisabled =
+          !hasBillingRights ||
+          (isCurrentSelection && !isTrialingWithoutPayment && !isCancelAtPeriodEndCta) ||
+          isPendingSelection ||
+          isStripeSetupIncomplete;
+
+        return (
+          <div
+            key={`${planCard.plan}-${planCard.interval}`}
+            className={cn(
+              "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-xs",
+              planCard.plan === "pro" ? "border-slate-900/20" : "border-slate-200"
+            )}>
+            <div className="mb-4 flex min-h-7 items-start gap-2">
+              {planCard.plan === "pro" && (
+                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+                  {t("workspace.settings.billing.most_popular")}
+                </span>
+              )}
+              {isCurrentSelection && (
+                <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
+                  {t("workspace.settings.billing.current_plan_badge")}
+                </span>
+              )}
+              {isPendingSelection && (
+                <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                  {t("workspace.settings.billing.pending_plan_badge")}
+                </span>
+              )}
+            </div>
+
+            <div className="min-h-32">
+              <h3 className="text-3xl font-semibold text-slate-900">
+                {getCurrentCloudPlanLabel(planCard.plan, t)}
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-slate-500">{planCard.description}</p>
+            </div>
+
+            <div className="mt-4 flex min-h-12 items-end gap-2">
+              <span className="text-3xl font-normal tracking-tight text-slate-900">{planCard.amount}</span>
+              <span className="pb-1 text-sm text-slate-500">
+                {getPlanPeriodLabel(planCard.plan, planCard.interval, t)}
+              </span>
+            </div>
+
+            <Button
+              variant={isSecondaryPlanCta || planCard.plan !== "pro" ? "secondary" : "default"}
+              className="mt-4 w-full"
+              disabled={isDisabled}
+              loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
+              onClick={() => requestPlanAction(planCard.plan, planCard.interval)}>
+              {getCtaLabel(planCard.plan, planCard.interval)}
+            </Button>
+
+            <div className="mt-8 border-t border-slate-100 pt-6">
+              <p className="mb-4 text-sm font-semibold text-slate-900">
+                {t("workspace.settings.billing.this_includes")}
+              </p>
+              <ul className="space-y-3">
+                {planCard.features.map((feature) => (
+                  <li
+                    key={feature.type === "text" ? feature.label : `${feature.plan}-responses`}
+                    className="flex items-start gap-3 text-sm text-slate-700">
+                    <CheckIcon className="mt-0.5 size-4 shrink-0 text-slate-500" />
+                    <span>
+                      {feature.type === "text" ? (
+                        feature.label
+                      ) : (
+                        <PlanResponseFeature
+                          plan={feature.plan}
+                          locale={locale}
+                          overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
+                          t={t}
+                        />
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <main>
       <div className="flex max-w-6xl flex-col gap-4">
         {trialDaysRemaining !== null &&
           (hasPaymentMethod ? (
-            <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod>
+            <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod className="max-w-5xl">
               <AlertDescription>
                 {t("workspace.settings.billing.trial_payment_method_added_description")}
               </AlertDescription>
             </TrialAlert>
           ) : (
-            <TrialAlert trialDaysRemaining={trialDaysRemaining}>
+            <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
               <AlertDescription>
                 {t("workspace.settings.billing.trial_alert_description", {
                   price: formatMoney(
@@ -934,7 +1186,7 @@ export const PricingTable = ({
           ))}
 
         {pendingChange && (
-          <Alert variant="info" className="max-w-4xl">
+          <Alert variant="info" className="max-w-5xl">
             <AlertTitle>{t("workspace.settings.billing.pending_plan_change_title")}</AlertTitle>
             <AlertDescription>
               {t("workspace.settings.billing.pending_plan_change_description", {
@@ -956,7 +1208,7 @@ export const PricingTable = ({
         )}
 
         {isStripeSetupIncomplete && hasBillingRights && (
-          <Alert variant="warning" className="max-w-4xl">
+          <Alert variant="warning" className="max-w-5xl">
             <AlertTitle>{t("workspace.settings.billing.stripe_setup_incomplete")}</AlertTitle>
             <AlertDescription>
               {t("workspace.settings.billing.stripe_setup_incomplete_description")}
@@ -968,82 +1220,197 @@ export const PricingTable = ({
         )}
 
         {currentCloudPlan === "custom" && (
-          <Alert className="max-w-4xl">
+          <Alert className="max-w-5xl">
             <AlertTitle>{t("workspace.settings.billing.custom_plan_title")}</AlertTitle>
             <AlertDescription>{t("workspace.settings.billing.custom_plan_description")}</AlertDescription>
           </Alert>
         )}
 
-        <SettingsCard
-          title={t("workspace.settings.billing.subscription")}
-          description={t("workspace.settings.billing.subscription_description")}
-          buttonInfo={
-            canShowSubscriptionButton
-              ? {
-                  text: t("workspace.settings.billing.manage_billing_details"),
-                  onClick: () => void openBillingPortal(),
-                  variant: "secondary",
-                }
-              : undefined
-          }>
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-semibold text-slate-700">
-                {t("workspace.settings.billing.your_plan")}
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge type="success" size="normal" text={getCurrentCloudPlanLabel(currentCloudPlan, t)} />
-                {currentCloudPlan !== "hobby" && currentBillingInterval && (
-                  <Badge
-                    type="gray"
-                    size="normal"
-                    text={
-                      currentBillingInterval === "monthly"
-                        ? t("workspace.settings.billing.monthly")
-                        : t("workspace.settings.billing.yearly")
-                    }
-                  />
-                )}
-                {currentSubscriptionStatus === "trialing" && (
-                  <Badge
-                    type="warning"
-                    size="normal"
-                    text={t("workspace.settings.billing.status_trialing")}
-                  />
-                )}
+        {isSubscriptionRedesign ? (
+          <>
+            <SettingsCard
+              className="mb-0 max-w-5xl"
+              title={t("workspace.settings.billing.current_subscription_title")}
+              description={t("workspace.settings.billing.subscription_description")}>
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-2xl font-semibold text-slate-900">
+                      {getCurrentCloudPlanLabel(currentCloudPlan, t)}
+                    </h3>
+                    {isTrialing && trialEndLabel && (
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                        {t("workspace.settings.billing.on_free_trial_until", { date: trialEndLabel })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+                    {currentPlanAmount && (
+                      <span>
+                        {currentPlanAmount}
+                        {currentPlanInterval === "yearly"
+                          ? t("workspace.settings.billing.per_year_slash")
+                          : t("workspace.settings.billing.per_month_slash")}
+                      </span>
+                    )}
+                    {currentPlanAmount && <span aria-hidden="true">·</span>}
+                    <span>
+                      {workspaceCount === 1
+                        ? t("workspace.settings.billing.meta_workspace_one", { value: workspaceCount })
+                        : t("workspace.settings.billing.meta_workspace_other", { value: workspaceCount })}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      {memberCount === 1
+                        ? t("workspace.settings.billing.meta_member_one", { value: memberCount })
+                        : t("workspace.settings.billing.meta_member_other", { value: memberCount })}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <Link
+                      href={`/organizations/${organizationId}/settings/teams`}
+                      className="font-medium text-slate-700 underline-offset-2 hover:underline">
+                      {t("workspace.settings.billing.invite_cta")}
+                    </Link>
+                  </div>
+                  {isTrialing && trialEndLabel && (
+                    <p className="text-sm text-slate-500">
+                      {t("workspace.settings.billing.trial_cancels_automatically", {
+                        date: trialEndLabel,
+                      })}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                  {currentPlanAmount && (
+                    <div className="flex flex-col sm:items-end">
+                      <span className="text-3xl font-semibold text-slate-900">{currentPlanAmount}</span>
+                      <span className="text-sm text-slate-500">
+                        {currentPlanInterval === "yearly"
+                          ? t("workspace.settings.billing.total_per_year")
+                          : t("workspace.settings.billing.total_per_month")}
+                      </span>
+                    </div>
+                  )}
+                  {hasBillingRights && (
+                    <Button variant="default" size="sm" onClick={handleUpgradeCtaClick}>
+                      {t("workspace.settings.billing.upgrade_cta")}
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
+            </SettingsCard>
 
-            <div className="flex flex-col gap-2">
+            <SettingsCard
+              className="mt-0 max-w-5xl"
+              title={t("workspace.settings.billing.usage_overview_title")}
+              description={t("workspace.settings.billing.usage_overview_description")}>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <UsageStat
+                  label={t("workspace.settings.billing.usage_surveys")}
+                  value={surveyCount}
+                  unlimited
+                  t={t}
+                />
+                <UsageStat
+                  label={t("workspace.settings.billing.usage_responses")}
+                  value={responseCount}
+                  limit={organization.billing.limits.monthly.responses}
+                  unlimited={responsesUnlimitedCheck}
+                  t={t}
+                />
+                <UsageStat
+                  label={t("workspace.settings.billing.usage_workspaces")}
+                  value={workspaceCount}
+                  limit={organization.billing.limits.workspaces}
+                  unlimited={workspacesUnlimitedCheck}
+                  t={t}
+                />
+                <UsageStat
+                  label={t("workspace.settings.billing.usage_members")}
+                  value={memberCount}
+                  unlimited
+                  t={t}
+                />
+              </div>
+            </SettingsCard>
+          </>
+        ) : (
+          <SettingsCard
+            className="max-w-5xl"
+            title={t("workspace.settings.billing.subscription")}
+            description={t("workspace.settings.billing.subscription_description")}
+            buttonInfo={
+              canShowSubscriptionButton
+                ? {
+                    text: t("workspace.settings.billing.manage_billing_details"),
+                    onClick: () => void openBillingPortal(),
+                    variant: "secondary",
+                  }
+                : undefined
+            }>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-semibold text-slate-700">
+                  {t("workspace.settings.billing.your_plan")}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge type="success" size="normal" text={getCurrentCloudPlanLabel(currentCloudPlan, t)} />
+                  {currentCloudPlan !== "hobby" && currentBillingInterval && (
+                    <Badge
+                      type="gray"
+                      size="normal"
+                      text={
+                        currentBillingInterval === "monthly"
+                          ? t("workspace.settings.billing.monthly")
+                          : t("workspace.settings.billing.yearly")
+                      }
+                    />
+                  )}
+                  {currentSubscriptionStatus === "trialing" && (
+                    <Badge
+                      type="warning"
+                      size="normal"
+                      text={t("workspace.settings.billing.status_trialing")}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <UsageCard
+                  metric={t("common.responses")}
+                  currentCount={responseCount}
+                  limit={organization.billing.limits.monthly.responses}
+                  isUnlimited={responsesUnlimitedCheck}
+                  unlimitedLabel={t("workspace.settings.billing.unlimited_responses")}
+                />
+                <p className="text-sm text-slate-500">
+                  {t("workspace.settings.billing.usage_cycle")}: {usageCycleLabel}
+                </p>
+              </div>
+
               <UsageCard
-                metric={t("common.responses")}
-                currentCount={responseCount}
-                limit={organization.billing.limits.monthly.responses}
-                isUnlimited={responsesUnlimitedCheck}
-                unlimitedLabel={t("workspace.settings.billing.unlimited_responses")}
+                metric={t("common.workspaces")}
+                currentCount={workspaceCount}
+                limit={organization.billing.limits.workspaces}
+                isUnlimited={workspacesUnlimitedCheck}
+                unlimitedLabel={t("workspace.settings.billing.unlimited_workspaces")}
               />
-              <p className="text-sm text-slate-500">
-                {t("workspace.settings.billing.usage_cycle")}: {usageCycleLabel}
-              </p>
             </div>
-
-            <UsageCard
-              metric={t("common.workspaces")}
-              currentCount={workspaceCount}
-              limit={organization.billing.limits.workspaces}
-              isUnlimited={workspacesUnlimitedCheck}
-              unlimitedLabel={t("workspace.settings.billing.unlimited_workspaces")}
-            />
-          </div>
-        </SettingsCard>
+          </SettingsCard>
+        )}
 
         {showPlanSelector && (
           <SettingsCard
+            className="max-w-5xl"
             title={t("workspace.settings.billing.plan_selection_title")}
             description={t("workspace.settings.billing.plan_selection_description")}>
             <div className="flex flex-col gap-6">
               <div
-                className="flex w-fit rounded-xl border border-slate-200 bg-slate-100 p-1"
+                className={cn(
+                  "flex w-fit rounded-xl border border-slate-200 bg-slate-100 p-1",
+                  isPlanComparison && "self-end"
+                )}
                 role="tablist"
                 aria-label={t("workspace.settings.billing.billing_interval_toggle")}>
                 {(["monthly", "yearly"] as const).map((interval) => (
@@ -1067,121 +1434,34 @@ export const PricingTable = ({
                 ))}
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-3">
-                {planCards.map((planCard) => {
-                  const isCurrentSelection = isCurrentPlanSelection(
-                    planCard.plan,
-                    planCard.interval,
-                    currentCloudPlan,
-                    currentBillingInterval
-                  );
-                  const isPendingSelection =
-                    pendingChange?.targetPlan === planCard.plan &&
-                    (planCard.plan === "hobby" || pendingChange.targetInterval === planCard.interval);
-                  const isCancelAtPeriodEndCta = canCancelCurrentPaidPlanAtPeriodEnd(
-                    planCard.plan,
-                    planCard.interval,
-                    currentCloudPlan,
-                    currentBillingInterval,
-                    isTrialingWithoutPayment,
-                    pendingChange
-                  );
-                  const isSwitchAtPeriodEndCtaForCard = isSwitchAtPeriodEndCta(
-                    planCard.plan,
-                    planCard.interval,
-                    currentCloudPlan,
-                    currentBillingInterval,
-                    currentPlanLevel,
-                    isTrialingWithoutPayment,
-                    hasPaymentMethod,
-                    pendingChange
-                  );
-                  const isSecondaryPlanCta = isCancelAtPeriodEndCta || isSwitchAtPeriodEndCtaForCard;
-                  const isDisabled =
-                    !hasBillingRights ||
-                    (isCurrentSelection && !isTrialingWithoutPayment && !isCancelAtPeriodEndCta) ||
-                    isPendingSelection ||
-                    isStripeSetupIncomplete;
+              {isPlanComparison ? (
+                <>
+                  <div className="lg:hidden">{planCardGrid}</div>
+                  <div className="hidden lg:block">
+                    <PlanComparisonTable columns={planComparisonColumns} />
+                  </div>
+                </>
+              ) : (
+                planCardGrid
+              )}
 
-                  return (
-                    <div
-                      key={`${planCard.plan}-${planCard.interval}`}
-                      className={cn(
-                        "grid h-full grid-rows-[minmax(1.75rem,auto)_minmax(8rem,auto)_minmax(4.5rem,auto)_auto_1fr] rounded-2xl border bg-white p-6 shadow-xs",
-                        planCard.plan === "pro" ? "border-slate-900/20" : "border-slate-200"
-                      )}>
-                      <div className="mb-4 flex min-h-7 items-start gap-2">
-                        {planCard.plan === "pro" && (
-                          <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                            {t("workspace.settings.billing.most_popular")}
-                          </span>
-                        )}
-                        {isCurrentSelection && (
-                          <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                            {t("workspace.settings.billing.current_plan_badge")}
-                          </span>
-                        )}
-                        {isPendingSelection && (
-                          <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-                            {t("workspace.settings.billing.pending_plan_badge")}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="min-h-32">
-                        <h3 className="text-3xl font-semibold text-slate-900">
-                          {getCurrentCloudPlanLabel(planCard.plan, t)}
-                        </h3>
-                        <p className="mt-3 text-sm leading-6 text-slate-500">{planCard.description}</p>
-                      </div>
-
-                      <div className="mt-4 flex min-h-12 items-end gap-2">
-                        <span className="text-3xl font-normal tracking-tight text-slate-900">
-                          {planCard.amount}
-                        </span>
-                        <span className="pb-1 text-sm text-slate-500">
-                          {getPlanPeriodLabel(planCard.plan, planCard.interval, t)}
-                        </span>
-                      </div>
-
-                      <Button
-                        variant={isSecondaryPlanCta || planCard.plan !== "pro" ? "secondary" : "default"}
-                        className="mt-4 w-full"
-                        disabled={isDisabled}
-                        loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
-                        onClick={() => requestPlanAction(planCard.plan, planCard.interval)}>
-                        {getCtaLabel(planCard.plan, planCard.interval)}
-                      </Button>
-
-                      <div className="mt-8 border-t border-slate-100 pt-6">
-                        <p className="mb-4 text-sm font-semibold text-slate-900">
-                          {t("workspace.settings.billing.this_includes")}
-                        </p>
-                        <ul className="space-y-3">
-                          {planCard.features.map((feature) => (
-                            <li
-                              key={feature.type === "text" ? feature.label : `${feature.plan}-responses`}
-                              className="flex items-start gap-3 text-sm text-slate-700">
-                              <CheckIcon className="mt-0.5 size-4 shrink-0 text-slate-500" />
-                              <span>
-                                {feature.type === "text" ? (
-                                  feature.label
-                                ) : (
-                                  <PlanResponseFeature
-                                    plan={feature.plan}
-                                    locale={locale}
-                                    overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
-                                    t={t}
-                                  />
-                                )}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="mt-4 flex flex-col items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs sm:flex-row sm:items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {t("workspace.settings.billing.contact_sales_title")}
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                    {t("workspace.settings.billing.contact_sales_description")}
+                  </p>
+                </div>
+                <Button variant="default" className="shrink-0" asChild>
+                  <Link
+                    href="https://app.formbricks.com/s/trvp8tzy5uvsps9rc9qi9l9w?delivery=cloud&source=billingView"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    {t("workspace.settings.billing.contact_sales_cta")}
+                  </Link>
+                </Button>
               </div>
             </div>
           </SettingsCard>
