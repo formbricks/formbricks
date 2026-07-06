@@ -69,13 +69,13 @@ export interface TranslationKeys {
   [key: string]: string | TranslationKeys;
 }
 
-interface LockfileValidationResults {
+export interface LockfileValidationResults {
   missing: string[];
   outOfSync: string[];
   extra: string[];
 }
 
-interface ScanResults {
+export interface ScanResults {
   usedKeys: Set<string>;
   translationKeys: Set<string>;
   missingKeys: Set<string>;
@@ -503,7 +503,7 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
 
   console.log("═══════════════════════════════════════════════════════════\n");
 }
-function parseLockfile(content: string): Record<string, string> {
+export function parseLockfile(content: string): Record<string, string> {
   const checksums: Record<string, string> = {};
   const lines = content.split(/\r?\n/);
   const regex = /^\s{4}(?<key>[^:]+):\s*(?<hash>[a-f0-9]{32})\s*$/;
@@ -544,11 +544,7 @@ async function loadDefaultLocaleWithValues(
   return flattened;
 }
 
-interface ObjectHash {
-  MD5: (val: unknown) => string;
-}
-
-async function validateLockfile(
+export async function validateLockfile(
   localesDir: string,
   defaultLocale: string
 ): Promise<LockfileValidationResults | null> {
@@ -569,7 +565,7 @@ async function validateLockfile(
   const extra: string[] = [];
 
   for (const [key, val] of Object.entries(sourceKeysWithValues)) {
-    const expected = (objectHash as unknown as ObjectHash).MD5(val);
+    const expected = objectHash.MD5(val);
     const actual = lockChecksums[key];
     if (!actual) {
       missing.push(key);
