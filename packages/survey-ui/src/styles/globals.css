@@ -226,11 +226,11 @@
 /* =============================================================================
    Focus Visibility (WCAG 2.4.7)
 
-   One uniform, high-visibility focus indicator for every focusable element in
-   the survey: a black + bright-yellow double ring. Keeping both colors means
-   the indicator stays visible on any background (the black ring carries light
-   themes, the yellow ring carries dark themes), so it works without per-theme
-   overrides.
+   One uniform focus indicator for every focusable element in the survey: a
+   white inner halo + brand-colored outer ring. The halo separates the ring
+   from the control and keeps it visible on dark or saturated backgrounds,
+   while the outer ring follows the theme's brand color so the indicator stays
+   visually cohesive with the rest of the palette.
 
    This lives in the `components` layer with !important on purpose: the
    per-component Tailwind `focus-visible:ring-*` utilities are emitted in the
@@ -242,8 +242,8 @@
    ============================================================================= */
 @layer components {
   #fbjs {
-    --fb-focus-ring-inner-color: #000000;
-    --fb-focus-ring-outer-color: #fde047;
+    --fb-focus-ring-inner-color: #ffffff;
+    --fb-focus-ring-outer-color: var(--fb-survey-brand-color, #1e40af);
     --fb-focus-ring-inner-width: 2px;
     --fb-focus-ring-outer-width: 2px;
   }
