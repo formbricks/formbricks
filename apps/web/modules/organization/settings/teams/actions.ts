@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { OrganizationRole } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
@@ -335,7 +336,14 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
 
     if (inviteId) {
       await recordRateLimitUsage(rateLimitConfigs.actions.inviteMember, parsedInput.organizationId);
-      await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
+      // Email delivery is best-effort: the invite is already persisted and can be shared via its
+      // link, so a failing/misconfigured SMTP must not fail the whole action — otherwise the created
+      // invite is stranded behind an "Invite already exists" error on the user's next attempt.
+      try {
+        await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
+      } catch (error) {
+        logger.error(error, "Failed to send invite email");
+      }
     }
 
     capturePostHogEvent(
@@ -421,7 +429,13 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
         });
 
         if (inviteId) {
-          await sendInviteMemberEmail(inviteId, email, ctx.user.name ?? "", invitee.name ?? "");
+          // Best-effort email (see inviteUserAction): a failed send must not flip a created invite
+          // to "failed" — the invitee exists and can be reached via the invite link.
+          try {
+            await sendInviteMemberEmail(inviteId, email, ctx.user.name ?? "", invitee.name ?? "");
+          } catch (error) {
+            logger.error(error, "Failed to send bulk invite email");
+          }
           invitedEmails.push(email);
           results.push({ email, success: true });
         } else {

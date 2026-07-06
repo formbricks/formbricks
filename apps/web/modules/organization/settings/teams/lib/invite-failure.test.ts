@@ -31,6 +31,15 @@ describe("getInviteFailureReason", () => {
   test("returns unknown for unrecognized errors", () => {
     expect(getInviteFailureReason(new Error("Something else"))).toBe("unknown");
   });
+
+  test("returns unknown for non-error values", () => {
+    expect(getInviteFailureReason("just a string")).toBe("unknown");
+    expect(getInviteFailureReason(undefined)).toBe("unknown");
+  });
+
+  test("returns unknown for a known error class with an unmapped message", () => {
+    expect(getInviteFailureReason(new InvalidInputError("some unmapped message"))).toBe("unknown");
+  });
 });
 
 describe("getInviteFailureReasonFromMessage", () => {
@@ -50,6 +59,18 @@ describe("formatInviteFailureMessage", () => {
     expect(
       formatInviteFailureMessage(t, { email: "a@example.com", failureReason: "invite_already_exists" })
     ).toBe("workspace.settings.general.invite_failure_invite_exists:a@example.com");
+  });
+
+  test("maps duplicate team ids to its translation key", () => {
+    expect(
+      formatInviteFailureMessage(t, { email: "b@example.com", failureReason: "duplicate_team_ids" })
+    ).toBe("workspace.settings.general.invite_failure_duplicate_teams:b@example.com");
+  });
+
+  test("maps invalid team ids to its translation key", () => {
+    expect(formatInviteFailureMessage(t, { email: "c@example.com", failureReason: "invalid_team_ids" })).toBe(
+      "workspace.settings.general.invite_failure_invalid_teams:c@example.com"
+    );
   });
 });
 
