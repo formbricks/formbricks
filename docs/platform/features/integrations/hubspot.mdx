@@ -61,17 +61,17 @@ To create a Legacy Private App:
   <Step title="Set Up Your Survey">
     Make sure your survey has meaningful `questionId` values for each question. This makes mapping responses to HubSpot fields easier.
 
-    ![Update Question ID](/images/xm-and-surveys/core-features/integrations/make/update-question-id.webp)
+    ![Update Question ID](/images/platform/features/integrations/make/update-question-id.webp)
   </Step>
   <Step title="Create a New Make.com Scenario">
     Go to [Make.com](https://make.com) and create a new scenario. Search for **Formbricks** and select it as your trigger, then choose **Response Finished** as the trigger event.
 
-    ![Search Formbricks](/images/xm-and-surveys/core-features/integrations/make/search-formbricks.webp)
+    ![Search Formbricks](/images/platform/features/integrations/make/search-formbricks.webp)
   </Step>
   <Step title="Connect Formbricks to Make">
     Click **Create a webhook**, enter your Formbricks API Host (default: `https://app.formbricks.com`), add your Formbricks API Key (see [API Key Setup](/api-reference/rest-api#how-to-generate-an-api-key)), and select the survey you want to connect.
 
-    ![Enter API Key](/images/xm-and-surveys/core-features/integrations/make/enter-api-key-and-host.webp)
+    ![Enter API Key](/images/platform/features/integrations/make/enter-api-key-and-host.webp)
   </Step>
   <Step title="Add the HubSpot Module">
     Click the **+** button after the Formbricks trigger, search for **HubSpot**, choose **Create or Update a Contact** as the action, and connect your HubSpot account.
@@ -105,7 +105,7 @@ To create a Legacy Private App:
   <Step title="Set Up the Formbricks Trigger">
     Create a new workflow in n8n, add the **Formbricks** trigger node, connect it with your Formbricks API Key and host, select **Response Finished** as the event, and choose your survey.
 
-    ![Add Formbricks Trigger](/images/xm-and-surveys/core-features/integrations/n8n/add-formbricks-trigger.webp)
+    ![Add Formbricks Trigger](/images/platform/features/integrations/n8n/add-formbricks-trigger.webp)
   </Step>
   <Step title="Add the HubSpot Node">
     Add a new node and search for **HubSpot**, select **Create/Update Contact** as the operation, and connect your HubSpot account (n8n supports both OAuth and access token authentication).
@@ -140,7 +140,7 @@ For maximum flexibility, you can use Formbricks webhooks with a custom endpoint 
   <Step title="Create a Formbricks Webhook">
     Go to **Configuration** → **Integrations** in Formbricks, click **Manage Webhooks** → **Add Webhook**, enter your endpoint URL, select **Response Finished** as the trigger, and choose the surveys to monitor.
 
-    ![Integrations Tab](/images/xm-and-surveys/core-features/integrations/webhooks/integrations-tab.webp)
+    ![Integrations Tab](/images/platform/features/integrations/webhooks/integrations-tab.webp)
   </Step>
   <Step title="Build Your Webhook Handler">
     Your webhook handler needs to:
@@ -149,7 +149,7 @@ For maximum flexibility, you can use Formbricks webhooks with a custom endpoint 
     - **Call the HubSpot API** - Use the [HubSpot Contacts API](https://developers.hubspot.com/docs/api/crm/contacts) to create or update contacts
     - **Handle duplicates** - HubSpot returns a 409 error if a contact with that email exists; search and update instead
 
-    You can deploy using serverless functions (Vercel, AWS Lambda, Cloudflare Workers), traditional servers, or low-code platforms. For webhook signature verification, see the [Webhooks documentation](/xm-and-surveys/core-features/integrations/webhooks).
+    You can deploy using serverless functions (Vercel, AWS Lambda, Cloudflare Workers), traditional servers, or low-code platforms. For webhook signature verification, see the [Webhooks documentation](/platform/features/integrations/webhooks).
   </Step>
   <Step title="Deploy and Test">
     Deploy your webhook handler to a publicly accessible URL, add the URL to your Formbricks webhook configuration, submit a test survey response, and verify the contact appears in HubSpot.
