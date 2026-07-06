@@ -172,9 +172,14 @@ function UploadArea({
   // elements (axe nested-interactive) and the button's aria-label did not contain the
   // visible text (axe label-content-name-mismatch). data-fb-focus-ring paints the global
   // focus ring on the dropzone while the hidden input holds focus.
+  //
+  // Deliberately NO htmlFor: the stacked-card renderer keeps every card mounted, so the
+  // question (and its input id) exists more than once in the DOM. An explicit htmlFor
+  // resolves against the FIRST element with that id document-wide — a hidden clone — so
+  // clicks would never reach this card's input and the file dialog would not open. The
+  // implicit wrapping association always targets the input inside THIS label.
   return (
     <label
-      htmlFor={inputId}
       onDragOver={onDragOver}
       onDrop={onDrop}
       data-fb-focus-ring

@@ -50,17 +50,10 @@ interface AllowlistEntry {
   justification: string;
 }
 
-const ALLOWLIST: AllowlistEntry[] = [
-  {
-    // File-upload control renders a <button> nested inside the dropzone <label>. This
-    // is a known structural issue in the file-upload element (tracked separately);
-    // the control remains operable. Scoped tightly to the file-upload dropzone.
-    ruleId: "nested-interactive",
-    targets: ["fb__el__fileupload", "filepicker", "file-upload"],
-    justification:
-      "File-upload nested <button> inside <label> — known issue tracked separately; control stays operable.",
-  },
-];
+// Currently empty: every violation the suite found was fixed at the source instead
+// (file-upload dropzone restructure, branding contrast) and the Cal.com third-party
+// iframe was removed from the fixture. Add entries only for justified wontfixes.
+const ALLOWLIST: AllowlistEntry[] = [];
 
 type ViolationRow = {
   variant: string;
@@ -296,25 +289,40 @@ const waitForCardSettled = (page: Page, cardId: string): Promise<void> =>
  * id, or null when the ending card is reached.
  */
 const waitForCardTransition = async (page: Page, fromCardId: string): Promise<string | null> => {
-  const deadline = Date.now() + CARD_TIMEOUT;
   let stableId: string | null = null;
   let stableHits = 0;
+  let outcome: string | null | undefined;
 
-  while (Date.now() < deadline) {
-    if (await isOnEndingCard(page)) return null;
+  await expect
+    .poll(
+      async () => {
+        if (await isOnEndingCard(page)) {
+          outcome = null;
+          return true;
+        }
+        const currentId = await getActiveCardId(page);
+        if (currentId && currentId !== fromCardId) {
+          if (currentId === stableId) {
+            stableHits += 1;
+          } else {
+            stableId = currentId;
+            stableHits = 1;
+          }
+          if (stableHits >= 2) {
+            outcome = currentId;
+            return true;
+          }
+        }
+        return false;
+      },
+      { timeout: CARD_TIMEOUT, intervals: [150] }
+    )
+    .toBe(true)
+    // Timeout is not an error here: mirror the previous behavior of falling back to
+    // whatever card is currently active so the caller's stall detection decides.
+    .catch(() => undefined);
 
-    const currentId = await getActiveCardId(page);
-    if (currentId && currentId !== fromCardId) {
-      if (currentId === stableId) {
-        stableHits += 1;
-        if (stableHits >= 2) return currentId;
-      } else {
-        stableId = currentId;
-        stableHits = 1;
-      }
-    }
-    await page.waitForTimeout(150);
-  }
+  if (outcome !== undefined) return outcome;
   return getActiveCardId(page);
 };
 
