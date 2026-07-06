@@ -82,6 +82,14 @@
       "message": "Votre réponse n'a pas pu être soumise car elle a été signalée comme une activité automatisée. Si vous respirez, veuillez réessayer.",
       "title": "Nous n'avons pas pu vérifier que tu es humain."
     },
+    "response_already_completed": {
+      "message": "Cette réponse a déjà été complétée et ne peut plus être modifiée. Tu peux fermer cette fenêtre en toute sécurité.",
+      "title": "Cette réponse a déjà été complétée."
+    },
+    "response_sending_error_permanent": {
+      "message": "Votre réponse n'a pas pu être envoyée et ne peut pas être retentée. Contacte le propriétaire de l'enquête si cela continue.",
+      "title": "Votre réponse n'a pas pu être envoyée."
+    },
     "value_must_contain": "La valeur doit contenir {value}",
     "value_must_equal": "La valeur doit être égale à {value}",
     "value_must_not_contain": "La valeur ne doit pas contenir {value}",
