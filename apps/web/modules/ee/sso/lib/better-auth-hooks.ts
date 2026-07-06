@@ -1,9 +1,11 @@
 import "server-only";
 import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
+import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { WEBAPP_URL } from "@/lib/constants";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { normalizeSsoProvider } from "./provider-normalization";
@@ -11,7 +13,9 @@ import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisio
 import { startSsoRecovery } from "./sso-recovery";
 import {
   getPendingSsoIdentity,
+  getSsoAttributionProperties,
   getSsoProvisioningDecision,
+  setSsoAttributionProperties,
   setSsoProvisioningDecision,
 } from "./sso-request-context";
 
@@ -78,6 +82,15 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         if (decision.action === "reject") return false;
         setSsoProvisioningDecision(decision); // carried to user.create.after (the membership writes)
 
+        // Read the marketing attribution cookie here, in request scope, and carry it to the
+        // after-hook (which runs post-commit, where re-reading the cookie is unreliable). The
+        // `user_signed_in` path clears the cookie via finalizeSuccessfulSignIn on the same request.
+        try {
+          setSsoAttributionProperties(getAttributionPropertiesFromCookies(await cookies()));
+        } catch {
+          // Best-effort: attribution is non-critical and must never block sign-up.
+        }
+
         // Enrich the row in a single INSERT (shallow-merged): IdP-attested email, denormalized
         // provider, request-matched locale, and an email-localpart name when the IdP gave none.
         return {
@@ -107,6 +120,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           organizationId: decision.organizationId,
           assignToDefaultTeam: decision.assignToDefaultTeam,
           signupSource: decision.signupSource,
+          attributionProperties: getSsoAttributionProperties(),
         });
       },
     },

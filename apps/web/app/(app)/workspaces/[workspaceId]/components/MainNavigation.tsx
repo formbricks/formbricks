@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -493,7 +494,7 @@ export const MainNavigation = ({
                 {!isCollapsed &&
                   isFormbricksCloud &&
                   trialDaysRemaining !== null &&
-                  (newTrialBannerVariant === "new-trial-banner" ? (
+                  (newTrialBannerVariant === "test" ? (
                     <TrialBannerNew
                       trialDaysRemaining={trialDaysRemaining}
                       planName={organization.billing.stripe?.plan ?? "pro"}
@@ -503,7 +504,10 @@ export const MainNavigation = ({
                       billingHref={`/organizations/${organization.id}/settings/billing`}
                     />
                   ) : (
-                    <Link href={`/organizations/${organization.id}/settings/billing`} className="m-2 block">
+                    <Link
+                      href={`/organizations/${organization.id}/settings/billing`}
+                      className="m-2 block"
+                      onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}>
                       <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
                     </Link>
                   ))}

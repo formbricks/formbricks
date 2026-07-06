@@ -44,7 +44,7 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
     {
       key: "quotas",
       labelKey: t("workspace.settings.enterprise.quota_management"),
-      docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/quota-management",
+      docsUrl: "https://formbricks.com/docs/surveys/general-features/quota-management",
     },
     {
       key: "feedbackDirectories",
@@ -74,12 +74,12 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
     {
       key: "spamProtection",
       labelKey: t("workspace.settings.enterprise.spam_protection_recaptcha"),
-      docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/spam-protection",
+      docsUrl: "https://formbricks.com/docs/surveys/general-features/spam-protection",
     },
     {
       key: "twoFactorAuth",
       labelKey: t("workspace.settings.enterprise.two_factor_authentication"),
-      docsUrl: "https://formbricks.com/docs/xm-and-surveys/core-features/user-management/two-factor-auth",
+      docsUrl: "https://formbricks.com/docs/platform/features/user-management/two-factor-auth",
     },
     {
       key: "workspaces",

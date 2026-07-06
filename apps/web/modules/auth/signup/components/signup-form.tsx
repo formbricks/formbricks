@@ -11,6 +11,7 @@ import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
@@ -88,6 +89,13 @@ export const SignupForm = ({
       return webAppUrl;
     }
   }, [inviteToken, webAppUrl]);
+
+  const loginHref = useMemo(() => {
+    const base = inviteToken ? `/auth/login?callbackUrl=${returnToUrl}` : "/auth/login";
+    const attributionSuffix = buildAttributionQuerySuffix(searchParams);
+    if (!attributionSuffix) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${attributionSuffix}`;
+  }, [inviteToken, returnToUrl, searchParams]);
 
   const form = useForm<TSignupInput>({
     defaultValues: {
@@ -316,9 +324,7 @@ export const SignupForm = ({
       <div className="mt-9 text-center text-xs">
         <span className="leading-5 text-slate-500">{t("auth.signup.have_an_account")}</span>
         <br />
-        <Link
-          href={inviteToken ? `/auth/login?callbackUrl=${returnToUrl}` : "/auth/login"}
-          className="font-semibold text-slate-600 underline hover:text-slate-700">
+        <Link href={loginHref} className="font-semibold text-slate-600 underline hover:text-slate-700">
           {t("auth.signup.log_in")}
         </Link>
       </div>

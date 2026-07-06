@@ -154,6 +154,7 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       organizationId: "org-1",
       assignToDefaultTeam: false,
       signupSource: "direct",
+      attributionProperties: {},
     });
   });
 

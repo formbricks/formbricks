@@ -412,6 +412,13 @@ export const SettingsSidebarContent = ({
       icon: <BellIcon className={iconClassName} />,
       disabled: isBilling,
     },
+    {
+      id: "authorized-apps",
+      label: t("common.authorized_apps"),
+      href: accountSettingsPath("authorized-apps"),
+      icon: <UnplugIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
   ];
 
   const disabledMessage = t("common.you_are_not_authorized_to_perform_this_action");
