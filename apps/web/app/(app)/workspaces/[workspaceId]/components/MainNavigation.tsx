@@ -163,7 +163,7 @@ export const MainNavigation = ({
         items: [
           {
             name: t("workspace.unify.feedback_data"),
-            href: `/workspaces/${workspace.id}/unify/feedback-records`,
+            href: `/workspaces/${workspace.id}/unify/sources`,
             icon: MessageSquareTextIcon,
             isActive: pathname?.includes("/unify/"),
             isHidden: false,
