@@ -301,6 +301,14 @@ services:
         condition: service_healthy
       cube:
         condition: service_healthy
+      # The web container no longer migrates at startup (SKIP_STARTUP_MIGRATION=true),
+      # so it must not serve traffic until the one-shot migration run has finished —
+      # otherwise a fresh install briefly serves against an empty/half-migrated schema.
+      # Same gate hub-migrate uses. On updates (`docker compose up` after `pull`) the
+      # idempotent migrate service re-runs and web waits for it, giving correct
+      # migrate-before-serve ordering on every deploy.
+      formbricks-migrate:
+        condition: service_completed_successfully
     ports:
       - 3000:3000
     volumes:
