@@ -82,7 +82,7 @@ interface ScanResults {
   unusedKeys: Set<string>;
   incompleteTranslations: Map<string, string[]>; // locale -> missing keys
   keysWithSpaces: Set<string>; // keys that contain spaces
-  lockfileValidation: LockfileValidationResults | null;
+  lockfileValidation?: LockfileValidationResults | null;
 }
 
 /**
