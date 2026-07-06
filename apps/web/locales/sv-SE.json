@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Samla in feedback från besökare som precis har tittat på prissidan",
         "prompt_helper_website_label": "Webbplatsfeedback",
         "prompt_label": "Beskriv enkäten du behöver",
-        "prompt_placeholder": "Beskriv enkäten du behöver, t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra installationen",
+        "prompt_placeholder": "Beskriv den enkät du behöver, t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra installationen",
         "shortcut_hint": "⌘/Ctrl + Enter för att skapa",
         "start_from_scratch": "Börja från början",
         "try_prompt": "Se exempelprompt",

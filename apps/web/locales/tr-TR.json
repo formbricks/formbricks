@@ -2770,7 +2770,7 @@
         "prompt_helper_website": "Fiyatlandırma sayfasını yeni inceleyen ziyaretçilerden web sitesi geri bildirimi toplayın",
         "prompt_helper_website_label": "Web sitesi geri bildirimi",
         "prompt_label": "İhtiyacın olan anketi açıkla",
-        "prompt_placeholder": "İhtiyacın olan anketi açıkla, örn. Yeni kullanıcıların onboarding sırasında neden ayrıldığını ve kurulumu tamamlamalarına neyin yardımcı olacağını anlamak",
+        "prompt_placeholder": "İhtiyacınız olan anketi açıklayın, örneğin: Yeni kullanıcıların onboarding sırasında neden ayrıldıklarını ve kurulumu tamamlamalarına neyin yardımcı olacağını anlamak",
         "shortcut_hint": "Oluşturmak için ⌘/Ctrl + Enter",
         "start_from_scratch": "Sıfırdan başla",
         "try_prompt": "Örnek komutu gör",
