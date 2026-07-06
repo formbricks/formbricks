@@ -2588,6 +2588,7 @@
         "ai_settings_updated_successfully": "AI-instellingen succesvol bijgewerkt",
         "ai_smart_tools_enabled": "Slimme functionaliteit (AI)",
         "ai_smart_tools_enabled_description": "AI om je te helpen meer te bereiken in minder tijd. Raakt nooit data aan die met Formbricks is verzameld. Wordt alleen gebruikt om bijvoorbeeld enquêtes naar andere talen te vertalen.",
+        "bulk_invite_billing_not_supported": "The Billing role is only available on Formbricks Cloud: {emails}. Choose a different role for these rows.",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
         "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",

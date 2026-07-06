@@ -47,7 +47,7 @@ export const InviteMemberModal = ({
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
   isBulkInviteAllowed,
-}: InviteMemberModalProps) => {
+}: Readonly<InviteMemberModalProps>) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
   const { t } = useTranslation();

@@ -79,7 +79,10 @@ export const BulkInviteTab = ({
       skipEmptyLines: true,
       header: true,
       complete: (results: ParseResult<BulkCsvRow>) => {
-        if (results.errors.length > 0) {
+        // FieldMismatch (TooFewFields/TooManyFields) is non-fatal: the row still parses,
+        // missing cells come back undefined and are caught by schema validation on import.
+        const fatalErrors = results.errors.filter((parseError) => parseError.type !== "FieldMismatch");
+        if (fatalErrors.length > 0) {
           setError(t("workspace.settings.general.please_check_csv_file"));
           setPreviewRows([]);
           return;
@@ -118,12 +121,14 @@ export const BulkInviteTab = ({
 
     const teamByName = new Map(teams.map((team) => [team.name.trim().toLowerCase(), team]));
     const unknownTeamNames = new Set<string>();
+    const billingRoleEmails = new Set<string>();
 
     const members = previewRows.map((csv) => {
+      const email = readCell(csv, "Email Address", "email").trim();
       const roleCell = readCell(csv, "Role", "role");
-      let orgRole = isAccessControlAllowed ? roleCell.trim().toLowerCase() : "owner";
-      if (!isFormbricksCloud) {
-        orgRole = orgRole === "billing" ? "owner" : orgRole;
+      const orgRole = isAccessControlAllowed ? roleCell.trim().toLowerCase() : "owner";
+      if (!isFormbricksCloud && orgRole === "billing") {
+        billingRoleEmails.add(email);
       }
 
       const teamsCell = readCell(csv, "Teams", "teams");
@@ -143,7 +148,7 @@ export const BulkInviteTab = ({
 
       return {
         name: readCell(csv, "Full Name", "name").trim(),
-        email: readCell(csv, "Email Address", "email").trim(),
+        email,
         role: orgRole as TOrganizationRole,
         teamIds,
       };
@@ -153,6 +158,15 @@ export const BulkInviteTab = ({
       setError(
         t("workspace.settings.general.bulk_invite_unknown_teams", {
           teams: Array.from(unknownTeamNames).join(", "),
+        })
+      );
+      return;
+    }
+
+    if (billingRoleEmails.size > 0) {
+      setError(
+        t("workspace.settings.general.bulk_invite_billing_not_supported", {
+          emails: Array.from(billingRoleEmails).join(", "),
         })
       );
       return;

@@ -2588,6 +2588,7 @@
         "ai_settings_updated_successfully": "Az MI-beállítások sikeresen frissítve",
         "ai_smart_tools_enabled": "Intelligens funkcionalitás (MI)",
         "ai_smart_tools_enabled_description": "Mesterséges intelligencia ahhoz, hogy segítsen Önnek többet elérni kevesebb idő alatt. Soha sem érinti a Formbricks segítségével gyűjtött adatokat. Csak például a kérdőívek más nyelvekre történő fordításához kerül felhasználásra.",
+        "bulk_invite_billing_not_supported": "The Billing role is only available on Formbricks Cloud: {emails}. Choose a different role for these rows.",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
         "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",

@@ -2588,6 +2588,7 @@
         "ai_settings_updated_successfully": "Setările AI au fost actualizate cu succes",
         "ai_smart_tools_enabled": "Funcționalitate inteligentă (AI)",
         "ai_smart_tools_enabled_description": "AI care te ajută să faci mai mult în mai puțin timp. Nu accesează niciodată datele colectate cu Formbricks. Folosit doar, de exemplu, pentru a traduce chestionare în alte limbi.",
+        "bulk_invite_billing_not_supported": "The Billing role is only available on Formbricks Cloud: {emails}. Choose a different role for these rows.",
         "bulk_invite_download_template": "Download CSV template",
         "bulk_invite_rows_detected": "{count, plural, one {{count} row detected} other {{count} rows detected}}",
         "bulk_invite_rows_more": "{count, plural, one {+{count} more row} other {+{count} more rows}}",
