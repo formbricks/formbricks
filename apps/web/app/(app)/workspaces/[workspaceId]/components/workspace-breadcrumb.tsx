@@ -136,7 +136,7 @@ export const WorkspaceBreadcrumb = ({
   return (
     <BreadcrumbItem isActive={isWorkspaceDropdownOpen}>
       <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
-        <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 outline-none" asChild>
+        <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 outline-hidden" asChild>
           <div className="flex items-center gap-1">
             <FoldersIcon className="size-3" strokeWidth={1.5} />
             <span>{workspaceName}</span>

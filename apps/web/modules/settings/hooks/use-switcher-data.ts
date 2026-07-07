@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { logger } from "@formbricks/logger";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 
 export interface SwitcherItem {
@@ -67,7 +68,9 @@ export const useSwitcherData = (
           onErrorRef.current?.(message);
         }
       } catch (err) {
-        console.error(err);
+        // onError only receives the translated fallback message, so keep the raw error
+        // detail in the log — it is the only place the original failure survives.
+        logger.error(err, "Switcher data load failed");
         const message = fallbackError;
         setError(message);
         hasErrorRef.current = true;

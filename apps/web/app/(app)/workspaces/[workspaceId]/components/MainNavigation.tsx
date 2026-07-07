@@ -524,7 +524,7 @@ export const MainNavigation = ({
                       className={switcherTriggerClasses}>
                       <button
                         type="button"
-                        aria-label={isCollapsed ? t("common.change_workspace") : undefined}
+                        aria-label={isCollapsed ? t("common.choose_workspace") : undefined}
                         className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
                         <span className={switcherIconClasses}>
                           <FoldersIcon className="size-4" strokeWidth={1.5} />
@@ -571,7 +571,7 @@ export const MainNavigation = ({
                       className={switcherTriggerClasses}>
                       <button
                         type="button"
-                        aria-label={isCollapsed ? t("common.change_organization") : undefined}
+                        aria-label={isCollapsed ? t("common.choose_organization") : undefined}
                         className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
                         <span className={switcherIconClasses}>
                           <Building2Icon className="size-4" strokeWidth={1.5} />
