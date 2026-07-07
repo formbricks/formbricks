@@ -4,6 +4,7 @@ import { mockUsers } from "./utils/mock";
 
 const { name, email, password } = mockUsers.signup[0];
 const mixedCaseEmail = email.replace("signup", "SignUp");
+const normalizedEmailPattern = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 
 test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });
@@ -22,7 +23,7 @@ test.describe("Email Signup Flow Test", async () => {
     await page.waitForURL(/\/auth\/signup-without-verification-success.*/);
     await expect(page).toHaveURL(/\/auth\/signup-without-verification-success.*/);
     await expect(page).not.toHaveURL(/token=undefined/);
-    await expect(page.getByText(email)).toBeVisible();
+    await expect(page.getByText(normalizedEmailPattern)).toBeVisible();
   });
 
   test("No Name", async ({ page }) => {

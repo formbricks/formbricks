@@ -6,9 +6,9 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 
 export const SignupWithoutVerificationSuccessPage = async ({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ token?: string | string[] }>;
-}) => {
+}>) => {
   const t = await getTranslate();
   const { token } = await searchParams;
   let email: string;
@@ -24,6 +24,8 @@ export const SignupWithoutVerificationSuccessPage = async ({
     return (
       <FormWrapper>
         <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>
+        <hr className="my-4" />
+        <BackToLoginButton />
       </FormWrapper>
     );
   }
