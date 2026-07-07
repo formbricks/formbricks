@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -41,6 +42,8 @@ vi.mock("@/modules/ee/sso/lib/team", () => ({
 const constantsOverrides = vi.hoisted(() => ({
   SKIP_INVITE_FOR_SSO: false as boolean,
   DEFAULT_TEAM_ID: "team-123" as string | undefined,
+  IS_FORMBRICKS_CLOUD: false as boolean,
+  SIGNUP_DOMAIN_CHECK_ON_INVITES: false as boolean,
 }));
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
@@ -52,6 +55,12 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     get DEFAULT_TEAM_ID() {
       return constantsOverrides.DEFAULT_TEAM_ID;
     },
+    get IS_FORMBRICKS_CLOUD() {
+      return constantsOverrides.IS_FORMBRICKS_CLOUD;
+    },
+    get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
+      return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
+    },
   };
 });
 
@@ -61,6 +70,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   constantsOverrides.SKIP_INVITE_FOR_SSO = false;
   constantsOverrides.DEFAULT_TEAM_ID = "team-123";
+  constantsOverrides.IS_FORMBRICKS_CLOUD = false;
+  constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
   // Defaults: established single-org instance, access allowed, orgs resolvable.
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -193,6 +204,74 @@ describe("gateSsoProvisioning — provisions", () => {
       organizationId: "org-1",
       assignToDefaultTeam: false,
       signupSource: "invite",
+    });
+  });
+});
+
+describe("gateSsoProvisioning — personal email domain block (Cloud)", () => {
+  const blockedEmail = "spammer@gmail.com";
+
+  test("rejects a personal-domain SSO sign-up even when multi-org would otherwise bypass the gate", async () => {
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true); // the check must run BEFORE this bypass
+    expect(await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "" })).toEqual({
+      action: "reject",
+      reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+    });
+  });
+
+  test("rejects a personal-domain SSO sign-up on a fresh instance too", async () => {
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+    expect(await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "" })).toEqual({
+      action: "reject",
+      reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+    });
+  });
+
+  test("exempts a personal-domain sign-up backed by a valid matching invite", async () => {
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    vi.mocked(verifyInviteToken).mockReturnValue({ email: blockedEmail, inviteId: "inv-1" } as never);
+    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    expect(
+      await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "https://app.test/?token=t" })
+    ).toEqual({
+      action: "provision",
+      organizationId: "org-1",
+      assignToDefaultTeam: false,
+      signupSource: "invite",
+    });
+  });
+
+  test("blocks a personal-domain invite when SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled", async () => {
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = true;
+    vi.mocked(verifyInviteToken).mockReturnValue({ email: blockedEmail, inviteId: "inv-1" } as never);
+    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    expect(
+      await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "https://app.test/?token=t" })
+    ).toEqual({ action: "reject", reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE });
+  });
+
+  test("does not block a personal domain when not on Formbricks Cloud (self-hosted)", async () => {
+    // IS_FORMBRICKS_CLOUD stays false (default); fresh instance so it provisions cleanly.
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+    expect(await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "" })).toEqual({
+      action: "provision",
+      organizationId: null,
+      assignToDefaultTeam: false,
+      signupSource: "direct",
+    });
+  });
+
+  test("allows a company-domain SSO sign-up on Cloud", async () => {
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    expect(await gateSsoProvisioning({ email: "person@acme-corp.com", callbackUrl: "" })).toEqual({
+      action: "provision",
+      organizationId: null,
+      assignToDefaultTeam: false,
+      signupSource: "direct",
     });
   });
 });

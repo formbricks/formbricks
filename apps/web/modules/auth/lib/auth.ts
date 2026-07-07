@@ -22,6 +22,7 @@ import {
   requireDeletionConfirmationBeforeHandler,
 } from "@/modules/account/lib/better-auth-account-deletion";
 import {
+  blockedSignupDomainRedirectAfterHandler,
   ssoDatabaseHooks,
   ssoLicenseGateBeforeHandler,
   ssoRecoveryAfterHandler,
@@ -244,6 +245,9 @@ export const auth = betterAuth({
     after: createAuthMiddleware(async (ctx) => {
       await ssoRecoveryAfterHandler(ctx);
       await auditFailedAuthAfter(ctx);
+      // Personal-email SSO rejection → redirect to /auth/signup with a toast. Runs last so the
+      // failed-auth audit above still records the attempt; only fires on our stashed reject reason.
+      await blockedSignupDomainRedirectAfterHandler(ctx);
     }),
   },
 

@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -9,6 +10,7 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -71,6 +73,19 @@ export const gateSsoProvisioning = async ({
   email: string;
   callbackUrl: string;
 }): Promise<TSsoProvisioningDecision> => {
+  // Formbricks Cloud only: block SSO sign-ups from personal/free/disposable email domains, before any
+  // org resolution. Placed above the multi-org / fresh-instance bypass below (Cloud is multi-org, so
+  // the bypass would otherwise let these through). Invited users — a valid token whose email matches —
+  // are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is set; the exemption reuses the same invite
+  // validation as the gate below and runs lazily, only when the domain is actually blocked.
+  const isDomainBlocked = await isSignupEmailDomainBlocked(
+    email,
+    async () => (await validateSsoInviteToken(email, callbackUrl)) === null
+  );
+  if (isDomainBlocked) {
+    return { action: "reject", reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE };
+  }
+
   const signupSource = callbackUrl.includes("token=") ? "invite" : "direct";
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
