@@ -208,11 +208,6 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      // Vars in `env` are hashed into Turborepo's cache key AND made visible to the build (strict env
-      // mode). Every `process.env.*` read in apps/web/next.config.mjs shapes the build output and MUST
-      // be listed here — enforced by apps/web/lib/turbo-build-env.test.ts. NEXT_PUBLIC_* vars are
-      // additionally hashed via Next.js framework inference; the ones actually consumed by apps/web
-      // are listed explicitly so this list stays truthful.
       "env": [
         "NODE_ENV",
         "ASSET_PREFIX_URL",
@@ -228,10 +223,6 @@
         "NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE"
       ],
       "outputs": ["dist/**", ".next/**"],
-      // Vars here are visible to the build but NOT hashed: they are only read at server runtime, so
-      // their values never change the produced artifacts. If a var starts being read in
-      // next.config.mjs (or becomes NEXT_PUBLIC_*-inlined), it MUST move up to `env` — otherwise
-      // Turborepo (including the shared CI remote cache) will replay stale builds when it changes.
       "passThroughEnv": [
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",

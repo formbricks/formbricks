@@ -12,9 +12,6 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const nextConfigPath = path.resolve(here, "..", "next.config.mjs");
 const turboJsonPath = path.resolve(here, "..", "..", "..", "turbo.json");
 
-// turbo.json is JSONC (Turborepo supports comments); strip full-line comments before parsing.
-const stripJsonComments = (source: string): string => source.replace(/^\s*\/\/.*$/gm, "");
-
 const getProcessEnvReads = (source: string): string[] => {
   const reads = new Set<string>();
   const pattern = /process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g;
@@ -26,7 +23,7 @@ const getProcessEnvReads = (source: string): string[] => {
 
 describe("turbo.json build.env stays in sync with next.config.mjs", () => {
   const nextConfigSource = fs.readFileSync(nextConfigPath, "utf-8");
-  const turboJson = JSON.parse(stripJsonComments(fs.readFileSync(turboJsonPath, "utf-8"))) as {
+  const turboJson = JSON.parse(fs.readFileSync(turboJsonPath, "utf-8")) as {
     tasks: { build: { env: string[]; passThroughEnv?: string[] } };
   };
   const buildEnv = turboJson.tasks.build.env;
