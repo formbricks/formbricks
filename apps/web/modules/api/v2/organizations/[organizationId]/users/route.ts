@@ -14,6 +14,11 @@ import {
   updateUser,
 } from "@/modules/api/v2/organizations/[organizationId]/users/lib/users";
 import {
+  canAssignOrganizationRole,
+  getApiKeyCreatorRole,
+  getMembershipRoleByEmail,
+} from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
+import {
   ZGetUsersFilter,
   ZUserInput,
   ZUserInputPatch,
@@ -86,6 +91,21 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         );
       }
 
+      // Org API keys carry no role of their own, so clamp the assignable role to the role of the
+      // user who created the key. This mirrors the settings/session-path guard and stops a manager
+      // from escalating a user (or themselves) to owner through the management API.
+      const assignerRole = await getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId);
+      if (!canAssignOrganizationRole(assignerRole, body!.role)) {
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "role", issue: "You are not allowed to assign this role" }],
+          },
+          auditLog
+        );
+      }
+
       const createUserResult = await createUser(body!, authentication.organizationId);
       if (!createUserResult.ok) {
         return handleApiError(request, createUserResult.error, auditLog);
@@ -144,6 +164,27 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
           },
           auditLog
         );
+      }
+
+      // Only a role change needs clamping; when no role is supplied the membership role is left
+      // untouched. Anchor the assignable role to the API key creator's role so a manager cannot
+      // promote a target above the member role — or demote an existing owner — through the
+      // management API.
+      if (body.role) {
+        const [assignerRole, targetCurrentRole] = await Promise.all([
+          getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId),
+          getMembershipRoleByEmail(body.email, authentication.organizationId),
+        ]);
+        if (!canAssignOrganizationRole(assignerRole, body.role, targetCurrentRole)) {
+          return handleApiError(
+            request,
+            {
+              type: "forbidden",
+              details: [{ field: "role", issue: "You are not allowed to assign this role" }],
+            },
+            auditLog
+          );
+        }
       }
 
       let oldUserData: any = UNKNOWN_DATA;
