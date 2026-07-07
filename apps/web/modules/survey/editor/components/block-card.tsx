@@ -23,6 +23,7 @@ import { BlockMenu } from "@/modules/survey/editor/components/block-menu";
 import { BlockSettings } from "@/modules/survey/editor/components/block-settings";
 import { CalElementForm } from "@/modules/survey/editor/components/cal-element-form";
 import { CESElementForm } from "@/modules/survey/editor/components/ces-element-form";
+import { ConditionalLogic } from "@/modules/survey/editor/components/conditional-logic";
 import { ConsentElementForm } from "@/modules/survey/editor/components/consent-element-form";
 import { ContactInfoElementForm } from "@/modules/survey/editor/components/contact-info-element-form";
 import { CSATElementForm } from "@/modules/survey/editor/components/csat-element-form";
@@ -459,6 +460,19 @@ export const BlockCard = ({
 
             <hr className="border-dashed border-slate-200" />
 
+            {/* Conditional Logic */}
+            {block.elements[0] && (
+              <div className="p-4 pb-0">
+                <ConditionalLogic
+                  localSurvey={localSurvey}
+                  block={block}
+                  blockIdx={blockIdx}
+                  updateBlockLogic={updateBlockLogic}
+                  updateBlockLogicFallback={updateBlockLogicFallback}
+                />
+              </div>
+            )}
+
             {/* Block Settings */}
             <div className="p-4">
               <BlockSettings
@@ -467,8 +481,6 @@ export const BlockCard = ({
                 blockIndex={blockIdx}
                 selectedLanguageCode={selectedLanguageCode}
                 updateBlockButtonLabel={updateBlockButtonLabel}
-                updateBlockLogic={updateBlockLogic}
-                updateBlockLogicFallback={updateBlockLogicFallback}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isLastBlock={blockIdx === totalBlocks - 1}
