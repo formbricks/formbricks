@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getTaxonomyFields, getTaxonomyNodeRecords, removeTaxonomyNode } from "./api-client";
+import {
+  getTaxonomyFields,
+  getTaxonomyNodeRecords,
+  getTaxonomyRun,
+  getTaxonomyState,
+  removeTaxonomyNode,
+  renameTaxonomyNode,
+  triggerTaxonomyRun,
+} from "./api-client";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -65,6 +73,116 @@ describe("removeTaxonomyNode", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v3/unify-feedback/taxonomy/nodes/n?workspaceId=w&directoryId=d",
       expect.objectContaining({ method: "DELETE", cache: "no-store" })
+    );
+  });
+});
+
+describe("getTaxonomyState", () => {
+  test("forwards the full scope (incl. the empty sourceId) and returns body.data", async () => {
+    const state = { activeTree: null, runs: [], unavailable: false };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: state }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await getTaxonomyState({
+      workspaceId: "w",
+      directoryId: "d",
+      sourceType: "survey",
+      sourceId: "",
+      fieldId: "q1",
+    });
+
+    expect(result).toEqual(state);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/unify-feedback/taxonomy/state?workspaceId=w&directoryId=d&sourceType=survey&sourceId=&fieldId=q1",
+      expect.objectContaining({ method: "GET", cache: "no-store" })
+    );
+  });
+});
+
+describe("getTaxonomyRun", () => {
+  test("hits the run route with the encoded runId and returns body.data", async () => {
+    const run = { id: "run-1", status: "running" };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: run }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await getTaxonomyRun({ workspaceId: "w", directoryId: "d", runId: "run-1" });
+
+    expect(result).toEqual(run);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/unify-feedback/taxonomy/runs/run-1?workspaceId=w&directoryId=d",
+      expect.objectContaining({ method: "GET", cache: "no-store" })
+    );
+  });
+});
+
+describe("getTaxonomyNodeRecords (error path)", () => {
+  test("throws a parsed V3ApiError on a non-2xx response", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(problemResponse(500, "boom")));
+
+    await expect(
+      getTaxonomyNodeRecords({ workspaceId: "w", directoryId: "d", nodeId: "n", limit: 100 })
+    ).rejects.toMatchObject({ status: 500 });
+  });
+});
+
+describe("triggerTaxonomyRun", () => {
+  test("POSTs the scope as JSON and returns body.data", async () => {
+    const params = {
+      workspaceId: "w",
+      directoryId: "d",
+      sourceType: "survey",
+      sourceId: "",
+      fieldId: "q1",
+      fieldLabel: "Q1",
+    };
+    const payload = { run: { id: "run-1" }, inProgress: true };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: payload }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await triggerTaxonomyRun(params);
+
+    expect(result).toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/unify-feedback/taxonomy/runs",
+      expect.objectContaining({ method: "POST", body: JSON.stringify(params) })
+    );
+  });
+
+  test("throws a parsed V3ApiError on a non-2xx response", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(problemResponse(409, "already running")));
+
+    await expect(
+      triggerTaxonomyRun({
+        workspaceId: "w",
+        directoryId: "d",
+        sourceType: "survey",
+        sourceId: "",
+        fieldId: "q1",
+      })
+    ).rejects.toMatchObject({ status: 409 });
+  });
+});
+
+describe("renameTaxonomyNode", () => {
+  test("PATCHes the node with the new label and returns body.data", async () => {
+    const node = { id: "n", label: "Renamed" };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: node }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await renameTaxonomyNode({
+      workspaceId: "w",
+      directoryId: "d",
+      nodeId: "n",
+      label: "Renamed",
+    });
+
+    expect(result).toEqual(node);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/unify-feedback/taxonomy/nodes/n",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ workspaceId: "w", directoryId: "d", label: "Renamed" }),
+      })
     );
   });
 });
