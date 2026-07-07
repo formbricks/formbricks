@@ -143,7 +143,7 @@ export function ConditionalLogic({
         <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
           <Collapsible.CollapsibleTrigger
             className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-900"
-            aria-label="Toggle conditional logic">
+            aria-label={t("workspace.surveys.edit.conditional_logic")}>
             {isOpen ? (
               <ChevronDownIcon className="size-4 text-slate-500" />
             ) : (

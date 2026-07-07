@@ -35,7 +35,7 @@ export const BlockSettings = ({
   locale,
   isStorageConfigured,
   isLastBlock,
-}: BlockSettingsProps) => {
+}: Readonly<BlockSettingsProps>) => {
   const { t } = useTranslation();
 
   const [open, setOpen] = useState(false);
