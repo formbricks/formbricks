@@ -45,4 +45,7 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
     introspect: { window: 60, max: 60 },
     revoke: { window: 60, max: 30 },
   },
+  silenceWarnings: {
+    oauthAuthServerConfig: true,
+  },
 });
