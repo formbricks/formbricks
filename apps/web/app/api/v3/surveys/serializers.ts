@@ -1,3 +1,4 @@
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
@@ -7,7 +8,6 @@ import {
   getV3SurveyDefaultLanguage,
   getV3SurveyLanguages,
   getV3SurveyResolverLanguages,
-  normalizeV3SurveyLanguageIdentifier,
   resolveV3SurveyLanguageCode,
 } from "./language";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
@@ -97,7 +97,7 @@ function getI18nValueForLanguage(value: Record<string, string>, languageCode: st
   }
 
   const matchingKey = Object.keys(value).find(
-    (key) => normalizeV3SurveyLanguageIdentifier(key)?.toLowerCase() === languageCode.toLowerCase()
+    (key) => normalizeLanguageCode(key)?.toLowerCase() === languageCode.toLowerCase()
   );
   return matchingKey ? value[matchingKey] : undefined;
 }

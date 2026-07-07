@@ -187,6 +187,13 @@ export const EXPECTED_ERROR_NAMES = new Set([
  */
 export const isExpectedError = (error: Error): boolean => EXPECTED_ERROR_NAMES.has(error.name);
 
+/**
+ * Stable, locale-independent marker placed in an ApiErrorResponse's `details.code` when a
+ * response update is rejected because the response was already finalized. Clients key off this
+ * instead of the human-readable (and potentially localized/reworded) error message.
+ */
+export const RESPONSE_ALREADY_FINISHED_ERROR_CODE = "response_already_finished";
+
 export interface ApiErrorResponse {
   code:
     | "not_found"

@@ -43,6 +43,8 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
     // Headlines & Descriptions
     "elementHeadlineColor.light": questionColor,
     "elementDescriptionColor.light": questionColor,
+    // Brand-derived like the other text colors so it stays configurable and visually cohesive.
+    // The WCAG 1.4.3 fix was dropping the old 0.6 opacity (see globals.css), not muting the hue.
     "elementUpperLabelColor.light": questionColor,
 
     // Buttons — use the brand color so the button matches the user's intent.

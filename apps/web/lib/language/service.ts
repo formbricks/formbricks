@@ -1,6 +1,7 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { CANONICAL_LANGUAGE_CODES, normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
@@ -58,9 +59,22 @@ export const createLanguage = async (
       throw new ValidationError("Language code is required");
     }
 
+    // Standardize on a canonical BCP-47 tag (ENG-1067) and only allow codes from the curated catalog.
+    // Normalizing rejects malformed/unparseable codes; the catalog check additionally rejects valid-but-
+    // uncurated CLDR fallbacks (e.g. "nso" -> "nso-ZA"), so persisted rows can't drift from the codes the
+    // app actually supports — regardless of the caller.
+    const canonicalCode = normalizeLanguageCode(languageInput.code);
+    if (!canonicalCode) {
+      throw new ValidationError(`Invalid language code: '${languageInput.code}'`);
+    }
+    if (!CANONICAL_LANGUAGE_CODES.includes(canonicalCode)) {
+      throw new ValidationError(`Unsupported language code: '${languageInput.code}'`);
+    }
+
     const language = await prisma.language.create({
       data: {
         ...languageInput,
+        code: canonicalCode,
         workspace: {
           connect: { id: workspaceId },
         },
@@ -138,9 +152,14 @@ export const updateLanguage = async (
     validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate], [workspaceId, ZId]);
     const workspace = await getWorkspace(workspaceId);
     if (!workspace) throw new ResourceNotFoundError("Workspace not found", workspaceId);
+    // Only the alias is mutable on update — the `code` is immutable, so `Language.code` stays canonical
+    // regardless of caller (createLanguage enforces the canonical catalog; a code change means delete +
+    // create). Write `alias` explicitly rather than spreading `languageInput`: a caller can pass a `code`
+    // in the runtime object even though the declared type is alias-only, and spreading it would persist an
+    // arbitrary, non-canonical code — the exact hole the create-side hardening closed.
     const prismaLanguage = await prisma.language.update({
       where: { id: languageId },
-      data: { ...languageInput, updatedAt: new Date() },
+      data: { alias: languageInput.alias, updatedAt: new Date() },
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
     });
 

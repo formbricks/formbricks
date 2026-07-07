@@ -1,3 +1,4 @@
+import { LANGUAGE_CANONICAL_MAP } from "@formbricks/i18n-utils/src/canonical";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -239,3 +240,40 @@ export const appLanguages = [
 export const sortedAppLanguages = [...appLanguages].sort((a, b) =>
   a.label["en-US"].localeCompare(b.label["en-US"])
 );
+
+// Reverse of the canonical map: canonical code → the legacy codes that canonicalize to it (excluding
+// the identity). Using the real map (not a mechanical region-strip) is what surfaces alias codes a
+// strip would miss — e.g. `fil-PH` → `tl`, `ak-GH` → `ak`/`tw`, `zh-Hant-TW` → `zh-Hant`/`zh-TW`.
+const LEGACY_CODES_BY_CANONICAL: Readonly<Record<string, string[]>> = Object.entries(
+  LANGUAGE_CANONICAL_MAP
+).reduce<Record<string, string[]>>((reverse, [legacy, canonical]) => {
+  if (legacy !== canonical) {
+    (reverse[canonical] ??= []).push(legacy);
+  }
+  return reverse;
+}, {});
+
+/**
+ * Transitional SDK back-compat (ENG-1067).
+ *
+ * Language codes were canonicalized to region-tagged BCP-47 (`de` → `de-DE`). SDK clients pick a
+ * survey's display language by matching the user's language against the survey languages by *exact*
+ * code — they don't canonicalize. So while older clients are still in the wild, the SDK-facing surface
+ * keeps speaking the legacy code(s) on both sides:
+ *   - the client environment serializer exposes a duplicate entry for each legacy alias next to the
+ *     canonical language, and
+ *   - the user-state response de-canonicalizes the contact's language to a legacy form,
+ * so the two line up and exact matching still works. The DB stays canonical throughout; the renderer
+ * canonicalizes whatever it receives, so content lookup is unaffected.
+ *
+ * Both call sites MUST use this single helper so the codes they emit stay aligned.
+ *
+ * Remove once SDK clients holding pre-canonicalization codes have drained.
+ *
+ * @returns the known legacy codes that canonicalize to `canonicalCode` (`fil-PH` → `["tl"]`,
+ *   `ak-GH` → `["ak","tw"]`); empty when the code has no legacy aliases.
+ */
+export const toLegacyLanguageCodes = (canonicalCode: string): string[] =>
+  // Return a fresh copy, never the cached array by reference, so a caller mutating the result
+  // (sort/push/etc.) can't corrupt LEGACY_CODES_BY_CANONICAL and poison every later lookup.
+  [...(LEGACY_CODES_BY_CANONICAL[canonicalCode] ?? [])];

@@ -2,7 +2,6 @@
   "common": {
     "and": "e",
     "apply": "aplicar",
-    "auto_close_wrapper": "Fechamento automático do wrapper",
     "back": "Voltar",
     "close_survey": "Fechar pesquisa",
     "company_logo": "Logo da empresa",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "Sua resposta não pôde ser enviada porque foi sinalizada como atividade automatizada. Se você respira, por favor tente novamente.",
       "title": "Não foi possível verificar que você é humano."
+    },
+    "response_already_completed": {
+      "message": "Esta resposta já foi concluída e não pode mais ser alterada. Podes fechar esta janela com segurança.",
+      "title": "Esta resposta já foi concluída."
+    },
+    "response_sending_error_permanent": {
+      "message": "A sua resposta não pôde ser enviada e não pode ser retentada. Por favor, contacte o responsável pelo questionário se isto continuar a acontecer.",
+      "title": "A sua resposta não pôde ser enviada."
     },
     "value_must_contain": "O valor deve conter {value}",
     "value_must_equal": "O valor deve ser igual a {value}",

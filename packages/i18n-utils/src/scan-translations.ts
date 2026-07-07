@@ -33,7 +33,7 @@ const WEB_APP_DEFAULT_LOCALE = "en-US";
 // Configuration for Surveys Package
 const SURVEYS_PKG_DIR = path.join(__dirname, "..", "..", "..", "packages", "surveys");
 const SURVEYS_LOCALES_DIR = path.join(SURVEYS_PKG_DIR, "locales");
-const SURVEYS_DEFAULT_LOCALE = "en";
+const SURVEYS_DEFAULT_LOCALE = "en-US";
 
 // Patterns to match translation keys
 const TRANSLATION_PATTERNS = [
