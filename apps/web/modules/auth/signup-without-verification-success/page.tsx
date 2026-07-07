@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
@@ -6,15 +7,30 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 export const SignupWithoutVerificationSuccessPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ token: string }>;
+  searchParams: Promise<{ token?: string | string[] }>;
 }) => {
   const t = await getTranslate();
   const { token } = await searchParams;
-  const email = getEmailFromEmailToken(token);
+  let email: string;
+
+  try {
+    if (!token || Array.isArray(token)) {
+      throw new Error("Missing or invalid signup success token");
+    }
+
+    email = getEmailFromEmailToken(token);
+  } catch (error) {
+    logger.error(error, "Invalid signup success token");
+    return (
+      <FormWrapper>
+        <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>
+      </FormWrapper>
+    );
+  }
 
   return (
     <FormWrapper>
-      <h1 className="leading-2 mb-4 text-center font-bold">
+      <h1 className="mb-4 text-center leading-2 font-bold">
         {t("auth.signup_without_verification_success.user_successfully_created")}
       </h1>
       <p className="text-center text-sm">

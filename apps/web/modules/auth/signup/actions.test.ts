@@ -8,6 +8,12 @@ import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { createUserAction } from "./actions";
 
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   rateLimitConfigs: {
@@ -35,15 +41,12 @@ vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({ subscribeUserT
 vi.mock("@/modules/email", () => ({ sendInviteAcceptedEmail: vi.fn() }));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace: vi.fn() }));
 
-vi.mock("@/lib/constants", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/constants")>();
-  return {
-    ...actual,
-    WEBAPP_URL: "http://localhost:3000",
-    IS_FORMBRICKS_CLOUD: false,
-    IS_TURNSTILE_CONFIGURED: false,
-  };
-});
+vi.mock("@/lib/constants", () => ({
+  WEBAPP_URL: "http://localhost:3000",
+  IS_FORMBRICKS_CLOUD: false,
+  IS_TURNSTILE_CONFIGURED: false,
+  TURNSTILE_SECRET_KEY: undefined,
+}));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
