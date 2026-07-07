@@ -7,6 +7,7 @@ import {
   Cog,
   FoldersIcon,
   Loader2,
+  MegaphoneIcon,
   MessageCircle,
   MessageSquareTextIcon,
   PanelLeftCloseIcon,
@@ -22,6 +23,7 @@ import { usePathname, useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
+import formbricks from "@formbricks/js";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
@@ -591,6 +593,27 @@ export const MainNavigation = ({
             )}
 
             <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={() => {
+                  formbricks.track("whats_new_clicked").catch(() => undefined);
+                }}
+                aria-label="What's New"
+                className={cn(
+                  switcherTriggerClasses,
+                  "flex items-center gap-3",
+                  isCollapsed && "justify-center"
+                )}>
+                <span className={switcherIconClasses}>
+                  <MegaphoneIcon className="size-4" strokeWidth={1.5} />
+                </span>
+                {!isCollapsed && !isTextVisible && (
+                  <div className="grow overflow-hidden">
+                    <p className="truncate text-sm font-bold text-slate-700">What&apos;s New</p>
+                  </div>
+                )}
+              </button>
+
               {!isSettingsMode && (
                 <>
                   <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
