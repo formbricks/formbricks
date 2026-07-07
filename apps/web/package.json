@@ -93,6 +93,7 @@
     "cmdk": "1.1.1",
     "csv-parse": "6.1.0",
     "date-fns": "4.1.0",
+    "disposable-email-domains": "1.0.62",
     "framer-motion": "12.35.2",
     "googleapis": "171.4.0",
     "heic-convert": "2.1.0",
