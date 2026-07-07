@@ -103,6 +103,7 @@
     "saml_connection_error": "出了问题。请查看应用 控制台 以获取更多详情。",
     "signup": {
       "captcha_failed": "验证码 验证 失败",
+      "company_email_required": "请使用您的公司电子邮箱注册。",
       "have_an_account": "有账户？",
       "log_in": "登录",
       "password_validation_contain_at_least_1_number": "包含至少 1 个 数字",

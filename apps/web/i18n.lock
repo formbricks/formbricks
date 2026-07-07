@@ -85,6 +85,7 @@ checksums:
     auth/oauth/unknown_client: 561bc5afdb90606fbc1ed97f20698ead
     auth/saml_connection_error: 03c69c534e7eaafcb2c22b7daf9f3efc
     auth/signup/captcha_failed: 4e1ed87800585b8c1da1514fa86ab943
+    auth/signup/company_email_required: 997bf11a31512cedf4ab8acb7b4f56c3
     auth/signup/have_an_account: 6f9c2d441e93cb6df9ef7dc898e80e05
     auth/signup/log_in: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/signup/password_validation_contain_at_least_1_number: 58fb33a486aa4dadfc05e3242fc7ea0b

@@ -103,6 +103,7 @@
     "saml_connection_error": "Algo salió mal. Por favor, consulta la consola de tu aplicación para más detalles.",
     "signup": {
       "captcha_failed": "Captcha fallido",
+      "company_email_required": "Regístrate con el correo electrónico de tu empresa.",
       "have_an_account": "¿Tienes una cuenta?",
       "log_in": "Iniciar sesión",
       "password_validation_contain_at_least_1_number": "Contener al menos 1 número",

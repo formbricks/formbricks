@@ -103,6 +103,7 @@
     "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
     "signup": {
       "captcha_failed": "Captcha fehlgeschlagen",
+      "company_email_required": "Bitte registriere dich mit deiner geschäftlichen E-Mail-Adresse.",
       "have_an_account": "Hast du bereits ein Konto?",
       "log_in": "Anmelden",
       "password_validation_contain_at_least_1_number": "Mindestens 1 Zahl enthalten",

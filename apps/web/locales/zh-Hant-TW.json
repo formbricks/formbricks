@@ -103,6 +103,7 @@
     "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
     "signup": {
       "captcha_failed": "驗證碼失敗",
+      "company_email_required": "請使用您的公司電子郵件地址註冊。",
       "have_an_account": "已有帳戶？",
       "log_in": "登入",
       "password_validation_contain_at_least_1_number": "包含至少 1 個數字",

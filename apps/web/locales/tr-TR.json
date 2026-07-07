@@ -103,6 +103,7 @@
     "saml_connection_error": "Bir sorun oluştu. Daha fazla bilgi için uygulama konsolunuzu kontrol edin.",
     "signup": {
       "captcha_failed": "Captcha başarısız oldu",
+      "company_email_required": "Lütfen şirket e-posta adresinizle kaydolun.",
       "have_an_account": "Hesabınız var mı?",
       "log_in": "Giriş yap",
       "password_validation_contain_at_least_1_number": "En az 1 rakam içermeli",

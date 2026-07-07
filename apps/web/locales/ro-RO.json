@@ -103,6 +103,7 @@
     "saml_connection_error": "Ceva nu a mers. Vă rugăm să verificați consola aplicației pentru mai multe detalii.",
     "signup": {
       "captcha_failed": "Captcha eșuat",
+      "company_email_required": "Înregistrează-te cu adresa de e-mail a companiei.",
       "have_an_account": "Ai un cont?",
       "log_in": "Conectează-te",
       "password_validation_contain_at_least_1_number": "Conține cel puțin 1 număr",
