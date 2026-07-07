@@ -34,7 +34,7 @@ export const UnifyTopicsSubtopicsPage = async (
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="taxonomy" />
         </PageHeader>
         <div className="flex items-center justify-center">
           <UpgradePrompt
@@ -67,7 +67,7 @@ export const UnifyTopicsSubtopicsPage = async (
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="taxonomy" />
         </PageHeader>
         <FeedbackDataEmptyState
           variant="no-directory"

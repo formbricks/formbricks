@@ -240,7 +240,7 @@ export const TopicsSubtopicsContainer = ({
 
   const header = (
     <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
-      <UnifyConfigNavigation workspaceId={workspaceId} activeId="topics-subtopics" />
+      <UnifyConfigNavigation workspaceId={workspaceId} activeId="taxonomy" />
     </PageHeader>
   );
 
