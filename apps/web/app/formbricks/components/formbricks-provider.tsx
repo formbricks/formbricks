@@ -22,14 +22,14 @@ export const FormbricksProvider = ({
   userId,
   userEmail,
   userName,
-}: FormbricksProviderProps) => {
+}: Readonly<FormbricksProviderProps>) => {
   const pathname = usePathname();
 
   // Set up the SDK and identify the user.
   useEffect(() => {
     if (!workspaceId) return;
 
-    void (async () => {
+    const setupFormbricks = async () => {
       await formbricks.setup({ workspaceId, appUrl });
 
       if (userId) {
@@ -41,13 +41,20 @@ export const FormbricksProvider = ({
           await formbricks.setAttributes(attributes);
         }
       }
-    })();
+    };
+
+    // Handle rejections so failed SDK calls don't become unhandled promise rejections.
+    setupFormbricks().catch((error) => {
+      console.error("Formbricks setup failed:", error);
+    });
   }, [workspaceId, appUrl, userId, userEmail, userName]);
 
   // Track client-side navigations for page-triggered surveys.
   useEffect(() => {
     if (!workspaceId) return;
-    void formbricks.registerRouteChange();
+    formbricks.registerRouteChange().catch((error) => {
+      console.error("Formbricks route change failed:", error);
+    });
   }, [workspaceId, pathname]);
 
   return null;

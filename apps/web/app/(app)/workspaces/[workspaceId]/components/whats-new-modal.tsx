@@ -74,7 +74,7 @@ interface WhatsNewModalProps {
   setOpen: (open: boolean) => void;
 }
 
-export const WhatsNewModal = ({ open, setOpen }: WhatsNewModalProps) => {
+export const WhatsNewModal = ({ open, setOpen }: Readonly<WhatsNewModalProps>) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent width="default" className="gap-0 overflow-y-auto p-0">

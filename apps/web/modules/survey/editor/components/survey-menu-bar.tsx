@@ -488,12 +488,7 @@ export const SurveyMenuBar = ({
       // this delay or break navigation to the summary page.
       try {
         const publishedCountResult = await getPublishedSurveyCountAction({ surveyId: localSurvey.id });
-        const publishedCount = publishedCountResult?.data;
-        // eslint-disable-next-line no-console -- diagnostic for the second-survey trigger
-        console.debug(`🧱 Formbricks trigger — published survey count: ${publishedCount}`);
-        if (publishedCount === 2) {
-          // eslint-disable-next-line no-console -- diagnostic for the second-survey trigger
-          console.debug('🧱 Formbricks trigger — firing code action "second_survey_published"');
+        if (publishedCountResult?.data === 2) {
           void formbricks.track("second_survey_published");
         }
       } catch (error) {

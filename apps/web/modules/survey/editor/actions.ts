@@ -326,9 +326,9 @@ const ZGetPublishedSurveyCountAction = z.object({
   surveyId: ZId,
 });
 
-// Returns how many surveys in the survey's workspace have been published (i.e. gone
-// live at least once). Used by the editor to fire an in-app code action when a user
-// publishes their Nth survey. Read-only, so it only requires read access.
+// Returns how many surveys the current user has published (i.e. gone live at least
+// once) in the survey's workspace. Scoped to the creator so, in shared workspaces, the
+// "Nth survey" trigger reflects the acting user rather than the whole team. Read-only.
 export const getPublishedSurveyCountAction = authenticatedActionClient
   .inputSchema(ZGetPublishedSurveyCountAction)
   .action(async ({ ctx, parsedInput }) => {
@@ -350,7 +350,10 @@ export const getPublishedSurveyCountAction = authenticatedActionClient
       ],
     });
 
-    return getSurveyCount(workspaceId, { status: ["inProgress", "paused", "completed"] });
+    return getSurveyCount(workspaceId, {
+      status: ["inProgress", "paused", "completed"],
+      createdBy: { userId: ctx.user.id, value: ["you"] },
+    });
   });
 
 const ZRefetchWorkspaceAction = z.object({

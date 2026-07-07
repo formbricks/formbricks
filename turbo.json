@@ -280,6 +280,8 @@
         "IS_FORMBRICKS_CLOUD",
         "CHATWOOT_WEBSITE_TOKEN",
         "CHATWOOT_BASE_URL",
+        "FORMBRICKS_WORKSPACE_ID",
+        "FORMBRICKS_APP_URL",
         "POSTHOG_KEY",
         "LOG_LEVEL",
         "MAIL_FROM",
