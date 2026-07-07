@@ -36,8 +36,16 @@ info:
 
     **workspaceId**
 
-    Query param `workspaceId` is the canonical container identifier for this
-    API.
+    `workspaceId` is the canonical container identifier for this API. It is a
+    **required query parameter on collection read endpoints** (`GET
+    /api/v3/surveys`, `GET /api/v3/action-classes`, `GET
+    /api/v3/contact-attribute-keys`) because those operate within a workspace.
+    **`POST /api/v3/surveys` instead requires `workspaceId` in the request
+    body**, not as a query parameter. Single-resource endpoints
+    (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by
+    its globally-unique id and resolve the workspace from it, so they do **not**
+    accept a `workspaceId` query parameter — sending one returns **400**
+    (`Unrecognized key: "workspaceId"`).
 
 
     **Auth**
@@ -83,9 +91,10 @@ info:
     **AI survey creation**
 
     `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys`
-    payload plus validation metadata. It does not create a survey. Generated
-    payloads are currently link-survey only because the v3 create contract
-    accepts only `type: link`.
+    payload plus validation metadata. It does not create a survey. It generates
+    survey content for both `link` and `app` surveys; for `app` it seeds a
+    default `distribution` (display once, no triggers, no targeting) that you
+    finish configuring before publishing.
 
     Prompt text is sent to the configured AI provider for generation, but it is
     not stored by this endpoint, not logged by default, and not included in
@@ -185,6 +194,10 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_unarchive.yml
   /api/v3/workflows/{workflowId}/test:
     $ref: paths/api_v3_workflows_{workflowId}_test.yml
+  /api/v3/action-classes:
+    $ref: paths/api_v3_action-classes.yml
+  /api/v3/contact-attribute-keys:
+    $ref: paths/api_v3_contact-attribute-keys.yml
 components:
   securitySchemes:
     sessionAuth:

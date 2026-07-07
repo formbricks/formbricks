@@ -169,13 +169,13 @@ export const PersonalLinksTab = ({
           {
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
             href: isFormbricksCloud
-              ? `/workspaces/${workspace?.id}/settings/organization/billing`
+              ? `/organizations/${workspace?.organizationId}/settings/billing`
               : enterpriseLicenseRequestFormUrl,
           },
           {
             text: t("common.learn_more"),
             href: isFormbricksCloud
-              ? `/workspaces/${workspace?.id}/settings/organization/billing`
+              ? `/organizations/${workspace?.organizationId}/settings/billing`
               : "https://formbricks.com/learn-more-self-hosting-license",
           },
         ]}
@@ -256,7 +256,7 @@ export const PersonalLinksTab = ({
         links={[
           {
             title: t("workspace.surveys.share.personal_links.work_with_segments"),
-            href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
+            href: "https://formbricks.com/docs/surveys/website-app-surveys/advanced-targeting#segment-configuration",
           },
         ]}
       />

@@ -194,11 +194,94 @@ describe("validateElementResponse", () => {
         type: TSurveyElementTypeEnum.MultipleChoiceMulti,
         headline: { default: "Pick" },
         required: true,
-        choices: [{ id: "opt1", label: { default: "Option 1" } }],
+        // The Other option is what makes the trailing free-text value ("custom") legitimate;
+        // legacy clients send it without the "" sentinel.
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
       } as unknown as TSurveyElement;
 
       const result = validateElementResponse(element, ["opt1", "custom"], "en");
       expect(result.valid).toBe(true);
+    });
+
+    test("should reject single-select value that is not a configured option (no Other option)", () => {
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [
+          { id: "yes", label: { default: "Yes" } },
+          { id: "no", label: { default: "No" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, "ARBITRARY_VALUE", "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].ruleId).toBe("invalidOption");
+    });
+
+    test("should accept single-select value matching a configured option by id or label", () => {
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [
+          { id: "yes", label: { default: "Yes" } },
+          { id: "no", label: { default: "No" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      expect(validateElementResponse(element, "yes", "en").valid).toBe(true); // by id
+      expect(validateElementResponse(element, "No", "en").valid).toBe(true); // by label
+    });
+
+    test("should reject multi-select values that are not configured options (no Other option)", () => {
+      const element = {
+        id: "mc1",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "opt2", label: { default: "Option 2" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, ["Option 1", "injected"], "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].ruleId).toBe("invalidOption");
+    });
+
+    test("should accept arbitrary free text for a single-select with an Other option", () => {
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, "some free text", "en");
+      expect(result.valid).toBe(true);
+    });
+
+    test("should not throw for a malformed choice element missing choices", () => {
+      const element = {
+        id: "mc1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick" },
+        required: false,
+      } as unknown as TSurveyElement; // choices intentionally absent
+
+      expect(() => validateElementResponse(element, "anything", "en")).not.toThrow();
+      expect(validateElementResponse(element, "anything", "en").valid).toBe(true);
     });
 
     test("should handle required ranking element - at least one ranked", () => {

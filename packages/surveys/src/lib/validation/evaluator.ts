@@ -38,6 +38,17 @@ const createRequiredError = (t: TFunction): TValidationError => {
 };
 
 /**
+ * Create an invalid-option error (value not among a choice element's configured options)
+ */
+const createInvalidOptionError = (t: TFunction): TValidationError => {
+  return {
+    ruleId: "invalidOption",
+    ruleType: "minLength", // Structural field only - choice membership is not a configurable rule
+    message: t("errors.invalid_format"),
+  } as TValidationError;
+};
+
+/**
  * Get field label for address/contact info elements
  */
 const getFieldLabel = (
@@ -181,6 +192,62 @@ const validateSingleSelectOtherValue = (
 
   if (value.trim() === "") {
     return createRequiredError(t);
+  }
+
+  return null;
+};
+
+/**
+ * Reject answer values that are not among a choice element's configured options.
+ *
+ * Choice elements that expose an "Other" option intentionally accept free text, so this
+ * check only applies when the element has NO "Other" option — there a legitimate client can
+ * only ever submit a configured choice (by id or localized label), so any other value is
+ * tampered/garbage input submitted directly to the API. Empty values are deferred to the
+ * required check.
+ */
+const validateChoiceMembership = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  languageCode: string,
+  t: TFunction
+): TValidationError | null => {
+  if (
+    element.type !== TSurveyElementTypeEnum.MultipleChoiceSingle &&
+    element.type !== TSurveyElementTypeEnum.MultipleChoiceMulti
+  ) {
+    return null;
+  }
+
+  // Defensive: a malformed survey element could be missing `choices` at runtime; match the
+  // other choice validators and bail rather than throw.
+  if (!("choices" in element) || !Array.isArray(element.choices)) {
+    return null;
+  }
+
+  const hasOtherOption = element.choices.some((choice) => choice.id === "other");
+  if (hasOtherOption || isEmpty(value)) {
+    return null;
+  }
+
+  const knownValues = new Set<string>();
+  for (const choice of element.choices) {
+    knownValues.add(choice.id);
+    const label = getLocalizedValue(choice.label, languageCode);
+    if (label) {
+      knownValues.add(label);
+    }
+  }
+
+  const submittedValues = Array.isArray(value) ? value : [value];
+  for (const submitted of submittedValues) {
+    // Tolerate stray empty/sentinel entries; emptiness is the required check's concern.
+    if (submitted === "") {
+      continue;
+    }
+    if (typeof submitted !== "string" || !knownValues.has(submitted)) {
+      return createInvalidOptionError(t);
+    }
   }
 
   return null;
@@ -436,6 +503,11 @@ export const validateElementResponse = (
   const multiSelectOtherError = validateMultiSelectOtherValue(element, value, t);
   if (multiSelectOtherError) {
     errors.push(multiSelectOtherError);
+  }
+
+  const invalidOptionError = validateChoiceMembership(element, value, languageCode, t);
+  if (invalidOptionError) {
+    errors.push(invalidOptionError);
   }
 
   // Validation rules apply to matrix elements regardless of required status

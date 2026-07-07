@@ -79,7 +79,7 @@ export const AdditionalIntegrationSettings = ({
                 checked={checked}
                 onCheckedChange={() => onChange(!checked)}
               />
-              <span className="ml-2 w-[30rem] truncate">{label}</span>
+              <span className="ml-2 w-120 truncate">{label}</span>
             </label>
           </div>
         ))}

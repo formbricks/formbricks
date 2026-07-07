@@ -2,12 +2,15 @@
 
 import { Plus, SparklesIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { FilterDateInput } from "@/modules/ee/analysis/charts/components/filter-date-input";
+import { FilterValueCombobox } from "@/modules/ee/analysis/charts/components/filter-value-combobox";
 import type { FilterRow, TFilterFieldType } from "@/modules/ee/analysis/lib/query-builder";
 import {
   FEEDBACK_FIELDS,
   getFieldById,
   getFilterOperatorsForType,
   getTranslatedFieldLabel,
+  isSelectableValueDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -25,6 +28,10 @@ interface FiltersPanelProps {
   onFiltersChange: (filters: FilterRow[]) => void;
   onFilterLogicChange: (logic: "and" | "or") => void;
   hideTitle?: boolean;
+  // When provided, low-cardinality string dimensions offer a value pick-list
+  // (fetched per data source) instead of free-text entry for exact-match operators.
+  workspaceId?: string;
+  feedbackDirectoryId?: string | null;
 }
 
 export function FiltersPanel({
@@ -33,6 +40,8 @@ export function FiltersPanel({
   onFiltersChange,
   onFilterLogicChange,
   hideTitle = false,
+  workspaceId,
+  feedbackDirectoryId,
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
 
@@ -83,6 +92,37 @@ export function FiltersPanel({
 
     if (filter.operator === "set" || filter.operator === "notSet") {
       return null;
+    }
+
+    const currentValue = String(filter.values?.[0] ?? "");
+
+    // Time-type dimensions (Collected At, Created At, Updated At, Value (Date)) get a
+    // date picker instead of a free-text field.
+    if (fieldType === "time") {
+      return (
+        <FilterDateInput
+          value={currentValue}
+          onChange={(value) => handleUpdateFilter(index, { values: value ? [value] : null })}
+        />
+      );
+    }
+
+    // Exact-match operators on a low-cardinality string dimension get a pick-list of
+    // real stored values, so the chosen value matches exactly (no casing/whitespace drift).
+    const canSelectValues =
+      isSelectableValueDimension(filter.field) &&
+      (filter.operator === "equals" || filter.operator === "notEquals");
+
+    if (canSelectValues && workspaceId && feedbackDirectoryId) {
+      return (
+        <FilterValueCombobox
+          workspaceId={workspaceId}
+          feedbackDirectoryId={feedbackDirectoryId}
+          dimension={filter.field}
+          value={currentValue}
+          onChange={(value) => handleUpdateFilter(index, { values: value ? [value] : null })}
+        />
+      );
     }
 
     const isNumericInput =
@@ -154,7 +194,7 @@ export function FiltersPanel({
                 <SelectTrigger className="w-[200px] bg-white">
                   <SelectValue placeholder={t("workspace.analysis.charts.select_field")} />
                 </SelectTrigger>
-                <SelectContent className="max-h-[var(--radix-select-content-available-height)] overflow-y-auto">
+                <SelectContent className="max-h-(--radix-select-content-available-height) overflow-y-auto">
                   {fieldOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       <span className="flex items-center gap-1.5">
@@ -178,7 +218,7 @@ export function FiltersPanel({
                 <SelectTrigger className="w-[150px] bg-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-[var(--radix-select-content-available-height)] overflow-y-auto">
+                <SelectContent className="max-h-(--radix-select-content-available-height) overflow-y-auto">
                   {operators.map((op) => (
                     <SelectItem key={op} value={op}>
                       {op === "equals" && t("workspace.analysis.charts.equals")}

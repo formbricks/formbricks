@@ -5,9 +5,9 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { withV3ApiWrapper } from "./api-wrapper";
 
-const { mockAuthenticateRequest, mockGetServerSession } = vi.hoisted(() => ({
+const { mockAuthenticateRequest, mockGetSession } = vi.hoisted(() => ({
   mockAuthenticateRequest: vi.fn(),
-  mockGetServerSession: vi.fn(),
+  mockGetSession: vi.fn(),
 }));
 
 const { mockQueueAuditEvent, mockBuildAuditLogBaseObject } = vi.hoisted(() => ({
@@ -31,16 +31,12 @@ const { mockLoggerWarn, mockLoggerError } = vi.hoisted(() => ({
   mockLoggerError: vi.fn(),
 }));
 
-vi.mock("next-auth", () => ({
-  getServerSession: mockGetServerSession,
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: mockGetSession,
 }));
 
 vi.mock("@/app/api/v1/auth", () => ({
   authenticateRequest: mockAuthenticateRequest,
-}));
-
-vi.mock("@/modules/auth/lib/authOptions", () => ({
-  authOptions: {},
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -67,7 +63,7 @@ vi.mock("@formbricks/logger", () => ({
 describe("withV3ApiWrapper", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mockGetServerSession.mockResolvedValue(null);
+    mockGetSession.mockResolvedValue(null);
     mockAuthenticateRequest.mockResolvedValue(null);
   });
 
@@ -78,7 +74,7 @@ describe("withV3ApiWrapper", () => {
   test("passes an audit log to the handler and queues success after the response", async () => {
     const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
 
-    mockGetServerSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       user: { id: "user_1", name: "Test", email: "t@example.com" },
       expires: "2026-01-01",
     });
@@ -185,7 +181,7 @@ describe("withV3ApiWrapper", () => {
 
   test("uses session auth first in both mode and injects request id into plain responses", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
-    mockGetServerSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       user: { id: "user_1", name: "Test", email: "t@example.com" },
       expires: "2026-01-01",
     });
@@ -251,11 +247,11 @@ describe("withV3ApiWrapper", () => {
       expect.objectContaining({ namespace: "api:v3" }),
       "key_1"
     );
-    expect(mockGetServerSession).not.toHaveBeenCalled();
+    expect(mockGetSession).not.toHaveBeenCalled();
   });
 
   test("uses bearer API keys before session auth in both mode", async () => {
-    mockGetServerSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       user: { id: "user_1", name: "Test", email: "t@example.com" },
       expires: "2026-01-01",
     });
@@ -284,7 +280,7 @@ describe("withV3ApiWrapper", () => {
 
     expect(response.status).toBe(200);
     expect(mockAuthenticateRequest).toHaveBeenCalledOnce();
-    expect(mockGetServerSession).not.toHaveBeenCalled();
+    expect(mockGetSession).not.toHaveBeenCalled();
   });
 
   test("returns 401 problem response when authentication is required but missing", async () => {
@@ -309,7 +305,7 @@ describe("withV3ApiWrapper", () => {
   });
 
   test("returns 400 problem response for invalid query input", async () => {
-    mockGetServerSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       user: { id: "user_1" },
       expires: "2026-01-01",
     });
@@ -554,7 +550,7 @@ describe("withV3ApiWrapper", () => {
 
   test("returns 429 problem response when rate limited", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
-    mockGetServerSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       user: { id: "user_1" },
       expires: "2026-01-01",
     });
@@ -575,7 +571,7 @@ describe("withV3ApiWrapper", () => {
 
   test("applies rate limiting before parsing request bodies", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
-    mockGetServerSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       user: { id: "user_1" },
       expires: "2026-01-01",
     });
@@ -610,7 +606,7 @@ describe("withV3ApiWrapper", () => {
   });
 
   test("returns 500 problem response when the handler throws unexpectedly", async () => {
-    mockGetServerSession.mockResolvedValue({
+    mockGetSession.mockResolvedValue({
       user: { id: "user_1" },
       expires: "2026-01-01",
     });

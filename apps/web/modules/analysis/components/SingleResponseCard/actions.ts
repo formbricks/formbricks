@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { deleteResponse, getResponse } from "@/lib/response/service";
-import { createTag } from "@/lib/tag/service";
+import { deleteResponse, getResponse, getResponseWithQuotas } from "@/lib/response/service";
+import { createTag, getTagsByWorkspaceId } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -184,6 +184,32 @@ export const deleteResponseAction = authenticatedActionClient.inputSchema(ZDelet
   })
 );
 
+const ZGetTagsByWorkspaceIdAction = z.object({
+  workspaceId: ZId,
+});
+
+export const getTagsByWorkspaceIdAction = authenticatedActionClient
+  .inputSchema(ZGetTagsByWorkspaceIdAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "read",
+          workspaceId: parsedInput.workspaceId,
+        },
+      ],
+    });
+
+    return await getTagsByWorkspaceId(parsedInput.workspaceId);
+  });
+
 const ZGetResponseAction = z.object({
   responseId: ZId,
 });
@@ -207,5 +233,5 @@ export const getResponseAction = authenticatedActionClient
       ],
     });
 
-    return await getResponse(parsedInput.responseId);
+    return await getResponseWithQuotas(parsedInput.responseId);
   });

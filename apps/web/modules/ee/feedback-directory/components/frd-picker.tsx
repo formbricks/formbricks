@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { Alert } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -15,22 +16,25 @@ interface FrdPickerProps {
   directories: { id: string; name: string }[];
   selectedDirectoryId: string | null;
   onChange: (id: string) => void;
-  workspaceId: string;
 }
 
-export const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspaceId }: FrdPickerProps) => {
+export const FrdPicker = ({ directories, selectedDirectoryId, onChange }: FrdPickerProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const organizationId = workspace?.organizationId;
 
   if (directories.length === 0) {
     return (
       <Alert variant="error" size="small">
         <div>
           <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
-          <a
-            className="mt-1 inline-block font-medium underline"
-            href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
-            {t("workspace.analysis.charts.go_to_feedback_directories")}
-          </a>
+          {organizationId && (
+            <a
+              className="mt-1 inline-block font-medium underline"
+              href={`/organizations/${organizationId}/settings/feedback-directories`}>
+              {t("workspace.analysis.charts.go_to_feedback_directories")}
+            </a>
+          )}
         </div>
       </Alert>
     );

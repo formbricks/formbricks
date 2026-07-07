@@ -1,10 +1,9 @@
 import "server-only";
-import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { ZWorkflowDefinition } from "@formbricks/workflows";
 import { createWorkflowsService } from "@formbricks/workflows/server";
 import { DEFAULT_LOCALE, MAIL_FROM } from "@/lib/constants";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail, getUserLocale } from "@/modules/survey/editor/lib/user";
 import type { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
@@ -37,7 +36,7 @@ export const getWorkflowEmailAuthoringContext = async ({
   workflowId: string;
   workspaceId: string;
 }): Promise<TWorkflowEmailAuthoringContext> => {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   // Match the app-wide default sender used by `@/modules/email` so the read-only From box shows the
   // address emails are actually sent from.
   const mailFrom = MAIL_FROM ?? "noreply@formbricks.com";

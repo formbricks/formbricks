@@ -185,6 +185,41 @@ describe("user.ts", () => {
       expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
       expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
     });
+
+    test("does not tear down the existing user when the replacement userId is too long", async () => {
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          user: {
+            data: {
+              userId: "existing-user",
+            },
+          },
+        }),
+      };
+
+      const mockLogger = {
+        debug: vi.fn(),
+        error: vi.fn(),
+      };
+
+      const mockUpdateQueue = {
+        updateUserId: vi.fn(),
+        processUpdates: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
+      getInstanceUpdateQueueMock.mockReturnValue(mockUpdateQueue as unknown as UpdateQueue);
+
+      const longId = "a".repeat(256);
+      const result = await setUserId(longId);
+
+      expect(result.ok).toBe(true);
+      expect(mockLogger.error).toHaveBeenCalledWith("UserId exceeds maximum length of 255 characters");
+      expect(tearDown).not.toHaveBeenCalled();
+      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
+      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
   });
 
   describe("logout", () => {

@@ -3,6 +3,7 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
+import { RemoveBrandingLicenseTip } from "@/modules/ee/whitelabel/remove-branding/components/remove-branding-license-tip";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
@@ -10,21 +11,21 @@ interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
   workspace: TWorkspace;
   isReadOnly: boolean;
+  showLiteLicenseTip?: boolean;
 }
 
 export const BrandingSettingsCard = async ({
   canRemoveBranding,
   workspace,
   isReadOnly,
-}: BrandingSettingsCardProps) => {
+  showLiteLicenseTip = false,
+}: Readonly<BrandingSettingsCardProps>) => {
   const t = await getTranslate();
-  const workspaceBasePath = `/workspaces/${workspace.id}`;
-
   const buttons: [ModalButton, ModalButton] = [
     {
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
-        ? `${workspaceBasePath}/settings/organization/billing`
+        ? `/organizations/${workspace.organizationId}/settings/billing`
         : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
     },
     {
@@ -33,33 +34,43 @@ export const BrandingSettingsCard = async ({
     },
   ];
 
+  let brandingContent: React.ReactNode;
+  if (canRemoveBranding) {
+    brandingContent = (
+      <div className="space-y-4">
+        <EditBranding
+          type="linkSurvey"
+          isEnabled={workspace.linkSurveyBranding}
+          workspaceId={workspace.id}
+          isReadOnly={isReadOnly}
+        />
+        <EditBranding
+          type="appSurvey"
+          isEnabled={workspace.inAppSurveyBranding}
+          workspaceId={workspace.id}
+          isReadOnly={isReadOnly}
+        />
+      </div>
+    );
+  } else if (showLiteLicenseTip) {
+    brandingContent = <RemoveBrandingLicenseTip licenseRequestUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL} />;
+  } else {
+    brandingContent = (
+      <UpgradePrompt
+        title={t("workspace.look.remove_branding_with_a_higher_plan")}
+        description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
+        buttons={buttons}
+        feature="remove_branding"
+      />
+    );
+  }
+
   return (
     <SettingsCard
       title={t("workspace.look.formbricks_branding")}
-      description={t("workspace.look.formbricks_branding_settings_description")}>
-      {canRemoveBranding ? (
-        <div className="space-y-4">
-          <EditBranding
-            type="linkSurvey"
-            isEnabled={workspace.linkSurveyBranding}
-            workspaceId={workspace.id}
-            isReadOnly={isReadOnly}
-          />
-          <EditBranding
-            type="appSurvey"
-            isEnabled={workspace.inAppSurveyBranding}
-            workspaceId={workspace.id}
-            isReadOnly={isReadOnly}
-          />
-        </div>
-      ) : (
-        <UpgradePrompt
-          title={t("workspace.look.remove_branding_with_a_higher_plan")}
-          description={t("workspace.settings.general.eliminate_branding_with_whitelabel")}
-          buttons={buttons}
-          feature="remove_branding"
-        />
-      )}
+      description={t("workspace.look.formbricks_branding_settings_description")}
+      noPadding={showLiteLicenseTip}>
+      {brandingContent}
       {isReadOnly && (
         <Alert variant="warning" className="mt-4">
           <AlertDescription>

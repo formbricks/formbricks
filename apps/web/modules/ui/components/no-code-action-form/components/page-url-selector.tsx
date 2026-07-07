@@ -143,7 +143,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
         />
       </div>
       {filterType === "specific" && (
-        <div className="mb-2 mt-4 w-full space-y-3 pe-2">
+        <div className="mt-4 mb-2 w-full space-y-3 pe-2">
           <Label>{t("workspace.actions.url")}</Label>
           <UrlInput
             control={form.control}
@@ -164,7 +164,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
             <p className="text-sm font-normal text-slate-500">
               {t("workspace.actions.enter_a_url_to_see_if_a_user_visiting_it_would_be_tracked")}
             </p>
-            <div className="rounded">
+            <div className="rounded-sm">
               <div className="mt-1 flex items-end">
                 <Input
                   type="text"

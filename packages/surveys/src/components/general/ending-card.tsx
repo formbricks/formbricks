@@ -25,6 +25,7 @@ interface EndingCardProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   isPreviewMode: boolean;
   fullSizeCards: boolean;
+  isCardless?: boolean;
   isOfflineWithPending?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function EndingCard({
   onOpenExternalURL,
   isPreviewMode,
   fullSizeCards,
+  isCardless = false,
   isOfflineWithPending = false,
 }: Readonly<EndingCardProps>) {
   const { t } = useTranslation();
@@ -131,7 +133,7 @@ export function EndingCard({
   ]);
 
   return (
-    <ScrollableContainer fullSizeCards={fullSizeCards}>
+    <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
       <div className="text-center">
         {isResponseSendingFinished ? (
           <>
@@ -156,7 +158,6 @@ export function EndingCard({
                       variablesData,
                       languageCode
                     )}
-                    elementId="EndingCard"
                   />
                   {endingCard.buttonLabel ? (
                     <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
@@ -186,10 +187,7 @@ export function EndingCard({
                       headline={t("common.respondents_will_not_see_this_card")}
                       elementId="EndingCard"
                     />
-                    <Subheader
-                      subheader={t("common.they_will_be_redirected_immediately")}
-                      elementId="EndingCard"
-                    />
+                    <Subheader subheader={t("common.they_will_be_redirected_immediately")} />
                   </div>
                 ) : (
                   <div className="my-3">

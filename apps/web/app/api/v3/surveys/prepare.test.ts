@@ -418,11 +418,11 @@ describe("v3 survey preparation", () => {
     );
   });
 
-  test("normalizes existing known legacy translation keys during patch preparation", () => {
+  test("preserves canonical translation keys during patch preparation", () => {
     const preparation = prepareV3SurveyPatchInput(
-      createLegacyLanguageSurvey("hi", { defaultLanguage: "en-US" }),
+      createLegacyLanguageSurvey("hi-IN", { defaultLanguage: "en-US" }),
       {
-        name: "Updated legacy hi survey",
+        name: "Updated hi-IN survey",
       }
     );
 

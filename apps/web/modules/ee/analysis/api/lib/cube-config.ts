@@ -11,6 +11,7 @@ export const DEFAULT_CUBE_JWT_ISSUER = "formbricks-web";
 export type TCubeQuerySource =
   | "charts.executeQueryAction"
   | "charts.generateAIChartAction"
+  | "charts.getDimensionValuesAction"
   | "dashboards.widget";
 
 export type TCubeTenantScope = {

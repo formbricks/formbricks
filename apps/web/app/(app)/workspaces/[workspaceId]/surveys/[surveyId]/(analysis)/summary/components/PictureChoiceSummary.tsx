@@ -29,7 +29,7 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <ElementSummaryHeader
         elementSummary={elementSummary}
         survey={survey}
@@ -42,7 +42,7 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
           ) : undefined
         }
       />
-      <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 px-4 pt-4 pb-6 text-sm md:px-6 md:text-base">
         {results.map((result, index) => {
           const choiceId = getChoiceIdByValue(result.imageUrl, elementSummary.element);
           return (

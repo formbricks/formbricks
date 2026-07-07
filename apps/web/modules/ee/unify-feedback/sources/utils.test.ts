@@ -73,8 +73,12 @@ describe("parseCSVColumnsToFields", () => {
   });
 });
 
-const createMockFile = (name: string, size: number, type: string): File =>
-  new File(["x".repeat(size)], name, { type });
+const createMockFile = (name: string, size: number, type: string): File => {
+  const file = new File([], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+
+  return file;
+};
 
 describe("validateCsvFile", () => {
   test("accepts a valid .csv file", () => {
@@ -115,6 +119,12 @@ describe("validateCsvFile", () => {
 
   test("accepts a file exactly at the size limit", () => {
     const file = createMockFile("exact.csv", MAX_CSV_VALUES.FILE_SIZE, "text/csv");
+    const result = validateCsvFile(file, mockT as never);
+    expect(result).toEqual({ valid: true });
+  });
+
+  test("accepts a CSV file larger than 14MB", () => {
+    const file = createMockFile("large.csv", 14 * 1024 * 1024, "text/csv");
     const result = validateCsvFile(file, mockT as never);
     expect(result).toEqual({ valid: true });
   });
@@ -424,6 +434,57 @@ describe("autoMapCsvSourceFields", () => {
       expect(result.confidence.field_type).toBe("high");
     }
   );
+
+  test.each(["Embedded Data - DeviceType", "Page Type", "Website Type"])(
+    "does not auto-map field_type to an unrelated 'type' column (%s)",
+    (typeColumn) => {
+      const result = autoMapCsvSourceFields({
+        sourceFields: buildSourceFields(["response_id", "question", "answer", typeColumn]),
+        sampleRow: {
+          response_id: "resp-1",
+          question: "How was it?",
+          answer: "Great",
+          [typeColumn]: "Desktop",
+        },
+        fileName: "feedback.csv",
+      });
+
+      // The column merely contains the word "type" and must not be claimed by field_type.
+      expect(result.mappings.some((m) => m.sourceFieldId === typeColumn)).toBe(false);
+
+      // field_type should be inferred as a static hub field type from the response value instead.
+      const fieldTypeMapping = result.mappings.find((m) => m.targetFieldId === "field_type");
+      expect(fieldTypeMapping?.sourceFieldId).toBeUndefined();
+      expect(fieldTypeMapping?.staticValue).toBe("text");
+    }
+  );
+
+  test("does not auto-map a target to a column that is empty in the sample row", () => {
+    // "response_id" matches the submission_id alias, but it has no data in the sample row. Binding
+    // it would make every row skip the transform, so it must be left unmapped for the user to fix.
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["response_id", "answer"]),
+      sampleRow: { response_id: "", answer: "Great" },
+      fileName: "feedback.csv",
+    });
+
+    expect(result.mappings.some((m) => m.sourceFieldId === "response_id")).toBe(false);
+    expect(result.mappings.find((m) => m.targetFieldId === "submission_id")).toBeUndefined();
+  });
+
+  test("does not auto-map field_label/field_id to a descriptive '...Label' column", () => {
+    // Descriptive analytics columns ending in "Label" must not be treated as field_label (and then
+    // borrowed as field_id) — their values are long free text that fails the hub's field_id limit.
+    const labelColumn = "Translated Comments - Topic Sentiment Label";
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["response_id", "answer", labelColumn]),
+      sampleRow: { response_id: "r1", answer: "Great", [labelColumn]: "Very Negative,Neutral,Positive" },
+      fileName: "feedback.csv",
+    });
+
+    expect(result.mappings.some((m) => m.sourceFieldId === labelColumn)).toBe(false);
+    expect(result.mappings.find((m) => m.targetFieldId === "field_label")).toBeUndefined();
+  });
 });
 
 describe("toggleQuestionId", () => {

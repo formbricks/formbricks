@@ -1,10 +1,11 @@
 packages:
   - "apps/*"
+  - "docker"
   - "packages/*"
 
 allowBuilds:
-  '@prisma/engines': true
-  '@sentry/cli': true
+  "@prisma/engines": true
+  "@sentry/cli": true
   better-sqlite3: true
   core-js: true
   esbuild: true
@@ -14,7 +15,7 @@ allowBuilds:
   sharp: true
   sqlite3: true
   unrs-resolver: true
-  '@prisma/client': true
+  "@prisma/client": true
 
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
@@ -28,10 +29,13 @@ overrides:
   # OpenTelemetry / protobuf chains.
   protobufjs@7: 7.6.3
   protobufjs@8: 8.6.3
-  # sqlite3 / node-gyp chain: tar and @tootallnate/once advisories (ENG-1456/1396/1379) are deferred,
-  # not pinned. The only patched releases (tar@7.5.10, @tootallnate/once@2+) cross a major and break
-  # node-gyp@8 / http-proxy-agent@4. Not exploitable here: tar only unpacks trusted npm-registry
-  # tarballs, and @tootallnate/once is Low. Re-pin once those parents adopt the patched majors.
+  # sqlite3 / node-gyp chain: tar advisory pins are safe here because sqlite3 is pulled in
+  # transitively by typeorm but the project uses postgres; sqlite3 is never built at runtime.
+  # Therefore node-gyp@8 / http-proxy-agent@4 compatibility is not a concern.
+  # ENG-1379 / GHSA-vpq2-c234-7xj6 (CVE-2026-3449): @tootallnate/once <2.0.1 leaves the promise
+  # permanently pending after an AbortSignal abort; http-proxy-agent@4 pins ^1, so an override is
+  # required. Pinned to the minimal patched version (2.0.1) to stay CJS-compatible with http-proxy-agent@4.
+  "@tootallnate/once": 2.0.1
   # SAML and XML processing chains.
   "@xmldom/xmldom": 0.9.10 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
   axios: 1.16.0
@@ -43,6 +47,8 @@ overrides:
   postcss: 8.5.14
   # SDK and runtime transitive security pins.
   fast-xml-parser: 5.7.0 # load-bearing: <5.7.0 vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
+  typeorm: 0.3.29
   # js-cookie / uuid: load-bearing security pins that are also MAJOR coercions on transitive consumers
   # (react-use@17 js-cookie v2->v3; @azure/msal-node + next-auth uuid v8/9->v11). Natural versions are
   # vulnerable (GHSA-qjx8-664m-686j / GHSA-w5hq-g745-h8pq), so the pins stay; runtime verified in build+tests.
@@ -57,16 +63,24 @@ overrides:
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
   "@babel/core": 7.29.6 # ENG-1376 / GHSA-4x5r-pxfx-6jf8
   "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf
-  dompurify: 3.4.9 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9)
+  dompurify: 3.4.11 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9); ENG-1527-batch / GHSA-cmwh-pvxp-8882 raises the pin to >=3.4.11 (3.4.9/3.4.10 vulnerable to clobbered-root / cross-realm / hook-pollution XSS)
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
-
-patchedDependencies:
-  next-auth@4.24.13: patches/next-auth@4.24.13.patch
+  # ENG-1509 / ENG-1505 / GHSA-vmh5-mc38-953g: undici 7.x TLS certificate
+  # validation bypass, patched in 7.28.0 (covers the jsdom transitive 7.25.0).
+  undici@7: 7.28.0
+  # ENG-1513 / GHSA-fjxv-7rqg-78g4: form-data <4.0.4 uses an unsafe random function for the
+  # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
+  form-data@4: 4.0.6
+  tar: 7.5.16
+  # ENG-1527-batch / GHSA-mh29-5h37-fv8m + GHSA-h67p-54hq-rp68: js-yaml <4.1.2 quadratic-complexity
+  # DoS via merge keys / repeated aliases (dev-only, via @redocly/cli). No 4.1.2 published; 4.2.0 is the
+  # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
+  js-yaml@4: 4.2.0
 
 autoInstallPeers: true
 linkWorkspacePackages: true
 shamefullyHoist: true
-sharedWorkspaceShrinkwrap: true
+sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
 legacyPeerDeps: true

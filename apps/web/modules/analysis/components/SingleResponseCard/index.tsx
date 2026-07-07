@@ -138,7 +138,7 @@ export const SingleResponseCard = ({
 
   return (
     <div className="group relative">
-      <div className="relative z-20 rounded-xl border border-slate-200 bg-white shadow-sm transition-all">
+      <div className="relative z-20 rounded-xl border border-slate-200 bg-white shadow-xs transition-all">
         {renderHeader ? (
           renderHeader({
             onDeleteClick: () => setDeleteDialogOpen(true),

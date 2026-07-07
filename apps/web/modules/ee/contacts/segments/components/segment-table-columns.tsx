@@ -18,7 +18,7 @@ export const generateSegmentTableColumns = (
     cell: ({ row }) => {
       return (
         <div className="flex items-center gap-4">
-          <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
             <UsersIcon className="size-5 text-slate-600" />
           </div>
           <div className="flex flex-col">

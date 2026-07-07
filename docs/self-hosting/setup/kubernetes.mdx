@@ -177,6 +177,24 @@ taxonomy:
 The `taxonomy-llm-secret` secret must contain `TAXONOMY_LLM_API_KEY`. If your endpoint does not enforce
 authentication, store a non-empty dummy value.
 
+To use Gemini on Vertex AI instead, keep `llm.enabled: false`, create a secret containing
+`TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON`, and configure the Vertex provider:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    provider: vertex-gemini
+    model: gemini-2.5-flash
+    vertex:
+      project: formbricks-cloud
+      location: europe-west3
+      existingSecret: taxonomy-vertex-secret
+```
+
+The service account in `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` must be allowed to call Vertex AI for the selected
+project and location.
+
 After startup, run the authenticated preflight check from inside the taxonomy pod:
 
 ```sh

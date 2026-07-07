@@ -30,10 +30,10 @@ const ResponsePricingTable = ({
     <table className="w-full text-left text-xs">
       <thead>
         <tr className="border-b border-slate-200 text-slate-500">
-          <th className="pb-2 pr-4 font-medium">
+          <th className="pr-4 pb-2 font-medium">
             {t("workspace.settings.billing.dynamic_pricing_first_unit")}
           </th>
-          <th className="pb-2 pr-4 font-medium">
+          <th className="pr-4 pb-2 font-medium">
             {t("workspace.settings.billing.dynamic_pricing_last_unit")}
           </th>
           <th className="pb-2 font-medium">{t("workspace.settings.billing.dynamic_pricing_per_unit")}</th>

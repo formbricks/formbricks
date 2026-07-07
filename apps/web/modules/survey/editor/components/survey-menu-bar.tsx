@@ -263,7 +263,7 @@ export const SurveyMenuBar = ({
           setActiveId("language");
         } else {
           toast.error(firstError.message, {
-            className: "w-fit !max-w-md",
+            className: "w-fit max-w-md!",
           });
         }
 
@@ -567,7 +567,7 @@ export const SurveyMenuBar = ({
         />
       </div>
 
-      <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+      <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
         <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
         {!isStorageConfigured && (
           <div>
@@ -575,7 +575,7 @@ export const SurveyMenuBar = ({
               <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
               <AlertButton className="flex items-center justify-center">
                 <a
-                  className="flex h-full w-full items-center justify-center !bg-white"
+                  className="flex h-full w-full items-center justify-center bg-white!"
                   href="https://formbricks.com/docs/self-hosting/configuration/file-uploads"
                   target="_blank"
                   rel="noopener noreferrer">

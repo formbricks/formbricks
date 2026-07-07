@@ -5,7 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZSegmentFilters } from "@formbricks/types/segment";
+import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
@@ -650,7 +650,11 @@ const assertSurveySegmentBelongsToWorkspace = async (
   }
 };
 
-export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
+export const createSurvey = async (
+  workspaceId: string,
+  surveyBody: TSurveyCreateInput,
+  privateSegmentFilters: TBaseFilters = []
+): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
     [surveyBody, ZSurveyCreateInput]
@@ -703,46 +707,52 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    const survey = await prisma.survey.create({
-      data: {
-        ...data,
-        workspace: {
-          connect: {
-            id: parsedWorkspaceId,
-          },
-        },
-      },
-      select: selectSurvey,
-    });
-
-    // if the survey created is an "app" survey, we also create a private segment for it.
-    if (survey.type === "app") {
-      const newSegment = await prisma.segment.create({
+    // Create the survey and — for app surveys — its private targeting segment atomically. The survey,
+    // the segment (seeded with any caller-supplied filters), and the segment connection must all land
+    // or none, so a mid-write failure can't leave a survey with missing or partial targeting.
+    const survey = await prisma.$transaction(async (tx) => {
+      const createdSurvey = await tx.survey.create({
         data: {
-          title: survey.id,
-          filters: [],
-          isPrivate: true,
+          ...data,
           workspace: {
             connect: {
               id: parsedWorkspaceId,
             },
           },
         },
+        select: selectSurvey,
       });
 
-      await prisma.survey.update({
-        where: {
-          id: survey.id,
-        },
-        data: {
-          segment: {
-            connect: {
-              id: newSegment.id,
+      if (createdSurvey.type === "app") {
+        const newSegment = await tx.segment.create({
+          data: {
+            title: createdSurvey.id,
+            filters: privateSegmentFilters,
+            isPrivate: true,
+            workspace: {
+              connect: {
+                id: parsedWorkspaceId,
+              },
             },
           },
-        },
-      });
-    }
+        });
+
+        await tx.survey.update({
+          where: {
+            id: createdSurvey.id,
+          },
+          data: {
+            segment: {
+              connect: {
+                id: newSegment.id,
+              },
+            },
+          },
+        });
+      }
+
+      return createdSurvey;
+    });
 
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
     // @ts-expect-error

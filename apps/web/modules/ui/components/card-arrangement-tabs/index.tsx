@@ -1,5 +1,7 @@
 "use client";
 
+import { SquareDashedTopSolid } from "lucide-react";
+import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys/types";
@@ -33,10 +35,42 @@ export const CardArrangementTabs = ({
         return <CasualCardArrangementIcon />;
       case "straight":
         return <StraightCardArrangementIcon />;
+      case "cardless":
+        return <SquareDashedTopSolid className="size-4 text-slate-900" />;
       default:
         return <SimpleCardsArrangementIcon />;
     }
   };
+
+  const options: {
+    value: TCardArrangementOptions;
+    label: string;
+    icon: ReactNode;
+  }[] = [
+    {
+      value: "simple",
+      label: t("workspace.surveys.edit.simple"),
+      icon: getCardArrangementIcon("simple"),
+    },
+    {
+      value: "straight",
+      label: t("workspace.surveys.edit.straight"),
+      icon: getCardArrangementIcon("straight"),
+    },
+    {
+      value: "casual",
+      label: t("workspace.surveys.edit.casual"),
+      icon: getCardArrangementIcon("casual"),
+    },
+  ];
+
+  if (surveyType === "link") {
+    options.push({
+      value: "cardless",
+      label: t("workspace.surveys.edit.cardless"),
+      icon: getCardArrangementIcon("cardless"),
+    });
+  }
 
   return (
     <div className="w-full gap-2 rounded-md bg-white">
@@ -45,23 +79,7 @@ export const CardArrangementTabs = ({
         onChange={(value) => {
           handleCardArrangementChange(value);
         }}
-        options={[
-          {
-            value: "simple",
-            label: t("workspace.surveys.edit.simple"),
-            icon: getCardArrangementIcon("simple"),
-          },
-          {
-            value: "straight",
-            label: t("workspace.surveys.edit.straight"),
-            icon: getCardArrangementIcon("straight"),
-          },
-          {
-            value: "casual",
-            label: t("workspace.surveys.edit.casual"),
-            icon: getCardArrangementIcon("casual"),
-          },
-        ]}
+        options={options}
         defaultSelected={activeCardArrangement}
         className="w-full"
         tabsContainerClassName="p-1 gap-2"

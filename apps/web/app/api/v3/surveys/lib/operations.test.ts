@@ -393,7 +393,7 @@ describe("createV3SurveyResponse", () => {
           instance,
         })
       ).status
-    ).toBe(400);
+    ).toBe(422);
 
     vi.mocked(createV3Survey).mockRejectedValueOnce(new V3SurveyUnsupportedShapeError("Unsupported"));
     expect(
@@ -681,7 +681,7 @@ describe("patchV3SurveyResponse", () => {
           instance,
         })
       ).status
-    ).toBe(400);
+    ).toBe(422);
 
     vi.mocked(patchV3Survey).mockRejectedValueOnce(new V3SurveyUnsupportedShapeError("Unsupported"));
     expect(

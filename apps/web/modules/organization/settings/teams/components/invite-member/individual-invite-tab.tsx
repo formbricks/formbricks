@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
@@ -10,9 +9,9 @@ import { OrganizationRole } from "@formbricks/database/prisma-browser";
 import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -23,8 +22,11 @@ import { Small } from "@/modules/ui/components/typography";
 
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]) => void;
+  onSubmit: (
+    data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]
+  ) => Promise<boolean>;
   teams: TOrganizationTeam[];
+  organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
@@ -36,14 +38,13 @@ export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
   teams,
+  organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
   membershipRole,
   showTeamAdminRestrictions,
   enterpriseLicenseRequestFormUrl,
 }: IndividualInviteTabProps) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z
@@ -61,12 +62,8 @@ export const IndividualInviteTab = ({
       : z.array(ZId),
   });
 
-  const router = useRouter();
-
   type TFormData = z.infer<typeof ZFormSchema>;
   const { t } = useTranslation();
-
-  // Determine default role based on permissions
   let defaultRole: TOrganizationRole = "owner";
   if (showTeamAdminRestrictions || isAccessControlAllowed) {
     defaultRole = "member";
@@ -93,10 +90,11 @@ export const IndividualInviteTab = ({
   const submitEventClass = async () => {
     const data = getValues();
     data.role = data.role || OrganizationRole.owner;
-    onSubmit([data]);
-    router.refresh();
-    setOpen(false);
-    reset();
+    const success = await onSubmit([data]);
+    if (success) {
+      setOpen(false);
+      reset();
+    }
   };
 
   const teamOptions = teams.map((team) => ({
@@ -193,7 +191,7 @@ export const IndividualInviteTab = ({
                 target="_blank"
                 href={
                   isFormbricksCloud
-                    ? `${workspaceBasePath}/settings/organization/billing`
+                    ? organizationSettingsPath(organizationId, "billing")
                     : enterpriseLicenseRequestFormUrl
                 }>
                 {t("common.upgrade_plan")}

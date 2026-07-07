@@ -49,7 +49,7 @@ export const OptionsSwitch = ({
       ref={containerRef}
       className="relative flex w-full items-center justify-between rounded-md border bg-white p-1">
       <div
-        className="absolute bottom-1 top-1 rounded-md bg-slate-100 transition-all duration-300 ease-in-out"
+        className="absolute top-1 bottom-1 rounded-md bg-slate-100 transition-all duration-300 ease-in-out"
         style={highlightStyle}
       />
       {elementTypes.map((type) => (
@@ -61,7 +61,7 @@ export const OptionsSwitch = ({
             e.preventDefault();
             !type.disabled && handleOptionChange(type.value);
           }}
-          className={`relative z-10 flex-grow rounded-md p-2 text-center transition-colors duration-200 ${
+          className={`relative z-10 grow rounded-md p-2 text-center transition-colors duration-200 ${
             type.disabled
               ? "cursor-not-allowed opacity-50"
               : currentOption === type.value

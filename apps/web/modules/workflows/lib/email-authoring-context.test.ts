@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getWorkflowEmailAuthoringContext } from "./email-authoring-context";
 
 const {
-  mockGetServerSession,
+  mockGetSession,
   mockGetWorkflowById,
   mockGetWorkspaceWithTeamIds,
   mockGetTeamMemberDetails,
@@ -10,7 +10,7 @@ const {
   mockGetUserLocale,
   mockGetSurvey,
 } = vi.hoisted(() => ({
-  mockGetServerSession: vi.fn(),
+  mockGetSession: vi.fn(),
   mockGetWorkflowById: vi.fn(),
   mockGetWorkspaceWithTeamIds: vi.fn(),
   mockGetTeamMemberDetails: vi.fn(),
@@ -19,14 +19,13 @@ const {
   mockGetSurvey: vi.fn(),
 }));
 
-vi.mock("next-auth", () => ({ getServerSession: mockGetServerSession }));
 vi.mock("@formbricks/database", () => ({ prisma: {} }));
 vi.mock("@formbricks/workflows/server", () => ({
   createWorkflowsService: () => ({ getWorkflowById: mockGetWorkflowById }),
 }));
 // Keep ZWorkflowDefinition real so trigger surveyId parsing is exercised end-to-end.
 vi.mock("@/lib/constants", () => ({ MAIL_FROM: undefined, DEFAULT_LOCALE: "en-US" }));
-vi.mock("@/modules/auth/lib/authOptions", () => ({ authOptions: {} }));
+vi.mock("@/modules/auth/lib/session", () => ({ getSession: mockGetSession }));
 vi.mock("@/modules/survey/editor/lib/team", () => ({ getTeamMemberDetails: mockGetTeamMemberDetails }));
 vi.mock("@/modules/survey/editor/lib/user", () => ({
   getUserEmail: mockGetUserEmail,
@@ -54,7 +53,7 @@ const definitionForSurvey = (surveyId: string) => ({
 describe("getWorkflowEmailAuthoringContext", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetServerSession.mockResolvedValue({ user: { id: "user1" } });
+    mockGetSession.mockResolvedValue({ user: { id: "user1" } });
     mockGetWorkflowById.mockResolvedValue({
       id: "wf1",
       workspaceId: WORKSPACE_ID,
@@ -119,7 +118,7 @@ describe("getWorkflowEmailAuthoringContext", () => {
   });
 
   test("returns an empty context when there is no session", async () => {
-    mockGetServerSession.mockResolvedValue(null);
+    mockGetSession.mockResolvedValue(null);
 
     const ctx = await getWorkflowEmailAuthoringContext({ workflowId: "wf1", workspaceId: WORKSPACE_ID });
 

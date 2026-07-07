@@ -43,7 +43,6 @@ export const FileUploadElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
 }: FileUploadFormProps): JSX.Element => {
-  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const [isMaxSizeError, setIsMaxSizeError] = useState(false);
   const {
@@ -174,7 +173,7 @@ export const FileUploadElementForm = ({
 
                         updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
                       }}
-                      className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                      className="mr-2 ml-2 inline w-20 bg-white text-center text-sm"
                     />
                   ),
                 }}
@@ -190,7 +189,7 @@ export const FileUploadElementForm = ({
                       <Link
                         className="underline"
                         target="_blank"
-                        href={`${workspaceBasePath}/settings/organization/billing`}
+                        href={`/organizations/${workspace.organizationId}/settings/billing`}
                       />
                     ),
                   }}

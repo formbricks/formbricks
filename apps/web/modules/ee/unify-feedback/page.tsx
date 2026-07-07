@@ -50,7 +50,7 @@ export default async function UnifyFeedbackRecordsPage(
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  ? `/organizations/${organization.id}/settings/billing`
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
@@ -76,7 +76,7 @@ export default async function UnifyFeedbackRecordsPage(
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
         </PageHeader>
         <NoFeedbackDirectoryEmptyState
-          workspaceId={params.workspaceId}
+          organizationId={organization.id}
           isOwnerOrManager={isOwner || isManager}
         />
       </PageContentWrapper>

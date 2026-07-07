@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import {
   AdvancedChartBuilder,
@@ -56,6 +57,7 @@ export function CreateChartView({
   aiUnavailableReason,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
   const isEditing = !!chartId;
 
   const {
@@ -122,7 +124,10 @@ export function CreateChartView({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent width="full" disableCloseOnOutsideClick={!isEditing}>
+      <DialogContent
+        width="full"
+        disableCloseOnOutsideClick={!isEditing}
+        onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader>
           <DialogTitle>
             {isEditing
@@ -196,7 +201,7 @@ export function CreateChartView({
                         setChartNameError(null);
                         return handleSaveChart();
                       }}
-                      className="space-y-2">
+                      className="flex flex-col gap-2">
                       <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
                         {t("workspace.analysis.charts.chart_name")}
                       </Label>
@@ -228,11 +233,13 @@ export function CreateChartView({
               <Alert variant="error" size="small">
                 <div>
                   <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
-                  <Link
-                    className="mt-1 inline-block font-medium underline"
-                    href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
-                    {t("workspace.analysis.charts.go_to_feedback_directories")}
-                  </Link>
+                  {workspace?.organizationId && (
+                    <Link
+                      className="mt-1 inline-block font-medium underline"
+                      href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
+                      {t("workspace.analysis.charts.go_to_feedback_directories")}
+                    </Link>
+                  )}
                 </div>
               </Alert>
             )}

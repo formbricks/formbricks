@@ -13,7 +13,7 @@ const WorkspacePage = async (props: { params: Promise<{ workspaceId: string }> }
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   if (isBilling) {
-    return redirect(getBillingFallbackPath(params.workspaceId, IS_FORMBRICKS_CLOUD));
+    return redirect(getBillingFallbackPath(organization.id, IS_FORMBRICKS_CLOUD));
   }
 
   return redirect(`/workspaces/${params.workspaceId}/surveys`);
