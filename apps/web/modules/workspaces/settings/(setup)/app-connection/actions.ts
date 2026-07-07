@@ -10,6 +10,7 @@ import { actionClient, authenticatedActionClient } from "@/lib/utils/action-clie
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromActionClassId, getWorkspaceIdFromActionClassId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getLatestStableFbRelease } from "./lib/github";
 
 const ZDeleteActionClassAction = z.object({
   actionClassId: ZId,
@@ -84,6 +85,7 @@ export const updateActionClassAction = authenticatedActionClient.inputSchema(ZUp
 
 const ZGetActiveInactiveSurveysAction = z.object({
   actionClassId: ZId,
+  excludeSurveyId: ZId.optional(),
 });
 
 export const getActiveInactiveSurveysAction = authenticatedActionClient
@@ -106,27 +108,19 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
     });
 
     const surveys = await getSurveysByActionClassId(parsedInput.actionClassId);
+    const filteredSurveys = parsedInput.excludeSurveyId
+      ? surveys.filter((survey) => survey.id !== parsedInput.excludeSurveyId)
+      : surveys;
     const response = {
-      activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
-      inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
+      activeSurveys: filteredSurveys
+        .filter((survey) => survey.status === "inProgress")
+        .map((survey) => survey.name),
+      inactiveSurveys: filteredSurveys
+        .filter((survey) => survey.status !== "inProgress")
+        .map((survey) => survey.name),
     };
     return response;
   });
-
-const getLatestStableFbRelease = async (): Promise<string | null> => {
-  try {
-    const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases/latest");
-    const release = await res.json();
-
-    if (release?.tag_name) {
-      return release.tag_name;
-    }
-
-    return null;
-  } catch (error) {
-    throw new Error("Failed to get latest stable Formbricks release", { cause: error });
-  }
-};
 
 export const getLatestStableFbReleaseAction = actionClient.action(async () => {
   return await getLatestStableFbRelease();

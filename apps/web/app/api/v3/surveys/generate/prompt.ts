@@ -38,7 +38,12 @@ export function buildV3SurveyGenerationSystemPrompt(
       "embedded external forms, or any other question type outside the allowed list.",
     "Do not include branching, variables, hidden fields, URLs, files, scripts, markdown, HTML, or tracking instructions.",
     `The final product will be created as a ${surveyType} survey draft.`,
-  ].join("\n");
+    surveyType === "app"
+      ? "This is an in-app survey shown inside the user's web or mobile app, so favor short questions that are easy to answer inside a small embedded widget."
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function buildV3SurveyGenerationPrompt(

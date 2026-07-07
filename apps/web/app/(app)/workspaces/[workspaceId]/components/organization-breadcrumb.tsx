@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useOrganization, useWorkspace } from "../context/workspace-context";
+import { useOptionalWorkspaceContext } from "../context/workspace-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
@@ -40,10 +40,9 @@ export const OrganizationBreadcrumb = ({
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Get current organization name from context OR prop
-  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
-  const { organization: currentOrganization } = useOrganization();
-  const { workspace } = useWorkspace();
+  // Name comes from context, falling back to the prop when there's no context yet.
+  const workspaceContext = useOptionalWorkspaceContext();
+  const currentOrganization = workspaceContext?.organization ?? null;
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   // Lazy-load organizations when dropdown opens
@@ -77,20 +76,11 @@ export const OrganizationBreadcrumb = ({
     t,
   ]);
 
-  if (!currentOrganization) {
-    const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
-    logger.error(errorMessage);
-    Sentry.captureException(new Error(errorMessage));
-    return;
-  }
-
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
-
   const handleOrganizationChange = (organizationId: string) => {
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
-      if (organizationId === currentOrganizationId && currentWorkspaceId) {
-        router.push(`/workspaces/${currentWorkspaceId}/settings/organization/general`);
+      if (organizationId === currentOrganizationId) {
+        router.push(`/organizations/${currentOrganizationId}/settings/general`);
         return;
       }
       router.push(`/organizations/${organizationId}/`);
@@ -111,7 +101,7 @@ export const OrganizationBreadcrumb = ({
     <BreadcrumbItem isActive={isOrganizationDropdownOpen}>
       <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
         <DropdownMenuTrigger
-          className="flex cursor-pointer items-center gap-1 outline-none"
+          className="flex cursor-pointer items-center gap-1 outline-hidden"
           id="organizationDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
@@ -170,7 +160,9 @@ export const OrganizationBreadcrumb = ({
             <>
               {showOrganizationDropdown && <DropdownMenuSeparator />}
               <DropdownMenuCheckboxItem
-                onClick={() => handleSettingChange(`${workspaceBasePath}/settings/organization/general`)}
+                onClick={() =>
+                  handleSettingChange(`/organizations/${currentOrganizationId}/settings/general`)
+                }
                 className="cursor-pointer">
                 <SettingsIcon className="mr-2 size-4" />
                 {t("common.settings")}

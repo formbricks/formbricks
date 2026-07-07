@@ -11,8 +11,8 @@
   "style": "new-york",
   "tailwind": {
     "baseColor": "slate",
-    "config": "tailwind.config.js",
-    "css": "globals.css",
+    "config": "",
+    "css": "modules/ui/globals.css",
     "cssVariables": true,
     "prefix": ""
   },

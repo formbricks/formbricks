@@ -119,6 +119,7 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
       throw new Error("Unable to parse workspaceId from URL");
     })();
 
+  // Old workspace-scoped org settings URL is redirected to the org-scoped API keys route.
   await page.goto(`/workspaces/${workspaceId}/settings/organization/api-keys`, {
     waitUntil: "domcontentloaded",
   });

@@ -4,23 +4,7 @@ import ResizeObserver from "resize-observer-polyfill";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
 
-// mock next-auth EARLY to prevent SessionProvider errors
-vi.mock("next-auth/react", () => ({
-  useSession: () => ({
-    data: {
-      user: {
-        id: "test-user-id",
-        email: "test@example.com",
-        name: "Test User",
-      },
-    },
-    status: "authenticated",
-  }),
-  signOut: vi.fn().mockResolvedValue(undefined),
-  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-// mock our useSignOut hook directly to avoid next-auth issues in tests
+// mock our useSignOut hook directly to avoid auth issues in tests
 vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
   useSignOut: () => ({
     signOut: vi.fn().mockResolvedValue(undefined),

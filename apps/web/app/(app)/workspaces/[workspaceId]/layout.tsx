@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { WorkspaceLayout as WorkspaceLayoutComponent } from "@/app/(app)/workspaces/[workspaceId]/components/WorkspaceLayout";
 import { WorkspaceContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { PostHogGroupIdentify } from "@/app/posthog/PostHogGroupIdentify";
 import { POSTHOG_KEY } from "@/lib/constants";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getWorkspaceLayoutData } from "@/modules/workspaces/lib/utils";
 import WorkspaceStorageHandler from "./components/WorkspaceStorageHandler";
 
@@ -15,7 +14,7 @@ const WorkspaceLayout = async (props: {
   const params = await props.params;
   const { children } = props;
 
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session?.user) {
     return redirect(`/auth/login`);
   }

@@ -2,7 +2,7 @@
 
 import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -53,6 +53,7 @@ export function AddExistingChartsDialog({
 }: Readonly<AddExistingChartsDialogProps>) {
   const { t } = useTranslation();
   const router = useRouter();
+  const [, startTransition] = useTransition();
   const [chartOptions, setChartOptions] = useState<ChartOption[]>([]);
   const [selectedChartIds, setSelectedChartIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -170,7 +171,9 @@ export function AddExistingChartsDialog({
             label={t("workspace.analysis.dashboards.create_new_chart")}
             onSuccess={() => {
               onOpenChange(false);
-              router.refresh();
+              startTransition(() => {
+                router.refresh();
+              });
               onSuccess();
             }}
             buttonProps={{ variant: "secondary", size: "default", disabled: isAdding }}

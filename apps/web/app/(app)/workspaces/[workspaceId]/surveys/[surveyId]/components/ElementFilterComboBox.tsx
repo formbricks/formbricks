@@ -150,7 +150,7 @@ export const ElementFilterComboBox = ({
         <DropdownMenuTrigger
           disabled={disabled}
           className={clsx(
-            "flex h-9 max-w-fit items-center justify-between gap-2 rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
+            "flex h-9 max-w-fit items-center justify-between gap-2 rounded-md rounded-r-none border-r border-slate-300 bg-white px-2 text-sm text-slate-600 focus:ring-0 focus:outline-transparent",
             disabled ? "opacity-50" : "cursor-pointer hover:bg-slate-50"
           )}>
           {filterValue ? (
@@ -158,7 +158,7 @@ export const ElementFilterComboBox = ({
           ) : (
             <p className="text-slate-400">{t("common.select")}...</p>
           )}
-          {filterOptions.length > 1 && <ChevronIcon className="size-4 flex-shrink-0 opacity-50" />}
+          {filterOptions.length > 1 && <ChevronIcon className="size-4 shrink-0 opacity-50" />}
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white">
           {filterOptions.map((o, index) => {
@@ -201,7 +201,7 @@ export const ElementFilterComboBox = ({
       key={`${value}-${index}`}
       type="button"
       onClick={(e) => handleRemoveTag(e, value)}
-      className="flex items-center gap-1 whitespace-nowrap rounded bg-slate-100 px-2 py-1 text-sm text-slate-600 hover:bg-slate-200">
+      className="flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-1 text-sm whitespace-nowrap text-slate-600 hover:bg-slate-200">
       {value}
       <X className="size-3" />
     </button>
@@ -214,7 +214,7 @@ export const ElementFilterComboBox = ({
     }
 
     return (
-      <div className="no-scrollbar flex grow gap-2 overflow-auto">
+      <div className="flex grow no-scrollbar gap-2 overflow-auto">
         {filterComboBoxValue.map((value, index) => renderTag(value, index))}
       </div>
     );
@@ -279,7 +279,7 @@ export const ElementFilterComboBox = ({
               disabled={isComboBoxDisabled}
               variant="secondary"
               size="icon"
-              className="flex-shrink-0"
+              className="shrink-0"
               aria-expanded={open}
               aria-label={t("common.select")}>
               <ChevronIcon />
@@ -287,7 +287,7 @@ export const ElementFilterComboBox = ({
           </div>
 
           {open && (
-            <div className="absolute top-full z-10 mt-1 w-full overflow-auto rounded-md bg-white shadow-md outline-none animate-in">
+            <div className="absolute top-full z-10 mt-1 w-full overflow-auto rounded-md bg-white shadow-md outline-hidden animate-in">
               <CommandList className="max-h-52">
                 <CommandInput
                   value={searchQuery}

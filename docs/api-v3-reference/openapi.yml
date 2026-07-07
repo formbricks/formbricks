@@ -14,7 +14,7 @@ info:
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
     **workspaceId**
-    Query param `workspaceId` is the canonical container identifier for this API.
+    `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** (`Unrecognized key: "workspaceId"`).
 
     **Auth**
     Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation.
@@ -29,7 +29,7 @@ info:
     Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. Workflow and workflow-run detail endpoints also return **403** for unknown IDs or inaccessible IDs to avoid IDOR leaks. List responses use `private, no-store`.
 
     **AI survey creation**
-    `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. Generated payloads are currently link-survey only because the v3 create contract accepts only `type: link`.
+    `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. It generates survey content for both `link` and `app` surveys; for `app` it seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
     Prompt text is sent to the configured AI provider for generation, but it is not stored by this endpoint, not logged by default, and not included in audit data.
 
     **OpenAPI**
@@ -189,40 +189,15 @@ paths:
                         minimum: 0
                         description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
         '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3BadRequest'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or workspace does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -245,9 +220,7 @@ paths:
         when the same block has at least one `logic` rule; otherwise the API returns
         `invalid_reference`.
 
-        This first write surface intentionally stays structure-focused: `type` may be omitted or set
-        to `link` or `app`, but in-app survey creation and distribution-channel settings are not part
-        of this operation. Unsupported fields are rejected instead of ignored.
+        `type` may be omitted or set to `link` or `app`. App surveys additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; both are rejected for link surveys. Trigger ids must reference existing workspace action classes (discover them via `GET /api/v3/action-classes`), and `targeting.filters` references (contact-attribute keys and segments) must exist in the workspace. Unsupported fields are rejected instead of ignored.
       tags:
         - V3 Surveys
       requestBody:
@@ -290,6 +263,69 @@ paths:
                   hiddenFields:
                     enabled: false
                   variables: []
+              appSurvey:
+                summary: Create an in-app (app) survey with distribution and triggers
+                description: |
+                  App surveys are shown inside your web or mobile app. `distribution` controls display behavior and the action classes that trigger the survey (by id — discover ids via `GET /api/v3/action-classes`). `targeting.filters` scopes the audience; an empty array targets everyone. `type` is immutable after creation.
+                value:
+                  workspaceId: clxx1234567890123456789012
+                  name: In-App Onboarding Feedback
+                  type: app
+                  status: draft
+                  defaultLanguage: en-US
+                  blocks:
+                    - name: Onboarding
+                      elements:
+                        - id: onboarding_feedback
+                          type: openText
+                          headline:
+                            en-US: How was your setup experience?
+                          required: false
+                  endings: []
+                  hiddenFields:
+                    enabled: false
+                  variables: []
+                  distribution:
+                    displayOption: respondMultiple
+                    recontactDays: 7
+                    delay: 5
+                    triggers:
+                      - actionClassId: clyy1234567890123456789012
+                  targeting:
+                    filters:
+                      - id: clf0aaaaaaaaaaaaaaaaaaaa01
+                        connector: null
+                        resource:
+                          id: clf1aaaaaaaaaaaaaaaaaaaa01
+                          root:
+                            type: attribute
+                            contactAttributeKey: plan
+                          qualifier:
+                            operator: equals
+                          value: pro
+                      - id: clf2aaaaaaaaaaaaaaaaaaaa01
+                        connector: and
+                        resource:
+                          - id: clf3aaaaaaaaaaaaaaaaaaaa01
+                            connector: null
+                            resource:
+                              id: clf4aaaaaaaaaaaaaaaaaaaa01
+                              root:
+                                type: attribute
+                                contactAttributeKey: role
+                              qualifier:
+                                operator: equals
+                              value: admin
+                          - id: clf5aaaaaaaaaaaaaaaaaaaa01
+                            connector: or
+                            resource:
+                              id: clf6aaaaaaaaaaaaaaaaaaaa01
+                              root:
+                                type: attribute
+                                contactAttributeKey: role
+                              qualifier:
+                                operator: equals
+                              value: owner
               sequentialProductSurvey:
                 summary: Create a richer sequential survey without logicFallback
                 description: |
@@ -390,41 +426,29 @@ paths:
                     $ref: '#/components/schemas/SurveyResource'
         '400':
           description: |
-            Bad Request — invalid JSON, unsupported fields, malformed multilingual maps, duplicate
-            stable ids, or dangling logic/reference ids.
+            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayPercentage` is required when `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution` on a link survey, or `displayPercentage` without `displayOption: displaySome`); omissions carry `code: missing_required_field` (e.g. `displayPercentage` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or workspace does not exist (404 not used; avoids existence leak)
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden — no write access, missing external URL permission, or workspace does not exist (404 not used; avoids existence leak)
+        '422':
+          description: 'Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -438,9 +462,9 @@ paths:
         Clients should validate the returned payload with `/api/v3/surveys/validate` or use the
         embedded validation metadata, then create the draft through `POST /api/v3/surveys`.
 
-        The generated payload always sets `status: draft`. The initial contract supports only
-        `type: link`; app and website survey creation must stay disabled until the v3 create
-        endpoint accepts those types.
+        The generated payload always sets `status: draft`. Both `type: link` and `type: app` are
+        supported; for `app`, the payload includes a default `distribution` (display once, no triggers,
+        no targeting) that you finish configuring in the editor or via the create request.
 
         Prompt privacy: prompt text is sent to the configured AI provider to create the payload, but
         this endpoint does not store prompts and server logs should use request ids and failure
@@ -551,11 +575,7 @@ paths:
                       - name: prompt
                         reason: Describe the survey goal, audience, or topic in a sentence so the AI can create a useful draft.
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
           description: Forbidden — no write access, workspace does not exist, AI is not in plan, or AI smart tools are disabled
           content:
@@ -579,6 +599,14 @@ paths:
                     detail: AI smart tools are disabled for this organization.
                     code: ai_smart_tools_disabled
                     requestId: req_123
+                aiNotInPlan:
+                  summary: AI features not enabled for the plan
+                  value:
+                    title: AI Unavailable
+                    status: 403
+                    detail: AI features are not enabled for this organization's plan.
+                    code: ai_features_not_enabled
+                    requestId: req_123
         '422':
           description: AI generated an invalid payload after schema and v3 create validation
           content:
@@ -598,22 +626,9 @@ paths:
                       - name: generatedSurvey.blocks
                         reason: Too small
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
         '502':
           description: The configured AI provider failed or could not produce a valid draft
           content:
@@ -749,34 +764,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no write access, or survey/workspace does not exist
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -931,34 +925,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or survey does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -1049,42 +1022,29 @@ paths:
                     $ref: '#/components/schemas/SurveyResource'
         '400':
           description: |
-            Bad Request — malformed JSON, unsupported query parameter, unsupported field,
-            invalid locale map, duplicate id, immutable element id change, dangling reference,
-            or invalid survey document.
+            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation, and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayPercentage` is required when `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '401':
-          description: Not authenticated (no valid session or API key)
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or survey does not exist (404 not used; avoids existence leak)
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden — no write access, or survey does not exist (404 not used; avoids existence leak)
+        '422':
+          description: 'Unprocessable Content — the patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -1115,40 +1075,15 @@ paths:
                 type: string
               example: private, no-store
         '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3BadRequest'
         '401':
-          description: Not authenticated (no valid session or API key)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no access, or survey does not exist (404 not used; avoids existence leak)
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3Forbidden'
         '429':
-          description: Rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-              description: Seconds until the current rate-limit window resets
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3TooManyRequests'
         '500':
-          description: Internal Server Error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+          $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
         - apiKeyAuth: []
@@ -1889,6 +1824,179 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+  /api/v3/action-classes:
+    get:
+      operationId: listActionClassesV3
+      summary: List action classes
+      description: |
+        Returns the action classes (user actions that can trigger an app survey) for a workspace. Use
+        the returned ids as `distribution.triggers[].actionClassId` when creating or updating app
+        surveys. Read-only: this v3 endpoint lists action classes but does not create them — action
+        classes are managed in the Formbricks app (Actions settings) or via the v1/v2 management API.
+
+        An empty `data` array means the workspace has no action classes yet. Triggers are optional, so
+        you can still create an app survey with `distribution.triggers: []` (or omit `distribution`
+        entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie or
+        x-api-key.
+      tags:
+        - V3 Action Classes
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: |
+            Workspace identifier. This is the canonical container ID for v3 APIs.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Page size (max 100).
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: |
+            Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+      responses:
+        '200':
+          description: Action classes retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActionClassResource'
+                  meta:
+                    type: object
+                    required:
+                      - limit
+                      - nextCursor
+                    properties:
+                      limit:
+                        type: integer
+                      nextCursor:
+                        type:
+                          - string
+                          - 'null'
+                        description: Opaque cursor for the next page. `null` when there are no more results.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/contact-attribute-keys:
+    get:
+      operationId: listContactAttributeKeysV3
+      summary: List contact attribute keys
+      description: |
+        Returns the contact attribute keys for a workspace. Use the returned `key` values as
+        `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
+        operators apply. Session cookie or x-api-key. (Applying targeting filters requires the Contacts
+        entitlement; this discovery endpoint does not.)
+      tags:
+        - V3 Contact Attribute Keys
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: |
+            Workspace identifier. This is the canonical container ID for v3 APIs.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Page size (max 100).
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: |
+            Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+      responses:
+        '200':
+          description: Contact attribute keys retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContactAttributeKeyResource'
+                  meta:
+                    type: object
+                    required:
+                      - limit
+                      - nextCursor
+                    properties:
+                      limit:
+                        type: integer
+                      nextCursor:
+                        type:
+                          - string
+                          - 'null'
+                        description: Opaque cursor for the next page. `null` when there are no more results.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
 components:
   securitySchemes:
     sessionAuth:
@@ -1911,6 +2019,17 @@ components:
         Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601 strings.
         The v3 overview contract intentionally omits internal fields such as `_count`.
         Legacy DB rows may include survey **type** values `website` or `web` (see Prisma); filter **type** only accepts `link` | `app`.
+      required:
+        - id
+        - name
+        - workspaceId
+        - type
+        - status
+        - publishOn
+        - createdAt
+        - updatedAt
+        - responseCount
+        - creator
       properties:
         id:
           type: string
@@ -1938,24 +2057,25 @@ components:
         updatedAt:
           type: string
           format: date-time
+        publishOn:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Scheduled publish time (ISO 8601), or null if not scheduled.
         responseCount:
           type: integer
         creator:
           type:
             - object
             - 'null'
+          description: The user who created the survey, or null for API-key/system-created surveys.
+          required:
+            - name
           properties:
             name:
               type: string
-        singleUse:
-          type:
-            - object
-            - 'null'
-          properties:
-            enabled:
-              type: boolean
-            isEncrypted:
-              type: boolean
+          additionalProperties: false
     InvalidParam:
       type: object
       description: |
@@ -2054,6 +2174,8 @@ components:
             - internal_server_error
             - invalid_workflow_state
             - not_authenticated
+            - not_found
+            - payload_too_large
             - too_many_requests
             - unprocessable_content
             - workflow_not_executable
@@ -3181,14 +3303,354 @@ components:
         Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
         generated by the server. Provide an explicit cuid2 id when logic in the same request needs
         to reference this variable.
+    SurveyTrigger:
+      type: object
+      description: |
+        Reference to an existing workspace action class that triggers this app survey. Discover available action-class ids with `GET /api/v3/action-classes`.
+      required:
+        - actionClassId
+      properties:
+        actionClassId:
+          type: string
+          format: cuid2
+          description: Id of an action class in the same workspace.
+      additionalProperties: false
+    SurveyDistribution:
+      type: object
+      description: |
+        App-survey runtime/display settings. Only valid for `type: app`; rejected for link surveys.
+        **Replacement semantics (destructive):** when `distribution` is provided on PATCH it fully replaces the stored object — any sub-field you omit is reset to its default, NOT preserved. In particular, omitting `triggers` removes ALL existing triggers, and omitting `displayOption` resets it to `displayOnce`. To change one setting, send the complete desired distribution. To leave distribution untouched, omit the whole `distribution` key.
+      properties:
+        displayOption:
+          type: string
+          enum:
+            - displayOnce
+            - displayMultiple
+            - respondMultiple
+            - displaySome
+          default: displayOnce
+          description: |
+            How often the survey may be shown to a contact. `displaySome` shows it to `displayPercentage` of contacts.
+        displayPercentage:
+          type:
+            - number
+            - 'null'
+          minimum: 0.01
+          maximum: 100
+          default: null
+          description: |
+            Percentage of contacts to show the survey to. Required when `displayOption` is `displaySome`; must be null/omitted otherwise.
+        displayLimit:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          default: null
+          description: Maximum number of times the survey is shown to a single contact.
+        recontactDays:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          default: null
+          description: Days to wait before showing this survey again to the same contact. Null uses the workspace default.
+        autoClose:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          default: null
+          description: Seconds of inactivity after which the survey widget auto-closes. Null disables auto-close.
+        autoComplete:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          default: null
+          description: Automatically stop collecting responses after this many completed responses. Null disables it.
+        delay:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Seconds to wait after a trigger fires before showing the survey.
+        triggers:
+          type: array
+          default: []
+          items:
+            $ref: '#/components/schemas/SurveyTrigger'
+          description: |
+            Action classes that trigger the survey. Every id must reference an existing workspace action class. On PATCH this list fully replaces the survey's triggers — omitting it (or sending `[]`) removes all existing triggers.
+      additionalProperties: false
+      example:
+        displayOption: displaySome
+        displayPercentage: 50
+        displayLimit: null
+        recontactDays: 7
+        autoClose: null
+        autoComplete: null
+        delay: 0
+        triggers:
+          - actionClassId: clyy1234567890123456789012
+    SegmentFilterValue:
+      description: |
+        Comparison value for a segment filter condition. A string or number for most operators; a relative-date object (`{ amount, unit }`) for `isOlderThan` / `isNewerThan`; a two-element `[from, to]` string array for `isBetween`. Ignored for `isSet` / `isNotSet` but still required.
+      oneOf:
+        - type: string
+        - type: number
+        - type: object
+          required:
+            - amount
+            - unit
+          properties:
+            amount:
+              type: number
+            unit:
+              type: string
+              enum:
+                - days
+                - weeks
+                - months
+                - years
+          additionalProperties: false
+        - type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 2
+    SegmentFilter:
+      description: |
+        A single targeting condition. `root.type` selects the subject and determines the valid `qualifier.operator` set: `attribute` (a workspace contact-attribute key), `person` (a built-in person identifier such as `userId`/`email`), `segment` (membership in another segment), or `device`. Each variant is one member of this union; the matching member is chosen by `root.type`.
+      oneOf:
+        - title: AttributeFilter
+          description: Matches on a workspace contact-attribute value.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - contactAttributeKey
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - attribute
+                contactAttributeKey:
+                  type: string
+                  description: A contact-attribute key defined in the workspace (e.g. `plan`, `role`).
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - lessThan
+                    - lessEqual
+                    - greaterThan
+                    - greaterEqual
+                    - equals
+                    - notEquals
+                    - isSet
+                    - isNotSet
+                    - contains
+                    - doesNotContain
+                    - startsWith
+                    - endsWith
+                    - isOlderThan
+                    - isNewerThan
+                    - isBefore
+                    - isAfter
+                    - isBetween
+                    - isSameDay
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: PersonFilter
+          description: Matches on a built-in person identifier.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - personIdentifier
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - person
+                personIdentifier:
+                  type: string
+                  description: A built-in person identifier (e.g. `userId`).
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - equals
+                    - notEquals
+                    - isSet
+                    - isNotSet
+                    - contains
+                    - doesNotContain
+                    - startsWith
+                    - endsWith
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: SegmentFilter
+          description: Matches on membership in another segment.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - segmentId
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - segment
+                segmentId:
+                  type: string
+                  description: Id of the segment to test membership against.
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - userIsIn
+                    - userIsNotIn
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+        - title: DeviceFilter
+          description: Matches on the contact's device type.
+          type: object
+          required:
+            - id
+            - root
+            - qualifier
+            - value
+          properties:
+            id:
+              type: string
+              format: cuid2
+            root:
+              type: object
+              required:
+                - type
+                - deviceType
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - device
+                deviceType:
+                  type: string
+                  description: Device type (e.g. `desktop`, `phone`).
+              additionalProperties: false
+            qualifier:
+              type: object
+              required:
+                - operator
+              properties:
+                operator:
+                  type: string
+                  enum:
+                    - equals
+                    - notEquals
+              additionalProperties: false
+            value:
+              $ref: '#/components/schemas/SegmentFilterValue'
+          additionalProperties: false
+    SegmentFilters:
+      type: array
+      description: |
+        Contact targeting filter tree. An empty array targets everyone. Each node joins the previous one via its `connector` (`and`/`or`; the first node's connector is null). A node's `resource` is either a single filter condition or a nested filter group (enabling parenthesized `and`/`or` logic).
+      items:
+        type: object
+        required:
+          - id
+          - connector
+          - resource
+        properties:
+          id:
+            type: string
+            format: cuid2
+          connector:
+            type:
+              - string
+              - 'null'
+            enum:
+              - and
+              - or
+              - null
+            description: Logical connector joining this node to the previous one. Null for the first node.
+          resource:
+            oneOf:
+              - $ref: '#/components/schemas/SegmentFilter'
+              - $ref: '#/components/schemas/SegmentFilters'
+            description: A single filter condition, or a nested filter group for grouped logic.
+        additionalProperties: false
+    SurveyTargeting:
+      type: object
+      description: |
+        App-survey contact targeting. Only valid for `type: app`. `filters: []` targets everyone. Setting or changing non-empty filters requires the Contacts entitlement; otherwise create/patch returns 403.
+
+        `attribute` filters reference workspace contact-attribute keys (discover them via `GET /api/v3/contact-attribute-keys`) and `segment` filters reference other segment ids — both are workspace-scoped resources you must obtain before constructing filters (an invalid key/id targets no one rather than erroring). See `SegmentFilter` for the per-`root.type` operator sets.
+      required:
+        - filters
+      properties:
+        filters:
+          $ref: '#/components/schemas/SegmentFilters'
+      additionalProperties: false
     CreateSurveyRequest:
       type: object
       description: |
         Strict v3 survey creation document. This endpoint accepts survey structure only: name,
         metadata, languages, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
-        It rejects legacy `questions` and out-of-scope settings such as styling, targeting, segments,
-        follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields,
-        timestamps, and `createdBy`.
+        App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
+        It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
         Translatable fields use real locale-code maps. The map must include the canonical
         `defaultLanguage` key, such as `en-US`, so the server can persist the internal default
@@ -3219,8 +3681,7 @@ components:
             - app
           default: link
           description: |
-            Optional compatibility field. `link` and `app` survey types are accepted here; app/in-app
-            survey distribution settings remain outside this structure-focused create endpoint.
+            Survey type. `link` surveys are distributed by URL; `app` surveys are shown in-app and configure their runtime behavior via the `distribution` and `targeting` objects. `type` is immutable after creation (it cannot be changed via PATCH).
         status:
           type: string
           enum:
@@ -3271,6 +3732,14 @@ components:
           default: []
           items:
             $ref: '#/components/schemas/CreateSurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: App-survey runtime/display settings. Only valid when `type` is `app`.
+        targeting:
+          allOf:
+            - $ref: '#/components/schemas/SurveyTargeting'
+          description: App-survey contact targeting. Only valid when `type` is `app`.
       additionalProperties: false
     SurveyLanguage:
       type: object
@@ -3469,6 +3938,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: App-survey runtime/display settings. Present only for app surveys; omitted for link surveys.
+        targeting:
+          allOf:
+            - $ref: '#/components/schemas/SurveyTargeting'
+          description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
     AISurveyGenerationLocaleCode:
       type: string
       enum:
@@ -3514,8 +3991,9 @@ components:
           type: string
           enum:
             - link
+            - app
           default: link
-          description: Link Survey is the only AI-created type until the v3 create endpoint supports additional types.
+          description: Survey type to generate. The AI generates the survey content (blocks/questions) for both types; for `app` it additionally seeds a default `distribution` (display once, no triggers, no targeting) that you finish configuring before publishing.
         language:
           $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
           description: |
@@ -3599,8 +4077,8 @@ components:
       description: |
         Patch payload shape. Top-level fields are partial; any provided nested object or array
         fully replaces that subtree. Omitted top-level fields are preserved. Immutable/system fields
-        such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps, `questions`, analytics,
-        distribution, styling, targeting, and scripts are rejected.
+        such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps, `questions`, analytics, styling,
+        and scripts are rejected. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
         `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
@@ -3650,6 +4128,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SurveyVariable'
+        distribution:
+          allOf:
+            - $ref: '#/components/schemas/SurveyDistribution'
+          description: |
+            App-survey runtime/display settings. Only valid for stored `type: app`. Replaces the full distribution; omitted scalars reset to their defaults.
+        targeting:
+          allOf:
+            - $ref: '#/components/schemas/SurveyTargeting'
+          description: App-survey contact targeting. Only valid for stored app surveys.
       additionalProperties: false
     ValidateSurveyPatchRequest:
       type: object
@@ -4456,46 +4943,77 @@ components:
               message:
                 type: string
                 description: Human-readable explanation of the problem.
-  parameters:
-    WorkspaceIdQuery:
-      in: query
-      name: workspaceId
-      required: true
-      schema:
-        type: string
-        format: cuid2
-      description: Workspace identifier. This is the canonical container ID for v3 APIs.
-    LimitQuery:
-      in: query
-      name: limit
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-      description: Page size (max 100).
-    CursorQuery:
-      in: query
-      name: cursor
-      schema:
-        type: string
-      description: Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
-    WorkflowRunIdPath:
-      in: path
-      name: runId
-      required: true
-      schema:
-        type: string
-        format: cuid2
-      description: Workflow run identifier.
-    WorkflowIdPath:
-      in: path
-      name: workflowId
-      required: true
-      schema:
-        type: string
-        format: cuid2
-      description: Workflow identifier.
+    ActionClassResource:
+      type: object
+      description: A workspace action class that can be referenced from an app-survey trigger.
+      required:
+        - id
+        - name
+        - description
+        - type
+        - key
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Use this value as `distribution.triggers[].actionClassId` on an app survey.
+        name:
+          type: string
+        description:
+          type:
+            - string
+            - 'null'
+        type:
+          type: string
+          enum:
+            - code
+            - noCode
+        key:
+          type:
+            - string
+            - 'null'
+          description: Code-action key for code-type action classes; null for no-code actions.
+      additionalProperties: false
+    ContactAttributeKeyResource:
+      type: object
+      description: |
+        A workspace contact-attribute key. Use `key` as `targeting.filters[].root.contactAttributeKey` on an app survey; `dataType` indicates which operators apply (e.g. `number`/`date` attributes support arithmetic/date operators).
+      required:
+        - id
+        - key
+        - name
+        - description
+        - type
+        - dataType
+      properties:
+        id:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          description: The attribute key used in targeting filters (e.g. `plan`, `role`).
+        name:
+          type:
+            - string
+            - 'null'
+          description: Human-readable display name, or null.
+        description:
+          type:
+            - string
+            - 'null'
+        type:
+          type: string
+          enum:
+            - default
+            - custom
+          description: Whether this is a built-in (`default`) or workspace-defined (`custom`) attribute.
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - date
+      additionalProperties: false
   responses:
     V3BadRequest:
       description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.
@@ -4626,3 +5144,43 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+  parameters:
+    WorkspaceIdQuery:
+      in: query
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workspace identifier. This is the canonical container ID for v3 APIs.
+    LimitQuery:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size (max 100).
+    CursorQuery:
+      in: query
+      name: cursor
+      schema:
+        type: string
+      description: Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
+    WorkflowRunIdPath:
+      in: path
+      name: runId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workflow run identifier.
+    WorkflowIdPath:
+      in: path
+      name: workflowId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workflow identifier.

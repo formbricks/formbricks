@@ -11,10 +11,13 @@ test.describe("Invite, accept and remove organization member", async () => {
   });
 
   test("Invite organization member", async ({ page }) => {
+    const inviteEmail = `org-invite-${Date.now()}@formbricks.com`;
+
     await test.step("Invite User", async () => {
       const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+      // Old workspace-scoped org settings URL is redirected to the org-scoped route.
       await page.goto(`/workspaces/${workspaceId}/settings/organization/teams`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/organization\/teams/);
+      await page.waitForURL(/\/organizations\/[^/]+\/settings\/teams/);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
@@ -27,26 +30,22 @@ test.describe("Invite, accept and remove organization member", async () => {
       await page.getByLabel("Full Name").fill(invites.addMember.name);
 
       await expect(page.getByLabel("Email")).toBeVisible();
-      await page.getByLabel("Email").fill(invites.addMember.email);
+      await page.getByLabel("Email").fill(inviteEmail);
 
       await page.getByRole("button", { name: "Invite", exact: true }).click();
 
-      await page.waitForTimeout(5000);
-
-      // const successToast = await page.waitForSelector(".formbricks__toast__success");
-      // expect(successToast).toBeTruthy();
+      await expect(page.locator(".formbricks__toast__success")).toBeVisible({ timeout: 15000 });
     });
 
     await test.step("Copy invite Link", async () => {
       await expect(page.locator("#membersInfoWrapper")).toBeVisible();
 
-      const lastMemberInfo = page.locator("#membersInfoWrapper > #singleMemberInfo:last-child");
-      await expect(lastMemberInfo).toBeVisible();
+      const invitedMemberInfo = page.locator("#singleMemberInfo").filter({ hasText: inviteEmail });
+      await expect(invitedMemberInfo).toBeVisible({ timeout: 10000 });
 
-      const pendingSpan = lastMemberInfo.locator("span").locator("span").filter({ hasText: "Pending" });
-      await expect(pendingSpan).toBeVisible();
+      await expect(invitedMemberInfo.getByText("Pending", { exact: true })).toBeVisible();
 
-      const shareInviteButton = page.locator("#shareInviteButton").last();
+      const shareInviteButton = invitedMemberInfo.locator("#shareInviteButton");
       await expect(shareInviteButton).toBeVisible();
 
       await shareInviteButton.click();
@@ -121,8 +120,9 @@ test.describe("Create, update and delete team", async () => {
 
   test("Create and update team", async ({ page }) => {
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    // Old workspace-scoped org settings URL is redirected to the org-scoped route.
     await page.goto(`/workspaces/${workspaceId}/settings/organization/teams`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/organization\/teams/);
+    await page.waitForURL(/\/organizations\/[^/]+\/settings\/teams/);
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");

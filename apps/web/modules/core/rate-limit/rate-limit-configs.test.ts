@@ -69,7 +69,15 @@ describe("rateLimitConfigs", () => {
 
     test("should have all API configurations", () => {
       const apiConfigs = Object.keys(rateLimitConfigs.api);
-      expect(apiConfigs).toEqual(["v1", "v2", "v3", "v3SurveyGenerate", "client", "clientEnvironment"]);
+      expect(apiConfigs).toEqual([
+        "v1",
+        "v2",
+        "v3",
+        "mcpAuth",
+        "v3SurveyGenerate",
+        "client",
+        "clientEnvironment",
+      ]);
     });
 
     test("should have all action configurations", () => {
@@ -82,6 +90,8 @@ describe("rateLimitConfigs", () => {
         "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
+        "inviteMember",
+        "bulkInviteMembers",
         "generateExampleResponses",
       ]);
     });

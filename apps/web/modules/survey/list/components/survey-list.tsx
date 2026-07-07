@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TSurveyType } from "@formbricks/types/surveys/types";
+import type { TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
@@ -17,6 +17,7 @@ import { CreateWithAIDialog } from "@/modules/survey/components/template-list/co
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
+import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import {
   hasActiveSurveyFilters,
@@ -35,6 +36,7 @@ import {
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { FeaturedTemplates } from "./featured-templates";
 import { SurveyCard } from "./survey-card";
 import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
@@ -48,6 +50,7 @@ interface SurveysListProps {
   locale: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
+  showFeaturedTemplates?: boolean;
 }
 
 type NewSurveyMenuProps = {
@@ -144,7 +147,8 @@ export const SurveysList = ({
   locale,
   isAIAvailable,
   aiUnavailableReason,
-}: SurveysListProps) => {
+  showFeaturedTemplates = false,
+}: Readonly<SurveysListProps>) => {
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
@@ -203,6 +207,7 @@ export const SurveysList = ({
   });
 
   const deleteSurveyMutation = useDeleteSurvey({ queryKey });
+  const updateSurveyStatusMutation = useUpdateSurveyStatus({ queryKey });
 
   const hasAppliedFilters = hasActiveSurveyFilters(normalizedFilters);
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
@@ -211,6 +216,10 @@ export const SurveysList = ({
 
   const handleDeleteSurvey = async (surveyId: string) => {
     await deleteSurveyMutation.mutateAsync({ surveyId });
+  };
+
+  const handleUpdateSurveyStatus = async (surveyId: string, status: TSurveyStatus) => {
+    await updateSurveyStatusMutation.mutateAsync({ surveyId, status });
   };
 
   const createSurveyButton = (
@@ -302,6 +311,7 @@ export const SurveysList = ({
               survey={survey}
               isReadOnly={isReadOnly}
               deleteSurvey={handleDeleteSurvey}
+              updateSurveyStatus={handleUpdateSurveyStatus}
               publicDomain={publicDomain}
               locale={locale}
             />
@@ -327,6 +337,14 @@ export const SurveysList = ({
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
       <div className="space-y-6">
+        {!isReadOnly && showFeaturedTemplates && (
+          <FeaturedTemplates
+            workspace={workspace}
+            locale={locale}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
+          />
+        )}
         <SurveyFilters
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}

@@ -11,6 +11,7 @@ import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
@@ -47,8 +48,6 @@ interface SignupFormProps {
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
-  samlTenant: string;
-  samlProduct: string;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
 }
@@ -69,8 +68,6 @@ export const SignupForm = ({
   isSsoEnabled,
   samlSsoEnabled,
   isTurnstileConfigured,
-  samlTenant,
-  samlProduct,
   turnstileSiteKey,
   isFormbricksCloud,
 }: SignupFormProps) => {
@@ -93,6 +90,13 @@ export const SignupForm = ({
     }
   }, [inviteToken, webAppUrl]);
 
+  const loginHref = useMemo(() => {
+    const base = inviteToken ? `/auth/login?callbackUrl=${returnToUrl}` : "/auth/login";
+    const attributionSuffix = buildAttributionQuerySuffix(searchParams);
+    if (!attributionSuffix) return base;
+    return `${base}${base.includes("?") ? "&" : "?"}${attributionSuffix}`;
+  }, [inviteToken, returnToUrl, searchParams]);
+
   const form = useForm<TSignupInput>({
     defaultValues: {
       name: "",
@@ -108,9 +112,17 @@ export const SignupForm = ({
         throw new Error(t("auth.signup.please_verify_captcha"));
       }
 
+      const resetTurnstileIfConfigured = () => {
+        if (isTurnstileConfigured) {
+          setTurnstileToken(undefined);
+          turnstile.reset();
+        }
+      };
+      const normalizedEmail = data.email.toLowerCase();
+
       const createUserResponse = await createUserAction({
         name: data.name,
-        email: data.email,
+        email: normalizedEmail,
         password: data.password,
         userLocale,
         inviteToken: inviteToken ?? "",
@@ -119,37 +131,33 @@ export const SignupForm = ({
         subscribeToProductUpdates,
       });
 
-      const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+      if (!createUserResponse?.data) {
+        resetTurnstileIfConfigured();
+
+        const errorMessage = getFormattedErrorMessage(createUserResponse);
+        toast.error(errorMessage);
+        return;
+      }
+
+      const emailTokenActionResponse = await createEmailTokenAction({ email: normalizedEmail });
       const token = emailTokenActionResponse?.data;
+
+      if (!token) {
+        resetTurnstileIfConfigured();
+
+        const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
+        toast.error(errorMessage);
+        return;
+      }
 
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success?token=${token}`
         : buildVerificationRequestedPath({
-            token: token ?? "",
+            token,
             callbackUrl: inviteToken ? returnToUrl : undefined,
           });
 
-      if (createUserResponse?.data) {
-        router.push(url);
-
-        if (!emailTokenActionResponse?.data) {
-          if (isTurnstileConfigured) {
-            setTurnstileToken(undefined);
-            turnstile.reset();
-          }
-
-          const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-          toast.error(errorMessage);
-        }
-      } else {
-        if (isTurnstileConfigured) {
-          setTurnstileToken(undefined);
-          turnstile.reset();
-        }
-
-        const errorMessage = getFormattedErrorMessage(createUserResponse);
-        toast.error(errorMessage);
-      }
+      router.push(url);
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -224,7 +232,7 @@ export const SignupForm = ({
                               placeholder="*******"
                               aria-placeholder="password"
                               required
-                              className="block w-full rounded-md shadow-sm focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
+                              className="block w-full rounded-md shadow-xs focus:border-brand-dark focus:ring-brand-dark sm:text-sm"
                             />
                             {error?.message && <FormError className="text-left">{error.message}</FormError>}
                           </div>
@@ -312,8 +320,6 @@ export const SignupForm = ({
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
           samlSsoEnabled={samlSsoEnabled}
-          samlTenant={samlTenant}
-          samlProduct={samlProduct}
           returnToUrl={returnToUrl}
           source="signup"
         />
@@ -322,9 +328,7 @@ export const SignupForm = ({
       <div className="mt-9 text-center text-xs">
         <span className="leading-5 text-slate-500">{t("auth.signup.have_an_account")}</span>
         <br />
-        <Link
-          href={inviteToken ? `/auth/login?callbackUrl=${returnToUrl}` : "/auth/login"}
-          className="font-semibold text-slate-600 underline hover:text-slate-700">
+        <Link href={loginHref} className="font-semibold text-slate-600 underline hover:text-slate-700">
           {t("auth.signup.log_in")}
         </Link>
       </div>

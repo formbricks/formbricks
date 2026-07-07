@@ -282,7 +282,7 @@ export const StylingView = ({
                   components={{
                     lookFeelLink: (
                       <Link
-                        href={`${workspaceBasePath}/look`}
+                        href={`${workspaceBasePath}/settings/workspace/look`}
                         target="_blank"
                         className="font-semibold underline"
                       />

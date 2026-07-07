@@ -4,7 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
-import { TIso639Language, iso639Languages } from "@formbricks/i18n-utils/src/utils";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { TIso639Language, supportedLanguages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Button } from "@/modules/ui/components/button";
@@ -22,9 +23,12 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState<TIso639Language | undefined>(
-    iso639Languages.find((isoLang) => isoLang.code === language.code)
+    // Match on the canonical tag so an existing row stored under a legacy code (e.g. `de`) still
+    // preselects its canonical entry (`de-DE`).
+    supportedLanguages.find(
+      (isoLang) => isoLang.code === (normalizeLanguageCode(language.code) ?? language.code)
+    )
   );
-  const items = iso639Languages;
 
   const languageSelectRef = useRef(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +52,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
   // added recently.
   const getLabelForLocale = (item: TIso639Language) => item.label[locale] ?? item.label["en-US"];
 
-  const filteredItems = items.filter((item) =>
+  const filteredItems = supportedLanguages.filter((item) =>
     getLabelForLocale(item).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -72,7 +76,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         <ChevronDown className="size-4 shrink-0" />
       </Button>
       <div
-        className={`absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 ${isOpen ? "" : "hidden"}`}>
+        className={`absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black/5 ${isOpen ? "" : "hidden"}`}>
         <Input
           autoComplete="off"
           onChange={(e) => {

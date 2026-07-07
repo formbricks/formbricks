@@ -11,6 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -70,6 +71,11 @@ export const VerifyEmail = ({
   }, [survey]);
 
   const questions = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
+  const cardArrangement =
+    localSurvey.styling?.cardArrangement?.linkSurveys ?? styling.cardArrangement?.linkSurveys ?? "straight";
+  const isCardless = cardArrangement === "cardless";
+  const linkSurveyCardWidth =
+    localSurvey.styling?.linkSurveyCardWidth ?? styling.linkSurveyCardWidth ?? "default";
 
   const { isSubmitting } = form.formState;
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
@@ -120,7 +126,7 @@ export const VerifyEmail = ({
 
   if (isErrorComponent) {
     return (
-      <div className="flex h-[100vh] w-[100vw] flex-col items-center justify-center bg-slate-50">
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-50">
         <span className="size-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
         <p className="mt-8 text-4xl font-bold">{t("s.this_looks_fishy")}</p>
         <Button variant="ghost" className="mt-4" onClick={handleGoBackClick}>
@@ -131,14 +137,13 @@ export const VerifyEmail = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center">
+    <div
+      className={cn(
+        "flex h-full w-full flex-col items-center justify-center text-center",
+        isCardless ? "px-4 py-12 sm:px-6" : "p-2"
+      )}>
       <Toaster />
-      <StackedCardsContainer
-        cardArrangement={
-          localSurvey.styling?.cardArrangement?.linkSurveys ??
-          styling.cardArrangement?.linkSurveys ??
-          "straight"
-        }>
+      <StackedCardsContainer cardArrangement={cardArrangement} linkSurveyCardWidth={linkSurveyCardWidth}>
         <FormProvider {...form}>
           <form
             onSubmit={async (e) => {
@@ -191,7 +196,7 @@ export const VerifyEmail = ({
         {!emailSent && showPreviewQuestions && (
           <div>
             <p className="text-2xl font-bold">{t("s.question_preview")}</p>
-            <div className="mt-4 flex max-h-[50vh] w-full flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-4 text-slate-700">
+            <div className="mt-4 flex max-h-[50vh] w-full flex-col overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/20 p-4 text-slate-700">
               {questions.map((question, index) => (
                 <p
                   key={index}

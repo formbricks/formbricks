@@ -12,6 +12,7 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth" }, // 30 per minute
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,
@@ -46,6 +47,12 @@ export const rateLimitConfigs = {
       namespace: "action:validate-survey-pin",
     }, // 10 per minute — prevents brute-force PIN guessing
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
+    inviteMember: { interval: 3600 * 24, allowedPerInterval: 20, namespace: "action:invite-member" }, // 20 per day  — bounds invite-spam abuse
+    bulkInviteMembers: {
+      interval: 3600 * 24,
+      allowedPerInterval: 5,
+      namespace: "action:bulk-invite-members",
+    }, // 5 bulk imports per day per org
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,

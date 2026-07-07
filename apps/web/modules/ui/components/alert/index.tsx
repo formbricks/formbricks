@@ -44,7 +44,7 @@ const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4 bg-w
       default:
         "py-3 px-4 text-sm grid grid-cols-[2fr_auto] grid-rows-[auto_auto] gap-y-0.5 gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
       small:
-        "px-4 py-2 text-xs flex items-center gap-2 [&>svg]:flex-shrink-0 [&_button]:bg-transparent [&_button:hover]:bg-transparent [&_a]:bg-transparent [&_a:hover]:bg-transparent [&>svg~*]:pl-0",
+        "px-4 py-2 text-xs flex items-center gap-2 [&>svg]:shrink-0 [&_button]:bg-transparent [&_button:hover]:bg-transparent [&_a]:bg-transparent [&_a:hover]:bg-transparent [&>svg~*]:pl-0",
     },
   },
   defaultVariants: {
@@ -95,7 +95,7 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
         ref={ref}
         className={cn(
           "col-start-1 row-start-1 tracking-tight",
-          size === "small" ? "flex-shrink truncate font-normal" : "col-start-1 row-start-1 font-medium",
+          size === "small" ? "shrink truncate font-normal" : "col-start-1 row-start-1 font-medium",
           className
         )}
         {...props}>
@@ -116,7 +116,7 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
         ref={ref}
         className={cn(
           "[&_p]:leading-relaxed",
-          size === "small" ? "flex-shrink flex-grow-0 truncate" : "col-start-1 row-start-2",
+          size === "small" ? "shrink grow-0 truncate" : "col-start-1 row-start-2",
           className
         )}
         {...props}
@@ -140,7 +140,7 @@ const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "self-end",
           alertSize === "small"
-            ? "-my-2 -mr-4 ml-auto flex-shrink-0"
+            ? "-my-2 -mr-4 ml-auto shrink-0"
             : "col-start-2 row-span-2 row-start-1 flex items-center justify-center"
         )}>
         <Button

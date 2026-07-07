@@ -139,7 +139,7 @@ export const OTPInput = ({
           pattern="\d{1}"
           maxLength={valueLength}
           className={cn(
-            "h-10 w-10 rounded-md border-slate-300 text-center shadow-sm sm:text-sm",
+            "h-10 w-10 rounded-md border-slate-300 text-center shadow-xs sm:text-sm",
             inputBoxClassName
           )}
           value={digit}

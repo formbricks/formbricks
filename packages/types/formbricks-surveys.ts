@@ -24,6 +24,9 @@ export interface SurveyBaseProps {
   languageCode: string;
   dir?: "ltr" | "rtl" | "auto";
   setDir?: (dir: "ltr" | "rtl" | "auto") => void;
+  /** Notifies the host of the survey's active language code (e.g. "default", "en-AU", "he").
+   *  Link surveys use it to keep the page lang/dir in sync; embedded widgets omit it. */
+  onLanguageChange?: (languageCode: string) => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;
@@ -32,6 +35,7 @@ export interface SurveyBaseProps {
   hiddenFieldsRecord?: TResponseHiddenFieldValue;
   shouldResetQuestionId?: boolean;
   fullSizeCards?: boolean;
+  showCardlessPreviewLogoSlot?: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {
@@ -47,6 +51,8 @@ export interface SurveyModalProps extends SurveyBaseProps {
 export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
   appUrl?: string;
   workspaceId?: string;
+  /** Legacy alias for `workspaceId`, sent by old SDKs (e.g. Android ≤ v1.2.0). */
+  environmentId?: string;
   isPreviewMode?: boolean;
   userId?: string;
   contactId?: string;

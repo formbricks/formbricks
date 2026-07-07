@@ -15,7 +15,7 @@ export const PrettyUrlInput = ({ value, onChange, publicDomain, disabled = false
 
   return (
     <div className="flex items-center overflow-hidden rounded-md border border-slate-300 bg-white">
-      <span className="flex-shrink-0 border-r border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+      <span className="shrink-0 border-r border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
         {publicDomain}/p/
       </span>
       <Input

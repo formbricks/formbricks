@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { ZUserLocale } from "@formbricks/types/user";
-import { normalizeV3SurveyLanguageIdentifier } from "../language";
 import {
   GENERATED_SURVEY_ELEMENT_TYPES,
   GENERATED_SURVEY_MAX_BLOCKS,
@@ -20,7 +20,7 @@ const ALLOWED_GENERATE_LOCALE_LOOKUP = new Map<string, TV3SurveyGenerateAllowedL
 );
 
 export function normalizeV3SurveyGenerateLocale(value: string): TV3SurveyGenerateAllowedLocale | null {
-  const normalizedLanguage = normalizeV3SurveyLanguageIdentifier(value);
+  const normalizedLanguage = normalizeLanguageCode(value);
 
   if (!normalizedLanguage) {
     return null;
@@ -61,7 +61,7 @@ export const ZV3SurveyGenerateBody = z
         V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH,
         `Prompt must be ${V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH} characters or less`
       ),
-    type: z.literal("link").prefault("link"),
+    type: z.enum(["link", "app"]).prefault("link"),
     language: ZV3SurveyGenerateLanguage.optional(),
   })
   .strict();

@@ -1,4 +1,4 @@
-import type { Account } from "next-auth";
+import type { Account } from "@formbricks/types/auth";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TUser } from "@formbricks/types/user";
 
@@ -12,7 +12,7 @@ export const mockUser: TUser = {
 
     unsubscribedOrganizationIds: [],
   },
-  emailVerified: new Date(),
+  emailVerified: true,
   twoFactorEnabled: false,
   identityProvider: "google",
   locale: "en-US",
@@ -83,5 +83,5 @@ export const mockOpenIdUser = (options?: {
 export const mockCreatedUser = (name: string = mockUser.name): TUser => ({
   ...mockUser,
   name,
-  emailVerified: new Date(),
+  emailVerified: true,
 });

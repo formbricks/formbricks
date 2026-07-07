@@ -1,0 +1,168 @@
+---
+title: "Set Up Your MCP Client"
+description: "Connect Claude Code, the Claude apps, or Codex to the Formbricks MCP server over OAuth — plus how to manage and revoke access."
+icon: "plug"
+---
+
+These guides connect your MCP client to Formbricks using OAuth (no API keys). They use the Formbricks Cloud URL `https://app.formbricks.com/api/mcp`; if you self-host, swap in your own `https://<your-formbricks-domain>/api/mcp`. For how the flow works and prerequisites, see [Connect AI agents (MCP)](/platform/mcp/overview).
+
+## Claude Code
+
+Claude Code runs on your machine and performs the OAuth handshake itself.
+
+<Steps>
+  <Step title="Add the server">
+    ```bash
+    claude mcp add --transport http formbricks https://app.formbricks.com/api/mcp
+    ```
+  </Step>
+  <Step title="Authenticate">
+    In a Claude Code session, run `/mcp`, select **formbricks**, and choose **Authenticate**. Your
+    browser opens to Formbricks; sign in if needed and **approve** the requested access on the consent
+    screen. Claude Code registers itself automatically and stores the token — there's no scope to type
+    in.
+  </Step>
+  <Step title="Verify">
+    ```bash
+    claude mcp list
+    claude mcp get formbricks
+    ```
+    Then ask Claude to use it, e.g. *"Use the formbricks MCP server to list my surveys."*
+  </Step>
+</Steps>
+
+To share the server definition with a project (no credentials committed), add it to `.mcp.json` at the repo root and authenticate with `/mcp` on first use:
+
+```json
+{
+  "mcpServers": {
+    "formbricks": {
+      "type": "http",
+      "url": "https://app.formbricks.com/api/mcp"
+    }
+  }
+}
+```
+
+## Claude apps (custom connectors)
+
+Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as a custom connector.
+
+<Steps>
+  <Step title="Open the connectors settings">
+    Go to **Settings → Connectors** (**Customize → Connectors**) and click **Add custom connector**.
+  </Step>
+  <Step title="Add the server URL">
+    Enter `https://app.formbricks.com/api/mcp` and confirm. Leave the optional OAuth client fields
+    blank — Formbricks registers the connector automatically.
+  </Step>
+  <Step title="Approve access">
+    Claude opens Formbricks in your browser. Sign in and **approve** the requested access. The
+    connector then shows as connected, and you can enable it per chat from the **+** menu.
+  </Step>
+</Steps>
+
+<Warning>
+  **Two things to know about the Claude apps:**
+
+  - **Custom connectors depend on your Claude plan.** They're available on Free, Pro, Max, Team, and
+    Enterprise, but the Free plan is limited to a single connector. On **Team/Enterprise**, an
+    **organization owner** must add the connector under **Organization settings → Connectors** first;
+    members then connect to it individually.
+  - **The connection runs from Anthropic's servers, not your machine.** A custom connector therefore
+    **cannot reach a `localhost` server** — the MCP URL must be a **public HTTPS** address. Formbricks
+    Cloud works out of the box; if you self-host, expose your instance on a public HTTPS domain (a
+    tunnel such as ngrok/cloudflared works for testing). To connect a local dev server, use **Claude
+    Code** instead — it runs locally.
+</Warning>
+
+## Codex
+
+<Steps>
+  <Step title="Add the server">
+    Include `--oauth-resource` so the access token is audience-bound to the MCP resource:
+    ```bash
+    codex mcp add formbricks \
+      --url https://app.formbricks.com/api/mcp \
+      --oauth-resource https://app.formbricks.com/api/mcp
+    ```
+  </Step>
+  <Step title="Authenticate">
+    ```bash
+    codex mcp login formbricks
+    ```
+    Codex opens the browser to Formbricks, registers itself, and you **approve** on the consent
+    screen. For read-only access, restrict the scopes:
+    ```bash
+    codex mcp login formbricks --scopes surveys:read,offline_access
+    ```
+  </Step>
+  <Step title="Verify">
+    ```bash
+    codex mcp list
+    codex mcp get formbricks
+    ```
+  </Step>
+</Steps>
+
+The equivalent `~/.codex/config.toml` entry:
+
+```toml
+[mcp_servers.formbricks]
+url = "https://app.formbricks.com/api/mcp"
+oauth_resource = "https://app.formbricks.com/api/mcp"
+```
+
+## Manage and revoke access
+
+Every client you authorize appears under **Account settings → Authorized apps**
+(`/account/settings/authorized-apps`), showing the client name, granted scopes, and when it was
+approved. Click **Revoke** to immediately cut off a client's access; it will need to be re-authorized
+to connect again.
+
+Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
+silently in the background for up to **30 days** (the refresh window). After that — or after you
+revoke — the client re-runs the sign-in and consent flow. Approving `surveys:write` is re-confirmed
+periodically for safety.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="claude.ai says it couldn't register / connect">
+    Custom connectors connect from Anthropic's cloud, which can't reach `localhost` or a private
+    network. Use a **public HTTPS** MCP URL (Formbricks Cloud, or a tunnel to a self-hosted instance),
+    or connect a local server with **Claude Code** instead.
+  </Accordion>
+  <Accordion title="invalid_client or a stale-registration error after reconnecting">
+    The client cached a registration that no longer exists on the server (e.g. the server data was
+    reset). Clear the client's stored credentials for the server and re-authenticate — in Claude Code,
+    remove and re-add the server (`claude mcp remove formbricks` then `claude mcp add …`) and run
+    `/mcp` again.
+  </Accordion>
+  <Accordion title="invalid_scope during sign-in">
+    The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
+    with the scopes the server advertises (`surveys:read`, `surveys:write`, `offline_access`).
+  </Accordion>
+  <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
+    Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same
+    browser the client opens, and that third-party-cookie blocking or a private window isn't
+    discarding the session. If it persists, revoke the app under **Account settings → Authorized
+    apps**, clear the client's stored credentials for the server, and reconnect. Self-hosters: an
+    incorrect base URL (see below) also causes repeated redirects.
+  </Accordion>
+  <Accordion title="A tool call fails even though you're connected">
+    Scopes don't override your workspace role. Creating, editing, or deleting surveys requires
+    `write` or `manage` permission on that workspace — ask a workspace owner/manager to grant it.
+  </Accordion>
+  <Accordion title="Self-hosted: the browser can't complete sign-in / redirects fail">
+    OAuth discovery and redirects are built from your configured base URL. Serve Formbricks from a
+    correct, public **HTTPS** origin and set `WEBAPP_URL` (and `BETTER_AUTH_URL`) to it. An
+    `http://localhost` or mismatched origin breaks the flow for remote clients. See the
+    [environment variables](/self-hosting/configuration/environment-variables) reference.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+Need the tool schemas, response shapes, or the API-key fallback? See the
+[MCP server technical handbook](/development/technical-handbook/mcp-server).

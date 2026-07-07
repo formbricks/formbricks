@@ -3,7 +3,13 @@ import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getElementsFromSurveyBlocks, getWebAppLocale, isRTL, isRTLLanguage } from "./utils";
+import {
+  getElementsFromSurveyBlocks,
+  getSurveyLanguageTag,
+  getWebAppLocale,
+  isRTL,
+  isRTLLanguage,
+} from "./utils";
 
 const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
   ({
@@ -17,6 +23,9 @@ const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
     status: "draft",
     displayOption: "displayOnce",
     autoClose: null,
+    publishOn: null,
+    closeOn: null,
+    isAutoProgressingEnabled: false,
     triggers: [],
     recontactDays: null,
     displayLimit: null,
@@ -170,6 +179,36 @@ describe("isRTLLanguage", () => {
     const element = { id: "q1", type: TSurveyElementTypeEnum.OpenText, headline: {}, required: false };
     const block = { id: "b1", name: "Block", elements: [element] } as TSurveyBlock;
     expect(isRTLLanguage(createJsSurvey([], [block]), "default")).toBe(false);
+  });
+});
+
+describe("getSurveyLanguageTag", () => {
+  const langSurvey = (languages: TJsWorkspaceStateSurvey["languages"] = []): TJsWorkspaceStateSurvey =>
+    ({ languages }) as unknown as TJsWorkspaceStateSurvey;
+
+  const enAU = {
+    language: {
+      id: "l1",
+      code: "en-AU",
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "p1",
+    },
+    default: true,
+    enabled: true,
+  };
+
+  test("returns an explicit (non-default) code as-is", () => {
+    expect(getSurveyLanguageTag(langSurvey([enAU]), "he")).toBe("he");
+  });
+
+  test("resolves 'default' to the survey's default language code", () => {
+    expect(getSurveyLanguageTag(langSurvey([enAU]), "default")).toBe("en-AU");
+  });
+
+  test("returns null when 'default' but no language is configured", () => {
+    expect(getSurveyLanguageTag(langSurvey([]), "default")).toBeNull();
   });
 });
 

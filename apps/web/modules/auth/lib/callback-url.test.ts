@@ -1,39 +1,26 @@
 import { describe, expect, test } from "vitest";
 import {
-  getAuthCallbackUrlFromCookies,
   getInviteTokenFromCallbackUrl,
   getRelativeCallbackUrl,
+  getSearchParamString,
   resolveAuthCallbackUrl,
 } from "./callback-url";
 
 const WEBAPP_URL = "http://localhost:3000";
 
 describe("auth callback URL helpers", () => {
-  test("prefers a valid callback URL from search params over the cookie", () => {
+  test("returns a valid callback URL from the search params", () => {
     const result = resolveAuthCallbackUrl({
       searchParamCallbackUrl: "http://localhost:3000/invite?token=search-token",
-      cookieCallbackUrl: "http://localhost:3000/invite?token=cookie-token",
       webAppUrl: WEBAPP_URL,
     });
 
     expect(result).toBe("http://localhost:3000/invite?token=search-token");
   });
 
-  test("falls back to the callback URL cookie when the query string only contains an auth error", () => {
+  test("returns null when no callback URL is provided", () => {
     const result = resolveAuthCallbackUrl({
       searchParamCallbackUrl: undefined,
-      cookieCallbackUrl: "http://localhost:3000/invite?token=cookie-token&source=signin",
-      allowCookieFallback: true,
-      webAppUrl: WEBAPP_URL,
-    });
-
-    expect(result).toBe("http://localhost:3000/invite?token=cookie-token&source=signin");
-  });
-
-  test("does not fall back to the callback URL cookie unless explicitly allowed", () => {
-    const result = resolveAuthCallbackUrl({
-      searchParamCallbackUrl: undefined,
-      cookieCallbackUrl: "http://localhost:3000/invite?token=cookie-token&source=signin",
       webAppUrl: WEBAPP_URL,
     });
 
@@ -43,7 +30,6 @@ describe("auth callback URL helpers", () => {
   test("rejects callback URLs on a different origin", () => {
     const result = resolveAuthCallbackUrl({
       searchParamCallbackUrl: "https://evil.example/invite?token=bad",
-      cookieCallbackUrl: "https://evil.example/fallback",
       webAppUrl: WEBAPP_URL,
     });
 
@@ -68,17 +54,39 @@ describe("auth callback URL helpers", () => {
     expect(result).toBe("abc123");
   });
 
-  test("reads the Auth.js callback URL from the secure cookie first", () => {
-    const result = getAuthCallbackUrlFromCookies({
-      get: (name: string) => {
-        if (name === "__Secure-next-auth.callback-url") {
-          return { value: "http://localhost:3000/invite?token=secure" };
-        }
-
-        return undefined;
-      },
+  test("uses the first value when the callback URL search param is repeated", () => {
+    const result = resolveAuthCallbackUrl({
+      searchParamCallbackUrl: ["http://localhost:3000/invite?token=first", "http://localhost:3000/second"],
+      webAppUrl: WEBAPP_URL,
     });
 
-    expect(result).toBe("http://localhost:3000/invite?token=secure");
+    expect(result).toBe("http://localhost:3000/invite?token=first");
+  });
+
+  test("returns null when the callback URL search param is an empty array", () => {
+    const result = resolveAuthCallbackUrl({
+      searchParamCallbackUrl: [],
+      webAppUrl: WEBAPP_URL,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  test("falls back to '/' when the relative callback URL is missing or invalid", () => {
+    expect(getRelativeCallbackUrl(undefined, WEBAPP_URL)).toBe("/");
+    expect(getRelativeCallbackUrl("https://evil.example/x", WEBAPP_URL)).toBe("/");
+  });
+
+  test("returns null invite token when the callback URL is invalid or has no token", () => {
+    expect(getInviteTokenFromCallbackUrl("https://evil.example/invite?token=bad", WEBAPP_URL)).toBeNull();
+    expect(
+      getInviteTokenFromCallbackUrl("http://localhost:3000/invite?source=signin", WEBAPP_URL)
+    ).toBeNull();
+  });
+
+  test("getSearchParamString normalizes strings, arrays, and missing values", () => {
+    expect(getSearchParamString("plain")).toBe("plain");
+    expect(getSearchParamString(["first", "second"])).toBe("first");
+    expect(getSearchParamString(undefined)).toBe("");
   });
 });

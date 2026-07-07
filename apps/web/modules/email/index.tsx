@@ -1,6 +1,7 @@
 import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
+  renderAccountDeletionEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderForgotPasswordEmail,
@@ -200,6 +201,48 @@ export const sendPasswordResetLinkEmail = async (user: {
   return await sendEmail({
     to: user.email,
     subject: t("emails.forgot_password_email_subject"),
+    html,
+  });
+};
+
+export const sendDeleteAccountConfirmationEmail = async (data: {
+  email: TUserEmail;
+  locale: TUserLocale;
+  deleteLink: string;
+  linkValidityInMinutes: number;
+}): Promise<boolean> => {
+  const t = await getTranslate(data.locale);
+  const html = await renderAccountDeletionEmail({
+    deleteLink: data.deleteLink,
+    linkValidityInMinutes: data.linkValidityInMinutes,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    to: data.email,
+    subject: t("emails.delete_account_email_subject"),
+    html,
+  });
+};
+
+export const sendVerificationLinkEmail = async (data: {
+  email: TUserEmail;
+  locale: TUserLocale;
+  verifyLink: string;
+}): Promise<boolean> => {
+  const t = await getTranslate(data.locale);
+  const html = await renderVerificationEmail({
+    // Better Auth supplies a single verification link; the resend CTA reuses it. Wiring
+    // verificationRequestLink to a dedicated Better Auth resend endpoint is a post-cutover
+    // refinement tracked in the ENG-1054 runbook, not a blocker for this flow.
+    verificationRequestLink: data.verifyLink,
+    verifyLink: data.verifyLink,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    to: data.email,
+    subject: t("emails.verification_email_subject"),
     html,
   });
 };

@@ -5,6 +5,7 @@ import { Prisma, Response } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TResponse } from "@formbricks/types/responses";
+import { normalizeResponseLanguage } from "@/lib/response/utils";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
@@ -149,7 +150,8 @@ export const updateResponse = async (
       where: {
         id: responseId,
       },
-      data: responseInput,
+      // Canonicalize the language on write (ENG-1067) — see normalizeResponseLanguage.
+      data: { ...responseInput, language: normalizeResponseLanguage(responseInput.language) },
     });
 
     return ok(updatedResponse);

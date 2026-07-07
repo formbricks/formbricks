@@ -63,7 +63,7 @@ const baseSurvey = {
   variables: [],
 } as unknown as TSurvey;
 
-const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
+const createHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
   ({
     ...baseSurvey,
     languages: [
@@ -72,7 +72,7 @@ const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
         enabled: true,
         language: {
           id: "lang_1",
-          code: "en",
+          code: "en-US",
           alias: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -83,7 +83,7 @@ const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
         enabled: true,
         language: {
           id: "lang_2",
-          code: "hi",
+          code: "hi-IN",
           alias: "hi-in",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -92,12 +92,76 @@ const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
     ],
     welcomeCard: {
       enabled: true,
-      headline: { default: "Welcome", hi: "स्वागत है" },
+      headline: { default: "Welcome", "hi-IN": "स्वागत है" },
     },
     ...overrides,
   }) as unknown as TSurvey;
 
 describe("serializeV3SurveyResource", () => {
+  test("includes distribution and targeting for app surveys", () => {
+    const appSurvey = {
+      ...baseSurvey,
+      type: "app",
+      displayOption: "respondMultiple",
+      displayPercentage: 25,
+      displayLimit: 3,
+      recontactDays: 7,
+      autoClose: 30,
+      autoComplete: 100,
+      delay: 5,
+      triggers: [{ actionClass: { id: "claa1234567890123456789012", name: "Checkout" } }],
+      segment: {
+        id: "seg_1",
+        filters: [
+          {
+            id: "f1",
+            connector: null,
+            resource: {
+              id: "r1",
+              root: { type: "attribute", contactAttributeKey: "plan" },
+              qualifier: { operator: "equals" },
+              value: "pro",
+            },
+          },
+        ],
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(appSurvey);
+
+    expect(resource.distribution).toEqual({
+      displayOption: "respondMultiple",
+      displayPercentage: 25,
+      displayLimit: 3,
+      recontactDays: 7,
+      autoClose: 30,
+      autoComplete: 100,
+      delay: 5,
+      triggers: [{ actionClassId: "claa1234567890123456789012" }],
+    });
+    expect(resource.targeting).toEqual({
+      filters: [
+        {
+          id: "f1",
+          connector: null,
+          resource: {
+            id: "r1",
+            root: { type: "attribute", contactAttributeKey: "plan" },
+            qualifier: { operator: "equals" },
+            value: "pro",
+          },
+        },
+      ],
+    });
+  });
+
+  test("omits distribution and targeting for link surveys", () => {
+    const resource = serializeV3SurveyResource(baseSurvey);
+
+    expect(resource).not.toHaveProperty("distribution");
+    expect(resource).not.toHaveProperty("targeting");
+  });
+
   test("returns multilingual fields using emitted survey language codes", () => {
     const resource = serializeV3SurveyResource(baseSurvey);
 
@@ -394,8 +458,8 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("maps known legacy stored language codes and translation keys to emitted response codes", () => {
-    const survey = createLegacyHindiSurvey({
+  test("emits canonical language codes and translation keys", () => {
+    const survey = createHindiSurvey({
       blocks: [
         {
           id: "block_1",
@@ -404,13 +468,13 @@ describe("serializeV3SurveyResource", () => {
             {
               id: "satisfaction",
               type: "openText",
-              headline: { default: "What should we improve?", hi: "हमें क्या सुधारना चाहिए?" },
+              headline: { default: "What should we improve?", "hi-IN": "हमें क्या सुधारना चाहिए?" },
               required: true,
             },
           ],
         },
       ],
-    });
+    } as unknown as Partial<TSurvey>);
 
     const resource = serializeV3SurveyResource(survey, { lang: ["hi-IN"] });
 
@@ -433,8 +497,8 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("filters legacy stored language codes by legacy code and alias", () => {
-    const survey = createLegacyHindiSurvey();
+  test("resolves a survey language by legacy code and alias selectors", () => {
+    const survey = createHindiSurvey();
 
     expect(serializeV3SurveyResource(survey, { lang: ["hi"] })).toMatchObject({
       welcomeCard: { headline: { "hi-IN": "स्वागत है" } },

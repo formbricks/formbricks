@@ -25,7 +25,7 @@ describe("getPlacementStyle", () => {
 
   test("returns correct style for center placement", () => {
     const style = getPlacementStyle("center");
-    expect(style).toBe("top-1/2 left-1/2 transform !-translate-x-1/2 -translate-y-1/2");
+    expect(style).toBe("top-1/2 left-1/2 transform -translate-x-1/2! -translate-y-1/2");
   });
 
   test("returns default style for invalid placement", () => {

@@ -34,6 +34,8 @@ properties:
       - internal_server_error
       - invalid_workflow_state
       - not_authenticated
+      - not_found
+      - payload_too_large
       - too_many_requests
       - unprocessable_content
       - workflow_not_executable

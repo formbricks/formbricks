@@ -144,7 +144,7 @@ const CsvMappingForm = ({
         <button
           type="button"
           onClick={() => setAdvancedOpen((v) => !v)}
-          className="flex w-full items-start gap-2 rounded text-left">
+          className="flex w-full items-start gap-2 rounded-sm text-left">
           <span className="mt-0.5 text-slate-500">
             {advancedOpen ? <ChevronDownIcon className="size-4" /> : <ChevronRightIcon className="size-4" />}
           </span>

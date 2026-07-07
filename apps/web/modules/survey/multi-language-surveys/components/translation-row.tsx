@@ -26,7 +26,7 @@ const DefaultTextCell = ({
   noTextLabel: string;
 }) => {
   if (!text) {
-    return <div className="text-sm italic text-slate-400">{noTextLabel}</div>;
+    return <div className="text-sm text-slate-400 italic">{noTextLabel}</div>;
   }
 
   if (isRichText) {
@@ -56,7 +56,7 @@ export const TranslationRow = ({
   return (
     <tr className="border-b last:border-b-0" data-testid={`translation-row-${s.path}`}>
       <td className="py-2 pr-2 align-top">
-        <span className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+        <span className="inline-block rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
           {s.displayId}
         </span>
         <div className="mt-0.5 text-[10px] text-slate-400">{s.fieldLabel}</div>
