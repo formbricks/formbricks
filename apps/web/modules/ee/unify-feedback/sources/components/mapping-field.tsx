@@ -106,20 +106,15 @@ export const FormTargetField = ({
     return "";
   }, [mapping, isEnum]);
 
-  const comboboxOptions = useMemo((): TComboboxOption[] => {
-    if (!isEnum || !field.enumValues?.length) return [];
-
-    return field.enumValues.map((enumValue) => ({
-      value: `${SENTINEL.ENUM_PREFIX}${enumValue}`,
-      label: enumValue,
-    }));
-  }, [field.enumValues, isEnum]);
-
+  // A single grouped option-set drives the picker. InputCombobox's validOptions uses the flat
+  // `options` prop exclusively when it is non-empty and otherwise falls back to groupedOptions, so
+  // everything (columns, enum values, actions) must live in ONE source or a selected value won't
+  // resolve for display. We keep it all in groupedOptions and pass an empty flat `options`.
   const comboboxGroupedOptions = useMemo((): TComboboxGroupedOption[] => {
-    if (isEnum) return [];
-
     const groups: TComboboxGroupedOption[] = [];
 
+    // CSV columns are mappable for every field type — including enum, where a column carries the
+    // per-row enum value (this is what auto-mapping produces, e.g. field_type -> the "type" column).
     if (sourceFields.length > 0) {
       groups.push({
         label: t("workspace.unify.csv_columns"),
@@ -145,26 +140,41 @@ export const FormTargetField = ({
       });
     }
 
-    const actionOptions: TComboboxOption[] = [];
-
-    if (isTimestamp) {
-      actionOptions.push({
-        value: SENTINEL.STATIC_NOW,
-        label: t("workspace.unify.csv_now_label"),
-        icon: ClockIcon,
+    // Enum fields also offer their allowed values as static picks.
+    if (isEnum && field.enumValues?.length) {
+      groups.push({
+        label: t("workspace.unify.enum"),
+        value: "enum-values",
+        options: field.enumValues.map((enumValue) => ({
+          value: `${SENTINEL.ENUM_PREFIX}${enumValue}`,
+          label: enumValue,
+        })),
       });
     }
 
-    actionOptions.push({
-      value: SENTINEL.EDIT_FIXED,
-      label:
-        mapping?.staticValue && mapping.staticValue !== "$now"
-          ? t("workspace.unify.csv_fixed_value_label", {
-              value: truncate(mapping.staticValue, 40),
-            })
-          : t("workspace.unify.csv_fixed_value_action"),
-      icon: TextCursorInputIcon,
-    });
+    const actionOptions: TComboboxOption[] = [];
+
+    // "Set to now" and free-text fixed values only apply to non-enum fields.
+    if (!isEnum) {
+      if (isTimestamp) {
+        actionOptions.push({
+          value: SENTINEL.STATIC_NOW,
+          label: t("workspace.unify.csv_now_label"),
+          icon: ClockIcon,
+        });
+      }
+
+      actionOptions.push({
+        value: SENTINEL.EDIT_FIXED,
+        label:
+          mapping?.staticValue && mapping.staticValue !== "$now"
+            ? t("workspace.unify.csv_fixed_value_label", {
+                value: truncate(mapping.staticValue, 40),
+              })
+            : t("workspace.unify.csv_fixed_value_action"),
+        icon: TextCursorInputIcon,
+      });
+    }
 
     if (!field.required && hasMapping) {
       actionOptions.push({
@@ -184,6 +194,7 @@ export const FormTargetField = ({
 
     return groups;
   }, [
+    field.enumValues,
     field.required,
     hasMapping,
     isEnum,
@@ -284,7 +295,7 @@ export const FormTargetField = ({
               <InputCombobox
                 id={`csv-mapping-${field.id}`}
                 value={selectValue || null}
-                options={comboboxOptions}
+                options={[]}
                 groupedOptions={comboboxGroupedOptions}
                 onChangeValue={(value) => {
                   if (typeof value === "string") {

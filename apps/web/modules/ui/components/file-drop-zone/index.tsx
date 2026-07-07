@@ -99,11 +99,13 @@ export const FileDropZone = ({
             {helpText ? <p className="mt-1 text-xs text-slate-400">{helpText}</p> : null}
           </>
         )}
+        {/* sr-only (not `hidden`) keeps the input in the tab order so keyboard users can focus it
+            and open the file picker with Enter/Space; the visible dropzone is the label above. */}
         <input
           type="file"
           id={id}
           accept={accept}
-          className="hidden"
+          className="sr-only"
           disabled={isBusy || disabled}
           onChange={handleChange}
         />
