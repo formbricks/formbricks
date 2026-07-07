@@ -29,11 +29,15 @@ interface BulkInviteTabProps {
   enterpriseLicenseRequestFormUrl: string;
 }
 
-type BulkCsvRow = Record<string, string | undefined>;
+export type BulkCsvRow = Record<string, string | undefined>;
 
 const PREVIEW_ROW_LIMIT = 11;
 
-const readCell = (row: BulkCsvRow, ...keys: string[]): string => {
+// Guards ENG-1596: a missing/misnamed CSV column yields undefined at runtime (the
+// PapaParse generic is a compile-time lie), so cell access must never assume string.
+// Returning "" lets ZInvitees validation reject the row and surface the CSV error
+// instead of a TypeError crash that silently closes the modal.
+export const readCell = (row: BulkCsvRow, ...keys: string[]): string => {
   for (const key of keys) {
     const value = row[key];
     if (value !== undefined && value !== null && value !== "") return value;
@@ -41,7 +45,7 @@ const readCell = (row: BulkCsvRow, ...keys: string[]): string => {
   return "";
 };
 
-const parseTeamCell = (cell: string | undefined): string[] => {
+export const parseTeamCell = (cell: string | undefined): string[] => {
   if (!cell) return [];
   return cell
     .split(/[,|]/)
