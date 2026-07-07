@@ -3,12 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
@@ -82,6 +83,15 @@ export const SignupForm = ({
 
   const turnstile = useTurnstile();
 
+  // An SSO sign-up rejected for a personal email domain redirects back here with ?error=<code>.
+  // Match the known code exactly (never echo the raw param) and show the same message as the form.
+  const oauthError = searchParams?.get("error");
+  useEffect(() => {
+    if (oauthError === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
+      toast.error(t("auth.signup.company_email_required"));
+    }
+  }, [oauthError, t]);
+
   const returnToUrl = useMemo(() => {
     if (inviteToken) {
       return webAppUrl + "/invite?token=" + inviteToken;
@@ -135,7 +145,12 @@ export const SignupForm = ({
         resetTurnstileIfConfigured();
 
         const errorMessage = getFormattedErrorMessage(createUserResponse);
-        toast.error(errorMessage);
+        // Personal-email block: surface under the email field rather than as a toast.
+        if (errorMessage === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
+          form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
+        } else {
+          toast.error(errorMessage);
+        }
         return;
       }
 
