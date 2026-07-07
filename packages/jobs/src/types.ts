@@ -51,3 +51,10 @@ export const ZWorkflowRunJobData = z.object({
 });
 
 export type TWorkflowRunJobData = z.infer<typeof ZWorkflowRunJobData>;
+
+// The reconciler is a global periodic sweep, not a per-run job — it carries no run identifiers.
+export const ZWorkflowRunReconcileJobData = z.object({
+  scope: z.literal("global"),
+});
+
+export type TWorkflowRunReconcileJobData = z.infer<typeof ZWorkflowRunReconcileJobData>;
