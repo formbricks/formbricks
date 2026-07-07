@@ -13,7 +13,6 @@ import {
   LanguagesIcon,
   ListChecksIcon,
   Loader2,
-  ShapesIcon,
   ShieldIcon,
   TagIcon,
   UnplugIcon,
@@ -284,13 +283,6 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "feedback-sources",
-      label: t("workspace.unify.feedback_sources"),
-      href: workspaceSettingsPath(workspaceId, "feedback-sources"),
-      icon: <ShapesIcon className={iconClassName} />,
-      disabled: isBilling,
-    },
-    {
       id: "integrations",
       label: t("common.integrations"),
       href: workspaceSettingsPath(workspaceId, "integrations"),
@@ -336,19 +328,19 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
+      id: "org-api-keys",
+      label: t("common.api_keys"),
+      href: organizationSettingsPath(organizationId, "api-keys"),
+      icon: <KeyIcon className={iconClassName} />,
+      hidden: !isOwnerOrManager,
+    },
+    {
       id: "org-feedback-directories",
       label: t("workspace.settings.feedback_directories.nav_label"),
       href: organizationSettingsPath(organizationId, "feedback-directories"),
       icon: <FoldersIcon className={iconClassName} />,
       hidden: isMember,
       disabled: !isOwnerOrManager,
-    },
-    {
-      id: "org-api-keys",
-      label: t("common.api_keys"),
-      href: organizationSettingsPath(organizationId, "api-keys"),
-      icon: <KeyIcon className={iconClassName} />,
-      hidden: !isOwnerOrManager,
     },
     {
       id: "org-domain",

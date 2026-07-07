@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CopyIcon,
   EyeIcon,
   FileSpreadsheetIcon,
   MoreVertical,
@@ -28,7 +27,6 @@ interface FeedbackSourceRowDropdownProps {
   feedbackSource: TFeedbackSourceWithMappings;
   onEdit: () => void;
   onCsvImport?: () => void;
-  onDuplicate: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
 }
@@ -37,7 +35,6 @@ export function FeedbackSourceRowDropdown({
   feedbackSource,
   onEdit,
   onCsvImport,
-  onDuplicate,
   onToggleStatus,
   onDelete,
 }: Readonly<FeedbackSourceRowDropdownProps>) {
@@ -124,20 +121,6 @@ export function FeedbackSourceRowDropdown({
                 }}>
                 <SquarePenIcon className="mr-2 size-4" />
                 {t("common.edit")}
-              </button>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem>
-              <button
-                type="button"
-                className="flex w-full items-center"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  setIsDropDownOpen(false);
-                  await onDuplicate();
-                }}>
-                <CopyIcon className="mr-2 size-4" />
-                {t("common.duplicate")}
               </button>
             </DropdownMenuItem>
 
