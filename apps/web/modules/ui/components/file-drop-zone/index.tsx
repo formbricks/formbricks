@@ -75,17 +75,13 @@ export const FileDropZone = ({
         className
       )}
       aria-busy={isBusy}>
+      {/* Drag-and-drop is an enhancement; the keyboard-accessible path is the associated file input below. */}
       <label
         htmlFor={id}
         className={cn(
           "flex flex-col items-center justify-center",
           isBusy || disabled ? "cursor-not-allowed" : "cursor-pointer"
         )}
-        onClick={(e) => {
-          if (isBusy || disabled) {
-            e.preventDefault();
-          }
-        }}
         onDragOver={handleDragOver}
         onDrop={handleDrop}>
         {isBusy ? (
