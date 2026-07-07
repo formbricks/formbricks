@@ -7,28 +7,23 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-let mockCacheStore = new Map<string, any>();
+// Mirrors the real cache facade: get returns { ok, data } with data null on a
+// miss, set stores plain JSON values and expires them after ttlMs.
+const mockCacheStore = new Map<string, { value: unknown; expiresAt: number }>();
 
 vi.mock("@/lib/cache", () => ({
   cache: {
     get: vi.fn(async (key: string) => {
-      const data = mockCacheStore.get(key);
-      return { ok: true, data };
+      const entry = mockCacheStore.get(key);
+      if (!entry || entry.expiresAt <= Date.now()) {
+        mockCacheStore.delete(key);
+        return { ok: true, data: null };
+      }
+      return { ok: true, data: entry.value };
     }),
-    del: vi.fn(async (keys: string[]) => {
-      keys.forEach((key) => mockCacheStore.delete(key));
+    set: vi.fn(async (key: string, value: unknown, ttlMs: number) => {
+      mockCacheStore.set(key, { value, expiresAt: Date.now() + ttlMs });
       return { ok: true };
-    }),
-    withCacheNullable: vi.fn(async (fn: () => Promise<any>, key: string, ttlMs: number) => {
-      const existing = mockCacheStore.get(key);
-      if (existing !== undefined) {
-        return existing;
-      }
-      const fresh = await fn();
-      if (fresh !== undefined) {
-        mockCacheStore.set(key, fresh);
-      }
-      return fresh;
     }),
   },
 }));
