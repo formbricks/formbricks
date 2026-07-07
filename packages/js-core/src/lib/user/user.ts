@@ -4,6 +4,8 @@ import { tearDown } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type ApiErrorResponse, type Result, okVoid } from "@/types/error";
 
+const MAX_USER_ID_LENGTH = 255;
+
 // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
 export const setUserId = async (userId: string): Promise<Result<void, ApiErrorResponse>> => {
   const appConfig = Config.getInstance();
@@ -16,7 +18,6 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
 
   // Validate the new userId before mutating any state, so an invalid replacement
   // does not tear down the existing valid user.
-  const MAX_USER_ID_LENGTH = 255;
   if (userId.length > MAX_USER_ID_LENGTH) {
     logger.error(`UserId exceeds maximum length of ${String(MAX_USER_ID_LENGTH)} characters`);
     return okVoid();
