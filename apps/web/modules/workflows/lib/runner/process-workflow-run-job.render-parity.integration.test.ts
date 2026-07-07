@@ -69,6 +69,18 @@ const {
   };
 });
 
+// The BA harness setup (integration/setup.ts) mocks @/modules/email to capture transactional emails;
+// this test needs the REAL sendEmail (that's the render-parity point), so cancel that registration.
+vi.unmock("@/modules/email");
+
+// The integration config doesn't load the unit-suite vitestSetup, so pin the sender constants this
+// file's assertions were written against (everything else stays the real .env-backed constants).
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  MAIL_FROM: "mock@mail.com",
+  MAIL_FROM_NAME: "Mock Mail",
+}));
+
 // Outermost transport: mock nodemailer so the REAL sendEmail() runs and applies MAIL_FROM, but no SMTP
 // connection is made. sendMail captures the fully-built message we assert on.
 vi.mock("nodemailer", () => ({
