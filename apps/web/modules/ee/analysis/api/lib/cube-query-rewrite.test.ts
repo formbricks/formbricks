@@ -1,8 +1,11 @@
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const require = createRequire(import.meta.url);
 const cubeConfigPath = require.resolve("../../../../../../../docker/cube/cube.js");
+const chartCubeConfigPath = require.resolve("../../../../../../../charts/formbricks/cube/cube.js");
+const cubeSchemaPath = require.resolve("../../../../../../../docker/cube/schema/FeedbackRecords.js");
 process.env.CUBEJS_API_SECRET = process.env.CUBEJS_API_SECRET || "cube-secret";
 
 const { queryRewrite } = require(cubeConfigPath) as {
@@ -315,5 +318,33 @@ describe("cube queryRewrite", () => {
     });
     expect(parsed.members).toContain("FeedbackRecords.tenantId");
     expect(logPayload).not.toContain("secret-value");
+  });
+
+  // The Helm chart mounts charts/formbricks/cube/cube.js over the pod's config
+  // (see charts/formbricks/templates/cube-configmap.yaml), so it must stay
+  // byte-identical to the Docker copy this suite runs against — mirroring the
+  // schema parity guard in schema-definition.test.ts.
+  test("keeps the Helm and Docker Cube configs in sync", () => {
+    expect(readFileSync(chartCubeConfigPath, "utf8")).toBe(readFileSync(cubeConfigPath, "utf8"));
+  });
+
+  test("rewrite map matches the *Normalized companion dimensions in the Cube schema", () => {
+    const configSource = readFileSync(cubeConfigPath, "utf8");
+    const schemaSource = readFileSync(cubeSchemaPath, "utf8");
+
+    const mapEntries = [
+      ...configSource.matchAll(/"FeedbackRecords\.(\w+)":\s*"FeedbackRecords\.(\w+)"/g),
+    ].map(([, source, normalized]) => ({ source, normalized }));
+    const schemaNormalizedDimensions = [...schemaSource.matchAll(/^ {4}(\w+Normalized): \{/gm)].map(
+      ([, name]) => name
+    );
+
+    expect(mapEntries.length).toBeGreaterThan(0);
+    for (const { source, normalized } of mapEntries) {
+      expect(normalized).toBe(`${source}Normalized`);
+    }
+    expect(mapEntries.map(({ normalized }) => normalized).sort()).toEqual(
+      [...schemaNormalizedDimensions].sort()
+    );
   });
 });
