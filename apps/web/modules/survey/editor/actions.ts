@@ -291,10 +291,10 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       workspaceId: result.workspaceId,
     });
 
+    const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
+
     if (POSTHOG_KEY) {
       if (result.status !== "draft") {
-        const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
-
         const posthogEventMetadata = {
           survey_id: result.id,
           survey_type: result.type,
@@ -316,45 +316,24 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       }
     }
 
+    // Detect the acting user's second published survey so the editor can fire an in-app
+    // code action. Computed here (only on a genuine draft→publish) to reuse the auth and
+    // ids this action already resolved and avoid an extra client round-trip. Scoped to
+    // the current user's own surveys so it's correct in shared workspaces.
+    let isSecondPublish = false;
+    if (isPublish) {
+      const publishedCount = await getSurveyCount(result.workspaceId, {
+        status: ["inProgress", "paused", "completed"],
+        createdBy: { userId: ctx.user.id, value: ["you"] },
+      });
+      isSecondPublish = publishedCount === 2;
+    }
+
     revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
-    return result;
+    return { ...result, isSecondPublish };
   })
 );
-
-const ZGetPublishedSurveyCountAction = z.object({
-  surveyId: ZId,
-});
-
-// Returns how many surveys the current user has published (i.e. gone live at least
-// once) in the survey's workspace. Scoped to the creator so, in shared workspaces, the
-// "Nth survey" trigger reflects the acting user rather than the whole team. Read-only.
-export const getPublishedSurveyCountAction = authenticatedActionClient
-  .inputSchema(ZGetPublishedSurveyCountAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId,
-          minPermission: "read",
-        },
-      ],
-    });
-
-    return getSurveyCount(workspaceId, {
-      status: ["inProgress", "paused", "completed"],
-      createdBy: { userId: ctx.user.id, value: ["you"] },
-    });
-  });
 
 const ZRefetchWorkspaceAction = z.object({
   workspaceId: z.cuid2(),

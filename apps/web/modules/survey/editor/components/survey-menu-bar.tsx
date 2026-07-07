@@ -25,7 +25,7 @@ import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { getPublishedSurveyCountAction, updateSurveyAction, updateSurveyDraftAction } from "../actions";
+import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
@@ -483,16 +483,11 @@ export const SurveyMenuBar = ({
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
 
-      // Fire an in-app code action when the user publishes their second survey, so a
-      // Formbricks survey can be triggered from the dashboard. Non-blocking: never let
-      // this delay or break navigation to the summary page.
-      try {
-        const publishedCountResult = await getPublishedSurveyCountAction({ surveyId: localSurvey.id });
-        if (publishedCountResult?.data === 2) {
-          void formbricks.track("second_survey_published");
-        }
-      } catch (error) {
-        console.error(error);
+      // When the user publishes their second survey, fire an in-app code action so a
+      // Formbricks survey can be triggered from the dashboard. The flag is computed
+      // server-side in updateSurveyAction, so there's no extra round-trip here.
+      if (publishResult.data.isSecondPublish) {
+        formbricks.track("second_survey_published").catch(() => undefined);
       }
 
       // Set flag to prevent beforeunload warning during navigation
