@@ -51,3 +51,47 @@ export const isLight = (color: string) => {
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 };
+
+// WCAG 2.x relative luminance of an sRGB hex color (0 = black, 1 = white).
+// https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+export const getRelativeLuminance = (hex: string): number => {
+  const rgba = hexToRGBA(hex, 1);
+  if (!rgba) return 0;
+
+  const [r, g, b] = rgba.match(/\d+/g)?.map(Number) ?? [0, 0, 0];
+
+  const toLinear = (channel8bit: number): number => {
+    const channel = channel8bit / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  };
+
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+};
+
+// WCAG 2.x contrast ratio between two hex colors, ranging from 1:1 to 21:1.
+export const getContrastRatio = (colorA: string, colorB: string): number => {
+  const lighter = Math.max(getRelativeLuminance(colorA), getRelativeLuminance(colorB));
+  const darker = Math.min(getRelativeLuminance(colorA), getRelativeLuminance(colorB));
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+// WCAG AA contrast threshold for normal-size text.
+export const AA_CONTRAST_RATIO = 4.5;
+
+// Nudges `preferred` toward black (on light surfaces) or white (on dark surfaces) just far
+// enough to clear `minRatio` against `surface`, preserving as much of the original hue as
+// possible. Falls back to the pure pole, which always clears AA on a near-white/near-black surface.
+export const ensureReadable = (
+  preferred: string,
+  surface: string,
+  minRatio: number = AA_CONTRAST_RATIO
+): string => {
+  if (getContrastRatio(preferred, surface) >= minRatio) return preferred;
+
+  const pole = isLight(surface) ? "#000000" : "#ffffff";
+  for (let weight = 0.1; weight < 1; weight += 0.1) {
+    const candidate = mixColor(preferred, pole, weight);
+    if (getContrastRatio(candidate, surface) >= minRatio) return candidate;
+  }
+  return pole;
+};

@@ -2,7 +2,7 @@
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
-import { isLight, mixColor } from "@/lib/color";
+import { ensureReadable, isLight, mixColor } from "@/lib/color";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
@@ -199,6 +199,12 @@ export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | 
   }
   appendCssVariable("button-bg-color", buttonBg);
   appendCssVariable("button-text-color", buttonText);
+  // The ghost "Back" button renders the brand (button bg) as text directly on the card surface,
+  // where a light brand fails contrast. Darken it toward readable while keeping the brand hue.
+  if (buttonBg) {
+    const backButtonSurface = styling.cardBackgroundColor?.light ?? "#ffffff";
+    appendCssVariable("back-button-color", ensureReadable(buttonBg, backButtonSurface));
+  }
   if (styling.buttonBorderRadius !== undefined)
     appendCssVariable("button-border-radius", formatDimension(styling.buttonBorderRadius));
   if (styling.buttonHeight !== undefined)

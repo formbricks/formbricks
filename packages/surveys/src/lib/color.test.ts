@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isLight, mixColor } from "./color";
+import { AA_CONTRAST_RATIO, ensureReadable, getContrastRatio, isLight, mixColor } from "./color";
 
 describe("mixColor", () => {
   test("should mix a color with white", () => {
@@ -73,5 +73,37 @@ describe("isLight", () => {
     expect(isLight("#GGHHII")).toBe(false); // Invalid hex characters currently return false
     expect(() => isLight("")).toThrow("Invalid color");
     expect(() => isLight("#12")).toThrow("Invalid color"); // Too short
+  });
+});
+
+describe("getContrastRatio", () => {
+  test("returns 21:1 for black on white and 1:1 for identical colors", () => {
+    expect(getContrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 5);
+    expect(getContrastRatio("#123456", "#123456")).toBeCloseTo(1, 5);
+  });
+});
+
+describe("ensureReadable", () => {
+  test("returns the preferred color unchanged when it already clears AA", () => {
+    expect(ensureReadable("#1e40af", "#ffffff")).toBe("#1e40af");
+  });
+
+  test("darkens a too-light color on a light surface until it clears AA", () => {
+    const result = ensureReadable("#f9a8c0", "#ffffff"); // light pink fails as text on white
+    expect(result).not.toBe("#f9a8c0");
+    expect(getContrastRatio(result, "#ffffff")).toBeGreaterThanOrEqual(AA_CONTRAST_RATIO);
+  });
+
+  test("produces an AA-compliant result against white for any brand color", () => {
+    for (let r = 0; r <= 255; r += 51) {
+      for (let g = 0; g <= 255; g += 51) {
+        for (let b = 0; b <= 255; b += 51) {
+          const brand = "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
+          expect(getContrastRatio(ensureReadable(brand, "#ffffff"), "#ffffff")).toBeGreaterThanOrEqual(
+            AA_CONTRAST_RATIO
+          );
+        }
+      }
+    }
   });
 });
