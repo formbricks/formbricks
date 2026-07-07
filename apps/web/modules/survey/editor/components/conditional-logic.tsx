@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
@@ -40,6 +41,7 @@ interface ConditionalLogicProps {
   block: TSurveyBlock;
   updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
   updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
+  invalidElements?: string[];
 }
 
 export function ConditionalLogic({
@@ -48,6 +50,7 @@ export function ConditionalLogic({
   block,
   updateBlockLogic,
   updateBlockLogicFallback,
+  invalidElements,
 }: ConditionalLogicProps) {
   const { t } = useTranslation();
   const transformedSurvey = useMemo(() => {
@@ -59,6 +62,13 @@ export function ConditionalLogic({
 
   const blockLogic = useMemo(() => block.logic ?? [], [block.logic]);
   const blockLogicFallback = block.logicFallback;
+
+  // A logic rule is flagged as invalid on save/publish (see validateSurveyWithZod).
+  // Surface it here so the user can locate the offending rule.
+  const hasLogicError = useMemo(
+    () => blockLogic.some((logicItem) => invalidElements?.includes(logicItem.id)),
+    [blockLogic, invalidElements]
+  );
 
   // The logic rules are collapsed by default and expand when the user adds a rule.
   const [isOpen, setIsOpen] = useState(false);
@@ -137,6 +147,13 @@ export function ConditionalLogic({
     }
   }, [blockLogic, blockIdx, blockLogicFallback, updateBlockLogicFallback]);
 
+  // Expand the section when a rule is flagged invalid so the red outline is visible.
+  useEffect(() => {
+    if (hasLogicError) {
+      setIsOpen(true);
+    }
+  }, [hasLogicError]);
+
   return (
     <div className="mt-4">
       {blockLogic.length > 0 ? (
@@ -151,11 +168,13 @@ export function ConditionalLogic({
             )}
             {t("workspace.surveys.edit.conditional_logic")}
             <SplitIcon className="size-4 rotate-90" />
-            {!isOpen && (
-              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
-                {blockLogic.length}
-              </span>
-            )}
+            <span
+              className={cn(
+                "rounded px-1.5 py-0.5 text-xs font-normal",
+                hasLogicError ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-500"
+              )}>
+              {blockLogic.length}
+            </span>
           </Collapsible.CollapsibleTrigger>
 
           <Collapsible.CollapsibleContent>
@@ -163,7 +182,10 @@ export function ConditionalLogic({
               {blockLogic.map((logicItem, logicItemIdx) => (
                 <div
                   key={logicItem.id}
-                  className="relative flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  className={cn(
+                    "relative flex w-full grow items-start gap-2 rounded-lg border bg-slate-50 p-3",
+                    invalidElements?.includes(logicItem.id) ? "border-red-400" : "border-slate-200"
+                  )}>
                   <LogicEditor
                     localSurvey={transformedSurvey}
                     logicItem={logicItem}
@@ -181,7 +203,7 @@ export function ConditionalLogic({
                         <Button
                           variant="secondary"
                           aria-label="More options"
-                          className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-md">
+                          className="absolute top-3 right-3 flex size-10 items-center justify-center rounded-md">
                           <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
                         </Button>
                       </DropdownMenuTrigger>

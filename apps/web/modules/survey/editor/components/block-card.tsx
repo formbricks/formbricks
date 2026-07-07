@@ -128,7 +128,8 @@ export const BlockCard = ({
   const isBlockOpen = block.elements.some((element) => element.id === activeElementId);
 
   const hasInvalidElement = block.elements.some((element) => invalidElements?.includes(element.id));
-  const isBlockInvalid = hasInvalidElement;
+  const hasInvalidLogic = blockLogic.some((logicItem) => invalidElements?.includes(logicItem.id));
+  const isBlockInvalid = hasInvalidElement || hasInvalidLogic;
 
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [openAdvanced, setOpenAdvanced] = useState(blockLogic.length > 0);
@@ -246,7 +247,8 @@ export const BlockCard = ({
     <div
       className={cn(
         isBlockOpen ? "shadow-lg" : "shadow-md",
-        "flex w-full flex-row rounded-lg bg-white duration-300"
+        // scroll-mt clears the fixed tabs bar (h-12) when scrolled into view on validation errors
+        "flex w-full scroll-mt-16 flex-row rounded-lg bg-white duration-300"
       )}
       ref={setNodeRef}
       style={style}
@@ -319,7 +321,7 @@ export const BlockCard = ({
                   <div
                     key={element.id}
                     id={element.id}
-                    className={cn(elementIndex > 0 && "border-t border-slate-200")}>
+                    className={cn("scroll-mt-16", elementIndex > 0 && "border-t border-slate-200")}>
                     <Collapsible.Root
                       open={isOpen}
                       onOpenChange={() => {
@@ -469,6 +471,7 @@ export const BlockCard = ({
                   blockIdx={blockIdx}
                   updateBlockLogic={updateBlockLogic}
                   updateBlockLogicFallback={updateBlockLogicFallback}
+                  invalidElements={invalidElements}
                 />
               </div>
             )}
