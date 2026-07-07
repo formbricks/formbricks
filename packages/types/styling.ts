@@ -63,7 +63,13 @@ export const ZBaseStyling = z.object({
   accentBgColorSelected: ZStylingColor.nullish(),
   // Color of the link-survey footer legal links (imprint/privacy/terms/report survey).
   // When unset, the color is auto-adjusted at render time for AA contrast with the background.
-  linkColor: ZStylingColor.nullish(),
+  // The color-picker field always emits an object, so a cleared value arrives as
+  // `{ light: "" }`; normalize a blank/absent light to `undefined` ("auto-adjust") so the
+  // optional field validates instead of failing ZColor and renders the auto fallback.
+  linkColor: z.preprocess(
+    (val) => (val && typeof val === "object" && !(val as { light?: string }).light ? undefined : val),
+    ZStylingColor.nullish()
+  ),
   fontFamily: z.string().nullish(),
 
   // Buttons

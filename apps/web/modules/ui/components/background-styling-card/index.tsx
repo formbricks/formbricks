@@ -154,6 +154,7 @@ export const BackgroundStylingCard = ({
             name="linkColor.light"
             label={t("workspace.look.advanced_styling_field_link_color")}
             description={t("workspace.look.advanced_styling_field_link_color_description")}
+            placeholder={t("workspace.look.advanced_styling_field_link_color_placeholder")}
           />
         </div>
       </Collapsible.CollapsibleContent>

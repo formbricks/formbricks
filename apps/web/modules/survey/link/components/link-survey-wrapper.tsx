@@ -65,7 +65,8 @@ export const LinkSurveyWrapper = ({
   // Footer legal links sit on the survey background; resolve an AA-compliant color (and an
   // optional backdrop for non-solid backgrounds). An explicit linkColor override wins.
   const footerLinkStyle = getFooterLinkStyle(styling);
-  const footerLinkColor = styling.linkColor?.light ?? footerLinkStyle.textColor;
+  // `||` (not `??`) so an empty-string override falls back to the auto-adjusted color.
+  const footerLinkColor = styling.linkColor?.light || footerLinkStyle.textColor;
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
   const hasLogo = !styling.isLogoHidden && !!(workspace.logo?.url || styling.logo?.url);

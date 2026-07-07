@@ -9,9 +9,17 @@ interface ColorFieldProps {
   label: string;
   description?: string;
   containerClass?: string;
+  placeholder?: string;
 }
 
-export const ColorField = ({ form, name, label, description, containerClass }: ColorFieldProps) => (
+export const ColorField = ({
+  form,
+  name,
+  label,
+  description,
+  containerClass,
+  placeholder,
+}: ColorFieldProps) => (
   <FormField
     control={form.control}
     name={name}
@@ -24,6 +32,7 @@ export const ColorField = ({ form, name, label, description, containerClass }: C
             color={field.value ?? ""}
             onChange={(color) => field.onChange(color)}
             containerClass={containerClass || "w-full"}
+            placeholder={placeholder}
           />
         </FormControl>
       </FormItem>
