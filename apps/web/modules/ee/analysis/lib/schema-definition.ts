@@ -336,7 +336,7 @@ export function getTranslatedDimensionValueLabel(
   if (dimensionId === EMOTIONS_DIMENSION_ID) {
     const tokens = value.split(",").map((token) => token.trim());
     const labels = tokens.map((token) => getTranslatedEmotionValueLabel(token, t));
-    if (labels.some((label) => label === undefined)) return undefined;
+    if (labels.includes(undefined)) return undefined;
     return labels.join(", ");
   }
   return undefined;

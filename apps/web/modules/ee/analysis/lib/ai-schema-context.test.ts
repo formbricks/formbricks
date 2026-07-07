@@ -2,63 +2,38 @@ import { describe, expect, test } from "vitest";
 import { generateSchemaContext } from "./ai-schema-context";
 
 describe("AI schema context", () => {
-  test("documents NPS score aliases for the canonical score measure", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain('"NPS score" or "net promoter score" means `FeedbackRecords.npsScore`');
-  });
-
-  test("distinguishes NPS score from NPS average prompts", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain(
-      '"NPS value", "NPS average", or "NPS average rating" means `FeedbackRecords.npsAverage`'
-    );
-  });
-
-  test("documents CSAT score and average aliases", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain('"CSAT score" means `FeedbackRecords.csatScore`');
-    expect(context).toContain('"CSAT average" means `FeedbackRecords.csatAverage`');
-  });
-
-  test("documents CES aliases", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain('"CES average" or "CES score" means `FeedbackRecords.cesAverage`');
-  });
-
-  test("documents the sentiment average alias and distinguishes the per-record score", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain(
-      '"average sentiment" or "sentiment trend" means `FeedbackRecords.sentimentAverage`'
-    );
-    expect(context).toContain(
-      '"sentiment score" (e.g. filtering records by score) means the `FeedbackRecords.sentimentScore` dimension'
-    );
-  });
-
-  test("documents the exact sentiment enum tokens for equals filtering", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain(
-      "very_negative, negative, neutral, positive, very_positive, mixed. Filter it with `equals`/`notEquals`"
-    );
-  });
-
-  test("steers emotions filtering toward contains with exact tokens", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain("joy, anger, sadness, fear, surprise, disgust");
-    expect(context).toContain("never use `equals` on it");
-  });
-
-  test("steers free-text dimension filters toward contains over equals", () => {
-    const context = generateSchemaContext();
-
-    expect(context).toContain("prefer the `contains` operator over `equals`");
-    expect(context).toContain("`FeedbackRecords.sourceName`");
+  test.each([
+    [
+      "the NPS score alias for the canonical score measure",
+      '"NPS score" or "net promoter score" means `FeedbackRecords.npsScore`',
+    ],
+    [
+      "the NPS average alias, distinct from the NPS score",
+      '"NPS value", "NPS average", or "NPS average rating" means `FeedbackRecords.npsAverage`',
+    ],
+    ["the CSAT score alias", '"CSAT score" means `FeedbackRecords.csatScore`'],
+    ["the CSAT average alias", '"CSAT average" means `FeedbackRecords.csatAverage`'],
+    ["the CES alias", '"CES average" or "CES score" means `FeedbackRecords.cesAverage`'],
+    [
+      "the sentiment average alias",
+      '"average sentiment" or "sentiment trend" means `FeedbackRecords.sentimentAverage`',
+    ],
+    [
+      "the per-record sentiment score dimension, distinct from the average",
+      '"sentiment score" (e.g. filtering records by score) means the `FeedbackRecords.sentimentScore` dimension',
+    ],
+    [
+      "the exact sentiment enum tokens for equals filtering",
+      "very_negative, negative, neutral, positive, very_positive, mixed. Filter it with `equals`/`notEquals`",
+    ],
+    ["the exact emotion tokens", "joy, anger, sadness, fear, surprise, disgust"],
+    ["that emotions must never be filtered with equals", "never use `equals` on it"],
+    [
+      "the contains-over-equals preference for free-text dimensions",
+      "prefer the `contains` operator over `equals`",
+    ],
+    ["sourceName among the free-text dimensions", "`FeedbackRecords.sourceName`"],
+  ])("documents %s", (_description, expectedSnippet) => {
+    expect(generateSchemaContext()).toContain(expectedSnippet);
   });
 });
