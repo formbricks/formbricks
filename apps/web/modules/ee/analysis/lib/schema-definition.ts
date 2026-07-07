@@ -374,6 +374,11 @@ export const SELECTABLE_VALUE_DIMENSION_IDS = [
   "FeedbackRecords.fieldType",
   "FeedbackRecords.fieldLabel",
   "FeedbackRecords.fieldGroupLabel",
+  // Sentiment stores a fixed enum of machine tokens, so picked values are exact-match
+  // safe. Emotions is excluded on purpose: values are stored as comma-separated
+  // multi-label sets, so `equals` on a picked combination is a trap — filter it with
+  // `contains` instead.
+  SENTIMENT_DIMENSION_ID,
 ] as const;
 
 export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS)[number];

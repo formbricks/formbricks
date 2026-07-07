@@ -253,10 +253,13 @@ describe("schema-definition", () => {
       expect(isSelectableValueDimension("FeedbackRecords.sourceType")).toBe(true);
       expect(isSelectableValueDimension("FeedbackRecords.language")).toBe(true);
       expect(isSelectableValueDimension("FeedbackRecords.fieldLabel")).toBe(true);
+      expect(isSelectableValueDimension("FeedbackRecords.sentiment")).toBe(true);
     });
 
     test("rejects free-text, numeric, time, and unknown fields", () => {
       expect(isSelectableValueDimension("FeedbackRecords.valueText")).toBe(false);
+      // multi-label set — equals on a picked combination is a trap, filter via contains
+      expect(isSelectableValueDimension("FeedbackRecords.emotions")).toBe(false);
       expect(isSelectableValueDimension("FeedbackRecords.valueNumber")).toBe(false);
       expect(isSelectableValueDimension("FeedbackRecords.collectedAt")).toBe(false);
       expect(isSelectableValueDimension("FeedbackRecords.userId")).toBe(false);
