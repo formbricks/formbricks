@@ -2,7 +2,7 @@ import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { hashString } from "@/lib/hash-string";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { checkRateLimit } from "./rate-limit";
+import { checkRateLimit, peekRateLimit } from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";
 import { type TRateLimitConfig, type TRateLimitResponse } from "./types/rate-limit";
 
@@ -32,12 +32,7 @@ export const getClientIdentifier = async (): Promise<string> => {
  * @param identifier - Unique identifier for rate limiting (IP hash, user ID, API key, etc.)
  * @throws {Error} When rate limit is exceeded or rate limiting system fails
  */
-export const applyRateLimit = async (
-  config: TRateLimitConfig,
-  identifier: string
-): Promise<TRateLimitResponse> => {
-  const result = await checkRateLimit(config, identifier);
-
+const throwIfRateLimitExceeded = (result: Awaited<ReturnType<typeof checkRateLimit>>): TRateLimitResponse => {
   if (!result.ok || !result.data.allowed) {
     throw new TooManyRequestsError(
       "Maximum number of requests reached. Please try again later.",
@@ -47,6 +42,31 @@ export const applyRateLimit = async (
 
   return result.data;
 };
+
+/**
+ * Fail fast when the rate limit window is already exhausted.
+ * Does not increment the counter.
+ */
+export const assertRateLimitAvailable = async (
+  config: TRateLimitConfig,
+  identifier: string
+): Promise<TRateLimitResponse> => {
+  const result = await peekRateLimit(config, identifier);
+  return throwIfRateLimitExceeded(result);
+};
+
+export const applyRateLimit = async (
+  config: TRateLimitConfig,
+  identifier: string
+): Promise<TRateLimitResponse> => {
+  const result = await checkRateLimit(config, identifier);
+  return throwIfRateLimitExceeded(result);
+};
+
+/**
+ * Record successful usage against a rate limit without a prior check.
+ */
+export const recordRateLimitUsage = applyRateLimit;
 
 /**
  * Apply IP-based rate limiting for unauthenticated requests
