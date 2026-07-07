@@ -12,11 +12,14 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const nextConfigPath = path.resolve(here, "..", "next.config.mjs");
 const turboJsonPath = path.resolve(here, "..", "..", "..", "turbo.json");
 
+// Matches `process.env.X` and `process.env["X"]`/`process.env['X']`. Destructuring
+// (`const { X } = process.env`) is intentionally not detected — next.config.mjs must read env vars
+// directly (see the note in that file) so this guardrail stays reliable.
 const getProcessEnvReads = (source: string): string[] => {
   const reads = new Set<string>();
-  const pattern = /process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g;
+  const pattern = /process\.env(?:\.([A-Za-z_][A-Za-z0-9_]*)|\[\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\])/g;
   for (const match of source.matchAll(pattern)) {
-    reads.add(match[1]);
+    reads.add(match[1] ?? match[2]);
   }
   return [...reads].sort();
 };
