@@ -20,15 +20,22 @@ interface RechartsTooltipProps {
   active?: boolean;
   payload?: TooltipPayloadItem[];
   label?: string | number;
+  /** Formats the header (dimension value); defaults to the generic date/string formatting. */
+  labelFormatter?: (value: unknown) => string;
 }
 
-export const PolishedChartTooltip = ({ active, payload, label }: Readonly<RechartsTooltipProps>) => {
+export const PolishedChartTooltip = ({
+  active,
+  payload,
+  label,
+  labelFormatter,
+}: Readonly<RechartsTooltipProps>) => {
   const { t } = useTranslation();
   if (!active || !payload?.length) return null;
 
   // Pies leave `label` empty and put the slice name on payload[0].name.
   const headerSource = label != null && String(label).length > 0 ? label : (payload[0]?.name ?? "");
-  const headerText = formatXAxisTick(headerSource);
+  const headerText = labelFormatter ? labelFormatter(headerSource) : formatXAxisTick(headerSource);
 
   return (
     <div className="border-border/50 min-w-[180px] rounded-lg border bg-white px-3 py-2.5 shadow-lg dark:bg-gray-950">

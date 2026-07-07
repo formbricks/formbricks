@@ -1,13 +1,17 @@
+import type { TFunction } from "i18next";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import {
   FEEDBACK_FIELDS,
   SELECTABLE_VALUE_DIMENSION_IDS,
+  SENTIMENT_VALUE_ORDER,
   formatCubeColumnHeader,
   getFieldById,
   getFilterOperatorsForType,
+  getTranslatedDimensionValueLabel,
   isSelectableValueDimension,
+  sortRowsByEnumDimension,
 } from "./schema-definition";
 
 const chartCubeSchemaPath = fileURLToPath(
@@ -123,6 +127,123 @@ describe("schema-definition", () => {
 
     test("keeps the Helm and Docker Cube schemas in sync", () => {
       expect(readChartCubeSchema()).toBe(readDockerCubeSchema());
+    });
+  });
+
+  describe("Hub enrichment fields (sentiment + emotions)", () => {
+    test("exposes the enrichment dimensions and measures", () => {
+      const dimensionIds = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
+      expect(dimensionIds).toEqual(
+        expect.arrayContaining([
+          "FeedbackRecords.sentiment",
+          "FeedbackRecords.sentimentScore",
+          "FeedbackRecords.emotions",
+        ])
+      );
+
+      const measureIds = FEEDBACK_FIELDS.measures.map((m) => m.id);
+      expect(measureIds).toEqual(
+        expect.arrayContaining([
+          "FeedbackRecords.sentimentAverage",
+          "FeedbackRecords.joyCount",
+          "FeedbackRecords.angerCount",
+          "FeedbackRecords.sadnessCount",
+          "FeedbackRecords.fearCount",
+          "FeedbackRecords.surpriseCount",
+          "FeedbackRecords.disgustCount",
+        ])
+      );
+    });
+
+    test("enrichment members exist in both deployed Cube schemas", () => {
+      const dockerSchema = readDockerCubeSchema();
+      const chartSchema = readChartCubeSchema();
+      const members = [
+        "sentiment",
+        "sentimentScore",
+        "emotions",
+        "sentimentAverage",
+        "joyCount",
+        "angerCount",
+        "sadnessCount",
+        "fearCount",
+        "surpriseCount",
+        "disgustCount",
+      ];
+
+      for (const member of members) {
+        expect(dockerSchema).toContain(`    ${member}: {`);
+        expect(chartSchema).toContain(`    ${member}: {`);
+      }
+    });
+  });
+
+  describe("getTranslatedDimensionValueLabel", () => {
+    const t = ((key: string) => key) as TFunction;
+
+    test("maps sentiment tokens to their i18n keys", () => {
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", "very_negative", t)).toBe(
+        "workspace.analysis.charts.sentiment_value_very_negative"
+      );
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", "mixed", t)).toBe(
+        "workspace.analysis.charts.sentiment_value_mixed"
+      );
+    });
+
+    test("translates each token of a comma-separated emotions set", () => {
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.emotions", "anger, joy", t)).toBe(
+        "workspace.analysis.charts.emotion_value_anger, workspace.analysis.charts.emotion_value_joy"
+      );
+    });
+
+    test("returns undefined for unknown tokens and non-enum dimensions", () => {
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", "great", t)).toBeUndefined();
+      expect(
+        getTranslatedDimensionValueLabel("FeedbackRecords.emotions", "anger, ecstasy", t)
+      ).toBeUndefined();
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", "anger", t)).toBeUndefined();
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", 3, t)).toBeUndefined();
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", "", t)).toBeUndefined();
+    });
+  });
+
+  describe("sortRowsByEnumDimension", () => {
+    test("sorts sentiment rows on the scale with mixed last and unknowns at the end", () => {
+      const rows = [
+        { "FeedbackRecords.sentiment": "mixed" },
+        { "FeedbackRecords.sentiment": "positive" },
+        { "FeedbackRecords.sentiment": "surprising" },
+        { "FeedbackRecords.sentiment": "very_negative" },
+        { "FeedbackRecords.sentiment": "neutral" },
+      ];
+
+      const sorted = sortRowsByEnumDimension(rows, "FeedbackRecords.sentiment");
+
+      expect(sorted.map((r) => r["FeedbackRecords.sentiment"])).toEqual([
+        "very_negative",
+        "neutral",
+        "positive",
+        "mixed",
+        "surprising",
+      ]);
+      // input untouched
+      expect(rows[0]["FeedbackRecords.sentiment"]).toBe("mixed");
+    });
+
+    test("covers the full sentiment scale order", () => {
+      expect(SENTIMENT_VALUE_ORDER).toEqual([
+        "very_negative",
+        "negative",
+        "neutral",
+        "positive",
+        "very_positive",
+        "mixed",
+      ]);
+    });
+
+    test("leaves rows of other dimensions unchanged", () => {
+      const rows = [{ "FeedbackRecords.sourceName": "b" }, { "FeedbackRecords.sourceName": "a" }];
+      expect(sortRowsByEnumDimension(rows, "FeedbackRecords.sourceName")).toBe(rows);
     });
   });
 

@@ -21,6 +21,8 @@ export interface CartesianChartProps {
   tooltipCursor?: boolean | Record<string, unknown>;
   /** Force the y-axis to start at 0. Required for bars so length encodes magnitude correctly. */
   zeroBaseline?: boolean;
+  /** Formats x-axis ticks and the tooltip header (e.g. enum dimension value labels). */
+  xAxisTickFormatter?: (value: unknown) => string;
 }
 
 const TARGET_TICK_COUNT = 5;
@@ -105,6 +107,7 @@ export function CartesianChart({
   chartProps = {},
   tooltipCursor,
   zeroBaseline = false,
+  xAxisTickFormatter,
 }: Readonly<CartesianChartProps>) {
   const yScale = computeYAxis(data, dataKeys, zeroBaseline);
 
@@ -121,7 +124,7 @@ export function CartesianChart({
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={formatXAxisTick}
+            tickFormatter={xAxisTickFormatter ?? formatXAxisTick}
           />
           <YAxis
             tickLine={false}
@@ -131,7 +134,10 @@ export function CartesianChart({
             ticks={yScale?.ticks}
             interval={0}
           />
-          <ChartTooltip content={<PolishedChartTooltip />} cursor={tooltipCursor} />
+          <ChartTooltip
+            content={<PolishedChartTooltip labelFormatter={xAxisTickFormatter} />}
+            cursor={tooltipCursor}
+          />
           {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
         </Chart>

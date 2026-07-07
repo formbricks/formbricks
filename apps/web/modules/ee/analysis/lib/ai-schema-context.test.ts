@@ -29,6 +29,29 @@ describe("AI schema context", () => {
     expect(context).toContain('"CES average" or "CES score" means `FeedbackRecords.cesAverage`');
   });
 
+  test("documents the sentiment average alias", () => {
+    const context = generateSchemaContext();
+
+    expect(context).toContain(
+      '"average sentiment", "sentiment score", or "sentiment trend" means `FeedbackRecords.sentimentAverage`'
+    );
+  });
+
+  test("documents the exact sentiment enum tokens for equals filtering", () => {
+    const context = generateSchemaContext();
+
+    expect(context).toContain(
+      "very_negative, negative, neutral, positive, very_positive, mixed. Filter it with `equals`/`notEquals`"
+    );
+  });
+
+  test("steers emotions filtering toward contains with exact tokens", () => {
+    const context = generateSchemaContext();
+
+    expect(context).toContain("joy, anger, sadness, fear, surprise, disgust");
+    expect(context).toContain("never use `equals` on it");
+  });
+
   test("steers free-text dimension filters toward contains over equals", () => {
     const context = generateSchemaContext();
 

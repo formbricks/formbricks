@@ -13,7 +13,11 @@ import {
   formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
+import {
+  formatCubeColumnHeader,
+  getTranslatedDimensionValueLabel,
+  sortRowsByEnumDimension,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip } from "@/modules/ui/components/chart";
@@ -135,6 +139,12 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
 
   const xAxisKey = query.dimensions?.[0] ?? timeDimKey ?? rowKeys[0] ?? "key";
 
+  // Enum dimensions (e.g. sentiment) sort ordinally instead of alphabetically and
+  // render translated labels instead of their raw machine tokens.
+  const sortedData = sortRowsByEnumDimension(data, xAxisKey);
+  const formatDimensionValue = (value: unknown): string =>
+    getTranslatedDimensionValueLabel(xAxisKey, value, t) ?? formatXAxisTick(value);
+
   const measureIds = query.measures?.filter((m) => rowKeys.includes(m)) ?? [];
   const dataKeys = measureIds.length > 0 ? measureIds : rowKeys.filter((k) => k !== xAxisKey);
 
@@ -163,8 +173,8 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       // Setting `fill` on the data row (not via <Cell>) is what propagates
       // the per-bar colour into the tooltip payload as well as the SVG.
       const barData = isMultiMeasure
-        ? data
-        : data.map((row, index) => ({
+        ? sortedData
+        : sortedData.map((row, index) => ({
             ...row,
             fill: CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
           }));
@@ -179,6 +189,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           showLegend={isMultiMeasure}
           tooltipCursor={false}
           zeroBaseline
+          xAxisTickFormatter={formatDimensionValue}
           chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
           {dataKeys.map((key, i) => {
             const fallbackColor =
@@ -205,11 +216,12 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       return (
         <CartesianChart
           chart={AreaChart}
-          data={data}
+          data={sortedData}
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend>
+          showLegend
+          xAxisTickFormatter={formatDimensionValue}>
           <defs>
             {dataKeys.map((key, i) => {
               const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
@@ -244,11 +256,12 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       return (
         <CartesianChart
           chart={AreaChart}
-          data={data}
+          data={sortedData}
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend>
+          showLegend
+          xAxisTickFormatter={formatDimensionValue}>
           {dataKeys.map((key, i) => (
             <Area
               key={key}
@@ -264,7 +277,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         </CartesianChart>
       );
     case "pie": {
-      const pieResult = preparePieData(data, dataKey);
+      const pieResult = preparePieData(sortedData, dataKey);
       if (!pieResult) {
         return (
           <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
@@ -302,12 +315,12 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 })}
                 <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
               </Pie>
-              <ChartTooltip content={<PolishedChartTooltip />} />
+              <ChartTooltip content={<PolishedChartTooltip labelFormatter={formatDimensionValue} />} />
               <Legend
                 verticalAlign="bottom"
                 height={36}
                 iconType="circle"
-                formatter={(value: string) => formatXAxisTick(value)}
+                formatter={(value: string) => formatDimensionValue(value)}
                 wrapperStyle={{ fontSize: 12 }}
               />
             </PieChart>

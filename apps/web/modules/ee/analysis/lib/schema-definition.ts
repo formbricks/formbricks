@@ -58,6 +58,27 @@ export const FEEDBACK_FIELDS = {
       description: 'Response language code (e.g., "en", "de")',
     },
     {
+      id: "FeedbackRecords.sentiment",
+      label: "Sentiment",
+      type: "string",
+      description:
+        "AI-generated sentiment label. Exact values: very_negative, negative, neutral, positive, very_positive, mixed. Empty until a record is enriched.",
+    },
+    {
+      id: "FeedbackRecords.sentimentScore",
+      label: "Sentiment Score",
+      type: "number",
+      description:
+        "Signed sentiment polarity score (-1 to 1, negative to positive), set together with the sentiment label. Empty until a record is enriched.",
+    },
+    {
+      id: "FeedbackRecords.emotions",
+      label: "Emotions",
+      type: "string",
+      description:
+        'AI-detected emotions as a comma-separated multi-label set from: joy, anger, sadness, fear, surprise, disgust. Filter a single emotion with "contains". Empty until a record is enriched.',
+    },
+    {
       id: "FeedbackRecords.userId",
       label: "User ID",
       type: "string",
@@ -211,6 +232,49 @@ export const FEEDBACK_FIELDS = {
       type: "count",
       description: "Number of CES responses",
     },
+    {
+      id: "FeedbackRecords.sentimentAverage",
+      label: "Sentiment Average",
+      type: "number",
+      description:
+        'Average sentiment score (-1 to 1, negative to positive) across enriched records. "mixed" records score near 0 and are included.',
+    },
+    {
+      id: "FeedbackRecords.joyCount",
+      label: "Joy Count",
+      type: "count",
+      description: 'Number of feedback records tagged with the "joy" emotion',
+    },
+    {
+      id: "FeedbackRecords.angerCount",
+      label: "Anger Count",
+      type: "count",
+      description: 'Number of feedback records tagged with the "anger" emotion',
+    },
+    {
+      id: "FeedbackRecords.sadnessCount",
+      label: "Sadness Count",
+      type: "count",
+      description: 'Number of feedback records tagged with the "sadness" emotion',
+    },
+    {
+      id: "FeedbackRecords.fearCount",
+      label: "Fear Count",
+      type: "count",
+      description: 'Number of feedback records tagged with the "fear" emotion',
+    },
+    {
+      id: "FeedbackRecords.surpriseCount",
+      label: "Surprise Count",
+      type: "count",
+      description: 'Number of feedback records tagged with the "surprise" emotion',
+    },
+    {
+      id: "FeedbackRecords.disgustCount",
+      label: "Disgust Count",
+      type: "count",
+      description: 'Number of feedback records tagged with the "disgust" emotion',
+    },
   ] as MeasureDefinition[],
 };
 
@@ -221,6 +285,92 @@ export const FEEDBACK_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions.map((
 export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
   .filter((d) => d.type === "time")
   .map((d) => d.id);
+
+/**
+ * Enum dimensions carry machine tokens (e.g. "very_negative") that need a display
+ * label and, for sentiment, an ordinal axis order instead of the alphabetical one.
+ * Keep both value pools in sync with the Hub enrichment enums (migrations 014/015).
+ */
+export const SENTIMENT_VALUE_ORDER = [
+  "very_negative",
+  "negative",
+  "neutral",
+  "positive",
+  "very_positive",
+  "mixed",
+] as const;
+
+export const EMOTION_VALUES = ["joy", "anger", "sadness", "fear", "surprise", "disgust"] as const;
+
+export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
+export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
+
+const getTranslatedSentimentValueLabel = (value: string, t: TFunction): string | undefined => {
+  const labels: Record<string, string> = {
+    very_negative: t("workspace.analysis.charts.sentiment_value_very_negative"),
+    negative: t("workspace.analysis.charts.sentiment_value_negative"),
+    neutral: t("workspace.analysis.charts.sentiment_value_neutral"),
+    positive: t("workspace.analysis.charts.sentiment_value_positive"),
+    very_positive: t("workspace.analysis.charts.sentiment_value_very_positive"),
+    mixed: t("workspace.analysis.charts.sentiment_value_mixed"),
+  };
+  return labels[value];
+};
+
+const getTranslatedEmotionValueLabel = (value: string, t: TFunction): string | undefined => {
+  const labels: Record<string, string> = {
+    joy: t("workspace.analysis.charts.emotion_value_joy"),
+    anger: t("workspace.analysis.charts.emotion_value_anger"),
+    sadness: t("workspace.analysis.charts.emotion_value_sadness"),
+    fear: t("workspace.analysis.charts.emotion_value_fear"),
+    surprise: t("workspace.analysis.charts.emotion_value_surprise"),
+    disgust: t("workspace.analysis.charts.emotion_value_disgust"),
+  };
+  return labels[value];
+};
+
+/**
+ * Translate an enum dimension value for display (chart axes, tooltips, tables).
+ * Emotions values are comma-separated multi-label sets, so each token is translated
+ * individually. Returns undefined for non-enum dimensions or unknown values so callers
+ * can fall back to their generic formatting.
+ */
+export function getTranslatedDimensionValueLabel(
+  dimensionId: string,
+  value: unknown,
+  t: TFunction
+): string | undefined {
+  if (typeof value !== "string" || value.length === 0) return undefined;
+  if (dimensionId === SENTIMENT_DIMENSION_ID) {
+    return getTranslatedSentimentValueLabel(value, t);
+  }
+  if (dimensionId === EMOTIONS_DIMENSION_ID) {
+    const tokens = value.split(",").map((token) => token.trim());
+    const labels = tokens.map((token) => getTranslatedEmotionValueLabel(token, t));
+    if (labels.some((label) => label === undefined)) return undefined;
+    return labels.join(", ");
+  }
+  return undefined;
+}
+
+/**
+ * Sort chart rows into the sentiment scale order (very_negative → very_positive, mixed
+ * last) when the x-axis is the sentiment dimension. Unknown values keep their relative
+ * position at the end; other dimensions are returned unchanged.
+ */
+export function sortRowsByEnumDimension<T extends Record<string, unknown>>(
+  rows: T[],
+  dimensionId: string
+): T[] {
+  if (dimensionId !== SENTIMENT_DIMENSION_ID) return rows;
+  const order = SENTIMENT_VALUE_ORDER as readonly string[];
+  const rank = (row: T): number => {
+    const value = row[dimensionId];
+    const index = typeof value === "string" ? order.indexOf(value) : -1;
+    return index === -1 ? order.length : index;
+  };
+  return [...rows].sort((a, b) => rank(a) - rank(b));
+}
 
 /**
  * String dimensions whose distinct values are low-cardinality enough to offer as a
@@ -312,6 +462,9 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
     "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),
     "FeedbackRecords.language": t("workspace.analysis.charts.field_label_language"),
+    "FeedbackRecords.sentiment": t("workspace.analysis.charts.field_label_sentiment"),
+    "FeedbackRecords.sentimentScore": t("workspace.analysis.charts.field_label_sentiment_score"),
+    "FeedbackRecords.emotions": t("workspace.analysis.charts.field_label_emotions"),
     "FeedbackRecords.userId": t("workspace.analysis.charts.field_label_user_identifier"),
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
@@ -339,6 +492,13 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.csatCount": t("workspace.analysis.charts.field_label_csat_count"),
     "FeedbackRecords.cesAverage": t("workspace.analysis.charts.field_label_ces_average"),
     "FeedbackRecords.cesCount": t("workspace.analysis.charts.field_label_ces_count"),
+    "FeedbackRecords.sentimentAverage": t("workspace.analysis.charts.field_label_sentiment_average"),
+    "FeedbackRecords.joyCount": t("workspace.analysis.charts.field_label_joy_count"),
+    "FeedbackRecords.angerCount": t("workspace.analysis.charts.field_label_anger_count"),
+    "FeedbackRecords.sadnessCount": t("workspace.analysis.charts.field_label_sadness_count"),
+    "FeedbackRecords.fearCount": t("workspace.analysis.charts.field_label_fear_count"),
+    "FeedbackRecords.surpriseCount": t("workspace.analysis.charts.field_label_surprise_count"),
+    "FeedbackRecords.disgustCount": t("workspace.analysis.charts.field_label_disgust_count"),
   };
   return labels[id] ?? getFieldById(id)?.label ?? id;
 }
