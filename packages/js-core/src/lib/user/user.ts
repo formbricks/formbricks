@@ -14,6 +14,14 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
     data: { userId: currentUserId },
   } = appConfig.get().user;
 
+  // Validate the new userId before mutating any state, so an invalid replacement
+  // does not tear down the existing valid user.
+  const MAX_USER_ID_LENGTH = 255;
+  if (userId.length > MAX_USER_ID_LENGTH) {
+    logger.error(`UserId exceeds maximum length of ${String(MAX_USER_ID_LENGTH)} characters`);
+    return okVoid();
+  }
+
   // If the same userId is already set, no-op
   if (currentUserId === userId) {
     logger.debug("UserId is already set to the same value, skipping");
@@ -24,12 +32,6 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
   if (currentUserId) {
     logger.debug("Different userId is being set, cleaning up previous user state");
     tearDown();
-  }
-
-  const MAX_USER_ID_LENGTH = 255;
-  if (userId.length > MAX_USER_ID_LENGTH) {
-    logger.error(`UserId exceeds maximum length of ${String(MAX_USER_ID_LENGTH)} characters`);
-    return okVoid();
   }
 
   updateQueue.updateUserId(userId);
