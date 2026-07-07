@@ -309,7 +309,7 @@ export const FormTargetField = ({
                 }
                 searchPlaceholder={t("common.search")}
                 emptyDropdownText={t("workspace.surveys.edit.no_option_found")}
-                showSearch={!isEnum}
+                showSearch
                 comboboxClasses="h-9 w-full max-w-none [&_[role=combobox]]:h-9"
               />
             </div>
