@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import type { TaxonomyNode } from "@/modules/hub/types";
 import { Input } from "@/modules/ui/components/input";
+import { RecordCountPlaceholder } from "./record-count-placeholder";
 
 interface TaxonomyTreeProps {
   root: TaxonomyNode;
@@ -41,6 +42,14 @@ export const TaxonomyTree = ({
       return next;
     });
 
+  // Selecting a row both shows its records (upward) and opens the category so its subtopics are visible.
+  const handleSelect = (node: TaxonomyNode) => {
+    onSelect(node);
+    if (node.children?.length) {
+      setExpandedIds((prev) => new Set(prev).add(node.id));
+    }
+  };
+
   return (
     <div className="space-y-0.5">
       {(root.children ?? []).map((node) => (
@@ -53,7 +62,7 @@ export const TaxonomyTree = ({
           editMode={editMode}
           renamingId={renamingId}
           onToggleExpand={toggleExpand}
-          onSelect={onSelect}
+          onSelect={handleSelect}
           onStartRename={setRenamingId}
           onCloseRename={() => setRenamingId(null)}
           onRename={onRename}
@@ -104,7 +113,12 @@ const TaxonomyTreeRow = ({
       <div
         className={cn(
           "group flex min-h-9 items-center gap-1 rounded-md pr-2 text-sm transition-colors",
-          isSelected ? "bg-slate-900 text-white" : "text-slate-800 hover:bg-slate-50"
+          // While renaming, drop the dark "selected" fill so the inline input stays readable.
+          isRenaming
+            ? "bg-slate-50 text-slate-800"
+            : isSelected
+              ? "bg-slate-900 text-white"
+              : "text-slate-800 hover:bg-slate-50"
         )}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}>
         <button
@@ -135,6 +149,7 @@ const TaxonomyTreeRow = ({
               onClick={() => onSelect(node)}>
               {node.label}
             </button>
+            <RecordCountPlaceholder />
             {editMode && (
               <div
                 className={cn(

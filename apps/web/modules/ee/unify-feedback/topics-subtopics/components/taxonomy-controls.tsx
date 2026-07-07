@@ -3,7 +3,6 @@
 import { PlayIcon, RefreshCwIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/cn";
 import type { TaxonomyFieldOption } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -35,8 +34,6 @@ interface TaxonomyControlsProps {
   isGenerating: boolean;
   onGenerate: () => void;
   canWrite: boolean;
-  viewMode: "view" | "edit";
-  onViewModeChange: (mode: "view" | "edit") => void;
 }
 
 const Selector = ({ label, children }: Readonly<{ label: string; children: ReactNode }>) => (
@@ -64,8 +61,6 @@ export const TaxonomyControls = ({
   isGenerating,
   onGenerate,
   canWrite,
-  viewMode,
-  onViewModeChange,
 }: Readonly<TaxonomyControlsProps>) => {
   const { t } = useTranslation();
   const [isRegenerateConfirmOpen, setIsRegenerateConfirmOpen] = useState(false);
@@ -138,25 +133,6 @@ export const TaxonomyControls = ({
         </Selector>
 
         <div className="flex shrink-0 items-center gap-2">
-          {canWrite && hasActiveTree && (
-            <div className="inline-flex rounded-md border border-slate-200 p-0.5">
-              {(["view", "edit"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  className={cn(
-                    "rounded px-3 py-1 text-sm font-medium transition-colors",
-                    viewMode === mode ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
-                  )}
-                  onClick={() => onViewModeChange(mode)}>
-                  {mode === "view"
-                    ? t("workspace.unify.taxonomy_view_mode")
-                    : t("workspace.unify.taxonomy_edit_mode")}
-                </button>
-              ))}
-            </div>
-          )}
-
           <Button
             type="button"
             className="h-9"

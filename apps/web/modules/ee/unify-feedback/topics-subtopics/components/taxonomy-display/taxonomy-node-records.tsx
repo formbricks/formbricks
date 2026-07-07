@@ -6,6 +6,7 @@ import type { FeedbackRecordData, TaxonomyNode } from "@/modules/hub/types";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { FeedbackRecordCard } from "./feedback-record-card";
+import { RecordCountPlaceholder } from "./record-count-placeholder";
 
 interface TaxonomyNodeRecordsProps {
   node: TaxonomyNode | null;
@@ -32,10 +33,13 @@ export const TaxonomyNodeRecords = ({
   return (
     <aside className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-xs">
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
-        <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold text-slate-900">
-            {node ? node.label : t("workspace.unify.feedback_records")}
-          </h2>
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 className="min-w-0 truncate text-sm font-semibold text-slate-900">
+              {node ? node.label : t("workspace.unify.feedback_records")}
+            </h2>
+            {node && <RecordCountPlaceholder />}
+          </div>
           {node?.description && (
             <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{node.description}</p>
           )}

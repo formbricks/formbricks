@@ -176,7 +176,6 @@ export const TopicsSubtopicsContainer = ({
 
   const isRunning = runningRunId !== null || triggerMutation.isPending;
   const canGenerate = Boolean(selectedField && canWrite && !isRunning);
-  const editMode = canWrite && viewMode === "edit";
   const hasActiveTree = Boolean(activeTree?.root?.children?.length);
   const runFailure =
     latestRun?.status === "failed"
@@ -287,8 +286,6 @@ export const TopicsSubtopicsContainer = ({
           isGenerating={triggerMutation.isPending}
           onGenerate={handleGenerate}
           canWrite={canWrite}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
         />
 
         {gate.showInlineProgress && (
@@ -325,7 +322,9 @@ export const TopicsSubtopicsContainer = ({
           onRetryTree={() => void stateQuery.refetch()}
           selectedNode={selectedNode}
           selectedNodeId={selectedNodeId}
-          editMode={editMode}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          canWrite={canWrite}
           onSelectNode={(node) => setSelectedNodeId(node.id)}
           onRenameNode={handleRenameNode}
           onRequestRemoveNode={handleRequestRemove}

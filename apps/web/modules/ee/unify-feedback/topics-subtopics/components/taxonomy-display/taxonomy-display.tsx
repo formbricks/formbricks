@@ -2,6 +2,7 @@
 
 import { GitBranchIcon, Loader2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import type { FeedbackRecordData, TaxonomyNode, TaxonomyTreeResponse } from "@/modules/hub/types";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EmptyState } from "@/modules/ui/components/empty-state";
@@ -17,7 +18,9 @@ interface TaxonomyDisplayProps {
   onRetryTree: () => void;
   selectedNode: TaxonomyNode | null;
   selectedNodeId: string | null;
-  editMode: boolean;
+  viewMode: "view" | "edit";
+  onViewModeChange: (mode: "view" | "edit") => void;
+  canWrite: boolean;
   onSelectNode: (node: TaxonomyNode) => void;
   onRenameNode: (nodeId: string, label: string) => Promise<void>;
   onRequestRemoveNode: (node: TaxonomyNode) => void;
@@ -46,7 +49,9 @@ export const TaxonomyDisplay = ({
   onRetryTree,
   selectedNode,
   selectedNodeId,
-  editMode,
+  viewMode,
+  onViewModeChange,
+  canWrite,
   onSelectNode,
   onRenameNode,
   onRequestRemoveNode,
@@ -59,6 +64,7 @@ export const TaxonomyDisplay = ({
 }: Readonly<TaxonomyDisplayProps>) => {
   const { t } = useTranslation();
   const hasTree = Boolean(activeTree?.root?.children?.length);
+  const editMode = canWrite && viewMode === "edit";
 
   const renderTree = () => {
     if (isLoadingTree) {
@@ -100,14 +106,36 @@ export const TaxonomyDisplay = ({
   };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_460px]">
+    <div className="grid gap-4 lg:grid-cols-2">
       <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-xs">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <div className="flex items-center gap-2">
             <GitBranchIcon className="size-4 text-slate-500" />
             <h2 className="text-sm font-semibold text-slate-900">{t("workspace.unify.taxonomy_title")}</h2>
           </div>
-          {isFetchingTree && !isLoadingTree && <Loader2Icon className="size-4 animate-spin text-slate-400" />}
+          <div className="flex items-center gap-2">
+            {isFetchingTree && !isLoadingTree && (
+              <Loader2Icon className="size-4 animate-spin text-slate-400" />
+            )}
+            {canWrite && hasTree && (
+              <div className="inline-flex rounded-md border border-slate-200 p-0.5">
+                {(["view", "edit"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    className={cn(
+                      "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                      viewMode === mode ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
+                    )}
+                    onClick={() => onViewModeChange(mode)}>
+                    {mode === "view"
+                      ? t("workspace.unify.taxonomy_view_mode")
+                      : t("workspace.unify.taxonomy_edit_mode")}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         {renderTree()}
       </div>
