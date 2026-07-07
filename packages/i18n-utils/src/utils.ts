@@ -1,3 +1,5 @@
+import { normalizeLanguageCode } from "./canonical";
+
 export interface TIso639Language {
   code: string;
   label: {
@@ -4295,8 +4297,43 @@ export const iso639Languages = [
  */
 export type Iso639Code = (typeof iso639Languages)[number]["code"];
 
+/**
+ * The curated, canonical language list shown in the language picker. Derived from `iso639Languages`
+ * by collapsing every entry onto its canonical BCP-47 tag (see `normalizeLanguageCode`), so the picker
+ * is free of the legacy bare/region/script format mixing and offers one entry per language.
+ *
+ * Label selection per canonical tag: keep the first source entry seen, but let a **bare-language**
+ * source override it — so `de`'s clean "German" wins over `de-DE`'s wordier "German (Germany)" for the
+ * canonical `de-DE` entry. Canonicals with no bare source (e.g. Chinese: `zh-Hans`/`zh-CN` → `zh-Hans-CN`)
+ * keep the first contributing source's label — catalog order puts the script entry first, so
+ * Simplified/Traditional retain their script labels rather than a region label.
+ */
+const supportedLanguagesByCanonicalCode = new Map<string, TIso639Language>();
+const canonicalCodesWithBareLabel = new Set<string>();
+for (const language of iso639Languages) {
+  const canonicalCode = normalizeLanguageCode(language.code);
+  if (!canonicalCode) continue;
+  const isBareSource = !language.code.includes("-");
+  const existing = supportedLanguagesByCanonicalCode.get(canonicalCode);
+  if (!existing || (isBareSource && !canonicalCodesWithBareLabel.has(canonicalCode))) {
+    supportedLanguagesByCanonicalCode.set(canonicalCode, { code: canonicalCode, label: language.label });
+    if (isBareSource) canonicalCodesWithBareLabel.add(canonicalCode);
+  }
+}
+
+export const supportedLanguages: TIso639Language[] = Array.from(supportedLanguagesByCanonicalCode.values());
+
+/**
+ * Resolve a human-readable label for a language code in the given UI locale. Normalizes the input
+ * first, so legacy/bare codes (`de`), canonical codes (`de-DE`), and region aliases (`zh-CN`) all
+ * resolve to the same canonical entry; falls back to the raw catalog for custom/unknown codes. Returns
+ * undefined when no label exists for the resolved code.
+ */
 export const getLanguageLabel = (languageCode: string, locale: string): string | undefined => {
-  const language = iso639Languages.find((lang) => lang.code === languageCode);
+  const canonicalCode = normalizeLanguageCode(languageCode);
+  const language =
+    (canonicalCode ? supportedLanguagesByCanonicalCode.get(canonicalCode) : undefined) ??
+    iso639Languages.find((lang) => lang.code === languageCode);
   // Type assertion to tell TypeScript that we know the structure of label
   return language?.label[locale as keyof typeof language.label];
 };

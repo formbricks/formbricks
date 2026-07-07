@@ -175,7 +175,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
           : updateLanguageAction({
               workspaceId: workspace.id,
               languageId: lang.id,
-              languageInput: { code: lang.code, alias: lang.alias },
+              languageInput: { alias: lang.alias },
             });
       })
     );
@@ -211,7 +211,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
             ))}
           </>
         ) : (
-          <p className="text-sm italic text-slate-500">{t("workspace.languages.no_language_found")}</p>
+          <p className="text-sm text-slate-500 italic">{t("workspace.languages.no_language_found")}</p>
         )}
 
         <AddLanguageButton

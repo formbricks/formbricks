@@ -2,7 +2,6 @@
   "common": {
     "and": "și",
     "apply": "aplică",
-    "auto_close_wrapper": "Închidere automată a învelișului",
     "back": "Înapoi",
     "close_survey": "Închide sondajul",
     "company_logo": "Sigla companiei",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "Răspunsul dumneavoastră nu a putut fi trimis deoarece a fost marcat ca activitate automată. Dacă respirați, încercați din nou.",
       "title": "Nu am putut verifica dacă ești om."
+    },
+    "response_already_completed": {
+      "message": "Acest răspuns a fost deja completat și nu mai poate fi modificat. Poți închide în siguranță această fereastră.",
+      "title": "Acest răspuns a fost deja completat."
+    },
+    "response_sending_error_permanent": {
+      "message": "Răspunsul tău nu a putut fi trimis și nu poate fi reîncercat. Te rugăm să contactezi proprietarul sondajului dacă problema persistă.",
+      "title": "Răspunsul tău nu a putut fi trimis."
     },
     "value_must_contain": "Valoarea trebuie să conțină {value}",
     "value_must_equal": "Valoarea trebuie să fie egală cu {value}",

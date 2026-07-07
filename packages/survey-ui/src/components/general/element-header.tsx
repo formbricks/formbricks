@@ -1,8 +1,7 @@
-import DOMPurify from "isomorphic-dompurify";
 import * as React from "react";
 import { ElementMedia } from "@/components/general/element-media";
 import { Label } from "@/components/general/label";
-import { cn, stripInlineStyles } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface ElementHeaderProps extends React.ComponentProps<"div"> {
   headline: string;
@@ -15,32 +14,14 @@ interface ElementHeaderProps extends React.ComponentProps<"div"> {
   imageUrl?: string;
   videoUrl?: string;
   imageAltText?: string;
+  /**
+   * Id placed on the headline element. For grouped questions (radio/checkbox/matrix) the
+   * surrounding native <fieldset> references this id via aria-labelledby instead of pointing
+   * a htmlFor at a non-input, which keeps the group name correct without nesting block content
+   * (media, etc.) inside a <legend> (invalid HTML).
+   */
+  headlineId?: string;
 }
-
-/**
- * Checks if a string contains valid HTML markup
- * @param str - The input string to test
- * @returns true if the string contains valid HTML elements, false otherwise
- */
-const isValidHTML = (str: string): boolean => {
-  if (!str) return false;
-
-  try {
-    const doc = new DOMParser().parseFromString(str, "text/html");
-    const errorNode = doc.querySelector("parsererror");
-    if (errorNode) return false;
-    return Array.from(doc.body.childNodes).some((node) => node.nodeType === 1);
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Strips inline style attributes to prevent CSP violations
- * Uses a safe regex pattern to avoid ReDoS (Regular Expression Denial of Service) vulnerabilities
- * @param html - The HTML string to clean
- * @returns HTML string without inline style attributes
- */
 
 function ElementHeader({
   headline,
@@ -53,20 +34,10 @@ function ElementHeader({
   imageUrl,
   videoUrl,
   imageAltText,
+  headlineId,
   ...props
 }: Readonly<ElementHeaderProps>): React.JSX.Element {
-  const isMediaAvailable = imageUrl ?? videoUrl;
-
-  // Check if headline is HTML
-  const strippedHeadline = stripInlineStyles(headline);
-  const isHeadlineHtml = isValidHTML(strippedHeadline);
-  const safeHeadlineHtml =
-    isHeadlineHtml && strippedHeadline
-      ? DOMPurify.sanitize(strippedHeadline, {
-          ADD_ATTR: ["target"],
-          FORBID_ATTR: ["style"],
-        })
-      : "";
+  const isMediaAvailable = Boolean(imageUrl) || Boolean(videoUrl);
 
   return (
     <div className={cn("space-y-2", className)} {...props}>
@@ -79,15 +50,9 @@ function ElementHeader({
       <div>
         <div>{required ? <span className="label-card mb-[3px]">{requiredLabel}</span> : null}</div>
         <div className="flex">
-          {isHeadlineHtml && safeHeadlineHtml ? (
-            <Label htmlFor={htmlFor} variant="headline">
-              {headline}
-            </Label>
-          ) : (
-            <Label htmlFor={htmlFor} variant="headline">
-              {headline}
-            </Label>
-          )}
+          <Label htmlFor={htmlFor} id={headlineId} variant="headline">
+            {headline}
+          </Label>
         </div>
       </div>
 

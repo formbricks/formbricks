@@ -2,7 +2,6 @@
   "common": {
     "and": "en",
     "apply": "Toepassen",
-    "auto_close_wrapper": "Automatisch sluitende wrapper",
     "back": "Terug",
     "close_survey": "Enquête sluiten",
     "company_logo": "Bedrijfslogo",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "Uw reactie kan niet worden verzonden omdat deze is gemarkeerd als geautomatiseerde activiteit. Als u ademhaalt, probeer het dan opnieuw.",
       "title": "We konden niet verifiëren dat je een mens bent."
+    },
+    "response_already_completed": {
+      "message": "Deze reactie is al voltooid en kan niet meer worden gewijzigd. Je kunt dit venster veilig sluiten.",
+      "title": "Deze reactie is al voltooid."
+    },
+    "response_sending_error_permanent": {
+      "message": "Je reactie kon niet worden verzonden en kan niet opnieuw worden geprobeerd. Neem contact op met de eigenaar van de enquête als dit blijft gebeuren.",
+      "title": "Je reactie kon niet worden verzonden."
     },
     "value_must_contain": "Waarde moet {value} bevatten",
     "value_must_equal": "Waarde moet gelijk zijn aan {value}",

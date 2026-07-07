@@ -1,5 +1,10 @@
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  RESPONSE_ALREADY_FINISHED_ERROR_CODE,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -132,7 +137,11 @@ const validateUpdateRequest = (
 ): TRouteResult | undefined => {
   if (existingResponse.finished) {
     return {
-      response: responses.badRequestResponse("Response is already finished", undefined, true),
+      response: responses.badRequestResponse(
+        "Response is already finished",
+        { code: RESPONSE_ALREADY_FINISHED_ERROR_CODE },
+        true
+      ),
     };
   }
 

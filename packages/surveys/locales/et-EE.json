@@ -2,7 +2,6 @@
   "common": {
     "and": "ja",
     "apply": "rakenda",
-    "auto_close_wrapper": "Automaatse sulgemise ümbris",
     "back": "Tagasi",
     "close_survey": "Sulge küsitlus",
     "company_logo": "Ettevõtte logo",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "Sinu vastust ei saanud esitada, kuna see märgiti automatiseeritud tegevuseks. Kui sa hingad, palun proovi uuesti.",
       "title": "Me ei suutnud kinnitada, et sa oled inimene."
+    },
+    "response_already_completed": {
+      "message": "See vastus on juba lõpetatud ega saa enam muuta. Võid selle akna turvaliselt sulgeda.",
+      "title": "See vastus on juba lõpetatud."
+    },
+    "response_sending_error_permanent": {
+      "message": "Teie vastust ei saanud esitada ja seda ei saa uuesti proovida. Palun võtke küsitluse omanikuga ühendust, kui see jätkub.",
+      "title": "Teie vastust ei saanud esitada."
     },
     "value_must_contain": "Väärtus peab sisaldama {value}",
     "value_must_equal": "Väärtus peab võrduma {value}",

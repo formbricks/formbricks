@@ -2,7 +2,6 @@
   "common": {
     "and": "および",
     "apply": "適用",
-    "auto_close_wrapper": "自動クローズラッパー",
     "back": "戻る",
     "close_survey": "アンケートを閉じる",
     "company_logo": "会社ロゴ",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "自動化された活動としてフラグが立てられたため、回答を送信できませんでした。人間の方は、もう一度お試しください。",
       "title": "あなたが人間であることを確認できませんでした。"
+    },
+    "response_already_completed": {
+      "message": "この回答は既に完了しており、変更できません。このウィンドウを閉じても問題ありません。",
+      "title": "この回答は既に完了しています。"
+    },
+    "response_sending_error_permanent": {
+      "message": "回答を送信できませんでした。再試行することもできません。この問題が続く場合は、アンケート管理者にお問い合わせください。",
+      "title": "回答を送信できませんでした。"
     },
     "value_must_contain": "値に{value}を含める必要があります",
     "value_must_equal": "値は{value}と等しい必要があります",

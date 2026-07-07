@@ -213,6 +213,10 @@
 #fbjs fieldset {
   margin: 0;
   padding: 0;
+  /* The UA default min-inline-size: min-content stops the fieldset shrinking, which breaks
+     responsive layouts and the matrix's overflow-x scroll now that grouped questions are
+     wrapped in <fieldset> instead of <div>. */
+  min-width: 0;
 }
 
 #fbjs legend {

@@ -240,7 +240,7 @@ export const WebhookSettingsTab = ({
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transform"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 transform"
                   onClick={() => setShowSecret(!showSecret)}>
                   {showSecret ? (
                     <EyeOff className="size-5 text-slate-400" />

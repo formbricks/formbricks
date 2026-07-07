@@ -2,7 +2,6 @@
   "common": {
     "and": "y",
     "apply": "aplicar",
-    "auto_close_wrapper": "Cerrar automáticamente",
     "back": "Atrás",
     "close_survey": "Cerrar encuesta",
     "company_logo": "Logo de la empresa",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "Su respuesta no pudo ser enviada porque fue marcada como actividad automatizada. Si respira, por favor inténtelo de nuevo.",
       "title": "No pudimos verificar que eres humano."
+    },
+    "response_already_completed": {
+      "message": "Esta respuesta ya se ha completado y ya no se puede modificar. Puedes cerrar esta ventana de forma segura.",
+      "title": "Esta respuesta ya se ha completado."
+    },
+    "response_sending_error_permanent": {
+      "message": "Tu respuesta no pudo enviarse y no se puede reintentar. Por favor, contacta al creador de la encuesta si esto sigue ocurriendo.",
+      "title": "Tu respuesta no pudo enviarse."
     },
     "value_must_contain": "El valor debe contener {value}",
     "value_must_equal": "El valor debe ser igual a {value}",

@@ -262,7 +262,7 @@ export function DashboardDetailClient({
               <span>{t("workspace.analysis.dashboards.chart_removed")}</span>
               <button
                 type="button"
-                className="text-sm font-medium text-brand-dark underline hover:text-brand-dark/80"
+                className="text-sm font-medium text-black underline hover:text-slate-700"
                 onClick={() => {
                   toast.dismiss(toastInstance.id);
                   void handleUndoRemoveWidget(snapshot);
@@ -440,7 +440,9 @@ export function DashboardDetailClient({
           chartId={editingChartId ?? undefined}
           onSuccess={() => {
             setEditingChartId(null);
-            router.refresh();
+            startTransition(() => {
+              router.refresh();
+            });
           }}
           directories={directories}
           isAIAvailable={isAIAvailable}

@@ -113,11 +113,12 @@ export function Survey({
   isSpamProtectionEnabled,
   dir = "auto",
   setDir,
+  onLanguageChange,
   placement,
   offlineSupport = false,
   onOfflineStatusChange,
   showCardlessPreviewLogoSlot = false,
-}: SurveyContainerProps) {
+}: Readonly<SurveyContainerProps>) {
   const workspaceId = workspaceIdProp ?? environmentId;
   let apiClient: ApiClient | null = null;
 
@@ -438,6 +439,13 @@ export function Survey({
   useEffect(() => {
     setSelectedLanguage(languageCode);
   }, [languageCode]);
+
+  // Report the active language (initial value + every switch) so a link-survey
+  // host can keep the page lang/dir in sync (WCAG 3.1.1). Embedded widgets pass
+  // no callback, so the host page is never touched.
+  useEffect(() => {
+    onLanguageChange?.(selectedLanguage);
+  }, [selectedLanguage, onLanguageChange]);
 
   // --- Offline support: restore progress from IndexedDB on mount ---
   useEffect(() => {
@@ -948,14 +956,23 @@ export function Survey({
 
     pushVariableState(firstRespondedElementId);
 
-    const { nextBlockId, calculatedVariables } = evaluateLogicAndGetNextBlockId(surveyResponseData);
+    const { nextBlockId: rawNextBlockId, calculatedVariables } =
+      evaluateLogicAndGetNextBlockId(surveyResponseData);
+    // A jump target may reference a deleted block or ending; treat such stale ids as "no target"
+    // so the shown ending and the persisted endingId stay in sync
+    const targetIsBlock = localSurvey.blocks.some((block) => block.id === rawNextBlockId);
+    const targetIsEnding = localSurvey.endings.some((ending) => ending.id === rawNextBlockId);
+    const isValidTarget = targetIsBlock || targetIsEnding;
+    const nextBlockId = isValidTarget ? rawNextBlockId : undefined;
     const finished =
       nextBlockId === undefined || !localSurvey.blocks.map((block) => block.id).includes(nextBlockId);
 
     setIsSurveyFinished(finished);
 
-    const endingId = nextBlockId
-      ? localSurvey.endings.find((ending) => ending.id === nextBlockId)?.id
+    // The ending that will be shown: an explicit jump target, or the first ending when the survey
+    // falls off the last block (mirrors the display fallback below so the persisted endingId matches it)
+    const endingId = finished
+      ? (localSurvey.endings.find((ending) => ending.id === nextBlockId)?.id ?? localSurvey.endings[0]?.id)
       : undefined;
 
     onChange(surveyResponseData);
@@ -1081,6 +1098,8 @@ export function Survey({
           );
         case TResponseErrorCodesEnum.RecaptchaError:
         case TResponseErrorCodesEnum.InvalidDeviceError:
+        case TResponseErrorCodesEnum.ResponseAlreadyCompleted:
+        case TResponseErrorCodesEnum.ResponseSendingErrorPermanent:
           return (
             <>
               {localSurvey.type !== "link" ? (

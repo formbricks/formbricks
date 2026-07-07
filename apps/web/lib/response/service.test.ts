@@ -64,6 +64,36 @@ describe("updateResponse", () => {
     vi.clearAllMocks();
   });
 
+  describe("language canonicalization (ENG-1067)", () => {
+    test("canonicalizes a legacy language code on update", async () => {
+      const currentResponse = createMockCurrentResponse();
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ language: "hi" }));
+
+      expect(prisma.response.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ language: "hi-IN" }) })
+      );
+    });
+
+    test("preserves the 'default' sentinel and unresolvable codes", async () => {
+      const currentResponse = createMockCurrentResponse();
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ language: "default" }));
+      expect(prisma.response.update).toHaveBeenLastCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ language: "default" }) })
+      );
+
+      await updateResponse(mockResponseId, createMockResponseInput({ language: "123" }));
+      expect(prisma.response.update).toHaveBeenLastCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ language: "123" }) })
+      );
+    });
+  });
+
   describe("TTC merging behavior", () => {
     test("should merge new TTC with existing TTC from previous blocks", async () => {
       const currentResponse = createMockCurrentResponse({

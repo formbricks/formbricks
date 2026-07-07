@@ -2,7 +2,6 @@
   "common": {
     "and": "och",
     "apply": "Tillämpa",
-    "auto_close_wrapper": "Automatisk stängning",
     "back": "Tillbaka",
     "close_survey": "Stäng enkät",
     "company_logo": "Företagslogotyp",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "Ditt svar kunde inte skickas eftersom det flaggades som automatiserad aktivitet. Om du andas, försök igen.",
       "title": "Vi kunde inte verifiera att du är en människa."
+    },
+    "response_already_completed": {
+      "message": "Detta svar har redan slutförts och kan inte längre ändras. Du kan tryggt stänga det här fönstret.",
+      "title": "Detta svar har redan slutförts."
+    },
+    "response_sending_error_permanent": {
+      "message": "Ditt svar kunde inte skickas in och kan inte försökas igen. Vänligen kontakta undersökningens ägare om detta fortsätter att hända.",
+      "title": "Ditt svar kunde inte skickas in."
     },
     "value_must_contain": "Värdet måste innehålla {value}",
     "value_must_equal": "Värdet måste vara {value}",
