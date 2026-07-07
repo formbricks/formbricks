@@ -90,7 +90,7 @@ describe("schema-definition", () => {
       expect(FEEDBACK_FIELDS.measures.length).toBeGreaterThan(0);
     });
 
-    test("exposes CSAT, CES, NPS and universal measures", () => {
+    test("exposes CSAT, CES, NPS, rating and universal measures", () => {
       const ids = FEEDBACK_FIELDS.measures.map((m) => m.id);
       expect(ids).toEqual(
         expect.arrayContaining([
@@ -105,6 +105,8 @@ describe("schema-definition", () => {
           "FeedbackRecords.csatCount",
           "FeedbackRecords.cesAverage",
           "FeedbackRecords.cesCount",
+          "FeedbackRecords.ratingAverage",
+          "FeedbackRecords.ratingCount",
         ])
       );
       expect(ids).not.toContain("FeedbackRecords.averageScore");

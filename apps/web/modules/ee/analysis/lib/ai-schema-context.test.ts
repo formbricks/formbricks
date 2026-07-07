@@ -29,6 +29,12 @@ describe("AI schema context", () => {
     expect(context).toContain('"CES average" or "CES score" means `FeedbackRecords.cesAverage`');
   });
 
+  test("documents rating average alias", () => {
+    const context = generateSchemaContext();
+
+    expect(context).toContain('"rating average" or "average rating" means `FeedbackRecords.ratingAverage`');
+  });
+
   test("steers free-text dimension filters toward contains over equals", () => {
     const context = generateSchemaContext();
 

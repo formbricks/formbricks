@@ -211,6 +211,18 @@ export const FEEDBACK_FIELDS = {
       type: "count",
       description: "Number of CES responses",
     },
+    {
+      id: "FeedbackRecords.ratingAverage",
+      label: "Rating Average",
+      type: "number",
+      description: "Average rating value (scale depends on the question, e.g. 1-5 or 1-10)",
+    },
+    {
+      id: "FeedbackRecords.ratingCount",
+      label: "Rating Count",
+      type: "count",
+      description: "Number of rating responses",
+    },
   ] as MeasureDefinition[],
 };
 
@@ -339,6 +351,8 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.csatCount": t("workspace.analysis.charts.field_label_csat_count"),
     "FeedbackRecords.cesAverage": t("workspace.analysis.charts.field_label_ces_average"),
     "FeedbackRecords.cesCount": t("workspace.analysis.charts.field_label_ces_count"),
+    "FeedbackRecords.ratingAverage": t("workspace.analysis.charts.field_label_rating_average"),
+    "FeedbackRecords.ratingCount": t("workspace.analysis.charts.field_label_rating_count"),
   };
   return labels[id] ?? getFieldById(id)?.label ?? id;
 }

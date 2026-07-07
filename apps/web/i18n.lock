@@ -1626,6 +1626,8 @@ checksums:
     workspace/analysis/charts/field_label_promoter_count: c393131a4bd3a25bf6b297beed20e34f
     workspace/analysis/charts/field_label_question: 0576462ce60d4263d7c482463fcc9547
     workspace/analysis/charts/field_label_question_group: b007e2cfd1262272de3260f8d14d5833
+    workspace/analysis/charts/field_label_rating_average: 923529bcb9afcd41ffe5ba2f5bbbb983
+    workspace/analysis/charts/field_label_rating_count: 719e4f6b5f22ba1ecdd55f5b17eda134
     workspace/analysis/charts/field_label_response_id: 73375099cc976dc7203b8e27f5f709e0
     workspace/analysis/charts/field_label_source_name: 157675beca12efcd8ec512c5256b1a61
     workspace/analysis/charts/field_label_source_type: d1ff69af76c687eb189db72030717570
