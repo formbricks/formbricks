@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import {
-  normalizeV3SurveyLanguageIdentifier,
   normalizeV3SurveyLanguageTag,
   normalizeV3SurveyLocaleCode,
   normalizeV3SurveyWriteLanguageCode,
@@ -38,27 +37,16 @@ describe("normalizeV3SurveyLocaleCode", () => {
   test.each([
     ["EN_us", "en-US"],
     ["zh_hans_cn", "zh-Hans-CN"],
+    // 3-letter base and UN M.49 numeric region — canonical catalog codes the old 2-letter-only regex rejected.
+    ["fil-PH", "fil-PH"],
+    ["bho-IN", "bho-IN"],
+    ["eo-001", "eo-001"],
   ])("normalizes write locale %s to %s", (input, expected) => {
     expect(normalizeV3SurveyLocaleCode(input)).toBe(expected);
   });
 
   test.each(["de", "zh_Hans", "not a locale"])("rejects non-region-qualified write locale %s", (input) => {
     expect(normalizeV3SurveyLocaleCode(input)).toBeNull();
-  });
-});
-
-describe("normalizeV3SurveyLanguageIdentifier", () => {
-  test.each([
-    ["hi", "hi-IN"],
-    ["HI", "hi-IN"],
-    ["de", "de-DE"],
-    ["hi_in", "hi-IN"],
-  ])("normalizes legacy identifier %s to %s", (input, expected) => {
-    expect(normalizeV3SurveyLanguageIdentifier(input)).toBe(expected);
-  });
-
-  test("does not guess ambiguous legacy identifiers", () => {
-    expect(normalizeV3SurveyLanguageIdentifier("pt")).toBeNull();
   });
 });
 
@@ -73,6 +61,43 @@ describe("normalizeV3SurveyWriteLanguageCode", () => {
     expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu", "en-US"])).toBe("gu");
     expect(normalizeV3SurveyWriteLanguageCode("hi", ["hi-IN", "en-US"])).toBe("hi-IN");
     expect(normalizeV3SurveyWriteLanguageCode("vi", ["en-US"])).toBeNull();
+  });
+
+  test("maps a legacy code to its canonical configured tag (post-migration inbound)", () => {
+    // After the migration flips a stored `gu` to `gu-IN`, a client still sending `gu` keeps working.
+    expect(normalizeV3SurveyWriteLanguageCode("gu", ["gu-IN", "en-US"])).toBe("gu-IN");
+    expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu-IN", "en-US"])).toBe("gu-IN");
+  });
+
+  test("canonicalizes a script-incomplete locale on create (ENG-1067)", () => {
+    // A new survey language given a region-only Chinese tag is stored script-complete/canonical.
+    expect(normalizeV3SurveyWriteLanguageCode("zh-CN")).toBe("zh-Hans-CN");
+    expect(normalizeV3SurveyWriteLanguageCode("zh-TW")).toBe("zh-Hant-TW");
+  });
+
+  test("preserves legitimate non-default regions on create", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("de-AT")).toBe("de-AT");
+    expect(normalizeV3SurveyWriteLanguageCode("en-GB")).toBe("en-GB");
+  });
+
+  test("preserves a survey's stored legacy code on patch even when the canonical/script form is sent", () => {
+    // Survey stores legacy zh-CN (content keyed by zh-CN); sending canonical zh-Hans-CN must still write
+    // the stored zh-CN so the existing content keys are not orphaned.
+    expect(normalizeV3SurveyWriteLanguageCode("zh-Hans-CN", ["zh-CN", "en-US"])).toBe("zh-CN");
+    expect(normalizeV3SurveyWriteLanguageCode("zh-CN", ["zh-CN", "en-US"])).toBe("zh-CN");
+  });
+
+  test("writes the canonical stored code on patch when the survey is already canonical", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("zh-CN", ["zh-Hans-CN", "en-US"])).toBe("zh-Hans-CN");
+  });
+
+  test("returns the survey's stored legacy code on match, not its canonical form (pre-migration)", () => {
+    // `pt` and `hi` are in the curated map, so the identifier resolves to `pt-BR`/`hi-IN`. A survey that
+    // still stores the bare code (not yet migrated) keys its content by `pt`/`hi`, so the write must
+    // target the stored code as-is — rewriting it to the canonical tag would create a mismatched i18n key.
+    expect(normalizeV3SurveyWriteLanguageCode("pt", ["pt", "en-US"])).toBe("pt");
+    expect(normalizeV3SurveyWriteLanguageCode("PT", ["pt", "en-US"])).toBe("pt");
+    expect(normalizeV3SurveyWriteLanguageCode("hi", ["hi", "en-US"])).toBe("hi");
   });
 });
 
@@ -139,23 +164,37 @@ describe("resolveV3SurveyLanguageCode", () => {
     });
   });
 
-  test("matches configured script-only languages case-insensitively and normalizes underscores", () => {
-    expect(resolveV3SurveyLanguageCode("ZH_hans", [{ code: "zh-Hans", enabled: true }])).toEqual({
-      ok: true,
-      code: "zh-Hans",
-    });
-  });
-
   test("resolves disabled configured languages for management reads", () => {
     expect(resolveV3SurveyLanguageCode("fr-FR", languages)).toEqual({ ok: true, code: "fr-FR" });
   });
 
-  test("resolves legacy stored language codes and canonical selectors", () => {
-    const legacyLanguages = [{ code: "hi", enabled: true, alias: null }];
+  test("resolves legacy and canonical selectors to the canonical survey language", () => {
+    // Post-migration the survey stores the canonical tag; a client sending the legacy bare code, the
+    // canonical tag, or an underscore variant all resolve to the stored code.
+    const languages = [{ code: "hi-IN", enabled: true, alias: null }];
 
-    expect(resolveV3SurveyLanguageCode("hi", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
-    expect(resolveV3SurveyLanguageCode("hi-IN", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
-    expect(resolveV3SurveyLanguageCode("HI_in", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("hi", languages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("hi-IN", languages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("HI_in", languages)).toEqual({ ok: true, code: "hi-IN" });
+  });
+
+  test("resolves legacy/script Chinese selectors to a migrated canonical survey language (ENG-1067)", () => {
+    // Survey stored zh-Hans-CN post-migration. A client still sending the legacy script/region tag must
+    // keep resolving (was HTTP 400 before the canonical-equivalence fallback).
+    const migrated = [{ code: "zh-Hans-CN", enabled: true }];
+    expect(resolveV3SurveyLanguageCode("zh-Hans", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh_Hans", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh-CN", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh-Hans-CN", migrated)).toEqual({ ok: true, code: "zh-Hans-CN" });
+  });
+
+  test("keeps Simplified and Traditional Chinese distinct through canonical equivalence", () => {
+    const both = [
+      { code: "zh-Hans-CN", enabled: true },
+      { code: "zh-Hant-TW", enabled: true },
+    ];
+    expect(resolveV3SurveyLanguageCode("zh-CN", both)).toEqual({ ok: true, code: "zh-Hans-CN" });
+    expect(resolveV3SurveyLanguageCode("zh-TW", both)).toEqual({ ok: true, code: "zh-Hant-TW" });
   });
 
   test("resolves configured language aliases", () => {
@@ -175,6 +214,16 @@ describe("resolveV3SurveyLanguageCode", () => {
       normalizedCode: "en",
       message: "Language 'en' is ambiguous for this survey. Matching languages: en-US, en-GB",
     });
+  });
+
+  test("an exact alias match wins over the bare-selector ambiguity heuristic", () => {
+    // en-US carries the alias "en" and en-GB shares the base; the exact alias match must win, not 400.
+    expect(
+      resolveV3SurveyLanguageCode("en", [
+        { code: "en-US", enabled: true, alias: "en" },
+        { code: "en-GB", enabled: true },
+      ])
+    ).toEqual({ ok: true, code: "en-US" });
   });
 
   test("reports the user's input rather than a guessed locale when unknown", () => {
@@ -199,6 +248,35 @@ describe("resolveV3SurveyLanguageCode", () => {
       reason: "unknown",
       normalizedCode: "en-GB",
       message: "Language 'en-GB' is not configured for this survey",
+    });
+  });
+
+  test("classifies a widened 3-letter / numeric-region tag as unknown (not invalid) when not configured", () => {
+    // fil-PH / eo-001 became writable; the read resolver must recognise them as valid tags so an
+    // unconfigured survey reports "not configured" (unknown), not "not a valid locale code" (invalid).
+    expect(resolveV3SurveyLanguageCode("fil-PH", [{ code: "en-US", enabled: true }])).toEqual({
+      ok: false,
+      reason: "unknown",
+      normalizedCode: "fil-PH",
+      message: "Language 'fil-PH' is not configured for this survey",
+    });
+    expect(resolveV3SurveyLanguageCode("eo-001", [{ code: "en-US", enabled: true }])).toEqual({
+      ok: false,
+      reason: "unknown",
+      normalizedCode: "eo-001",
+      message: "Language 'eo-001' is not configured for this survey",
+    });
+  });
+
+  test("resolves a configured 3-letter-base language and its legacy selector", () => {
+    expect(resolveV3SurveyLanguageCode("fil-PH", [{ code: "fil-PH", enabled: true }])).toEqual({
+      ok: true,
+      code: "fil-PH",
+    });
+    // legacy `tl` selector still resolves to a migrated fil-PH via canonical equivalence
+    expect(resolveV3SurveyLanguageCode("tl", [{ code: "fil-PH", enabled: true }])).toEqual({
+      ok: true,
+      code: "fil-PH",
     });
   });
 

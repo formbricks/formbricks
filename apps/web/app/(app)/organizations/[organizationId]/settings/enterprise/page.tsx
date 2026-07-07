@@ -1,4 +1,4 @@
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, RocketIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { EnterpriseLicenseFeaturesTable } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/enterprise/components/EnterpriseLicenseFeaturesTable";
@@ -56,6 +56,12 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
     t("workspace.settings.enterprise.support_slas"),
   ];
 
+  const liteLicenseUrl = new URL(ENTERPRISE_LICENSE_REQUEST_FORM_URL);
+  liteLicenseUrl.searchParams.set("type", "lite");
+
+  const trialLicenseUrl = new URL(ENTERPRISE_LICENSE_REQUEST_FORM_URL);
+  trialLicenseUrl.searchParams.set("type", "trial");
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.enterprise_license")} />
@@ -74,7 +80,7 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
           {licenseState.features && <EnterpriseLicenseFeaturesTable features={licenseState.features} />}
         </>
       ) : (
-        <div>
+        <div className="max-w-4xl">
           <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
             <svg
               viewBox="0 0 1024 1024"
@@ -105,12 +111,64 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
               </p>
             </div>
           </div>
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <div className="flex flex-col rounded-lg border border-slate-300 bg-slate-100 p-8 shadow-xs">
+              <div className="w-fit rounded-md border border-slate-200 bg-white p-3">
+                <SparklesIcon className="size-6 text-teal-600" />
+              </div>
+              <h3 className="mt-4 text-xl font-bold text-slate-700">
+                {t("workspace.settings.enterprise.lite_license_title")}
+              </h3>
+              <p className="mt-2 grow text-sm text-slate-500">
+                {t("workspace.settings.enterprise.lite_license_description")}
+              </p>
+              <Button asChild className="mt-6 w-fit">
+                <Link
+                  href={liteLicenseUrl.toString()}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  referrerPolicy="no-referrer">
+                  {t("workspace.settings.enterprise.request_lite_license")}
+                </Link>
+              </Button>
+            </div>
+            <div className="flex flex-col rounded-lg border border-slate-300 bg-slate-100 p-8 shadow-xs">
+              <div className="w-fit rounded-md border border-slate-200 bg-white p-3">
+                <RocketIcon className="size-6 text-teal-600" />
+              </div>
+              <h3 className="mt-4 text-xl font-bold text-slate-700">
+                {t("workspace.settings.enterprise.full_feature_trial_title")}
+              </h3>
+              <p className="mt-2 grow text-sm text-slate-500">
+                {t("workspace.settings.enterprise.full_feature_trial_description")}
+              </p>
+              <Button asChild variant="outline" className="mt-6 w-fit bg-white">
+                <Link
+                  href={trialLicenseUrl.toString()}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  referrerPolicy="no-referrer">
+                  {t("workspace.settings.enterprise.request_trial_license")}
+                </Link>
+              </Button>
+            </div>
+          </div>
           <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-xs">
             <div className="p-8">
-              <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">
-                {t("workspace.settings.enterprise.enterprise_features")}
-              </h2>
-              <ul className="my-4 space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+                <h2 className="text-2xl font-bold text-slate-700">
+                  {t("workspace.settings.enterprise.enterprise_features")}
+                </h2>
+                <Link
+                  href="https://formbricks.com/docs/self-hosting/advanced/license"
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  referrerPolicy="no-referrer"
+                  className="text-sm underline">
+                  {t("common.learn_more")}
+                </Link>
+              </div>
+              <ul className="my-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                 {paidFeatures.map((feature) => (
                   <li key={feature} className="flex items-center">
                     <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
@@ -120,23 +178,6 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
                   </li>
                 ))}
               </ul>
-              <p className="my-6 text-sm text-slate-700">
-                {t(
-                  "workspace.settings.enterprise.no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form"
-                )}
-              </p>
-              <Button asChild>
-                <Link
-                  href={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  referrerPolicy="no-referrer">
-                  {t("workspace.settings.enterprise.request_30_day_trial_license")}
-                </Link>
-              </Button>
-              <p className="mt-2 text-xs text-slate-500">
-                {t("workspace.settings.enterprise.no_credit_card_no_sales_call_just_test_it")}
-              </p>
             </div>
           </div>
         </div>

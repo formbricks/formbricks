@@ -34,7 +34,9 @@ vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: vi.fn(),
 }));
 
-vi.mock("@/lib/response/utils", () => ({
+vi.mock("@/lib/response/utils", async (importOriginal) => ({
+  // keep the real normalizeResponseLanguage; calculateTtcTotal stays mockable (tests configure it)
+  ...(await importOriginal<typeof import("@/lib/response/utils")>()),
   calculateTtcTotal: vi.fn((ttc) => ttc),
 }));
 
@@ -228,7 +230,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       responseId: responseId,
       data: mockResponseInput.data,
       variables: mockResponseInput.variables,
-      language: mockResponseInput.language,
+      language: undefined, // null language is normalized to undefined for quota evaluation
       responseFinished: mockResponseInput.finished,
       tx: mockTx,
     });
@@ -282,7 +284,7 @@ describe("createResponseWithQuotaEvaluation", () => {
       responseId: responseId,
       data: mockResponseInput.data,
       variables: mockResponseInput.variables,
-      language: mockResponseInput.language,
+      language: undefined, // null language is normalized to undefined for quota evaluation
       responseFinished: mockResponseInput.finished,
       tx: mockTx,
     });

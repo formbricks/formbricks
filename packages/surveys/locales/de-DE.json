@@ -2,7 +2,6 @@
   "common": {
     "and": "und",
     "apply": "anwenden",
-    "auto_close_wrapper": "Automatisches Schließen",
     "back": "Zurück",
     "close_survey": "Umfrage schließen",
     "company_logo": "Firmenlogo",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "Ihre Antwort konnte nicht übermittelt werden, da sie als automatisierte Aktivität eingestuft wurde. Wenn Sie atmen, versuchen Sie es bitte erneut.",
       "title": "Wir konnten nicht verifizieren, dass du ein Mensch bist."
+    },
+    "response_already_completed": {
+      "message": "Diese Antwort wurde bereits abgeschlossen und kann nicht mehr geändert werden. Du kannst dieses Fenster jetzt schließen.",
+      "title": "Diese Antwort wurde bereits abgeschlossen."
+    },
+    "response_sending_error_permanent": {
+      "message": "Deine Antwort konnte nicht übermittelt werden und kann nicht erneut versucht werden. Bitte kontaktiere den Umfrage-Ersteller, falls das weiterhin passiert.",
+      "title": "Deine Antwort konnte nicht übermittelt werden."
     },
     "value_must_contain": "Wert muss {value} enthalten",
     "value_must_equal": "Wert muss {value} entsprechen",

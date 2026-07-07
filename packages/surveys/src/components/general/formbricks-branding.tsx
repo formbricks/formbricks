@@ -4,11 +4,7 @@ export function FormbricksBranding() {
   const { t } = useTranslation();
   return (
     <span className="flex justify-center">
-      <a
-        href="https://formbricks.com?utm_source=survey_branding"
-        target="_blank"
-        tabIndex={-1}
-        rel="noopener">
+      <a href="https://formbricks.com?utm_source=survey_branding" target="_blank" rel="noopener">
         <p className="text-signature text-xs">
           {t("common.powered_by")}{" "}
           <b>

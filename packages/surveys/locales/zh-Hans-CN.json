@@ -2,7 +2,6 @@
   "common": {
     "and": "和",
     "apply": "应用",
-    "auto_close_wrapper": "自动关闭包装器",
     "back": "返回",
     "close_survey": "关闭调查",
     "company_logo": "公司标志",
@@ -82,6 +81,14 @@
     "recaptcha_error": {
       "message": "您的响应未能提交，因为它被标记为自动活动。如果您是人类，请重试。",
       "title": "我们无法验证你是人类。"
+    },
+    "response_already_completed": {
+      "message": "此回复已完成,无法再进行更改。你可以安全地关闭此窗口。",
+      "title": "此回复已完成。"
+    },
+    "response_sending_error_permanent": {
+      "message": "你的回复无法提交且无法重试。如果此问题持续发生,请联系调查问卷的创建者。",
+      "title": "你的回复无法提交。"
     },
     "value_must_contain": "值必须包含{value}",
     "value_must_equal": "值必须等于{value}",
