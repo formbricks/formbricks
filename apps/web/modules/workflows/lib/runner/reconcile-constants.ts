@@ -21,5 +21,12 @@ export const WORKFLOW_RUN_ORPHAN_MIN_AGE_MS = 2 * 60 * 1000;
  */
 export const WORKFLOW_RUN_ORPHAN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * A run still `running` with no executor writes for this long is treated as abandoned mid-execution
+ * (crash between step claim and send) and recovered → `failed`. Healthy runs finish in seconds and the
+ * full retry/backoff window is ≲1 min, so 1h is generous enough that no live owner can be racing.
+ */
+export const WORKFLOW_RUN_STUCK_RUNNING_MAX_AGE_MS = 60 * 60 * 1000;
+
 /** Max orphans handled per tick. A larger backlog drains over subsequent ticks (re-dispatch is idempotent). */
 export const WORKFLOW_RUN_RECONCILE_BATCH_SIZE = 250;
