@@ -45,6 +45,9 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
     introspect: { window: 60, max: 60 },
     revoke: { window: 60, max: 30 },
   },
+  // Discovery is served by our Next.js catch-all at /.well-known/oauth-authorization-server/api/auth;
+  // Better Auth can't introspect the route, so this acks the (verified-correct) endpoint rather than
+  // masking a real problem. See PR #8447.
   silenceWarnings: {
     oauthAuthServerConfig: true,
   },
