@@ -51,3 +51,29 @@ export const isLight = (color: string) => {
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 };
+
+// WCAG 2.x relative luminance of an sRGB hex color (0 = black, 1 = white).
+// https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+export const getRelativeLuminance = (hex: string): number => {
+  const rgba = hexToRGBA(hex, 1);
+  if (!rgba) return 0;
+
+  const [r, g, b] = rgba.match(/\d+/g)?.map(Number) ?? [0, 0, 0];
+
+  const toLinear = (channel8bit: number): number => {
+    const channel = channel8bit / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  };
+
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+};
+
+// WCAG 2.x contrast ratio between two hex colors, ranging from 1:1 to 21:1.
+// AA requires >= 4.5 for normal text and >= 3 for large text/non-text.
+export const getContrastRatio = (colorA: string, colorB: string): number => {
+  const luminanceA = getRelativeLuminance(colorA);
+  const luminanceB = getRelativeLuminance(colorB);
+  const lighter = Math.max(luminanceA, luminanceB);
+  const darker = Math.min(luminanceA, luminanceB);
+  return (lighter + 0.05) / (darker + 0.05);
+};

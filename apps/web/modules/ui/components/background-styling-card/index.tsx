@@ -11,6 +11,7 @@ import { SurveyBgSelectorTab } from "@/modules/ui/components/background-styling-
 import { Badge } from "@/modules/ui/components/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Slider } from "@/modules/ui/components/slider";
+import { ColorField } from "@/modules/ui/components/styling-fields/components/color-field";
 
 interface BackgroundStylingCardProps {
   open: boolean;
@@ -147,6 +148,13 @@ export const BackgroundStylingCard = ({
               </div>
             </div>
           </div>
+
+          <ColorField
+            form={form}
+            name="linkColor.light"
+            label={t("workspace.look.advanced_styling_field_link_color")}
+            description={t("workspace.look.advanced_styling_field_link_color_description")}
+          />
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
