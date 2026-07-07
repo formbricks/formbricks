@@ -1,32 +1,26 @@
 import { createId } from "@paralleldrive/cuid2";
-import { type APIRequestContext, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { SURVEYS_API_URL } from "../api/constants";
+import { type TSurveyEnding, type TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { type UsersFixture } from "../fixtures/users";
-import { loginAndGetApiKey } from "../lib/utils";
 
 /**
  * Self-seeding helpers for the survey accessibility (axe-core) suite.
  *
  * The suite must run unattended in the normal Playwright job, so it provisions
  * its own published "kitchen-sink" link survey instead of reading a manual
- * SURVEY_URL. It follows the same path as the existing API specs:
- *   1. `loginAndGetApiKey` to obtain { workspaceId, apiKey }.
- *   2. POST a survey (legacy `questions` shape, which the v1 API transforms to
- *      blocks server-side) to `/api/v1/management/surveys`.
- *   3. PUT `{ status: "inProgress" }` to publish it — a `type: "link"` survey is
- *      created as `draft` and `/s/<id>` returns 404 until it is `inProgress`
- *      (see apps/web/modules/survey/link/components/survey-renderer.tsx).
- *   4. Derive the `/s/<id>` link from the returned `data.id`.
+ * SURVEY_URL. Seeding goes straight through Prisma — the same boundary the
+ * `users` fixture writes through — so no login, dashboard navigation, or API key
+ * is needed. To stay aligned with the real survey schema, the legacy `questions`
+ * shape is converted with the SAME `transformQuestionsToBlocks` the v1 management
+ * API uses server-side, instead of hand-crafting blocks JSON. The survey is
+ * created directly as `inProgress` because `/s/<id>` returns 404 for drafts
+ * (see apps/web/modules/survey/link/components/survey-renderer.tsx).
  *
  * The multi-language / RTL variant additionally creates a real Arabic `Language`
- * row + `SurveyLanguage` join via Prisma. The v1 API cannot accept languages over
- * JSON (its `ZSurveyLanguage`/`ZLanguage` schema requires `z.date()` createdAt /
- * updatedAt and a cuid2 id that must already exist in the workspace), so the
- * language is attached directly through the database — the same boundary the
- * `users` fixture already writes through. Arabic translation keys are patched into
- * the stored blocks so axe scans genuine RTL content; `?lang=ar-EG` then renders the
+ * row + `SurveyLanguage` join, and patches Arabic translation keys into the
+ * stored blocks so axe scans genuine RTL content; `?lang=ar-EG` then renders the
  * survey with `dir="rtl"` (see packages/surveys/src/lib/utils.ts `isRTLLanguage`).
  */
 
@@ -176,53 +170,35 @@ const buildEndings = () => [
   },
 ];
 
-const createSurveyViaApi = async (
-  request: APIRequestContext,
+/**
+ * Creates a published kitchen-sink link survey directly through Prisma. The legacy
+ * `questions` list is converted to blocks with the same transform the v1 management
+ * API applies server-side, so the stored shape cannot drift from the API contract.
+ */
+const createKitchenSinkSurvey = async (
   workspaceId: string,
-  apiKey: string,
+  createdBy: string,
   name: string,
   baseURL: string
 ): Promise<string> => {
-  const createResponse = await request.post(SURVEYS_API_URL, {
-    headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+  const questions = buildKitchenSinkQuestions(baseURL) as unknown as TSurveyQuestion[];
+  const endings = buildEndings() as unknown as TSurveyEnding[];
+  const blocks = transformQuestionsToBlocks(questions, endings);
+
+  const survey = await prisma.survey.create({
     data: {
       workspaceId,
-      type: "link",
+      createdBy,
       name,
-      welcomeCard: buildWelcomeCard(),
-      questions: buildKitchenSinkQuestions(baseURL),
-      endings: buildEndings(),
+      type: "link",
+      status: "inProgress",
+      welcomeCard: buildWelcomeCard() as unknown as Prisma.InputJsonValue,
+      blocks: blocks as unknown as Prisma.InputJsonValue[],
+      endings: endings as unknown as Prisma.InputJsonValue[],
     },
+    select: { id: true },
   });
-
-  const createBody = await createResponse.json().catch(() => null);
-  expect(
-    createResponse.ok(),
-    `Survey create failed (${createResponse.status()}): ${JSON.stringify(createBody)}`
-  ).toBeTruthy();
-
-  const surveyId = createBody?.data?.id as string | undefined;
-  if (!surveyId) {
-    throw new Error(`Survey create response did not include an id: ${JSON.stringify(createBody)}`);
-  }
-  return surveyId;
-};
-
-const publishSurveyViaApi = async (
-  request: APIRequestContext,
-  surveyId: string,
-  apiKey: string
-): Promise<void> => {
-  const publishResponse = await request.put(`${SURVEYS_API_URL}/${surveyId}`, {
-    headers: { "Content-Type": "application/json", "x-api-key": apiKey },
-    data: { status: "inProgress" },
-  });
-  const publishBody = await publishResponse.json().catch(() => null);
-  expect(
-    publishResponse.ok(),
-    `Survey publish failed (${publishResponse.status()}): ${JSON.stringify(publishBody)}`
-  ).toBeTruthy();
-  expect(publishBody?.data?.status).toBe("inProgress");
+  return survey.id;
 };
 
 /**
@@ -318,28 +294,24 @@ export interface SeededAccessibilitySurveys {
 }
 
 /**
- * Logs in, creates + publishes two kitchen-sink link surveys (one default-language,
- * one with an Arabic RTL variant) and returns their public `/s/<id>` links.
+ * Seeds a workspace user plus two published kitchen-sink link surveys (one
+ * default-language, one with an Arabic RTL variant) entirely through Prisma —
+ * no login or dashboard interaction — and returns their public `/s/<id>` links.
  */
 export const seedAccessibilitySurveys = async (
-  page: Page,
-  request: APIRequestContext,
   users: UsersFixture,
   baseURL: string
 ): Promise<SeededAccessibilitySurveys> => {
-  const { workspaceId, apiKey } = await loginAndGetApiKey(page, users);
+  const user = await users.create({ skipSurveySeed: true });
+  const workspaceId = user.workspaceId;
+  if (!workspaceId) {
+    throw new Error("users.create() did not return a workspaceId");
+  }
 
-  const mainSurveyId = await createSurveyViaApi(request, workspaceId, apiKey, "A11y Kitchen Sink", baseURL);
-  await publishSurveyViaApi(request, mainSurveyId, apiKey);
-
-  const rtlSurveyId = await createSurveyViaApi(
-    request,
-    workspaceId,
-    apiKey,
-    "A11y Kitchen Sink (RTL)",
-    baseURL
-  );
-  await publishSurveyViaApi(request, rtlSurveyId, apiKey);
+  const [mainSurveyId, rtlSurveyId] = await Promise.all([
+    createKitchenSinkSurvey(workspaceId, user.id, "A11y Kitchen Sink", baseURL),
+    createKitchenSinkSurvey(workspaceId, user.id, "A11y Kitchen Sink (RTL)", baseURL),
+  ]);
   await attachArabicLanguage(rtlSurveyId, workspaceId);
 
   return {

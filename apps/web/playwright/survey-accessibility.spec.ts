@@ -464,22 +464,17 @@ const reportAndAssert = (variant: string, failSink: ViolationRow[]): void => {
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 const TABLET_VIEWPORT = { width: 820, height: 1180 };
-const SEED_VIEWPORT = { width: 1280, height: 900 };
 
 test.describe("Survey accessibility (axe-core) @slow", () => {
-  // Seeded once per WORKER process and reused by every test in it: the tests only
-  // read the published surveys (responses never mutate them), and per-test seeding
-  // would run the signup + login + API-key flow up to nine times concurrently
-  // (fullyParallel), hammering the auth endpoints for no added isolation.
+  // Seeded once per WORKER process and reused by every test in it: seeding writes
+  // straight through Prisma (no login / dashboard / API-key UI), and the tests only
+  // read the published surveys — responses never mutate them — so re-seeding per
+  // test would add no isolation, only time.
   let seeded: SeededAccessibilitySurveys | undefined;
 
-  test.beforeEach(async ({ page, request, users, baseURL }) => {
-    // Seed at a desktop size: loginAndGetApiKey drives the app dashboard, which renders
-    // a full-screen NoMobileOverlay below the `sm` breakpoint that would intercept the
-    // "Add API Key" clicks. Variant tests resize to mobile/tablet AFTER seeding.
-    await page.setViewportSize(SEED_VIEWPORT);
+  test.beforeEach(async ({ page, users, baseURL }) => {
     await mockStorageUploads(page);
-    seeded ??= await seedAccessibilitySurveys(page, request, users, baseURL ?? "http://localhost:3000");
+    seeded ??= await seedAccessibilitySurveys(users, baseURL ?? "http://localhost:3000");
   });
 
   test("desktop: full walk has no WCAG AA violations", async ({ page }) => {
@@ -541,7 +536,6 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
 
   test("mobile: full walk has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(180_000);
-    // Resize to mobile AFTER seeding (seed runs at desktop in beforeEach).
     await page.setViewportSize(MOBILE_VIEWPORT);
     const violations: ViolationRow[] = [];
     await walkAndScan(page, "mobile", seeded.surveyUrl, violations);
