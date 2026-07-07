@@ -124,7 +124,10 @@ export function CreateChartView({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent width="full" disableCloseOnOutsideClick={!isEditing}>
+      <DialogContent
+        width="full"
+        disableCloseOnOutsideClick={!isEditing}
+        onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader>
           <DialogTitle>
             {isEditing
@@ -198,7 +201,7 @@ export function CreateChartView({
                         setChartNameError(null);
                         return handleSaveChart();
                       }}
-                      className="space-y-2">
+                      className="flex flex-col gap-2">
                       <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
                         {t("workspace.analysis.charts.chart_name")}
                       </Label>

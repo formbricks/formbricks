@@ -10,6 +10,7 @@ overrides:
   hono: 4.12.25
   protobufjs@7: 7.6.3
   protobufjs@8: 8.6.3
+  '@tootallnate/once': 2.0.1
   '@xmldom/xmldom': 0.9.10
   axios: 1.16.0
   lodash: 4.18.1
@@ -5810,9 +5811,9 @@ packages:
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
 
-  '@tootallnate/once@1.1.2':
-    resolution: {integrity: sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==}
-    engines: {node: '>= 6'}
+  '@tootallnate/once@2.0.1':
+    resolution: {integrity: sha512-HqmEUIGRJ5fSXchkVgR5F7qn48bDBzv0kWj/Kfu5e6uci4UlEeng4331LnBkWffb++Ei3FOVLxo8JJWMFBDMeQ==}
+    engines: {node: '>= 10'}
 
   '@trivago/prettier-plugin-sort-imports@6.0.2':
     resolution: {integrity: sha512-3DgfkukFyC/sE/VuYjaUUWoFfuVjPK55vOFDsxD56XXynFMCZDYFogH2l/hDfOsQAm1myoU/1xByJ3tWqtulXA==}
@@ -18435,7 +18436,7 @@ snapshots:
     dependencies:
       '@testing-library/dom': 8.20.1
 
-  '@tootallnate/once@1.1.2':
+  '@tootallnate/once@2.0.1':
     optional: true
 
   '@trivago/prettier-plugin-sort-imports@6.0.2(prettier@3.8.3)':
@@ -21655,7 +21656,7 @@ snapshots:
 
   http-proxy-agent@4.0.1:
     dependencies:
-      '@tootallnate/once': 1.1.2
+      '@tootallnate/once': 2.0.1
       agent-base: 6.0.2
       debug: 4.4.3
     transitivePeerDependencies:
@@ -25439,7 +25440,7 @@ snapshots:
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.0.16(@types/node@25.4.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0

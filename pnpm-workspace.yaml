@@ -32,7 +32,10 @@ overrides:
   # sqlite3 / node-gyp chain: tar advisory pins are safe here because sqlite3 is pulled in
   # transitively by typeorm but the project uses postgres; sqlite3 is never built at runtime.
   # Therefore node-gyp@8 / http-proxy-agent@4 compatibility is not a concern.
-  # `@tootallnate/once` advisory (ENG-1456/1396/1379) remains Low and is not pinned.
+  # ENG-1379 / GHSA-vpq2-c234-7xj6 (CVE-2026-3449): @tootallnate/once <2.0.1 leaves the promise
+  # permanently pending after an AbortSignal abort; http-proxy-agent@4 pins ^1, so an override is
+  # required. Pinned to the minimal patched version (2.0.1) to stay CJS-compatible with http-proxy-agent@4.
+  "@tootallnate/once": 2.0.1
   # SAML and XML processing chains.
   "@xmldom/xmldom": 0.9.10 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
   axios: 1.16.0
