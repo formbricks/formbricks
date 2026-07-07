@@ -112,9 +112,17 @@ export const SignupForm = ({
         throw new Error(t("auth.signup.please_verify_captcha"));
       }
 
+      const resetTurnstileIfConfigured = () => {
+        if (isTurnstileConfigured) {
+          setTurnstileToken(undefined);
+          turnstile.reset();
+        }
+      };
+      const normalizedEmail = data.email.toLowerCase();
+
       const createUserResponse = await createUserAction({
         name: data.name,
-        email: data.email,
+        email: normalizedEmail,
         password: data.password,
         userLocale,
         inviteToken: inviteToken ?? "",
@@ -123,37 +131,33 @@ export const SignupForm = ({
         subscribeToProductUpdates,
       });
 
-      const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+      if (!createUserResponse?.data) {
+        resetTurnstileIfConfigured();
+
+        const errorMessage = getFormattedErrorMessage(createUserResponse);
+        toast.error(errorMessage);
+        return;
+      }
+
+      const emailTokenActionResponse = await createEmailTokenAction({ email: normalizedEmail });
       const token = emailTokenActionResponse?.data;
+
+      if (!token) {
+        resetTurnstileIfConfigured();
+
+        const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
+        toast.error(errorMessage);
+        return;
+      }
 
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success?token=${token}`
         : buildVerificationRequestedPath({
-            token: token ?? "",
+            token,
             callbackUrl: inviteToken ? returnToUrl : undefined,
           });
 
-      if (createUserResponse?.data) {
-        router.push(url);
-
-        if (!emailTokenActionResponse?.data) {
-          if (isTurnstileConfigured) {
-            setTurnstileToken(undefined);
-            turnstile.reset();
-          }
-
-          const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-          toast.error(errorMessage);
-        }
-      } else {
-        if (isTurnstileConfigured) {
-          setTurnstileToken(undefined);
-          turnstile.reset();
-        }
-
-        const errorMessage = getFormattedErrorMessage(createUserResponse);
-        toast.error(errorMessage);
-      }
+      router.push(url);
     } catch (e: any) {
       toast.error(e.message);
     }
