@@ -19,6 +19,37 @@ export interface MeasureDefinition {
   description?: string;
 }
 
+/**
+ * Hub enrichment enum vocabularies (migrations 014/015). Single source for the
+ * enum dimension values: the generated emotion-count measures, the translated
+ * value-label maps (typed against these tuples, so additions fail the build until
+ * every map is updated), and the ordinal sentiment axis sort all derive from them.
+ */
+export const SENTIMENT_VALUE_ORDER = [
+  "very_negative",
+  "negative",
+  "neutral",
+  "positive",
+  "very_positive",
+  "mixed",
+] as const;
+
+export const EMOTION_VALUES = ["joy", "anger", "sadness", "fear", "surprise", "disgust"] as const;
+
+export type TSentimentValue = (typeof SENTIMENT_VALUE_ORDER)[number];
+export type TEmotionValue = (typeof EMOTION_VALUES)[number];
+
+const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
+
+// One structurally identical count measure per emotion; mirrors the <emotion>Count
+// measures in the Cube schema (docker/cube/schema/FeedbackRecords.js).
+const EMOTION_COUNT_MEASURES: MeasureDefinition[] = EMOTION_VALUES.map((emotion) => ({
+  id: `FeedbackRecords.${emotion}Count`,
+  label: `${capitalize(emotion)} Count`,
+  type: "count",
+  description: `Number of feedback records tagged with the "${emotion}" emotion`,
+}));
+
 export const FEEDBACK_FIELDS = {
   dimensions: [
     {
@@ -239,42 +270,7 @@ export const FEEDBACK_FIELDS = {
       description:
         'Average sentiment score (-1 to 1, negative to positive) across enriched records. "mixed" records score near 0 and are included.',
     },
-    {
-      id: "FeedbackRecords.joyCount",
-      label: "Joy Count",
-      type: "count",
-      description: 'Number of feedback records tagged with the "joy" emotion',
-    },
-    {
-      id: "FeedbackRecords.angerCount",
-      label: "Anger Count",
-      type: "count",
-      description: 'Number of feedback records tagged with the "anger" emotion',
-    },
-    {
-      id: "FeedbackRecords.sadnessCount",
-      label: "Sadness Count",
-      type: "count",
-      description: 'Number of feedback records tagged with the "sadness" emotion',
-    },
-    {
-      id: "FeedbackRecords.fearCount",
-      label: "Fear Count",
-      type: "count",
-      description: 'Number of feedback records tagged with the "fear" emotion',
-    },
-    {
-      id: "FeedbackRecords.surpriseCount",
-      label: "Surprise Count",
-      type: "count",
-      description: 'Number of feedback records tagged with the "surprise" emotion',
-    },
-    {
-      id: "FeedbackRecords.disgustCount",
-      label: "Disgust Count",
-      type: "count",
-      description: 'Number of feedback records tagged with the "disgust" emotion',
-    },
+    ...EMOTION_COUNT_MEASURES,
   ] as MeasureDefinition[],
 };
 
@@ -286,27 +282,20 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
   .filter((d) => d.type === "time")
   .map((d) => d.id);
 
-/**
- * Enum dimensions carry machine tokens (e.g. "very_negative") that need a display
- * label and, for sentiment, an ordinal axis order instead of the alphabetical one.
- * Keep both value pools in sync with the Hub enrichment enums (migrations 014/015).
- */
-export const SENTIMENT_VALUE_ORDER = [
-  "very_negative",
-  "negative",
-  "neutral",
-  "positive",
-  "very_positive",
-  "mixed",
-] as const;
-
-export const EMOTION_VALUES = ["joy", "anger", "sadness", "fear", "surprise", "disgust"] as const;
-
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
 
+const isSentimentValue = (value: string): value is TSentimentValue =>
+  (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
+
+const isEmotionValue = (value: string): value is TEmotionValue =>
+  (EMOTION_VALUES as readonly string[]).includes(value);
+
+// The label maps are typed against the enum tuples, so extending
+// SENTIMENT_VALUE_ORDER / EMOTION_VALUES without adding the matching label is a
+// compile error. Keys stay literal t() calls so the i18n scanner can detect them.
 const getTranslatedSentimentValueLabel = (value: string, t: TFunction): string | undefined => {
-  const labels: Record<string, string> = {
+  const labels: Record<TSentimentValue, string> = {
     very_negative: t("workspace.analysis.charts.sentiment_value_very_negative"),
     negative: t("workspace.analysis.charts.sentiment_value_negative"),
     neutral: t("workspace.analysis.charts.sentiment_value_neutral"),
@@ -314,11 +303,11 @@ const getTranslatedSentimentValueLabel = (value: string, t: TFunction): string |
     very_positive: t("workspace.analysis.charts.sentiment_value_very_positive"),
     mixed: t("workspace.analysis.charts.sentiment_value_mixed"),
   };
-  return labels[value];
+  return isSentimentValue(value) ? labels[value] : undefined;
 };
 
 const getTranslatedEmotionValueLabel = (value: string, t: TFunction): string | undefined => {
-  const labels: Record<string, string> = {
+  const labels: Record<TEmotionValue, string> = {
     joy: t("workspace.analysis.charts.emotion_value_joy"),
     anger: t("workspace.analysis.charts.emotion_value_anger"),
     sadness: t("workspace.analysis.charts.emotion_value_sadness"),
@@ -326,7 +315,7 @@ const getTranslatedEmotionValueLabel = (value: string, t: TFunction): string | u
     surprise: t("workspace.analysis.charts.emotion_value_surprise"),
     disgust: t("workspace.analysis.charts.emotion_value_disgust"),
   };
-  return labels[value];
+  return isEmotionValue(value) ? labels[value] : undefined;
 };
 
 /**

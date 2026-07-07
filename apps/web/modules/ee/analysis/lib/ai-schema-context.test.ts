@@ -29,11 +29,14 @@ describe("AI schema context", () => {
     expect(context).toContain('"CES average" or "CES score" means `FeedbackRecords.cesAverage`');
   });
 
-  test("documents the sentiment average alias", () => {
+  test("documents the sentiment average alias and distinguishes the per-record score", () => {
     const context = generateSchemaContext();
 
     expect(context).toContain(
-      '"average sentiment", "sentiment score", or "sentiment trend" means `FeedbackRecords.sentimentAverage`'
+      '"average sentiment" or "sentiment trend" means `FeedbackRecords.sentimentAverage`'
+    );
+    expect(context).toContain(
+      '"sentiment score" (e.g. filtering records by score) means the `FeedbackRecords.sentimentScore` dimension'
     );
   });
 
