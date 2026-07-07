@@ -33,6 +33,33 @@ const findChoiceByLabel = <T extends { id: string; label: TSurveyElementChoice["
   return choices.find((choice) => getChoiceLabel(choice, language) === label);
 };
 
+/**
+ * Selected choice values arrive as labels localized to the response language, so a
+ * bilingual survey would otherwise split one option into a category per language in
+ * Hub analytics (e.g. Gender charting as Male/Female/ذكر/أنثى). Map each selected
+ * label back to its choice and store the default-language label as the canonical
+ * value. Labels that match no choice (an "other" free-text answer, or a choice label
+ * edited since submission) pass through unchanged.
+ */
+const normalizeChoiceValue = (
+  choices: { id: string; label: TSurveyElementChoice["label"] }[] | undefined,
+  value: TResponseDataValue,
+  language: string
+): TResponseDataValue => {
+  if (!choices?.length) return value;
+
+  const canonicalize = (label: string): string => {
+    const choice = findChoiceByLabel(choices, label, language);
+    return choice ? getChoiceLabel(choice, "default") : label;
+  };
+
+  if (typeof value === "string") return canonicalize(value);
+  if (Array.isArray(value)) {
+    return value.map((item) => (typeof item === "string" ? canonicalize(item) : item));
+  }
+  return value;
+};
+
 const toIsoTimestamp = (value: unknown): string | null => {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value.toISOString();
@@ -154,7 +181,13 @@ const expandMatrixToRecords = (
     const row = findChoiceByLabel<TSurveyMatrixElementChoice>(element.rows, rowLabel, language);
     if (!row) continue;
 
-    const valueFields = convertValueToHubFields(columnLabel as TResponseDataValue, mapping.hubFieldType);
+    // Column labels are localized like the row labels — store the canonical one (ENG-1566).
+    const canonicalColumn = normalizeChoiceValue(
+      element.columns,
+      columnLabel as TResponseDataValue,
+      language
+    );
+    const valueFields = convertValueToHubFields(canonicalColumn, mapping.hubFieldType);
 
     records.push({
       ...baseFields,
@@ -243,7 +276,15 @@ export function transformResponseToFeedbackRecords(
     }
 
     const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
-    const valueFields = convertValueToHubFields(value, mapping.hubFieldType);
+
+    const isChoiceElement =
+      element?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+      element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti;
+    const normalizedValue = isChoiceElement
+      ? normalizeChoiceValue(element.choices, value, baseFields.language ?? "default")
+      : value;
+
+    const valueFields = convertValueToHubFields(normalizedValue, mapping.hubFieldType);
 
     feedbackRecords.push({
       ...baseFields,

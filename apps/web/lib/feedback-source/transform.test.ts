@@ -5,7 +5,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { transformResponseToFeedbackRecords } from "./transform";
 
 vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: (_val: Record<string, string>, _lang: string) => _val?.default ?? "",
+  getLocalizedValue: (_val: Record<string, string>, _lang: string) => _val?.[_lang] ?? _val?.default ?? "",
 }));
 
 vi.mock("@formbricks/types/surveys/validation", () => ({
@@ -588,6 +588,118 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result).toHaveLength(1);
       expect(result[0].field_id).toBe("el-ranking__ch-1");
       expect(result[0].value_number).toBe(1);
+    });
+  });
+
+  describe("choice value normalization across languages (ENG-1566)", () => {
+    const bilingualSurvey = {
+      id: "survey-1",
+      name: "Bilingual Survey",
+      blocks: [
+        {
+          elements: [
+            {
+              id: "el-gender",
+              type: "multipleChoiceSingle",
+              headline: { default: "Gender", ar: "الجنس" },
+              choices: [
+                { id: "c-male", label: { default: "Male", ar: "ذكر" } },
+                { id: "c-female", label: { default: "Female", ar: "أنثى" } },
+              ],
+            },
+            {
+              id: "el-feats",
+              type: "multipleChoiceMulti",
+              headline: { default: "Select features" },
+              choices: [
+                { id: "c-speed", label: { default: "Speed", ar: "سرعة" } },
+                { id: "c-quality", label: { default: "Quality", ar: "جودة" } },
+              ],
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const buildResponse = (data: Record<string, unknown>, language: string): TResponse =>
+      ({
+        id: "resp-i18n",
+        createdAt: NOW,
+        data,
+        language,
+      }) as unknown as TResponse;
+
+    test("stores the default-language label for a single select answered in another language", () => {
+      const response = buildResponse({ "el-gender": "ذكر" }, "ar");
+      const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].value_text).toBe("Male");
+      expect(result[0].language).toBe("ar");
+    });
+
+    test("stores default-language labels for every entry of a multi select answered in another language", () => {
+      const response = buildResponse({ "el-feats": ["سرعة", "جودة"] }, "ar");
+      const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].value_text).toBe("Speed, Quality");
+    });
+
+    test("passes through values that match no choice label (other / free text)", () => {
+      const response = buildResponse({ "el-feats": ["سرعة", "something else"] }, "ar");
+      const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
+
+      expect(result[0].value_text).toBe("Speed, something else");
+    });
+
+    test("leaves default-language answers unchanged", () => {
+      const response = buildResponse({ "el-gender": "Female" }, "default");
+      const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
+
+      expect(result[0].value_text).toBe("Female");
+    });
+
+    test("stores the default-language column label for a matrix answered in another language", () => {
+      const matrixSurvey = {
+        id: "survey-1",
+        name: "Matrix Survey",
+        blocks: [
+          {
+            elements: [
+              {
+                id: "el-matrix",
+                type: "matrix",
+                headline: { default: "Rate each feature" },
+                rows: [{ id: "row-1", label: { default: "Speed", ar: "سرعة" } }],
+                columns: [
+                  { id: "col-1", label: { default: "Good", ar: "جيد" } },
+                  { id: "col-2", label: { default: "Bad", ar: "سيئ" } },
+                ],
+              },
+            ],
+          },
+        ],
+      } as unknown as TSurvey;
+      const response = buildResponse({ "el-matrix": { سرعة: "جيد" } }, "ar");
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings, mockTenantId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        field_id: "el-matrix__row-1",
+        field_label: "Speed",
+        value_text: "Good",
+      });
     });
   });
 });
