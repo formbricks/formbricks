@@ -77,3 +77,41 @@ export const getContrastRatio = (colorA: string, colorB: string): number => {
   const darker = Math.min(luminanceA, luminanceB);
   return (lighter + 0.05) / (darker + 0.05);
 };
+
+// WCAG AA contrast threshold for normal-size text.
+export const AA_CONTRAST_RATIO = 4.5;
+
+// Picks a text color that clears `minRatio` against `surface`. Prefers the higher-contrast of
+// the two soft candidates (slate-900 / white) for a less harsh look, but escalates to the pure
+// black/white pole when a soft tone falls short — one pure pole always clears AA (~4.58:1 worst
+// case), so the result is guaranteed accessible for any surface.
+export const getReadableTextColor = (
+  surface: string,
+  darkText = "#0f172a",
+  lightText = "#ffffff",
+  minRatio: number = AA_CONTRAST_RATIO
+): string => {
+  const soft =
+    getContrastRatio(darkText, surface) >= getContrastRatio(lightText, surface) ? darkText : lightText;
+  if (getContrastRatio(soft, surface) >= minRatio) return soft;
+
+  return getContrastRatio("#000000", surface) >= getContrastRatio("#ffffff", surface) ? "#000000" : "#ffffff";
+};
+
+// Nudges `preferred` toward black (on light surfaces) or white (on dark surfaces) just far
+// enough to clear `minRatio` against `surface`, preserving as much of the original hue as
+// possible. Falls back to the pure pole, which always clears AA on a near-white/near-black surface.
+export const ensureReadable = (
+  preferred: string,
+  surface: string,
+  minRatio: number = AA_CONTRAST_RATIO
+): string => {
+  if (getContrastRatio(preferred, surface) >= minRatio) return preferred;
+
+  const pole = isLight(surface) ? "#000000" : "#ffffff";
+  for (let weight = 0.1; weight < 1; weight += 0.1) {
+    const candidate = mixColor(preferred, pole, weight);
+    if (getContrastRatio(candidate, surface) >= minRatio) return candidate;
+  }
+  return pole;
+};
