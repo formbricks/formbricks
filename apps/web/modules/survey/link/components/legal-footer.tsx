@@ -26,7 +26,7 @@ export const LegalFooter = ({
   isInFlow = false,
   linkColor,
   backdropColor,
-}: LegalFooterProps) => {
+}: Readonly<LegalFooterProps>) => {
   const { t } = useTranslation();
   if (!IMPRINT_URL && !PRIVACY_URL && !TERMS_URL && !IS_FORMBRICKS_CLOUD) return null;
 
