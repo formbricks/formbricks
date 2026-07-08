@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "Todos los datos, incluidas las respuestas anteriores, siguen estando disponibles para descargar en la página de resumen de la encuesta.",
         "caution_explanation_responses_are_safe": "Las respuestas antiguas y nuevas se mezclan, lo que puede llevar a resúmenes de datos engañosos.",
         "caution_recommendation": "Esto puede causar inconsistencias de datos en el resumen de la encuesta. Recomendamos duplicar la encuesta en su lugar.",
-        "caution_text": "Los cambios provocarán inconsistencias",
+        "caution_text": "Los cambios pueden generar inconsistencias",
         "change_anyway": "Cambiar de todos modos",
         "change_background": "Cambiar fondo",
         "change_default": "Cambiar predeterminado",

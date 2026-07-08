@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "Alle Daten, einschließlich früherer Antworten, bleiben als Download auf der Umfragezusammenfassungsseite verfügbar.",
         "caution_explanation_responses_are_safe": "Ältere und neuere Antworten werden vermischt, was zu irreführenden Datenzusammenfassungen führen kann.",
         "caution_recommendation": "Dies kann zu Dateninkonsistenzen in der Umfragezusammenfassung führen. Wir empfehlen stattdessen, die Umfrage zu duplizieren.",
-        "caution_text": "Änderungen führen zu Inkonsistenzen",
+        "caution_text": "Änderungen können zu Inkonsistenzen führen",
         "change_anyway": "Trotzdem ändern",
         "change_background": "Hintergrund ändern",
         "change_default": "Standard ändern",

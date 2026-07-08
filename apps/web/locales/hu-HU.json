@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "Az összes adat, beleértve a korábbi válaszokat is, továbbra is elérhetők maradnak letölthető formában a kérdőív összegző oldalán.",
         "caution_explanation_responses_are_safe": "A régebbi és az újabb válaszok összekeverednek, ami félrevezető adatösszegzésekhez vezethet.",
         "caution_recommendation": "Ez adatellentmondásokat okozhat a kérdőív összegzésében. Azt javasoljuk, hogy inkább kettőzze meg a kérdőívet.",
-        "caution_text": "A változtatások következetlenségekhez vezetnek",
+        "caution_text": "A módosítások következetlenségekhez vezethetnek",
         "change_anyway": "Változtatás mindenképp",
         "change_background": "Háttér megváltoztatása",
         "change_default": "Alapértelmezett megváltoztatása",

@@ -2805,7 +2805,7 @@ checksums:
     workspace/surveys/edit/caution_explanation_only_new_responses_in_summary: 1ad5f649c7784a58bfa9d62304780514
     workspace/surveys/edit/caution_explanation_responses_are_safe: 090ff00b7922a49c273e67c5f364730d
     workspace/surveys/edit/caution_recommendation: b15090fe878ff17f2ee7cc2082dd9018
-    workspace/surveys/edit/caution_text: 3291e962c0e4c4656832837ddc512918
+    workspace/surveys/edit/caution_text: a7e2a89fcb4d03cd84bfb23af383470f
     workspace/surveys/edit/change_anyway: 6377497d40373f6d0f082670194981ab
     workspace/surveys/edit/change_background: fa71a993869f7d3ac553c547c12c3e9b
     workspace/surveys/edit/change_default: 6236a6c8a28489ba7c4cad7426806859

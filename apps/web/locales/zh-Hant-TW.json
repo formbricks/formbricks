@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "所有資料，包括過去的回應，仍可在調查摘要頁面下載。",
         "caution_explanation_responses_are_safe": "較舊和較新的回應會混在一起，可能導致資料摘要失準。",
         "caution_recommendation": "這可能導致調查摘要中的資料不一致。我們建議複製這個調查。",
-        "caution_text": "變更會導致不一致",
+        "caution_text": "變更可能導致不一致的情況",
         "change_anyway": "仍然變更",
         "change_background": "變更背景",
         "change_default": "變更預設",

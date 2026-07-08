@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "Geçmiş yanıtlar dahil tüm veriler, anket özet sayfasında indirilebilir şekilde mevcut kalmaya devam eder.",
         "caution_explanation_responses_are_safe": "Eski ve yeni yanıtlar karışır, bu da yanıltıcı veri özetlerine yol açabilir.",
         "caution_recommendation": "Bu durum anket özetinde veri tutarsızlıklarına neden olabilir. Bunun yerine anketi çoğaltmanı öneririz.",
-        "caution_text": "Değişiklikler tutarsızlıklara yol açacak",
+        "caution_text": "Değişiklikler tutarsızlıklara yol açabilir",
         "change_anyway": "Yine de değiştir",
         "change_background": "Arka planı değiştir",
         "change_default": "Varsayılanı değiştir",

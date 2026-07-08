@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "All data, inklusive tidigare svar, förblir tillgänglig som nedladdning på enkätsammanfattningssidan.",
         "caution_explanation_responses_are_safe": "Äldre och nyare svar blandas vilket kan leda till vilseledande datasammanfattningar.",
         "caution_recommendation": "Detta kan orsaka datainkonsekvenser i enkätsammanfattningen. Vi rekommenderar att duplicera enkäten istället.",
-        "caution_text": "Ändringar kommer att leda till inkonsekvenser",
+        "caution_text": "Ändringar kan leda till inkonsekvenser",
         "change_anyway": "Ändra ändå",
         "change_background": "Ändra bakgrund",
         "change_default": "Ändra standard",

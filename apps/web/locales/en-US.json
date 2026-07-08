@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "All data, including past responses, remain available as download on the survey summary page.",
         "caution_explanation_responses_are_safe": "Older and newer responses get mixed which can lead to misleading data summaries.",
         "caution_recommendation": "This may cause data inconsistencies in the survey summary. We recommend duplicating the survey instead.",
-        "caution_text": "Changes will lead to inconsistencies",
+        "caution_text": "Changes may lead to inconsistencies",
         "change_anyway": "Change anyway",
         "change_background": "Change background",
         "change_default": "Change default",

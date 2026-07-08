@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "Toate datele, inclusiv răspunsurile anterioare, rămân disponibile ca descărcare pe pagina de rezumat a sondajului.",
         "caution_explanation_responses_are_safe": "Răspunsurile mai vechi și mai noi se amestecă, ceea ce poate duce la rezumate de date înșelătoare.",
         "caution_recommendation": "Aceasta poate cauza inconsistențe de date în rezultatul sondajului. Vă recomandăm să duplicați sondajul în schimb.",
-        "caution_text": "Schimbările vor duce la inconsecvențe",
+        "caution_text": "Modificările pot duce la inconsistențe",
         "change_anyway": "Schimbă oricum",
         "change_background": "Schimbați fundalul",
         "change_default": "Schimbă implicit",

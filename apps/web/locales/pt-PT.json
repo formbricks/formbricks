@@ -2922,7 +2922,7 @@
         "caution_explanation_only_new_responses_in_summary": "Todos os dados, incluindo respostas anteriores, permanecem disponíveis para download na página de resumo do inquérito.",
         "caution_explanation_responses_are_safe": "As respostas mais antigas e mais recentes se misturam, o que pode levar a resumos de dados enganosos.",
         "caution_recommendation": "Isso pode causar inconsistências de dados no resumo do inquérito. Recomendamos duplicar o inquérito em vez disso.",
-        "caution_text": "As alterações levarão a inconsistências",
+        "caution_text": "As alterações podem causar inconsistências",
         "change_anyway": "Alterar mesmo assim",
         "change_background": "Alterar fundo",
         "change_default": "Alterar predefinição",

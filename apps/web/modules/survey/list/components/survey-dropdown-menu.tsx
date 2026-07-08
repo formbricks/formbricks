@@ -193,6 +193,33 @@ export const SurveyDropDownMenu = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
+            {canManageSurvey && (
+              <DropdownMenuItem>
+                <Link
+                  className="flex w-full items-center"
+                  href={editHref}
+                  onClick={survey.responseCount > 0 ? handleEditforActiveSurvey : undefined}>
+                  <SquarePenIcon className="mr-2 size-4" />
+                  {t("common.edit")}
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {canManageSurvey && (
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  data-testid="duplicate-survey"
+                  className={cn("flex w-full items-center", isDuplicating && "cursor-not-allowed opacity-50")}
+                  disabled={isDuplicating}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void handleDuplicateSurvey();
+                  }}>
+                  <CopyIcon className="mr-2 size-4" />
+                  {t("common.duplicate")}
+                </button>
+              </DropdownMenuItem>
+            )}
             {canChangeStatus && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger data-testid="survey-status-submenu" chevronSide="left">
@@ -223,33 +250,6 @@ export const SurveyDropDownMenu = ({
                   </DropdownMenuRadioGroup>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
-            )}
-            {canManageSurvey && (
-              <DropdownMenuItem>
-                <Link
-                  className="flex w-full items-center"
-                  href={editHref}
-                  onClick={survey.responseCount > 0 ? handleEditforActiveSurvey : undefined}>
-                  <SquarePenIcon className="mr-2 size-4" />
-                  {t("common.edit")}
-                </Link>
-              </DropdownMenuItem>
-            )}
-            {canManageSurvey && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
-                  data-testid="duplicate-survey"
-                  className={cn("flex w-full items-center", isDuplicating && "cursor-not-allowed opacity-50")}
-                  disabled={isDuplicating}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    void handleDuplicateSurvey();
-                  }}>
-                  <CopyIcon className="mr-2 size-4" />
-                  {t("common.duplicate")}
-                </button>
-              </DropdownMenuItem>
             )}
             {canManageSurvey && workspace?.organizationId && (
               <DropdownMenuItem

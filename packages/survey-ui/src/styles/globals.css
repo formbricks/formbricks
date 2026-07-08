@@ -81,7 +81,7 @@
 
   /* ── Headlines ─────────────────────────────────────────────────────── */
   --fb-element-headline-font-family: inherit;
-  --fb-element-headline-font-weight: 600;
+  --fb-element-headline-font-weight: 500;
   --fb-element-headline-font-size: 16px;
   --fb-element-headline-color: #142a72;
   --fb-element-headline-opacity: 1;
@@ -191,6 +191,24 @@
   font-size: var(--fb-element-description-font-size);
   color: var(--fb-element-description-color);
   opacity: var(--fb-element-description-opacity);
+}
+
+/*
+ * Keep bold (<strong>/<b>) inside rich text actually bold. The headline /
+ * description weight rules above target every descendant (`* `), which would
+ * otherwise flatten bold spans to the base weight and erase the contrast
+ * between bold and non-bold text. Higher specificity + !important wins over
+ * those rules (and the equivalent runtime rules injected by styles.ts).
+ */
+#fbjs .label-headline strong,
+#fbjs .label-headline b,
+#fbjs .label-description strong,
+#fbjs .label-description b,
+#fbjs .text-subheading strong,
+#fbjs .text-subheading b,
+#fbjs .htmlbody strong,
+#fbjs .htmlbody b {
+  font-weight: 700 !important;
 }
 
 #fbjs .label-default,
