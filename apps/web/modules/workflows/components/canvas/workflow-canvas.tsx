@@ -58,6 +58,10 @@ const EDGE_TYPES: EdgeTypes = {
   addButton: AddButtonEdge,
 };
 
+// The canvas is the page's main action — let fitView scale small flows up to 2x instead of the
+// former 0.85 cap, which rendered a fresh two-node workflow noticeably small.
+const WORKFLOW_CANVAS_MAX_ZOOM = 2;
+
 interface WorkflowCanvasProps {
   isEditable: boolean;
   /** Workspace write permission. Distinct from `isEditable` (which is also false when enabled). */
@@ -136,7 +140,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
       currentDefinition ? reorganizeWorkflowDefinition(currentDefinition) : currentDefinition
     );
     // Defer one frame so the new node positions render before RF recenters the viewport.
-    requestAnimationFrame(() => fitView({ padding: 0.25, maxZoom: 0.85, minZoom: 0.4, duration: 300 }));
+    requestAnimationFrame(() =>
+      fitView({ padding: 0.25, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4, duration: 300 })
+    );
   }, [canMutate, setDefinition, fitView]);
 
   const handleRunWorkflow = async () => {
@@ -210,8 +216,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         onNodeClick={(_event, node) => openNodeConfigModal(node.id)}
         className="bg-slate-50"
         fitView
-        fitViewOptions={{ padding: 0.25, maxZoom: 0.85, minZoom: 0.4 }}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.85 }}
+        fitViewOptions={{ padding: 0.25, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4 }}
+        defaultViewport={{ x: 0, y: 0, zoom: WORKFLOW_CANVAS_MAX_ZOOM }}
         nodesDraggable={canMutate}
         nodesConnectable={false}
         snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
