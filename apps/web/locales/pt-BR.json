@@ -4080,7 +4080,6 @@
       "test_problems_description": "Fix these issues before this workflow can run:",
       "test_problems_title": "Workflow has issues",
       "test_success": "Workflow is valid and ready to run.",
-      "trigger_ending_cards_description": "Restrict the trigger to specific endings.",
       "trigger_ending_cards_label": "Ending cards",
       "trigger_ending_cards_none": "This survey has no endings configured.",
       "trigger_ending_cards_pick_survey": "Pick a survey to see its endings.",

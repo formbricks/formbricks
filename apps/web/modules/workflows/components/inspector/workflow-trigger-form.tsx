@@ -161,7 +161,6 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
           {t("workspace.workflows.trigger_ending_cards_label")}
         </Label>
         {renderEndingChoices()}
-        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_description")}</p>
       </div>
     </div>
   );
