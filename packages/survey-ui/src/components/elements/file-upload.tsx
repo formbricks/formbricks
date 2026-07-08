@@ -166,46 +166,45 @@ function UploadArea({
     return null;
   }
 
+  // A single <label> is the whole click/drop surface and the sr-only <input type="file">
+  // is the one real, focusable control (named by the label's visible text via the native
+  // association). No nested <button>: label > button > input tripled up interactive
+  // elements (axe nested-interactive) and the button's aria-label did not contain the
+  // visible text (axe label-content-name-mismatch). data-fb-focus-ring paints the global
+  // focus ring on the dropzone while the hidden input holds focus.
+  //
+  // Deliberately NO htmlFor: the stacked-card renderer keeps every card mounted, so the
+  // question (and its input id) exists more than once in the DOM. An explicit htmlFor
+  // resolves against the FIRST element with that id document-wide — a hidden clone — so
+  // clicks would never reach this card's input and the file dialog would not open. The
+  // implicit wrapping association always targets the input inside THIS label.
   return (
     <label
-      htmlFor={inputId}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className={cn("block w-full", disabled && "cursor-not-allowed")}>
-      <button
-        type="button"
-        onClick={() => {
-          if (fileInputRef.current) {
-            fileInputRef.current.click();
-          }
-        }}
+      data-fb-focus-ring
+      className={cn(
+        "flex w-full flex-col items-center justify-center py-6",
+        "hover:cursor-pointer",
+        disabled && "cursor-not-allowed opacity-50"
+      )}>
+      <Upload className="text-input-text h-6" aria-hidden="true" />
+      <span
+        className="text-input-text font-input-weight m-2 [font-size:var(--fb-input-font-size)]"
+        id={`${inputId}-label`}>
+        {placeholderText}
+      </span>
+      <input
+        ref={fileInputRef}
+        type="file"
+        id={inputId}
+        className="sr-only"
+        multiple={allowMultiple}
+        accept={acceptAttribute}
+        onChange={onFileChange}
         disabled={disabled}
-        className={cn(
-          "flex w-full flex-col items-center justify-center py-6",
-          "hover:cursor-pointer",
-          disabled && "cursor-not-allowed opacity-50"
-        )}
-        aria-label="Upload files by clicking or dragging them here">
-        <Upload className="text-input-text h-6" aria-hidden="true" />
-        <span
-          className="text-input-text font-input-weight m-2 [font-size:var(--fb-input-font-size)]"
-          id={`${inputId}-label`}>
-          {placeholderText}
-        </span>
-        <input
-          ref={fileInputRef}
-          type="file"
-          id={inputId}
-          className="sr-only"
-          multiple={allowMultiple}
-          accept={acceptAttribute}
-          onChange={onFileChange}
-          disabled={disabled}
-          dir={dir}
-          aria-label="File upload"
-          aria-describedby={`${inputId}-label`}
-        />
-      </button>
+        dir={dir}
+      />
     </label>
   );
 }
