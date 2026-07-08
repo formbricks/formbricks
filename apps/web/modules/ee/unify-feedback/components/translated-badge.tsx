@@ -33,7 +33,8 @@ export const TranslatedBadge = ({ langKey, original, locale, className }: Readon
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span
+          <button
+            type="button"
             className={cn(
               "inline-flex shrink-0 cursor-default items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600",
               className
@@ -43,7 +44,7 @@ export const TranslatedBadge = ({ langKey, original, locale, className }: Readon
             onKeyDown={stopPropagation}>
             <LanguagesIcon aria-hidden="true" className="size-3" />
             {label}
-          </span>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
           <span className="font-medium">{t("workspace.unify.original_text")}: </span>

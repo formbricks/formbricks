@@ -108,28 +108,33 @@ const TaxonomyTreeRow = ({
   const isSelected = selectedNodeId === node.id;
   const isRenaming = renamingId === node.id;
 
+  // While renaming, drop the dark "selected" fill so the inline input stays readable.
+  let rowStateClass = "text-slate-800 hover:bg-slate-50";
+  if (isRenaming) {
+    rowStateClass = "bg-slate-50 text-slate-800";
+  } else if (isSelected) {
+    rowStateClass = "bg-slate-900 text-white";
+  }
+
+  // Only expandable rows expose a toggle; leaf rows have no label (the button is hidden).
+  let toggleAriaLabel: string | undefined;
+  if (hasChildren) {
+    toggleAriaLabel = isExpanded
+      ? t("workspace.unify.taxonomy_collapse")
+      : t("workspace.unify.taxonomy_expand");
+  }
+
   return (
     <>
       <div
         className={cn(
           "group flex min-h-9 items-center gap-1 rounded-md pr-2 text-sm transition-colors",
-          // While renaming, drop the dark "selected" fill so the inline input stays readable.
-          isRenaming
-            ? "bg-slate-50 text-slate-800"
-            : isSelected
-              ? "bg-slate-900 text-white"
-              : "text-slate-800 hover:bg-slate-50"
+          rowStateClass
         )}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}>
         <button
           type="button"
-          aria-label={
-            hasChildren
-              ? isExpanded
-                ? t("workspace.unify.taxonomy_collapse")
-                : t("workspace.unify.taxonomy_expand")
-              : undefined
-          }
+          aria-label={toggleAriaLabel}
           className={cn(
             "flex size-6 shrink-0 items-center justify-center rounded",
             !hasChildren && "invisible"

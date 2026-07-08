@@ -60,8 +60,8 @@ export const ZRenameNodeBody = z
   })
   .strict();
 
-export const ZRunIdParams = z.object({ runId: z.string().uuid() }).strict();
-export const ZNodeIdParams = z.object({ nodeId: z.string().uuid() }).strict();
+export const ZRunIdParams = z.object({ runId: z.uuid() }).strict();
+export const ZNodeIdParams = z.object({ nodeId: z.uuid() }).strict();
 
 export type TWorkspaceDirectoryQuery = z.infer<typeof ZWorkspaceDirectoryQuery>;
 export type TTaxonomyStateQuery = z.infer<typeof ZTaxonomyStateQuery>;
