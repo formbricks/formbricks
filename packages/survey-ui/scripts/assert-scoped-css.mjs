@@ -42,11 +42,11 @@ if (/@property\s+--tw-/.test(css)) {
 
 // Any :root/:host token not immediately preceded by a #fbjs scope on the same
 // compound selector. We scan selector preludes only (text before `{`, split on `}`).
-const selectorChunks = css.split("}").map((chunk) => chunk.slice(0, chunk.indexOf("{") + 1 || undefined));
 const globalSelector = /(^|[,\s>+~(])(:root|:host)(?![\w-])/;
-for (const chunk of selectorChunks) {
-  const prelude = chunk.includes("{") ? chunk.slice(0, chunk.indexOf("{")) : "";
-  if (!prelude) continue;
+for (const chunk of css.split("}")) {
+  const braceIndex = chunk.indexOf("{");
+  if (braceIndex === -1) continue;
+  const prelude = chunk.slice(0, braceIndex);
   for (const selector of prelude.split(",")) {
     if (globalSelector.test(selector) && !selector.includes("#fbjs")) {
       violations.push(`unscoped selector: \`${selector.trim().slice(0, 80)}\``);
