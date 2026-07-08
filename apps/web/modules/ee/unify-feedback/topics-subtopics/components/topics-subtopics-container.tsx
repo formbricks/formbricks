@@ -313,6 +313,15 @@ export const TopicsSubtopicsContainer = ({
           </Alert>
         )}
 
+        {/* A run is in progress but its status poll is failing. Polling self-recovers (see
+         * useTaxonomyRun), so surface a soft warning + manual retry rather than a hard error. */}
+        {isRunning && runQuery.isError && (
+          <Alert variant="warning" size="small">
+            <AlertTitle>{t("common.something_went_wrong_please_try_again")}</AlertTitle>
+            <AlertButton onClick={() => void runQuery.refetch()}>{t("common.retry")}</AlertButton>
+          </Alert>
+        )}
+
         <TaxonomyDisplay
           activeTree={activeTree}
           hasScope={scope !== null}

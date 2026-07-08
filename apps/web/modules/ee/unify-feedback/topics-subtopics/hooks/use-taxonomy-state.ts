@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { getTaxonomyState } from "../lib/api-client";
 import { type TTaxonomyScopeSelection, taxonomyKeys } from "../lib/query";
 
@@ -16,7 +17,7 @@ export const useTaxonomyState = ({
     enabled: enabled && scope !== null,
     queryFn: ({ signal }) => {
       if (!scope) {
-        throw new Error("scope is required");
+        throw new InvalidInputError("scope is required");
       }
       return getTaxonomyState({ workspaceId, ...scope, signal });
     },

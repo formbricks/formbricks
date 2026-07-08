@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { renameTaxonomyNode } from "../lib/api-client";
 import { type TTaxonomyScopeSelection, taxonomyKeys } from "../lib/query";
 
@@ -13,7 +14,7 @@ export const useRenameTaxonomyNode = ({
   return useMutation({
     mutationFn: (variables: { nodeId: string; label: string }) => {
       if (!scope) {
-        throw new Error("scope is required");
+        throw new InvalidInputError("scope is required");
       }
       return renameTaxonomyNode({
         workspaceId,

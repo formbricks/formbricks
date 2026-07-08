@@ -363,7 +363,11 @@ export const getActiveTaxonomyTree = async (
     const data = await client.taxonomy.runs.active.getTree(scope);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, tenantId: scope.tenant_id }, "Hub: getActiveTaxonomyTree failed");
+    if (getErrorStatus(err) === 404) {
+      logger.debug({ tenantId: scope.tenant_id }, "Hub: no active taxonomy tree yet");
+    } else {
+      logger.warn({ err, tenantId: scope.tenant_id }, "Hub: getActiveTaxonomyTree failed");
+    }
     return createHubResultFromError(err);
   }
 };

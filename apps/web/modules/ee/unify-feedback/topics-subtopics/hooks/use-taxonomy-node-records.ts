@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { getTaxonomyNodeRecords } from "../lib/api-client";
 import { taxonomyKeys } from "../lib/query";
 
@@ -26,7 +27,7 @@ export const useTaxonomyNodeRecords = ({
     enabled: enabled && nodeId !== null,
     queryFn: ({ signal }) => {
       if (!nodeId) {
-        throw new Error("nodeId is required");
+        throw new InvalidInputError("nodeId is required");
       }
       return getTaxonomyNodeRecords({ workspaceId, directoryId, nodeId, limit, signal });
     },

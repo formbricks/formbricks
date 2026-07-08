@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { triggerTaxonomyRun } from "../lib/api-client";
 import { type TTaxonomyScopeSelection, taxonomyKeys } from "../lib/query";
 
@@ -14,7 +15,7 @@ export const useTriggerTaxonomyRun = ({
   return useMutation({
     mutationFn: (variables: { fieldLabel?: string }) => {
       if (!scope) {
-        throw new Error("scope is required");
+        throw new InvalidInputError("scope is required");
       }
       return triggerTaxonomyRun({
         workspaceId,

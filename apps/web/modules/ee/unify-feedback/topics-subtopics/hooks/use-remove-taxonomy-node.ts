@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { type TTaxonomyStateResponse, removeTaxonomyNode } from "../lib/api-client";
 import { type TTaxonomyScopeSelection, removeNodeFromStateData, taxonomyKeys } from "../lib/query";
 
@@ -14,7 +15,7 @@ export const useRemoveTaxonomyNode = ({
   return useMutation({
     mutationFn: (variables: { nodeId: string }) => {
       if (!scope) {
-        throw new Error("scope is required");
+        throw new InvalidInputError("scope is required");
       }
       return removeTaxonomyNode({ workspaceId, directoryId: scope.directoryId, nodeId: variables.nodeId });
     },

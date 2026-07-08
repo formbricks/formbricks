@@ -10,16 +10,17 @@ export type TTaxonomyScopeSelection = {
 };
 
 /** Typed query-key factory. Never inline string keys — mutation hooks target these exact tuples. */
+const taxonomyCacheKeyBase = ["unify-taxonomy"] as const;
 export const taxonomyKeys = {
-  all: ["unify-taxonomy"] as const,
+  all: taxonomyCacheKeyBase,
   fields: (workspaceId: string, directoryId: string) =>
-    [...taxonomyKeys.all, "fields", workspaceId, directoryId] as const,
+    [...taxonomyCacheKeyBase, "fields", workspaceId, directoryId] as const,
   state: (workspaceId: string, scope: TTaxonomyScopeSelection | null) =>
-    [...taxonomyKeys.all, "state", workspaceId, scope] as const,
+    [...taxonomyCacheKeyBase, "state", workspaceId, scope] as const,
   run: (workspaceId: string, directoryId: string, runId: string) =>
-    [...taxonomyKeys.all, "run", workspaceId, directoryId, runId] as const,
+    [...taxonomyCacheKeyBase, "run", workspaceId, directoryId, runId] as const,
   nodeRecords: (workspaceId: string, directoryId: string, nodeId: string, limit: number) =>
-    [...taxonomyKeys.all, "node-records", workspaceId, directoryId, nodeId, limit] as const,
+    [...taxonomyCacheKeyBase, "node-records", workspaceId, directoryId, nodeId, limit] as const,
 };
 
 function removeNodeFromTree(node: TaxonomyNode, nodeId: string): TaxonomyNode | null {
