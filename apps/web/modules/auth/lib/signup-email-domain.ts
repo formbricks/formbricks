@@ -1,24 +1,22 @@
 import "server-only";
 import disposableEmailDomains from "disposable-email-domains/index.json";
 import { IS_FORMBRICKS_CLOUD, SIGNUP_DOMAIN_CHECK_ON_INVITES } from "@/lib/constants";
-import freeEmailDomains from "./vendor/free-email-domains.json";
+import { PERSONAL_EMAIL_DOMAINS } from "./personal-email-domains";
 
 /**
  * Blocklist of personal / free / disposable email domains, built once at module load.
  *
  * Union of two sources:
- *  - Free/personal providers (gmail, yahoo, outlook, …): vendored at ./vendor/free-email-domains.json.
- *    Vendored from the `free-email-domains` npm package (Kikobeats, HubSpot-derived) rather than
- *    depended on, because that package auto-publishes a new version daily and ships a postinstall
- *    script — an ongoing supply-chain surface we don't want. Regenerate the vendored file by
- *    installing `free-email-domains`, then normalizing its `domains.json` (trim → lowercase → dedupe → sort).
+ *  - Free/personal providers (gmail, yahoo, outlook, …): a small curated list in
+ *    ./personal-email-domains.ts that we expand as we go (its comment points at the full ~12.9k-domain
+ *    `free-email-domains` list to vendor from if we ever want exhaustive coverage).
  *  - Disposable/burner providers (mailinator, 10minutemail, …): the `disposable-email-domains` npm
- *    package (stable, no install scripts).
+ *    package — kept comprehensive because burner domains are long-tail and churn constantly.
  *
- * Server-only: the union is ~130k domains (~2.7MB) and must never be pulled into the client bundle.
+ * Server-only: the disposable list alone is ~121k domains and must never be pulled into the client bundle.
  */
 const blockedEmailDomains = new Set<string>(
-  [...(freeEmailDomains as string[]), ...(disposableEmailDomains as string[])].map((domain) =>
+  [...PERSONAL_EMAIL_DOMAINS, ...(disposableEmailDomains as string[])].map((domain) =>
     domain.trim().toLowerCase()
   )
 );
