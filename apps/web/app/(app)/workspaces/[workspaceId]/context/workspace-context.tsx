@@ -20,6 +20,10 @@ export const useWorkspaceContext = () => {
   return context;
 };
 
+// Like useWorkspaceContext but returns null instead of throwing when used outside
+// a WorkspaceContextWrapper (e.g. the zero-workspaces landing page).
+export const useOptionalWorkspaceContext = () => useContext(WorkspaceContext);
+
 export const useWorkspace = () => {
   const context = useContext(WorkspaceContext);
   if (!context) {

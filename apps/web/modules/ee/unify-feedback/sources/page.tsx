@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
+import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -13,11 +14,12 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackSourcesSection } from "./components/feedback-sources-page-client";
 import { transformToUnifySurvey } from "./lib";
 
-export const WorkspaceFeedbackSourcesPage = async (
+// Renders the Feedback Sources tab of the Unify feedback branch.
+export const UnifyFeedbackSourcesPage = async (
   props: Readonly<{ params: Promise<{ workspaceId: string }> }>
 ) => {
   const t = await getTranslate();
-  const params = await props.params;
+  const { workspaceId } = await props.params;
 
   const {
     isOwner,
@@ -28,14 +30,13 @@ export const WorkspaceFeedbackSourcesPage = async (
     isReadOnly,
     session,
     organization,
-  } = await getWorkspaceAuth(params.workspaceId);
+  } = await getWorkspaceAuth(workspaceId);
 
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
 
   const hasAccess = isOwner || isManager || hasReadAccess || hasReadWriteAccess || hasManageAccess;
-  const pageTitle = t("workspace.unify.feedback_sources");
   if (!hasAccess) {
     return notFound();
   }
@@ -44,10 +45,8 @@ export const WorkspaceFeedbackSourcesPage = async (
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={pageTitle} />
-        <SettingsCard
-          title={t("workspace.unify.feedback_sources")}
-          description={t("workspace.unify.feedback_sources_settings_description")}>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")} />
+        <div className="flex items-center justify-center">
           <UpgradePrompt
             title={t("workspace.unify.upgrade_prompt_title")}
             description={t("workspace.unify.upgrade_prompt_description")}
@@ -67,22 +66,37 @@ export const WorkspaceFeedbackSourcesPage = async (
               },
             ]}
           />
-        </SettingsCard>
+        </div>
       </PageContentWrapper>
     );
   }
 
   const [feedbackSources, surveys, directories] = await Promise.all([
-    getFeedbackSourcesWithMappings(params.workspaceId),
-    getSurveys(params.workspaceId),
-    getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
+    getFeedbackSourcesWithMappings(workspaceId),
+    getSurveys(workspaceId),
+    getFeedbackDirectoriesByWorkspaceId(workspaceId),
   ]);
+
+  if (directories.length === 0) {
+    return (
+      <PageContentWrapper>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
+          <UnifyConfigNavigation workspaceId={workspaceId} activeId="sources" />
+        </PageHeader>
+        <FeedbackDataEmptyState
+          variant="no-directory"
+          organizationId={organization.id}
+          isOwnerOrManager={isOwner || isManager}
+        />
+      </PageContentWrapper>
+    );
+  }
 
   const unifySurveys = surveys.map(transformToUnifySurvey);
 
   return (
     <FeedbackSourcesSection
-      workspaceId={params.workspaceId}
+      workspaceId={workspaceId}
       initialFeedbackSources={feedbackSources}
       initialSurveys={unifySurveys}
       directories={directories}
