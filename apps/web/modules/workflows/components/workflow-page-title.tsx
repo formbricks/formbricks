@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
+import { WorkflowStatusPill } from "@/modules/workflows/components/workflow-status-pill";
 import { getWorkflow } from "@/modules/workflows/lib/api-client";
 import { workflowKeys } from "@/modules/workflows/lib/query";
 import { workflowAtom } from "@/modules/workflows/state/editor";
@@ -22,5 +23,14 @@ export const WorkflowPageTitle = ({ workflowId }: Readonly<WorkflowPageTitleProp
     enabled: !workflow?.name,
   });
 
-  return <>{workflow?.name ?? data?.name ?? null}</>;
+  const resolved = workflow ?? data;
+  if (!resolved) return null;
+
+  // flex-wrap keeps the badge inline next to the name and pushes it below on narrow widths.
+  return (
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="min-w-0">{resolved.name}</span>
+      <WorkflowStatusPill status={resolved.status} size="large" />
+    </span>
+  );
 };
