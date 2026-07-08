@@ -4002,6 +4002,7 @@
       "value_text": "Waarde (tekst)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alfabetisch",
       "archive_confirm_body": "Archiveren schakelt deze workflow uit en stopt de uitvoering ervan. Je kunt het later weer uit het archief halen.",

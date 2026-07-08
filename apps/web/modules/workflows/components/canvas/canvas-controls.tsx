@@ -5,6 +5,7 @@ import {
   LockIcon,
   type LucideIcon,
   MousePointerClickIcon,
+  PlusIcon,
   UnlockIcon,
   ZoomInIcon,
   ZoomOutIcon,
@@ -47,6 +48,15 @@ export const CanvasControls = ({
   const lockLabel = isLocked ? t("workspace.workflows.unlock_canvas") : t("workspace.workflows.lock_canvas");
 
   const controls: ControlDescriptor[] = [
+    {
+      key: "add-node",
+      Icon: PlusIcon,
+      label: t("workspace.workflows.add_node"),
+      variant: "outline",
+      // Placeholder — node insertion from the toolbar isn't wired up yet.
+      disabled: true,
+      onClick: () => {},
+    },
     {
       key: "zoom-in",
       Icon: ZoomInIcon,

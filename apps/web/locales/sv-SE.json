@@ -4002,6 +4002,7 @@
       "value_text": "Värde (text)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alfabetisk",
       "archive_confirm_body": "Arkivering inaktiverar det här arbetsflödet och stoppar det från att köras. Du kan återställa det senare.",

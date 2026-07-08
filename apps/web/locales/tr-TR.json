@@ -4002,6 +4002,7 @@
       "value_text": "Değer (Metin)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alfabetik",
       "archive_confirm_body": "Arşivleme bu iş akışını devre dışı bırakır ve çalışmasını durdurur. Daha sonra tekrar arşivden çıkarabilirsin.",

@@ -3840,6 +3840,7 @@ checksums:
     workspace/unify/value_date: c8d705d1975affc01c002324725fec3f
     workspace/unify/value_number: 1f14da79d14bd7b1c2324141f4470675
     workspace/unify/value_text: e097a597cc507c716401ad18255de578
+    workspace/workflows/add_node: 3f5ba0c2392cf7089f8c02f4214b1e54
     workspace/workflows/add_step: a2feffd01d0e793021996eb437249e7b
     workspace/workflows/alphabetical: 5fcfeff9c5fd28714f0a390e0ddaaaee
     workspace/workflows/archive_confirm_body: faab86aaacb71d5b5dd7b63c00f534c3

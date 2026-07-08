@@ -4002,6 +4002,7 @@
       "value_text": "値 (テキスト)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "アルファベット順",
       "archive_confirm_body": "アーカイブすると、このワークフローが無効化され、実行されなくなります。後で再度アーカイブ解除できます。",

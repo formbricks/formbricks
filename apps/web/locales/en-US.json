@@ -4002,6 +4002,7 @@
       "value_text": "Value (Text)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alphabetical",
       "archive_confirm_body": "Archiving disables this workflow and stops it from running. You can unarchive it again later.",

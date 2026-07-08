@@ -4002,6 +4002,7 @@
       "value_text": "值（文字）"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "字母順序",
       "archive_confirm_body": "封存會停用此工作流程並停止執行。你可以稍後再解除封存。",

@@ -4002,6 +4002,7 @@
       "value_text": "Wert (Text)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alphabetisch",
       "archive_confirm_body": "Durch das Archivieren wird dieser Workflow deaktiviert und die Ausführung gestoppt. Du kannst ihn später wieder aus dem Archiv holen.",

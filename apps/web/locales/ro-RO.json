@@ -4002,6 +4002,7 @@
       "value_text": "Valoare (Text)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alfabetic",
       "archive_confirm_body": "Arhivarea dezactivează acest flux de lucru și îl oprește din rulare. Îl poți dezarhiva mai târziu.",

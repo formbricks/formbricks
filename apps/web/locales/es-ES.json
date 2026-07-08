@@ -4002,6 +4002,7 @@
       "value_text": "Valor (Texto)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alfabético",
       "archive_confirm_body": "Archivar desactiva este flujo de trabajo y evita que se ejecute. Puedes desarchivarlo más adelante.",

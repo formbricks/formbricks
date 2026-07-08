@@ -4002,6 +4002,7 @@
       "value_text": "Érték (szöveg)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Ábécé szerinti",
       "archive_confirm_body": "Az archiválás letiltja ezt a munkafolyamatot és leállítja annak futtatását. Később bármikor visszaállíthatja az archívumból.",

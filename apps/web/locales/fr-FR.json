@@ -4002,6 +4002,7 @@
       "value_text": "Valeur (texte)"
     },
     "workflows": {
+      "add_node": "Add node",
       "add_step": "Add step",
       "alphabetical": "Alphabétique",
       "archive_confirm_body": "L'archivage désactive ce workflow et l'empêche de s'exécuter. Tu pourras le restaurer plus tard.",
