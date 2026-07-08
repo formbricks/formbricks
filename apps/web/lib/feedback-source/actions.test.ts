@@ -49,7 +49,6 @@ vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: vi.fn(),
 }));
 vi.mock("@/modules/hub/service", () => ({ listFeedbackRecords: vi.fn() }));
-vi.mock("./csv-import", () => ({ importCsvData: vi.fn() }));
 vi.mock("./import", () => ({ importHistoricalResponses: vi.fn() }));
 
 vi.mock("./service", () => ({
