@@ -94,7 +94,7 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
-          <div className="flex w-10 items-center justify-center rounded-l-lg bg-brand-dark group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
+          <div className="flex w-10 items-center justify-center rounded-l-[7px] bg-brand-dark group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
             <PlusIcon className="size-5 text-white" />
           </div>
           <div className="px-4 py-3">
