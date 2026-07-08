@@ -324,7 +324,7 @@ export const FeedbackDirectorySettingsModal = ({
                               {source.name} · {source.workspaceName}{" "}
                               <a
                                 className="font-medium text-slate-700 hover:text-slate-900 hover:underline"
-                                href={`/workspaces/${source.workspaceId}/settings/workspace/feedback-sources`}>
+                                href={`/workspaces/${source.workspaceId}/unify/sources`}>
                                 {t("common.view")}
                               </a>
                             </li>
