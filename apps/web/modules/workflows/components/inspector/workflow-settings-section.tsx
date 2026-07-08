@@ -9,7 +9,6 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { InspectorSection } from "@/modules/workflows/components/inspector/workflow-inspector-section";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import {
   setWorkflowDescriptionAtom,
@@ -43,7 +42,10 @@ export const SettingsSection = ({
   };
 
   return (
-    <InspectorSection title={t("workspace.workflows.settings_title")} defaultOpen>
+    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <h2 className="px-4 py-3 text-sm font-semibold text-slate-900">
+        {t("workspace.workflows.settings_title")}
+      </h2>
       <div className="flex flex-col gap-4 border-t border-slate-200 px-4 py-3">
         <div className="flex flex-col gap-2">
           <Label htmlFor="workflow-settings-name">{t("workspace.workflows.workflow_name_label")}</Label>
@@ -117,6 +119,6 @@ export const SettingsSection = ({
         onConfirm={handleArchiveConfirm}
         Icon={ArchiveIcon}
       />
-    </InspectorSection>
+    </section>
   );
 };
