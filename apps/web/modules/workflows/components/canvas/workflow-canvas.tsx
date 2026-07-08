@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Background,
+  BackgroundVariant,
   type EdgeTypes,
   type Node,
   type NodeTypes,
@@ -175,7 +177,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
       className={cn(
         "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         {isTestable ? (
           <Button variant="secondary" onClick={handleRunWorkflow} loading={isTesting} disabled={isTesting}>
             <PlayIcon className="size-4" />
@@ -204,7 +206,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         onNodesChange={handleNodesChange}
         onNodeDragStop={(_event, node) => handleNodeDragStop(node)}
         onNodeClick={(_event, node) => openNodeConfigModal(node.id)}
-        className="bg-white"
+        className="bg-slate-50"
         fitView
         fitViewOptions={{ padding: 0.25, maxZoom: 0.85, minZoom: 0.4 }}
         defaultViewport={{ x: 0, y: 0, zoom: 0.85 }}
@@ -213,8 +215,10 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
         snapToGrid={isSnapToCanvasEnabled}
         proOptions={{ hideAttribution: true }}
-        elementsSelectable
-      />
+        elementsSelectable>
+        {/* Same dot grid the pre-ReactFlow mockup used: radial-gradient(#cbd5e1 1px) on an 18px grid. */}
+        <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
+      </ReactFlow>
       <CanvasControls
         canEdit={isEditable}
         canMutate={canMutate}
