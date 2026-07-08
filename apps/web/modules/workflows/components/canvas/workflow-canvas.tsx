@@ -183,8 +183,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
           onClick={handleRunWorkflow}
           loading={isTesting}
           disabled={!isTestable || isTesting}>
-          <PlayIcon className="size-4" />
           {t("workspace.workflows.test")}
+          <PlayIcon className="size-4" />
         </Button>
         <Button
           variant="outline"

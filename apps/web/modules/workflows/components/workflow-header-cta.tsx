@@ -61,8 +61,8 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           onClick={builder.unarchive}
           loading={builder.isTransitioning}
           disabled={isReadOnly || builder.isTransitioning}>
-          <ArchiveRestoreIcon />
           {t("common.unarchive")}
+          <ArchiveRestoreIcon />
         </Button>
       ) : (
         <>
@@ -75,11 +75,11 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             size="sm"
             onClick={() => setIsArchiveModalOpen(true)}
             disabled={isReadOnly || builder.isTransitioning || builder.isSaving}>
-            <ArchiveIcon />
             {t("common.archive")}
+            <ArchiveIcon />
           </Button>
           {/* Save sits second as a secondary action — where users instinctively look for it. The
-              leading Save icon turns into the spinner while saving (single icon slot, never both),
+              trailing Save icon turns into the spinner while saving (single icon slot, never both),
               so the label never shifts. */}
           <Button
             type="button"
@@ -88,8 +88,8 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             onClick={handleSave}
             disabled={!builder.canEditMetadata || builder.isTransitioning || builder.isSaving}
             className="min-w-[6rem] justify-center">
-            {builder.isSaving ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
             {t("common.save")}
+            {builder.isSaving ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
           </Button>
           {/* Lifecycle control as a toggle: the switch position communicates the current state
               (on = running) instead of an Enable/Disable action label the user has to invert.
