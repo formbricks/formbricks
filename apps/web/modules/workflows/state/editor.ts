@@ -215,17 +215,22 @@ export const closeWorkflowNodeConfigModalAtom = atom(null, (get, set) => {
   );
 });
 
-// The canvas cog toggles the workflow Settings view: it expands a collapsed inspector, switches
-// an open node-config view back to Settings, and only collapses the inspector when Settings is
-// already the visible view.
-export const toggleWorkflowSettingsPanelAtom = atom(null, (get, set) => {
+export const toggleWorkflowInspectorAtom = atom(null, (get, set) => {
   set(
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
-      if (!draft.isInspectorCollapsed && !draft.isNodeConfigModalOpen) {
-        draft.isInspectorCollapsed = true;
-        return;
-      }
+      draft.isInspectorCollapsed = !draft.isInspectorCollapsed;
+    })
+  );
+});
+
+// The canvas cog opens the workflow Settings view: it expands a collapsed inspector and switches
+// an open node-config view back to Settings. It never collapses — that stays with the inspector
+// toggle button next to it.
+export const openWorkflowSettingsPanelAtom = atom(null, (get, set) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
       draft.isInspectorCollapsed = false;
       draft.isNodeConfigModalOpen = false;
     })

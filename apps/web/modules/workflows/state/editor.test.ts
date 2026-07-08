@@ -16,6 +16,7 @@ import {
   isWorkflowSnapToCanvasEnabledAtom,
   isWorkflowTransitioningAtom,
   openWorkflowNodeConfigModalAtom,
+  openWorkflowSettingsPanelAtom,
   selectedWorkflowNodeIdAtom,
   setSelectedWorkflowNodeIdAtom,
   setWorkflowAtom,
@@ -26,7 +27,7 @@ import {
   setWorkflowSavingAtom,
   setWorkflowSnapToCanvasEnabledAtom,
   setWorkflowTransitioningAtom,
-  toggleWorkflowSettingsPanelAtom,
+  toggleWorkflowInspectorAtom,
   workflowAtom,
   workflowDefinitionAtom,
   workflowDescriptionAtom,
@@ -116,20 +117,25 @@ describe("inspector + node-config modal", () => {
   test("toggle flips the collapsed flag", () => {
     const store = createStore();
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
-    store.set(toggleWorkflowSettingsPanelAtom);
+    store.set(toggleWorkflowInspectorAtom);
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(true);
 
-    store.set(toggleWorkflowSettingsPanelAtom);
+    store.set(toggleWorkflowInspectorAtom);
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
   });
 
-  test("toggle switches an open node-config view back to Settings instead of collapsing", () => {
+  test("openWorkflowSettingsPanelAtom expands the inspector and leaves the node-config view", () => {
     const store = createStore();
     store.set(openWorkflowNodeConfigModalAtom, "node-1");
-    expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(true);
+    store.set(toggleWorkflowInspectorAtom); // collapse on top of the node-config view
+    expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(true);
 
-    store.set(toggleWorkflowSettingsPanelAtom);
+    store.set(openWorkflowSettingsPanelAtom);
     expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(false);
+    expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
+
+    // Idempotent: opening again keeps Settings visible instead of collapsing.
+    store.set(openWorkflowSettingsPanelAtom);
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
   });
 
@@ -198,7 +204,7 @@ describe("canMutateCanvasAtom", () => {
 describe("openWorkflowNodeConfigModalAtom", () => {
   test("expands a collapsed inspector when a node is opened", () => {
     const store = createStore();
-    store.set(toggleWorkflowSettingsPanelAtom); // collapse
+    store.set(toggleWorkflowInspectorAtom); // collapse
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(true);
 
     store.set(openWorkflowNodeConfigModalAtom, "node-9");
