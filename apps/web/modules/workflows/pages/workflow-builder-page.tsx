@@ -42,6 +42,8 @@ export const WorkflowBuilderPage = ({
         <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
         <WorkflowEmailAuthoringProvider value={emailAuthoringContext}>
           <WorkflowInspectorPanel
+            workflowId={workflowId}
+            isReadOnly={isReadOnly}
             canEditMetadata={builder.canEditMetadata}
             isEditingNode={builder.canEditDefinition}
             onSaveNode={builder.save}
