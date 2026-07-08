@@ -2,6 +2,7 @@ import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
+import { HUB_VALUE_ID_ENABLED } from "@/lib/constants";
 import { getHubClient } from "./hub-client";
 import type {
   CreateTaxonomyRunInput,
@@ -38,6 +39,17 @@ export type HubFeedbackRecordResult = {
 };
 
 /**
+ * The deployed Hub rejects unknown request fields, and value_id ships with ENG-1671.
+ * Ingestion always computes it (ENG-1673); send it only when the Hub deployment
+ * supports it (HUB_VALUE_ID_ENABLED=1), otherwise strip it so creates keep working.
+ */
+const toHubCreatePayload = (input: FeedbackRecordCreateParams): FeedbackRecordCreateParams => {
+  if (HUB_VALUE_ID_ENABLED) return input;
+  const { value_id, ...rest } = input;
+  return rest;
+};
+
+/**
  * Create a single feedback record in the Hub.
  * Returns a result shape with data or error; logs failures.
  */
@@ -49,7 +61,7 @@ export const createFeedbackRecord = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
-    const data = await client.feedbackRecords.create(input);
+    const data = await client.feedbackRecords.create(toHubCreatePayload(input));
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
@@ -268,7 +280,7 @@ export const createFeedbackRecordsBatch = async (
   const results = await Promise.all(
     inputs.map(async (input) => {
       try {
-        const data = await client.feedbackRecords.create(input);
+        const data = await client.feedbackRecords.create(toHubCreatePayload(input));
         return { data, error: null as HubFeedbackRecordResult["error"] };
       } catch (err) {
         logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");

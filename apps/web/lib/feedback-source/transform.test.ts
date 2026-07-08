@@ -702,4 +702,129 @@ describe("transformResponseToFeedbackRecords", () => {
       });
     });
   });
+
+  describe("stable option identity via value_id (ENG-1673)", () => {
+    const survey = {
+      id: "survey-1",
+      name: "Identity Survey",
+      blocks: [
+        {
+          elements: [
+            {
+              id: "el-gender",
+              type: "multipleChoiceSingle",
+              headline: { default: "Gender", ar: "الجنس" },
+              choices: [
+                { id: "c-male", label: { default: "Male", ar: "ذكر" } },
+                { id: "c-female", label: { default: "Female", ar: "أنثى" } },
+              ],
+            },
+            {
+              id: "el-feats",
+              type: "multipleChoiceMulti",
+              headline: { default: "Select features" },
+              choices: [
+                { id: "c-speed", label: { default: "Speed" } },
+                { id: "c-quality", label: { default: "Quality" } },
+              ],
+            },
+            {
+              id: "el-text",
+              type: "openText",
+              headline: { default: "Anything else?" },
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const buildResponse = (data: Record<string, unknown>, language = "default"): TResponse =>
+      ({
+        id: "resp-value-id",
+        createdAt: NOW,
+        data,
+        language,
+      }) as unknown as TResponse;
+
+    test("sets value_id to the matched choice id for a single select", () => {
+      const response = buildResponse({ "el-gender": "ذكر" }, "ar");
+      const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+
+      expect(result[0].value_id).toBe("c-male");
+      expect(result[0].value_text).toBe("Male");
+    });
+
+    test("sets value_id for default-language single select answers too", () => {
+      const response = buildResponse({ "el-gender": "Female" });
+      const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+
+      expect(result[0].value_id).toBe("c-female");
+    });
+
+    test("omits value_id when the value matches no choice (other / free text)", () => {
+      const response = buildResponse({ "el-gender": "self-described" });
+      const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+
+      expect(result[0].value_id).toBeUndefined();
+      expect(result[0].value_text).toBe("self-described");
+    });
+
+    test("omits value_id for multi select (joined record cannot carry multiple ids)", () => {
+      const response = buildResponse({ "el-feats": ["Speed", "Quality"] });
+      const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+
+      expect(result[0].value_id).toBeUndefined();
+      expect(result[0].value_text).toBe("Speed, Quality");
+    });
+
+    test("omits value_id for non-choice elements", () => {
+      const response = buildResponse({ "el-text": "free text" });
+      const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
+
+      const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+
+      expect(result[0].value_id).toBeUndefined();
+    });
+
+    test("sets value_id to the matched column id for matrix answers", () => {
+      const matrixSurvey = {
+        id: "survey-1",
+        name: "Matrix Survey",
+        blocks: [
+          {
+            elements: [
+              {
+                id: "el-matrix",
+                type: "matrix",
+                headline: { default: "Rate each feature" },
+                rows: [{ id: "row-1", label: { default: "Speed", ar: "سرعة" } }],
+                columns: [
+                  { id: "col-1", label: { default: "Good", ar: "جيد" } },
+                  { id: "col-2", label: { default: "Bad", ar: "سيئ" } },
+                ],
+              },
+            ],
+          },
+        ],
+      } as unknown as TSurvey;
+      const response = buildResponse({ "el-matrix": { سرعة: "جيد" } }, "ar");
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings, mockTenantId);
+
+      expect(result[0]).toMatchObject({
+        field_id: "el-matrix__row-1",
+        value_text: "Good",
+        value_id: "col-1",
+      });
+    });
+  });
 });

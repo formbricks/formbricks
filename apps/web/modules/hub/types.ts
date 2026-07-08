@@ -1,6 +1,12 @@
 import type FormbricksHub from "@formbricks/hub";
 
-export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams;
+// value_id (ENG-1671/ENG-1673): stable id of the selected option in the source system (a survey
+// choice id or matrix column id), alongside the canonical display label in value_text. The
+// published SDK and deployed Hub predate it — the service layer strips it from create calls
+// until HUB_VALUE_ID_ENABLED is set (the Hub API rejects unknown fields).
+export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams & {
+  value_id?: string;
+};
 export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
 export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
 
@@ -9,6 +15,7 @@ export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParam
 export type FeedbackRecordData = FormbricksHub.FeedbackRecordData & {
   value_text_translated?: string | null;
   translation_lang_key?: string | null;
+  value_id?: string | null;
 };
 
 export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListResponse, "data"> & {

@@ -50,6 +50,9 @@ vi.mock("@/lib/cache", () => ({
   },
 }));
 
+const mockConstants = vi.hoisted(() => ({ HUB_VALUE_ID_ENABLED: false }));
+vi.mock("@/lib/constants", () => mockConstants);
+
 const { getHubClient } = await import("./hub-client");
 const { cache } = await import("@/lib/cache");
 
@@ -101,6 +104,28 @@ describe("hub service", () => {
 
       expect(result.error).toBeNull();
       expect(result.data).toEqual(created);
+    });
+
+    test("strips value_id from the payload while the Hub does not support it (ENG-1673)", async () => {
+      mockConstants.HUB_VALUE_ID_ENABLED = false;
+      const create = vi.fn().mockResolvedValue({ id: "hub-1" });
+      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
+
+      await createFeedbackRecord({ ...sampleInput, value_id: "c-male" });
+
+      expect(create).toHaveBeenCalledWith(sampleInput);
+      expect(create.mock.calls[0][0]).not.toHaveProperty("value_id");
+    });
+
+    test("sends value_id when HUB_VALUE_ID_ENABLED is on", async () => {
+      mockConstants.HUB_VALUE_ID_ENABLED = true;
+      const create = vi.fn().mockResolvedValue({ id: "hub-1" });
+      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
+
+      await createFeedbackRecord({ ...sampleInput, value_id: "c-male" });
+
+      expect(create).toHaveBeenCalledWith({ ...sampleInput, value_id: "c-male" });
+      mockConstants.HUB_VALUE_ID_ENABLED = false;
     });
 
     test("returns error result when client.create throws", async () => {

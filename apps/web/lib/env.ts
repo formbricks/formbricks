@@ -268,6 +268,9 @@ const parsedEnv = createEnv({
     HTTPS_PROXY: z.url().optional(),
     HUB_API_URL: z.url(),
     HUB_API_KEY: z.string().trim().min(1),
+    // The deployed Hub rejects unknown fields; set to "1" once the Hub supports value_id (ENG-1671)
+    // so ingestion starts sending it. Until then the service layer strips it from create calls.
+    HUB_VALUE_ID_ENABLED: z.enum(["1", "0"]).optional(),
     IMPRINT_URL: z
       .url()
       .optional()
@@ -440,6 +443,7 @@ const parsedEnv = createEnv({
     HTTPS_PROXY: process.env.HTTPS_PROXY,
     HUB_API_URL: process.env.HUB_API_URL,
     HUB_API_KEY: process.env.HUB_API_KEY,
+    HUB_VALUE_ID_ENABLED: process.env.HUB_VALUE_ID_ENABLED,
     IMPRINT_URL: process.env.IMPRINT_URL,
     IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,

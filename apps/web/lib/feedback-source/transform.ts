@@ -33,31 +33,48 @@ const findChoiceByLabel = <T extends { id: string; label: TSurveyElementChoice["
   return choices.find((choice) => getChoiceLabel(choice, language) === label);
 };
 
+interface NormalizedChoiceValue {
+  value: TResponseDataValue;
+  /**
+   * Stable id of the matched choice (ENG-1673). Only set for single-value answers that
+   * matched a choice — multi-value answers collapse into one joined record that cannot
+   * carry multiple ids, and unmatched values ("other" free text, edited labels) have none.
+   */
+  valueId?: string;
+}
+
 /**
  * Selected choice values arrive as labels localized to the response language, so a
  * bilingual survey would otherwise split one option into a category per language in
  * Hub analytics (e.g. Gender charting as Male/Female/ذكر/أنثى). Map each selected
  * label back to its choice and store the default-language label as the canonical
- * value. Labels that match no choice (an "other" free-text answer, or a choice label
+ * value, plus the choice id as a stable identity where one selection maps to one
+ * record. Labels that match no choice (an "other" free-text answer, or a choice label
  * edited since submission) pass through unchanged.
  */
 const normalizeChoiceValue = (
   choices: { id: string; label: TSurveyElementChoice["label"] }[] | undefined,
   value: TResponseDataValue,
   language: string
-): TResponseDataValue => {
-  if (!choices?.length) return value;
+): NormalizedChoiceValue => {
+  if (!choices?.length) return { value };
 
-  const canonicalize = (label: string): string => {
-    const choice = findChoiceByLabel(choices, label, language);
-    return choice ? getChoiceLabel(choice, "default") : label;
-  };
-
-  if (typeof value === "string") return canonicalize(value);
-  if (Array.isArray(value)) {
-    return value.map((item) => (typeof item === "string" ? canonicalize(item) : item));
+  if (typeof value === "string") {
+    const choice = findChoiceByLabel(choices, value, language);
+    return choice ? { value: getChoiceLabel(choice, "default"), valueId: choice.id } : { value };
   }
-  return value;
+
+  if (Array.isArray(value)) {
+    return {
+      value: value.map((item) => {
+        if (typeof item !== "string") return item;
+        const choice = findChoiceByLabel(choices, item, language);
+        return choice ? getChoiceLabel(choice, "default") : item;
+      }),
+    };
+  }
+
+  return { value };
 };
 
 const toIsoTimestamp = (value: unknown): string | null => {
@@ -181,13 +198,14 @@ const expandMatrixToRecords = (
     const row = findChoiceByLabel<TSurveyMatrixElementChoice>(element.rows, rowLabel, language);
     if (!row) continue;
 
-    // Column labels are localized like the row labels — store the canonical one (ENG-1566).
+    // Column labels are localized like the row labels — store the canonical one (ENG-1566)
+    // plus the column id as stable identity (ENG-1673).
     const canonicalColumn = normalizeChoiceValue(
       element.columns,
       columnLabel as TResponseDataValue,
       language
     );
-    const valueFields = convertValueToHubFields(canonicalColumn, mapping.hubFieldType);
+    const valueFields = convertValueToHubFields(canonicalColumn.value, mapping.hubFieldType);
 
     records.push({
       ...baseFields,
@@ -198,6 +216,7 @@ const expandMatrixToRecords = (
       field_group_label: groupLabel,
       metadata: { question_type: "matrix" },
       ...valueFields,
+      ...(canonicalColumn.valueId ? { value_id: canonicalColumn.valueId } : {}),
     });
   }
 
@@ -280,11 +299,11 @@ export function transformResponseToFeedbackRecords(
     const isChoiceElement =
       element?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
       element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti;
-    const normalizedValue = isChoiceElement
+    const normalized = isChoiceElement
       ? normalizeChoiceValue(element.choices, value, baseFields.language ?? "default")
-      : value;
+      : { value };
 
-    const valueFields = convertValueToHubFields(normalizedValue, mapping.hubFieldType);
+    const valueFields = convertValueToHubFields(normalized.value, mapping.hubFieldType);
 
     feedbackRecords.push({
       ...baseFields,
@@ -292,6 +311,7 @@ export function transformResponseToFeedbackRecords(
       field_type: mapping.hubFieldType,
       field_label: fieldLabel,
       ...valueFields,
+      ...(normalized.valueId ? { value_id: normalized.valueId } : {}),
     });
   }
 
