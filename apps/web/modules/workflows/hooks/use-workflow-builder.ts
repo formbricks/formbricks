@@ -1,6 +1,7 @@
 "use client";
 
 import { useAtomValue, useSetAtom, useStore } from "jotai";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -52,6 +53,7 @@ export const useWorkflowBuilder = ({
   loadOnMount = true,
 }: UseWorkflowBuilderArgs) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const store = useStore();
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
@@ -152,13 +154,17 @@ export const useWorkflowBuilder = ({
     try {
       const savedWorkflow = await updateWorkflow(currentWorkflow.id, payload);
       setWorkflow(savedWorkflow);
+      // Re-run the server loaders so server-resolved props (e.g. the email authoring context,
+      // which resolves the trigger's bound survey) catch up with the just-saved definition.
+      // Client state (atoms, form drafts) survives a refresh.
+      router.refresh();
       toast.success(t("workspace.workflows.save_success"));
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.save_failed")));
     } finally {
       setIsSaving(false);
     }
-  }, [store, setWorkflow, setIsSaving, t]);
+  }, [store, setWorkflow, setIsSaving, router, t]);
 
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {

@@ -17,6 +17,11 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+const routerRefresh = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: routerRefresh }),
+}));
+
 const getWorkflow = vi.fn();
 const updateWorkflow = vi.fn();
 const enableWorkflow = vi.fn();
@@ -59,6 +64,7 @@ const renderBuilder = (args: Parameters<typeof useWorkflowBuilder>[0]) => {
 beforeEach(() => {
   toastSuccess.mockClear();
   toastError.mockClear();
+  routerRefresh.mockClear();
   getWorkflow.mockReset();
   updateWorkflow.mockReset();
   enableWorkflow.mockReset();
@@ -146,6 +152,8 @@ describe("save", () => {
 
     expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "From API" }));
     expect(toastSuccess).toHaveBeenCalledWith("workspace.workflows.save_success");
+    // Server-resolved props (email authoring context) must catch up with the saved definition.
+    expect(routerRefresh).toHaveBeenCalled();
   });
 
   test("save reports a failure toast", async () => {
@@ -160,6 +168,7 @@ describe("save", () => {
     });
 
     expect(toastError).toHaveBeenCalled();
+    expect(routerRefresh).not.toHaveBeenCalled();
   });
 });
 
