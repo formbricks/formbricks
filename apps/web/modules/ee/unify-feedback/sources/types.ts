@@ -236,7 +236,7 @@ sub-003,2026-01-15T10:10:30Z,nps_comment,text,"Documentation could be clearer",c
 
 export const MAX_CSV_VALUES = {
   FILE_SIZE: 15 * 1024 * 1024, // 15MB
-  RECORDS: 1_000, // 1,000 records
+  RECORDS: 10_000, // 10,000 records
 } as const;
 
 export const createFeedbackCSVDataSchema = (t: TFunction) =>

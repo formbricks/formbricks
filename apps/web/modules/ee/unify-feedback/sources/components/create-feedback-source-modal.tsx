@@ -15,6 +15,7 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
+import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -82,6 +83,8 @@ interface CreateFeedbackSourceModalProps {
     fieldMappings?: TFieldMapping[];
   }) => Promise<string | undefined>;
   surveys: TUnifySurvey[];
+  /** Survey ids that already have a feedback source — disabled in the picker (one source per survey). */
+  connectedSurveyIds?: string[];
   workspaceId: string;
   directories: { id: string; name: string }[];
 }
@@ -131,10 +134,12 @@ export const CreateFeedbackSourceModal = ({
   showTrigger = true,
   onCreateFeedbackSource,
   surveys,
+  connectedSurveyIds = [],
   workspaceId,
   directories,
 }: CreateFeedbackSourceModalProps) => {
   const { t } = useTranslation();
+  const connectedSurveyIdSet = useMemo(() => new Set(connectedSurveyIds), [connectedSurveyIds]);
   const { workspace } = useWorkspace();
 
   const defaultFeedbackSourceName = useMemo<Record<TFeedbackSourceType, string>>(
@@ -486,7 +491,7 @@ export const CreateFeedbackSourceModal = ({
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent width="wide">
           {isImporting && (
             <div className="absolute inset-0 z-50 flex items-center justify-center rounded-lg bg-white/80">
               <div className="flex flex-col items-center gap-3">
@@ -519,16 +524,52 @@ export const CreateFeedbackSourceModal = ({
                   onSubmit={formbricksForm.handleSubmit(handleCreateFormbricksFeedbackSource)}>
                   <FormField
                     control={formbricksForm.control}
-                    name="sourceName"
+                    name="surveyId"
                     render={({ field, fieldState: { error } }) => (
                       <FormItem>
-                        <FormLabel>{t("workspace.unify.source_name")}</FormLabel>
+                        <FormLabel>{t("workspace.unify.select_survey")}</FormLabel>
                         <FormControl>
-                          <Input
+                          <Select
                             value={field.value}
-                            onChange={field.onChange}
-                            placeholder={t("workspace.unify.enter_name_for_source")}
-                          />
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              // Auto-fill the source name from the survey so users don't have to.
+                              // They can still rename it later in the Edit modal.
+                              const survey = surveys.find((item) => item.id === value);
+                              if (survey) {
+                                formbricksForm.setValue(
+                                  "sourceName",
+                                  t("workspace.unify.source_connector_name", { surveyName: survey.name }),
+                                  {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                  }
+                                );
+                              }
+                            }}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("workspace.unify.select_survey")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {surveys.map((survey) => {
+                                const alreadyConnected = connectedSurveyIdSet.has(survey.id);
+                                return (
+                                  <SelectItem key={survey.id} value={survey.id} disabled={alreadyConnected}>
+                                    <span className="flex items-center gap-2">
+                                      {survey.name}
+                                      {alreadyConnected && (
+                                        <Badge
+                                          text={t("workspace.unify.survey_already_connected")}
+                                          type="gray"
+                                          size="tiny"
+                                        />
+                                      )}
+                                    </span>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         {error?.message && (
                           <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
@@ -540,33 +581,6 @@ export const CreateFeedbackSourceModal = ({
                   {directories.length === 0 && (
                     <NoFeedbackDirectoryAlert organizationId={workspace?.organizationId} t={t} />
                   )}
-
-                  <FormField
-                    control={formbricksForm.control}
-                    name="surveyId"
-                    render={({ field, fieldState: { error } }) => (
-                      <FormItem>
-                        <FormLabel>{t("workspace.unify.select_survey")}</FormLabel>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("workspace.unify.select_survey")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {surveys.map((survey) => (
-                                <SelectItem key={survey.id} value={survey.id}>
-                                  {survey.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        {error?.message && (
-                          <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
-                        )}
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
                     control={formbricksForm.control}

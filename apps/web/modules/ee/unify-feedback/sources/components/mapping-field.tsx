@@ -6,15 +6,10 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
+  InputCombobox,
+  TComboboxGroupedOption,
+  TComboboxOption,
+} from "@/modules/ui/components/input-combo-box";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
 import { TFieldMapping, TSourceField, TTargetField } from "../types";
@@ -59,10 +54,6 @@ const SENTINEL = {
   EDIT_FIXED: "__edit_fixed__",
   CLEAR: "__clear__",
 } as const;
-
-const GROUP_LABEL_CLASS = "px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-500";
-const ACTION_ITEM_CLASS = "text-slate-700 focus:bg-slate-50";
-const ACTION_ICON_CLASS = "h-3.5 w-3.5 text-slate-500";
 
 interface FormTargetFieldProps {
   field: TTargetField;
@@ -115,19 +106,104 @@ export const FormTargetField = ({
     return "";
   }, [mapping, isEnum]);
 
-  const selectDisplayValue = useMemo(() => {
-    if (mapping?.sourceFieldId) {
-      return sourceFields.find((sourceField) => sourceField.id === mapping.sourceFieldId)?.name;
-    }
-    if (mapping?.staticValue === "$now") return t("workspace.unify.csv_now_label");
-    if (isEnum && mapping?.staticValue) return mapping.staticValue;
-    if (mapping?.staticValue !== undefined && mapping?.staticValue !== "") {
-      return t("workspace.unify.csv_fixed_value_label", {
-        value: truncate(mapping.staticValue, 40),
+  // A single grouped option-set drives the picker. InputCombobox's validOptions uses the flat
+  // `options` prop exclusively when it is non-empty and otherwise falls back to groupedOptions, so
+  // everything (columns, enum values, actions) must live in ONE source or a selected value won't
+  // resolve for display. We keep it all in groupedOptions and pass an empty flat `options`.
+  const comboboxGroupedOptions = useMemo((): TComboboxGroupedOption[] => {
+    const groups: TComboboxGroupedOption[] = [];
+
+    // CSV columns are mappable for every field type — including enum, where a column carries the
+    // per-row enum value (this is what auto-mapping produces, e.g. field_type -> the "type" column).
+    if (sourceFields.length > 0) {
+      groups.push({
+        label: t("workspace.unify.csv_columns"),
+        value: "csv-columns",
+        options: sourceFields.map((column) => {
+          const sampleValue = column.sampleValue?.trim();
+          const otherUsage = otherUsageByColumn[column.id];
+          const meta: Record<string, string> = {};
+
+          if (sampleValue) {
+            meta.hint = t("workspace.unify.csv_first_value", { value: truncate(sampleValue, 48) });
+          }
+          if (otherUsage) {
+            meta.badge = t("workspace.unify.csv_column_used_by", { target: otherUsage });
+          }
+
+          return {
+            value: `${SENTINEL.COLUMN_PREFIX}${column.id}`,
+            label: column.name,
+            meta: Object.keys(meta).length > 0 ? meta : undefined,
+          };
+        }),
       });
     }
-    return undefined;
-  }, [isEnum, mapping, sourceFields, t]);
+
+    // Enum fields also offer their allowed values as static picks.
+    if (isEnum && field.enumValues?.length) {
+      groups.push({
+        label: t("workspace.unify.enum"),
+        value: "enum-values",
+        options: field.enumValues.map((enumValue) => ({
+          value: `${SENTINEL.ENUM_PREFIX}${enumValue}`,
+          label: enumValue,
+        })),
+      });
+    }
+
+    const actionOptions: TComboboxOption[] = [];
+
+    // "Set to now" and free-text fixed values only apply to non-enum fields.
+    if (!isEnum) {
+      if (isTimestamp) {
+        actionOptions.push({
+          value: SENTINEL.STATIC_NOW,
+          label: t("workspace.unify.csv_now_label"),
+          icon: ClockIcon,
+        });
+      }
+
+      actionOptions.push({
+        value: SENTINEL.EDIT_FIXED,
+        label:
+          mapping?.staticValue && mapping.staticValue !== "$now"
+            ? t("workspace.unify.csv_fixed_value_label", {
+                value: truncate(mapping.staticValue, 40),
+              })
+            : t("workspace.unify.csv_fixed_value_action"),
+        icon: TextCursorInputIcon,
+      });
+    }
+
+    if (!field.required && hasMapping) {
+      actionOptions.push({
+        value: SENTINEL.CLEAR,
+        label: t("workspace.unify.clear_mapping"),
+        icon: EraserIcon,
+      });
+    }
+
+    if (actionOptions.length > 0) {
+      groups.push({
+        label: t("common.actions"),
+        value: "actions",
+        options: actionOptions,
+      });
+    }
+
+    return groups;
+  }, [
+    field.enumValues,
+    field.required,
+    hasMapping,
+    isEnum,
+    isTimestamp,
+    mapping?.staticValue,
+    otherUsageByColumn,
+    sourceFields,
+    t,
+  ]);
 
   const openFixedValueEditor = () => {
     setDraftFixedValue(mapping?.staticValue && mapping.staticValue !== "$now" ? mapping.staticValue : "");
@@ -179,7 +255,7 @@ export const FormTargetField = ({
   return (
     <div className="rounded-md border border-slate-200 bg-white p-3">
       <div className="flex items-baseline gap-2">
-        <span className="font-medium text-slate-900">{field.name}</span>
+        <span className="text-sm font-medium text-slate-800">{field.name}</span>
         {field.required && <span className="text-xs text-red-500">*</span>}
         {isEnum && <span className="text-xs text-slate-400">{t("workspace.unify.enum")}</span>}
         {hasMapping && autoMapState && <AutoMappedBadge sourceColumn={autoMapSourceColumn} />}
@@ -215,101 +291,27 @@ export const FormTargetField = ({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <Select value={selectValue} onValueChange={handleSelectChange}>
-                <SelectTrigger className="h-9 w-full bg-white">
-                  <SelectValue
-                    placeholder={
-                      isEnum
-                        ? t("workspace.unify.select_a_value")
-                        : t("workspace.unify.csv_pick_column_placeholder")
-                    }>
-                    {selectDisplayValue}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {isEnum &&
-                    field.enumValues?.map((enumValue) => (
-                      <SelectItem key={enumValue} value={`${SENTINEL.ENUM_PREFIX}${enumValue}`}>
-                        {enumValue}
-                      </SelectItem>
-                    ))}
-                  {!isEnum && sourceFields.length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel className={GROUP_LABEL_CLASS}>
-                        {t("workspace.unify.csv_columns")}
-                      </SelectLabel>
-                      {sourceFields.map((column) => {
-                        const otherUsage = otherUsageByColumn[column.id];
-                        const sampleValue = column.sampleValue?.trim();
-                        const sampleLabel = sampleValue
-                          ? t("workspace.unify.csv_first_value", { value: truncate(sampleValue, 48) })
-                          : undefined;
-                        return (
-                          <SelectItem
-                            key={column.id}
-                            value={`${SENTINEL.COLUMN_PREFIX}${column.id}`}
-                            textValue={column.name}
-                            className="py-2">
-                            <span className="flex min-w-0 flex-col">
-                              <span className="flex min-w-0 items-center gap-2">
-                                <span className="truncate text-slate-900">{column.name}</span>
-                                {otherUsage && (
-                                  <span className="shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
-                                    {t("workspace.unify.csv_column_used_by", { target: otherUsage })}
-                                  </span>
-                                )}
-                              </span>
-                              {sampleLabel && (
-                                <span className="mt-0.5 truncate text-xs font-normal text-slate-400">
-                                  {sampleLabel}
-                                </span>
-                              )}
-                            </span>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectGroup>
-                  )}
-                  {isTimestamp && (
-                    <>
-                      <SelectSeparator />
-                      <SelectItem value={SENTINEL.STATIC_NOW} className={ACTION_ITEM_CLASS}>
-                        <span className="inline-flex items-center gap-2 font-normal">
-                          <ClockIcon className={ACTION_ICON_CLASS} />
-                          {t("workspace.unify.csv_now_label")}
-                        </span>
-                      </SelectItem>
-                    </>
-                  )}
-                  {!isEnum && (
-                    <>
-                      <SelectSeparator />
-                      <SelectItem value={SENTINEL.EDIT_FIXED} className={ACTION_ITEM_CLASS}>
-                        <span className="inline-flex items-center gap-2 font-normal">
-                          <TextCursorInputIcon className="size-3.5 text-indigo-500" />
-                          {mapping?.staticValue && mapping.staticValue !== "$now"
-                            ? t("workspace.unify.csv_fixed_value_label", {
-                                value: truncate(mapping.staticValue, 40),
-                              })
-                            : t("workspace.unify.csv_fixed_value_action")}
-                        </span>
-                      </SelectItem>
-                    </>
-                  )}
-                  {!field.required && hasMapping && (
-                    <>
-                      <SelectSeparator />
-                      <SelectItem value={SENTINEL.CLEAR} className="text-slate-700 focus:bg-orange-50">
-                        <span className="inline-flex items-center gap-2 font-normal">
-                          <EraserIcon className="size-3.5 text-orange-500" />
-                          {t("workspace.unify.clear_mapping")}
-                        </span>
-                      </SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
+            <div className="min-w-0 flex-1">
+              <InputCombobox
+                id={`csv-mapping-${field.id}`}
+                value={selectValue || null}
+                options={[]}
+                groupedOptions={comboboxGroupedOptions}
+                onChangeValue={(value) => {
+                  if (typeof value === "string") {
+                    handleSelectChange(value);
+                  }
+                }}
+                placeholder={
+                  isEnum
+                    ? t("workspace.unify.select_a_value")
+                    : t("workspace.unify.csv_pick_column_placeholder")
+                }
+                searchPlaceholder={t("common.search")}
+                emptyDropdownText={t("workspace.surveys.edit.no_option_found")}
+                showSearch
+                comboboxClasses="h-9 w-full max-w-none [&_[role=combobox]]:h-9"
+              />
             </div>
             {!isEnum && mapping?.staticValue && mapping.staticValue !== "$now" && (
               <Button

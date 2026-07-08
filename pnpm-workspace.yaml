@@ -86,3 +86,5 @@ enablePrePostScripts: true
 legacyPeerDeps: true
 nodeLinker: hoisted
 saveExact: true
+minimumReleaseAgeExclude:
+  - '@formbricks/hub@0.6.0'
