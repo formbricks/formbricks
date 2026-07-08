@@ -1,9 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { type TSurveyEnding, type TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { type UsersFixture } from "../fixtures/users";
+
+// The transform's own (legacy v1) question input type, derived from its signature so
+// this file does not reference the deprecated TSurveyQuestion name directly.
+type TLegacyQuestions = Parameters<typeof transformQuestionsToBlocks>[0];
 
 /**
  * Self-seeding helpers for the survey accessibility (axe-core) suite.
@@ -181,7 +185,7 @@ const createKitchenSinkSurvey = async (
   name: string,
   baseURL: string
 ): Promise<string> => {
-  const questions = buildKitchenSinkQuestions(baseURL) as unknown as TSurveyQuestion[];
+  const questions = buildKitchenSinkQuestions(baseURL) as unknown as TLegacyQuestions;
   const endings = buildEndings() as unknown as TSurveyEnding[];
   const blocks = transformQuestionsToBlocks(questions, endings);
 
