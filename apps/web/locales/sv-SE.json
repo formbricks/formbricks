@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "AI-exempelsvar är inte tillgängliga i din nuvarande plan.",
         "generating_example_responses": "Genererar exempelsvar…",
         "generating_qr_code": "Genererar QR-kod",
+        "how_many_example_responses": "Hur många svar behöver du?",
         "impressions": "Visningar",
         "impressions_identified_only": "Visar bara visningar från identifierade kontakter",
         "impressions_tooltip": "Antal gånger enkäten har visats.",

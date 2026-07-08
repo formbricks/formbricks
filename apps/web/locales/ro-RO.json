@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "Răspunsurile exemplu AI nu sunt disponibile în planul tău actual.",
         "generating_example_responses": "Se generează răspunsuri exemplu…",
         "generating_qr_code": "Se generează codul QR",
+        "how_many_example_responses": "De câte răspunsuri ai nevoie?",
         "impressions": "Impresii",
         "impressions_identified_only": "Se afișează doar impresiile de la contactele identificate",
         "impressions_tooltip": "Număr de ori când sondajul a fost vizualizat.",

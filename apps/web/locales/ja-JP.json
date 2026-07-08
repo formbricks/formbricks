@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "現在のプランではAIサンプル回答をご利用いただけません。",
         "generating_example_responses": "サンプル回答を生成中…",
         "generating_qr_code": "QRコードを生成中",
+        "how_many_example_responses": "回答は何件必要ですか？",
         "impressions": "表示回数",
         "impressions_identified_only": "識別済みコンタクトからのインプレッションのみを表示しています",
         "impressions_tooltip": "フォームが表示された回数。",

@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "AI example responses are not available on your current plan.",
         "generating_example_responses": "Generating example responses…",
         "generating_qr_code": "Generating QR code",
+        "how_many_example_responses": "How many responses do you need?",
         "impressions": "Impressions",
         "impressions_identified_only": "Only showing impressions from identified contacts",
         "impressions_tooltip": "Number of times the survey has been viewed.",

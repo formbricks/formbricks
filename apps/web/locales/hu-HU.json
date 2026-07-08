@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "Az AI példaválaszok nem érhetők el az Ön jelenlegi csomagjában.",
         "generating_example_responses": "Példaválaszok generálása folyamatban…",
         "generating_qr_code": "QR-kód előállítása",
+        "how_many_example_responses": "Hány válaszra van szüksége?",
         "impressions": "Megtekintések",
         "impressions_identified_only": "Csak azonosított partnerektől származó megtekintések megjelenítése",
         "impressions_tooltip": "A kérdőív megtekintési alkalmainak száma.",

@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "KI-Beispielantworten sind in deinem aktuellen Tarif nicht verfügbar.",
         "generating_example_responses": "Beispielantworten werden generiert…",
         "generating_qr_code": "QR-Code wird erstellt",
+        "how_many_example_responses": "Wie viele Antworten brauchst du?",
         "impressions": "Impressionen",
         "impressions_identified_only": "Es werden nur Impressionen von identifizierten Kontakten angezeigt",
         "impressions_tooltip": "Anzahl der Male, wie oft die Umfrage angesehen wurde.",

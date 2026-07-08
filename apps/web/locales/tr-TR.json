@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "AI örnek yanıtları mevcut planınızda mevcut değil.",
         "generating_example_responses": "Örnek yanıtlar oluşturuluyor…",
         "generating_qr_code": "QR kodu oluşturuluyor",
+        "how_many_example_responses": "Kaç yanıta ihtiyacınız var?",
         "impressions": "Görüntülenmeler",
         "impressions_identified_only": "Yalnızca tanımlanan kişilerden gelen görüntülenmeler gösteriliyor",
         "impressions_tooltip": "Anketin görüntülenme sayısı.",

@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "AI-voorbeeldantwoorden zijn niet beschikbaar op je huidige abonnement.",
         "generating_example_responses": "Voorbeeldreacties genereren…",
         "generating_qr_code": "QR-code genereren",
+        "how_many_example_responses": "Hoeveel reacties heb je nodig?",
         "impressions": "Indrukken",
         "impressions_identified_only": "Alleen weergaven van geïdentificeerde contacten worden getoond",
         "impressions_tooltip": "Aantal keren dat de enquête is bekeken.",

@@ -5,7 +5,9 @@ import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEmailTemplateHtml } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
+import { DEFAULT_EXAMPLE_RESPONSE_COUNT } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-response-options";
 import {
+  ZExampleResponseCount,
   generateExampleResponseDataset,
   toExampleResponseInput,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses";
@@ -123,10 +125,14 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
 
 const ZGenerateExampleResponsesAction = z.object({
   surveyId: ZId,
+  // How many example responses to create. Restricted to the fixed options the
+  // popover offers so a crafted request can't drive up LLM/DB cost arbitrarily.
+  count: ZExampleResponseCount.default(DEFAULT_EXAMPLE_RESPONSE_COUNT),
 });
 
-// Generates a small set of LLM-authored example responses for a survey that
-// has no real responses yet. Server-side gates: caller must have write access,
+// Generates a user-chosen number (see ZExampleResponseCount) of LLM-authored
+// example responses for a survey that has no real responses yet. Server-side
+// gates: caller must have write access,
 // the org's AI smart-tools feature must be enabled and entitled, and the
 // survey must currently have zero responses (button is also hidden client-side
 // when responseCount > 0, but we re-check here so a stale tab can't insert
@@ -175,7 +181,11 @@ export const generateExampleResponsesAction = authenticatedActionClient
       );
     }
 
-    const generatedDataset = await generateExampleResponseDataset({ survey, organizationId });
+    const generatedDataset = await generateExampleResponseDataset({
+      survey,
+      organizationId,
+      count: parsedInput.count,
+    });
     if (generatedDataset.responses.length === 0) {
       throw new InvalidInputError(
         "This survey doesn't contain any question types we can synthesize answers for yet."

@@ -22,6 +22,10 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { generateExampleResponsesAction, resetSurveyAction } from "../actions";
+import {
+  DEFAULT_EXAMPLE_RESPONSE_COUNT,
+  EXAMPLE_RESPONSE_COUNT_OPTIONS,
+} from "../lib/example-response-options";
 
 interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
@@ -66,6 +70,8 @@ export const SurveyAnalysisCTA = ({
   const [isResetting, setIsResetting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isGeneratingExamples, setIsGeneratingExamples] = useState(false);
+  const [isExamplePopoverOpen, setIsExamplePopoverOpen] = useState(false);
+  const [selectedExampleCount, setSelectedExampleCount] = useState<number>(DEFAULT_EXAMPLE_RESPONSE_COUNT);
 
   const { workspace } = useWorkspaceContext();
   const { survey } = useSurvey();
@@ -155,12 +161,12 @@ export const SurveyAnalysisCTA = ({
     setIsResetModalOpen(false);
   };
 
-  const handleGenerateExampleResponses = async () => {
+  const handleGenerateExampleResponses = async (count: number) => {
     if (isGeneratingExamples) return;
     setIsGeneratingExamples(true);
     const loadingToastId = toast.loading(t("workspace.surveys.summary.generating_example_responses"));
     try {
-      const result = await generateExampleResponsesAction({ surveyId: survey.id });
+      const result = await generateExampleResponsesAction({ surveyId: survey.id, count });
       if (result?.data) {
         toast.success(
           t("workspace.surveys.summary.example_responses_generated_successfully", {
@@ -168,6 +174,7 @@ export const SurveyAnalysisCTA = ({
           }),
           { id: loadingToastId }
         );
+        setIsExamplePopoverOpen(false);
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(result);
@@ -195,6 +202,44 @@ export const SurveyAnalysisCTA = ({
     }
     return t("workspace.surveys.summary.generate_example_responses");
   })();
+
+  const exampleResponsesPopover = (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm font-medium text-slate-900">
+        {t("workspace.surveys.summary.how_many_example_responses")}
+      </p>
+      <div className="flex gap-2">
+        {EXAMPLE_RESPONSE_COUNT_OPTIONS.map((count) => (
+          <Button
+            key={count}
+            variant={selectedExampleCount === count ? "default" : "outline"}
+            size="sm"
+            className="flex-1"
+            disabled={isGeneratingExamples}
+            aria-pressed={selectedExampleCount === count}
+            onClick={() => setSelectedExampleCount(count)}>
+            {count}
+          </Button>
+        ))}
+      </div>
+      <div className="flex justify-between gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={isGeneratingExamples}
+          onClick={() => setIsExamplePopoverOpen(false)}>
+          {t("common.cancel")}
+        </Button>
+        <Button
+          variant="default"
+          size="sm"
+          loading={isGeneratingExamples}
+          onClick={() => handleGenerateExampleResponses(selectedExampleCount)}>
+          {t("common.generate")}
+        </Button>
+      </div>
+    </div>
+  );
 
   const iconActions = [
     {
@@ -234,9 +279,11 @@ export const SurveyAnalysisCTA = ({
     {
       icon: Wand2,
       tooltip: exampleResponsesTooltip,
-      onClick: handleGenerateExampleResponses,
-      disabled: isGeneratingExamples || aiUnavailableReason !== null,
+      disabled: aiUnavailableReason !== null,
       isVisible: !isReadOnly && responseCount === 0,
+      popoverContent: exampleResponsesPopover,
+      popoverOpen: isExamplePopoverOpen,
+      onPopoverOpenChange: setIsExamplePopoverOpen,
     },
     {
       icon: ListRestart,

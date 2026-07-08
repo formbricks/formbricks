@@ -6,6 +6,7 @@ import {
   EXAMPLE_AI_GENERATED_TAG_NAME,
   EXAMPLE_IMPRESSION_ONLY_COUNT,
   EXAMPLE_RESPONSE_COUNT,
+  ZExampleResponseCount,
   buildExampleImpressionTimestamps,
   buildExampleResponsesSchema,
   generateExampleResponseDataset,
@@ -554,6 +555,19 @@ describe("generateExampleResponseDataset", () => {
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
+  test("scales responses and impression-only displays to a requested count", async () => {
+    const survey = makeSurvey([
+      { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
+    ] as unknown as TSurvey["questions"]);
+
+    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1", count: 25 });
+
+    expect(result.responses).toHaveLength(25);
+    // ~0.6 impression-only displays per response keeps the completion rate realistic.
+    expect(result.displays).toHaveLength(15);
+    expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
+  });
+
   test("generateExampleResponses returns only the response rows for compatibility", async () => {
     const survey = makeSurvey([
       { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
@@ -562,6 +576,20 @@ describe("generateExampleResponseDataset", () => {
     const result = await generateExampleResponses({ survey, organizationId: "org_1" });
 
     expect(result).toHaveLength(EXAMPLE_RESPONSE_COUNT);
+  });
+});
+
+describe("ZExampleResponseCount", () => {
+  test.each([10, 25, 50])("accepts the allowed option %i", (value) => {
+    expect(ZExampleResponseCount.safeParse(value).success).toBe(true);
+  });
+
+  test.each([0, 5, 11, 24, 100, -10, 10.5])("rejects the disallowed value %p", (value) => {
+    expect(ZExampleResponseCount.safeParse(value).success).toBe(false);
+  });
+
+  test("rejects non-numeric input", () => {
+    expect(ZExampleResponseCount.safeParse("25").success).toBe(false);
   });
 });
 

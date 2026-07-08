@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "你当前的套餐不支持 AI 示例回复。",
         "generating_example_responses": "正在生成示例回复…",
         "generating_qr_code": "正在生成二维码",
+        "how_many_example_responses": "您需要多少个回复？",
         "impressions": "印象",
         "impressions_identified_only": "仅显示已识别联系人的展示次数",
         "impressions_tooltip": "调查 被 查看 的 次数",

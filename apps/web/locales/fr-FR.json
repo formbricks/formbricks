@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "Les réponses d'exemple générées par IA ne sont pas disponibles avec ton forfait actuel.",
         "generating_example_responses": "Génération des exemples de réponses en cours…",
         "generating_qr_code": "Génération du code QR",
+        "how_many_example_responses": "De combien de réponses avez-vous besoin ?",
         "impressions": "Impressions",
         "impressions_identified_only": "Affichage uniquement des impressions des contacts identifiés",
         "impressions_tooltip": "Nombre de fois que l'enquête a été consultée.",

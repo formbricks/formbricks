@@ -3466,6 +3466,7 @@ checksums:
     workspace/surveys/summary/generate_example_responses_locked_plan: 42f254b6243c859c7bd6f4f12f284b91
     workspace/surveys/summary/generating_example_responses: 49e68bed3aae7d2b51e5bbab69ccd2aa
     workspace/surveys/summary/generating_qr_code: 5026d4a76f995db458195e5215d9bbd9
+    workspace/surveys/summary/how_many_example_responses: 470da27b013730a563ccdcc0ac7cdd99
     workspace/surveys/summary/impressions: 7fe38d42d68a64d3fd8436a063751584
     workspace/surveys/summary/impressions_identified_only: 10f8c491463c73b8e6534314ee00d165
     workspace/surveys/summary/impressions_tooltip: 4d0823cbf360304770c7c5913e33fdc8

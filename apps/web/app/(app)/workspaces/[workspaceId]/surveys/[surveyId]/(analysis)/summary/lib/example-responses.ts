@@ -7,13 +7,33 @@ import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/s
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import {
+  DEFAULT_EXAMPLE_RESPONSE_COUNT,
+  EXAMPLE_RESPONSE_COUNT_OPTIONS,
+  type TExampleResponseCount,
+} from "./example-response-options";
 
-export const EXAMPLE_RESPONSE_COUNT = 10;
+// Default number of example responses when a caller doesn't request a specific
+// count. The summary popover lets users pick from EXAMPLE_RESPONSE_COUNT_OPTIONS.
+export const EXAMPLE_RESPONSE_COUNT = DEFAULT_EXAMPLE_RESPONSE_COUNT;
 // Impression-only displays simulate respondents who saw the survey but didn't
-// submit. Combined with the response count, the dashboard's completion rate
-// lands around 62% — close to typical web survey benchmarks.
-export const EXAMPLE_IMPRESSION_ONLY_COUNT = 6;
+// submit. We scale them at ~0.6 per response so that, combined with the response
+// count, the dashboard's completion rate lands around 62% — close to typical web
+// survey benchmarks — no matter how many responses the user asked for.
+const EXAMPLE_IMPRESSION_ONLY_RATIO = 0.6;
+const getImpressionOnlyCount = (responseCount: number): number =>
+  Math.round(responseCount * EXAMPLE_IMPRESSION_ONLY_RATIO);
+export const EXAMPLE_IMPRESSION_ONLY_COUNT = getImpressionOnlyCount(EXAMPLE_RESPONSE_COUNT);
 export const EXAMPLE_AI_GENERATED_TAG_NAME = "AI-generated example response";
+
+// Validates a caller-requested response count against the allowed options. Lives
+// in this (already-tested) module and is consumed by the server action's input
+// schema so the count can't be spoofed past the UI's fixed choices.
+export const ZExampleResponseCount = z
+  .number()
+  .refine((value): value is TExampleResponseCount =>
+    (EXAMPLE_RESPONSE_COUNT_OPTIONS as readonly number[]).includes(value)
+  );
 
 // ~20% of synthetic responses are partial drop-offs to mirror typical survey
 // abandonment. The remaining ~80% are finished.
@@ -503,6 +523,8 @@ Example output shape:
 export type TGenerateExampleResponsesArgs = {
   survey: TSurvey;
   organizationId: string;
+  // Number of example responses to synthesize. Defaults to EXAMPLE_RESPONSE_COUNT.
+  count?: number;
 };
 
 export type TGeneratedExampleResponse = {
@@ -723,7 +745,7 @@ const applyDropOffToPlanRow = (
   };
 };
 
-const buildExampleResponsePlan = (survey: TSurvey): TExampleResponsePlanRow[] => {
+const buildExampleResponsePlan = (survey: TSurvey, count: number): TExampleResponsePlanRow[] => {
   const { ctx } = buildExampleResponsesSchema(survey);
   if (ctx.supportedElementIds.length === 0) {
     return [];
@@ -731,7 +753,7 @@ const buildExampleResponsePlan = (survey: TSurvey): TExampleResponsePlanRow[] =>
 
   const elementsById = new Map(collectSurveyElements(survey).map((el) => [el.id, el]));
   const finishedEndingId = survey.endings?.[0]?.id ?? null;
-  const profiles = buildRespondentProfiles(EXAMPLE_RESPONSE_COUNT);
+  const profiles = buildRespondentProfiles(count);
 
   return profiles.map((profile, index) => {
     const data: TResponseData = {};
@@ -755,7 +777,7 @@ const buildExampleResponsePlan = (survey: TSurvey): TExampleResponsePlanRow[] =>
       ttc[id] = ttcForElement(element);
     }
 
-    const isFinished = index >= Math.ceil(EXAMPLE_RESPONSE_COUNT * DROP_OFF_RATE);
+    const isFinished = index >= Math.ceil(count * DROP_OFF_RATE);
     const row: TExampleResponsePlanRow = {
       rowId: `row_${index}`,
       profile,
@@ -1010,8 +1032,9 @@ const toGeneratedResponse = (row: TExampleResponsePlanRow): TGeneratedExampleRes
 export const generateExampleResponseDataset = async ({
   survey,
   organizationId,
+  count = EXAMPLE_RESPONSE_COUNT,
 }: TGenerateExampleResponsesArgs): Promise<TGeneratedExampleDataset> => {
-  const planRows = buildExampleResponsePlan(survey);
+  const planRows = buildExampleResponsePlan(survey, count);
   if (planRows.length === 0) {
     return { responses: [], displays: [], tagName: EXAMPLE_AI_GENERATED_TAG_NAME };
   }
@@ -1020,7 +1043,7 @@ export const generateExampleResponseDataset = async ({
 
   return {
     responses: rowsWithText.map(toGeneratedResponse),
-    displays: buildExampleImpressionTimestamps(EXAMPLE_IMPRESSION_ONLY_COUNT).map((createdAt) => ({
+    displays: buildExampleImpressionTimestamps(getImpressionOnlyCount(count)).map((createdAt) => ({
       createdAt,
     })),
     tagName: EXAMPLE_AI_GENERATED_TAG_NAME,

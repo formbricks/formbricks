@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "As respostas de exemplo de IA não estão disponíveis no teu plano atual.",
         "generating_example_responses": "A gerar respostas de exemplo…",
         "generating_qr_code": "A gerar código QR",
+        "how_many_example_responses": "De quantas respostas precisas?",
         "impressions": "Impressões",
         "impressions_identified_only": "A mostrar apenas impressões de contactos identificados",
         "impressions_tooltip": "Número de vezes que o inquérito foi visualizado.",

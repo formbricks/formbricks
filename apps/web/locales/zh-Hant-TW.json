@@ -3615,6 +3615,7 @@
         "generate_example_responses_locked_plan": "您目前的方案不包含 AI 範例回覆功能。",
         "generating_example_responses": "正在產生範例回應…",
         "generating_qr_code": "正在生成 QR code",
+        "how_many_example_responses": "您需要多少則回應？",
         "impressions": "曝光數",
         "impressions_identified_only": "僅顯示已識別聯絡人的曝光次數",
         "impressions_tooltip": "問卷已檢視的次數。",
