@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -84,10 +84,14 @@ export const SignupForm = ({
   const turnstile = useTurnstile();
 
   // An SSO sign-up rejected for a personal email domain redirects back here with ?error=<code>.
-  // Match the known code exactly (never echo the raw param) and show the same message as the form.
+  // Match the known code exactly (never echo the raw param) and show it at most once — the ref guards
+  // against a re-toast on locale change and React strict mode's double effect invocation in dev.
   const oauthError = searchParams?.get("error");
+  const hasShownDomainErrorToast = useRef(false);
   useEffect(() => {
+    if (hasShownDomainErrorToast.current) return;
     if (oauthError === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
+      hasShownDomainErrorToast.current = true;
       toast.error(t("auth.signup.company_email_required"));
     }
   }, [oauthError, t]);
