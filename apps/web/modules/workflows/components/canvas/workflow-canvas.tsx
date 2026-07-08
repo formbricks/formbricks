@@ -14,7 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon } from "lucide-react";
+import { PlayIcon, SettingsIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -36,11 +36,12 @@ import {
   type TWorkflowNodeData,
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
+  isWorkflowNodeConfigModalOpenAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
   setWorkflowDefinitionAtom,
   setWorkflowFlowNodesAtom,
-  toggleWorkflowInspectorAtom,
+  toggleWorkflowSettingsPanelAtom,
   workflowAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
@@ -78,7 +79,10 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const isLocked = useAtomValue(isCanvasLockedAtom);
   const setLocked = useSetAtom(isCanvasLockedAtom);
   const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
-  const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
+  const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
+  const toggleSettingsPanel = useSetAtom(toggleWorkflowSettingsPanelAtom);
+  // The cog reads as pressed while the Settings view is the visible inspector content.
+  const isSettingsOpen = !isInspectorCollapsed && !isNodeConfigOpen;
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
@@ -197,14 +201,10 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
           variant="outline"
           size="icon"
           className="bg-white"
-          aria-label={
-            isInspectorCollapsed
-              ? t("workspace.workflows.expand_inspector")
-              : t("workspace.workflows.collapse_inspector")
-          }
-          aria-pressed={!isInspectorCollapsed}
-          onClick={toggleInspector}>
-          {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
+          aria-label={t("workspace.workflows.settings_title")}
+          aria-pressed={isSettingsOpen}
+          onClick={toggleSettingsPanel}>
+          <SettingsIcon />
         </Button>
       </div>
       <ReactFlow
