@@ -75,9 +75,7 @@ export const SettingsSection = ({
           />
         </div>
 
-        <div className="flex flex-col gap-2 border-t border-slate-200 pt-4">
-          <Label>{t("workspace.workflows.archive_workflow")}</Label>
-          <p className="text-xs text-slate-500">{t("workspace.workflows.archive_workflow_description")}</p>
+        <div className="flex flex-col border-t border-slate-200 pt-4">
           {builder.isArchived ? (
             <Button
               type="button"
