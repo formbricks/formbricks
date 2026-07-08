@@ -2283,7 +2283,7 @@ checksums:
     workspace/settings/billing/comparison_row_unlimited_seats: 478092018a27a4e588cb5c70968ef11a
     workspace/settings/billing/comparison_row_workspaces: 8ba082a84aa35cf851af1cf874b853e2
     workspace/settings/billing/comparison_section_all_plans: 2a4543269f18647b8b2bd5f5cb399c24
-    workspace/settings/billing/comparison_section_basic_usage: 098f3b7afd3a24583623616a32c57c96
+    workspace/settings/billing/comparison_section_basic_usage: 16bd8c505c287b38de311ad6a2eaa3e9
     workspace/settings/billing/comparison_section_pro_unlocks: 9064c532bdd5a57b6979575793772b35
     workspace/settings/billing/comparison_section_scale_unlocks: 8d043ca2c2ff294dfc8ee41ab8830b09
     workspace/settings/billing/confirm_upgrade_body: 136720e5ee76ea2888f088201b306603
@@ -2298,7 +2298,6 @@ checksums:
     workspace/settings/billing/continue_with_plan_after_trial: 96f01459c998341b8467fe239e890875
     workspace/settings/billing/current_plan_badge: 27f172f76ac28e72cb062f80002b0ad5
     workspace/settings/billing/current_plan_cta: 53ac259fd40a361274861ee7c7498424
-    workspace/settings/billing/current_subscription_title: 224635b9fda146014c5cde5ceb87a828
     workspace/settings/billing/custom_plan_description: 53faa38123cc74e5adc7e59630641d66
     workspace/settings/billing/custom_plan_title: f3b71be0d1cd4f81a177ada040119f30
     workspace/settings/billing/downgrade_to_hobby: 80b85d47ccb480a1b6429294d1679f0a
@@ -2316,16 +2315,10 @@ checksums:
     workspace/settings/billing/hobby_confirm_feature_workspaces: 02a34669419ed7f30f728980f54d42ef
     workspace/settings/billing/hobby_confirm_start_trial: dbd178a6b5d09aa9baa97e5ca4764c11
     workspace/settings/billing/hobby_confirm_title: 6d5cd13628a7887711fd0c29f1123652
-    workspace/settings/billing/invite_cta: 181884cea804cbde665f160811ee7ad0
     workspace/settings/billing/keep_current_plan: 57ac15ffa2c29ac364dd405669eeb7f6
     workspace/settings/billing/manage_billing_details: 40448f0b5ed4b3bb1d864ba6e1bb6a3b
-    workspace/settings/billing/meta_member_one: cc804de0de4cc67cede5af9fbb4a716e
-    workspace/settings/billing/meta_member_other: a737d3451a1220b9facf5076656009d1
-    workspace/settings/billing/meta_workspace_one: b4ec28728077a687ff7a76bccf518b2a
-    workspace/settings/billing/meta_workspace_other: 2396109996f502d240758cfeecb49e12
     workspace/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
     workspace/settings/billing/most_popular: 03051978338d93d9abdd999bc06284f9
-    workspace/settings/billing/on_free_trial_until: 88b454bdfd124878ade386b1a28d7cb7
     workspace/settings/billing/payment_authentication_failed: c5ca722ae0fea1635d3a69c9ba82278b
     workspace/settings/billing/payment_error_contact_support: 3145080022ff17d06e41afe78363a6cc
     workspace/settings/billing/payment_error_failed_invoice: 5344b45e2acaf0287b69b043d37a964d
@@ -2336,9 +2329,7 @@ checksums:
     workspace/settings/billing/pending_plan_change_title: 730a8df084494ccf06c0a2f44c28f9fc
     workspace/settings/billing/pending_plan_cta: 1283929a2810dcf6110765f387dc118e
     workspace/settings/billing/per_month: 64e96490ee2d7811496cf04adae30aa4
-    workspace/settings/billing/per_month_slash: 6cb28ff89203e2eca3fdd69396dd00d6
     workspace/settings/billing/per_year: bf02408d157486e53c15a521a5645617
-    workspace/settings/billing/per_year_slash: 18398b63db59d314e7c0540b909d20db
     workspace/settings/billing/plan_change_applied: d1e04599487247dd0e21a7d99785dc7a
     workspace/settings/billing/plan_change_scheduled: 16455d4aa9a152b156ee434d8c7e34d4
     workspace/settings/billing/plan_comparison_hide_details: 51086404511c662af46ac4e54838f38f
@@ -2397,13 +2388,12 @@ checksums:
     workspace/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
     workspace/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     workspace/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
+    workspace/settings/billing/subscribe_for_price_per_month: 9b67e89ed4f6022214954c1bdf681476
     workspace/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     workspace/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
     workspace/settings/billing/switch_at_period_end: 9c91b2287886e077a0571efab8908623
     workspace/settings/billing/switch_plan_now: dad56622a1916fe5d1a2bda5b0393194
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
-    workspace/settings/billing/total_per_month: 18c97be41cd97911e58e4d000a47ff4b
-    workspace/settings/billing/total_per_year: 30db022858f280b6cbc0832a2bf7f55d
     workspace/settings/billing/trial_alert_description: e8c20d27d8cd41690db0373463c2eacb
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
     workspace/settings/billing/trial_cancels_automatically: a6805d9b040b561f50e6deae244a600b
@@ -2422,18 +2412,9 @@ checksums:
     workspace/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
     workspace/settings/billing/upgrade_checkout_pending: a518f2c29034c9de6ed60644b8219577
     workspace/settings/billing/upgrade_checkout_success: ff3aa28f9db371c88c1ee456465a54e7
-    workspace/settings/billing/upgrade_cta: 63c3b52882e0d779859307d672c178c2
     workspace/settings/billing/upgrade_now: 059e020c0eddd549ac6c6369a427915a
     workspace/settings/billing/usage_count_of_limit_used: 0bcf3f084731f9fc7cd0b0777e720567
     workspace/settings/billing/usage_cycle: 4986315c0b486c7490bab6ada2205bee
-    workspace/settings/billing/usage_members: 0932e80cba1e3e0a7f52bb67ff31da32
-    workspace/settings/billing/usage_of_limit: 38420cd422db4853cdd82bdbd1e5b277
-    workspace/settings/billing/usage_of_unlimited: 8cc56a3632e12b88690c66edcc1343c3
-    workspace/settings/billing/usage_overview_description: 1d0fbfaa9353e142224a604fd5f7cb84
-    workspace/settings/billing/usage_overview_title: f81c4c5f161b720904bbf0a07b0d0ebf
-    workspace/settings/billing/usage_responses: 14bb6c69f906d7bbd1359f7ef1bb3c28
-    workspace/settings/billing/usage_surveys: 33f68ad4111b32a6361beb9d5c184533
-    workspace/settings/billing/usage_workspaces: 8ba082a84aa35cf851af1cf874b853e2
     workspace/settings/billing/yearly: 87f43e016c19cb25860f456549a2f431
     workspace/settings/billing/yearly_checkout_unavailable: f7b694de0e554c8583d8aaa4740e01a2
     workspace/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b

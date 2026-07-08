@@ -163,11 +163,6 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
     },
     {
       type: "feature",
-      label: t("workspace.settings.billing.comparison_row_unlimited_seats"),
-      values: [true, true, true],
-    },
-    {
-      type: "feature",
       label: t("workspace.settings.billing.comparison_row_respondent_id"),
       values: [true, true, true],
     },
@@ -243,6 +238,11 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
       label: t("workspace.settings.billing.comparison_row_overage"),
       values: [false, true, true],
     },
+    {
+      type: "feature",
+      label: t("workspace.settings.billing.comparison_row_unlimited_seats"),
+      values: [true, true, true],
+    },
     { type: "section", label: t("workspace.settings.billing.comparison_section_pro_unlocks") },
     ...proUnlocks,
     ...(showDetails
@@ -266,7 +266,7 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
       <div
         role="table"
         aria-label={t("workspace.settings.billing.plan_selection_title")}
-        className="grid min-w-[42rem] grid-cols-[minmax(0,0.5fr)_repeat(3,minmax(0,1fr))]">
+        className="grid min-w-[48rem] grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,1fr))]">
         {/* Plan header row — badges, name, price, aligned CTA */}
         <div role="row" className="contents">
           <div role="columnheader" className={LABEL_CELL} />
