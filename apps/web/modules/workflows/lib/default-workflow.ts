@@ -24,11 +24,14 @@ export const createDefaultWorkflowDefinition = (): TWorkflowDefinition => {
         type: "action",
         actionType: "send_email",
         config: {
-          to: "{{ response.email }}",
+          // Recipient and body stay empty until a survey is bound — their options (recipient
+          // fields, recall tokens) come from the survey, and the empty `to` makes the canvas
+          // card render its "configure the recipient" summary instead of template syntax.
+          to: "",
           from: "noreply@example.com",
           replyTo: [],
           subject: "Thanks for completing the survey",
-          body: "Thanks for completing the survey. We will be in touch soon.",
+          body: "",
           attachResponseData: false,
         },
         ui: { position: { x: 0, y: 160 } },

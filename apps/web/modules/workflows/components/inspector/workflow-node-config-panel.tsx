@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { useWorkflowEmailAuthoringContext } from "@/modules/workflows/components/workflow-email-authoring-context";
+import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
 import { getNodeRegistryEntry } from "@/modules/workflows/lib/node-registry";
 import {
   closeWorkflowNodeConfigModalAtom,
@@ -53,12 +55,15 @@ const NodeConfigEditor = ({
   initialNode,
   isEditable,
   isSaving,
+  isSaveBlocked,
   onSave,
   onCancel,
 }: Readonly<{
   initialNode: TWorkflowNode;
   isEditable: boolean;
   isSaving: boolean;
+  /** The node's form has nothing meaningful to save (e.g. send_email without a bound survey). */
+  isSaveBlocked: boolean;
   onSave: (node: TWorkflowNode) => Promise<void> | void;
   onCancel: () => void;
 }>) => {
@@ -67,7 +72,7 @@ const NodeConfigEditor = ({
 
   const registryEntry = getNodeRegistryEntry(draftNode);
   const ConfigForm = registryEntry.ConfigForm;
-  const canSave = isEditable && Boolean(ConfigForm) && !isSaving;
+  const canSave = isEditable && Boolean(ConfigForm) && !isSaving && !isSaveBlocked;
 
   // Submitting the form (Save click or Enter in a single-line field) commits the draft. Enter in
   // the Body textarea still inserts a newline — textareas don't submit forms on Enter.
@@ -125,9 +130,17 @@ export const WorkflowNodeConfigPanel = ({
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
   const closePanel = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
+  const authoringContext = useWorkflowEmailAuthoringContext();
 
   const selectedNode = findSelectedNode(definition, selectedNodeId);
   if (!selectedNode || !definition) return null;
+
+  // A send_email node without a resolvable bound survey renders a "set up the trigger first"
+  // callout instead of its form (see WorkflowEmailActionForm), so there is nothing to save.
+  const isSaveBlocked =
+    selectedNode.type === "action" &&
+    selectedNode.actionType === "send_email" &&
+    !resolveBoundTriggerSurvey(authoringContext, definition);
 
   const handleSave = async (draftNode: TWorkflowNode) => {
     // Stay on the node-config view after saving — closing here dropped the user back to the
@@ -143,6 +156,7 @@ export const WorkflowNodeConfigPanel = ({
       initialNode={selectedNode}
       isEditable={isEditable}
       isSaving={isSaving}
+      isSaveBlocked={isSaveBlocked}
       onSave={handleSave}
       onCancel={() => closePanel()}
     />
