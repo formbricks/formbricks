@@ -22,7 +22,9 @@ import type { TWorkflowTestProblem } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
+import { useWorkflowEmailAuthoringContext } from "@/modules/workflows/components/workflow-email-authoring-context";
 import { testWorkflow } from "@/modules/workflows/lib/api-client";
+import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
 import {
   WORKFLOW_CANVAS_NODE_TYPE,
   WORKFLOW_CANVAS_SNAP_GRID,
@@ -102,9 +104,12 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   // the user unlocks it.
   const canMutate = isEditable && !isLocked;
 
+  const authoringContext = useWorkflowEmailAuthoringContext();
+  const hasBoundSurvey = Boolean(resolveBoundTriggerSurvey(authoringContext, definition));
+
   const derivedFlowNodes = useMemo(
-    () => (definition ? workflowDefinitionToFlowNodes(definition, t) : []),
-    [definition, t]
+    () => (definition ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey }) : []),
+    [definition, t, hasBoundSurvey]
   );
   const flowEdges = useMemo(
     () => (definition ? workflowDefinitionToFlowEdges(definition) : []),

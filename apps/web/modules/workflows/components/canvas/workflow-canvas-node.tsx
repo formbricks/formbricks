@@ -57,6 +57,8 @@ export const WorkflowCanvasNode = memo(
         <div
           className={cn(
             "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
+            // Same red the survey editor uses for invalid cards — the node can't run as configured.
+            data.isInvalid && "border-red-400",
             selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50"
           )}>
           <Handle type="target" position={Position.Top} className={HANDLE_CLASS_NAMES} />
@@ -68,7 +70,7 @@ export const WorkflowCanvasNode = memo(
             <Icon className="size-4" strokeWidth={1.75} />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="truncate text-[13px] font-semibold leading-tight text-slate-900">
+            <span className="truncate text-[13px] leading-tight font-semibold text-slate-900">
               {data.title}
             </span>
             <span className="line-clamp-2 text-xs leading-tight text-slate-500">{data.summary}</span>

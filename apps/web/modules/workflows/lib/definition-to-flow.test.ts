@@ -81,6 +81,24 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     });
   });
 
+  test("marks every node valid by default (survey resolution unknown)", () => {
+    const nodes = workflowDefinitionToFlowNodes(buildDefinition(), t);
+    expect(nodes.map((node) => node.data.isInvalid)).toEqual([false, false]);
+  });
+
+  test("flags the trigger and email node when the bound survey doesn't resolve", () => {
+    const nodes = workflowDefinitionToFlowNodes(buildDefinition(), t, { hasBoundSurvey: false });
+    expect(nodes.map((node) => node.data.isInvalid)).toEqual([true, true]);
+  });
+
+  test("flags an email node without recipient or body even with a bound survey", () => {
+    const def = buildDefinition();
+    (def.nodes[0] as { config: { to: string; body: string } }).config.to = "";
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: true });
+    expect(nodes[0].data.isInvalid).toBe(false);
+    expect(nodes[1].data.isInvalid).toBe(true);
+  });
+
   test("projects edges with sourceHandle preserved", () => {
     const def = buildDefinition({
       edges: [{ id: "edge-1", source: "trigger-1", target: "action-1", sourceHandle: "then" }],

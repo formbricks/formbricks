@@ -14,6 +14,8 @@ export type TWorkflowNodeData = {
   title: string;
   summary: string;
   isLeaf: boolean;
+  /** The node can't run as configured (e.g. no bound survey, missing email recipient/body). */
+  isInvalid: boolean;
 };
 
 type TWorkflowEditorState = {

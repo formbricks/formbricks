@@ -38,9 +38,11 @@ export const WorkflowBuilderPage = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="flex min-h-[calc(100vh-220px)] gap-4">
-        <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
-        <WorkflowEmailAuthoringProvider value={emailAuthoringContext}>
+      {/* The provider wraps the canvas too: node validity (red border) needs to know whether the
+          trigger's survey resolves, which only the server-resolved authoring context can tell. */}
+      <WorkflowEmailAuthoringProvider value={emailAuthoringContext}>
+        <section className="flex min-h-[calc(100vh-220px)] gap-4">
+          <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
           <WorkflowInspectorPanel
             workflowId={workflowId}
             isReadOnly={isReadOnly}
@@ -49,8 +51,8 @@ export const WorkflowBuilderPage = ({
             onSaveNode={builder.save}
             isSavingNode={builder.isSaving}
           />
-        </WorkflowEmailAuthoringProvider>
-      </section>
+        </section>
+      </WorkflowEmailAuthoringProvider>
     </div>
   );
 };

@@ -11,11 +11,32 @@ export const WORKFLOW_CANVAS_SNAP_GRID: SnapGrid = [20, 20];
 const WORKFLOW_CANVAS_NODE_SPACING = { x: 360, y: 120 };
 const WORKFLOW_CANVAS_START_POSITION = { x: 220, y: 80 };
 
+interface WorkflowFlowNodeOptions {
+  /**
+   * Whether the trigger's `surveyId` resolves to a real survey (see `resolveBoundTriggerSurvey`).
+   * Only the canvas can know this (it needs the server-resolved authoring context), so callers
+   * without it — e.g. the initial hydrate — default to true and get corrected on the next render.
+   */
+  hasBoundSurvey?: boolean;
+}
+
+// Client-side counterpart of the dry-run test's checks: flags nodes that can't run as configured
+// so the canvas can render them with an error border.
+const isWorkflowNodeInvalid = (node: TWorkflowNode, hasBoundSurvey: boolean): boolean => {
+  if (node.type === "trigger") return !hasBoundSurvey;
+  if (node.type === "action" && node.actionType === "send_email") {
+    return !hasBoundSurvey || !node.config.to || !node.config.body;
+  }
+  return false;
+};
+
 export const workflowDefinitionToFlowNodes = (
   definition: TWorkflowDefinition,
-  t: TFunction
+  t: TFunction,
+  options?: WorkflowFlowNodeOptions
 ): Array<Node<TWorkflowNodeData>> => {
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
+  const hasBoundSurvey = options?.hasBoundSurvey ?? true;
 
   return [definition.trigger, ...definition.nodes].map((node, index) => {
     const registryEntry = getNodeRegistryEntry(node);
@@ -31,6 +52,7 @@ export const workflowDefinitionToFlowNodes = (
         title: registryEntry.title(node, t),
         summary: registryEntry.summary(node, t),
         isLeaf: !sourcesWithEdges.has(node.id),
+        isInvalid: isWorkflowNodeInvalid(node, hasBoundSurvey),
       },
     };
   });
