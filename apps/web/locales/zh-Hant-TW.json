@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "選擇問卷與問題",
       "select_survey_questions_description": "請選擇哪些問卷問題要建立 FeedbackRecords。",
       "sentiment": "情感",
-      "sentiment_score": "情感分數",
       "set_value": "設定值",
       "setup_connection": "設定來源並建立記錄",
       "showing_count_loaded": "顯示 {count} 筆記錄",

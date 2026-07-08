@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "选择调查和问题",
       "select_survey_questions_description": "选择哪些调查问题会创建反馈记录。",
       "sentiment": "情感",
-      "sentiment_score": "情感评分",
       "set_value": "设置值",
       "setup_connection": "设置数据源并创建记录",
       "showing_count_loaded": "显示 {count} 条记录",

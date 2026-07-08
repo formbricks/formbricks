@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Выбрать опрос и вопросы",
       "select_survey_questions_description": "Выберите, какие вопросы опроса должны создавать FeedbackRecords.",
       "sentiment": "Тональность",
-      "sentiment_score": "Оценка тональности",
       "set_value": "установить значение",
       "setup_connection": "Настроить источник и создать записи",
       "showing_count_loaded": "Показано записей: {count}",

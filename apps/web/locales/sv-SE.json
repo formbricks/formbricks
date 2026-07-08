@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Välj enkät & frågor",
       "select_survey_questions_description": "Välj vilka enkätfrågor som ska skapa FeedbackRecords.",
       "sentiment": "Sentiment",
-      "sentiment_score": "Sentimentpoäng",
       "set_value": "ange värde",
       "setup_connection": "Konfigurera källa & skapa poster",
       "showing_count_loaded": "Visar {count} poster",

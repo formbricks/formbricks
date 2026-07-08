@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Anket ve Soruları Seç",
       "select_survey_questions_description": "Hangi anket sorularının GeriBildirimKayıtları oluşturması gerektiğini seçin.",
       "sentiment": "Duyarlılık",
-      "sentiment_score": "Duyarlılık skoru",
       "set_value": "değer belirle",
       "setup_connection": "Kaynağı ayarla ve kayıtları oluştur",
       "showing_count_loaded": "{count} kayıt gösteriliyor",

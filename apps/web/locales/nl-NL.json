@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Selecteer enquête & vragen",
       "select_survey_questions_description": "Kies welke enquêtevragen FeedbackRecords moeten aanmaken.",
       "sentiment": "Sentiment",
-      "sentiment_score": "Sentimentscore",
       "set_value": "waarde instellen",
       "setup_connection": "Bron instellen en records aanmaken",
       "showing_count_loaded": "Er worden {count} records weergegeven",

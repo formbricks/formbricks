@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Umfrage & Fragen auswählen",
       "select_survey_questions_description": "Wähle aus, welche Umfragefragen FeedbackRecords erstellen sollen.",
       "sentiment": "Stimmung",
-      "sentiment_score": "Stimmungswert",
       "set_value": "Wert festlegen",
       "setup_connection": "Quelle einrichten & Datensätze erstellen",
       "showing_count_loaded": "{count} Datensätze werden angezeigt",

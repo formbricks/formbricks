@@ -3749,7 +3749,6 @@ checksums:
     workspace/unify/select_survey_and_questions: 53914988a2f48caecea23f3b3b868b9f
     workspace/unify/select_survey_questions_description: 3386ed56085eabebefa3cc453269fc5b
     workspace/unify/sentiment: 9ba5719c80c0136c2d0644217619aff6
-    workspace/unify/sentiment_score: 3c8ee79177d637cd3d57c5929e8a0a18
     workspace/unify/set_value: b8a86f8da957ebd599ece4b1b1936a78
     workspace/unify/setup_connection: 2b15b163e60a2112904d8fa505206a22
     workspace/unify/showing_count_loaded: f443aae08223b65fbd5521d6e69534a4

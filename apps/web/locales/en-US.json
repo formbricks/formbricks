@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Select Survey & Questions",
       "select_survey_questions_description": "Choose which survey questions should create FeedbackRecords.",
       "sentiment": "Sentiment",
-      "sentiment_score": "Sentiment score",
       "set_value": "set value",
       "setup_connection": "Set up source & create records",
       "showing_count_loaded": "Showing {count} records",

@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Kérdőív és kérdések kiválasztása",
       "select_survey_questions_description": "Válassza ki, hogy mely kérdőívkérdéseknek kell visszajelzési rekordokat létrehoznia.",
       "sentiment": "Hangulat",
-      "sentiment_score": "Hangulatértékelés",
       "set_value": "érték beállítása",
       "setup_connection": "Forrás beállítása és rekordok létrehozása",
       "showing_count_loaded": "{count} rekord megjelenítése",

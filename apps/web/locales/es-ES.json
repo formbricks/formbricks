@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Seleccionar encuesta y preguntas",
       "select_survey_questions_description": "Elige qué preguntas de la encuesta deben crear FeedbackRecords.",
       "sentiment": "Sentimiento",
-      "sentiment_score": "Puntuación de sentimiento",
       "set_value": "establecer valor",
       "setup_connection": "Configurar fuente y crear registros",
       "showing_count_loaded": "Mostrando {count} registros",

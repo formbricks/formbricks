@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "フォームと質問を選択",
       "select_survey_questions_description": "フィードバックレコードを作成するフォームの質問を選択してください。",
       "sentiment": "センチメント",
-      "sentiment_score": "センチメントスコア",
       "set_value": "値を設定",
       "setup_connection": "ソースを設定してレコードを作成",
       "showing_count_loaded": "{count}件のレコードを表示中",

@@ -3909,7 +3909,6 @@
       "select_survey_and_questions": "Selectează chestionar și întrebări",
       "select_survey_questions_description": "Alege ce întrebări din chestionar vor crea FeedbackRecords.",
       "sentiment": "Sentiment",
-      "sentiment_score": "Scor sentiment",
       "set_value": "setează valoare",
       "setup_connection": "Configurează sursa și creează înregistrări",
       "showing_count_loaded": "Se afișează {count} înregistrări",
