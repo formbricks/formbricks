@@ -3,7 +3,6 @@
 import { useParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -57,8 +56,28 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
     if (endingsQuery.endings.length === 0) {
       return <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>;
     }
+    // An empty `endingCardIds` means "match any ending" — surfaced as an explicit "All endings"
+    // first row instead of a helper text nobody reads. Checking it clears the selection; checking
+    // any specific ending unchecks it.
+    const isAllEndings = node.config.endingCardIds.length === 0;
+
     return (
       <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
+        <label
+          className="flex items-center gap-2 text-sm text-slate-700"
+          htmlFor="workflow-trigger-ending-all">
+          <Checkbox
+            id="workflow-trigger-ending-all"
+            checked={isAllEndings}
+            disabled={!isEditable}
+            onCheckedChange={(value) => {
+              if (value === true) {
+                onChange({ ...node, config: { ...node.config, endingCardIds: [] } });
+              }
+            }}
+          />
+          <span className="truncate">{t("workspace.workflows.trigger_ending_cards_all")}</span>
+        </label>
         {endingsQuery.endings.map((ending) => {
           const checked = node.config.endingCardIds.includes(ending.id);
           return (
@@ -113,9 +132,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
       <div className="flex flex-col gap-2">
         <Label>{t("workspace.workflows.trigger_ending_cards_label")}</Label>
         {renderEndingChoices()}
-        <Alert variant="info">
-          <AlertDescription>{t("workspace.workflows.trigger_ending_cards_description")}</AlertDescription>
-        </Alert>
+        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_description")}</p>
       </div>
     </div>
   );
