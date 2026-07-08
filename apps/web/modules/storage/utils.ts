@@ -322,6 +322,16 @@ export const validateClientFileUploads = ({
   return true;
 };
 
+/**
+ * Image file extensions accepted for survey media (question/element/choice imageUrl).
+ *
+ * These are all rendered client-side via a plain `<img src>` tag (see
+ * `packages/survey-ui` PictureSelect), so any raster format the browser can decode is safe to
+ * allow. `svg` is deliberately excluded: SVGs can embed scripts and we do not sanitize them, so
+ * allowing them would be an XSS vector.
+ */
+export const IMAGE_FILE_EXTENSIONS = ["png", "jpeg", "jpg", "webp", "heic", "gif", "avif", "bmp"] as const;
+
 export const isValidImageFile = (fileUrl: string): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);
   if (!fileName || fileName.endsWith(".")) return false;
@@ -329,8 +339,7 @@ export const isValidImageFile = (fileUrl: string): boolean => {
   const extension = fileName.split(".").pop()?.toLowerCase();
   if (!extension) return false;
 
-  const imageExtensions = ["png", "jpeg", "jpg", "webp", "heic"];
-  return imageExtensions.includes(extension);
+  return (IMAGE_FILE_EXTENSIONS as readonly string[]).includes(extension);
 };
 
 export const getErrorResponseFromStorageError = (
