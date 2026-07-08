@@ -221,7 +221,7 @@ export const FEEDBACK_FIELDS = {
       id: "FeedbackRecords.ratingCount",
       label: "Rating Count",
       type: "count",
-      description: "Number of rating responses",
+      description: "Number of answered rating responses (dismissed responses excluded)",
     },
   ] as MeasureDefinition[],
 };
