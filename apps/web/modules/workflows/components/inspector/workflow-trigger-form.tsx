@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
+import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -56,28 +57,28 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
     if (endingsQuery.endings.length === 0) {
       return <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>;
     }
-    // An empty `endingCardIds` means "match any ending" — surfaced as an explicit "All endings"
-    // first row instead of a helper text nobody reads. Checking it clears the selection; checking
-    // any specific ending unchecks it.
+    // An empty `endingCardIds` means "match any ending" — surfaced as an explicit state line with
+    // a "Select all endings" action while a restriction is active, instead of a helper text
+    // nobody reads.
     const isAllEndings = node.config.endingCardIds.length === 0;
 
     return (
       <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
-        <label
-          className="flex items-center gap-2 text-sm text-slate-700"
-          htmlFor="workflow-trigger-ending-all">
-          <Checkbox
-            id="workflow-trigger-ending-all"
-            checked={isAllEndings}
+        {isAllEndings ? (
+          <p className="text-sm font-medium text-slate-700">
+            {t("workspace.workflows.trigger_ending_cards_all_selected")}
+          </p>
+        ) : (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
             disabled={!isEditable}
-            onCheckedChange={(value) => {
-              if (value === true) {
-                onChange({ ...node, config: { ...node.config, endingCardIds: [] } });
-              }
-            }}
-          />
-          <span className="truncate">{t("workspace.workflows.trigger_ending_cards_all")}</span>
-        </label>
+            className="h-auto w-fit p-0"
+            onClick={() => onChange({ ...node, config: { ...node.config, endingCardIds: [] } })}>
+            {t("workspace.workflows.trigger_ending_cards_select_all")}
+          </Button>
+        )}
         {endingsQuery.endings.map((ending) => {
           const checked = node.config.endingCardIds.includes(ending.id);
           return (

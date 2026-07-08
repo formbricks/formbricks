@@ -177,11 +177,12 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
     }
   };
 
-  const handleToggleLock = () => {
-    if (!isLocked) {
-      setLocked(true);
-      return;
-    }
+  // Drag mode locks node editing so the user can browse/pan a large graph without grabbing
+  // nodes; pointer mode is the editing mode and is gated the same way unlocking was.
+  const handleDragMode = () => setLocked(true);
+
+  const handlePointerMode = () => {
+    if (!isLocked) return;
     if (isEnabled) {
       toast.error(t("workspace.workflows.edit_blocked_active"));
       return;
@@ -250,11 +251,11 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
       </ReactFlow>
       <CanvasControls
-        canEdit={isEditable}
         canMutate={canMutate}
-        isLocked={isLocked}
+        isDragMode={isLocked}
         onAutoLayout={handleAutoLayout}
-        onToggleLock={handleToggleLock}
+        onDragMode={handleDragMode}
+        onPointerMode={handlePointerMode}
       />
       <WorkflowTestResultDialog
         open={testProblems !== null}

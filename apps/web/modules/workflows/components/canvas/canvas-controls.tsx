@@ -2,11 +2,11 @@
 
 import { useReactFlow } from "@xyflow/react";
 import {
-  LockIcon,
+  HandIcon,
   type LucideIcon,
   MousePointerClickIcon,
   PlusIcon,
-  UnlockIcon,
+  WandSparklesIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from "lucide-react";
@@ -15,11 +15,12 @@ import { Button, type ButtonProps } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CanvasControlsProps {
-  canEdit: boolean;
   canMutate: boolean;
-  isLocked: boolean;
+  /** Drag mode = pan/browse only (nodes not editable); pointer mode = select and edit nodes. */
+  isDragMode: boolean;
   onAutoLayout: () => void;
-  onToggleLock: () => void;
+  onDragMode: () => void;
+  onPointerMode: () => void;
 }
 
 interface ControlDescriptor {
@@ -36,27 +37,16 @@ interface ControlDescriptor {
 }
 
 export const CanvasControls = ({
-  canEdit,
   canMutate,
-  isLocked,
+  isDragMode,
   onAutoLayout,
-  onToggleLock,
+  onDragMode,
+  onPointerMode,
 }: Readonly<CanvasControlsProps>) => {
   const { t } = useTranslation();
   const { zoomIn, zoomOut } = useReactFlow();
 
-  const lockLabel = isLocked ? t("workspace.workflows.unlock_canvas") : t("workspace.workflows.lock_canvas");
-
   const controls: ControlDescriptor[] = [
-    {
-      key: "add-node",
-      Icon: PlusIcon,
-      label: t("workspace.workflows.add_node"),
-      variant: "outline",
-      // Placeholder — node insertion from the toolbar isn't wired up yet.
-      disabled: true,
-      onClick: () => {},
-    },
     {
       key: "zoom-in",
       Icon: ZoomInIcon,
@@ -72,23 +62,39 @@ export const CanvasControls = ({
       onClick: () => zoomOut(),
     },
     {
-      key: "auto-layout",
+      key: "drag-mode",
+      Icon: HandIcon,
+      label: t("workspace.workflows.drag_mode"),
+      variant: isDragMode ? "default" : "outline",
+      ariaPressed: isDragMode,
+      onClick: onDragMode,
+    },
+    {
+      key: "pointer-mode",
       Icon: MousePointerClickIcon,
+      label: t("workspace.workflows.pointer_mode"),
+      variant: isDragMode ? "outline" : "default",
+      ariaPressed: !isDragMode,
+      // Stays clickable while the workflow is enabled so the click can surface the
+      // "disable first" toast — the actual gate sits in the parent's onPointerMode.
+      onClick: onPointerMode,
+    },
+    {
+      key: "auto-layout",
+      Icon: WandSparklesIcon,
       label: t("workspace.workflows.auto_layout"),
       variant: "outline",
       disabled: !canMutate,
       onClick: onAutoLayout,
     },
     {
-      key: "lock",
-      Icon: isLocked ? LockIcon : UnlockIcon,
-      label: lockLabel,
-      variant: isLocked ? "default" : "outline",
-      ariaPressed: !isLocked,
-      // Keep clickable while the workflow is enabled so the click can surface the
-      // "disable first" toast — the actual gate sits in the parent's handleToggleLock.
-      disabled: isLocked ? false : !canEdit,
-      onClick: onToggleLock,
+      key: "add-node",
+      Icon: PlusIcon,
+      label: t("workspace.workflows.add_node"),
+      variant: "outline",
+      // Placeholder — node insertion from the toolbar isn't wired up yet.
+      disabled: true,
+      onClick: () => {},
     },
   ];
 
