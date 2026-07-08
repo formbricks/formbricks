@@ -23,7 +23,8 @@ const response = {
   id: responseId,
   surveyId,
   finished: true,
-  endingId,
+  // Widened so tests can spread in `endingId: null` (matches RunnerResponse's `string | null`).
+  endingId: endingId as string | null,
   updatedAt: new Date("2026-06-12T09:30:00.000Z"),
   data: { q1: "answer" },
 };
