@@ -1,12 +1,13 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { ArchiveIcon, ArchiveRestoreIcon, Loader2Icon, PlayIcon, PowerOffIcon, SaveIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, Loader2Icon, SaveIcon } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { Switch } from "@/modules/ui/components/switch";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { isCanvasLockedAtom, workflowAtom } from "@/modules/workflows/state/editor";
 
@@ -50,13 +51,6 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const isArchived = workflow.status === "archived";
   const isActive = workflow.status === "enabled";
 
-  let lifecycleIcon = <PlayIcon />;
-  if (builder.isTransitioning) {
-    lifecycleIcon = <Loader2Icon className="animate-spin" />;
-  } else if (isActive) {
-    lifecycleIcon = <PowerOffIcon />;
-  }
-
   return (
     <div className="flex items-center gap-3">
       {isArchived ? (
@@ -97,15 +91,24 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
             {builder.isSaving ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
             {t("common.save")}
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleActiveChange}
-            disabled={isReadOnly || builder.isTransitioning || builder.isSaving}
-            className="min-w-[6rem] justify-center">
-            {lifecycleIcon}
-            {isActive ? t("common.disable") : t("common.enable")}
-          </Button>
+          {/* Lifecycle control as a toggle: the switch position communicates the current state
+              (on = running) instead of an Enable/Disable action label the user has to invert.
+              The shell matches the sibling h-8 buttons so it reads as part of the button row. */}
+          <label
+            htmlFor="workflow-enabled-toggle"
+            className="flex h-8 cursor-pointer items-center gap-2 rounded-md border border-primary/5 bg-secondary px-3 text-xs font-medium text-secondary-foreground has-[button:disabled]:cursor-not-allowed has-[button:disabled]:opacity-50">
+            <Switch
+              id="workflow-enabled-toggle"
+              checked={isActive}
+              disabled={isReadOnly || builder.isTransitioning || builder.isSaving}
+              onCheckedChange={handleActiveChange}
+            />
+            {builder.isTransitioning ? (
+              <Loader2Icon className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <span>{isActive ? t("common.enabled") : t("common.disabled")}</span>
+            )}
+          </label>
         </>
       )}
 
