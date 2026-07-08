@@ -58,9 +58,10 @@ const EDGE_TYPES: EdgeTypes = {
   addButton: AddButtonEdge,
 };
 
-// The canvas is the page's main action — let fitView scale small flows up to 2x instead of the
-// former 0.85 cap, which rendered a fresh two-node workflow noticeably small.
-const WORKFLOW_CANVAS_MAX_ZOOM = 2;
+// The canvas is the page's main action — let fitView scale small flows past the former 0.85 cap,
+// which rendered a fresh two-node workflow noticeably small. 2x proved too big; 1.15 is three
+// zoom-out steps down from it (RF's zoomIn/zoomOut step is 1.2x, and 2 / 1.2^3 ≈ 1.157).
+const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
