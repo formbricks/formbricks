@@ -1,9 +1,9 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
-import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -24,6 +24,11 @@ interface WorkflowTriggerFormProps {
   onChange: (next: TWorkflowResponseCompletedTriggerNode) => void;
 }
 
+// How the trigger filters endings. "all" maps to an empty `endingCardIds` (match any ending,
+// including ones added later); "specific" shows the checkbox list. Same two-mode pattern the
+// survey Follow-Ups modal uses for its ending trigger.
+type TEndingScope = "all" | "specific";
+
 export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<WorkflowTriggerFormProps>) => {
   const { t } = useTranslation();
   const params = useParams<{ workspaceId: string }>();
@@ -31,12 +36,26 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
   const endingsQuery = useWorkflowSurveyEndings(node.config.surveyId || null);
 
+  // Local because "specific with nothing checked yet" is a UI-only state — the config still
+  // holds an empty list (= all endings) until the user checks something.
+  const [endingScope, setEndingScope] = useState<TEndingScope>(
+    node.config.endingCardIds.length > 0 ? "specific" : "all"
+  );
+
   const handleSurveyChange = (surveyId: string) => {
     // Clear ending selection when survey changes — ids belong to the previous survey's endings.
+    setEndingScope("all");
     onChange({
       ...node,
       config: { ...node.config, surveyId, endingCardIds: [] },
     });
+  };
+
+  const handleScopeChange = (scope: TEndingScope) => {
+    setEndingScope(scope);
+    if (scope === "all" && node.config.endingCardIds.length > 0) {
+      onChange({ ...node, config: { ...node.config, endingCardIds: [] } });
+    }
   };
 
   const toggleEnding = (endingId: string, checked: boolean) => {
@@ -57,46 +76,53 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
     if (endingsQuery.endings.length === 0) {
       return <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>;
     }
-    // An empty `endingCardIds` means "match any ending" — surfaced as an explicit state line with
-    // a "Select all endings" action while a restriction is active, instead of a helper text
-    // nobody reads.
-    const isAllEndings = node.config.endingCardIds.length === 0;
 
     return (
-      <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
-        {isAllEndings ? (
-          <p className="text-sm font-medium text-slate-700">
-            {t("workspace.workflows.trigger_ending_cards_all_selected")}
-          </p>
-        ) : (
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            disabled={!isEditable}
-            className="h-auto w-fit p-0"
-            onClick={() => onChange({ ...node, config: { ...node.config, endingCardIds: [] } })}>
-            {t("workspace.workflows.trigger_ending_cards_select_all")}
-          </Button>
-        )}
-        {endingsQuery.endings.map((ending) => {
-          const checked = node.config.endingCardIds.includes(ending.id);
-          return (
-            <label
-              key={ending.id}
-              className="flex items-center gap-2 text-sm text-slate-700"
-              htmlFor={`workflow-trigger-ending-${ending.id}`}>
-              <Checkbox
-                id={`workflow-trigger-ending-${ending.id}`}
-                checked={checked}
-                disabled={!isEditable}
-                onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
-              />
-              <span className="truncate">{ending.label}</span>
-            </label>
-          );
-        })}
-      </div>
+      <>
+        <Select
+          value={endingScope}
+          onValueChange={(value) => handleScopeChange(value as TEndingScope)}
+          disabled={!isEditable}>
+          <SelectTrigger id="workflow-trigger-ending-scope" className="bg-white">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("workspace.workflows.trigger_ending_cards_scope_all")}</SelectItem>
+            <SelectItem value="specific">
+              {t("workspace.workflows.trigger_ending_cards_scope_specific")}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        {endingScope === "specific" ? (
+          <>
+            <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
+              {endingsQuery.endings.map((ending) => {
+                const checked = node.config.endingCardIds.includes(ending.id);
+                return (
+                  <label
+                    key={ending.id}
+                    className="flex items-center gap-2 text-sm text-slate-700"
+                    htmlFor={`workflow-trigger-ending-${ending.id}`}>
+                    <Checkbox
+                      id={`workflow-trigger-ending-${ending.id}`}
+                      checked={checked}
+                      disabled={!isEditable}
+                      onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
+                    />
+                    <span className="truncate">{ending.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {node.config.endingCardIds.length === 0 ? (
+              // UI-only state: with nothing checked the stored config still means "all endings".
+              <p className="text-xs text-amber-700">
+                {t("workspace.workflows.trigger_ending_cards_select_at_least_one")}
+              </p>
+            ) : null}
+          </>
+        ) : null}
+      </>
     );
   };
 
@@ -131,7 +157,9 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label>{t("workspace.workflows.trigger_ending_cards_label")}</Label>
+        <Label htmlFor="workflow-trigger-ending-scope">
+          {t("workspace.workflows.trigger_ending_cards_label")}
+        </Label>
         {renderEndingChoices()}
         <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_description")}</p>
       </div>
