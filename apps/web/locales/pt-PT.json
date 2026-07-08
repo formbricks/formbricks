@@ -4056,6 +4056,8 @@
       "no_workflows_description": "Cria o teu primeiro fluxo de trabalho para automatizar ações quando chegarem respostas.",
       "no_workflows_title": "Ainda sem fluxos de trabalho",
       "node_actions": "Node actions",
+      "node_needs_email_content": "Add a recipient and message",
+      "node_needs_survey": "Pick a survey to get started",
       "pointer_mode": "Pointer mode",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",

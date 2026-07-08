@@ -2,7 +2,7 @@ import { type Edge, type Node, type SnapGrid } from "@xyflow/react";
 import type { TFunction } from "i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import { getNodeRegistryEntry } from "@/modules/workflows/lib/node-registry";
-import type { TWorkflowNodeData } from "@/modules/workflows/state/editor";
+import type { TWorkflowNodeData, TWorkflowNodeIssue } from "@/modules/workflows/state/editor";
 
 export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";
 
@@ -18,16 +18,32 @@ interface WorkflowFlowNodeOptions {
    * without it — e.g. the initial hydrate — default to true and get corrected on the next render.
    */
   hasBoundSurvey?: boolean;
+  /**
+   * Drafts get "setup" severity (amber, guiding) — an unfinished config is the normal starting
+   * state, not an error. Live or previously-live workflows get "error" (red).
+   */
+  isDraft?: boolean;
 }
 
-// Client-side counterpart of the dry-run test's checks: flags nodes that can't run as configured
-// so the canvas can render them with an error border.
-const isWorkflowNodeInvalid = (node: TWorkflowNode, hasBoundSurvey: boolean): boolean => {
-  if (node.type === "trigger") return !hasBoundSurvey;
-  if (node.type === "action" && node.actionType === "send_email") {
-    return !hasBoundSurvey || !node.config.to || !node.config.body;
+// Client-side counterpart of the dry-run test's checks: flags nodes that can't run as configured.
+// Sequential guidance: while the survey is missing only the trigger carries a flag — the email
+// step can't be configured until a survey exists, so flagging it too is just noise.
+const getWorkflowNodeIssue = (
+  node: TWorkflowNode,
+  t: TFunction,
+  options: Required<WorkflowFlowNodeOptions>
+): TWorkflowNodeIssue | null => {
+  const severity = options.isDraft ? "setup" : "error";
+
+  if (node.type === "trigger" && !options.hasBoundSurvey) {
+    return { severity, label: t("workspace.workflows.node_needs_survey") };
   }
-  return false;
+  if (node.type === "action" && node.actionType === "send_email" && options.hasBoundSurvey) {
+    if (!node.config.to || !node.config.body) {
+      return { severity, label: t("workspace.workflows.node_needs_email_content") };
+    }
+  }
+  return null;
 };
 
 export const workflowDefinitionToFlowNodes = (
@@ -36,7 +52,10 @@ export const workflowDefinitionToFlowNodes = (
   options?: WorkflowFlowNodeOptions
 ): Array<Node<TWorkflowNodeData>> => {
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
-  const hasBoundSurvey = options?.hasBoundSurvey ?? true;
+  const resolvedOptions: Required<WorkflowFlowNodeOptions> = {
+    hasBoundSurvey: options?.hasBoundSurvey ?? true,
+    isDraft: options?.isDraft ?? true,
+  };
 
   return [definition.trigger, ...definition.nodes].map((node, index) => {
     const registryEntry = getNodeRegistryEntry(node);
@@ -52,7 +71,7 @@ export const workflowDefinitionToFlowNodes = (
         title: registryEntry.title(node, t),
         summary: registryEntry.summary(node, t),
         isLeaf: !sourcesWithEdges.has(node.id),
-        isInvalid: isWorkflowNodeInvalid(node, hasBoundSurvey),
+        issue: getWorkflowNodeIssue(node, t, resolvedOptions),
       },
     };
   });

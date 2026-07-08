@@ -81,22 +81,32 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     });
   });
 
-  test("marks every node valid by default (survey resolution unknown)", () => {
+  test("flags no issues by default (survey resolution unknown)", () => {
     const nodes = workflowDefinitionToFlowNodes(buildDefinition(), t);
-    expect(nodes.map((node) => node.data.isInvalid)).toEqual([false, false]);
+    expect(nodes.map((node) => node.data.issue)).toEqual([null, null]);
   });
 
-  test("flags the trigger and email node when the bound survey doesn't resolve", () => {
-    const nodes = workflowDefinitionToFlowNodes(buildDefinition(), t, { hasBoundSurvey: false });
-    expect(nodes.map((node) => node.data.isInvalid)).toEqual([true, true]);
+  test("flags only the trigger when the bound survey doesn't resolve (sequential guidance)", () => {
+    const nodes = workflowDefinitionToFlowNodes(buildDefinition(), t, {
+      hasBoundSurvey: false,
+      isDraft: true,
+    });
+    expect(nodes[0].data.issue).toEqual({
+      severity: "setup",
+      label: "workspace.workflows.node_needs_survey",
+    });
+    expect(nodes[1].data.issue).toBeNull();
   });
 
-  test("flags an email node without recipient or body even with a bound survey", () => {
+  test("flags an incomplete email node once the survey is bound, with error severity when live", () => {
     const def = buildDefinition();
-    (def.nodes[0] as { config: { to: string; body: string } }).config.to = "";
-    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: true });
-    expect(nodes[0].data.isInvalid).toBe(false);
-    expect(nodes[1].data.isInvalid).toBe(true);
+    (def.nodes[0] as { config: { to: string } }).config.to = "";
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: true, isDraft: false });
+    expect(nodes[0].data.issue).toBeNull();
+    expect(nodes[1].data.issue).toEqual({
+      severity: "error",
+      label: "workspace.workflows.node_needs_email_content",
+    });
   });
 
   test("projects edges with sourceHandle preserved", () => {

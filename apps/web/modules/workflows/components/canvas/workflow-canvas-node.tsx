@@ -9,6 +9,7 @@ import {
   MoreVerticalIcon,
   PlusIcon,
   Trash2Icon,
+  TriangleAlertIcon,
   ZapIcon,
 } from "lucide-react";
 import { memo } from "react";
@@ -57,8 +58,9 @@ export const WorkflowCanvasNode = memo(
         <div
           className={cn(
             "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
-            // Same red the survey editor uses for invalid cards — the node can't run as configured.
-            data.isInvalid && "border-red-400",
+            // Amber = draft that isn't finished being set up; red = a live workflow that can't
+            // run as configured (same red the survey editor uses for invalid cards).
+            data.issue && (data.issue.severity === "error" ? "border-red-400" : "border-amber-300"),
             selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50"
           )}>
           <Handle type="target" position={Position.Top} className={HANDLE_CLASS_NAMES} />
@@ -73,7 +75,20 @@ export const WorkflowCanvasNode = memo(
             <span className="truncate text-[13px] leading-tight font-semibold text-slate-900">
               {data.title}
             </span>
-            <span className="line-clamp-2 text-xs leading-tight text-slate-500">{data.summary}</span>
+            {data.issue ? (
+              // The reason travels with the highlight — replaces the summary so the user never
+              // has to guess why a card is flagged.
+              <span
+                className={cn(
+                  "flex items-center gap-1 text-xs leading-tight",
+                  data.issue.severity === "error" ? "text-red-600" : "text-amber-700"
+                )}>
+                <TriangleAlertIcon className="size-3 shrink-0" aria-hidden="true" />
+                <span className="line-clamp-2">{data.issue.label}</span>
+              </span>
+            ) : (
+              <span className="line-clamp-2 text-xs leading-tight text-slate-500">{data.summary}</span>
+            )}
           </div>
           {!isTrigger && canMutate && (
             <DropdownMenu>

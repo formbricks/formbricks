@@ -106,10 +106,12 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
 
   const authoringContext = useWorkflowEmailAuthoringContext();
   const hasBoundSurvey = Boolean(resolveBoundTriggerSurvey(authoringContext, definition));
+  // Unloaded state defaults to draft so a fresh page never flashes red before the workflow lands.
+  const isDraft = workflow ? workflow.status === "draft" : true;
 
   const derivedFlowNodes = useMemo(
-    () => (definition ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey }) : []),
-    [definition, t, hasBoundSurvey]
+    () => (definition ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft }) : []),
+    [definition, t, hasBoundSurvey, isDraft]
   );
   const flowEdges = useMemo(
     () => (definition ? workflowDefinitionToFlowEdges(definition) : []),

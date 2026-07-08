@@ -4056,6 +4056,8 @@
       "no_workflows_description": "建立你的第一個工作流程,在收到回應時自動執行動作。",
       "no_workflows_title": "尚無工作流程",
       "node_actions": "Node actions",
+      "node_needs_email_content": "Add a recipient and message",
+      "node_needs_survey": "Pick a survey to get started",
       "pointer_mode": "Pointer mode",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",

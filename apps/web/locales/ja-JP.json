@@ -4056,6 +4056,8 @@
       "no_workflows_description": "最初のワークフローを作成して、回答が届いたときのアクションを自動化しましょう。",
       "no_workflows_title": "ワークフローはまだありません",
       "node_actions": "Node actions",
+      "node_needs_email_content": "Add a recipient and message",
+      "node_needs_survey": "Pick a survey to get started",
       "pointer_mode": "Pointer mode",
       "relative_date": "{date}, {time}",
       "relative_days_ago": "{count, plural, one {# day ago} other {# days ago}}, {time}",

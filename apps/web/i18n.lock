@@ -3894,6 +3894,8 @@ checksums:
     workspace/workflows/no_workflows_description: 8a8152d86459e52a07e1ab28bd347121
     workspace/workflows/no_workflows_title: f1a5ada694cc4d773d2b56b105306a09
     workspace/workflows/node_actions: 60413ce1864388744a65164a552d5079
+    workspace/workflows/node_needs_email_content: 180086f108a8708fa9222ddc804a5c1b
+    workspace/workflows/node_needs_survey: 5e51ca0392e98011a8a72e75a223e5dd
     workspace/workflows/pointer_mode: 7af7ee96c6d8e9a15f0569c1b2376def
     workspace/workflows/relative_date: b9249095eeb4436a1d0d5ca5f9ecd346
     workspace/workflows/relative_days_ago: d9da4648c4fa3cb86584d3f9f48df6a2

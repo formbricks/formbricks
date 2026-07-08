@@ -8,14 +8,23 @@ import { type TWorkflowDefinition, type TWorkflowResource, WORKFLOW_ACTIONS } fr
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
 export type TWorkflowNodeIcon = "trigger" | "ifElse" | "email";
 
+export type TWorkflowNodeIssue = {
+  /**
+   * "setup" = a draft that simply isn't finished being configured (amber, guiding);
+   * "error" = a live (or previously live) workflow that can't run as configured (red).
+   */
+  severity: "setup" | "error";
+  /** Short user-facing reason rendered on the card in place of the summary. */
+  label: string;
+};
+
 export type TWorkflowNodeData = {
   category: TWorkflowNodeCategory;
   icon: TWorkflowNodeIcon;
   title: string;
   summary: string;
   isLeaf: boolean;
-  /** The node can't run as configured (e.g. no bound survey, missing email recipient/body). */
-  isInvalid: boolean;
+  issue: TWorkflowNodeIssue | null;
 };
 
 type TWorkflowEditorState = {
