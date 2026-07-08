@@ -5,7 +5,6 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   HashIcon,
-  LanguagesIcon,
   MessageSquareTextIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -16,7 +15,6 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import { getFeedbackRecordContactsAction, listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
@@ -35,10 +33,11 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { deleteFeedbackRecordAction } from "../actions";
-import { formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
+import { formatFieldType, formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
 import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolbar-left";
+import { TranslatedBadge } from "./translated-badge";
 
 const RECORDS_PER_PAGE = 50;
 // Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
@@ -545,7 +544,6 @@ const FeedbackRecordRow = ({
   const { text, isTranslated, original, langKey } = resolveFeedbackDisplayText(record);
   const value = formatValue(record, text, t, locale);
   const isLongValue = value.length > 60;
-  const translatedLangLabel = langKey ? (getLanguageLabel(langKey, locale) ?? langKey) : null;
   const collectedAt = formatDateTimeForDisplay(new Date(record.collected_at), locale);
   const isFormbricksSurveySource =
     (record.source_type === "formbricks" || record.source_type === "formbricks_survey") && !!record.source_id;
@@ -603,7 +601,7 @@ const FeedbackRecordRow = ({
       <td className="px-4 py-3 whitespace-nowrap">
         <span className="inline-flex items-center gap-1 text-slate-600">
           {FIELD_TYPE_ICONS[record.field_type] ?? <HashIcon className="size-3.5" />}
-          {record.field_type}
+          {formatFieldType(record.field_type)}
         </span>
       </td>
       <td className="px-4 py-3" title={value}>
@@ -622,33 +620,7 @@ const FeedbackRecordRow = ({
           ) : (
             <span className="block min-w-0 truncate">{value}</span>
           )}
-          {isTranslated && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-auto shrink-0 cursor-default gap-1 px-1.5 py-0.5 text-xs font-normal [&_svg]:size-3"
-                    aria-label={
-                      translatedLangLabel
-                        ? `${t("workspace.unify.translated")}: ${translatedLangLabel}`
-                        : t("workspace.unify.translated")
-                    }
-                    onClick={(event) => event.stopPropagation()}
-                    onKeyDown={(event) => event.stopPropagation()}>
-                    <LanguagesIcon aria-hidden="true" />
-                    {translatedLangLabel ?? t("workspace.unify.translated")}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
-                  <span className="font-medium">{t("workspace.unify.original_text")}: </span>
-                  {original ?? "—"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          {isTranslated && <TranslatedBadge langKey={langKey} original={original} locale={locale} />}
         </div>
       </td>
       <td className="px-4 py-3 text-slate-500" title={record.user_id}>

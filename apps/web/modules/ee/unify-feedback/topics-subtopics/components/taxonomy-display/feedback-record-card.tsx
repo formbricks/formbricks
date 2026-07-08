@@ -1,15 +1,15 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { CalendarDaysIcon, LanguagesIcon, UserIcon } from "lucide-react";
+import { CalendarDaysIcon, UserIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { resolveFeedbackDisplayText } from "../../../lib/utils";
+import { TranslatedBadge } from "../../../components/translated-badge";
+import { formatFieldType, resolveFeedbackDisplayText } from "../../../lib/utils";
 
 type SentimentValue = NonNullable<FeedbackRecordData["sentiment"]>;
 type BadgeType = "warning" | "success" | "error" | "gray" | "info";
@@ -31,6 +31,21 @@ const sentimentBadge = (sentiment: SentimentValue, t: TFunction): { text: string
   }
 };
 
+const capitalize = (value: string): string =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+
+// Emotion → badge color. Falls back to gray for anything the enrichment model returns that isn't mapped.
+const EMOTION_BADGE_TYPES: Record<string, BadgeType> = {
+  joy: "success",
+  anger: "error",
+  disgust: "warning",
+  fear: "warning",
+  sadness: "info",
+  surprise: "info",
+};
+
+const emotionBadgeType = (emotion: string): BadgeType => EMOTION_BADGE_TYPES[emotion.toLowerCase()] ?? "gray";
+
 /** A labelled metadata field ("Label: value"), the shared shape for source/type/sentiment/emotion. */
 const MetaItem = ({ label, children }: Readonly<{ label: string; children: ReactNode }>) => (
   <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -39,13 +54,22 @@ const MetaItem = ({ label, children }: Readonly<{ label: string; children: React
   </span>
 );
 
-export const FeedbackRecordCard = ({ record }: Readonly<{ record: FeedbackRecordData }>) => {
+interface FeedbackRecordCardProps {
+  record: FeedbackRecordData;
+  /** When true, show the untranslated source text instead of the translation. */
+  showOriginal?: boolean;
+}
+
+export const FeedbackRecordCard = ({ record, showOriginal = false }: Readonly<FeedbackRecordCardProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  // Prefer the consolidated-language (translated) text; keep the original reachable via the tooltip.
+  // Prefer the consolidated-language (translated) text; keep the original reachable via the badge tooltip.
+  // When the viewer picked "Original", show the source text and drop the translated badge.
   const { text, isTranslated, original, langKey } = resolveFeedbackDisplayText(record);
-  const translatedLangLabel = langKey ? (getLanguageLabel(langKey, locale) ?? langKey) : null;
+  const displayText = showOriginal ? (original ?? text) : text;
+  const showTranslatedBadge = isTranslated && !showOriginal;
   const sentiment = record.sentiment ? sentimentBadge(record.sentiment, t) : null;
+  const emotions = record.emotions?.filter(Boolean) ?? [];
   const sourceName =
     record.source_name || record.source_type || t("workspace.unify.taxonomy_feedback_source_fallback");
 
@@ -60,24 +84,11 @@ export const FeedbackRecordCard = ({ record }: Readonly<{ record: FeedbackRecord
           <p className="min-w-0 truncate text-xs font-semibold tracking-wide text-slate-400 uppercase">
             {record.field_label || record.field_id}
           </p>
-          {isTranslated && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex shrink-0 cursor-default items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
-                  <LanguagesIcon aria-hidden="true" className="size-3" />
-                  {translatedLangLabel ?? t("workspace.unify.translated")}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
-                <span className="font-medium">{t("workspace.unify.original_text")}: </span>
-                {original ?? "—"}
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {showTranslatedBadge && <TranslatedBadge langKey={langKey} original={original} locale={locale} />}
         </div>
 
         <p className="mt-1 text-sm leading-6 whitespace-pre-wrap text-slate-700">
-          {text ?? t("workspace.unify.taxonomy_no_text_value")}
+          {displayText ?? t("workspace.unify.taxonomy_no_text_value")}
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-slate-100 pt-2.5 text-xs text-slate-500">
@@ -92,14 +103,29 @@ export const FeedbackRecordCard = ({ record }: Readonly<{ record: FeedbackRecord
             </Tooltip>
           </MetaItem>
 
-          {record.field_type && <MetaItem label={t("common.type")}>{record.field_type}</MetaItem>}
+          {record.field_type && (
+            <MetaItem label={t("common.type")}>{formatFieldType(record.field_type)}</MetaItem>
+          )}
 
           <MetaItem label={t("workspace.unify.taxonomy_sentiment_label")}>
             {sentiment ? <Badge text={sentiment.text} type={sentiment.type} size="tiny" /> : <span>—</span>}
           </MetaItem>
 
           <MetaItem label={t("workspace.unify.taxonomy_emotion_label")}>
-            <span title={t("workspace.unify.taxonomy_emotion_coming_soon")}>—</span>
+            {emotions.length > 0 ? (
+              <span className="inline-flex flex-wrap items-center gap-1">
+                {emotions.map((emotion) => (
+                  <Badge
+                    key={emotion}
+                    text={capitalize(emotion)}
+                    type={emotionBadgeType(emotion)}
+                    size="tiny"
+                  />
+                ))}
+              </span>
+            ) : (
+              <span>—</span>
+            )}
           </MetaItem>
 
           {record.user_id && (

@@ -1,12 +1,25 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import type { FeedbackRecordData, TaxonomyNode } from "@/modules/hub/types";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import { resolveFeedbackDisplayText } from "../../../lib/utils";
 import { FeedbackRecordCard } from "./feedback-record-card";
 import { RecordCountPlaceholder } from "./record-count-placeholder";
+
+const COMMENT_LANGUAGE_TRANSLATED = "translated";
+const COMMENT_LANGUAGE_ORIGINAL = "original";
 
 interface TaxonomyNodeRecordsProps {
   node: TaxonomyNode | null;
@@ -28,7 +41,17 @@ export const TaxonomyNodeRecords = ({
   isError,
   onRetry,
 }: Readonly<TaxonomyNodeRecordsProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const [showOriginal, setShowOriginal] = useState(false);
+
+  // Offer the comment-language toggle only when the sample actually contains a translation. The label
+  // for the translated option is the shared target language (e.g. "English") derived from the records.
+  const targetLangLabel = useMemo(() => {
+    const translatedRecord = records.find((record) => resolveFeedbackDisplayText(record).isTranslated);
+    const langKey = translatedRecord ? resolveFeedbackDisplayText(translatedRecord).langKey : null;
+    return langKey ? (getLanguageLabel(langKey, locale) ?? langKey) : null;
+  }, [records, locale]);
 
   return (
     <aside className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-xs">
@@ -44,7 +67,26 @@ export const TaxonomyNodeRecords = ({
             <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{node.description}</p>
           )}
         </div>
-        {isFetching && !isLoading && <Loader2Icon className="size-4 shrink-0 animate-spin text-slate-400" />}
+        <div className="flex shrink-0 items-center gap-2">
+          {isFetching && !isLoading && <Loader2Icon className="size-4 animate-spin text-slate-400" />}
+          {targetLangLabel && (
+            <Select
+              value={showOriginal ? COMMENT_LANGUAGE_ORIGINAL : COMMENT_LANGUAGE_TRANSLATED}
+              onValueChange={(value) => setShowOriginal(value === COMMENT_LANGUAGE_ORIGINAL)}>
+              <SelectTrigger
+                className="h-8 w-auto gap-1.5 text-xs"
+                aria-label={t("workspace.unify.comment_language")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={COMMENT_LANGUAGE_TRANSLATED}>{targetLangLabel}</SelectItem>
+                <SelectItem value={COMMENT_LANGUAGE_ORIGINAL}>
+                  {t("workspace.unify.original_text")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       <div className="p-4">
@@ -79,7 +121,7 @@ export const TaxonomyNodeRecords = ({
                 </p>
               )}
               {records.map((record) => (
-                <FeedbackRecordCard key={record.id} record={record} />
+                <FeedbackRecordCard key={record.id} record={record} showOriginal={showOriginal} />
               ))}
             </div>
           );
