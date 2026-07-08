@@ -116,7 +116,7 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
             </div>
             {node.config.endingCardIds.length === 0 ? (
               // UI-only state: with nothing checked the stored config still means "all endings".
-              <p className="text-xs text-amber-700">
+              <p className="text-xs text-slate-500">
                 {t("workspace.workflows.trigger_ending_cards_select_at_least_one")}
               </p>
             ) : null}
