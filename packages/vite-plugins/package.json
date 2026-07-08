@@ -13,11 +13,15 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx"
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "vite": "7.3.5"
+    "postcss": "8.5.14",
+    "vite": "7.3.5",
+    "vitest": "4.1.6"
   }
 }

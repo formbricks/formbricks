@@ -3,8 +3,10 @@ import { CSV_HIDDEN_STATIC_MAPPINGS, MAX_CSV_VALUES, TFieldMapping, TSourceField
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
+  getCsvIdentityMappingAlert,
   getFeedbackSourceOptions,
   inferFieldType,
+  isCsvUserDefinedStaticValueMapping,
   isFeedbackSourceNameValid,
   parseCSVColumnsToFields,
   titleizeFromFileName,
@@ -24,9 +26,15 @@ describe("getFeedbackSourceOptions", () => {
     expect(options[3].id).toBe("feedback_record_mcp");
   });
 
-  test("both options are enabled by default", () => {
+  test("formbricks and csv are enabled; api ingestion and mcp are coming soon (disabled)", () => {
     const options = getFeedbackSourceOptions(mockT as never);
-    expect(options.every((o) => !o.disabled)).toBe(true);
+    const byId = Object.fromEntries(options.map((o) => [o.id, o]));
+    expect(byId.formbricks_survey.disabled).toBe(false);
+    expect(byId.csv.disabled).toBe(false);
+    expect(byId.api_ingestion.disabled).toBe(true);
+    expect(byId.api_ingestion.badge?.text).toBe("common.coming_soon");
+    expect(byId.feedback_record_mcp.disabled).toBe(true);
+    expect(byId.feedback_record_mcp.badge?.text).toBe("common.coming_soon");
   });
 
   test("uses translation keys for name and description", () => {
@@ -156,6 +164,58 @@ describe("isFeedbackSourceNameValid", () => {
 
   test("returns true for single character", () => {
     expect(isFeedbackSourceNameValid("a")).toBe(true);
+  });
+});
+
+describe("getCsvIdentityMappingAlert", () => {
+  test("returns both_fixed when submission_id and field_id use fixed values", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", staticValue: "batch-1" },
+        { targetFieldId: "field_id", staticValue: "nps-score" },
+      ])
+    ).toEqual({ type: "both_fixed" });
+  });
+
+  test("returns submission_id when only submission_id uses a fixed value", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", staticValue: "batch-1" },
+        { targetFieldId: "field_id", sourceFieldId: "question_id" },
+      ])
+    ).toEqual({ type: "single_fixed", field: "submission_id" });
+  });
+
+  test("returns field_id when only field_id uses a fixed value", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", sourceFieldId: "response_id" },
+        { targetFieldId: "field_id", staticValue: "nps-score" },
+      ])
+    ).toEqual({ type: "single_fixed", field: "field_id" });
+  });
+
+  test("returns null when both identity fields are column-mapped", () => {
+    expect(
+      getCsvIdentityMappingAlert([
+        { targetFieldId: "submission_id", sourceFieldId: "response_id" },
+        { targetFieldId: "field_id", sourceFieldId: "question_id" },
+      ])
+    ).toBeNull();
+  });
+});
+
+describe("isCsvUserDefinedStaticValueMapping", () => {
+  test("returns false for $now timestamp mappings", () => {
+    expect(isCsvUserDefinedStaticValueMapping({ targetFieldId: "collected_at", staticValue: "$now" })).toBe(
+      false
+    );
+  });
+
+  test("returns false for column mappings", () => {
+    expect(
+      isCsvUserDefinedStaticValueMapping({ targetFieldId: "submission_id", sourceFieldId: "response_id" })
+    ).toBe(false);
   });
 });
 

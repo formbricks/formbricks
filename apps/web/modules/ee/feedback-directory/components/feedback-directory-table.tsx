@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -109,6 +110,19 @@ export const FeedbackDirectoryTable = ({
 
   const filteredDirectories = showArchived ? directories : directories.filter((d) => !d.isArchived);
 
+  // Map each directory to a linked workspace the member can reach, so "View data" can deep-link
+  // into that workspace's feedback records. Falls back to the first assigned org workspace.
+  const orgWorkspaceIds = new Set(orgWorkspaces.map((workspace) => workspace.id));
+  const viewDataWorkspaceIdByDirectory = new Map<string, string>();
+  for (const assignment of workspaceAccessByWorkspace) {
+    if (
+      orgWorkspaceIds.has(assignment.workspaceId) &&
+      !viewDataWorkspaceIdByDirectory.has(assignment.feedbackDirectoryId)
+    ) {
+      viewDataWorkspaceIdByDirectory.set(assignment.feedbackDirectoryId, assignment.workspaceId);
+    }
+  }
+
   return (
     <>
       {isOwnerOrManager && (
@@ -157,6 +171,14 @@ export const FeedbackDirectoryTable = ({
                   )}
                 </TableCell>
                 <TableCell className="flex justify-end gap-2">
+                  {!directory.isArchived && viewDataWorkspaceIdByDirectory.has(directory.id) && (
+                    <Button size="sm" variant="ghost" asChild>
+                      <Link
+                        href={`/workspaces/${viewDataWorkspaceIdByDirectory.get(directory.id)}/unify/feedback-records`}>
+                        {t("workspace.settings.feedback_directories.view_data")}
+                      </Link>
+                    </Button>
+                  )}
                   {isOwnerOrManager && !directory.isArchived && (
                     <Button
                       size="sm"

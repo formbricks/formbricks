@@ -2,8 +2,11 @@
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
-import tailwindcss from "@tailwindcss/vite";
 import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
+
+// NOTE: Tailwind is compiled via PostCSS (postcss.config.mjs), NOT the
+// @tailwindcss/vite plugin. The #fbjs-scoping plugins must run after Tailwind
+// emits its CSS, and PostCSS guarantees that ordering. See postcss.config.mjs.
 
 /**
  * Plugin to strip "use client" directives from bundled dependencies.
@@ -55,7 +58,6 @@ export default defineConfig({
       exclude: ["**/*.stories.tsx", "**/*.test.ts", "**/story-helpers.tsx"],
       beforeWriteFile: rewriteNodeNextDtsSpecifiers,
     }),
-    tailwindcss(),
   ],
   test: {
     environment: "node",

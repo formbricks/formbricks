@@ -4,9 +4,9 @@ import { FeedbackSourcesTableDataRow } from "./feedback-sources-table-data-row";
 
 interface FeedbackSourcesTableRowsContainerProps {
   feedbackSources: TFeedbackSourceWithMappings[];
+  surveyNameById: Record<string, string>;
   onFeedbackSourceClick: (feedbackSource: TFeedbackSourceWithMappings) => void;
   onCsvImport: (feedbackSource: TFeedbackSourceWithMappings) => void;
-  onDuplicate: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   onToggleStatus: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
   onDelete: (feedbackSourceId: string) => Promise<void>;
   isReadOnly?: boolean;
@@ -14,9 +14,9 @@ interface FeedbackSourcesTableRowsContainerProps {
 
 export const FeedbackSourcesTableRowsContainer = ({
   feedbackSources,
+  surveyNameById,
   onFeedbackSourceClick,
   onCsvImport,
-  onDuplicate,
   onToggleStatus,
   onDelete,
   isReadOnly = false,
@@ -37,9 +37,9 @@ export const FeedbackSourcesTableRowsContainer = ({
         <FeedbackSourcesTableDataRow
           key={feedbackSource.id}
           feedbackSource={feedbackSource}
+          surveyNameById={surveyNameById}
           onEdit={() => onFeedbackSourceClick(feedbackSource)}
           onCsvImport={feedbackSource.type === "csv" ? () => onCsvImport(feedbackSource) : undefined}
-          onDuplicate={() => onDuplicate(feedbackSource)}
           onToggleStatus={() => onToggleStatus(feedbackSource)}
           onDelete={() => onDelete(feedbackSource.id)}
           isReadOnly={isReadOnly}

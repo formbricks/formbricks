@@ -1,5 +1,5 @@
-Full Name,Email Address,Role
-John Doe,john@example.com,Manager
-Jane Doe,jane@example.com,Billing
-Janice Doe,janice@example.com,Member
-Jhonny Doe,jhonny@example.com,Owner
+Full Name,Email Address,Organization Role,Teams
+John Doe,john@example.com,Manager,"Engineering, Design"
+Jane Doe,jane@example.com,Owner,
+Janice Doe,janice@example.com,Member,Engineering
+Joe Doe,joe@example.com,Member,"Engineering, Design, Marketing"

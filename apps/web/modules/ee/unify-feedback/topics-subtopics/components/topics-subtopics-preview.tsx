@@ -68,6 +68,7 @@ import {
   renameTaxonomyNodeAction,
   triggerTaxonomyRunAction,
 } from "../actions";
+import { TopicsSubtopicsGate } from "./topics-subtopics-gate";
 
 interface TopicsSubtopicsPreviewProps {
   workspaceId: string;
@@ -77,19 +78,16 @@ interface TopicsSubtopicsPreviewProps {
 
 const RUNNING_STATUSES = new Set(["pending", "running"]);
 const NODE_RECORD_LIMIT = 50;
+// Minimum open-text (value_text) feedback records a dataset needs before the taxonomy UI is shown.
+const MIN_OPEN_TEXT_RECORDS = 750;
+// How often to re-check embedding progress while the dataset is still being embedded.
+const EMBEDDING_POLL_INTERVAL_MS = 1000;
 const NODE_RECORD_COUNT_METADATA_KEYS = ["record_count", "records_count", "cluster_size", "size"] as const;
 
 const fieldKey = (field: TaxonomyFieldOption) =>
   `${field.source_type}::${field.source_id}::${field.field_id}`;
 
 const sourceKey = (field: TaxonomyFieldOption) => `${field.source_type}::${field.source_id}`;
-
-const scopeFromField = (field: TaxonomyFieldOption): TaxonomyScope => ({
-  tenant_id: field.tenant_id,
-  source_type: field.source_type,
-  source_id: field.source_id,
-  field_id: field.field_id,
-});
 
 const statusBadgeType = (status: TaxonomyRun["status"]): "warning" | "success" | "error" | "info" => {
   if (status === "succeeded") return "success";
@@ -225,6 +223,7 @@ export const TopicsSubtopicsPreview = ({
   const [editNode, setEditNode] = useState<TaxonomyNode | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [isRecordsDrawerOpen, setIsRecordsDrawerOpen] = useState(false);
+  const [fieldsUnavailable, setFieldsUnavailable] = useState(false);
   const [isLoadingFields, setIsLoadingFields] = useState(false);
   const [isLoadingState, setIsLoadingState] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -254,9 +253,28 @@ export const TopicsSubtopicsPreview = ({
     [fields, selectedFieldKey]
   );
 
-  const selectedScope = useMemo(
-    () => (selectedField ? scopeFromField(selectedField) : null),
-    [selectedField]
+  // Key the scope on its primitive fields, not the selectedField object. The embedding poll
+  // replaces `fields` (hence selectedField's identity) every second, but the scope of a given
+  // field never changes — keeping selectedScope stable prevents the run poller effect below (which
+  // depends on it) from tearing down and recreating its interval on every embedding tick.
+  const scopeTenantId = selectedField?.tenant_id;
+  const scopeSourceType = selectedField?.source_type;
+  const scopeSourceId = selectedField?.source_id;
+  const scopeFieldId = selectedField?.field_id;
+  const selectedScope = useMemo<TaxonomyScope | null>(
+    () =>
+      scopeTenantId !== undefined &&
+      scopeSourceType !== undefined &&
+      scopeSourceId !== undefined &&
+      scopeFieldId !== undefined
+        ? {
+            tenant_id: scopeTenantId,
+            source_type: scopeSourceType,
+            source_id: scopeSourceId,
+            field_id: scopeFieldId,
+          }
+        : null,
+    [scopeTenantId, scopeSourceType, scopeSourceId, scopeFieldId]
   );
   const runErrorMessage = useCallback(
     (run: TaxonomyRun) => run.error ?? (run.error_code ? runFailureMessage(run.error_code, t) : null),
@@ -286,6 +304,7 @@ export const TopicsSubtopicsPreview = ({
       setIsLoadingFields(true);
       setError(null);
       setNotice(null);
+      setFieldsUnavailable(false);
       setFields([]);
       setSelectedSourceKey("");
       setSelectedFieldKey("");
@@ -305,6 +324,7 @@ export const TopicsSubtopicsPreview = ({
 
         setFields(response.data.fields);
         if (response.data.unavailable) {
+          setFieldsUnavailable(true);
           setNotice(response.data.unavailableMessage ?? t("workspace.unify.taxonomy_fields_unavailable"));
         }
 
@@ -360,39 +380,64 @@ export const TopicsSubtopicsPreview = ({
     void loadState();
   }, [loadState]);
 
-  useEffect(() => {
-    if (!latestRun || !selectedScope || !RUNNING_STATUSES.has(latestRun.status)) return;
+  // Poll a running run until it reaches a terminal state. Keyed on the run *id* (not the whole
+  // run object) so per-tick status refreshes don't tear the effect down and recreate the interval.
+  // Crucially, on success we fetch the tree *before* recording the terminal status — otherwise the
+  // very setRuns that flips the run to "succeeded" re-runs this effect, whose cleanup would cancel
+  // the in-flight tree fetch and leave the tree unset until a manual page refresh.
+  const runningRunId = latestRun && RUNNING_STATUSES.has(latestRun.status) ? latestRun.id : null;
 
-    const abortController = new AbortController();
+  useEffect(() => {
+    if (!runningRunId || !selectedScope) return;
+
+    let cancelled = false;
 
     const interval = window.setInterval(async () => {
-      if (abortController.signal.aborted) return;
+      try {
+        const response = await getTaxonomyRunAction({
+          workspaceId,
+          scope: selectedScope,
+          runId: runningRunId,
+        });
+        const run = response?.data;
+        if (!run || cancelled) return;
 
-      const response = await getTaxonomyRunAction({ workspaceId, scope: selectedScope, runId: latestRun.id });
-      const run = response?.data;
-      if (!run || abortController.signal.aborted) return;
+        if (RUNNING_STATUSES.has(run.status)) {
+          setRuns((prev) => [run, ...prev.filter((existingRun) => existingRun.id !== run.id)]);
+          return;
+        }
 
-      setRuns((prev) => [run, ...prev.filter((existingRun) => existingRun.id !== run.id)]);
-      if (!RUNNING_STATUSES.has(run.status)) {
-        if (run.status === "succeeded") {
-          const treeResponse = await getTaxonomyTreeAction({
-            workspaceId,
-            scope: selectedScope,
-            runId: run.id,
-          });
-          if (treeResponse?.data && !abortController.signal.aborted) {
-            setActiveTree(treeResponse.data);
+        window.clearInterval(interval);
+        // Fetch the tree first (the run still reads as running, so this effect isn't torn down and
+        // can't cancel the in-flight fetch), then record the terminal status in `finally`. Doing it
+        // in `finally` guarantees the run leaves the "running" state even if the tree fetch throws —
+        // otherwise the spinner would freeze and re-generation would be blocked until a manual refresh.
+        try {
+          if (run.status === "succeeded") {
+            const treeResponse = await getTaxonomyTreeAction({
+              workspaceId,
+              scope: selectedScope,
+              runId: run.id,
+            });
+            if (treeResponse?.data && !cancelled) {
+              setActiveTree(treeResponse.data);
+            }
+          }
+        } finally {
+          if (!cancelled) {
+            setRuns((prev) => [run, ...prev.filter((existingRun) => existingRun.id !== run.id)]);
           }
         }
-        window.clearInterval(interval);
+      } catch {
+        // Transient failure — keep polling; the next tick retries.
       }
     }, 5000);
 
     return () => {
-      abortController.abort();
+      cancelled = true;
       window.clearInterval(interval);
     };
-  }, [latestRun, selectedScope, workspaceId]);
+  }, [runningRunId, selectedScope, workspaceId]);
 
   const handleSourceChange = (value: string) => {
     setSelectedSourceKey(value);
@@ -548,201 +593,272 @@ export const TopicsSubtopicsPreview = ({
 
   const hasDirectories = directoryIds.length > 0;
 
+  // Dataset-level open-text (value_text) totals. Records are partitioned by (source, field),
+  // so summing per-field counts gives the dataset totals without double-counting.
+  const totalOpenTextRecords = useMemo(
+    () => fields.reduce((sum, field) => sum + field.record_count, 0),
+    [fields]
+  );
+  const totalEmbeddedRecords = useMemo(
+    () => fields.reduce((sum, field) => sum + field.embedding_count, 0),
+    [fields]
+  );
+
+  // Only gate once fields have loaded cleanly (not mid-load, error, or Hub unavailable).
+  const canEvaluateGate = hasDirectories && !isLoadingFields && !error && !fieldsUnavailable;
+  const gateVariant: "insufficient" | "embedding" | null = !canEvaluateGate
+    ? null
+    : totalOpenTextRecords < MIN_OPEN_TEXT_RECORDS
+      ? "insufficient"
+      : totalEmbeddedRecords < totalOpenTextRecords
+        ? "embedding"
+        : null;
+
+  // While embeddings are still being generated, poll the field counts. Uses a self-scheduling
+  // timeout rather than setInterval so at most one request is ever in flight — otherwise a slow
+  // response could resolve after a fresher one and flicker the gate backward. A `cancelled` flag
+  // drops any response that lands after the directory changed or the effect was torn down.
+  useEffect(() => {
+    if (gateVariant !== "embedding" || !directoryId) return;
+
+    let cancelled = false;
+    let timeout: number;
+
+    const poll = async () => {
+      try {
+        const response = await getTaxonomyFieldsAction({ workspaceId, directoryId });
+        if (!cancelled && response?.data && !response.data.unavailable) {
+          setFields(response.data.fields);
+        }
+      } catch {
+        // Ignore transient failures and keep polling — the gate stays until counts catch up.
+      }
+      if (!cancelled) {
+        timeout = window.setTimeout(poll, EMBEDDING_POLL_INTERVAL_MS);
+      }
+    };
+
+    timeout = window.setTimeout(poll, EMBEDDING_POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [gateVariant, directoryId, workspaceId]);
+
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+      <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="topics-subtopics" />
       </PageHeader>
 
-      <div className="space-y-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-            <Selector label={t("workspace.unify.feedback_directory")}>
-              <Select
-                value={directoryId}
-                onValueChange={setDirectoryId}
-                disabled={!hasDirectories || isLoadingFields}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("workspace.unify.select_feedback_directory")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {directoryIds.map((id) => (
-                    <SelectItem key={id} value={id}>
-                      {directoryMap[id]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Selector>
+      {gateVariant ? (
+        <TopicsSubtopicsGate
+          variant={gateVariant}
+          workspaceId={workspaceId}
+          current={gateVariant === "insufficient" ? totalOpenTextRecords : totalEmbeddedRecords}
+          total={gateVariant === "insufficient" ? MIN_OPEN_TEXT_RECORDS : totalOpenTextRecords}
+          directoryMap={directoryMap}
+          directoryId={directoryId}
+          onDirectoryChange={setDirectoryId}
+        />
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+              {/* A workspace is limited to a single dataset, so the picker is only shown in the
+               * defensive case where a workspace is somehow linked to more than one. */}
+              {directoryIds.length > 1 && (
+                <Selector label={t("workspace.unify.feedback_directory")}>
+                  <Select
+                    value={directoryId}
+                    onValueChange={setDirectoryId}
+                    disabled={!hasDirectories || isLoadingFields}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("workspace.unify.select_feedback_directory")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {directoryIds.map((id) => (
+                        <SelectItem key={id} value={id}>
+                          {directoryMap[id]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Selector>
+              )}
 
-            <Selector label={t("workspace.unify.taxonomy_source")}>
-              <Select
-                value={selectedSourceKey}
-                onValueChange={handleSourceChange}
-                disabled={sourceOptions.length === 0 || isLoadingFields}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("workspace.unify.taxonomy_select_source")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {sourceOptions.map((field) => (
-                    <SelectItem key={sourceKey(field)} value={sourceKey(field)}>
-                      {field.source_name || field.source_id || t("workspace.unify.taxonomy_no_source")} (
-                      {field.source_type})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Selector>
+              <Selector label={t("workspace.unify.taxonomy_source")}>
+                <Select
+                  value={selectedSourceKey}
+                  onValueChange={handleSourceChange}
+                  disabled={sourceOptions.length === 0 || isLoadingFields}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("workspace.unify.taxonomy_select_source")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sourceOptions.map((field) => (
+                      <SelectItem key={sourceKey(field)} value={sourceKey(field)}>
+                        {field.source_name || field.source_id || t("workspace.unify.taxonomy_no_source")} (
+                        {field.source_type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Selector>
 
-            <Selector label={t("workspace.unify.taxonomy_field")}>
-              <Select
-                value={selectedFieldKey}
-                onValueChange={setSelectedFieldKey}
-                disabled={filteredFields.length === 0 || isLoadingFields}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("workspace.unify.taxonomy_select_field")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredFields.map((field) => (
-                    <SelectItem key={fieldKey(field)} value={fieldKey(field)}>
-                      {field.field_label || field.field_id} ({field.embedding_count}/{field.record_count})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Selector>
+              <Selector label={t("workspace.unify.taxonomy_field")}>
+                <Select
+                  value={selectedFieldKey}
+                  onValueChange={setSelectedFieldKey}
+                  disabled={filteredFields.length === 0 || isLoadingFields}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("workspace.unify.taxonomy_select_field")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredFields.map((field) => (
+                      <SelectItem key={fieldKey(field)} value={fieldKey(field)}>
+                        {field.field_label || field.field_id} ({field.embedding_count}/{field.record_count})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Selector>
 
-            <Button
-              type="button"
-              className="h-9 shrink-0"
-              disabled={!canGenerate}
-              loading={isGenerating}
-              onClick={handleGenerate}>
-              {activeTree ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
-              {activeTree ? t("workspace.unify.taxonomy_regenerate") : t("workspace.unify.taxonomy_generate")}
-            </Button>
+              <Button
+                type="button"
+                className="h-9 shrink-0"
+                disabled={!canGenerate}
+                loading={isGenerating}
+                onClick={handleGenerate}>
+                {activeTree ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
+                {activeTree
+                  ? t("workspace.unify.taxonomy_regenerate")
+                  : t("workspace.unify.taxonomy_generate")}
+              </Button>
+            </div>
+
+            {selectedField && (
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+                <Badge
+                  text={t("workspace.unify.taxonomy_embedded_records_short", {
+                    count: selectedField.embedding_count,
+                  })}
+                  type="gray"
+                  size="tiny"
+                />
+                <Badge
+                  text={t("workspace.unify.taxonomy_text_records_short", {
+                    count: selectedField.record_count,
+                  })}
+                  type="gray"
+                  size="tiny"
+                />
+                {!canWrite && (
+                  <Badge text={t("workspace.unify.taxonomy_read_only")} type="warning" size="tiny" />
+                )}
+              </div>
+            )}
           </div>
 
-          {selectedField && (
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <Badge
-                text={t("workspace.unify.taxonomy_embedded_records_short", {
-                  count: selectedField.embedding_count,
-                })}
-                type="gray"
-                size="tiny"
-              />
-              <Badge
-                text={t("workspace.unify.taxonomy_text_records_short", {
-                  count: selectedField.record_count,
-                })}
-                type="gray"
-                size="tiny"
-              />
-              {!canWrite && (
-                <Badge text={t("workspace.unify.taxonomy_read_only")} type="warning" size="tiny" />
-              )}
+          {!hasDirectories && (
+            <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-xs">
+              <p className="text-sm text-slate-600">{t("workspace.unify.taxonomy_no_directory")}</p>
+              <Button className="mt-4" size="sm" asChild>
+                <Link href={`/workspaces/${workspaceId}/unify/sources`}>
+                  {t("workspace.unify.manage_feedback_sources")}
+                </Link>
+              </Button>
             </div>
           )}
-        </div>
 
-        {!hasDirectories && (
-          <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-xs">
-            <p className="text-sm text-slate-600">{t("workspace.unify.taxonomy_no_directory")}</p>
-            <Button className="mt-4" size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/feedback-sources`}>
-                {t("workspace.unify.manage_feedback_sources")}
-              </Link>
-            </Button>
-          </div>
-        )}
-
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
-        )}
-        {notice && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            {notice}
-          </div>
-        )}
-
-        {latestRun && (
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge
-                text={runStatusLabel(latestRun.status, t)}
-                type={statusBadgeType(latestRun.status)}
-                size="tiny"
-              />
-              <span className="text-sm text-slate-600">
-                {t("workspace.unify.taxonomy_run_summary", {
-                  embeddedCount: latestRun.embedding_count,
-                  clusterCount: latestRun.cluster_count,
-                  topicCount: latestRun.node_count,
-                })}
-              </span>
-              {hasRunningRun && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+          )}
+          {notice && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              {notice}
             </div>
-            {latestRunError && <p className="mt-2 text-sm text-red-700">{latestRunError}</p>}
-          </div>
-        )}
+          )}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <GitBranchIcon className="size-4 text-slate-500" />
-                <h2 className="text-sm font-semibold text-slate-900">
-                  {t("workspace.unify.taxonomy_title")}
-                </h2>
+          {latestRun && (
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge
+                  text={runStatusLabel(latestRun.status, t)}
+                  type={statusBadgeType(latestRun.status)}
+                  size="tiny"
+                />
+                <span className="text-sm text-slate-600">
+                  {t("workspace.unify.taxonomy_run_summary", {
+                    embeddedCount: latestRun.embedding_count,
+                    clusterCount: latestRun.cluster_count,
+                    topicCount: latestRun.node_count,
+                  })}
+                </span>
+                {hasRunningRun && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
               </div>
-              {isLoadingState && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
+              {latestRunError && <p className="mt-2 text-sm text-red-700">{latestRunError}</p>}
             </div>
+          )}
 
-            <div className="p-4">
-              {activeTree?.root ? (
-                <div className="overflow-x-auto">
-                  <div
-                    className="grid min-h-[560px] gap-3"
-                    style={{
-                      gridTemplateColumns: `repeat(${Math.max(taxonomyColumns.length, 1)}, minmax(220px, 1fr))`,
-                      minWidth: `${Math.max(taxonomyColumns.length, 3) * 244}px`,
-                    }}>
-                    {taxonomyColumns.map((column) => (
-                      <TaxonomyColumnView
-                        key={column.level}
-                        column={column}
-                        selectedPathIds={selectedPathIds}
-                        selectedNodeId={selectedNode?.id}
-                        selectedNodeRecordCount={selectedNodeRecordCount}
-                        canWrite={canWrite}
-                        onSelect={handleSelectNode}
-                        onEdit={handleOpenEdit}
-                      />
-                    ))}
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+            <div className="min-w-0 rounded-lg border border-slate-200 bg-white shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <GitBranchIcon className="size-4 text-slate-500" />
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    {t("workspace.unify.taxonomy_title")}
+                  </h2>
+                </div>
+                {isLoadingState && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
+              </div>
+
+              <div className="p-4">
+                {activeTree?.root ? (
+                  <div className="overflow-x-auto">
+                    <div
+                      className="grid min-h-[560px] gap-3"
+                      style={{
+                        gridTemplateColumns: `repeat(${Math.max(taxonomyColumns.length, 1)}, minmax(220px, 1fr))`,
+                        minWidth: `${Math.max(taxonomyColumns.length, 3) * 244}px`,
+                      }}>
+                      {taxonomyColumns.map((column) => (
+                        <TaxonomyColumnView
+                          key={column.level}
+                          column={column}
+                          selectedPathIds={selectedPathIds}
+                          selectedNodeId={selectedNode?.id}
+                          selectedNodeRecordCount={selectedNodeRecordCount}
+                          canWrite={canWrite}
+                          onSelect={handleSelectNode}
+                          onEdit={handleOpenEdit}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
-                  {selectedField
-                    ? t("workspace.unify.taxonomy_empty_no_active")
-                    : t("workspace.unify.taxonomy_empty_select_field")}
-                </div>
-              )}
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
+                    {selectedField
+                      ? t("workspace.unify.taxonomy_empty_no_active")
+                      : t("workspace.unify.taxonomy_empty_select_field")}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          <TaxonomyDetailPanel
-            selectedNode={selectedNode}
-            nodeRecords={nodeRecords}
-            selectedNodeRecordCount={selectedNodeRecordCount}
-            isLoadingRecords={isLoadingRecords}
-            canWrite={canWrite}
-            onEdit={handleOpenEdit}
-            onOpenRecords={() => setIsRecordsDrawerOpen(true)}
-          />
+            <TaxonomyDetailPanel
+              selectedNode={selectedNode}
+              nodeRecords={nodeRecords}
+              selectedNodeRecordCount={selectedNodeRecordCount}
+              isLoadingRecords={isLoadingRecords}
+              canWrite={canWrite}
+              onEdit={handleOpenEdit}
+              onOpenRecords={() => setIsRecordsDrawerOpen(true)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <EditKeywordDialog
         node={editNode}

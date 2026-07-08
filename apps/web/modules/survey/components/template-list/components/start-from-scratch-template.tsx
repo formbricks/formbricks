@@ -52,7 +52,7 @@ export const StartFromScratchTemplate = ({
   const cardContent = (
     <>
       <PlusCircleIcon className="size-8 text-brand-dark transition-all duration-150 group-hover:scale-110" />
-      <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{customSurvey.name}</h3>
+      <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{customSurvey.name}</h3>
       <p className="text-left text-xs text-slate-600">{customSurvey.description}</p>
       {showCreateSurveyButton && (
         <div className="text-left">

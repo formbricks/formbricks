@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -45,6 +45,8 @@ export function useChartDialog({
 }: Readonly<UseChartDialogProps>) {
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
+  const [, startTransition] = useTransition();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
@@ -244,9 +246,14 @@ export function useChartDialog({
 
       onOpenChange(false);
       if (autoAddToDashboardId) {
-        router.push(`/workspaces/${workspaceId}/dashboards/${autoAddToDashboardId}`);
+        const dashboardPath = `/workspaces/${workspaceId}/dashboards/${autoAddToDashboardId}`;
+        if (pathname !== dashboardPath) {
+          router.push(dashboardPath);
+        }
       }
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
       onSuccess?.();
     } catch (error: unknown) {
       const message =
@@ -331,7 +338,9 @@ export function useChartDialog({
       toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
       onOpenChange(false);
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
       onSuccess?.();
     } catch (error: unknown) {
       const message =
