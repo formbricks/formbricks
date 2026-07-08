@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { getUserManagementAccess } from "@/lib/membership/utils";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import {
   canAssignOrganizationRole,
+  canManageOrganizationUsers,
   canModifyOrganizationMember,
   getApiKeyCreatorRole,
   getMembershipRoleByEmail,
@@ -13,6 +15,14 @@ import {
 vi.mock("@/modules/api/v2/management/lib/utils", () => ({
   pickCommonFilter: vi.fn(),
   buildCommonFilterQuery: vi.fn(),
+}));
+
+vi.mock("@/lib/constants", () => ({
+  USER_MANAGEMENT_MINIMUM_ROLE: "manager",
+}));
+
+vi.mock("@/lib/membership/utils", () => ({
+  getUserManagementAccess: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -198,5 +208,27 @@ describe("canModifyOrganizationMember", () => {
     expect(canModifyOrganizationMember("manager", "manager")).toBe(true);
     expect(canModifyOrganizationMember("manager", "member")).toBe(true);
     expect(canModifyOrganizationMember("manager", null)).toBe(true);
+  });
+});
+
+describe("canManageOrganizationUsers", () => {
+  beforeEach(() => {
+    vi.mocked(getUserManagementAccess).mockReset();
+  });
+
+  test("an unresolved creator (null) is denied without consulting the floor", () => {
+    expect(canManageOrganizationUsers(null)).toBe(false);
+    expect(getUserManagementAccess).not.toHaveBeenCalled();
+  });
+
+  test("delegates to getUserManagementAccess with the configured minimum role", () => {
+    vi.mocked(getUserManagementAccess).mockReturnValue(true);
+    expect(canManageOrganizationUsers("manager")).toBe(true);
+    expect(getUserManagementAccess).toHaveBeenCalledWith("manager", "manager");
+  });
+
+  test("denies when the creator's role is below the configured floor", () => {
+    vi.mocked(getUserManagementAccess).mockReturnValue(false);
+    expect(canManageOrganizationUsers("manager")).toBe(false);
   });
 });

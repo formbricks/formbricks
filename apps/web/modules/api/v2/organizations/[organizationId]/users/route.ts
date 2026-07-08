@@ -15,6 +15,7 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/users/lib/users";
 import {
   canAssignOrganizationRole,
+  canManageOrganizationUsers,
   canModifyOrganizationMember,
   getApiKeyCreatorRole,
   getMembershipRoleByEmail,
@@ -92,10 +93,21 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         );
       }
 
-      // Org API keys carry no role of their own, so clamp the assignable role to the role of the
-      // user who created the key. This mirrors the settings/session-path guard and stops a manager
+      // Org API keys carry no role of their own, so anchor authorization to the API key creator's
+      // role. First enforce the org's user-management floor (USER_MANAGEMENT_MINIMUM_ROLE), then
+      // clamp the assignable role. This mirrors the settings/session-path guard and stops a manager
       // from escalating a user (or themselves) to owner through the management API.
       const assignerRole = await getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId);
+      if (!canManageOrganizationUsers(assignerRole)) {
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "user", issue: "You are not allowed to manage users in this organization" }],
+          },
+          auditLog
+        );
+      }
       if (!canAssignOrganizationRole(assignerRole, body!.role)) {
         return handleApiError(
           request,
@@ -168,13 +180,24 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
       }
 
       // Org API keys carry no role of their own, so anchor authorization to the API key creator's
-      // role. A non-owner may not touch an existing owner's membership at all (role, active state,
-      // email, or teams), and when a role change is requested it must not exceed what the creator
-      // may assign. This mirrors the settings/session-path guard.
+      // role. First enforce the org's user-management floor (USER_MANAGEMENT_MINIMUM_ROLE). Then a
+      // non-owner may not touch an existing owner's membership at all (role, active state, email, or
+      // teams), and when a role change is requested it must not exceed what the creator may assign.
+      // This mirrors the settings/session-path guard.
       const [assignerRole, targetCurrentRole] = await Promise.all([
         getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId),
         getMembershipRoleByEmail(body.email, authentication.organizationId),
       ]);
+      if (!canManageOrganizationUsers(assignerRole)) {
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "user", issue: "You are not allowed to manage users in this organization" }],
+          },
+          auditLog
+        );
+      }
       if (
         !canModifyOrganizationMember(assignerRole, targetCurrentRole) ||
         (body.role && !canAssignOrganizationRole(assignerRole, body.role, targetCurrentRole))

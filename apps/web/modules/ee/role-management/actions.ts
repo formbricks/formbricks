@@ -142,10 +142,7 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
-    ctx.auditLoggingCtx.oldObject = await getMembershipByUserIdOrganizationId(
-      parsedInput.userId,
-      parsedInput.organizationId
-    );
+    ctx.auditLoggingCtx.oldObject = targetMembership;
     const result = await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
     ctx.auditLoggingCtx.newObject = result;
     return result;

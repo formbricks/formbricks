@@ -1,6 +1,8 @@
 import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma } from "@formbricks/database/prisma";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { getUserManagementAccess } from "@/lib/membership/utils";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 
@@ -125,4 +127,16 @@ export const canModifyOrganizationMember = (
 ): boolean => {
   if (assignerRole === OrganizationRole.owner) return true;
   return targetCurrentRole !== OrganizationRole.owner;
+};
+
+/**
+ * Whether the acting user (the API key creator) clears the org's user-management floor. The v2 API
+ * anchors this to the key creator's role so the `USER_MANAGEMENT_MINIMUM_ROLE` policy the
+ * settings/session path enforces (via `getUserManagementAccess`) is applied consistently here — an
+ * install that restricts user management to owners only, or disables it, isn't silently bypassed by
+ * a manager-created key. An unresolved creator (null) never clears the floor.
+ */
+export const canManageOrganizationUsers = (assignerRole: TOrganizationRole | null): boolean => {
+  if (!assignerRole) return false;
+  return getUserManagementAccess(assignerRole, USER_MANAGEMENT_MINIMUM_ROLE);
 };
