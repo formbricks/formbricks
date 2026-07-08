@@ -161,8 +161,6 @@ checksums:
     common/bottom_right: aaef9a70ef795affc806c6d1853d8373
     common/cancel: 2e2a849c2223911717de8caa2c71bade
     common/centered_modal: 982ff411cb7e91e30300c2ed56b7e507
-    common/change_organization: 3b2c873962509445ff2cb8cde5ad913b
-    common/change_workspace: 489cbcf7eef9b9b960e426fbf4da318f
     common/chart: 6f4d9c56e45ceb8fc22d2f74454cd813
     common/charts: 1da4564d89264c89de4ed28d7451b43e
     common/choice_n: a6965b8fb3e479e94175b3826839d9ae
