@@ -139,9 +139,11 @@ services:
       EMBEDDING_GOOGLE_CLOUD_PROJECT: ${EMBEDDING_GOOGLE_CLOUD_PROJECT:-}
       EMBEDDING_GOOGLE_CLOUD_LOCATION: ${EMBEDDING_GOOGLE_CLOUD_LOCATION:-}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
-      # Hub sentiment/emotion enrichment (0.7.x) are disabled unless the matching
-      # *_PROVIDER and *_MODEL pair is set. The anchor feeds both the API (enqueues)
-      # and the worker (classifies) — configuring only one side leaves jobs unprocessed.
+      # Hub sentiment/emotion/translation enrichment (0.7.x) are disabled unless the
+      # matching *_PROVIDER and *_MODEL pair is set (translation additionally needs a
+      # target language — TRANSLATION_DEFAULT_LANGUAGE, or a per-tenant setting). The
+      # anchor feeds both the API (enqueues) and the worker (classifies) — configuring
+      # only one side leaves jobs unprocessed.
       SENTIMENT_PROVIDER: ${SENTIMENT_PROVIDER:-}
       SENTIMENT_MODEL: ${SENTIMENT_MODEL:-}
       SENTIMENT_PROVIDER_API_KEY: ${SENTIMENT_PROVIDER_API_KEY:-}
@@ -152,6 +154,12 @@ services:
       EMOTIONS_PROVIDER_API_KEY: ${EMOTIONS_PROVIDER_API_KEY:-}
       EMOTIONS_GOOGLE_CLOUD_PROJECT: ${EMOTIONS_GOOGLE_CLOUD_PROJECT:-}
       EMOTIONS_GOOGLE_CLOUD_LOCATION: ${EMOTIONS_GOOGLE_CLOUD_LOCATION:-}
+      TRANSLATION_PROVIDER: ${TRANSLATION_PROVIDER:-}
+      TRANSLATION_MODEL: ${TRANSLATION_MODEL:-}
+      TRANSLATION_PROVIDER_API_KEY: ${TRANSLATION_PROVIDER_API_KEY:-}
+      TRANSLATION_DEFAULT_LANGUAGE: ${TRANSLATION_DEFAULT_LANGUAGE:-}
+      TRANSLATION_GOOGLE_CLOUD_PROJECT: ${TRANSLATION_GOOGLE_CLOUD_PROJECT:-}
+      TRANSLATION_GOOGLE_CLOUD_LOCATION: ${TRANSLATION_GOOGLE_CLOUD_LOCATION:-}
       TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
       TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
       HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}
