@@ -29,19 +29,3 @@ export const createHubResultFromError = <T>(err: unknown): HubResult<T> => {
   const message = getErrorMessage(err);
   return { data: null, error: { status, message, detail: message } };
 };
-
-export const toQueryString = (params: Record<string, string | number | undefined>): string => {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    // Only `undefined` is omitted ("not provided"). Empty strings are preserved: a taxonomy
-    // scope with source_id="" is the "no source" bucket — a real, comparable scope value, not
-    // the absence of a filter. Dropping it would make active-tree/run reads behave like
-    // "no source filter" instead of "the unattributed bucket". See Hub PR #88.
-    if (value !== undefined) {
-      query.set(key, String(value));
-    }
-  }
-
-  const serialized = query.toString();
-  return serialized ? `?${serialized}` : "";
-};

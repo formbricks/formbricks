@@ -1,8 +1,9 @@
 "use client";
 
+import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,17 +12,17 @@ import {
   THubTargetField,
 } from "@formbricks/types/feedback-source";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
   createFeedbackSourceWithMappingsAction,
   deleteFeedbackSourceAction,
-  duplicateFeedbackSourceAction,
   updateFeedbackSourceWithMappingsAction,
 } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
@@ -52,6 +53,18 @@ export function FeedbackSourcesSection({
   );
   const [csvImportFeedbackSource, setCsvImportFeedbackSource] = useState<TFeedbackSourceWithMappings | null>(
     null
+  );
+  const surveyNameById = useMemo(
+    () => Object.fromEntries(initialSurveys.map((survey) => [survey.id, survey.name])),
+    [initialSurveys]
+  );
+  // A survey can only back one feedback source, so surveys already connected are disabled in the picker.
+  const connectedSurveyIds = useMemo(
+    () =>
+      initialFeedbackSources.flatMap((source) =>
+        source.formbricksMappings.map((mapping) => mapping.surveyId)
+      ),
+    [initialFeedbackSources]
   );
   const directoryNames = directories.map((directory) => directory.name).join(", ");
   const feedbackDirectoryAccessText =
@@ -143,23 +156,6 @@ export function FeedbackSourcesSection({
     router.refresh();
   };
 
-  const handleDuplicateFeedbackSource = async (
-    feedbackSource: TFeedbackSourceWithMappings
-  ): Promise<void> => {
-    const result = await duplicateFeedbackSourceAction({
-      feedbackSourceId: feedbackSource.id,
-      workspaceId: workspaceId,
-    });
-
-    if (!result?.data) {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
-      return;
-    }
-
-    toast.success(t("workspace.unify.source_duplicated_successfully"));
-    router.refresh();
-  };
-
   const handleToggleStatus = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
     const newStatus = feedbackSource.status === "active" ? "paused" : "active";
     const result = await updateFeedbackSourceWithMappingsAction({
@@ -179,49 +175,48 @@ export function FeedbackSourcesSection({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.unify.feedback_sources")} />
-
-      <SettingsCard
-        title={t("workspace.unify.feedback_sources")}
-        description={t("workspace.unify.feedback_sources_settings_description")}
-        buttonInfo={
-          isReadOnly
-            ? undefined
-            : {
-                text: t("workspace.unify.add_source"),
-                onClick: () => setIsCreateModalOpen(true),
-                variant: "default",
-              }
+      <PageHeader
+        pageTitle={t("workspace.unify.feedback_data")}
+        cta={
+          isReadOnly ? undefined : (
+            <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="mr-2 size-4" />
+              {t("workspace.unify.add_feedback_source")}
+            </Button>
+          )
         }>
-        <FeedbackSourcesTable
-          feedbackSources={initialFeedbackSources}
-          onFeedbackSourceClick={setEditingFeedbackSource}
-          onCsvImport={setCsvImportFeedbackSource}
-          onDuplicate={handleDuplicateFeedbackSource}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDeleteFeedbackSource}
-          isLoading={false}
-          isReadOnly={isReadOnly}
-        />
-        {directories.length > 0 && (
-          <Alert size="small" className="mt-4">
-            <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
-            {!isReadOnly && workspace?.organizationId && (
-              <AlertButton asChild>
-                <Link href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
-                  {t("workspace.unify.manage_directories")}
-                </Link>
-              </AlertButton>
-            )}
-          </Alert>
-        )}
-      </SettingsCard>
+        <UnifyConfigNavigation workspaceId={workspaceId} activeId="sources" />
+      </PageHeader>
+
+      <FeedbackSourcesTable
+        feedbackSources={initialFeedbackSources}
+        surveyNameById={surveyNameById}
+        onFeedbackSourceClick={setEditingFeedbackSource}
+        onCsvImport={setCsvImportFeedbackSource}
+        onToggleStatus={handleToggleStatus}
+        onDelete={handleDeleteFeedbackSource}
+        isLoading={false}
+        isReadOnly={isReadOnly}
+      />
+      {directories.length > 0 && (
+        <Alert size="small" className="mt-4">
+          <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
+          {!isReadOnly && workspace?.organizationId && (
+            <AlertButton asChild>
+              <Link href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
+                {t("workspace.unify.manage_directories")}
+              </Link>
+            </AlertButton>
+          )}
+        </Alert>
+      )}
 
       <CreateFeedbackSourceModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
         onCreateFeedbackSource={handleCreateFeedbackSource}
         surveys={initialSurveys}
+        connectedSurveyIds={connectedSurveyIds}
         workspaceId={workspaceId}
         directories={directories}
         showTrigger={false}
