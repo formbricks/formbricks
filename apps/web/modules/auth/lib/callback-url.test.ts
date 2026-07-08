@@ -77,6 +77,12 @@ describe("auth callback URL helpers", () => {
     expect(getRelativeCallbackUrl("https://evil.example/x", WEBAPP_URL)).toBe("/");
   });
 
+  test("falls back to '/' for a same-origin URL with a scheme-relative (//) pathname", () => {
+    // Guards ENG-1636: without the validator fix this would return "//evil.example/path",
+    // which router.push resolves to an external origin.
+    expect(getRelativeCallbackUrl("http://localhost:3000//evil.example/path", WEBAPP_URL)).toBe("/");
+  });
+
   test("returns null invite token when the callback URL is invalid or has no token", () => {
     expect(getInviteTokenFromCallbackUrl("https://evil.example/invite?token=bad", WEBAPP_URL)).toBeNull();
     expect(
