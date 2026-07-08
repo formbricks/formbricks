@@ -112,3 +112,17 @@ export const canAssignOrganizationRole = (
   if (assignerRole === OrganizationRole.manager) return targetRole === OrganizationRole.member;
   return false;
 };
+
+/**
+ * Whether the acting user (the API key creator) may modify the target membership at all. Only an
+ * owner may act on an existing owner: this guards not just the role, but every other membership
+ * field an update can touch (active state, email, teams). Without it a manager-scoped key could,
+ * for example, deactivate or lock out an owner even though it can't change their role.
+ */
+export const canModifyOrganizationMember = (
+  assignerRole: TOrganizationRole | null,
+  targetCurrentRole: TOrganizationRole | null
+): boolean => {
+  if (assignerRole === OrganizationRole.owner) return true;
+  return targetCurrentRole !== OrganizationRole.owner;
+};

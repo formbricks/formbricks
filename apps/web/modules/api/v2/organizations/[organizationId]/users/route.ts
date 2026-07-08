@@ -15,6 +15,7 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/users/lib/users";
 import {
   canAssignOrganizationRole,
+  canModifyOrganizationMember,
   getApiKeyCreatorRole,
   getMembershipRoleByEmail,
 } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
@@ -166,25 +167,26 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
         );
       }
 
-      // Only a role change needs clamping; when no role is supplied the membership role is left
-      // untouched. Anchor the assignable role to the API key creator's role so a manager cannot
-      // promote a target above the member role — or demote an existing owner — through the
-      // management API.
-      if (body.role) {
-        const [assignerRole, targetCurrentRole] = await Promise.all([
-          getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId),
-          getMembershipRoleByEmail(body.email, authentication.organizationId),
-        ]);
-        if (!canAssignOrganizationRole(assignerRole, body.role, targetCurrentRole)) {
-          return handleApiError(
-            request,
-            {
-              type: "forbidden",
-              details: [{ field: "role", issue: "You are not allowed to assign this role" }],
-            },
-            auditLog
-          );
-        }
+      // Org API keys carry no role of their own, so anchor authorization to the API key creator's
+      // role. A non-owner may not touch an existing owner's membership at all (role, active state,
+      // email, or teams), and when a role change is requested it must not exceed what the creator
+      // may assign. This mirrors the settings/session-path guard.
+      const [assignerRole, targetCurrentRole] = await Promise.all([
+        getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId),
+        getMembershipRoleByEmail(body.email, authentication.organizationId),
+      ]);
+      if (
+        !canModifyOrganizationMember(assignerRole, targetCurrentRole) ||
+        (body.role && !canAssignOrganizationRole(assignerRole, body.role, targetCurrentRole))
+      ) {
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "role", issue: "You are not allowed to modify this user" }],
+          },
+          auditLog
+        );
       }
 
       let oldUserData: any = UNKNOWN_DATA;

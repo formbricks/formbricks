@@ -4,6 +4,7 @@ import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/manag
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import {
   canAssignOrganizationRole,
+  canModifyOrganizationMember,
   getApiKeyCreatorRole,
   getMembershipRoleByEmail,
   getUsersQuery,
@@ -177,5 +178,25 @@ describe("canAssignOrganizationRole", () => {
   test("an unresolved creator cannot assign any role", () => {
     expect(canAssignOrganizationRole(null, "member")).toBe(false);
     expect(canAssignOrganizationRole(null, "owner")).toBe(false);
+  });
+});
+
+describe("canModifyOrganizationMember", () => {
+  test("owner can modify any member, including another owner", () => {
+    expect(canModifyOrganizationMember("owner", "owner")).toBe(true);
+    expect(canModifyOrganizationMember("owner", "manager")).toBe(true);
+    expect(canModifyOrganizationMember("owner", "member")).toBe(true);
+  });
+
+  test("a non-owner cannot modify an existing owner", () => {
+    expect(canModifyOrganizationMember("manager", "owner")).toBe(false);
+    expect(canModifyOrganizationMember("member", "owner")).toBe(false);
+    expect(canModifyOrganizationMember(null, "owner")).toBe(false);
+  });
+
+  test("a non-owner can modify non-owner members", () => {
+    expect(canModifyOrganizationMember("manager", "manager")).toBe(true);
+    expect(canModifyOrganizationMember("manager", "member")).toBe(true);
+    expect(canModifyOrganizationMember("manager", null)).toBe(true);
   });
 });
