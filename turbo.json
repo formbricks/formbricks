@@ -1,5 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
+  "cacheMaxSize": "10GB",
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
   "tasks": {
     "@formbricks/ai#build": {
@@ -360,11 +361,11 @@
         "PROMETHEUS_EXPORTER_PORT",
         "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "build:dev": {
       "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "clean": {
       "cache": false,
