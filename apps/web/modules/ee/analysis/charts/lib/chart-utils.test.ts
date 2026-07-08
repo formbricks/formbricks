@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
+  CHART_NOT_ENRICHED_COLOR,
   formatCellValue,
   formatXAxisTick,
   preparePieData,
@@ -55,6 +56,27 @@ describe("chart-utils", () => {
       expect(result!.processedData[0].count).toBe(10);
       expect(result!.colors[0]).toBe(CHART_MEASURE_COLORS[0]);
       expect(result!.colors[1]).toBe(CHART_MEASURE_COLORS[1]);
+    });
+
+    test("greys the not-enriched slice and hands palette colours only to enriched slices", () => {
+      const nameKey = "FeedbackRecords.sentiment";
+      const data = [
+        { [nameKey]: "", count: 20 }, // biggest → sorted first → not enriched
+        { [nameKey]: "positive", count: 6 },
+        { [nameKey]: "negative", count: 4 },
+      ];
+      const result = preparePieData(data, "count", nameKey);
+      expect(result).not.toBeNull();
+      // gray for the empty (not-enriched) slice; the palette is not consumed by it
+      expect(result!.colors[0]).toBe(CHART_NOT_ENRICHED_COLOR);
+      expect(result!.colors[1]).toBe(CHART_MEASURE_COLORS[0]);
+      expect(result!.colors[2]).toBe(CHART_MEASURE_COLORS[1]);
+    });
+
+    test("uses palette colours when no nameKey is provided", () => {
+      const data = [{ label: "A", count: 5 }];
+      const result = preparePieData(data, "count");
+      expect(result!.colors[0]).toBe(CHART_MEASURE_COLORS[0]);
     });
   });
 
@@ -121,8 +143,12 @@ describe("chart-utils", () => {
 
   describe("constants", () => {
     test("CHART_MEASURE_COLORS has expected length", () => {
-      expect(CHART_MEASURE_COLORS).toHaveLength(6);
+      expect(CHART_MEASURE_COLORS).toHaveLength(8);
       expect(CHART_MEASURE_COLORS[0]).toBe(CHART_BRAND_DARK);
+    });
+
+    test("CHART_MEASURE_COLORS has no duplicate hues", () => {
+      expect(new Set(CHART_MEASURE_COLORS).size).toBe(CHART_MEASURE_COLORS.length);
     });
   });
 });

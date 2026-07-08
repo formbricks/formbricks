@@ -9,13 +9,16 @@ import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/po
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
+  CHART_NOT_ENRICHED_COLOR,
   formatCellValue,
   formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
+  FEEDBACK_MEASURE_IDS,
   formatCubeColumnHeader,
   getTranslatedDimensionValueLabel,
+  isNotEnrichedDimensionValue,
   sortRowsByEnumDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
@@ -138,6 +141,10 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     : timeDim?.dimension;
 
   const xAxisKey = query.dimensions?.[0] ?? timeDimKey ?? rowKeys[0] ?? "key";
+  // Measure-only charts (e.g. the emotion counts) have no real category: xAxisKey falls back to a
+  // measure column, so the single group would otherwise be labelled with that measure's value (a
+  // stray "1"). Track that so the x-axis tick and tooltip header are suppressed instead.
+  const hasCategoryAxis = Boolean(query.dimensions?.[0] ?? timeDimKey);
 
   // Enum dimensions (e.g. sentiment) sort ordinally instead of alphabetically and
   // render translated labels instead of their raw machine tokens.
@@ -146,7 +153,15 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     getTranslatedDimensionValueLabel(xAxisKey, value, t) ?? formatXAxisTick(value);
 
   const measureIds = query.measures?.filter((m) => rowKeys.includes(m)) ?? [];
-  const dataKeys = measureIds.length > 0 ? measureIds : rowKeys.filter((k) => k !== xAxisKey);
+  const rawDataKeys = measureIds.length > 0 ? measureIds : rowKeys.filter((k) => k !== xAxisKey);
+  // Render series (bars/lines/legend) in the schema's canonical measure order — e.g. sentiment from
+  // very positive → mixed — instead of the order the user happened to pick them. Unknown keys keep
+  // their relative order at the end.
+  const measureRank = (id: string): number => {
+    const index = FEEDBACK_MEASURE_IDS.indexOf(id);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  const dataKeys = [...rawDataKeys].sort((a, b) => measureRank(a) - measureRank(b));
 
   if (dataKeys.length === 0) {
     return (
@@ -176,7 +191,9 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         ? sortedData
         : sortedData.map((row, index) => ({
             ...row,
-            fill: CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
+            fill: isNotEnrichedDimensionValue(xAxisKey, row[xAxisKey])
+              ? CHART_NOT_ENRICHED_COLOR
+              : CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
           }));
 
       return (
@@ -189,6 +206,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           showLegend={isMultiMeasure}
           tooltipCursor={false}
           zeroBaseline
+          hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}
           chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
           {dataKeys.map((key, i) => {
@@ -221,6 +239,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           dataKeys={dataKeys}
           chartConfig={chartConfig}
           showLegend
+          hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}>
           <defs>
             {dataKeys.map((key, i) => {
@@ -261,6 +280,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           dataKeys={dataKeys}
           chartConfig={chartConfig}
           showLegend
+          hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}>
           {dataKeys.map((key, i) => (
             <Area
@@ -277,7 +297,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         </CartesianChart>
       );
     case "pie": {
-      const pieResult = preparePieData(sortedData, dataKey);
+      const pieResult = preparePieData(sortedData, dataKey, xAxisKey);
       if (!pieResult) {
         return (
           <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">

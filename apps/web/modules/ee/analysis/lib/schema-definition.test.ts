@@ -3,13 +3,20 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import {
+  EMOTION_MEASURE_ORDER,
+  EMOTION_VALUES,
   FEEDBACK_FIELDS,
+  MEASURE_GROUP_ORDER,
   SELECTABLE_VALUE_DIMENSION_IDS,
+  SENTIMENT_MEASURE_ORDER,
   SENTIMENT_VALUE_ORDER,
   formatCubeColumnHeader,
   getFieldById,
   getFilterOperatorsForType,
   getTranslatedDimensionValueLabel,
+  getTranslatedFieldLabel,
+  isEnrichmentDimensionId,
+  isNotEnrichedDimensionValue,
   isSelectableValueDimension,
   sortRowsByEnumDimension,
 } from "./schema-definition";
@@ -60,7 +67,7 @@ describe("schema-definition", () => {
     test("returns measure by id", () => {
       const field = getFieldById("FeedbackRecords.count");
       expect(field).toBeDefined();
-      expect(field?.label).toBe("Count");
+      expect(field?.label).toBe("Responses");
     });
 
     test("returns undefined for unknown id", () => {
@@ -76,7 +83,7 @@ describe("schema-definition", () => {
 
     test("returns field label for known dimension/measure", () => {
       expect(formatCubeColumnHeader("FeedbackRecords.sourceType")).toBe("Source Type");
-      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Count");
+      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Responses");
     });
 
     test("converts last segment to title case for unknown keys", () => {
@@ -114,6 +121,21 @@ describe("schema-definition", () => {
       expect(ids).not.toContain("FeedbackRecords.averageScore");
     });
 
+    test("every measure has a valid UX group", () => {
+      for (const m of FEEDBACK_FIELDS.measures) {
+        expect(MEASURE_GROUP_ORDER).toContain(m.group);
+      }
+    });
+
+    test("labels buckets with the 'Domain: Detail' scheme", () => {
+      expect(getFieldById("FeedbackRecords.joyCount")?.label).toBe("Emotion: Joy");
+      expect(getFieldById("FeedbackRecords.veryPositiveCount")?.label).toBe("Sentiment: Very positive");
+      expect(getFieldById("FeedbackRecords.promoterCount")?.label).toBe("NPS: Promoters");
+      expect(getFieldById("FeedbackRecords.promoterCount")?.group).toBe("count");
+      expect(getFieldById("FeedbackRecords.npsAverage")?.group).toBe("average");
+      expect(getFieldById("FeedbackRecords.npsScore")?.group).toBe("score");
+    });
+
     test("only exposes members present in the deployed Cube schema", () => {
       const chartCubeSchema = readChartCubeSchema();
       const exposedMembers = [...FEEDBACK_FIELDS.measures, ...FEEDBACK_FIELDS.dimensions].map(({ id }) =>
@@ -145,6 +167,12 @@ describe("schema-definition", () => {
       expect(measureIds).toEqual(
         expect.arrayContaining([
           "FeedbackRecords.sentimentAverage",
+          "FeedbackRecords.veryNegativeCount",
+          "FeedbackRecords.negativeCount",
+          "FeedbackRecords.neutralCount",
+          "FeedbackRecords.positiveCount",
+          "FeedbackRecords.veryPositiveCount",
+          "FeedbackRecords.mixedCount",
           "FeedbackRecords.joyCount",
           "FeedbackRecords.angerCount",
           "FeedbackRecords.sadnessCount",
@@ -155,6 +183,55 @@ describe("schema-definition", () => {
       );
     });
 
+    test("orders sentiment count measures most-positive → mixed", () => {
+      const expectedOrder = [
+        "FeedbackRecords.veryPositiveCount",
+        "FeedbackRecords.positiveCount",
+        "FeedbackRecords.neutralCount",
+        "FeedbackRecords.negativeCount",
+        "FeedbackRecords.veryNegativeCount",
+        "FeedbackRecords.mixedCount",
+      ];
+      const measureIds = FEEDBACK_FIELDS.measures.map((m) => m.id);
+      const sentimentCountIds = measureIds.filter((id) => expectedOrder.includes(id));
+      expect(sentimentCountIds).toEqual(expectedOrder);
+    });
+
+    test("orders emotion count measures by the fixed valence order", () => {
+      const expectedOrder = [
+        "FeedbackRecords.joyCount",
+        "FeedbackRecords.surpriseCount",
+        "FeedbackRecords.angerCount",
+        "FeedbackRecords.sadnessCount",
+        "FeedbackRecords.fearCount",
+        "FeedbackRecords.disgustCount",
+      ];
+      const measureIds = FEEDBACK_FIELDS.measures.map((m) => m.id);
+      expect(measureIds.filter((id) => expectedOrder.includes(id))).toEqual(expectedOrder);
+    });
+
+    test("measure display orders cover exactly their vocabularies", () => {
+      expect([...EMOTION_MEASURE_ORDER].sort()).toEqual([...EMOTION_VALUES].sort());
+      expect([...SENTIMENT_MEASURE_ORDER].sort()).toEqual([...SENTIMENT_VALUE_ORDER].sort());
+    });
+
+    test("labels each sentiment count measure (no raw-id fallback)", () => {
+      const t = ((key: string) => key) as TFunction;
+      const sentimentCountIds = [
+        "FeedbackRecords.veryNegativeCount",
+        "FeedbackRecords.negativeCount",
+        "FeedbackRecords.neutralCount",
+        "FeedbackRecords.positiveCount",
+        "FeedbackRecords.veryPositiveCount",
+        "FeedbackRecords.mixedCount",
+      ];
+      for (const id of sentimentCountIds) {
+        // resolves to an i18n key, not the raw dimension id
+        expect(getTranslatedFieldLabel(id, t)).toMatch(/^workspace\.analysis\.charts\.field_label_/);
+        expect(getTranslatedFieldLabel(id, t)).not.toBe(id);
+      }
+    });
+
     test("enrichment members exist in both deployed Cube schemas", () => {
       const dockerSchema = readDockerCubeSchema();
       const chartSchema = readChartCubeSchema();
@@ -163,6 +240,12 @@ describe("schema-definition", () => {
         "sentimentScore",
         "emotions",
         "sentimentAverage",
+        "veryNegativeCount",
+        "negativeCount",
+        "neutralCount",
+        "positiveCount",
+        "veryPositiveCount",
+        "mixedCount",
         "joyCount",
         "angerCount",
         "sadnessCount",
@@ -203,7 +286,42 @@ describe("schema-definition", () => {
       ).toBeUndefined();
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", "anger", t)).toBeUndefined();
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", 3, t)).toBeUndefined();
-      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", "", t)).toBeUndefined();
+    });
+
+    test("labels empty enrichment values as 'Not enriched'", () => {
+      for (const dimension of ["FeedbackRecords.sentiment", "FeedbackRecords.emotions"]) {
+        for (const value of ["", "   ", null, undefined]) {
+          expect(getTranslatedDimensionValueLabel(dimension, value, t)).toBe(
+            "workspace.analysis.charts.not_enriched"
+          );
+        }
+      }
+    });
+
+    test("does not label empty values on non-enrichment dimensions", () => {
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", "", t)).toBeUndefined();
+      expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", null, t)).toBeUndefined();
+    });
+  });
+
+  describe("isNotEnrichedDimensionValue", () => {
+    test("true only for empty values on sentiment/emotions dimensions", () => {
+      expect(isNotEnrichedDimensionValue("FeedbackRecords.sentiment", "")).toBe(true);
+      expect(isNotEnrichedDimensionValue("FeedbackRecords.sentiment", null)).toBe(true);
+      expect(isNotEnrichedDimensionValue("FeedbackRecords.emotions", "  ")).toBe(true);
+      // populated enrichment value → enriched, not gray
+      expect(isNotEnrichedDimensionValue("FeedbackRecords.sentiment", "positive")).toBe(false);
+      // empty value on a non-enrichment dimension → not the "not enriched" bucket
+      expect(isNotEnrichedDimensionValue("FeedbackRecords.sourceName", "")).toBe(false);
+    });
+  });
+
+  describe("isEnrichmentDimensionId", () => {
+    test("recognizes the sentiment and emotions dimensions only", () => {
+      expect(isEnrichmentDimensionId("FeedbackRecords.sentiment")).toBe(true);
+      expect(isEnrichmentDimensionId("FeedbackRecords.emotions")).toBe(true);
+      expect(isEnrichmentDimensionId("FeedbackRecords.sentimentScore")).toBe(false);
+      expect(isEnrichmentDimensionId("FeedbackRecords.sourceName")).toBe(false);
     });
   });
 

@@ -168,6 +168,45 @@ cube(`FeedbackRecords`, {
       filters: [{ sql: `${CUBE}.emotions @> ARRAY['disgust']::text[]` }],
       description: `Number of feedback records tagged with the "disgust" emotion`,
     },
+
+    // Sentiment label counts: sentiment is a single-value column (not multi-label), so unlike the
+    // emotion counts these ARE mutually exclusive — they partition the enriched records and sum to
+    // the enriched record count. NULL (not-yet-enriched) records fall into none of them.
+    veryNegativeCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.sentiment = 'very_negative'` }],
+      description: `Number of feedback records with "very_negative" sentiment`,
+    },
+
+    negativeCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.sentiment = 'negative'` }],
+      description: `Number of feedback records with "negative" sentiment`,
+    },
+
+    neutralCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.sentiment = 'neutral'` }],
+      description: `Number of feedback records with "neutral" sentiment`,
+    },
+
+    positiveCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.sentiment = 'positive'` }],
+      description: `Number of feedback records with "positive" sentiment`,
+    },
+
+    veryPositiveCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.sentiment = 'very_positive'` }],
+      description: `Number of feedback records with "very_positive" sentiment`,
+    },
+
+    mixedCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.sentiment = 'mixed'` }],
+      description: `Number of feedback records with "mixed" sentiment`,
+    },
   },
 
   dimensions: {
@@ -315,7 +354,9 @@ cube(`FeedbackRecords`, {
     },
 
     fieldTypeNormalized: {
-      sql: `LOWER(TRIM(field_type))`,
+      // field_type is a Postgres enum (field_type_enum); TRIM/LOWER only accept text, so cast
+      // first (btrim(field_type_enum) does not exist). The other companions are text columns.
+      sql: `LOWER(TRIM(field_type::text))`,
       type: `string`,
       shown: false,
     },

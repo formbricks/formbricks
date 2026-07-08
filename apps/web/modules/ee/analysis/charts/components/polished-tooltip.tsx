@@ -22,6 +22,9 @@ interface RechartsTooltipProps {
   label?: string | number;
   /** Formats the header (dimension value); defaults to the generic date/string formatting. */
   labelFormatter?: (value: unknown) => string;
+  /** Suppress the header entirely for measure-only charts, where the label is a meaningless
+   * fallback value (e.g. a stray "1") rather than a real category. */
+  hideLabel?: boolean;
 }
 
 export const PolishedChartTooltip = ({
@@ -29,13 +32,15 @@ export const PolishedChartTooltip = ({
   payload,
   label,
   labelFormatter,
+  hideLabel = false,
 }: Readonly<RechartsTooltipProps>) => {
   const { t } = useTranslation();
   if (!active || !payload?.length) return null;
 
   // Pies leave `label` empty and put the slice name on payload[0].name.
   const headerSource = label != null && String(label).length > 0 ? label : (payload[0]?.name ?? "");
-  const headerText = labelFormatter ? labelFormatter(headerSource) : formatXAxisTick(headerSource);
+  const formatHeader = labelFormatter ?? formatXAxisTick;
+  const headerText = hideLabel ? "" : formatHeader(headerSource);
 
   return (
     <div className="border-border/50 min-w-[180px] rounded-lg border bg-white px-3 py-2.5 shadow-lg dark:bg-gray-950">

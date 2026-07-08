@@ -6,9 +6,13 @@ export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParam
 
 // Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge
 // them as optional reads; drop once the SDK ships them. May be null when translation is off/pending.
+// `emotions` is a read-only enrichment field that also predates the SDK type (the DB column is a
+// Postgres text[]); absent until a record is enriched. Typed to accept either the serialized array
+// or a comma-joined string, since the serialization is owned by the external hub service.
 export type FeedbackRecordData = FormbricksHub.FeedbackRecordData & {
   value_text_translated?: string | null;
   translation_lang_key?: string | null;
+  emotions?: string[] | string | null;
 };
 
 export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListResponse, "data"> & {

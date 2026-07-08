@@ -12,10 +12,16 @@ export interface FieldDefinition {
   isGenerated?: boolean;
 }
 
+/** UX grouping for the measures picker — sections are shown in this order. Distinct from the Cube
+ * aggregation `type` ("number" covers both averages and scores, which we want as separate sections). */
+export type TMeasureGroup = "count" | "average" | "score" | "other";
+export const MEASURE_GROUP_ORDER: readonly TMeasureGroup[] = ["score", "average", "count", "other"];
+
 export interface MeasureDefinition {
   id: string;
   label: string;
   type: "count" | "number";
+  group: TMeasureGroup;
   description?: string;
 }
 
@@ -41,13 +47,46 @@ export type TEmotionValue = (typeof EMOTION_VALUES)[number];
 
 const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
 
+// "very_positive" -> "veryPositiveCount" (Cube measure id) and "Very positive" (sentence-case label).
+const toCountMeasureId = (value: string): string =>
+  value.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
+const toSentenceCase = (value: string): string => capitalize(value.replace(/_/g, " "));
+
+// Display order for emotions as measures/series. Emotions are nominal (no scale), so this is a
+// deliberate valence grouping — positive/neutral (joy, surprise) then negative (anger…disgust) —
+// chosen for stable, comparable slots across charts rather than any inherent ranking.
+export const EMOTION_MEASURE_ORDER = ["joy", "surprise", "anger", "sadness", "fear", "disgust"] as const;
+
 // One structurally identical count measure per emotion; mirrors the <emotion>Count
 // measures in the Cube schema (docker/cube/schema/FeedbackRecords.js).
-const EMOTION_COUNT_MEASURES: MeasureDefinition[] = EMOTION_VALUES.map((emotion) => ({
+const EMOTION_COUNT_MEASURES: MeasureDefinition[] = EMOTION_MEASURE_ORDER.map((emotion) => ({
   id: `FeedbackRecords.${emotion}Count`,
-  label: `${capitalize(emotion)} Count`,
+  label: `Emotion: ${capitalize(emotion)}`,
   type: "count",
+  group: "count",
   description: `Number of feedback records tagged with the "${emotion}" emotion`,
+}));
+
+// Display order for sentiment as measures/series (chart bars, legend, picker): most positive →
+// most negative, with "mixed" last. Distinct from SENTIMENT_VALUE_ORDER, which is the low→high
+// ordinal order used to sort the sentiment *dimension* axis.
+export const SENTIMENT_MEASURE_ORDER = [
+  "very_positive",
+  "positive",
+  "neutral",
+  "negative",
+  "very_negative",
+  "mixed",
+] as const;
+
+// One count measure per sentiment label; mirrors the <sentiment>Count measures in the Cube schema.
+// Unlike emotions these are mutually exclusive (sentiment is single-valued).
+const SENTIMENT_COUNT_MEASURES: MeasureDefinition[] = SENTIMENT_MEASURE_ORDER.map((sentiment) => ({
+  id: `FeedbackRecords.${toCountMeasureId(sentiment)}Count`,
+  label: `Sentiment: ${toSentenceCase(sentiment)}`,
+  type: "count",
+  group: "count",
+  description: `Number of feedback records with "${sentiment}" sentiment`,
 }));
 
 export const FEEDBACK_FIELDS = {
@@ -169,107 +208,125 @@ export const FEEDBACK_FIELDS = {
   measures: [
     {
       id: "FeedbackRecords.count",
-      label: "Count",
+      label: "Responses",
       type: "count",
+      group: "count",
       description: "Total number of feedback responses",
     },
     {
       id: "FeedbackRecords.uniqueRespondents",
-      label: "Unique Respondents",
+      label: "Unique respondents",
       type: "number",
+      group: "count",
       description: "Number of unique users who provided feedback",
     },
     {
       id: "FeedbackRecords.uniqueResponses",
-      label: "Unique Responses",
+      label: "Unique responses",
       type: "number",
+      group: "count",
       description: "Number of unique survey submissions",
     },
     {
       id: "FeedbackRecords.npsScore",
-      label: "NPS Score",
+      label: "NPS: Score",
       type: "number",
+      group: "score",
       description: "Net Promoter Score: ((Promoters - Detractors) / Total NPS responses) * 100",
     },
     {
       id: "FeedbackRecords.npsAverage",
-      label: "NPS Average",
+      label: "NPS: Average",
       type: "number",
+      group: "average",
       description: "Average NPS rating (0-10)",
     },
     {
       id: "FeedbackRecords.promoterCount",
-      label: "Promoter Count",
+      label: "NPS: Promoters",
       type: "count",
+      group: "count",
       description: "Number of NPS promoters (score 9-10)",
     },
     {
       id: "FeedbackRecords.passiveCount",
-      label: "Passive Count",
+      label: "NPS: Passives",
       type: "count",
+      group: "count",
       description: "Number of NPS passives (score 7-8)",
     },
     {
       id: "FeedbackRecords.detractorCount",
-      label: "Detractor Count",
+      label: "NPS: Detractors",
       type: "count",
+      group: "count",
       description: "Number of NPS detractors (score 0-6)",
     },
     {
       id: "FeedbackRecords.csatScore",
-      label: "CSAT Score",
+      label: "CSAT: Score",
       type: "number",
+      group: "score",
       description: "CSAT Score: % of CSAT responses rated 4 or 5 (top-2-box on the 1-5 scale)",
     },
     {
       id: "FeedbackRecords.csatAverage",
-      label: "CSAT Average",
+      label: "CSAT: Average",
       type: "number",
+      group: "average",
       description: "Average CSAT rating (1-5)",
     },
     {
       id: "FeedbackRecords.csatSatisfiedCount",
-      label: "CSAT Satisfied Count",
+      label: "CSAT: Satisfied",
       type: "count",
+      group: "count",
       description: "Number of satisfied CSAT responses (top-2-box on the 1-5 scale)",
     },
     {
       id: "FeedbackRecords.csatDissatisfiedCount",
-      label: "CSAT Dissatisfied Count",
+      label: "CSAT: Dissatisfied",
       type: "count",
+      group: "count",
       description: "Number of dissatisfied CSAT responses (bottom-2-box on the 1-5 scale)",
     },
     {
       id: "FeedbackRecords.csatNeutralCount",
-      label: "CSAT Neutral Count",
+      label: "CSAT: Neutral",
       type: "count",
+      group: "count",
       description: "Number of neutral CSAT responses (middle box on the 1-5 scale)",
     },
     {
       id: "FeedbackRecords.csatCount",
-      label: "CSAT Count",
+      label: "CSAT: Responses",
       type: "count",
+      group: "count",
       description: "Number of CSAT responses",
     },
     {
       id: "FeedbackRecords.cesAverage",
-      label: "CES Average",
+      label: "CES: Average",
       type: "number",
+      group: "average",
       description: "Average CES rating (scale is 1-5 or 1-7 depending on the question)",
     },
     {
       id: "FeedbackRecords.cesCount",
-      label: "CES Count",
+      label: "CES: Responses",
       type: "count",
+      group: "count",
       description: "Number of CES responses",
     },
     {
       id: "FeedbackRecords.sentimentAverage",
-      label: "Sentiment Average",
+      label: "Sentiment: Average",
       type: "number",
+      group: "average",
       description:
         'Average sentiment score (-1 to 1, negative to positive) across enriched records. "mixed" records score near 0 and are included.',
     },
+    ...SENTIMENT_COUNT_MEASURES,
     ...EMOTION_COUNT_MEASURES,
   ] as MeasureDefinition[],
 };
@@ -290,6 +347,19 @@ const isSentimentValue = (value: string): value is TSentimentValue =>
 
 const isEmotionValue = (value: string): value is TEmotionValue =>
   (EMOTION_VALUES as readonly string[]).includes(value);
+
+/** Sentiment/emotions are populated by AI enrichment, so their values are empty until a record is
+ * enriched. Charts special-case that empty bucket (a "Not enriched" label + neutral gray). */
+export const isEnrichmentDimensionId = (dimensionId: string): boolean =>
+  dimensionId === SENTIMENT_DIMENSION_ID || dimensionId === EMOTIONS_DIMENSION_ID;
+
+const isEmptyDimensionValue = (value: unknown): boolean =>
+  value == null || (typeof value === "string" && value.trim().length === 0);
+
+/** True for a chart row in the "not enriched" bucket: an enrichment dimension whose value is empty
+ * because the record hasn't been AI-enriched yet. Drives both the label and the gray coloring. */
+export const isNotEnrichedDimensionValue = (dimensionId: string, value: unknown): boolean =>
+  isEnrichmentDimensionId(dimensionId) && isEmptyDimensionValue(value);
 
 // The label maps are typed against the enum tuples, so extending
 // SENTIMENT_VALUE_ORDER / EMOTION_VALUES without adding the matching label is a
@@ -321,7 +391,8 @@ const getTranslatedEmotionValueLabel = (value: string, t: TFunction): string | u
 /**
  * Translate an enum dimension value for display (chart axes, tooltips, tables).
  * Emotions values are comma-separated multi-label sets, so each token is translated
- * individually. Returns undefined for non-enum dimensions or unknown values so callers
+ * individually. Empty sentiment/emotions values are labeled "Not enriched" instead of
+ * left blank. Returns undefined for non-enum dimensions or unknown values so callers
  * can fall back to their generic formatting.
  */
 export function getTranslatedDimensionValueLabel(
@@ -329,6 +400,9 @@ export function getTranslatedDimensionValueLabel(
   value: unknown,
   t: TFunction
 ): string | undefined {
+  if (isNotEnrichedDimensionValue(dimensionId, value)) {
+    return t("workspace.analysis.charts.not_enriched");
+  }
   if (typeof value !== "string" || value.length === 0) return undefined;
   if (dimensionId === SENTIMENT_DIMENSION_ID) {
     return getTranslatedSentimentValueLabel(value, t);
@@ -487,6 +561,12 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.cesAverage": t("workspace.analysis.charts.field_label_ces_average"),
     "FeedbackRecords.cesCount": t("workspace.analysis.charts.field_label_ces_count"),
     "FeedbackRecords.sentimentAverage": t("workspace.analysis.charts.field_label_sentiment_average"),
+    "FeedbackRecords.veryNegativeCount": t("workspace.analysis.charts.field_label_very_negative_count"),
+    "FeedbackRecords.negativeCount": t("workspace.analysis.charts.field_label_negative_count"),
+    "FeedbackRecords.neutralCount": t("workspace.analysis.charts.field_label_neutral_count"),
+    "FeedbackRecords.positiveCount": t("workspace.analysis.charts.field_label_positive_count"),
+    "FeedbackRecords.veryPositiveCount": t("workspace.analysis.charts.field_label_very_positive_count"),
+    "FeedbackRecords.mixedCount": t("workspace.analysis.charts.field_label_mixed_count"),
     "FeedbackRecords.joyCount": t("workspace.analysis.charts.field_label_joy_count"),
     "FeedbackRecords.angerCount": t("workspace.analysis.charts.field_label_anger_count"),
     "FeedbackRecords.sadnessCount": t("workspace.analysis.charts.field_label_sadness_count"),
