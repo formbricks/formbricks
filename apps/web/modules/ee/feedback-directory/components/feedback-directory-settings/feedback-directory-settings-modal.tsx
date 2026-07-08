@@ -271,7 +271,7 @@ export const FeedbackDirectorySettingsModal = ({
           <DialogDescription>
             {isEdit
               ? t("workspace.settings.feedback_directories.directory_settings_description")
-              : t("workspace.settings.feedback_directories.create_feedback_directory")}
+              : t("workspace.settings.feedback_directories.create_feedback_directory_description")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -286,7 +286,7 @@ export const FeedbackDirectorySettingsModal = ({
                     <FormControl>
                       <Input
                         type="text"
-                        placeholder={t("workspace.settings.feedback_directories.directory_name")}
+                        placeholder={t("workspace.settings.feedback_directories.directory_name_placeholder")}
                         {...field}
                         disabled={!isOwnerOrManager}
                       />
@@ -365,7 +365,7 @@ export const FeedbackDirectorySettingsModal = ({
                           </div>
                           <a
                             className="text-xs font-medium text-slate-700 hover:text-slate-900 hover:underline"
-                            href={`/workspaces/${c.workspaceId}/settings/workspace/feedback-sources`}>
+                            href={`/workspaces/${c.workspaceId}/unify/sources`}>
                             {t("common.view")}
                           </a>
                         </li>
