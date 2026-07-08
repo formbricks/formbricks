@@ -141,8 +141,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
 
   const handleRunWorkflow = async () => {
     // Dry-run the workflow: validate its survey + ending references without running it or causing
-    // side effects. Valid → toast; problems → dialog listing them. The button only renders for
-    // testable (enabled/disabled) workflows, so `workflow` is always present here.
+    // side effects. Valid → toast; problems → dialog listing them. The button is disabled unless
+    // the workflow is testable (enabled/disabled), so `workflow` is always present here.
     if (!workflow || isTesting) return;
     setIsTesting(true);
     try {
@@ -178,12 +178,14 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-        {isTestable ? (
-          <Button variant="secondary" onClick={handleRunWorkflow} loading={isTesting} disabled={isTesting}>
-            <PlayIcon className="size-4" />
-            {t("workspace.workflows.test")}
-          </Button>
-        ) : null}
+        <Button
+          variant="secondary"
+          onClick={handleRunWorkflow}
+          loading={isTesting}
+          disabled={!isTestable || isTesting}>
+          <PlayIcon className="size-4" />
+          {t("workspace.workflows.test")}
+        </Button>
         <Button
           variant="outline"
           size="icon"
