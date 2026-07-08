@@ -3971,6 +3971,8 @@
       "value": "Valor",
       "value_boolean": "Valor (booleano)",
       "value_date": "Valor (Fecha)",
+      "value_id": "ID de opción",
+      "value_id_hint": "ID estable de la opción seleccionada en la encuesta de origen. Mantiene este registro vinculado a su opción a través de ediciones de etiquetas e idiomas, y se gestiona automáticamente.",
       "value_number": "Valor (Número)",
       "value_text": "Valor (Texto)"
     },

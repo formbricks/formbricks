@@ -3971,6 +3971,8 @@
       "value": "Waarde",
       "value_boolean": "Waarde (Booleaans)",
       "value_date": "Waarde (datum)",
+      "value_id": "Optie-ID",
+      "value_id_hint": "Stabiele ID van de geselecteerde optie in de bronnenquête. Het houdt dit record gekoppeld aan zijn optie over labelbewerkingen en talen heen, en wordt automatisch beheerd.",
       "value_number": "Waarde (getal)",
       "value_text": "Waarde (tekst)"
     },

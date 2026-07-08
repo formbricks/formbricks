@@ -3971,6 +3971,8 @@
       "value": "Värde",
       "value_boolean": "Värde (booleskt)",
       "value_date": "Värde (datum)",
+      "value_id": "Alternativ-ID",
+      "value_id_hint": "Stabilt ID för det valda alternativet i källenkäten. Det håller denna post länkad till sitt alternativ över etikettändringar och språk, och hanteras automatiskt.",
       "value_number": "Värde (antal)",
       "value_text": "Värde (text)"
     },

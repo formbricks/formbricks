@@ -3971,6 +3971,8 @@
       "value": "Value",
       "value_boolean": "Value (Boolean)",
       "value_date": "Value (Date)",
+      "value_id": "Option ID",
+      "value_id_hint": "Stable ID of the selected option in the source survey. It keeps this record linked to its option across label edits and languages, and is managed automatically.",
       "value_number": "Value (Number)",
       "value_text": "Value (Text)"
     },

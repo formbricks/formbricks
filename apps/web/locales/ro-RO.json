@@ -3971,6 +3971,8 @@
       "value": "Valoare",
       "value_boolean": "Valoare (booleană)",
       "value_date": "Valoare (data)",
+      "value_id": "ID opțiune",
+      "value_id_hint": "ID-ul stabil al opțiunii selectate în chestionarul sursă. Menține această înregistrare conectată la opțiunea sa prin editări de etichete și limbi, fiind gestionat automat.",
       "value_number": "Valoare (număr)",
       "value_text": "Valoare (Text)"
     },

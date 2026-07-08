@@ -3971,6 +3971,8 @@
       "value": "Valeur",
       "value_boolean": "Valeur (booléenne)",
       "value_date": "Valeur (Date)",
+      "value_id": "ID de l'option",
+      "value_id_hint": "ID stable de l'option sélectionnée dans le questionnaire source. Il maintient ce dossier lié à son option lors de modifications de libellé et de changements de langue, et est géré automatiquement.",
       "value_number": "Valeur (Nombre)",
       "value_text": "Valeur (texte)"
     },

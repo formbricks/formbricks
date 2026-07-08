@@ -3971,6 +3971,8 @@
       "value": "Érték",
       "value_boolean": "Érték (logikai)",
       "value_date": "Érték (dátum)",
+      "value_id": "Opció-azonosító",
+      "value_id_hint": "A forrásfelmérésben kiválasztott opció stabil azonosítója. Ez tartja a rekordot kapcsolatban az opciójával a címkeszerkesztések és nyelvek között, és automatikusan kerül kezelésre.",
       "value_number": "Érték (szám)",
       "value_text": "Érték (szöveg)"
     },

@@ -3971,6 +3971,8 @@
       "value": "Wert",
       "value_boolean": "Wert (Boolescher Wert)",
       "value_date": "Wert (Datum)",
+      "value_id": "Options-ID",
+      "value_id_hint": "Stabile ID der ausgewählten Option in der Quellumfrage. Sie hält diesen Datensatz über Labeländerungen und Sprachen hinweg mit seiner Option verknüpft und wird automatisch verwaltet.",
       "value_number": "Wert (Anzahl)",
       "value_text": "Wert (Text)"
     },

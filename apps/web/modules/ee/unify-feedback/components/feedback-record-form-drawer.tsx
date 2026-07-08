@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LanguagesIcon, PlusIcon } from "lucide-react";
+import { FingerprintIcon, LanguagesIcon, PlusIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -669,6 +669,21 @@ export const FeedbackRecordFormDrawer = ({
                     </div>
                     <p className="text-sm whitespace-pre-wrap text-slate-700">{translatedText}</p>
                     <p className="text-xs text-slate-400">{t("workspace.unify.translated_text_hint")}</p>
+                  </div>
+                )}
+
+                {/* ENG-1673: read-only — the stable option identity is managed by ingestion/backfill;
+                    hand-editing it would desync the record from its source option. */}
+                {record?.value_id && (
+                  <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <FingerprintIcon className="size-3.5 text-slate-500" aria-hidden="true" />
+                      <span className="text-sm font-medium text-slate-700">
+                        {t("workspace.unify.value_id")}
+                      </span>
+                    </div>
+                    <p className="font-mono text-sm text-slate-700">{record.value_id}</p>
+                    <p className="text-xs text-slate-400">{t("workspace.unify.value_id_hint")}</p>
                   </div>
                 )}
 
