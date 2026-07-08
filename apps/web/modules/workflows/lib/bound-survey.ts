@@ -16,5 +16,5 @@ export const resolveBoundTriggerSurvey = (
 ): TSurvey | null => {
   const triggerSurveyId = definition?.trigger.type === "trigger" ? definition.trigger.config.surveyId : null;
   const survey = authoringContext?.survey ?? null;
-  return survey && survey.id === triggerSurveyId ? survey : null;
+  return survey?.id === triggerSurveyId ? survey : null;
 };

@@ -84,7 +84,7 @@ export const SettingsSection = ({
               className="w-fit"
               onClick={builder.unarchive}
               loading={builder.isTransitioning}
-              disabled={isReadOnly || builder.isTransitioning}>
+              disabled={isReadOnly || builder.isTransitioning || builder.isSaving}>
               {t("common.unarchive")}
               <ArchiveRestoreIcon />
             </Button>
