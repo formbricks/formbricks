@@ -8,37 +8,38 @@ export const hexToRGBA = (hex: string | undefined, opacity: number): string | un
   if (!hex || hex === "") return undefined;
 
   // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
-  let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-  hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
+  const shorthandRegex = /^#?(?<r>[a-f\d])(?<g>[a-f\d])(?<b>[a-f\d])$/i;
+  const fullHex = hex.replace(shorthandRegex, "$<r>$<r>$<g>$<g>$<b>$<b>");
 
-  let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return "";
+  const groups = /^#?(?<r>[a-f\d]{2})(?<g>[a-f\d]{2})(?<b>[a-f\d]{2})$/i.exec(fullHex)?.groups;
+  if (!groups) return "";
 
-  let r = parseInt(result[1], 16);
-  let g = parseInt(result[2], 16);
-  let b = parseInt(result[3], 16);
+  const r = parseInt(groups.r, 16);
+  const g = parseInt(groups.g, 16);
+  const b = parseInt(groups.b, 16);
 
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  return `rgba(${r.toString()}, ${g.toString()}, ${b.toString()}, ${opacity.toString()})`;
 };
 
 export const mixColor = (hexColor: string, mixWithHex: string, weight: number): string => {
   // Convert both colors to RGBA format
-  const color1 = hexToRGBA(hexColor, 1) || "";
-  const color2 = hexToRGBA(mixWithHex, 1) || "";
+  const color1 = hexToRGBA(hexColor, 1) ?? "";
+  const color2 = hexToRGBA(mixWithHex, 1) ?? "";
 
   // Extract RGBA values
-  const [r1, g1, b1] = color1.match(/\d+/g)?.map(Number) || [0, 0, 0];
-  const [r2, g2, b2] = color2.match(/\d+/g)?.map(Number) || [0, 0, 0];
+  const [r1, g1, b1] = color1.match(/\d+/g)?.map(Number) ?? [0, 0, 0];
+  const [r2, g2, b2] = color2.match(/\d+/g)?.map(Number) ?? [0, 0, 0];
 
   // Mix the colors
   const r = Math.round(r1 * (1 - weight) + r2 * weight);
   const g = Math.round(g1 * (1 - weight) + g2 * weight);
   const b = Math.round(b1 * (1 - weight) + b2 * weight);
 
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  const toHex = (channel: number): string => channel.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
-export const isLight = (color: string) => {
+export const isLight = (color: string): boolean => {
   let r: number | undefined, g: number | undefined, b: number | undefined;
 
   if (color.length === 4) {
