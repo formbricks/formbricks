@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "Länk till uppladdad fil ingår inte av dataskyddsskäl",
     "response_data": "Svarsdata",
     "response_finished_email_subject": "Ett svar för {surveyName} har slutförts ✅",
-    "response_finished_email_subject_with_email": "{personEmail} har precis slutfört din {surveyName}-enkät ✅",
     "schedule_your_meeting": "Boka ditt möte",
     "select_a_date": "Välj ett datum",
     "survey_response_finished_email_congrats": "Grattis, du har fått ett nytt svar på din enkät! Någon har precis slutfört din enkät: {surveyName}",

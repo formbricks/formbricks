@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "De link naar het geüploade bestand is om redenen van gegevensprivacy niet opgenomen",
     "response_data": "Responsgegevens",
     "response_finished_email_subject": "Er is een reactie voor {surveyName} voltooid ✅",
-    "response_finished_email_subject_with_email": "{personEmail} heeft zojuist uw {surveyName} enquête voltooid ✅",
     "schedule_your_meeting": "Plan uw vergadering",
     "select_a_date": "Selecteer een datum",
     "survey_response_finished_email_congrats": "Gefeliciteerd, u heeft een nieuwe reactie op uw enquête ontvangen! Iemand heeft zojuist uw enquête ingevuld: {surveyName}",

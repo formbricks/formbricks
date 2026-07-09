@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "Yüklenen dosya bağlantısı veri gizliliği nedeniyle dahil edilmemiştir",
     "response_data": "Yanıt verileri",
     "response_finished_email_subject": "{surveyName} için bir yanıt tamamlandı ✅",
-    "response_finished_email_subject_with_email": "{personEmail} az önce {surveyName} survey'inizi tamamladı ✅",
     "schedule_your_meeting": "Toplantınızı planlayın",
     "select_a_date": "Bir tarih seçin",
     "survey_response_finished_email_congrats": "Tebrikler, survey'inize yeni bir yanıt aldınız! Birisi survey'inizi tamamladı: {surveyName}",

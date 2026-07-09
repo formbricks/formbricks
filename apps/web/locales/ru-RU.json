@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "Ссылка на загруженный файл не включена по соображениям конфиденциальности данных",
     "response_data": "Данные ответа",
     "response_finished_email_subject": "Ответ на {surveyName} был получен ✅",
-    "response_finished_email_subject_with_email": "{personEmail} только что завершил(а) ваш опрос {surveyName} ✅",
     "schedule_your_meeting": "Запланируйте встречу",
     "select_a_date": "Выберите дату",
     "survey_response_finished_email_congrats": "Поздравляем, вы получили новый ответ на свой опрос! Кто-то только что завершил ваш опрос: {surveyName}",

@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "由於資料隱私原因，未包含上傳檔案的連結",
     "response_data": "回應資料",
     "response_finished_email_subject": "{surveyName} 的回應已完成 ✅",
-    "response_finished_email_subject_with_email": "{personEmail} 剛剛完成了您的 {surveyName} 調查 ✅",
     "schedule_your_meeting": "安排你的會議",
     "select_a_date": "選擇日期",
     "survey_response_finished_email_congrats": "恭喜，您收到了新的問卷回應！有人剛完成您的問卷：{surveyName}",

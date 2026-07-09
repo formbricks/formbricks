@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "Linkul către fișierul încărcat nu este inclus din motive de confidențialitate a datelor",
     "response_data": "Datele răspunsului",
     "response_finished_email_subject": "Un răspuns pentru {surveyName} a fost finalizat ✅",
-    "response_finished_email_subject_with_email": "{personEmail} tocmai a completat sondajul {surveyName} ✅",
     "schedule_your_meeting": "Programați întâlnirea",
     "select_a_date": "Selectați o dată",
     "survey_response_finished_email_congrats": "Felicitări, aţi primit un răspuns nou la sondaj! Cineva tocmai a completat sondajul dumneavoastră: {surveyName}",

@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "データプライバシーのため、アップロードされたファイルへのリンクは含まれていません",
     "response_data": "回答データ",
     "response_finished_email_subject": "{surveyName} の回答が完了しました ✅",
-    "response_finished_email_subject_with_email": "{personEmail} が {surveyName} フォームを完了しました ✅",
     "schedule_your_meeting": "ミーティングを予約",
     "select_a_date": "日付を選択",
     "survey_response_finished_email_congrats": "おめでとうございます、新しい回答が届きました！{surveyName} フォームへの回答が完了しました。",

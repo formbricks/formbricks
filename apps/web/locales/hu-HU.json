@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "Adatvédelmi okokból a feltöltött fájlra mutató hivatkozást nem tartalmazza",
     "response_data": "Válasz adatai",
     "response_finished_email_subject": "A(z) {surveyName} kérdőívre adott válasz befejeződött ✅",
-    "response_finished_email_subject_with_email": "{personEmail} épp most töltötte ki a(z) {surveyName} kérdőívet ✅",
     "schedule_your_meeting": "Megbeszélés ütemezése",
     "select_a_date": "Dátum kiválasztása",
     "survey_response_finished_email_congrats": "Gratulálunk, új válasz érkezett a kérdőívére! Valaki épp most töltötte ki ezt a kérdőívet: {surveyName}",

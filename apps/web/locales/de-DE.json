@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "Link zur hochgeladenen Datei ist aus Datenschutzgründen nicht enthalten",
     "response_data": "Antwortdaten",
     "response_finished_email_subject": "Eine Antwort für {surveyName} wurde ausgefüllt ✅",
-    "response_finished_email_subject_with_email": "{personEmail} hat gerade deine {surveyName}-Umfrage ausgefüllt ✅",
     "schedule_your_meeting": "Plane dein Meeting",
     "select_a_date": "Wähle ein Datum",
     "survey_response_finished_email_congrats": "Glückwunsch, du hast eine neue Antwort auf deine Umfrage erhalten! Jemand hat gerade deine Umfrage ausgefüllt: {surveyName}",

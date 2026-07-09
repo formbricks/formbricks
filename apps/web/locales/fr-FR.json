@@ -624,7 +624,6 @@
     "render_email_response_value_file_upload_response_link_not_included": "Le lien vers le fichier téléchargé n'est pas inclus pour des raisons de confidentialité des données",
     "response_data": "Données de réponse",
     "response_finished_email_subject": "Une réponse pour {surveyName} a été complétée ✅",
-    "response_finished_email_subject_with_email": "{personEmail} vient de compléter votre enquête {surveyName} ✅",
     "schedule_your_meeting": "Planifier votre rendez-vous",
     "select_a_date": "Sélectionner une date",
     "survey_response_finished_email_congrats": "Félicitations, vous avez reçu une nouvelle réponse à votre enquête ! Quelqu'un vient de compléter votre enquête : {surveyName}",
