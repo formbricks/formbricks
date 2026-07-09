@@ -28,12 +28,12 @@ const findSelectedNode = (
   selectedNodeId: string | null
 ): TWorkflowNode | null => {
   if (!definition || !selectedNodeId) return null;
-  if (definition.trigger.id === selectedNodeId) return definition.trigger;
+  if (definition.trigger?.id === selectedNodeId) return definition.trigger;
   return definition.nodes.find((node) => node.id === selectedNodeId) ?? null;
 };
 
 const replaceNode = (definition: TWorkflowDefinition, node: TWorkflowNode): TWorkflowDefinition => {
-  if (node.type === "trigger" && node.id === definition.trigger.id) {
+  if (node.type === "trigger" && node.id === definition.trigger?.id) {
     return { ...definition, trigger: node };
   }
 

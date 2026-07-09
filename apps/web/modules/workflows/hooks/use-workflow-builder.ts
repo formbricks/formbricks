@@ -93,6 +93,11 @@ export const useWorkflowBuilder = ({
           workflow: loadedWorkflow,
           flowNodes: workflowDefinitionToFlowNodes(loadedWorkflow.definition, t),
         });
+        // Drafts land in edit mode: they can't run yet, so the read-only landing that the lock
+        // provides for live workflows would only hide the build affordances (starting with the
+        // Add-trigger picker on a fresh empty canvas). Everything else stays locked until the
+        // user opts in via pointer mode.
+        setCanvasLocked(isReadOnly || loadedWorkflow.status !== "draft");
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
@@ -106,7 +111,7 @@ export const useWorkflowBuilder = ({
       });
 
     return () => controller.abort();
-  }, [workspaceId, workflowId, hydrateEditor, t, loadOnMount]);
+  }, [workspaceId, workflowId, hydrateEditor, setCanvasLocked, isReadOnly, t, loadOnMount]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";

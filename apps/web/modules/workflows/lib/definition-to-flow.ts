@@ -57,7 +57,7 @@ export const workflowDefinitionToFlowNodes = (
     isDraft: options?.isDraft ?? true,
   };
 
-  return [definition.trigger, ...definition.nodes].map((node, index) => {
+  return [...(definition.trigger ? [definition.trigger] : []), ...definition.nodes].map((node, index) => {
     const registryEntry = getNodeRegistryEntry(node);
     const fallbackPosition = { x: 120, y: 80 + index * 120 };
 
@@ -98,7 +98,7 @@ export const updateNodePosition = (
   nodeId: string,
   position: { x: number; y: number }
 ): TWorkflowDefinition => {
-  if (definition.trigger.id === nodeId) {
+  if (definition.trigger && definition.trigger.id === nodeId) {
     return {
       ...definition,
       trigger: {
@@ -117,7 +117,10 @@ export const updateNodePosition = (
 };
 
 export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
-  const allNodes: TWorkflowNode[] = [definition.trigger, ...definition.nodes];
+  const allNodes: TWorkflowNode[] = [
+    ...(definition.trigger ? [definition.trigger] : []),
+    ...definition.nodes,
+  ];
   const nodesById = new Map(allNodes.map((node) => [node.id, node]));
   const originalNodeOrder = allNodes.map((node) => node.id);
 
@@ -127,8 +130,8 @@ export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): T
   }
 
   // BFS rank from the trigger so reachable nodes share a row, unreachable ones spill below.
-  const ranks = new Map<string, number>([[definition.trigger.id, 0]]);
-  const queue = [definition.trigger.id];
+  const ranks = new Map<string, number>(definition.trigger ? [[definition.trigger.id, 0]] : []);
+  const queue = definition.trigger ? [definition.trigger.id] : [];
   while (queue.length > 0) {
     const nodeId = queue.shift()!;
     const nextRank = (ranks.get(nodeId) ?? 0) + 1;
@@ -169,13 +172,15 @@ export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): T
 
   return {
     ...definition,
-    trigger: {
-      ...definition.trigger,
-      ui: {
-        ...definition.trigger.ui,
-        position: positionsByNodeId.get(definition.trigger.id) ?? definition.trigger.ui?.position,
-      },
-    },
+    trigger: definition.trigger
+      ? {
+          ...definition.trigger,
+          ui: {
+            ...definition.trigger.ui,
+            position: positionsByNodeId.get(definition.trigger.id) ?? definition.trigger.ui?.position,
+          },
+        }
+      : null,
     nodes: definition.nodes.map((node) => ({
       ...node,
       ui: {

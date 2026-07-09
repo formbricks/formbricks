@@ -36,6 +36,7 @@ import {
 } from "@/modules/workflows/lib/definition-to-flow";
 import {
   type TWorkflowNodeData,
+  addWorkflowTriggerAtom,
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
@@ -52,6 +53,7 @@ import {
 import { WorkflowTestResultDialog } from "../workflow-test-result-dialog";
 import { AddButtonEdge } from "./add-button-edge";
 import { CanvasControls } from "./canvas-controls";
+import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
 
 const NODE_TYPES: NodeTypes = {
@@ -90,6 +92,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
+  const addTrigger = useSetAtom(addWorkflowTriggerAtom);
   const { fitView } = useReactFlow();
   const isEnabled = workflow?.status === "enabled";
   // Dry-run testing is only meaningful for live workflows (draft is still being built, archived is
@@ -153,9 +156,17 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
     setDefinition((currentDefinition) =>
       currentDefinition ? reorganizeWorkflowDefinition(currentDefinition) : currentDefinition
     );
+    // Skip the animated recenter for users who ask for reduced motion (read at call time —
+    // no reactivity needed for a click handler).
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Defer one frame so the new node positions render before RF recenters the viewport.
     requestAnimationFrame(() =>
-      fitView({ padding: 0.25, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4, duration: 300 })
+      fitView({
+        padding: 0.25,
+        maxZoom: WORKFLOW_CANVAS_MAX_ZOOM,
+        minZoom: 0.4,
+        duration: prefersReducedMotion ? 0 : 300,
+      })
     );
   }, [canMutate, setDefinition, fitView]);
 
@@ -252,6 +263,16 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         {/* Same dot grid the pre-ReactFlow mockup used: radial-gradient(#cbd5e1 1px) on an 18px grid. */}
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
       </ReactFlow>
+      {/* Empty drafts start with no nodes: the centered picker is how the trigger gets added.
+          Gated on status-based editability (not the layout lock) — adding nodes is a content
+          edit, same as the node config forms. */}
+      {definition && !definition.trigger && isEditable && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="pointer-events-auto">
+            <WorkflowAddTriggerPicker onSelect={addTrigger} />
+          </div>
+        </div>
+      )}
       <CanvasControls
         canMutate={canMutate}
         isDragMode={isLocked}
