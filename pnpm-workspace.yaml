@@ -87,5 +87,7 @@ legacyPeerDeps: true
 nodeLinker: hoisted
 saveExact: true
 minimumReleaseAgeExclude:
-  - '@formbricks/hub@0.6.0'
-  - '@formbricks/hub@0.9.0'
+  # First-party SDK (published by Formbricks' own CI) — exempt all versions from the release-age gate so
+  # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
+  # reliably matched by the exclude, so match by name.
+  - '@formbricks/hub'
