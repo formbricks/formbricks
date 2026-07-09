@@ -231,6 +231,21 @@ export const useWorkflowBuilder = ({
   };
   useEffect(() => () => flushOnUnmountRef.current(), []);
 
+  // Warn on hard refresh / tab close while edits are unsaved: unlike SPA navigation, a page
+  // unload kills the flush request above, so the native confirm is the only safety net. The
+  // browser shows its own generic copy; custom text is ignored by modern browsers.
+  useEffect(() => {
+    if (!loadOnMount || isReadOnly) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!store.get(isWorkflowDirtyAtom)) return;
+      event.preventDefault();
+      // Legacy signal some Chromium versions still require for the dialog to appear.
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [loadOnMount, isReadOnly, store]);
+
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {
       if (!workflow) return;

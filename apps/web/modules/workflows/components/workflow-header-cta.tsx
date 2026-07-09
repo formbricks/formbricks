@@ -48,17 +48,25 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         </span>
       ) : null}
       {/* Edits autosave; the button stays as the explicit "persist now" escape hatch and doubles
-          as the saved-state signal (enabled only while there is something unsaved). */}
+          as the saved-state signal: enabled with a dot while something is unsaved, disabled once
+          everything is persisted. */}
       <Button
         type="button"
         variant="secondary"
         size="sm"
+        className="relative"
         onClick={() => builder.save()}
         loading={builder.isSaving}
         disabled={
           !builder.canEditMetadata || !builder.isDirty || builder.isTransitioning || builder.isSaving
         }>
         {workflow.status === "draft" ? t("common.save_as_draft") : t("common.save")}
+        {builder.isDirty && !builder.isSaving ? (
+          <span
+            aria-hidden="true"
+            className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-white bg-amber-400"
+          />
+        ) : null}
       </Button>
       {/* Lifecycle control as a toggle: the switch position communicates the current state
           (on = running) instead of an Enable/Disable action label the user has to invert.
