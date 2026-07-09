@@ -809,6 +809,8 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].value_text).toBe("self-described");
     });
 
+    // Multi-select answers stay unmatched and split per language (ENG-1702 follow-up):
+    // the joined record cannot carry one id per selected option.
     test("omits value_id for multi select (joined record cannot carry multiple ids)", () => {
       const response = buildResponse({ "el-feats": ["Speed", "Quality"] });
       const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];

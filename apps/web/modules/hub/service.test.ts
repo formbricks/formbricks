@@ -99,14 +99,13 @@ describe("hub service", () => {
       expect(result.data).toEqual(created);
     });
 
-    test("strips value_id from the payload while the Hub does not support it (ENG-1673)", async () => {
+    test("forwards value_id to the Hub (ENG-1673)", async () => {
       const create = vi.fn().mockResolvedValue({ id: "hub-1" });
       vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
 
       await createFeedbackRecord({ ...sampleInput, value_id: "c-male" });
 
-      expect(create).toHaveBeenCalledWith(sampleInput);
-      expect(create.mock.calls[0][0]).not.toHaveProperty("value_id");
+      expect(create).toHaveBeenCalledWith({ ...sampleInput, value_id: "c-male" });
     });
 
     test("returns error result when client.create throws", async () => {

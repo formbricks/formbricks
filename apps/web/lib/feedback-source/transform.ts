@@ -288,8 +288,9 @@ export function transformResponseToFeedbackRecords(
     const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
 
     const isChoiceElement =
-      element?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-      element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti;
+      element &&
+      (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+        element.type === TSurveyElementTypeEnum.MultipleChoiceMulti);
     const normalized = isChoiceElement
       ? normalizeChoiceValue(element.choices, value, lookupLanguage)
       : { value };

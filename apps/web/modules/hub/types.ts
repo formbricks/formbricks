@@ -1,7 +1,9 @@
 import type FormbricksHub from "@formbricks/hub";
 
 // value_id (ENG-1671/ENG-1673): stable id of the selected option in the source system (a survey
-
+// choice id for Formbricks responses). Lets Hub consolidate the same option across languages
+// instead of splitting it per localized label. The published SDK predates the field, so bridge
+// it as an optional param until the SDK ships it.
 export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams & {
   value_id?: string;
 };
