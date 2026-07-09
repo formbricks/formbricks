@@ -53,8 +53,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         size="sm"
         onClick={handleSave}
         loading={builder.isSaving}
-        disabled={!builder.canEditMetadata || builder.isTransitioning || builder.isSaving}
-        className="min-w-[6rem] justify-center">
+        disabled={!builder.canEditMetadata || builder.isTransitioning || builder.isSaving}>
         {workflow.status === "draft" ? t("common.save_as_draft") : t("common.save")}
       </Button>
       {/* Lifecycle control as a toggle: the switch position communicates the current state
