@@ -14,5 +14,5 @@ The full Next.js documentation for this project's version lives in `.next-docs/`
 The block between the `NEXT-AGENTS-MD-START/END` markers is machine-managed. To refresh after a Next.js upgrade, run from the repo root:
 
 ```
-npx @next/codemod agents-md --output .agents/skills/nextjs-docs/SKILL.md
+npx @next/codemod@canary agents-md --output .agents/skills/nextjs-docs/SKILL.md
 ```
