@@ -616,19 +616,26 @@ describe("testWorkflow", () => {
     expect(body.data.ok).toBe(true);
   });
 
-  test.each([["draft"], ["archived"]] as const)(
-    "rejects a %s workflow with 422 invalid_workflow_state without checking the survey",
-    async (status) => {
-      service.getWorkflowById.mockResolvedValue(makeRow({ status }));
+  test("tests a draft workflow (dry-run before going live)", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
 
-      const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
 
-      expect(res.status).toBe(422);
-      const body = await readJson<{ code: string }>(res);
-      expect(body.code).toBe("invalid_workflow_state");
-      expect(verifyTriggerSurvey).not.toHaveBeenCalled();
-    }
-  );
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(true);
+  });
+
+  test("rejects an archived workflow with 422 invalid_workflow_state without checking the survey", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string }>(res);
+    expect(body.code).toBe("invalid_workflow_state");
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
 
   test("collects every executability issue in one pass without throwing", async () => {
     service.getWorkflowById.mockResolvedValue(

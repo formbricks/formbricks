@@ -93,10 +93,10 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
   const { fitView } = useReactFlow();
-  // Dry-run testing is only meaningful for live workflows (draft is still being built, archived is
-  // dead) and requires workspace write access — testWorkflow authorizes with readWrite, so a
-  // read-only user would only get a 403. Mirrors the API guard in workflows.handlers.ts.
-  const isTestable = !isReadOnly && (workflow?.status === "enabled" || workflow?.status === "disabled");
+  // Dry-run testing works in every state except archived (soft-deleted) — the point of a dry
+  // run is validating the setup BEFORE going live. Requires workspace write access: testWorkflow
+  // authorizes with readWrite, so a read-only user would only get a 403. Mirrors the API guard.
+  const isTestable = !isReadOnly && Boolean(workflow) && workflow?.status !== "archived";
   const [isTesting, setIsTesting] = useState(false);
   // null = dialog closed; a non-empty array opens the problems dialog (the ok case is a toast).
   const [testProblems, setTestProblems] = useState<TWorkflowTestProblem[] | null>(null);
