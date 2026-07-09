@@ -60,6 +60,7 @@
     "lint": "eslint ./src --fix",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
   "dependencies": {

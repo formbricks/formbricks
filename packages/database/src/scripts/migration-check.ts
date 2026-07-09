@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
+import { type ExpectedMigrations, type PendingMigrations, diffPendingMigrations } from "./migration-diff";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,33 +14,6 @@ const isBuilt = __filename.split(path.sep).includes("dist");
 const MIGRATIONS_DIR = isBuilt
   ? path.resolve(__dirname, "../migration")
   : path.resolve(__dirname, "../../migration");
-
-export interface ExpectedMigrations {
-  /** Directory names that contain a schema migration (`migration.sql`). */
-  schema: string[];
-  /** Directory names that contain a data migration (`migration.js`/`migration.ts`). */
-  data: string[];
-}
-
-export interface PendingMigrations {
-  schema: string[];
-  data: string[];
-}
-
-/**
- * Pure diff of expected-vs-applied migration names. Kept free of I/O and imports
- * so it is trivially unit-testable and so the startup gate never has to import
- * the data-migration modules (we compare by directory name, not by the `id`
- * embedded in each module — unlike the migration runner).
- */
-export const diffPendingMigrations = (
-  expected: ExpectedMigrations,
-  appliedSchema: ReadonlySet<string>,
-  appliedData: ReadonlySet<string>
-): PendingMigrations => ({
-  schema: expected.schema.filter((name) => !appliedSchema.has(name)),
-  data: expected.data.filter((name) => !appliedData.has(name)),
-});
 
 /**
  * Scan the shipped migration directory and classify each entry by the file it
