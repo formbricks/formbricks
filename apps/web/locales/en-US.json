@@ -4052,7 +4052,7 @@
       "no_workflows_description": "Create your first workflow to automate actions when responses come in.",
       "no_workflows_title": "No workflows yet",
       "node_actions": "Node actions",
-      "node_needs_email_content": "Set recipient & subject",
+      "node_needs_email_content": "Set recipient & contents",
       "node_needs_survey": "Pick a survey to get started",
       "pan_mode": "Pan mode",
       "pointer_mode": "Pointer mode",

@@ -4052,7 +4052,7 @@
       "no_workflows_description": "Crée ton premier workflow pour automatiser des actions lorsque des réponses arrivent.",
       "no_workflows_title": "Aucun workflow pour le moment",
       "node_actions": "Node actions",
-      "node_needs_email_content": "Définir le destinataire et l'objet",
+      "node_needs_email_content": "Définir le destinataire et le contenu",
       "node_needs_survey": "Pick a survey to get started",
       "pan_mode": "Pan mode",
       "pointer_mode": "Pointer mode",

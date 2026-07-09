@@ -4052,7 +4052,7 @@
       "no_workflows_description": "建立你的第一個工作流程,在收到回應時自動執行動作。",
       "no_workflows_title": "尚無工作流程",
       "node_actions": "Node actions",
-      "node_needs_email_content": "設定收件人與主旨",
+      "node_needs_email_content": "設定收件人與內容",
       "node_needs_survey": "Pick a survey to get started",
       "pan_mode": "Pan mode",
       "pointer_mode": "Pointer mode",
