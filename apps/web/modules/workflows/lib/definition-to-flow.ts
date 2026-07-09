@@ -98,7 +98,7 @@ export const updateNodePosition = (
   nodeId: string,
   position: { x: number; y: number }
 ): TWorkflowDefinition => {
-  if (definition.trigger && definition.trigger.id === nodeId) {
+  if (definition.trigger?.id === nodeId) {
     return {
       ...definition,
       trigger: {
@@ -116,20 +116,18 @@ export const updateNodePosition = (
   };
 };
 
-export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
-  const allNodes: TWorkflowNode[] = [
-    ...(definition.trigger ? [definition.trigger] : []),
-    ...definition.nodes,
-  ];
-  const nodesById = new Map(allNodes.map((node) => [node.id, node]));
-  const originalNodeOrder = allNodes.map((node) => node.id);
-
+// BFS rank from the trigger so reachable nodes share a row; unreachable nodes (and every node of
+// a trigger-less draft) each get their own row below, keeping the original order.
+const rankWorkflowNodes = (
+  definition: TWorkflowDefinition,
+  nodesById: Map<string, TWorkflowNode>,
+  originalNodeOrder: string[]
+): Map<string, number> => {
   const edgesBySource = new Map<string, string[]>();
   for (const edge of definition.edges) {
     edgesBySource.set(edge.source, [...(edgesBySource.get(edge.source) ?? []), edge.target]);
   }
 
-  // BFS rank from the trigger so reachable nodes share a row, unreachable ones spill below.
   const ranks = new Map<string, number>(definition.trigger ? [[definition.trigger.id, 0]] : []);
   const queue = definition.trigger ? [definition.trigger.id] : [];
   while (queue.length > 0) {
@@ -149,6 +147,18 @@ export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): T
       nextUnreachableRank += 1;
     }
   }
+
+  return ranks;
+};
+
+export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
+  const allNodes: TWorkflowNode[] = [
+    ...(definition.trigger ? [definition.trigger] : []),
+    ...definition.nodes,
+  ];
+  const nodesById = new Map(allNodes.map((node) => [node.id, node]));
+  const originalNodeOrder = allNodes.map((node) => node.id);
+  const ranks = rankWorkflowNodes(definition, nodesById, originalNodeOrder);
 
   const nodeIdsByRank = new Map<number, string[]>();
   for (const nodeId of originalNodeOrder) {
