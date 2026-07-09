@@ -127,10 +127,6 @@ spec:
           {{- end }}
           {{- end }}
           env:
-            {{- if .Values.migration.enabled }}
-            - name: SKIP_STARTUP_MIGRATION
-              value: "true"
-            {{- end }}
             {{- if not (hasKey .Values.deployment.env "HUB_API_URL") }}
             - name: HUB_API_URL
               value: "http://{{ include "formbricks.hubname" . }}:8080"

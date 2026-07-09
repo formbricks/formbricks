@@ -182,21 +182,20 @@ Formbricks application image reference. A configured digest takes precedence ove
 {{/*
 Image used by the migration Job (ENG-1153). This is the dedicated, Prisma-CLI-
 bearing migration image, kept separate so the web runtime image can stay slim.
-When migration.image.repository is left empty it falls back to the application
-image. That fallback is only valid while the web image still bundles the Prisma
-CLI; once the web image is slimmed (ENG-1153 phase 2) it will lack the CLI, so an
-empty repository must then be replaced with an explicit migration image. A
-configured digest takes precedence over the tag.
+The web image no longer bundles the Prisma CLI, so this image is required — there
+is no safe fallback to the application image (it can't run `prisma migrate deploy`).
+`migration.image.repository` therefore must be set (it has a sensible default);
+clearing it fails rendering with guidance rather than producing a Job that can't
+migrate. A configured digest takes precedence over the tag.
 */}}
 {{- define "formbricks.migrationImage" -}}
-{{- if .Values.migration.image.repository -}}
+{{- if not .Values.migration.image.repository -}}
+{{- fail "migration.image.repository is required: the web image no longer bundles the Prisma CLI, so the migration Job needs the dedicated migration image. Set migration.image.repository (default ghcr.io/formbricks/formbricks-migrate) or mirror that image into your registry." -}}
+{{- end -}}
 {{- if .Values.migration.image.digest -}}
 {{- printf "%s@%s" .Values.migration.image.repository .Values.migration.image.digest -}}
 {{- else -}}
 {{- printf "%s:%s" .Values.migration.image.repository (.Values.migration.image.tag | default .Chart.AppVersion | default "latest") -}}
-{{- end -}}
-{{- else -}}
-{{- include "formbricks.deploymentImage" . -}}
 {{- end -}}
 {{- end }}
 

@@ -47,13 +47,13 @@ run_with_timeout() {
 }
 
 
-# Check if migrations should be skipped (e.g., when using Helm migration job)
-if [ "${SKIP_STARTUP_MIGRATION:-false}" = "true" ]; then
-  echo "⏭️ Skipping startup migrations (handled by migration job)"
-else
-  echo "🗃️ Running database migrations..."
-  run_with_timeout 300 "database migration" node packages/database/dist/scripts/apply-migrations.js
-fi
+# The web runtime image no longer bundles the Prisma CLI, so it cannot migrate
+# itself. Migrations run in the dedicated formbricks-migrate image (Helm Job,
+# docker-compose one-shot service, or a manual one-shot container) BEFORE the web
+# app starts (ENG-1153). Verify the database is fully migrated and fail fast
+# otherwise, instead of serving traffic against an empty or half-migrated schema.
+echo "🗃️ Verifying database migrations are applied..."
+run_with_timeout 60 "migration check" node packages/database/dist/scripts/check-migrations.js
 
 echo "🗃️ Running SAML database setup..."
 run_with_timeout 60 "SAML database setup" node packages/database/dist/scripts/create-saml-database.js

@@ -32,21 +32,20 @@ enterprise:
 # Database Migration Job Configuration Helm
 ##########################################################
 migration:
-  # Enable migration job for ArgoCD deployments
-  # When enabled, migrations run as a PreSync hook before the deployment
-  # and the startup migration in the container is skipped
+  # Run migrations as a pre-deploy Job (Argo sync-wave -1) using the dedicated
+  # migration image, before the web Deployment rolls. The web image no longer
+  # migrates itself (ENG-1153) and fails fast at startup if the schema is behind,
+  # so if you disable this Job you MUST apply migrations another way before pods
+  # start — otherwise the web pods will crash-loop on the startup migration check.
   enabled: true
 
   # Dedicated migration image (ENG-1153). This image bundles the Prisma CLI and
-  # the @prisma/config loader chain needed to run `prisma migrate deploy`. Keeping
-  # `repository` set (the default) is the supported configuration.
-  #
-  # Leaving `repository` empty falls back to deployment.image. That is safe ONLY
-  # while the web image still bundles the Prisma CLI. Once the web runtime image is
-  # slimmed (ENG-1153 phase 2 removes the CLI/@prisma/config chain from it), an
-  # empty `repository` would run the migration Job on a CLI-less image and fail —
-  # so mirror this migration image into your registry rather than relying on the
-  # fallback.
+  # the @prisma/config loader chain needed to run `prisma migrate deploy`. The web
+  # image no longer carries the CLI, so this image is REQUIRED — there is no
+  # fallback to the application image. `repository` has a sensible default; if you
+  # mirror images into a private registry, mirror this one too. Clearing
+  # `repository` intentionally fails rendering rather than producing a Job that
+  # cannot migrate. Pin with `digest` (takes precedence over `tag`) in production.
   image:
     repository: "ghcr.io/formbricks/formbricks-migrate"
     tag: "" # Defaults to appVersion if not set

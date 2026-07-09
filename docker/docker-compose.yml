@@ -301,12 +301,12 @@ services:
         condition: service_healthy
       cube:
         condition: service_healthy
-      # The web container no longer migrates at startup (SKIP_STARTUP_MIGRATION=true),
-      # so it must not serve traffic until the one-shot migration run has finished —
-      # otherwise a fresh install briefly serves against an empty/half-migrated schema.
-      # Same gate hub-migrate uses. On updates (`docker compose up` after `pull`) the
-      # idempotent migrate service re-runs and web waits for it, giving correct
-      # migrate-before-serve ordering on every deploy.
+      # The web image no longer migrates itself (ENG-1153) — migrations run in the
+      # formbricks-migrate one-shot service. Gate web startup on its completion so a
+      # fresh install can't serve against an empty/half-migrated schema, and so
+      # `docker compose up` after a `pull` re-runs migrations before web restarts.
+      # (The web container additionally fails fast at startup if migrations are not
+      # applied.) Same gate hub-migrate uses.
       formbricks-migrate:
         condition: service_completed_successfully
     ports:
@@ -315,7 +315,6 @@ services:
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     environment:
       <<: *app-environment
-      SKIP_STARTUP_MIGRATION: "true"
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
