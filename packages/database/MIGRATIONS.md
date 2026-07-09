@@ -92,7 +92,7 @@ Against a throwaway `pgvector/pgvector:pg18` database, using the built runner:
   `migration.sql` directory under `migration/`.
 - **Data migration**: `pnpm --filter @formbricks/database generate-data-migration` — scaffolds a
   timestamped `migration.ts` under `migration/`. Its exported `name` must equal the directory
-  name (the runner keys on this, as does the startup migration check introduced in ENG-1153).
+  name (the migration runner keys on this).
 
 ## Future direction (out of scope for ENG-1145)
 
