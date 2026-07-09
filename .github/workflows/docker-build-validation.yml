@@ -78,6 +78,30 @@ jobs:
             cubejs_api_url=http://localhost:4000
             cubejs_api_secret=build-time-placeholder
 
+      # The web image no longer migrates itself (ENG-1153); build the dedicated
+      # migration image so we can apply migrations before starting the web app.
+      - name: Build Migration Image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          target: migrations
+          push: false
+          load: true
+          tags: formbricks-migrate-test:${{ env.GITHUB_SHA }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            redis_url=redis://localhost:6379
+            hub_api_url=http://localhost:4000
+            hub_api_key=build-time-placeholder
+            cubejs_api_url=http://localhost:4000
+            cubejs_api_secret=build-time-placeholder
+
       - name: Verify and Initialize PostgreSQL
         run: |
           echo "Verifying PostgreSQL connection..."
@@ -128,6 +152,21 @@ jobs:
           # Show network configuration for Redis
           echo "Redis network configuration:"
           netstat -tulpn | grep 6379 || echo "No process listening on port 6379"
+
+      # Apply migrations with the dedicated migration image before starting the web
+      # app, mirroring production (Helm Job / compose one-shot). The web container's
+      # startup check then passes; without this it would fail fast on a pending schema.
+      - name: Run Database Migrations
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          echo "🗃️ Applying migrations with the dedicated migration image..."
+          docker run --rm \
+            --add-host=host.docker.internal:host-gateway \
+            -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
+            "formbricks-migrate-test:$GITHUB_SHA"
+          echo "✅ Migrations applied"
 
       - name: Test Docker Image with Health Check
         shell: bash
