@@ -22,9 +22,7 @@ import type { TWorkflowTestProblem } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import { useWorkflowEmailAuthoringContext } from "@/modules/workflows/components/workflow-email-authoring-context";
 import { testWorkflow } from "@/modules/workflows/lib/api-client";
-import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
 import {
   WORKFLOW_CANVAS_NODE_TYPE,
   WORKFLOW_CANVAS_SNAP_GRID,
@@ -38,6 +36,7 @@ import {
   type TWorkflowNodeData,
   addWorkflowTriggerAtom,
   closeWorkflowNodeConfigModalAtom,
+  hasBoundTriggerSurveyAtom,
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
@@ -111,8 +110,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   // non-mutable until the user switches to pointer mode.
   const canMutate = isEditable && !isLocked;
 
-  const authoringContext = useWorkflowEmailAuthoringContext();
-  const hasBoundSurvey = Boolean(resolveBoundTriggerSurvey(authoringContext, definition));
+  // Shared flag owned by the builder page (server context OR workspace survey-list membership),
+  // so a just-picked survey clears the node's setup flag immediately.
+  const hasBoundSurvey = useAtomValue(hasBoundTriggerSurveyAtom);
   // Unloaded state defaults to draft so a fresh page never flashes red before the workflow lands.
   const isDraft = workflow ? workflow.status === "draft" : true;
 
