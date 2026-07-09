@@ -15,6 +15,7 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -72,6 +73,9 @@ const mapBillingRecord = (billing: TOrganizationBillingRecord | null): TOrganiza
 
 const toIsoStringOrNull = (date: Date | null | undefined): string | null =>
   date ? date.toISOString() : null;
+
+const isPaidCloudPlan = (plan: TCloudBillingPlan | null | undefined): boolean =>
+  plan === "pro" || plan === "scale";
 
 const getDateFromBilling = (value: string | null | undefined): Date | null => {
   if (!value) return null;
@@ -1123,13 +1127,13 @@ const ensureOrganizationBillingRecord = async (
  */
 const getOrganizationOwner = async (
   organizationId: string
-): Promise<{ email: string; name: string | null } | null> => {
+): Promise<{ id: string; email: string; name: string | null } | null> => {
   const membership = await prisma.membership.findFirst({
     where: { organizationId, role: "owner" },
-    select: { user: { select: { email: true, name: true } } },
+    select: { user: { select: { id: true, email: true, name: true } } },
   });
   if (!membership) return null;
-  return { email: membership.user.email, name: membership.user.name };
+  return { id: membership.user.id, email: membership.user.email, name: membership.user.name };
 };
 
 export const ensureStripeCustomerForOrganization = async (
@@ -1302,6 +1306,20 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const pendingChange = await resolvePendingPlanChange(subscription);
+
+  const wasPaidActive =
+    existingStripeSnapshot?.subscriptionStatus === "active" && isPaidCloudPlan(existingStripeSnapshot?.plan);
+  const isPaidActive = subscriptionStatus === "active" && isPaidCloudPlan(cloudPlan);
+  const recoveredFromDunning =
+    existingStripeSnapshot?.subscriptionStatus === "past_due" ||
+    existingStripeSnapshot?.subscriptionStatus === "unpaid" ||
+    existingStripeSnapshot?.subscriptionStatus === "paused";
+  const subscriptionEnded = !subscription || subscriptionStatus === "canceled" || cloudPlan === "hobby";
+  const startedPaidSubscription = isPaidActive && !wasPaidActive && !recoveredFromDunning;
+  const canceledPaidSubscription = wasPaidActive && subscriptionEnded;
+  // Plan switch within an active paid subscription (Pro <-> Scale, either direction).
+  const switchedPaidPlan = wasPaidActive && isPaidActive && existingStripeSnapshot?.plan !== cloudPlan;
+
   const limits = resolveEntitlementDrivenLimits(
     organizationId,
     customerId,
@@ -1350,6 +1368,40 @@ export const syncOrganizationBillingFromStripe = async (
   });
 
   await invalidateOrganizationBillingCache(organizationId);
+
+  // Emit the paid-subscription lifecycle signal, keyed off the org owner so it ties to a person in
+  // PostHog (with the organization group for company attribution).
+  if (startedPaidSubscription || canceledPaidSubscription || switchedPaidPlan) {
+    const owner = await getOrganizationOwner(organizationId);
+    if (owner) {
+      if (switchedPaidPlan) {
+        capturePostHogEvent(
+          owner.id,
+          "subscription_updated",
+          {
+            previous_plan: existingStripeSnapshot?.plan ?? null,
+            plan: cloudPlan,
+            interval: billingInterval,
+            organization_id: organizationId,
+          },
+          { organizationId }
+        );
+      } else {
+        capturePostHogEvent(
+          owner.id,
+          startedPaidSubscription ? "subscription_started" : "subscription_canceled",
+          {
+            // On cancel the new snapshot has already dropped to hobby/none, so report the prior plan.
+            plan: startedPaidSubscription ? cloudPlan : (existingStripeSnapshot?.plan ?? null),
+            interval: startedPaidSubscription ? billingInterval : (existingStripeSnapshot?.interval ?? null),
+            organization_id: organizationId,
+          },
+          { organizationId }
+        );
+      }
+    }
+  }
+
   return updatedBilling;
 };
 
