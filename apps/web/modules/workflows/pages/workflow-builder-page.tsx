@@ -32,10 +32,13 @@ export const WorkflowBuilderPage = ({
 
   // Only this page holds the server-resolved authoring context, so it owns pushing the "does the
   // trigger's survey resolve" fact into the shared atom the validity + canvas checks read.
-  const hasBoundTriggerSurvey = Boolean(resolveBoundTriggerSurvey(emailAuthoringContext, builder.definition));
+  // Keyed on the inputs (not the computed boolean): hydration resets the atom to its optimistic
+  // default, and a boolean-keyed effect would skip re-syncing when the computed value happens to
+  // match its pre-hydration result.
+  const definition = builder.definition;
   useEffect(() => {
-    setHasBoundTriggerSurvey(hasBoundTriggerSurvey);
-  }, [hasBoundTriggerSurvey, setHasBoundTriggerSurvey]);
+    setHasBoundTriggerSurvey(Boolean(resolveBoundTriggerSurvey(emailAuthoringContext, definition)));
+  }, [emailAuthoringContext, definition, setHasBoundTriggerSurvey]);
 
   // Deep-link the inspected node (?node=…) once the editor is hydrated.
   useWorkflowNodeUrlSync({ isEnabled: Boolean(builder.workflow) });
