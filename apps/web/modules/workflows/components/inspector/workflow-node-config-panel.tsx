@@ -1,14 +1,11 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { ArrowLeftIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
-import { Button } from "@/modules/ui/components/button";
 import { getNodeRegistryEntry } from "@/modules/workflows/lib/node-registry";
 import {
-  closeWorkflowNodeConfigModalAtom,
   selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
   workflowDefinitionAtom,
@@ -46,13 +43,13 @@ const replaceNode = (definition: TWorkflowDefinition, node: TWorkflowNode): TWor
  * Renders inside the inspector aside (replaces the workflow-level sections while a node is being
  * configured). Every form change writes straight into the definition atom, so the canvas node
  * (title, summary, issue flag) and the whole-workflow validity update live; persistence is owned
- * by the page-level autosave. The Back arrow restores the workflow-level view.
+ * by the page-level autosave. The workflow Settings view is reached via the canvas cog, not a
+ * Back arrow — the two views are siblings, not a hierarchy.
  */
 export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeConfigPanelProps>) => {
   const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
-  const closePanel = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
 
   const selectedNode = findSelectedNode(definition, selectedNodeId);
@@ -71,16 +68,8 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   return (
     <aside className="w-[360px] shrink-0 self-start rounded-lg border border-slate-200 bg-white">
       <div className="flex flex-col gap-3">
-        <header className="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={t("common.back")}
-            onClick={closePanel}>
-            <ArrowLeftIcon className="size-4" />
-          </Button>
-          <span className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</span>
+        <header className="flex items-center border-b border-slate-200 px-4 py-3">
+          <h2 className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</h2>
         </header>
         <div className="flex flex-col gap-3 px-3 pb-4">
           {!isEditable && (
