@@ -20,6 +20,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import {
@@ -36,7 +38,9 @@ const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
   email: MailIcon,
 };
 
-const CATEGORY_CHIP_CLASS_NAMES: Record<TWorkflowNodeData["category"], string> = {
+// Shared with the add-trigger / add-action pickers so selector icons carry the same category
+// colors as the canvas cards.
+export const CATEGORY_CHIP_CLASS_NAMES: Record<TWorkflowNodeData["category"], string> = {
   trigger: "bg-indigo-500 text-white",
   flow: "bg-purple-500 text-white",
   action: "bg-green-600 text-white",
@@ -57,10 +61,9 @@ export const WorkflowCanvasNode = memo(
       <div className="flex flex-col items-center">
         <div
           className={cn(
+            // Issues don't tint the card border — the inline alert line below carries the
+            // severity; a second color signal on the frame just adds noise.
             "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
-            // Amber = draft that isn't finished being set up; red = a live workflow that can't
-            // run as configured (same red the survey editor uses for invalid cards).
-            data.issue && (data.issue.severity === "error" ? "border-red-400" : "border-amber-300"),
             selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50"
           )}>
           <Handle type="target" position={Position.Top} className={HANDLE_CLASS_NAMES} />
@@ -103,7 +106,7 @@ export const WorkflowCanvasNode = memo(
                   <MoreVerticalIcon />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="motion-reduce:animate-none">
                 <DropdownMenuItem
                   onClick={(event) => {
                     event.stopPropagation();
@@ -120,21 +123,46 @@ export const WorkflowCanvasNode = memo(
         {isTrigger && data.isLeaf && canMutate && (
           // Only the trigger gets an inline `+` — workflows are currently capped at one action
           // after the trigger, so neither the trailing send_email card nor mid-chain edges
-          // should advertise the affordance.
+          // should advertise the affordance. The `+` opens an action picker instead of
+          // appending a default node, so the user consciously chooses each step.
           <div className="mt-2 flex flex-col items-center gap-1">
             <div className="h-3 w-px bg-slate-300" />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label={t("workspace.workflows.add_step")}
-              className="size-6 rounded-full bg-white shadow-sm"
-              onClick={(event) => {
-                event.stopPropagation();
-                appendSendEmail(id);
-              }}>
-              <PlusIcon />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={t("workspace.workflows.add_action")}
+                  className="size-6 rounded-full bg-white shadow-sm"
+                  onClick={(event) => event.stopPropagation()}>
+                  <PlusIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-64 motion-reduce:animate-none">
+                <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    appendSendEmail(id);
+                  }}>
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-md",
+                      CATEGORY_CHIP_CLASS_NAMES.action
+                    )}>
+                    <MailIcon className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm text-slate-700">{t("workspace.workflows.send_email")}</span>
+                    <span className="text-xs text-slate-500">
+                      {t("workspace.workflows.send_email_description")}
+                    </span>
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </div>

@@ -17,7 +17,7 @@ const workflowsService = createWorkflowsService({ prisma });
 const readTriggerSurveyId = (definition: unknown): string | null => {
   const parsed = ZWorkflowDefinition.safeParse(definition);
   if (!parsed.success) return null;
-  return parsed.data.trigger.config.surveyId;
+  return parsed.data.trigger?.config.surveyId ?? null;
 };
 
 /**

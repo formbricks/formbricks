@@ -54,14 +54,14 @@ describe("updateNodePosition", () => {
   test("updates trigger position when id matches", () => {
     const def = buildDefinition();
     const next = updateNodePosition(def, "trigger-1", { x: 100, y: 80 });
-    expect(next.trigger.ui?.position).toEqual({ x: 100, y: 80 });
+    expect(next.trigger?.ui?.position).toEqual({ x: 100, y: 80 });
     expect(next.nodes[0].ui?.position).toEqual({ x: 0, y: 0 });
   });
 
   test("updates child-node position when id matches", () => {
     const def = buildDefinition();
     const next = updateNodePosition(def, "action-1", { x: 220, y: 240 });
-    expect(next.trigger.ui?.position).toEqual({ x: 0, y: 0 });
+    expect(next.trigger?.ui?.position).toEqual({ x: 0, y: 0 });
     expect(next.nodes[0].ui?.position).toEqual({ x: 220, y: 240 });
   });
 });
@@ -128,7 +128,7 @@ describe("reorganizeWorkflowDefinition", () => {
   test("ranks reachable nodes by BFS distance from the trigger", () => {
     const def = buildDefinition();
     const next = reorganizeWorkflowDefinition(def);
-    const triggerY = next.trigger.ui?.position?.y ?? 0;
+    const triggerY = next.trigger?.ui?.position?.y ?? 0;
     const actionY = next.nodes[0].ui?.position?.y ?? 0;
     expect(actionY).toBeGreaterThan(triggerY);
   });
@@ -152,5 +152,24 @@ describe("workflowDefinitionToFlowNodes fallback", () => {
     const def = { ...base, trigger: triggerWithoutUi } as TWorkflowDefinition;
     const nodes = workflowDefinitionToFlowNodes(def, t);
     expect(nodes[0].position).toEqual({ x: 120, y: 80 });
+  });
+});
+
+describe("trigger-less draft definitions", () => {
+  const emptyDefinition = buildDefinition({
+    trigger: null,
+    nodes: [],
+    edges: [],
+    entryNodeId: null,
+  });
+
+  test("project to zero flow nodes and edges", () => {
+    expect(workflowDefinitionToFlowNodes(emptyDefinition, t)).toEqual([]);
+    expect(workflowDefinitionToFlowEdges(emptyDefinition)).toEqual([]);
+  });
+
+  test("updateNodePosition and reorganize are no-op safe", () => {
+    expect(updateNodePosition(emptyDefinition, "anything", { x: 1, y: 1 }).trigger).toBeNull();
+    expect(reorganizeWorkflowDefinition(emptyDefinition).trigger).toBeNull();
   });
 });

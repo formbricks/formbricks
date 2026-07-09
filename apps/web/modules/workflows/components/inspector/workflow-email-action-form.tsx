@@ -68,7 +68,7 @@ export const WorkflowEmailActionForm = ({
   const updateConfig = (next: Partial<TWorkflowSendEmailActionNode["config"]>) =>
     onChange({ ...node, config: { ...node.config, ...next } });
 
-  const triggerSurveyId = definition?.trigger.type === "trigger" ? definition.trigger.config.surveyId : null;
+  const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
   const survey = resolveBoundTriggerSurvey(authoringContext, definition);
 
   // Clear the recipient + body when the trigger's bound survey changes: `config.to` is an element/
@@ -104,13 +104,16 @@ export const WorkflowEmailActionForm = ({
     return (
       <div className="flex flex-col gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
         <p className="text-sm text-slate-600">{t("workspace.workflows.email_needs_survey")}</p>
-        {definition ? (
+        {definition?.trigger ? (
           <Button
             type="button"
             variant="secondary"
             size="sm"
             className="w-fit"
-            onClick={() => openNodeConfigModal(definition.trigger.id)}>
+            onClick={() => {
+              const triggerId = definition.trigger?.id;
+              if (triggerId) openNodeConfigModal(triggerId);
+            }}>
             {t("workspace.workflows.email_set_up_trigger")}
             <ArrowRightIcon />
           </Button>

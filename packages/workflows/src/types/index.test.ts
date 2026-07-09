@@ -138,6 +138,24 @@ describe("@formbricks/workflows", () => {
     expect(ZWorkflowDefinition.parse(definition).nodes).toHaveLength(0);
   });
 
+  test("allows persisting an empty draft definition without a trigger", () => {
+    const definition = { schemaVersion: 1, trigger: null, nodes: [], edges: [], entryNodeId: null };
+
+    expect(ZWorkflowDefinition.parse(definition).trigger).toBeNull();
+  });
+
+  test("rejects a trigger-less definition whose entryNodeId is set", () => {
+    const definition = { schemaVersion: 1, trigger: null, nodes: [], edges: [], entryNodeId: "trigger" };
+
+    expect(() => ZWorkflowDefinition.parse(definition)).toThrow(/entryNodeId must be null/);
+  });
+
+  test("rejects trigger-less definitions for executable parsing", () => {
+    const definition = { schemaVersion: 1, trigger: null, nodes: [], edges: [], entryNodeId: null };
+
+    expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow();
+  });
+
   test("rejects definitions with multiple outgoing trigger edges", () => {
     const definition = createDefinition();
     definition.edges.push({ id: "trigger-send-email-2", source: "trigger", target: "send-email" });

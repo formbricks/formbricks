@@ -3,7 +3,13 @@ import { type Node } from "@xyflow/react";
 import { produce } from "immer";
 import { atom } from "jotai";
 import type { SetStateAction } from "react";
-import { type TWorkflowDefinition, type TWorkflowResource, WORKFLOW_ACTIONS } from "@formbricks/workflows";
+import {
+  type TWorkflowDefinition,
+  type TWorkflowResource,
+  type TWorkflowTriggerType,
+  WORKFLOW_ACTIONS,
+  WORKFLOW_TRIGGERS,
+} from "@formbricks/workflows";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
 export type TWorkflowNodeIcon = "trigger" | "ifElse" | "email";
@@ -129,7 +135,7 @@ export const hydrateWorkflowEditorAtom = atom(
         draft.workflowDescription = workflow.description ?? "";
         draft.definition = workflow.definition;
         draft.flowNodes = flowNodes;
-        draft.selectedNodeId = workflow.definition.trigger.id;
+        draft.selectedNodeId = workflow.definition.trigger?.id ?? null;
       })
     );
   }
@@ -257,7 +263,7 @@ export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
     produce(get(workflowEditorAtom), (draft) => {
       const definition = draft.definition;
       if (!definition) return;
-      if (definition.trigger.id === nodeId) return;
+      if (definition.trigger?.id === nodeId) return;
 
       const incoming = definition.edges.filter((edge) => edge.target === nodeId);
       const outgoing = definition.edges.filter((edge) => edge.source === nodeId);
@@ -277,9 +283,40 @@ export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
       }
 
       if (draft.selectedNodeId === nodeId) {
-        draft.selectedNodeId = definition.trigger.id;
+        draft.selectedNodeId = definition.trigger?.id ?? null;
         draft.isNodeConfigModalOpen = false;
       }
+    })
+  );
+});
+
+// Seed the trigger on an empty draft canvas (the "Add trigger" picker). The placeholder
+// surveyId keeps the config schema-valid until the user binds a real survey; opening the
+// config panel right away walks them into doing exactly that.
+export const addWorkflowTriggerAtom = atom(null, (get, set, triggerType: TWorkflowTriggerType) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      const definition = draft.definition;
+      if (!definition || definition.trigger) return;
+      if (triggerType !== WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) return;
+
+      const triggerId = createId();
+      definition.trigger = {
+        id: triggerId,
+        type: "trigger",
+        triggerType,
+        config: {
+          surveyId: createId(),
+          endingCardIds: [],
+        },
+        // Matches WORKFLOW_CANVAS_START_POSITION in definition-to-flow (not imported to avoid a cycle).
+        ui: { position: { x: 220, y: 80 } },
+      };
+      definition.entryNodeId = triggerId;
+
+      draft.selectedNodeId = triggerId;
+      draft.isNodeConfigModalOpen = true;
     })
   );
 });
@@ -294,7 +331,7 @@ export const appendSendEmailAfterNodeAtom = atom(null, (get, set, sourceNodeId: 
       if (!definition) return;
 
       const sourcePosition =
-        definition.trigger.id === sourceNodeId
+        definition.trigger?.id === sourceNodeId
           ? definition.trigger.ui?.position
           : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
       const newPosition = sourcePosition
@@ -338,7 +375,7 @@ export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string
       const edge = definition.edges[edgeIndex];
 
       const positionOf = (nodeId: string) => {
-        if (definition.trigger.id === nodeId) return definition.trigger.ui?.position;
+        if (definition.trigger?.id === nodeId) return definition.trigger.ui?.position;
         return definition.nodes.find((node) => node.id === nodeId)?.ui?.position;
       };
       const sourcePosition = positionOf(edge.source);

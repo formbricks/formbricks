@@ -14,7 +14,7 @@ export const resolveBoundTriggerSurvey = (
   authoringContext: TWorkflowEmailAuthoringContext | null,
   definition: TWorkflowDefinition | null
 ): TSurvey | null => {
-  const triggerSurveyId = definition?.trigger.type === "trigger" ? definition.trigger.config.surveyId : null;
+  const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
   const survey = authoringContext?.survey ?? null;
   return survey?.id === triggerSurveyId ? survey : null;
 };

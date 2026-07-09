@@ -251,14 +251,14 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
         include: LAST_RUN_INCLUDE,
       });
 
-    // A caller-supplied name is used verbatim; a collision surfaces as a clean 409 (do not rename it).
+    // A caller-supplied name is used verbatim (names are not unique; do not rename it).
     if (name !== undefined) {
       return createCopy(name);
     }
 
-    // No name given: honor the contract's promise to "choose a non-conflicting copy name". Each attempt
-    // is an independent `create` (a failed one rolls back on its own), so on the workspace-unique-name
-    // P2002 we just advance the suffix and retry. Any other error is a real failure → rethrow.
+    // No name given: generate a "(copy)"-suffixed name. Names are no longer workspace-unique, so
+    // the first attempt normally succeeds; the suffix-advance retry is kept as a cheap safety net
+    // in case a unique constraint ever returns. Any non-P2002 error is a real failure → rethrow.
     for (let attempt = 1; attempt <= MAX_DUPLICATE_NAME_ATTEMPTS; attempt++) {
       try {
         return await createCopy(buildCopyName(source.name, attempt));

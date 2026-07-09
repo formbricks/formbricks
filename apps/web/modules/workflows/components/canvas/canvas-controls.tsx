@@ -5,7 +5,6 @@ import {
   HandIcon,
   type LucideIcon,
   MousePointerClickIcon,
-  PlusIcon,
   WandSparklesIcon,
   ZoomInIcon,
   ZoomOutIcon,
@@ -86,15 +85,6 @@ export const CanvasControls = ({
       variant: "outline",
       disabled: !canMutate,
       onClick: onAutoLayout,
-    },
-    {
-      key: "add-node",
-      Icon: PlusIcon,
-      label: t("workspace.workflows.add_node"),
-      variant: "outline",
-      // Placeholder — node insertion from the toolbar isn't wired up yet.
-      disabled: true,
-      onClick: () => {},
     },
   ];
 

@@ -40,9 +40,12 @@ describe("toProblemResponse", () => {
     expect(res.headers.get("Content-Type")).toBe("application/problem+json");
     const body = await readJson<{ code: string; detail: string; status: number }>(res);
     expect(body.code).toBe("conflict");
-    expect(body.detail).toBe("A workflow with this name already exists.");
+    expect(body.detail).toBe("A conflicting workflow write happened at the same time. Please retry.");
     expect(body.status).toBe(409);
-    expect(logger.warn).toHaveBeenCalledWith({ statusCode: 409, code: "conflict" }, "Workflow name conflict");
+    expect(logger.warn).toHaveBeenCalledWith(
+      { statusCode: 409, code: "conflict" },
+      "Workflow unique constraint conflict"
+    );
     expect(logger.error).not.toHaveBeenCalled();
   });
 

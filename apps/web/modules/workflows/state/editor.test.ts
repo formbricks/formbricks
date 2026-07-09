@@ -2,6 +2,7 @@ import { createStore } from "jotai";
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition, TWorkflowResource } from "@formbricks/workflows";
 import {
+  addWorkflowTriggerAtom,
   appendSendEmailAfterNodeAtom,
   canEditWorkflowDefinitionAtom,
   canMutateCanvasAtom,
@@ -352,6 +353,57 @@ describe("insertSendEmailAfterEdgeAtom", () => {
     const next = store.get(workflowDefinitionAtom)!;
     const added = next.nodes[next.nodes.length - 1];
     expect(added.ui?.position).toEqual({ x: 220, y: 200 });
+  });
+});
+
+describe("addWorkflowTriggerAtom", () => {
+  const emptyDefinition = () =>
+    ({
+      schemaVersion: 1,
+      trigger: null,
+      nodes: [],
+      edges: [],
+      entryNodeId: null,
+    }) as unknown as TWorkflowDefinition;
+
+  test("no-ops when there is no definition", () => {
+    const store = createStore();
+    store.set(addWorkflowTriggerAtom, "response.completed");
+    expect(store.get(workflowDefinitionAtom)).toBeNull();
+  });
+
+  test("seeds a response.completed trigger, entry point, selection, and opens config", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, emptyDefinition());
+    store.set(addWorkflowTriggerAtom, "response.completed");
+
+    const def = store.get(workflowDefinitionAtom)!;
+    expect(def.trigger?.triggerType).toBe("response.completed");
+    expect(def.trigger?.config.endingCardIds).toEqual([]);
+    expect(def.entryNodeId).toBe(def.trigger?.id);
+    expect(store.get(selectedWorkflowNodeIdAtom)).toBe(def.trigger?.id);
+    expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(true);
+  });
+
+  test("no-ops when a trigger already exists", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, graphDefinition());
+    store.set(addWorkflowTriggerAtom, "response.completed");
+
+    expect(store.get(workflowDefinitionAtom)?.trigger?.id).toBe("trigger-1");
+  });
+});
+
+describe("hydrateWorkflowEditorAtom with a trigger-less draft", () => {
+  test("leaves the selection empty", () => {
+    const store = createStore();
+    const triggerlessWorkflow = {
+      ...workflow,
+      definition: { ...definition, trigger: null, entryNodeId: null },
+    } as unknown as TWorkflowResource;
+    store.set(hydrateWorkflowEditorAtom, { workflow: triggerlessWorkflow, flowNodes: [] });
+
+    expect(store.get(selectedWorkflowNodeIdAtom)).toBeNull();
   });
 });
 
