@@ -1,4 +1,7 @@
+import { CheckIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import { debounce } from "@/lib/utils/debounce";
 
 interface AnimatedSurveyBgProps {
@@ -7,6 +10,7 @@ interface AnimatedSurveyBgProps {
 }
 
 export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
+  const { t } = useTranslation();
   const [animation, setAnimation] = useState(background);
 
   const animationFiles = {
@@ -74,27 +78,34 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
       <div className="mt-4 grid grid-cols-6 gap-4">
         {Object.keys(animationFiles).map((key, index) => {
           const value = (animationFiles as Record<string, string>)[key];
+          const isSelected = animation === value;
           return (
             <button
               type="button"
               key={key}
+              // The tile's only content is a video, so expose a name and the selection state
+              // (which is otherwise conveyed purely visually) to assistive technology.
+              aria-label={t("workspace.surveys.edit.animated_background_option", { number: index + 1 })}
+              aria-pressed={isSelected}
               onMouseEnter={() => debouncedManagePlayback(index, "play")}
               onMouseLeave={() => debouncedManagePlayback(index, "pause")}
               onClick={() => handleBg(value)}
-              className="relative cursor-pointer overflow-hidden rounded-lg">
+              className={cn(
+                "relative aspect-video cursor-pointer overflow-hidden rounded-lg border-2",
+                isSelected ? "border-slate-800" : "border-transparent"
+              )}>
               <video
                 disablePictureInPicture
                 muted
                 id={`video-${index}`}
-                className="h-46 w-96 origin-center scale-105 transform">
+                className="h-full w-full object-cover">
                 <source src={`${key}`} type="video/mp4" />
               </video>
-              <input
-                className="absolute top-2 right-2 size-4 cursor-pointer rounded-xs bg-white"
-                type="checkbox"
-                checked={animation === value}
-                onChange={() => handleBg(value)}
-              />
+              {isSelected && (
+                <span className="absolute top-2 right-2 flex size-5 items-center justify-center rounded-full bg-slate-800 text-white shadow">
+                  <CheckIcon className="size-3" strokeWidth={3} />
+                </span>
+              )}
             </button>
           );
         })}

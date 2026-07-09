@@ -3,6 +3,7 @@ import { toast } from "react-hot-toast";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
+import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyAddressElement,
   TSurveyCTAElement,
@@ -1387,5 +1388,62 @@ describe("validation.getValidateIdErrorMessage", () => {
       type: "Question",
       field: "userId",
     });
+  });
+});
+
+describe("validation.isBlockLogicItemValid", () => {
+  // A fully schema-valid rule: a real cuid id, an "and" condition group and a
+  // jumpToBlock action pointing at a valid block id.
+  const validLogicItem: TSurveyBlockLogic = {
+    id: "cs8fnvm1v9d8x1234567890ab",
+    conditions: {
+      id: "n1x8fq7z9v2c3b4m5k6j7h8g",
+      connector: "and",
+      conditions: [],
+    },
+    actions: [
+      {
+        id: "aq7z9v2c3b4m5k6j7h8g1x8f",
+        objective: "jumpToBlock",
+        target: "bx8fq7z9v2c3b4m5k6j7h8ga",
+      },
+    ],
+  };
+
+  test("returns true for a schema-valid conditional-logic rule", () => {
+    expect(validation.isBlockLogicItemValid(validLogicItem)).toBe(true);
+  });
+
+  test("returns false when a jumpToBlock action has an empty target", () => {
+    const emptyJumpTarget: TSurveyBlockLogic = {
+      ...validLogicItem,
+      actions: [{ id: "aq7z9v2c3b4m5k6j7h8g1x8f", objective: "jumpToBlock", target: "" }],
+    };
+
+    expect(validation.isBlockLogicItemValid(emptyJumpTarget)).toBe(false);
+  });
+
+  test("returns false when a condition is missing its required right operand", () => {
+    const missingRightOperand: TSurveyBlockLogic = {
+      ...validLogicItem,
+      conditions: {
+        id: "n1x8fq7z9v2c3b4m5k6j7h8g",
+        connector: "and",
+        conditions: [
+          {
+            id: "cx8fq7z9v2c3b4m5k6j7h8ga",
+            leftOperand: { type: "element", value: "element-1" },
+            // "equals" requires a right operand, which is intentionally omitted.
+            operator: "equals",
+          },
+        ],
+      },
+    };
+
+    expect(validation.isBlockLogicItemValid(missingRightOperand)).toBe(false);
+  });
+
+  test("returns false when the rule id is not a valid cuid", () => {
+    expect(validation.isBlockLogicItemValid({ ...validLogicItem, id: "logic-1" })).toBe(false);
   });
 });

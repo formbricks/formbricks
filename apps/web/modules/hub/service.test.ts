@@ -74,10 +74,6 @@ const taxonomyScope = {
 };
 
 describe("hub service", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("createFeedbackRecord", () => {
     test("returns error result when getHubClient returns null", async () => {
       vi.mocked(getHubClient).mockReturnValue(null);
@@ -101,6 +97,15 @@ describe("hub service", () => {
 
       expect(result.error).toBeNull();
       expect(result.data).toEqual(created);
+    });
+
+    test("forwards value_id to the Hub (ENG-1673)", async () => {
+      const create = vi.fn().mockResolvedValue({ id: "hub-1" });
+      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
+
+      await createFeedbackRecord({ ...sampleInput, value_id: "c-male" });
+
+      expect(create).toHaveBeenCalledWith({ ...sampleInput, value_id: "c-male" });
     });
 
     test("returns error result when client.create throws", async () => {
