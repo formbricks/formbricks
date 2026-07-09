@@ -152,14 +152,10 @@ export const getAccessControlPermission = async (organizationId: string): Promis
 };
 
 export const getIsFeedbackDirectoriesEnabled = async (organizationId: string): Promise<boolean> => {
-  // LOCAL OVERRIDE — do not commit
-  return true;
   return getCustomPlanFeaturePermission(organizationId, "feedbackDirectories");
 };
 
 export const getIsDashboardsEnabled = async (organizationId: string): Promise<boolean> => {
-  // LOCAL OVERRIDE — do not commit
-  return true;
   return getCustomPlanFeaturePermission(organizationId, "dashboards");
 };
 
