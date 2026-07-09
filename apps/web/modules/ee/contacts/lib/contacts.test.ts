@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { getSurvey } from "@/lib/survey/service";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -912,6 +913,10 @@ describe("Contacts Lib", () => {
       } as any);
 
       await expect(generatePersonalLinks(mockSurveyId, mockSegmentId)).rejects.toThrow(ValidationError);
+      // Message is a stable error code the client maps to a localized string.
+      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId)).rejects.toThrow(
+        SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE
+      );
 
       // No contacts should have been queried for the foreign segment.
       expect(prisma.contact.findMany).not.toHaveBeenCalled();

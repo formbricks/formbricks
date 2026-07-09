@@ -17,6 +17,7 @@ import {
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
+import { SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -729,9 +730,10 @@ export const generatePersonalLinks = async (surveyId: string, segmentId: string,
   // survey the caller is authorized against. Without this, a caller with access
   // to `surveyId`'s workspace could pass a `segmentId` from another workspace and
   // exfiltrate that workspace's contact PII. Mirrors the v2 management API
-  // (contact-links/segments) which rejects the same mismatch.
+  // (contact-links/segments) which rejects the same mismatch. The message is a
+  // stable error code the client maps to a localized string.
   if (survey.workspaceId !== segment.workspaceId) {
-    throw new ValidationError("Survey and segment are not in the same workspace");
+    throw new ValidationError(SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
   }
 
   const contactsResult = await getContactsInSegment(segmentId);

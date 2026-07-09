@@ -12,6 +12,7 @@ import {
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 
 const ZGeneratePersonalSurveyLinkAction = z.object({
   contactId: ZId,
@@ -48,7 +49,7 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
     // workspace assertion the segment-based personal-links path performs.
     const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
     if (surveyWorkspaceId !== workspaceId) {
-      throw new ValidationError("Contact and survey are not in the same workspace");
+      throw new ValidationError(CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
     }
 
     const result = await getContactSurveyLink(
