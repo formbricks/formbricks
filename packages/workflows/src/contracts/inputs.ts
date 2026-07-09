@@ -44,9 +44,7 @@ export const ZDuplicateWorkflowInput = z
       .min(1)
       .max(120)
       .optional()
-      .describe(
-        "Optional name for the duplicate. If omitted, the server chooses a non-conflicting copy name."
-      ),
+      .describe("Optional name for the duplicate. If omitted, the server generates a copy-suffixed name."),
   })
   .describe("Duplicates a workflow as a new draft with empty run and version history.");
 export type TDuplicateWorkflowInput = z.infer<typeof ZDuplicateWorkflowInput>;
