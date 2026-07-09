@@ -116,8 +116,13 @@ export const ZWorkflowListItem = z
     name: z.string().min(1),
     description: z.string().nullable(),
     status: ZWorkflowStatus,
-    triggerType: ZWorkflowTriggerType.describe("Derived from definition.trigger.triggerType."),
-    surveyId: z.cuid2().describe("Derived from definition.trigger.config.surveyId."),
+    triggerType: ZWorkflowTriggerType.nullable().describe(
+      "Derived from definition.trigger.triggerType. Null while the draft has no trigger."
+    ),
+    surveyId: z
+      .cuid2()
+      .nullable()
+      .describe("Derived from definition.trigger.config.surveyId. Null while the draft has no trigger."),
     createdBy: z.cuid2().nullable().describe("Null when the creating user was deleted."),
     creator: z
       .object({ name: z.string() })
