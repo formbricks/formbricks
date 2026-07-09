@@ -27,8 +27,9 @@ describe("runAfterAuthHooks", () => {
     });
 
     await expect(runAfterAuthHooks({} as never)).rejects.toThrow();
-    // Load-bearing: the audit must run before the redirect throw, or a personal-email SSO rejection
-    // would skip the failed-auth audit entirely.
+    // Pins the intended order: the audit runs before the redirect throw. Future-proofing today
+    // (auditFailedAuthAfter only records /sign-in/email, so an SSO /callback rejection no-ops it either
+    // way), but locks the contract for when the failed-auth audit is extended to SSO callback paths.
     expect(calls).toEqual(["recovery", "audit", "redirect"]);
   });
 });

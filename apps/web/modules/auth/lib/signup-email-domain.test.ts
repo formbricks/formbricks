@@ -89,10 +89,11 @@ describe("isBlockedEmailDomain", () => {
   });
 
   test("treats input with no usable domain as not-blocked", () => {
-    // Missing domain or local part → not blocked. Genuinely malformed addresses (e.g. double "@")
-    // are rejected by email-format validation upstream before this predicate is reached.
-    for (const email of ["", "notanemail", "@gmail.com", "test@"]) {
-      expect(isBlockedEmailDomain(email)).toBe(false);
+    // Missing/absent domain or local part → not blocked; an unexpected null/undefined caller degrades
+    // to "allow" rather than throwing. Genuinely malformed addresses (e.g. double "@") are rejected by
+    // email-format validation upstream before this predicate is reached.
+    for (const email of ["", "notanemail", "@gmail.com", "test@", null, undefined]) {
+      expect(isBlockedEmailDomain(email as unknown as string)).toBe(false);
     }
   });
 });

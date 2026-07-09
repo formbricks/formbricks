@@ -26,9 +26,11 @@ const blockedEmailDomains = new Set<string>(
  *
  * Environment-agnostic — callers apply the Cloud gate and invite exemption via
  * {@link isSignupEmailDomainBlocked}. Assumes the address has already passed email-format
- * validation; malformed input (no local part, no domain, multiple `@`) is treated as not-blocked.
+ * validation; malformed or absent input (missing/empty address, empty local part, empty domain) is
+ * treated as not-blocked, so an unexpected caller degrades to "allow" rather than throwing.
  */
 export const isBlockedEmailDomain = (email: string): boolean => {
+  if (!email) return false;
   const normalized = email.trim().toLowerCase();
   const atIndex = normalized.lastIndexOf("@");
   // Reject empty local part ("@gmail.com"), missing domain ("test@") and no-`@` inputs.

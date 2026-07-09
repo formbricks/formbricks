@@ -43,4 +43,5 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "mail.com",
   "qq.com",
   "163.com",
+  "126.com",
 ];
