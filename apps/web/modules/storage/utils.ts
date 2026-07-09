@@ -2,6 +2,7 @@ import "server-only";
 import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import {
+  IMAGE_FILE_EXTENSIONS,
   type TAccessType,
   type TAllowedFileExtension,
   ZAllowedFileExtension,
@@ -321,16 +322,6 @@ export const validateClientFileUploads = ({
 
   return true;
 };
-
-/**
- * Image file extensions accepted for survey media (question/element/choice imageUrl).
- *
- * These are all rendered client-side via a plain `<img src>` tag (see
- * `packages/survey-ui` PictureSelect), so any raster format the browser can decode is safe to
- * allow. `svg` is deliberately excluded: SVGs can embed scripts and we do not sanitize them, so
- * allowing them would be an XSS vector.
- */
-export const IMAGE_FILE_EXTENSIONS = ["png", "jpeg", "jpg", "webp", "heic", "gif", "avif", "bmp"] as const;
 
 export const isValidImageFile = (fileUrl: string): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);

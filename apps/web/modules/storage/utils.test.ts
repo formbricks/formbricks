@@ -655,17 +655,17 @@ describe("storage utils", () => {
       expect(isValidImageFile("https://example.com/image.png")).toBe(true);
       expect(isValidImageFile("https://example.com/image.webp")).toBe(true);
       expect(isValidImageFile("https://example.com/image.heic")).toBe(true);
-      // ENG-1329: widened to the browser-<img>-supported raster formats.
-      expect(isValidImageFile("https://example.com/image.gif")).toBe(true);
-      expect(isValidImageFile("https://example.com/image.avif")).toBe(true);
-      expect(isValidImageFile("https://example.com/image.bmp")).toBe(true);
     });
 
     test("should return false for non-image file extensions", () => {
       expect(isValidImageFile("https://example.com/document.pdf")).toBe(false);
       expect(isValidImageFile("https://example.com/document.docx")).toBe(false);
       expect(isValidImageFile("https://example.com/document.txt")).toBe(false);
-      // svg is deliberately excluded: unsanitized SVGs are an XSS vector.
+      // ENG-1329: the allowlist is kept a subset of the upload allowlist (so the "upload to
+      // Formbricks" hint is truthful). gif/avif/bmp aren't uploadable, and svg is an XSS vector.
+      expect(isValidImageFile("https://example.com/image.gif")).toBe(false);
+      expect(isValidImageFile("https://example.com/image.avif")).toBe(false);
+      expect(isValidImageFile("https://example.com/image.bmp")).toBe(false);
       expect(isValidImageFile("https://example.com/image.svg")).toBe(false);
     });
 

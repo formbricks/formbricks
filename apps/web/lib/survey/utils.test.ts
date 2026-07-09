@@ -197,9 +197,7 @@ describe("checkForInvalidImagesInQuestions", () => {
       { id: "q1", type: TSurveyQuestionTypeEnum.OpenText, imageUrl: "invalid-image.txt" },
     ] as TSurveyQuestion[];
 
-    expect(() => checkForInvalidImagesInQuestions(questions)).toThrow(
-      new InvalidInputError("Invalid image file in question 1")
-    );
+    expect(() => checkForInvalidImagesInQuestions(questions)).toThrow("Invalid image file in question 1");
     expect(fileValidation.isValidImageFile).toHaveBeenCalledWith("invalid-image.txt");
   });
 
@@ -231,7 +229,7 @@ describe("checkForInvalidImagesInQuestions", () => {
     ] as TSurveyQuestion[];
 
     expect(() => checkForInvalidImagesInQuestions(questions)).toThrow(
-      new InvalidInputError("Invalid image file for choice 2 in question 1")
+      "Invalid image file for choice 2 in question 1"
     );
 
     expect(fileValidation.isValidImageFile).toHaveBeenCalledTimes(2);
@@ -356,7 +354,7 @@ describe("checkForInvalidMediaInBlocks", () => {
         'Invalid image URL in choice 1 of question 1 of block "Welcome Block"'
       );
       // The message names the supported formats so the caller can fix the URL.
-      expect(result.error.message).toContain("png, jpeg, jpg, webp, heic, gif, avif, bmp");
+      expect(result.error.message).toContain("png, jpeg, jpg, webp, heic");
     }
     expect(fileValidation.isValidImageFile).toHaveBeenCalledWith("image1.jpg");
   });
@@ -718,7 +716,7 @@ describe("validateMediaAndPrepareBlocks", () => {
       expect((error as InvalidInputError).message).toContain(
         'Invalid image URL in choice 1 of question 1 of block "Design Vote"'
       );
-      expect((error as InvalidInputError).message).toContain("png, jpeg, jpg, webp, heic, gif, avif, bmp");
+      expect((error as InvalidInputError).message).toContain("png, jpeg, jpg, webp, heic");
     }
   });
 

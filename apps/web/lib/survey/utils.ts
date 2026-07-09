@@ -3,6 +3,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
+import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyElement,
@@ -11,7 +12,7 @@ import {
 } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { isValidVideoUrl } from "@/lib/utils/video-upload";
-import { IMAGE_FILE_EXTENSIONS, isValidImageFile } from "@/modules/storage/utils";
+import { isValidImageFile } from "@/modules/storage/utils";
 
 /**
  * Actionable hint appended to invalid-image messages. Names the supported formats and explains why
@@ -54,7 +55,9 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
 export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) => {
   questions.forEach((question, qIndex) => {
     if (question.imageUrl && !isValidImageFile(question.imageUrl)) {
-      throw new InvalidInputError(`Invalid image file in question ${String(qIndex + 1)}`);
+      throw new InvalidInputError(
+        `Invalid image file in question ${String(qIndex + 1)}. ${INVALID_IMAGE_HINT}`
+      );
     }
 
     if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
@@ -65,7 +68,7 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
       question.choices.forEach((choice, cIndex) => {
         if (!isValidImageFile(choice.imageUrl)) {
           throw new InvalidInputError(
-            `Invalid image file for choice ${String(cIndex + 1)} in question ${String(qIndex + 1)}`
+            `Invalid image file for choice ${String(cIndex + 1)} in question ${String(qIndex + 1)}. ${INVALID_IMAGE_HINT}`
           );
         }
       });
