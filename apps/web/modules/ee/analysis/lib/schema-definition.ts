@@ -84,6 +84,13 @@ export const FEEDBACK_FIELDS = {
         "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
     },
     {
+      id: "FeedbackRecords.valueId",
+      label: "Option",
+      type: "string",
+      description:
+        "Stable id of the selected option in the source survey. Identical across response languages and label edits — prefer it over valueText for grouping and filtering choice answers. NULL for free text and multi-select.",
+    },
+    {
       id: "FeedbackRecords.valueBoolean",
       label: "Value (Boolean)",
       type: "boolean",
@@ -235,6 +242,7 @@ export const SELECTABLE_VALUE_DIMENSION_IDS = [
   "FeedbackRecords.fieldType",
   "FeedbackRecords.fieldLabel",
   "FeedbackRecords.fieldGroupLabel",
+  "FeedbackRecords.valueId",
 ] as const;
 
 export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS)[number];
@@ -316,6 +324,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
+    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_label_value_id"),
     "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
     "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),

@@ -86,10 +86,15 @@ export function FilterValueCombobox({
 
       return Array.isArray(result?.data) ? result.data : [];
     },
-    enabled: open,
+    // Also fetch while closed when a value is already set, so the trigger can render the
+    // option's label instead of a raw stored id (valueId filters).
+    enabled: open || Boolean(value),
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 5, // 5 minutes cache validity
   });
+
+  // Stored ids are meaningless to users — show the matching label when we have one.
+  const selectedLabel = values.find((item) => item.value === value)?.label ?? value;
 
   // Reset the transient search term whenever the popover closes.
   useEffect(() => {
@@ -112,8 +117,8 @@ export function FilterValueCombobox({
           className={cn(
             "flex h-9 w-[200px] items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 focus:outline-hidden hover:enabled:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50 data-[state=open]:ring-2 data-[state=open]:ring-slate-400 data-[state=open]:ring-offset-1"
           )}>
-          <span className={cn("truncate", !value && "text-slate-500")} title={value || undefined}>
-            {value || t("workspace.analysis.charts.select_value")}
+          <span className={cn("truncate", !value && "text-slate-500")} title={selectedLabel || undefined}>
+            {selectedLabel || t("workspace.analysis.charts.select_value")}
           </span>
           <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
         </button>
@@ -165,17 +170,17 @@ export function FilterValueCombobox({
                 <CommandGroup className="overflow-visible">
                   {values.map((item) => (
                     <CommandItem
-                      key={item}
-                      value={item}
+                      key={item.value}
+                      value={item.value}
                       onSelect={() => {
-                        onChange(item);
+                        onChange(item.value);
                         setOpen(false);
                       }}>
                       <CheckIcon
-                        className={cn("mr-2 size-4", value === item ? "opacity-100" : "opacity-0")}
+                        className={cn("mr-2 size-4", value === item.value ? "opacity-100" : "opacity-0")}
                       />
-                      <span className="truncate" title={item}>
-                        {item}
+                      <span className="truncate" title={item.label}>
+                        {item.label}
                       </span>
                     </CommandItem>
                   ))}

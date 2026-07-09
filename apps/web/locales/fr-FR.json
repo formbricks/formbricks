@@ -1697,6 +1697,7 @@
         "field_label_user_identifier": "Identifiant utilisateur",
         "field_label_value_boolean": "Valeur (booléenne)",
         "field_label_value_date": "Valeur (date)",
+        "field_label_value_id": "Option",
         "field_label_value_number": "Valeur (Nombre)",
         "field_label_value_text": "Valeur (Texte)",
         "filter_data": "Filtrer les données",

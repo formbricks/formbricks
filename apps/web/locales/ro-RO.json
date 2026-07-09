@@ -1697,6 +1697,7 @@
         "field_label_user_identifier": "Identificator utilizator",
         "field_label_value_boolean": "Valoare (Boolean)",
         "field_label_value_date": "Valoare (Dată)",
+        "field_label_value_id": "Opțiune",
         "field_label_value_number": "Valoare (Număr)",
         "field_label_value_text": "Valoare (Text)",
         "filter_data": "Filtrează datele",

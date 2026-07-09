@@ -1697,6 +1697,7 @@
         "field_label_user_identifier": "Идентификатор пользователя",
         "field_label_value_boolean": "Значение (логическое)",
         "field_label_value_date": "Значение (дата)",
+        "field_label_value_id": "Вариант",
         "field_label_value_number": "Значение (число)",
         "field_label_value_text": "Значение (текст)",
         "filter_data": "Фильтровать данные",

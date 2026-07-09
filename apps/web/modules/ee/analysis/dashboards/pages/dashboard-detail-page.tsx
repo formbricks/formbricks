@@ -8,6 +8,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
+import { mapValueIdRowsToLabels } from "@/modules/ee/analysis/lib/option-labels";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -49,7 +50,11 @@ async function executeWidgetQuery(
       userId,
       source: "dashboards.widget",
     });
-    return { data: Array.isArray(data) ? data : [], query };
+    const rows = Array.isArray(data) ? data : [];
+    return {
+      data: await mapValueIdRowsToLabels(rows, query, tenant.feedbackDirectoryId, workspaceId),
+      query,
+    };
   } catch (error) {
     logger.error(error, "Failed to load dashboard widget data");
     return { error: DASHBOARD_WIDGET_LOAD_ERROR };

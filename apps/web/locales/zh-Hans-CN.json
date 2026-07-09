@@ -1697,6 +1697,7 @@
         "field_label_user_identifier": "用户标识",
         "field_label_value_boolean": "值(布尔型)",
         "field_label_value_date": "值(日期)",
+        "field_label_value_id": "选项",
         "field_label_value_number": "数值",
         "field_label_value_text": "文本值",
         "filter_data": "筛选数据",

@@ -1697,6 +1697,7 @@
         "field_label_user_identifier": "使用者識別碼",
         "field_label_value_boolean": "值(布林)",
         "field_label_value_date": "值(日期)",
+        "field_label_value_id": "選項",
         "field_label_value_number": "數值",
         "field_label_value_text": "文字值",
         "filter_data": "篩選資料",

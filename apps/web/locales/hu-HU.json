@@ -1697,6 +1697,7 @@
         "field_label_user_identifier": "Felhasználó-azonosító",
         "field_label_value_boolean": "Érték (logikai)",
         "field_label_value_date": "Érték (dátum)",
+        "field_label_value_id": "Opció",
         "field_label_value_number": "Érték (szám)",
         "field_label_value_text": "Érték (szöveg)",
         "filter_data": "Adatok szűrése",
