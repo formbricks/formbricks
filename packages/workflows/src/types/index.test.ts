@@ -156,6 +156,27 @@ describe("@formbricks/workflows", () => {
     expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow();
   });
 
+  test.each(["to", "subject", "body"] as const)(
+    "rejects executable definitions whose send_email node has an empty %s",
+    (field) => {
+      const definition = createDefinition();
+      const emailNode = definition.nodes[0];
+      if (emailNode.type !== "action") throw new Error("expected send_email node");
+      emailNode.config = { ...emailNode.config, [field]: "  " };
+
+      expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(new RegExp(`missing ${field}`));
+    }
+  );
+
+  test("allows persisting a draft definition whose send_email node is incomplete", () => {
+    const definition = createDefinition();
+    const emailNode = definition.nodes[0];
+    if (emailNode.type !== "action") throw new Error("expected send_email node");
+    emailNode.config = { ...emailNode.config, to: "", subject: "", body: "" };
+
+    expect(ZWorkflowDefinition.parse(definition).nodes).toHaveLength(1);
+  });
+
   test("rejects definitions with multiple outgoing trigger edges", () => {
     const definition = createDefinition();
     definition.edges.push({ id: "trigger-send-email-2", source: "trigger", target: "send-email" });

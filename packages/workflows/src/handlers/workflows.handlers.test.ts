@@ -660,6 +660,33 @@ describe("testWorkflow", () => {
     expect(codes).not.toContain("survey_not_found");
   });
 
+  test("reports an incomplete send_email action as not executable", async () => {
+    const incompleteEmailDefinition = {
+      ...definition,
+      nodes: [
+        {
+          ...definition.nodes[0],
+          config: { ...definition.nodes[0].config, to: "", subject: "", body: "" },
+        },
+      ],
+    };
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({ status: "enabled", definition: incompleteEmailDefinition })
+    );
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    const fields = body.data.problems
+      .filter((p) => p.code === "definition_not_executable")
+      .map((p) => p.field);
+    expect(fields).toEqual(
+      expect.arrayContaining(["nodes.0.config.to", "nodes.0.config.subject", "nodes.0.config.body"])
+    );
+  });
+
   test("reports a missing ending card", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: ["ec_missing"] });

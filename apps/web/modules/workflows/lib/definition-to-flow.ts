@@ -39,7 +39,8 @@ const getWorkflowNodeIssue = (
     return { severity, label: t("workspace.workflows.node_needs_survey") };
   }
   if (node.type === "action" && node.actionType === "send_email" && options.hasBoundSurvey) {
-    if (!node.config.to || !node.config.body) {
+    // Same completeness rule ZWorkflowExecutableDefinition enforces server-side on enable/test.
+    if (!node.config.to.trim() || !node.config.subject.trim() || !node.config.body.trim()) {
       return { severity, label: t("workspace.workflows.node_needs_email_content") };
     }
   }
