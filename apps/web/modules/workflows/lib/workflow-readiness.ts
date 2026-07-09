@@ -8,9 +8,9 @@ import type { TWorkflowValidity } from "@/modules/workflows/state/editor";
  */
 export type TWorkflowReadinessHint =
   | "add_trigger"
-  | "connect_survey"
+  | "complete_trigger"
   | "add_action"
-  | "complete_email"
+  | "complete_action"
   | "name_missing"
   | "not_executable";
 
@@ -26,7 +26,7 @@ export const getWorkflowReadinessHint = (
   if (validity.isReady) return null;
 
   if (!definition?.trigger) return "add_trigger";
-  if (!validity.hasBoundTriggerSurvey) return "connect_survey";
+  if (!validity.hasBoundTriggerSurvey) return "complete_trigger";
 
   const triggerId = definition.trigger.id;
   const hasTriggerEdge = definition.edges.some((edge) => edge.source === triggerId);
@@ -37,7 +37,7 @@ export const getWorkflowReadinessHint = (
       node.type === "action" &&
       (!node.config.to.trim() || !node.config.subject.trim() || !node.config.body.trim())
   );
-  if (hasIncompleteEmail) return "complete_email";
+  if (hasIncompleteEmail) return "complete_action";
 
   if (!validity.isNameValid) return "name_missing";
 

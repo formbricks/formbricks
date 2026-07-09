@@ -63,9 +63,9 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   // Inline literal t() calls so the translation-key scanner detects every key.
   const readinessHintLabels: Record<NonNullable<typeof readinessHint>, string> = {
     add_trigger: t("workspace.workflows.readiness_add_trigger"),
-    connect_survey: t("workspace.workflows.readiness_connect_survey"),
+    complete_trigger: t("workspace.workflows.readiness_complete_trigger"),
     add_action: t("workspace.workflows.readiness_add_action"),
-    complete_email: t("workspace.workflows.readiness_complete_email"),
+    complete_action: t("workspace.workflows.readiness_complete_action"),
     name_missing: t("workspace.workflows.readiness_name_missing"),
     not_executable: t("workspace.workflows.test_problems_title"),
   };

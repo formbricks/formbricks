@@ -52,9 +52,9 @@ describe("getWorkflowReadinessHint", () => {
     );
   });
 
-  test("an unbound trigger survey asks to connect one", () => {
+  test("an unbound trigger survey asks to complete the trigger", () => {
     expect(getWorkflowReadinessHint(buildDefinition(), unready({ hasBoundTriggerSurvey: false }))).toBe(
-      "connect_survey"
+      "complete_trigger"
     );
   });
 
@@ -65,11 +65,11 @@ describe("getWorkflowReadinessHint", () => {
     );
   });
 
-  test("an incomplete send_email asks to finish it", () => {
+  test("an incomplete send_email asks to complete the action", () => {
     const definition = buildDefinition();
     (definition.nodes[0] as { config: { subject: string } }).config.subject = " ";
     expect(getWorkflowReadinessHint(definition, unready({ isDefinitionExecutable: false }))).toBe(
-      "complete_email"
+      "complete_action"
     );
   });
 
