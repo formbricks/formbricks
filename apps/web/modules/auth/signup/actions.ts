@@ -21,8 +21,12 @@ import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { auth } from "@/modules/auth/lib/auth";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import {
+  markSignupDomainAllowed,
+  runWithSignupRequestContext,
+} from "@/modules/auth/lib/signup-request-context";
 import { updateUser } from "@/modules/auth/lib/user";
-import { deleteInvite, getInvite, getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
+import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -71,22 +75,6 @@ async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): 
   const isHuman = await verifyTurnstileToken(TURNSTILE_SECRET_KEY, turnstileToken);
   if (!isHuman) {
     throw new UnknownError("reCAPTCHA verification failed");
-  }
-}
-
-/**
- * Invite-exemption check for the personal-email sign-up block: resolves true only when `inviteToken`
- * is a valid, non-expired invite whose email matches the address being registered. Validated here,
- * before any user is created, rather than relying on the post-creation handleInviteAcceptance step.
- */
-async function hasValidMatchingInvite(email: string, inviteToken: string | undefined): Promise<boolean> {
-  if (!inviteToken) return false;
-  try {
-    const { inviteId, email: invitedEmail } = verifyInviteToken(inviteToken);
-    if (invitedEmail.toLowerCase() !== email.toLowerCase()) return false;
-    return await getIsValidInviteToken(inviteId);
-  } catch {
-    return false;
   }
 }
 
@@ -271,19 +259,26 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
     if (
-      await isSignupEmailDomainBlocked(parsedInput.email, () =>
-        hasValidMatchingInvite(parsedInput.email, parsedInput.inviteToken)
+      await isSignupEmailDomainBlocked(
+        parsedInput.email,
+        async () => (await resolveInviteMatch(parsedInput.inviteToken, parsedInput.email)) === "valid"
       )
     ) {
       throw new InvalidInputError(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
     }
 
-    const { user, userAlreadyExisted } = await signUpUserSafely(
-      parsedInput.email,
-      parsedInput.name,
-      parsedInput.password,
-      parsedInput.userLocale
-    );
+    // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
+    // sign-up that went through this action apart from a direct POST to Better Auth's native
+    // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
+    const { user, userAlreadyExisted } = await runWithSignupRequestContext(() => {
+      markSignupDomainAllowed();
+      return signUpUserSafely(
+        parsedInput.email,
+        parsedInput.name,
+        parsedInput.password,
+        parsedInput.userLocale
+      );
+    });
 
     if (!userAlreadyExisted && user) {
       await handlePostUserCreation(ctx, user, parsedInput.inviteToken);

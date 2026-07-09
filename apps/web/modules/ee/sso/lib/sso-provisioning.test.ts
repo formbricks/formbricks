@@ -3,12 +3,11 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
-import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { updateUser } from "@/modules/auth/lib/user";
-import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
+import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
@@ -23,12 +22,11 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
-vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ createBrevoCustomer: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ updateUser: vi.fn() }));
-vi.mock("@/modules/auth/signup/lib/invite", () => ({ getIsValidInviteToken: vi.fn() }));
+vi.mock("@/modules/auth/signup/lib/invite", () => ({ resolveInviteMatch: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getAccessControlPermission: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
@@ -127,41 +125,38 @@ describe("gateSsoProvisioning — rejects", () => {
     ).toEqual({ action: "reject", reason: "signin_without_invite_token" });
   });
 
-  test("invite token email mismatch is rejected (without checking validity)", async () => {
-    vi.mocked(verifyInviteToken).mockReturnValue({ email: "other@b.com", inviteId: "inv-1" } as never);
+  test("invite token email mismatch is rejected", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("email_mismatch");
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "https://app.test/?token=t" })).toEqual(
       { action: "reject", reason: "invite_email_mismatch" }
     );
-    expect(getIsValidInviteToken).not.toHaveBeenCalled();
   });
 
   test("invalid/expired invite token is rejected", async () => {
-    vi.mocked(verifyInviteToken).mockReturnValue({ email: "a@b.com", inviteId: "inv-1" } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(false);
+    vi.mocked(resolveInviteMatch).mockResolvedValue("invalid_or_expired");
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "https://app.test/?token=t" })).toEqual(
       { action: "reject", reason: "invalid_invite_token" }
     );
   });
 
-  test("malformed callback URL is rejected", async () => {
+  test("a callback URL without a token is rejected", async () => {
+    // "not-a-url" resolves against WEBAPP_URL to a tokenless URL → resolveInviteMatch sees no token.
+    vi.mocked(resolveInviteMatch).mockResolvedValue("missing");
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "not-a-url" })).toEqual({
       action: "reject",
       reason: "invite_token_validation_error",
     });
   });
 
-  test("a throwing invite verification is rejected", async () => {
-    vi.mocked(verifyInviteToken).mockImplementation(() => {
-      throw new Error("bad token");
-    });
+  test("an unverifiable invite token is rejected", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("verification_error");
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "https://app.test/?token=t" })).toEqual(
       { action: "reject", reason: "invite_token_validation_error" }
     );
   });
 
   test("no resolvable organization is rejected", async () => {
-    vi.mocked(verifyInviteToken).mockReturnValue({ email: "a@b.com", inviteId: "inv-1" } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
     vi.mocked(getFirstOrganization).mockResolvedValue(null);
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "https://app.test/?token=t" })).toEqual(
       { action: "reject", reason: "no_organization_found" }
@@ -195,8 +190,7 @@ describe("gateSsoProvisioning — provisions", () => {
   });
 
   test("a valid invite provisions into the first org with invite source", async () => {
-    vi.mocked(verifyInviteToken).mockReturnValue({ email: "a@b.com", inviteId: "inv-1" } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
     const result = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "https://app.test/?token=t" });
     expect(getFirstOrganization).toHaveBeenCalled();
     expect(result).toEqual({
@@ -231,8 +225,7 @@ describe("gateSsoProvisioning — personal email domain block (Cloud)", () => {
 
   test("exempts a personal-domain sign-up backed by a valid matching invite", async () => {
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
-    vi.mocked(verifyInviteToken).mockReturnValue({ email: blockedEmail, inviteId: "inv-1" } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
     expect(
       await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "https://app.test/?token=t" })
     ).toEqual({
@@ -246,8 +239,7 @@ describe("gateSsoProvisioning — personal email domain block (Cloud)", () => {
   test("blocks a personal-domain invite when SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled", async () => {
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = true;
-    vi.mocked(verifyInviteToken).mockReturnValue({ email: blockedEmail, inviteId: "inv-1" } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    // Kill-switch on: the invite exemption isn't consulted, so resolveInviteMatch is irrelevant.
     expect(
       await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "https://app.test/?token=t" })
     ).toEqual({ action: "reject", reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE });

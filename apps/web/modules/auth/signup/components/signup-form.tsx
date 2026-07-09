@@ -84,16 +84,16 @@ export const SignupForm = ({
   const turnstile = useTurnstile();
 
   // An SSO sign-up rejected for a personal email domain redirects back here with ?error=<code>.
-  // Match the known code exactly (never echo the raw param) and show it at most once — the ref guards
-  // against a re-toast on locale change and React strict mode's double effect invocation in dev.
+  // Match the known code exactly (never echo the raw param). Track the last error value we toasted
+  // (rather than a permanent boolean) so strict-mode's double effect invocation and locale re-renders
+  // are deduped, but a fresh, distinct rejection value would still notify.
   const oauthError = searchParams?.get("error");
-  const hasShownDomainErrorToast = useRef(false);
+  const lastToastedOauthError = useRef<string | null>(null);
   useEffect(() => {
-    if (hasShownDomainErrorToast.current) return;
-    if (oauthError === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
-      hasShownDomainErrorToast.current = true;
-      toast.error(t("auth.signup.company_email_required"));
-    }
+    if (oauthError !== SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) return;
+    if (lastToastedOauthError.current === oauthError) return;
+    lastToastedOauthError.current = oauthError;
+    toast.error(t("auth.signup.company_email_required"));
   }, [oauthError, t]);
 
   const returnToUrl = useMemo(() => {

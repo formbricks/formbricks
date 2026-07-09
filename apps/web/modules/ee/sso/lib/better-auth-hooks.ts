@@ -7,6 +7,8 @@ import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors
 import { WEBAPP_URL } from "@/lib/constants";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
+import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { normalizeSsoProvider } from "./provider-normalization";
@@ -71,7 +73,16 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
       before: async (user, context) => {
         const provider = getSsoProviderFromContext(context);
         const identityProvider = provider ? normalizeSsoProvider(provider) : null;
-        if (!identityProvider) return; // not an SSO sign-up (e.g. email/password) → keep defaults
+        if (!identityProvider) {
+          // Credential sign-up. createUserAction runs the full personal-email policy (Cloud gate +
+          // invite exemption) and marks the request scope before calling signUpEmail. If that mark is
+          // absent, this is a direct POST to Better Auth's native /sign-up/email — which bypasses the
+          // action — so re-enforce the domain block here (no invite is carried on that raw path).
+          if (!isSignupDomainAllowed() && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
+            return false;
+          }
+          return; // otherwise keep credential-signup defaults
+        }
 
         // Provisioning gate — orphan-safe: a reject returns `false`, rolling back the user+account
         // insert inside Better Auth's transaction (a post-commit after-hook could not reject safely).

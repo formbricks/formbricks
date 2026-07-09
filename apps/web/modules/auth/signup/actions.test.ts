@@ -3,7 +3,7 @@ import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors
 import { verifyInviteToken } from "@/lib/jwt";
 import { getUserByEmail } from "@/lib/user/service";
 import { auth } from "@/modules/auth/lib/auth";
-import { getInvite, getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
+import { getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
@@ -31,7 +31,7 @@ vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/invite", () => ({
   getInvite: vi.fn(),
   deleteInvite: vi.fn(),
-  getIsValidInviteToken: vi.fn(),
+  resolveInviteMatch: vi.fn(),
 }));
 vi.mock("@/modules/auth/signup/lib/team", () => ({ createTeamMembership: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/utils", () => ({ verifyTurnstileToken: vi.fn() }));
@@ -181,11 +181,12 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
   });
 
   test("allows a personal-domain signup backed by a valid matching invite", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid"); // domain-block exemption
+    // handleInviteAcceptance (post-signup) still verifies + loads the invite.
     vi.mocked(verifyInviteToken).mockReturnValue({
       inviteId: "invite-1",
       email: "spammer@gmail.com",
     } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
     vi.mocked(getInvite).mockResolvedValue({
       id: "invite-1",
       organizationId: "org-1",
@@ -204,11 +205,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
   });
 
   test("blocks when the invite email does not match the signup email", async () => {
-    vi.mocked(verifyInviteToken).mockReturnValue({
-      inviteId: "invite-1",
-      email: "someone-else@acme-corp.com",
-    } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    vi.mocked(resolveInviteMatch).mockResolvedValue("email_mismatch");
 
     await expect(
       createUserAction({
@@ -221,11 +218,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
 
   test("blocks a personal-domain invite when the kill-switch is enabled", async () => {
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = true;
-    vi.mocked(verifyInviteToken).mockReturnValue({
-      inviteId: "invite-1",
-      email: "spammer@gmail.com",
-    } as never);
-    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+    // Kill-switch on: the invite exemption isn't consulted at all, so resolveInviteMatch is irrelevant.
 
     await expect(
       createUserAction({

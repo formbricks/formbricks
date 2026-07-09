@@ -33,7 +33,10 @@ export const isBlockedEmailDomain = (email: string): boolean => {
   const atIndex = normalized.lastIndexOf("@");
   // Reject empty local part ("@gmail.com"), missing domain ("test@") and no-`@` inputs.
   if (atIndex <= 0 || atIndex === normalized.length - 1) return false;
-  return blockedEmailDomains.has(normalized.slice(atIndex + 1));
+  // Strip any trailing FQDN dot ("gmail.com." → "gmail.com") so it can't slip past the Set. The
+  // credentials path is zod-validated upstream, but the SSO email reaching the gate is not.
+  const domain = normalized.slice(atIndex + 1).replace(/\.+$/, "");
+  return blockedEmailDomains.has(domain);
 };
 
 /**

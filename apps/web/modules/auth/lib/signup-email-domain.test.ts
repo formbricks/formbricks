@@ -76,8 +76,16 @@ describe("isBlockedEmailDomain", () => {
   });
 
   test("matches on the domain after the last @", () => {
-    // Only an exact domain match counts; a company subdomain is not blocked.
+    // Only an exact domain match counts; a subdomain of a blocked domain is intentionally NOT blocked.
     expect(isBlockedEmailDomain("user@mail.acme-corp.com")).toBe(false);
+    expect(isBlockedEmailDomain("user@sub.gmail.com")).toBe(false);
+  });
+
+  test("blocks plus-addressed and trailing-dot variants of a blocked domain", () => {
+    // Plus-addressing is a common evasion attempt; the domain is unchanged so it's still blocked.
+    expect(isBlockedEmailDomain("user+tag@gmail.com")).toBe(true);
+    // A trailing FQDN dot is stripped so it can't slip past the Set (SSO emails aren't zod-validated).
+    expect(isBlockedEmailDomain("user@gmail.com.")).toBe(true);
   });
 
   test("treats input with no usable domain as not-blocked", () => {
