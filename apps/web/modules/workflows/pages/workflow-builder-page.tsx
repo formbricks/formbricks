@@ -62,10 +62,7 @@ export const WorkflowBuilderPage = ({
             when a config form runs long). No stretch alignment ties one to the other. */}
         <section className="flex items-start gap-4">
           <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
-          <WorkflowInspectorPanel
-            canEditMetadata={builder.canEditMetadata}
-            isEditingNode={builder.canEditDefinition}
-          />
+          <WorkflowInspectorPanel isEditingNode={builder.canEditDefinition} />
         </section>
       </WorkflowEmailAuthoringProvider>
     </div>

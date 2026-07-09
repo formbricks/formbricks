@@ -3912,7 +3912,6 @@ checksums:
     workspace/workflows/send_email_description: a05ecd60166cdb3e3667e674afae556b
     workspace/workflows/send_email_summary: 23c31e7b1539ee670994c0e70cf7fdfe
     workspace/workflows/send_email_unconfigured: 306f5a6768ec08c316c3234ce11f8b32
-    workspace/workflows/settings_title: 8df6777277469c1fd88cc18dde2f1cc3
     workspace/workflows/test: 82a46f197779af4dde92e7e5f9336ccf
     workspace/workflows/test_failed: 1b943f34c72e29e2698969a5c48efb65
     workspace/workflows/test_problem_ending_card_not_found: 2a288324d1a1c0c96dfb24ec7df1111b
@@ -3939,9 +3938,6 @@ checksums:
     workspace/workflows/unarchive_failed: 16568ba93941e8e71f9b4cc997d5eaf2
     workspace/workflows/unarchive_success: b1ae787ba6e1d4e9e8631ad35d73e5ee
     workspace/workflows/validation_failed: fbba0e27eca222e81a86d3036919d11a
-    workspace/workflows/workflow_description_label: e17686a22ffad04cc7bb70524ed4478b
-    workspace/workflows/workflow_description_placeholder: c6bb04358c55eafe85e9b29e839ce417
-    workspace/workflows/workflow_name_label: 9368b5a047572b6051f334af5aa76819
     workspace/workflows/zoom_in: 20244d74cc44e8606cbf4bb8b4e16e4b
     workspace/workflows/zoom_out: b723e467be28d8659338502c470821fd
     workspace/xm-templates/ces: e2ea309b2f7f13257967b966c2fda1e9

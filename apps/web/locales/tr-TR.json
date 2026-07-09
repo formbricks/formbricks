@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "{to} adresine e-posta gönder.",
       "send_email_unconfigured": "E-posta alıcısını yapılandır.",
-      "settings_title": "Ayarlar",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "İş akışı arşivden çıkarılamadı. Lütfen tekrar deneyin.",
       "unarchive_success": "İş akışı arşivden çıkarıldı.",
       "validation_failed": "İş akışı doğrulaması başarısız oldu.",
-      "workflow_description_label": "Açıklama",
-      "workflow_description_placeholder": "örn. Bir yanıt tamamlandığında ekibe bildirim gönder",
-      "workflow_name_label": "Ad",
       "zoom_in": "Yakınlaştır",
       "zoom_out": "Uzaklaştır"
     },

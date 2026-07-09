@@ -20,7 +20,6 @@ import {
   isWorkflowTransitioningAtom,
   markWorkflowDraftSavedAtom,
   openWorkflowNodeConfigModalAtom,
-  openWorkflowSettingsPanelAtom,
   selectedWorkflowNodeIdAtom,
   setSelectedWorkflowNodeIdAtom,
   setWorkflowAtom,
@@ -126,21 +125,6 @@ describe("inspector + node-config modal", () => {
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(true);
 
     store.set(toggleWorkflowInspectorAtom);
-    expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
-  });
-
-  test("openWorkflowSettingsPanelAtom expands the inspector and leaves the node-config view", () => {
-    const store = createStore();
-    store.set(openWorkflowNodeConfigModalAtom, "node-1");
-    store.set(toggleWorkflowInspectorAtom); // collapse on top of the node-config view
-    expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(true);
-
-    store.set(openWorkflowSettingsPanelAtom);
-    expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(false);
-    expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
-
-    // Idempotent: opening again keeps Settings visible instead of collapsing.
-    store.set(openWorkflowSettingsPanelAtom);
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
   });
 

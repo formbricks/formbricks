@@ -334,19 +334,6 @@ export const toggleWorkflowInspectorAtom = atom(null, (get, set) => {
   );
 });
 
-// The canvas cog opens the workflow Settings view: it expands a collapsed inspector and switches
-// an open node-config view back to Settings. It never collapses — that stays with the inspector
-// toggle button next to it.
-export const openWorkflowSettingsPanelAtom = atom(null, (get, set) => {
-  set(
-    workflowEditorAtom,
-    produce(get(workflowEditorAtom), (draft) => {
-      draft.isInspectorCollapsed = false;
-      draft.isNodeConfigModalOpen = false;
-    })
-  );
-});
-
 // Drop a node + its incident edges; bridge each incoming edge to each outgoing one so the
 // graph stays connected (preserving the incoming sourceHandle for if_else branches). Refuses
 // to delete the trigger.

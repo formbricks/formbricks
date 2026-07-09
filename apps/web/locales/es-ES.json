@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "Enviar un correo a {to}.",
       "send_email_unconfigured": "Configura el destinatario del correo.",
-      "settings_title": "Configuración",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "No se pudo desarchivar el flujo de trabajo. Por favor, inténtalo de nuevo.",
       "unarchive_success": "Flujo de trabajo desarchivado.",
       "validation_failed": "Falló la validación del flujo de trabajo.",
-      "workflow_description_label": "Descripción",
-      "workflow_description_placeholder": "p. ej. Notificar al equipo cuando se complete una respuesta",
-      "workflow_name_label": "Nombre",
       "zoom_in": "Acercar",
       "zoom_out": "Alejar"
     },

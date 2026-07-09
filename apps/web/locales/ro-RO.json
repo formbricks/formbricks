@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "Trimite un email către {to}.",
       "send_email_unconfigured": "Configurează destinatarul emailului.",
-      "settings_title": "Setări",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "Nu s-a putut dezarhiva workflow-ul. Te rugăm să încerci din nou.",
       "unarchive_success": "Workflow dezarhivat.",
       "validation_failed": "Validarea fluxului de lucru a eșuat.",
-      "workflow_description_label": "Descriere",
-      "workflow_description_placeholder": "ex. Notifică echipa când un răspuns este finalizat",
-      "workflow_name_label": "Nume",
       "zoom_in": "Mărește",
       "zoom_out": "Micșorează"
     },

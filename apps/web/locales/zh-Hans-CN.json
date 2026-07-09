@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "向 {to} 发送邮件。",
       "send_email_unconfigured": "配置邮件收件人。",
-      "settings_title": "设置",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "取消归档工作流失败。请重试。",
       "unarchive_success": "工作流已取消归档。",
       "validation_failed": "工作流验证失败。",
-      "workflow_description_label": "描述",
-      "workflow_description_placeholder": "例如：响应完成时通知团队",
-      "workflow_name_label": "名称",
       "zoom_in": "放大",
       "zoom_out": "缩小"
     },

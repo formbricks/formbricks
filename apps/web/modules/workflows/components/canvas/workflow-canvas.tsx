@@ -14,7 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon, SettingsIcon } from "lucide-react";
+import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -37,12 +37,12 @@ import {
 import {
   type TWorkflowNodeData,
   addWorkflowTriggerAtom,
+  closeWorkflowNodeConfigModalAtom,
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
-  openWorkflowSettingsPanelAtom,
   setWorkflowDefinitionAtom,
   setWorkflowFlowNodesAtom,
   toggleWorkflowInspectorAtom,
@@ -86,10 +86,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const setLocked = useSetAtom(isCanvasLockedAtom);
   const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
-  const openSettingsPanel = useSetAtom(openWorkflowSettingsPanelAtom);
   const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
-  // The Settings view is the visible inspector content (as opposed to collapsed or node config).
-  const isSettingsOpen = !isInspectorCollapsed && !isNodeConfigOpen;
+  const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
@@ -218,29 +216,23 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
           {t("workspace.workflows.test")}
           <PlayIcon className="size-4" />
         </Button>
-        {/* Cog jumps to the workflow Settings view; the panel button only collapses/expands. */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-white"
-          aria-label={t("workspace.workflows.settings_title")}
-          disabled={isSettingsOpen}
-          onClick={openSettingsPanel}>
-          <SettingsIcon />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-white"
-          aria-label={
-            isInspectorCollapsed
-              ? t("workspace.workflows.expand_inspector")
-              : t("workspace.workflows.collapse_inspector")
-          }
-          aria-pressed={!isInspectorCollapsed}
-          onClick={toggleInspector}>
-          {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
-        </Button>
+        {/* The inspector only ever shows a node's config now, so the collapse toggle is only
+            offered while one is open. */}
+        {isNodeConfigOpen ? (
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-white"
+            aria-label={
+              isInspectorCollapsed
+                ? t("workspace.workflows.expand_inspector")
+                : t("workspace.workflows.collapse_inspector")
+            }
+            aria-pressed={!isInspectorCollapsed}
+            onClick={toggleInspector}>
+            {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
+          </Button>
+        ) : null}
       </div>
       <ReactFlow
         nodes={flowNodes}
@@ -252,6 +244,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         onNodeClick={(_event, node) => {
           if (!isLocked) openNodeConfigModal(node.id);
         }}
+        // Clicking empty canvas deselects (ReactFlow) and dismisses the node inspector — with
+        // Settings gone this is the natural way out of a node's config view.
+        onPaneClick={() => closeNodeConfig()}
         // Mode-dependent cursor + hit-testing rules live in workflow-canvas.css, keyed off
         // these classes (Tailwind can't express `.react-flow__node` — underscores in arbitrary
         // selectors turn into spaces).

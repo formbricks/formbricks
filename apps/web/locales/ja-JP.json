@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "{to}にメールを送信します。",
       "send_email_unconfigured": "メールの送信先を設定してください。",
-      "settings_title": "設定",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "ワークフローのアーカイブ解除に失敗しました。もう一度お試しください。",
       "unarchive_success": "ワークフローのアーカイブを解除しました。",
       "validation_failed": "ワークフローの検証に失敗しました。",
-      "workflow_description_label": "説明",
-      "workflow_description_placeholder": "例：回答が完了したらチームに通知する",
-      "workflow_name_label": "名前",
       "zoom_in": "拡大",
       "zoom_out": "縮小"
     },

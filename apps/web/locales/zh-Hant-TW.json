@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "傳送電子郵件給 {to}。",
       "send_email_unconfigured": "設定電子郵件收件人。",
-      "settings_title": "設定",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "無法取消封存工作流程,請再試一次。",
       "unarchive_success": "工作流程已取消封存。",
       "validation_failed": "工作流程驗證失敗。",
-      "workflow_description_label": "描述",
-      "workflow_description_placeholder": "例如：回應完成時通知團隊",
-      "workflow_name_label": "名稱",
       "zoom_in": "放大",
       "zoom_out": "縮小"
     },

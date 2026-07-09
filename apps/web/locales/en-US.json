@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "Send an email to {to}.",
       "send_email_unconfigured": "Configure the email recipient.",
-      "settings_title": "Settings",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "Failed to unarchive the workflow. Please try again.",
       "unarchive_success": "Workflow unarchived.",
       "validation_failed": "Workflow validation failed.",
-      "workflow_description_label": "Description",
-      "workflow_description_placeholder": "e.g. Notify the team when a response is completed",
-      "workflow_name_label": "Name",
       "zoom_in": "Zoom in",
       "zoom_out": "Zoom out"
     },

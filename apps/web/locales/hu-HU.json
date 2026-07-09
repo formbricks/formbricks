@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "E-mail küldése a következő címre: {to}.",
       "send_email_unconfigured": "Konfigurálja az e-mail címzettet.",
-      "settings_title": "Beállítások",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "A munkafolyamat archiválásának visszavonása sikertelen volt. Kérjük, próbálja meg újra.",
       "unarchive_success": "A munkafolyamat archiválása visszavonva.",
       "validation_failed": "A munkafolyamat érvényesítése sikertelen volt.",
-      "workflow_description_label": "Leírás",
-      "workflow_description_placeholder": "pl. Értesítse a csapatot, amikor egy válasz elkészült",
-      "workflow_name_label": "Név",
       "zoom_in": "Nagyítás",
       "zoom_out": "Kicsinyítés"
     },

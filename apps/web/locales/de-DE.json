@@ -4074,7 +4074,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "Sende eine E-Mail an {to}.",
       "send_email_unconfigured": "Konfiguriere den E-Mail-Empfänger.",
-      "settings_title": "Einstellungen",
       "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
@@ -4101,9 +4100,6 @@
       "unarchive_failed": "Workflow konnte nicht wiederhergestellt werden. Bitte versuche es erneut.",
       "unarchive_success": "Workflow wiederhergestellt.",
       "validation_failed": "Workflow-Validierung fehlgeschlagen.",
-      "workflow_description_label": "Beschreibung",
-      "workflow_description_placeholder": "z. B. Benachrichtige das Team, wenn eine Antwort abgeschlossen ist",
-      "workflow_name_label": "Name",
       "zoom_in": "Vergrößern",
       "zoom_out": "Verkleinern"
     },
