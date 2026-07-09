@@ -1,3 +1,6 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
 export const RunsTableSkeleton = () => (
@@ -46,37 +49,47 @@ export const WorkflowsListBodyLoading = () => (
 
 export const WorkspaceWorkflowRunsBodyLoading = () => <RunsTableSkeleton />;
 
-export const WorkflowBuilderBodyLoading = () => (
-  <div className="flex flex-col gap-4">
-    <div className="flex items-start gap-4">
-      {/* Mirrors the canvas' fixed height in workflow-canvas.tsx so hydration doesn't shift. */}
-      <div className="relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <Skeleton className="h-9 w-20 rounded-md" />
-          <Skeleton className="size-9 rounded-md" />
-        </div>
-        <div className="absolute inset-x-0 bottom-4 flex justify-center gap-2">
-          <Skeleton className="size-10 rounded-md" />
-          <Skeleton className="size-10 rounded-md" />
-          <Skeleton className="size-10 rounded-md" />
-          <Skeleton className="size-10 rounded-md" />
-        </div>
-      </div>
-      <aside className="flex w-[360px] shrink-0 flex-col gap-3">
-        {[0, 1].map((row) => (
-          <div
-            key={row}
-            className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-4 w-28 rounded-md" />
-              <Skeleton className="h-3 w-20 rounded-md" />
-            </div>
-            <Skeleton className="size-4 rounded-md" />
+export const WorkflowBuilderBodyLoading = () => {
+  // The inspector column only exists while a node's config is open (deep-linked via ?node=), so
+  // the skeleton follows the same rule — otherwise the canvas visibly narrows/widens on load.
+  const searchParams = useSearchParams();
+  const showInspector = searchParams.has("node");
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start gap-4">
+        {/* Mirrors the canvas' fixed height in workflow-canvas.tsx so hydration doesn't shift. */}
+        <div className="relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <Skeleton className="h-9 w-20 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
           </div>
-        ))}
-      </aside>
+          <div className="absolute inset-x-0 bottom-4 flex justify-center gap-2">
+            <Skeleton className="size-10 rounded-md" />
+            <Skeleton className="size-10 rounded-md" />
+            <Skeleton className="size-10 rounded-md" />
+            <Skeleton className="size-10 rounded-md" />
+          </div>
+        </div>
+        {showInspector ? (
+          <aside className="w-[360px] shrink-0 rounded-lg border border-slate-200 bg-white">
+            {/* Mirrors the node config panel: title bar + a few form fields. */}
+            <div className="border-b border-slate-200 px-4 py-3">
+              <Skeleton className="h-4 w-32 rounded-md" />
+            </div>
+            <div className="flex flex-col gap-4 px-3 py-4">
+              {[0, 1, 2].map((row) => (
+                <div key={row} className="flex flex-col gap-1.5">
+                  <Skeleton className="h-3 w-20 rounded-md" />
+                  <Skeleton className="h-9 w-full rounded-md" />
+                </div>
+              ))}
+            </div>
+          </aside>
+        ) : null}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const WorkflowRunsBodyLoading = () => <RunsTableSkeleton />;
