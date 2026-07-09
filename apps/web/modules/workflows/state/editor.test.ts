@@ -8,14 +8,17 @@ import {
   canMutateCanvasAtom,
   closeWorkflowNodeConfigModalAtom,
   deleteWorkflowNodeAtom,
+  hasBoundTriggerSurveyAtom,
   hydrateWorkflowEditorAtom,
   insertSendEmailAfterEdgeAtom,
   isCanvasLockedAtom,
+  isWorkflowDirtyAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
   isWorkflowSavingAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   isWorkflowTransitioningAtom,
+  markWorkflowDraftSavedAtom,
   openWorkflowNodeConfigModalAtom,
   openWorkflowSettingsPanelAtom,
   selectedWorkflowNodeIdAtom,
@@ -34,6 +37,7 @@ import {
   workflowDescriptionAtom,
   workflowFlowNodesAtom,
   workflowNameAtom,
+  workflowValidityAtom,
 } from "./editor";
 
 const definition = {
@@ -426,5 +430,163 @@ describe("deleteWorkflowNodeAtom bridge without sourceHandle", () => {
     const bridge = next.edges.find((e) => e.source === "n1" && e.target === "n3");
     expect(bridge).toBeDefined();
     expect(bridge?.sourceHandle).toBeUndefined();
+  });
+});
+
+describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
+  test("is clean right after hydrate and dirty after an edit", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+
+    expect(store.get(isWorkflowDirtyAtom)).toBe(false);
+
+    store.set(setWorkflowNameAtom, "Renamed");
+    expect(store.get(isWorkflowDirtyAtom)).toBe(true);
+  });
+
+  test("trailing whitespace the save flow trims anyway does not count as dirty", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+
+    store.set(setWorkflowNameAtom, "Hello ");
+    expect(store.get(isWorkflowDirtyAtom)).toBe(false);
+  });
+
+  test("markWorkflowDraftSavedAtom records the sent draft, so mid-flight edits stay dirty", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(setWorkflowNameAtom, "Renamed");
+    // Simulates an edit landing while the PATCH for "Renamed" was in flight.
+    store.set(setWorkflowDescriptionAtom, "Edited during save");
+
+    store.set(markWorkflowDraftSavedAtom, {
+      workflowName: "Renamed",
+      workflowDescription: "Desc",
+      definition,
+    });
+
+    expect(store.get(isWorkflowDirtyAtom)).toBe(true);
+
+    store.set(markWorkflowDraftSavedAtom, {
+      workflowName: "Renamed",
+      workflowDescription: "Edited during save",
+      definition,
+    });
+    expect(store.get(isWorkflowDirtyAtom)).toBe(false);
+  });
+
+  test("definition edits count as dirty", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+
+    store.set(setWorkflowDefinitionAtom, (current) =>
+      current ? { ...current, edges: [...current.edges] } : current
+    );
+    // Structurally identical definition stays clean (JSON comparison).
+    expect(store.get(isWorkflowDirtyAtom)).toBe(false);
+
+    store.set(setWorkflowDefinitionAtom, (current) =>
+      current
+        ? { ...current, edges: [{ id: "new-edge", source: "trigger-1", target: "trigger-1" }] }
+        : current
+    );
+    expect(store.get(isWorkflowDirtyAtom)).toBe(true);
+  });
+});
+
+describe("workflowValidityAtom", () => {
+  const executableDefinition = {
+    schemaVersion: 1,
+    trigger: {
+      id: "trigger-1",
+      type: "trigger",
+      triggerType: "response.completed",
+      config: { surveyId: "cm9zr4mps000008l8btfy1vtz", endingCardIds: [] },
+    },
+    nodes: [
+      {
+        id: "email-1",
+        type: "action",
+        actionType: "send_email",
+        config: {
+          to: "jane@example.com",
+          from: "noreply@example.com",
+          replyTo: [],
+          subject: "Thanks",
+          body: "Thanks for your response.",
+          attachResponseData: false,
+        },
+      },
+    ],
+    edges: [{ id: "e1", source: "trigger-1", target: "email-1" }],
+    entryNodeId: "trigger-1",
+  } as unknown as TWorkflowDefinition;
+
+  const executableWorkflow = {
+    ...workflow,
+    definition: executableDefinition,
+  } as unknown as TWorkflowResource;
+
+  test("is ready when the name is set, the definition is executable, and the survey resolves", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+
+    expect(store.get(workflowValidityAtom)).toEqual({
+      isNameValid: true,
+      isDefinitionExecutable: true,
+      hasBoundTriggerSurvey: true,
+      isReady: true,
+    });
+  });
+
+  test("an empty name makes the workflow not ready", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+    store.set(setWorkflowNameAtom, "   ");
+
+    const validity = store.get(workflowValidityAtom);
+    expect(validity.isNameValid).toBe(false);
+    expect(validity.isReady).toBe(false);
+  });
+
+  test("an incomplete send_email node makes the definition not executable", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+    store.set(setWorkflowDefinitionAtom, (current) =>
+      current
+        ? {
+            ...current,
+            nodes: current.nodes.map((node) =>
+              node.type === "action" ? { ...node, config: { ...node.config, to: "" } } : node
+            ),
+          }
+        : current
+    );
+
+    const validity = store.get(workflowValidityAtom);
+    expect(validity.isDefinitionExecutable).toBe(false);
+    expect(validity.isReady).toBe(false);
+  });
+
+  test("an unresolved trigger survey makes the workflow not ready", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+    store.set(hasBoundTriggerSurveyAtom, false);
+
+    const validity = store.get(workflowValidityAtom);
+    expect(validity.isDefinitionExecutable).toBe(true);
+    expect(validity.hasBoundTriggerSurvey).toBe(false);
+    expect(validity.isReady).toBe(false);
+  });
+
+  test("a trigger-less draft is not executable", () => {
+    const store = createStore();
+    const triggerless = {
+      ...workflow,
+      definition: { ...executableDefinition, trigger: null, nodes: [], edges: [], entryNodeId: null },
+    } as unknown as TWorkflowResource;
+    store.set(hydrateWorkflowEditorAtom, { workflow: triggerless, flowNodes: [] });
+
+    expect(store.get(workflowValidityAtom).isDefinitionExecutable).toBe(false);
   });
 });

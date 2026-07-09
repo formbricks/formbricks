@@ -9,6 +9,7 @@ import {
   type TWorkflowTriggerType,
   WORKFLOW_ACTIONS,
   WORKFLOW_TRIGGERS,
+  ZWorkflowExecutableDefinition,
 } from "@formbricks/workflows";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
@@ -33,11 +34,23 @@ export type TWorkflowNodeData = {
   issue: TWorkflowNodeIssue | null;
 };
 
+/**
+ * The editable draft fields exactly as last persisted (or hydrated). Compared against the live
+ * draft to derive dirtiness; kept as a client-side snapshot of what was SENT (not the server
+ * response) so server-side normalization can never make the editor look permanently dirty.
+ */
+export type TWorkflowSavedDraft = {
+  workflowName: string;
+  workflowDescription: string;
+  definition: TWorkflowDefinition | null;
+};
+
 type TWorkflowEditorState = {
   workflow: TWorkflowResource | null;
   workflowName: string;
   workflowDescription: string;
   definition: TWorkflowDefinition | null;
+  lastSavedDraft: TWorkflowSavedDraft | null;
   flowNodes: Array<Node<TWorkflowNodeData>>;
   selectedNodeId: string | null;
   isInspectorCollapsed: boolean;
@@ -52,6 +65,7 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   workflowName: "",
   workflowDescription: "",
   definition: null,
+  lastSavedDraft: null,
   flowNodes: [],
   selectedNodeId: null,
   isInspectorCollapsed: false,
@@ -74,6 +88,71 @@ export const isWorkflowSnapToCanvasEnabledAtom = atom((get) => get(workflowEdito
 export const isWorkflowNodeConfigModalOpenAtom = atom((get) => get(workflowEditorAtom).isNodeConfigModalOpen);
 export const isWorkflowSavingAtom = atom((get) => get(workflowEditorAtom).isSaving);
 export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom).isTransitioning);
+
+// Whether the trigger's surveyId resolves to a real survey. Owned by the builder page, which is
+// the only place holding the server-resolved email authoring context; defaults to true so nothing
+// flashes as broken before the page syncs it.
+export const hasBoundTriggerSurveyAtom = atom<boolean>(true);
+
+const toSavedDraft = (state: TWorkflowEditorState): TWorkflowSavedDraft => ({
+  workflowName: state.workflowName.trim(),
+  workflowDescription: state.workflowDescription.trim(),
+  definition: state.definition,
+});
+
+// Records the just-persisted draft. The save flow passes the exact values it sent (captured
+// before the request) so edits landing while the PATCH was in flight still read as dirty.
+export const markWorkflowDraftSavedAtom = atom(null, (get, set, savedDraft: TWorkflowSavedDraft) => {
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      draft.lastSavedDraft = savedDraft;
+    })
+  );
+});
+
+// True while the editable draft (name, description, definition) differs from what was last
+// persisted. Trimmed comparison so trailing whitespace the save flow strips anyway never counts.
+export const isWorkflowDirtyAtom = atom((get) => {
+  const state = get(workflowEditorAtom);
+  if (!state.workflow || !state.lastSavedDraft) return false;
+  const current = toSavedDraft(state);
+  return (
+    current.workflowName !== state.lastSavedDraft.workflowName ||
+    current.workflowDescription !== state.lastSavedDraft.workflowDescription ||
+    JSON.stringify(current.definition) !== JSON.stringify(state.lastSavedDraft.definition)
+  );
+});
+
+export type TWorkflowValidity = {
+  /** The workflow has a non-empty name (required by the PATCH contract). */
+  isNameValid: boolean;
+  /** The definition passes the same executable-subset schema enable/test enforce server-side. */
+  isDefinitionExecutable: boolean;
+  /** The trigger's surveyId resolves to a real survey (see hasBoundTriggerSurveyAtom). */
+  hasBoundTriggerSurvey: boolean;
+  /** Everything above holds; the workflow would pass the server's enable/test pre-flight. */
+  isReady: boolean;
+};
+
+// Live whole-workflow validity, recomputed on every draft edit. Mirrors the server's enable/test
+// checks (ZWorkflowExecutableDefinition plus the survey binding) so the editor can flag an
+// unready workflow immediately instead of after a round-trip.
+export const workflowValidityAtom = atom<TWorkflowValidity>((get) => {
+  const state = get(workflowEditorAtom);
+  const hasBoundTriggerSurvey = get(hasBoundTriggerSurveyAtom);
+  const isNameValid = state.workflowName.trim().length > 0;
+  const isDefinitionExecutable = state.definition
+    ? ZWorkflowExecutableDefinition.safeParse(state.definition).success
+    : false;
+
+  return {
+    isNameValid,
+    isDefinitionExecutable,
+    hasBoundTriggerSurvey,
+    isReady: isNameValid && isDefinitionExecutable && hasBoundTriggerSurvey,
+  };
+});
 
 // Locked = pan mode (pan/browse; nodes are inert), unlocked = pointer mode (select/inspect,
 // edit when status/permissions allow). Pointer is the default tool and the toggle is purely
@@ -126,6 +205,9 @@ export const hydrateWorkflowEditorAtom = atom(
       flowNodes: Array<Node<TWorkflowNodeData>>;
     }
   ) => {
+    // Optimistic default until the builder page re-syncs it from the authoring context;
+    // without the reset, a previous workflow's "unbound" state would flash on the next one.
+    set(hasBoundTriggerSurveyAtom, true);
     set(
       workflowEditorAtom,
       produce(initialWorkflowEditorState, (draft) => {
@@ -133,6 +215,12 @@ export const hydrateWorkflowEditorAtom = atom(
         draft.workflowName = workflow.name;
         draft.workflowDescription = workflow.description ?? "";
         draft.definition = workflow.definition;
+        // Freshly hydrated means nothing is dirty yet; the saved snapshot is the loaded state.
+        draft.lastSavedDraft = {
+          workflowName: workflow.name.trim(),
+          workflowDescription: (workflow.description ?? "").trim(),
+          definition: workflow.definition,
+        };
         draft.flowNodes = flowNodes;
         draft.selectedNodeId = workflow.definition.trigger?.id ?? null;
       })

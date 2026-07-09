@@ -1,11 +1,15 @@
 "use client";
 
+import { useSetAtom } from "jotai";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/workflows/components/workflow-email-authoring-context";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
+import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
+import { hasBoundTriggerSurveyAtom } from "@/modules/workflows/state/editor";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/workflows/types/email-authoring-context";
 
 interface WorkflowBuilderPageProps {
@@ -23,6 +27,14 @@ export const WorkflowBuilderPage = ({
 }: Readonly<WorkflowBuilderPageProps>) => {
   const { t } = useTranslation();
   const builder = useWorkflowBuilder({ workspaceId, workflowId, isReadOnly });
+  const setHasBoundTriggerSurvey = useSetAtom(hasBoundTriggerSurveyAtom);
+
+  // Only this page holds the server-resolved authoring context, so it owns pushing the "does the
+  // trigger's survey resolve" fact into the shared atom the validity + canvas checks read.
+  const hasBoundTriggerSurvey = Boolean(resolveBoundTriggerSurvey(emailAuthoringContext, builder.definition));
+  useEffect(() => {
+    setHasBoundTriggerSurvey(hasBoundTriggerSurvey);
+  }, [hasBoundTriggerSurvey, setHasBoundTriggerSurvey]);
 
   if (builder.isLoading) {
     return <WorkflowBuilderBodyLoading />;
@@ -51,8 +63,6 @@ export const WorkflowBuilderPage = ({
             isReadOnly={isReadOnly}
             canEditMetadata={builder.canEditMetadata}
             isEditingNode={builder.canEditDefinition}
-            onSaveNode={builder.save}
-            isSavingNode={builder.isSaving}
           />
         </section>
       </WorkflowEmailAuthoringProvider>

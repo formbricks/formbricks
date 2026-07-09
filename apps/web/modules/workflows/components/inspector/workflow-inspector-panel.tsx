@@ -14,8 +14,6 @@ interface WorkflowInspectorPanelProps {
   isReadOnly: boolean;
   canEditMetadata: boolean;
   isEditingNode: boolean;
-  onSaveNode?: () => Promise<void> | void;
-  isSavingNode?: boolean;
 }
 
 export const WorkflowInspectorPanel = ({
@@ -23,8 +21,6 @@ export const WorkflowInspectorPanel = ({
   isReadOnly,
   canEditMetadata,
   isEditingNode,
-  onSaveNode,
-  isSavingNode,
 }: Readonly<WorkflowInspectorPanelProps>) => {
   const isCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
@@ -38,7 +34,7 @@ export const WorkflowInspectorPanel = ({
       )}>
       <div className="flex w-[360px] flex-col gap-3 self-start">
         {isNodeConfigOpen ? (
-          <WorkflowNodeConfigPanel isEditable={isEditingNode} onSave={onSaveNode} isSaving={isSavingNode} />
+          <WorkflowNodeConfigPanel isEditable={isEditingNode} />
         ) : (
           <SettingsSection
             workflowId={workflowId}
