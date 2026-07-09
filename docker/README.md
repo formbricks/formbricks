@@ -82,6 +82,11 @@ docker run -d -p 3000:3000 \
 Use `MIGRATE_DATABASE_URL` instead of `DATABASE_URL` on the migration container if
 migrations must run under a higher-privilege database role than the application.
 
+The web container verifies the schema is up to date at startup and exits if it is
+not. If you apply migrations entirely out-of-band and want to bypass that check, set
+`SKIP_MIGRATION_CHECK=true` on the web container — at your own risk, as the app will
+then start against whatever schema is present.
+
 > **Upgrading from a pre-ENG-1153 release?** Earlier web images ran migrations at
 > startup. After upgrading, the web image will not migrate on its own — adopt one of
 > the flows above so pending migrations are applied on each deploy.
