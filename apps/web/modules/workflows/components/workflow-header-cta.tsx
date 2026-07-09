@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { Loader2Icon, SaveIcon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
@@ -45,17 +45,17 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
 
   return (
     <div className="flex items-center gap-3">
-      {/* The trailing Save icon turns into the spinner while saving (single icon slot, never
-          both), so the label never shifts. Archive/Unarchive live in the Settings panel. */}
+      {/* Mirrors the survey editor: drafts say "Save as draft" so the label carries the status
+          the save keeps you in. Archive/Unarchive live in the Settings panel. */}
       <Button
         type="button"
         variant="secondary"
         size="sm"
         onClick={handleSave}
+        loading={builder.isSaving}
         disabled={!builder.canEditMetadata || builder.isTransitioning || builder.isSaving}
         className="min-w-[6rem] justify-center">
-        {t("common.save")}
-        {builder.isSaving ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
+        {workflow.status === "draft" ? t("common.save_as_draft") : t("common.save")}
       </Button>
       {/* Lifecycle control as a toggle: the switch position communicates the current state
           (on = running) instead of an Enable/Disable action label the user has to invert.
