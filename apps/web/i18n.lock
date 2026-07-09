@@ -3859,7 +3859,6 @@ checksums:
     workspace/workflows/delete_workflow_confirmation: c282ef533424f60f04f8ff2da3354eb7
     workspace/workflows/disable_failed: 02640d94b113075d6e03d50dac8be8a3
     workspace/workflows/disable_success: d107eb1a5c608c93695eecbc31bf26df
-    workspace/workflows/drag_mode: 4dceefef2cf820ef216e77fc3d8acdc3
     workspace/workflows/duplicate_failed: 56b15c01ba3e3fafbfd226520023204f
     workspace/workflows/duplicate_success: b94c796f27301d2957a710dc06e73679
     workspace/workflows/edit_blocked_active: 11f02e65cffdf7a8533906eff1de4ffb
@@ -3892,6 +3891,7 @@ checksums:
     workspace/workflows/node_actions: 60413ce1864388744a65164a552d5079
     workspace/workflows/node_needs_email_content: 180086f108a8708fa9222ddc804a5c1b
     workspace/workflows/node_needs_survey: 5e51ca0392e98011a8a72e75a223e5dd
+    workspace/workflows/pan_mode: 7d97982816ad18072903021c89153bce
     workspace/workflows/pointer_mode: 7af7ee96c6d8e9a15f0569c1b2376def
     workspace/workflows/relative_date: b9249095eeb4436a1d0d5ca5f9ecd346
     workspace/workflows/relative_days_ago: d9da4648c4fa3cb86584d3f9f48df6a2

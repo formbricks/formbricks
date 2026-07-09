@@ -18,7 +18,6 @@ import {
 import { workflowDefinitionToFlowNodes } from "@/modules/workflows/lib/definition-to-flow";
 import {
   hydrateWorkflowEditorAtom,
-  isCanvasLockedAtom,
   isWorkflowSavingAtom,
   isWorkflowTransitioningAtom,
   setWorkflowAtom,
@@ -63,7 +62,6 @@ export const useWorkflowBuilder = ({
   const isTransitioning = useAtomValue(isWorkflowTransitioningAtom);
   const setIsSaving = useSetAtom(setWorkflowSavingAtom);
   const setIsTransitioning = useSetAtom(setWorkflowTransitioningAtom);
-  const setCanvasLocked = useSetAtom(isCanvasLockedAtom);
 
   const [isLoading, setIsLoading] = useState(loadOnMount);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -93,11 +91,6 @@ export const useWorkflowBuilder = ({
           workflow: loadedWorkflow,
           flowNodes: workflowDefinitionToFlowNodes(loadedWorkflow.definition, t),
         });
-        // Drafts land in edit mode: they can't run yet, so the read-only landing that the lock
-        // provides for live workflows would only hide the build affordances (starting with the
-        // Add-trigger picker on a fresh empty canvas). Everything else stays locked until the
-        // user opts in via pointer mode.
-        setCanvasLocked(isReadOnly || loadedWorkflow.status !== "draft");
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
@@ -111,7 +104,7 @@ export const useWorkflowBuilder = ({
       });
 
     return () => controller.abort();
-  }, [workspaceId, workflowId, hydrateEditor, setCanvasLocked, isReadOnly, t, loadOnMount]);
+  }, [workspaceId, workflowId, hydrateEditor, t, loadOnMount]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
@@ -208,9 +201,6 @@ export const useWorkflowBuilder = ({
       try {
         const transitioned = await op.run(workflow.id);
         setWorkflow(transitioned);
-        // Enabling/archiving moves the workflow into a state where the definition is read-only,
-        // so collapse back to a locked canvas on any lifecycle transition.
-        setCanvasLocked(true);
         toast.success(op.success());
       } catch (error) {
         toast.error(getV3ApiErrorMessage(error, op.failure()));
@@ -218,7 +208,7 @@ export const useWorkflowBuilder = ({
         setIsTransitioning(false);
       }
     },
-    [store, workflow, setWorkflow, setIsTransitioning, setCanvasLocked, t]
+    [store, workflow, setWorkflow, setIsTransitioning, t]
   );
 
   return {

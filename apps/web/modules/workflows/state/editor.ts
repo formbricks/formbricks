@@ -75,11 +75,10 @@ export const isWorkflowNodeConfigModalOpenAtom = atom((get) => get(workflowEdito
 export const isWorkflowSavingAtom = atom((get) => get(workflowEditorAtom).isSaving);
 export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom).isTransitioning);
 
-// Canvas starts locked so users land in a read-only view; the lock button in the toolbar
-// flips it after we confirm the workflow status allows editing. A successful save also
-// re-locks (see useWorkflowBuilder). NOTE: the lock only gates the canvas LAYOUT (drag +
-// auto-layout). Node content edits and add/delete are gated by workflow status, not the lock.
-export const isCanvasLockedAtom = atom<boolean>(true);
+// Locked = pan mode (pan/browse; nodes are inert), unlocked = pointer mode (select/inspect,
+// edit when status/permissions allow). Pointer is the default tool and the toggle is purely
+// user-driven — nothing auto-switches it; mutations are gated separately by canMutateCanvasAtom.
+export const isCanvasLockedAtom = atom<boolean>(false);
 
 // Derived: the workflow's definition is editable when its status allows it (the API rejects
 // definition PATCHes on enabled / archived workflows). The auth-derived `isReadOnly` flag is

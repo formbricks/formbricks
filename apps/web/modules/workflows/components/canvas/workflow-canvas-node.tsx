@@ -63,6 +63,8 @@ export const WorkflowCanvasNode = memo(
           className={cn(
             // Issues don't tint the card border — the inline alert line below carries the
             // severity; a second color signal on the frame just adds noise.
+            // The hover shadow needs no pan-mode gate: the canvas disables pointer events on
+            // nodes in pan mode, so hover styles can't fire there.
             "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
             selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50"
           )}>

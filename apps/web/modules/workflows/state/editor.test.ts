@@ -188,10 +188,13 @@ describe("canMutateCanvasAtom", () => {
     const store = createStore();
     store.set(hydrateWorkflowEditorAtom, { workflow: workflowWithStatus("draft"), flowNodes: [] });
 
-    // Canvas starts locked.
-    expect(store.get(isCanvasLockedAtom)).toBe(true);
-    expect(store.get(canMutateCanvasAtom)).toBe(false);
+    // Canvas starts in pointer mode (unlocked), so a draft is mutable right away.
+    expect(store.get(isCanvasLockedAtom)).toBe(false);
+    expect(store.get(canMutateCanvasAtom)).toBe(true);
 
+    // Switching to pan mode blocks mutations even on an editable status.
+    store.set(isCanvasLockedAtom, true);
+    expect(store.get(canMutateCanvasAtom)).toBe(false);
     store.set(isCanvasLockedAtom, false);
     expect(store.get(canMutateCanvasAtom)).toBe(true);
 

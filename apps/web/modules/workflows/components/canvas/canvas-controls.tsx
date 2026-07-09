@@ -15,10 +15,10 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CanvasControlsProps {
   canMutate: boolean;
-  /** Drag mode = pan/browse only (nodes not editable); pointer mode = select and edit nodes. */
-  isDragMode: boolean;
+  /** Pan mode = pan/browse only (nodes inert); pointer mode = select/inspect nodes, edit when permitted. */
+  isPanMode: boolean;
   onAutoLayout: () => void;
-  onDragMode: () => void;
+  onPanMode: () => void;
   onPointerMode: () => void;
 }
 
@@ -37,9 +37,9 @@ interface ControlDescriptor {
 
 export const CanvasControls = ({
   canMutate,
-  isDragMode,
+  isPanMode,
   onAutoLayout,
-  onDragMode,
+  onPanMode,
   onPointerMode,
 }: Readonly<CanvasControlsProps>) => {
   const { t } = useTranslation();
@@ -61,21 +61,19 @@ export const CanvasControls = ({
       onClick: () => zoomOut(),
     },
     {
-      key: "drag-mode",
+      key: "pan-mode",
       Icon: HandIcon,
-      label: t("workspace.workflows.drag_mode"),
-      variant: isDragMode ? "default" : "outline",
-      ariaPressed: isDragMode,
-      onClick: onDragMode,
+      label: t("workspace.workflows.pan_mode"),
+      variant: isPanMode ? "default" : "outline",
+      ariaPressed: isPanMode,
+      onClick: onPanMode,
     },
     {
       key: "pointer-mode",
       Icon: MousePointerClickIcon,
       label: t("workspace.workflows.pointer_mode"),
-      variant: isDragMode ? "outline" : "default",
-      ariaPressed: !isDragMode,
-      // Stays clickable while the workflow is enabled so the click can surface the
-      // "disable first" toast — the actual gate sits in the parent's onPointerMode.
+      variant: isPanMode ? "outline" : "default",
+      ariaPressed: !isPanMode,
       onClick: onPointerMode,
     },
     {

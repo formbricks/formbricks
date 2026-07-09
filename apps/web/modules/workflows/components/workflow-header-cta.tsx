@@ -1,13 +1,13 @@
 "use client";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { Loader2Icon } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Switch } from "@/modules/ui/components/switch";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
-import { isCanvasLockedAtom, workflowAtom } from "@/modules/workflows/state/editor";
+import { workflowAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowHeaderCtaProps {
   workflowId: string;
@@ -18,15 +18,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const { t } = useTranslation();
   const segment = useSelectedLayoutSegment();
   const workflow = useAtomValue(workflowAtom);
-  const setCanvasLocked = useSetAtom(isCanvasLockedAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
-
-  // Header Save is the "end this editing session" action — persist, then re-lock the canvas so
-  // the user explicitly opts back into edit mode. Per-node modal Save just persists.
-  const handleSave = async () => {
-    await builder.save();
-    setCanvasLocked(true);
-  };
 
   const handleActiveChange = () => {
     if (isActive) {
@@ -51,7 +43,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         type="button"
         variant="secondary"
         size="sm"
-        onClick={handleSave}
+        onClick={() => builder.save()}
         loading={builder.isSaving}
         disabled={!builder.canEditMetadata || builder.isTransitioning || builder.isSaving}>
         {workflow.status === "draft" ? t("common.save_as_draft") : t("common.save")}

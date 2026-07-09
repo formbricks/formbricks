@@ -55,6 +55,7 @@ import { AddButtonEdge } from "./add-button-edge";
 import { CanvasControls } from "./canvas-controls";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
+import "./workflow-canvas.css";
 
 const NODE_TYPES: NodeTypes = {
   [WORKFLOW_CANVAS_NODE_TYPE]: WorkflowCanvasNode,
@@ -94,7 +95,6 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
   const { fitView } = useReactFlow();
-  const isEnabled = workflow?.status === "enabled";
   // Dry-run testing is only meaningful for live workflows (draft is still being built, archived is
   // dead) and requires workspace write access — testWorkflow authorizes with readWrite, so a
   // read-only user would only get a 403. Mirrors the API guard in workflows.handlers.ts.
@@ -102,9 +102,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const [isTesting, setIsTesting] = useState(false);
   // null = dialog closed; a non-empty array opens the problems dialog (the ok case is a toast).
   const [testProblems, setTestProblems] = useState<TWorkflowTestProblem[] | null>(null);
-  // `isEditable` (canEditDefinition) is the API-side gate. The lock toggle is the user-driven
-  // gate layered on top: even when permissions allow editing, the canvas stays read-only until
-  // the user unlocks it.
+  // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
+  // user-driven gate layered on top: even when permissions allow editing, the canvas stays
+  // non-mutable until the user switches to pointer mode.
   const canMutate = isEditable && !isLocked;
 
   const authoringContext = useWorkflowEmailAuthoringContext();
@@ -190,19 +190,17 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
     }
   };
 
-  // Drag mode locks node editing so the user can browse/pan a large graph without grabbing
-  // nodes; pointer mode is the editing mode and is gated the same way unlocking was.
-  const handleDragMode = () => setLocked(true);
-
-  const handlePointerMode = () => {
-    if (!isLocked) return;
-    if (isEnabled) {
-      toast.error(t("workspace.workflows.edit_blocked_active"));
-      return;
-    }
-    if (!isEditable) return;
-    setLocked(false);
+  // Pan mode is the pan/browse tool: nodes are fully inert (no click, selection, or drag), so
+  // switching into it also clears any leftover selection. Pointer mode is the select/inspect
+  // tool and is available to everyone — mutations stay gated by status/permissions (canMutate).
+  const handlePanMode = () => {
+    setLocked(true);
+    setFlowNodes((currentNodes) =>
+      currentNodes.map((node) => (node.selected ? { ...node, selected: false } : node))
+    );
   };
+
+  const handlePointerMode = () => setLocked(false);
 
   return (
     <div
@@ -249,8 +247,13 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         edgeTypes={EDGE_TYPES}
         onNodesChange={handleNodesChange}
         onNodeDragStop={(_event, node) => handleNodeDragStop(node)}
-        onNodeClick={(_event, node) => openNodeConfigModal(node.id)}
-        className="bg-slate-50"
+        onNodeClick={(_event, node) => {
+          if (!isLocked) openNodeConfigModal(node.id);
+        }}
+        // Mode-dependent cursor + hit-testing rules live in workflow-canvas.css, keyed off
+        // these classes (Tailwind can't express `.react-flow__node` — underscores in arbitrary
+        // selectors turn into spaces).
+        className={cn("workflow-canvas bg-slate-50", isLocked && "pan-mode")}
         fitView
         fitViewOptions={{ padding: 0.25, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4 }}
         defaultViewport={{ x: 0, y: 0, zoom: WORKFLOW_CANVAS_MAX_ZOOM }}
@@ -259,7 +262,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
         snapToGrid={isSnapToCanvasEnabled}
         proOptions={{ hideAttribution: true }}
-        elementsSelectable>
+        elementsSelectable={!isLocked}
+        nodesFocusable={!isLocked}>
         {/* Same dot grid the pre-ReactFlow mockup used: radial-gradient(#cbd5e1 1px) on an 18px grid. */}
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
       </ReactFlow>
@@ -275,9 +279,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
       )}
       <CanvasControls
         canMutate={canMutate}
-        isDragMode={isLocked}
+        isPanMode={isLocked}
         onAutoLayout={handleAutoLayout}
-        onDragMode={handleDragMode}
+        onPanMode={handlePanMode}
         onPointerMode={handlePointerMode}
       />
       <WorkflowTestResultDialog
