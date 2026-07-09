@@ -3,7 +3,10 @@
 import { DatabaseIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
+import {
+  formatCubeColumnHeader,
+  getTranslatedDimensionValueLabel,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
 const MAX_DISPLAY_ROWS = 50;
@@ -52,7 +55,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
                 <tr key={`data-row-${rowKey}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
                   {Object.entries(row).map(([key, value]) => (
                     <td key={`cell-${key}-${rowKey}`} className="px-3 py-2">
-                      {formatCellValue(value)}
+                      {getTranslatedDimensionValueLabel(key, value, t) ?? formatCellValue(value)}
                     </td>
                   ))}
                 </tr>

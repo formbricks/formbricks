@@ -56,11 +56,15 @@ interface SettingsSidebarContentProps {
   isLoadingWorkspaces: boolean;
   onWorkspaceChange: (id: string) => void;
   onWorkspaceDropdownOpen: () => void;
+  errorWorkspaces?: string | null;
+  onWorkspaceRetry?: () => void;
   // Organization switcher
   organizations: { id: string; name: string }[];
   isLoadingOrganizations: boolean;
   onOrganizationChange: (id: string) => void;
   onOrganizationDropdownOpen: () => void;
+  errorOrganizations?: string | null;
+  onOrganizationRetry?: () => void;
 }
 
 interface NavItem {
@@ -169,6 +173,8 @@ const SectionHeader = ({
   switcherName,
   switcherItems,
   isLoadingSwitcher,
+  errorSwitcher,
+  onSwitcherRetry,
   currentId,
   onSwitcherChange,
   onSwitcherOpen,
@@ -179,10 +185,52 @@ const SectionHeader = ({
   switcherName?: string;
   switcherItems?: { id: string; name: string }[];
   isLoadingSwitcher?: boolean;
+  errorSwitcher?: string | null;
+  onSwitcherRetry?: () => void;
   currentId?: string;
   onSwitcherChange?: (id: string) => void;
   onSwitcherOpen?: () => void;
 }>) => {
+  const { t } = useTranslation();
+
+  const renderSwitcherContent = () => {
+    if (isLoadingSwitcher) {
+      return (
+        <div className="flex items-center justify-center py-2">
+          <Loader2 className="size-4 animate-spin" />
+        </div>
+      );
+    }
+
+    if (errorSwitcher) {
+      return (
+        <div className="px-2 py-4 text-center">
+          <p className="mb-2 text-sm text-red-600">{errorSwitcher}</p>
+          <button
+            type="button"
+            onClick={onSwitcherRetry}
+            className="text-xs text-slate-600 underline hover:text-slate-800">
+            {t("common.try_again")}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <DropdownMenuGroup className="overflow-y-auto">
+        {switcherItems?.map((item) => (
+          <DropdownMenuCheckboxItem
+            key={item.id}
+            checked={item.id === currentId}
+            onClick={() => onSwitcherChange?.(item.id)}
+            className="cursor-pointer text-sm">
+            {item.name}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuGroup>
+    );
+  };
+
   if (isCollapsed) {
     return null;
   }
@@ -201,23 +249,7 @@ const SectionHeader = ({
             <ChevronDownIcon className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="max-h-[300px]">
-            {isLoadingSwitcher ? (
-              <div className="flex items-center justify-center py-2">
-                <Loader2 className="size-4 animate-spin" />
-              </div>
-            ) : (
-              <DropdownMenuGroup className="overflow-y-auto">
-                {switcherItems.map((item) => (
-                  <DropdownMenuCheckboxItem
-                    key={item.id}
-                    checked={item.id === currentId}
-                    onClick={() => onSwitcherChange(item.id)}
-                    className="cursor-pointer text-sm">
-                    {item.name}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuGroup>
-            )}
+            {renderSwitcherContent()}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -239,10 +271,14 @@ export const SettingsSidebarContent = ({
   isLoadingWorkspaces,
   onWorkspaceChange,
   onWorkspaceDropdownOpen,
+  errorWorkspaces,
+  onWorkspaceRetry,
   organizations,
   isLoadingOrganizations,
   onOrganizationChange,
   onOrganizationDropdownOpen,
+  errorOrganizations,
+  onOrganizationRetry,
 }: SettingsSidebarContentProps) => {
   const pathname = usePathname();
   const { t } = useTranslation();
@@ -420,6 +456,8 @@ export const SettingsSidebarContent = ({
             switcherName={workspaceName}
             switcherItems={workspaces}
             isLoadingSwitcher={isLoadingWorkspaces}
+            errorSwitcher={errorWorkspaces}
+            onSwitcherRetry={onWorkspaceRetry}
             currentId={workspaceId}
             onSwitcherChange={onWorkspaceChange}
             onSwitcherOpen={onWorkspaceDropdownOpen}
@@ -436,6 +474,8 @@ export const SettingsSidebarContent = ({
           switcherName={organizationName}
           switcherItems={organizations}
           isLoadingSwitcher={isLoadingOrganizations}
+          errorSwitcher={errorOrganizations}
+          onSwitcherRetry={onOrganizationRetry}
           currentId={organizationId}
           onSwitcherChange={onOrganizationChange}
           onSwitcherOpen={onOrganizationDropdownOpen}
