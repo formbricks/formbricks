@@ -54,7 +54,12 @@ import {
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
+import {
+  isBlockLogicItemValid,
+  isEndingCardValid,
+  isWelcomeCardValid,
+  validateElement,
+} from "../lib/validation";
 
 interface ElementsViewProps {
   localSurvey: TSurvey;
@@ -768,6 +773,18 @@ export const ElementsView = ({
         }
       });
 
+      // Live-clear conditional logic errors as they get fixed. We only clear
+      // here (never add) so freshly added, not-yet-filled-in rules aren't
+      // flagged prematurely — logic errors are added on save/publish instead.
+      localSurvey.blocks.forEach((block) => {
+        (block.logic ?? []).forEach((logicItem) => {
+          if (currentInvalidSet.has(logicItem.id) && isBlockLogicItemValid(logicItem)) {
+            currentInvalidSet.delete(logicItem.id);
+            hasChanges = true;
+          }
+        });
+      });
+
       if (hasChanges) {
         setInvalidElements(Array.from(currentInvalidSet));
       }
@@ -780,6 +797,7 @@ export const ElementsView = ({
       setInvalidElements,
       localSurvey.welcomeCard,
       localSurvey.endings,
+      localSurvey.blocks,
     ]
   );
 
