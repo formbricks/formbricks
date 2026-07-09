@@ -1348,10 +1348,16 @@ model FeedbackSource {
   createdBy           String?                           @map(name: "created_by")
   creator             User?                             @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
+  // Composite FK anchoring the source to an actual directory<->workspace assignment.
+  // Defense-in-depth on top of the action-layer check: the DB refuses any (directory, workspace)
+  // pair that is not assigned. onDelete: NoAction (checked at statement end) lets the direct
+  // workspace/feedbackDirectory Cascade FKs delete the source first when their parent is removed.
+  feedbackDirectoryWorkspace FeedbackDirectoryWorkspace @relation(fields: [feedbackDirectoryId, workspaceId], references: [feedbackDirectoryId, workspaceId], onDelete: NoAction, onUpdate: Cascade)
+
   @@unique([id, workspaceId])
   @@unique([workspaceId, name])
   @@index([type])
-  @@index([feedbackDirectoryId])
+  @@index([feedbackDirectoryId, workspaceId])
 }
 
 /// Maps survey elements to Hub FeedbackRecords for Formbricks feedback sources.
@@ -1436,6 +1442,7 @@ model FeedbackDirectoryWorkspace {
   feedbackDirectory   FeedbackDirectory @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
   workspaceId         String
   workspace           Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  feedbackSources     FeedbackSource[]
 
   @@id([feedbackDirectoryId, workspaceId])
   @@index([workspaceId])

@@ -12,6 +12,7 @@ interface FeedbackRecordsPageClientProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
   initialCursors: Record<string, string>;
+  initialContactIdByUserId: Record<string, string>;
   frdMap: Record<string, string>;
   csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
   canWrite: boolean;
@@ -21,6 +22,7 @@ export function FeedbackRecordsPageClient({
   workspaceId,
   initialRecords,
   initialCursors,
+  initialContactIdByUserId,
   frdMap,
   csvSources,
   canWrite,
@@ -29,7 +31,7 @@ export function FeedbackRecordsPageClient({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+      <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="feedback-records" />
       </PageHeader>
 
@@ -37,6 +39,7 @@ export function FeedbackRecordsPageClient({
         workspaceId={workspaceId}
         initialRecords={initialRecords}
         initialCursors={initialCursors}
+        initialContactIdByUserId={initialContactIdByUserId}
         frdMap={frdMap}
         csvSources={csvSources}
         canWrite={canWrite}

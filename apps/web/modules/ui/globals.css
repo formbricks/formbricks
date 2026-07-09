@@ -358,3 +358,21 @@ input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   background: #0f172a;
 }
+
+/* Respect prefers-reduced-motion for all CSS animations and transitions (tailwindcss-animate
+   entry/exit classes included). Durations are collapsed to a near-zero value instead of
+   `animation: none` so animationend/transitionend still fire; Radix primitives rely on them
+   to unmount `animate-out` content. Kept unlayered so it wins over layered utilities. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

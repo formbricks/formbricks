@@ -52,8 +52,8 @@
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
-    "build": "vite build",
-    "build:dev": "vite build --mode dev",
+    "build": "vite build && node scripts/assert-scoped-css.mjs",
+    "build:dev": "vite build --mode dev && node scripts/assert-scoped-css.mjs",
     "go": "vite build --watch --mode dev",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
