@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import type { TaxonomyFieldOption, TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
+import type { TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -22,7 +22,6 @@ import { useTaxonomyState } from "../hooks/use-taxonomy-state";
 import { useTriggerTaxonomyRun } from "../hooks/use-trigger-taxonomy-run";
 import { MIN_OPEN_TEXT_RECORDS, computeGate } from "../lib/gate";
 import { type TTaxonomyScopeSelection, taxonomyKeys } from "../lib/query";
-import { fieldKey, sourceKey } from "../lib/scope";
 import { findNodeById, firstTopLevelNodeId } from "../lib/tree";
 import { EmbeddingProgressBanner } from "./embedding-progress-banner";
 import { TaxonomyControls } from "./taxonomy-controls";
@@ -62,13 +61,8 @@ export const TopicsSubtopicsContainer = ({
 
   const directoryIds = useMemo(() => Object.keys(directoryMap), [directoryMap]);
   const [directoryId, setDirectoryId] = useState(directoryIds[0] ?? "");
-  const [selectedSourceKey, setSelectedSourceKey] = useState("");
-  const [selectedFieldKey, setSelectedFieldKey] = useState("");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"view" | "edit">("view");
-  // "directory" = one taxonomy over all open text in the directory (default); "field" = the legacy
-  // per-(source, field) scope, exposed as an advanced toggle in the controls.
-  const [scopeMode, setScopeMode] = useState<"directory" | "field">("directory");
   const [nodeToRemove, setNodeToRemove] = useState<TaxonomyNode | null>(null);
   const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
 
@@ -76,62 +70,11 @@ export const TopicsSubtopicsContainer = ({
   const fields = useMemo(() => fieldsQuery.data?.fields ?? [], [fieldsQuery.data]);
   const fieldsUnavailable = fieldsQuery.data?.unavailable ?? false;
 
-  const sourceOptions = useMemo(() => {
-    const options = new Map<string, TaxonomyFieldOption>();
-    for (const field of fields) {
-      const key = sourceKey(field);
-      if (!options.has(key)) {
-        options.set(key, field);
-      }
-    }
-    return [...options.values()];
-  }, [fields]);
-
-  const filteredFields = useMemo(
-    () => fields.filter((field) => sourceKey(field) === selectedSourceKey),
-    [fields, selectedSourceKey]
+  // A single taxonomy always covers all open text in the selected directory.
+  const scope = useMemo<TTaxonomyScopeSelection>(
+    () => ({ directoryId, scopeType: "directory" }),
+    [directoryId]
   );
-
-  const selectedField = useMemo(
-    () => fields.find((field) => fieldKey(field) === selectedFieldKey) ?? null,
-    [fields, selectedFieldKey]
-  );
-
-  // Derive the scope from primitive field values (not the field object). The embedding poll replaces
-  // the `fields` array every few seconds, but the scope of a given field never changes — keeping it
-  // stable prevents the state/run queries from tearing down and refetching on every poll tick.
-  const scopeSourceType = selectedField?.source_type;
-  const scopeSourceId = selectedField?.source_id;
-  const scopeFieldId = selectedField?.field_id;
-  const scope = useMemo<TTaxonomyScopeSelection | null>(() => {
-    if (scopeMode === "directory") {
-      return { directoryId, scopeType: "directory" };
-    }
-    if (scopeSourceType !== undefined && scopeSourceId !== undefined && scopeFieldId !== undefined) {
-      return {
-        directoryId,
-        scopeType: "field",
-        sourceType: scopeSourceType,
-        sourceId: scopeSourceId,
-        fieldId: scopeFieldId,
-      };
-    }
-    return null;
-  }, [scopeMode, directoryId, scopeSourceType, scopeSourceId, scopeFieldId]);
-
-  // Default the source/field selection to the first available field once fields load (or when the
-  // current selection is no longer valid, e.g. after switching directory).
-  useEffect(() => {
-    if (fields.length === 0) {
-      return;
-    }
-    if (fields.some((field) => fieldKey(field) === selectedFieldKey)) {
-      return;
-    }
-    const first = fields[0];
-    setSelectedSourceKey(sourceKey(first));
-    setSelectedFieldKey(fieldKey(first));
-  }, [fields, selectedFieldKey]);
 
   const gate = useMemo(
     () =>
@@ -200,29 +143,17 @@ export const TopicsSubtopicsContainer = ({
   }, [runStatus, queryClient, workspaceId, scope]);
 
   const isRunning = runningRunId !== null || triggerMutation.isPending;
-  // Directory scope always has a target; field scope needs a selected field.
-  const canGenerate = canWrite && !isRunning && (scopeMode === "directory" || selectedField !== null);
+  // The directory scope always has a target, so generation only depends on write access + no active run.
+  const canGenerate = canWrite && !isRunning;
   const hasActiveTree = Boolean(activeTree?.root?.children?.length);
-  // Counts under the scope toggle: directory mode shows the whole-directory totals (summed across all
-  // fields), field mode shows the selected field's own counts.
-  const displayEmbeddedCount =
-    scopeMode === "directory" ? gate.totalEmbeddedRecords : (selectedField?.embedding_count ?? 0);
-  const displayTextRecordCount =
-    scopeMode === "directory" ? gate.totalOpenTextRecords : (selectedField?.record_count ?? 0);
   const runFailure =
     latestRun?.status === "failed"
       ? (latestRun.error ?? runFailureMessageFromCode(latestRun.error_code, t))
       : null;
 
-  const handleSourceChange = (value: string) => {
-    setSelectedSourceKey(value);
-    const firstField = fields.find((field) => sourceKey(field) === value);
-    setSelectedFieldKey(firstField ? fieldKey(firstField) : "");
-  };
-
   const handleGenerate = () => {
     triggerMutation.mutate(
-      { fieldLabel: scopeMode === "field" ? selectedField?.field_label : undefined },
+      {},
       {
         onSuccess: (data) =>
           toast.success(
@@ -313,17 +244,8 @@ export const TopicsSubtopicsContainer = ({
           directoryIds={directoryIds}
           directoryId={directoryId}
           onDirectoryChange={setDirectoryId}
-          scopeMode={scopeMode}
-          onScopeModeChange={setScopeMode}
-          sourceOptions={sourceOptions}
-          selectedSourceKey={selectedSourceKey}
-          onSourceChange={handleSourceChange}
-          filteredFields={filteredFields}
-          selectedFieldKey={selectedFieldKey}
-          onFieldChange={setSelectedFieldKey}
-          selectedField={selectedField}
-          embeddedCount={displayEmbeddedCount}
-          textRecordCount={displayTextRecordCount}
+          embeddedCount={gate.totalEmbeddedRecords}
+          textRecordCount={gate.totalOpenTextRecords}
           isLoadingFields={fieldsQuery.isLoading}
           hasActiveTree={hasActiveTree}
           canGenerate={canGenerate}

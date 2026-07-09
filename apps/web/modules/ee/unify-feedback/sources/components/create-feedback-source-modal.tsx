@@ -7,10 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import {
-  TFeedbackSourceType,
-  UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
-} from "@formbricks/types/feedback-source";
+import { TFeedbackSourceType } from "@formbricks/types/feedback-source";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -60,6 +57,7 @@ import {
   TEnumValidationError,
   TFeedbackSourceOptionId,
   areAllRequiredCsvFieldsMapped,
+  getSelectableQuestionIds,
   isFeedbackSourceNameValid,
   toggleQuestionId,
   validateEnumMappings,
@@ -87,6 +85,11 @@ interface CreateFeedbackSourceModalProps {
   connectedSurveyIds?: string[];
   workspaceId: string;
   directories: { id: string; name: string }[];
+  /**
+   * When set, the modal opens straight on the survey mapping step with this survey preselected
+   * (used by the "Select questions for import" suggestion CTA). Falls back to the type picker otherwise.
+   */
+  initialSurveyId?: string | null;
 }
 
 const getDialogTitle = (
@@ -119,13 +122,6 @@ const getNextStepButtonLabel = (type: TFeedbackSourceOptionId | null, t: (key: s
   return t("workspace.unify.create_mapping");
 };
 
-const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
-  survey.elements
-    .filter(
-      (element) => !(UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES as readonly string[]).includes(element.type)
-    )
-    .map((element) => element.id);
-
 type TImportState = "success" | "error" | "skipped";
 
 export const CreateFeedbackSourceModal = ({
@@ -137,6 +133,7 @@ export const CreateFeedbackSourceModal = ({
   connectedSurveyIds = [],
   workspaceId,
   directories,
+  initialSurveyId = null,
 }: CreateFeedbackSourceModalProps) => {
   const { t } = useTranslation();
   const connectedSurveyIdSet = useMemo(() => new Set(connectedSurveyIds), [connectedSurveyIds]);
@@ -241,6 +238,22 @@ export const CreateFeedbackSourceModal = ({
       shouldDirty: true,
     });
   }, [currentStep, formbricksForm, selectedSurveyId, selectedType, surveys]);
+
+  // When opened from a suggestion, jump straight to the survey mapping step with the survey preselected.
+  useEffect(() => {
+    if (!open || !initialSurveyId) return;
+    const survey = surveys.find((item) => item.id === initialSurveyId);
+    if (!survey) return;
+
+    setSelectedType("formbricks_survey");
+    setCurrentStep("mapping");
+    formbricksForm.reset({
+      sourceName: t("workspace.unify.source_connector_name", { surveyName: survey.name }),
+      surveyId: initialSurveyId,
+      selectedQuestionIds: getSelectableQuestionIds(survey),
+      importHistorical: true,
+    });
+  }, [open, initialSurveyId, surveys, formbricksForm, t]);
 
   const resetForm = () => {
     setCurrentStep("selectType");
