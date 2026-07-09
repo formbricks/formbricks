@@ -1,9 +1,7 @@
 import type FormbricksHub from "@formbricks/hub";
 
 // value_id (ENG-1671/ENG-1673): stable id of the selected option in the source system (a survey
-// choice id or matrix column id), alongside the canonical display label in value_text. The
-// published SDK and deployed Hub predate it — the service layer strips it from create calls
-// until HUB_VALUE_ID_ENABLED is set (the Hub API rejects unknown fields).
+
 export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams & {
   value_id?: string;
 };

@@ -50,9 +50,6 @@ vi.mock("@/lib/cache", () => ({
   },
 }));
 
-const mockConstants = vi.hoisted(() => ({ HUB_VALUE_ID_ENABLED: false }));
-vi.mock("@/lib/constants", () => mockConstants);
-
 const { getHubClient } = await import("./hub-client");
 const { cache } = await import("@/lib/cache");
 
@@ -77,11 +74,6 @@ const taxonomyScope = {
 };
 
 describe("hub service", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockConstants.HUB_VALUE_ID_ENABLED = false;
-  });
-
   describe("createFeedbackRecord", () => {
     test("returns error result when getHubClient returns null", async () => {
       vi.mocked(getHubClient).mockReturnValue(null);
@@ -108,7 +100,6 @@ describe("hub service", () => {
     });
 
     test("strips value_id from the payload while the Hub does not support it (ENG-1673)", async () => {
-      mockConstants.HUB_VALUE_ID_ENABLED = false;
       const create = vi.fn().mockResolvedValue({ id: "hub-1" });
       vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
 
@@ -116,16 +107,6 @@ describe("hub service", () => {
 
       expect(create).toHaveBeenCalledWith(sampleInput);
       expect(create.mock.calls[0][0]).not.toHaveProperty("value_id");
-    });
-
-    test("sends value_id when HUB_VALUE_ID_ENABLED is on", async () => {
-      mockConstants.HUB_VALUE_ID_ENABLED = true;
-      const create = vi.fn().mockResolvedValue({ id: "hub-1" });
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
-
-      await createFeedbackRecord({ ...sampleInput, value_id: "c-male" });
-
-      expect(create).toHaveBeenCalledWith({ ...sampleInput, value_id: "c-male" });
     });
 
     test("returns error result when client.create throws", async () => {
@@ -460,32 +441,6 @@ describe("hub service", () => {
       expect(result.results[0].error).toBeNull();
       expect(result.results[1].data).toMatchObject({ field_id: "el-2" });
       expect(result.results[1].error).toBeNull();
-    });
-
-    test("strips value_id from every batch payload while the Hub does not support it (ENG-1673)", async () => {
-      mockConstants.HUB_VALUE_ID_ENABLED = false;
-      const create = vi.fn().mockResolvedValue({ id: "hub-1" });
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
-
-      await createFeedbackRecordsBatch([
-        { ...sampleInput, value_id: "c-male" },
-        { ...sampleInput, field_id: "el-2", value_id: "c-female" },
-      ]);
-
-      expect(create).toHaveBeenCalledTimes(2);
-      create.mock.calls.forEach(([payload]) => {
-        expect(payload).not.toHaveProperty("value_id");
-      });
-    });
-
-    test("sends value_id in batch payloads when HUB_VALUE_ID_ENABLED is on", async () => {
-      mockConstants.HUB_VALUE_ID_ENABLED = true;
-      const create = vi.fn().mockResolvedValue({ id: "hub-1" });
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
-
-      await createFeedbackRecordsBatch([{ ...sampleInput, value_id: "c-male" }]);
-
-      expect(create).toHaveBeenCalledWith({ ...sampleInput, value_id: "c-male" });
     });
 
     test("returns mixed results when some creates fail", async () => {

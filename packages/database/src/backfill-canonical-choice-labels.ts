@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- operational one-off script, console output is the interface */
 /**
  * Backfill for ENG-1566 / ENG-1673 (choice answers in Hub feedback_records).
  *

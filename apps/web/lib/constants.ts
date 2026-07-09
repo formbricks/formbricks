@@ -46,7 +46,6 @@ export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
 export const HUB_API_URL = env.HUB_API_URL;
 export const HUB_API_KEY = env.HUB_API_KEY;
-export const HUB_VALUE_ID_ENABLED = env.HUB_VALUE_ID_ENABLED === "1";
 
 export const AZUREAD_CLIENT_ID = env.AZUREAD_CLIENT_ID;
 export const AZUREAD_CLIENT_SECRET = env.AZUREAD_CLIENT_SECRET;

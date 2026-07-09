@@ -2,7 +2,6 @@ import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
-import { HUB_VALUE_ID_ENABLED } from "@/lib/constants";
 import { getHubClient } from "./hub-client";
 import type {
   CreateTaxonomyRunInput,
@@ -44,7 +43,6 @@ export type HubFeedbackRecordResult = {
  * supports it (HUB_VALUE_ID_ENABLED=1), otherwise strip it so creates keep working.
  */
 const toHubCreatePayload = (input: FeedbackRecordCreateParams): FeedbackRecordCreateParams => {
-  if (HUB_VALUE_ID_ENABLED) return input;
   const { value_id, ...rest } = input;
   return rest;
 };
