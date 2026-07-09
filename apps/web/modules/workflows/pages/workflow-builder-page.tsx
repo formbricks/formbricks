@@ -7,6 +7,7 @@ import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-c
 import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/workflows/components/workflow-email-authoring-context";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
+import { useWorkflowNodeUrlSync } from "@/modules/workflows/hooks/use-workflow-node-url-sync";
 import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
 import { hasBoundTriggerSurveyAtom } from "@/modules/workflows/state/editor";
@@ -35,6 +36,9 @@ export const WorkflowBuilderPage = ({
   useEffect(() => {
     setHasBoundTriggerSurvey(hasBoundTriggerSurvey);
   }, [hasBoundTriggerSurvey, setHasBoundTriggerSurvey]);
+
+  // Deep-link the inspected node (?node=…) once the editor is hydrated.
+  useWorkflowNodeUrlSync({ isEnabled: Boolean(builder.workflow) });
 
   if (builder.isLoading) {
     return <WorkflowBuilderBodyLoading />;
