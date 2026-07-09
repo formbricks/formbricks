@@ -564,13 +564,26 @@ describe("hub service", () => {
       });
     });
 
-    test("builds taxonomy endpoint URLs with scoped query parameters", async () => {
-      const get = vi.fn().mockResolvedValue({ data: [], limit: 10 });
-      const post = vi.fn().mockResolvedValue({ run: { id: "run-1" }, in_progress: false });
-      const patch = vi.fn().mockResolvedValue({ id: "node-1", label: "Renamed" });
-      const del = vi.fn().mockResolvedValue({ id: "node-1", removed_at: "2026-06-11T00:00:00Z" });
-      vi.mocked(getHubClient).mockReturnValue({ get, post, patch, delete: del } as any);
+    test("calls the typed taxonomy resource methods with scoped arguments", async () => {
+      const listFields = vi.fn().mockResolvedValue({ data: [] });
+      const start = vi.fn().mockResolvedValue({ run: { id: "run-1" }, in_progress: false });
+      const list = vi.fn().mockResolvedValue({ data: [] });
+      const retrieve = vi.fn().mockResolvedValue({ id: "run-1" });
+      const getTree = vi.fn().mockResolvedValue({ run: { id: "run-1" }, root: null });
+      const activeGetTree = vi.fn().mockResolvedValue({ run: { id: "run-1" }, root: null });
+      const rename = vi.fn().mockResolvedValue({ id: "node-1", label: "Renamed" });
+      const softRemove = vi.fn().mockResolvedValue({ id: "node-1", removed_at: "2026-06-11T00:00:00Z" });
+      const listRecords = vi.fn().mockResolvedValue({ data: [], limit: 25 });
+      vi.mocked(getHubClient).mockReturnValue({
+        taxonomy: {
+          listFields,
+          runs: { start, list, retrieve, getTree, active: { getTree: activeGetTree } },
+          nodes: { rename, softRemove, listRecords },
+        },
+      } as any);
 
+      // The SDK owns path building and URL-encoding now, so ids are passed through verbatim
+      // (note the spaces in "run 1"/"node 1") instead of being pre-encoded by the service.
       await listTaxonomyFields("tenant-1");
       await createTaxonomyRun({ ...taxonomyScope, field_label: "Question?", actor_id: "user-1" });
       await listTaxonomyRuns({ ...taxonomyScope, limit: 5 });
@@ -581,53 +594,41 @@ describe("hub service", () => {
       await removeTaxonomyNode("node 1", { tenant_id: "tenant-1", actor_id: "user-1" });
       await listTaxonomyNodeRecords("node 1", { tenant_id: "tenant-1", limit: 25 });
 
-      expect(get).toHaveBeenNthCalledWith(1, "/v1/taxonomy/fields?tenant_id=tenant-1");
-      expect(post).toHaveBeenCalledWith("/v1/taxonomy/runs", {
-        body: { ...taxonomyScope, field_label: "Question?", actor_id: "user-1" },
+      expect(listFields).toHaveBeenCalledWith({ tenant_id: "tenant-1" });
+      expect(start).toHaveBeenCalledWith({ ...taxonomyScope, field_label: "Question?", actor_id: "user-1" });
+      expect(list).toHaveBeenCalledWith({ ...taxonomyScope, limit: 5 });
+      expect(retrieve).toHaveBeenCalledWith("run 1", { tenant_id: "tenant-1" });
+      expect(activeGetTree).toHaveBeenCalledWith(taxonomyScope);
+      expect(getTree).toHaveBeenCalledWith("run 1", { tenant_id: "tenant-1" });
+      expect(rename).toHaveBeenCalledWith("node 1", {
+        tenant_id: "tenant-1",
+        actor_id: "user-1",
+        label: "Renamed",
       });
-      expect(get).toHaveBeenNthCalledWith(
-        2,
-        "/v1/taxonomy/runs?tenant_id=tenant-1&source_type=formbricks_survey&source_id=survey-1&field_id=question-1&limit=5"
-      );
-      expect(get).toHaveBeenNthCalledWith(3, "/v1/taxonomy/runs/run%201?tenant_id=tenant-1");
-      expect(get).toHaveBeenNthCalledWith(
-        4,
-        "/v1/taxonomy/runs/active/tree?tenant_id=tenant-1&source_type=formbricks_survey&source_id=survey-1&field_id=question-1"
-      );
-      expect(get).toHaveBeenNthCalledWith(5, "/v1/taxonomy/runs/run%201/tree?tenant_id=tenant-1");
-      expect(patch).toHaveBeenCalledWith("/v1/taxonomy/nodes/node%201", {
-        body: { tenant_id: "tenant-1", actor_id: "user-1", label: "Renamed" },
-      });
-      expect(del).toHaveBeenCalledWith("/v1/taxonomy/nodes/node%201?tenant_id=tenant-1&actor_id=user-1");
-      expect(get).toHaveBeenNthCalledWith(
-        6,
-        "/v1/taxonomy/nodes/node%201/records?tenant_id=tenant-1&limit=25"
-      );
+      expect(softRemove).toHaveBeenCalledWith("node 1", { tenant_id: "tenant-1", actor_id: "user-1" });
+      expect(listRecords).toHaveBeenCalledWith("node 1", { tenant_id: "tenant-1", limit: 25 });
     });
 
-    test("preserves an empty source_id in taxonomy scope query params (the no-source bucket)", async () => {
-      const get = vi.fn().mockResolvedValue({ run: {}, root: null });
-      vi.mocked(getHubClient).mockReturnValue({ get } as any);
+    test("preserves an empty source_id in taxonomy scope (the no-source bucket)", async () => {
+      const activeGetTree = vi.fn().mockResolvedValue({ run: {}, root: null });
+      const list = vi.fn().mockResolvedValue({ data: [] });
+      vi.mocked(getHubClient).mockReturnValue({
+        taxonomy: { runs: { active: { getTree: activeGetTree }, list } },
+      } as any);
 
       const noSourceScope = { ...taxonomyScope, source_id: "" };
       await getActiveTaxonomyTree(noSourceScope);
       await listTaxonomyRuns({ ...noSourceScope, limit: 5 });
 
-      // source_id="" must be sent (source_id=), not dropped — otherwise Hub reads it as
-      // "no source filter" instead of "the unattributed bucket". See Hub PR #88.
-      expect(get).toHaveBeenNthCalledWith(
-        1,
-        "/v1/taxonomy/runs/active/tree?tenant_id=tenant-1&source_type=formbricks_survey&source_id=&field_id=question-1"
-      );
-      expect(get).toHaveBeenNthCalledWith(
-        2,
-        "/v1/taxonomy/runs?tenant_id=tenant-1&source_type=formbricks_survey&source_id=&field_id=question-1&limit=5"
-      );
+      // source_id="" must be forwarded (not dropped) — otherwise Hub reads it as "no source
+      // filter" instead of "the unattributed bucket". See Hub PR #88.
+      expect(activeGetTree).toHaveBeenCalledWith({ ...taxonomyScope, source_id: "" });
+      expect(list).toHaveBeenCalledWith({ ...taxonomyScope, source_id: "", limit: 5 });
     });
 
     test("maps taxonomy endpoint failures to HubResult errors", async () => {
       vi.mocked(getHubClient).mockReturnValue({
-        get: vi.fn().mockRejectedValue(new Error("taxonomy unavailable")),
+        taxonomy: { listFields: vi.fn().mockRejectedValue(new Error("taxonomy unavailable")) },
       } as any);
 
       const result = await listTaxonomyFields("tenant-1");

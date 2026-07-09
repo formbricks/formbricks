@@ -28,4 +28,11 @@ describe("AI schema context", () => {
 
     expect(context).toContain('"CES average" or "CES score" means `FeedbackRecords.cesAverage`');
   });
+
+  test("steers free-text dimension filters toward contains over equals", () => {
+    const context = generateSchemaContext();
+
+    expect(context).toContain("prefer the `contains` operator over `equals`");
+    expect(context).toContain("`FeedbackRecords.sourceName`");
+  });
 });

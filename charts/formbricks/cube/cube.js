@@ -158,6 +158,69 @@ function logCubeQuerySecurityContextFailure(query, error) {
   );
 }
 
+// String dimensions whose `equals` / `notEquals` filters should be case- and
+// whitespace-insensitive. Each maps to a hidden companion dimension defined in
+// schema/FeedbackRecords.js as LOWER(TRIM(<column>)). The visible dimension is left
+// untouched (so grouping/display keep the original-cased value); only exact-match
+// filters are rewritten onto the normalized companion. Keep this map in sync with
+// the *Normalized dimensions in schema/FeedbackRecords.js.
+const CASE_INSENSITIVE_EQUALS_DIMENSIONS = {
+  "FeedbackRecords.sourceType": "FeedbackRecords.sourceTypeNormalized",
+  "FeedbackRecords.sourceName": "FeedbackRecords.sourceNameNormalized",
+  "FeedbackRecords.fieldType": "FeedbackRecords.fieldTypeNormalized",
+  "FeedbackRecords.fieldLabel": "FeedbackRecords.fieldLabelNormalized",
+  "FeedbackRecords.fieldGroupLabel": "FeedbackRecords.fieldGroupLabelNormalized",
+  "FeedbackRecords.language": "FeedbackRecords.languageNormalized",
+  "FeedbackRecords.valueText": "FeedbackRecords.valueTextNormalized",
+};
+
+const CASE_INSENSITIVE_OPERATORS = new Set(["equals", "notEquals"]);
+
+function normalizeFilterValue(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : value;
+}
+
+// Rewrites a single filter node: exact-match filters on a normalizable string
+// dimension are redirected to the *Normalized companion with lowercased/trimmed
+// values; nested and/or groups recurse; everything else is returned unchanged.
+function normalizeCaseInsensitiveFilter(filter) {
+  if (!filter || typeof filter !== "object") {
+    return filter;
+  }
+
+  if (Array.isArray(filter.and)) {
+    return { ...filter, and: filter.and.map(normalizeCaseInsensitiveFilter) };
+  }
+
+  if (Array.isArray(filter.or)) {
+    return { ...filter, or: filter.or.map(normalizeCaseInsensitiveFilter) };
+  }
+
+  const normalizedMember = CASE_INSENSITIVE_EQUALS_DIMENSIONS[filter.member];
+  if (
+    typeof filter.member === "string" &&
+    normalizedMember &&
+    typeof filter.operator === "string" &&
+    CASE_INSENSITIVE_OPERATORS.has(filter.operator)
+  ) {
+    return {
+      ...filter,
+      member: normalizedMember,
+      ...(Array.isArray(filter.values) ? { values: filter.values.map(normalizeFilterValue) } : {}),
+    };
+  }
+
+  return filter;
+}
+
+function normalizeCaseInsensitiveFilters(filters) {
+  if (!Array.isArray(filters)) {
+    return filters;
+  }
+
+  return filters.map(normalizeCaseInsensitiveFilter);
+}
+
 function queryRewrite(query, rewriteContext) {
   const cubeQuery = query ?? {};
   let context;
@@ -177,17 +240,16 @@ function queryRewrite(query, rewriteContext) {
   }
 
   const queriedCubePrefixes = new Set(collectQueryMembers(cubeQuery).map((member) => member.split(".")[0]));
+  const normalizedFilters = normalizeCaseInsensitiveFilters(cubeQuery.filters);
   const rewrittenQuery = {
     ...cubeQuery,
     filters: [
-      ...(Array.isArray(cubeQuery.filters) ? cubeQuery.filters : []),
-      ...TENANT_MEMBERS.filter((member) => queriedCubePrefixes.has(member.split(".")[0])).map(
-        (member) => ({
-          member,
-          operator: "equals",
-          values: [context.tenantId],
-        })
-      ),
+      ...(Array.isArray(normalizedFilters) ? normalizedFilters : []),
+      ...TENANT_MEMBERS.filter((member) => queriedCubePrefixes.has(member.split(".")[0])).map((member) => ({
+        member,
+        operator: "equals",
+        values: [context.tenantId],
+      })),
     ],
   };
 

@@ -228,5 +228,55 @@ cube(`FeedbackRecords`, {
       type: `string`,
       description: `Tenant ID linking to FeedbackDirectory`,
     },
+
+    // ── Normalized (LOWER+TRIM) companions ────────────────────────────────────
+    // Hidden helper dimensions for case- and whitespace-insensitive EXACT matching.
+    // The Cube queryRewrite (docker/cube/cube.js) transparently swaps a user's
+    // `equals`/`notEquals` filter on the visible dimension to its *Normalized
+    // companion (and lowercases/trims the value), so exact-match filtering is not
+    // defeated by casing/whitespace drift in human-entered source/field text. The
+    // visible dimensions above are left untouched for grouping and display.
+    // Keep this set in sync with CASE_INSENSITIVE_EQUALS_DIMENSIONS in cube.js.
+    sourceTypeNormalized: {
+      sql: `LOWER(TRIM(source_type))`,
+      type: `string`,
+      shown: false,
+    },
+
+    sourceNameNormalized: {
+      sql: `LOWER(TRIM(source_name))`,
+      type: `string`,
+      shown: false,
+    },
+
+    fieldTypeNormalized: {
+      sql: `LOWER(TRIM(field_type))`,
+      type: `string`,
+      shown: false,
+    },
+
+    fieldLabelNormalized: {
+      sql: `LOWER(TRIM(field_label))`,
+      type: `string`,
+      shown: false,
+    },
+
+    fieldGroupLabelNormalized: {
+      sql: `LOWER(TRIM(field_group_label))`,
+      type: `string`,
+      shown: false,
+    },
+
+    languageNormalized: {
+      sql: `LOWER(TRIM(language))`,
+      type: `string`,
+      shown: false,
+    },
+
+    valueTextNormalized: {
+      sql: `LOWER(TRIM(value_text))`,
+      type: `string`,
+      shown: false,
+    },
   },
 });

@@ -17,6 +17,11 @@ import {
   leaveOrganizationAction,
 } from "@/modules/organization/settings/teams/actions";
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
+import {
+  formatInviteFailureMessage,
+  formatInviteFailureMessages,
+  getInviteFailureReasonFromMessage,
+} from "@/modules/organization/settings/teams/lib/invite-failure";
 import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -39,7 +44,6 @@ interface OrganizationActionsProps {
   isFormbricksCloud: boolean;
   isMultiOrgEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
-  isStorageConfigured: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
   enterpriseLicenseRequestFormUrl: string;
@@ -57,7 +61,6 @@ export const OrganizationActions = ({
   isFormbricksCloud,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
-  isStorageConfigured,
   isTeamAdmin,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
@@ -94,53 +97,75 @@ export const OrganizationActions = ({
     }
   };
 
-  const handleAddMembers = async (data: TInvitee[]) => {
-    if (data.length === 1) {
-      // Individual invite
-      const inviteUserActionResult = await inviteUserAction({
-        organizationId: organization.id,
-        email: data[0].email.toLowerCase(),
-        name: data[0].name,
-        role: data[0].role,
-        teamIds: data[0].teamIds,
-      });
-      if (inviteUserActionResult?.data) {
-        router.refresh();
-        toast.success(t("workspace.settings.general.member_invited_successfully"));
-      } else {
+  const handleAddMembers = async (data: TInvitee[]): Promise<boolean> => {
+    const toastId = toast.loading(t("workspace.settings.general.inviting_member", { count: data.length }));
+
+    try {
+      if (data.length === 1) {
+        const inviteUserActionResult = await inviteUserAction({
+          organizationId: organization.id,
+          email: data[0].email.toLowerCase(),
+          name: data[0].name,
+          role: data[0].role,
+          teamIds: data[0].teamIds,
+        });
+
+        if (inviteUserActionResult?.data) {
+          router.refresh();
+          toast.success(t("workspace.settings.general.member_invited_successfully"), {
+            id: toastId,
+          });
+          return true;
+        }
+
         const errorMessage = getFormattedErrorMessage(inviteUserActionResult);
-        toast.error(errorMessage);
+        const failureReason = getInviteFailureReasonFromMessage(errorMessage);
+        toast.error(
+          failureReason === "unknown" && errorMessage
+            ? errorMessage
+            : formatInviteFailureMessage(t, { email: data[0].email, failureReason }),
+          { id: toastId }
+        );
+        return false;
       }
-    } else {
+
       const bulkInviteResult = await bulkInviteUsersAction({
         organizationId: organization.id,
         invitees: data.map((invitee) => ({ ...invitee, email: invitee.email.toLowerCase() })),
       });
 
       if (!bulkInviteResult?.data) {
-        toast.error(getFormattedErrorMessage(bulkInviteResult));
-        return;
+        toast.error(getFormattedErrorMessage(bulkInviteResult), { id: toastId });
+        return false;
       }
 
       const inviteResults = bulkInviteResult.data;
       router.refresh();
-      const failedInvites: string[] = [];
-      const successInvites: string[] = [];
-      inviteResults.forEach((invite) => {
-        if (!invite.success) {
-          failedInvites.push(invite.email);
-        } else {
-          successInvites.push(invite.email);
-        }
-      });
-      if (failedInvites.length > 0) {
-        toast.error(`${failedInvites.length} ${t("workspace.settings.general.invites_failed")}`);
-      }
+
+      const failedInvites = inviteResults
+        .filter((invite) => !invite.success)
+        .map((invite) => ({
+          email: invite.email,
+          failureReason: invite.failureReason ?? ("unknown" as const),
+        }));
+      const successInvites = inviteResults.filter((invite) => invite.success);
+
       if (successInvites.length > 0) {
         toast.success(
-          `${successInvites.length} ${t("workspace.settings.general.member_invited_successfully")}`
+          t("workspace.settings.general.members_invited_successfully", { count: successInvites.length }),
+          { id: toastId }
         );
+        if (failedInvites.length > 0) {
+          toast.error(formatInviteFailureMessages(t, failedInvites));
+        }
+        return true;
       }
+
+      toast.error(formatInviteFailureMessages(t, failedInvites), { id: toastId });
+      return false;
+    } catch (err) {
+      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`, { id: toastId });
+      return false;
     }
   };
 
@@ -174,7 +199,6 @@ export const OrganizationActions = ({
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
         teams={teams}
-        isStorageConfigured={isStorageConfigured}
         isOwnerOrManager={isOwnerOrManager}
         isTeamAdmin={isTeamAdmin}
         userAdminTeamIds={userAdminTeamIds}

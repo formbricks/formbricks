@@ -3,6 +3,8 @@ import { test } from "./lib/fixtures";
 import { mockUsers } from "./utils/mock";
 
 const { name, email, password } = mockUsers.signup[0];
+const mixedCaseEmail = email.replace("signup", "SignUp");
+const normalizedEmailPattern = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 
 test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });
@@ -14,12 +16,14 @@ test.describe("Email Signup Flow Test", async () => {
   test("Valid User", async ({ page }) => {
     await page.fill('input[name="name"]', name);
     await page.getByPlaceholder("Full Name").press("Tab");
-    await page.fill('input[name="email"]', email);
+    await page.fill('input[name="email"]', mixedCaseEmail);
     await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
     await page.waitForURL(/\/auth\/signup-without-verification-success.*/);
     await expect(page).toHaveURL(/\/auth\/signup-without-verification-success.*/);
+    await expect(page).not.toHaveURL(/token=undefined/);
+    await expect(page.getByText(normalizedEmailPattern)).toBeVisible();
   });
 
   test("No Name", async ({ page }) => {

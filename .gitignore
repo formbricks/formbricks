@@ -67,3 +67,7 @@ i18n.cache
 stats.html
 # next-agents-md
 .next-docs/
+
+# robots (installed agent assets - machine-local, do not commit)
+.claude/
+.agents/formbricks-context
