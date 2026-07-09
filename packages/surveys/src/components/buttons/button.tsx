@@ -29,7 +29,8 @@ const buttonVariantStyles: Record<ButtonProps["variant"], CSSProperties> = {
     paddingBottom: "var(--fb-button-padding-y)",
   },
   ghost: {
-    color: "var(--fb-button-bg-color)",
+    // Contrast-adjusted brand color (falls back to the raw brand when no custom theme is set).
+    color: "var(--fb-back-button-color, var(--fb-button-bg-color))",
   },
 };
 
