@@ -25,6 +25,7 @@ import {
   getOrganizationIdFromWorkspaceId,
 } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importHistoricalResponses } from "./import";
@@ -191,13 +192,25 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
       ],
     });
 
-    // Verify FRD belongs to same org
+    // Verify the directory belongs to the same org and is actually assigned to this workspace.
+    // The composite FK enforces the assignment at the DB level too; these checks return the
+    // friendlier errors first: a generic auth error for missing/cross-org directories, a typed
+    // error for a same-org directory that just isn't assigned to the workspace.
     const frd = await prisma.feedbackDirectory.findUnique({
       where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
-      select: { organizationId: true },
+      select: {
+        organizationId: true,
+        workspaces: {
+          where: { workspaceId: parsedInput.workspaceId },
+          select: { workspaceId: true },
+        },
+      },
     });
     if (frd?.organizationId !== organizationId) {
       throw new AuthorizationError("Invalid feedback directory");
+    }
+    if (frd.workspaces.length === 0) {
+      throw new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE");
     }
 
     let mappingsInput: TMappingsInput | undefined;
@@ -302,83 +315,6 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
         parsedInput.feedbackSourceId,
         parsedInput.workspaceId,
         parsedInput.feedbackSourceInput,
-        mappingsInput
-      );
-    }
-  );
-
-const ZDuplicateFeedbackSourceAction = z.object({
-  feedbackSourceId: ZId,
-  workspaceId: ZId,
-});
-
-export const duplicateFeedbackSourceAction = authenticatedActionClient
-  .inputSchema(ZDuplicateFeedbackSourceAction)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDuplicateFeedbackSourceAction>;
-    }): Promise<TFeedbackSourceWithMappings> => {
-      const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
-      });
-
-      const source = await getFeedbackSourceWithMappingsById(
-        parsedInput.feedbackSourceId,
-        parsedInput.workspaceId
-      );
-      if (!source) {
-        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
-      }
-
-      let mappingsInput: TMappingsInput | undefined;
-
-      if (source.type === "formbricks_survey" && source.formbricksMappings.length > 0) {
-        mappingsInput = {
-          type: "formbricks_survey",
-          mappings: source.formbricksMappings.map((m) => ({
-            surveyId: m.surveyId,
-            elementId: m.elementId,
-            hubFieldType: m.hubFieldType,
-            customFieldLabel: m.customFieldLabel ?? undefined,
-          })),
-        };
-      } else if (source.fieldMappings.length > 0) {
-        const projected = source.fieldMappings.map((m) => ({
-          sourceFieldId: m.sourceFieldId,
-          targetFieldId: m.targetFieldId,
-          staticValue: m.staticValue ?? undefined,
-        }));
-        mappingsInput = {
-          type: "field",
-          mappings: source.type === "csv" ? sanitizeAndValidateCsvFieldMappings(projected) : projected,
-        };
-      }
-
-      return createFeedbackSourceWithMappings(
-        parsedInput.workspaceId,
-        {
-          name: `${source.name} (copy)`,
-          type: source.type,
-          feedbackDirectoryId: source.feedbackDirectoryId,
-          createdBy: ctx.user.id,
-        },
         mappingsInput
       );
     }
@@ -533,5 +469,42 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       }
 
       return result.data;
+    }
+  );
+
+const ZGetFeedbackRecordContactsAction = z.object({
+  workspaceId: ZId,
+  userIds: z.array(z.string()).max(1000),
+});
+
+// Resolves a page of feedback records' user_ids to Formbricks contact ids (batched, deduped).
+export const getFeedbackRecordContactsAction = authenticatedActionClient
+  .inputSchema(ZGetFeedbackRecordContactsAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZGetFeedbackRecordContactsAction>;
+    }): Promise<Record<string, string>> => {
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            minPermission: "read",
+            workspaceId: parsedInput.workspaceId,
+          },
+        ],
+      });
+
+      return getContactIdsByUserIds(parsedInput.workspaceId, parsedInput.userIds);
     }
   );

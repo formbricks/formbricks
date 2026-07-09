@@ -148,7 +148,7 @@ export function LogicEditorActions({
                     <InputCombobox
                       id={`action-${idx}-target`}
                       key={`target-${action.id}`}
-                      showSearch={false}
+                      showSearch={true}
                       options={getActionTargetOptions(action, localSurvey, blockIdx, t)}
                       value={action.target}
                       onChangeValue={(val: string | number | string[]) => {

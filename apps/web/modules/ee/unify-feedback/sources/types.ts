@@ -236,7 +236,7 @@ sub-003,2026-01-15T10:10:30Z,nps_comment,text,"Documentation could be clearer",c
 
 export const MAX_CSV_VALUES = {
   FILE_SIZE: 15 * 1024 * 1024, // 15MB
-  RECORDS: 1_000, // 1,000 records
+  RECORDS: 10_000, // 10,000 records
 } as const;
 
 export const createFeedbackCSVDataSchema = (t: TFunction) =>
@@ -325,6 +325,8 @@ export const getTranslatedFeedbackSourceError = (
       return t("workspace.unify.error_source_survey_required");
     case "FEEDBACK_SOURCE_QUESTIONS_REQUIRED":
       return t("workspace.unify.error_source_questions_required");
+    case "FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE":
+      return t("workspace.unify.error_source_directory_not_assigned");
     default:
       return errorCode;
   }

@@ -5,6 +5,7 @@ import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
+import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import {
   TSurveyElement,
   TSurveyElementChoice,
@@ -409,7 +410,7 @@ export const ElementFormInput = ({
     return (
       <div className="w-full">
         {label && (
-          <div className="mb-2 mt-3 flex items-center justify-between">
+          <div className="mt-3 mb-2 flex items-center justify-between">
             <Label htmlFor={id}>{label}</Label>
             {id === "headline" && currentElement && updateElement && (
               <div className="flex items-center gap-x-2">
@@ -432,7 +433,7 @@ export const ElementFormInput = ({
           {showImageUploader && id === "headline" && (
             <FileInput
               id="element-image"
-              allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
+              allowedFileExtensions={[...IMAGE_FILE_EXTENSIONS]}
               workspaceId={localSurvey.workspaceId}
               onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                 if (url) {
@@ -538,7 +539,7 @@ export const ElementFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mb-2 mt-3 flex items-center justify-between">
+        <div className="mt-3 mb-2 flex items-center justify-between">
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
@@ -563,7 +564,7 @@ export const ElementFormInput = ({
                   <div className="h-10 w-full"></div>
                   <div
                     ref={highlightContainerRef}
-                    className="no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent"
+                    className="absolute top-0 z-0 mt-0.5 flex h-10 w-full no-scrollbar overflow-scroll px-3 py-2 text-center text-sm whitespace-nowrap text-transparent"
                     dir="auto"
                     key={highlightedJSX.toString()}>
                     {highlightedJSX}

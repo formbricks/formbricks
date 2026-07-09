@@ -1,13 +1,10 @@
 import { use } from "react";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
-import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
-import { hasFeedbackRecordsInDirectories } from "@/modules/ee/analysis/lib/feedback-records";
-import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getFeedbackDataAvailability } from "@/modules/ee/analysis/lib/feedback-data-availability";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TDashboardWithCount } from "../../types/analysis";
@@ -66,18 +63,16 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
     );
   }
 
-  const [frds, feedbackSources] = await Promise.all([
-    getFeedbackDirectoriesByWorkspaceId(workspaceId),
-    getFeedbackSourcesWithMappings(workspaceId),
-  ]);
+  const feedbackDataAvailability = await getFeedbackDataAvailability(workspaceId);
 
-  if (frds.length === 0) {
+  if (feedbackDataAvailability.status === "no-directory") {
     return (
       <AnalysisPageLayout
         pageTitle={t("common.analysis")}
         workspaceId={workspaceId}
         cta={isReadOnly ? undefined : <CreateDashboardButton workspaceId={workspaceId} disabled={true} />}>
-        <NoFeedbackDirectoryEmptyState
+        <FeedbackDataEmptyState
+          variant="no-directory"
           organizationId={organization.id}
           isOwnerOrManager={isOwner || isManager}
         />
@@ -85,7 +80,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
     );
   }
 
-  const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(frds.map((frd) => frd.id));
+  const { feedbackSources, hasFeedbackRecords } = feedbackDataAvailability;
   const dashboardsPromise = hasFeedbackRecords ? getDashboards(workspaceId) : null;
 
   return (
@@ -104,7 +99,11 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
           isReadOnly={isReadOnly}
         />
       ) : (
-        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={feedbackSources.length > 0} />
+        <FeedbackDataEmptyState
+          variant="no-records"
+          workspaceId={workspaceId}
+          hasFeedbackSources={feedbackSources.length > 0}
+        />
       )}
     </AnalysisPageLayout>
   );

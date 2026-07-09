@@ -5,6 +5,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { type JSX } from "react";
 import { useTranslation } from "react-i18next";
+import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import type { TSurveyElement, TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -137,7 +138,7 @@ export const PictureSelectionForm = ({
         <div className="mt-3 flex w-full items-center justify-center">
           <FileInput
             id="choices-file-input"
-            allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
+            allowedFileExtensions={[...IMAGE_FILE_EXTENSIONS]}
             workspaceId={workspaceId}
             onFileUpload={handleFileInputChanges}
             fileUrl={element?.choices?.map((choice) => choice.imageUrl)}
