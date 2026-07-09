@@ -2485,7 +2485,6 @@
         "status_trialing": "Trial",
         "stripe_setup_incomplete": "Configuração de cobrança incompleta",
         "stripe_setup_incomplete_description": "A configuração de cobrança não foi concluída com sucesso. Tente novamente para ativar sua assinatura.",
-        "subscribe_for_price_per_month": "Assinar por {price} / mês",
         "subscription": "Assinatura",
         "subscription_description": "Gerencie seu plano de assinatura e acompanhe seu uso",
         "switch_at_period_end": "Mudar no final do período",

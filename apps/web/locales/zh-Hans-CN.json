@@ -2485,7 +2485,6 @@
         "status_trialing": "试用版",
         "stripe_setup_incomplete": "账单设置未完成",
         "stripe_setup_incomplete_description": "账单设置未成功完成。请重试以激活订阅。",
-        "subscribe_for_price_per_month": "订阅，每月 {price}",
         "subscription": "订阅",
         "subscription_description": "管理你的订阅套餐并监控用量",
         "switch_at_period_end": "在周期结束时切换",

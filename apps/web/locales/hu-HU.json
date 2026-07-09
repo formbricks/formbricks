@@ -2485,7 +2485,6 @@
         "status_trialing": "Próbaidőszak",
         "stripe_setup_incomplete": "A számlázási beállítás befejezetlen",
         "stripe_setup_incomplete_description": "A számlázási beállítás nem fejeződött be sikeresen. Próbálja meg újra aktiválni az előfizetését.",
-        "subscribe_for_price_per_month": "Feliratkozás {price} / hónap díjért",
         "subscription": "Előfizetés",
         "subscription_description": "Az előfizetési csomag kezelése és a használat felügyelete",
         "switch_at_period_end": "Váltás az időszak végén",

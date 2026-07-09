@@ -2485,7 +2485,6 @@
         "status_trialing": "試用版",
         "stripe_setup_incomplete": "帳單設定尚未完成",
         "stripe_setup_incomplete_description": "帳單設定未成功完成，請重新操作以啟用訂閱。",
-        "subscribe_for_price_per_month": "訂閱 {price} / 月",
         "subscription": "訂閱",
         "subscription_description": "管理您的訂閱方案並監控用量",
         "switch_at_period_end": "週期結束時切換",

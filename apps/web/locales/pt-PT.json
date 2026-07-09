@@ -2485,7 +2485,6 @@
         "status_trialing": "Trial",
         "stripe_setup_incomplete": "Configuração de faturação incompleta",
         "stripe_setup_incomplete_description": "A configuração de faturação não foi concluída com sucesso. Por favor, tenta novamente para ativar a tua subscrição.",
-        "subscribe_for_price_per_month": "Subscrever por {price}/mês",
         "subscription": "Subscrição",
         "subscription_description": "Gere o teu plano de subscrição e acompanha a tua utilização",
         "switch_at_period_end": "Mudar no fim do período",

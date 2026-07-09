@@ -2485,7 +2485,6 @@
         "status_trialing": "Proefperiode",
         "stripe_setup_incomplete": "Facturatie-instelling niet voltooid",
         "stripe_setup_incomplete_description": "Het instellen van de facturatie is niet gelukt. Probeer het opnieuw om je abonnement te activeren.",
-        "subscribe_for_price_per_month": "Abonneer voor {price} / maand",
         "subscription": "Abonnement",
         "subscription_description": "Beheer je abonnement en houd je gebruik bij",
         "switch_at_period_end": "Schakel aan het einde van de periode",

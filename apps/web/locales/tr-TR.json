@@ -2485,7 +2485,6 @@
         "status_trialing": "Deneme",
         "stripe_setup_incomplete": "Faturalama kurulumu tamamlanmadı",
         "stripe_setup_incomplete_description": "Faturalama kurulumu başarıyla tamamlanmadı. Aboneliğini etkinleştirmek için lütfen tekrar dene.",
-        "subscribe_for_price_per_month": "{price} / ay için abone ol",
         "subscription": "Abonelik",
         "subscription_description": "Abonelik planını yönet ve kullanımını izle",
         "switch_at_period_end": "Dönem sonunda geçiş yap",

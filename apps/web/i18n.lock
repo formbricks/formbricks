@@ -2388,7 +2388,6 @@ checksums:
     workspace/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
     workspace/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     workspace/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
-    workspace/settings/billing/subscribe_for_price_per_month: 9b67e89ed4f6022214954c1bdf681476
     workspace/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
     workspace/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
     workspace/settings/billing/switch_at_period_end: 9c91b2287886e077a0571efab8908623

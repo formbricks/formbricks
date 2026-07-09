@@ -2485,7 +2485,6 @@
         "status_trialing": "Testphase",
         "stripe_setup_incomplete": "Rechnungseinrichtung unvollständig",
         "stripe_setup_incomplete_description": "Die Rechnungseinrichtung wurde nicht erfolgreich abgeschlossen. Bitte wiederhole den Vorgang, um dein Abonnement zu aktivieren.",
-        "subscribe_for_price_per_month": "Abonniere für {price} / Monat",
         "subscription": "Abonnement",
         "subscription_description": "Verwalte deinen Abonnement-Tarif und überwache deine Nutzung",
         "switch_at_period_end": "Am Ende der Periode wechseln",

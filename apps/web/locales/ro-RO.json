@@ -2485,7 +2485,6 @@
         "status_trialing": "Trial",
         "stripe_setup_incomplete": "Configurare facturare incompletă",
         "stripe_setup_incomplete_description": "Configurarea facturării nu a fost finalizată cu succes. Încearcă din nou pentru a activa abonamentul.",
-        "subscribe_for_price_per_month": "Abonează-te pentru {price} / lună",
         "subscription": "Abonament",
         "subscription_description": "Gestionează-ți abonamentul și monitorizează-ți consumul",
         "switch_at_period_end": "Schimbă la sfârșitul perioadei",

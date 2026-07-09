@@ -2485,7 +2485,6 @@
         "status_trialing": "Testperiod",
         "stripe_setup_incomplete": "Faktureringsinställningar ofullständiga",
         "stripe_setup_incomplete_description": "Faktureringsinställningen slutfördes inte riktigt. Försök igen för att aktivera ditt abonnemang.",
-        "subscribe_for_price_per_month": "Prenumerera för {price} / månad",
         "subscription": "Abonnemang",
         "subscription_description": "Hantera din abonnemangsplan och följ din användning",
         "switch_at_period_end": "Byt vid periodens slut",

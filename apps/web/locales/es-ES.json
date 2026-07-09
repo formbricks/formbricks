@@ -2485,7 +2485,6 @@
         "status_trialing": "Prueba",
         "stripe_setup_incomplete": "Configuración de facturación incompleta",
         "stripe_setup_incomplete_description": "La configuración de facturación no se completó correctamente. Por favor, vuelve a intentarlo para activar tu suscripción.",
-        "subscribe_for_price_per_month": "Suscríbete por {price} / mes",
         "subscription": "Suscripción",
         "subscription_description": "Gestiona tu plan de suscripción y monitorea tu uso",
         "switch_at_period_end": "Cambiar al final del período",
