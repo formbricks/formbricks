@@ -4,9 +4,9 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { transformResponseToFeedbackRecords } from "./transform";
 
-vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: (_val: Record<string, string>, _lang: string) => _val?.[_lang] ?? _val?.default ?? "",
-}));
+// Deliberately unmocked: @/lib/i18n/utils — the real getLocalizedValue has NO default-language
+// fallback, and an earlier mock that added one hid a bug where default-language responses
+// carrying a concrete code (e.g. "en-US") never matched choice labels keyed "default".
 
 vi.mock("@formbricks/types/surveys/validation", () => ({
   getTextContent: (str: string) => str,
@@ -18,6 +18,12 @@ vi.mock("@/lib/survey/utils", () => ({
 }));
 
 const NOW = new Date("2026-02-24T10:00:00.000Z");
+
+// Minimal TSurveyLanguage[] for a survey whose default language is en-US with Arabic enabled.
+const bilingualLanguages = [
+  { language: { code: "en-US" }, default: true, enabled: true },
+  { language: { code: "ar" }, default: false, enabled: true },
+];
 
 const mockSurvey = {
   id: "survey-1",
@@ -591,10 +597,11 @@ describe("transformResponseToFeedbackRecords", () => {
     });
   });
 
-  describe("choice value normalization across languages (ENG-1566)", () => {
+  describe("choice values across languages (labels stored as submitted, identity via value_id)", () => {
     const bilingualSurvey = {
       id: "survey-1",
       name: "Bilingual Survey",
+      languages: bilingualLanguages,
       blocks: [
         {
           elements: [
@@ -629,25 +636,26 @@ describe("transformResponseToFeedbackRecords", () => {
         language,
       }) as unknown as TResponse;
 
-    test("stores the default-language label for a single select answered in another language", () => {
+    test("stores the submitted-language label for a single select, with the choice id as identity", () => {
       const response = buildResponse({ "el-gender": "ذكر" }, "ar");
       const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
 
       const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(1);
-      expect(result[0].value_text).toBe("Male");
+      expect(result[0].value_text).toBe("ذكر");
+      expect(result[0].value_id).toBe("c-male");
       expect(result[0].language).toBe("ar");
     });
 
-    test("stores default-language labels for every entry of a multi select answered in another language", () => {
+    test("stores submitted-language labels for a multi select answered in another language", () => {
       const response = buildResponse({ "el-feats": ["سرعة", "جودة"] }, "ar");
       const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
 
       const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(1);
-      expect(result[0].value_text).toBe("Speed, Quality");
+      expect(result[0].value_text).toBe("سرعة, جودة");
     });
 
     test("passes through values that match no choice label (other / free text)", () => {
@@ -656,7 +664,7 @@ describe("transformResponseToFeedbackRecords", () => {
 
       const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
 
-      expect(result[0].value_text).toBe("Speed, something else");
+      expect(result[0].value_text).toBe("سرعة, something else");
     });
 
     test("leaves default-language answers unchanged", () => {
@@ -668,10 +676,24 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].value_text).toBe("Female");
     });
 
-    test("stores the default-language column label for a matrix answered in another language", () => {
+    test("matches choices when the response carries the default language's concrete code", () => {
+      // Labels for the default language live under the "default" key, but responses may
+      // record the concrete code (e.g. "en-US") — the lookup must map it back to "default".
+      const response = buildResponse({ "el-gender": "Female" }, "en-US");
+      const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
+
+      expect(result[0].value_text).toBe("Female");
+      expect(result[0].value_id).toBe("c-female");
+      expect(result[0].language).toBe("en-US");
+    });
+
+    test("stores the submitted-language column label for a matrix answered in another language", () => {
       const matrixSurvey = {
         id: "survey-1",
         name: "Matrix Survey",
+        languages: bilingualLanguages,
         blocks: [
           {
             elements: [
@@ -698,7 +720,8 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0]).toMatchObject({
         field_id: "el-matrix__row-1",
         field_label: "Speed",
-        value_text: "Good",
+        value_text: "جيد",
+        value_id: "col-1",
       });
     });
   });
@@ -707,6 +730,7 @@ describe("transformResponseToFeedbackRecords", () => {
     const survey = {
       id: "survey-1",
       name: "Identity Survey",
+      languages: bilingualLanguages,
       blocks: [
         {
           elements: [
@@ -753,7 +777,7 @@ describe("transformResponseToFeedbackRecords", () => {
       const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
 
       expect(result[0].value_id).toBe("c-male");
-      expect(result[0].value_text).toBe("Male");
+      expect(result[0].value_text).toBe("ذكر");
     });
 
     test("sets value_id for default-language single select answers too", () => {
@@ -763,6 +787,16 @@ describe("transformResponseToFeedbackRecords", () => {
       const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
 
       expect(result[0].value_id).toBe("c-female");
+    });
+
+    test("sets value_id when the response carries the default language's concrete code (ENG-1673 regression)", () => {
+      const response = buildResponse({ "el-gender": "Female" }, "en-US");
+      const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+
+      expect(result[0].value_id).toBe("c-female");
+      expect(result[0].value_text).toBe("Female");
     });
 
     test("omits value_id when the value matches no choice (other / free text)", () => {
@@ -798,6 +832,7 @@ describe("transformResponseToFeedbackRecords", () => {
       const matrixSurvey = {
         id: "survey-1",
         name: "Matrix Survey",
+        languages: bilingualLanguages,
         blocks: [
           {
             elements: [
@@ -822,7 +857,7 @@ describe("transformResponseToFeedbackRecords", () => {
 
       expect(result[0]).toMatchObject({
         field_id: "el-matrix__row-1",
-        value_text: "Good",
+        value_text: "جيد",
         value_id: "col-1",
       });
     });

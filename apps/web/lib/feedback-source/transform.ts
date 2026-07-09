@@ -11,7 +11,7 @@ import type {
 } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import type { FeedbackRecordCreateParams } from "@/modules/hub";
 
@@ -44,13 +44,10 @@ interface NormalizedChoiceValue {
 }
 
 /**
- * Selected choice values arrive as labels localized to the response language, so a
- * bilingual survey would otherwise split one option into a category per language in
- * Hub analytics (e.g. Gender charting as Male/Female/ذكر/أنثى). Map each selected
- * label back to its choice and store the default-language label as the canonical
- * value, plus the choice id as a stable identity where one selection maps to one
- * record. Labels that match no choice (an "other" free-text answer, or a choice label
- * edited since submission) pass through unchanged.
+ * Selected choice values arrive as labels localized to the response language. The label
+ * is stored as submitted; cross-language consolidation relies on value_id (ENG-1673),
+ * the stable id of the matched choice. Values that match no choice (an "other" free-text
+ * answer, or a choice label edited since submission) carry no id.
  */
 const normalizeChoiceValue = (
   choices: { id: string; label: TSurveyElementChoice["label"] }[] | undefined,
@@ -61,17 +58,7 @@ const normalizeChoiceValue = (
 
   if (typeof value === "string") {
     const choice = findChoiceByLabel(choices, value, language);
-    return choice ? { value: getChoiceLabel(choice, "default"), valueId: choice.id } : { value };
-  }
-
-  if (Array.isArray(value)) {
-    return {
-      value: value.map((item) => {
-        if (typeof item !== "string") return item;
-        const choice = findChoiceByLabel(choices, item, language);
-        return choice ? getChoiceLabel(choice, "default") : item;
-      }),
-    };
+    return choice ? { value, valueId: choice.id } : { value };
   }
 
   return { value };
@@ -184,28 +171,28 @@ const expandMatrixToRecords = (
   element: TSurveyMatrixElement,
   mapping: TFeedbackSourceFormbricksMapping,
   value: TResponseDataValue,
-  baseFields: BaseRecordFields
+  baseFields: BaseRecordFields,
+  lookupLanguage: string
 ): FeedbackRecordCreateParams[] => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return [];
 
-  const language = baseFields.language ?? "default";
   const groupLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
   const records: FeedbackRecordCreateParams[] = [];
 
   for (const [rowLabel, columnLabel] of Object.entries(value)) {
     if (columnLabel === undefined || columnLabel === null || columnLabel === "") continue;
 
-    const row = findChoiceByLabel<TSurveyMatrixElementChoice>(element.rows, rowLabel, language);
+    const row = findChoiceByLabel<TSurveyMatrixElementChoice>(element.rows, rowLabel, lookupLanguage);
     if (!row) continue;
 
-    // Column labels are localized like the row labels — store the canonical one (ENG-1566)
-    // plus the column id as stable identity (ENG-1673).
-    const canonicalColumn = normalizeChoiceValue(
+    // Column labels are localized like the row labels — store the label as submitted and
+    // attach the column id as stable cross-language identity (ENG-1673).
+    const matchedColumn = normalizeChoiceValue(
       element.columns,
       columnLabel as TResponseDataValue,
-      language
+      lookupLanguage
     );
-    const valueFields = convertValueToHubFields(canonicalColumn.value, mapping.hubFieldType);
+    const valueFields = convertValueToHubFields(matchedColumn.value, mapping.hubFieldType);
 
     records.push({
       ...baseFields,
@@ -216,7 +203,7 @@ const expandMatrixToRecords = (
       field_group_label: groupLabel,
       metadata: { question_type: "matrix" },
       ...valueFields,
-      ...(canonicalColumn.valueId ? { value_id: canonicalColumn.valueId } : {}),
+      ...(matchedColumn.valueId ? { value_id: matchedColumn.valueId } : {}),
     });
   }
 
@@ -227,18 +214,18 @@ const expandRankingToRecords = (
   element: TSurveyRankingElement,
   mapping: TFeedbackSourceFormbricksMapping,
   value: TResponseDataValue,
-  baseFields: BaseRecordFields
+  baseFields: BaseRecordFields,
+  lookupLanguage: string
 ): FeedbackRecordCreateParams[] => {
   if (!Array.isArray(value) || value.length === 0) return [];
 
-  const language = baseFields.language ?? "default";
   const groupLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
   const records: FeedbackRecordCreateParams[] = [];
 
   value.forEach((itemLabel, index) => {
     if (typeof itemLabel !== "string" || itemLabel === "") return;
 
-    const choice = findChoiceByLabel<TSurveyElementChoice>(element.choices, itemLabel, language);
+    const choice = findChoiceByLabel<TSurveyElementChoice>(element.choices, itemLabel, lookupLanguage);
     if (!choice) return;
 
     records.push({
@@ -265,7 +252,7 @@ const expandRankingToRecords = (
  */
 export function transformResponseToFeedbackRecords(
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "blocks">,
+  survey: Pick<TSurvey, "id" | "name" | "blocks" | "languages">,
   mappings: TFeedbackSourceFormbricksMapping[],
   tenantId: string
 ): FeedbackRecordCreateParams[] {
@@ -276,6 +263,10 @@ export function transformResponseToFeedbackRecords(
   const elements = getElementsFromBlocks(survey.blocks);
   const elementMap = new Map(elements.map((el) => [el.id, el]));
   const baseFields = buildBaseFields(response, survey, tenantId);
+  // Responses in the survey's default language may carry its concrete code (e.g. "en-US")
+  // while choice labels store that language under the "default" key — resolve the code to
+  // the label key so choice matching for value_id (ENG-1673) works.
+  const lookupLanguage = getLanguageCode(survey.languages ?? [], response.language ?? null);
   const feedbackRecords: FeedbackRecordCreateParams[] = [];
 
   for (const mapping of surveyMappings) {
@@ -285,12 +276,12 @@ export function transformResponseToFeedbackRecords(
     const element = elementMap.get(mapping.elementId);
 
     if (element?.type === TSurveyElementTypeEnum.Matrix) {
-      feedbackRecords.push(...expandMatrixToRecords(element, mapping, value, baseFields));
+      feedbackRecords.push(...expandMatrixToRecords(element, mapping, value, baseFields, lookupLanguage));
       continue;
     }
 
     if (element?.type === TSurveyElementTypeEnum.Ranking) {
-      feedbackRecords.push(...expandRankingToRecords(element, mapping, value, baseFields));
+      feedbackRecords.push(...expandRankingToRecords(element, mapping, value, baseFields, lookupLanguage));
       continue;
     }
 
@@ -300,7 +291,7 @@ export function transformResponseToFeedbackRecords(
       element?.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
       element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti;
     const normalized = isChoiceElement
-      ? normalizeChoiceValue(element.choices, value, baseFields.language ?? "default")
+      ? normalizeChoiceValue(element.choices, value, lookupLanguage)
       : { value };
 
     const valueFields = convertValueToHubFields(normalized.value, mapping.hubFieldType);
