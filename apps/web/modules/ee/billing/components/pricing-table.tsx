@@ -1092,20 +1092,9 @@ export const PricingTable = ({
             <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
               <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
               {hasBillingRights && (
-                <div className="col-start-2 row-span-2 row-start-1 flex flex-col items-end justify-center gap-1">
-                  <Button variant="secondary" onClick={() => void openTrialPaymentCheckout()}>
-                    {t("workspace.settings.billing.continue_with_plan_after_trial")}
-                  </Button>
-                  <span className="text-xs text-slate-500">
-                    {t("workspace.settings.billing.subscribe_for_price_per_month", {
-                      price: formatMoney(
-                        billingCatalog.pro.monthly.currency,
-                        billingCatalog.pro.monthly.unitAmount,
-                        locale
-                      ),
-                    })}
-                  </span>
-                </div>
+                <AlertButton onClick={() => void openTrialPaymentCheckout()}>
+                  {t("workspace.settings.billing.continue_with_plan_after_trial")}
+                </AlertButton>
               )}
             </TrialAlert>
           ))}
