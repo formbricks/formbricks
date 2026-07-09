@@ -61,10 +61,9 @@ export const WorkflowCanvasNode = memo(
       <div className="flex flex-col items-center">
         <div
           className={cn(
+            // Issues don't tint the card border — the inline alert line below carries the
+            // severity; a second color signal on the frame just adds noise.
             "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
-            // Amber = draft that isn't finished being set up; red = a live workflow that can't
-            // run as configured (same red the survey editor uses for invalid cards).
-            data.issue && (data.issue.severity === "error" ? "border-red-400" : "border-amber-300"),
             selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50"
           )}>
           <Handle type="target" position={Position.Top} className={HANDLE_CLASS_NAMES} />
