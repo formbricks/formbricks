@@ -18,8 +18,9 @@ import type {
   TaxonomyFieldsResponse,
   TaxonomyNode,
   TaxonomyNodeRecordsResponse,
+  TaxonomyRecordCountsResponse,
   TaxonomyRun,
-  TaxonomyScope,
+  TaxonomyScopeInput,
   TaxonomyTreeResponse,
 } from "./types";
 import {
@@ -320,7 +321,7 @@ export const createTaxonomyRun = async (
 };
 
 export const listTaxonomyRuns = async (
-  params: TaxonomyScope & { limit?: number }
+  params: TaxonomyScopeInput & { limit?: number }
 ): Promise<HubResult<ListTaxonomyRunsResponse>> => {
   const client = getHubClient();
   if (!client) {
@@ -352,7 +353,7 @@ export const getTaxonomyRun = async (runId: string, tenantId: string): Promise<H
 };
 
 export const getActiveTaxonomyTree = async (
-  scope: TaxonomyScope
+  scope: TaxonomyScopeInput
 ): Promise<HubResult<TaxonomyTreeResponse>> => {
   const client = getHubClient();
   if (!client) {
@@ -440,6 +441,28 @@ export const listTaxonomyNodeRecords = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, nodeId, tenantId: params.tenant_id }, "Hub: listTaxonomyNodeRecords failed");
+    return createHubResultFromError(err);
+  }
+};
+
+/**
+ * Per-node distinct feedback-record counts (subtree totals) for a taxonomy run — one entry per visible
+ * node. Feeds the tree/records count badges.
+ */
+export const listTaxonomyNodeRecordCounts = async (
+  runId: string,
+  tenantId: string
+): Promise<HubResult<TaxonomyRecordCountsResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.taxonomy.runs.retrieveRecordCounts(runId, { tenant_id: tenantId });
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, runId, tenantId }, "Hub: listTaxonomyNodeRecordCounts failed");
     return createHubResultFromError(err);
   }
 };

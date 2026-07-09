@@ -16,6 +16,7 @@ export const GET = withV3ApiWrapper({
       authentication,
       workspaceId: parsedInput.query.workspaceId,
       directoryId: parsedInput.query.directoryId,
+      scopeType: parsedInput.query.scopeType,
       sourceType: parsedInput.query.sourceType,
       sourceId: parsedInput.query.sourceId,
       fieldId: parsedInput.query.fieldId,

@@ -16,6 +16,7 @@ import { useRemoveTaxonomyNode } from "../hooks/use-remove-taxonomy-node";
 import { useRenameTaxonomyNode } from "../hooks/use-rename-taxonomy-node";
 import { useTaxonomyFields } from "../hooks/use-taxonomy-fields";
 import { NODE_RECORD_LIMIT, useTaxonomyNodeRecords } from "../hooks/use-taxonomy-node-records";
+import { useTaxonomyRecordCounts } from "../hooks/use-taxonomy-record-counts";
 import { useTaxonomyRun } from "../hooks/use-taxonomy-run";
 import { useTaxonomyState } from "../hooks/use-taxonomy-state";
 import { useTriggerTaxonomyRun } from "../hooks/use-trigger-taxonomy-run";
@@ -65,6 +66,9 @@ export const TopicsSubtopicsContainer = ({
   const [selectedFieldKey, setSelectedFieldKey] = useState("");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"view" | "edit">("view");
+  // "directory" = one taxonomy over all open text in the directory (default); "field" = the legacy
+  // per-(source, field) scope, exposed as an advanced toggle in the controls.
+  const [scopeMode, setScopeMode] = useState<"directory" | "field">("directory");
   const [nodeToRemove, setNodeToRemove] = useState<TaxonomyNode | null>(null);
   const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
 
@@ -99,13 +103,21 @@ export const TopicsSubtopicsContainer = ({
   const scopeSourceType = selectedField?.source_type;
   const scopeSourceId = selectedField?.source_id;
   const scopeFieldId = selectedField?.field_id;
-  const scope = useMemo<TTaxonomyScopeSelection | null>(
-    () =>
-      scopeSourceType !== undefined && scopeSourceId !== undefined && scopeFieldId !== undefined
-        ? { directoryId, sourceType: scopeSourceType, sourceId: scopeSourceId, fieldId: scopeFieldId }
-        : null,
-    [directoryId, scopeSourceType, scopeSourceId, scopeFieldId]
-  );
+  const scope = useMemo<TTaxonomyScopeSelection | null>(() => {
+    if (scopeMode === "directory") {
+      return { directoryId, scopeType: "directory" };
+    }
+    if (scopeSourceType !== undefined && scopeSourceId !== undefined && scopeFieldId !== undefined) {
+      return {
+        directoryId,
+        scopeType: "field",
+        sourceType: scopeSourceType,
+        sourceId: scopeSourceId,
+        fieldId: scopeFieldId,
+      };
+    }
+    return null;
+  }, [scopeMode, directoryId, scopeSourceType, scopeSourceId, scopeFieldId]);
 
   // Default the source/field selection to the first available field once fields load (or when the
   // current selection is no longer valid, e.g. after switching directory).
@@ -135,6 +147,7 @@ export const TopicsSubtopicsContainer = ({
 
   const stateQuery = useTaxonomyState({ workspaceId, scope });
   const activeTree = stateQuery.data?.activeTree ?? null;
+  const activeRunId = activeTree?.run.id ?? null;
   const runs = useMemo(() => stateQuery.data?.runs ?? [], [stateQuery.data]);
   const latestRun = runs[0] ?? null;
   const runningRunId =
@@ -162,6 +175,18 @@ export const TopicsSubtopicsContainer = ({
 
   const nodeRecordsQuery = useTaxonomyNodeRecords({ workspaceId, directoryId, nodeId: selectedNodeId });
 
+  // Per-node subtree record counts for the active run, as a node-id → count lookup for the tree/records
+  // badges. Keyed on the run id, so a fresh run loads new counts automatically; a node remove that
+  // shifts ancestor totals is reconciled by invalidating this query (see handleConfirmRemove).
+  const recordCountsQuery = useTaxonomyRecordCounts({ workspaceId, directoryId, runId: activeRunId });
+  const recordCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const entry of recordCountsQuery.data ?? []) {
+      map.set(entry.node_id, entry.record_count);
+    }
+    return map;
+  }, [recordCountsQuery.data]);
+
   const triggerMutation = useTriggerTaxonomyRun({ workspaceId, scope });
   const renameMutation = useRenameTaxonomyNode({ workspaceId, scope });
   const removeMutation = useRemoveTaxonomyNode({ workspaceId, scope });
@@ -175,8 +200,15 @@ export const TopicsSubtopicsContainer = ({
   }, [runStatus, queryClient, workspaceId, scope]);
 
   const isRunning = runningRunId !== null || triggerMutation.isPending;
-  const canGenerate = Boolean(selectedField && canWrite && !isRunning);
+  // Directory scope always has a target; field scope needs a selected field.
+  const canGenerate = canWrite && !isRunning && (scopeMode === "directory" || selectedField !== null);
   const hasActiveTree = Boolean(activeTree?.root?.children?.length);
+  // Counts under the scope toggle: directory mode shows the whole-directory totals (summed across all
+  // fields), field mode shows the selected field's own counts.
+  const displayEmbeddedCount =
+    scopeMode === "directory" ? gate.totalEmbeddedRecords : (selectedField?.embedding_count ?? 0);
+  const displayTextRecordCount =
+    scopeMode === "directory" ? gate.totalOpenTextRecords : (selectedField?.record_count ?? 0);
   const runFailure =
     latestRun?.status === "failed"
       ? (latestRun.error ?? runFailureMessageFromCode(latestRun.error_code, t))
@@ -190,7 +222,7 @@ export const TopicsSubtopicsContainer = ({
 
   const handleGenerate = () => {
     triggerMutation.mutate(
-      { fieldLabel: selectedField?.field_label },
+      { fieldLabel: scopeMode === "field" ? selectedField?.field_label : undefined },
       {
         onSuccess: (data) =>
           toast.success(
@@ -231,7 +263,15 @@ export const TopicsSubtopicsContainer = ({
     removeMutation.mutate(
       { nodeId: id },
       {
-        onSuccess: () => toast.success(t("workspace.unify.taxonomy_remove_success")),
+        onSuccess: async () => {
+          toast.success(t("workspace.unify.taxonomy_remove_success"));
+          // Removing a node shifts its ancestors' subtree totals; refetch counts for the active run.
+          if (activeRunId) {
+            await queryClient.invalidateQueries({
+              queryKey: taxonomyKeys.recordCounts(workspaceId, directoryId, activeRunId),
+            });
+          }
+        },
         onError: (error) =>
           toast.error(getV3ApiErrorMessage(error, t("workspace.unify.taxonomy_remove_failed"))),
       }
@@ -273,6 +313,8 @@ export const TopicsSubtopicsContainer = ({
           directoryIds={directoryIds}
           directoryId={directoryId}
           onDirectoryChange={setDirectoryId}
+          scopeMode={scopeMode}
+          onScopeModeChange={setScopeMode}
           sourceOptions={sourceOptions}
           selectedSourceKey={selectedSourceKey}
           onSourceChange={handleSourceChange}
@@ -280,6 +322,8 @@ export const TopicsSubtopicsContainer = ({
           selectedFieldKey={selectedFieldKey}
           onFieldChange={setSelectedFieldKey}
           selectedField={selectedField}
+          embeddedCount={displayEmbeddedCount}
+          textRecordCount={displayTextRecordCount}
           isLoadingFields={fieldsQuery.isLoading}
           hasActiveTree={hasActiveTree}
           canGenerate={canGenerate}
@@ -337,6 +381,7 @@ export const TopicsSubtopicsContainer = ({
           onSelectNode={(node) => setSelectedNodeId(node.id)}
           onRenameNode={handleRenameNode}
           onRequestRemoveNode={handleRequestRemove}
+          recordCounts={recordCounts}
           records={nodeRecordsQuery.data?.records ?? []}
           recordsLimit={nodeRecordsQuery.data?.limit ?? NODE_RECORD_LIMIT}
           isLoadingRecords={nodeRecordsQuery.isLoading}

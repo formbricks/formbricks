@@ -12,11 +12,13 @@ import {
   getActiveTaxonomyTree,
   getTaxonomyRun,
   listTaxonomyFields,
+  listTaxonomyNodeRecordCounts,
   listTaxonomyNodeRecords,
   listTaxonomyRuns,
   removeTaxonomyNode,
   renameTaxonomyNode,
 } from "@/modules/hub/service";
+import type { TaxonomyScopeInput, TaxonomyScopeType } from "@/modules/hub/types";
 import { getSessionUserId, requireUnifyDirectoryAccess } from "./access";
 
 type TBaseParams = {
@@ -26,6 +28,30 @@ type TBaseParams = {
   requestId: string;
   instance: string;
 };
+
+/**
+ * Build the Hub scope for a request. Directory scope sends only `scope_type` (covers all text feedback
+ * in the directory); field scope adds source/field. `sourceId` may be "" — the "no source" bucket.
+ * Field-scope params are guaranteed present by the route schema's `requireFieldScopeParams` refine.
+ */
+function buildTaxonomyScope(
+  directoryId: string,
+  scopeType: TaxonomyScopeType,
+  sourceType?: string,
+  sourceId?: string,
+  fieldId?: string
+): TaxonomyScopeInput {
+  if (scopeType === "directory") {
+    return { tenant_id: directoryId, scope_type: "directory" };
+  }
+  return {
+    tenant_id: directoryId,
+    scope_type: "field",
+    source_type: sourceType,
+    source_id: sourceId ?? "",
+    field_id: fieldId,
+  };
+}
 
 /**
  * `fields` and `state` return 200 with an `unavailable` flag on Hub error / NO_CONFIG (mirroring the
@@ -62,10 +88,24 @@ export async function listV3TaxonomyFields(params: TBaseParams): Promise<Respons
 }
 
 export async function getV3TaxonomyState(
-  params: TBaseParams & { sourceType: string; sourceId: string; fieldId: string }
+  params: TBaseParams & {
+    scopeType: TaxonomyScopeType;
+    sourceType?: string;
+    sourceId?: string;
+    fieldId?: string;
+  }
 ): Promise<Response> {
-  const { authentication, workspaceId, directoryId, sourceType, sourceId, fieldId, requestId, instance } =
-    params;
+  const {
+    authentication,
+    workspaceId,
+    directoryId,
+    scopeType,
+    sourceType,
+    sourceId,
+    fieldId,
+    requestId,
+    instance,
+  } = params;
 
   const access = await requireUnifyDirectoryAccess(
     authentication,
@@ -77,12 +117,7 @@ export async function getV3TaxonomyState(
   );
   if (access instanceof Response) return access;
 
-  const scope = {
-    tenant_id: directoryId,
-    source_type: sourceType,
-    source_id: sourceId,
-    field_id: fieldId,
-  };
+  const scope = buildTaxonomyScope(directoryId, scopeType, sourceType, sourceId, fieldId);
 
   const [activeTree, runs] = await Promise.all([
     getActiveTaxonomyTree(scope),
@@ -137,13 +172,43 @@ export async function getV3TaxonomyRun(params: TBaseParams & { runId: string }):
   return successResponse(result.data, { requestId });
 }
 
+export async function getV3TaxonomyNodeRecordCounts(
+  params: TBaseParams & { runId: string }
+): Promise<Response> {
+  const { authentication, workspaceId, directoryId, runId, requestId, instance } = params;
+
+  const access = await requireUnifyDirectoryAccess(
+    authentication,
+    workspaceId,
+    directoryId,
+    "read",
+    requestId,
+    instance
+  );
+  if (access instanceof Response) return access;
+
+  const result = await listTaxonomyNodeRecordCounts(runId, directoryId);
+  if (result.error || !result.data) {
+    return problemBadGateway(requestId, result.error?.message || "Failed to load record counts", instance);
+  }
+
+  return successResponse({ counts: result.data.counts }, { requestId });
+}
+
 export async function triggerV3TaxonomyRun(
-  params: TBaseParams & { sourceType: string; sourceId: string; fieldId: string; fieldLabel?: string }
+  params: TBaseParams & {
+    scopeType: TaxonomyScopeType;
+    sourceType?: string;
+    sourceId?: string;
+    fieldId?: string;
+    fieldLabel?: string;
+  }
 ): Promise<Response> {
   const {
     authentication,
     workspaceId,
     directoryId,
+    scopeType,
     sourceType,
     sourceId,
     fieldId,
@@ -166,11 +231,9 @@ export async function triggerV3TaxonomyRun(
   if (!actorId) return problemUnauthorized(requestId, "Session required", instance);
 
   const result = await createTaxonomyRun({
-    tenant_id: directoryId,
-    source_type: sourceType,
-    source_id: sourceId,
-    field_id: fieldId,
-    field_label: fieldLabel,
+    ...buildTaxonomyScope(directoryId, scopeType, sourceType, sourceId, fieldId),
+    // field_label is a field-scope nicety; directory runs derive their own label on the Hub side.
+    field_label: scopeType === "field" ? fieldLabel : undefined,
     actor_id: actorId,
   });
   if (result.error || !result.data) {

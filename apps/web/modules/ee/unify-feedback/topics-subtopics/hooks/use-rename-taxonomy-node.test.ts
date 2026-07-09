@@ -20,6 +20,7 @@ const createQueryClient = () =>
 
 const scope: TTaxonomyScopeSelection = {
   directoryId: "d",
+  scopeType: "field",
   sourceType: "survey",
   sourceId: "",
   fieldId: "q1",

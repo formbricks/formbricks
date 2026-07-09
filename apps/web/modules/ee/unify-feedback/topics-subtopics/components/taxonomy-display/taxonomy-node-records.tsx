@@ -25,6 +25,8 @@ interface TaxonomyNodeRecordsProps {
   node: TaxonomyNode | null;
   records: FeedbackRecordData[];
   limit: number;
+  /** Subtree record total for the selected node; undefined while counts load. */
+  recordCount?: number;
   isLoading: boolean;
   isFetching: boolean;
   isError: boolean;
@@ -36,6 +38,7 @@ export const TaxonomyNodeRecords = ({
   node,
   records,
   limit,
+  recordCount,
   isLoading,
   isFetching,
   isError,
@@ -61,7 +64,7 @@ export const TaxonomyNodeRecords = ({
             <h2 className="min-w-0 truncate text-sm font-semibold text-slate-900">
               {node ? node.label : t("workspace.unify.feedback_records")}
             </h2>
-            {node && <RecordCountPlaceholder />}
+            {node && <RecordCountPlaceholder count={recordCount} />}
           </div>
           {node?.description && (
             <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{node.description}</p>

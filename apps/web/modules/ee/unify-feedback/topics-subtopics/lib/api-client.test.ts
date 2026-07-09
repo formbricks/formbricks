@@ -78,7 +78,7 @@ describe("removeTaxonomyNode", () => {
 });
 
 describe("getTaxonomyState", () => {
-  test("forwards the full scope (incl. the empty sourceId) and returns body.data", async () => {
+  test("field scope forwards source/field (incl. the empty sourceId) and returns body.data", async () => {
     const state = { activeTree: null, runs: [], unavailable: false };
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: state }));
     vi.stubGlobal("fetch", fetchMock);
@@ -86,6 +86,7 @@ describe("getTaxonomyState", () => {
     const result = await getTaxonomyState({
       workspaceId: "w",
       directoryId: "d",
+      scopeType: "field",
       sourceType: "survey",
       sourceId: "",
       fieldId: "q1",
@@ -93,7 +94,20 @@ describe("getTaxonomyState", () => {
 
     expect(result).toEqual(state);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v3/unify-feedback/taxonomy/state?workspaceId=w&directoryId=d&sourceType=survey&sourceId=&fieldId=q1",
+      "/api/v3/unify-feedback/taxonomy/state?workspaceId=w&directoryId=d&scopeType=field&sourceType=survey&sourceId=&fieldId=q1",
+      expect.objectContaining({ method: "GET", cache: "no-store" })
+    );
+  });
+
+  test("directory scope sends only scope_type, no source/field params", async () => {
+    const state = { activeTree: null, runs: [], unavailable: false };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: state }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getTaxonomyState({ workspaceId: "w", directoryId: "d", scopeType: "directory" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/unify-feedback/taxonomy/state?workspaceId=w&directoryId=d&scopeType=directory",
       expect.objectContaining({ method: "GET", cache: "no-store" })
     );
   });
@@ -126,25 +140,52 @@ describe("getTaxonomyNodeRecords (error path)", () => {
 });
 
 describe("triggerTaxonomyRun", () => {
-  test("POSTs the scope as JSON and returns body.data", async () => {
-    const params = {
-      workspaceId: "w",
-      directoryId: "d",
-      sourceType: "survey",
-      sourceId: "",
-      fieldId: "q1",
-      fieldLabel: "Q1",
-    };
+  test("field scope POSTs source/field + fieldLabel and returns body.data", async () => {
     const payload = { run: { id: "run-1" }, inProgress: true };
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: payload }));
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await triggerTaxonomyRun(params);
+    const result = await triggerTaxonomyRun({
+      workspaceId: "w",
+      directoryId: "d",
+      scopeType: "field",
+      sourceType: "survey",
+      sourceId: "",
+      fieldId: "q1",
+      fieldLabel: "Q1",
+    });
 
     expect(result).toEqual(payload);
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v3/unify-feedback/taxonomy/runs",
-      expect.objectContaining({ method: "POST", body: JSON.stringify(params) })
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          workspaceId: "w",
+          directoryId: "d",
+          scopeType: "field",
+          sourceType: "survey",
+          sourceId: "",
+          fieldId: "q1",
+          fieldLabel: "Q1",
+        }),
+      })
+    );
+  });
+
+  test("directory scope POSTs only scope_type (no source/field/fieldLabel)", async () => {
+    const payload = { run: { id: "run-2" }, inProgress: false };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: payload }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await triggerTaxonomyRun({ workspaceId: "w", directoryId: "d", scopeType: "directory" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/unify-feedback/taxonomy/runs",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ workspaceId: "w", directoryId: "d", scopeType: "directory" }),
+      })
     );
   });
 

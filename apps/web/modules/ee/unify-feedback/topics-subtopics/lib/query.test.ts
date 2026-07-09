@@ -5,6 +5,7 @@ import { type TTaxonomyScopeSelection, removeNodeFromStateData, taxonomyKeys } f
 
 const scope: TTaxonomyScopeSelection = {
   directoryId: "d",
+  scopeType: "field",
   sourceType: "survey",
   sourceId: "",
   fieldId: "q1",

@@ -24,6 +24,7 @@ interface TaxonomyDisplayProps {
   onSelectNode: (node: TaxonomyNode) => void;
   onRenameNode: (nodeId: string, label: string) => Promise<void>;
   onRequestRemoveNode: (node: TaxonomyNode) => void;
+  recordCounts?: Map<string, number>;
   records: FeedbackRecordData[];
   recordsLimit: number;
   isLoadingRecords: boolean;
@@ -55,6 +56,7 @@ export const TaxonomyDisplay = ({
   onSelectNode,
   onRenameNode,
   onRequestRemoveNode,
+  recordCounts,
   records,
   recordsLimit,
   isLoadingRecords,
@@ -91,6 +93,7 @@ export const TaxonomyDisplay = ({
             root={activeTree.root}
             selectedNodeId={selectedNodeId}
             editMode={editMode}
+            recordCounts={recordCounts}
             onSelect={onSelectNode}
             onRename={onRenameNode}
             onRequestRemove={onRequestRemoveNode}
@@ -144,6 +147,7 @@ export const TaxonomyDisplay = ({
         node={selectedNode}
         records={records}
         limit={recordsLimit}
+        recordCount={selectedNode ? recordCounts?.get(selectedNode.id) : undefined}
         isLoading={isLoadingRecords}
         isFetching={isFetchingRecords}
         isError={isRecordsError}

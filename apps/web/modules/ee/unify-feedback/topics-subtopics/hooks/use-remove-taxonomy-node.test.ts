@@ -20,6 +20,7 @@ function createWrapper(queryClient: QueryClient) {
 const workspaceId = "w";
 const scope: TTaxonomyScopeSelection = {
   directoryId: "d",
+  scopeType: "field",
   sourceType: "survey",
   sourceId: "",
   fieldId: "q1",

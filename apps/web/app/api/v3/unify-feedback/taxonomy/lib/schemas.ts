@@ -15,6 +15,24 @@ const sourceType = z.string().trim().min(1).max(255);
 const sourceId = z.string().trim().max(255);
 const fieldId = z.string().trim().min(1).max(255);
 const label = z.string().trim().min(1).max(1000);
+const scopeType = z.enum(["field", "directory"]).default("field");
+
+/**
+ * Field scope needs source_type + field_id; directory scope (all text feedback in the directory) takes
+ * neither. Enforce that here so the Hub never receives a half-specified field scope.
+ */
+const requireFieldScopeParams = (
+  val: { scopeType: "field" | "directory"; sourceType?: string; fieldId?: string },
+  ctx: z.RefinementCtx
+): void => {
+  if (val.scopeType !== "field") return;
+  if (!val.sourceType) {
+    ctx.addIssue({ code: "custom", path: ["sourceType"], message: "sourceType is required for field scope" });
+  }
+  if (!val.fieldId) {
+    ctx.addIssue({ code: "custom", path: ["fieldId"], message: "fieldId is required for field scope" });
+  }
+};
 
 export const ZWorkspaceDirectoryQuery = z
   .object({
@@ -27,11 +45,13 @@ export const ZTaxonomyStateQuery = z
   .object({
     workspaceId,
     directoryId,
-    sourceType,
-    sourceId,
-    fieldId,
+    scopeType,
+    sourceType: sourceType.optional(),
+    sourceId: sourceId.optional(),
+    fieldId: fieldId.optional(),
   })
-  .strict();
+  .strict()
+  .superRefine(requireFieldScopeParams);
 
 export const ZNodeRecordsQuery = z
   .object({
@@ -45,12 +65,14 @@ export const ZTriggerRunBody = z
   .object({
     workspaceId,
     directoryId,
-    sourceType,
-    sourceId,
-    fieldId,
+    scopeType,
+    sourceType: sourceType.optional(),
+    sourceId: sourceId.optional(),
+    fieldId: fieldId.optional(),
     fieldLabel: z.string().trim().max(1000).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine(requireFieldScopeParams);
 
 export const ZRenameNodeBody = z
   .object({

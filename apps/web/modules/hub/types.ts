@@ -29,6 +29,21 @@ export type TaxonomyScope = {
   field_id: string;
 };
 
+export type TaxonomyScopeType = "field" | "directory";
+
+/**
+ * Scope used to address taxonomy reads/writes. `field` scope carries source/field; `directory` scope
+ * (`scope_type: "directory"`) covers all text feedback in the tenant and omits source/field entirely
+ * (the Hub rejects source/field params for directory scope).
+ */
+export type TaxonomyScopeInput = {
+  tenant_id: string;
+  scope_type?: TaxonomyScopeType;
+  source_type?: string;
+  source_id?: string;
+  field_id?: string;
+};
+
 export type TaxonomyFieldOption = TaxonomyScope & {
   source_name?: string;
   field_label?: string;
@@ -47,6 +62,7 @@ export type TaxonomyRunFailureCode =
 
 export type TaxonomyRun = TaxonomyScope & {
   id: string;
+  scope_type?: TaxonomyScopeType;
   field_label?: string;
   status: TaxonomyRunStatus;
   params?: Record<string, unknown>;
@@ -86,7 +102,7 @@ export type TaxonomyFieldsResponse = {
   data: TaxonomyFieldOption[];
 };
 
-export type CreateTaxonomyRunInput = TaxonomyScope & {
+export type CreateTaxonomyRunInput = TaxonomyScopeInput & {
   field_label?: string;
   actor_id?: string;
 };
@@ -114,4 +130,15 @@ export type RenameTaxonomyNodeInput = {
 export type TaxonomyNodeRecordsResponse = {
   data: FeedbackRecordData[];
   limit: number;
+};
+
+/** Distinct feedback-record count for a taxonomy node's subtree (node + its visible descendants). */
+export type TaxonomyNodeRecordCount = {
+  node_id: string;
+  record_count: number;
+};
+
+/** Per-node record counts for a taxonomy run — one entry per visible node, subtree totals. */
+export type TaxonomyRecordCountsResponse = {
+  counts: TaxonomyNodeRecordCount[];
 };

@@ -54,6 +54,19 @@ describe("ZTaxonomyStateQuery", () => {
       }).success
     ).toBe(false);
   });
+
+  test("defaults scopeType to field", () => {
+    expect(
+      ZTaxonomyStateQuery.parse({ workspaceId, directoryId, sourceType: "survey", fieldId: "q1" }).scopeType
+    ).toBe("field");
+  });
+
+  test("directory scope parses with no source/field", () => {
+    const result = ZTaxonomyStateQuery.parse({ workspaceId, directoryId, scopeType: "directory" });
+    expect(result.scopeType).toBe("directory");
+    expect(result.sourceType).toBeUndefined();
+    expect(result.fieldId).toBeUndefined();
+  });
 });
 
 describe("ZNodeRecordsQuery", () => {
@@ -79,6 +92,12 @@ describe("ZTriggerRunBody", () => {
         fieldLabel: "Question 1",
       }).fieldLabel
     ).toBe("Question 1");
+  });
+
+  test("directory scope parses with no source/field", () => {
+    expect(ZTriggerRunBody.parse({ workspaceId, directoryId, scopeType: "directory" }).scopeType).toBe(
+      "directory"
+    );
   });
 });
 

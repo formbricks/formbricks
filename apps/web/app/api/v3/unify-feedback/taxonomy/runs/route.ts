@@ -16,6 +16,7 @@ export const POST = withV3ApiWrapper({
       authentication,
       workspaceId: parsedInput.body.workspaceId,
       directoryId: parsedInput.body.directoryId,
+      scopeType: parsedInput.body.scopeType,
       sourceType: parsedInput.body.sourceType,
       sourceId: parsedInput.body.sourceId,
       fieldId: parsedInput.body.fieldId,

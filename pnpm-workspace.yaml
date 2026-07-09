@@ -88,3 +88,4 @@ nodeLinker: hoisted
 saveExact: true
 minimumReleaseAgeExclude:
   - '@formbricks/hub@0.6.0'
+  - '@formbricks/hub@0.9.0'

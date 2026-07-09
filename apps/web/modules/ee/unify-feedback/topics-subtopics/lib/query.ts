@@ -1,12 +1,18 @@
-import type { TaxonomyNode } from "@/modules/hub/types";
+import type { TaxonomyNode, TaxonomyScopeType } from "@/modules/hub/types";
 import type { TTaxonomyStateResponse } from "./api-client";
 
-/** A fully-selected taxonomy scope (directory + source + field) that a tree/records query keys on. */
+/**
+ * A selected taxonomy scope that tree/records/run queries key on. Directory scope
+ * (`scopeType: "directory"`) covers all text feedback in the directory and omits source/field;
+ * field scope carries all three. The whole object is part of the query key, so the two variants
+ * cache independently.
+ */
 export type TTaxonomyScopeSelection = {
   directoryId: string;
-  sourceType: string;
-  sourceId: string;
-  fieldId: string;
+  scopeType: TaxonomyScopeType;
+  sourceType?: string;
+  sourceId?: string;
+  fieldId?: string;
 };
 
 /** Typed query-key factory. Never inline string keys — mutation hooks target these exact tuples. */
@@ -21,6 +27,8 @@ export const taxonomyKeys = {
     [...taxonomyCacheKeyBase, "run", workspaceId, directoryId, runId] as const,
   nodeRecords: (workspaceId: string, directoryId: string, nodeId: string, limit: number) =>
     [...taxonomyCacheKeyBase, "node-records", workspaceId, directoryId, nodeId, limit] as const,
+  recordCounts: (workspaceId: string, directoryId: string, runId: string) =>
+    [...taxonomyCacheKeyBase, "record-counts", workspaceId, directoryId, runId] as const,
 };
 
 function removeNodeFromTree(node: TaxonomyNode, nodeId: string): TaxonomyNode | null {

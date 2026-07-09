@@ -12,6 +12,8 @@ interface TaxonomyTreeProps {
   root: TaxonomyNode;
   selectedNodeId: string | null;
   editMode: boolean;
+  /** Per-node subtree record counts, keyed by node id. Undefined entries render a loading dash. */
+  recordCounts?: Map<string, number>;
   onSelect: (node: TaxonomyNode) => void;
   /** Resolves on success (editor closes) and rejects on failure (editor stays open; caller toasts). */
   onRename: (nodeId: string, label: string) => Promise<void>;
@@ -24,6 +26,7 @@ export const TaxonomyTree = ({
   root,
   selectedNodeId,
   editMode,
+  recordCounts,
   onSelect,
   onRename,
   onRequestRemove,
@@ -60,6 +63,7 @@ export const TaxonomyTree = ({
           expandedIds={expandedIds}
           selectedNodeId={selectedNodeId}
           editMode={editMode}
+          recordCounts={recordCounts}
           renamingId={renamingId}
           onToggleExpand={toggleExpand}
           onSelect={handleSelect}
@@ -79,6 +83,7 @@ interface TaxonomyTreeRowProps {
   expandedIds: Set<string>;
   selectedNodeId: string | null;
   editMode: boolean;
+  recordCounts?: Map<string, number>;
   renamingId: string | null;
   onToggleExpand: (id: string) => void;
   onSelect: (node: TaxonomyNode) => void;
@@ -94,6 +99,7 @@ const TaxonomyTreeRow = ({
   expandedIds,
   selectedNodeId,
   editMode,
+  recordCounts,
   renamingId,
   onToggleExpand,
   onSelect,
@@ -154,7 +160,7 @@ const TaxonomyTreeRow = ({
               onClick={() => onSelect(node)}>
               {node.label}
             </button>
-            <RecordCountPlaceholder />
+            <RecordCountPlaceholder count={recordCounts?.get(node.id)} />
             {editMode && (
               <div
                 className={cn(
@@ -197,6 +203,7 @@ const TaxonomyTreeRow = ({
               expandedIds={expandedIds}
               selectedNodeId={selectedNodeId}
               editMode={editMode}
+              recordCounts={recordCounts}
               renamingId={renamingId}
               onToggleExpand={onToggleExpand}
               onSelect={onSelect}

@@ -3,6 +3,7 @@
 import { PlayIcon, RefreshCwIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import type { TaxonomyFieldOption } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -21,6 +22,8 @@ interface TaxonomyControlsProps {
   directoryIds: string[];
   directoryId: string;
   onDirectoryChange: (id: string) => void;
+  scopeMode: "directory" | "field";
+  onScopeModeChange: (mode: "directory" | "field") => void;
   sourceOptions: TaxonomyFieldOption[];
   selectedSourceKey: string;
   onSourceChange: (key: string) => void;
@@ -28,6 +31,9 @@ interface TaxonomyControlsProps {
   selectedFieldKey: string;
   onFieldChange: (key: string) => void;
   selectedField: TaxonomyFieldOption | null;
+  /** Counts shown under the scope toggle: directory totals in directory mode, else the field's own. */
+  embeddedCount: number;
+  textRecordCount: number;
   isLoadingFields: boolean;
   hasActiveTree: boolean;
   canGenerate: boolean;
@@ -48,6 +54,8 @@ export const TaxonomyControls = ({
   directoryIds,
   directoryId,
   onDirectoryChange,
+  scopeMode,
+  onScopeModeChange,
   sourceOptions,
   selectedSourceKey,
   onSourceChange,
@@ -55,6 +63,8 @@ export const TaxonomyControls = ({
   selectedFieldKey,
   onFieldChange,
   selectedField,
+  embeddedCount,
+  textRecordCount,
   isLoadingFields,
   hasActiveTree,
   canGenerate,
@@ -81,7 +91,7 @@ export const TaxonomyControls = ({
         {directoryIds.length > 1 && (
           <Selector label={t("workspace.unify.feedback_directory")}>
             <Select value={directoryId} onValueChange={onDirectoryChange} disabled={isLoadingFields}>
-              <SelectTrigger>
+              <SelectTrigger className="[&>span]:min-w-0 [&>span]:truncate">
                 <SelectValue placeholder={t("workspace.unify.select_feedback_directory")} />
               </SelectTrigger>
               <SelectContent>
@@ -95,42 +105,71 @@ export const TaxonomyControls = ({
           </Selector>
         )}
 
-        <Selector label={t("workspace.unify.taxonomy_source")}>
-          <Select
-            value={selectedSourceKey}
-            onValueChange={onSourceChange}
-            disabled={sourceOptions.length === 0 || isLoadingFields}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("workspace.unify.taxonomy_select_source")} />
-            </SelectTrigger>
-            <SelectContent>
-              {sourceOptions.map((field) => (
-                <SelectItem key={sourceKey(field)} value={sourceKey(field)}>
-                  {field.source_name || field.source_id || t("workspace.unify.taxonomy_no_source")} (
-                  {field.source_type})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Selector>
+        {/* Scope: default to one taxonomy over all open text in the directory; "Specific field" reveals
+         * the legacy source/field pickers. */}
+        <div className="min-w-0 space-y-1">
+          <span className="block text-xs font-medium text-slate-600">
+            {t("workspace.unify.taxonomy_scope_label")}
+          </span>
+          <div className="inline-flex rounded-md border border-slate-200 p-0.5">
+            {(["directory", "field"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                disabled={isLoadingFields}
+                className={cn(
+                  "rounded px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50",
+                  scopeMode === mode ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
+                )}
+                onClick={() => onScopeModeChange(mode)}>
+                {mode === "directory"
+                  ? t("workspace.unify.taxonomy_scope_directory")
+                  : t("workspace.unify.taxonomy_scope_field")}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <Selector label={t("workspace.unify.taxonomy_field")}>
-          <Select
-            value={selectedFieldKey}
-            onValueChange={onFieldChange}
-            disabled={filteredFields.length === 0 || isLoadingFields}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("workspace.unify.taxonomy_select_field")} />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredFields.map((field) => (
-                <SelectItem key={fieldKey(field)} value={fieldKey(field)}>
-                  {field.field_label || field.field_id} ({field.embedding_count}/{field.record_count})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Selector>
+        {scopeMode === "field" && (
+          <>
+            <Selector label={t("workspace.unify.taxonomy_source")}>
+              <Select
+                value={selectedSourceKey}
+                onValueChange={onSourceChange}
+                disabled={sourceOptions.length === 0 || isLoadingFields}>
+                <SelectTrigger className="[&>span]:min-w-0 [&>span]:truncate">
+                  <SelectValue placeholder={t("workspace.unify.taxonomy_select_source")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {sourceOptions.map((field) => (
+                    <SelectItem key={sourceKey(field)} value={sourceKey(field)}>
+                      {field.source_name || field.source_id || t("workspace.unify.taxonomy_no_source")} (
+                      {field.source_type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Selector>
+
+            <Selector label={t("workspace.unify.taxonomy_field")}>
+              <Select
+                value={selectedFieldKey}
+                onValueChange={onFieldChange}
+                disabled={filteredFields.length === 0 || isLoadingFields}>
+                <SelectTrigger className="[&>span]:min-w-0 [&>span]:truncate">
+                  <SelectValue placeholder={t("workspace.unify.taxonomy_select_field")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredFields.map((field) => (
+                    <SelectItem key={fieldKey(field)} value={fieldKey(field)}>
+                      {field.field_label || field.field_id} ({field.embedding_count}/{field.record_count})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Selector>
+          </>
+        )}
 
         <div className="flex shrink-0 items-center gap-2">
           <Button
@@ -147,17 +186,15 @@ export const TaxonomyControls = ({
         </div>
       </div>
 
-      {selectedField && (
+      {(scopeMode === "directory" || selectedField) && (
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
           <Badge
-            text={t("workspace.unify.taxonomy_embedded_records_short", {
-              count: selectedField.embedding_count,
-            })}
+            text={t("workspace.unify.taxonomy_embedded_records_short", { count: embeddedCount })}
             type="gray"
             size="tiny"
           />
           <Badge
-            text={t("workspace.unify.taxonomy_text_records_short", { count: selectedField.record_count })}
+            text={t("workspace.unify.taxonomy_text_records_short", { count: textRecordCount })}
             type="gray"
             size="tiny"
           />

@@ -17,14 +17,7 @@ export const useTriggerTaxonomyRun = ({
       if (!scope) {
         throw new InvalidInputError("scope is required");
       }
-      return triggerTaxonomyRun({
-        workspaceId,
-        directoryId: scope.directoryId,
-        sourceType: scope.sourceType,
-        sourceId: scope.sourceId,
-        fieldId: scope.fieldId,
-        fieldLabel: variables.fieldLabel,
-      });
+      return triggerTaxonomyRun({ workspaceId, ...scope, fieldLabel: variables.fieldLabel });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: taxonomyKeys.state(workspaceId, scope) }),
   });

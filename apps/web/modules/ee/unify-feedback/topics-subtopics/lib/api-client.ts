@@ -3,7 +3,9 @@ import type {
   FeedbackRecordData,
   TaxonomyFieldOption,
   TaxonomyNode,
+  TaxonomyNodeRecordCount,
   TaxonomyRun,
+  TaxonomyScopeType,
   TaxonomyTreeResponse,
 } from "@/modules/hub/types";
 
@@ -61,19 +63,23 @@ export async function getTaxonomyFields(params: {
 export async function getTaxonomyState(params: {
   workspaceId: string;
   directoryId: string;
-  sourceType: string;
-  sourceId: string;
-  fieldId: string;
+  scopeType: TaxonomyScopeType;
+  sourceType?: string;
+  sourceId?: string;
+  fieldId?: string;
   signal?: AbortSignal;
 }): Promise<TTaxonomyStateResponse> {
   const query = new URLSearchParams({
     workspaceId: params.workspaceId,
     directoryId: params.directoryId,
-    sourceType: params.sourceType,
-    // sourceId may be the empty "no source" bucket — URLSearchParams still emits `sourceId=`.
-    sourceId: params.sourceId,
-    fieldId: params.fieldId,
+    scopeType: params.scopeType,
   });
+  if (params.scopeType === "field") {
+    query.set("sourceType", params.sourceType ?? "");
+    // sourceId may be the empty "no source" bucket — URLSearchParams still emits `sourceId=`.
+    query.set("sourceId", params.sourceId ?? "");
+    query.set("fieldId", params.fieldId ?? "");
+  }
   return getData<TTaxonomyStateResponse>(`${BASE_PATH}/state?${query.toString()}`, params.signal);
 }
 
@@ -91,6 +97,23 @@ export async function getTaxonomyRun(params: {
     `${BASE_PATH}/runs/${encodeURIComponent(params.runId)}?${query.toString()}`,
     params.signal
   );
+}
+
+export async function getTaxonomyRecordCounts(params: {
+  workspaceId: string;
+  directoryId: string;
+  runId: string;
+  signal?: AbortSignal;
+}): Promise<TaxonomyNodeRecordCount[]> {
+  const query = new URLSearchParams({
+    workspaceId: params.workspaceId,
+    directoryId: params.directoryId,
+  });
+  const data = await getData<{ counts: TaxonomyNodeRecordCount[] }>(
+    `${BASE_PATH}/runs/${encodeURIComponent(params.runId)}/record-counts?${query.toString()}`,
+    params.signal
+  );
+  return data.counts;
 }
 
 export async function getTaxonomyNodeRecords(params: {
@@ -119,16 +142,26 @@ export async function getTaxonomyNodeRecords(params: {
 export async function triggerTaxonomyRun(params: {
   workspaceId: string;
   directoryId: string;
-  sourceType: string;
-  sourceId: string;
-  fieldId: string;
+  scopeType: TaxonomyScopeType;
+  sourceType?: string;
+  sourceId?: string;
+  fieldId?: string;
   fieldLabel?: string;
 }): Promise<TTriggerRunResponse> {
+  const body = {
+    workspaceId: params.workspaceId,
+    directoryId: params.directoryId,
+    scopeType: params.scopeType,
+    ...(params.scopeType === "field"
+      ? { sourceType: params.sourceType, sourceId: params.sourceId, fieldId: params.fieldId }
+      : {}),
+    ...(params.fieldLabel !== undefined ? { fieldLabel: params.fieldLabel } : {}),
+  };
   const response = await fetch(`${BASE_PATH}/runs`, {
     method: "POST",
     cache: "no-store",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify(body),
     signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
   if (!response.ok) {

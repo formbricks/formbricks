@@ -136,7 +136,13 @@ describe("listV3TaxonomyFields", () => {
 });
 
 describe("getV3TaxonomyState", () => {
-  const stateParams = { ...base, sourceType: "survey", sourceId: "s1", fieldId: "q1" };
+  const stateParams = {
+    ...base,
+    scopeType: "field" as const,
+    sourceType: "survey",
+    sourceId: "s1",
+    fieldId: "q1",
+  };
 
   test("returns the active tree + runs on success", async () => {
     vi.mocked(getActiveTaxonomyTree).mockResolvedValue({ data: { run, root: node }, error: null });
@@ -233,7 +239,13 @@ describe("getV3TaxonomyNodeRecords", () => {
 });
 
 describe("triggerV3TaxonomyRun", () => {
-  const runParams = { ...base, sourceType: "survey", sourceId: "s1", fieldId: "q1" };
+  const runParams = {
+    ...base,
+    scopeType: "field" as const,
+    sourceType: "survey",
+    sourceId: "s1",
+    fieldId: "q1",
+  };
 
   test("starts a run and returns { run, inProgress }", async () => {
     vi.mocked(createTaxonomyRun).mockResolvedValue({ data: { run, in_progress: false }, error: null });
@@ -243,8 +255,28 @@ describe("triggerV3TaxonomyRun", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: { run, inProgress: false } });
     expect(createTaxonomyRun).toHaveBeenCalledWith(
-      expect.objectContaining({ tenant_id: directoryId, actor_id: "user_1" })
+      expect.objectContaining({
+        tenant_id: directoryId,
+        scope_type: "field",
+        source_type: "survey",
+        field_id: "q1",
+        actor_id: "user_1",
+      })
     );
+  });
+
+  test("directory scope starts a run with scope_type=directory and no source/field", async () => {
+    vi.mocked(createTaxonomyRun).mockResolvedValue({ data: { run, in_progress: false }, error: null });
+
+    const response = await triggerV3TaxonomyRun({ ...base, scopeType: "directory" });
+
+    expect(response.status).toBe(200);
+    expect(createTaxonomyRun).toHaveBeenCalledWith(
+      expect.objectContaining({ tenant_id: directoryId, scope_type: "directory", actor_id: "user_1" })
+    );
+    const arg = vi.mocked(createTaxonomyRun).mock.calls.at(-1)?.[0];
+    expect(arg).not.toHaveProperty("source_type");
+    expect(arg).not.toHaveProperty("field_id");
   });
 
   test("returns 401 when there is no session user", async () => {
