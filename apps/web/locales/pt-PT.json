@@ -4071,6 +4071,8 @@
       "value": "Valor",
       "value_boolean": "Valor (Booleano)",
       "value_date": "Valor (Data)",
+      "value_id": "ID da opção",
+      "value_id_hint": "ID estável da opção selecionada no inquérito de origem. Mantém este registo ligado à sua opção através de edições de etiquetas e idiomas, sendo gerido automaticamente.",
       "value_number": "Valor (Número)",
       "value_text": "Valor (Texto)"
     },

@@ -4071,6 +4071,8 @@
       "value": "值",
       "value_boolean": "值（布林值）",
       "value_date": "值（日期）",
+      "value_id": "選項 ID",
+      "value_id_hint": "來源問卷中所選選項的穩定 ID。它讓此記錄在標籤編輯和語言變更時保持與選項的連結，並會自動管理。",
       "value_number": "值（數量）",
       "value_text": "值（文字）"
     },

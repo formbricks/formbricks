@@ -4071,6 +4071,8 @@
       "value": "Değer",
       "value_boolean": "Değer (Boolean)",
       "value_date": "Değer (Tarih)",
+      "value_id": "Seçenek ID",
+      "value_id_hint": "Kaynak anketteki seçilen seçeneğin sabit ID'si. Bu kayıt, etiket düzenlemeleri ve diller genelinde seçeneğiyle bağlantılı kalmasını sağlar ve otomatik olarak yönetilir.",
       "value_number": "Değer (Sayı)",
       "value_text": "Değer (Metin)"
     },

@@ -4071,6 +4071,8 @@
       "value": "值",
       "value_boolean": "值（布尔值）",
       "value_date": "值（日期）",
+      "value_id": "选项 ID",
+      "value_id_hint": "源调查问卷中所选选项的稳定 ID。它使此记录在标签编辑和语言变更时保持与其选项的关联，并且是自动管理的。",
       "value_number": "值（数量）",
       "value_text": "值（文本）"
     },
