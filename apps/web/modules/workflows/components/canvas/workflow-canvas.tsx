@@ -73,7 +73,7 @@ const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
 // only after the canvas has its final size, with a small buffer.
 const INSPECTOR_RESIZE_SETTLE_MS = 170;
 // Near-instant pan: the refit should feel like part of the sidebar toggle, not a second animation.
-const INSPECTOR_REFIT_PAN_MS = 120;
+const INSPECTOR_REFIT_PAN_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
@@ -171,7 +171,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         minZoom: 0.4,
         duration: prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS,
       });
-    }, INSPECTOR_RESIZE_SETTLE_MS);
+    }, INSPECTOR_RESIZE_SETTLE_MS / 2);
     return () => clearTimeout(timeoutHandle);
   }, [isInspectorVisible, fitView]);
 
