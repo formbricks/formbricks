@@ -18,7 +18,7 @@ export const embedSurveyPreviewEmailHtml = `
           cellpadding="0"
           cellspacing="0"
           role="presentation"
-          style="max-width:37.5em;color:#1f2937 !important;margin:0rem;display:block;font-size:16px;line-height:1.5rem;font-weight:600;margin-right:2rem;color-scheme:only light;font-family:Inter, Helvetica, Arial, sans-serif">
+          style="max-width:37.5em;color:#1f2937 !important;margin:0rem;display:block;font-size:16px;line-height:1.5rem;font-weight:500;margin-right:2rem;color-scheme:only light;font-family:Inter, Helvetica, Arial, sans-serif">
           <tbody>
             <tr style="width:100%">
               <td><div>Which fruits do you like</div></td>
