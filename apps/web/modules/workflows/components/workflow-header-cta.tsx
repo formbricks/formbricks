@@ -123,7 +123,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         {builder.isDirty && !builder.isSaving ? (
           <span
             aria-hidden="true"
-            className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-white bg-amber-400"
+            className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-white bg-brand-dark"
           />
         ) : null}
       </Button>
