@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "确定要归档“{name}”吗？你可以稍后恢复它。",
       "archive_workflow_description": "归档后，工作流会从列表中隐藏。你可以随时恢复。",
       "auto_layout": "自动布局",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "创建工作流失败。请重试。",
       "delete_failed": "删除工作流失败。请重试。",

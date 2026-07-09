@@ -51,7 +51,7 @@ interface UseWorkflowBuilderArgs {
 
 // Long enough to batch a typing burst into one PATCH, short enough that edits are on the server
 // before the user reaches for Test or navigates away.
-const WORKFLOW_AUTOSAVE_DELAY_MS = 1000;
+const WORKFLOW_AUTOSAVE_DELAY_MS = 2000;
 
 export const useWorkflowBuilder = ({
   workspaceId,

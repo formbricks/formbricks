@@ -222,7 +222,7 @@ describe("silent save (autosave mode)", () => {
 });
 
 describe("autosave", () => {
-  test("persists a dirty draft after the debounce window without toasting", async () => {
+  test("persists a dirty draft after the debounce window without toasting", { timeout: 10000 }, async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     updateWorkflow.mockResolvedValue(apiWorkflow);
 
@@ -241,7 +241,7 @@ describe("autosave", () => {
           "wf-api",
           expect.objectContaining({ name: "Renamed by autosave" })
         ),
-      { timeout: 3000 }
+      { timeout: 4000 }
     );
     expect(toastSuccess).not.toHaveBeenCalled();
     await waitFor(() => expect(result.current.isDirty).toBe(false));
@@ -257,11 +257,11 @@ describe("autosave", () => {
       store.set(setWorkflowNameAtom, "Renamed");
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1300));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     expect(updateWorkflow).not.toHaveBeenCalled();
   });
 
-  test("does not retry a failed autosave until the draft changes again", async () => {
+  test("does not retry a failed autosave until the draft changes again", { timeout: 15000 }, async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     updateWorkflow.mockRejectedValue(new Error("persistent 500"));
 
@@ -271,17 +271,17 @@ describe("autosave", () => {
     act(() => {
       store.set(setWorkflowNameAtom, "Doomed edit");
     });
-    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
 
     // The same draft is not retried on the next debounce window (no PATCH/toast loop)…
-    await new Promise((resolve) => setTimeout(resolve, 1300));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     expect(updateWorkflow).toHaveBeenCalledTimes(1);
 
     // …but a further edit produces a fresh attempt.
     act(() => {
       store.set(setWorkflowNameAtom, "Doomed edit, take two");
     });
-    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2), { timeout: 3000 });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2), { timeout: 4000 });
   });
 
   test("flushes a dirty draft on unmount instead of dropping the debounce window", async () => {

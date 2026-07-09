@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { WorkflowAutoSaveIndicator } from "@/modules/workflows/components/workflow-auto-save-indicator";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { deleteWorkflow } from "@/modules/workflows/lib/api-client";
 import { getWorkflowStatusBadge } from "@/modules/workflows/lib/display";
@@ -106,6 +107,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           {readinessHintLabels[readinessHint]}
         </span>
       ) : null}
+      {builder.canEditMetadata ? <WorkflowAutoSaveIndicator /> : null}
       {/* Edits autosave; the button stays as the explicit "persist now" escape hatch and doubles
           as the saved-state signal: enabled with a dot while something is unsaved, disabled once
           everything is persisted. */}

@@ -51,6 +51,8 @@ type TWorkflowEditorState = {
   workflowDescription: string;
   definition: TWorkflowDefinition | null;
   lastSavedDraft: TWorkflowSavedDraft | null;
+  /** Epoch ms of the last successful save this session; drives the "Changes saved" flash. */
+  lastSavedAt: number | null;
   flowNodes: Array<Node<TWorkflowNodeData>>;
   selectedNodeId: string | null;
   isInspectorCollapsed: boolean;
@@ -66,6 +68,7 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   workflowDescription: "",
   definition: null,
   lastSavedDraft: null,
+  lastSavedAt: null,
   flowNodes: [],
   selectedNodeId: null,
   isInspectorCollapsed: false,
@@ -107,9 +110,12 @@ export const markWorkflowDraftSavedAtom = atom(null, (get, set, savedDraft: TWor
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
       draft.lastSavedDraft = savedDraft;
+      draft.lastSavedAt = Date.now();
     })
   );
 });
+
+export const workflowLastSavedAtAtom = atom((get) => get(workflowEditorAtom).lastSavedAt);
 
 // True while the editable draft (name, description, definition) differs from what was last
 // persisted. Trimmed comparison so trailing whitespace the save flow strips anyway never counts.

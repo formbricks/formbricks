@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "Ești sigur că vrei să arhivezi \"{name}\"? Îl poți restabili mai târziu.",
       "archive_workflow_description": "Arhivarea ascunde workflow-ul din listă. Îl poți restabili mai târziu.",
       "auto_layout": "Aranjare automată",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "Nu s-a putut crea workflow-ul. Te rugăm să încerci din nou.",
       "delete_failed": "Nu s-a putut șterge workflow-ul. Te rugăm să încerci din nou.",

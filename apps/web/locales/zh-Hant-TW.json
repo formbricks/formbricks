@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "確定要封存「{name}」嗎?你之後可以還原它。",
       "archive_workflow_description": "封存會將工作流程從列表中隱藏,你之後可以還原它。",
       "auto_layout": "自動排版",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "無法建立工作流程,請再試一次。",
       "delete_failed": "無法刪除工作流程,請再試一次。",

@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "Are you sure you want to archive \"{name}\"? You can restore it later.",
       "archive_workflow_description": "Archiving hides the workflow from the list. You can restore it later.",
       "auto_layout": "Auto layout",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "Failed to create the workflow. Please try again.",
       "delete_failed": "Failed to delete the workflow. Please try again.",

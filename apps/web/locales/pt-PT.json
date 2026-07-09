@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "Tens a certeza de que queres arquivar \"{name}\"? Podes restaurá-lo mais tarde.",
       "archive_workflow_description": "Arquivar oculta o fluxo de trabalho da lista. Podes restaurá-lo mais tarde.",
       "auto_layout": "Disposição automática",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "Falha ao criar o fluxo de trabalho. Por favor, tenta novamente.",
       "delete_failed": "Falha ao eliminar o fluxo de trabalho. Por favor, tenta novamente.",

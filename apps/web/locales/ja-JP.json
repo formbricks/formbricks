@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "「{name}」をアーカイブしてもよろしいですか？後で復元できます。",
       "archive_workflow_description": "アーカイブすると、ワークフローがリストに表示されなくなります。後で復元できます。",
       "auto_layout": "自動レイアウト",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "ワークフローの作成に失敗しました。もう一度お試しください。",
       "delete_failed": "ワークフローの削除に失敗しました。もう一度お試しください。",

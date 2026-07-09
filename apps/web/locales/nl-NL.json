@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "Weet je zeker dat je \"{name}\" wilt archiveren? Je kunt deze later herstellen.",
       "archive_workflow_description": "Archiveren verbergt de workflow uit de lijst. Je kunt deze later herstellen.",
       "auto_layout": "Automatische indeling",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "Aanmaken van de workflow is mislukt. Probeer het opnieuw.",
       "delete_failed": "Verwijderen van de workflow is mislukt. Probeer het opnieuw.",

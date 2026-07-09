@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "Точно хочешь архивировать «{name}»? Ты сможешь восстановить его позже.",
       "archive_workflow_description": "Архивирование скрывает воркфлоу из списка. Ты сможешь восстановить его позже.",
       "auto_layout": "Автораскладка",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "Не удалось создать воркфлоу. Попробуй ещё раз.",
       "delete_failed": "Не удалось удалить воркфлоу. Попробуй ещё раз.",

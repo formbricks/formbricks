@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "Es-tu sûr de vouloir archiver « {name} » ? Tu pourras le restaurer plus tard.",
       "archive_workflow_description": "L'archivage masque le workflow de la liste. Tu pourras le restaurer plus tard.",
       "auto_layout": "Disposition automatique",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "Échec de la création du workflow. Réessaye.",
       "delete_failed": "Échec de la suppression du workflow. Réessaye.",

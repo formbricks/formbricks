@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "\"{name}\" iş akışını arşivlemek istediğinizden emin misiniz? Daha sonra geri yükleyebilirsiniz.",
       "archive_workflow_description": "Arşivleme, iş akışını listeden gizler. Daha sonra geri yükleyebilirsiniz.",
       "auto_layout": "Otomatik düzen",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "İş akışı oluşturulamadı. Lütfen tekrar deneyin.",
       "delete_failed": "İş akışı silinemedi. Lütfen tekrar deneyin.",

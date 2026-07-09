@@ -4013,6 +4013,8 @@
       "archive_workflow_confirmation": "Biztos benne, hogy archiválni kívánja a következőt: \"{name}\"? Később visszaállíthatja.",
       "archive_workflow_description": "Az archiválás elrejti a munkafolyamatot a listából. Később visszaállíthatja.",
       "auto_layout": "Automatikus elrendezés",
+      "autosave_on": "Auto-save on",
+      "changes_saved": "Changes saved",
       "collapse_inspector": "Collapse inspector",
       "create_failed": "A munkafolyamat létrehozása sikertelen volt. Kérjük, próbálja meg újra.",
       "delete_failed": "A munkafolyamat törlése sikertelen volt. Kérjük, próbálja meg újra.",
