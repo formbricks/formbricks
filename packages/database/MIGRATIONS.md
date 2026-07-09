@@ -13,7 +13,7 @@ evaluation.
   (`migration.ts`) live side by side, ordered by their timestamp prefix.
 - `packages/database/migrations/` (**plural**, git-ignored) is a **generated scratch** directory.
   The runner wipes it and copies schema migrations into it on demand so that
-  `prisma migrate deploy` sees a *pure* Prisma directory. `prisma.config.mjs` points
+  `prisma migrate deploy` sees a _pure_ Prisma directory. `prisma.config.mjs` points
   `migrations.path` here.
 - **Do not** point Prisma at `migration/` directly and **do not** split the directory. The
   copy step is load-bearing (see [Why the copy step exists](#why-the-copy-step-exists)).
@@ -50,7 +50,7 @@ Pointing Prisma directly at the mixed directory is not viable. Verified with
 database: Prisma reports **every data-migration directory as an unapplied migration** (they are
 absent from `_prisma_migrations`), e.g.
 
-```
+```text
 20251118032116_migrate_questions_to_blocks
 20260401000002_backfill_workspace_id
 20260416110000_backfill_legacy_sso_accounts
@@ -77,14 +77,14 @@ The evaluation confirmed the current model is correct as-is. The alternatives we
 
 Against a throwaway `pgvector/pgvector:pg18` database, using the built runner:
 
-| Check | Result |
-| --- | --- |
-| Mixed-directory behavior (AC1) | Prisma lists all data-migration dirs as pending — direct use not viable |
-| Empty-DB deploy (AC2) | Applies all schema + data migrations, exit 0 |
-| Existing-DB upgrade (AC3) | Older release deployed, then restoring newer migrations applies only the pending ones, exit 0 |
-| Second-deploy idempotency (AC4) | No-op; no data-migration bodies run; tracking tables unchanged |
-| `prisma migrate status` (AC5) | Sees the pure scratch dir; "Database schema is up to date" |
-| Data-migration ordering (AC6) | Applied order (from `_prisma_migrations` + `DataMigration` timestamps) shows schema/data correctly interleaved |
+| Check                           | Result                                                                                                         |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Mixed-directory behavior (AC1)  | Prisma lists all data-migration dirs as pending — direct use not viable                                        |
+| Empty-DB deploy (AC2)           | Applies all schema + data migrations, exit 0                                                                   |
+| Existing-DB upgrade (AC3)       | Older release deployed, then restoring newer migrations applies only the pending ones, exit 0                  |
+| Second-deploy idempotency (AC4) | No-op; no data-migration bodies run; tracking tables unchanged                                                 |
+| `prisma migrate status` (AC5)   | Sees the pure scratch dir; "Database schema is up to date"                                                     |
+| Data-migration ordering (AC6)   | Applied order (from `_prisma_migrations` + `DataMigration` timestamps) shows schema/data correctly interleaved |
 
 ## Authoring migrations
 
@@ -98,7 +98,7 @@ Against a throwaway `pgvector/pgvector:pg18` database, using the built runner:
 
 The interleaved runner is a homegrown design; the idiomatic Prisma-ecosystem model is a
 **two-track** system (schema via `migrate deploy`, data via a separate ordered runner) that relies
-on **expand/contract** discipline so every data migration is safe to run *after* all pending
-schema migrations. Moving to that model would let Prisma own a *pure* directory with no copy step,
+on **expand/contract** discipline so every data migration is safe to run _after_ all pending
+schema migrations. Moving to that model would let Prisma own a _pure_ directory with no copy step,
 but it requires reworking the existing order-dependent data migrations and a one-time baseline —
 a larger, separate effort, not this cleanup.
