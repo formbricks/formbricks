@@ -10,15 +10,11 @@ import {
 } from "@/modules/workflows/state/editor";
 
 interface WorkflowInspectorPanelProps {
-  workflowId: string;
-  isReadOnly: boolean;
   canEditMetadata: boolean;
   isEditingNode: boolean;
 }
 
 export const WorkflowInspectorPanel = ({
-  workflowId,
-  isReadOnly,
   canEditMetadata,
   isEditingNode,
 }: Readonly<WorkflowInspectorPanelProps>) => {
@@ -36,11 +32,7 @@ export const WorkflowInspectorPanel = ({
         {isNodeConfigOpen ? (
           <WorkflowNodeConfigPanel isEditable={isEditingNode} />
         ) : (
-          <SettingsSection
-            workflowId={workflowId}
-            isReadOnly={isReadOnly}
-            canEditMetadata={canEditMetadata}
-          />
+          <SettingsSection canEditMetadata={canEditMetadata} />
         )}
       </div>
     </div>

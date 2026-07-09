@@ -1,13 +1,34 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { CircleDashedIcon, Loader2Icon, TriangleAlertIcon } from "lucide-react";
-import { useSelectedLayoutSegment } from "next/navigation";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  ChevronDownIcon,
+  CircleDashedIcon,
+  CirclePauseIcon,
+  CirclePlayIcon,
+  TrashIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
+import { useRouter, useSelectedLayoutSegment } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import { Switch } from "@/modules/ui/components/switch";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
+import { deleteWorkflow } from "@/modules/workflows/lib/api-client";
+import { getWorkflowStatusBadge } from "@/modules/workflows/lib/display";
 import { getWorkflowReadinessHint } from "@/modules/workflows/lib/workflow-readiness";
 import { workflowAtom, workflowDefinitionAtom, workflowValidityAtom } from "@/modules/workflows/state/editor";
 
@@ -18,19 +39,15 @@ interface WorkflowHeaderCtaProps {
 
 export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowHeaderCtaProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const segment = useSelectedLayoutSegment();
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
   const validity = useAtomValue(workflowValidityAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
-
-  const handleActiveChange = () => {
-    if (isActive) {
-      builder.disable();
-    } else {
-      builder.enable();
-    }
-  };
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Only the edit tab gets the lifecycle controls — the runs tab is read-only.
   if (segment !== null) return null;
@@ -39,6 +56,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const isArchived = workflow.status === "archived";
   const isDraft = workflow.status === "draft";
   const isActive = workflow.status === "enabled";
+  const isBusy = builder.isTransitioning || builder.isSaving || isDeleting;
 
   const readinessHint = getWorkflowReadinessHint(definition, validity);
   // Inline literal t() calls so the translation-key scanner detects every key.
@@ -49,6 +67,24 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
     complete_email: t("workspace.workflows.readiness_complete_email"),
     name_missing: t("workspace.workflows.readiness_name_missing"),
     not_executable: t("workspace.workflows.test_problems_title"),
+  };
+
+  const handleArchiveConfirm = async () => {
+    await builder.archive();
+    setIsArchiveModalOpen(false);
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteWorkflow(workflow.id);
+      toast.success(t("workspace.workflows.delete_success"));
+      router.push(`/workspaces/${workflow.workspaceId}/workflows`);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.delete_failed")));
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
   };
 
   return (
@@ -80,9 +116,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         className="relative"
         onClick={() => builder.save()}
         loading={builder.isSaving}
-        disabled={
-          !builder.canEditMetadata || !builder.isDirty || builder.isTransitioning || builder.isSaving
-        }>
+        disabled={!builder.canEditMetadata || !builder.isDirty || isBusy}>
         {isDraft ? t("common.save_as_draft") : t("common.save")}
         {builder.isDirty && !builder.isSaving ? (
           <span
@@ -91,32 +125,78 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           />
         ) : null}
       </Button>
-      {/* Lifecycle control as a toggle: the switch position communicates the current state
-          (on = running) instead of an Enable/Disable action label the user has to invert.
-          The shell matches the sibling h-8 buttons so it reads as part of the button row.
-          Enabling is gated on live validity — the server would reject a non-executable
-          definition anyway; disabling an active workflow is always allowed. */}
-      <label
-        htmlFor="workflow-enabled-toggle"
-        className="flex h-8 cursor-pointer items-center gap-2 rounded-md border border-primary/5 bg-secondary px-3 text-xs font-medium text-secondary-foreground has-[button:disabled]:cursor-not-allowed has-[button:disabled]:opacity-50">
-        <Switch
-          id="workflow-enabled-toggle"
-          checked={isActive}
-          disabled={
-            isReadOnly ||
-            isArchived ||
-            builder.isTransitioning ||
-            builder.isSaving ||
-            (!isActive && !validity.isReady)
-          }
-          onCheckedChange={handleActiveChange}
-        />
-        {builder.isTransitioning ? (
-          <Loader2Icon className="size-4 animate-spin" aria-hidden="true" />
-        ) : (
-          <span>{isActive ? t("common.enabled") : t("common.disabled")}</span>
-        )}
-      </label>
+      {/* Lifecycle as a status dropdown (same shape as the surveys list "New survey" menu): the
+          button reads the current state, the menu holds the transitions available from it. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" loading={builder.isTransitioning} disabled={isReadOnly || isBusy}>
+            {getWorkflowStatusBadge(workflow.status, t).label}
+            <ChevronDownIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          {isArchived ? (
+            <>
+              <DropdownMenuItem
+                icon={<ArchiveRestoreIcon className="size-4" />}
+                onSelect={() => void builder.unarchive()}>
+                {t("common.unarchive")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                icon={<TrashIcon className="size-4" />}
+                className="text-red-600 focus:text-red-600"
+                onSelect={() => setIsDeleteDialogOpen(true)}>
+                {t("common.delete")}
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              {isActive ? (
+                <DropdownMenuItem
+                  icon={<CirclePauseIcon className="size-4" />}
+                  onSelect={() => void builder.disable()}>
+                  {t("common.disable")}
+                </DropdownMenuItem>
+              ) : (
+                // Enabling requires a workflow the server would accept; the readiness hint next
+                // to the Save button says what is still missing.
+                <DropdownMenuItem
+                  icon={<CirclePlayIcon className="size-4" />}
+                  disabled={!validity.isReady}
+                  onSelect={() => void builder.enable()}>
+                  {t("common.enable")}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                icon={<ArchiveIcon className="size-4" />}
+                onSelect={() => setIsArchiveModalOpen(true)}>
+                {t("common.archive")}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ConfirmationModal
+        open={isArchiveModalOpen}
+        setOpen={setIsArchiveModalOpen}
+        title={t("workspace.workflows.archive_confirm_title")}
+        body={t("workspace.workflows.archive_confirm_body")}
+        buttonText={t("common.archive")}
+        buttonVariant="destructive"
+        buttonLoading={builder.isTransitioning}
+        isButtonDisabled={isReadOnly || builder.isTransitioning}
+        onConfirm={handleArchiveConfirm}
+        Icon={ArchiveIcon}
+      />
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        setOpen={setIsDeleteDialogOpen}
+        deleteWhat={workflow.name}
+        onDelete={() => void handleDelete()}
+        isDeleting={isDeleting}
+        text={t("workspace.workflows.delete_workflow_confirmation", { name: workflow.name })}
+      />
     </div>
   );
 };

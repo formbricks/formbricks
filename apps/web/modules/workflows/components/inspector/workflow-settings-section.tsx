@@ -1,15 +1,10 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { ArchiveIcon, ArchiveRestoreIcon } from "lucide-react";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { Button } from "@/modules/ui/components/button";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import {
   setWorkflowDescriptionAtom,
   setWorkflowNameAtom,
@@ -18,28 +13,17 @@ import {
 } from "@/modules/workflows/state/editor";
 
 interface SettingsSectionProps {
-  workflowId: string;
-  isReadOnly: boolean;
   canEditMetadata: boolean;
 }
 
-export const SettingsSection = ({
-  workflowId,
-  isReadOnly,
-  canEditMetadata,
-}: Readonly<SettingsSectionProps>) => {
+// Name + description only — lifecycle actions (enable/disable/archive/…) live in the header
+// status dropdown. Edits write straight into the editor atoms and persist via autosave.
+export const SettingsSection = ({ canEditMetadata }: Readonly<SettingsSectionProps>) => {
   const { t } = useTranslation();
   const workflowName = useAtomValue(workflowNameAtom);
   const workflowDescription = useAtomValue(workflowDescriptionAtom);
   const setWorkflowName = useSetAtom(setWorkflowNameAtom);
   const setWorkflowDescription = useSetAtom(setWorkflowDescriptionAtom);
-  const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
-  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-
-  const handleArchiveConfirm = async () => {
-    await builder.archive();
-    setIsArchiveModalOpen(false);
-  };
 
   return (
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -74,49 +58,7 @@ export const SettingsSection = ({
             onChange={(event) => setWorkflowDescription(event.target.value)}
           />
         </div>
-
-        <div className="flex flex-col border-t border-slate-200 pt-4">
-          {builder.isArchived ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="w-fit"
-              onClick={builder.unarchive}
-              loading={builder.isTransitioning}
-              disabled={isReadOnly || builder.isTransitioning || builder.isSaving}>
-              {t("common.unarchive")}
-              <ArchiveRestoreIcon />
-            </Button>
-          ) : (
-            // The confirmation modal owns the spinner, so this button only disables while
-            // another lifecycle action runs.
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="w-fit"
-              onClick={() => setIsArchiveModalOpen(true)}
-              disabled={isReadOnly || builder.isTransitioning || builder.isSaving}>
-              {t("common.archive")}
-              <ArchiveIcon />
-            </Button>
-          )}
-        </div>
       </div>
-
-      <ConfirmationModal
-        open={isArchiveModalOpen}
-        setOpen={setIsArchiveModalOpen}
-        title={t("workspace.workflows.archive_confirm_title")}
-        body={t("workspace.workflows.archive_confirm_body")}
-        buttonText={t("common.archive")}
-        buttonVariant="destructive"
-        buttonLoading={builder.isTransitioning}
-        isButtonDisabled={isReadOnly || builder.isTransitioning}
-        onConfirm={handleArchiveConfirm}
-        Icon={ArchiveIcon}
-      />
     </section>
   );
 };
