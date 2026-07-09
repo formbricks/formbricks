@@ -74,8 +74,139 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=posthog_key \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
+
 #
-## step 3: setup production runner
+## step 3: dedicated migration runner image (ENG-1153)
+#
+# A standalone, short-lived image whose only job is to apply Formbricks schema +
+# data migrations (`prisma migrate deploy` plus the in-process data-migration
+# runner) once, before the web app serves traffic. It is consumed as a
+# Kubernetes/Helm migration Job, a docker-compose `formbricks-migrate` one-shot
+# service, or a manually run one-shot container — never as a long-running
+# workload.
+#
+# It is the SOLE home of the Prisma CLI and the `@prisma/config` loader chain
+# (c12, effect, fast-check, valibot, jiti, … ~30 modules / ~48 MB). The web
+# `runner` stage no longer carries any of it: migrations run only from this image
+# (Helm Job / compose one-shot / manual one-shot), so the web runtime never
+# invokes the CLI. This closure is therefore NOT duplicated with `runner`.
+FROM base AS migrations
+
+# Patch base OS/npm and create the unprivileged runtime user, mirroring `runner`.
+RUN apk update && apk upgrade --no-cache \
+    && npm install --ignore-scripts -g npm@11.17.0 \
+    && addgroup -S nextjs \
+    && adduser -S -u 1001 -G nextjs nextjs
+
+WORKDIR /home/nextjs
+
+# Runtime dependency closure, reused from the web build's Next.js standalone
+# output. The migration runner needs a subset of the web app's runtime libraries
+# (Prisma client, pg + its transitive deps, pino + its closure, zod, cuid2,
+# uuid), and Next.js' file-tracer has already resolved that closure — including
+# the deep/nested dependencies (e.g. the pg driver bundled under
+# @prisma/adapter-pg, pino's serializers) that a hand-maintained COPY list keeps
+# missing. We take that traced node_modules wholesale; the web server code itself
+# is not needed in this image, only its node_modules.
+COPY --from=installer /app/apps/web/.next/standalone/node_modules ./node_modules
+
+# Compiled migration runner + schema/data migrations + Prisma schema & config.
+# dist/ holds the runner, the schema migration SQL and compiled data migrations
+# under dist/migration, and the SAML helper. generated/ is the Prisma v7
+# generated client the in-process data migrations query through.
+COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
+COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
+COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
+COPY --from=installer /app/packages/database/dist ./packages/database/dist
+COPY --from=installer /app/packages/database/generated ./packages/database/generated
+
+# `prisma migrate deploy` copies each pending migration into
+# packages/database/migrations on demand, so the directory must exist and be
+# writable by the runtime user.
+RUN mkdir -p ./packages/database/migrations
+
+# Overlays the web `runner` also applies on top of the trace: the generated
+# Prisma client / driver-adapter output, and the id/hash libraries the (untraced)
+# data-migration scripts call directly.
+COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
+COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+COPY --from=installer /app/node_modules/zod ./node_modules/zod
+# Data migrations import uuid v7 from the database package, so use that package's
+# resolved install rather than any repo-root hoisted version.
+COPY --from=installer /app/packages/database/node_modules/uuid ./node_modules/uuid
+
+# Prisma CLI + the @prisma/config loader chain (c12, effect, fast-check, valibot,
+# jiti, … ~30 modules). These drive `prisma migrate deploy` and are NOT part of
+# the web app trace, so they are copied explicitly. This is precisely the
+# dependency surface ENG-1153 phase 2 removes from the slim web image; the
+# migration image is its permanent home.
+COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
+RUN mkdir -p ./node_modules/.bin \
+    && ln -sf ../prisma/build/index.js ./node_modules/.bin/prisma
+COPY --from=installer /app/node_modules/dotenv ./node_modules/dotenv
+COPY --from=installer /app/node_modules/@standard-schema ./node_modules/@standard-schema
+COPY --from=installer /app/node_modules/c12 ./node_modules/c12
+COPY --from=installer /app/node_modules/confbox ./node_modules/confbox
+COPY --from=installer /app/node_modules/deepmerge-ts ./node_modules/deepmerge-ts
+COPY --from=installer /app/node_modules/defu ./node_modules/defu
+COPY --from=installer /app/node_modules/destr ./node_modules/destr
+COPY --from=installer /app/node_modules/effect ./node_modules/effect
+COPY --from=installer /app/node_modules/empathic ./node_modules/empathic
+COPY --from=installer /app/node_modules/exsolve ./node_modules/exsolve
+COPY --from=installer /app/node_modules/fast-check ./node_modules/fast-check
+COPY --from=installer /app/node_modules/giget ./node_modules/giget
+COPY --from=installer /app/node_modules/jiti ./node_modules/jiti
+COPY --from=installer /app/node_modules/ohash ./node_modules/ohash
+COPY --from=installer /app/node_modules/pathe ./node_modules/pathe
+COPY --from=installer /app/node_modules/perfect-debounce ./node_modules/perfect-debounce
+COPY --from=installer /app/node_modules/pkg-types ./node_modules/pkg-types
+COPY --from=installer /app/node_modules/pure-rand ./node_modules/pure-rand
+COPY --from=installer /app/node_modules/rc9 ./node_modules/rc9
+COPY --from=installer /app/node_modules/cross-spawn ./node_modules/cross-spawn
+COPY --from=installer /app/node_modules/foreground-child ./node_modules/foreground-child
+COPY --from=installer /app/node_modules/get-port-please ./node_modules/get-port-please
+COPY --from=installer /app/node_modules/graceful-fs ./node_modules/graceful-fs
+COPY --from=installer /app/node_modules/grammex ./node_modules/grammex
+COPY --from=installer /app/node_modules/graphmatch ./node_modules/graphmatch
+COPY --from=installer /app/node_modules/isexe ./node_modules/isexe
+COPY --from=installer /app/node_modules/path-key ./node_modules/path-key
+COPY --from=installer /app/node_modules/proper-lockfile ./node_modules/proper-lockfile
+COPY --from=installer /app/node_modules/remeda ./node_modules/remeda
+COPY --from=installer /app/node_modules/retry ./node_modules/retry
+COPY --from=installer /app/node_modules/shebang-command ./node_modules/shebang-command
+COPY --from=installer /app/node_modules/shebang-regex ./node_modules/shebang-regex
+COPY --from=installer /app/node_modules/signal-exit ./node_modules/signal-exit
+COPY --from=installer /app/node_modules/std-env ./node_modules/std-env
+COPY --from=installer /app/node_modules/valibot ./node_modules/valibot
+COPY --from=installer /app/node_modules/which ./node_modules/which
+COPY --from=installer /app/node_modules/zeptomatch ./node_modules/zeptomatch
+
+# Hand ownership of the assembled closure to the unprivileged user and verify
+# the uuid v7 export resolves (fails the build instead of failing at deploy).
+RUN chown -R nextjs:nextjs /home/nextjs \
+    && chmod -R 755 ./node_modules ./packages/database \
+    && node --input-type=module -e "\
+      import { v7 } from 'uuid'; \
+      if (typeof v7 !== 'function') { \
+        throw new Error('uuid v7 missing in migration image'); \
+      }"
+
+# Build-time smoke test: boot the Prisma CLI so an incomplete @prisma/config loader
+# closure (the hand-listed c12/effect/valibot/jiti/… chain above) fails THIS build
+# rather than a production migration run. `prisma -v` loads the CLI entrypoint and
+# @prisma/config without touching a database; a missing module throws MODULE_NOT_FOUND
+# here. The full deploy path is exercised against a live database in CI.
+RUN node ./node_modules/.bin/prisma -v
+
+ENV NODE_ENV=production
+USER nextjs
+
+CMD ["node", "packages/database/dist/scripts/apply-migrations.js"]
+
+
+#
+## step 4: setup production runner
 #
 FROM base AS runner
 
@@ -238,132 +369,3 @@ VOLUME /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/saml-connection
 
 CMD ["/home/nextjs/start.sh"]
-
-#
-## step 4: dedicated migration runner image (ENG-1153)
-#
-# A standalone, short-lived image whose only job is to apply Formbricks schema +
-# data migrations (`prisma migrate deploy` plus the in-process data-migration
-# runner) once, before the web app serves traffic. It is consumed as a
-# Kubernetes/Helm migration Job, a docker-compose `formbricks-migrate` one-shot
-# service, or a manually run one-shot container — never as a long-running
-# workload.
-#
-# It is the SOLE home of the Prisma CLI and the `@prisma/config` loader chain
-# (c12, effect, fast-check, valibot, jiti, … ~30 modules / ~48 MB). The web
-# `runner` stage above no longer carries any of it: migrations run only from
-# this image (Helm Job / compose one-shot / manual one-shot), so the web runtime
-# never invokes the CLI. This closure is therefore NOT duplicated with `runner`.
-FROM base AS migrations
-
-# Patch base OS/npm and create the unprivileged runtime user, mirroring `runner`.
-RUN apk update && apk upgrade --no-cache \
-    && npm install --ignore-scripts -g npm@11.17.0 \
-    && addgroup -S nextjs \
-    && adduser -S -u 1001 -G nextjs nextjs
-
-WORKDIR /home/nextjs
-
-# Runtime dependency closure, reused from the web build's Next.js standalone
-# output. The migration runner needs a subset of the web app's runtime libraries
-# (Prisma client, pg + its transitive deps, pino + its closure, zod, cuid2,
-# uuid), and Next.js' file-tracer has already resolved that closure — including
-# the deep/nested dependencies (e.g. the pg driver bundled under
-# @prisma/adapter-pg, pino's serializers) that a hand-maintained COPY list keeps
-# missing. We take that traced node_modules wholesale; the web server code itself
-# is not needed in this image, only its node_modules.
-COPY --from=installer /app/apps/web/.next/standalone/node_modules ./node_modules
-
-# Compiled migration runner + schema/data migrations + Prisma schema & config.
-# dist/ holds the runner, the schema migration SQL and compiled data migrations
-# under dist/migration, and the SAML helper. generated/ is the Prisma v7
-# generated client the in-process data migrations query through.
-COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
-COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
-COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
-COPY --from=installer /app/packages/database/dist ./packages/database/dist
-COPY --from=installer /app/packages/database/generated ./packages/database/generated
-
-# `prisma migrate deploy` copies each pending migration into
-# packages/database/migrations on demand, so the directory must exist and be
-# writable by the runtime user.
-RUN mkdir -p ./packages/database/migrations
-
-# Overlays the web `runner` also applies on top of the trace: the generated
-# Prisma client / driver-adapter output, and the id/hash libraries the (untraced)
-# data-migration scripts call directly.
-COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
-COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
-COPY --from=installer /app/node_modules/zod ./node_modules/zod
-# Data migrations import uuid v7 from the database package, so use that package's
-# resolved install rather than any repo-root hoisted version.
-COPY --from=installer /app/packages/database/node_modules/uuid ./node_modules/uuid
-
-# Prisma CLI + the @prisma/config loader chain (c12, effect, fast-check, valibot,
-# jiti, … ~30 modules). These drive `prisma migrate deploy` and are NOT part of
-# the web app trace, so they are copied explicitly. This is precisely the
-# dependency surface ENG-1153 phase 2 removes from the slim web image; the
-# migration image is its permanent home.
-COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
-RUN mkdir -p ./node_modules/.bin \
-    && ln -sf ../prisma/build/index.js ./node_modules/.bin/prisma
-COPY --from=installer /app/node_modules/dotenv ./node_modules/dotenv
-COPY --from=installer /app/node_modules/@standard-schema ./node_modules/@standard-schema
-COPY --from=installer /app/node_modules/c12 ./node_modules/c12
-COPY --from=installer /app/node_modules/confbox ./node_modules/confbox
-COPY --from=installer /app/node_modules/deepmerge-ts ./node_modules/deepmerge-ts
-COPY --from=installer /app/node_modules/defu ./node_modules/defu
-COPY --from=installer /app/node_modules/destr ./node_modules/destr
-COPY --from=installer /app/node_modules/effect ./node_modules/effect
-COPY --from=installer /app/node_modules/empathic ./node_modules/empathic
-COPY --from=installer /app/node_modules/exsolve ./node_modules/exsolve
-COPY --from=installer /app/node_modules/fast-check ./node_modules/fast-check
-COPY --from=installer /app/node_modules/giget ./node_modules/giget
-COPY --from=installer /app/node_modules/jiti ./node_modules/jiti
-COPY --from=installer /app/node_modules/ohash ./node_modules/ohash
-COPY --from=installer /app/node_modules/pathe ./node_modules/pathe
-COPY --from=installer /app/node_modules/perfect-debounce ./node_modules/perfect-debounce
-COPY --from=installer /app/node_modules/pkg-types ./node_modules/pkg-types
-COPY --from=installer /app/node_modules/pure-rand ./node_modules/pure-rand
-COPY --from=installer /app/node_modules/rc9 ./node_modules/rc9
-COPY --from=installer /app/node_modules/cross-spawn ./node_modules/cross-spawn
-COPY --from=installer /app/node_modules/foreground-child ./node_modules/foreground-child
-COPY --from=installer /app/node_modules/get-port-please ./node_modules/get-port-please
-COPY --from=installer /app/node_modules/graceful-fs ./node_modules/graceful-fs
-COPY --from=installer /app/node_modules/grammex ./node_modules/grammex
-COPY --from=installer /app/node_modules/graphmatch ./node_modules/graphmatch
-COPY --from=installer /app/node_modules/isexe ./node_modules/isexe
-COPY --from=installer /app/node_modules/path-key ./node_modules/path-key
-COPY --from=installer /app/node_modules/proper-lockfile ./node_modules/proper-lockfile
-COPY --from=installer /app/node_modules/remeda ./node_modules/remeda
-COPY --from=installer /app/node_modules/retry ./node_modules/retry
-COPY --from=installer /app/node_modules/shebang-command ./node_modules/shebang-command
-COPY --from=installer /app/node_modules/shebang-regex ./node_modules/shebang-regex
-COPY --from=installer /app/node_modules/signal-exit ./node_modules/signal-exit
-COPY --from=installer /app/node_modules/std-env ./node_modules/std-env
-COPY --from=installer /app/node_modules/valibot ./node_modules/valibot
-COPY --from=installer /app/node_modules/which ./node_modules/which
-COPY --from=installer /app/node_modules/zeptomatch ./node_modules/zeptomatch
-
-# Hand ownership of the assembled closure to the unprivileged user and verify
-# the uuid v7 export resolves (fails the build instead of failing at deploy).
-RUN chown -R nextjs:nextjs /home/nextjs \
-    && chmod -R 755 ./node_modules ./packages/database \
-    && node --input-type=module -e "\
-      import { v7 } from 'uuid'; \
-      if (typeof v7 !== 'function') { \
-        throw new Error('uuid v7 missing in migration image'); \
-      }"
-
-# Build-time smoke test: boot the Prisma CLI so an incomplete @prisma/config loader
-# closure (the hand-listed c12/effect/valibot/jiti/… chain above) fails THIS build
-# rather than a production migration run. `prisma -v` loads the CLI entrypoint and
-# @prisma/config without touching a database; a missing module throws MODULE_NOT_FOUND
-# here. The full deploy path is exercised against a live database in CI.
-RUN node ./node_modules/.bin/prisma -v
-
-ENV NODE_ENV=production
-USER nextjs
-
-CMD ["node", "packages/database/dist/scripts/apply-migrations.js"]
