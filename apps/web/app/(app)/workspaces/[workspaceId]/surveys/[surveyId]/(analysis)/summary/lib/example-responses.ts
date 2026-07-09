@@ -8,7 +8,7 @@ import { type TSurvey } from "@formbricks/types/surveys/types";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 
-export const EXAMPLE_RESPONSE_COUNT = 10;
+export const EXAMPLE_RESPONSE_COUNT = 20;
 // Impression-only displays simulate respondents who saw the survey but didn't
 // submit. Combined with the response count, the dashboard's completion rate
 // lands around 62% — close to typical web survey benchmarks.

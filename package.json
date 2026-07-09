@@ -6,6 +6,7 @@
     "agents:update": "npx @next/codemod@canary agents-md --output AGENTS.md",
     "clean:all": "turbo run clean && rimraf node_modules pnpm-lock.yaml .turbo coverage out",
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
+    "clean:cache": "rimraf .turbo/cache apps/web/.next",
     "build": "turbo run build",
     "build:dev": "turbo run build:dev",
     "db:migrate:dev": "turbo run db:migrate:dev",
@@ -47,6 +48,7 @@
     "react-dom": "19.2.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.3",
     "@azure/playwright": "1.1.5",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.58.2",

@@ -1,4 +1,3 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
@@ -7,7 +6,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getUserWorkspaces } from "@/lib/workspace/service";
-import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getSession } from "@/modules/auth/lib/session";
 import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 
 export const GET = async (_: Request, context: { params: Promise<{ organizationId: string }> }) => {
@@ -15,7 +14,7 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   const organizationId = params?.organizationId;
   if (!organizationId) return notFound();
   // check auth
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   if (!session) throw new AuthenticationError("Not authenticated");
   const hasAccess = await hasOrganizationAccess(session.user.id, organizationId);
   if (!hasAccess) throw new AuthorizationError("Unauthorized");

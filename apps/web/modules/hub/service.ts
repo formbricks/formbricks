@@ -29,7 +29,6 @@ import {
   createHubResultFromError,
   getErrorMessage,
   getErrorStatus,
-  toQueryString,
 } from "./utils";
 
 export type HubFeedbackRecordResult = {
@@ -40,6 +39,9 @@ export type HubFeedbackRecordResult = {
 /**
  * Create a single feedback record in the Hub.
  * Returns a result shape with data or error; logs failures.
+ *
+ * value_id (the stable id of the matched choice, ENG-1673) is sent through as-is:
+ * the deployed Hub accepts it, and the SDK forwards unknown fields untouched.
  */
 export const createFeedbackRecord = async (
   input: FeedbackRecordCreateParams
@@ -286,9 +288,7 @@ export const listTaxonomyFields = async (tenantId: string): Promise<HubResult<Ta
   }
 
   try {
-    const data = await client.get<TaxonomyFieldsResponse>(
-      `/v1/taxonomy/fields${toQueryString({ tenant_id: tenantId })}`
-    );
+    const data = await client.taxonomy.listFields({ tenant_id: tenantId });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId }, "Hub: listTaxonomyFields failed");
@@ -305,7 +305,7 @@ export const createTaxonomyRun = async (
   }
 
   try {
-    const data = await client.post<CreateTaxonomyRunResponse>("/v1/taxonomy/runs", { body: input });
+    const data = await client.taxonomy.runs.start(input);
     return { data, error: null };
   } catch (err) {
     logger.warn(
@@ -331,7 +331,7 @@ export const listTaxonomyRuns = async (
   }
 
   try {
-    const data = await client.get<ListTaxonomyRunsResponse>(`/v1/taxonomy/runs${toQueryString(params)}`);
+    const data = await client.taxonomy.runs.list(params);
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId: params.tenant_id }, "Hub: listTaxonomyRuns failed");
@@ -346,9 +346,7 @@ export const getTaxonomyRun = async (runId: string, tenantId: string): Promise<H
   }
 
   try {
-    const data = await client.get<TaxonomyRun>(
-      `/v1/taxonomy/runs/${encodeURIComponent(runId)}${toQueryString({ tenant_id: tenantId })}`
-    );
+    const data = await client.taxonomy.runs.retrieve(runId, { tenant_id: tenantId });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyRun failed");
@@ -365,9 +363,7 @@ export const getActiveTaxonomyTree = async (
   }
 
   try {
-    const data = await client.get<TaxonomyTreeResponse>(
-      `/v1/taxonomy/runs/active/tree${toQueryString(scope)}`
-    );
+    const data = await client.taxonomy.runs.active.getTree(scope);
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId: scope.tenant_id }, "Hub: getActiveTaxonomyTree failed");
@@ -385,9 +381,7 @@ export const getTaxonomyTree = async (
   }
 
   try {
-    const data = await client.get<TaxonomyTreeResponse>(
-      `/v1/taxonomy/runs/${encodeURIComponent(runId)}/tree${toQueryString({ tenant_id: tenantId })}`
-    );
+    const data = await client.taxonomy.runs.getTree(runId, { tenant_id: tenantId });
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyTree failed");
@@ -405,9 +399,7 @@ export const renameTaxonomyNode = async (
   }
 
   try {
-    const data = await client.patch<TaxonomyNode>(`/v1/taxonomy/nodes/${encodeURIComponent(nodeId)}`, {
-      body: input,
-    });
+    const data = await client.taxonomy.nodes.rename(nodeId, input);
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, nodeId, tenantId: input.tenant_id }, "Hub: renameTaxonomyNode failed");
@@ -425,9 +417,7 @@ export const removeTaxonomyNode = async (
   }
 
   try {
-    const data = await client.delete<TaxonomyNode>(
-      `/v1/taxonomy/nodes/${encodeURIComponent(nodeId)}${toQueryString(params)}`
-    );
+    const data = await client.taxonomy.nodes.softRemove(nodeId, params);
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, nodeId, tenantId: params.tenant_id }, "Hub: removeTaxonomyNode failed");
@@ -445,9 +435,7 @@ export const listTaxonomyNodeRecords = async (
   }
 
   try {
-    const data = await client.get<TaxonomyNodeRecordsResponse>(
-      `/v1/taxonomy/nodes/${encodeURIComponent(nodeId)}/records${toQueryString(params)}`
-    );
+    const data = await client.taxonomy.nodes.listRecords(nodeId, params);
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, nodeId, tenantId: params.tenant_id }, "Hub: listTaxonomyNodeRecords failed");

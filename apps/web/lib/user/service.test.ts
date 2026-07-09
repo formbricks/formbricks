@@ -34,11 +34,14 @@ describe("User Service", () => {
     vi.clearAllMocks();
   });
 
+  // Shaped as the `publicUserSelect` payload the service actually returns (no sensitive
+  // columns). Asserted to the full Prisma `User` row so the select-unaware vitest mocks accept
+  // it, while keeping the sensitive keys absent so the `not.toHaveProperty` checks below hold.
   const mockPrismaUser = {
     id: "user1",
     name: "Test User",
     email: "test@example.com",
-    emailVerified: new Date(),
+    emailVerified: true,
     createdAt: new Date(),
     updatedAt: new Date(),
     twoFactorEnabled: false,
@@ -51,7 +54,7 @@ describe("User Service", () => {
     locale: "en-US" as TUserLocale,
     lastLoginAt: new Date(),
     isActive: true,
-  };
+  } as Prisma.UserGetPayload<object>;
 
   const mockOrganizations: TOrganization[] = [
     {

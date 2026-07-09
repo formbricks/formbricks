@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   TUserPersonalInfoUpdateInput,
@@ -7,12 +8,12 @@ import {
   ZUserPersonalInfoUpdateInput,
 } from "@formbricks/types/user";
 import { getIsEmailUnique } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/lib/user";
-import { EMAIL_VERIFICATION_DISABLED, PASSWORD_RESET_DISABLED } from "@/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, PASSWORD_RESET_DISABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyUserPassword } from "@/lib/user/password";
 import { getUser, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { requestPasswordReset } from "@/modules/auth/forgot-password/lib/password-reset-service";
+import { auth } from "@/modules/auth/lib/auth";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -92,7 +93,10 @@ export const resetPasswordAction = authenticatedActionClient.action(
       throw new OperationNotAllowedError("Password reset is not allowed for this user.");
     }
 
-    await requestPasswordReset(ctx.user, "profile");
+    await auth.api.requestPasswordReset({
+      body: { email: ctx.user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },
+      headers: await headers(),
+    });
 
     ctx.auditLoggingCtx.userId = ctx.user.id;
 

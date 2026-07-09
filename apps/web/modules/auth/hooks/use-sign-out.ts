@@ -1,7 +1,7 @@
-import { signOut } from "next-auth/react";
 import { logger } from "@formbricks/logger";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
 import { logSignOutAction } from "@/modules/auth/actions/sign-out";
+import { authClient } from "@/modules/auth/lib/auth-client";
 
 interface UseSignOutOptions {
   reason?:
@@ -52,11 +52,25 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
     }
 
-    // Call NextAuth signOut
-    return await signOut({
-      redirect: options?.redirect,
-      callbackUrl: options?.callbackUrl,
-    });
+    // Better Auth sign-out clears the BA session; the redirect is manual (BA's signOut doesn't take
+    // redirect/callbackUrl like NextAuth's did). Mirror NextAuth's contract: navigate by default, or
+    // return { url } when the caller passes redirect:false so it can navigate itself. Logout must
+    // ALWAYS navigate away even if the BA /sign-out call fails (best-effort + audited above), so
+    // swallow+log and fall through to the redirect/return.
+    const url = options?.callbackUrl ?? "/auth/login";
+    try {
+      // The BA client resolves HTTP failures as { error } rather than throwing, so log both shapes.
+      const { error } = await authClient.signOut();
+      if (error) {
+        logger.error(new Error(error.message ?? "signOut returned an error"), "Better Auth signOut failed");
+      }
+    } catch (error) {
+      logger.error(error instanceof Error ? error : new Error(String(error)), "Better Auth signOut failed");
+    }
+    if (options?.redirect === false) {
+      return { url };
+    }
+    globalThis.location.href = url;
   };
 
   return { signOut: signOutWithAudit };

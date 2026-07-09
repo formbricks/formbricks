@@ -4,8 +4,14 @@ import { err, ok } from "@formbricks/types/error-handlers";
 import { hashString } from "@/lib/hash-string";
 // Import modules after mocking
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { applyClientRateLimit, applyIPRateLimit, applyRateLimit, getClientIdentifier } from "./helpers";
-import { checkRateLimit } from "./rate-limit";
+import {
+  applyClientRateLimit,
+  applyIPRateLimit,
+  applyRateLimit,
+  assertRateLimitAvailable,
+  getClientIdentifier,
+} from "./helpers";
+import { checkRateLimit, peekRateLimit } from "./rate-limit";
 import { rateLimitConfigs } from "./rate-limit-configs";
 
 // Mock all dependencies
@@ -19,6 +25,7 @@ vi.mock("@/lib/hash-string", () => ({
 
 vi.mock("./rate-limit", () => ({
   checkRateLimit: vi.fn(),
+  peekRateLimit: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -144,6 +151,33 @@ describe("helpers", () => {
       }
 
       expect(checkRateLimit).toHaveBeenCalledTimes(identifiers.length);
+    });
+  });
+
+  describe("assertRateLimitAvailable", () => {
+    const mockConfig = {
+      interval: 300,
+      allowedPerInterval: 5,
+      namespace: "test",
+    };
+
+    test("should allow request when peek says capacity remains", async () => {
+      (peekRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+
+      await expect(assertRateLimitAvailable(mockConfig, "test-identifier")).resolves.toEqual({
+        allowed: true,
+      });
+
+      expect(peekRateLimit).toHaveBeenCalledWith(mockConfig, "test-identifier");
+      expect(checkRateLimit).not.toHaveBeenCalled();
+    });
+
+    test("should reject request when peek says limit is exhausted", async () => {
+      (peekRateLimit as any).mockResolvedValue(ok({ allowed: false, retryAfter: 60 }));
+
+      await expect(assertRateLimitAvailable(mockConfig, "test-identifier")).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
     });
   });
 

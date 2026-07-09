@@ -390,7 +390,7 @@ async function main(): Promise<void> {
       name: "Admin User",
       email: SEED_CREDENTIALS.ADMIN.email,
       password: passwordHash,
-      emailVerified: new Date(),
+      emailVerified: true,
       memberships: {
         create: {
           organizationId: organization.id,
@@ -409,7 +409,7 @@ async function main(): Promise<void> {
       name: "Manager User",
       email: SEED_CREDENTIALS.MANAGER.email,
       password: passwordHash,
-      emailVerified: new Date(),
+      emailVerified: true,
       memberships: {
         create: {
           organizationId: organization.id,
@@ -428,7 +428,7 @@ async function main(): Promise<void> {
       name: "Member User",
       email: SEED_CREDENTIALS.MEMBER.email,
       password: passwordHash,
-      emailVerified: new Date(),
+      emailVerified: true,
       memberships: {
         create: {
           organizationId: organization.id,

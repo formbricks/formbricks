@@ -19,6 +19,7 @@ import {
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { isDeepEqual } from "@/lib/utils/object";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -209,6 +210,10 @@ export const SurveyMenuBar = ({
     if (!localSurveyValidation.success) {
       const issues = localSurveyValidation.error.issues;
       const newInvalidIds: string[] = [];
+      // DOM id of the first invalid card so we can scroll it into view. For logic
+      // errors this is the block (the red bar lives on the block card); for element
+      // errors it's the element card itself.
+      let firstInvalidScrollId: string | null = null;
 
       for (const issue of issues) {
         if (issue.path[0] === "blocks") {
@@ -222,17 +227,41 @@ export const SurveyMenuBar = ({
             if (element && !newInvalidIds.includes(element.id)) {
               newInvalidIds.push(element.id);
             }
+            firstInvalidScrollId ??= element?.id ?? null;
+          } else if (issue.path[2] === "logic" && typeof issue.path[3] === "number") {
+            // Conditional logic error: flag the offending rule so the block card
+            // surfaces it. Uses the logic rule id (a CUID, distinct from element ids).
+            const logicIdx = issue.path[3];
+            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+            const logicItem = block?.logic?.[logicIdx];
+
+            if (logicItem && !newInvalidIds.includes(logicItem.id)) {
+              newInvalidIds.push(logicItem.id);
+            }
+            firstInvalidScrollId ??= block?.id ?? null;
+          } else if (issue.path[2] === "logic") {
+            // Block-scope logic error (e.g. a cyclic jump) with no specific rule index: flag every
+            // rule in the block so the Conditional Logic section still surfaces and auto-expands.
+            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+            for (const logicItem of block?.logic ?? []) {
+              if (!newInvalidIds.includes(logicItem.id)) {
+                newInvalidIds.push(logicItem.id);
+              }
+            }
+            firstInvalidScrollId ??= block?.id ?? null;
           }
         } else if (issue.path[0] === "welcomeCard") {
           if (!newInvalidIds.includes("start")) {
             newInvalidIds.push("start");
           }
+          firstInvalidScrollId ??= "start";
         } else if (issue.path[0] === "endings") {
           const endingIdx = typeof issue.path[1] === "number" ? issue.path[1] : -1;
           const endingId = localSurvey.endings[endingIdx]?.id;
           if (endingId && !newInvalidIds.includes(endingId)) {
             newInvalidIds.push(endingId);
           }
+          firstInvalidScrollId ??= endingId ?? null;
         }
       }
 
@@ -247,6 +276,10 @@ export const SurveyMenuBar = ({
           }
           return merged;
         });
+      }
+
+      if (firstInvalidScrollId) {
+        scrollElementCardIntoView(firstInvalidScrollId, "start");
       }
 
       const firstError = issues[0];

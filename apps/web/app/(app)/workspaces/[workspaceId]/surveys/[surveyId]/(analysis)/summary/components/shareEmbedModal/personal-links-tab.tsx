@@ -9,6 +9,7 @@ import { TSegment } from "@formbricks/types/segment";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getTranslatedPersonalLinkError } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import {
@@ -143,7 +144,7 @@ export const PersonalLinksTab = ({
         id: "generating-links",
       });
     } else {
-      const errorMessage = getFormattedErrorMessage(result);
+      const errorMessage = getTranslatedPersonalLinkError(getFormattedErrorMessage(result), t);
       toast.error(errorMessage, {
         duration: 5000,
         id: "generating-links",
@@ -256,7 +257,7 @@ export const PersonalLinksTab = ({
         links={[
           {
             title: t("workspace.surveys.share.personal_links.work_with_segments"),
-            href: "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting#segment-configuration",
+            href: "https://formbricks.com/docs/surveys/website-app-surveys/advanced-targeting#segment-configuration",
           },
         ]}
       />

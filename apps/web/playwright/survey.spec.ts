@@ -1,4 +1,4 @@
-import { type Locator, expect } from "@playwright/test";
+import { type Locator, type Page, expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 import * as helper from "./utils/helper";
@@ -27,6 +27,14 @@ const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: st
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
   await expect(choiceImage).toBeVisible();
   await choiceImage.click();
+};
+
+// The matrix radio input is visually hidden (sr-only), so it never becomes actionable itself;
+// its wrapping <label> is the visible control. Click the label, then assert the radio state.
+const checkMatrixRadio = async (page: Page, name: string) => {
+  const radio = page.getByRole("radio", { name });
+  await radio.locator("..").click();
+  await expect(radio).toBeChecked();
 };
 
 test.describe("Survey Create & Submit Response without logic", async () => {
@@ -195,7 +203,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.getByText(surveys.createAndSubmit.fileUploadQuestion.question)).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Upload files by clicking or" })).toBeVisible();
+      await expect(page.getByText("Click or drag to upload files")).toBeVisible();
 
       await page.locator("input[type=file]").setInputFiles({
         name: "file.doc",
@@ -232,9 +240,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("radio", { name: "Roses-0" }).click();
-      await page.getByRole("radio", { name: "Trees-0" }).click();
-      await page.getByRole("radio", { name: "Ocean-0" }).click();
+      await checkMatrixRadio(page, "Roses 0");
+      await checkMatrixRadio(page, "Trees 0");
+      await checkMatrixRadio(page, "Ocean 0");
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // Address Question
@@ -948,9 +956,9 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("radio", { name: "Roses-0" }).click();
-      await page.getByRole("radio", { name: "Trees-0" }).click();
-      await page.getByRole("radio", { name: "Ocean-0" }).click();
+      await checkMatrixRadio(page, "Roses 0");
+      await checkMatrixRadio(page, "Trees 0");
+      await checkMatrixRadio(page, "Ocean 0");
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question
@@ -980,7 +988,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Back" })).toBeVisible();
 
-      await expect(page.getByRole("button", { name: "Upload files by clicking or" })).toBeVisible();
+      await expect(page.getByText("Click or drag to upload files")).toBeVisible();
 
       await page.locator("input[type=file]").setInputFiles({
         name: "file.doc",

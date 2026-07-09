@@ -53,8 +53,32 @@ describe("createLanguage", () => {
     expect(result).toEqual(mockLanguage);
   });
 
+  test("stores the canonical BCP-47 tag, normalizing a legacy code", async () => {
+    vi.mocked(prisma.language.create).mockResolvedValue(mockLanguage);
+    await createLanguage(mockWorkspaceId, { code: "de", alias: null });
+    expect(prisma.language.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ code: "de-DE" }) })
+    );
+  });
+
   describe("sad path", () => {
     testInputValidation(createLanguage, "bad-id", {});
+
+    test("throws ValidationError on a malformed/unparseable code", async () => {
+      await expect(createLanguage(mockWorkspaceId, { code: "not a language", alias: null })).rejects.toThrow(
+        ValidationError
+      );
+      expect(prisma.language.create).not.toHaveBeenCalled();
+    });
+
+    test("throws ValidationError for a valid code outside the curated catalog (CLDR-only fallback)", async () => {
+      // `nso` normalizes to `nso-ZA` via the CLDR fallback, but that isn't in CANONICAL_LANGUAGE_CODES —
+      // accepting it would let stored rows drift from the catalog the app supports.
+      await expect(createLanguage(mockWorkspaceId, { code: "nso", alias: null })).rejects.toThrow(
+        ValidationError
+      );
+      expect(prisma.language.create).not.toHaveBeenCalled();
+    });
 
     test("throws DatabaseError when PrismaKnownRequestError", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
@@ -84,6 +108,24 @@ describe("updateLanguage", () => {
     vi.mocked(prisma.language.update).mockResolvedValue(mockUpdatedLanguageWithSurveyLanguage);
     const result = await updateLanguage(mockWorkspaceId, mockLanguageId, mockLanguageUpdate);
     expect(result).toEqual(mockUpdatedLanguage);
+  });
+
+  test("never writes `code` — only alias is mutable (invariant regardless of caller)", async () => {
+    const mockUpdatedLanguageWithSurveyLanguage = {
+      ...mockUpdatedLanguage,
+      surveyLanguages: [{ id: "surveyLanguageId" }],
+    };
+    vi.mocked(prisma.language.update).mockResolvedValue(mockUpdatedLanguageWithSurveyLanguage);
+    // Sneak a `code` into the runtime object (its declared type is alias-only) — it must be ignored so
+    // Language.code can't drift to an arbitrary, non-canonical value on update.
+    await updateLanguage(mockWorkspaceId, mockLanguageId, {
+      code: "anything-non-canonical",
+      alias: "New alias",
+    } as unknown as typeof mockLanguageUpdate);
+
+    const updateArg = vi.mocked(prisma.language.update).mock.calls[0][0];
+    expect(updateArg.data).toEqual({ alias: "New alias", updatedAt: expect.any(Date) });
+    expect(updateArg.data).not.toHaveProperty("code");
   });
 
   describe("sad path", () => {

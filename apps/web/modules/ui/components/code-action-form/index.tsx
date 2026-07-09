@@ -51,7 +51,7 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
           </span>{" "}
           {t("workspace.actions.in_your_code_read_more_in_our")}{" "}
           <a
-            href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions"
+            href="https://formbricks.com/docs/surveys/website-app-surveys/actions"
             target="_blank"
             rel="noreferrer"
             className="underline">

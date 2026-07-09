@@ -20,13 +20,12 @@ import { IndividualInviteTab } from "./individual-invite-tab";
 interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: TInvitee[]) => void;
+  onSubmit: (data: TInvitee[]) => Promise<boolean>;
   teams: TOrganizationTeam[];
   organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
-  isStorageConfigured: boolean;
   isOwnerOrManager: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
@@ -43,13 +42,12 @@ export const InviteMemberModal = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   membershipRole,
-  isStorageConfigured,
   isOwnerOrManager,
   isTeamAdmin,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
   isBulkInviteAllowed,
-}: InviteMemberModalProps) => {
+}: Readonly<InviteMemberModalProps>) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
   const { t } = useTranslation();
@@ -79,10 +77,10 @@ export const InviteMemberModal = ({
       <BulkInviteTab
         setOpen={setOpen}
         onSubmit={onSubmit}
+        teams={filteredTeams}
         organizationId={organizationId}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
-        isStorageConfigured={isStorageConfigured}
         isBulkInviteAllowed={isBulkInviteAllowed}
         enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />

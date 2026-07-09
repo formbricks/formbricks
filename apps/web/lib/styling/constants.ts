@@ -1,7 +1,7 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { DEFAULT_BRAND_COLOR } from "@/lib/brand-color";
-import { isLight, mixColor } from "@/lib/utils/colors";
+import { ensureReadable, getReadableTextColor, mixColor } from "@/lib/utils/colors";
 
 export const COLOR_DEFAULTS = {
   brandColor: "#1e40af",
@@ -24,17 +24,25 @@ export const COLOR_DEFAULTS = {
  * can be spread directly into form defaults or applied via `form.setValue`.
  */
 export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => {
-  // Question / dark text: brand darkened with black (visible brand tint)
-  const questionColor = mixColor(brandColor, "#000000", 0.35);
   // Input / option background: white with noticeable brand tint
   const inputBg = mixColor(brandColor, "#ffffff", 0.92);
   // Input border: visible brand-tinted border
   const inputBorder = mixColor(brandColor, "#ffffff", 0.6);
-  // Card tones
+  // Card tones — the card stays white so all derived text renders on a known light surface.
   const cardBg = "#ffffff";
   const cardBorder = mixColor(brandColor, "#ffffff", 0.8);
   // Page background
   const pageBg = mixColor(brandColor, "#ffffff", 0.855);
+
+  // Selected/hovered options darken the option background by 5% (see survey-ui tailwind
+  // config: `color-mix(--fb-option-bg-color 95%, black)`), so this is the darkest surface the
+  // shared text color renders on — the worst case for contrast.
+  const optionSelectedBg = mixColor(inputBg, "#000000", 0.05);
+
+  // Question / dark text: brand darkened with black for a visible tint, then guaranteed to
+  // clear WCAG AA against the darkest surface it lands on (the selected option bg, which is
+  // slightly darker than the white card and the near-white input bg — so those pass too).
+  const questionColor = ensureReadable(mixColor(brandColor, "#000000", 0.35), optionSelectedBg);
 
   return {
     // General
@@ -43,11 +51,13 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
     // Headlines & Descriptions
     "elementHeadlineColor.light": questionColor,
     "elementDescriptionColor.light": questionColor,
+    // Brand-derived like the other text colors so it stays configurable and visually cohesive.
+    // The WCAG 1.4.3 fix was dropping the old 0.6 opacity (see globals.css), not muting the hue.
     "elementUpperLabelColor.light": questionColor,
 
-    // Buttons — use the brand color so the button matches the user's intent.
+    // Buttons — brand background with a text color chosen for AA contrast against it.
     "buttonBgColor.light": brandColor,
-    "buttonTextColor.light": isLight(brandColor) ? "#0f172a" : "#ffffff",
+    "buttonTextColor.light": getReadableTextColor(brandColor),
 
     // Inputs
     "inputBgColor.light": inputBg,

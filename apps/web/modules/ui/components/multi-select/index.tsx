@@ -11,6 +11,13 @@ import { cn } from "@/modules/ui/lib/utils";
 interface TOption<T> {
   value: T;
   label: string;
+  /** Optional secondary line shown under the label in the dropdown (e.g. a field description). */
+  description?: string;
+  /** Optional section heading. Consecutive options with the same group render under one header;
+   * order the options array to control section order. */
+  group?: string;
+  /** Optional icon shown in a box beside the section heading (take from the first option in a group). */
+  groupIcon?: React.ReactNode;
   disabled?: boolean;
   icon?: React.ReactNode;
 }
@@ -125,9 +132,33 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       .filter((o) => !selected.some((s) => s.value === o.value))
       .filter((o) => {
         if (!inputValue) return true;
-        return o.label.toLowerCase().includes(inputValue.toLowerCase());
+        const needle = inputValue.toLowerCase();
+        // Match label, group, and description so e.g. "emotion", "count", or a word from the
+        // description all surface the option.
+        return [o.label, o.group, o.description].some((field) => field?.toLowerCase().includes(needle));
       });
   }, [options, selected, inputValue]);
+
+  // Cluster consecutive options that share a `group` into labelled sections, preserving the caller's
+  // ordering. Options without a group form a single unlabelled section. Because empty groups are
+  // never created, filtering hides section headers that have no matches.
+  const optionGroups = React.useMemo(() => {
+    const groups: { key: string; label?: string; icon?: React.ReactNode; options: TOption<T>[] }[] = [];
+    for (const option of selectableOptions) {
+      const last = groups[groups.length - 1];
+      if (last && last.label === option.group) {
+        last.options.push(option);
+      } else {
+        groups.push({
+          key: option.group ?? "__ungrouped__",
+          label: option.group,
+          icon: option.groupIcon,
+          options: [option],
+        });
+      }
+    }
+    return groups;
+  }, [selectableOptions]);
 
   // Calculate position for dropdown when opening
   React.useEffect(() => {
@@ -167,6 +198,11 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   return (
     <Command
       onKeyDown={handleKeyDown}
+      // We filter options ourselves via `selectableOptions` (keyed off `inputValue`). cmdk's built-in
+      // filter double-filters the already-pruned list and goes stale on backspace — options removed by
+      // our filter unmount, and when they re-mount cmdk doesn't re-include them until the next keystroke,
+      // so search only appeared to react to added letters. Disabling it makes our memo the sole filter.
+      shouldFilter={false}
       className={`relative overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
       <div
         ref={containerRef}
@@ -177,9 +213,14 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         )}>
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
-            <Badge key={option.value} className="rounded-md">
-              {option.icon ? <span className="mr-1 inline-flex items-center">{option.icon}</span> : null}
-              {option.label}
+            <Badge
+              key={option.value}
+              className="max-w-full rounded-md"
+              title={option.description ?? option.label}>
+              {option.icon ? (
+                <span className="mr-1 inline-flex shrink-0 items-center">{option.icon}</span>
+              ) : null}
+              <span className="truncate">{option.label}</span>
               <button
                 type="button"
                 className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
@@ -224,30 +265,55 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               width: `${position.width}px`,
             }}>
             <CommandList className="border-0">
-              <div className="text-popover-foreground max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-hidden animate-in">
-                <CommandGroup className="h-full overflow-auto">
-                  {selectableOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      disabled={option.disabled}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onSelect={() => {
-                        if (disabled || option.disabled) return;
-                        isUserInitiatedRef.current = true; // Mark as user-initiated
-                        setSelected((prev) => [...prev, option]);
-                        setInputValue("");
-                      }}
-                      className={option.disabled ? "cursor-not-allowed" : "cursor-pointer"}>
-                      {option.icon ? (
-                        <span className="mr-1 inline-flex items-center">{option.icon}</span>
-                      ) : null}
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+              <div className="text-popover-foreground max-h-64 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-hidden animate-in">
+                {optionGroups.map((group) => (
+                  <CommandGroup
+                    key={group.key}
+                    heading={
+                      group.label ? (
+                        <span className="flex items-center gap-2">
+                          {group.icon ? (
+                            <span className="inline-flex size-5 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+                              {group.icon}
+                            </span>
+                          ) : null}
+                          {group.label}
+                        </span>
+                      ) : undefined
+                    }>
+                    {group.options.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        disabled={option.disabled}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onSelect={() => {
+                          if (disabled || option.disabled) return;
+                          isUserInitiatedRef.current = true; // Mark as user-initiated
+                          setSelected((prev) => [...prev, option]);
+                          setInputValue("");
+                        }}
+                        className={cn(
+                          "items-start gap-2",
+                          option.disabled ? "cursor-not-allowed" : "cursor-pointer"
+                        )}>
+                        {option.icon ? (
+                          <span className="mt-0.5 inline-flex items-center">{option.icon}</span>
+                        ) : null}
+                        <span className="flex min-w-0 flex-col">
+                          <span className="truncate text-slate-900">{option.label}</span>
+                          {option.description ? (
+                            <span className="mt-0.5 text-xs font-normal text-slate-400">
+                              {option.description}
+                            </span>
+                          ) : null}
+                        </span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))}
               </div>
             </CommandList>
           </div>,

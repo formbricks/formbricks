@@ -1,5 +1,5 @@
-import { Session } from "next-auth";
 import { z } from "zod";
+import type { Session } from "@formbricks/types/auth";
 import { TMembership, ZMembership } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
 import { TUser, ZUser } from "@formbricks/types/user";

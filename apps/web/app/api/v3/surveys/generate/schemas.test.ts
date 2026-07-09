@@ -383,13 +383,17 @@ describe("ZV3SurveyGenerateBody", () => {
     expect(result.success).toBe(false);
   });
 
-  test("rejects incomplete locale tags that cannot normalize to an allowed locale", () => {
+  test("normalizes an incomplete script tag to its allowed canonical locale", () => {
+    // `zh-Hans` (script, no region) canonicalizes to the allowed `zh-Hans-CN`, so it is accepted.
     const result = ZV3SurveyGenerateBody.safeParse({
       workspaceId: "clxx1234567890123456789012",
       prompt: "Measure onboarding completion for new users.",
       language: "zh-Hans",
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.language).toBe("zh-Hans-CN");
+    }
   });
 });

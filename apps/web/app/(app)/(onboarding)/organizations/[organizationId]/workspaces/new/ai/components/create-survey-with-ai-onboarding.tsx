@@ -43,7 +43,6 @@ export const CreateSurveyWithAIOnboarding = ({
         onSuccess={handleSuccess}
         promptInputRef={promptInputRef}
         showCancel={false}
-        showSurveyType={false}
       />
     </div>
   );

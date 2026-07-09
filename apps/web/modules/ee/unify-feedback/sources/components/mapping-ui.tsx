@@ -5,8 +5,9 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TFeedbackSourceType, THubFieldType, ZHubFieldType } from "@formbricks/types/feedback-source";
 import { routeResponseValueTarget } from "@/lib/feedback-source/utils";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { CSV_FIELD_GROUPS, CSV_TARGET_FIELDS, TFieldMapping, TSourceField, TTargetField } from "../types";
-import { TMappingConfidence } from "../utils";
+import { TMappingConfidence, getCsvIdentityMappingAlert } from "../utils";
 import { FormTargetField, TAutoMapState } from "./mapping-field";
 
 interface MappingUIProps {
@@ -122,6 +123,8 @@ const CsvMappingForm = ({
       .filter((f): f is TTargetField => Boolean(f))
       .map(renderField);
 
+  const identityMappingAlert = getCsvIdentityMappingAlert(mappings);
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -129,6 +132,22 @@ const CsvMappingForm = ({
           <p className="text-sm font-semibold text-slate-800">{t("workspace.unify.csv_basic_required")}</p>
           <p className="text-xs text-slate-500">{t("workspace.unify.csv_basic_required_hint")}</p>
         </div>
+        {identityMappingAlert?.type === "both_fixed" && (
+          <Alert variant="error" size="small">
+            <AlertDescription className="overflow-visible whitespace-normal">
+              {t("workspace.unify.csv_both_identity_fields_fixed_note")}
+            </AlertDescription>
+          </Alert>
+        )}
+        {identityMappingAlert?.type === "single_fixed" && (
+          <Alert variant="warning" size="small">
+            <AlertDescription className="overflow-visible whitespace-normal">
+              {identityMappingAlert.field === "submission_id"
+                ? t("workspace.unify.csv_fixed_submission_id_note")
+                : t("workspace.unify.csv_fixed_field_id_note")}
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="space-y-2">{renderGroup(CSV_FIELD_GROUPS.basic)}</div>
       </div>
 

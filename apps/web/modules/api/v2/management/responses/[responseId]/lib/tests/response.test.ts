@@ -385,7 +385,7 @@ describe("Response Lib", () => {
       const result = await updateResponse(responseId, responseInput);
       expect(prisma.response.update).toHaveBeenCalledWith({
         where: { id: responseId },
-        data: responseInput,
+        data: { ...responseInput, language: "en-US" }, // language canonicalized on write
       });
 
       expect(result.ok).toBe(true);
@@ -401,7 +401,7 @@ describe("Response Lib", () => {
       const result = await updateResponse(responseId, responseInput);
       expect(prisma.response.update).toHaveBeenCalledWith({
         where: { id: responseId },
-        data: responseInput,
+        data: { ...responseInput, language: "en-US" }, // language canonicalized on write
       });
 
       expect(result.ok).toBe(true);
@@ -476,7 +476,7 @@ describe("Response Lib", () => {
 
       expect(mockTx.response.update).toHaveBeenCalledWith({
         where: { id: responseId },
-        data: responseInput,
+        data: { ...responseInput, language: "en-US" }, // language canonicalized on write
       });
       expect(evaluateResponseQuotas).toHaveBeenCalledWith({
         surveyId: response.surveyId,

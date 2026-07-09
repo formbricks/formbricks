@@ -216,7 +216,7 @@ describe("User Management", () => {
         id: "user123",
         email: mockEmail,
         locale: "en",
-        emailVerified: null,
+        emailVerified: false,
       };
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(
         mockUser as Awaited<ReturnType<typeof prisma.user.findFirst>>

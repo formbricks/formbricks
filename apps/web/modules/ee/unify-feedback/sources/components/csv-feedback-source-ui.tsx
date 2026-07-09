@@ -1,12 +1,13 @@
 "use client";
 
 import { parse } from "csv-parse/sync";
-import { ArrowUpFromLineIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { FileDropZone } from "@/modules/ui/components/file-drop-zone";
 import {
   SAMPLE_CSV_CONTENT,
   SAMPLE_CSV_FILE_NAME,
@@ -18,6 +19,8 @@ import { TMappingConfidence, autoMapCsvSourceFields, titleizeFromFileName, valid
 import { MappingUI } from "./mapping-ui";
 
 const PREVIEW_ROW_LIMIT = 5;
+const CSV_PREVIEW_COLUMN_WIDTH_CLASS = "min-w-[120px] max-w-[200px]";
+const CSV_PREVIEW_CELL_TRUNCATE_CLASS = "block max-w-full overflow-hidden text-ellipsis whitespace-nowrap";
 
 const buildCsvPreviewRows = (headers: string[], records: Record<string, string>[]): string[][] =>
   records.slice(0, PREVIEW_ROW_LIMIT).map((row) => headers.map((h) => row[h] ?? ""));
@@ -61,13 +64,6 @@ export function CsvFeedbackSourceUI({
       userEditedSourceNameRef.current = true;
     }
   }, [mappings]);
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target?.files?.[0];
-    if (file) {
-      void processCSVFile(file);
-    }
-  };
 
   const handleUserMappingsChange = (newMappings: TFieldMapping[]) => {
     const oldByTarget = new Map(mappings.map((m) => [m.targetFieldId, m]));
@@ -173,20 +169,6 @@ export function CsvFeedbackSourceUI({
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      void processCSVFile(file);
-    }
-  };
-
   const handleDownloadSample = () => {
     const blob = new Blob([SAMPLE_CSV_CONTENT], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -203,18 +185,22 @@ export function CsvFeedbackSourceUI({
     const sourceLabel = csvFile?.name ?? t("workspace.unify.csv_sample_label");
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-800">{sourceLabel}</span>
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="truncate text-sm font-medium text-slate-800" title={sourceLabel}>
+              {sourceLabel}
+            </span>
             <Badge
               text={t("workspace.unify.csv_rows_count", { count: csvTotalRows })}
               type="gray"
               size="tiny"
+              className="shrink-0"
             />
           </div>
           <Button
             variant="secondary"
             size="sm"
+            className="shrink-0 bg-white"
             onClick={() => {
               setCsvFile(null);
               setCsvPreview([]);
@@ -253,12 +239,14 @@ export function CsvFeedbackSourceUI({
             </button>
             {previewOpen && (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+                <table className="w-max min-w-full text-sm">
                   <thead className="bg-slate-50">
                     <tr>
                       {csvPreview[0]?.map((header, i) => (
-                        <th key={`${header}-${i}`} className="px-3 py-2 text-left font-medium text-slate-700">
-                          {header}
+                        <th
+                          key={`${header}-${i}`}
+                          className={`${CSV_PREVIEW_COLUMN_WIDTH_CLASS} px-3 py-2 text-left font-medium text-slate-700`}>
+                          <span className={CSV_PREVIEW_CELL_TRUNCATE_CLASS}>{header}</span>
                         </th>
                       ))}
                     </tr>
@@ -269,8 +257,10 @@ export function CsvFeedbackSourceUI({
                         {row.map((cell, cellIndex) => (
                           <td
                             key={`${csvPreview[0]?.[cellIndex] ?? cellIndex}-${cellIndex}`}
-                            className="px-3 py-2 text-slate-600">
-                            {cell || <span className="text-slate-300">—</span>}
+                            className={`${CSV_PREVIEW_COLUMN_WIDTH_CLASS} px-3 py-2 text-slate-600`}>
+                            <span className={CSV_PREVIEW_CELL_TRUNCATE_CLASS}>
+                              {cell || <span className="text-slate-300">—</span>}
+                            </span>
                           </td>
                         ))}
                       </tr>
@@ -305,27 +295,14 @@ export function CsvFeedbackSourceUI({
       )}
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-slate-700">{t("workspace.unify.upload_csv_file")}</h4>
-        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6">
-          <label
-            htmlFor="csv-file-upload"
-            className="flex cursor-pointer flex-col items-center justify-center"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}>
-            <ArrowUpFromLineIcon className="size-8 text-slate-400" />
-            <p className="mt-2 text-sm text-slate-600">
-              <span className="font-semibold">{t("workspace.unify.click_to_upload")}</span>{" "}
-              {t("workspace.unify.or_drag_and_drop")}
-            </p>
-            <p className="mt-1 text-xs text-slate-400">{t("workspace.unify.csv_files_only")}</p>
-            <input
-              type="file"
-              id="csv-file-upload"
-              accept=".csv"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-          </label>
-        </div>
+        <FileDropZone
+          id="csv-file-upload"
+          accept=".csv"
+          onFileSelect={processCSVFile}
+          primaryText={t("workspace.unify.click_to_upload")}
+          secondaryText={t("workspace.unify.or_drag_and_drop")}
+          helpText={t("workspace.unify.csv_files_only")}
+        />
         <div className="flex justify-between">
           <Button variant="secondary" size="sm" onClick={handleDownloadSample}>
             {t("workspace.unify.download_sample_csv")}

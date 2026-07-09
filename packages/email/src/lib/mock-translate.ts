@@ -9,6 +9,16 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "common.powered_by_formbricks": "Powered by Formbricks",
   "emails.accept": "Accept",
   "emails.click_or_drag_to_upload_files": "Click or drag to upload files.",
+  "emails.delete_account_email_confirm_deletion": "Confirm account deletion",
+  "emails.delete_account_email_did_not_request":
+    "If you did not request this, please ignore this email and your account will remain active.",
+  "emails.delete_account_email_heading": "Confirm your account deletion",
+  "emails.delete_account_email_link_valid_for_minutes": "The link is valid for {minutes} minutes.",
+  "emails.delete_account_email_subject": "Confirm your Formbricks account deletion",
+  "emails.delete_account_email_text":
+    "You have requested to delete your Formbricks account. To confirm, please click the button below:",
+  "emails.delete_account_email_warning":
+    "This will permanently delete your account and all associated data. This action cannot be undone.",
   "emails.email_customization_preview_email_heading": "Hey {userName}",
   "emails.email_customization_preview_email_subject": "Formbricks Email Customization Preview",
   "emails.email_customization_preview_email_text":

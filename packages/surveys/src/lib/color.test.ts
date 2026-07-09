@@ -70,8 +70,15 @@ describe("isLight", () => {
   test("should throw error for invalid color strings", () => {
     expect(() => isLight("#12345")).toThrow("Invalid color");
     expect(() => isLight("notacolor")).toThrow("Invalid color");
-    expect(isLight("#GGHHII")).toBe(false); // Invalid hex characters currently return false
+    expect(() => isLight("#GGHHII")).toThrow("Invalid color"); // Invalid hex characters
     expect(() => isLight("")).toThrow("Invalid color");
     expect(() => isLight("#12")).toThrow("Invalid color"); // Too short
+  });
+
+  test("should tolerate 4- and 8-digit hex (with alpha) as accepted by ZColor", () => {
+    expect(isLight("#FFFB")).toBe(true);
+    expect(isLight("#000B")).toBe(false);
+    expect(isLight("#ffffff80")).toBe(true);
+    expect(isLight("#00000080")).toBe(false);
   });
 });
