@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { getSurvey } from "@/lib/survey/service";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
@@ -38,6 +39,10 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
+}));
+
+vi.mock("@/lib/survey/service", () => ({
+  getSurvey: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
@@ -721,6 +726,12 @@ describe("Contacts Lib", () => {
   });
 
   describe("generatePersonalLinks", () => {
+    beforeEach(() => {
+      // Default: survey lives in the same workspace as the segment so the
+      // cross-tenant guard passes. Individual tests override as needed.
+      vi.mocked(getSurvey).mockResolvedValue({ workspaceId: mockWorkspaceId } as any);
+    });
+
     test("generates survey links for contacts in segment", async () => {
       const mockPrismaContactData = [
         {
@@ -886,6 +897,34 @@ describe("Contacts Lib", () => {
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
 
       expect(result).toHaveLength(0);
+    });
+
+    test("throws when the segment belongs to a different workspace than the survey (cross-tenant guard)", async () => {
+      // Survey is in workspace A, segment is in workspace B. The caller was only
+      // authorized against the survey's workspace, so reading the segment's
+      // contacts would leak another workspace's PII. Must reject before any
+      // contact is read.
+      vi.mocked(getSurvey).mockResolvedValue({ workspaceId: "workspace-A" } as any);
+      vi.mocked(getSegment).mockResolvedValue({
+        id: mockSegmentId,
+        filters: [],
+        workspaceId: "workspace-B",
+      } as any);
+
+      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId)).rejects.toThrow(ValidationError);
+
+      // No contacts should have been queried for the foreign segment.
+      expect(prisma.contact.findMany).not.toHaveBeenCalled();
+      expect(getContactSurveyLink).not.toHaveBeenCalled();
+    });
+
+    test("returns null when the survey does not exist", async () => {
+      vi.mocked(getSurvey).mockResolvedValue(null as any);
+
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+
+      expect(result).toBeNull();
+      expect(getSegment).not.toHaveBeenCalled();
     });
   });
 });

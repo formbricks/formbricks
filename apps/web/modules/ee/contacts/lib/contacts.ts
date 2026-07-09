@@ -7,6 +7,7 @@ import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common"
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { getSurvey } from "@/lib/survey/service";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -712,6 +713,27 @@ export const createContactsFromCSV = async (
 };
 
 export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays?: number) => {
+  const survey = await getSurvey(surveyId);
+
+  if (!survey) {
+    return null;
+  }
+
+  const segment = await getSegment(segmentId);
+
+  if (!segment) {
+    return null;
+  }
+
+  // Cross-tenant guard: the segment must belong to the same workspace as the
+  // survey the caller is authorized against. Without this, a caller with access
+  // to `surveyId`'s workspace could pass a `segmentId` from another workspace and
+  // exfiltrate that workspace's contact PII. Mirrors the v2 management API
+  // (contact-links/segments) which rejects the same mismatch.
+  if (survey.workspaceId !== segment.workspaceId) {
+    throw new ValidationError("Survey and segment are not in the same workspace");
+  }
+
   const contactsResult = await getContactsInSegment(segmentId);
 
   if (!contactsResult) {
