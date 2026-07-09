@@ -15,7 +15,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
 import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowTestProblem } from "@formbricks/workflows";
@@ -69,6 +69,10 @@ const EDGE_TYPES: EdgeTypes = {
 // which rendered a fresh two-node workflow noticeably small. 2x proved too big; 1.15 is three
 // zoom-out steps down from it (RF's zoomIn/zoomOut step is 1.2x, and 2 / 1.2^3 ≈ 1.157).
 const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
+
+// The inspector column animates its width over 300ms (see workflow-inspector-panel.tsx); refit
+// only after the canvas has its final size, with a small buffer.
+const INSPECTOR_RESIZE_SETTLE_MS = 350;
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
@@ -148,6 +152,26 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
     },
     [canMutate, isSnapToCanvasEnabled, setDefinition]
   );
+
+  // Opening/closing the inspector resizes the canvas by 360px, which can push nodes behind the
+  // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
+  // node coordinates are untouched.
+  const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
+  const previousInspectorVisibleRef = useRef(isInspectorVisible);
+  useEffect(() => {
+    if (previousInspectorVisibleRef.current === isInspectorVisible) return;
+    previousInspectorVisibleRef.current = isInspectorVisible;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timeoutHandle = setTimeout(() => {
+      void fitView({
+        padding: 0.25,
+        maxZoom: WORKFLOW_CANVAS_MAX_ZOOM,
+        minZoom: 0.4,
+        duration: prefersReducedMotion ? 0 : 300,
+      });
+    }, INSPECTOR_RESIZE_SETTLE_MS);
+    return () => clearTimeout(timeoutHandle);
+  }, [isInspectorVisible, fitView]);
 
   const handleAutoLayout = useCallback(() => {
     if (!canMutate) return;
