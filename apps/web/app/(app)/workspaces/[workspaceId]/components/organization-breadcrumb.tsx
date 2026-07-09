@@ -7,17 +7,17 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
+import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { useOrganization } from "../context/workspace-context";
+import { useOptionalWorkspaceContext } from "../context/workspace-context";
 
 interface OrganizationBreadcrumbProps {
   currentOrganizationId: string;
@@ -36,52 +36,29 @@ export const OrganizationBreadcrumb = ({
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
-  const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Get current organization name from context OR prop
-  // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
-  const { organization: currentOrganization } = useOrganization();
+  const organizationSwitcher = useSwitcherData(
+    () => getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }),
+    t("common.failed_to_load_organizations"),
+    (message) => {
+      const error = new Error(message);
+      logger.error(error, "Failed to load organizations");
+      Sentry.captureException(error);
+    }
+  );
+  const { load: loadOrganizations } = organizationSwitcher;
+
+  // Name comes from context, falling back to the prop when there's no context yet.
+  const workspaceContext = useOptionalWorkspaceContext();
+  const currentOrganization = workspaceContext?.organization ?? null;
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
-  // Lazy-load organizations when dropdown opens
+  // Lazy-load organizations when dropdown opens (the hook guards against duplicate/looping loads).
   useEffect(() => {
-    // Only fetch when dropdown opened for first time (and no error state)
-    if (isOrganizationDropdownOpen && organizations.length === 0 && !isLoadingOrganizations && !loadError) {
-      setIsLoadingOrganizations(true);
-      setLoadError(null); // Clear any previous errors
-      getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }).then((result) => {
-        if (result?.data) {
-          // Sort organizations by name
-          const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
-          setOrganizations(sorted);
-        } else {
-          // Handle server errors or validation errors
-          const errorMessage = getFormattedErrorMessage(result);
-          const error = new Error(errorMessage);
-          logger.error(error, "Failed to load organizations");
-          Sentry.captureException(error);
-          setLoadError(errorMessage || t("common.failed_to_load_organizations"));
-        }
-        setIsLoadingOrganizations(false);
-      });
+    if (isOrganizationDropdownOpen) {
+      void loadOrganizations();
     }
-  }, [
-    isOrganizationDropdownOpen,
-    currentOrganizationId,
-    organizations.length,
-    isLoadingOrganizations,
-    loadError,
-    t,
-  ]);
-
-  if (!currentOrganization) {
-    const errorMessage = `Organization not found for organization id: ${currentOrganizationId}`;
-    logger.error(errorMessage);
-    Sentry.captureException(new Error(errorMessage));
-    return;
-  }
+  }, [isOrganizationDropdownOpen, loadOrganizations]);
 
   const handleOrganizationChange = (organizationId: string) => {
     startTransition(() => {
@@ -95,7 +72,7 @@ export const OrganizationBreadcrumb = ({
   };
 
   // Hide organization dropdown for single org setups (on-premise)
-  const showOrganizationDropdown = isMultiOrgEnabled || organizations.length > 1;
+  const showOrganizationDropdown = isMultiOrgEnabled || organizationSwitcher.items.length > 1;
 
   const handleSettingChange = (href: string) => {
     startTransition(() => {
@@ -124,44 +101,16 @@ export const OrganizationBreadcrumb = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="mt-2">
           {showOrganizationDropdown && (
-            <>
-              <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <Building2Icon className="mr-2 inline size-4" />
-                {t("common.choose_organization")}
-              </div>
-              {isLoadingOrganizations && (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="size-4 animate-spin" />
-                </div>
-              )}
-              {!isLoadingOrganizations && loadError && (
-                <div className="px-2 py-4">
-                  <p className="mb-2 text-sm text-red-600">{loadError}</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoadError(null);
-                      setOrganizations([]);
-                    }}
-                    className="text-xs text-slate-600 underline hover:text-slate-800">
-                    {t("common.try_again")}
-                  </button>
-                </div>
-              )}
-              {!isLoadingOrganizations && !loadError && (
-                <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                  {organizations.map((org) => (
-                    <DropdownMenuCheckboxItem
-                      key={org.id}
-                      checked={org.id === currentOrganizationId}
-                      onClick={() => handleOrganizationChange(org.id)}
-                      className="cursor-pointer">
-                      {org.name}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuGroup>
-              )}
-            </>
+            <SwitcherDropdownBody
+              type="organization"
+              isLoading={organizationSwitcher.isLoading}
+              error={organizationSwitcher.error}
+              onRetry={organizationSwitcher.retry}
+              items={organizationSwitcher.items}
+              selectedId={currentOrganizationId}
+              onSelect={handleOrganizationChange}
+              showSettings={false}
+            />
           )}
           {currentWorkspaceId && (
             <>

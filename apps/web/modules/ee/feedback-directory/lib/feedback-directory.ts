@@ -6,6 +6,7 @@ import { Prisma, type PrismaClient } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { isDirectoryWorkspaceFkViolation } from "@/lib/feedback-source/service";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   TFeedbackDirectory,
@@ -406,10 +407,6 @@ const buildWorkspaceAssignmentPayload = async (
   };
 };
 
-interface UpdateFeedbackDirectoryOptions {
-  pauseFeedbackSourcesInRemovedWorkspaces?: boolean;
-}
-
 const getArchiveUpdate = async (
   prismaClient: FeedbackDirectoryPrismaClient,
   directoryId: string,
@@ -468,24 +465,30 @@ const getWorkspaceAssignmentUpdate = async (
   };
 };
 
-const pauseConnectorsInWorkspaces = async (
+/**
+ * Guards the composite FeedbackSource -> FeedbackDirectoryWorkspace FK: a workspace cannot be
+ * unassigned from a directory while it still owns feedback sources there, otherwise deleting the
+ * join row would violate the constraint. Mirrors the archive guard (DIRECTORY_HAS_FEEDBACK_SOURCES).
+ */
+const assertNoFeedbackSourcesInRemovedWorkspaces = async (
   tx: Prisma.TransactionClient,
   directoryId: string,
-  workspaceIds: string[]
+  removedWorkspaceIds: string[]
 ): Promise<void> => {
-  if (workspaceIds.length === 0) {
+  if (removedWorkspaceIds.length === 0) {
     return;
   }
 
-  await tx.feedbackSource.updateMany({
+  const feedbackSourceCount = await tx.feedbackSource.count({
     where: {
       feedbackDirectoryId: directoryId,
-      workspaceId: { in: workspaceIds },
-    },
-    data: {
-      status: "paused",
+      workspaceId: { in: removedWorkspaceIds },
     },
   });
+
+  if (feedbackSourceCount > 0) {
+    throw new InvalidInputError("DIRECTORY_WORKSPACE_HAS_FEEDBACK_SOURCES");
+  }
 };
 
 /**
@@ -531,15 +534,15 @@ const assertWorkspacesNotAssignedElsewhere = async (
  * @throws {ValidationError} If the inputs fail validation.
  * @throws {ResourceNotFoundError} If the directory does not exist (Prisma P2025).
  * @throws {InvalidInputError} If any specified workspace does not belong to the directory's organization,
- *   or if the name conflicts with an existing directory in the same organization.
+ *   if a removed workspace still owns feedback sources in this directory, or if the name conflicts
+ *   with an existing directory in the same organization.
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
  */
 export const updateFeedbackDirectory = async (
   directoryId: string,
   organizationId: string,
-  data: TFeedbackDirectoryUpdateInput,
-  options?: UpdateFeedbackDirectoryOptions
+  data: TFeedbackDirectoryUpdateInput
 ): Promise<boolean> => {
   validateInputs([directoryId, ZId], [organizationId, ZId], [data, ZFeedbackDirectoryUpdateInput]);
 
@@ -560,6 +563,12 @@ export const updateFeedbackDirectory = async (
           workspaceIds
         );
 
+        await assertNoFeedbackSourcesInRemovedWorkspaces(
+          tx,
+          directoryId,
+          workspaceAssignmentUpdate.removedWorkspaceIds
+        );
+
         const payload: Prisma.FeedbackDirectoryUpdateInput = {
           ...(name !== undefined ? { name } : {}),
           ...archiveUpdate,
@@ -572,10 +581,6 @@ export const updateFeedbackDirectory = async (
           where: { id: directoryId },
           data: payload,
         });
-
-        if (options?.pauseFeedbackSourcesInRemovedWorkspaces) {
-          await pauseConnectorsInWorkspaces(tx, directoryId, workspaceAssignmentUpdate.removedWorkspaceIds);
-        }
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -590,6 +595,12 @@ export const updateFeedbackDirectory = async (
       }
       if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
         throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
+      }
+      // Defense-in-depth: the composite FeedbackSource FK fires on the join-row deletion if the
+      // pre-flight count above was bypassed (e.g. a concurrent source create). Other FK violations
+      // in this transaction (e.g. a concurrently deleted workspace) fall through to DatabaseError.
+      if (isDirectoryWorkspaceFkViolation(error)) {
+        throw new InvalidInputError("DIRECTORY_WORKSPACE_HAS_FEEDBACK_SOURCES");
       }
       throw new DatabaseError(error.message);
     }

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -33,7 +33,7 @@ export const UnifyTopicsSubtopicsPage = async (
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
         </PageHeader>
         <div className="flex items-center justify-center">
@@ -66,10 +66,11 @@ export const UnifyTopicsSubtopicsPage = async (
   if (directories.length === 0) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+        <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
           <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
         </PageHeader>
-        <NoFeedbackDirectoryEmptyState
+        <FeedbackDataEmptyState
+          variant="no-directory"
           organizationId={organization.id}
           isOwnerOrManager={isOwner || isManager}
         />

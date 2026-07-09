@@ -1,11 +1,5 @@
 import { TFunction } from "i18next";
-import {
-  CalendarDaysIcon,
-  type LucideIcon,
-  SquareArrowOutUpRightIcon,
-  StarIcon,
-  UploadIcon,
-} from "lucide-react";
+import { CalendarDaysIcon, type LucideIcon, SquareArrowOutUpRightIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import {
   Column,
@@ -119,12 +113,14 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
     return i + 1;
   }
   if (scale === "star") {
+    // Hosted PNG instead of an inline SVG: Gmail and Outlook strip <svg>,
+    // so stars rendered as lucide icons never show up in real email clients.
     return (
-      <StarIcon
-        color="#cbd5e1"
-        fill="#cbd5e1"
-        size={28}
-        strokeWidth={2}
+      <Img
+        src={`${WEBAPP_URL}/star-icons/star.png`}
+        alt="star"
+        width={28}
+        height={28}
         style={{
           display: "inline-block",
           marginTop: "9px",

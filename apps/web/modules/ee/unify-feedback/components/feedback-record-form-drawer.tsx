@@ -1,13 +1,18 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FingerprintIcon, LanguagesIcon, PlusIcon } from "lucide-react";
+import { FingerprintIcon, LanguagesIcon, PlusIcon, SparklesIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import {
+  EMOTIONS_DIMENSION_ID,
+  SENTIMENT_DIMENSION_ID,
+  getTranslatedDimensionValueLabel,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -126,6 +131,19 @@ export const FeedbackRecordFormDrawer = ({
     selectedValueField === "value_text" && hasTranslation ? resolvedTranslatedText : null;
   const translatedLangLabel = record?.translation_lang_key
     ? (getLanguageLabel(record.translation_lang_key, locale) ?? record.translation_lang_key)
+    : null;
+
+  // Read-only AI enrichment (sentiment/emotions). Same "absent until enriched" contract as the
+  // translation fields above; reuse the chart value-label maps so labels stay consistent everywhere.
+  const sentimentLabel = record?.sentiment
+    ? (getTranslatedDimensionValueLabel(SENTIMENT_DIMENSION_ID, record.sentiment, t) ?? record.sentiment)
+    : null;
+  const sentimentScoreLabel =
+    typeof record?.sentiment_score === "number" ? record.sentiment_score.toFixed(2) : null;
+  const emotions = record?.emotions;
+  const emotionsRaw = Array.isArray(emotions) ? emotions.join(", ") : (emotions ?? "");
+  const emotionsLabel = emotionsRaw
+    ? (getTranslatedDimensionValueLabel(EMOTIONS_DIMENSION_ID, emotionsRaw, t) ?? emotionsRaw)
     : null;
 
   const resetForCreate = useCallback(() => {
@@ -684,6 +702,40 @@ export const FeedbackRecordFormDrawer = ({
                     </div>
                     <p className="font-mono text-sm text-slate-700">{record.value_id}</p>
                     <p className="text-xs text-slate-400">{t("workspace.unify.value_id_hint")}</p>
+                  </div>
+                )}
+
+                {record && selectedValueField === "value_text" && (
+                  <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <SparklesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
+                      <span className="text-sm font-medium text-slate-700">
+                        {t("workspace.unify.ai_enrichment")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-slate-500">{t("workspace.unify.sentiment")}</span>
+                      {sentimentLabel ? (
+                        <span className="text-sm text-slate-700">
+                          {sentimentLabel}
+                          {sentimentScoreLabel ? ` (${sentimentScoreLabel})` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-slate-400 italic">
+                          {t("workspace.unify.not_enriched")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-slate-500">{t("workspace.unify.emotions")}</span>
+                      {emotionsLabel ? (
+                        <span className="text-sm text-slate-700">{emotionsLabel}</span>
+                      ) : (
+                        <span className="text-sm text-slate-400 italic">
+                          {t("workspace.unify.not_enriched")}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
