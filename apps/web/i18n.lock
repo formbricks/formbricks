@@ -3892,6 +3892,11 @@ checksums:
     workspace/workflows/node_needs_survey: 5e51ca0392e98011a8a72e75a223e5dd
     workspace/workflows/pan_mode: 7d97982816ad18072903021c89153bce
     workspace/workflows/pointer_mode: 7af7ee96c6d8e9a15f0569c1b2376def
+    workspace/workflows/readiness_add_action: 4a0b9055d5d16c069c001227ea137b68
+    workspace/workflows/readiness_add_trigger: 6eb6c234754642b354997485a6ae4ef6
+    workspace/workflows/readiness_complete_email: 0907e94ca4b2524e8c635cbfa0bfd4e8
+    workspace/workflows/readiness_connect_survey: 4cddec027df65a69930e4b94d02a33de
+    workspace/workflows/readiness_name_missing: 1499a08b88af085a8829e27128ab0b9d
     workspace/workflows/relative_date: b9249095eeb4436a1d0d5ca5f9ecd346
     workspace/workflows/relative_days_ago: d9da4648c4fa3cb86584d3f9f48df6a2
     workspace/workflows/relative_today: 86945b299a1fb38b11917873dd0bea40

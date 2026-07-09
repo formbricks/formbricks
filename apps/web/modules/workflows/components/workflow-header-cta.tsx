@@ -1,13 +1,15 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { Loader2Icon, TriangleAlertIcon } from "lucide-react";
+import { CircleDashedIcon, Loader2Icon, TriangleAlertIcon } from "lucide-react";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 import { Switch } from "@/modules/ui/components/switch";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
-import { workflowAtom, workflowValidityAtom } from "@/modules/workflows/state/editor";
+import { getWorkflowReadinessHint } from "@/modules/workflows/lib/workflow-readiness";
+import { workflowAtom, workflowDefinitionAtom, workflowValidityAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowHeaderCtaProps {
   workflowId: string;
@@ -18,6 +20,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const { t } = useTranslation();
   const segment = useSelectedLayoutSegment();
   const workflow = useAtomValue(workflowAtom);
+  const definition = useAtomValue(workflowDefinitionAtom);
   const validity = useAtomValue(workflowValidityAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
 
@@ -34,17 +37,37 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   if (!workflow) return null;
 
   const isArchived = workflow.status === "archived";
+  const isDraft = workflow.status === "draft";
   const isActive = workflow.status === "enabled";
+
+  const readinessHint = getWorkflowReadinessHint(definition, validity);
+  // Inline literal t() calls so the translation-key scanner detects every key.
+  const readinessHintLabels: Record<NonNullable<typeof readinessHint>, string> = {
+    add_trigger: t("workspace.workflows.readiness_add_trigger"),
+    connect_survey: t("workspace.workflows.readiness_connect_survey"),
+    add_action: t("workspace.workflows.readiness_add_action"),
+    complete_email: t("workspace.workflows.readiness_complete_email"),
+    name_missing: t("workspace.workflows.readiness_name_missing"),
+    not_executable: t("workspace.workflows.test_problems_title"),
+  };
 
   return (
     <div className="flex items-center gap-3">
-      {/* Validity is computed live from the editor state (workflowValidityAtom mirrors the
-          server's enable/test pre-flight), so the author sees "not ready" while building,
-          not after a failed enable. Amber: an unfinished draft is guidance, not an error. */}
-      {!isArchived && !validity.isReady ? (
-        <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600">
-          <TriangleAlertIcon className="size-4" aria-hidden="true" />
-          {t("workspace.workflows.test_problems_title")}
+      {/* One concrete next step, resolved from the live editor state. Drafts render it as quiet
+          setup guidance (an unfinished draft has a to-do, not a problem); a previously-live
+          workflow that can no longer run gets the red warning treatment. */}
+      {readinessHint && !isArchived ? (
+        <span
+          className={cn(
+            "flex items-center gap-1.5 text-xs font-medium",
+            isDraft ? "text-slate-500" : "text-red-600"
+          )}>
+          {isDraft ? (
+            <CircleDashedIcon className="size-4" aria-hidden="true" />
+          ) : (
+            <TriangleAlertIcon className="size-4" aria-hidden="true" />
+          )}
+          {readinessHintLabels[readinessHint]}
         </span>
       ) : null}
       {/* Edits autosave; the button stays as the explicit "persist now" escape hatch and doubles
@@ -60,7 +83,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         disabled={
           !builder.canEditMetadata || !builder.isDirty || builder.isTransitioning || builder.isSaving
         }>
-        {workflow.status === "draft" ? t("common.save_as_draft") : t("common.save")}
+        {isDraft ? t("common.save_as_draft") : t("common.save")}
         {builder.isDirty && !builder.isSaving ? (
           <span
             aria-hidden="true"
