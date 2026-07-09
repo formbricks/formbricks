@@ -147,12 +147,15 @@ export function ConditionalLogic({
     }
   }, [blockLogic, blockIdx, blockLogicFallback, updateBlockLogicFallback]);
 
-  // Expand the section when a rule is flagged invalid so the red outline is visible.
+  // Expand the section whenever a rule is flagged invalid so the red outline is visible.
+  // Keyed on invalidElements (a fresh array each validation pass) rather than only the derived
+  // hasLogicError, so a re-save re-opens the section even if the user collapsed it while the
+  // error still persisted (a plain edge-trigger on hasLogicError would not fire the second time).
   useEffect(() => {
     if (hasLogicError) {
       setIsOpen(true);
     }
-  }, [hasLogicError]);
+  }, [hasLogicError, invalidElements]);
 
   return (
     <div className="mt-4">

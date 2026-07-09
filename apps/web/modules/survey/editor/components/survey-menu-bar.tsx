@@ -239,6 +239,16 @@ export const SurveyMenuBar = ({
               newInvalidIds.push(logicItem.id);
             }
             firstInvalidScrollId ??= block?.id ?? null;
+          } else if (issue.path[2] === "logic") {
+            // Block-scope logic error (e.g. a cyclic jump) with no specific rule index: flag every
+            // rule in the block so the Conditional Logic section still surfaces and auto-expands.
+            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
+            for (const logicItem of block?.logic ?? []) {
+              if (!newInvalidIds.includes(logicItem.id)) {
+                newInvalidIds.push(logicItem.id);
+              }
+            }
+            firstInvalidScrollId ??= block?.id ?? null;
           }
         } else if (issue.path[0] === "welcomeCard") {
           if (!newInvalidIds.includes("start")) {
