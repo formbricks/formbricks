@@ -70,9 +70,11 @@ const EDGE_TYPES: EdgeTypes = {
 // zoom-out steps down from it (RF's zoomIn/zoomOut step is 1.2x, and 2 / 1.2^3 ≈ 1.157).
 const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
 
-// The inspector column animates its width over 300ms (see workflow-inspector-panel.tsx); refit
+// The inspector column animates its width over 150ms (see workflow-inspector-panel.tsx); refit
 // only after the canvas has its final size, with a small buffer.
-const INSPECTOR_RESIZE_SETTLE_MS = 350;
+const INSPECTOR_RESIZE_SETTLE_MS = 170;
+// Near-instant pan: the refit should feel like part of the sidebar toggle, not a second animation.
+const INSPECTOR_REFIT_PAN_MS = 120;
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
@@ -167,7 +169,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         padding: 0.25,
         maxZoom: WORKFLOW_CANVAS_MAX_ZOOM,
         minZoom: 0.4,
-        duration: prefersReducedMotion ? 0 : 300,
+        duration: prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS,
       });
     }, INSPECTOR_RESIZE_SETTLE_MS);
     return () => clearTimeout(timeoutHandle);
