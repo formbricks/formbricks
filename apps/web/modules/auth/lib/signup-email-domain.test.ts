@@ -86,6 +86,8 @@ describe("isBlockedEmailDomain", () => {
     expect(isBlockedEmailDomain("user+tag@gmail.com")).toBe(true);
     // A trailing FQDN dot is stripped so it can't slip past the Set (SSO emails aren't zod-validated).
     expect(isBlockedEmailDomain("user@gmail.com.")).toBe(true);
+    // Multiple trailing dots are all stripped (the linear scan matches the old /\.+$/ behavior).
+    expect(isBlockedEmailDomain("user@gmail.com..")).toBe(true);
   });
 
   test("treats input with no usable domain as not-blocked", () => {
