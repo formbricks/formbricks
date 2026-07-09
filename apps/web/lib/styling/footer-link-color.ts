@@ -57,8 +57,8 @@ const pickAccessibleTextColor = (surface: string): string => {
  * - Image / animation / upload background (or none): the links sit on a near-white backdrop
  *   and use a dark text color, guaranteeing contrast against a known surface.
  *
- * This is the *auto* value; an explicit `styling.linkColor` set by the user overrides it at
- * the call site.
+ * This is the *auto* value; an explicit `styling.footerLinkColor` set by the user overrides it
+ * (color and backdrop) at the call site.
  */
 export const getFooterLinkStyle = (styling: Styling): FooterLinkStyle => {
   const background = styling.background;

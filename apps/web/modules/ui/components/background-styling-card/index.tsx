@@ -9,9 +9,9 @@ import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { SurveyBgSelectorTab } from "@/modules/ui/components/background-styling-card/survey-bg-selector-tab";
 import { Badge } from "@/modules/ui/components/badge";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Slider } from "@/modules/ui/components/slider";
-import { ColorField } from "@/modules/ui/components/styling-fields/components/color-field";
 
 interface BackgroundStylingCardProps {
   open: boolean;
@@ -149,12 +149,29 @@ export const BackgroundStylingCard = ({
             </div>
           </div>
 
-          <ColorField
-            form={form}
-            name="linkColor.light"
-            label={t("workspace.look.advanced_styling_field_link_color")}
-            description={t("workspace.look.advanced_styling_field_link_color_description")}
-            placeholder={t("workspace.look.advanced_styling_field_link_color_placeholder")}
+          <FormField
+            control={form.control}
+            name="footerLinkColor"
+            render={({ field }) => (
+              <FormItem className="space-y-1">
+                <FormLabel>{t("workspace.look.advanced_styling_field_link_color")}</FormLabel>
+                <FormDescription>
+                  {t("workspace.look.advanced_styling_field_link_color_description")}
+                </FormDescription>
+                <FormControl>
+                  <ColorPicker
+                    color={field.value?.light ?? ""}
+                    onChange={(color) => {
+                      // A cleared picker means "auto-adjust": store undefined instead of an
+                      // empty string so the strict ZColor schema keeps validating.
+                      field.onChange(color ? { light: color } : undefined);
+                    }}
+                    containerClass="w-full"
+                    placeholder={t("workspace.look.advanced_styling_field_link_color_placeholder")}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
         </div>
       </Collapsible.CollapsibleContent>

@@ -2856,6 +2856,7 @@
         "allow_multi_select": "Mehrfachauswahl erlauben",
         "allow_multiple_files": "Mehrere Dateien erlauben",
         "allow_users_to_select_more_than_one_image": "Erlaube Nutzern, mehr als ein Bild auszuwählen",
+        "animated_background_option": "Animierter Hintergrund {number}",
         "animation": "Animation",
         "any_is_true": "mindestens eine ist wahr",
         "app_survey_description": "Binde eine Umfrage in deine Web-App oder Website ein, um Antworten zu sammeln.",

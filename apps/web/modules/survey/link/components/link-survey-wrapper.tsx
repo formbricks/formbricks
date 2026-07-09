@@ -63,10 +63,13 @@ export const LinkSurveyWrapper = ({
   };
   const styling = determineStyling();
   // Footer legal links sit on the survey background; resolve an AA-compliant color (and an
-  // optional backdrop for non-solid backgrounds). An explicit linkColor override wins.
+  // optional backdrop for non-solid backgrounds). An explicit footerLinkColor override wins —
+  // and also disables the near-white media backdrop: the user takes ownership of contrast, and
+  // e.g. a light override would otherwise be unreadable on the light backdrop.
   const footerLinkStyle = getFooterLinkStyle(styling);
-  // `||` (not `??`) so an empty-string override falls back to the auto-adjusted color.
-  const footerLinkColor = styling.linkColor?.light || footerLinkStyle.textColor;
+  const explicitFooterLinkColor = styling.footerLinkColor?.light;
+  const footerLinkColor = explicitFooterLinkColor ?? footerLinkStyle.textColor;
+  const footerLinkBackdropColor = explicitFooterLinkColor ? undefined : footerLinkStyle.backdropColor;
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
   const hasLogo = !styling.isLogoHidden && !!(workspace.logo?.url || styling.logo?.url);
@@ -152,7 +155,7 @@ export const LinkSurveyWrapper = ({
                 IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
                 surveyUrl={publicDomain + "/s/" + surveyId}
                 linkColor={footerLinkColor}
-                backdropColor={footerLinkStyle.backdropColor}
+                backdropColor={footerLinkBackdropColor}
                 isInFlow
               />
             )}
@@ -175,7 +178,7 @@ export const LinkSurveyWrapper = ({
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
           surveyUrl={publicDomain + "/s/" + surveyId}
           linkColor={footerLinkColor}
-          backdropColor={footerLinkStyle.backdropColor}
+          backdropColor={footerLinkBackdropColor}
         />
       )}
     </div>

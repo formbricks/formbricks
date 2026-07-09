@@ -2856,6 +2856,7 @@
         "allow_multi_select": "Tillåt flerval",
         "allow_multiple_files": "Tillåt flera filer",
         "allow_users_to_select_more_than_one_image": "Tillåt användare att välja mer än en bild",
+        "animated_background_option": "Animerad bakgrund {number}",
         "animation": "Animering",
         "any_is_true": "någon är sann",
         "app_survey_description": "Bädda in en enkät i din webbapp eller webbplats för att samla in svar.",

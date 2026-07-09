@@ -2856,6 +2856,7 @@
         "allow_multi_select": "Permitir seleção múltipla",
         "allow_multiple_files": "Permitir vários ficheiros",
         "allow_users_to_select_more_than_one_image": "Permitir aos utilizadores selecionar mais do que uma imagem",
+        "animated_background_option": "Fundo animado {number}",
         "animation": "Animação",
         "any_is_true": "qualquer uma é verdadeira",
         "app_survey_description": "Incorpore um inquérito na sua aplicação web ou site para recolher respostas.",

@@ -2856,6 +2856,7 @@
         "allow_multi_select": "Multi-select toestaan",
         "allow_multiple_files": "Meerdere bestanden toestaan",
         "allow_users_to_select_more_than_one_image": "Sta gebruikers toe meer dan één afbeelding te selecteren",
+        "animated_background_option": "Geanimeerde achtergrond {number}",
         "animation": "Animatie",
         "any_is_true": "een is waar",
         "app_survey_description": "Sluit een enquête in uw web-app of website in om reacties te verzamelen.",

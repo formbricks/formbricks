@@ -1,5 +1,6 @@
 import { CheckIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { debounce } from "@/lib/utils/debounce";
 
@@ -9,6 +10,7 @@ interface AnimatedSurveyBgProps {
 }
 
 export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
+  const { t } = useTranslation();
   const [animation, setAnimation] = useState(background);
 
   const animationFiles = {
@@ -81,6 +83,10 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
             <button
               type="button"
               key={key}
+              // The tile's only content is a video, so expose a name and the selection state
+              // (which is otherwise conveyed purely visually) to assistive technology.
+              aria-label={t("workspace.surveys.edit.animated_background_option", { number: index + 1 })}
+              aria-pressed={isSelected}
               onMouseEnter={() => debouncedManagePlayback(index, "play")}
               onMouseLeave={() => debouncedManagePlayback(index, "pause")}
               onClick={() => handleBg(value)}

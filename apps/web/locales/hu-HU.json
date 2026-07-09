@@ -2856,6 +2856,7 @@
         "allow_multi_select": "Több választás engedélyezése",
         "allow_multiple_files": "Több fájl engedélyezése",
         "allow_users_to_select_more_than_one_image": "Lehetővé tétel a felhasználóknak, hogy egynél több képet válasszanak ki",
+        "animated_background_option": "Animált háttér {number}",
         "animation": "Animáció",
         "any_is_true": "bármelyik igaz",
         "app_survey_description": "Egy kérdőív beágyazása a webalkalmazásába vagy webhelyére a válaszok gyűjtéséhez.",

@@ -36,6 +36,11 @@ describe("Color utilities", () => {
     test("should return empty string for invalid hex", () => {
       expect(hexToRGBA("invalid", 1)).toBe("");
     });
+
+    test("should ignore the alpha channel of 4- and 8-digit hex", () => {
+      expect(hexToRGBA("#F00A", 1)).toBe("rgba(255, 0, 0, 1)");
+      expect(hexToRGBA("#ffffff80", 0.5)).toBe("rgba(255, 255, 255, 0.5)");
+    });
   });
 
   describe("mixColor", () => {
@@ -68,6 +73,13 @@ describe("Color utilities", () => {
       expect(isLight("#FFF")).toBe(true);
       expect(isLight("#000")).toBe(false);
       expect(isLight("#F00")).toBe(false);
+    });
+
+    test("should tolerate 4- and 8-digit hex (with alpha) as accepted by ZColor", () => {
+      expect(isLight("#FFFB")).toBe(true);
+      expect(isLight("#000B")).toBe(false);
+      expect(isLight("#ffffff80")).toBe(true);
+      expect(isLight("#00000080")).toBe(false);
     });
 
     test("should throw error for invalid colors", () => {
@@ -122,6 +134,12 @@ describe("Color utilities", () => {
       const preferred = "#cccccc"; // far below AA on white
       const result = ensureReadable(preferred, surface);
       expect(getContrastRatio(result, surface)).toBeGreaterThanOrEqual(AA_CONTRAST_RATIO);
+    });
+
+    test("does not throw for 8-digit hex surfaces (persistable via the management API)", () => {
+      // e.g. cardBackgroundColor.light = "#ffffff80" — the alpha byte is ignored.
+      const result = ensureReadable("#cccccc", "#ffffff80");
+      expect(getContrastRatio(result, "#ffffff")).toBeGreaterThanOrEqual(AA_CONTRAST_RATIO);
     });
   });
 });

@@ -1,22 +1,42 @@
 // Shared color utilities used by both the web app and the survey renderer. Kept in
 // `@formbricks/types` (a dependency of both) so the WCAG/contrast math lives in one place
 // instead of being duplicated per package.
+//
+// NOTE: runtime color math living in a package named for types is a pragmatic exception, not a
+// pattern — `@formbricks/types` happens to be the only shared dependency between `apps/web` and
+// `packages/surveys`. If more shared runtime utilities appear, extract them into a dedicated
+// `packages/utils` package (like `i18n-utils`) instead of growing this one.
+
+// Normalizes every hex form `ZColor` accepts (#RGB, #RGBA, #RRGGBB, #RRGGBBAA, with or without
+// the leading "#") to lowercase #rrggbb, dropping any alpha channel. Returns undefined for
+// anything else. Centralized so the parsers below never throw on persisted styling values.
+const normalizeHex = (color: string): string | undefined => {
+  const hex = color.startsWith("#") ? color.slice(1) : color;
+  if (!/^[a-f\d]+$/i.test(hex)) return undefined;
+
+  // Shorthand (#RGB / #RGBA): expand each channel digit; ignore the alpha digit.
+  if (hex.length === 3 || hex.length === 4) {
+    const [r, g, b] = hex;
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  // Full form (#RRGGBB / #RRGGBBAA): strip the alpha byte.
+  if (hex.length === 6 || hex.length === 8) {
+    return `#${hex.slice(0, 6)}`.toLowerCase();
+  }
+  return undefined;
+};
 
 export const hexToRGBA = (hex: string | undefined, opacity: number): string | undefined => {
   // return undefined if hex is undefined, this is important for adding the default values to the CSS variables
   // TODO: find a better way to handle this
   if (!hex || hex === "") return undefined;
 
-  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
-  const shorthandRegex = /^#?(?<r>[a-f\d])(?<g>[a-f\d])(?<b>[a-f\d])$/i;
-  const fullHex = hex.replace(shorthandRegex, "$<r>$<r>$<g>$<g>$<b>$<b>");
+  const fullHex = normalizeHex(hex);
+  if (!fullHex) return "";
 
-  const groups = /^#?(?<r>[a-f\d]{2})(?<g>[a-f\d]{2})(?<b>[a-f\d]{2})$/i.exec(fullHex)?.groups;
-  if (!groups) return "";
-
-  const r = parseInt(groups.r, 16);
-  const g = parseInt(groups.g, 16);
-  const b = parseInt(groups.b, 16);
+  const r = parseInt(fullHex.slice(1, 3), 16);
+  const g = parseInt(fullHex.slice(3, 5), 16);
+  const b = parseInt(fullHex.slice(5, 7), 16);
 
   return `rgba(${r.toString()}, ${g.toString()}, ${b.toString()}, ${opacity.toString()})`;
 };
@@ -40,20 +60,18 @@ export const mixColor = (hexColor: string, mixWithHex: string, weight: number): 
 };
 
 export const isLight = (color: string): boolean => {
-  let r: number | undefined, g: number | undefined, b: number | undefined;
-
-  if (color.length === 4) {
-    r = parseInt(color[1] + color[1], 16);
-    g = parseInt(color[2] + color[2], 16);
-    b = parseInt(color[3] + color[3], 16);
-  } else if (color.length === 7) {
-    r = parseInt(color[1] + color[2], 16);
-    g = parseInt(color[3] + color[4], 16);
-    b = parseInt(color[5] + color[6], 16);
-  }
-  if (r === undefined || g === undefined || b === undefined) {
+  // Tolerate every hex form `ZColor` accepts (incl. 4/8-digit with alpha) — persisted styling
+  // (e.g. via the management API) reaches this at render time, where throwing would take the
+  // whole survey down.
+  const hex = normalizeHex(color);
+  if (!hex) {
     throw new Error("Invalid color");
   }
+
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 };
 
