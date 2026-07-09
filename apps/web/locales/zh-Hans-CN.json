@@ -4052,7 +4052,7 @@
       "no_workflows_description": "创建你的第一个工作流，让回复自动化。",
       "no_workflows_title": "暂无工作流",
       "node_actions": "Node actions",
-      "node_needs_email_content": "Add a recipient and message",
+      "node_needs_email_content": "设置收件人和主题",
       "node_needs_survey": "Pick a survey to get started",
       "pan_mode": "Pan mode",
       "pointer_mode": "Pointer mode",

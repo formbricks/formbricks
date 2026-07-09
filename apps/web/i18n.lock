@@ -3890,7 +3890,7 @@ checksums:
     workspace/workflows/no_workflows_description: 8a8152d86459e52a07e1ab28bd347121
     workspace/workflows/no_workflows_title: f1a5ada694cc4d773d2b56b105306a09
     workspace/workflows/node_actions: 60413ce1864388744a65164a552d5079
-    workspace/workflows/node_needs_email_content: 180086f108a8708fa9222ddc804a5c1b
+    workspace/workflows/node_needs_email_content: 6aad8ab6de262aa8d8a2e8641d6dc79f
     workspace/workflows/node_needs_survey: 5e51ca0392e98011a8a72e75a223e5dd
     workspace/workflows/pan_mode: 7d97982816ad18072903021c89153bce
     workspace/workflows/pointer_mode: 7af7ee96c6d8e9a15f0569c1b2376def
