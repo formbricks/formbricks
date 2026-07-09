@@ -92,6 +92,26 @@ describe("getValidatedCallbackUrl", () => {
   test("returns null for malformed URL", () => {
     expect(getValidatedCallbackUrl("not-a-valid-url", WEBAPP_URL)).toBeNull();
   });
+
+  test("rejects a same-origin URL with a scheme-relative (//) pathname", () => {
+    expect(
+      getValidatedCallbackUrl("https://webapp.example.com//evil.example/path?x=1#frag", WEBAPP_URL)
+    ).toBeNull();
+  });
+
+  test("rejects the dot-segment variant that normalizes to a // pathname", () => {
+    expect(getValidatedCallbackUrl("https://webapp.example.com/.//evil.example/path", WEBAPP_URL)).toBeNull();
+  });
+
+  test("rejects the backslash variant that normalizes to a // pathname", () => {
+    expect(getValidatedCallbackUrl("https://webapp.example.com/\\evil.example", WEBAPP_URL)).toBeNull();
+  });
+
+  test("still accepts a normal single-slash path", () => {
+    expect(getValidatedCallbackUrl("https://webapp.example.com/dashboard", WEBAPP_URL)).toBe(
+      "https://webapp.example.com/dashboard"
+    );
+  });
 });
 
 describe("isStringUrl", () => {

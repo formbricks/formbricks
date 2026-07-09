@@ -5,12 +5,11 @@ import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
-import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
-import { ConditionalLogic } from "@/modules/survey/editor/components/conditional-logic";
 
 interface BlockSettingsProps {
   localSurvey: TSurvey;
@@ -22,8 +21,6 @@ interface BlockSettingsProps {
     labelKey: "buttonLabel" | "backButtonLabel",
     labelValue: TI18nString | undefined
   ) => void;
-  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isLastBlock: boolean;
@@ -35,20 +32,13 @@ export const BlockSettings = ({
   blockIndex,
   selectedLanguageCode,
   updateBlockButtonLabel,
-  updateBlockLogic,
-  updateBlockLogicFallback,
   locale,
   isStorageConfigured,
   isLastBlock,
-}: BlockSettingsProps) => {
+}: Readonly<BlockSettingsProps>) => {
   const { t } = useTranslation();
 
-  // Use the first element in the block as a representative for logic
-  const firstElement = block.elements[0];
-  const blockLogic = block.logic ?? [];
-
-  // Auto-open if block has logic configured
-  const [open, setOpen] = useState(blockLogic.length > 0);
+  const [open, setOpen] = useState(false);
 
   const updateEmptyButtonLabels = (
     labelKey: "buttonLabel" | "backButtonLabel",
@@ -157,17 +147,6 @@ export const BlockSettings = ({
               }}
             />
           </div>
-
-          {/* Conditional Logic */}
-          {firstElement && (
-            <ConditionalLogic
-              localSurvey={localSurvey}
-              block={block}
-              blockIdx={blockIndex}
-              updateBlockLogic={updateBlockLogic}
-              updateBlockLogicFallback={updateBlockLogicFallback}
-            />
-          )}
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

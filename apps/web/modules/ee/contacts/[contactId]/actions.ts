@@ -2,12 +2,17 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromContactId, getWorkspaceIdFromContactId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromContactId,
+  getWorkspaceIdFromContactId,
+  getWorkspaceIdFromSurveyId,
+} from "@/lib/utils/helper";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 
 const ZGeneratePersonalSurveyLinkAction = z.object({
   contactId: ZId,
@@ -36,6 +41,16 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
         },
       ],
     });
+
+    // Cross-tenant guard: the survey must belong to the same workspace as the
+    // contact the caller was authorized against. Authorization above is derived
+    // from `contactId` only, so without this a caller could pass a `surveyId`
+    // from another workspace and mint a working personal link for it. Mirrors the
+    // workspace assertion the segment-based personal-links path performs.
+    const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    if (surveyWorkspaceId !== workspaceId) {
+      throw new ValidationError(CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
+    }
 
     const result = await getContactSurveyLink(
       parsedInput.contactId,

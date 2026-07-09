@@ -325,6 +325,8 @@ export const getTranslatedFeedbackSourceError = (
       return t("workspace.unify.error_source_survey_required");
     case "FEEDBACK_SOURCE_QUESTIONS_REQUIRED":
       return t("workspace.unify.error_source_questions_required");
+    case "FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE":
+      return t("workspace.unify.error_source_directory_not_assigned");
     default:
       return errorCode;
   }

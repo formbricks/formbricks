@@ -2,6 +2,7 @@ import "server-only";
 import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import {
+  IMAGE_FILE_EXTENSIONS,
   type TAccessType,
   type TAllowedFileExtension,
   ZAllowedFileExtension,
@@ -329,8 +330,7 @@ export const isValidImageFile = (fileUrl: string): boolean => {
   const extension = fileName.split(".").pop()?.toLowerCase();
   if (!extension) return false;
 
-  const imageExtensions = ["png", "jpeg", "jpg", "webp", "heic"];
-  return imageExtensions.includes(extension);
+  return (IMAGE_FILE_EXTENSIONS as readonly string[]).includes(extension);
 };
 
 export const getErrorResponseFromStorageError = (

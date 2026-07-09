@@ -1,14 +1,25 @@
 import type FormbricksHub from "@formbricks/hub";
 
-export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams;
+// value_id (ENG-1671/ENG-1673): stable id of the selected option in the source system (a survey
+// choice id for Formbricks responses). Lets Hub consolidate the same option across languages
+// instead of splitting it per localized label. The published SDK predates the field, so bridge
+// it as an optional param until the SDK ships it.
+export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams & {
+  value_id?: string;
+};
 export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
 export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
 
 // Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge
 // them as optional reads; drop once the SDK ships them. May be null when translation is off/pending.
+// `emotions` is a read-only enrichment field that also predates the SDK type (the DB column is a
+// Postgres text[]); absent until a record is enriched. Typed to accept either the serialized array
+// or a comma-joined string, since the serialization is owned by the external hub service.
 export type FeedbackRecordData = FormbricksHub.FeedbackRecordData & {
   value_text_translated?: string | null;
   translation_lang_key?: string | null;
+  value_id?: string | null;
+  emotions?: string[] | string | null;
 };
 
 export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListResponse, "data"> & {
