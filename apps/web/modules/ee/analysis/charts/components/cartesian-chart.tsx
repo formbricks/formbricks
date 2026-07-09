@@ -21,6 +21,11 @@ export interface CartesianChartProps {
   tooltipCursor?: boolean | Record<string, unknown>;
   /** Force the y-axis to start at 0. Required for bars so length encodes magnitude correctly. */
   zeroBaseline?: boolean;
+  /** Formats x-axis ticks and the tooltip header (e.g. enum dimension value labels). */
+  xAxisTickFormatter?: (value: unknown) => string;
+  /** False for measure-only charts with no real category: hides the meaningless x-axis tick and
+   * tooltip header (which would otherwise show the fallback measure value, e.g. a stray "1"). */
+  hasCategoryAxis?: boolean;
 }
 
 const TARGET_TICK_COUNT = 5;
@@ -105,6 +110,8 @@ export function CartesianChart({
   chartProps = {},
   tooltipCursor,
   zeroBaseline = false,
+  xAxisTickFormatter,
+  hasCategoryAxis = true,
 }: Readonly<CartesianChartProps>) {
   const yScale = computeYAxis(data, dataKeys, zeroBaseline);
 
@@ -121,7 +128,8 @@ export function CartesianChart({
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tickFormatter={formatXAxisTick}
+            tick={hasCategoryAxis}
+            tickFormatter={xAxisTickFormatter ?? formatXAxisTick}
           />
           <YAxis
             tickLine={false}
@@ -131,8 +139,17 @@ export function CartesianChart({
             ticks={yScale?.ticks}
             interval={0}
           />
-          <ChartTooltip content={<PolishedChartTooltip />} cursor={tooltipCursor} />
-          {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
+          <ChartTooltip
+            content={
+              <PolishedChartTooltip labelFormatter={xAxisTickFormatter} hideLabel={!hasCategoryAxis} />
+            }
+            cursor={tooltipCursor}
+            // Measure-only charts (no category) have one bar per measure, so a shared tooltip would
+            // dump every measure at once with no way to tell which bar is which. Scope it to the
+            // hovered bar instead. Category charts keep the shared tooltip to compare within a group.
+            shared={hasCategoryAxis}
+          />
+          {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="bottom" height={36} />}
           {children}
         </Chart>
       </ChartContainer>
