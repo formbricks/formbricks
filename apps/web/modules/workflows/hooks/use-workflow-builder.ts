@@ -170,12 +170,16 @@ export const useWorkflowBuilder = ({
       try {
         const savedWorkflow = await updateWorkflow(currentWorkflow.id, payload);
         setWorkflow(savedWorkflow);
-        // Snapshot what was sent (captured above, not re-read) so edits that landed while the
-        // PATCH was in flight still count as dirty and trigger the next autosave.
+        // Snapshot the EDITOR STATE captured at send time (not re-read, so edits that landed
+        // while the PATCH was in flight still count as dirty). Deliberately the raw
+        // currentDefinition rather than the parsed payload: dirty tracking asks "did the user
+        // change anything since the last save", and zod normalization (defaults, stripped legacy
+        // keys, shape-ordered keys) would make a parsed snapshot never compare equal to the
+        // state it was parsed from — leaving the editor permanently dirty and autosave looping.
         markDraftSaved({
           workflowName: trimmedName,
           workflowDescription: trimmedDescription ?? "",
-          definition: payload.definition ?? currentDefinition,
+          definition: currentDefinition,
         });
         // Re-run the server loaders so server-resolved props (e.g. the email authoring context,
         // which resolves the trigger's bound survey) catch up with the just-saved definition.

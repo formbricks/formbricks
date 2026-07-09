@@ -45,9 +45,15 @@ vi.mock("@/modules/workflows/lib/definition-to-flow", () => ({
   workflowDefinitionToFlowNodes: () => [],
 }));
 
+// safeParse mimics real zod normalization: it returns a REBUILT object (defaults applied, keys in
+// schema order), never the input reference. The autosave dirty-tracking must stay immune to that —
+// see "a normalizing schema parse..." below.
 vi.mock("@formbricks/workflows", () => ({
   ZWorkflowDefinition: {
-    safeParse: (value: unknown) => ({ success: true, data: value }),
+    safeParse: (value: unknown) => ({
+      success: true,
+      data: { schemaVersion: 1, ...(value as Record<string, unknown>) },
+    }),
   },
 }));
 
@@ -260,6 +266,29 @@ describe("autosave", () => {
     await new Promise((resolve) => setTimeout(resolve, 2500));
     expect(updateWorkflow).not.toHaveBeenCalled();
   });
+
+  test(
+    "a normalizing schema parse does not leave the draft permanently dirty (no autosave loop)",
+    { timeout: 15000 },
+    async () => {
+      getWorkflow.mockResolvedValue(apiWorkflow);
+      updateWorkflow.mockResolvedValue(apiWorkflow);
+
+      const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+      await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+      act(() => {
+        store.set(setWorkflowNameAtom, "Edited once");
+      });
+      await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+
+      // The parsed payload differs structurally from the editor state (schemaVersion default),
+      // but the saved snapshot must be the editor state itself — clean, no repeat saves.
+      await waitFor(() => expect(result.current.isDirty).toBe(false));
+      await new Promise((resolve) => setTimeout(resolve, 2600));
+      expect(updateWorkflow).toHaveBeenCalledTimes(1);
+    }
+  );
 
   test("does not retry a failed autosave until the draft changes again", { timeout: 15000 }, async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
