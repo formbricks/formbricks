@@ -250,7 +250,9 @@ export const WorkflowEmailActionForm = ({
       </div>
 
       {/* Body (recall editor) */}
-      <div className="flex flex-col gap-2">
+      {/* The editor defaults to a 2-line min-height (48px); a 4-line body (24px line-height)
+          better matches the amount of content an email body usually holds. */}
+      <div className="flex flex-col gap-2 [--editor-min-height:96px]">
         <Label>{t("workspace.workflows.email_body_label")}</Label>
         <Editor
           disableLists

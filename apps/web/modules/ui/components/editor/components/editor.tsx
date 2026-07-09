@@ -131,7 +131,13 @@ export const Editor = (props: TextEditorProps) => {
                   />
                 }
                 placeholder={
-                  <div className="-mt-11 cursor-text p-3 text-sm text-slate-400" dir="auto">
+                  // Overlay the (empty-state-only) placeholder on the contentEditable instead of
+                  // flowing after it — a static sibling would render below the input, which shows
+                  // once the input's min-height exceeds one line. pointer-events-none keeps clicks
+                  // on the placeholder text focusing the editor. Padding/leading mirror .editor-input.
+                  <div
+                    className="pointer-events-none absolute top-0 left-0 px-2.5 pt-[5px] text-sm leading-6 text-slate-400"
+                    dir="auto">
                     {props.placeholder ?? ""}
                   </div>
                 }
