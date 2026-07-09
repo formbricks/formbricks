@@ -1,34 +1,20 @@
 import { describe, expect, test } from "vitest";
 import { ZCreateWorkflowInput, ZWorkflowDefinition } from "@formbricks/workflows";
-import { createDefaultWorkflowDefinition } from "./default-workflow";
+import { createEmptyWorkflowDefinition } from "./default-workflow";
 
-describe("createDefaultWorkflowDefinition", () => {
+describe("createEmptyWorkflowDefinition", () => {
   test("yields a definition that passes ZWorkflowDefinition", () => {
-    const result = ZWorkflowDefinition.safeParse(createDefaultWorkflowDefinition());
+    const result = ZWorkflowDefinition.safeParse(createEmptyWorkflowDefinition());
     expect(result.success).toBe(true);
   });
 
-  test("entryNodeId references the trigger node", () => {
-    const definition = createDefaultWorkflowDefinition();
-    expect(definition.entryNodeId).toBe(definition.trigger.id);
-  });
+  test("starts without trigger, nodes, edges, or entry point", () => {
+    const definition = createEmptyWorkflowDefinition();
 
-  test("has a response.completed trigger and a single send_email action wired by one edge", () => {
-    const definition = createDefaultWorkflowDefinition();
-
-    expect(definition.trigger.triggerType).toBe("response.completed");
-    expect(definition.nodes).toHaveLength(1);
-    expect(definition.nodes[0]?.type).toBe("action");
-    expect(definition.edges).toHaveLength(1);
-    expect(definition.edges[0]?.source).toBe(definition.trigger.id);
-    expect(definition.edges[0]?.target).toBe(definition.nodes[0]?.id);
-  });
-
-  test("generates a fresh cuid2 placeholder surveyId on each call", () => {
-    const first = createDefaultWorkflowDefinition();
-    const second = createDefaultWorkflowDefinition();
-
-    expect(first.trigger.config.surveyId).not.toBe(second.trigger.config.surveyId);
+    expect(definition.trigger).toBeNull();
+    expect(definition.entryNodeId).toBeNull();
+    expect(definition.nodes).toHaveLength(0);
+    expect(definition.edges).toHaveLength(0);
   });
 
   test("is accepted as the definition of a valid create input", () => {
@@ -37,7 +23,7 @@ describe("createDefaultWorkflowDefinition", () => {
       name: "My workflow",
       description: null,
       status: "draft",
-      definition: createDefaultWorkflowDefinition(),
+      definition: createEmptyWorkflowDefinition(),
     });
 
     expect(result.success).toBe(true);

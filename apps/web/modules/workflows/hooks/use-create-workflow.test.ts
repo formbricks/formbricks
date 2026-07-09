@@ -6,7 +6,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TCreateWorkflowInput } from "@formbricks/workflows";
-import { createDefaultWorkflowDefinition } from "../lib/default-workflow";
+import { createEmptyWorkflowDefinition } from "../lib/default-workflow";
 import { workflowKeys } from "../lib/query";
 import { useCreateWorkflow } from "./use-create-workflow";
 
@@ -25,7 +25,7 @@ const input: TCreateWorkflowInput = {
   name: "New",
   description: null,
   status: "draft",
-  definition: createDefaultWorkflowDefinition(),
+  definition: createEmptyWorkflowDefinition(),
 };
 
 describe("useCreateWorkflow", () => {
