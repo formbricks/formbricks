@@ -33,10 +33,10 @@ export const WorkflowInspectorPanel = ({
     <div
       aria-hidden={isCollapsed}
       className={cn(
-        "shrink-0 self-stretch overflow-hidden transition-[width,opacity] duration-300 ease-in-out",
-        isCollapsed ? "w-0 opacity-0" : "w-[320px] opacity-100"
+        "shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-in-out",
+        isCollapsed ? "w-0 opacity-0" : "w-[360px] opacity-100"
       )}>
-      <div className="flex w-[320px] flex-col gap-3 self-start">
+      <div className="flex w-[360px] flex-col gap-3 self-start">
         {isNodeConfigOpen ? (
           <WorkflowNodeConfigPanel isEditable={isEditingNode} onSave={onSaveNode} isSaving={isSavingNode} />
         ) : (

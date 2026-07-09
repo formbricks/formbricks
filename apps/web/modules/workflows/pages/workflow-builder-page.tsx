@@ -41,7 +41,10 @@ export const WorkflowBuilderPage = ({
       {/* The provider wraps the canvas too: node validity (red border) needs to know whether the
           trigger's survey resolves, which only the server-resolved authoring context can tell. */}
       <WorkflowEmailAuthoringProvider value={emailAuthoringContext}>
-        <section className="flex min-h-[calc(100vh-220px)] gap-4">
+        {/* Canvas and inspector heights are independent: the canvas owns a fixed viewport-based
+            height while the inspector grows with its content (the page scrolls past the canvas
+            when a config form runs long). No stretch alignment ties one to the other. */}
+        <section className="flex items-start gap-4">
           <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
           <WorkflowInspectorPanel
             workflowId={workflowId}

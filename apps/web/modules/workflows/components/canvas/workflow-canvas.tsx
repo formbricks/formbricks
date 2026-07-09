@@ -205,7 +205,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   return (
     <div
       className={cn(
-        "relative flex-1 self-stretch overflow-hidden rounded-lg border border-slate-200 bg-white"
+        // Fixed viewport-based height (not self-stretch): a tall inspector must not stretch the
+        // canvas with it. 220px ≈ page chrome above the canvas; kept in sync with loading.tsx.
+        "relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <Button

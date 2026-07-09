@@ -83,7 +83,7 @@ const NodeConfigEditor = ({
   };
 
   return (
-    <aside className="w-[320px] shrink-0 self-start rounded-lg border border-slate-200 bg-white">
+    <aside className="w-[360px] shrink-0 self-start rounded-lg border border-slate-200 bg-white">
       <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <header className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
           <div className="flex items-center gap-2">

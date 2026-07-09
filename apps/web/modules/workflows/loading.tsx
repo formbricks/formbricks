@@ -48,9 +48,10 @@ export const WorkspaceWorkflowRunsBodyLoading = () => <RunsTableSkeleton />;
 
 export const WorkflowBuilderBodyLoading = () => (
   <div className="flex flex-col gap-4">
-    <div className="flex min-h-[calc(100vh-220px)] gap-4">
-      <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="absolute right-4 top-4 flex items-center gap-2">
+    <div className="flex items-start gap-4">
+      {/* Mirrors the canvas' fixed height in workflow-canvas.tsx so hydration doesn't shift. */}
+      <div className="relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <div className="absolute top-4 right-4 flex items-center gap-2">
           <Skeleton className="h-9 w-20 rounded-md" />
           <Skeleton className="size-9 rounded-md" />
         </div>
@@ -61,7 +62,7 @@ export const WorkflowBuilderBodyLoading = () => (
           <Skeleton className="size-10 rounded-md" />
         </div>
       </div>
-      <aside className="flex w-[320px] shrink-0 flex-col gap-3">
+      <aside className="flex w-[360px] shrink-0 flex-col gap-3">
         {[0, 1].map((row) => (
           <div
             key={row}
