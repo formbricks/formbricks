@@ -95,6 +95,10 @@ export const StylingView = ({
       form.setValue(key as keyof TSurveyStyling, value, { shouldDirty: true });
     }
 
+    // Footer link color auto-adjusts for contrast when unset; clear any override so it
+    // follows the freshly suggested palette instead of a stale custom value.
+    form.setValue("footerLinkColor", undefined, { shouldDirty: true });
+
     toast.success(t("workspace.look.suggested_colors_applied_please_save"));
     setConfirmSuggestColorsOpen(false);
   };

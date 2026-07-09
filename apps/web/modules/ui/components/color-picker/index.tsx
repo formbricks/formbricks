@@ -9,8 +9,15 @@ interface ColorPickerProps {
   onChange: (v: string) => void;
   containerClass?: string;
   disabled?: boolean;
+  placeholder?: string;
 }
-export const ColorPicker = ({ color, onChange, containerClass, disabled = false }: ColorPickerProps) => {
+export const ColorPicker = ({
+  color,
+  onChange,
+  containerClass,
+  disabled = false,
+  placeholder,
+}: ColorPickerProps) => {
   return (
     <div className={cn(containerClass)}>
       <div className="flex h-10 w-full items-center gap-2 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-400">
@@ -22,6 +29,7 @@ export const ColorPicker = ({ color, onChange, containerClass, disabled = false 
           id="color"
           aria-label="Primary color"
           disabled={disabled}
+          placeholder={placeholder}
         />
         <PopoverPicker color={color} onChange={onChange} disabled={disabled} />
       </div>

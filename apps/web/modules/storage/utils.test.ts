@@ -661,6 +661,12 @@ describe("storage utils", () => {
       expect(isValidImageFile("https://example.com/document.pdf")).toBe(false);
       expect(isValidImageFile("https://example.com/document.docx")).toBe(false);
       expect(isValidImageFile("https://example.com/document.txt")).toBe(false);
+      // ENG-1329: the allowlist is kept a subset of the upload allowlist (so the "upload to
+      // Formbricks" hint is truthful). gif/avif/bmp aren't uploadable, and svg is an XSS vector.
+      expect(isValidImageFile("https://example.com/image.gif")).toBe(false);
+      expect(isValidImageFile("https://example.com/image.avif")).toBe(false);
+      expect(isValidImageFile("https://example.com/image.bmp")).toBe(false);
+      expect(isValidImageFile("https://example.com/image.svg")).toBe(false);
     });
 
     test("should return false when file name cannot be extracted", () => {

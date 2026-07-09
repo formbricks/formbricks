@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { ZEndingCardUrl } from "@formbricks/types/common";
 import { TI18nString } from "@formbricks/types/i18n";
 import { ZSegmentFilters } from "@formbricks/types/segment";
+import { TSurveyBlockLogic, ZSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import {
   TInputFieldConfig,
   TSurveyAddressElement,
@@ -164,6 +165,11 @@ export const validationRules = {
     return isValid;
   },
 };
+
+// Validate a single conditional-logic rule against its schema (catches e.g. a
+// missing right operand or empty jump target).
+export const isBlockLogicItemValid = (logicItem: TSurveyBlockLogic): boolean =>
+  ZSurveyBlockLogic.safeParse(logicItem).success;
 
 // Main validation function
 export const validateElement = (element: TSurveyElement, surveyLanguages: TSurveyLanguage[]): boolean => {

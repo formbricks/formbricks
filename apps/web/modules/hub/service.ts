@@ -39,6 +39,9 @@ export type HubFeedbackRecordResult = {
 /**
  * Create a single feedback record in the Hub.
  * Returns a result shape with data or error; logs failures.
+ *
+ * value_id (the stable id of the matched choice, ENG-1673) is sent through as-is:
+ * the deployed Hub accepts it, and the SDK forwards unknown fields untouched.
  */
 export const createFeedbackRecord = async (
   input: FeedbackRecordCreateParams

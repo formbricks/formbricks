@@ -69,5 +69,9 @@ stats.html
 .next-docs/
 
 # robots (installed agent assets - machine-local, do not commit)
-.claude/
+# .claude is machine-local except committed symlinks into .agents/skills
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/nextjs-docs
 .agents/formbricks-context
