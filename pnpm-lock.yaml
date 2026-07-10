@@ -172,6 +172,9 @@ importers:
       '@formbricks/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@formbricks/js':
+        specifier: 5.0.0
+        version: 5.0.0
       '@formbricks/js-core':
         specifier: workspace:*
         version: link:../../packages/js-core
@@ -2320,6 +2323,9 @@ packages:
 
   '@formbricks/hub@0.9.0':
     resolution: {integrity: sha512-W0yf2o8Z5HV2AQUKmqsSlaAIgpFTtFaOQjz332NeeN6Ljn+0Pr9/iNlscEmjN6po5t3ChERp7ilDtX4/ERKstA==}
+
+  '@formbricks/js@5.0.0':
+    resolution: {integrity: sha512-mQGngmTKFP+x6rxTsqHawT0eDc1txHzSuyJvEZyG69cs7ACxBfesMRamBmabmw4LdMRODZ2J8WaBLuzck3v9Ig==}
 
   '@formkit/auto-animate@0.9.0':
     resolution: {integrity: sha512-VhP4zEAacXS3dfTpJpJ88QdLqMTcabMg0jwpOSxZ/VzfQVfl3GkZSCZThhGC5uhq/TxPHPzW0dzr4H9Bb1OgKA==}
@@ -14405,6 +14411,8 @@ snapshots:
       tslib: 2.8.1
 
   '@formbricks/hub@0.9.0': {}
+
+  '@formbricks/js@5.0.0': {}
 
   '@formkit/auto-animate@0.9.0': {}
 

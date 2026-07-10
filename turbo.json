@@ -293,6 +293,8 @@
         "IS_FORMBRICKS_CLOUD",
         "CHATWOOT_WEBSITE_TOKEN",
         "CHATWOOT_BASE_URL",
+        "FORMBRICKS_WORKSPACE_ID",
+        "FORMBRICKS_APP_URL",
         "LOG_LEVEL",
         "MAIL_FROM",
         "MAIL_FROM_NAME",
