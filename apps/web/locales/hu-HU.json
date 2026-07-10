@@ -2162,6 +2162,8 @@
       "cannot_remove_language_warning": "Nem tudja eltávolítani ezt a nyelvet, mert még mindig használatban van ezekben a kérdőívekben:",
       "conflict_between_identifier_and_alias": "Ütközés van egy hozzáadott nyelv azonosítója és az álnevei egyike között. Az álnevek és az azonosítók nem lehetnek azonosak.",
       "conflict_between_selected_alias_and_another_language": "Ütközés van a kiválasztott álnév és egy másik, ezzel az azonosítóval rendelkező nyelv között. A következetlenségek elkerülése érdekében ezzel az azonosítóval adja hozzá a nyelvet a munkaterületéhez.",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "Biztosan törölni szeretné ezt a nyelvet? Ezt a műveletet nem lehet visszavonni.",
       "duplicate_language_or_language_id": "Kettőzött nyelv vagy nyelvazonosító",
       "edit_languages": "Nyelvek szerkesztése",
@@ -2175,7 +2177,8 @@
       "please_select_a_language": "Válasszon egy nyelvet",
       "remove_language": "Nyelv eltávolítása",
       "remove_language_from_surveys_to_remove_it_from_workspace": "Távolítsa el a nyelvet ezekből a kérdőívekből, hogy eltávolítsa azt a munkaterületről.",
-      "search_items": "Elemek keresése"
+      "search_items": "Elemek keresése",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "Háttérszín hozzáadása",

@@ -614,6 +614,10 @@ model Workspace {
   clickOutsideClose           Boolean                      @default(true)
   overlay                     SurveyOverlay                @default(none)
   languages                   Language[]
+  /// Canonical BCP-47 code of the workspace's default survey language. Newly created surveys adopt it
+  /// as their default language. References a `Language.code` on this workspace (not a hard FK, so a code
+  /// can be re-added after deletion); resolution guards against a stale/removed code.
+  defaultLanguageCode         String?
   /// [Logo]
   logo                        Json?
   workspaceTeams              WorkspaceTeam[]

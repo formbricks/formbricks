@@ -2162,6 +2162,8 @@
       "cannot_remove_language_warning": "您無法移除此語言，因為它仍用於以下問卷：",
       "conflict_between_identifier_and_alias": "已新增語言的識別碼與您的別名發生衝突。別名與識別碼不可相同。",
       "conflict_between_selected_alias_and_another_language": "所選別名與另一個語言的識別碼發生衝突。請改為將此識別碼的語言新增至您的工作區，以避免不一致。",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "確定要刪除此語言嗎？此操作無法復原。",
       "duplicate_language_or_language_id": "語言或語言 ID 重複",
       "edit_languages": "編輯語言",
@@ -2175,7 +2177,8 @@
       "please_select_a_language": "請選擇一種語言",
       "remove_language": "移除語言",
       "remove_language_from_surveys_to_remove_it_from_workspace": "請先從這些問卷中移除此語言，才能從工作區移除。",
-      "search_items": "搜尋項目"
+      "search_items": "搜尋項目",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "新增背景顏色",

@@ -2162,6 +2162,8 @@
       "cannot_remove_language_warning": "You cannot remove this language since it is still used in these surveys:",
       "conflict_between_identifier_and_alias": "There is a conflict between the identifier of an added language and one for your aliases. Aliases and identifiers cannot be identical.",
       "conflict_between_selected_alias_and_another_language": "There is a conflict between the selected alias and another language that has this identifier. Please add the language with this identifier to your workspace instead to avoid inconsistencies.",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "Are you sure you want to delete this language? This action cannot be undone.",
       "duplicate_language_or_language_id": "Duplicate language or language ID",
       "edit_languages": "Edit languages",
@@ -2175,7 +2177,8 @@
       "please_select_a_language": "Please select a language",
       "remove_language": "Remove Language",
       "remove_language_from_surveys_to_remove_it_from_workspace": "Please remove the language from these surveys in order to remove it from the workspace.",
-      "search_items": "Search items"
+      "search_items": "Search items",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "Add background color",

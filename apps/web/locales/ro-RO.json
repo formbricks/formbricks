@@ -2162,6 +2162,8 @@
       "cannot_remove_language_warning": "Nu poți elimina această limbă deoarece este încă folosită în următoarele sondaje:",
       "conflict_between_identifier_and_alias": "Există un conflict între identificatorul unei limbi adăugate și unul dintre aliasurile tale. Aliasurile și identificatorii nu pot fi identici.",
       "conflict_between_selected_alias_and_another_language": "Există un conflict între aliasul selectat și o altă limbă care are acest identificator. Te rugăm să adaugi în schimb limba cu acest identificator în spațiul tău de lucru pentru a evita inconsistențele.",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "Sigur vrei să ștergi această limbă? Această acțiune nu poate fi anulată.",
       "duplicate_language_or_language_id": "Limbă sau ID de limbă duplicat",
       "edit_languages": "Editați limbile",
@@ -2175,7 +2177,8 @@
       "please_select_a_language": "Vă rugăm să selectați o limbă",
       "remove_language": "Eliminați limba",
       "remove_language_from_surveys_to_remove_it_from_workspace": "Vă rugăm să eliminați limba din aceste sondaje pentru a o elimina din spațiul de lucru.",
-      "search_items": "Căutați elemente"
+      "search_items": "Căutați elemente",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "Adăugați culoare de fundal",

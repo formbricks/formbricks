@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { iso639Languages } from "@formbricks/i18n-utils/src/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
@@ -18,6 +19,7 @@ import {
   deleteLanguageAction,
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
+  updateWorkspaceDefaultLanguageAction,
 } from "../lib/actions";
 import { AddLanguageButton } from "./add-language-button";
 import { LanguageLabels } from "./language-labels";
@@ -31,6 +33,12 @@ interface EditLanguageProps {
 
 const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
+};
+
+// Compare on the canonical tag so a legacy-stored default (e.g. `de`) still matches its row (`de-DE`).
+const isSameLanguageCode = (a: string | null, b: string | null): boolean => {
+  if (!a || !b) return false;
+  return (normalizeLanguageCode(a) ?? a) === (normalizeLanguageCode(b) ?? b);
 };
 
 const validateLanguages = (languages: Language[], t: TFunction) => {
@@ -77,6 +85,9 @@ const validateLanguages = (languages: Language[], t: TFunction) => {
 export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProps) {
   const { t } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>(workspace.languages);
+  const [defaultLanguageCode, setDefaultLanguageCode] = useState<string | null>(
+    workspace.defaultLanguageCode ?? null
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -87,7 +98,8 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
   useEffect(() => {
     setLanguages(workspace.languages);
-  }, [workspace.languages]);
+    setDefaultLanguageCode(workspace.defaultLanguageCode ?? null);
+  }, [workspace.languages, workspace.defaultLanguageCode]);
 
   const router = useRouter();
 
@@ -148,6 +160,11 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
         return;
       }
+      const deletedLanguage = languages.find((lang) => lang.id === languageId);
+      if (deletedLanguage && isSameLanguageCode(deletedLanguage.code, defaultLanguageCode)) {
+        // The service clears the persisted default when its language is deleted; mirror that locally.
+        setDefaultLanguageCode(null);
+      }
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
       toast.success(t("workspace.languages.language_deleted_successfully"));
       // Close the modal after deletion
@@ -160,6 +177,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
   const handleCancelChanges = async () => {
     setLanguages(workspace.languages);
+    setDefaultLanguageCode(workspace.defaultLanguageCode ?? null);
     setIsEditing(false);
   };
 
@@ -184,6 +202,24 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       toast.error(getFormattedErrorMessage(errorResult));
       return;
     }
+
+    // Persist the default only when it changed (null↔null counts as unchanged). Runs after language
+    // create/update so a brand-new language marked as default already exists when the service validates it.
+    const originalDefault = workspace.defaultLanguageCode ?? null;
+    const defaultChanged = defaultLanguageCode
+      ? !isSameLanguageCode(defaultLanguageCode, originalDefault)
+      : originalDefault !== null;
+    if (defaultChanged) {
+      const defaultResult = await updateWorkspaceDefaultLanguageAction({
+        workspaceId: workspace.id,
+        languageCode: defaultLanguageCode,
+      });
+      if (defaultResult?.serverError) {
+        toast.error(getFormattedErrorMessage(defaultResult));
+        return;
+      }
+    }
+
     toast.success(t("workspace.languages.languages_updated_successfully"));
     router.refresh();
     setIsEditing(false);
@@ -198,10 +234,12 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
             {languages.map((language, index) => (
               <LanguageRow
                 isEditing={isEditing}
+                isDefault={isSameLanguageCode(language.code, defaultLanguageCode)}
                 key={language.id}
                 language={language}
                 locale={locale}
                 onDelete={() => handleDeleteLanguage(language.id)}
+                onSetDefault={() => setDefaultLanguageCode(language.code)}
                 onLanguageChange={(newLanguage: Language) => {
                   const updatedLanguages = [...languages];
                   updatedLanguages[index] = newLanguage;

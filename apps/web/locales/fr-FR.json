@@ -2162,6 +2162,8 @@
       "cannot_remove_language_warning": "Vous ne pouvez pas supprimer cette langue car elle est encore utilisée dans ces enquêtes :",
       "conflict_between_identifier_and_alias": "Il y a un conflit entre l'identifiant d'une langue ajoutée et l'un de vos alias. Les alias et les identifiants ne peuvent pas être identiques.",
       "conflict_between_selected_alias_and_another_language": "Il y a un conflit entre l'alias sélectionné et une autre langue qui possède cet identifiant. Ajoute plutôt la langue avec cet identifiant à ton espace de travail pour éviter les incohérences.",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "Êtes-vous sûr de vouloir supprimer cette langue ? Cette action ne peut pas être annulée.",
       "duplicate_language_or_language_id": "Langue ou identifiant de langue en double",
       "edit_languages": "Modifier les langues",
@@ -2175,7 +2177,8 @@
       "please_select_a_language": "Veuillez sélectionner une langue",
       "remove_language": "Supprimer la langue",
       "remove_language_from_surveys_to_remove_it_from_workspace": "Veuillez supprimer la langue de ces sondages afin de la retirer de l'espace de travail.",
-      "search_items": "Rechercher des éléments"
+      "search_items": "Rechercher des éléments",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "Ajouter une couleur d'arrière-plan",
