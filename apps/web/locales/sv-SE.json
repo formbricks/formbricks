@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "Du har inga API-nycklar ännu",
       "no_workspace_permissions_found": "Inga behörigheter för arbetsytan hittades",
       "organization_access": "Organisationsåtkomst",
+      "organization_access_cloud_note": "På Formbricks Cloud är det inte möjligt att hantera organisationsmedlemmar via API:et. Teamhantering fungerar fortfarande.",
       "organization_access_description": "Ger läs- eller skrivåtkomst till organisationsadministration, som medlemmar och team. Det ger inte åtkomst till arbetsytedata som undersökningar eller svar.",
       "permissions": "Behörigheter",
       "secret": "Hemlig",

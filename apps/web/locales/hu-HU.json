@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "Még nincs semmilyen API-kulcsa",
       "no_workspace_permissions_found": "Nem találhatók munkaterület-jogosultságok",
       "organization_access": "Szervezeti hozzáférés",
+      "organization_access_cloud_note": "A Formbricks Cloud rendszerében a szervezeti tagok API-n keresztüli kezelése nem érhető el. A csapatkezelés továbbra is működik.",
       "organization_access_description": "Olvasási vagy írási hozzáférést biztosít a szervezeti adminisztrációhoz, mint például a tagokhoz és csapatokhoz. Nem biztosít hozzáférést munkaterület adatokhoz, például felmérésekhez vagy válaszokhoz.",
       "permissions": "Jogosultságok",
       "secret": "Titok",

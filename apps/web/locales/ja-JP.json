@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "まだAPIキーがありません",
       "no_workspace_permissions_found": "ワークスペースの権限が見つかりません",
       "organization_access": "組織アクセス",
+      "organization_access_cloud_note": "Formbricks Cloudでは、API経由での組織メンバーの管理は利用できません。チーム管理は引き続き機能します。",
       "organization_access_description": "メンバーやチームなど、組織管理への読み取りまたは書き込みアクセスを許可します。アンケートや回答などのワークスペースデータへのアクセスは許可されません。",
       "permissions": "権限",
       "secret": "シークレット",

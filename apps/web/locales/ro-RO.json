@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "Nu ai încă nicio cheie API",
       "no_workspace_permissions_found": "Nu s-au găsit permisiuni pentru Workspace",
       "organization_access": "Acces organizație",
+      "organization_access_cloud_note": "Pe Formbricks Cloud, gestionarea membrilor organizației prin API nu este disponibilă. Gestionarea echipei funcționează în continuare.",
       "organization_access_description": "Oferă acces de citire sau scriere la administrarea organizației, cum ar fi membrii și echipele. Nu oferă acces la datele din spațiul de lucru, precum sondajele sau răspunsurile.",
       "permissions": "Permisiuni",
       "secret": "Secret",

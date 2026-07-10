@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "U heeft nog geen API-sleutels",
       "no_workspace_permissions_found": "Geen Workspace-rechten gevonden",
       "organization_access": "Organisatietoegang",
+      "organization_access_cloud_note": "Op Formbricks Cloud is het beheren van organisatieleden via de API niet beschikbaar. Teambeheer werkt nog steeds.",
       "organization_access_description": "Geeft lees- of schrijftoegang tot organisatiebeheer, zoals leden en teams. Het geeft geen toegang tot werkruimtegegevens zoals enquêtes of antwoorden.",
       "permissions": "Machtigingen",
       "secret": "Geheim",

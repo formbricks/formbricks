@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "Aún no tienes ninguna clave API",
       "no_workspace_permissions_found": "No se encontraron permisos del espacio de trabajo",
       "organization_access": "Acceso a la organización",
+      "organization_access_cloud_note": "En Formbricks Cloud, gestionar miembros de la organización a través de la API no está disponible. La gestión de equipos sigue funcionando.",
       "organization_access_description": "Concede acceso de lectura o escritura a la administración de la organización, como miembros y equipos. No concede acceso a los datos del espacio de trabajo como encuestas o respuestas.",
       "permissions": "Permisos",
       "secret": "Secreto",

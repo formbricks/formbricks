@@ -1777,6 +1777,7 @@ checksums:
     workspace/api_keys/no_api_keys_yet: 58593ed9f7e507dcd7ca7fe069add599
     workspace/api_keys/no_workspace_permissions_found: 1d719624828a9d3e433cdf6b387549f3
     workspace/api_keys/organization_access: 96a92fa907b15e0c0e47e33cac15be88
+    workspace/api_keys/organization_access_cloud_note: d2e43b1fb928a07441329b9e2482c617
     workspace/api_keys/organization_access_description: 522f4539c01f906ad35c6c91dcf53989
     workspace/api_keys/permissions: 2160be68b1d6b6577e64634e9feba2ed
     workspace/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b

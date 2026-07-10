@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "您目前尚未有任何 API 金鑰",
       "no_workspace_permissions_found": "找不到工作區權限",
       "organization_access": "組織存取",
+      "organization_access_cloud_note": "在 Formbricks Cloud 上，無法透過 API 管理組織成員。團隊管理功能仍可正常使用。",
       "organization_access_description": "授予組織管理的讀取或寫入權限，例如成員和團隊。不會授予工作區資料（如問卷或回覆）的存取權限。",
       "permissions": "權限",
       "secret": "密鑰",

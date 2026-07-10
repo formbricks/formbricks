@@ -1845,6 +1845,7 @@
       "no_api_keys_yet": "Henüz hiç API anahtarınız yok",
       "no_workspace_permissions_found": "Çalışma Alanı izni bulunamadı",
       "organization_access": "Organizasyon Erişimi",
+      "organization_access_cloud_note": "Formbricks Cloud'da API üzerinden organizasyon üyelerini yönetmek mevcut değil. Ekip yönetimi hâlâ çalışıyor.",
       "organization_access_description": "Üyeler ve ekipler gibi kuruluş yönetimine okuma veya yazma erişimi sağlar. Anketler veya yanıtlar gibi çalışma alanı verilerine erişim vermez.",
       "permissions": "İzinler",
       "secret": "Gizli Anahtar",
