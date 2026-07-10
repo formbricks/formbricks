@@ -191,9 +191,11 @@ const createAndDispatchWorkflowRun = async ({
 };
 
 /**
- * Producer half of the workflow runner. On a completed response that reached an ending card, find the
- * enabled workflows whose current published version targets this survey/ending, persist one `queued`
- * `WorkflowRun` per match (bound to that published version), and hand each to the injected dispatcher.
+ * Producer half of the workflow runner. On a completed response, find the enabled workflows whose
+ * current published version targets this survey/ending, persist one `queued` `WorkflowRun` per match
+ * (bound to that published version), and hand each to the injected dispatcher. Responses without an
+ * ending card (surveys can have none) still count as completed: an "all endings" trigger fires for
+ * them; only an explicit ending selection requires the response to have reached one of those cards.
  *
  * Idempotent: `idempotencyKey = responseId` + `@@unique([workflowId, idempotencyKey])` plus a
  * deterministic dispatch `jobId` mean a replayed `responseFinished` creates no duplicate runs or jobs.
@@ -206,11 +208,11 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
   dispatch,
   logContext,
 }: EnqueueResponseCompletedWorkflowRunsInput): Promise<void> => {
-  // Only completed responses that reached an ending card enqueue runs.
-  if (!response.finished || !response.endingId) {
+  // Only completed responses enqueue runs; the ending card is optional (null on surveys without one).
+  if (!response.finished) {
     return;
   }
-  const endingId = response.endingId;
+  const endingId = response.endingId ?? null;
 
   const candidates = await loadEnabledWorkflowCandidates(workspaceId, logContext);
   const matches = matchWorkflowsForResponse(candidates, { surveyId: response.surveyId, endingId });
@@ -225,7 +227,7 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
     workspaceId,
     surveyId: response.surveyId,
     responseId: response.id,
-    endingCardId: endingId,
+    ...(endingId ? { endingCardId: endingId } : {}),
     data: response.data,
     triggeredAt: response.updatedAt.toISOString(),
   });

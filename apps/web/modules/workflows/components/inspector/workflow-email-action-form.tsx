@@ -229,6 +229,7 @@ export const WorkflowEmailActionForm = ({
       <div className="flex flex-col gap-2">
         <Label htmlFor="workflow-email-reply-to">{t("workspace.workflows.email_reply_to_label")}</Label>
         <FollowUpActionMultiEmailInput
+          disabled={!isEditable}
           emails={node.config.replyTo}
           setEmails={(update) => {
             const nextReplyTo = typeof update === "function" ? update(node.config.replyTo) : update;

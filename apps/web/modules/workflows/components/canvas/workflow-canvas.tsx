@@ -14,17 +14,15 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon, SettingsIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ListChecksIcon, PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowTestProblem } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import { useWorkflowEmailAuthoringContext } from "@/modules/workflows/components/workflow-email-authoring-context";
 import { testWorkflow } from "@/modules/workflows/lib/api-client";
-import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
 import {
   WORKFLOW_CANVAS_NODE_TYPE,
   WORKFLOW_CANVAS_SNAP_GRID,
@@ -37,14 +35,14 @@ import {
 import {
   type TWorkflowNodeData,
   addWorkflowTriggerAtom,
+  closeWorkflowNodeConfigModalAtom,
+  hasBoundTriggerSurveyAtom,
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
-  openWorkflowSettingsPanelAtom,
   setWorkflowDefinitionAtom,
-  setWorkflowFlowNodesAtom,
   toggleWorkflowInspectorAtom,
   workflowAtom,
   workflowDefinitionAtom,
@@ -56,6 +54,7 @@ import { CanvasControls } from "./canvas-controls";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
 import "./workflow-canvas.css";
+import { WorkflowReadinessHint } from "./workflow-readiness-hint";
 
 const NODE_TYPES: NodeTypes = {
   [WORKFLOW_CANVAS_NODE_TYPE]: WorkflowCanvasNode,
@@ -69,6 +68,12 @@ const EDGE_TYPES: EdgeTypes = {
 // which rendered a fresh two-node workflow noticeably small. 2x proved too big; 1.15 is three
 // zoom-out steps down from it (RF's zoomIn/zoomOut step is 1.2x, and 2 / 1.2^3 ≈ 1.157).
 const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
+
+// The inspector column animates its width over 150ms (see workflow-inspector-panel.tsx); refit
+// only after the canvas has its final size, with a small buffer.
+const INSPECTOR_RESIZE_SETTLE_MS = 170;
+// Near-instant pan: the refit should feel like part of the sidebar toggle, not a second animation.
+const INSPECTOR_REFIT_PAN_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
@@ -86,19 +91,17 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const setLocked = useSetAtom(isCanvasLockedAtom);
   const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
-  const openSettingsPanel = useSetAtom(openWorkflowSettingsPanelAtom);
   const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
-  // The Settings view is the visible inspector content (as opposed to collapsed or node config).
-  const isSettingsOpen = !isInspectorCollapsed && !isNodeConfigOpen;
+  const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
-  const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
+  const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
   const { fitView } = useReactFlow();
-  // Dry-run testing is only meaningful for live workflows (draft is still being built, archived is
-  // dead) and requires workspace write access — testWorkflow authorizes with readWrite, so a
-  // read-only user would only get a 403. Mirrors the API guard in workflows.handlers.ts.
-  const isTestable = !isReadOnly && (workflow?.status === "enabled" || workflow?.status === "disabled");
+  // Dry-run testing works in every state except archived (soft-deleted) — the point of a dry
+  // run is validating the setup BEFORE going live. Requires workspace write access: testWorkflow
+  // authorizes with readWrite, so a read-only user would only get a 403. Mirrors the API guard.
+  const isTestable = !isReadOnly && Boolean(workflow) && workflow?.status !== "archived";
   const [isTesting, setIsTesting] = useState(false);
   // null = dialog closed; a non-empty array opens the problems dialog (the ok case is a toast).
   const [testProblems, setTestProblems] = useState<TWorkflowTestProblem[] | null>(null);
@@ -107,8 +110,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   // non-mutable until the user switches to pointer mode.
   const canMutate = isEditable && !isLocked;
 
-  const authoringContext = useWorkflowEmailAuthoringContext();
-  const hasBoundSurvey = Boolean(resolveBoundTriggerSurvey(authoringContext, definition));
+  // Shared flag owned by the builder page (server context OR workspace survey-list membership),
+  // so a just-picked survey clears the node's setup flag immediately.
+  const hasBoundSurvey = useAtomValue(hasBoundTriggerSurveyAtom);
   // Unloaded state defaults to draft so a fresh page never flashes red before the workflow lands.
   const isDraft = workflow ? workflow.status === "draft" : true;
 
@@ -150,6 +154,26 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
     },
     [canMutate, isSnapToCanvasEnabled, setDefinition]
   );
+
+  // Opening/closing the inspector resizes the canvas by 360px, which can push nodes behind the
+  // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
+  // node coordinates are untouched.
+  const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
+  const previousInspectorVisibleRef = useRef(isInspectorVisible);
+  useEffect(() => {
+    if (previousInspectorVisibleRef.current === isInspectorVisible) return;
+    previousInspectorVisibleRef.current = isInspectorVisible;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timeoutHandle = setTimeout(() => {
+      void fitView({
+        padding: 0.25,
+        maxZoom: WORKFLOW_CANVAS_MAX_ZOOM,
+        minZoom: 0.4,
+        duration: prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS,
+      });
+    }, INSPECTOR_RESIZE_SETTLE_MS / 2);
+    return () => clearTimeout(timeoutHandle);
+  }, [isInspectorVisible, fitView]);
 
   const handleAutoLayout = useCallback(() => {
     if (!canMutate) return;
@@ -209,38 +233,36 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         // canvas with it. 220px ≈ page chrome above the canvas; kept in sync with loading.tsx.
         "relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
+      {/* Same offset as the action cluster on the right; h-9 centers the text with the buttons. */}
+      <div className="absolute top-4 left-4 z-10 flex h-9 items-center">
+        <WorkflowReadinessHint />
+      </div>
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <Button
           variant="secondary"
           onClick={handleRunWorkflow}
           loading={isTesting}
           disabled={!isTestable || isTesting}>
-          {t("workspace.workflows.test")}
-          <PlayIcon className="size-4" />
+          {t("workspace.workflows.validate")}
+          <ListChecksIcon className="size-4" />
         </Button>
-        {/* Cog jumps to the workflow Settings view; the panel button only collapses/expands. */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-white"
-          aria-label={t("workspace.workflows.settings_title")}
-          disabled={isSettingsOpen}
-          onClick={openSettingsPanel}>
-          <SettingsIcon />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-white"
-          aria-label={
-            isInspectorCollapsed
-              ? t("workspace.workflows.expand_inspector")
-              : t("workspace.workflows.collapse_inspector")
-          }
-          aria-pressed={!isInspectorCollapsed}
-          onClick={toggleInspector}>
-          {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
-        </Button>
+        {/* The inspector only ever shows a node's config now, so the collapse toggle is only
+            offered while one is open. */}
+        {isNodeConfigOpen ? (
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-white"
+            aria-label={
+              isInspectorCollapsed
+                ? t("workspace.workflows.expand_inspector")
+                : t("workspace.workflows.collapse_inspector")
+            }
+            aria-pressed={!isInspectorCollapsed}
+            onClick={toggleInspector}>
+            {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
+          </Button>
+        ) : null}
       </div>
       <ReactFlow
         nodes={flowNodes}
@@ -252,6 +274,9 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         onNodeClick={(_event, node) => {
           if (!isLocked) openNodeConfigModal(node.id);
         }}
+        // Clicking empty canvas deselects (ReactFlow) and dismisses the node inspector — with
+        // Settings gone this is the natural way out of a node's config view.
+        onPaneClick={() => closeNodeConfig()}
         // Mode-dependent cursor + hit-testing rules live in workflow-canvas.css, keyed off
         // these classes (Tailwind can't express `.react-flow__node` — underscores in arbitrary
         // selectors turn into spaces).

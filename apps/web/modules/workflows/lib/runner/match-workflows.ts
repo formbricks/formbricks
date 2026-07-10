@@ -15,7 +15,8 @@ export interface WorkflowMatch {
 
 export interface ResponseMatchInput {
   surveyId: string;
-  endingId: string;
+  /** Null when the survey has no ending cards; only "all endings" triggers match then. */
+  endingId: string | null;
 }
 
 /** Loose view of a trigger node: the published definition is persisted DB JSON, branded as
@@ -49,7 +50,8 @@ export const readResponseCompletedTriggerConfig = (
  * Pure matcher: from the candidate enabled workflows (each carrying its current published version's
  * definition), return those whose `response.completed` trigger fires for this completed response —
  * the trigger targets the response's survey and its ending filter passes (empty `endingCardIds` means
- * "any ending", otherwise the reached `endingId` must be listed). No I/O, so it's exhaustively
+ * "any completion" — including surveys without ending cards — otherwise the reached `endingId` must be
+ * listed). No I/O, so it's exhaustively
  * table-testable. Reads the published snapshot (never the mutable draft) and is total over malformed
  * definitions (a bad one simply doesn't match).
  */
@@ -62,6 +64,7 @@ export const matchWorkflowsForResponse = (
       const config = readResponseCompletedTriggerConfig(definition);
       if (!config) return false;
       if (config.surveyId !== surveyId) return false;
-      return config.endingCardIds.length === 0 || config.endingCardIds.includes(endingId);
+      if (config.endingCardIds.length === 0) return true;
+      return endingId !== null && config.endingCardIds.includes(endingId);
     })
     .map(({ workflowId, publishedVersionId }) => ({ workflowId, publishedVersionId }));

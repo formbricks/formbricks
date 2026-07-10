@@ -1,11 +1,17 @@
 "use client";
 
+import { useSetAtom } from "jotai";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { WorkflowCanvas } from "@/modules/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/workflows/components/workflow-email-authoring-context";
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
+import { useWorkflowNodeUrlSync } from "@/modules/workflows/hooks/use-workflow-node-url-sync";
+import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
+import { useWorkflowSurveyOptions } from "@/modules/workflows/list/hooks/use-trigger-survey-picker";
 import { WorkflowBuilderBodyLoading } from "@/modules/workflows/loading";
+import { hasBoundTriggerSurveyAtom } from "@/modules/workflows/state/editor";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/workflows/types/email-authoring-context";
 
 interface WorkflowBuilderPageProps {
@@ -23,6 +29,29 @@ export const WorkflowBuilderPage = ({
 }: Readonly<WorkflowBuilderPageProps>) => {
   const { t } = useTranslation();
   const builder = useWorkflowBuilder({ workspaceId, workflowId, isReadOnly });
+  const setHasBoundTriggerSurvey = useSetAtom(hasBoundTriggerSurveyAtom);
+  const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
+
+  // This page owns pushing the "does the trigger's survey resolve" fact into the shared atom the
+  // validity + canvas checks read. Two sources, so the flag flips the moment a survey is picked:
+  // the server-resolved authoring context (authoritative — catches deleted surveys) still lags a
+  // save + refresh behind the draft, so membership in the workspace survey list (the same query
+  // the trigger's picker offers choices from) vouches for a just-picked id immediately.
+  // Keyed on the inputs (not the computed boolean): hydration resets the atom to its optimistic
+  // default, and a boolean-keyed effect would skip re-syncing when the computed value happens to
+  // match its pre-hydration result.
+  const definition = builder.definition;
+  const surveyOptions = surveyOptionsQuery.options;
+  useEffect(() => {
+    const triggerSurveyId = definition?.trigger?.config.surveyId ?? null;
+    const isBound =
+      Boolean(resolveBoundTriggerSurvey(emailAuthoringContext, definition)) ||
+      (triggerSurveyId !== null && surveyOptions.some((option) => option.id === triggerSurveyId));
+    setHasBoundTriggerSurvey(isBound);
+  }, [emailAuthoringContext, definition, surveyOptions, setHasBoundTriggerSurvey]);
+
+  // Deep-link the inspected node (?node=…) once the editor is hydrated.
+  useWorkflowNodeUrlSync({ isEnabled: Boolean(builder.workflow) });
 
   if (builder.isLoading) {
     return <WorkflowBuilderBodyLoading />;
@@ -38,22 +67,13 @@ export const WorkflowBuilderPage = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* The provider wraps the canvas too: node validity (red border) needs to know whether the
-          trigger's survey resolves, which only the server-resolved authoring context can tell. */}
       <WorkflowEmailAuthoringProvider value={emailAuthoringContext}>
         {/* Canvas and inspector heights are independent: the canvas owns a fixed viewport-based
             height while the inspector grows with its content (the page scrolls past the canvas
             when a config form runs long). No stretch alignment ties one to the other. */}
         <section className="flex items-start gap-4">
           <WorkflowCanvas isEditable={builder.canEditDefinition} isReadOnly={isReadOnly} />
-          <WorkflowInspectorPanel
-            workflowId={workflowId}
-            isReadOnly={isReadOnly}
-            canEditMetadata={builder.canEditMetadata}
-            isEditingNode={builder.canEditDefinition}
-            onSaveNode={builder.save}
-            isSavingNode={builder.isSaving}
-          />
+          <WorkflowInspectorPanel isEditingNode={builder.canEditDefinition} />
         </section>
       </WorkflowEmailAuthoringProvider>
     </div>

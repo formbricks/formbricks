@@ -20,8 +20,8 @@ interface WorkflowPageTitleProps {
 // builder never mounts to hydrate the atom, so fetch the name directly; the query stays disabled
 // once the atom carries a name, so the builder page never double-fetches.
 //
-// On the edit tab the title doubles as the name editor: it binds to the same draft atom as the
-// Settings panel and is persisted by the header Save. A workflow arriving from the dialog-less
+// On the edit tab the title doubles as the name editor: it binds to the draft atom and is
+// persisted by the page-level autosave. A workflow arriving from the dialog-less
 // create flow (?new=1) gets the title focused and selected so the user names it immediately.
 export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowPageTitleProps>) => {
   const { t } = useTranslation();

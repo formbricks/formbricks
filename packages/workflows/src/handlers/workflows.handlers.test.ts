@@ -616,19 +616,26 @@ describe("testWorkflow", () => {
     expect(body.data.ok).toBe(true);
   });
 
-  test.each([["draft"], ["archived"]] as const)(
-    "rejects a %s workflow with 422 invalid_workflow_state without checking the survey",
-    async (status) => {
-      service.getWorkflowById.mockResolvedValue(makeRow({ status }));
+  test("tests a draft workflow (dry-run before going live)", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
 
-      const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
 
-      expect(res.status).toBe(422);
-      const body = await readJson<{ code: string }>(res);
-      expect(body.code).toBe("invalid_workflow_state");
-      expect(verifyTriggerSurvey).not.toHaveBeenCalled();
-    }
-  );
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(true);
+  });
+
+  test("rejects an archived workflow with 422 invalid_workflow_state without checking the survey", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "archived" }));
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string }>(res);
+    expect(body.code).toBe("invalid_workflow_state");
+    expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
 
   test("collects every executability issue in one pass without throwing", async () => {
     service.getWorkflowById.mockResolvedValue(
@@ -658,6 +665,33 @@ describe("testWorkflow", () => {
     const codes = (await readJson<TestResultBody>(res)).data.problems.map((p) => p.code);
     expect(codes).toContain("definition_not_executable");
     expect(codes).not.toContain("survey_not_found");
+  });
+
+  test("reports an incomplete send_email action as not executable", async () => {
+    const incompleteEmailDefinition = {
+      ...definition,
+      nodes: [
+        {
+          ...definition.nodes[0],
+          config: { ...definition.nodes[0].config, to: "", subject: "", body: "" },
+        },
+      ],
+    };
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({ status: "enabled", definition: incompleteEmailDefinition })
+    );
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    const fields = body.data.problems
+      .filter((p) => p.code === "definition_not_executable")
+      .map((p) => p.field);
+    expect(fields).toEqual(
+      expect.arrayContaining(["nodes.0.config.to", "nodes.0.config.subject", "nodes.0.config.body"])
+    );
   });
 
   test("reports a missing ending card", async () => {

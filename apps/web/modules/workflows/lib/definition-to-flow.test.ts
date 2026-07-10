@@ -109,6 +109,16 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     });
   });
 
+  test("flags an email node whose subject is blank (parity with the executable schema)", () => {
+    const def = buildDefinition();
+    (def.nodes[0] as { config: { subject: string } }).config.subject = "   ";
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: true, isDraft: true });
+    expect(nodes[1].data.issue).toEqual({
+      severity: "setup",
+      label: "workspace.workflows.node_needs_email_content",
+    });
+  });
+
   test("projects edges with sourceHandle preserved", () => {
     const def = buildDefinition({
       edges: [{ id: "edge-1", source: "trigger-1", target: "action-1", sourceHandle: "then" }],
