@@ -116,6 +116,13 @@ export const FEEDBACK_FIELDS = {
       description: "Human-readable label of the question/field",
     },
     {
+      id: "FeedbackRecords.fieldId",
+      label: "Field ID/Question ID",
+      type: "string",
+      description:
+        "Stable question/field identifier (the survey element id). Unlike the label it is consistent across languages and duplicate labels, so group or filter by this to treat them as one question.",
+    },
+    {
       id: "FeedbackRecords.fieldGroupLabel",
       label: "Question Group",
       type: "string",

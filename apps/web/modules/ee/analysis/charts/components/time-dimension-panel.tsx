@@ -16,6 +16,7 @@ import {
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { Button } from "@/modules/ui/components/button";
 import "@/modules/ui/components/date-picker/styles.css";
+import { Label } from "@/modules/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import {
   Select,
@@ -132,8 +133,8 @@ export function TimeDimensionPanel({
 
       <div className="space-y-3">
         {/* Field Selector */}
-        <div className="space-y-2">
-          <label className="text-sm">{t("workspace.analysis.charts.field")}</label>
+        <div className="space-y-3">
+          <Label className="text-sm">{t("workspace.analysis.charts.field")}</Label>
           <Select value={timeDimension.dimension} onValueChange={handleDimensionChange}>
             <SelectTrigger className="w-full bg-white">
               <SelectValue />
@@ -149,8 +150,8 @@ export function TimeDimensionPanel({
         </div>
 
         {/* Granularity Selector */}
-        <div className="space-y-2">
-          <label className="text-sm">{t("workspace.analysis.charts.granularity")}</label>
+        <div className="space-y-3">
+          <Label className="text-sm">{t("workspace.analysis.charts.granularity")}</Label>
           <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
             <SelectTrigger className="w-full bg-white">
               <SelectValue />
@@ -167,8 +168,8 @@ export function TimeDimensionPanel({
         </div>
 
         {/* Date Range */}
-        <div className="space-y-2">
-          <label className="text-sm">{t("workspace.analysis.charts.date_range")}</label>
+        <div className="space-y-3">
+          <Label className="text-sm">{t("workspace.analysis.charts.date_range")}</Label>
           <div className="space-y-2">
             <Select
               value={dateRangeType === "custom" ? CUSTOM_RANGE_VALUE : presetValue}
