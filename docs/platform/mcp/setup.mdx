@@ -115,7 +115,7 @@ oauth_resource = "https://app.formbricks.com/api/mcp"
 
 ## Manage and revoke access
 
-Every client you authorize appears under **Account settings → Authorized apps**
+Every client you authorize appears under **Settings → Account → Authorized Apps**
 (`/account/settings/authorized-apps`), showing the client name, granted scopes, and when it was
 approved. Click **Revoke** to immediately cut off a client's access; it will need to be re-authorized
 to connect again.
@@ -146,8 +146,8 @@ periodically for safety.
   <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
     Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same
     browser the client opens, and that third-party-cookie blocking or a private window isn't
-    discarding the session. If it persists, revoke the app under **Account settings → Authorized
-    apps**, clear the client's stored credentials for the server, and reconnect. Self-hosters: an
+    discarding the session. If it persists, revoke the app under **Settings → Account → Authorized
+    Apps**, clear the client's stored credentials for the server, and reconnect. Self-hosters: an
     incorrect base URL (see below) also causes repeated redirects.
   </Accordion>
   <Accordion title="A tool call fails even though you're connected">
