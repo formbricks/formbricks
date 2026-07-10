@@ -49,6 +49,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   handler,
   auditLog,
   bodyTransform,
+  allowOrganizationOnlyApiKey = false,
 }: {
   request: Request;
   schemas?: S;
@@ -60,8 +61,15 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     body: Record<string, unknown>,
     auth: TAuthenticationApiKey
   ) => Promise<Record<string, unknown>> | Record<string, unknown>;
+  /**
+   * When true, API keys that only carry organization-level access (i.e. no workspace
+   * permissions) are allowed to authenticate. Organization-scoped endpoints opt in so a
+   * pure organization key can reach them; workspace-scoped routes keep this false so such
+   * keys are rejected at the auth layer. See {@link authenticateApiKeyFromHeaders}.
+   */
+  allowOrganizationOnlyApiKey?: boolean;
 }): Promise<Response> => {
-  const authentication = await authenticateRequest(request);
+  const authentication = await authenticateRequest(request, { allowOrganizationOnlyApiKey });
   if (!authentication.ok) {
     return handleApiError(request, authentication.error);
   }
