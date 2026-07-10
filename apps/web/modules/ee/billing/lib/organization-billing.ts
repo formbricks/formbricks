@@ -15,6 +15,7 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -72,6 +73,9 @@ const mapBillingRecord = (billing: TOrganizationBillingRecord | null): TOrganiza
 
 const toIsoStringOrNull = (date: Date | null | undefined): string | null =>
   date ? date.toISOString() : null;
+
+const isPaidCloudPlan = (plan: TCloudBillingPlan | null | undefined): boolean =>
+  plan === "pro" || plan === "scale";
 
 const getDateFromBilling = (value: string | null | undefined): Date | null => {
   if (!value) return null;
@@ -1123,13 +1127,13 @@ const ensureOrganizationBillingRecord = async (
  */
 const getOrganizationOwner = async (
   organizationId: string
-): Promise<{ email: string; name: string | null } | null> => {
+): Promise<{ id: string; email: string; name: string | null } | null> => {
   const membership = await prisma.membership.findFirst({
     where: { organizationId, role: "owner" },
-    select: { user: { select: { email: true, name: true } } },
+    select: { user: { select: { id: true, email: true, name: true } } },
   });
   if (!membership) return null;
-  return { email: membership.user.email, name: membership.user.name };
+  return { id: membership.user.id, email: membership.user.email, name: membership.user.name };
 };
 
 export const ensureStripeCustomerForOrganization = async (
@@ -1267,6 +1271,94 @@ const resolvePendingPlanChange = async (subscription: Stripe.Subscription | null
   return null;
 };
 
+type TSubscriptionLifecycleTransition = {
+  startedPaidSubscription: boolean;
+  canceledPaidSubscription: boolean;
+  switchedPaidPlan: boolean;
+};
+
+const resolveSubscriptionLifecycleTransition = (
+  existingStripeSnapshot: TOrganizationBilling["stripe"],
+  subscription: Stripe.Subscription | null,
+  subscriptionStatus: TOrganizationStripeSubscriptionStatus | null,
+  cloudPlan: TCloudStripePlan
+): TSubscriptionLifecycleTransition => {
+  const wasPaidActive =
+    existingStripeSnapshot?.subscriptionStatus === "active" && isPaidCloudPlan(existingStripeSnapshot?.plan);
+  const isPaidActive = subscriptionStatus === "active" && isPaidCloudPlan(cloudPlan);
+  const recoveredFromDunning =
+    existingStripeSnapshot?.subscriptionStatus === "past_due" ||
+    existingStripeSnapshot?.subscriptionStatus === "unpaid" ||
+    existingStripeSnapshot?.subscriptionStatus === "paused";
+  const wasPaidRecoverable =
+    isPaidCloudPlan(existingStripeSnapshot?.plan) &&
+    (existingStripeSnapshot?.subscriptionStatus === "active" || recoveredFromDunning);
+  const subscriptionEnded = !subscription || subscriptionStatus === "canceled" || cloudPlan === "hobby";
+
+  return {
+    startedPaidSubscription: isPaidActive && !wasPaidActive && !recoveredFromDunning,
+    canceledPaidSubscription: wasPaidRecoverable && subscriptionEnded,
+    // Plan switch within an active paid subscription (Pro <-> Scale, either direction).
+    switchedPaidPlan: wasPaidActive && isPaidActive && existingStripeSnapshot?.plan !== cloudPlan,
+  };
+};
+
+// Emit the paid-subscription lifecycle signal, keyed off the org owner so it ties to a person in
+// PostHog (with the organization group for company attribution).
+const emitSubscriptionLifecycleEvent = async (input: {
+  organizationId: string;
+  existingStripeSnapshot: TOrganizationBilling["stripe"];
+  cloudPlan: TCloudStripePlan;
+  billingInterval: TCloudBillingInterval | null;
+  transition: TSubscriptionLifecycleTransition;
+}): Promise<void> => {
+  const { organizationId, existingStripeSnapshot, cloudPlan, billingInterval, transition } = input;
+  const { startedPaidSubscription, canceledPaidSubscription, switchedPaidPlan } = transition;
+
+  if (!startedPaidSubscription && !canceledPaidSubscription && !switchedPaidPlan) {
+    return;
+  }
+
+  // Best-effort: the billing snapshot is already persisted, so a failure here (owner lookup DB blip,
+  // etc.) must not reject the sync — a retried sync would see the new state and detect no transition,
+  // permanently dropping the event. Swallow and log instead.
+  try {
+    const owner = await getOrganizationOwner(organizationId);
+    if (!owner) {
+      return;
+    }
+
+    if (switchedPaidPlan) {
+      capturePostHogEvent(
+        owner.id,
+        "subscription_updated",
+        {
+          previous_plan: existingStripeSnapshot?.plan ?? null,
+          plan: cloudPlan,
+          interval: billingInterval,
+          organization_id: organizationId,
+        },
+        { organizationId }
+      );
+      return;
+    }
+
+    capturePostHogEvent(
+      owner.id,
+      startedPaidSubscription ? "subscription_started" : "subscription_canceled",
+      {
+        // On cancel the new snapshot has already dropped to hobby/none, so report the prior plan.
+        plan: startedPaidSubscription ? cloudPlan : (existingStripeSnapshot?.plan ?? null),
+        interval: startedPaidSubscription ? billingInterval : (existingStripeSnapshot?.interval ?? null),
+        organization_id: organizationId,
+      },
+      { organizationId }
+    );
+  } catch (error) {
+    logger.error({ error, organizationId }, "Failed to emit subscription lifecycle event to PostHog");
+  }
+};
+
 export const syncOrganizationBillingFromStripe = async (
   organizationId: string,
   event?: { id: string; created: number }
@@ -1302,6 +1394,14 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const pendingChange = await resolvePendingPlanChange(subscription);
+
+  const transition = resolveSubscriptionLifecycleTransition(
+    existingStripeSnapshot,
+    subscription,
+    subscriptionStatus,
+    cloudPlan
+  );
+
   const limits = resolveEntitlementDrivenLimits(
     organizationId,
     customerId,
@@ -1350,6 +1450,15 @@ export const syncOrganizationBillingFromStripe = async (
   });
 
   await invalidateOrganizationBillingCache(organizationId);
+
+  await emitSubscriptionLifecycleEvent({
+    organizationId,
+    existingStripeSnapshot,
+    cloudPlan,
+    billingInterval,
+    transition,
+  });
+
   return updatedBilling;
 };
 

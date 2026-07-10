@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 
 /**
@@ -14,6 +15,8 @@ export const createBrevoCustomerAfterEmailVerification = async (user: {
   id: string;
   email: string;
 }): Promise<void> => {
+  capturePostHogEvent(user.id, "user_email_confirmed");
+
   void createBrevoCustomer({ id: user.id, email: user.email }).catch((err) =>
     logger.error(err, "Failed to create Brevo customer after email verification")
   );

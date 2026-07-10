@@ -19,7 +19,7 @@
     "generate-api-specs": "./scripts/openapi/generate.sh",
     "merge-client-endpoints": "tsx ./scripts/openapi/merge-client-endpoints.ts",
     "generate-and-merge-api-specs": "pnpm run generate-api-specs && pnpm run merge-client-endpoints",
-    "i18n:generate": "npx lingo.dev@latest run && npx lingo.dev@latest lockfile --force"
+    "i18n:generate": "dotenv -e ../../.env -- npx lingo.dev@latest run && dotenv -e ../../.env -- npx lingo.dev@latest lockfile --force"
   },
   "dependencies": {
     "@better-auth/oauth-provider": "1.6.18",
@@ -33,7 +33,7 @@
     "@formbricks/cache": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/email": "workspace:*",
-    "@formbricks/hub": "0.6.0",
+    "@formbricks/hub": "0.9.0",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/jobs": "workspace:*",
     "@formbricks/js-core": "workspace:*",

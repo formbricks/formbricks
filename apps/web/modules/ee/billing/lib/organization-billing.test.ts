@@ -53,6 +53,7 @@ const mocks = vi.hoisted(() => ({
   prismaMembershipFindFirst: vi.fn(),
   loggerInfo: vi.fn(),
   loggerError: vi.fn(),
+  capturePostHogEvent: vi.fn(),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -105,6 +106,10 @@ vi.mock("@formbricks/logger", () => ({
     info: mocks.loggerInfo,
     error: mocks.loggerError,
   },
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: mocks.capturePostHogEvent,
 }));
 
 vi.mock("./stripe-plan", async (importOriginal) => {
@@ -1890,6 +1895,153 @@ describe("organization-billing", () => {
 
     expect(result?.stripe?.subscriptionId).toBe("sub_pro");
     expect(result?.stripe?.plan).toBe("pro");
+  });
+
+  describe("syncOrganizationBillingFromStripe paid-subscription lifecycle events", () => {
+    const buildActiveSubscription = (
+      plan: "pro" | "scale",
+      status: "active" | "past_due" | "unpaid" | "paused" | "trialing"
+    ) => ({
+      id: `sub_${plan}`,
+      created: 1739923200,
+      status,
+      billing_cycle_anchor: 1739923200,
+      items: {
+        data: [
+          {
+            price: {
+              metadata: {
+                formbricks_plan: plan,
+                formbricks_price_kind: "base",
+                formbricks_interval: "monthly",
+              },
+              product: { id: `prod_${plan}`, metadata: { formbricks_plan: plan } },
+              recurring: { usage_type: "licensed", interval: "month" },
+            },
+          },
+        ],
+      },
+    });
+
+    beforeEach(() => {
+      // Resolve the cloud plan from product metadata so each case can drive its own plan.
+      mocks.getCloudPlanFromProduct.mockImplementation(
+        (product: { metadata?: { formbricks_plan?: string } }) =>
+          product.metadata?.formbricks_plan ?? "unknown"
+      );
+      mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+      mocks.prismaMembershipFindFirst.mockResolvedValue({
+        user: { id: "owner_1", email: "owner@example.com", name: "Owner" },
+      });
+    });
+
+    // status/plan here describe the persisted snapshot before the sync; `incoming` is what
+    // Stripe now resolves to (empty subscription list ⇒ hobby / canceled).
+    const cases: {
+      name: string;
+      existingStripe: Record<string, unknown>;
+      incoming: {
+        plan: "pro" | "scale";
+        status: "active" | "past_due" | "unpaid" | "paused" | "trialing";
+      } | null;
+      expectedEvent: "subscription_started" | "subscription_canceled" | "subscription_updated" | null;
+      expectedPlan?: string | null;
+    }[] = [
+      {
+        name: "emits subscription_started on first paid activation",
+        existingStripe: { plan: "hobby", subscriptionStatus: null },
+        incoming: { plan: "pro", status: "active" },
+        expectedEvent: "subscription_started",
+        expectedPlan: "pro",
+      },
+      {
+        name: "emits subscription_canceled on voluntary cancel (active → ended)",
+        existingStripe: { plan: "pro", subscriptionStatus: "active", interval: "monthly" },
+        incoming: null,
+        expectedEvent: "subscription_canceled",
+        expectedPlan: "pro",
+      },
+      {
+        name: "emits subscription_canceled on involuntary (dunning) churn (past_due → ended)",
+        existingStripe: { plan: "pro", subscriptionStatus: "past_due", interval: "monthly" },
+        incoming: null,
+        expectedEvent: "subscription_canceled",
+        expectedPlan: "pro",
+      },
+      {
+        name: "emits subscription_updated on Pro → Scale switch",
+        existingStripe: { plan: "pro", subscriptionStatus: "active", interval: "monthly" },
+        incoming: { plan: "scale", status: "active" },
+        expectedEvent: "subscription_updated",
+        expectedPlan: "scale",
+      },
+      {
+        name: "emits nothing on dunning recovery (past_due → active, same plan)",
+        existingStripe: { plan: "pro", subscriptionStatus: "past_due", interval: "monthly" },
+        incoming: { plan: "pro", status: "active" },
+        expectedEvent: null,
+      },
+      {
+        name: "emits nothing when a trial lapses without conversion (trialing → ended)",
+        existingStripe: { plan: "pro", subscriptionStatus: "trialing", interval: "monthly" },
+        incoming: null,
+        expectedEvent: null,
+      },
+      {
+        name: "emits nothing when an active paid plan is unchanged",
+        existingStripe: { plan: "pro", subscriptionStatus: "active", interval: "monthly" },
+        incoming: { plan: "pro", status: "active" },
+        expectedEvent: null,
+      },
+    ];
+
+    test.each(cases)("$name", async ({ existingStripe, incoming, expectedEvent, expectedPlan }) => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { ...existingStripe, lastSyncedEventId: null },
+      });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: incoming ? [buildActiveSubscription(incoming.plan, incoming.status)] : [],
+      });
+
+      await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923300 });
+
+      if (!expectedEvent) {
+        expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
+        return;
+      }
+
+      expect(mocks.capturePostHogEvent).toHaveBeenCalledTimes(1);
+      expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+        "owner_1",
+        expectedEvent,
+        expect.objectContaining({ organization_id: "org_1", plan: expectedPlan }),
+        { organizationId: "org_1" }
+      );
+    });
+
+    test("does not reject the sync when the owner lookup fails after persistence", async () => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { plan: "pro", subscriptionStatus: "active", interval: "monthly", lastSyncedEventId: null },
+      });
+      mocks.subscriptionsList.mockResolvedValue({ data: [] });
+      mocks.prismaMembershipFindFirst.mockRejectedValue(new Error("db blip"));
+
+      const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_1", created: 1739923300 });
+
+      expect(result?.stripe?.plan).toBe("hobby");
+      expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalled();
+      expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        { error: expect.any(Error), organizationId: "org_1" },
+        "Failed to emit subscription lifecycle event to PostHog"
+      );
+    });
   });
 
   test("getOrganizationBillingWithReadThroughSync returns cached billing when no stripe customer exists", async () => {
