@@ -57,7 +57,7 @@ export function MeasuresPanel({
       {!hideTitle && (
         <h3 className="text-md font-semibold text-gray-900">{t("workspace.analysis.charts.measures")}</h3>
       )}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         <Label className="text-sm">{t("workspace.analysis.charts.predefined_measures")}</Label>
         <MultiSelect
           options={measureOptions}
