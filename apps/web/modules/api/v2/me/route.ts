@@ -9,6 +9,7 @@ import { hasOrganizationAccess } from "@/modules/organization/settings/api-keys/
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     handler: async ({ authentication }) => {
       if (!hasOrganizationAccess(authentication, OrganizationAccessType.Read)) {
         return handleApiError(request, {
