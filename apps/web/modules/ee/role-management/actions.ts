@@ -130,14 +130,19 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
       throw new OperationNotAllowedError("Managers can only assign users to the member role");
     }
 
+    const targetMembership = await getMembershipByUserIdOrganizationId(
+      parsedInput.userId,
+      parsedInput.organizationId
+    );
+    if (currentUserMembership.role !== "owner" && targetMembership?.role === "owner") {
+      throw new OperationNotAllowedError("Only owners can change the role of an owner");
+    }
+
     await checkRoleManagementPermission(parsedInput.organizationId);
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
-    ctx.auditLoggingCtx.oldObject = await getMembershipByUserIdOrganizationId(
-      parsedInput.userId,
-      parsedInput.organizationId
-    );
+    ctx.auditLoggingCtx.oldObject = targetMembership;
     const result = await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
     ctx.auditLoggingCtx.newObject = result;
     return result;

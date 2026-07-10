@@ -1,5 +1,5 @@
 import { logger } from "@formbricks/logger";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
@@ -156,6 +156,14 @@ export const POST = withV1ApiWrapper({
         ),
       };
     } catch (error) {
+      // Invalid survey media (e.g. an unsupported/unparseable choice imageUrl) surfaces as an
+      // InvalidInputError — it's bad user input, so return a 400 with the message instead of
+      // letting it fall through to an unhandled 500 (which would page Sentry).
+      if (error instanceof InvalidInputError) {
+        return {
+          response: responses.badRequestResponse(error.message),
+        };
+      }
       if (error instanceof DatabaseError) {
         return {
           response: responses.internalServerErrorResponse(error.message),

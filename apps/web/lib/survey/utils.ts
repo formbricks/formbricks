@@ -3,6 +3,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
+import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyElement,
@@ -12,6 +13,15 @@ import {
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { isValidVideoUrl } from "@/lib/utils/video-upload";
 import { isValidImageFile } from "@/modules/storage/utils";
+
+/**
+ * Actionable hint appended to invalid-image messages. Names the supported formats and explains why
+ * extension-less external/CDN URLs (e.g. Unsplash, signed URLs, `?format=auto`) are rejected, since
+ * validation keys off the URL's file extension.
+ */
+const INVALID_IMAGE_HINT = `The URL must end in a supported image extension (${IMAGE_FILE_EXTENSIONS.join(
+  ", "
+)}). For CDN or extension-less links, upload the image to Formbricks or use a direct image URL.`;
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurvey>(surveyPrisma: any): T => {
   let segment: TSegment | null = null;
@@ -45,7 +55,9 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
 export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) => {
   questions.forEach((question, qIndex) => {
     if (question.imageUrl && !isValidImageFile(question.imageUrl)) {
-      throw new InvalidInputError(`Invalid image file in question ${String(qIndex + 1)}`);
+      throw new InvalidInputError(
+        `Invalid image file in question ${String(qIndex + 1)}. ${INVALID_IMAGE_HINT}`
+      );
     }
 
     if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
@@ -56,7 +68,7 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
       question.choices.forEach((choice, cIndex) => {
         if (!isValidImageFile(choice.imageUrl)) {
           throw new InvalidInputError(
-            `Invalid image file for choice ${String(cIndex + 1)} in question ${String(qIndex + 1)}`
+            `Invalid image file for choice ${String(cIndex + 1)} in question ${String(qIndex + 1)}. ${INVALID_IMAGE_HINT}`
           );
         }
       });
@@ -70,18 +82,18 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
  * @param choiceIdx - Index of the choice for error reporting
  * @param elementIdx - Index of the element for error reporting
  * @param blockName - Block name for error reporting
- * @returns Result with void data on success or Error on failure
+ * @returns Result with void data on success or InvalidInputError on failure
  */
 const validateChoiceImage = (
   choice: TSurveyPictureChoice,
   choiceIdx: number,
   elementIdx: number,
   blockName: string
-): Result<void, Error> => {
+): Result<void, InvalidInputError> => {
   if (choice.imageUrl && !isValidImageFile(choice.imageUrl)) {
     return err(
-      new Error(
-        `Invalid image URL in choice ${choiceIdx + 1} of question ${elementIdx + 1} of block "${blockName}"`
+      new InvalidInputError(
+        `Invalid image URL in choice ${choiceIdx + 1} of question ${elementIdx + 1} of block "${blockName}". ${INVALID_IMAGE_HINT}`
       )
     );
   }
@@ -94,13 +106,13 @@ const validateChoiceImage = (
  * @param element - Element with choices to validate
  * @param elementIdx - Index of the element for error reporting
  * @param blockName - Block name for error reporting
- * @returns Result with void data on success or Error on failure
+ * @returns Result with void data on success or InvalidInputError on failure
  */
 const validatePictureSelectionChoiceImages = (
   element: TSurveyElement,
   elementIdx: number,
   blockName: string
-): Result<void, Error> => {
+): Result<void, InvalidInputError> => {
   // Only validate choices for picture selection elements
   if (element.type !== TSurveyElementTypeEnum.PictureSelection) {
     return ok(undefined);
@@ -126,19 +138,19 @@ const validatePictureSelectionChoiceImages = (
  * @param elementIdx - Index of the element for error reporting
  * @param blockIdx - Index of the block for error reporting
  * @param blockName - Block name for error reporting
- * @returns Result with void data on success or Error on failure
+ * @returns Result with void data on success or InvalidInputError on failure
  */
 const validateElement = (
   element: TSurveyElement,
   elementIdx: number,
   blockIdx: number,
   blockName: string
-): Result<void, Error> => {
+): Result<void, InvalidInputError> => {
   // Check element imageUrl
   if (element.imageUrl && !isValidImageFile(element.imageUrl)) {
     return err(
-      new Error(
-        `Invalid image URL in question ${elementIdx + 1} of block "${blockName}" (block ${blockIdx + 1})`
+      new InvalidInputError(
+        `Invalid image URL in question ${elementIdx + 1} of block "${blockName}" (block ${blockIdx + 1}). ${INVALID_IMAGE_HINT}`
       )
     );
   }
@@ -146,7 +158,7 @@ const validateElement = (
   // Check element videoUrl
   if (element.videoUrl && !isValidVideoUrl(element.videoUrl)) {
     return err(
-      new Error(
+      new InvalidInputError(
         `Invalid video URL in question ${elementIdx + 1} of block "${blockName}" (block ${blockIdx + 1}). Only YouTube, Vimeo, and Loom URLs are supported.`
       )
     );
@@ -162,9 +174,9 @@ const validateElement = (
  * - Validates element videoUrl
  * - Validates choice imageUrl for picture selection elements
  * @param blocks - Array of survey blocks to validate
- * @returns Result with void data on success or Error on failure
+ * @returns Result with void data on success or InvalidInputError on failure
  */
-export const checkForInvalidMediaInBlocks = (blocks: TSurveyBlock[]): Result<void, Error> => {
+export const checkForInvalidMediaInBlocks = (blocks: TSurveyBlock[]): Result<void, InvalidInputError> => {
   for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
     const block = blocks[blockIdx];
 
@@ -202,12 +214,14 @@ export const stripIsDraftFromBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] =
  * - Strips isDraft flags from elements
  * @param blocks - Array of survey blocks to validate and prepare
  * @returns Prepared blocks ready for database persistence
- * @throws Error if any media validation fails
+ * @throws InvalidInputError if any media validation fails (mapped to a 400 by the API handlers)
  */
 export const validateMediaAndPrepareBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] => {
   // Validate media (images and videos)
   const validation = checkForInvalidMediaInBlocks(blocks);
   if (!validation.ok) {
+    // The validation error is an InvalidInputError, so the API layer maps it to a 400 (and never
+    // pages Sentry) instead of letting it surface as an unhandled 500.
     throw validation.error;
   }
 

@@ -90,7 +90,7 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
       onOpenChange={setOpen}
       className={cn(
         open ? "shadow-lg" : "shadow-md",
-        "group w-full space-y-2 rounded-lg border border-slate-300 bg-white duration-200 hover:cursor-pointer hover:bg-slate-50"
+        "group w-full overflow-hidden rounded-lg border border-slate-300 bg-white duration-200 hover:cursor-pointer hover:bg-slate-50"
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">

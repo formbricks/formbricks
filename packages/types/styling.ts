@@ -61,6 +61,11 @@ export const ZBaseStyling = z.object({
   brandColor: ZStylingColor.nullish(),
   accentBgColor: ZStylingColor.nullish(),
   accentBgColorSelected: ZStylingColor.nullish(),
+  // Color of the link-survey footer legal links (imprint/privacy/terms/report survey).
+  // When unset, the color is auto-adjusted at render time for AA contrast with the background.
+  // A cleared color picker is transformed to undefined at the form layer, so this stays a
+  // strict ZColor like every other color field.
+  footerLinkColor: ZStylingColor.nullish(),
   fontFamily: z.string().nullish(),
 
   // Buttons

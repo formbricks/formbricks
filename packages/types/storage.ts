@@ -56,6 +56,23 @@ export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;
 // Export the array derived from the tuple
 export const ALLOWED_FILE_EXTENSIONS: TAllowedFileExtension[] = [...ALLOWED_FILE_EXTENSIONS_TUPLE];
 
+/**
+ * Image extensions accepted for survey media (question/element/choice `imageUrl`) and offered by the
+ * editor's image pickers. Single source of truth so URL validation, uploads, and the picker can't
+ * drift apart.
+ *
+ * Kept a strict subset of the upload allowlist — `satisfies` enforces this at compile time — so any
+ * URL that passes image validation is always something the user can actually upload to Formbricks.
+ * `svg` is deliberately excluded: we don't sanitize SVGs, so allowing them would be an XSS vector.
+ */
+export const IMAGE_FILE_EXTENSIONS = [
+  "png",
+  "jpeg",
+  "jpg",
+  "webp",
+  "heic",
+] as const satisfies readonly TAllowedFileExtension[];
+
 export const mimeTypes: Record<TAllowedFileExtension, string> = {
   heic: "image/heic",
   png: "image/png",
