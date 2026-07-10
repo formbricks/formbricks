@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { auth } from "@/modules/auth/lib/auth";
 import * as brevo from "@/modules/auth/lib/brevo";
 import {
@@ -14,6 +15,11 @@ vi.mock("@/modules/auth/lib/brevo", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/auth/lib/brevo")>();
   return { ...actual, createBrevoCustomer: vi.fn().mockResolvedValue(undefined) };
 });
+
+// Spy capturePostHogEvent (the other afterEmailVerification side effect) without hitting PostHog.
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
+}));
 
 /**
  * Integration coverage for email verification + password reset (ENG-1054) against a real Postgres.
@@ -57,11 +63,15 @@ describe("Better Auth email verification (real Postgres)", () => {
       id: verifiedUser?.id,
       email: "verify@example.com",
     });
+    // ...and captures the analytics event for the confirmation
+    expect(capturePostHogEvent).toHaveBeenCalledWith(verifiedUser?.id, "user_email_confirmed");
 
     // verify-email is a stateless signed JWT (no getAndDelete), so re-verifying is idempotent:
     // the already-verified branch returns { status: true, user: null }
     const replay = await auth.api.verifyEmail({ query: { token } });
     expect(replay).toMatchObject({ status: true, user: null });
+    // afterEmailVerification fires once per user — the replay must NOT re-emit the event
+    expect(capturePostHogEvent).toHaveBeenCalledTimes(1);
   });
 });
 
