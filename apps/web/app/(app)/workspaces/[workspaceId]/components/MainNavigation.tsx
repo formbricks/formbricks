@@ -123,7 +123,8 @@ export const MainNavigation = ({
     () => [
       {
         id: "ask",
-        name: t("common.ask"),
+        // Product section (IA) label — intentionally not localized (kept in English across all locales)
+        name: "Ask",
         items: [
           {
             name: t("common.surveys"),
@@ -149,7 +150,8 @@ export const MainNavigation = ({
         id: "unify-feedback",
         name: (
           <span className="inline-flex items-center gap-2">
-            <span>{t("workspace.unify.unify_feedback")}</span>
+            {/* Product section (IA) label — intentionally not localized (kept in English across all locales) */}
+            <span>Unify</span>
             <Badge
               text="Beta"
               type="gray"

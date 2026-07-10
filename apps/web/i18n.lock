@@ -151,7 +151,6 @@ checksums:
     common/apply_filters: 6543c1e80038b3da0f4a42848d08d4d1
     common/archived: cf5127ecfd7e43a35466a1ba5fe16450
     common/are_you_sure: 6d5cd13628a7887711fd0c29f1123652
-    common/ask: 24150ae04c60dcd8688d93a8a3a2d238
     common/attributes: 86d0ae6fea0fbb119722ed3841f8385a
     common/authorized_apps: ffed21922e6e9c0975ddcde28e0a266b
     common/back: f541015a827e37cb3b1234e56bc2aa3c
