@@ -115,7 +115,7 @@ export function LanguageSwitch({
       {showLanguageDropdown ? (
         <div
           className={cn(
-            "bg-input-bg text-heading border-border absolute top-10 max-h-64 space-y-2 overflow-auto rounded-md border p-2 text-xs",
+            "bg-survey-bg text-heading border-border absolute top-10 max-h-64 space-y-2 overflow-auto rounded-md border p-2 text-xs shadow-lg",
             dir === "rtl" ? "left-8" : "right-8"
           )}
           ref={languageDropdownRef}>

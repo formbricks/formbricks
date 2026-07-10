@@ -27,6 +27,10 @@ import {
 
 const TIME_FIELD_OPTIONS = FEEDBACK_FIELDS.dimensions.filter((d) => d.type === "time");
 
+// Sentinel value for the "Custom" entry in the date-range select. Safe against DATE_PRESETS, whose
+// values are phrases like "last 30 days" — never this token.
+const CUSTOM_RANGE_VALUE = "__custom__";
+
 interface TimeDimensionPanelProps {
   timeDimension: TimeDimensionConfig | null;
   onTimeDimensionChange: (config: TimeDimensionConfig | null) => void;
@@ -83,17 +87,17 @@ export function TimeDimensionPanel({
     }
   };
 
-  const handleDateRangeTypeChange = (value: "preset" | "custom") => {
-    setDateRangeType(value);
-    if (!timeDimension) return;
-
-    if (value === "preset") {
-      const nextPreset = presetValue || "last 30 days";
-      if (!presetValue) setPresetValue(nextPreset);
-      onTimeDimensionChange({ ...timeDimension, dateRange: nextPreset });
+  // Single date-range select: picking a preset switches to preset mode; picking "Custom" reveals the
+  // date pickers (seeded with sensible defaults so the query stays valid immediately).
+  const handleDateRangeSelect = (value: string) => {
+    if (value !== CUSTOM_RANGE_VALUE) {
+      setDateRangeType("preset");
+      handlePresetChange(value);
       return;
     }
 
+    setDateRangeType("custom");
+    if (!timeDimension) return;
     const start = customStartDate ?? new Date();
     const end = customEndDate ?? start;
     if (!customStartDate) setCustomStartDate(start);
@@ -167,36 +171,32 @@ export function TimeDimensionPanel({
           <label className="text-sm">{t("workspace.analysis.charts.date_range")}</label>
           <div className="space-y-2">
             <Select
-              value={dateRangeType}
-              onValueChange={(value) => handleDateRangeTypeChange(value as "preset" | "custom")}>
+              value={dateRangeType === "custom" ? CUSTOM_RANGE_VALUE : presetValue}
+              onValueChange={handleDateRangeSelect}>
               <SelectTrigger className="w-full bg-white">
-                <SelectValue />
+                <SelectValue placeholder={t("workspace.analysis.charts.select_preset")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="preset">{t("workspace.analysis.charts.preset")}</SelectItem>
-                <SelectItem value="custom">{t("workspace.analysis.charts.custom_range")}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {dateRangeType === "preset" ? (
-              <Select value={presetValue} onValueChange={handlePresetChange}>
-                <SelectTrigger className="w-full bg-white">
-                  <SelectValue placeholder={t("workspace.analysis.charts.select_preset")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_PRESETS.map((preset) => (
-                    <SelectItem key={preset.value} value={preset.value}>
-                      {getTranslatedDatePresetLabel(preset.value, t)}
-                    </SelectItem>
-                  ))}
-                  {presetValue && !DATE_PRESETS.some((p) => p.value === presetValue) && (
+                {DATE_PRESETS.map((preset) => (
+                  <SelectItem key={preset.value} value={preset.value}>
+                    {getTranslatedDatePresetLabel(preset.value, t)}
+                  </SelectItem>
+                ))}
+                {/* preserve a previously-saved preset value we don't recognize */}
+                {dateRangeType === "preset" &&
+                  presetValue &&
+                  !DATE_PRESETS.some((p) => p.value === presetValue) && (
                     <SelectItem key={presetValue} value={presetValue}>
                       {presetValue}
                     </SelectItem>
                   )}
-                </SelectContent>
-              </Select>
-            ) : (
+                <SelectItem value={CUSTOM_RANGE_VALUE}>
+                  {t("workspace.analysis.charts.custom_range")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {dateRangeType === "custom" && (
               <div className="grid grid-cols-2 gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
