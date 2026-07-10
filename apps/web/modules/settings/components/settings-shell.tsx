@@ -1,5 +1,6 @@
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
 import { WorkspaceContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
 import { SettingsNavigation } from "@/modules/settings/components/settings-navigation";
 import type { TSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -50,6 +51,7 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
           membershipRole={data.membershipRole}
           isFormbricksCloud={data.isFormbricksCloud}
           publicDomain={data.publicDomain}
+          isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
           backUrl={data.backUrl}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">

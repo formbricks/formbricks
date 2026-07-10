@@ -4,6 +4,7 @@ import {
   ArrowUpRightIcon,
   ChevronRightIcon,
   LogOutIcon,
+  MegaphoneIcon,
   MessageSquareTextIcon,
   UserCircleIcon,
 } from "lucide-react";
@@ -29,6 +30,10 @@ interface UserDropdownProps {
   isCollapsed?: boolean;
   isTextVisible?: boolean;
   className?: string;
+  // Whether the Formbricks-in-Formbricks in-app survey widget is configured (workspace id set). The
+  // "What's New" and "Share feedback" items only trigger Formbricks surveys, so they are hidden when
+  // the widget is not mounted — otherwise they would render but do nothing.
+  isFormbricksSurveysConfigured?: boolean;
 }
 
 // The avatar/account trigger + menu (Account, Documentation, Share feedback, Log out) shown at the
@@ -42,6 +47,7 @@ export const UserDropdown = ({
   isCollapsed = false,
   isTextVisible = false,
   className,
+  isFormbricksSurveysConfigured = false,
 }: Readonly<UserDropdownProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -114,11 +120,20 @@ export const UserDropdown = ({
             </DropdownMenuItem>
           </Link>
         ))}
-        <DropdownMenuItem
-          onClick={() => formbricks.track("share_feedback_clicked")}
-          icon={<MessageSquareTextIcon className="mr-2 size-4" strokeWidth={1.5} />}>
-          {t("common.share_feedback")}
-        </DropdownMenuItem>
+        {isFormbricksSurveysConfigured && (
+          <>
+            <DropdownMenuItem
+              onClick={() => formbricks.track("whats_new_clicked").catch(() => undefined)}
+              icon={<MegaphoneIcon className="mr-2 size-4" strokeWidth={1.5} />}>
+              {t("common.whats_new")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => formbricks.track("share_feedback_clicked").catch(() => undefined)}
+              icon={<MessageSquareTextIcon className="mr-2 size-4" strokeWidth={1.5} />}>
+              {t("common.share_feedback")}
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuItem
           onClick={async () => {
             const loginUrl = `${publicDomain}/auth/login`;

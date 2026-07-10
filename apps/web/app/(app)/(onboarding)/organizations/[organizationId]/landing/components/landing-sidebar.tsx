@@ -23,9 +23,15 @@ interface LandingSidebarProps {
   user: TUser;
   organization: TOrganization;
   publicDomain: string;
+  isFormbricksSurveysConfigured: boolean;
 }
 
-export const LandingSidebar = ({ user, organization, publicDomain }: Readonly<LandingSidebarProps>) => {
+export const LandingSidebar = ({
+  user,
+  organization,
+  publicDomain,
+  isFormbricksSurveysConfigured,
+}: Readonly<LandingSidebarProps>) => {
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -99,6 +105,7 @@ export const LandingSidebar = ({ user, organization, publicDomain }: Readonly<La
           organizationId={organization.id}
           publicDomain={publicDomain}
           className="rounded-br-xl"
+          isFormbricksSurveysConfigured={isFormbricksSurveysConfigured}
         />
       </div>
     </aside>

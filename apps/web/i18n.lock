@@ -502,6 +502,7 @@ checksums:
     common/website_survey: 17513d25a07b6361768a15ec622b021b
     common/weeks: 545de30df4f44d3f6d1d344af6a10815
     common/welcome_card: 76081ebd5b2e35da9b0f080323704ae7
+    common/whats_new: e426b9bfcc875da20c66192faa148206
     common/workspace: b63ef0e99ee6f7fef6cbe4971ca6cf0f
     common/workspace_created_successfully: bf401ae83da954f1db48724e2a8e40f1
     common/workspace_creation_description: aea2f480ba0c54c5cabac72c9c900ddf
