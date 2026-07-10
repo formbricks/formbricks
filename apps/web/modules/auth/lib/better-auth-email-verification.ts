@@ -15,7 +15,7 @@ export const createBrevoCustomerAfterEmailVerification = async (user: {
   id: string;
   email: string;
 }): Promise<void> => {
-  capturePostHogEvent(user.id, "user_email_confirmed", { email: user.email });
+  capturePostHogEvent(user.id, "user_email_confirmed");
 
   void createBrevoCustomer({ id: user.id, email: user.email }).catch((err) =>
     logger.error(err, "Failed to create Brevo customer after email verification")
