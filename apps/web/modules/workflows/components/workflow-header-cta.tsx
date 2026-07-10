@@ -50,7 +50,6 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   if (!workflow) return null;
 
   const isArchived = workflow.status === "archived";
-  const isDraft = workflow.status === "draft";
   const isActive = workflow.status === "enabled";
   const isBusy = builder.isTransitioning || builder.isSaving || isDeleting;
 
@@ -75,25 +74,6 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   return (
     <div className="flex items-center gap-3">
       {builder.canEditMetadata ? <WorkflowAutoSaveIndicator /> : null}
-      {/* Edits autosave; the button stays as the explicit "persist now" escape hatch and doubles
-          as the saved-state signal: enabled with a dot while something is unsaved, disabled once
-          everything is persisted. */}
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        className="relative"
-        onClick={() => builder.save()}
-        loading={builder.isSaving}
-        disabled={!builder.canEditMetadata || !builder.isDirty || isBusy}>
-        {isDraft ? t("common.save_as_draft") : t("common.save")}
-        {builder.isDirty && !builder.isSaving ? (
-          <span
-            aria-hidden="true"
-            className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-white bg-brand-dark"
-          />
-        ) : null}
-      </Button>
       {/* Lifecycle as a status dropdown (same shape as the surveys list "New survey" menu): the
           button reads the current state, the menu holds the transitions available from it. */}
       <DropdownMenu>
