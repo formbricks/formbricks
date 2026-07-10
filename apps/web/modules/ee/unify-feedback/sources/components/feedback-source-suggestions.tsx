@@ -68,7 +68,9 @@ export function FeedbackSourceSuggestions({
   };
 
   return (
-    <div>
+    // Separate the suggestions from the connected-source rows above, and cap the height so a long list
+    // scrolls instead of pushing the page down.
+    <div className="max-h-80 overflow-y-auto border-t border-slate-200">
       {visibleSurveys.map((survey) => {
         const isImporting = importingSurveyId === survey.id;
         const isBusy = importingSurveyId !== null;
