@@ -55,7 +55,7 @@ describe("invite.ts", () => {
 
     test("should throw ResourceNotFoundError when invite does not exist", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record does not exist", {
-        code: PrismaErrorType.RecordDoesNotExist,
+        code: PrismaErrorType.RelatedRecordNotFound,
         clientVersion: "1.0.0",
       });
 

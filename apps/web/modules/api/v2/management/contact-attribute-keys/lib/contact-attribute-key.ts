@@ -77,8 +77,8 @@ export const createContactAttributeKey = async (
     return ok(createdContactAttributeKey);
   } catch (error) {
     if (
-      isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist) ||
-      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)
+      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
+      isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)
     ) {
       return err({
         type: "not_found",

@@ -186,7 +186,7 @@ describe("User Service", () => {
 
     test("should throw ResourceNotFoundError when user not found", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: PrismaErrorType.RecordDoesNotExist,
+        code: PrismaErrorType.RelatedRecordNotFound,
         clientVersion: "5.0.0",
       });
       vi.mocked(prisma.user.update).mockRejectedValue(prismaError);

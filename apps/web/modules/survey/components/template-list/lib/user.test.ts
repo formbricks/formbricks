@@ -66,7 +66,7 @@ describe("updateUser", () => {
 
   test("throws ResourceNotFoundError when user does not exist", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
-      code: PrismaErrorType.RecordDoesNotExist,
+      code: PrismaErrorType.RelatedRecordNotFound,
       clientVersion: "1.0.0",
     });
 

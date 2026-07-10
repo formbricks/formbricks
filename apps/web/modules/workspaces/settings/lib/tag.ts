@@ -22,7 +22,7 @@ export const deleteTag = async (
 
     return ok(tag);
   } catch (error) {
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound)) {
       return err({
         code: TagError.TAG_NOT_FOUND,
         message: "Tag not found",

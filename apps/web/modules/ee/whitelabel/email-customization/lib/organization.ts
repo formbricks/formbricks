@@ -43,7 +43,7 @@ export const updateOrganizationEmailLogoUrl = async (
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RecordDoesNotExist
+      error.code === PrismaErrorType.RelatedRecordNotFound
     ) {
       throw new ResourceNotFoundError("Organization", organizationId);
     }
@@ -86,7 +86,7 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RecordDoesNotExist
+      error.code === PrismaErrorType.RelatedRecordNotFound
     ) {
       throw new ResourceNotFoundError("Organization", organizationId);
     }

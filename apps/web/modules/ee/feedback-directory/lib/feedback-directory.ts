@@ -593,7 +593,7 @@ export const updateFeedbackDirectory = async (
     if (isUniqueConstraintError(error)) {
       throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
     }
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
     }
     if (isPrismaKnownRequestError(error)) {

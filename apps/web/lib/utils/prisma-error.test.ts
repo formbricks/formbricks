@@ -7,7 +7,7 @@ const knownError = (code: string): Prisma.PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("boom", { code, clientVersion: "test" });
 
 const uniqueViolation = knownError(PrismaErrorType.UniqueConstraintViolation);
-const recordNotFound = knownError(PrismaErrorType.RecordDoesNotExist);
+const recordNotFound = knownError(PrismaErrorType.RelatedRecordNotFound);
 
 describe("isPrismaKnownRequestError", () => {
   test("matches any known request error when no code is given", () => {
