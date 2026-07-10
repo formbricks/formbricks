@@ -73,7 +73,16 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
 
   return (
     <div className="flex items-center gap-3">
-      {builder.canEditMetadata ? <WorkflowAutoSaveIndicator /> : null}
+      {/* The definition is the workflow's real content: while it can't change (enabled, archived,
+          or a read-only member) the editor is effectively read-only, so say that instead of
+          advertising an autosave that has nothing to act on. */}
+      {builder.canEditDefinition ? (
+        <WorkflowAutoSaveIndicator />
+      ) : (
+        <span className="inline-flex cursor-default items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+          {t("workspace.workflows.read_only")}
+        </span>
+      )}
       {/* Lifecycle as a status dropdown (same shape as the surveys list "New survey" menu): the
           button reads the current state, the menu holds the transitions available from it. */}
       <DropdownMenu>

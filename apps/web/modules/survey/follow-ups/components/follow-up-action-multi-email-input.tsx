@@ -6,12 +6,14 @@ interface FollowUpActionMultiEmailInputProps {
   emails: string[];
   setEmails: React.Dispatch<React.SetStateAction<string[]>>;
   isInvalid?: boolean;
+  disabled?: boolean;
 }
 
 const FollowUpActionMultiEmailInput = ({
   emails,
   setEmails,
   isInvalid,
+  disabled,
 }: FollowUpActionMultiEmailInputProps) => {
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
@@ -66,7 +68,8 @@ const FollowUpActionMultiEmailInput = ({
       <div
         className={cn(
           "flex flex-wrap items-center gap-2 rounded-md border px-2 py-1",
-          isInvalid ? "border-red-500" : "border-slate-300"
+          isInvalid ? "border-red-500" : "border-slate-300",
+          disabled && "bg-slate-50"
         )}>
         {emails.map((email, index) => (
           <div
@@ -75,14 +78,16 @@ const FollowUpActionMultiEmailInput = ({
             <span className="text-slate-900">{email}</span>
             <button
               type="button"
+              disabled={disabled}
               onClick={() => removeEmail(index)}
-              className="px-1 text-lg leading-none font-medium text-slate-500">
+              className="px-1 text-lg leading-none font-medium text-slate-500 disabled:opacity-50">
               ×
             </button>
           </div>
         ))}
         <input
           type="text"
+          disabled={disabled}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}

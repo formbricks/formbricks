@@ -4056,6 +4056,7 @@
       "node_needs_survey": "Pick a survey to get started",
       "pan_mode": "Pan mode",
       "pointer_mode": "Pointer mode",
+      "read_only": "Только для чтения",
       "readiness_add_action": "Add an action step",
       "readiness_add_trigger": "Add a trigger to get started",
       "readiness_complete_action": "Complete the action configuration",
