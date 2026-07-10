@@ -253,6 +253,12 @@ cube(`FeedbackRecords`, {
       description: `Human-readable label of the question/field (e.g., "How satisfied are you with support?")`,
     },
 
+    fieldId: {
+      sql: `field_id`,
+      type: `string`,
+      description: `Stable identifier of the question/field (the source survey element id). Unlike fieldLabel it does not change across languages or when the label is edited, so group/filter by this to keep identical or translated labels as one question.`,
+    },
+
     fieldGroupLabel: {
       sql: `field_group_label`,
       type: `string`,
