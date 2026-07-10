@@ -1838,7 +1838,7 @@
       "api_key_created": "API key created",
       "api_key_deleted": "API Key deleted",
       "api_key_label": "API Key Label",
-      "api_key_security_warning": "For security reasons, the API key will only be shown once after creation. Please copy it to your destination right away.",
+      "api_key_security_warning": "For security reasons, the API key will only be shown once after creation.",
       "api_key_updated": "API Key updated",
       "delete_api_key_confirmation": "Any applications using this key will no longer be able to access your Formbricks data.",
       "duplicate_access": "Duplicate workspace access not allowed",
@@ -1846,15 +1846,15 @@
       "no_workspace_permissions_found": "No Workspace permissions found",
       "organization_access": "Organization Access",
       "organization_access_cloud_note": "On Formbricks Cloud, managing organization members via the API isn't available. Team management still works.",
-      "organization_access_description": "Grants read or write access to organization administration, such as members and teams. It does not grant access to workspace data like surveys or responses.",
+      "organization_access_description": "Members and teams only — not workspace data.",
       "permissions": "Permissions",
       "secret": "Secret",
       "unable_to_copy_api_key": "Unable to copy API key",
       "unable_to_delete_api_key": "Unable to delete API Key",
       "unknown_workspace": "Unknown workspace",
       "workspace_access": "Workspace Access",
-      "workspace_access_description": "Controls access to data inside a workspace, such as surveys and responses. Add each workspace this key should reach and pick a permission level — there is no \"all workspaces\" option.",
-      "workspace_access_empty": "No workspace added yet. Without at least one workspace, this key can't access any survey or response data."
+      "workspace_access_description": "Survey and response data. Grant access one workspace at a time.",
+      "workspace_access_empty": "No workspaces added yet."
     },
     "app-connection": {
       "app_connection": "App Connection",

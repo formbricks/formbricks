@@ -1838,7 +1838,7 @@
       "api_key_created": "API-sleutel aangemaakt",
       "api_key_deleted": "API-sleutel verwijderd",
       "api_key_label": "API-sleutel label",
-      "api_key_security_warning": "Om veiligheidsredenen wordt de API-sleutel slechts één keer getoond na aanmaak. Kopieer deze direct naar uw bestemming.",
+      "api_key_security_warning": "Om veiligheidsredenen wordt de API-sleutel slechts één keer getoond na aanmaak.",
       "api_key_updated": "API-sleutel bijgewerkt",
       "delete_api_key_confirmation": "Alle applicaties die deze sleutel gebruiken, hebben geen toegang meer tot uw Formbricks-gegevens.",
       "duplicate_access": "Dubbele workspace-toegang niet toegestaan",
@@ -1846,15 +1846,15 @@
       "no_workspace_permissions_found": "Geen Workspace-rechten gevonden",
       "organization_access": "Organisatietoegang",
       "organization_access_cloud_note": "Op Formbricks Cloud is het beheren van organisatieleden via de API niet beschikbaar. Teambeheer werkt nog steeds.",
-      "organization_access_description": "Geeft lees- of schrijftoegang tot organisatiebeheer, zoals leden en teams. Het geeft geen toegang tot werkruimtegegevens zoals enquêtes of antwoorden.",
+      "organization_access_description": "Alleen leden en teams — geen werkruimtegegevens.",
       "permissions": "Machtigingen",
       "secret": "Geheim",
       "unable_to_copy_api_key": "Kan API-sleutel niet kopiëren",
       "unable_to_delete_api_key": "Kan API-sleutel niet verwijderen",
       "unknown_workspace": "Onbekende workspace",
       "workspace_access": "Workspace-toegang",
-      "workspace_access_description": "Beheert de toegang tot gegevens binnen een werkruimte, zoals enquêtes en antwoorden. Voeg elke werkruimte toe die deze sleutel moet kunnen bereiken en kies een machtigingsniveau — er is geen optie voor \"alle werkruimtes\".",
-      "workspace_access_empty": "Nog geen werkruimte toegevoegd. Zonder minimaal één werkruimte heeft deze sleutel geen toegang tot enquête- of antwoordgegevens."
+      "workspace_access_description": "Enquête- en antwoordgegevens. Verleen toegang per werkruimte.",
+      "workspace_access_empty": "Nog geen werkruimtes toegevoegd."
     },
     "app-connection": {
       "app_connection": "App-verbinding",

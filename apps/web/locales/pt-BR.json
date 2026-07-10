@@ -1838,7 +1838,7 @@
       "api_key_created": "Chave de API criada",
       "api_key_deleted": "Chave de API excluída",
       "api_key_label": "Rótulo da chave de API",
-      "api_key_security_warning": "Por motivos de segurança, a chave de API será exibida apenas uma vez após a criação. Copie-a para o seu destino imediatamente.",
+      "api_key_security_warning": "Por motivos de segurança, a chave de API será exibida apenas uma vez após a criação.",
       "api_key_updated": "Chave de API atualizada",
       "delete_api_key_confirmation": "Quaisquer aplicativos que usem esta chave não poderão mais acessar seus dados do Formbricks.",
       "duplicate_access": "Acesso duplicado ao workspace não permitido",
@@ -1846,15 +1846,15 @@
       "no_workspace_permissions_found": "Nenhuma permissão de Workspace encontrada",
       "organization_access": "Acesso à organização",
       "organization_access_cloud_note": "No Formbricks Cloud, gerenciar membros da organização pela API não está disponível. O gerenciamento de equipes ainda funciona.",
-      "organization_access_description": "Concede acesso de leitura ou gravação à administração da organização, como membros e equipes. Não concede acesso aos dados do workspace, como pesquisas ou respostas.",
+      "organization_access_description": "Somente membros e equipes — não os dados do workspace.",
       "permissions": "Permissões",
       "secret": "Segredo",
       "unable_to_copy_api_key": "Não foi possível copiar a chave de API",
       "unable_to_delete_api_key": "Não foi possível excluir a chave de API",
       "unknown_workspace": "Workspace desconhecido",
       "workspace_access": "Acesso ao workspace",
-      "workspace_access_description": "Controla o acesso aos dados dentro de um workspace, como pesquisas e respostas. Adicione cada workspace que esta chave deve acessar e escolha um nível de permissão — não existe a opção \"todos os workspaces\".",
-      "workspace_access_empty": "Nenhum workspace adicionado ainda. Sem pelo menos um workspace, esta chave não pode acessar nenhum dado de pesquisa ou resposta."
+      "workspace_access_description": "Dados de pesquisas e respostas. Conceda acesso a um workspace por vez.",
+      "workspace_access_empty": "Nenhum workspace adicionado ainda."
     },
     "app-connection": {
       "app_connection": "Conexão do app",

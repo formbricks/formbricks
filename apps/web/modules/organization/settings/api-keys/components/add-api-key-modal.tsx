@@ -308,8 +308,13 @@ export const AddApiKeyModal = ({
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="border-t border-slate-200" />
+
+            <div className="space-y-2">
               <Label>{t("workspace.api_keys.organization_access")}</Label>
+              <p className="text-sm text-slate-500">
+                {t("workspace.api_keys.organization_access_description")}
+              </p>
               {Object.keys(selectedOrganizationAccess).map((key) => (
                 <div key={key} className="mt-2 flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -331,9 +336,6 @@ export const AddApiKeyModal = ({
                   </div>
                 </div>
               ))}
-              <p className="text-sm text-slate-500">
-                {t("workspace.api_keys.organization_access_description")}
-              </p>
               {isFormbricksCloud && (
                 <Alert variant="info" size="small">
                   <AlertDescription>

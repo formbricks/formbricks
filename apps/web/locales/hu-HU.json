@@ -1838,7 +1838,7 @@
       "api_key_created": "API-kulcs létrehozva",
       "api_key_deleted": "API-kulcs törölve",
       "api_key_label": "API-kulcs címkéje",
-      "api_key_security_warning": "Biztonsági okokból az API-kulcs csak egyszer jelenik meg a létrehozás után. Másolja át azonnal a kívánt helyre.",
+      "api_key_security_warning": "Biztonsági okokból az API-kulcs csak egyszer jelenik meg a létrehozás után.",
       "api_key_updated": "API-kulcs frissítve",
       "delete_api_key_confirmation": "Az ezt a kulcsot használó bármely alkalmazás többé nem fog tudni hozzáférni a Formbricks adataihoz.",
       "duplicate_access": "A kettőzött munkaterület-hozzáférés nem engedélyezett",
@@ -1846,15 +1846,15 @@
       "no_workspace_permissions_found": "Nem találhatók munkaterület-jogosultságok",
       "organization_access": "Szervezeti hozzáférés",
       "organization_access_cloud_note": "A Formbricks Cloud rendszerében a szervezeti tagok API-n keresztüli kezelése nem érhető el. A csapatkezelés továbbra is működik.",
-      "organization_access_description": "Olvasási vagy írási hozzáférést biztosít a szervezeti adminisztrációhoz, mint például a tagokhoz és csapatokhoz. Nem biztosít hozzáférést munkaterület adatokhoz, például felmérésekhez vagy válaszokhoz.",
+      "organization_access_description": "Kizárólag tagok és csapatok — munkaterület adatok nem.",
       "permissions": "Jogosultságok",
       "secret": "Titok",
       "unable_to_copy_api_key": "Nem lehet másolni az API-kulcsot",
       "unable_to_delete_api_key": "Nem lehet törölni az API-kulcsot",
       "unknown_workspace": "Ismeretlen munkaterület",
       "workspace_access": "Munkaterület-hozzáférés",
-      "workspace_access_description": "Szabályozza a hozzáférést a munkaterületen belüli adatokhoz, mint például felmérésekhez és válaszokhoz. Adja hozzá minden egyes munkaterületet, amelyhez ennek a kulcsnak el kell érnie, és válasszon egy jogosultsági szintet — nem létezik \"összes munkaterület\" opció.",
-      "workspace_access_empty": "Még nem került hozzáadásra munkaterület. Legalább egy munkaterület nélkül ez a kulcs nem férhet hozzá semmilyen felmérés- vagy válaszadathoz."
+      "workspace_access_description": "Felmérési és válaszadatok. Hozzáférés biztosítása munkaterületenként.",
+      "workspace_access_empty": "Még nem lett hozzáadva munkaterület."
     },
     "app-connection": {
       "app_connection": "Alkalmazáskapcsolat",
