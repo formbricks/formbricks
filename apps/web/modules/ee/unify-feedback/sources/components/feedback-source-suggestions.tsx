@@ -5,19 +5,16 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { TUnifySurvey } from "../types";
+import { getDismissedStorageKey } from "../utils";
 import { getFeedbackSourceIcon } from "./feedback-source-display";
 
 interface FeedbackSourceSuggestionsProps {
   /** Surveys in the workspace that aren't connected as a feedback source yet. */
   suggestedSurveys: TUnifySurvey[];
   workspaceId: string;
-  /** One-click import: create the source with all supported questions and import historical responses. */
   onImportResponses: (survey: TUnifySurvey) => Promise<void>;
-  /** Open the create modal prefilled with this survey so the user can pick which questions to import. */
   onSelectQuestions: (survey: TUnifySurvey) => void;
 }
-
-const getDismissedStorageKey = (workspaceId: string) => `${workspaceId}-dismissedFeedbackSuggestions`;
 
 export function FeedbackSourceSuggestions({
   suggestedSurveys,
@@ -32,16 +29,20 @@ export function FeedbackSourceSuggestions({
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem(getDismissedStorageKey(workspaceId));
+    const key = getDismissedStorageKey(workspaceId);
+    const stored = localStorage.getItem(key);
     if (!stored) return;
     try {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
         setDismissedIds(parsed.filter((id): id is string => typeof id === "string"));
+        return;
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // fall through to cleanup
     }
+    // Unparseable or wrong-shape value — drop it so it doesn't fail to parse on every mount.
+    localStorage.removeItem(key);
   }, [workspaceId]);
 
   const visibleSurveys = suggestedSurveys.filter((survey) => !dismissedIds.includes(survey.id));
@@ -60,12 +61,10 @@ export function FeedbackSourceSuggestions({
   };
 
   const handleDismiss = (surveyId: string) => {
-    setDismissedIds((prev) => {
-      if (prev.includes(surveyId)) return prev;
-      const next = [...prev, surveyId];
-      localStorage.setItem(getDismissedStorageKey(workspaceId), JSON.stringify(next));
-      return next;
-    });
+    if (dismissedIds.includes(surveyId)) return;
+    const next = [...dismissedIds, surveyId];
+    setDismissedIds(next);
+    localStorage.setItem(getDismissedStorageKey(workspaceId), JSON.stringify(next));
   };
 
   return (

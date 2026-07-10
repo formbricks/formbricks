@@ -15,6 +15,8 @@ import {
   TUnifySurvey,
 } from "./types";
 
+export const getDismissedStorageKey = (workspaceId: string) => `${workspaceId}-dismissedFeedbackSuggestions`;
+
 /** Survey element ids that can be mapped to a feedback source (drops unsupported question types). */
 export const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
   survey.elements
