@@ -43,7 +43,6 @@ import {
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
   setWorkflowDefinitionAtom,
-  setWorkflowFlowNodesAtom,
   toggleWorkflowInspectorAtom,
   workflowAtom,
   workflowDefinitionAtom,
@@ -95,7 +94,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
-  const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
+  const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
   const { fitView } = useReactFlow();

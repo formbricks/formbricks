@@ -53,7 +53,6 @@ type TWorkflowEditorState = {
   lastSavedDraft: TWorkflowSavedDraft | null;
   /** Epoch ms of the last successful save this session; drives the "Changes saved" flash. */
   lastSavedAt: number | null;
-  flowNodes: Array<Node<TWorkflowNodeData>>;
   selectedNodeId: string | null;
   isInspectorCollapsed: boolean;
   isSnapToCanvasEnabled: boolean;
@@ -69,7 +68,6 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   definition: null,
   lastSavedDraft: null,
   lastSavedAt: null,
-  flowNodes: [],
   selectedNodeId: null,
   isInspectorCollapsed: false,
   isSnapToCanvasEnabled: true,
@@ -84,8 +82,13 @@ export const workflowAtom = atom((get) => get(workflowEditorAtom).workflow);
 export const workflowNameAtom = atom((get) => get(workflowEditorAtom).workflowName);
 export const workflowDescriptionAtom = atom((get) => get(workflowEditorAtom).workflowDescription);
 export const workflowDefinitionAtom = atom((get) => get(workflowEditorAtom).definition);
-export const workflowFlowNodesAtom = atom((get) => get(workflowEditorAtom).flowNodes);
 export const selectedWorkflowNodeIdAtom = atom((get) => get(workflowEditorAtom).selectedNodeId);
+
+// ReactFlow's nodes live OUTSIDE the immer-produced editor state on purpose: immer auto-freezes
+// everything it produces, and ReactFlow mutates node internals (measured width/height) inside
+// applyNodeChanges — on frozen nodes that throws "Cannot assign to read only property 'width'".
+// A plain base atom keeps them mutable; jotai's setter already supports functional updates.
+export const workflowFlowNodesAtom = atom<Array<Node<TWorkflowNodeData>>>([]);
 export const isWorkflowInspectorCollapsedAtom = atom((get) => get(workflowEditorAtom).isInspectorCollapsed);
 export const isWorkflowSnapToCanvasEnabledAtom = atom((get) => get(workflowEditorAtom).isSnapToCanvasEnabled);
 export const isWorkflowNodeConfigModalOpenAtom = atom((get) => get(workflowEditorAtom).isNodeConfigModalOpen);
@@ -214,6 +217,8 @@ export const hydrateWorkflowEditorAtom = atom(
     // Optimistic default until the builder page re-syncs it from the authoring context;
     // without the reset, a previous workflow's "unbound" state would flash on the next one.
     set(hasBoundTriggerSurveyAtom, true);
+    // Set outside the produce below so the nodes stay unfrozen (see workflowFlowNodesAtom).
+    set(workflowFlowNodesAtom, flowNodes);
     set(
       workflowEditorAtom,
       produce(initialWorkflowEditorState, (draft) => {
@@ -227,7 +232,6 @@ export const hydrateWorkflowEditorAtom = atom(
           workflowDescription: (workflow.description ?? "").trim(),
           definition: workflow.definition,
         };
-        draft.flowNodes = flowNodes;
         draft.selectedNodeId = workflow.definition.trigger?.id ?? null;
       })
     );
@@ -274,21 +278,6 @@ export const setWorkflowDefinitionAtom = atom(
       workflowEditorAtom,
       produce(currentState, (draft) => {
         draft.definition = nextDefinition;
-      })
-    );
-  }
-);
-
-export const setWorkflowFlowNodesAtom = atom(
-  null,
-  (get, set, update: SetStateAction<Array<Node<TWorkflowNodeData>>>) => {
-    const currentState = get(workflowEditorAtom);
-    const nextFlowNodes = typeof update === "function" ? update(currentState.flowNodes) : update;
-
-    set(
-      workflowEditorAtom,
-      produce(currentState, (draft) => {
-        draft.flowNodes = nextFlowNodes;
       })
     );
   }

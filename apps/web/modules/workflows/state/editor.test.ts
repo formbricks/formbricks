@@ -25,7 +25,6 @@ import {
   setWorkflowAtom,
   setWorkflowDefinitionAtom,
   setWorkflowDescriptionAtom,
-  setWorkflowFlowNodesAtom,
   setWorkflowNameAtom,
   setWorkflowSavingAtom,
   setWorkflowSnapToCanvasEnabledAtom,
@@ -107,13 +106,30 @@ describe("definition + flow node updaters accept value or callback", () => {
     expect(store.get(workflowDefinitionAtom)?.entryNodeId).toBe("z");
   });
 
-  test("setWorkflowFlowNodesAtom resolves SetStateAction", () => {
+  test("workflowFlowNodesAtom resolves SetStateAction", () => {
     const store = createStore();
-    store.set(setWorkflowFlowNodesAtom, [{ id: "n1" } as never]);
+    store.set(workflowFlowNodesAtom, [{ id: "n1" } as never]);
     expect(store.get(workflowFlowNodesAtom)).toHaveLength(1);
 
-    store.set(setWorkflowFlowNodesAtom, (current) => [...current, { id: "n2" } as never]);
+    store.set(workflowFlowNodesAtom, (current) => [...current, { id: "n2" } as never]);
     expect(store.get(workflowFlowNodesAtom).map((n) => n.id)).toEqual(["n1", "n2"]);
+  });
+
+  test("flow nodes stay mutable after immer-produced writes (ReactFlow mutates measured dimensions)", () => {
+    // Regression: flowNodes used to live inside the immer-produced editor state, so immer's
+    // auto-freeze made ReactFlow's applyNodeChanges throw "Cannot assign to read only property
+    // 'width'" as soon as it measured a node.
+    const store = createStore();
+    const node = { id: "n1", measured: { width: 100, height: 40 } };
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [node as never] });
+    store.set(setWorkflowNameAtom, "renamed");
+
+    const [storedNode] = store.get(workflowFlowNodesAtom);
+    expect(Object.isFrozen(storedNode)).toBe(false);
+    expect(() => {
+      (storedNode as unknown as { measured: { width: number } }).measured.width = 120;
+    }).not.toThrow();
+    expect(node.measured.width).toBe(120);
   });
 });
 

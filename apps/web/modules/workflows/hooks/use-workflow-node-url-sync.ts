@@ -7,8 +7,8 @@ import {
   isWorkflowNodeConfigModalOpenAtom,
   openWorkflowNodeConfigModalAtom,
   selectedWorkflowNodeIdAtom,
-  setWorkflowFlowNodesAtom,
   workflowDefinitionAtom,
+  workflowFlowNodesAtom,
 } from "@/modules/workflows/state/editor";
 
 export const WORKFLOW_NODE_SEARCH_PARAM = "node";
@@ -32,7 +32,7 @@ export const useWorkflowNodeUrlSync = ({ isEnabled }: Readonly<{ isEnabled: bool
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
-  const setFlowNodes = useSetAtom(setWorkflowFlowNodesAtom);
+  const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
 
   // State (not a ref) so the write-back effect below stays inert during the same render pass
   // that applies the initial param — otherwise it would briefly wipe the param before the
