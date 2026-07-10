@@ -30,14 +30,15 @@ import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 export const MAX_STRING_LENGTH = 2000;
 
-export const scrollElementCardIntoView = (elementId: string) => {
+export const scrollElementCardIntoView = (elementId: string, block: ScrollLogicalPosition = "center") => {
   if (typeof window === "undefined") return;
   // Double rAF: first frame flushes React state + DOM mutations (new card mounted, Collapsible opened);
   // second frame waits for layout/paint so scrollIntoView computes the final position.
+  // The target's scroll-mt clears the fixed tabs bar; use block "start" to land the card top below it.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const node = document.getElementById(elementId);
-      node?.scrollIntoView({ behavior: "smooth", block: "center" });
+      node?.scrollIntoView({ behavior: "smooth", block });
     });
   });
 };

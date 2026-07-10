@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getTranslatedPersonalLinkError } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -107,7 +108,7 @@ export const GeneratePersonalLinkModal = ({
         );
       }
     } else {
-      const errorMessage = getFormattedErrorMessage(response);
+      const errorMessage = getTranslatedPersonalLinkError(getFormattedErrorMessage(response), t);
       toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
       return;
     }

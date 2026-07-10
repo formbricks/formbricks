@@ -9,13 +9,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
+import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 
 interface LogicEditorProps {
   localSurvey: TSurvey;
@@ -106,27 +100,22 @@ export function LogicEditor({
               i18nKey="workspace.surveys.edit.all_other_answers_will_continue_to_fallback"
               components={{
                 fallbackSelect: (
-                  <Select
-                    autoComplete="true"
-                    defaultValue={blockLogicFallback || "defaultSelection"}
-                    onValueChange={(val) => {
-                      updateBlockLogicFallback(blockIdx, val === "defaultSelection" ? undefined : val);
-                    }}>
-                    <SelectTrigger className="w-auto bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem key="fallback_default_selection" value={"defaultSelection"}>
-                        {t("workspace.surveys.edit.next_block")}
-                      </SelectItem>
-
-                      {fallbackOptions.map((option) => (
-                        <SelectItem key={`fallback_${option.value}`} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <InputCombobox
+                    id={`logic-${logicIdx}-fallback`}
+                    showSearch={true}
+                    options={[
+                      { label: t("workspace.surveys.edit.next_block"), value: "defaultSelection" },
+                      ...fallbackOptions,
+                    ]}
+                    value={blockLogicFallback ?? "defaultSelection"}
+                    onChangeValue={(val) => {
+                      updateBlockLogicFallback(
+                        blockIdx,
+                        val === "defaultSelection" ? undefined : String(val)
+                      );
+                    }}
+                    comboboxClasses="w-fit min-w-40 bg-white"
+                  />
                 ),
               }}
             />
