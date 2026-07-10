@@ -50,8 +50,9 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 
 - All user-facing text must use the `t()` function from `react-i18next`.
 - Key naming: use lowercase with dots for nesting (e.g., `common.welcome`).
-- Translations are in `apps/web/locales/`. Default is `en-US.json`.
-- Lingo.dev is automatically translating strings from en-US into other languages on commit. Run `pnpm i18n` to generate missing translations and validate keys.
+- Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
+- **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
+- After adding or changing an en-US string, run `pnpm i18n` to generate the translations for every other locale and validate keys. Lingo.dev also auto-translates from en-US on commit.
 
 ## Date and Time Rendering
 
