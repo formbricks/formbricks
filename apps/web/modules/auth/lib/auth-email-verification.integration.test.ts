@@ -4,6 +4,7 @@ import { resetDb } from "@/integration/reset-db";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { auth } from "@/modules/auth/lib/auth";
 import * as brevo from "@/modules/auth/lib/brevo";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import {
   sendPasswordResetLinkEmail,
   sendPasswordResetNotifyEmail,
@@ -14,6 +15,13 @@ import {
 vi.mock("@/modules/auth/lib/brevo", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/auth/lib/brevo")>();
   return { ...actual, createBrevoCustomer: vi.fn().mockResolvedValue(undefined) };
+});
+
+// Spy queueAuditEventBackground (the session.create.after `signedIn` audit) so the auto-login-after-
+// verification path can be asserted without depending on the real setImmediate/headers() emission.
+vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
+  return { ...actual, queueAuditEventBackground: vi.fn().mockResolvedValue(undefined) };
 });
 
 // Spy capturePostHogEvent (the other afterEmailVerification side effect) without hitting PostHog.
@@ -54,10 +62,28 @@ describe("Better Auth email verification (real Postgres)", () => {
     const token = tokenFromLink(vi.mocked(sendVerificationLinkEmail).mock.calls[0][0].verifyLink);
     expect(token).toBeTruthy();
 
+    // autoSignIn is off, so sign-up creates no session (verification is still pending) and emits
+    // no signedIn audit.
+    expect(await prisma.session.count()).toBe(0);
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
+
     await auth.api.verifyEmail({ query: { token } });
 
     const verifiedUser = await prisma.user.findUnique({ where: { email: "verify@example.com" } });
     expect(verifiedUser?.emailVerified).toBe(true);
+    // autoSignInAfterVerification (ENG-1746): consuming the link establishes a session so the user
+    // lands in the app already logged in instead of bouncing to /auth/login...
+    expect(await prisma.session.count()).toBe(1);
+    // ...and that session is captured in the signedIn audit trail, tagged as a credential-account
+    // ("password") sign-in via the /verify-email allow-list entry in getSignInAuthMethod.
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "signedIn",
+        userId: verifiedUser?.id,
+        newObject: expect.objectContaining({ authMethod: "password" }),
+      })
+    );
     // afterEmailVerification re-homes the createBrevoCustomer side effect (fire-and-forget)
     expect(brevo.createBrevoCustomer).toHaveBeenCalledWith({
       id: verifiedUser?.id,
@@ -67,11 +93,13 @@ describe("Better Auth email verification (real Postgres)", () => {
     expect(capturePostHogEvent).toHaveBeenCalledWith(verifiedUser?.id, "user_email_confirmed");
 
     // verify-email is a stateless signed JWT (no getAndDelete), so re-verifying is idempotent:
-    // the already-verified branch returns { status: true, user: null }
+    // the already-verified branch returns { status: true, user: null } and creates no second session
     const replay = await auth.api.verifyEmail({ query: { token } });
     expect(replay).toMatchObject({ status: true, user: null });
-    // afterEmailVerification fires once per user — the replay must NOT re-emit the event
+    expect(await prisma.session.count()).toBe(1);
+    // afterEmailVerification fires once per user — the replay must NOT re-emit the event or the audit
     expect(capturePostHogEvent).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
   });
 });
 
