@@ -2865,6 +2865,7 @@ checksums:
     workspace/surveys/edit/bulk_edit_description: 9b5b2c6183c6c51689e16d7ba02ec9bb
     workspace/surveys/edit/bulk_edit_options: 74ebec7c53be729f33e38d7605b25815
     workspace/surveys/edit/bulk_edit_options_for: 986af3a8286f34c9e4ad7c74d3c65ada
+    workspace/surveys/edit/bulleted_list: 3e3a85c9e84001cecdd46f417b2eb295
     workspace/surveys/edit/button_external: d2de24e06574622baf1c0cdd1b718b1a
     workspace/surveys/edit/button_external_description: cbd10d494a70b362bfee811e012c45b1
     workspace/surveys/edit/button_label: db3cd7c74f393187bd780c5c3d8b9b4f
@@ -2891,7 +2892,7 @@ checksums:
     workspace/surveys/edit/caution_explanation_only_new_responses_in_summary: 1ad5f649c7784a58bfa9d62304780514
     workspace/surveys/edit/caution_explanation_responses_are_safe: 090ff00b7922a49c273e67c5f364730d
     workspace/surveys/edit/caution_recommendation: b15090fe878ff17f2ee7cc2082dd9018
-    workspace/surveys/edit/caution_text: 3291e962c0e4c4656832837ddc512918
+    workspace/surveys/edit/caution_text: a7e2a89fcb4d03cd84bfb23af383470f
     workspace/surveys/edit/change_anyway: 6377497d40373f6d0f082670194981ab
     workspace/surveys/edit/change_background: fa71a993869f7d3ac553c547c12c3e9b
     workspace/surveys/edit/change_default: 6236a6c8a28489ba7c4cad7426806859
@@ -3110,6 +3111,7 @@ checksums:
     workspace/surveys/edit/no_recall_items_found: 729e2b02e412cdc79f5ad94b1918620c
     workspace/surveys/edit/no_variables_yet_add_first_one_below: c8704b9ebc9c26c0e9dd50c099ba88cd
     workspace/surveys/edit/number: 2789f8391f63e7200a5521078aab017d
+    workspace/surveys/edit/numbered_list: e3447a24726cb0b653b76fdcaba29808
     workspace/surveys/edit/once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations: 0b1cef6c1d6e9b3d1571126b2062853c
     workspace/surveys/edit/only_display_the_survey_to_a_subset_of_the_users: 63cfc873a0c5c24fdea6f78e781be0f2
     workspace/surveys/edit/only_lower_case_letters_numbers_and_underscores_are_allowed: 331cba8c535eb40ae8016acdb441554d
