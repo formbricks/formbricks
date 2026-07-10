@@ -69,6 +69,14 @@ export const getValidatedCallbackUrl = (
       return null;
     }
 
+    // A same-origin absolute URL can still carry a scheme-relative pathname ("//evil.example").
+    // Consumers that reduce the URL to pathname+search+hash (login's router.push) would then
+    // navigate off-origin. Reject it here so every consumer is protected. Backslash and
+    // dot-segment variants normalize to a "//" pathname before this check. (ENG-1636)
+    if (parsedUrl.pathname.startsWith("//")) {
+      return null;
+    }
+
     return parsedUrl.toString();
   } catch {
     return null;

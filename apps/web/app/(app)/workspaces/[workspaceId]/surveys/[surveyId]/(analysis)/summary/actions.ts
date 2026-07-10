@@ -23,6 +23,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { generatePersonalLinks } from "@/modules/ee/contacts/lib/contacts";
+import { NO_CONTACTS_IN_SEGMENT_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
@@ -290,7 +291,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
     );
 
     if (!contactsResult || contactsResult.length === 0) {
-      throw new InvalidInputError("No contacts found for the selected segment");
+      throw new InvalidInputError(NO_CONTACTS_IN_SEGMENT_ERROR_CODE);
     }
 
     capturePostHogEvent(

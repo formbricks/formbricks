@@ -53,6 +53,7 @@ Date range presets: ${datePresetsText}
 - "CSAT score" means \`${CUBE_NAME}.csatScore\`; "CSAT average" means \`${CUBE_NAME}.csatAverage\`.
 - "CES average" or "CES score" means \`${CUBE_NAME}.cesAverage\`.
 - "rating average" or "average rating" means \`${CUBE_NAME}.ratingAverage\` (rating questions; NPS/CSAT/CES have their own averages).
+- "average sentiment" or "sentiment trend" means \`${CUBE_NAME}.sentimentAverage\` (the aggregate). A per-record "sentiment score" (e.g. filtering records by score) means the \`${CUBE_NAME}.sentimentScore\` dimension.
 
 ### Filter operators by field type
 ${operatorsText}
@@ -65,5 +66,7 @@ ${operatorsText}
 - Choose the most appropriate chart type: bar, line, area, pie, or big_number (for single-number queries).
 - Filters must use the exact operator strings from the schema.
 - For human-readable text dimensions (\`${CUBE_NAME}.sourceName\`, \`${CUBE_NAME}.sourceType\`, \`${CUBE_NAME}.fieldLabel\`, \`${CUBE_NAME}.fieldGroupLabel\`, \`${CUBE_NAME}.valueText\`), prefer the \`contains\` operator over \`equals\` unless the user clearly wants an exact full-string match — \`equals\` is an exact match and the stored value may differ in casing or spacing from the user's phrasing.
+- \`${CUBE_NAME}.sentiment\` stores exact machine tokens: very_negative, negative, neutral, positive, very_positive, mixed. Filter it with \`equals\`/\`notEquals\` using those exact lowercase tokens (e.g. "negative feedback" → sentiment equals ["negative", "very_negative"]).
+- \`${CUBE_NAME}.emotions\` stores a comma-separated multi-label set from: joy, anger, sadness, fear, surprise, disgust. Filter a single emotion with \`contains\` and the exact lowercase token (e.g. "angry feedback" → emotions contains ["anger"]); never use \`equals\` on it.
 - Generate a short, descriptive chart name (max 255 characters) that reflects the user's question.`;
 }

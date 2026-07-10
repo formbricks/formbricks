@@ -295,11 +295,12 @@ export const updateSurveyInternal = async (
       checkForInvalidImagesInQuestions(questions);
     }
 
-    // Add blocks media validation
+    // Add blocks media validation. The validation error is already an InvalidInputError, so the
+    // API layer maps it to a 400 instead of an unhandled 500.
     if (!skipValidation && updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
       const blocksValidation = checkForInvalidMediaInBlocks(updatedSurvey.blocks);
       if (!blocksValidation.ok) {
-        throw new InvalidInputError(blocksValidation.error.message);
+        throw blocksValidation.error;
       }
     }
 

@@ -216,8 +216,8 @@ describe("generateExampleResponseDataset", () => {
     expect(result.responses).toHaveLength(EXAMPLE_RESPONSE_COUNT);
     expect(result.displays).toHaveLength(EXAMPLE_IMPRESSION_ONLY_COUNT);
     expect(result.tagName).toBe(EXAMPLE_AI_GENERATED_TAG_NAME);
-    expect(Object.values(roleCounts)).toContain(4);
-    expect(Object.values(roleCounts)).not.toEqual([2, 2, 2, 2, 2]);
+    expect(Object.values(roleCounts)).toContain(8);
+    expect(Object.values(roleCounts)).not.toEqual([4, 4, 4, 4, 4]);
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
@@ -230,8 +230,8 @@ describe("generateExampleResponseDataset", () => {
 
     const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
 
-    expect(result.responses[2].data.q_text).toBe("Open text answer 2");
-    expect(result.responses[2].data.q_nps).toBeTypeOf("number");
+    expect(result.responses[4].data.q_text).toBe("Open text answer 4");
+    expect(result.responses[4].data.q_nps).toBeTypeOf("number");
     expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(1);
     const call = vi.mocked(mocks.generateOrganizationAIObject).mock.calls[0][0];
     expect(call.organizationId).toBe("org_1");
@@ -278,7 +278,7 @@ describe("generateExampleResponseDataset", () => {
 
     const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
 
-    expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(2);
+    expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(4);
     expect(result.responses[2].data.q_text_1).toBe("AI row_2 q_text_1");
     expect(result.responses[7].data.q_text_1).not.toBe("AI row_7 q_text_1");
     expect(result.responses[7].data.q_text_1).toBeTypeOf("string");
@@ -358,8 +358,8 @@ describe("generateExampleResponseDataset", () => {
 
     expect(finished).toBeDefined();
     if (!finished) throw new Error("Expected at least one finished response");
-    expect(finished.data.q_addr).toEqual(["5 Sample Road", "", "London", "", "SW1A 1AA", "GB"]);
-    expect(finished.data.q_contact).toEqual(["Sam", "", "sam.rivers@example.com", "", "Sample Systems"]);
+    expect(finished.data.q_addr).toEqual(["9 Fictional Blvd", "", "Sydney", "", "2000", "AU"]);
+    expect(finished.data.q_contact).toEqual(["Jordan", "", "jordan.lee@example.com", "", "Placeholder Co"]);
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
@@ -374,8 +374,8 @@ describe("generateExampleResponseDataset", () => {
     const finished = result.responses.filter((response) => response.finished);
     const dropped = result.responses.filter((response) => !response.finished);
 
-    expect(finished).toHaveLength(8);
-    expect(dropped).toHaveLength(2);
+    expect(finished).toHaveLength(16);
+    expect(dropped).toHaveLength(4);
     expect(result.displays).toHaveLength(EXAMPLE_IMPRESSION_ONLY_COUNT);
     for (const response of result.responses) {
       expect(response.meta.source).toBe("example-generation");

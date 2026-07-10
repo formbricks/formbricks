@@ -931,10 +931,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.6.0.
-    digest: "sha256:b22c5f8d1e2dd79224574f526a6714a3cc5372d18f4c047eaa9d18fe6ab75591"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.0.
+    digest: "sha256:619d6bc4572fced76720810c1ba1665943f0a91e1c0e20fadf2f27c35b0ada14"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.6.0"
+    tag: "0.8.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
@@ -946,6 +946,21 @@ hub:
   existingSecret: ""
 
   # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
+  # Applied to both the Hub API and hub-worker (the worker merges hub.env), so providers set here also
+  # reach the classify jobs. To enable sentiment/emotion/translation enrichment (Hub >= 0.7.1), set the
+  # provider + model here and supply the API key via existingSecret. Supported providers: openai,
+  # google (AI Studio, needs *_PROVIDER_API_KEY), google-gemini (Vertex, needs
+  # *_GOOGLE_CLOUD_PROJECT/LOCATION + Application Default Credentials instead of an API key).
+  # A provider set without its required credentials crash-loops both Hub pods on startup. See:
+  # https://hub.formbricks.com/reference/environment-variables
+  # env:
+  #   SENTIMENT_PROVIDER: google
+  #   SENTIMENT_MODEL: gemini-2.5-flash
+  #   EMOTIONS_PROVIDER: google
+  #   EMOTIONS_MODEL: gemini-2.5-flash
+  #   TRANSLATION_PROVIDER: google
+  #   TRANSLATION_MODEL: gemini-2.5-flash
+  #   TRANSLATION_DEFAULT_LANGUAGE: en-US
   env: {}
 
   # Optional autoscaling for the Hub API deployment.
