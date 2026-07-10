@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { duplicateChartAction } from "@/modules/ee/analysis/charts/actions";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
@@ -130,6 +131,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   dataPromise,
   onEdit,
   onResize,
+  onDuplicate,
   onRemove,
 }: Readonly<{
   widget: TDashboardWidget;
@@ -137,6 +139,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>;
   onEdit?: () => void;
   onResize?: () => void;
+  onDuplicate?: () => void;
   onRemove?: () => void;
 }>) {
   const title = widget.chart?.name ?? "";
@@ -147,6 +150,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
       isEditing={isEditing}
       onEdit={onEdit}
       onResize={onResize}
+      onDuplicate={onDuplicate}
       onRemove={onRemove}>
       <MemoizedWidgetContent widget={widget} dataPromise={dataPromise} />
     </DashboardWidget>
@@ -292,6 +296,36 @@ export function DashboardDetailClient({
     ]
   );
 
+  const handleDuplicateWidget = useCallback(
+    async (widget: TDashboardWidget) => {
+      try {
+        const duplicated = await duplicateChartAction({ workspaceId, chartId: widget.chartId });
+        if (!duplicated?.data) {
+          toast.error(getFormattedErrorMessage(duplicated));
+          return;
+        }
+
+        const added = await addChartToDashboardAction({
+          workspaceId,
+          dashboardId: dashboard.id,
+          chartId: duplicated.data.id,
+          layout: widget.layout,
+          respectY: true,
+        });
+        if (!added?.data) {
+          toast.error(getFormattedErrorMessage(added));
+          return;
+        }
+
+        toast.success(t("workspace.analysis.charts.chart_duplicated_successfully"));
+        startTransition(() => router.refresh());
+      } catch {
+        toast.error(t("workspace.analysis.dashboards.chart_duplicate_failed"));
+      }
+    },
+    [workspaceId, dashboard.id, router, t, startTransition]
+  );
+
   const handleCancel = useCallback(() => {
     setName(dashboard.name);
     setDraftWidgets(null);
@@ -419,6 +453,7 @@ export function DashboardDetailClient({
                       dataPromise={widgetDataPromises.get(widget.id)}
                       onEdit={isReadOnly ? undefined : () => handleEditChart(widget.chartId)}
                       onResize={isReadOnly ? undefined : handleEnterEditMode}
+                      onDuplicate={isReadOnly ? undefined : () => handleDuplicateWidget(widget)}
                       onRemove={isReadOnly ? undefined : () => handleRemoveWidgetFromMenu(widget.id)}
                     />
                   </div>

@@ -1794,6 +1794,7 @@
       },
       "dashboards": {
         "add_count_charts": "Add {count} chart(s)",
+        "chart_duplicate_failed": "Failed to duplicate chart",
         "chart_remove_failed": "Failed to remove chart",
         "chart_removed": "Chart removed from dashboard",
         "chart_restore_failed": "Failed to restore chart",
