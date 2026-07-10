@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { WEBAPP_URL } from "@/lib/constants";
+import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
 
@@ -80,6 +81,18 @@ export const proxy = async (originalRequest: NextRequest) => {
   // Handle authentication
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
+
+  // Remember the active workspace so the workspace-agnostic org-settings shell can resolve it
+  // server-side (localStorage is browser-only). Mirrors the /workspaces/[workspaceId] path segment.
+  const workspaceMatch = /^\/workspaces\/([^/]+)/.exec(request.nextUrl.pathname);
+  if (workspaceMatch?.[1]) {
+    nextResponseWithCustomHeader.cookies.set(FORMBRICKS_WORKSPACE_ID_COOKIE, workspaceMatch[1], {
+      path: "/",
+      sameSite: "lax",
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
 
   return nextResponseWithCustomHeader;
 };
