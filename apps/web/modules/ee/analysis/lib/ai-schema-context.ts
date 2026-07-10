@@ -52,6 +52,7 @@ Date range presets: ${datePresetsText}
 - "NPS value", "NPS average", or "NPS average rating" means \`${CUBE_NAME}.npsAverage\`.
 - "CSAT score" means \`${CUBE_NAME}.csatScore\`; "CSAT average" means \`${CUBE_NAME}.csatAverage\`.
 - "CES average" or "CES score" means \`${CUBE_NAME}.cesAverage\`.
+- "rating average" or "average rating" means \`${CUBE_NAME}.ratingAverage\` (rating questions; NPS/CSAT/CES have their own averages).
 - "average sentiment" or "sentiment trend" means \`${CUBE_NAME}.sentimentAverage\` (the aggregate). A per-record "sentiment score" (e.g. filtering records by score) means the \`${CUBE_NAME}.sentimentScore\` dimension.
 
 ### Filter operators by field type
