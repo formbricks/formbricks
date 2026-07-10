@@ -66,7 +66,7 @@ describe("tag lib", () => {
     });
     test("returns tag_not_found on tag not found", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-        code: PrismaErrorType.RelatedRecordNotFound,
+        code: PrismaErrorType.RecordNotFound,
         clientVersion: "test",
       });
       vi.mocked(prisma.tag.delete).mockRejectedValueOnce(prismaError);

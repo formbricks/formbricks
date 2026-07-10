@@ -293,7 +293,7 @@ describe("updateFeedbackSource", () => {
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.feedbackSource.update).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "5.0.0",
       })
     );
@@ -346,7 +346,7 @@ describe("deleteFeedbackSource", () => {
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.feedbackSource.delete).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "5.0.0",
       })
     );
@@ -728,7 +728,7 @@ describe("updateFeedbackSourceWithMappings", () => {
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "5.0.0",
       })
     );

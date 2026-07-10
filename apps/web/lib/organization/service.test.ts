@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import {
@@ -290,6 +290,30 @@ describe("Organization Service", () => {
         where: { id: "org1" },
         data: { name: "Updated Org" },
       });
+    });
+
+    test("should throw ResourceNotFoundError when the update targets a missing organization (P2025)", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "5.0.0",
+      });
+
+      vi.mocked(prisma.$transaction).mockImplementation(
+        async (fn: any) =>
+          await fn({
+            organization: {
+              update: vi.fn().mockRejectedValue(prismaError),
+              findUnique: vi.fn().mockResolvedValue({ id: "org1" }),
+            },
+            organizationBilling: {
+              upsert: prisma.organizationBilling.upsert,
+            },
+          })
+      );
+
+      await expect(updateOrganization("org1", { name: "Updated Org" })).rejects.toThrow(
+        ResourceNotFoundError
+      );
     });
   });
 
