@@ -2487,6 +2487,10 @@ checksums:
     workspace/settings/feedback_directories/workspace_removal_blocked_title: 8b74d0cbdd6ae6a29f3b6285430ad4ae
     workspace/settings/feedback_directories/workspaces_already_linked: ef6248289707611a44950c3406aec0ec
     workspace/settings/feedback_directories/workspaces_being_added: e01628710aff05c5172f2f43aab1f6fb
+    workspace/settings/feedback_directories/data_purged_successfully: 3be0d367c0d61f7de2293db68bc670fe
+    workspace/settings/feedback_directories/purge_all_data: 9086cd64784bba4f0f70c466cc48189a
+    workspace/settings/feedback_directories/purge_all_data_warning: 1fe449245ecbaa04445abaae1e8f0fa8
+    workspace/settings/feedback_directories/purge_not_allowed: 202ffb4e238b19b8704ec5050dfc055d
     workspace/settings/general/ai_enabled: 3cb1fce89c525e754448d5bd143eb6b5
     workspace/settings/general/ai_enabled_description: e8c3e9f362588898a6cea85e18c013a1
     workspace/settings/general/ai_instance_not_configured: 37a80753eb22b5bfc985d0e1f2145e3f

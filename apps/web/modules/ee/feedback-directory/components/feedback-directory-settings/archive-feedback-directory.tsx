@@ -66,7 +66,7 @@ export const ArchiveFeedbackDirectory = ({
           tooltipContent={t("workspace.settings.feedback_directories.archive_not_allowed")}
           className="w-auto">
           <Button
-            variant="destructive"
+            variant="secondary"
             type="button"
             className="w-auto"
             disabled={!isOwnerOrManager}
