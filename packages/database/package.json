@@ -22,6 +22,11 @@
       "types": "./types/*.ts",
       "import": "./types/*.ts"
     },
+    "./errors": {
+      "types": "./dist/src/errors.d.ts",
+      "import": "./dist/src/errors.js",
+      "require": "./dist/src/errors.cjs"
+    },
     "./prisma": {
       "types": "./dist/src/prisma.d.ts",
       "import": "./dist/src/prisma.js",
@@ -60,6 +65,7 @@
     "lint": "eslint ./src --fix",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
   "dependencies": {

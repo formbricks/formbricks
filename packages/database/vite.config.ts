@@ -42,6 +42,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       rollupOptions: {
         input: {
           index: resolve(__dirname, "src/index.ts"),
+          "src/errors": resolve(__dirname, "src/errors.ts"),
           "src/prisma": resolve(__dirname, "src/prisma.ts"),
           "src/prisma-browser": resolve(__dirname, "src/prisma-browser.ts"),
           "src/prisma-adapter": resolve(__dirname, "src/prisma-adapter.ts"),
@@ -83,6 +84,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
         rollupTypes: false,
         include: [
           "src/index.ts",
+          "src/errors.ts",
           "src/client.ts",
           "src/json-types.ts",
           "src/prisma.ts",

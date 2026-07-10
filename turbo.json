@@ -45,6 +45,9 @@
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
+    "@formbricks/database#test": {
+      "dependsOn": ["@formbricks/database#generate"]
+    },
     "@formbricks/database#typecheck": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#generate"]
     },
