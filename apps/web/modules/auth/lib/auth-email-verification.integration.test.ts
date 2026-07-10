@@ -54,10 +54,16 @@ describe("Better Auth email verification (real Postgres)", () => {
     const token = tokenFromLink(vi.mocked(sendVerificationLinkEmail).mock.calls[0][0].verifyLink);
     expect(token).toBeTruthy();
 
+    // autoSignIn is off, so sign-up creates no session (verification is still pending).
+    expect(await prisma.session.count()).toBe(0);
+
     await auth.api.verifyEmail({ query: { token } });
 
     const verifiedUser = await prisma.user.findUnique({ where: { email: "verify@example.com" } });
     expect(verifiedUser?.emailVerified).toBe(true);
+    // autoSignInAfterVerification (ENG-1746): consuming the link establishes a session so the user
+    // lands in the app already logged in instead of bouncing to /auth/login.
+    expect(await prisma.session.count()).toBe(1);
     // afterEmailVerification re-homes the createBrevoCustomer side effect (fire-and-forget)
     expect(brevo.createBrevoCustomer).toHaveBeenCalledWith({
       id: verifiedUser?.id,
@@ -67,9 +73,10 @@ describe("Better Auth email verification (real Postgres)", () => {
     expect(capturePostHogEvent).toHaveBeenCalledWith(verifiedUser?.id, "user_email_confirmed");
 
     // verify-email is a stateless signed JWT (no getAndDelete), so re-verifying is idempotent:
-    // the already-verified branch returns { status: true, user: null }
+    // the already-verified branch returns { status: true, user: null } and creates no second session
     const replay = await auth.api.verifyEmail({ query: { token } });
     expect(replay).toMatchObject({ status: true, user: null });
+    expect(await prisma.session.count()).toBe(1);
     // afterEmailVerification fires once per user — the replay must NOT re-emit the event
     expect(capturePostHogEvent).toHaveBeenCalledTimes(1);
   });

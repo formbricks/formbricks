@@ -146,7 +146,11 @@ export const auth = betterAuth({
     // this flag BA would throw EMAIL_NOT_VERIFIED without sending anything, leaving no recovery path
     // and making that message untrue. (ENG-1054)
     sendOnSignIn: true,
-    autoSignInAfterVerification: false,
+    // Establish the session on a successful verification so the user lands in the app instead of
+    // bouncing to /auth/login (ENG-1746). Safe — clicking the signed link proves email ownership.
+    // Distinct from the sibling `autoSignIn: false` above, which stays off (no auto-login at sign-up,
+    // before ownership is proven; also enumeration-safe).
+    autoSignInAfterVerification: true,
     expiresIn: 60 * 60, // 1 hour
     sendVerificationEmail: async ({ user, url }) => {
       const { sendVerificationLinkEmail } = await import("@/modules/email");
