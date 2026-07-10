@@ -1,5 +1,7 @@
 const { resolve } = require("node:path");
 
+const prismaRestrictedImports = require("./prisma-restricted-imports");
+
 const project = resolve(process.cwd(), "tsconfig.json");
 
 /*
@@ -43,5 +45,6 @@ module.exports = {
   rules: {
     "import/no-default-export": "off",
     "@vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
+    ...prismaRestrictedImports,
   },
 };
