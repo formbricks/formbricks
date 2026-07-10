@@ -3694,6 +3694,7 @@
         "filtered_responses_csv": "Răspunsuri filtrate (CSV)",
         "filtered_responses_excel": "Răspunsuri filtrate (Excel)",
         "generate_example_responses": "Generează răspunsuri exemplu",
+        "generate_example_responses_disabled_has_responses": "Poți genera exemple de răspunsuri doar pentru sondaje fără răspunsuri. Resetează sondajul pentru a încerca.",
         "generate_example_responses_locked_disabled": "Răspunsurile exemplu AI sunt dezactivate pentru această organizație.",
         "generate_example_responses_locked_instance": "AI nu este configurat pe această instanță. Contactează administratorul.",
         "generate_example_responses_locked_plan": "Răspunsurile exemplu AI nu sunt disponibile în planul tău actual.",

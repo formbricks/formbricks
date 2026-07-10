@@ -3694,6 +3694,7 @@
         "filtered_responses_csv": "Respostas filtradas (CSV)",
         "filtered_responses_excel": "Respostas filtradas (Excel)",
         "generate_example_responses": "Gerar respostas de exemplo",
+        "generate_example_responses_disabled_has_responses": "Você só pode gerar respostas de exemplo para pesquisas sem respostas. Redefina a pesquisa para testar.",
         "generate_example_responses_locked_disabled": "As respostas de exemplo geradas por IA estão desativadas para esta organização.",
         "generate_example_responses_locked_instance": "A IA não está configurada nesta instância. Entre em contato com seu administrador.",
         "generate_example_responses_locked_plan": "As respostas de exemplo geradas por IA não estão disponíveis no seu plano atual.",

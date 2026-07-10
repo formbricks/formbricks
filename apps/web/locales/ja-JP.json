@@ -3694,6 +3694,7 @@
         "filtered_responses_csv": "フィルター済み回答 (CSV)",
         "filtered_responses_excel": "フィルター済み回答 (Excel)",
         "generate_example_responses": "サンプル回答を生成",
+        "generate_example_responses_disabled_has_responses": "サンプル回答を生成できるのは、回答のないアンケートのみです。試すにはアンケートをリセットしてください。",
         "generate_example_responses_locked_disabled": "この組織ではAIサンプル回答が無効になっています。",
         "generate_example_responses_locked_instance": "このインスタンスではAIが設定されていません。管理者に問い合わせてください。",
         "generate_example_responses_locked_plan": "現在のプランではAIサンプル回答をご利用いただけません。",

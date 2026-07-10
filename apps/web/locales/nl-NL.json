@@ -3694,6 +3694,7 @@
         "filtered_responses_csv": "Gefilterde reacties (CSV)",
         "filtered_responses_excel": "Gefilterde reacties (Excel)",
         "generate_example_responses": "Genereer voorbeeldreacties",
+        "generate_example_responses_disabled_has_responses": "Je kunt alleen voorbeeldantwoorden genereren voor enquêtes zonder antwoorden. Reset de enquête om het te proberen.",
         "generate_example_responses_locked_disabled": "AI-voorbeeldantwoorden zijn uitgeschakeld voor deze organisatie.",
         "generate_example_responses_locked_instance": "AI is niet geconfigureerd op deze instantie. Neem contact op met je beheerder.",
         "generate_example_responses_locked_plan": "AI-voorbeeldantwoorden zijn niet beschikbaar op je huidige abonnement.",

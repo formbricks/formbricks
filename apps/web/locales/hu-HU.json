@@ -3694,6 +3694,7 @@
         "filtered_responses_csv": "Szűrt válaszok (CSV)",
         "filtered_responses_excel": "Szűrt válaszok (Excel)",
         "generate_example_responses": "Példaválaszok generálása",
+        "generate_example_responses_disabled_has_responses": "Csak olyan felmérésekhez hozhat létre példaválaszokat, amelyekhez még nincsenek válaszok. Állítsa vissza a felmérést a próbálkozáshoz.",
         "generate_example_responses_locked_disabled": "Az AI példaválaszok le vannak tiltva ennél a szervezetnél.",
         "generate_example_responses_locked_instance": "Az AI nincs konfigurálva ezen a példányon. Lépjen kapcsolatba a rendszergazdával.",
         "generate_example_responses_locked_plan": "Az AI példaválaszok nem érhetők el az Ön jelenlegi csomagjában.",

@@ -3694,6 +3694,7 @@
         "filtered_responses_csv": "Filtrerade svar (CSV)",
         "filtered_responses_excel": "Filtrerade svar (Excel)",
         "generate_example_responses": "Generera exempelsvar",
+        "generate_example_responses_disabled_has_responses": "Du kan bara generera exempelsvar för undersökningar utan svar. Återställ undersökningen för att prova.",
         "generate_example_responses_locked_disabled": "AI-exempelsvar är inaktiverade för den här organisationen.",
         "generate_example_responses_locked_instance": "AI är inte konfigurerat på den här instansen. Kontakta din administratör.",
         "generate_example_responses_locked_plan": "AI-exempelsvar är inte tillgängliga i din nuvarande plan.",
