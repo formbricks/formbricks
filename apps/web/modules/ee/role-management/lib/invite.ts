@@ -19,7 +19,7 @@ export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): 
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RelatedRecordNotFound
+      error.code === PrismaErrorType.RecordNotFound
     ) {
       throw new ResourceNotFoundError("Invite", inviteId);
     } else {

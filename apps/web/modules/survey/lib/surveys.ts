@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -37,7 +38,7 @@ export const deleteSurvey = async (surveyId: string) => {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
+      if (error.code === PrismaErrorType.RecordNotFound) {
         logger.warn({ surveyId }, "Survey not found during delete");
         throw new ResourceNotFoundError("Survey", surveyId);
       }

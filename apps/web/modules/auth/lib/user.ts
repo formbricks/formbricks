@@ -31,7 +31,7 @@ export const updateUser = async (id: string, data: TUserUpdateInput, tx?: Prisma
 
     return updatedUser;
   } catch (error) {
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("User", id);
     }
     throw error;
@@ -71,7 +71,7 @@ export const updateUserLastLoginAt = async (email: string) => {
       throw error;
     }
 
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("email", email);
     }
     throw error;

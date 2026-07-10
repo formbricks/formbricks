@@ -260,7 +260,7 @@ export const updateOrganization = async (
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RelatedRecordNotFound
+      error.code === PrismaErrorType.RecordNotFound
     ) {
       throw new ResourceNotFoundError("Organization", organizationId);
     }
