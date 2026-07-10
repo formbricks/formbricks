@@ -133,7 +133,7 @@ export function TimeDimensionPanel({
 
       <div className="space-y-3">
         {/* Field Selector */}
-        <div className="flex flex-col gap-2">
+        <div className="space-y-3">
           <Label className="text-sm">{t("workspace.analysis.charts.field")}</Label>
           <Select value={timeDimension.dimension} onValueChange={handleDimensionChange}>
             <SelectTrigger className="w-full bg-white">
@@ -150,7 +150,7 @@ export function TimeDimensionPanel({
         </div>
 
         {/* Granularity Selector */}
-        <div className="flex flex-col gap-2">
+        <div className="space-y-3">
           <Label className="text-sm">{t("workspace.analysis.charts.granularity")}</Label>
           <Select value={timeDimension.granularity ?? "none"} onValueChange={handleGranularityChange}>
             <SelectTrigger className="w-full bg-white">
@@ -168,7 +168,7 @@ export function TimeDimensionPanel({
         </div>
 
         {/* Date Range */}
-        <div className="flex flex-col gap-2">
+        <div className="space-y-3">
           <Label className="text-sm">{t("workspace.analysis.charts.date_range")}</Label>
           <div className="space-y-2">
             <Select

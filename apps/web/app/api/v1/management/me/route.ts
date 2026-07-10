@@ -152,7 +152,12 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
 
   // Rate limiting for apiKey auth is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
   if (!isValidApiKeyEnvironment(apiKeyData)) {
-    return responses.badRequestResponse("You can't use this method with this API key");
+    // This legacy endpoint returns a single workspace's (environment's) details, so it only works
+    // for keys scoped to exactly one workspace. Organization-only keys (no workspace) and keys with
+    // multiple workspaces land here — point them at the v2 endpoint that returns full permissions.
+    return responses.badRequestResponse(
+      "This endpoint only supports API keys that are scoped to a single workspace. Use GET /api/v2/me to inspect organization-level API keys or keys with access to multiple workspaces."
+    );
   }
 
   return buildWorkspaceResponse(apiKeyData);

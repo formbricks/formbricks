@@ -32,7 +32,7 @@ export function DimensionsPanel({
       {!hideTitle && (
         <h3 className="text-md font-semibold text-gray-900">{t("workspace.analysis.charts.dimensions")}</h3>
       )}
-      <div className="flex flex-col gap-2">
+      <div className="space-y-3">
         <Label className="text-sm">{t("workspace.analysis.charts.group_by")}</Label>
         <MultiSelect
           options={dimensionOptions}

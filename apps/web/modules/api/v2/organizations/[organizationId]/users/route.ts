@@ -30,6 +30,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 export const GET = async (request: NextRequest, props: { params: Promise<{ organizationId: string }> }) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       query: ZGetUsersFilter,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
@@ -63,6 +64,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
 export const POST = async (request: Request, props: { params: Promise<{ organizationId: string }> }) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       body: ZUserInput,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
@@ -138,6 +140,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
 export const PATCH = async (request: Request, props: { params: Promise<{ organizationId: string }> }) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       body: ZUserInputPatch,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
