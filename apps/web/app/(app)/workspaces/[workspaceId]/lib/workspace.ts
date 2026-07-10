@@ -42,6 +42,9 @@ const findWorkspacesForMembership = async (
         id: true,
         name: true,
       },
+      // Deterministic order so the org-settings fallback workspace (workspaces[0]) is stable
+      // rather than arbitrary DB order when no active-workspace cookie is present.
+      orderBy: { createdAt: "asc" },
     });
     return workspaces;
   } catch (error) {

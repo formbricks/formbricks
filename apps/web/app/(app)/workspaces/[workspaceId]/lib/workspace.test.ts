@@ -47,6 +47,7 @@ describe("Workspace", () => {
           id: true,
           name: true,
         },
+        orderBy: { createdAt: "asc" },
       });
       expect(result).toEqual(mockWorkspaces);
     });
@@ -77,6 +78,7 @@ describe("Workspace", () => {
           id: true,
           name: true,
         },
+        orderBy: { createdAt: "asc" },
       });
       expect(result).toEqual(mockWorkspaces);
     });
@@ -139,6 +141,7 @@ describe("Workspace", () => {
           id: true,
           name: true,
         },
+        orderBy: { createdAt: "asc" },
       });
       expect(result).toEqual(mockWorkspaces);
     });
@@ -184,6 +187,7 @@ describe("Workspace", () => {
           id: true,
           name: true,
         },
+        orderBy: { createdAt: "asc" },
       });
       expect(result).toEqual(mockWorkspaces);
     });
@@ -203,6 +207,7 @@ describe("Workspace", () => {
           id: true,
           name: true,
         },
+        orderBy: { createdAt: "asc" },
       });
       expect(result).toEqual(mockWorkspaces);
     });
@@ -234,6 +239,7 @@ describe("Workspace", () => {
           id: true,
           name: true,
         },
+        orderBy: { createdAt: "asc" },
       });
       expect(result).toEqual(mockWorkspaces);
     });
