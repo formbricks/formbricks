@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "Még nincs semmilyen API-kulcsa",
       "no_workspace_permissions_found": "Nem találhatók munkaterület-jogosultságok",
       "organization_access": "Szervezeti hozzáférés",
-      "organization_access_description": "Olvasási vagy írási jogosultságok kiválasztása a teljes szervezetre vonatkozó erőforrásokhoz.",
+      "organization_access_description": "Olvasási vagy írási hozzáférést biztosít a szervezeti adminisztrációhoz, mint például a tagokhoz és csapatokhoz. Nem biztosít hozzáférést munkaterület adatokhoz, például felmérésekhez vagy válaszokhoz.",
       "permissions": "Jogosultságok",
       "secret": "Titok",
       "unable_to_copy_api_key": "Nem lehet másolni az API-kulcsot",
       "unable_to_delete_api_key": "Nem lehet törölni az API-kulcsot",
       "unknown_workspace": "Ismeretlen munkaterület",
-      "workspace_access": "Munkaterület-hozzáférés"
+      "workspace_access": "Munkaterület-hozzáférés",
+      "workspace_access_description": "Szabályozza a hozzáférést a munkaterületen belüli adatokhoz, mint például felmérésekhez és válaszokhoz. Adja hozzá minden egyes munkaterületet, amelyhez ennek a kulcsnak el kell érnie, és válasszon egy jogosultsági szintet — nem létezik \"összes munkaterület\" opció.",
+      "workspace_access_empty": "Még nem került hozzáadásra munkaterület. Legalább egy munkaterület nélkül ez a kulcs nem férhet hozzá semmilyen felmérés- vagy válaszadathoz."
     },
     "app-connection": {
       "app_connection": "Alkalmazáskapcsolat",

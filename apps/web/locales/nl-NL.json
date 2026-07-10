@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "U heeft nog geen API-sleutels",
       "no_workspace_permissions_found": "Geen Workspace-rechten gevonden",
       "organization_access": "Organisatietoegang",
-      "organization_access_description": "Selecteer lees- of schrijfrechten voor organisatiebrede bronnen.",
+      "organization_access_description": "Geeft lees- of schrijftoegang tot organisatiebeheer, zoals leden en teams. Het geeft geen toegang tot werkruimtegegevens zoals enquêtes of antwoorden.",
       "permissions": "Machtigingen",
       "secret": "Geheim",
       "unable_to_copy_api_key": "Kan API-sleutel niet kopiëren",
       "unable_to_delete_api_key": "Kan API-sleutel niet verwijderen",
       "unknown_workspace": "Onbekende workspace",
-      "workspace_access": "Workspace-toegang"
+      "workspace_access": "Workspace-toegang",
+      "workspace_access_description": "Beheert de toegang tot gegevens binnen een werkruimte, zoals enquêtes en antwoorden. Voeg elke werkruimte toe die deze sleutel moet kunnen bereiken en kies een machtigingsniveau — er is geen optie voor \"alle werkruimtes\".",
+      "workspace_access_empty": "Nog geen werkruimte toegevoegd. Zonder minimaal één werkruimte heeft deze sleutel geen toegang tot enquête- of antwoordgegevens."
     },
     "app-connection": {
       "app_connection": "App-verbinding",

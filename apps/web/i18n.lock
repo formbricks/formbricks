@@ -1777,13 +1777,15 @@ checksums:
     workspace/api_keys/no_api_keys_yet: 58593ed9f7e507dcd7ca7fe069add599
     workspace/api_keys/no_workspace_permissions_found: 1d719624828a9d3e433cdf6b387549f3
     workspace/api_keys/organization_access: 96a92fa907b15e0c0e47e33cac15be88
-    workspace/api_keys/organization_access_description: 773dfeaf6ffbf34dd9a0a3d656a6d83c
+    workspace/api_keys/organization_access_description: 522f4539c01f906ad35c6c91dcf53989
     workspace/api_keys/permissions: 2160be68b1d6b6577e64634e9feba2ed
     workspace/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b
     workspace/api_keys/unable_to_copy_api_key: 148506832e31d033fa3569ce292d2120
     workspace/api_keys/unable_to_delete_api_key: 1fd76d9a22c5f5f8c241c4891fca8295
     workspace/api_keys/unknown_workspace: 4b0df2d07ebc9ab084158b1b9525ae5e
     workspace/api_keys/workspace_access: b38cb73197ef5f5fa6653b88c68aa0bd
+    workspace/api_keys/workspace_access_description: 5967df99f95f44dc493a9fe216071551
+    workspace/api_keys/workspace_access_empty: d10d9fbc975a0fb23bb42c948f54372e
     workspace/app-connection/app_connection: 778d2305e1a9c8efe91c2c7b4af37ae4
     workspace/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
     workspace/app-connection/cache_update_delay_description: 3368e4a8090b7684117a16c94f0c409c

@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "Aún no tienes ninguna clave API",
       "no_workspace_permissions_found": "No se encontraron permisos del espacio de trabajo",
       "organization_access": "Acceso a la organización",
-      "organization_access_description": "Selecciona privilegios de lectura o escritura para recursos de toda la organización.",
+      "organization_access_description": "Concede acceso de lectura o escritura a la administración de la organización, como miembros y equipos. No concede acceso a los datos del espacio de trabajo como encuestas o respuestas.",
       "permissions": "Permisos",
       "secret": "Secreto",
       "unable_to_copy_api_key": "No se puede copiar la clave de API",
       "unable_to_delete_api_key": "No se puede eliminar la clave API",
       "unknown_workspace": "Espacio de trabajo desconocido",
-      "workspace_access": "Acceso al espacio de trabajo"
+      "workspace_access": "Acceso al espacio de trabajo",
+      "workspace_access_description": "Controla el acceso a los datos dentro de un espacio de trabajo, como encuestas y respuestas. Añade cada espacio de trabajo al que esta clave debe acceder y elige un nivel de permisos; no existe la opción «todos los espacios de trabajo».",
+      "workspace_access_empty": "Aún no se ha añadido ningún espacio de trabajo. Sin al menos un espacio de trabajo, esta clave no puede acceder a ningún dato de encuestas o respuestas."
     },
     "app-connection": {
       "app_connection": "Conexión de aplicación",

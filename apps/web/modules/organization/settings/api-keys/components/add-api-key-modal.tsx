@@ -215,7 +215,11 @@ export const AddApiKeyModal = ({
 
             <div className="space-y-2">
               <Label>{t("workspace.api_keys.workspace_access")}</Label>
+              <p className="text-sm text-slate-500">{t("workspace.api_keys.workspace_access_description")}</p>
               <div className="space-y-2">
+                {Object.keys(selectedPermissions).length === 0 && (
+                  <p className="text-sm text-slate-500">{t("workspace.api_keys.workspace_access_empty")}</p>
+                )}
                 {/* Permission rows */}
                 {Object.keys(selectedPermissions).map((key) => {
                   const permissionIndex = parseInt(key.split("-")[1]);

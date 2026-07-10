@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "您目前尚未有任何 API 金鑰",
       "no_workspace_permissions_found": "找不到工作區權限",
       "organization_access": "組織存取",
-      "organization_access_description": "請選擇組織層級資源的讀取或寫入權限。",
+      "organization_access_description": "授予組織管理的讀取或寫入權限，例如成員和團隊。不會授予工作區資料（如問卷或回覆）的存取權限。",
       "permissions": "權限",
       "secret": "密鑰",
       "unable_to_copy_api_key": "無法複製 API 金鑰",
       "unable_to_delete_api_key": "無法刪除 API 金鑰",
       "unknown_workspace": "未知工作區",
-      "workspace_access": "工作區存取"
+      "workspace_access": "工作區存取",
+      "workspace_access_description": "控制工作區內資料的存取權限，例如問卷和回覆。請新增此金鑰應可存取的每個工作區，並選擇權限等級——沒有「所有工作區」選項。",
+      "workspace_access_empty": "尚未新增任何工作區。若未新增至少一個工作區，此金鑰將無法存取任何問卷或回覆資料。"
     },
     "app-connection": {
       "app_connection": "應用程式連線",

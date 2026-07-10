@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "Vous n'avez pas encore de clés API",
       "no_workspace_permissions_found": "Aucune autorisation d'espace de travail trouvée",
       "organization_access": "Accès à l'organisation",
-      "organization_access_description": "Sélectionnez les privilèges de lecture ou d'écriture pour les ressources à l'échelle de l'organisation.",
+      "organization_access_description": "Accorde un accès en lecture ou en écriture à l'administration de l'organisation, comme les membres et les équipes. Cela ne donne pas accès aux données de l'espace de travail telles que les sondages ou les réponses.",
       "permissions": "Permissions",
       "secret": "Secret",
       "unable_to_copy_api_key": "Impossible de copier la clé API",
       "unable_to_delete_api_key": "Impossible de supprimer la clé API",
       "unknown_workspace": "Espace de travail inconnu",
-      "workspace_access": "Accès à l'espace de travail"
+      "workspace_access": "Accès à l'espace de travail",
+      "workspace_access_description": "Contrôle l'accès aux données au sein d'un espace de travail, comme les sondages et les réponses. Ajoute chaque espace de travail auquel cette clé doit accéder et choisis un niveau d'autorisation — il n'y a pas d'option « tous les espaces de travail ».",
+      "workspace_access_empty": "Aucun espace de travail ajouté pour le moment. Sans au moins un espace de travail, cette clé ne peut accéder à aucune donnée de sondage ou de réponse."
     },
     "app-connection": {
       "app_connection": "Connexion de l'application",

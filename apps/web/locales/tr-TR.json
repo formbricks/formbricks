@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "Henüz hiç API anahtarınız yok",
       "no_workspace_permissions_found": "Çalışma Alanı izni bulunamadı",
       "organization_access": "Organizasyon Erişimi",
-      "organization_access_description": "Organizasyon genelindeki kaynaklar için okuma veya yazma yetkilerini seçin.",
+      "organization_access_description": "Üyeler ve ekipler gibi kuruluş yönetimine okuma veya yazma erişimi sağlar. Anketler veya yanıtlar gibi çalışma alanı verilerine erişim vermez.",
       "permissions": "İzinler",
       "secret": "Gizli Anahtar",
       "unable_to_copy_api_key": "API anahtarı kopyalanamıyor",
       "unable_to_delete_api_key": "API anahtarı silinemiyor",
       "unknown_workspace": "Bilinmeyen çalışma alanı",
-      "workspace_access": "Çalışma Alanı Erişimi"
+      "workspace_access": "Çalışma Alanı Erişimi",
+      "workspace_access_description": "Anketler ve yanıtlar gibi bir çalışma alanı içindeki verilere erişimi kontrol eder. Bu anahtarın erişmesi gereken her çalışma alanını ekle ve bir izin seviyesi seç — \"tüm çalışma alanları\" seçeneği yok.",
+      "workspace_access_empty": "Henüz çalışma alanı eklenmedi. En az bir çalışma alanı olmadan bu anahtar, herhangi bir anket veya yanıt verisine erişemez."
     },
     "app-connection": {
       "app_connection": "Uygulama Bağlantısı",

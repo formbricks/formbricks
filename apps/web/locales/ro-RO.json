@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "Nu ai încă nicio cheie API",
       "no_workspace_permissions_found": "Nu s-au găsit permisiuni pentru Workspace",
       "organization_access": "Acces organizație",
-      "organization_access_description": "Selectează privilegii de citire sau scriere pentru resursele la nivel de organizație.",
+      "organization_access_description": "Oferă acces de citire sau scriere la administrarea organizației, cum ar fi membrii și echipele. Nu oferă acces la datele din spațiul de lucru, precum sondajele sau răspunsurile.",
       "permissions": "Permisiuni",
       "secret": "Secret",
       "unable_to_copy_api_key": "Nu se poate copia cheia API",
       "unable_to_delete_api_key": "Nu se poate șterge cheia API",
       "unknown_workspace": "Spațiu de lucru necunoscut",
-      "workspace_access": "Acces spațiu de lucru"
+      "workspace_access": "Acces spațiu de lucru",
+      "workspace_access_description": "Controlează accesul la datele din interiorul unui spațiu de lucru, precum sondajele și răspunsurile. Adaugă fiecare spațiu de lucru la care această cheie ar trebui să aibă acces și alege un nivel de permisiuni — nu există opțiunea „toate spațiile de lucru\".",
+      "workspace_access_empty": "Niciun spațiu de lucru adăugat încă. Fără cel puțin un spațiu de lucru, această cheie nu poate accesa niciun sondaj sau date de răspuns."
     },
     "app-connection": {
       "app_connection": "Conectare aplicație",

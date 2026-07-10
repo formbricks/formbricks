@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "You do not have any API keys yet",
       "no_workspace_permissions_found": "No Workspace permissions found",
       "organization_access": "Organization Access",
-      "organization_access_description": "Select read or write privileges for organization-wide resources.",
+      "organization_access_description": "Grants read or write access to organization administration, such as members and teams. It does not grant access to workspace data like surveys or responses.",
       "permissions": "Permissions",
       "secret": "Secret",
       "unable_to_copy_api_key": "Unable to copy API key",
       "unable_to_delete_api_key": "Unable to delete API Key",
       "unknown_workspace": "Unknown workspace",
-      "workspace_access": "Workspace Access"
+      "workspace_access": "Workspace Access",
+      "workspace_access_description": "Controls access to data inside a workspace, such as surveys and responses. Add each workspace this key should reach and pick a permission level — there is no \"all workspaces\" option.",
+      "workspace_access_empty": "No workspace added yet. Without at least one workspace, this key can't access any survey or response data."
     },
     "app-connection": {
       "app_connection": "App Connection",

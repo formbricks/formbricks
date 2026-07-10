@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "Du har inga API-nycklar ännu",
       "no_workspace_permissions_found": "Inga behörigheter för arbetsytan hittades",
       "organization_access": "Organisationsåtkomst",
-      "organization_access_description": "Välj läs- eller skrivbehörighet för resurser på organisationsnivå.",
+      "organization_access_description": "Ger läs- eller skrivåtkomst till organisationsadministration, som medlemmar och team. Det ger inte åtkomst till arbetsytedata som undersökningar eller svar.",
       "permissions": "Behörigheter",
       "secret": "Hemlig",
       "unable_to_copy_api_key": "Kunde inte kopiera API-nyckel",
       "unable_to_delete_api_key": "Det gick inte att radera API-nyckeln",
       "unknown_workspace": "Okänd arbetsyta",
-      "workspace_access": "Arbetsyteåtkomst"
+      "workspace_access": "Arbetsyteåtkomst",
+      "workspace_access_description": "Styr åtkomsten till data i en arbetsyta, som undersökningar och svar. Lägg till varje arbetsyta som denna nyckel ska nå och välj en behörighetsnivå — det finns inget alternativ för \"alla arbetsytor\".",
+      "workspace_access_empty": "Ingen arbetsyta har lagts till än. Utan minst en arbetsyta kan denna nyckel inte komma åt någon undersöknings- eller svarsdata."
     },
     "app-connection": {
       "app_connection": "Appanslutning",

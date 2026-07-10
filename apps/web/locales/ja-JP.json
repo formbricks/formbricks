@@ -1845,13 +1845,15 @@
       "no_api_keys_yet": "まだAPIキーがありません",
       "no_workspace_permissions_found": "ワークスペースの権限が見つかりません",
       "organization_access": "組織アクセス",
-      "organization_access_description": "組織全体のリソースに対する読み取りまたは書き込み権限を選択してください。",
+      "organization_access_description": "メンバーやチームなど、組織管理への読み取りまたは書き込みアクセスを許可します。アンケートや回答などのワークスペースデータへのアクセスは許可されません。",
       "permissions": "権限",
       "secret": "シークレット",
       "unable_to_copy_api_key": "APIキーをコピーできません",
       "unable_to_delete_api_key": "APIキーを削除できません",
       "unknown_workspace": "不明なワークスペース",
-      "workspace_access": "ワークスペースアクセス"
+      "workspace_access": "ワークスペースアクセス",
+      "workspace_access_description": "アンケートや回答など、ワークスペース内のデータへのアクセスを制御します。このキーでアクセスする各ワークスペースを追加し、権限レベルを選択してください。「すべてのワークスペース」オプションはありません。",
+      "workspace_access_empty": "まだワークスペースが追加されていません。少なくとも1つのワークスペースがないと、このキーはアンケートや回答データにアクセスできません。"
     },
     "app-connection": {
       "app_connection": "アプリ接続",

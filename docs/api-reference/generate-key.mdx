@@ -17,12 +17,12 @@ description: "Here is how you can generate an API key which gives you full acces
   
   <Step title="Configure your API key">
     1. Give your API key a descriptive label (e.g., "GitHub Integration", "PostHog", "Slack")
-    2. Configure Workspace access:
-       - Select which Workspaces this key should have access to
+    2. Configure **Workspace Access** — this controls access to data inside a Workspace (surveys, responses, contacts, webhooks, and so on):
+       - Add each Workspace this key should reach by clicking "Add Permission"
        - Choose the permission level for each (read, write, or manage)
-       - You can add access to multiple Workspaces by clicking "Add Permission"
-    3. Configure Organization Access:
-       - Set appropriate read/write permissions for organization-level access
+       - There is no "all Workspaces" option — a key can only reach the Workspaces you add here
+    3. Configure **Organization Access** — this controls organization administration (members and teams) and does **not** grant access to Workspace data:
+       - Set read and/or write access as needed
   </Step>
 
   <Step title="Copy your key">
@@ -33,6 +33,27 @@ description: "Here is how you can generate an API key which gives you full acces
     </Note>
   </Step>
 </Steps>
+
+## API Key Access Scopes
+
+An API key has two independent access scopes. They control different families of endpoints and do not overlap:
+
+| Scope | What it grants | Example endpoints |
+| --- | --- | --- |
+| **Workspace Access** (per Workspace: read / write / manage) | Access to data and configuration inside the selected Workspaces | `/api/v2/management/surveys`, `/responses`, `/contacts`, `/webhooks` |
+| **Organization Access** (read / write) | Organization administration only | `/api/v2/organizations/{organizationId}/users`, `/teams`, `/api/v2/me` |
+
+<Note>
+  **Organization Access is not a shortcut for "all Workspaces".** It only grants access to organization-administration endpoints (members and teams). To read or write survey and response data, add each Workspace explicitly under Workspace Access. A key with only Organization Access and no Workspaces cannot access any Workspace data.
+</Note>
+
+<Note>
+  Access scopes are fixed when the key is created. Afterwards you can only rename the key's label — to change its Workspaces or permissions, delete the key and create a new one.
+</Note>
+
+<Note>
+  On Formbricks Cloud, organization user-management endpoints (creating and updating members) are not available. Organization Access is primarily intended for self-hosted instances.
+</Note>
 
 ## Delete API Key
 
@@ -52,4 +73,4 @@ API Keys have three permission levels that can be assigned per Workspace:
 - **Write**: Can perform read and write operations (GET, POST, PUT, PATCH requests)
 - **Manage**: Has full access including delete operations (all request types)
 
-Additionally, organization-level access controls can be configured for broader permissions.
+These permission levels apply to **Workspace Access**. **Organization Access** is separate: it uses read/write access for organization administration only. See [API Key Access Scopes](#api-key-access-scopes) for how the two scopes differ.
