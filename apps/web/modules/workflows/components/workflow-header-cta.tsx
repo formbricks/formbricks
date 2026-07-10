@@ -5,17 +5,14 @@ import {
   ArchiveIcon,
   ArchiveRestoreIcon,
   ChevronDownIcon,
-  CircleDashedIcon,
   CirclePauseIcon,
   CirclePlayIcon,
   TrashIcon,
-  TriangleAlertIcon,
 } from "lucide-react";
 import { useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -30,8 +27,7 @@ import { WorkflowAutoSaveIndicator } from "@/modules/workflows/components/workfl
 import { useWorkflowBuilder } from "@/modules/workflows/hooks/use-workflow-builder";
 import { deleteWorkflow } from "@/modules/workflows/lib/api-client";
 import { getWorkflowStatusBadge } from "@/modules/workflows/lib/display";
-import { getWorkflowReadinessHint } from "@/modules/workflows/lib/workflow-readiness";
-import { workflowAtom, workflowDefinitionAtom, workflowValidityAtom } from "@/modules/workflows/state/editor";
+import { workflowAtom, workflowValidityAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowHeaderCtaProps {
   workflowId: string;
@@ -43,7 +39,6 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const router = useRouter();
   const segment = useSelectedLayoutSegment();
   const workflow = useAtomValue(workflowAtom);
-  const definition = useAtomValue(workflowDefinitionAtom);
   const validity = useAtomValue(workflowValidityAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
@@ -58,17 +53,6 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const isDraft = workflow.status === "draft";
   const isActive = workflow.status === "enabled";
   const isBusy = builder.isTransitioning || builder.isSaving || isDeleting;
-
-  const readinessHint = getWorkflowReadinessHint(definition, validity);
-  // Inline literal t() calls so the translation-key scanner detects every key.
-  const readinessHintLabels: Record<NonNullable<typeof readinessHint>, string> = {
-    add_trigger: t("workspace.workflows.readiness_add_trigger"),
-    complete_trigger: t("workspace.workflows.readiness_complete_trigger"),
-    add_action: t("workspace.workflows.readiness_add_action"),
-    complete_action: t("workspace.workflows.readiness_complete_action"),
-    name_missing: t("workspace.workflows.readiness_name_missing"),
-    not_executable: t("workspace.workflows.test_problems_title"),
-  };
 
   const handleArchiveConfirm = async () => {
     await builder.archive();
@@ -90,23 +74,6 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
 
   return (
     <div className="flex items-center gap-3">
-      {/* One concrete next step, resolved from the live editor state. Drafts render it as quiet
-          setup guidance (an unfinished draft has a to-do, not a problem); a previously-live
-          workflow that can no longer run gets the red warning treatment. */}
-      {readinessHint && !isArchived ? (
-        <span
-          className={cn(
-            "flex items-center gap-1.5 text-xs font-medium",
-            isDraft ? "text-slate-500" : "text-red-600"
-          )}>
-          {isDraft ? (
-            <CircleDashedIcon className="size-4" aria-hidden="true" />
-          ) : (
-            <TriangleAlertIcon className="size-4" aria-hidden="true" />
-          )}
-          {readinessHintLabels[readinessHint]}
-        </span>
-      ) : null}
       {builder.canEditMetadata ? <WorkflowAutoSaveIndicator /> : null}
       {/* Edits autosave; the button stays as the explicit "persist now" escape hatch and doubles
           as the saved-state signal: enabled with a dot while something is unsaved, disabled once
