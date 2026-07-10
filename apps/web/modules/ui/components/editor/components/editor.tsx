@@ -86,7 +86,7 @@ const editorConfig = {
 // LexicalComposer only reads `initialConfig.editable` at mount; without this sync a mounted
 // editor keeps its initial mode when the `editable` prop flips (e.g. a workflow being enabled
 // while its email body is open in the inspector).
-const SyncEditablePlugin = ({ editable }: { editable: boolean }) => {
+const SyncEditablePlugin = ({ editable }: Readonly<{ editable: boolean }>) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
