@@ -6,7 +6,12 @@ import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyVariable, ZSurvey } from "@formbricks/types/surveys/types";
-import { POSTHOG_KEY, UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
+import {
+  IS_FORMBRICKS_SURVEYS_CONFIGURED,
+  POSTHOG_KEY,
+  UNSPLASH_ACCESS_KEY,
+  UNSPLASH_ALLOWED_DOMAINS,
+} from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -319,9 +324,11 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     // Detect the acting user's second published survey so the editor can fire an in-app
     // code action. Computed here (only on a genuine draft→publish) to reuse the auth and
     // ids this action already resolved and avoid an extra client round-trip. Scoped to
-    // the current user's own surveys so it's correct in shared workspaces.
+    // the current user's own surveys so it's correct in shared workspaces. Gated on the
+    // in-app surveys config so it's a true no-op (no extra count query) when the widget
+    // isn't enabled, mirroring the POSTHOG_KEY gate above.
     let isSecondPublish = false;
-    if (isPublish) {
+    if (isPublish && IS_FORMBRICKS_SURVEYS_CONFIGURED) {
       const publishedCount = await getSurveyCount(result.workspaceId, {
         status: ["inProgress", "paused", "completed"],
         createdBy: { userId: ctx.user.id, value: ["you"] },
