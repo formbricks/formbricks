@@ -448,7 +448,10 @@ export const SurveyMenuBar = ({
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
-        setLocalSurvey(updatedSurveyResponse.data);
+        // isSecondPublish is a transient action flag, not part of the survey — strip it so it
+        // doesn't linger in editor state and get echoed back on the next update.
+        const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = updatedSurveyResponse.data;
+        setLocalSurvey(updatedSurvey);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
