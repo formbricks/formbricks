@@ -1290,11 +1290,14 @@ const resolveSubscriptionLifecycleTransition = (
     existingStripeSnapshot?.subscriptionStatus === "past_due" ||
     existingStripeSnapshot?.subscriptionStatus === "unpaid" ||
     existingStripeSnapshot?.subscriptionStatus === "paused";
+  const wasPaidRecoverable =
+    isPaidCloudPlan(existingStripeSnapshot?.plan) &&
+    (existingStripeSnapshot?.subscriptionStatus === "active" || recoveredFromDunning);
   const subscriptionEnded = !subscription || subscriptionStatus === "canceled" || cloudPlan === "hobby";
 
   return {
     startedPaidSubscription: isPaidActive && !wasPaidActive && !recoveredFromDunning,
-    canceledPaidSubscription: wasPaidActive && subscriptionEnded,
+    canceledPaidSubscription: wasPaidRecoverable && subscriptionEnded,
     // Plan switch within an active paid subscription (Pro <-> Scale, either direction).
     switchedPaidPlan: wasPaidActive && isPaidActive && existingStripeSnapshot?.plan !== cloudPlan,
   };
@@ -1316,37 +1319,44 @@ const emitSubscriptionLifecycleEvent = async (input: {
     return;
   }
 
-  const owner = await getOrganizationOwner(organizationId);
-  if (!owner) {
-    return;
-  }
+  // Best-effort: the billing snapshot is already persisted, so a failure here (owner lookup DB blip,
+  // etc.) must not reject the sync — a retried sync would see the new state and detect no transition,
+  // permanently dropping the event. Swallow and log instead.
+  try {
+    const owner = await getOrganizationOwner(organizationId);
+    if (!owner) {
+      return;
+    }
 
-  if (switchedPaidPlan) {
+    if (switchedPaidPlan) {
+      capturePostHogEvent(
+        owner.id,
+        "subscription_updated",
+        {
+          previous_plan: existingStripeSnapshot?.plan ?? null,
+          plan: cloudPlan,
+          interval: billingInterval,
+          organization_id: organizationId,
+        },
+        { organizationId }
+      );
+      return;
+    }
+
     capturePostHogEvent(
       owner.id,
-      "subscription_updated",
+      startedPaidSubscription ? "subscription_started" : "subscription_canceled",
       {
-        previous_plan: existingStripeSnapshot?.plan ?? null,
-        plan: cloudPlan,
-        interval: billingInterval,
+        // On cancel the new snapshot has already dropped to hobby/none, so report the prior plan.
+        plan: startedPaidSubscription ? cloudPlan : (existingStripeSnapshot?.plan ?? null),
+        interval: startedPaidSubscription ? billingInterval : (existingStripeSnapshot?.interval ?? null),
         organization_id: organizationId,
       },
       { organizationId }
     );
-    return;
+  } catch (error) {
+    logger.error({ error, organizationId }, "Failed to emit subscription lifecycle event to PostHog");
   }
-
-  capturePostHogEvent(
-    owner.id,
-    startedPaidSubscription ? "subscription_started" : "subscription_canceled",
-    {
-      // On cancel the new snapshot has already dropped to hobby/none, so report the prior plan.
-      plan: startedPaidSubscription ? cloudPlan : (existingStripeSnapshot?.plan ?? null),
-      interval: startedPaidSubscription ? billingInterval : (existingStripeSnapshot?.interval ?? null),
-      organization_id: organizationId,
-    },
-    { organizationId }
-  );
 };
 
 export const syncOrganizationBillingFromStripe = async (
