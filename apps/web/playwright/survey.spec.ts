@@ -203,7 +203,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await expect(page.getByText(surveys.createAndSubmit.fileUploadQuestion.question)).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-8").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Upload files by clicking or" })).toBeVisible();
+      await expect(page.getByText("Click or drag to upload files")).toBeVisible();
 
       await page.locator("input[type=file]").setInputFiles({
         name: "file.doc",
@@ -988,7 +988,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-10").getByRole("button", { name: "Back" })).toBeVisible();
 
-      await expect(page.getByRole("button", { name: "Upload files by clicking or" })).toBeVisible();
+      await expect(page.getByText("Click or drag to upload files")).toBeVisible();
 
       await page.locator("input[type=file]").setInputFiles({
         name: "file.doc",

@@ -177,7 +177,7 @@ export const ThemeStylingPreviewSurvey = ({
           isCardless ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden" : "h-full items-center"
         )}>
         {!workspace.styling?.isLogoHidden && !isCardless && (
-          <button type="button" className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
+          <button type="button" className="absolute top-5 left-5" onClick={scrollToEditLogoSection}>
             <ClientLogo
               workspaceLogo={workspace.logo ?? null}
               workspaceId={workspace.id}

@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
+import { AA_CONTRAST_RATIO, getContrastRatio } from "./color";
 import { addCustomThemeToDom, addStylesToDom, getStyleNonce, setStyleNonce } from "./styles";
 
 // Mock CSS module imports
@@ -427,6 +428,36 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-progress-track-height"]).toBe("4px");
     expect(variables["--fb-progress-track-bg-color"]).toBe("#667788");
     expect(variables["--fb-progress-indicator-bg-color"]).toBe("#778899");
+  });
+
+  test("keeps a dark button color as the back-button color (readable on the card)", () => {
+    const styling = getBaseWorkspaceStyling({
+      buttonBgColor: { light: "#1e40af" },
+      cardBackgroundColor: { light: "#ffffff" },
+    });
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    // Dark brand already clears AA on white, so it is used verbatim.
+    expect(variables["--fb-back-button-color"]).toBe("#1e40af");
+  });
+
+  test("darkens a light button color for an AA-compliant back-button color", () => {
+    const styling = getBaseWorkspaceStyling({
+      buttonBgColor: { light: "#f9a8c0" }, // light pink — fails contrast as text on white
+      cardBackgroundColor: { light: "#ffffff" },
+    });
+    addCustomThemeToDom({ styling });
+    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
+    const variables = getCssVariables(styleElement);
+
+    // The raw brand is unreadable on white, so it must be adjusted to a darker tone.
+    expect(variables["--fb-back-button-color"]).toBeDefined();
+    expect(variables["--fb-back-button-color"]).not.toBe("#f9a8c0");
+    expect(getContrastRatio(variables["--fb-back-button-color"], "#ffffff")).toBeGreaterThanOrEqual(
+      AA_CONTRAST_RATIO
+    );
   });
 
   test("should format dimensions correctly", () => {

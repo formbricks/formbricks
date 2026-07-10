@@ -1,7 +1,7 @@
 "use client";
 
 import { parse } from "csv-parse/sync";
-import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { FileDropZone } from "@/modules/ui/components/file-drop-zone";
 import { importCsvFile } from "../csv-import-client";
 import { createFeedbackCSVDataSchema, getTranslatedFeedbackSourceError } from "../types";
 import { validateCsvFile } from "../utils";
@@ -50,7 +51,7 @@ export function CsvImportModal({
   const [csvError, setCsvError] = useState("");
   const [isImporting, setIsImporting] = useState(false);
 
-  const processCSVFile = (file: File) => {
+  const processCSVFile = async (file: File) => {
     setCsvError("");
 
     const validateCSVFileResult = validateCsvFile(file, t);
@@ -60,65 +61,46 @@ export function CsvImportModal({
       return;
     }
 
-    file
-      .text()
-      .then((csv) => {
-        const records = parse(csv, { columns: true, relax_column_count: true, skip_empty_lines: true });
-        const result = createFeedbackCSVDataSchema(t).safeParse(records);
+    try {
+      const csv = await file.text();
+      const records = parse(csv, { columns: true, relax_column_count: true, skip_empty_lines: true });
+      const result = createFeedbackCSVDataSchema(t).safeParse(records);
 
-        if (!result.success) {
-          setCsvError(result.error.issues[0].message);
-          return;
-        }
+      if (!result.success) {
+        setCsvError(result.error.issues[0].message);
+        return;
+      }
 
-        const missingMappedColumns = getMissingCsvMappedSourceColumns(
+      const missingMappedColumns = getMissingCsvMappedSourceColumns(
+        fieldMappings,
+        Object.keys(result.data[0] ?? {})
+      );
+      if (missingMappedColumns.length > 0) {
+        const missingRequiredSourceColumns = getMissingRequiredCsvSourceColumns(
           fieldMappings,
           Object.keys(result.data[0] ?? {})
         );
-        if (missingMappedColumns.length > 0) {
-          const missingRequiredSourceColumns = getMissingRequiredCsvSourceColumns(
-            fieldMappings,
-            Object.keys(result.data[0] ?? {})
-          );
-          const missingSourceColumns =
-            missingRequiredSourceColumns.length > 0
-              ? missingRequiredSourceColumns.join(", ")
-              : [...new Set(missingMappedColumns.map(({ sourceFieldId }) => sourceFieldId))].join(", ");
+        const missingSourceColumns =
+          missingRequiredSourceColumns.length > 0
+            ? missingRequiredSourceColumns.join(", ")
+            : [...new Set(missingMappedColumns.map(({ sourceFieldId }) => sourceFieldId))].join(", ");
 
-          setCsvError(
-            t("workspace.unify.csv_saved_mapping_missing_columns", {
-              columns: missingSourceColumns,
-              mappings: formatCsvMissingMappedSourceColumns(missingMappedColumns),
-            })
-          );
-          return;
-        }
+        setCsvError(
+          t("workspace.unify.csv_saved_mapping_missing_columns", {
+            columns: missingSourceColumns,
+            mappings: formatCsvMissingMappedSourceColumns(missingMappedColumns),
+          })
+        );
+        return;
+      }
 
-        setCsvFile(file);
-        setParsedData(result.data);
-        setRowCount(result.data.length);
-      })
-      .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : t("common.failed_to_parse_csv");
-        setCsvError(message);
-      });
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target?.files?.[0];
-    if (file) processCSVFile(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const file = e.dataTransfer.files[0];
-    if (file) processCSVFile(file);
+      setCsvFile(file);
+      setParsedData(result.data);
+      setRowCount(result.data.length);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t("common.failed_to_parse_csv");
+      setCsvError(message);
+    }
   };
 
   const handleImport = async () => {
@@ -177,37 +159,31 @@ export function CsvImportModal({
           )}
 
           {csvFile ? (
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-800">{csvFile.name}</span>
-                <Badge text={`${rowCount} rows`} type="gray" size="tiny" />
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <span className="truncate text-sm font-medium text-slate-800" title={csvFile.name}>
+                  {csvFile.name}
+                </span>
+                <Badge text={`${rowCount} rows`} type="gray" size="tiny" className="shrink-0" />
               </div>
-              <Button variant="secondary" size="sm" onClick={handleClear} disabled={isImporting}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleClear}
+                disabled={isImporting}
+                className="shrink-0 bg-white">
                 {t("workspace.unify.change_file")}
               </Button>
             </div>
           ) : (
-            <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6">
-              <label
-                htmlFor="csv-import-upload"
-                className="flex cursor-pointer flex-col items-center justify-center"
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}>
-                <ArrowUpFromLineIcon className="size-8 text-slate-400" />
-                <p className="mt-2 text-sm text-slate-600">
-                  <span className="font-semibold">{t("workspace.unify.click_to_upload")}</span>{" "}
-                  {t("workspace.unify.or_drag_and_drop")}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">{t("workspace.unify.csv_files_only")}</p>
-                <input
-                  type="file"
-                  id="csv-import-upload"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </label>
-            </div>
+            <FileDropZone
+              id="csv-import-upload"
+              accept=".csv"
+              onFileSelect={processCSVFile}
+              primaryText={t("workspace.unify.click_to_upload")}
+              secondaryText={t("workspace.unify.or_drag_and_drop")}
+              helpText={t("workspace.unify.csv_files_only")}
+            />
           )}
         </div>
 

@@ -33,7 +33,7 @@
     "@formbricks/cache": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/email": "workspace:*",
-    "@formbricks/hub": "0.5.0",
+    "@formbricks/hub": "0.6.0",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/jobs": "workspace:*",
     "@formbricks/js": "5.0.0",

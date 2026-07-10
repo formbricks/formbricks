@@ -423,7 +423,7 @@ describe("renderEmbedSurveyPreviewEmail", () => {
     expect(longAnswerFragment).not.toMatch(/<a\b[^>]*border:1px solid/i);
   });
 
-  test("renders star ratings with SVG icons instead of emoji", async () => {
+  test("renders star ratings as hosted images instead of inline SVG or emoji", async () => {
     const starRatingSurvey = createEmbedSurveyPreviewEmailSurvey(TSurveyElementTypeEnum.Rating);
     const ratingQuestion = starRatingSurvey.blocks[0].elements[0];
 
@@ -443,7 +443,9 @@ describe("renderEmbedSurveyPreviewEmail", () => {
     );
     const starRatingFragment = extractEmailBodyFragment(starRatingHtml);
 
-    expect(starRatingFragment).toContain("lucide-star");
+    // Gmail and Outlook strip <svg>, so the star glyph must be a hosted image.
+    expect(starRatingFragment).toContain("/star-icons/star.png");
+    expect(starRatingFragment).not.toContain("<svg");
     expect(starRatingFragment).not.toContain("⭐");
   });
 });

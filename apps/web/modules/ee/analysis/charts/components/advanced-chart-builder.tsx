@@ -257,6 +257,8 @@ export function AdvancedChartBuilder({
         childBorder>
         <FiltersPanel
           hideTitle
+          workspaceId={workspaceId}
+          feedbackDirectoryId={feedbackDirectoryId}
           filters={state.filters}
           filterLogic={state.filterLogic}
           onFiltersChange={(filters) => dispatch({ type: ACTION.SET_FILTERS, payload: filters })}
