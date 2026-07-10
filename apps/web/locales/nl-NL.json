@@ -1718,7 +1718,6 @@
         "field_label_user_identifier": "Gebruikersidentificatie",
         "field_label_value_boolean": "Waarde (Boolean)",
         "field_label_value_date": "Waarde (Datum)",
-        "field_label_value_id": "Optie",
         "field_label_value_number": "Waarde (Getal)",
         "field_label_value_text": "Waarde (Tekst)",
         "field_label_very_negative_count": "Sentiment: Zeer negatief",

@@ -1718,7 +1718,6 @@
         "field_label_user_identifier": "Identificador de usuario",
         "field_label_value_boolean": "Valor (Booleano)",
         "field_label_value_date": "Valor (Fecha)",
-        "field_label_value_id": "Opción",
         "field_label_value_number": "Valor (Número)",
         "field_label_value_text": "Valor (Texto)",
         "field_label_very_negative_count": "Sentimiento: Muy negativo",

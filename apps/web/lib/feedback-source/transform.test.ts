@@ -597,7 +597,7 @@ describe("transformResponseToFeedbackRecords", () => {
     });
   });
 
-  describe("choice values across languages (labels stored as submitted, identity via value_id)", () => {
+  describe("choice values across languages (canonicalized to default-language label, value_id as identity)", () => {
     const bilingualSurvey = {
       id: "survey-1",
       name: "Bilingual Survey",
@@ -636,14 +636,15 @@ describe("transformResponseToFeedbackRecords", () => {
         language,
       }) as unknown as TResponse;
 
-    test("stores the submitted-language label for a single select, with the choice id as identity", () => {
+    test("canonicalizes a single select answered in another language, with the choice id as identity", () => {
       const response = buildResponse({ "el-gender": "ذكر" }, "ar");
       const mappings = [createMapping({ elementId: "el-gender", hubFieldType: "categorical" })];
 
       const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(1);
-      expect(result[0].value_text).toBe("ذكر");
+      // Submitted "ذكر" is stored as the default-language label so it groups as one option.
+      expect(result[0].value_text).toBe("Male");
       expect(result[0].value_id).toBe("c-male");
       expect(result[0].language).toBe("ar");
     });
@@ -689,7 +690,7 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].language).toBe("en-US");
     });
 
-    test("stores the submitted-language column label for a matrix answered in another language", () => {
+    test("canonicalizes a matrix column answered in another language", () => {
       const matrixSurvey = {
         id: "survey-1",
         name: "Matrix Survey",
@@ -720,7 +721,8 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0]).toMatchObject({
         field_id: "el-matrix__row-1",
         field_label: "Speed",
-        value_text: "جيد",
+        // Canonical default-language column label, not the submitted "جيد".
+        value_text: "Good",
         value_id: "col-1",
       });
     });
@@ -777,7 +779,7 @@ describe("transformResponseToFeedbackRecords", () => {
       const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
 
       expect(result[0].value_id).toBe("c-male");
-      expect(result[0].value_text).toBe("ذكر");
+      expect(result[0].value_text).toBe("Male");
     });
 
     test("sets value_id for default-language single select answers too", () => {
@@ -859,7 +861,7 @@ describe("transformResponseToFeedbackRecords", () => {
 
       expect(result[0]).toMatchObject({
         field_id: "el-matrix__row-1",
-        value_text: "جيد",
+        value_text: "Good",
         value_id: "col-1",
       });
     });

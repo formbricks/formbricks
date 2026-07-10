@@ -44,10 +44,12 @@ interface NormalizedChoiceValue {
 }
 
 /**
- * Selected choice values arrive as labels localized to the response language. The label
- * is stored as submitted; cross-language consolidation relies on value_id (ENG-1673),
- * the stable id of the matched choice. Values that match no choice (an "other" free-text
- * answer, or a choice label edited since submission) carry no id.
+ * Selected choice values arrive as labels localized to the response language. For a matched
+ * single choice we store the choice's default-language label as the canonical value_text, so
+ * the same option is one category across languages (mirrors how field_label is canonicalized),
+ * and additionally keep value_id (ENG-1673) as its stable id for label-edit resilience. Values
+ * that match no choice (an "other" free-text answer, a label edited since submission) and
+ * multi-select arrays (ENG-1702) pass through as submitted and carry no id.
  */
 const normalizeChoiceValue = (
   choices: { id: string; label: TSurveyElementChoice["label"] }[] | undefined,
@@ -58,7 +60,7 @@ const normalizeChoiceValue = (
 
   if (typeof value === "string") {
     const choice = findChoiceByLabel(choices, value, language);
-    return choice ? { value, valueId: choice.id } : { value };
+    return choice ? { value: getChoiceLabel(choice, "default"), valueId: choice.id } : { value };
   }
 
   return { value };

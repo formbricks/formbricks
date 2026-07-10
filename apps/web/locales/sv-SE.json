@@ -1718,7 +1718,6 @@
         "field_label_user_identifier": "Användar-ID",
         "field_label_value_boolean": "Värde (Boolean)",
         "field_label_value_date": "Värde (Datum)",
-        "field_label_value_id": "Alternativ",
         "field_label_value_number": "Värde (Nummer)",
         "field_label_value_text": "Värde (Text)",
         "field_label_very_negative_count": "Sentiment: Mycket negativ",

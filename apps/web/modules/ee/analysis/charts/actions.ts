@@ -18,11 +18,6 @@ import {
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
-import {
-  VALUE_ID_DIMENSION,
-  getOptionLabelMap,
-  mapValueIdRowsToLabels,
-} from "@/modules/ee/analysis/lib/option-labels";
 import { isSelectableValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -283,7 +278,7 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      const rows = await executeTenantScopedQuery({
+      return executeTenantScopedQuery({
         query: parsedInput.query,
         feedbackDirectoryId,
         workspaceId,
@@ -291,8 +286,6 @@ export const executeQueryAction = authenticatedActionClient
         userId: ctx.user.id,
         source: "charts.executeQueryAction",
       });
-
-      return mapValueIdRowsToLabels(rows, parsedInput.query, feedbackDirectoryId, workspaceId);
     }
   );
 
@@ -347,9 +340,7 @@ export const generateAIChartAction = authenticatedActionClient
       return {
         query: validatedQuery,
         chartType,
-        data: Array.isArray(data)
-          ? await mapValueIdRowsToLabels(data, validatedQuery, feedbackDirectoryId, workspaceId)
-          : [],
+        data: Array.isArray(data) ? data : [],
       };
     }
   );
@@ -367,16 +358,11 @@ const ZGetDimensionValuesAction = z.object({
   search: z.string().trim().max(255).optional(),
 });
 
-export type TDimensionValueOption = { value: string; label: string };
-
 /**
  * Returns the distinct stored values for a low-cardinality string dimension, so the
  * filter UI can offer a pick-list instead of free-text entry. Picking a real value
- * guarantees an exact match for the `equals` / `notEquals` operators.
- *
- * Values come back as { value, label } pairs. For most dimensions the label IS the
- * stored value; for valueId the label is the option's default-language label (raw ids
- * are meaningless to users), while the value stays the stable id the filter needs.
+ * guarantees an exact match for the `equals` / `notEquals` operators. Search narrows
+ * results server-side so dimensions with more than the lookup cap stay usable.
  */
 export const getDimensionValuesAction = authenticatedActionClient
   .inputSchema(ZGetDimensionValuesAction)
@@ -387,7 +373,7 @@ export const getDimensionValuesAction = authenticatedActionClient
     }: {
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetDimensionValuesAction>;
-    }): Promise<TDimensionValueOption[]> => {
+    }): Promise<string[]> => {
       const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
         parsedInput.workspaceId,
@@ -405,17 +391,12 @@ export const getDimensionValuesAction = authenticatedActionClient
       });
 
       const { dimension, search } = parsedInput;
-      const isValueIdLookup = dimension === VALUE_ID_DIMENSION;
 
-      // Ids are opaque, so a server-side `contains` on them would never match what the
-      // user types — fetch unfiltered and match the search against labels below instead.
       const query: TChartQuery = {
         dimensions: [dimension],
         order: [[dimension, "asc"]],
         limit: DIMENSION_VALUE_LOOKUP_LIMIT,
-        ...(search && !isValueIdLookup
-          ? { filters: [{ member: dimension, operator: "contains", values: [search] }] }
-          : {}),
+        ...(search ? { filters: [{ member: dimension, operator: "contains", values: [search] }] } : {}),
       };
 
       const rows = await executeTenantScopedQuery({
@@ -438,16 +419,6 @@ export const getDimensionValuesAction = authenticatedActionClient
         values.push(value);
       }
 
-      if (!isValueIdLookup) {
-        return values.map((value) => ({ value, label: value }));
-      }
-
-      const labelById = await getOptionLabelMap(feedbackDirectoryId, workspaceId);
-      const searchLower = search?.toLowerCase();
-
-      return values
-        .map((value) => ({ value, label: labelById.get(value) ?? value }))
-        .filter((option) => !searchLower || option.label.toLowerCase().includes(searchLower))
-        .sort((a, b) => a.label.localeCompare(b.label));
+      return values;
     }
   );

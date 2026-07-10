@@ -328,12 +328,6 @@ cube(`FeedbackRecords`, {
       description: `Boolean answer value (yes/no questions). Pair with a fieldType filter.`,
     },
 
-    valueId: {
-      sql: `value_id`,
-      type: `string`,
-      description: `Stable id of the selected option in the source survey. Unlike valueText it is identical across response languages and survives label edits — prefer it for grouping and exact-match filtering of choice answers. NULL for free text, multi-select, and records ingested before the id was captured.`,
-    },
-
     valueDate: {
       sql: `value_date`,
       type: `time`,
