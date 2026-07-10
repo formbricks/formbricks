@@ -1,10 +1,11 @@
 "use client";
 
-import { Loader2Icon, MessageSquareDashedIcon } from "lucide-react";
+import { MessageSquareDashedIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import {
   Select,
@@ -70,7 +71,7 @@ export const TopicsSubtopicsGate = ({
         {isInsufficient ? (
           <MessageSquareDashedIcon className="size-8 text-slate-400" />
         ) : (
-          <Loader2Icon className="size-8 animate-spin text-slate-400" />
+          <LoadingSpinner className="h-8 w-8" />
         )}
 
         <h2 className="text-lg font-semibold text-slate-900">
