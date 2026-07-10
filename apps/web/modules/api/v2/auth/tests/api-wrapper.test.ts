@@ -383,4 +383,32 @@ describe("apiWrapper", () => {
     expect(response.status).toBe(200);
     expect(handler).toHaveBeenCalled();
   });
+
+  test("forwards allowOrganizationOnlyApiKey=true to authenticateRequest", async () => {
+    const request = new Request("http://localhost", {
+      headers: { "x-api-key": "valid-api-key" },
+    });
+
+    vi.mocked(authenticateRequest).mockClear();
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
+
+    const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
+    await apiWrapper({ request, handler, rateLimit: false, allowOrganizationOnlyApiKey: true });
+
+    expect(authenticateRequest).toHaveBeenCalledWith(request, { allowOrganizationOnlyApiKey: true });
+  });
+
+  test("defaults allowOrganizationOnlyApiKey to false when omitted", async () => {
+    const request = new Request("http://localhost", {
+      headers: { "x-api-key": "valid-api-key" },
+    });
+
+    vi.mocked(authenticateRequest).mockClear();
+    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
+
+    const handler = vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
+    await apiWrapper({ request, handler, rateLimit: false });
+
+    expect(authenticateRequest).toHaveBeenCalledWith(request, { allowOrganizationOnlyApiKey: false });
+  });
 });

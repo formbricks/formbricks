@@ -95,7 +95,7 @@ export function LogicEditor({
           <div className="flex w-10 shrink-0 items-center justify-end">
             <ArrowRightIcon className="size-4 text-slate-500" />
           </div>
-          <div className="inline-flex items-center gap-x-2 text-nowrap font-medium text-slate-900">
+          <div className="inline-flex items-center gap-x-2 font-medium text-nowrap text-slate-900">
             <Trans
               i18nKey="workspace.surveys.edit.all_other_answers_will_continue_to_fallback"
               components={{

@@ -1,5 +1,10 @@
 import { TFunction } from "i18next";
-import { TFeedbackSourceType, THubFieldType, ZHubFieldType } from "@formbricks/types/feedback-source";
+import {
+  TFeedbackSourceType,
+  THubFieldType,
+  UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
+  ZHubFieldType,
+} from "@formbricks/types/feedback-source";
 import {
   CSV_REQUIRED_UI_FIELDS,
   CSV_TARGET_FIELDS,
@@ -7,7 +12,18 @@ import {
   MAX_CSV_VALUES,
   TFieldMapping,
   TSourceField,
+  TUnifySurvey,
 } from "./types";
+
+export const getDismissedStorageKey = (workspaceId: string) => `${workspaceId}-dismissedFeedbackSuggestions`;
+
+/** Survey element ids that can be mapped to a feedback source (drops unsupported question types). */
+export const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
+  survey.elements
+    .filter(
+      (element) => !(UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES as readonly string[]).includes(element.type)
+    )
+    .map((element) => element.id);
 
 export type TFeedbackSourceOptionId = TFeedbackSourceType | "api_ingestion" | "feedback_record_mcp";
 

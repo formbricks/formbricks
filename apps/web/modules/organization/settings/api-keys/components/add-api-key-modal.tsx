@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { ApiKeyPermission } from "@formbricks/database/prisma-browser";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TOrganizationWorkspace } from "@/modules/organization/settings/api-keys/types/api-keys";
-import { Alert, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -41,6 +41,7 @@ interface AddApiKeyModalProps {
   }) => Promise<void>;
   workspaces: TOrganizationWorkspace[];
   isCreatingAPIKey: boolean;
+  isFormbricksCloud: boolean;
 }
 
 interface WorkspaceOption {
@@ -62,6 +63,7 @@ export const AddApiKeyModal = ({
   onSubmit,
   workspaces,
   isCreatingAPIKey,
+  isFormbricksCloud,
 }: AddApiKeyModalProps) => {
   const { t } = useTranslation();
   const { register, getValues, handleSubmit, reset, watch } = useForm<{ label: string }>();
@@ -215,7 +217,11 @@ export const AddApiKeyModal = ({
 
             <div className="space-y-2">
               <Label>{t("workspace.api_keys.workspace_access")}</Label>
+              <p className="text-sm text-slate-500">{t("workspace.api_keys.workspace_access_description")}</p>
               <div className="space-y-2">
+                {Object.keys(selectedPermissions).length === 0 && (
+                  <p className="text-sm text-slate-500">{t("workspace.api_keys.workspace_access_empty")}</p>
+                )}
                 {/* Permission rows */}
                 {Object.keys(selectedPermissions).map((key) => {
                   const permissionIndex = parseInt(key.split("-")[1]);
@@ -302,8 +308,13 @@ export const AddApiKeyModal = ({
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="border-t border-slate-200" />
+
+            <div className="space-y-2">
               <Label>{t("workspace.api_keys.organization_access")}</Label>
+              <p className="text-sm text-slate-500">
+                {t("workspace.api_keys.organization_access_description")}
+              </p>
               {Object.keys(selectedOrganizationAccess).map((key) => (
                 <div key={key} className="mt-2 flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -325,9 +336,13 @@ export const AddApiKeyModal = ({
                   </div>
                 </div>
               ))}
-              <p className="text-sm text-slate-500">
-                {t("workspace.api_keys.organization_access_description")}
-              </p>
+              {isFormbricksCloud && (
+                <Alert variant="info" size="small">
+                  <AlertDescription>
+                    {t("workspace.api_keys.organization_access_cloud_note")}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
             <Alert variant="warning">
               <AlertTitle>{t("workspace.api_keys.api_key_security_warning")}</AlertTitle>

@@ -8,9 +8,16 @@ interface ApiKeyListProps {
   locale: TUserLocale;
   isReadOnly: boolean;
   workspaces: TOrganizationWorkspace[];
+  isFormbricksCloud: boolean;
 }
 
-export const ApiKeyList = async ({ organizationId, locale, isReadOnly, workspaces }: ApiKeyListProps) => {
+export const ApiKeyList = async ({
+  organizationId,
+  locale,
+  isReadOnly,
+  workspaces,
+  isFormbricksCloud,
+}: ApiKeyListProps) => {
   const apiKeys = await getApiKeysWithEnvironmentPermissions(organizationId);
 
   return (
@@ -20,6 +27,7 @@ export const ApiKeyList = async ({ organizationId, locale, isReadOnly, workspace
       locale={locale}
       isReadOnly={isReadOnly}
       workspaces={workspaces}
+      isFormbricksCloud={isFormbricksCloud}
     />
   );
 };
