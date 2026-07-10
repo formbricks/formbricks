@@ -3698,6 +3698,7 @@
         "filtered_responses_csv": "过滤 反馈 （CSV）",
         "filtered_responses_excel": "过滤 反馈 （Excel）",
         "generate_example_responses": "生成示例回复",
+        "generate_example_responses_disabled_has_responses": "只能为没有回复的调查生成示例回复。请重置调查后重试。",
         "generate_example_responses_locked_disabled": "此组织已禁用 AI 示例回复。",
         "generate_example_responses_locked_instance": "此实例未配置 AI。请联系你的管理员。",
         "generate_example_responses_locked_plan": "你当前的套餐不支持 AI 示例回复。",

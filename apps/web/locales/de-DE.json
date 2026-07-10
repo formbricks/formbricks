@@ -3698,6 +3698,7 @@
         "filtered_responses_csv": "Gefilterte Antworten (CSV)",
         "filtered_responses_excel": "Gefilterte Antworten (Excel)",
         "generate_example_responses": "Beispielantworten generieren",
+        "generate_example_responses_disabled_has_responses": "Du kannst nur für Umfragen ohne Antworten Beispielantworten generieren. Setze die Umfrage zurück, um es auszuprobieren.",
         "generate_example_responses_locked_disabled": "KI-Beispielantworten sind für diese Organisation deaktiviert.",
         "generate_example_responses_locked_instance": "KI ist auf dieser Instanz nicht konfiguriert. Wende dich an deinen Administrator.",
         "generate_example_responses_locked_plan": "KI-Beispielantworten sind in deinem aktuellen Tarif nicht verfügbar.",

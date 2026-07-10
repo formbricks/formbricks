@@ -3698,6 +3698,7 @@
         "filtered_responses_csv": "Réponses filtrées (CSV)",
         "filtered_responses_excel": "Réponses filtrées (Excel)",
         "generate_example_responses": "Générer des exemples de réponses",
+        "generate_example_responses_disabled_has_responses": "Tu ne peux générer des réponses d'exemple que pour les sondages sans réponses. Réinitialise le sondage pour essayer.",
         "generate_example_responses_locked_disabled": "Les réponses d'exemple générées par IA sont désactivées pour cette organisation.",
         "generate_example_responses_locked_instance": "L'IA n'est pas configurée sur cette instance. Contacte ton administrateur.",
         "generate_example_responses_locked_plan": "Les réponses d'exemple générées par IA ne sont pas disponibles avec ton forfait actuel.",

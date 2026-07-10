@@ -3698,6 +3698,7 @@
         "filtered_responses_csv": "Отфильтрованные ответы (CSV)",
         "filtered_responses_excel": "Отфильтрованные ответы (Excel)",
         "generate_example_responses": "Создать примеры ответов",
+        "generate_example_responses_disabled_has_responses": "Вы можете сгенерировать примеры ответов только для опросов без ответов. Сбросьте опрос, чтобы попробовать.",
         "generate_example_responses_locked_disabled": "Примеры ответов с ИИ отключены для этой организации.",
         "generate_example_responses_locked_instance": "ИИ не настроен на этом сервере. Свяжитесь с администратором.",
         "generate_example_responses_locked_plan": "Примеры ответов с ИИ недоступны в вашем текущем тарифе.",

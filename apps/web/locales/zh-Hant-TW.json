@@ -3698,6 +3698,7 @@
         "filtered_responses_csv": "篩選回應 (CSV)",
         "filtered_responses_excel": "篩選回應 (Excel)",
         "generate_example_responses": "產生範例回應",
+        "generate_example_responses_disabled_has_responses": "只能為沒有回應的問卷產生範例回應。請重設問卷後再試。",
         "generate_example_responses_locked_disabled": "此組織已停用 AI 範例回覆功能。",
         "generate_example_responses_locked_instance": "此實例尚未設定 AI 功能。請聯絡您的管理員。",
         "generate_example_responses_locked_plan": "您目前的方案不包含 AI 範例回覆功能。",
