@@ -1,10 +1,10 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@formbricks/database/errors";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "../utils/validate";
 
 const selectTagsOnResponse = {

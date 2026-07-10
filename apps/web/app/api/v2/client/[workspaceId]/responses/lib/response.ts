@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { isPrismaKnownRequestError } from "@formbricks/database/errors";
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import {
@@ -25,7 +26,6 @@ import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { isPrismaKnownRequestError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContact } from "./contact";
 

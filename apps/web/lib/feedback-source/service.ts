@@ -1,6 +1,12 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import {
+  isForeignKeyConstraintError,
+  isPrismaKnownRequestError,
+  isUniqueConstraintError,
+  prismaErrorMetaIncludes,
+} from "@formbricks/database/errors";
 import { Prisma } from "@formbricks/database/prisma";
 import type { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -17,7 +23,6 @@ import {
   ZFeedbackSourceCreateInput,
   ZFeedbackSourceUpdateInput,
 } from "@formbricks/types/feedback-source";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -234,43 +239,18 @@ const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): Invalid
   return new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE");
 };
 
-// Recursively collect every string in a Prisma error `meta`. Prisma 7's driver adapters (this repo
-// uses @prisma/adapter-pg) nest the real constraint name deep under
-// `meta.driverAdapterError.cause` (constraint.index / originalMessage), so a shallow scan of
-// `Object.values(meta)` would only see `modelName` and miss it — mis-mapping the violation.
-const collectMetaStrings = (value: unknown): string[] => {
-  if (typeof value === "string") {
-    return [value];
-  }
-  if (Array.isArray(value)) {
-    return value.flatMap(collectMetaStrings);
-  }
-  if (value && typeof value === "object") {
-    return Object.values(value).flatMap(collectMetaStrings);
-  }
-  return [];
-};
-
 /**
  * Detects a foreign-key violation of the composite FeedbackSource -> FeedbackDirectoryWorkspace
- * constraint (ENG-1148). The Prisma P2003 `meta` shape varies by version/adapter, so we deep-scan
- * every string in it for the composite-FK constraint name; the substring fallback (for shapes that
- * only expose columns) is anchored to the `FeedbackSource` table so an unrelated future junction
- * table carrying both column names can't be misclassified. Other FK violations fall through to the
- * caller's generic handling.
+ * constraint (ENG-1148). The Prisma P2003 `meta` shape varies by version/adapter, so we match the
+ * composite-FK constraint name via the deep-scanning `prismaErrorMetaIncludes` primitive; the
+ * column-set fallback (for shapes that only expose columns) is anchored to the `FeedbackSource`
+ * table so an unrelated future junction table carrying both column names can't be misclassified.
+ * Other FK violations fall through to the caller's generic handling.
  */
-export const isDirectoryWorkspaceFkViolation = (error: PrismaClientKnownRequestError): boolean => {
-  if (error.code !== PrismaErrorType.ForeignKeyConstraintViolation) {
-    return false;
-  }
-  const haystack = collectMetaStrings(error.meta).join(" ");
-  return (
-    haystack.includes("FeedbackSource_feedbackDirectoryId_workspaceId_fkey") ||
-    (haystack.includes("FeedbackSource") &&
-      haystack.includes("feedbackDirectoryId") &&
-      haystack.includes("workspaceId"))
-  );
-};
+export const isDirectoryWorkspaceFkViolation = (error: PrismaClientKnownRequestError): boolean =>
+  isForeignKeyConstraintError(error) &&
+  (prismaErrorMetaIncludes(error, "FeedbackSource_feedbackDirectoryId_workspaceId_fkey") ||
+    prismaErrorMetaIncludes(error, "FeedbackSource", "feedbackDirectoryId", "workspaceId"));
 
 export type TFormbricksMappingsInput = {
   type: "formbricks_survey";

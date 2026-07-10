@@ -3,11 +3,11 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@formbricks/database/errors";
 import { ActionClass, Prisma } from "@formbricks/database/prisma";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 

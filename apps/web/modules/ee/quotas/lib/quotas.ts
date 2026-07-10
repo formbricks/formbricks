@@ -1,12 +1,12 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@formbricks/database/errors";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getQuota = reactCache(async (quotaId: string): Promise<TSurveyQuota> => {

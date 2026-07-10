@@ -1,9 +1,9 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@formbricks/database/errors";
 import { TWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {

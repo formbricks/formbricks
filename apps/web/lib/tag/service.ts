@@ -1,10 +1,10 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { isUniqueConstraintError } from "@formbricks/database/errors";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
-import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { TagError } from "../../modules/workspaces/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";

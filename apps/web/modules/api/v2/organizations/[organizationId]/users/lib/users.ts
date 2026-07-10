@@ -1,8 +1,8 @@
 import { prisma } from "@formbricks/database";
+import { isUniqueConstraintError } from "@formbricks/database/errors";
 import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/prisma";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
   TGetUsersFilter,
