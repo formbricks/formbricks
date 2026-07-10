@@ -14,7 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PanelLeftIcon, PanelRightOpenIcon, PlayIcon } from "lucide-react";
+import { ListChecksIcon, PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -244,8 +244,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
           onClick={handleRunWorkflow}
           loading={isTesting}
           disabled={!isTestable || isTesting}>
-          {t("workspace.workflows.test")}
-          <PlayIcon className="size-4" />
+          {t("workspace.workflows.validate")}
+          <ListChecksIcon className="size-4" />
         </Button>
         {/* The inspector only ever shows a node's config now, so the collapse toggle is only
             offered while one is open. */}

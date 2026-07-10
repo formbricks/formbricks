@@ -4075,7 +4075,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "Отправить email на {to}.",
       "send_email_unconfigured": "Настрой получателя email.",
-      "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
       "test_problem_generic": "This workflow has a configuration problem.",
@@ -4100,6 +4099,7 @@
       "unarchive": "Восстановить из архива",
       "unarchive_failed": "Не удалось восстановить воркфлоу из архива. Попробуй ещё раз.",
       "unarchive_success": "Воркфлоу восстановлен из архива.",
+      "validate": "Проверить",
       "validation_failed": "Проверка рабочего процесса не пройдена.",
       "zoom_in": "Увеличить",
       "zoom_out": "Уменьшить"

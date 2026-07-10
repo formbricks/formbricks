@@ -4075,7 +4075,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "Skicka ett e-postmeddelande till {to}.",
       "send_email_unconfigured": "Konfigurera e-postmottagaren.",
-      "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
       "test_problem_generic": "This workflow has a configuration problem.",
@@ -4100,6 +4099,7 @@
       "unarchive": "Återställ",
       "unarchive_failed": "Det gick inte att återställa arbetsflödet. Försök igen.",
       "unarchive_success": "Arbetsflödet har återställts.",
+      "validate": "Validera",
       "validation_failed": "Validering av arbetsflöde misslyckades.",
       "zoom_in": "Zooma in",
       "zoom_out": "Zooma ut"

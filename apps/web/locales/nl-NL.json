@@ -4075,7 +4075,6 @@
       "send_email_description": "Send an email when this workflow runs.",
       "send_email_summary": "Verstuur een e-mail naar {to}.",
       "send_email_unconfigured": "Configureer de e-mailontvanger.",
-      "test": "Test",
       "test_failed": "Could not test the workflow.",
       "test_problem_ending_card_not_found": "A selected ending no longer exists on the connected survey.",
       "test_problem_generic": "This workflow has a configuration problem.",
@@ -4100,6 +4099,7 @@
       "unarchive": "Dearchiveren",
       "unarchive_failed": "Dearchiveren van de workflow is mislukt. Probeer het opnieuw.",
       "unarchive_success": "Workflow gedearchiveerd.",
+      "validate": "Valideren",
       "validation_failed": "Workflowvalidatie mislukt.",
       "zoom_in": "Inzoomen",
       "zoom_out": "Uitzoomen"
