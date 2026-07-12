@@ -1,0 +1,222 @@
+// =============================================================================
+// Formbricks — SpiceDB schema DRAFT v0 (straw-man, to be challenged)
+// =============================================================================
+// Companion to research/authorization/README.md — read that first.
+//
+// Design goals:
+//   1. Day-0 parity: every grant that exists today maps 1:1 onto this schema,
+//      so we can migrate without changing behavior, then add sharing on top.
+//   2. Per-object sharing (survey first) for users, teams, org-role sets and
+//      share links — matching the Figma sharing UX draft.
+//   3. Product-inherent dependencies (targeting → contact directory,
+//      charts → feedback dataset) are explicit, attenuated edges — not
+//      accidental side effects of container inheritance.
+//   4. Coarse objects only: no per-response or per-contact tuples (3–4M
+//      responses at BI). Row-level rules stay in the app/data layer.
+//
+// Conventions: relations = stored facts (who was granted what);
+// permissions = computed verbs the app checks via can(actor, verb, resource).
+// =============================================================================
+
+use expiration
+
+// -----------------------------------------------------------------------------
+// Caveats (ABAC predicates — keep few and small)
+// -----------------------------------------------------------------------------
+
+// Example: BI's "managers see EX results only above n responses".
+// response_count is provided by the app at check time; threshold is stored
+// on the relationship when the grant is created.
+caveat min_responses(response_count int, threshold int) {
+  response_count >= threshold
+}
+
+// -----------------------------------------------------------------------------
+// Principals
+// -----------------------------------------------------------------------------
+
+definition user {}
+
+// Machine principals. API keys become service accounts and receive grants
+// exactly like users do (PAT-style: attenuated, never privilege-escalating).
+definition service_account {}
+
+// A share link is itself a principal: possession of the token (plus app-side
+// password/audience checks) lets the bearer act as `share_link:<id>`.
+// Revoking the link = deleting its tuples. Expiry via `with expiration`.
+definition share_link {}
+
+// -----------------------------------------------------------------------------
+// Tenancy
+// -----------------------------------------------------------------------------
+
+definition organization {
+  relation owner: user
+  relation manager: user
+  relation member: user
+  relation billing_manager: user
+
+  // Coarse org administration stays RBAC-shaped (deliberately).
+  permission admin = owner + manager
+  permission manage_members = admin
+  permission manage_teams = admin
+  permission manage_api_keys = admin
+  permission manage_billing = owner + billing_manager
+  permission view = owner + manager + member + billing_manager
+  permission create_workspace = admin           // Q: allow members? (today: no)
+}
+
+definition team {
+  relation org: organization
+
+  // NOTE: SpiceDB subject-relations must reference relations, not permissions.
+  // Convention: every team user (incl. admins) gets a `member` tuple;
+  // admins additionally get `admin`. Mirrors Prisma TeamUser(admin|contributor).
+  relation admin: user
+  relation member: user
+
+  permission manage = admin + org->admin
+  permission view = member + manage
+}
+
+// -----------------------------------------------------------------------------
+// Containers
+// -----------------------------------------------------------------------------
+
+// Today's "Workspace". Whether we keep it, rename it, add folders, or add
+// personal workspaces is a product question (README Q1/Q5) — schema-wise a
+// personal workspace is just a workspace with a single user manager.
+definition workspace {
+  relation org: organization
+
+  // Dependency wiring: which contact pool this workspace's surveys target.
+  // (Today implicit: contacts are rows inside the workspace. Making it a
+  // relation keeps the door open for org-level shared directories — Q5.)
+  relation directory: contact_directory
+
+  // Today: only teams hold these (WorkspaceTeam.read/readWrite/manage).
+  // Target: users can hold them directly too (removes the forced
+  // one-person-team workaround).
+  relation manager: user | team#member | service_account
+  relation editor: user | team#member | service_account
+  relation viewer: user | team#member | service_account
+
+  permission manage = manager + org->admin
+  permission edit = editor + manage
+  permission view = viewer + edit
+  permission use_contact_directory = directory->use_for_targeting
+}
+
+// -----------------------------------------------------------------------------
+// Shareable resources
+// -----------------------------------------------------------------------------
+
+// The pilot resource for per-object sharing (Figma: People/Teams/Roles/Links,
+// levels: edit / view / view summary only, grants can expire).
+definition survey {
+  relation workspace: workspace
+  relation owner: user            // real ownership (manage access), not just attribution
+
+  // Direct grants. Subject types cover the Figma tabs:
+  //   people = user, teams = team#member, roles = organization#manager /
+  //   organization#member (org-role sets), links = share_link.
+  // Any grant may be time-boxed (Figma: team "Sales — can view until 20 Jan
+  // 2027"); the `with expiration` variants make that first-class per subject.
+  relation editor: user | user with expiration | team#member | team#member with expiration | organization#manager | organization#member | service_account | share_link with expiration
+  relation viewer: user | user with expiration | team#member | team#member with expiration | organization#manager | organization#member | service_account | share_link with expiration
+  // "Can view summary only": aggregates, no individual responses (also the
+  // hook for BI's min-response thresholds via the min_responses caveat).
+  relation summary_viewer: user | user with expiration | user with min_responses | team#member | team#member with expiration | organization#manager | organization#member | service_account | share_link with expiration
+
+  permission manage_access = owner + workspace->manage
+  permission edit = editor + manage_access + workspace->edit
+  permission view_responses = viewer + edit + workspace->view
+  permission view_summary = summary_viewer + view_responses
+
+  // Product-inherent dependency (attenuated): editing targeting requires the
+  // directory the workspace is wired to — granted via the survey's workspace,
+  // NEVER via the survey grant itself. An external collaborator with `edit`
+  // on one survey does not automatically reach the contact directory
+  // (see README §5.5 for the tradeoff this creates in the targeting editor).
+  permission use_contact_directory = workspace->use_contact_directory
+
+  // Respondent surface (public link, in-app widget) stays OUTSIDE SpiceDB:
+  // delivery is governed by survey status/settings (pin, singleUse, segments),
+  // not by ACLs. Modeling it here would add tuples with zero decisions gained.
+}
+
+// Contacts as a first-class shared pool ("contact directory"), decoupled from
+// workspaces the same way FeedbackDirectory already is (org-owned, assigned to
+// workspaces). Today contacts are hard-scoped per workspace; this object makes
+// the future direction expressible without forcing the product decision yet.
+definition contact_directory {
+  relation org: organization
+  relation workspace_access: workspace   // which workspaces may use this pool
+
+  relation manager: user | team#member | service_account
+  relation viewer: user | team#member | service_account
+
+  permission manage = manager + org->admin
+  // Seeing PII (contact list, attribute values) — deliberately stricter than
+  // "using" the directory for targeting.
+  permission view_contacts = viewer + manage + workspace_access->view
+  // Existence + attribute keys + segment evaluation, WITHOUT PII read.
+  // This is the attenuated edge survey targeting depends on.
+  permission use_for_targeting = view_contacts + workspace_access->edit
+}
+
+// Unify Feedback: FeedbackDirectory ("Feedback Dataset") is already org-owned
+// and workspace-assigned — the one resource that today works like the target
+// model. Records live in the external Hub keyed by tenant_id = dataset id.
+definition feedback_dataset {
+  relation org: organization
+  relation workspace_access: workspace   // FeedbackDirectoryWorkspace join
+
+  relation viewer: user | team#member | service_account
+
+  permission manage = org->admin                       // datasets/sources/topics admin
+  // Today's hybrid records gate: org admin OR access to an assigned workspace.
+  permission view_records = viewer + manage + workspace_access->view
+}
+
+// Dashboards & charts. Key decision encoded here (README Q7): a dashboard
+// grant lets you SEE the dashboard; the numbers render only if you can reach
+// the underlying dataset — OR the dashboard is explicitly marked as a
+// read-through view (curated exposure), which is what BI's "agency sees one
+// dashboard" case needs.
+definition dashboard {
+  relation workspace: workspace
+  relation owner: user
+  relation editor: user | team#member | organization#manager | organization#member | service_account | share_link with expiration
+  relation viewer: user | team#member | organization#manager | organization#member | service_account | share_link with expiration
+
+  permission manage_access = owner + workspace->manage
+  permission edit = editor + manage_access + workspace->edit
+  permission view = viewer + edit + workspace->view
+}
+
+definition chart {
+  relation workspace: workspace
+  relation dataset: feedback_dataset
+  relation dashboard: dashboard          // dashboards embedding this chart
+
+  permission edit = workspace->edit
+  // The load-bearing edge: querying data requires dataset access…
+  permission query_direct = dataset->view_records
+  // …except through a dashboard that was deliberately shared as a curated
+  // view — then the dashboard grant carries scoped read-through.
+  permission query = query_direct + dashboard->view
+}
+
+// =============================================================================
+// Day-0 parity mapping (how today's grants become tuples — see README §5.4):
+//   Membership(role)              → organization:<org>#<owner|manager|member|billing_manager>@user:<u>
+//   TeamUser(admin|contributor)   → team:<t>#admin/#member@user:<u> (+ member for admins)
+//   WorkspaceTeam(read)           → workspace:<w>#viewer@team:<t>#member
+//   WorkspaceTeam(readWrite)      → workspace:<w>#editor@team:<t>#member
+//   WorkspaceTeam(manage)         → workspace:<w>#manager@team:<t>#member
+//   ApiKeyWorkspace(read/write/manage) → workspace:<w>#viewer/editor/manager@service_account:<key>
+//   ApiKey.organizationAccess     → org-level relations on service_account (README Q8)
+//   FeedbackDirectoryWorkspace    → feedback_dataset:<d>#workspace_access@workspace:<w>
+//   Survey/Chart/Dashboard.createdBy → attribution only, NOT an owner tuple (per direction)
+// =============================================================================
