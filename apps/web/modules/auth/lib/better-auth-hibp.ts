@@ -49,8 +49,9 @@ const HIBP_RANGE_URL = "https://api.pwnedpasswords.com/range";
 const isPasswordCompromised = async (password: string): Promise<boolean> => {
   // SHA-1 is mandated by the HaveIBeenPwned range (k-anonymity) API — only the first 5 hex chars of
   // this digest ever leave the process, and it is NOT used for storage or authentication (bcrypt via
-  // hashSecret does that). CodeQL's "insufficient computational effort" alert here is a false positive.
-  const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase();
+  // hashSecret does that). The CodeQL "insufficient computational effort" and SonarQube S4790
+  // weak-hash alerts here are false positives.
+  const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase(); // NOSONAR S4790 - see above
   const prefix = sha1.substring(0, 5);
   const suffix = sha1.substring(5);
 
