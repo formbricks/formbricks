@@ -42,8 +42,9 @@ const HIBP_FETCH_TIMEOUT_MS = 3000;
 const HIBP_RANGE_URL = "https://api.pwnedpasswords.com/range";
 
 /**
- * Returns true only when the password is confirmed present in the breach corpus. Any network / parse
- * failure returns false (fail open) after logging — never throws for infrastructure problems.
+ * Returns true only when the password is confirmed present in the breach corpus. A network failure,
+ * timeout, or non-OK response returns false (fail open) after logging — never throws for
+ * infrastructure problems.
  */
 const isPasswordCompromised = async (password: string): Promise<boolean> => {
   const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase();
@@ -55,6 +56,9 @@ const isPasswordCompromised = async (password: string): Promise<boolean> => {
       // "Add-Padding" pads the response with decoy hashes so the row count can't hint at the prefix.
       headers: { "Add-Padding": "true", "User-Agent": "Formbricks Password Checker" },
       signal: AbortSignal.timeout(HIBP_FETCH_TIMEOUT_MS),
+      // Next.js instruments global fetch with its Data Cache — force every check to hit the live corpus
+      // so a breach verdict is never served from a cached/stale response.
+      cache: "no-store",
     });
 
     if (!res.ok) {
