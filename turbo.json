@@ -210,9 +210,11 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
+        "IMAGES_ALLOW_ALL_HTTPS_HOSTS",
         "NODE_ENV",
         "ASSET_PREFIX_URL",
         "BASE_PATH",
+        "PUBLIC_URL",
         "SENTRY_AUTH_TOKEN",
         "E2E_TESTING",
         "WEBAPP_URL",
@@ -347,7 +349,6 @@
         "STRIPE_PUBLISHABLE_KEY",
         "SURVEYS_PACKAGE_MODE",
         "SURVEYS_PACKAGE_BUILD",
-        "PUBLIC_URL",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
         "RECAPTCHA_SITE_KEY",

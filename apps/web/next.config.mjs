@@ -491,11 +491,41 @@ if (process.env.WEBAPP_URL) {
   };
 }
 
-// Allow all origins for next/image
-nextConfig.images.remotePatterns.push({
-  protocol: "https",
-  hostname: "**",
-});
+// next/image remote hosts (ENG-1678): the optimizer only fetches from the allowlist in
+// images.remotePatterns above. Uploaded files are served from same-origin /storage/... paths and
+// are unaffected. Instance-specific hosts (own domain, custom S3 endpoint) are derived from the
+// environment below. Deployments that render user-provided image URLs from arbitrary external
+// hosts can opt back into the previous allow-all behavior with IMAGES_ALLOW_ALL_HTTPS_HOSTS=1 —
+// note this exposes the image optimizer as an open proxy, so prefer extending the allowlist.
+const remoteImagePatternFromUrl = (url) => {
+  if (!url) return undefined;
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== "http:" && protocol !== "https:") return undefined;
+    return { protocol: protocol.slice(0, -1), hostname };
+  } catch {
+    return undefined;
+  }
+};
+
+for (const candidateUrl of [process.env.WEBAPP_URL, process.env.PUBLIC_URL, process.env.S3_ENDPOINT_URL]) {
+  const pattern = remoteImagePatternFromUrl(candidateUrl);
+  if (
+    pattern &&
+    !nextConfig.images.remotePatterns.some(
+      (existing) => existing.hostname === pattern.hostname && existing.protocol === pattern.protocol
+    )
+  ) {
+    nextConfig.images.remotePatterns.push(pattern);
+  }
+}
+
+if (process.env.IMAGES_ALLOW_ALL_HTTPS_HOSTS === "1") {
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: "**",
+  });
+}
 
 const sentryOptions = {
   // For all available options, see:
