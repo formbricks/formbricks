@@ -103,6 +103,7 @@
     "saml_connection_error": "Valami probléma történt. A további részletekért nézze meg az alkalmazás konzolját.",
     "signup": {
       "captcha_failed": "A captcha sikertelen",
+      "company_email_required": "Kérjük, regisztrálj a céges e-mail-címeddel.",
       "have_an_account": "Van fiókja?",
       "log_in": "Bejelentkezés",
       "password_validation_contain_at_least_1_number": "Legalább 1 számot tartalmazzon",

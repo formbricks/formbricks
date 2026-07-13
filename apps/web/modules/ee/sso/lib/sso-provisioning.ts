@@ -2,15 +2,16 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
-import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
+import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { updateUser } from "@/modules/auth/lib/user";
-import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
+import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { getAccessControlPermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getFirstOrganization } from "@/modules/ee/sso/lib/organization";
 import { createDefaultTeamMembership, getOrganizationByTeamId } from "@/modules/ee/sso/lib/team";
@@ -33,19 +34,28 @@ export type TSsoProvisioningDecision =
  */
 const validateSsoInviteToken = async (email: string, callbackUrl: string): Promise<string | null> => {
   if (!callbackUrl) return "missing_callback_url";
+  let inviteToken = "";
   try {
     // Resolve against WEBAPP_URL so a root-relative callback (e.g. `/auth/signup?token=…`) parses
-    // instead of throwing — a bare `new URL()` would reject it as invite_token_validation_error.
+    // instead of throwing — a bare `new URL()` would reject it.
     const url = new URL(callbackUrl, WEBAPP_URL);
-    const inviteToken = url.searchParams.get("token") || "";
+    inviteToken = url.searchParams.get("token") || "";
     const source = url.searchParams.get("source") || "";
     if (source === "signin" && !inviteToken) return "signin_without_invite_token";
-    const { email: inviteEmail, inviteId } = verifyInviteToken(inviteToken);
-    if (inviteEmail !== email) return "invite_email_mismatch";
-    if (!(await getIsValidInviteToken(inviteId))) return "invalid_invite_token";
-    return null;
   } catch {
     return "invite_token_validation_error";
+  }
+  // Delegate the token → email-match → validity trio to the shared, case-insensitive helper (the
+  // credentials gate uses the same one), mapping its outcome to this gate's granular reject reasons.
+  switch (await resolveInviteMatch(inviteToken, email)) {
+    case "valid":
+      return null;
+    case "email_mismatch":
+      return "invite_email_mismatch";
+    case "invalid_or_expired":
+      return "invalid_invite_token";
+    default:
+      return "invite_token_validation_error"; // "missing" | "verification_error"
   }
 };
 
@@ -71,6 +81,19 @@ export const gateSsoProvisioning = async ({
   email: string;
   callbackUrl: string;
 }): Promise<TSsoProvisioningDecision> => {
+  // Formbricks Cloud only: block SSO sign-ups from personal/free/disposable email domains, before any
+  // org resolution. Placed above the multi-org / fresh-instance bypass below (Cloud is multi-org, so
+  // the bypass would otherwise let these through). Invited users — a valid token whose email matches —
+  // are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is set; the exemption reuses the same invite
+  // validation as the gate below and runs lazily, only when the domain is actually blocked.
+  const isDomainBlocked = await isSignupEmailDomainBlocked(
+    email,
+    async () => (await validateSsoInviteToken(email, callbackUrl)) === null
+  );
+  if (isDomainBlocked) {
+    return { action: "reject", reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE };
+  }
+
   const signupSource = callbackUrl.includes("token=") ? "invite" : "direct";
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();

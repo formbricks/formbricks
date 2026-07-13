@@ -103,6 +103,7 @@
     "saml_connection_error": "Något gick fel. Kontrollera din appkonsol för mer information.",
     "signup": {
       "captcha_failed": "Captcha misslyckades",
+      "company_email_required": "Registrera dig med din företagsmejladress.",
       "have_an_account": "Har du ett konto?",
       "log_in": "Logga in",
       "password_validation_contain_at_least_1_number": "Innehålla minst 1 siffra",
