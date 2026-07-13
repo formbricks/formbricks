@@ -104,6 +104,10 @@ export const MAX_OTHER_OPTION_LENGTH = 250;
 export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 
+// Cloud-only kill-switch: when enabled, the personal-email sign-up block also applies to invited
+// users (default exempts invites). See @/modules/auth/lib/signup-email-domain.
+export const SIGNUP_DOMAIN_CHECK_ON_INVITES = env.SIGNUP_DOMAIN_CHECK_ON_INVITES === "1";
+
 export const SLACK_MESSAGE_LIMIT = 2995;
 export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;
 export const AIRTABLE_MESSAGE_LIMIT = 99995;

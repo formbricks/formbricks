@@ -103,6 +103,7 @@
     "saml_connection_error": "問題が発生しました。詳細については、アプリのコンソールを確認してください。",
     "signup": {
       "captcha_failed": "CAPTCHAに失敗しました",
+      "company_email_required": "会社のメールアドレスで登録してください。",
       "have_an_account": "すでにアカウントをお持ちですか？",
       "log_in": "ログイン",
       "password_validation_contain_at_least_1_number": "1つ以上の数字を含める",

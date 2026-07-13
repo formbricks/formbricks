@@ -21,21 +21,13 @@ import {
   accountDeletionConfig,
   requireDeletionConfirmationBeforeHandler,
 } from "@/modules/account/lib/better-auth-account-deletion";
-import {
-  ssoDatabaseHooks,
-  ssoLicenseGateBeforeHandler,
-  ssoRecoveryAfterHandler,
-} from "@/modules/ee/sso/lib/better-auth-hooks";
+import { ssoDatabaseHooks, ssoLicenseGateBeforeHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
+import { runAfterAuthHooks } from "./after-auth-hooks";
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
-import {
-  auditFailedAuthAfter,
-  auditPasswordReset,
-  betterAuthLogger,
-  signInAuditDatabaseHook,
-} from "./better-auth-observability";
+import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
@@ -245,10 +237,7 @@ export const auth = betterAuth({
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
     }),
-    after: createAuthMiddleware(async (ctx) => {
-      await ssoRecoveryAfterHandler(ctx);
-      await auditFailedAuthAfter(ctx);
-    }),
+    after: createAuthMiddleware(runAfterAuthHooks),
   },
 
   rateLimit: {
