@@ -364,6 +364,7 @@ export const ZResponseInput = z.object({
   userId: z.string().nullish(),
   displayId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
+  pinAuthToken: z.string().nullish(),
   finished: z.boolean(),
   endingId: z.string().nullish(),
   language: z.string().optional(),

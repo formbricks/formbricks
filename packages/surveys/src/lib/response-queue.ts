@@ -662,6 +662,7 @@ export class ResponseQueue {
           userId: this.surveyState.userId || null,
           singleUseId: this.surveyState.singleUseId || null,
           displayId: this.surveyState.displayId,
+          pinAuthToken: this.surveyState.pinAuthToken || null,
           recaptchaToken: this.responseRecaptchaToken ?? undefined,
         });
 
