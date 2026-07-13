@@ -1,3 +1,4 @@
+# Node major must stay in sync with .nvmrc (single source of truth for dev + CI + prod).
 FROM node:24-alpine3.23 AS base
 
 #
