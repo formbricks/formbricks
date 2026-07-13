@@ -42,8 +42,10 @@ export const useSwitcherData = (
   // Hold the latest loader/onError in refs so callers can pass inline closures (e.g. ones that close
   // over organizationId) without memoizing them and without churning `load`'s identity every render.
   const loaderRef = useRef(loader);
+  // eslint-disable-next-line react-hooks/refs -- migration ENG-1677
   loaderRef.current = loader;
   const onErrorRef = useRef(onError);
+  // eslint-disable-next-line react-hooks/refs -- migration ENG-1677
   onErrorRef.current = onError;
 
   const load = useCallback(

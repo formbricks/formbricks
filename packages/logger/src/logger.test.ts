@@ -257,7 +257,7 @@ describe("Logger", () => {
 
     const mockLogger = createMockLogger();
     mockLogger.child = childSpy;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
     vi.mocked(Pino).mockReturnValue(mockLogger as any);
 
     // Now import the logger with our updated mock
@@ -279,7 +279,7 @@ describe("Logger", () => {
 
     const mockLogger = createMockLogger();
     mockLogger.child = childSpy;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
     vi.mocked(Pino).mockReturnValue(mockLogger as any);
 
     // Now import the logger with our updated mock
@@ -319,7 +319,7 @@ describe("Logger", () => {
     (mockLogger as unknown as { [mockStreamSym]: typeof stream })[mockStreamSym] = stream;
     const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
     vi.mocked(Pino).mockReturnValue(mockLogger as any);
 
     await import("./logger");
@@ -337,7 +337,7 @@ describe("Logger", () => {
 
     process.env.NEXT_RUNTIME = "nodejs";
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
     vi.mocked(Pino).mockReturnValue(createMockLogger() as any);
 
     await import("./logger");
@@ -357,7 +357,7 @@ describe("Logger", () => {
 
     process.env.NEXT_RUNTIME = "edge";
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required to mock Pino.Logger with generics in strict TypeScript, as TS cannot infer the correct generic type for the mock object
     vi.mocked(Pino).mockReturnValue(createMockLogger() as any);
 
     await import("./logger");

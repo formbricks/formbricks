@@ -435,7 +435,6 @@ export const PricingTable = ({
       cancelled = true;
       toast.dismiss(toastId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, router, t, organizationId]);
 
   const paymentError = organization.billing.stripe?.paymentAttemptError;
@@ -473,7 +472,6 @@ export const PricingTable = ({
     };
     // Keyed on scalar fields: the billing snapshot object gets a new reference on every
     // server render (router.refresh), which would re-fire the toast for the same error.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentError?.type, paymentError?.paymentIntentId, paymentError?.createdAt, t]);
 
   const planCards = useMemo<TPlanCardData[]>(() => {

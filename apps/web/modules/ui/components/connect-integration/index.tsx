@@ -43,7 +43,6 @@ export const ConnectIntegration = ({
     if (error) {
       toast.error(t("workspace.integrations.connecting_integration_failed_please_try_again"));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

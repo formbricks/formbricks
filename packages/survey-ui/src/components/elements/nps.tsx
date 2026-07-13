@@ -102,7 +102,6 @@ function NPS({
     const { borderRadiusClasses, borderClasses } = getRTLScaleOptionClasses(isFirst, isLast);
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
         tabIndex={disabled ? -1 : 0}

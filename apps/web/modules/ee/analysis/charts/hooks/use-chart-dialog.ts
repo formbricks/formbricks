@@ -155,7 +155,6 @@ export function useChartDialog({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, chartId, workspaceId, initialChart]);
 
   const handleChartGenerated = (data: AnalyticsResponse) => {

@@ -154,7 +154,6 @@ export const PreviewSurvey = ({
       resetProgress();
       surveyNameTemp = survey.name;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
   const resetProgress = () => {

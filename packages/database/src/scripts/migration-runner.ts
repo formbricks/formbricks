@@ -141,7 +141,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
     } catch (error) {
       // Record migration failure
       logger.error(error, `Data migration ${migration.name} failed`);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- we need to check if the migration has a lock
+
       if (hasLock) {
         // Mark migration as failed
         await prisma.$queryRaw`

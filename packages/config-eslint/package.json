@@ -2,17 +2,23 @@
   "name": "@formbricks/eslint-config",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.mjs",
+    "./library": "./library.mjs",
+    "./next": "./next.mjs",
+    "./react": "./react.mjs",
+    "./react-hooks": "./react-hooks.mjs"
+  },
   "devDependencies": {
-    "@next/eslint-plugin-next": "15.5.18",
-    "@typescript-eslint/eslint-plugin": "8.57.2",
-    "@typescript-eslint/parser": "8.57.2",
-    "@vercel/style-guide": "6.0.0",
-    "eslint-config-next": "15.5.18",
+    "@eslint/js": "9.39.5",
+    "@vitest/eslint-plugin": "1.6.17",
+    "eslint-config-next": "16.2.6",
     "eslint-config-prettier": "10.1.8",
     "eslint-config-turbo": "2.8.21",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "5.2.0",
-    "eslint-plugin-react-refresh": "0.5.2",
-    "@vitest/eslint-plugin": "1.6.17"
+    "globals": "16.5.0",
+    "typescript-eslint": "8.63.0"
   }
 }
