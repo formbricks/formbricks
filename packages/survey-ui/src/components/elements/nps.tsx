@@ -103,6 +103,7 @@ function NPS({
     return (
       <label
         key={number}
+        data-fb-scale-cell
         className={cn(
           "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
           borderClasses,
