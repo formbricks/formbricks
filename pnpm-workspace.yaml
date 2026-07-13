@@ -79,6 +79,7 @@ overrides:
 
 autoInstallPeers: true
 linkWorkspacePackages: true
+shamefullyHoist: true
 sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
@@ -86,8 +87,8 @@ enablePrePostScripts: true
 # (undeclared) dependencies — e.g. @formbricks/js-core reaches into sibling packages (ENG-1681)
 # and react/react-dom are hoisted from the workspace root (ENG-1693). Moving to the strict
 # `isolated` linker is the long-term goal (ENG-1674); fix the undeclared deps first.
-# Note: `shamefullyHoist` is only consulted by the isolated linker, so it is intentionally
-# not set here.
+# `shamefullyHoist` above is left untouched here — it becomes meaningful only under the isolated
+# linker, so it is handled together with that migration rather than in this cleanup.
 nodeLinker: hoisted
 saveExact: true
 minimumReleaseAgeExclude:
