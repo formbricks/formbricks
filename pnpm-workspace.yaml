@@ -86,10 +86,16 @@ enablePrePostScripts: true
 legacyPeerDeps: true
 nodeLinker: hoisted
 saveExact: true
-# Supply-chain release cooldown: refuse to resolve package versions published less than
+# Supply-chain release cooldown: refuse to install package versions published less than
 # 3 days (4320 minutes) ago, so compromised releases are usually detected/yanked before we
-# can pull them. Existing lockfile entries are unaffected; only new resolutions are gated.
+# can pull them. pnpm 11 already defaults to 1 day; we raise it to 3 days and pin it
+# explicitly. Note: with trustLockfile disabled (below), `pnpm install` re-verifies entries
+# already in the lockfile against this policy too — a lockfile bump younger than 3 days
+# (e.g. written by a bot) fails install until it ages or is excluded below. Intended.
 minimumReleaseAge: 4320
+# Keep the install-time re-verification of lockfile entries active (this is pnpm's default;
+# pinned explicitly so a future default flip can't silently weaken the cooldown).
+trustLockfile: false
 minimumReleaseAgeExclude:
   # First-party SDK (published by Formbricks' own CI) — exempt all versions from the release-age gate so
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
