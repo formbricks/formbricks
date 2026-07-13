@@ -202,13 +202,15 @@ export const SummaryPage = ({
         console.error(error);
         // Roll back the key on failure so re-selecting the same filter retries the fetch.
         lastFetchedFiltersKeyRef.current = null;
+        // fetchSummary throws an Error whose message is already the formatted server error.
+        toast.error(error instanceof Error ? error.message : t("common.something_went_wrong"));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchFilteredSummary();
-  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, survey]);
+  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, survey, t]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
