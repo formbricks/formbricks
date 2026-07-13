@@ -69,19 +69,9 @@ function NPS({
     }
   };
 
-  // Handle keyboard navigation
-  const handleKeyDown = (npsValue: number) => (e: React.KeyboardEvent) => {
-    if (disabled) return;
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleSelect(npsValue);
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      e.preventDefault();
-      const direction = e.key === "ArrowLeft" ? -1 : 1;
-      const newValue = Math.max(0, Math.min(10, (currentValue ?? 0) + direction));
-      handleSelect(newValue);
-    }
-  };
+  // Keyboard interaction lives on the native radio inputs: the options share a
+  // radio group name, so the group is a single Tab stop and the focusable
+  // control is the <input>, not the label.
 
   // Get NPS option color for color coding
   const getNPSOptionColor = (idx: number): string => {
@@ -102,13 +92,10 @@ function NPS({
     const { borderRadiusClasses, borderClasses } = getRTLScaleOptionClasses(isFirst, isLast);
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={handleKeyDown(number)}
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors focus:outline-none",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
           borderClasses,
           isSelected
             ? "bg-brand-20 border-brand z-10 -ml-[1px] border-2 first:ml-0"
@@ -116,8 +103,7 @@ function NPS({
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
-          disabled && "cursor-not-allowed opacity-50",
-          "focus:border-brand focus:border-2"
+          disabled && "cursor-not-allowed opacity-50"
         )}
         onMouseEnter={() => {
           if (!disabled) {
