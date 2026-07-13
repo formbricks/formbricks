@@ -16,6 +16,7 @@ A Helm chart for Formbricks with PostgreSQL, Valkey
 
 | Repository                               | Name         | Version |
 | ---------------------------------------- | ------------ | ------- |
+| file://../spicedb-operator               | spicedbOperator | 0.1.0 |
 | oci://registry-1.docker.io/bitnamicharts | postgresql   | 16.4.16 |
 | oci://docker.io/envoyproxy               | gateway-helm | v1.7.1  |
 | oci://registry-1.docker.io/bitnamicharts | envoyRedis   | 20.11.2 |
@@ -44,6 +45,53 @@ The intended defaults are:
 
 - self-hosted / single-tenant clusters: bundled controller mode
 - shared clusters with an existing platform controller: external-controller mode
+
+## AuthZed / SpiceDB
+
+AuthZed is disabled by default. To deploy SpiceDB with Formbricks and the bundled PostgreSQL chart:
+
+```yaml
+authzed:
+  enabled: true
+  operator:
+    install: true
+```
+
+This installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, generates a stable preshared
+key, and creates a dedicated `spicedb` database and role in the bundled PostgreSQL server. The operator runs
+datastore migrations before rolling out SpiceDB.
+
+Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
+namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
+Kubernetes does not upgrade CRDs during a normal Helm upgrade. When changing the bundled operator version, apply
+the matching `charts/spicedb-operator/crds/authzed.com_spicedbclusters.yaml` before upgrading the release.
+
+For managed PostgreSQL, create a dedicated database and login outside Helm and expose these keys in a Kubernetes
+Secret:
+
+```yaml
+stringData:
+  datastore_uri: postgresql://spicedb:<password>@postgres.example:5432/spicedb?sslmode=require
+  preshared_key: <strong-random-token>
+```
+
+Then reference it from the release:
+
+```yaml
+authzed:
+  enabled: true
+  mode: selfHosted
+  auth:
+    existingSecret: formbricks-authzed
+  datastore:
+    existingSecret: formbricks-authzed
+```
+
+To connect to an AuthZed-managed or otherwise external endpoint, set `authzed.mode=external`, provide
+`authzed.endpoint`, and reference a Secret containing `preshared_key`. The chart injects `AUTHZED_ENABLED`,
+`AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and `AUTHZED_CONSISTENCY` into
+the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
+Formbricks readiness remains independent from transient SpiceDB availability.
 
 ## Cube
 

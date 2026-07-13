@@ -16,6 +16,11 @@ maintainers:
   - name: Formbricks
     email: info@formbricks.com
 dependencies:
+  - name: spicedb-operator
+    alias: spicedbOperator
+    version: "0.1.0"
+    repository: "file://../spicedb-operator"
+    condition: authzed.operator.install
   - name: postgresql
     version: "16.4.16"
     repository: "oci://registry-1.docker.io/bitnamicharts"

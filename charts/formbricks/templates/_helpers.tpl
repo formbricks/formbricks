@@ -136,6 +136,56 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- printf "%s-app-secrets" (include "formbricks.name" .) -}}
 {{- end }}
 
+{{- define "formbricks.authzedClusterName" -}}
+{{- .Values.authzed.cluster.name | default (printf "%s-spicedb" (include "formbricks.name" .)) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.authzedManagedSecretName" -}}
+{{- printf "%s-authzed" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.authzedAuthSecretName" -}}
+{{- .Values.authzed.auth.existingSecret | default (include "formbricks.authzedManagedSecretName" .) -}}
+{{- end }}
+
+{{- define "formbricks.authzedDatastoreSecretName" -}}
+{{- .Values.authzed.datastore.existingSecret | default (include "formbricks.authzedManagedSecretName" .) -}}
+{{- end }}
+
+{{- define "formbricks.authzedEndpoint" -}}
+{{- if .Values.authzed.endpoint -}}
+{{- .Values.authzed.endpoint -}}
+{{- else if eq .Values.authzed.mode "selfHosted" -}}
+{{- printf "%s:50051" (include "formbricks.authzedClusterName" .) -}}
+{{- else if eq .Values.authzed.mode "external" -}}
+{{- fail "authzed.endpoint is required when authzed.mode=external" -}}
+{{- else -}}
+{{- fail "authzed.mode must be one of: selfHosted, external" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.authzedPresharedKey" -}}
+{{- $secretName := include "formbricks.authzedManagedSecretName" . -}}
+{{- $secret := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- $secretData := dig "data" dict $secret -}}
+{{- if index $secretData .Values.authzed.auth.tokenKey -}}
+{{- index $secretData .Values.authzed.auth.tokenKey | b64dec -}}
+{{- else -}}
+{{- randAlphaNum 48 -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.authzedDatabasePassword" -}}
+{{- $secretName := include "formbricks.authzedManagedSecretName" . -}}
+{{- $secret := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- $secretData := dig "data" dict $secret -}}
+{{- if index $secretData "database_password" -}}
+{{- index $secretData "database_password" | b64dec -}}
+{{- else -}}
+{{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.redisName" -}}
 {{- .Values.redis.fullnameOverride | default (printf "%s-redis" (include "formbricks.name" .)) | trunc 63 | trimSuffix "-" -}}
 {{- end }}

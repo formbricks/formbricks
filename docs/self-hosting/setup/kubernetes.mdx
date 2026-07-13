@@ -82,6 +82,36 @@ If your cluster already uses an external secret manager, enable `externalSecret`
 SecretStore. Ensure the resulting app secret exposes the values your deployment needs, including `DATABASE_URL`,
 `REDIS_URL`, and `HUB_API_KEY`.
 
+### Optional AuthZed / SpiceDB
+
+AuthZed is disabled by default. To deploy SpiceDB with the chart-managed PostgreSQL server:
+
+```yaml
+authzed:
+  enabled: true
+  operator:
+    install: true
+```
+
+This installs the pinned SpiceDB operator, creates a two-replica SpiceDB cluster, and bootstraps a dedicated
+`spicedb` database and login. Install only one operator in a Kubernetes cluster. If your platform already runs
+the operator and watches the Formbricks namespace, keep `authzed.operator.install: false`.
+
+For managed PostgreSQL, create a separate SpiceDB database and login first. Store its connection URI and a
+strong API token in a Kubernetes Secret using the keys `datastore_uri` and `preshared_key`, then configure:
+
+```yaml
+authzed:
+  enabled: true
+  auth:
+    existingSecret: formbricks-authzed
+  datastore:
+    existingSecret: formbricks-authzed
+```
+
+Use `authzed.mode: external` plus `authzed.endpoint` when connecting to an externally managed AuthZed endpoint.
+The application endpoint remains internal by default when the chart owns SpiceDB.
+
 ## 3. v5-Specific Deployment Notes
 
 ### Hub Is Mandatory
