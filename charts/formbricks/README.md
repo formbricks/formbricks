@@ -95,6 +95,26 @@ The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. 
 
 When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
 
+For Hub enrichment through Vertex AI, configure the `google-gemini` provider settings in `hub.env`
+and mount an existing Google credential JSON Secret into both Hub processes:
+
+```yaml
+hub:
+  googleCloud:
+    credentials:
+      existingSecret: formbricks-app-secrets
+      secretKey: AI_GOOGLE_CLOUD_CREDENTIALS_JSON
+
+  env:
+    SENTIMENT_PROVIDER: google-gemini
+    SENTIMENT_MODEL: gemini-2.5-flash
+    SENTIMENT_GOOGLE_CLOUD_PROJECT: formbricks-cloud
+    SENTIMENT_GOOGLE_CLOUD_LOCATION: global
+```
+
+The chart mounts only the selected key as a read-only JSON file and sets
+`GOOGLE_APPLICATION_CREDENTIALS` in Hub API and hub-worker. Keep the credential out of values files.
+
 Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
 
 ## Web AI with self-hosted Qwen/vLLM
@@ -336,10 +356,12 @@ JSON that can call Vertex AI.
 | hub.embeddings.service.type                                        | string | `"ClusterIP"`                                                               |                                                           |
 | hub.env                                                            | object | `{}`                                                                        |                                                           |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
-| hub.image.digest                                                   | string | `"sha256:b22c5f8d1e2dd79224574f526a6714a3cc5372d18f4c047eaa9d18fe6ab75591"` | When set, takes precedence over tag (immutable pin).      |
+| hub.googleCloud.credentials.existingSecret                         | string | `""`                                                                        | Secret containing Google ADC JSON for Hub API and worker. |
+| hub.googleCloud.credentials.secretKey                              | string | `"GOOGLE_APPLICATION_CREDENTIALS_JSON"`                                    | Secret key mounted as the Google ADC credentials file.    |
+| hub.image.digest                                                   | string | `"sha256:619d6bc4572fced76720810c1ba1665943f0a91e1c0e20fadf2f27c35b0ada14"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |
-| hub.image.tag                                                      | string | `"0.6.0"`                                                                   | Fallback when digest is empty.                            |
+| hub.image.tag                                                      | string | `"0.8.0"`                                                                   | Fallback when digest is empty.                            |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |
