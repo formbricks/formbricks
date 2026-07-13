@@ -95,25 +95,39 @@ The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. 
 
 When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
 
-For Hub enrichment through Vertex AI, configure the `google-gemini` provider settings in `hub.env`
-and mount an existing Google credential JSON Secret into both Hub processes:
+Configure Hub enrichment providers through `hub.env`. API-key providers can keep their secrets in
+`hub.existingSecret`. Providers that need credential files, custom CA bundles, or other pod-level
+configuration can use the provider-neutral `hub.extraVolumes` and `hub.extraVolumeMounts`
+settings, which apply to both Hub API and hub-worker.
+
+For example, a Vertex AI deployment can mount an existing Google credential JSON Secret and point
+Application Default Credentials at it:
 
 ```yaml
 hub:
-  googleCloud:
-    credentials:
-      existingSecret: formbricks-app-secrets
-      secretKey: AI_GOOGLE_CLOUD_CREDENTIALS_JSON
+  extraVolumes:
+    - name: google-cloud-credentials
+      secret:
+        secretName: formbricks-app-secrets
+        items:
+          - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+            path: credentials.json
+
+  extraVolumeMounts:
+    - name: google-cloud-credentials
+      mountPath: /var/run/secrets/formbricks/google
+      readOnly: true
 
   env:
+    GOOGLE_APPLICATION_CREDENTIALS: /var/run/secrets/formbricks/google/credentials.json
     SENTIMENT_PROVIDER: google-gemini
     SENTIMENT_MODEL: gemini-2.5-flash
-    SENTIMENT_GOOGLE_CLOUD_PROJECT: formbricks-cloud
+    SENTIMENT_GOOGLE_CLOUD_PROJECT: your-google-cloud-project
     SENTIMENT_GOOGLE_CLOUD_LOCATION: global
 ```
 
-The chart mounts only the selected key as a read-only JSON file and sets
-`GOOGLE_APPLICATION_CREDENTIALS` in Hub API and hub-worker. Keep the credential out of values files.
+The chart renders these additions unchanged into both Hub processes. Keep credential values out of
+values files and reference existing Kubernetes Secrets instead.
 
 Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
 
@@ -356,8 +370,8 @@ JSON that can call Vertex AI.
 | hub.embeddings.service.type                                        | string | `"ClusterIP"`                                                               |                                                           |
 | hub.env                                                            | object | `{}`                                                                        |                                                           |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
-| hub.googleCloud.credentials.existingSecret                         | string | `""`                                                                        | Secret containing Google ADC JSON for Hub API and worker. |
-| hub.googleCloud.credentials.secretKey                              | string | `"GOOGLE_APPLICATION_CREDENTIALS_JSON"`                                    | Secret key mounted as the Google ADC credentials file.    |
+| hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
+| hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
 | hub.image.digest                                                   | string | `"sha256:619d6bc4572fced76720810c1ba1665943f0a91e1c0e20fadf2f27c35b0ada14"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |

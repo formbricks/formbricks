@@ -945,13 +945,11 @@ hub:
   # into the generated app secret and Envoy credential.
   existingSecret: ""
 
-  # Optional Google Cloud ADC credentials for Hub providers such as google-gemini.
-  # When existingSecret is set, the selected secret key is mounted read-only into both the Hub API
-  # and hub-worker, and GOOGLE_APPLICATION_CREDENTIALS points at the mounted JSON file.
-  googleCloud:
-    credentials:
-      existingSecret: ""
-      secretKey: "GOOGLE_APPLICATION_CREDENTIALS_JSON"
+  # Provider-neutral pod extensions applied to both Hub API and hub-worker.
+  # Use these for credential files, custom CA bundles, or other provider-specific runtime
+  # requirements without placing secret values in Helm values.
+  extraVolumes: []
+  extraVolumeMounts: []
 
   # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
   # Applied to both the Hub API and hub-worker (the worker merges hub.env), so providers set here also
@@ -959,7 +957,6 @@ hub:
   # provider + model here and supply the API key via existingSecret. Supported providers: openai,
   # google (AI Studio, needs *_PROVIDER_API_KEY), google-gemini (Vertex, needs
   # *_GOOGLE_CLOUD_PROJECT/LOCATION + Application Default Credentials instead of an API key).
-  # Configure Hub ADC with hub.googleCloud.credentials when the cluster does not provide it.
   # A provider set without its required credentials crash-loops both Hub pods on startup. See:
   # https://hub.formbricks.com/reference/environment-variables
   # env:

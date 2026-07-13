@@ -84,42 +84,31 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "formbricks.hubSecretName" . }}
-          {{- if or .Values.hub.embeddings.enabled .Values.hub.googleCloud.credentials.existingSecret (gt (len .Values.hub.env) 0) (gt (len .Values.hub.worker.env) 0) }}
+          {{- if or .Values.hub.embeddings.enabled (gt (len .Values.hub.env) 0) (gt (len .Values.hub.worker.env) 0) }}
           env:
-            {{- if .Values.hub.googleCloud.credentials.existingSecret }}
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: "/var/run/secrets/formbricks/google/credentials.json"
-            {{- end }}
             {{- $workerEnv := merge (dict) .Values.hub.env .Values.hub.worker.env }}
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" $workerEnv) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
-            {{- if and (not (hasKey $.Values.hub.worker.env $key)) (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.hub.googleCloud.credentials.existingSecret (eq $key "GOOGLE_APPLICATION_CREDENTIALS"))) }}
+            {{- if and (not (hasKey $.Values.hub.worker.env $key)) (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}
             {{- range $key, $value := .Values.hub.worker.env }}
-            {{- if and (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.hub.googleCloud.credentials.existingSecret (eq $key "GOOGLE_APPLICATION_CREDENTIALS"))) }}
+            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}
           {{- end }}
-          {{- if .Values.hub.googleCloud.credentials.existingSecret }}
+          {{- with .Values.hub.extraVolumeMounts }}
           volumeMounts:
-            - name: google-cloud-credentials
-              mountPath: "/var/run/secrets/formbricks/google"
-              readOnly: true
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if .Values.hub.worker.resources }}
           resources:
             {{- toYaml .Values.hub.worker.resources | nindent 12 }}
           {{- end }}
-      {{- if .Values.hub.googleCloud.credentials.existingSecret }}
+      {{- with .Values.hub.extraVolumes }}
       volumes:
-        - name: google-cloud-credentials
-          secret:
-            secretName: {{ .Values.hub.googleCloud.credentials.existingSecret | quote }}
-            items:
-              - key: {{ required "hub.googleCloud.credentials.secretKey is required when existingSecret is set" .Values.hub.googleCloud.credentials.secretKey | quote }}
-                path: credentials.json
+        {{- toYaml . | nindent 8 }}
       {{- end }}
 {{- end }}
