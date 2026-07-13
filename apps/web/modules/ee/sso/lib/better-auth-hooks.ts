@@ -4,6 +4,7 @@ import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { WEBAPP_URL } from "@/lib/constants";
+import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -122,6 +123,11 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           signupSource: decision.signupSource,
           attributionProperties: getSsoAttributionProperties(),
         });
+
+        // Mark the new SSO user as identified in PostHog (parity with the credentials sign-up
+        // path). provisionSsoUserMemberships only emits a bare `user_signed_up` capture, which
+        // keeps the person unidentified; this fires `$identify` so `is_identified` flips.
+        identifyPostHogPerson(user.id, { email: user.email, name: user.name });
       },
     },
   },
