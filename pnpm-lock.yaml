@@ -539,6 +539,9 @@ importers:
       dotenv:
         specifier: 17.3.1
         version: 17.3.1
+      jsdom:
+        specifier: 29.1.1
+        version: 29.1.1(@noble/hashes@2.0.1)
       postcss:
         specifier: 8.5.14
         version: 8.5.14
@@ -9374,10 +9377,6 @@ packages:
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
-
-  lru-cache@11.2.6:
-    resolution: {integrity: sha512-ESL2CrkS/2wTPfuend7Zhkzo2u0daGJ/A2VucJOgQ/C48S/zB8MMeMHSGKYpXhIjbPxfuezITkaBH1wqv00DDQ==}
-    engines: {node: 20 || >=22}
 
   lru-cache@11.3.6:
     resolution: {integrity: sha512-Gf/KoL3C/MlI7Bt0PGI9I+TeTC/I6r/csU58N4BSNc4lppLBeKsOdFYkK+dX0ABDUMJNfCHTyPpzwwO21Awd3A==}
@@ -19172,7 +19171,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.6(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(@vitest/coverage-v8@4.1.6)(happy-dom@20.8.9)(jsdom@29.1.1(@noble/hashes@2.0.1))(vite@8.0.16(@types/node@25.4.0)(esbuild@0.28.1)(jiti@2.6.1)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0))
+      vitest: 4.1.6(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(@vitest/coverage-v8@4.1.6)(happy-dom@20.8.9)(jsdom@29.1.1(@noble/hashes@2.0.1))(vite@7.3.5(@types/node@25.4.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0))
 
   '@vitest/eslint-plugin@1.6.17(@typescript-eslint/eslint-plugin@8.57.2(@typescript-eslint/parser@8.57.2(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)(vitest@4.1.6)':
     dependencies:
@@ -22401,8 +22400,6 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
-  lru-cache@11.2.6: {}
-
   lru-cache@11.3.6: {}
 
   lru-cache@5.1.1:
@@ -23149,7 +23146,7 @@ snapshots:
 
   path-scurry@2.0.2:
     dependencies:
-      lru-cache: 11.2.6
+      lru-cache: 11.3.6
       minipass: 7.1.3
 
   path-to-regexp@8.4.2: {}
