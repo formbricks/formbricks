@@ -37,7 +37,11 @@ vi.mock("@/modules/auth/signup/lib/team", () => ({ createTeamMembership: vi.fn()
 vi.mock("@/modules/auth/signup/lib/utils", () => ({ verifyTurnstileToken: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
 vi.mock("@/lib/organization/service", () => ({ createOrganization: vi.fn(), getOrganization: vi.fn() }));
-vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), groupIdentifyPostHog: vi.fn() }));
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
+  groupIdentifyPostHog: vi.fn(),
+  identifyPostHogPerson: vi.fn(),
+}));
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureCloudStripeSetupForOrganization: vi.fn(),
 }));

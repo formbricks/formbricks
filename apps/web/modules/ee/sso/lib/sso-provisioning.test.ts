@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { updateUser } from "@/modules/auth/lib/user";
 import { resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
@@ -23,7 +23,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
-vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), identifyPostHogPerson: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ createBrevoCustomer: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ updateUser: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/invite", () => ({ resolveInviteMatch: vi.fn() }));
@@ -293,6 +293,7 @@ describe("provisionSsoUserMemberships", () => {
       expect.anything()
     );
     expect(createBrevoCustomer).toHaveBeenCalledWith({ id: "u1", email: "new@example.com" });
+    expect(identifyPostHogPerson).toHaveBeenCalledWith("u1", { email: "new@example.com", name: undefined });
     expect(capturePostHogEvent).toHaveBeenCalledWith("u1", "user_signed_up", {
       auth_provider: "google",
       email_domain: "example.com",

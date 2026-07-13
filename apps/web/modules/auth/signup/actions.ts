@@ -13,7 +13,7 @@ import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } fr
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { capturePostHogEvent, groupIdentifyPostHog, identifyPostHogPerson } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -294,6 +294,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
       const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
 
+      identifyPostHogPerson(user.id, { email: user.email, name: user.name });
       capturePostHogEvent(
         user.id,
         "user_signed_up",

@@ -2,6 +2,7 @@ import { getOAuthState } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
@@ -37,6 +38,7 @@ vi.mock("better-auth/api", () => ({
   },
 }));
 vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
+vi.mock("@/lib/posthog", () => ({ identifyPostHogPerson: vi.fn() }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSsoEnabled: vi.fn(),
@@ -217,6 +219,7 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       signupSource: "direct",
       attributionProperties: {},
     });
+    expect(identifyPostHogPerson).toHaveBeenCalledWith("u1", { email: "a@b.com", name: undefined });
   });
 
   test("does nothing when no decision is stashed (e.g. non-SSO sign-up)", async () => {
