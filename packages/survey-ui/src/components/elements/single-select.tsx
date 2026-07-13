@@ -16,6 +16,7 @@ import {
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
 
 type Direction = "ltr" | "rtl" | "auto";
@@ -379,6 +380,8 @@ function RadioIndicator(): React.JSX.Element {
   );
 }
 
+type GetRadioProps = ReturnType<typeof useRovingRadioGroup>["getRadioProps"];
+
 interface SingleSelectOptionItemProps {
   inputId: string;
   option: SingleSelectOption;
@@ -388,6 +391,7 @@ interface SingleSelectOptionItemProps {
   dir: Direction;
   onSelect: (optionId: string) => void;
   onDeselect: (optionId: string) => void;
+  getRadioProps: GetRadioProps;
 }
 
 function SingleSelectOptionItem({
@@ -399,6 +403,7 @@ function SingleSelectOptionItem({
   dir,
   onSelect,
   onDeselect,
+  getRadioProps,
 }: Readonly<SingleSelectOptionItemProps>): React.JSX.Element {
   const optionId = `${inputId}-${option.id}`;
 
@@ -426,6 +431,7 @@ function SingleSelectOptionItem({
               onDeselect(option.id);
             }
           }}
+          {...getRadioProps(option.id)}
         />
         <RadioIndicator />
         <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
@@ -465,6 +471,18 @@ function SingleSelectListVariant({
     }
   };
 
+  // All radios of the group in DOM order: regular options, then "other", then "none".
+  const orderedValues = [
+    ...regularOptions.map((option) => option.id),
+    ...(hasOtherOption && otherOptionId ? [otherOptionId] : []),
+    ...noneOptions.map((option) => option.id),
+  ];
+  const { getRadioProps } = useRovingRadioGroup({
+    values: orderedValues,
+    selectedValue,
+    onSelect: handleSelect,
+  });
+
   const renderOption = (option: SingleSelectOption): React.JSX.Element => (
     <SingleSelectOptionItem
       key={option.id}
@@ -476,6 +494,7 @@ function SingleSelectListVariant({
       dir={dir}
       onSelect={handleSelect}
       onDeselect={handleDeselect}
+      getRadioProps={getRadioProps}
     />
   );
 
@@ -500,6 +519,7 @@ function SingleSelectListVariant({
             disabled={disabled}
             required={required}
             errorMessage={errorMessage}
+            getRadioProps={getRadioProps}
           />
         ) : null}
         {noneOptions.map(renderOption)}
@@ -523,6 +543,7 @@ interface OtherOptionLabelProps {
   disabled: boolean;
   required: boolean;
   errorMessage?: string;
+  getRadioProps: GetRadioProps;
 }
 
 function OtherOptionLabel({
@@ -540,6 +561,7 @@ function OtherOptionLabel({
   disabled,
   required,
   errorMessage,
+  getRadioProps,
 }: Readonly<OtherOptionLabelProps>): React.JSX.Element {
   const optionId = `${inputId}-${otherOptionId}`;
   const otherTextId = `${optionId}-input`;
@@ -568,6 +590,7 @@ function OtherOptionLabel({
               onDeselect(otherOptionId);
             }
           }}
+          {...getRadioProps(otherOptionId)}
         />
         <RadioIndicator />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>

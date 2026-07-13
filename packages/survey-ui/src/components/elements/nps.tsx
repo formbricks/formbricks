@@ -2,6 +2,7 @@ import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
+import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn, getRTLScaleOptionClasses } from "@/lib/utils";
 
 interface NPSProps {
@@ -69,9 +70,17 @@ function NPS({
     }
   };
 
-  // Keyboard interaction lives on the native radio inputs: the options share a
-  // radio group name, so the group is a single Tab stop and the focusable
-  // control is the <input>, not the label.
+  // Keyboard interaction lives on the native radio inputs; selection is
+  // decoupled from arrow-key focus moves because selecting can trigger
+  // auto-progress (see useRovingRadioGroup).
+  const npsValues = Array.from({ length: 11 }, (_, i) => String(i));
+  const { getRadioProps } = useRovingRadioGroup({
+    values: npsValues,
+    selectedValue: currentValue === undefined ? undefined : String(currentValue),
+    onSelect: (v) => {
+      handleSelect(Number(v));
+    },
+  });
 
   // Get NPS option color for color coding
   const getNPSOptionColor = (idx: number): string => {
@@ -135,6 +144,7 @@ function NPS({
           disabled={disabled}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of 10`}
+          {...getRadioProps(String(number))}
         />
         <span className="text-sm">{number}</span>
       </label>
