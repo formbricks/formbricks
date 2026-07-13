@@ -8,7 +8,10 @@ import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { cn } from "@/lib/cn";
 import {
+  type TElement,
+  type TElementCategoryMeta,
   getCXElementTypes,
+  getElementCategories,
   getElementDefaults,
   getElementTypes,
   universalElementPresets,
@@ -23,8 +26,63 @@ interface AddElementButtonProps {
 export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElementButtonProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
   const availableElementTypes = isCxMode ? getCXElementTypes(t) : getElementTypes(t);
+  const categories = getElementCategories(t);
+
+  const handleAddElement = (elementType: TElement) => {
+    addElement({
+      ...universalElementPresets,
+      ...getElementDefaults(elementType.id, workspace, t),
+      id: createId(),
+      type: elementType.id,
+    });
+    setOpen(false);
+  };
+
+  // Group the available element types by category while keeping their defined order.
+  const elementsByCategory = new Map<string, TElement[]>();
+  for (const elementType of availableElementTypes) {
+    const group = elementsByCategory.get(elementType.category) ?? [];
+    group.push(elementType);
+    elementsByCategory.set(elementType.category, group);
+  }
+
+  // Only render categories that actually contain elements (CX mode uses a subset).
+  const visibleCategories = categories.filter(
+    (category) => (elementsByCategory.get(category.id)?.length ?? 0) > 0
+  );
+
+  const renderCategory = (category: TElementCategoryMeta) => {
+    const elements = elementsByCategory.get(category.id) ?? [];
+    return (
+      <div key={category.id} className="mb-1">
+        <p
+          className={cn(
+            "px-2 pt-3 pb-1 text-xs font-semibold tracking-wide uppercase",
+            category.labelClassName
+          )}>
+          {category.label}
+        </p>
+        {elements.map((elementType) => (
+          <button
+            type="button"
+            key={elementType.id}
+            title={elementType.description}
+            className="group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+            onClick={() => handleAddElement(elementType)}>
+            <span
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center rounded-md",
+                category.iconClassName
+              )}>
+              <elementType.icon className="size-4" aria-hidden="true" />
+            </span>
+            <span>{elementType.label}</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <Collapsible.Root
@@ -36,7 +94,7 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
-          <div className="flex w-10 items-center justify-center rounded-l-lg bg-brand-dark group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
+          <div className="flex w-10 items-center justify-center rounded-l-[7px] bg-brand-dark group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
             <PlusIcon className="size-5 text-white" />
           </div>
           <div className="px-4 py-3">
@@ -47,35 +105,11 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="justify-left flex flex-col overflow-hidden pt-2 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-        {availableElementTypes.map((elementType) => (
-          <button
-            type="button"
-            key={elementType.id}
-            className="group relative mx-2 inline-flex items-center justify-between rounded-sm p-0.5 px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
-            onClick={() => {
-              addElement({
-                ...universalElementPresets,
-                ...getElementDefaults(elementType.id, workspace, t),
-                id: createId(),
-                type: elementType.id,
-              });
-              setOpen(false);
-            }}
-            onMouseEnter={() => setHoveredElementId(elementType.id)}
-            onMouseLeave={() => setHoveredElementId(null)}>
-            <div className="flex items-center">
-              <elementType.icon className="mr-2 -ml-0.5 size-4 text-brand-dark" aria-hidden="true" />
-              {elementType.label}
-            </div>
-            <div
-              className={`absolute right-4 text-xs font-light text-slate-500 transition-opacity duration-200 ${
-                hoveredElementId === elementType.id ? "opacity-100" : "opacity-0"
-              }`}>
-              {elementType.description}
-            </div>
-          </button>
-        ))}
+      <Collapsible.CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+        <div className="grid grid-cols-1 gap-x-6 px-3 pb-3 sm:grid-cols-2">
+          <div>{visibleCategories.filter((category) => category.column === 1).map(renderCategory)}</div>
+          <div>{visibleCategories.filter((category) => category.column === 2).map(renderCategory)}</div>
+        </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );
