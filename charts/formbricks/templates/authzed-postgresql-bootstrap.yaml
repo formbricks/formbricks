@@ -1,5 +1,6 @@
 {{- $bundledBootstrap := and .Values.authzed.bundledPostgresqlBootstrap.enabled .Values.postgresql.enabled (not .Values.authzed.datastore.existingSecret) -}}
 {{- $externalBootstrap := .Values.authzed.externalPostgresqlBootstrap.enabled -}}
+{{- $postgresSecretName := .Values.postgresql.auth.existingSecret | default (include "formbricks.appSecretName" .) -}}
 {{- if and .Values.authzed.enabled (eq .Values.authzed.mode "selfHosted") (or $bundledBootstrap $externalBootstrap) }}
 {{- if and $externalBootstrap (not .Values.authzed.datastore.existingSecret) -}}
 {{- fail "authzed.datastore.existingSecret is required for external PostgreSQL bootstrap" -}}
@@ -50,12 +51,12 @@ spec:
             - name: PGHOST
               value: formbricks-postgresql
             - name: PGUSER
-              value: postgres
+              value: {{ .Values.postgresql.auth.username | quote }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "formbricks.appSecretName" . }}
-                  key: POSTGRES_ADMIN_PASSWORD
+                  name: {{ $postgresSecretName }}
+                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
             - name: SPICEDB_DATABASE_NAME
               value: spicedb
             - name: SPICEDB_DATABASE_USERNAME
