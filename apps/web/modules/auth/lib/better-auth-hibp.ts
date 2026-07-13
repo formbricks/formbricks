@@ -30,7 +30,7 @@ import { PASSWORD_HIBP_CHECK_DISABLED } from "@/lib/constants";
 
 // Only the two paths that actually set a password in Formbricks (stock plugin also covers change /
 // admin / phone / email-otp paths we don't use).
-const CHECKED_PATHS = ["/sign-up/email", "/reset-password"];
+const CHECKED_PATHS = new Set(["/sign-up/email", "/reset-password"]);
 
 // Tight timeout: this call blocks a login-critical flow, so we bound it well under the license
 // check's 5s. On timeout we fail open (allow the password).
@@ -89,7 +89,7 @@ export const hibpBreachCheckPlugin = {
             if (PASSWORD_HIBP_CHECK_DISABLED) return originalHash(password);
 
             const authContext = await getCurrentAuthContext();
-            if (!authContext.path || !CHECKED_PATHS.includes(authContext.path)) {
+            if (!authContext.path || !CHECKED_PATHS.has(authContext.path)) {
               return originalHash(password);
             }
 

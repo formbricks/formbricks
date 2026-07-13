@@ -20,12 +20,28 @@ const setRangeResponse = (r: typeof rangeResponse) => {
   rangeResponse = r;
 };
 
+// integration/setup.ts disables the HIBP check suite-wide (so other tests don't hit the network);
+// re-enable it for this file, which is the one that actually exercises the breach check. betterFetch
+// is mocked below, so this still makes no real outbound call.
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  PASSWORD_HIBP_CHECK_DISABLED: false,
+}));
+
 vi.mock("@better-fetch/fetch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@better-fetch/fetch")>();
   return {
     ...actual,
     betterFetch: vi.fn((url: string, opts: unknown) => {
-      if (typeof url === "string" && url.includes("api.pwnedpasswords.com")) {
+      // Match the host exactly (parsed), not via substring — a substring check would also match a
+      // crafted URL that merely contains the host elsewhere (CodeQL: incomplete URL sanitization).
+      let host = "";
+      try {
+        host = new URL(String(url)).hostname;
+      } catch {
+        // non-absolute URL → not the range endpoint; fall through to the real fetch
+      }
+      if (host === "api.pwnedpasswords.com") {
         return Promise.resolve(rangeResponse);
       }
       return (actual.betterFetch as typeof betterFetch)(url as never, opts as never);
