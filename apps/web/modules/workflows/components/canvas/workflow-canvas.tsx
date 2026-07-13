@@ -54,7 +54,6 @@ import { CanvasControls } from "./canvas-controls";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
 import "./workflow-canvas.css";
-import { WorkflowReadinessHint } from "./workflow-readiness-hint";
 
 const NODE_TYPES: NodeTypes = {
   [WORKFLOW_CANVAS_NODE_TYPE]: WorkflowCanvasNode,
@@ -233,10 +232,6 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         // canvas with it. 220px ≈ page chrome above the canvas; kept in sync with loading.tsx.
         "relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      {/* Same offset as the action cluster on the right; h-9 centers the text with the buttons. */}
-      <div className="absolute top-4 left-4 z-10 flex h-9 items-center">
-        <WorkflowReadinessHint />
-      </div>
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <Button
           variant="secondary"
