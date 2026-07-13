@@ -103,6 +103,7 @@
     "saml_connection_error": "Er is iets misgegaan. Controleer uw app-console voor meer details.",
     "signup": {
       "captcha_failed": "Captcha is mislukt",
+      "company_email_required": "Registreer je met je zakelijke e-mailadres.",
       "have_an_account": "Heeft u een account?",
       "log_in": "Inloggen",
       "password_validation_contain_at_least_1_number": "Bevat minimaal 1 nummer",

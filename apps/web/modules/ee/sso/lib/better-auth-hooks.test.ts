@@ -1,9 +1,13 @@
 import { getOAuthState } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
+  blockedSignupDomainRedirectAfter,
   getSsoProviderFromContext,
   ssoDatabaseHooks,
   ssoLicenseGateBefore,
@@ -14,8 +18,10 @@ import { startSsoRecovery } from "./sso-recovery";
 import {
   captureSsoIdentity,
   getSsoProvisioningDecision,
+  getSsoSignupRejectReason,
   runWithSsoRequestContext,
   setSsoProvisioningDecision,
+  setSsoSignupRejectReason,
 } from "./sso-request-context";
 
 vi.mock("better-auth/api", () => ({
@@ -41,6 +47,8 @@ vi.mock("./sso-provisioning", () => ({
   provisionSsoUserMemberships: vi.fn(),
 }));
 vi.mock("./sso-recovery", () => ({ startSsoRecovery: vi.fn() }));
+vi.mock("@/modules/auth/lib/signup-email-domain", () => ({ isSignupEmailDomainBlocked: vi.fn() }));
+vi.mock("@/modules/auth/lib/signup-request-context", () => ({ isSignupDomainAllowed: vi.fn() }));
 
 const callbackCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "openid" } };
 const provisionDecision = {
@@ -100,6 +108,21 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     expect(getSsoProvisioningDecision()).toBeUndefined();
   });
 
+  test("stashes the reject reason so the after-hook can redirect (personal email domain)", async () => {
+    vi.mocked(gateSsoProvisioning).mockResolvedValue({
+      action: "reject",
+      reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+    });
+    let reason: string | undefined;
+    const result = await runWithSsoRequestContext(async () => {
+      const r = await before({ id: "u1", email: "spammer@gmail.com" } as never, callbackCtx as never);
+      reason = getSsoSignupRejectReason();
+      return r;
+    });
+    expect(result).toBe(false);
+    expect(reason).toBe(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
+  });
+
   test("fails loud when the request context is missing (route not wrapped in runWithSsoRequestContext)", async () => {
     // Without the wrapper a provision decision can't be stashed; fail rather than silently create a
     // user with no organization membership.
@@ -135,6 +158,44 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     const result = await before({ id: "u1", email: "a@b.com" } as never, { path: "/sign-up/email" } as never);
     expect(result).toBeUndefined();
     expect(gateSsoProvisioning).not.toHaveBeenCalled();
+  });
+
+  test("blocks a credential sign-up that bypassed the action (raw /sign-up/email) with a blocked domain", async () => {
+    vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // no action mark → direct native-endpoint POST
+    vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(true);
+    const result = await before(
+      { id: "u1", email: "spammer@gmail.com" } as never,
+      {
+        path: "/sign-up/email",
+      } as never
+    );
+    expect(result).toBe(false);
+    expect(gateSsoProvisioning).not.toHaveBeenCalled();
+  });
+
+  test("allows a credential sign-up that went through the action (domain already enforced, hook skips)", async () => {
+    vi.mocked(isSignupDomainAllowed).mockReturnValue(true); // action marked the scope
+    vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(true); // would block, but must be skipped
+    const result = await before(
+      { id: "u1", email: "spammer@gmail.com" } as never,
+      {
+        path: "/sign-up/email",
+      } as never
+    );
+    expect(result).toBeUndefined();
+    expect(isSignupEmailDomainBlocked).not.toHaveBeenCalled();
+  });
+
+  test("allows a credential sign-up with an allowed domain on the raw endpoint", async () => {
+    vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
+    vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
+    const result = await before(
+      { id: "u1", email: "person@acme-corp.com" } as never,
+      {
+        path: "/sign-up/email",
+      } as never
+    );
+    expect(result).toBeUndefined();
   });
 });
 
@@ -306,5 +367,56 @@ describe("ssoRecoveryAfter", () => {
     });
     expect(startSsoRecovery).toHaveBeenCalledWith(expect.objectContaining({ callbackUrl: "" }));
     expect(redirect).toHaveBeenCalled();
+  });
+});
+
+describe("blockedSignupDomainRedirectAfter", () => {
+  const makeCtx = (overrides: Record<string, unknown> = {}) => ({
+    path: "/oauth2/callback/:providerId",
+    params: { providerId: "openid" },
+    context: {
+      responseHeaders: new Headers({ location: "https://app.test/auth/login?error=unable_to_create_user" }),
+    },
+    redirect: vi.fn((url: string) => new Error(`redirect:${url}`)),
+    ...overrides,
+  });
+
+  test("rewrites the redirect to /auth/signup when a personal-email rejection was stashed", async () => {
+    const redirect = vi.fn((url: string) => new Error(`redirect:${url}`));
+    const ctx = makeCtx({ redirect });
+    await runWithSsoRequestContext(async () => {
+      setSsoSignupRejectReason(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
+      await expect(blockedSignupDomainRedirectAfter(ctx as never)).rejects.toBeDefined(); // throws ctx.redirect
+    });
+    expect(redirect).toHaveBeenCalledWith(
+      expect.stringContaining(`/auth/signup?error=${SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE}`)
+    );
+  });
+
+  test("does nothing when no personal-email rejection was stashed", async () => {
+    const redirect = vi.fn();
+    const ctx = makeCtx({ redirect });
+    await runWithSsoRequestContext(() => blockedSignupDomainRedirectAfter(ctx as never));
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test("does nothing for a different (non-domain) reject reason", async () => {
+    const redirect = vi.fn();
+    const ctx = makeCtx({ redirect });
+    await runWithSsoRequestContext(async () => {
+      setSsoSignupRejectReason("missing_callback_url");
+      await blockedSignupDomainRedirectAfter(ctx as never);
+    });
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test("does nothing when Better Auth set no redirect location", async () => {
+    const redirect = vi.fn();
+    const ctx = makeCtx({ redirect, context: {} });
+    await runWithSsoRequestContext(async () => {
+      setSsoSignupRejectReason(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
+      await blockedSignupDomainRedirectAfter(ctx as never);
+    });
+    expect(redirect).not.toHaveBeenCalled();
   });
 });
