@@ -86,6 +86,10 @@ enablePrePostScripts: true
 legacyPeerDeps: true
 nodeLinker: hoisted
 saveExact: true
+# Supply-chain release cooldown: refuse to resolve package versions published less than
+# 3 days (4320 minutes) ago, so compromised releases are usually detected/yanked before we
+# can pull them. Existing lockfile entries are unaffected; only new resolutions are gated.
+minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   # First-party SDK (published by Formbricks' own CI) — exempt all versions from the release-age gate so
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
