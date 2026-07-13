@@ -215,10 +215,10 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpValidateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const requiredScopes =
-        input.operation === "patch" || input.operation === "create" ? ["surveys:write"] : ["surveys:read"];
-
-      const scopeError = await guardMcpScopes(extra.authInfo, requiredScopes, requestId);
+      // validate_survey never persists changes (readOnlyHint) — a dry-run validation of a create or
+      // patch payload only needs read access. The actual write permission is enforced by the v3 layer
+      // when create_survey / patch_survey run.
+      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
       if (scopeError) {
         return scopeError;
       }
