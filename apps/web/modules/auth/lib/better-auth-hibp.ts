@@ -47,6 +47,9 @@ const HIBP_RANGE_URL = "https://api.pwnedpasswords.com/range";
  * infrastructure problems.
  */
 const isPasswordCompromised = async (password: string): Promise<boolean> => {
+  // SHA-1 is mandated by the HaveIBeenPwned range (k-anonymity) API — only the first 5 hex chars of
+  // this digest ever leave the process, and it is NOT used for storage or authentication (bcrypt via
+  // hashSecret does that). CodeQL's "insufficient computational effort" alert here is a false positive.
   const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase();
   const prefix = sha1.substring(0, 5);
   const suffix = sha1.substring(5);
