@@ -139,7 +139,6 @@ const useDropdownCommitState = ({
 
 interface DropdownVariantProps {
   inputId: string;
-  headline: string;
   dir: Direction;
   disabled: boolean;
   errorMessage?: string;
@@ -176,7 +175,6 @@ interface DropdownVariantProps {
 
 function SingleSelectDropdownVariant({
   inputId,
-  headline,
   dir,
   disabled,
   errorMessage,
@@ -224,13 +222,20 @@ function SingleSelectDropdownVariant({
       <ElementError errorMessage={errorMessage} dir={dir} />
       <DropdownMenu onOpenChange={handleDropdownOpenChange}>
         <DropdownMenuTrigger asChild>
+          {/* Named via aria-labelledby (headline + visible value) instead of aria-label:
+              a rich-text headline would leak raw HTML into the accessible name, and the
+              name must contain the visible text (WCAG 2.5.3 Label in Name). */}
           <Button
             variant="outline"
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
             aria-invalid={Boolean(errorMessage)}
-            aria-label={headline}>
-            <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+            aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
+            <span
+              id={`${inputId}-trigger-value`}
+              className="font-input font-input-weight text-input-text truncate">
+              {displayText}
+            </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
@@ -750,9 +755,11 @@ function SingleSelect({
         </fieldset>
       ) : (
         <>
-          {/* Dropdown trigger is a Radix menu button that names itself via aria-label={headline};
-              the headline is a plain label here (no htmlFor) to avoid pointing at a non-input. */}
+          {/* Dropdown trigger is a Radix menu button named via aria-labelledby (headline id +
+              visible value id); the headline is a plain label here (no htmlFor) to avoid
+              pointing at a non-input. */}
           <ElementHeader
+            headlineId={`${inputId}-headline`}
             headline={headline}
             description={description}
             required={required}
@@ -763,7 +770,6 @@ function SingleSelect({
           <div data-element-input>
             <SingleSelectDropdownVariant
               inputId={inputId}
-              headline={headline}
               dir={dir}
               disabled={disabled}
               errorMessage={errorMessage}
