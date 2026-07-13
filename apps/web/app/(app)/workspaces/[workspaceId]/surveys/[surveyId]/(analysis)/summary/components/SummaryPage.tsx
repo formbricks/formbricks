@@ -160,12 +160,13 @@ export const SummaryPage = ({
 
   // Only fetch data when filters change or when there's no initial data
   useEffect(() => {
-    // If we have initial data and no filters are applied, don't fetch
-    const hasNoFilters =
-      (!selectedFilter || Object.keys(selectedFilter).length === 0 || selectedFilter.filter?.length === 0) &&
-      (!dateRange || (!dateRange.from && !dateRange.to));
+    // If we have initial data and no filters are applied, don't fetch. "No filters" must mirror
+    // getFormattedFilters: the default date range ({ from: undefined, to: today }) produces empty
+    // criteria, so checking dateRange fields directly would treat the pristine state as filtered.
+    const hasNoFilters = Object.keys(getFormattedFilters(survey, selectedFilter, dateRange)).length === 0;
 
     if (initialSurveySummary && hasNoFilters) {
+      setSurveySummary(initialSurveySummary);
       setIsLoading(false);
       return;
     }
@@ -183,7 +184,7 @@ export const SummaryPage = ({
     };
 
     fetchFilteredSummary();
-  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary]);
+  }, [survey, selectedFilter, dateRange, initialSurveySummary, fetchSummary]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
