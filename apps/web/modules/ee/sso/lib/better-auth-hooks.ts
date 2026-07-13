@@ -116,6 +116,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         await provisionSsoUserMemberships({
           userId: user.id,
           email: user.email,
+          name: user.name,
           provider: identityProvider,
           organizationId: decision.organizationId,
           assignToDefaultTeam: decision.assignToDefaultTeam,

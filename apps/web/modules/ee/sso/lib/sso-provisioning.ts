@@ -7,7 +7,7 @@ import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constant
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { updateUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
@@ -124,6 +124,7 @@ export const gateSsoProvisioning = async ({
 export const provisionSsoUserMemberships = async ({
   userId,
   email,
+  name,
   provider,
   organizationId,
   assignToDefaultTeam,
@@ -132,6 +133,7 @@ export const provisionSsoUserMemberships = async ({
 }: {
   userId: string;
   email: string;
+  name?: string | null;
   provider: IdentityProvider;
   organizationId: string | null;
   assignToDefaultTeam: boolean;
@@ -183,6 +185,9 @@ export const provisionSsoUserMemberships = async ({
 
   // Best-effort analytics + CRM sync, regardless of org assignment (parity with provisionNewSsoUser).
   createBrevoCustomer({ id: userId, email });
+  // Identify the person before the sign-up capture so `user_signed_up` lands on an identified
+  // PostHog person (fires $identify + sets email/name) — parity with the credentials sign-up path.
+  identifyPostHogPerson(userId, { email, name });
   capturePostHogEvent(userId, "user_signed_up", {
     // Spread attribution first so trusted, server-computed props always win on a name clash.
     ...attributionProperties,
