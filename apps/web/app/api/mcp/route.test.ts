@@ -43,6 +43,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/oauth-urls", () => ({
+  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write"],
   getAuthIssuerUrl: () => "http://localhost/api/auth",
   getMcpOrigin: () => "http://localhost",
   getMcpProtectedResourceMetadataUrl: () => "http://localhost/.well-known/oauth-protected-resource/api/mcp",
@@ -160,7 +161,7 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(401);
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write"'
     );
     expect(applyIPRateLimit).toHaveBeenCalled();
   });
@@ -410,7 +411,7 @@ describe("POST /api/mcp", () => {
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
     expect(applyIPRateLimit).toHaveBeenCalled();
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write"'
     );
   });
 
