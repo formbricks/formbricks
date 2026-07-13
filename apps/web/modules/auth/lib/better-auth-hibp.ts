@@ -1,9 +1,12 @@
 import "server-only";
+// `getCurrentAuthContext` reads a shared AsyncLocalStorage singleton that Better Auth populates per
+// request. It MUST resolve to the same `@better-auth/core` instance `better-auth` uses, so we rely on
+// the single transitively-hoisted copy rather than declaring `@better-auth/core` as a direct dep — a
+// second copy would have its own (empty) ALS and silently disable the check.
 import { getCurrentAuthContext } from "@better-auth/core/context";
-import { createHash } from "@better-auth/utils/hash";
-import { betterFetch } from "@better-fetch/fetch";
 import type { BetterAuthPlugin } from "better-auth";
 import { APIError, isAPIError } from "better-auth/api";
+import { createHash } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import { PASSWORD_COMPROMISED_ERROR_CODE } from "@formbricks/types/errors";
 import { PASSWORD_HIBP_CHECK_DISABLED } from "@/lib/constants";
@@ -43,24 +46,26 @@ const HIBP_RANGE_URL = "https://api.pwnedpasswords.com/range";
  * failure returns false (fail open) after logging — never throws for infrastructure problems.
  */
 const isPasswordCompromised = async (password: string): Promise<boolean> => {
-  const sha1 = (await createHash("SHA-1", "hex").digest(password)).toUpperCase();
+  const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase();
   const prefix = sha1.substring(0, 5);
   const suffix = sha1.substring(5);
 
   try {
-    const { data, error } = await betterFetch<string>(`${HIBP_RANGE_URL}/${prefix}`, {
+    const res = await fetch(`${HIBP_RANGE_URL}/${prefix}`, {
       // "Add-Padding" pads the response with decoy hashes so the row count can't hint at the prefix.
       headers: { "Add-Padding": "true", "User-Agent": "Formbricks Password Checker" },
       signal: AbortSignal.timeout(HIBP_FETCH_TIMEOUT_MS),
     });
 
-    if (error || typeof data !== "string") {
-      logger.warn({ status: error?.status }, "HIBP breach check unreachable; allowing password (fail open)");
+    if (!res.ok) {
+      logger.warn({ status: res.status }, "HIBP breach check unreachable; allowing password (fail open)");
       return false;
     }
 
-    // Each line is "<SHA1_SUFFIX>:<count>". A match means the full hash is in the corpus.
-    return data.split("\n").some((line) => line.split(":")[0].toUpperCase() === suffix);
+    const body = await res.text();
+    // Each line is "<SHA1_SUFFIX>:<count>"; trim to tolerate CRLF endings. A match means the full hash
+    // is in the corpus.
+    return body.split("\n").some((line) => line.trim().split(":")[0].toUpperCase() === suffix);
   } catch (err) {
     // Timeout / DNS / connection error — fail open.
     logger.warn({ err }, "HIBP breach check failed; allowing password (fail open)");

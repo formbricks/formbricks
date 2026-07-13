@@ -1,6 +1,5 @@
-import { createHash } from "@better-auth/utils/hash";
-import { betterFetch } from "@better-fetch/fetch";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createHash } from "node:crypto";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
@@ -13,58 +12,55 @@ import { auth } from "@/modules/auth/lib/auth";
  * routes /sign-up/email through our hook — the one thing the pure unit test can't.
  */
 
-// Intercept ONLY the pwnedpasswords range endpoint; delegate every other betterFetch call (so we don't
-// disturb the rest of Better Auth). Each test sets the range payload via `setRangeResponse`.
-let rangeResponse: { data: string | null; error: unknown } = { data: "", error: null };
-const setRangeResponse = (r: typeof rangeResponse) => {
-  rangeResponse = r;
-};
-
 // integration/setup.ts disables the HIBP check suite-wide (so other tests don't hit the network);
-// re-enable it for this file, which is the one that actually exercises the breach check. betterFetch
-// is mocked below, so this still makes no real outbound call.
+// re-enable it for this file, which is the one that actually exercises the breach check. Global fetch
+// is stubbed below, so this still makes no real outbound call.
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
   PASSWORD_HIBP_CHECK_DISABLED: false,
 }));
 
-vi.mock("@better-fetch/fetch", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@better-fetch/fetch")>();
-  return {
-    ...actual,
-    betterFetch: vi.fn((url: string, opts: unknown) => {
-      // Match the host exactly (parsed), not via substring — a substring check would also match a
-      // crafted URL that merely contains the host elsewhere (CodeQL: incomplete URL sanitization).
-      let host = "";
-      try {
-        host = new URL(String(url)).hostname;
-      } catch {
-        // non-absolute URL → not the range endpoint; fall through to the real fetch
-      }
-      if (host === "api.pwnedpasswords.com") {
-        return Promise.resolve(rangeResponse);
-      }
-      return (actual.betterFetch as typeof betterFetch)(url as never, opts as never);
-    }),
-  };
-});
+// Intercept ONLY the pwnedpasswords range endpoint (matched by parsed host); delegate every other
+// fetch to the real implementation. Each test sets the range payload via `setRangeResponse`.
+const realFetch = globalThis.fetch;
+let rangeResponse: Response = new Response("");
+const setRangeResponse = (r: Response) => {
+  rangeResponse = r;
+};
 
 /** Build a range-endpoint body that DOES contain the given password's SHA-1 suffix (a breach hit). */
-const rangeHitFor = async (password: string): Promise<string> => {
-  const sha1 = (await createHash("SHA-1", "hex").digest(password)).toUpperCase();
+const rangeHitFor = (password: string): string => {
+  const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase();
   return `${sha1.substring(5)}:99\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:1`;
 };
 
 beforeEach(async () => {
   await resetDb();
-  vi.clearAllMocks();
-  setRangeResponse({ data: "", error: null });
+  setRangeResponse(new Response(""));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      let host = "";
+      try {
+        host = new URL(url).hostname;
+      } catch {
+        // non-absolute URL → not the range endpoint; fall through to the real fetch
+      }
+      if (host === "api.pwnedpasswords.com") return Promise.resolve(rangeResponse.clone());
+      return realFetch(input, init);
+    })
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("HIBP breach check on sign-up (real Better Auth + Postgres)", () => {
   test("rejects a breached password and creates no user", async () => {
     const password = "P4ssw0rd-breached";
-    setRangeResponse({ data: await rangeHitFor(password), error: null });
+    setRangeResponse(new Response(rangeHitFor(password)));
 
     await expect(
       auth.api.signUpEmail({ body: { email: "breach@example.com", password, name: "Bree" } })
@@ -75,7 +71,7 @@ describe("HIBP breach check on sign-up (real Better Auth + Postgres)", () => {
 
   test("allows a clean password (suffix absent from the range response)", async () => {
     // A range body whose suffixes cannot match any real SHA-1 suffix (too short) → not compromised.
-    setRangeResponse({ data: "0000000000:1\n1111111111:2", error: null });
+    setRangeResponse(new Response("0000000000:1\n1111111111:2"));
 
     const response = await auth.api.signUpEmail({
       body: { email: "clean@example.com", password: "Str0ng-unique-passphrase", name: "Cleo" },
@@ -86,7 +82,7 @@ describe("HIBP breach check on sign-up (real Better Auth + Postgres)", () => {
   });
 
   test("fails open: a range-endpoint error still lets sign-up through", async () => {
-    setRangeResponse({ data: null, error: { status: 503 } });
+    setRangeResponse(new Response(null, { status: 503 }));
 
     const response = await auth.api.signUpEmail({
       body: { email: "failopen@example.com", password: "Another-good-one-1", name: "Fay" },
