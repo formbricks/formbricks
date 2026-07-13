@@ -156,6 +156,13 @@
   --fb-option-font-family: inherit;
   --fb-option-font-size: 14px;
   --fb-option-font-weight: 400;
+
+  /* ── Page backdrop ─────────────────────────────────────────────────── */
+  /* The gray the link-survey shell paints behind the widget when no survey
+     background is configured (MediaBackground's default, slate-200). The
+     cardless layout blends its scroll fades and scroll-to-bottom button into
+     it; the shell can override this token if its default ever changes. */
+  --fb-page-bg-color: #e2e8f0;
 }
 
 #fbjs .button-custom {
