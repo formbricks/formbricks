@@ -239,6 +239,8 @@ function DropdownVariant({
     hasNoResults,
     handleDropdownOpen,
     handleDropdownClose,
+    focusMenuItem,
+    handleContentKeyDown,
   } = useDropdownSearch({ options, hasOtherOption, otherOptionLabel, isSearchEnabled: showSearch });
 
   return (
@@ -265,7 +267,8 @@ function DropdownVariant({
           side={lockedSide}
           avoidCollisions={lockedSide === undefined}
           className="bg-option-bg border-input-border w-(--radix-dropdown-menu-trigger-width) overflow-hidden"
-          align="start">
+          align="start"
+          onKeyDown={handleContentKeyDown}>
           {showSearch ? (
             <DropdownSearchInput
               searchQuery={searchQuery}
@@ -273,6 +276,7 @@ function DropdownVariant({
               searchInputRef={searchInputRef}
               placeholder={searchPlaceholder}
               dir={dir}
+              onNavigateToOptions={focusMenuItem}
             />
           ) : null}
           <div className="max-h-[260px] overflow-y-auto">

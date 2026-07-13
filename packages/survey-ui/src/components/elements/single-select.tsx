@@ -157,6 +157,8 @@ interface DropdownVariantProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   searchPlaceholder: string;
   searchNoResultsText: string;
+  focusMenuItem: (which: "first" | "last") => void;
+  handleContentKeyDown: (e: React.KeyboardEvent) => void;
   filteredRegularOptions: SingleSelectOption[];
   otherMatchesSearch: boolean;
   otherOptionId?: string;
@@ -192,6 +194,8 @@ function SingleSelectDropdownVariant({
   searchInputRef,
   searchPlaceholder,
   searchNoResultsText,
+  focusMenuItem,
+  handleContentKeyDown,
   filteredRegularOptions,
   otherMatchesSearch,
   otherOptionId,
@@ -235,7 +239,8 @@ function SingleSelectDropdownVariant({
           side={lockedSide}
           avoidCollisions={lockedSide === undefined}
           className="bg-option-bg border-input-border w-(--radix-dropdown-menu-trigger-width) overflow-hidden"
-          align="start">
+          align="start"
+          onKeyDown={handleContentKeyDown}>
           {showSearch ? (
             <DropdownSearchInput
               searchQuery={searchQuery}
@@ -243,6 +248,7 @@ function SingleSelectDropdownVariant({
               searchInputRef={searchInputRef}
               placeholder={searchPlaceholder}
               dir={dir}
+              onNavigateToOptions={focusMenuItem}
             />
           ) : null}
           <div className="max-h-[260px] overflow-y-auto">
@@ -661,6 +667,8 @@ function SingleSelect({
     hasNoResults,
     handleDropdownOpen,
     handleDropdownClose,
+    focusMenuItem,
+    handleContentKeyDown,
   } = useDropdownSearch({ options, hasOtherOption, otherOptionLabel, isSearchEnabled: showSearch });
 
   const {
@@ -773,6 +781,8 @@ function SingleSelect({
               searchInputRef={searchInputRef}
               searchPlaceholder={searchPlaceholder}
               searchNoResultsText={searchNoResultsText}
+              focusMenuItem={focusMenuItem}
+              handleContentKeyDown={handleContentKeyDown}
               filteredRegularOptions={filteredRegularOptions}
               otherMatchesSearch={otherMatchesSearch}
               otherOptionId={otherOptionId}
