@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "Această parolă a apărut într-o breșă de date. Te rugăm să alegi alta.",
     "saml_connection_error": "Ceva nu a mers. Vă rugăm să verificați consola aplicației pentru mai multe detalii.",
     "signup": {
       "captcha_failed": "Captcha eșuat",

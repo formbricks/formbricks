@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "Bu parola bir veri ihlalinde görülmüş. Lütfen farklı bir parola seçin.",
     "saml_connection_error": "Bir sorun oluştu. Daha fazla bilgi için uygulama konsolunuzu kontrol edin.",
     "signup": {
       "captcha_failed": "Captcha başarısız oldu",

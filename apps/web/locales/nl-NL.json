@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "Dit wachtwoord is aangetroffen in een datalek. Kies een ander wachtwoord.",
     "saml_connection_error": "Er is iets misgegaan. Controleer uw app-console voor meer details.",
     "signup": {
       "captcha_failed": "Captcha is mislukt",

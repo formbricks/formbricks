@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "このパスワードはデータ漏洩で見つかりました。別のパスワードを選択してください。",
     "saml_connection_error": "問題が発生しました。詳細については、アプリのコンソールを確認してください。",
     "signup": {
       "captcha_failed": "CAPTCHAに失敗しました",
