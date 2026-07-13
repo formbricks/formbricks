@@ -35,6 +35,14 @@ describe("matchWorkflowsForResponse", () => {
     expect(matchWorkflowsForResponse([candidate], { surveyId: SURVEY, endingId: ENDING_B })).toHaveLength(0);
   });
 
+  test("a null endingId (survey without ending cards) matches only all-endings triggers", () => {
+    const anyEnding = makeCandidate("wf_any", { surveyId: SURVEY, endingCardIds: [] });
+    const specific = makeCandidate("wf_specific", { surveyId: SURVEY, endingCardIds: [ENDING_A] });
+
+    expect(matchWorkflowsForResponse([anyEnding], { surveyId: SURVEY, endingId: null })).toHaveLength(1);
+    expect(matchWorkflowsForResponse([specific], { surveyId: SURVEY, endingId: null })).toHaveLength(0);
+  });
+
   test("does not match a different survey", () => {
     const candidate = makeCandidate("wf", { surveyId: OTHER_SURVEY, endingCardIds: [] });
     expect(matchWorkflowsForResponse([candidate], { surveyId: SURVEY, endingId: ENDING_A })).toHaveLength(0);

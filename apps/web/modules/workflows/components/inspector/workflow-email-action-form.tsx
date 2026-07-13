@@ -1,7 +1,7 @@
 "use client";
 
-import { useAtomValue } from "jotai";
-import { EyeOffIcon, MailIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
+import { useAtomValue, useSetAtom } from "jotai";
+import { ArrowRightIcon, EyeOffIcon, MailIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSendEmailActionNode } from "@formbricks/workflows";
@@ -11,6 +11,7 @@ import {
   buildEmailSendToOptions,
 } from "@/modules/survey/follow-ups/lib/email-send-to-options";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
+import { Button } from "@/modules/ui/components/button";
 import { Editor } from "@/modules/ui/components/editor";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -23,7 +24,8 @@ import {
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import { useWorkflowEmailAuthoringContext } from "@/modules/workflows/components/workflow-email-authoring-context";
-import { workflowDefinitionAtom } from "@/modules/workflows/state/editor";
+import { resolveBoundTriggerSurvey } from "@/modules/workflows/lib/bound-survey";
+import { openWorkflowNodeConfigModalAtom, workflowDefinitionAtom } from "@/modules/workflows/state/editor";
 
 interface WorkflowEmailActionFormProps {
   node: TWorkflowSendEmailActionNode;
@@ -60,19 +62,14 @@ export const WorkflowEmailActionForm = ({
   const { t } = useTranslation();
   const authoringContext = useWorkflowEmailAuthoringContext();
   const definition = useAtomValue(workflowDefinitionAtom);
+  const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const [firstRender, setFirstRender] = useState(true);
 
   const updateConfig = (next: Partial<TWorkflowSendEmailActionNode["config"]>) =>
     onChange({ ...node, config: { ...node.config, ...next } });
 
-  // The authoring context is resolved from the survey bound at page load. If the user switched the
-  // trigger survey in this session, the context is stale for the new survey — fall back to plain
-  // controls (no recall / recipient options) rather than showing the wrong survey's fields.
-  const triggerSurveyId = definition?.trigger.type === "trigger" ? definition.trigger.config.surveyId : null;
-  const survey =
-    authoringContext?.survey && authoringContext.survey.id === triggerSurveyId
-      ? authoringContext.survey
-      : null;
+  const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
+  const survey = resolveBoundTriggerSurvey(authoringContext, definition);
 
   // Clear the recipient + body when the trigger's bound survey changes: `config.to` is an element/
   // hidden-field id and `config.body` holds recall tokens, both of which dangle against the previous
@@ -99,6 +96,31 @@ export const WorkflowEmailActionForm = ({
       t,
     });
   }, [survey, authoringContext, t]);
+
+  // Without a resolvable bound survey there is nothing meaningful to author — the recipient
+  // options and recall body both come from the survey. Point the user at the trigger instead of
+  // rendering degraded plain inputs (and the seed's placeholder values).
+  if (!survey) {
+    return (
+      <div className="flex flex-col gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+        <p className="text-sm text-slate-600">{t("workspace.workflows.email_needs_survey")}</p>
+        {definition?.trigger ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="w-fit"
+            onClick={() => {
+              const triggerId = definition.trigger?.id;
+              if (triggerId) openNodeConfigModal(triggerId);
+            }}>
+            {t("workspace.workflows.email_set_up_trigger")}
+            <ArrowRightIcon />
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
 
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
 
@@ -144,64 +166,50 @@ export const WorkflowEmailActionForm = ({
         <p className="text-xs text-slate-500">
           {t("workspace.surveys.edit.follow_ups_modal_action_to_description")}
         </p>
-        {survey ? (
-          emailSendToOptions.length > 0 ? (
-            <Select
-              value={node.config.to || undefined}
-              disabled={!isEditable}
-              onValueChange={(value) => updateConfig({ to: value })}>
-              <SelectTrigger
-                id="workflow-email-to"
-                className="overflow-hidden text-ellipsis whitespace-nowrap bg-white">
-                <SelectValue placeholder={t("workspace.workflows.email_to_placeholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {verifiedEmailOptions.length > 0 || elementOptions.length > 0 ? (
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-x-2 p-2">
-                      <p className="text-sm text-slate-500">{t("common.questions")}</p>
-                    </div>
-                    {verifiedEmailOptions.map(renderSelectItem)}
-                    {elementOptions.map(renderSelectItem)}
-                  </div>
-                ) : null}
-                {hiddenFieldOptions.length > 0 ? (
-                  <div className="flex flex-col">
-                    <div className="flex gap-x-2 p-2">
-                      <p className="text-sm text-slate-500">{t("common.hidden_fields")}</p>
-                    </div>
-                    {hiddenFieldOptions.map(renderSelectItem)}
-                  </div>
-                ) : null}
-                {userOptions.length > 0 ? (
-                  <div className="flex flex-col">
-                    <div className="flex gap-x-2 p-2">
-                      <p className="text-sm text-slate-500">{t("common.members")}</p>
-                    </div>
-                    {userOptions.map(renderSelectItem)}
-                  </div>
-                ) : null}
-              </SelectContent>
-            </Select>
-          ) : (
-            <div className="flex items-start gap-2 text-yellow-600">
-              <TriangleAlertIcon className="mt-0.5 size-4 min-h-4 min-w-4" aria-hidden="true" />
-              <p className="text-sm">{t("workspace.surveys.edit.follow_ups_modal_action_to_warning")}</p>
-            </div>
-          )
-        ) : (
-          // No bound survey resolved (unbound trigger or survey switched this session): plain email input.
-          <Input
-            id="workflow-email-to"
-            value={node.config.to}
+        {emailSendToOptions.length > 0 ? (
+          <Select
+            value={node.config.to || undefined}
             disabled={!isEditable}
-            placeholder={t("workspace.workflows.email_to_placeholder")}
-            onChange={(event) => updateConfig({ to: event.target.value })}
-          />
+            onValueChange={(value) => updateConfig({ to: value })}>
+            <SelectTrigger
+              id="workflow-email-to"
+              className="overflow-hidden bg-white text-ellipsis whitespace-nowrap">
+              <SelectValue placeholder={t("workspace.workflows.email_to_placeholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {verifiedEmailOptions.length > 0 || elementOptions.length > 0 ? (
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-x-2 p-2">
+                    <p className="text-sm text-slate-500">{t("common.questions")}</p>
+                  </div>
+                  {verifiedEmailOptions.map(renderSelectItem)}
+                  {elementOptions.map(renderSelectItem)}
+                </div>
+              ) : null}
+              {hiddenFieldOptions.length > 0 ? (
+                <div className="flex flex-col">
+                  <div className="flex gap-x-2 p-2">
+                    <p className="text-sm text-slate-500">{t("common.hidden_fields")}</p>
+                  </div>
+                  {hiddenFieldOptions.map(renderSelectItem)}
+                </div>
+              ) : null}
+              {userOptions.length > 0 ? (
+                <div className="flex flex-col">
+                  <div className="flex gap-x-2 p-2">
+                    <p className="text-sm text-slate-500">{t("common.members")}</p>
+                  </div>
+                  {userOptions.map(renderSelectItem)}
+                </div>
+              ) : null}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="flex items-start gap-2 text-yellow-600">
+            <TriangleAlertIcon className="mt-0.5 size-4 min-h-4 min-w-4" aria-hidden="true" />
+            <p className="text-sm">{t("workspace.surveys.edit.follow_ups_modal_action_to_warning")}</p>
+          </div>
         )}
-        {!triggerSurveyId ? (
-          <p className="text-xs text-slate-500">{t("workspace.workflows.email_to_pick_survey")}</p>
-        ) : null}
       </div>
 
       {/* From (read-only) */}
@@ -221,6 +229,7 @@ export const WorkflowEmailActionForm = ({
       <div className="flex flex-col gap-2">
         <Label htmlFor="workflow-email-reply-to">{t("workspace.workflows.email_reply_to_label")}</Label>
         <FollowUpActionMultiEmailInput
+          disabled={!isEditable}
           emails={node.config.replyTo}
           setEmails={(update) => {
             const nextReplyTo = typeof update === "function" ? update(node.config.replyTo) : update;
@@ -242,33 +251,23 @@ export const WorkflowEmailActionForm = ({
       </div>
 
       {/* Body (recall editor) */}
-      <div className="flex flex-col gap-2">
+      {/* The editor defaults to a 2-line min-height (48px); a 4-line body (24px line-height)
+          better matches the amount of content an email body usually holds. */}
+      <div className="flex flex-col gap-2 [--editor-min-height:96px]">
         <Label>{t("workspace.workflows.email_body_label")}</Label>
-        {survey ? (
-          <Editor
-            disableLists
-            excludedToolbarItems={["blockType"]}
-            getText={() => toEditorHtml(node.config.body)}
-            setText={(value: string) => updateConfig({ body: value })}
-            firstRender={firstRender}
-            setFirstRender={setFirstRender}
-            editable={isEditable}
-            placeholder={t("workspace.workflows.email_body_placeholder")}
-            localSurvey={survey}
-            elementId={node.id}
-            selectedLanguageCode={DEFAULT_LANGUAGE_CODE}
-          />
-        ) : (
-          <textarea
-            id="workflow-email-body"
-            value={node.config.body}
-            disabled={!isEditable}
-            rows={6}
-            placeholder={t("workspace.workflows.email_body_placeholder")}
-            className="flex w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
-            onChange={(event) => updateConfig({ body: event.target.value })}
-          />
-        )}
+        <Editor
+          disableLists
+          excludedToolbarItems={["blockType"]}
+          getText={() => toEditorHtml(node.config.body)}
+          setText={(value: string) => updateConfig({ body: value })}
+          firstRender={firstRender}
+          setFirstRender={setFirstRender}
+          editable={isEditable}
+          placeholder={t("workspace.workflows.email_body_placeholder")}
+          localSurvey={survey}
+          elementId={node.id}
+          selectedLanguageCode={DEFAULT_LANGUAGE_CODE}
+        />
       </div>
 
       <div className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">

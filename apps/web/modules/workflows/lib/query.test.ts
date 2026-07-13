@@ -19,9 +19,11 @@ const workflowListItem = (id: string, name: string): TWorkflowListItem => ({
   triggerType: "response.completed",
   surveyId: "survey_1",
   createdBy: null,
+  creator: null,
   createdAt: "2026-06-11T09:30:00.000Z",
   updatedAt: "2026-06-11T09:30:00.000Z",
   lastRun: null,
+  runCount: 0,
 });
 
 const buildData = (): InfiniteData<TWorkflowListPage> => ({

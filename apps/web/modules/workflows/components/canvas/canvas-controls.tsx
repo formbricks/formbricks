@@ -2,10 +2,10 @@
 
 import { useReactFlow } from "@xyflow/react";
 import {
-  LockIcon,
+  HandIcon,
   type LucideIcon,
   MousePointerClickIcon,
-  UnlockIcon,
+  WandSparklesIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from "lucide-react";
@@ -14,11 +14,12 @@ import { Button, type ButtonProps } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CanvasControlsProps {
-  canEdit: boolean;
   canMutate: boolean;
-  isLocked: boolean;
+  /** Pan mode = pan/browse only (nodes inert); pointer mode = select/inspect nodes, edit when permitted. */
+  isPanMode: boolean;
   onAutoLayout: () => void;
-  onToggleLock: () => void;
+  onPanMode: () => void;
+  onPointerMode: () => void;
 }
 
 interface ControlDescriptor {
@@ -35,16 +36,14 @@ interface ControlDescriptor {
 }
 
 export const CanvasControls = ({
-  canEdit,
   canMutate,
-  isLocked,
+  isPanMode,
   onAutoLayout,
-  onToggleLock,
+  onPanMode,
+  onPointerMode,
 }: Readonly<CanvasControlsProps>) => {
   const { t } = useTranslation();
   const { zoomIn, zoomOut } = useReactFlow();
-
-  const lockLabel = isLocked ? t("workspace.workflows.unlock_canvas") : t("workspace.workflows.lock_canvas");
 
   const controls: ControlDescriptor[] = [
     {
@@ -62,23 +61,28 @@ export const CanvasControls = ({
       onClick: () => zoomOut(),
     },
     {
-      key: "auto-layout",
+      key: "pan-mode",
+      Icon: HandIcon,
+      label: t("workspace.workflows.pan_mode"),
+      variant: isPanMode ? "default" : "outline",
+      ariaPressed: isPanMode,
+      onClick: onPanMode,
+    },
+    {
+      key: "pointer-mode",
       Icon: MousePointerClickIcon,
+      label: t("workspace.workflows.pointer_mode"),
+      variant: isPanMode ? "outline" : "default",
+      ariaPressed: !isPanMode,
+      onClick: onPointerMode,
+    },
+    {
+      key: "auto-layout",
+      Icon: WandSparklesIcon,
       label: t("workspace.workflows.auto_layout"),
       variant: "outline",
       disabled: !canMutate,
       onClick: onAutoLayout,
-    },
-    {
-      key: "lock",
-      Icon: isLocked ? LockIcon : UnlockIcon,
-      label: lockLabel,
-      variant: isLocked ? "default" : "outline",
-      ariaPressed: !isLocked,
-      // Keep clickable while the workflow is enabled so the click can surface the
-      // "disable first" toast — the actual gate sits in the parent's handleToggleLock.
-      disabled: isLocked ? false : !canEdit,
-      onClick: onToggleLock,
     },
   ];
 

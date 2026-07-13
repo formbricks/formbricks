@@ -61,8 +61,6 @@ const translations: Record<TranslationKey, TranslationValue> = {
     "Link to uploaded file is not included for data privacy reasons",
   "emails.response_data": "Response data",
   "emails.response_finished_email_subject": "A response for {surveyName} was completed ✅",
-  "emails.response_finished_email_subject_with_email":
-    "{personEmail} just completed your {surveyName} survey ✅",
   "emails.schedule_your_meeting": "Schedule your meeting",
   "emails.select_a_date": "Select a date",
   "emails.survey_response_finished_email_congrats":

@@ -33,20 +33,27 @@ export type TWorkflowEdge = z.infer<typeof ZWorkflowEdge>;
 export const ZWorkflowDefinitionBase = z
   .object({
     schemaVersion: ZWorkflowSchemaVersion,
-    trigger: ZWorkflowTriggerNode,
+    trigger: ZWorkflowTriggerNode.nullable().describe(
+      "Null while the draft has no trigger yet; the user adds one from the canvas."
+    ),
     nodes: z.array(ZWorkflowChildNode).default([]),
     edges: z.array(ZWorkflowEdge).default([]),
     entryNodeId: z
       .string()
       .min(1)
-      .describe("Workflow entry point. Must reference the workflow trigger node."),
+      .nullable()
+      .describe("Workflow entry point. Must reference the workflow trigger node, or be null without one."),
   })
   .describe("Persisted workflow graph definition.");
 export type TWorkflowDefinitionBase = z.infer<typeof ZWorkflowDefinitionBase>;
 
 const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
-  const ids = new Set<string>([definition.trigger.id]);
-  const nodesById = new Map<string, TWorkflowNode>([[definition.trigger.id, definition.trigger]]);
+  const ids = new Set<string>();
+  const nodesById = new Map<string, TWorkflowNode>();
+  if (definition.trigger) {
+    ids.add(definition.trigger.id);
+    nodesById.set(definition.trigger.id, definition.trigger);
+  }
 
   for (const node of definition.nodes) {
     if (ids.has(node.id)) {
@@ -62,10 +69,12 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
     nodesById.set(node.id, node);
   }
 
-  if (definition.entryNodeId !== definition.trigger.id) {
+  if (definition.entryNodeId !== (definition.trigger?.id ?? null)) {
     ctx.addIssue({
       code: "custom",
-      message: "entryNodeId must reference the workflow trigger",
+      message: definition.trigger
+        ? "entryNodeId must reference the workflow trigger"
+        : "entryNodeId must be null while the workflow has no trigger",
       path: ["entryNodeId"],
     });
   }
@@ -111,7 +120,9 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
 
   // At most one so trigger-only drafts (no nodes/edges yet) stay persistable;
   // the executable definition requires exactly one.
-  const triggerEdges = definition.edges.filter((edge) => edge.source === definition.trigger.id);
+  const triggerEdges = definition.trigger
+    ? definition.edges.filter((edge) => edge.source === definition.trigger?.id)
+    : [];
   if (triggerEdges.length > 1) {
     ctx.addIssue({
       code: "custom",
@@ -152,7 +163,18 @@ export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateW
 );
 export type TWorkflowDefinition = z.infer<typeof ZWorkflowDefinition>;
 
-const validateExecutableGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+// Executable workflows are the enable-time subset: the trigger (and with it the entry point)
+// must exist, so the base's draft-only nullability is tightened back to required here.
+const ZWorkflowExecutableDefinitionBase = ZWorkflowDefinitionBase.extend({
+  trigger: ZWorkflowTriggerNode,
+  entryNodeId: z.string().min(1).describe("Workflow entry point. Must reference the trigger node."),
+});
+type TWorkflowExecutableDefinitionBase = z.infer<typeof ZWorkflowExecutableDefinitionBase>;
+
+const validateExecutableGraph = (
+  definition: TWorkflowExecutableDefinitionBase,
+  ctx: z.RefinementCtx
+): void => {
   const triggerEdges = definition.edges.filter((edge) => edge.source === definition.trigger.id);
   if (triggerEdges.length !== 1) {
     ctx.addIssue({
@@ -243,18 +265,36 @@ const validateExecutableGraph = (definition: TWorkflowDefinitionBase, ctx: z.Ref
   }
 };
 
-export const ZWorkflowExecutableDefinition = ZWorkflowDefinitionBase.superRefine((definition, ctx) => {
-  validateWorkflowGraph(definition, ctx);
-  validateExecutableGraph(definition, ctx);
+export const ZWorkflowExecutableDefinition = ZWorkflowExecutableDefinitionBase.superRefine(
+  (definition, ctx) => {
+    validateWorkflowGraph(definition, ctx);
+    validateExecutableGraph(definition, ctx);
 
-  for (const [index, node] of definition.nodes.entries()) {
-    if (node.type === "if_else") {
-      ctx.addIssue({
-        code: "custom",
-        message: "if_else nodes are not executable in this version of workflows",
-        path: ["nodes", index, "type"],
-      });
+    for (const [index, node] of definition.nodes.entries()) {
+      if (node.type === "if_else") {
+        ctx.addIssue({
+          code: "custom",
+          message: "if_else nodes are not executable in this version of workflows",
+          path: ["nodes", index, "type"],
+        });
+      }
+
+      // Draft configs may hold empty content (the persisted schema is permissive so authors can
+      // save work in progress), but an executable send_email must actually have something to send.
+      // send_email is the only action type today, so type === "action" is the whole check.
+      if (node.type === "action") {
+        const requiredContentFields = ["to", "subject", "body"] as const;
+        for (const field of requiredContentFields) {
+          if (node.config[field].trim().length === 0) {
+            ctx.addIssue({
+              code: "custom",
+              message: `send_email node ${node.id} is missing ${field}`,
+              path: ["nodes", index, "config", field],
+            });
+          }
+        }
+      }
     }
   }
-}).describe("Workflow definition subset that the current runner can execute.");
+).describe("Workflow definition subset that the current runner can execute.");
 export type TWorkflowExecutableDefinition = z.infer<typeof ZWorkflowExecutableDefinition>;

@@ -107,9 +107,15 @@ const domainFromEmail = (from: string): string => from.split("@")[1]?.trim() || 
  * Builds the deterministic RFC 5322 Message-ID (`<hash@domain>`) stored on a step output and sent as
  * the `Message-ID` header. Stable across retries for the same run + step, so a replayed send carries
  * the same id — enabling protocol-level dedup and traceability to the same logical message.
+ *
+ * Sized to 128 bits (32 hex chars) — the conventional scale for uniqueness ids (a UUID is 122).
+ * The id only needs to be unique, never preimage-resistant, so the full 256-bit digest bought
+ * nothing while pushing the header past the RFC 5322 78-char soft limit, forcing nodemailer to
+ * fold it; folded headers are valid MIME but trip naive parsers (MailHog shows the folded id as
+ * part of the Subject).
  */
 const buildMessageId = (workflowRunId: string, stepId: string, from: string): string => {
-  const hash = createHash("sha256").update(`${workflowRunId}:${stepId}`).digest("hex");
+  const hash = createHash("sha256").update(`${workflowRunId}:${stepId}`).digest("hex").slice(0, 32);
   return `<${hash}@${domainFromEmail(from)}>`;
 };
 

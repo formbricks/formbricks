@@ -23,7 +23,8 @@ const response = {
   id: responseId,
   surveyId,
   finished: true,
-  endingId,
+  // Widened so tests can spread in `endingId: null` (matches RunnerResponse's `string | null`).
+  endingId: endingId as string | null,
   updatedAt: new Date("2026-06-12T09:30:00.000Z"),
   data: { q1: "answer" },
 };
@@ -89,10 +90,26 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  test("does nothing when no ending card was reached", async () => {
+  test("a response without an ending card still fires an all-endings workflow", async () => {
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
+    create.mockResolvedValue({ id: "run_1" });
+
     await run({ response: { ...response, endingId: null }, workspaceId, dispatch });
-    expect(findMany).not.toHaveBeenCalled();
+
+    const data = create.mock.calls[0][0].data;
+    expect(data).toMatchObject({ workflowId: "wf_1", status: "queued" });
+    // No ending was reached, so the payload simply omits endingCardId (it is optional).
+    expect(data.triggerPayload.endingCardId).toBeUndefined();
+    expect(dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  test("a response without an ending card does not fire an ending-specific workflow", async () => {
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1", [endingId])]);
+
+    await run({ response: { ...response, endingId: null }, workspaceId, dispatch });
+
     expect(create).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   test("respects the ending-card filter (specific list, miss → no run)", async () => {

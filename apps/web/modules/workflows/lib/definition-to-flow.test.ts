@@ -54,14 +54,14 @@ describe("updateNodePosition", () => {
   test("updates trigger position when id matches", () => {
     const def = buildDefinition();
     const next = updateNodePosition(def, "trigger-1", { x: 100, y: 80 });
-    expect(next.trigger.ui?.position).toEqual({ x: 100, y: 80 });
+    expect(next.trigger?.ui?.position).toEqual({ x: 100, y: 80 });
     expect(next.nodes[0].ui?.position).toEqual({ x: 0, y: 0 });
   });
 
   test("updates child-node position when id matches", () => {
     const def = buildDefinition();
     const next = updateNodePosition(def, "action-1", { x: 220, y: 240 });
-    expect(next.trigger.ui?.position).toEqual({ x: 0, y: 0 });
+    expect(next.trigger?.ui?.position).toEqual({ x: 0, y: 0 });
     expect(next.nodes[0].ui?.position).toEqual({ x: 220, y: 240 });
   });
 });
@@ -78,6 +78,44 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     expect(nodes[1]).toMatchObject({
       id: "action-1",
       data: { category: "action", icon: "email" },
+    });
+  });
+
+  test("flags no issues by default (survey resolution unknown)", () => {
+    const nodes = workflowDefinitionToFlowNodes(buildDefinition(), t);
+    expect(nodes.map((node) => node.data.issue)).toEqual([null, null]);
+  });
+
+  test("flags only the trigger when the bound survey doesn't resolve (sequential guidance)", () => {
+    const nodes = workflowDefinitionToFlowNodes(buildDefinition(), t, {
+      hasBoundSurvey: false,
+      isDraft: true,
+    });
+    expect(nodes[0].data.issue).toEqual({
+      severity: "setup",
+      label: "workspace.workflows.node_needs_survey",
+    });
+    expect(nodes[1].data.issue).toBeNull();
+  });
+
+  test("flags an incomplete email node once the survey is bound, with error severity when live", () => {
+    const def = buildDefinition();
+    (def.nodes[0] as { config: { to: string } }).config.to = "";
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: true, isDraft: false });
+    expect(nodes[0].data.issue).toBeNull();
+    expect(nodes[1].data.issue).toEqual({
+      severity: "error",
+      label: "workspace.workflows.node_needs_email_content",
+    });
+  });
+
+  test("flags an email node whose subject is blank (parity with the executable schema)", () => {
+    const def = buildDefinition();
+    (def.nodes[0] as { config: { subject: string } }).config.subject = "   ";
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: true, isDraft: true });
+    expect(nodes[1].data.issue).toEqual({
+      severity: "setup",
+      label: "workspace.workflows.node_needs_email_content",
     });
   });
 
@@ -100,7 +138,7 @@ describe("reorganizeWorkflowDefinition", () => {
   test("ranks reachable nodes by BFS distance from the trigger", () => {
     const def = buildDefinition();
     const next = reorganizeWorkflowDefinition(def);
-    const triggerY = next.trigger.ui?.position?.y ?? 0;
+    const triggerY = next.trigger?.ui?.position?.y ?? 0;
     const actionY = next.nodes[0].ui?.position?.y ?? 0;
     expect(actionY).toBeGreaterThan(triggerY);
   });
@@ -124,5 +162,24 @@ describe("workflowDefinitionToFlowNodes fallback", () => {
     const def = { ...base, trigger: triggerWithoutUi } as TWorkflowDefinition;
     const nodes = workflowDefinitionToFlowNodes(def, t);
     expect(nodes[0].position).toEqual({ x: 120, y: 80 });
+  });
+});
+
+describe("trigger-less draft definitions", () => {
+  const emptyDefinition = buildDefinition({
+    trigger: null,
+    nodes: [],
+    edges: [],
+    entryNodeId: null,
+  });
+
+  test("project to zero flow nodes and edges", () => {
+    expect(workflowDefinitionToFlowNodes(emptyDefinition, t)).toEqual([]);
+    expect(workflowDefinitionToFlowEdges(emptyDefinition)).toEqual([]);
+  });
+
+  test("updateNodePosition and reorganize are no-op safe", () => {
+    expect(updateNodePosition(emptyDefinition, "anything", { x: 1, y: 1 }).trigger).toBeNull();
+    expect(reorganizeWorkflowDefinition(emptyDefinition).trigger).toBeNull();
   });
 });

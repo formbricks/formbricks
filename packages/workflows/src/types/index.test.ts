@@ -138,6 +138,45 @@ describe("@formbricks/workflows", () => {
     expect(ZWorkflowDefinition.parse(definition).nodes).toHaveLength(0);
   });
 
+  test("allows persisting an empty draft definition without a trigger", () => {
+    const definition = { schemaVersion: 1, trigger: null, nodes: [], edges: [], entryNodeId: null };
+
+    expect(ZWorkflowDefinition.parse(definition).trigger).toBeNull();
+  });
+
+  test("rejects a trigger-less definition whose entryNodeId is set", () => {
+    const definition = { schemaVersion: 1, trigger: null, nodes: [], edges: [], entryNodeId: "trigger" };
+
+    expect(() => ZWorkflowDefinition.parse(definition)).toThrow(/entryNodeId must be null/);
+  });
+
+  test("rejects trigger-less definitions for executable parsing", () => {
+    const definition = { schemaVersion: 1, trigger: null, nodes: [], edges: [], entryNodeId: null };
+
+    expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow();
+  });
+
+  test.each(["to", "subject", "body"] as const)(
+    "rejects executable definitions whose send_email node has an empty %s",
+    (field) => {
+      const definition = createDefinition();
+      const emailNode = definition.nodes[0];
+      if (emailNode.type !== "action") throw new Error("expected send_email node");
+      emailNode.config = { ...emailNode.config, [field]: "  " };
+
+      expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(new RegExp(`missing ${field}`));
+    }
+  );
+
+  test("allows persisting a draft definition whose send_email node is incomplete", () => {
+    const definition = createDefinition();
+    const emailNode = definition.nodes[0];
+    if (emailNode.type !== "action") throw new Error("expected send_email node");
+    emailNode.config = { ...emailNode.config, to: "", subject: "", body: "" };
+
+    expect(ZWorkflowDefinition.parse(definition).nodes).toHaveLength(1);
+  });
+
   test("rejects definitions with multiple outgoing trigger edges", () => {
     const definition = createDefinition();
     definition.edges.push({ id: "trigger-send-email-2", source: "trigger", target: "send-email" });

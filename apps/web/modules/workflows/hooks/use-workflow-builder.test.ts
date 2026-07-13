@@ -6,6 +6,7 @@ import { Provider, createStore } from "jotai";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TWorkflowResource } from "@formbricks/workflows";
+import { setWorkflowNameAtom } from "@/modules/workflows/state/editor";
 import { useWorkflowBuilder } from "./use-workflow-builder";
 
 const toastSuccess = vi.fn();
@@ -13,8 +14,16 @@ const toastError = vi.fn();
 vi.mock("react-hot-toast", () => ({
   default: { success: (msg: string) => toastSuccess(msg), error: (msg: string) => toastError(msg) },
 }));
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+vi.mock("react-i18next", () => {
+  // Stable across renders: the load effect depends on `t`, and a per-render identity would
+  // re-fetch + re-hydrate on every render, wiping the dirty draft the autosave tests rely on.
+  const translation = { t: (key: string) => key };
+  return { useTranslation: () => translation };
+});
+
+const routerRefresh = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: routerRefresh }),
 }));
 
 const getWorkflow = vi.fn();
@@ -36,9 +45,15 @@ vi.mock("@/modules/workflows/lib/definition-to-flow", () => ({
   workflowDefinitionToFlowNodes: () => [],
 }));
 
+// safeParse mimics real zod normalization: it returns a REBUILT object (defaults applied, keys in
+// schema order), never the input reference. The autosave dirty-tracking must stay immune to that —
+// see "a normalizing schema parse..." below.
 vi.mock("@formbricks/workflows", () => ({
   ZWorkflowDefinition: {
-    safeParse: (value: unknown) => ({ success: true, data: value }),
+    safeParse: (value: unknown) => ({
+      success: true,
+      data: { schemaVersion: 1, ...(value as Record<string, unknown>) },
+    }),
   },
 }));
 
@@ -53,12 +68,13 @@ const apiWorkflow = {
 const renderBuilder = (args: Parameters<typeof useWorkflowBuilder>[0]) => {
   const store = createStore();
   const wrapper = ({ children }: { children: ReactNode }) => createElement(Provider, { store }, children);
-  return renderHook(() => useWorkflowBuilder(args), { wrapper });
+  return { store, ...renderHook(() => useWorkflowBuilder(args), { wrapper }) };
 };
 
 beforeEach(() => {
   toastSuccess.mockClear();
   toastError.mockClear();
+  routerRefresh.mockClear();
   getWorkflow.mockReset();
   updateWorkflow.mockReset();
   enableWorkflow.mockReset();
@@ -146,6 +162,8 @@ describe("save", () => {
 
     expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "From API" }));
     expect(toastSuccess).toHaveBeenCalledWith("workspace.workflows.save_success");
+    // Server-resolved props (email authoring context) must catch up with the saved definition.
+    expect(routerRefresh).toHaveBeenCalled();
   });
 
   test("save reports a failure toast", async () => {
@@ -160,10 +178,186 @@ describe("save", () => {
     });
 
     expect(toastError).toHaveBeenCalled();
+    expect(routerRefresh).not.toHaveBeenCalled();
+  });
+});
+
+describe("silent save (autosave mode)", () => {
+  test("saves without a success toast", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockResolvedValue(apiWorkflow);
+
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(async () => {
+      await result.current.save({ silent: true });
+    });
+
+    expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "From API" }));
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  test("skips an invalid draft quietly instead of toasting", async () => {
+    getWorkflow.mockResolvedValue({ ...apiWorkflow, name: "  " });
+
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow).toBeTruthy());
+
+    await act(async () => {
+      await result.current.save({ silent: true });
+    });
+
+    expect(updateWorkflow).not.toHaveBeenCalled();
+    expect(toastError).not.toHaveBeenCalled();
+  });
+
+  test("still surfaces API failures with a toast", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(new Error("save kaboom"));
+
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(async () => {
+      await result.current.save({ silent: true });
+    });
+
+    expect(toastError).toHaveBeenCalled();
+  });
+});
+
+describe("autosave", () => {
+  test("persists a dirty draft after the debounce window without toasting", { timeout: 10000 }, async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockResolvedValue(apiWorkflow);
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Renamed by autosave");
+    });
+
+    // Debounced: nothing is sent synchronously with the edit.
+    expect(updateWorkflow).not.toHaveBeenCalled();
+    await waitFor(
+      () =>
+        expect(updateWorkflow).toHaveBeenCalledWith(
+          "wf-api",
+          expect.objectContaining({ name: "Renamed by autosave" })
+        ),
+      { timeout: 4000 }
+    );
+    expect(toastSuccess).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.isDirty).toBe(false));
+  });
+
+  test("does not autosave for read-only viewers", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: true });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Renamed");
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(updateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test(
+    "a normalizing schema parse does not leave the draft permanently dirty (no autosave loop)",
+    { timeout: 15000 },
+    async () => {
+      getWorkflow.mockResolvedValue(apiWorkflow);
+      updateWorkflow.mockResolvedValue(apiWorkflow);
+
+      const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+      await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+      act(() => {
+        store.set(setWorkflowNameAtom, "Edited once");
+      });
+      await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+
+      // The parsed payload differs structurally from the editor state (schemaVersion default),
+      // but the saved snapshot must be the editor state itself — clean, no repeat saves.
+      await waitFor(() => expect(result.current.isDirty).toBe(false));
+      await new Promise((resolve) => setTimeout(resolve, 2600));
+      expect(updateWorkflow).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  test("does not retry a failed autosave until the draft changes again", { timeout: 15000 }, async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(new Error("persistent 500"));
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Doomed edit");
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+
+    // The same draft is not retried on the next debounce window (no PATCH/toast loop)…
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+
+    // …but a further edit produces a fresh attempt.
+    act(() => {
+      store.set(setWorkflowNameAtom, "Doomed edit, take two");
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2), { timeout: 4000 });
+  });
+
+  test("flushes a dirty draft on unmount instead of dropping the debounce window", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockResolvedValue(apiWorkflow);
+
+    const { result, store, unmount } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Edited just before leaving");
+    });
+    expect(updateWorkflow).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(updateWorkflow).toHaveBeenCalledWith(
+      "wf-api",
+      expect.objectContaining({ name: "Edited just before leaving" })
+    );
   });
 });
 
 describe("transition", () => {
+  test("flushes a dirty draft before enabling", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockResolvedValue(apiWorkflow);
+    enableWorkflow.mockResolvedValue({ ...apiWorkflow, status: "enabled" });
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Renamed before enable");
+    });
+    await act(() => result.current.enable());
+
+    expect(updateWorkflow).toHaveBeenCalledWith(
+      "wf-api",
+      expect.objectContaining({ name: "Renamed before enable" })
+    );
+    expect(enableWorkflow).toHaveBeenCalledWith("wf-api");
+    expect(updateWorkflow.mock.invocationCallOrder[0]).toBeLessThan(
+      enableWorkflow.mock.invocationCallOrder[0]
+    );
+  });
+
   test("enable calls the API + success toast", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     enableWorkflow.mockResolvedValue(apiWorkflow);

@@ -21,7 +21,7 @@ import {
   unarchiveWorkflow,
   updateWorkflow,
 } from "./api-client";
-import { createDefaultWorkflowDefinition } from "./default-workflow";
+import { createEmptyWorkflowDefinition } from "./default-workflow";
 
 const workflow = { id: "wf1", name: "x" };
 const okResponse = (data: unknown) => ({ ok: true, json: async () => ({ data }) }) as unknown as Response;
@@ -211,7 +211,7 @@ describe("workflows api-client requests", () => {
       name: "New",
       description: null,
       status: "draft" as const,
-      definition: createDefaultWorkflowDefinition(),
+      definition: createEmptyWorkflowDefinition(),
     };
     const result = await createWorkflow(input);
 

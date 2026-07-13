@@ -345,14 +345,11 @@ export const sendResponseFinishedEmail = async (
 
   await sendEmail({
     to: email,
-    subject: personEmail
-      ? t("emails.response_finished_email_subject_with_email", {
-          personEmail,
-          surveyName: survey.name,
-        })
-      : t("emails.response_finished_email_subject", {
-          surveyName: survey.name,
-        }),
+    // Never put the respondent's email address in the subject — it's PII that ends up in
+    // notification previews and mailbox lists; replying still reaches them via replyTo.
+    subject: t("emails.response_finished_email_subject", {
+      surveyName: survey.name,
+    }),
     replyTo: personEmail?.toString() ?? MAIL_FROM,
     html,
   });

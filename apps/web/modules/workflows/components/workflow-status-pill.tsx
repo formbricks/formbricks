@@ -7,11 +7,12 @@ import { getWorkflowStatusBadge } from "../lib/display";
 
 interface WorkflowStatusPillProps {
   status: TWorkflowStatus;
+  size?: "tiny" | "normal" | "large";
 }
 
-export const WorkflowStatusPill = ({ status }: Readonly<WorkflowStatusPillProps>) => {
+export const WorkflowStatusPill = ({ status, size = "tiny" }: Readonly<WorkflowStatusPillProps>) => {
   const { t } = useTranslation();
   const badge = getWorkflowStatusBadge(status, t);
 
-  return <Badge text={badge.label} type={badge.type} size="tiny" />;
+  return <Badge text={badge.label} type={badge.type} size={size} />;
 };

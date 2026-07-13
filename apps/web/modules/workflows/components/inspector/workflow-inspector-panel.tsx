@@ -3,41 +3,32 @@
 import { useAtomValue } from "jotai";
 import { cn } from "@/lib/cn";
 import { WorkflowNodeConfigPanel } from "@/modules/workflows/components/inspector/workflow-node-config-panel";
-import { SettingsSection } from "@/modules/workflows/components/inspector/workflow-settings-section";
 import {
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
 } from "@/modules/workflows/state/editor";
 
 interface WorkflowInspectorPanelProps {
-  canEditMetadata: boolean;
   isEditingNode: boolean;
-  onSaveNode?: () => Promise<void> | void;
-  isSavingNode?: boolean;
 }
 
-export const WorkflowInspectorPanel = ({
-  canEditMetadata,
-  isEditingNode,
-  onSaveNode,
-  isSavingNode,
-}: Readonly<WorkflowInspectorPanelProps>) => {
+// The inspector's only content is the selected node's config: workflow name lives in the
+// editable page title and lifecycle actions in the header dropdown, so with no node open the
+// column collapses away entirely.
+export const WorkflowInspectorPanel = ({ isEditingNode }: Readonly<WorkflowInspectorPanelProps>) => {
   const isCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
+  const isVisible = isNodeConfigOpen && !isCollapsed;
 
   return (
     <div
-      aria-hidden={isCollapsed}
+      aria-hidden={!isVisible}
       className={cn(
-        "shrink-0 self-stretch overflow-hidden transition-[width,opacity] duration-300 ease-in-out",
-        isCollapsed ? "w-0 opacity-0" : "w-[320px] opacity-100"
+        "shrink-0 overflow-hidden pb-8 transition-[width,opacity] duration-150 ease-in-out",
+        isVisible ? "w-[360px] opacity-100" : "w-0 opacity-0"
       )}>
-      <div className="flex w-[320px] flex-col gap-3 self-start">
-        {isNodeConfigOpen ? (
-          <WorkflowNodeConfigPanel isEditable={isEditingNode} onSave={onSaveNode} isSaving={isSavingNode} />
-        ) : (
-          <SettingsSection canEditMetadata={canEditMetadata} />
-        )}
+      <div className="flex w-[360px] flex-col gap-3 self-start">
+        <WorkflowNodeConfigPanel isEditable={isEditingNode} />
       </div>
     </div>
   );

@@ -223,12 +223,12 @@ export const toProblemResponse = (error: unknown, ctx: ProblemContext): Response
     });
   }
 
-  // An unmapped Prisma P2002 reaching here is always a workspace-unique name collision
-  // (`Workflow_workspaceId_name_not_archived_key`): create/update/unarchive into a taken name, or an
-  // explicit-name duplicate. Surface a clean 409 (not a 500) uniformly — logged as a 4xx warning.
+  // Defensive net: workflow names are no longer workspace-unique (the partial index was dropped),
+  // so an unmapped P2002 only fires if a future unique constraint goes unhandled. Surface a clean,
+  // retryable 409 (not a 500) — logged as a 4xx warning.
   if (isUniqueConstraintViolation(error)) {
-    ctx.logger.warn({ statusCode: 409, code: "conflict" }, "Workflow name conflict");
-    return problemResponse(409, "A workflow with this name already exists.", {
+    ctx.logger.warn({ statusCode: 409, code: "conflict" }, "Workflow unique constraint conflict");
+    return problemResponse(409, "A conflicting workflow write happened at the same time. Please retry.", {
       requestId: ctx.requestId,
       code: "conflict",
       instance: ctx.instance,
