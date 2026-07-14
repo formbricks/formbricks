@@ -4154,6 +4154,7 @@
       "if_else": "Om / Annars",
       "if_else_summary": "Förgrena arbetsflödet baserat på ett villkor.",
       "inspector_unsupported_node": "Den här nodtypen har inte något konfigurationsformulär än.",
+      "invalid": "Ogiltig",
       "load_failed": "Kunde inte ladda arbetsflödet.",
       "name_required": "Ange ett namn.",
       "no_results_description": "Prova att justera din sökning eller dina filter.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Återställ",
       "unarchive_failed": "Det gick inte att återställa arbetsflödet. Försök igen.",
       "unarchive_success": "Arbetsflödet har återställts.",
-      "validate": "Validera",
+      "valid": "Giltig",
       "validation_failed": "Validering av arbetsflöde misslyckades.",
       "zoom_in": "Zooma in",
       "zoom_out": "Zooma ut"

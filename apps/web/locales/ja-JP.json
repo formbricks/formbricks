@@ -4154,6 +4154,7 @@
       "if_else": "条件分岐",
       "if_else_summary": "条件に基づいてワークフローを分岐します。",
       "inspector_unsupported_node": "このノードタイプにはまだ設定フォームがありません。",
+      "invalid": "無効",
       "load_failed": "ワークフローを読み込めませんでした。",
       "name_required": "名前を入力してください。",
       "no_results_description": "検索条件やフィルターを調整してみてください。",
@@ -4203,7 +4204,7 @@
       "unarchive": "アーカイブを解除",
       "unarchive_failed": "ワークフローのアーカイブ解除に失敗しました。もう一度お試しください。",
       "unarchive_success": "ワークフローのアーカイブを解除しました。",
-      "validate": "検証",
+      "valid": "有効",
       "validation_failed": "ワークフローの検証に失敗しました。",
       "zoom_in": "拡大",
       "zoom_out": "縮小"

@@ -4154,6 +4154,7 @@
       "if_else": "Als / Anders",
       "if_else_summary": "Splits de workflow op basis van een voorwaarde.",
       "inspector_unsupported_node": "Dit type node heeft nog geen configuratieformulier.",
+      "invalid": "Ongeldig",
       "load_failed": "Kon de workflow niet laden.",
       "name_required": "Voer een naam in.",
       "no_results_description": "Probeer je zoekopdracht of filters aan te passen.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Dearchiveren",
       "unarchive_failed": "Dearchiveren van de workflow is mislukt. Probeer het opnieuw.",
       "unarchive_success": "Workflow gedearchiveerd.",
-      "validate": "Valideren",
+      "valid": "Geldig",
       "validation_failed": "Workflowvalidatie mislukt.",
       "zoom_in": "Inzoomen",
       "zoom_out": "Uitzoomen"

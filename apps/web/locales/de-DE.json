@@ -4154,6 +4154,7 @@
       "if_else": "Wenn / Sonst",
       "if_else_summary": "Verzweige den Workflow basierend auf einer Bedingung.",
       "inspector_unsupported_node": "Dieser Knotentyp hat noch kein Konfigurationsformular.",
+      "invalid": "Ungültig",
       "load_failed": "Workflow konnte nicht geladen werden.",
       "name_required": "Bitte einen Namen eingeben.",
       "no_results_description": "Versuche, deine Suche oder Filter anzupassen.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Aus Archiv wiederherstellen",
       "unarchive_failed": "Workflow konnte nicht wiederhergestellt werden. Bitte versuche es erneut.",
       "unarchive_success": "Workflow wiederhergestellt.",
-      "validate": "Validieren",
+      "valid": "Gültig",
       "validation_failed": "Workflow-Validierung fehlgeschlagen.",
       "zoom_in": "Vergrößern",
       "zoom_out": "Verkleinern"

@@ -4154,6 +4154,7 @@
       "if_else": "Eğer / Değilse",
       "if_else_summary": "İş akışını bir koşula göre dallandır.",
       "inspector_unsupported_node": "Bu düğüm türü henüz bir yapılandırma formuna sahip değil.",
+      "invalid": "Geçersiz",
       "load_failed": "İş akışı yüklenemedi.",
       "name_required": "Lütfen bir ad girin.",
       "no_results_description": "Aramayı veya filtreleri ayarlamayı dene.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Arşivden çıkar",
       "unarchive_failed": "İş akışı arşivden çıkarılamadı. Lütfen tekrar deneyin.",
       "unarchive_success": "İş akışı arşivden çıkarıldı.",
-      "validate": "Doğrula",
+      "valid": "Geçerli",
       "validation_failed": "İş akışı doğrulaması başarısız oldu.",
       "zoom_in": "Yakınlaştır",
       "zoom_out": "Uzaklaştır"

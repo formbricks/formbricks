@@ -47,6 +47,7 @@ import {
   workflowAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
+  workflowValidityAtom,
 } from "@/modules/workflows/state/editor";
 import { WorkflowTestResultDialog } from "../workflow-test-result-dialog";
 import { AddButtonEdge } from "./add-button-edge";
@@ -84,6 +85,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
+  const validity = useAtomValue(workflowValidityAtom);
   const flowNodes = useAtomValue(workflowFlowNodesAtom);
   const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
   const isLocked = useAtomValue(isCanvasLockedAtom);
@@ -232,18 +234,25 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         // canvas with it. 220px ≈ page chrome above the canvas; kept in sync with loading.tsx.
         "relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+      <div className="absolute top-4 left-4 z-10">
         <Button
-          variant="secondary"
+          variant="outline"
+          className={cn(
+            validity.isReady
+              ? "border-success/30 bg-success/10 text-success-foreground enabled:hover:bg-success/20 enabled:hover:text-success-foreground"
+              : "border-warning/30 bg-warning/10 text-warning-foreground enabled:hover:bg-warning/20 enabled:hover:text-warning-foreground"
+          )}
           onClick={handleRunWorkflow}
           loading={isTesting}
           disabled={!isTestable || isTesting}>
-          {t("workspace.workflows.validate")}
-          <ListChecksIcon className="size-4" />
+          {validity.isReady ? t("workspace.workflows.valid") : t("workspace.workflows.invalid")}
+          <ListChecksIcon className={validity.isReady ? "text-success" : "text-warning-muted"} />
         </Button>
-        {/* The inspector only ever shows a node's config now, so the collapse toggle is only
-            offered while one is open. */}
-        {isNodeConfigOpen ? (
+      </div>
+      {/* The inspector only ever shows a node's config now, so the collapse toggle is only
+          offered while one is open. */}
+      {isNodeConfigOpen ? (
+        <div className="absolute top-4 right-4 z-10">
           <Button
             variant="outline"
             size="icon"
@@ -257,8 +266,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
             onClick={toggleInspector}>
             {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}

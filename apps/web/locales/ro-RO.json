@@ -4154,6 +4154,7 @@
       "if_else": "Dacă / Altfel",
       "if_else_summary": "Ramifică fluxul de lucru pe baza unei condiții.",
       "inspector_unsupported_node": "Acest tip de nod nu are încă un formular de configurare.",
+      "invalid": "Nevalid",
       "load_failed": "Nu am putut încărca fluxul de lucru.",
       "name_required": "Introduceți un nume.",
       "no_results_description": "Încearcă să ajustezi căutarea sau filtrele.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Dezarhivează",
       "unarchive_failed": "Nu s-a putut dezarhiva workflow-ul. Te rugăm să încerci din nou.",
       "unarchive_success": "Workflow dezarhivat.",
-      "validate": "Validare",
+      "valid": "Valid",
       "validation_failed": "Validarea fluxului de lucru a eșuat.",
       "zoom_in": "Mărește",
       "zoom_out": "Micșorează"

@@ -4154,6 +4154,7 @@
       "if_else": "If / Else",
       "if_else_summary": "Branch the workflow based on a condition.",
       "inspector_unsupported_node": "This node type doesn't have a configuration form yet.",
+      "invalid": "Invalid",
       "load_failed": "Could not load the workflow.",
       "name_required": "Please enter a name.",
       "no_results_description": "Try adjusting your search or filters.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Unarchive",
       "unarchive_failed": "Failed to unarchive the workflow. Please try again.",
       "unarchive_success": "Workflow unarchived.",
-      "validate": "Validate",
+      "valid": "Valid",
       "validation_failed": "Workflow validation failed.",
       "zoom_in": "Zoom in",
       "zoom_out": "Zoom out"

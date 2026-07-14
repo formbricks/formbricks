@@ -4154,6 +4154,7 @@
       "if_else": "如果 / 否則",
       "if_else_summary": "根據條件分支工作流程。",
       "inspector_unsupported_node": "此節點類型尚未提供設定表單。",
+      "invalid": "無效",
       "load_failed": "無法載入工作流程。",
       "name_required": "請輸入名稱。",
       "no_results_description": "試著調整你的搜尋條件或篩選器。",
@@ -4203,7 +4204,7 @@
       "unarchive": "取消封存",
       "unarchive_failed": "無法取消封存工作流程,請再試一次。",
       "unarchive_success": "工作流程已取消封存。",
-      "validate": "驗證",
+      "valid": "有效",
       "validation_failed": "工作流程驗證失敗。",
       "zoom_in": "放大",
       "zoom_out": "縮小"

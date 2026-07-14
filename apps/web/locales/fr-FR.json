@@ -4154,6 +4154,7 @@
       "if_else": "Si / Sinon",
       "if_else_summary": "Brancher le workflow selon une condition.",
       "inspector_unsupported_node": "Ce type de nœud n'a pas encore de formulaire de configuration.",
+      "invalid": "Non valide",
       "load_failed": "Impossible de charger le workflow.",
       "name_required": "Veuillez saisir un nom.",
       "no_results_description": "Essaie d'ajuster ta recherche ou tes filtres.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Désarchiver",
       "unarchive_failed": "Échec de la désarchivage du workflow. Réessaye.",
       "unarchive_success": "Workflow désarchivé.",
-      "validate": "Valider",
+      "valid": "Valide",
       "validation_failed": "La validation du workflow a échoué.",
       "zoom_in": "Zoomer",
       "zoom_out": "Dézoomer"

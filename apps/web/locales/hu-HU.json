@@ -4154,6 +4154,7 @@
       "if_else": "Ha / Egyébként",
       "if_else_summary": "A munkafolyamat elágaztatása egy feltétel alapján.",
       "inspector_unsupported_node": "Ez a csomóponttípus még nem rendelkezik konfigurációs űrlappal.",
+      "invalid": "Érvénytelen",
       "load_failed": "A munkafolyamat betöltése sikertelen volt.",
       "name_required": "Adj meg egy nevet.",
       "no_results_description": "Kérem, módosítsa a keresési feltételeket vagy a szűrőket.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Archiválás visszavonása",
       "unarchive_failed": "A munkafolyamat archiválásának visszavonása sikertelen volt. Kérjük, próbálja meg újra.",
       "unarchive_success": "A munkafolyamat archiválása visszavonva.",
-      "validate": "Érvényesítés",
+      "valid": "Érvényes",
       "validation_failed": "A munkafolyamat érvényesítése sikertelen volt.",
       "zoom_in": "Nagyítás",
       "zoom_out": "Kicsinyítés"

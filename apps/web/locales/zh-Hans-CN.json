@@ -4154,6 +4154,7 @@
       "if_else": "条件分支",
       "if_else_summary": "根据条件分支工作流。",
       "inspector_unsupported_node": "此节点类型暂无配置表单。",
+      "invalid": "无效",
       "load_failed": "无法加载工作流。",
       "name_required": "请输入名称。",
       "no_results_description": "试试调整你的搜索或筛选条件。",
@@ -4203,7 +4204,7 @@
       "unarchive": "取消归档",
       "unarchive_failed": "取消归档工作流失败。请重试。",
       "unarchive_success": "工作流已取消归档。",
-      "validate": "验证",
+      "valid": "有效",
       "validation_failed": "工作流验证失败。",
       "zoom_in": "放大",
       "zoom_out": "缩小"

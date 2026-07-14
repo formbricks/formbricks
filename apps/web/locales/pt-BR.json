@@ -4154,6 +4154,7 @@
       "if_else": "Se / Senão",
       "if_else_summary": "Ramifica o fluxo de trabalho com base em uma condição.",
       "inspector_unsupported_node": "Este tipo de nó ainda não tem um formulário de configuração.",
+      "invalid": "Inválido",
       "load_failed": "Não foi possível carregar o fluxo de trabalho.",
       "name_required": "Insira um nome.",
       "no_results_description": "Tente ajustar sua busca ou filtros.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Desarquivar",
       "unarchive_failed": "Falha ao desarquivar o fluxo de trabalho. Tente novamente.",
       "unarchive_success": "Fluxo de trabalho desarquivado.",
-      "validate": "Validar",
+      "valid": "Válido",
       "validation_failed": "Falha na validação do workflow.",
       "zoom_in": "Aumentar zoom",
       "zoom_out": "Diminuir zoom"

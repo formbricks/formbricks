@@ -4154,6 +4154,7 @@
       "if_else": "Si / Sino",
       "if_else_summary": "Ramifica el flujo de trabajo según una condición.",
       "inspector_unsupported_node": "Este tipo de nodo aún no tiene un formulario de configuración.",
+      "invalid": "No válido",
       "load_failed": "No se pudo cargar el flujo de trabajo.",
       "name_required": "Introduce un nombre.",
       "no_results_description": "Prueba a ajustar tu búsqueda o filtros.",
@@ -4203,7 +4204,7 @@
       "unarchive": "Desarchivar",
       "unarchive_failed": "No se pudo desarchivar el flujo de trabajo. Por favor, inténtalo de nuevo.",
       "unarchive_success": "Flujo de trabajo desarchivado.",
-      "validate": "Validar",
+      "valid": "Válido",
       "validation_failed": "Falló la validación del flujo de trabajo.",
       "zoom_in": "Acercar",
       "zoom_out": "Alejar"
