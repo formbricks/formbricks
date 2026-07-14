@@ -1,5 +1,5 @@
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { DEFAULT_LOCALE } from "@/lib/constants";
+import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -37,6 +37,7 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
           locale={locale ?? DEFAULT_LOCALE}
           isReadOnly={!canAccessApiKeys}
           workspaces={workspaces}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         />
       </SettingsCard>
     </PageContentWrapper>

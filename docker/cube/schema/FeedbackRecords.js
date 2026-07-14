@@ -125,6 +125,19 @@ cube(`FeedbackRecords`, {
       description: `Average CES rating (scale is 1-5 or 1-7 depending on the question)`,
     },
 
+    ratingCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.field_type = 'rating' AND ${CUBE}.value_number IS NOT NULL` }],
+      description: `Number of answered rating responses (dismissed responses excluded).`,
+    },
+
+    ratingAverage: {
+      type: `avg`,
+      sql: `${CUBE}.value_number`,
+      filters: [{ sql: `${CUBE}.field_type = 'rating'` }],
+      description: `Average rating value (scale depends on the question, e.g. 1-5 or 1-10)`,
+    },
+
     sentimentAverage: {
       type: `avg`,
       sql: `${CUBE}.sentiment_score`,
@@ -238,6 +251,12 @@ cube(`FeedbackRecords`, {
       sql: `field_label`,
       type: `string`,
       description: `Human-readable label of the question/field (e.g., "How satisfied are you with support?")`,
+    },
+
+    fieldId: {
+      sql: `field_id`,
+      type: `string`,
+      description: `Stable identifier of the question/field (the source survey element id). Unlike fieldLabel it does not change across languages or when the label is edited, so group/filter by this to keep identical or translated labels as one question.`,
     },
 
     fieldGroupLabel: {

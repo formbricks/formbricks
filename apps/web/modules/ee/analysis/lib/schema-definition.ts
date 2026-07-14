@@ -116,6 +116,13 @@ export const FEEDBACK_FIELDS = {
       description: "Human-readable label of the question/field",
     },
     {
+      id: "FeedbackRecords.fieldId",
+      label: "Field ID/Question ID",
+      type: "string",
+      description:
+        "Stable question/field identifier (the survey element id). Unlike the label it is consistent across languages and duplicate labels, so group or filter by this to treat them as one question.",
+    },
+    {
       id: "FeedbackRecords.fieldGroupLabel",
       label: "Question Group",
       type: "string",
@@ -317,6 +324,20 @@ export const FEEDBACK_FIELDS = {
       type: "count",
       group: "count",
       description: "Number of CES responses",
+    },
+    {
+      id: "FeedbackRecords.ratingAverage",
+      label: "Rating: Average",
+      type: "number",
+      group: "average",
+      description: "Average rating value (scale depends on the question, e.g. 1-5 or 1-10)",
+    },
+    {
+      id: "FeedbackRecords.ratingCount",
+      label: "Rating: Responses",
+      type: "count",
+      group: "count",
+      description: "Number of answered rating responses (dismissed responses excluded)",
     },
     {
       id: "FeedbackRecords.sentimentAverage",
@@ -560,6 +581,8 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.csatCount": t("workspace.analysis.charts.field_label_csat_count"),
     "FeedbackRecords.cesAverage": t("workspace.analysis.charts.field_label_ces_average"),
     "FeedbackRecords.cesCount": t("workspace.analysis.charts.field_label_ces_count"),
+    "FeedbackRecords.ratingAverage": t("workspace.analysis.charts.field_label_rating_average"),
+    "FeedbackRecords.ratingCount": t("workspace.analysis.charts.field_label_rating_count"),
     "FeedbackRecords.sentimentAverage": t("workspace.analysis.charts.field_label_sentiment_average"),
     "FeedbackRecords.veryNegativeCount": t("workspace.analysis.charts.field_label_very_negative_count"),
     "FeedbackRecords.negativeCount": t("workspace.analysis.charts.field_label_negative_count"),

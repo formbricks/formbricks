@@ -3,9 +3,13 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@/lib/constants";
+import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
+import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { normalizeSsoProvider } from "./provider-normalization";
@@ -15,8 +19,10 @@ import {
   getPendingSsoIdentity,
   getSsoAttributionProperties,
   getSsoProvisioningDecision,
+  getSsoSignupRejectReason,
   setSsoAttributionProperties,
   setSsoProvisioningDecision,
+  setSsoSignupRejectReason,
 } from "./sso-request-context";
 
 /**
@@ -68,7 +74,16 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
       before: async (user, context) => {
         const provider = getSsoProviderFromContext(context);
         const identityProvider = provider ? normalizeSsoProvider(provider) : null;
-        if (!identityProvider) return; // not an SSO sign-up (e.g. email/password) → keep defaults
+        if (!identityProvider) {
+          // Credential sign-up. createUserAction runs the full personal-email policy (Cloud gate +
+          // invite exemption) and marks the request scope before calling signUpEmail. If that mark is
+          // absent, this is a direct POST to Better Auth's native /sign-up/email — which bypasses the
+          // action — so re-enforce the domain block here (no invite is carried on that raw path).
+          if (!isSignupDomainAllowed() && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
+            return false;
+          }
+          return; // otherwise keep credential-signup defaults
+        }
 
         // Provisioning gate — orphan-safe: a reject returns `false`, rolling back the user+account
         // insert inside Better Auth's transaction (a post-commit after-hook could not reject safely).
@@ -79,7 +94,13 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           // Non-OAuth context / state unavailable → treat as no callback URL.
         }
         const decision = await gateSsoProvisioning({ email: user.email, callbackUrl });
-        if (decision.action === "reject") return false;
+        if (decision.action === "reject") {
+          // Stash the reason (request scope) so the after-hook can turn Better Auth's generic
+          // create-failure redirect into a tailored one — e.g. the personal-email block redirects to
+          // /auth/signup with a toast. Returning false rolls back the user+account insert.
+          setSsoSignupRejectReason(decision.reason);
+          return false;
+        }
         setSsoProvisioningDecision(decision); // carried to user.create.after (the membership writes)
 
         // Read the marketing attribution cookie here, in request scope, and carry it to the
@@ -116,12 +137,18 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         await provisionSsoUserMemberships({
           userId: user.id,
           email: user.email,
+          name: user.name,
           provider: identityProvider,
           organizationId: decision.organizationId,
           assignToDefaultTeam: decision.assignToDefaultTeam,
           signupSource: decision.signupSource,
           attributionProperties: getSsoAttributionProperties(),
         });
+
+        // Mark the new SSO user as identified in PostHog (parity with the credentials sign-up
+        // path). provisionSsoUserMemberships only emits a bare `user_signed_up` capture, which
+        // keeps the person unidentified; this fires `$identify` so `is_identified` flips.
+        identifyPostHogPerson(user.id, { email: user.email, name: user.name });
       },
     },
   },
@@ -228,3 +255,31 @@ export const ssoRecoveryAfterHandler = async (ctx: AuthHookContext): Promise<voi
 };
 
 export const ssoRecoveryAfter = createAuthMiddleware(ssoRecoveryAfterHandler);
+
+/**
+ * Request hook (`hooks.after`) that redirects a personal-email SSO sign-up rejection back to the
+ * sign-up page. When `user.create.before` rejects the domain (returns `false`, rolling back the
+ * insert), Better Auth finishes the OAuth callback with a generic error redirect (to /auth/login).
+ * We detect our own reject reason — stashed in the same request scope — and rewrite that redirect to
+ * `/auth/signup?error=<code>`; the sign-up form reads the param and toasts the localized message.
+ *
+ * Keyed on the stashed reason rather than Better Auth's error string (which is minified/version-
+ * fragile), so it fires only for the domain block. Mutually exclusive with the account-not-linked
+ * recovery above — that path matches an existing user and never reaches `user.create`. Composed last
+ * in auth.ts's `hooks.after`, so the failed-auth audit still records the attempt before we redirect.
+ */
+export const blockedSignupDomainRedirectAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
+  if (getSsoSignupRejectReason() !== SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) return;
+
+  // The gate rejected the sign-up, so whatever redirect Better Auth set here is an error redirect —
+  // replace it wholesale. If nothing set a location, there's nothing to rewrite.
+  const responseHeaders = (ctx.context as { responseHeaders?: { get(name: string): string | null } })
+    .responseHeaders;
+  if (!responseHeaders?.get("location")) return;
+
+  throw ctx.redirect(
+    new URL(`/auth/signup?error=${SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE}`, WEBAPP_URL).toString()
+  );
+};
+
+export const blockedSignupDomainRedirectAfter = createAuthMiddleware(blockedSignupDomainRedirectAfterHandler);

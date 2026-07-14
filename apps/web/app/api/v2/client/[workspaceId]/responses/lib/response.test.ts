@@ -27,6 +27,7 @@ vi.mock("@/lib/constants", () => ({
     return mockIsFormbricksCloud;
   },
   IS_PRODUCTION: false,
+  POSTHOG_KEY: undefined,
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   ENCRYPTION_KEY: "mock-encryption-key",
   ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",

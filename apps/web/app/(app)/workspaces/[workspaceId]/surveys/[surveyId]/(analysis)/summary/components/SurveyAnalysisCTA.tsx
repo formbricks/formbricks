@@ -193,6 +193,9 @@ export const SurveyAnalysisCTA = ({
     if (aiUnavailableReason === "instance_not_configured") {
       return t("workspace.surveys.summary.generate_example_responses_locked_instance");
     }
+    if (responseCount > 0) {
+      return t("workspace.surveys.summary.generate_example_responses_disabled_has_responses");
+    }
     return t("workspace.surveys.summary.generate_example_responses");
   })();
 
@@ -235,8 +238,8 @@ export const SurveyAnalysisCTA = ({
       icon: Wand2,
       tooltip: exampleResponsesTooltip,
       onClick: handleGenerateExampleResponses,
-      disabled: isGeneratingExamples || aiUnavailableReason !== null,
-      isVisible: !isReadOnly && responseCount === 0,
+      disabled: isGeneratingExamples || aiUnavailableReason !== null || responseCount > 0,
+      isVisible: !isReadOnly,
     },
     {
       icon: ListRestart,

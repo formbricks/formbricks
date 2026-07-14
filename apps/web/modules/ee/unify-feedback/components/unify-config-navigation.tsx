@@ -31,9 +31,9 @@ export const UnifyConfigNavigation = ({
       href: `${baseHref}/feedback-records`,
     },
     {
-      id: "topics-subtopics",
+      id: "taxonomy",
       label: t("workspace.unify.topics_and_subtopics"),
-      href: `${baseHref}/topics-subtopics`,
+      href: `${baseHref}/taxonomy`,
     },
   ];
 

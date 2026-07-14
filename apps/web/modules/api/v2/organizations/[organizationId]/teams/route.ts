@@ -15,6 +15,7 @@ import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizat
 export const GET = async (request: NextRequest, props: { params: Promise<{ organizationId: string }> }) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       query: ZGetTeamsFilter,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
@@ -41,6 +42,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
 export const POST = async (request: Request, props: { params: Promise<{ organizationId: string }> }) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       body: ZTeamInput,
       params: z.object({ organizationId: ZOrganizationIdSchema }),

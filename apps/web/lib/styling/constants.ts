@@ -114,7 +114,7 @@ export const STYLE_DEFAULTS: TWorkspaceStyling = {
   // Headlines & Descriptions
   elementHeadlineColor: { light: _colors["elementHeadlineColor.light"] },
   elementHeadlineFontSize: 16,
-  elementHeadlineFontWeight: 600,
+  elementHeadlineFontWeight: 500,
   elementDescriptionColor: { light: _colors["elementDescriptionColor.light"] },
   elementDescriptionFontSize: 14,
   elementDescriptionFontWeight: 400,

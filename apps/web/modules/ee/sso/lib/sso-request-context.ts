@@ -20,6 +20,9 @@ interface SsoRequestStore {
    *  scope), consumed by `user.create.after` for the `user_signed_up` event — the after-hook runs
    *  post-commit where re-reading the cookie is unreliable. */
   attributionProperties?: Record<string, string>;
+  /** Set by `user.create.before` when an SSO sign-up is rejected (e.g. personal email domain on
+   *  Cloud); read by the after-hook to redirect back to /auth/signup with a tailored error. */
+  signupRejectReason?: string;
 }
 
 const ssoRequestContext = new AsyncLocalStorage<SsoRequestStore>();
@@ -60,6 +63,20 @@ export const setSsoAttributionProperties = (properties: Record<string, string>):
 
 export const getSsoAttributionProperties = (): Record<string, string> =>
   ssoRequestContext.getStore()?.attributionProperties ?? {};
+
+/**
+ * Stash the reason an SSO sign-up was rejected in `user.create.before`, so the after-hook can turn
+ * Better Auth's generic create-failure redirect into a tailored one (personal-email block →
+ * /auth/signup with a toast). Best-effort: a missing request context still blocks the sign-up (the
+ * gate already returned `false`); only the tailored redirect degrades to Better Auth's default.
+ */
+export const setSsoSignupRejectReason = (reason: string): void => {
+  const store = ssoRequestContext.getStore();
+  if (store) store.signupRejectReason = reason;
+};
+
+export const getSsoSignupRejectReason = (): string | undefined =>
+  ssoRequestContext.getStore()?.signupRejectReason;
 
 /**
  * Capture the resolved SSO identity (email + provider account id) during `mapProfileToUser`, so the
