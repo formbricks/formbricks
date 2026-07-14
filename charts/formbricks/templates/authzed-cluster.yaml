@@ -18,8 +18,21 @@ spec:
     presharedKey:
       secretName: {{ include "formbricks.authzedAuthSecretName" . }}
       key: {{ .Values.authzed.auth.tokenKey }}
-  {{- with .Values.authzed.cluster.patches }}
+  {{- if or .Values.authzed.cluster.resources .Values.authzed.cluster.patches }}
   patches:
+    {{- with .Values.authzed.cluster.resources }}
+    - kind: Deployment
+      patch:
+        spec:
+          template:
+            spec:
+              containers:
+                - name: spicedb
+                  resources:
+                    {{- toYaml . | nindent 20 }}
+    {{- end }}
+    {{- with .Values.authzed.cluster.patches }}
     {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- end }}
 {{- end }}

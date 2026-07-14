@@ -59,7 +59,10 @@ authzed:
 
 This installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, generates a stable preshared
 key, and creates a dedicated `spicedb` database and role in the bundled PostgreSQL server. The operator runs
-datastore migrations before rolling out SpiceDB.
+datastore migrations before rolling out SpiceDB. The chart assigns explicit resource requests and limits to
+SpiceDB and uses a larger PostgreSQL allocation than the upstream `nano` preset so the database has enough
+headroom during SpiceDB rollouts. Override `authzed.cluster.resources` and `postgresql.primary.resources` to
+match the expected authorization traffic and the other workloads using the bundled database.
 
 Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
 namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.

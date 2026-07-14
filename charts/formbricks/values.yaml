@@ -589,6 +589,14 @@ authzed:
     config:
       datastoreEngine: postgres
       logLevel: info
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    # Operator patches are applied after the generated resource patch and can
+    # override it when a deployment needs more specific container settings.
     patches: []
 
   # Creates the dedicated `spicedb` database and role only when the bundled
@@ -1325,6 +1333,15 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
+    # The upstream nano preset leaves too little memory headroom when the
+    # bundled database also serves SpiceDB.
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
     podSecurityContext:
       enabled: true
       fsGroup: 1001
