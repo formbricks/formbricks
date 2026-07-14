@@ -277,6 +277,15 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: 1.40.0
         version: 1.40.0
+      '@otplib/core':
+        specifier: 12.0.1
+        version: 12.0.1
+      '@otplib/plugin-crypto':
+        specifier: 12.0.1
+        version: 12.0.1
+      '@otplib/plugin-thirty-two':
+        specifier: 12.0.1
+        version: 12.0.1
       '@paralleldrive/cuid2':
         specifier: 2.3.1
         version: 2.3.1
@@ -548,15 +557,6 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../../packages/config-eslint
-      '@otplib/core':
-        specifier: 12.0.1
-        version: 12.0.1
-      '@otplib/plugin-crypto':
-        specifier: 12.0.1
-        version: 12.0.1
-      '@otplib/plugin-thirty-two':
-        specifier: 12.0.1
-        version: 12.0.1
       '@playwright/test':
         specifier: 1.58.2
         version: 1.58.2
