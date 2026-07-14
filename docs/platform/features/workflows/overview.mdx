@@ -1,0 +1,66 @@
+---
+title: "Workflows overview"
+description: "Automate response-driven tasks in Formbricks with triggers, filters, actions, and observable runs."
+icon: "/images/platform/workflows/workflow.svg"
+---
+
+Workflows automate what happens after someone completes a survey. You define the event that starts the
+workflow, narrow down which responses qualify, and choose the action Formbricks should perform.
+
+## How Workflows work
+
+<CardGroup cols={2}>
+  <Card title="Trigger" icon="bolt">
+    The event that starts a workflow. The currently available trigger is **Response completed** for a
+    survey linked to the workflow.
+  </Card>
+
+<Card title="Condition or filter" icon="filter">
+  A rule that gates execution. You can currently filter completed responses by the ending card the respondent
+  reached.
+</Card>
+
+<Card title="Action" icon="play">
+  What the workflow does after its trigger and filter match. The currently available action is **Send email**.
+</Card>
+
+  <Card title="Run" icon="list-check">
+    A concrete execution of an enabled workflow. Every run records its overall status and logs for its
+    individual steps.
+  </Card>
+</CardGroup>
+
+In the current builder, a workflow follows this sequence:
+
+`Response completed trigger` → `optional ending card filter` → `Send email action`
+
+## Current capabilities
+
+You can use Workflows to:
+
+- Start when a response is completed for a selected survey
+- Run for all ending cards or only selected ending cards
+- Send a personalized email using survey response data
+- Inspect workspace-wide or workflow-specific execution history
+
+<Note>
+  Workflows currently support one **Response completed** trigger, an optional ending card filter, and one
+  **Send email** action. User-authored condition nodes, branching, webhooks, schedules, delays, and loops are
+  not available yet.
+</Note>
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Build a workflow" icon="rocket" href="/platform/features/workflows/build">
+    Connect a survey, configure the trigger and email action, validate the workflow, and enable it.
+  </Card>
+
+  <Card
+    title="Manage and monitor"
+    icon="magnifying-glass-chart"
+    href="/platform/features/workflows/manage-and-monitor"
+  >
+    Manage the workflow lifecycle and investigate runs and step logs.
+  </Card>
+</CardGroup>

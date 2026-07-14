@@ -1,0 +1,105 @@
+---
+title: "Build a workflow"
+description: "Create a response-completed workflow, configure its Send email action, validate it, and enable it."
+icon: "rocket"
+---
+
+Use the workflow builder to connect a survey response to an automated email. Changes to draft and disabled
+workflows are saved automatically.
+
+<Frame>
+  <img
+    src="/images/platform/workflows/workflow-builder.webp"
+    alt="Workflow builder showing a Response completed trigger connected to a Send email action"
+  />
+</Frame>
+
+## Before you begin
+
+You need write or manage access to the workspace. You also need a survey in the same workspace as the
+workflow.
+
+If the email should go to an address collected from a response, configure at least one compatible recipient
+source in the survey, such as an email question, contact information, email verification, or a hidden field.
+
+## Create a workflow
+
+<Steps>
+  <Step title="Open Workflows">
+    Select **Workflows** in the workspace navigation, then select **New workflow**. Formbricks creates a
+    draft and opens the builder. Rename the workflow using the title at the top of the page.
+  </Step>
+
+<Step title="Add the trigger">Select **Add trigger**, then choose **Response completed**.</Step>
+
+<Step title="Connect a survey">
+  Select the trigger card and choose the survey whose completed responses should start this workflow. Changing
+  the linked survey clears any ending card and email recipient configuration that belonged to the previous
+  survey.
+</Step>
+
+  <Step title="Choose which endings qualify">
+    Under **Ending cards**, choose one of these scopes:
+
+    - **All endings** runs the workflow for every completed response, including ending cards added later.
+    - **Specific endings** runs it only when the respondent reaches one of the selected ending cards.
+
+    If the survey has no ending cards, the workflow applies to every completed response.
+
+  </Step>
+
+  <Step title="Add the email action">
+    Select the **+** below the trigger, then choose **Send email**. Select the action card to open its
+    configuration.
+  </Step>
+</Steps>
+
+## Configure Send email
+
+Complete the email fields in the action panel:
+
+| Field        | Configuration                                                                         |
+| ------------ | ------------------------------------------------------------------------------------- |
+| **Send to**  | Select one recipient source from the linked survey or workspace.                      |
+| **From**     | Shows the deployment sender address. This value is read-only in the workflow builder. |
+| **Reply to** | Enter one or more addresses that should receive replies.                              |
+| **Subject**  | Enter the email subject.                                                              |
+| **Body**     | Write the message and insert survey recall values where needed.                       |
+
+The **Send to** options can include:
+
+- The verified email address, when email verification is enabled for the survey
+- An Open Text question configured for email input
+- The email field of a Contact Info question
+- A hidden field
+- A workspace member, including yourself
+
+### Personalize the body
+
+Type `@` in the **Body** editor to insert recall values from the linked survey. You can recall answers,
+variables, and hidden fields to personalize the message for each run. Learn more about the available sources
+in [Recall Data](/surveys/general-features/recall).
+
+### Include response data
+
+Turn on **Attach response data** to include the triggering survey response with the email. You can then also
+turn on **Include variables** and **Include hidden fields**.
+
+## Validate and enable
+
+Select **Validate** in the builder before enabling the workflow. Validation checks that the definition can
+run and that the linked survey and selected ending cards still exist.
+
+<Warning>
+  **Validate** is a side-effect-free pre-flight check. It does not create a run or send an email. It is
+  available for draft, enabled, and disabled workflows, but not archived workflows, and it requires workspace
+  write access.
+</Warning>
+
+When validation succeeds, open the status menu and select **Enable**. An enabled workflow listens for new
+matching responses. Its definition is read-only while enabled; select **Disable** before editing it again.
+
+<Note>
+  Enabling also verifies that the workflow is executable and that its survey and ending card references are
+  valid. A workflow with incomplete or outdated configuration cannot be enabled.
+</Note>

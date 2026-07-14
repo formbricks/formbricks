@@ -58,6 +58,15 @@
             "pages": [
               "platform/features/ai-features",
               {
+                "group": "Workflows",
+                "icon": "/images/platform/workflows/workflow.svg",
+                "pages": [
+                  "platform/features/workflows/overview",
+                  "platform/features/workflows/build",
+                  "platform/features/workflows/manage-and-monitor"
+                ]
+              },
+              {
                 "group": "Integrations",
                 "icon": "bridge",
                 "pages": [
