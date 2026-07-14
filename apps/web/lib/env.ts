@@ -200,6 +200,7 @@ const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
 const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
+const ZAuthzedBoolean = z.enum(["true", "false", "1", "0"]);
 
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
@@ -225,6 +226,12 @@ const parsedEnv = createEnv({
     DEBUG: z.string().optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
+    AUTHZED_CONSISTENCY: ZOptionalNonEmptyString,
+    AUTHZED_ENABLED: ZAuthzedBoolean.optional(),
+    AUTHZED_ENDPOINT: ZOptionalNonEmptyString,
+    AUTHZED_INSECURE: ZAuthzedBoolean.optional(),
+    AUTHZED_SYSTEM_KEY: ZOptionalNonEmptyString,
+    AUTHZED_TOKEN: ZOptionalNonEmptyString,
     // Cloud-only: when "1", the personal-email sign-up block also applies to invited users.
     // Default (unset/"0") exempts invites — see isSignupEmailDomainBlocked.
     SIGNUP_DOMAIN_CHECK_ON_INVITES: z.enum(["1", "0"]).optional(),
@@ -404,6 +411,12 @@ const parsedEnv = createEnv({
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
+    AUTHZED_CONSISTENCY: process.env.AUTHZED_CONSISTENCY,
+    AUTHZED_ENABLED: process.env.AUTHZED_ENABLED,
+    AUTHZED_ENDPOINT: process.env.AUTHZED_ENDPOINT,
+    AUTHZED_INSECURE: process.env.AUTHZED_INSECURE,
+    AUTHZED_SYSTEM_KEY: process.env.AUTHZED_SYSTEM_KEY,
+    AUTHZED_TOKEN: process.env.AUTHZED_TOKEN,
     SIGNUP_DOMAIN_CHECK_ON_INVITES: process.env.SIGNUP_DOMAIN_CHECK_ON_INVITES,
     BULLMQ_EXTERNAL_WORKER_ENABLED: process.env.BULLMQ_EXTERNAL_WORKER_ENABLED,
     BULLMQ_WORKER_CONCURRENCY: process.env.BULLMQ_WORKER_CONCURRENCY,

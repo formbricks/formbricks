@@ -6,7 +6,8 @@ icon: "docker"
 
 Use this guide for a manual Docker Compose setup. It downloads the production Compose file and starts the
 baseline Formbricks stack: Formbricks Web, PostgreSQL, Redis/Valkey, Formbricks Hub, and Cube. Optional
-services such as Qwen/vLLM, AI taxonomy, and RustFS are documented after the baseline stack is running.
+services such as Qwen/vLLM, AI taxonomy, and RustFS are documented after the baseline stack is running. The
+baseline also runs a single SpiceDB instance for Formbricks authorization data.
 
 ### Requirements
 
@@ -49,13 +50,18 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 
 1. **Download the Docker Files**
 
-   Get the Docker Compose file plus the Cube configuration shipped with the baseline stack:
+   Get the Docker Compose file, AuthZed database bootstrap helper, and Cube configuration shipped with the
+   baseline stack:
 
    ```bash
    mkdir -p cube/schema
    curl -fsSL \
      -o docker-compose.yml \
      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+   curl -fsSL \
+     -o authzed-postgres-bootstrap.sh \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/authzed-postgres-bootstrap.sh
+   chmod 700 authzed-postgres-bootstrap.sh
    curl -fsSL \
      -o cube/cube.js \
      https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
@@ -81,6 +87,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    CUBEJS_API_SECRET=$(openssl rand -hex 32)
    CUBEJS_JWT_ISSUER=formbricks-web
    CUBEJS_JWT_AUDIENCE=formbricks-cube
+   AUTHZED_TOKEN=$(openssl rand -hex 32)
+   AUTHZED_DATABASE_PASSWORD=$(openssl rand -hex 32)
    EOF
    chmod 600 .env
    ```
@@ -99,7 +107,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
-   PostgreSQL, Redis, Formbricks Hub, and Cube.
+   PostgreSQL, Redis, Formbricks Hub, Cube, and SpiceDB.
 
    ```bash
    docker compose up -d
@@ -114,11 +122,12 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    ```bash
    docker compose ps -a
    curl -fsS http://localhost:3000/health
-   docker compose logs --tail=100 formbricks-migrate hub-migrate formbricks hub cube
+   docker compose logs --tail=100 formbricks-migrate hub-migrate authzed-db-bootstrap spicedb-migrate
+   docker compose logs --tail=100 formbricks hub cube spicedb
    ```
 
-   `formbricks-migrate` and `hub-migrate` should complete successfully. `postgres`, `redis`, `cube`,
-   `hub`, and `formbricks` should be running or healthy.
+   `formbricks-migrate`, `hub-migrate`, `authzed-db-bootstrap`, and `spicedb-migrate` should complete
+   successfully. `postgres`, `redis`, `cube`, `hub`, `spicedb`, and `formbricks` should be running or healthy.
 
 1. **Open Formbricks in Your Browser**
 
@@ -131,6 +140,27 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
   through `http://hub:8080` and `http://cube:4000`. When AI taxonomy beta is enabled, Hub reaches taxonomy
   internally through `http://taxonomy:8000`.
 </Note>
+
+## AuthZed and SpiceDB
+
+The bundled SpiceDB service stores its data in a dedicated `spicedb` database and login inside the existing
+PostgreSQL container. The bootstrap and datastore migration containers run on every `docker compose up` and
+are idempotent. SpiceDB is reachable only inside the Compose network at `spicedb:50051`; it is not published
+on the host or routed through Traefik.
+
+The Formbricks container receives the supported AuthZed variables automatically. Keep `AUTHZED_TOKEN` and
+`AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
+`docker compose down` preserves the volume; `docker compose down -v` deletes both Formbricks and SpiceDB data.
+
+Repository development exposes SpiceDB on `127.0.0.1:50051`. To start the optional authenticated browser UI:
+
+```bash
+docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
+```
+
+Then open [http://127.0.0.1:50052](http://127.0.0.1:50052). Run `pnpm authzed:smoke` for an isolated
+schema, permission, migration-idempotency, and persistence check. The smoke command uses its own Compose
+project and removes its test data afterward.
 
 ## Optional Services
 
@@ -284,6 +314,26 @@ memory, and LLM capacity.
 ## Update
 
 See our [migration guide](/self-hosting/advanced/migration) for version-specific steps to update Formbricks.
+
+### Add SpiceDB to an Existing Docker Installation
+
+The normal image update commands do not add new services to an existing customized Compose file. Before the
+first release that requires the AuthZed runtime:
+
+1. Back up `.env`, `docker-compose.yml`, and the PostgreSQL volume.
+2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
+3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
+4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, and `spicedb`, plus the six `AUTHZED_*` Formbricks variables,
+   from the released Compose file into your customized file. Preserve your existing proxy, storage, and SMTP
+   settings.
+5. Run `docker compose config`, followed by `docker compose pull` and `docker compose up -d`.
+6. Confirm both one-shot AuthZed services completed and `spicedb` is healthy with `docker compose ps -a`.
+7. Back up the new authorization database with
+   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
+   include it in future database backup procedures.
+
+To roll back the runtime before application enforcement is enabled, restore the backed-up Compose and `.env`
+files and run `docker compose up -d`. Do not delete or replace the PostgreSQL volume.
 
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.

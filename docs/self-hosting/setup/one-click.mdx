@@ -6,7 +6,7 @@ icon: "rocket"
 
 <Note>This only works with an Ubuntu machine, so ensure the underlying OS is verified beforehand!</Note>
 
-If you’re looking to quickly set up a production instance of Formbricks on an Ubuntu server, this guide is for you. Using a convenient shell script, you can install everything—including Docker, Postgres DB, and an SSL certificate—in just a few steps. The script takes care of all the dependencies and configuration for your server, making the process smooth and simple.
+If you’re looking to quickly set up a production instance of Formbricks on an Ubuntu server, this guide is for you. Using a convenient shell script, you can install everything—including Docker, Postgres DB, SpiceDB, and an SSL certificate—in just a few steps. The script takes care of all the dependencies and configuration for your server, making the process smooth and simple.
 
 <Note>
   This setup uses **Traefik** as a **reverse proxy**, essential for directing incoming traffic to the correct
@@ -56,8 +56,10 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
   The current v5 one-click stack is based on the production Docker Compose file and includes Formbricks Hub
   and Cube as part of the baseline (Cube configuration lives under `formbricks/cube/`). Ensure your generated
   `formbricks/docker-compose.yml` contains a non-empty `HUB_API_KEY` and that `formbricks/.env` contains
-  `CUBEJS_API_SECRET` before treating the v5 stack as ready. If either value is missing after the script
-  finishes, add it manually. `HUB_API_URL` should normally stay at `http://hub:8080`.
+  `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` before treating the v5 stack as ready.
+  The installer generates these values without printing them and restricts `.env` to `0600`. `HUB_API_URL`
+  should normally stay at `http://hub:8080`. Bundled SpiceDB is installed for every new setup and does not
+  require an Enterprise license check.
 </Info>
 
 <Info>
@@ -335,6 +337,25 @@ The script pulls the latest images, stops the running containers, and starts the
   review that storage path separately before the first v5 restart; newer self-hosting updates move the bundled
   object-storage path to RustFS, while external S3-compatible storage keeps the same `S3_*` app contract.
 </Warning>
+
+### Add SpiceDB to an Existing One-Click Installation
+
+The update command intentionally preserves your customized Compose file, so it cannot add SpiceDB by itself.
+Before upgrading to a release that uses AuthZed:
+
+1. Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume.
+2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
+3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
+4. Merge the three AuthZed services and Formbricks environment variables from the released Compose file while
+   preserving the installer-added Traefik, storage, and mail configuration.
+5. Run `docker compose config`, `docker compose pull`, and `docker compose up -d` from the `formbricks` directory.
+6. Verify `authzed-db-bootstrap` and `spicedb-migrate` completed and `spicedb` is healthy.
+7. Back up the authorization database with
+   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your
+   regular backup procedure.
+
+Do not use `docker compose down -v` during this migration or rollback because the existing PostgreSQL volume
+stores both Formbricks and SpiceDB data.
 
 ## Stop
 

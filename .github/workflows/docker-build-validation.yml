@@ -17,6 +17,25 @@ env:
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 jobs:
+  validate-authzed-compose:
+    name: Validate AuthZed Compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate Compose contracts
+        run: bash docker/authzed-compose-contract.sh
+
+      - name: Run AuthZed persistence smoke test
+        run: bash docker/authzed-smoke.sh
+
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
