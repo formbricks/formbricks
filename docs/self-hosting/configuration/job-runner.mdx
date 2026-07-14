@@ -1,12 +1,12 @@
 ---
-title: "Workflow Runner"
-description: "Configure and operate the BullMQ worker that runs Workflows in self-hosted Formbricks"
+title: "Job Runner"
+description: "Configure and operate the BullMQ background-job worker in self-hosted Formbricks"
 icon: "gears"
 ---
 
-[Workflows](/platform/features/workflows/overview) run asynchronously through BullMQ. Formbricks starts the
-BullMQ worker inside the web application by default, so a standard self-hosted deployment does not need a
-separate worker container.
+Formbricks uses a shared BullMQ Job Runner for asynchronous work such as response processing, survey
+scheduling, and [Workflows](/platform/features/workflows/overview). Formbricks starts the worker inside the web
+application by default, so a standard self-hosted deployment does not need a separate worker container.
 
 <Note>
   Every Formbricks web process starts one worker with a concurrency of one by default. You can tune these
@@ -23,10 +23,23 @@ The web application creates jobs and consumes them from a shared Redis-backed qu
 - Default workers per web process: `1`
 - Default concurrent jobs per worker: `1`
 
-Redis is also used to coordinate recurring jobs, including workflow run recovery. The web process retries
-worker and recurring-job registration after 30 seconds if startup fails.
+Redis is also used to coordinate recurring jobs. The web process retries worker and recurring-job registration
+after 30 seconds if startup fails.
 
-## Configure the runner
+## Current background jobs
+
+Current workloads on the shared queue include:
+
+| Workload          | Job names                                        | Purpose                                           |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------- |
+| Response pipeline | `response-pipeline.process`                      | Processes asynchronous response pipeline events.  |
+| Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                |
+| Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs. |
+
+These are current examples rather than a fixed list. Future Formbricks features can use the same Job Runner for
+additional background work.
+
+## Configure the Job Runner
 
 <Steps>
   <Step title="Connect Redis">
@@ -54,15 +67,6 @@ worker and recurring-job registration after 30 seconds if startup fails.
 
   </Step>
 
-  <Step title="Configure SMTP for email actions">
-    The **Send email** workflow action uses your deployment's SMTP transport and sender. Configure
-    `SMTP_HOST`, `SMTP_PORT`, `MAIL_FROM`, `MAIL_FROM_NAME`, and any authentication or TLS variables required
-    by your provider.
-
-    See [SMTP Configuration](/self-hosting/configuration/smtp) for the complete setup.
-
-  </Step>
-
   <Step title="Verify startup">
     Check the web process logs for the exact message `BullMQ runtime started`. Its structured fields include
     the queue name, Redis prefix, worker count, and worker concurrency.
@@ -78,16 +82,10 @@ claims so one available worker ordinarily processes a queued job. Total processi
 web replicas x BULLMQ_WORKER_COUNT x BULLMQ_WORKER_CONCURRENCY
 ```
 
-Increase concurrency gradually and monitor database, Redis, and SMTP capacity. Adding replicas also adds
-workers, so account for both scaling controls.
+Increase concurrency gradually and monitor database, Redis, and downstream service capacity. Adding replicas
+also adds workers, so account for both scaling controls.
 
-<Warning>
-  Workflow delivery supports retries and recovery; it is not an exactly-once guarantee. Formbricks uses
-  deterministic job IDs and guarded workflow run and step transitions to make redispatch safe, but operators
-  should still expect jobs to be retried after transient failures.
-</Warning>
-
-## Retry and recovery behavior
+## Retry behavior
 
 BullMQ applies the following defaults to background jobs:
 
@@ -97,6 +95,29 @@ BullMQ applies the following defaults to background jobs:
 | Backoff                 | Exponential, starting at 5 seconds |
 | Completed job retention | Up to 24 hours or 1,000 jobs       |
 | Failed job retention    | Up to 7 days or 5,000 jobs         |
+
+Individual workloads can add their own recovery behavior on top of these queue-level retries.
+
+## Workflows
+
+Workflows use the shared Job Runner to execute runs and reconcile runs that lost their queue or worker handoff.
+No additional worker process is required.
+
+### Configure action dependencies
+
+Configure the services required by the workflow actions you use. For example, the **Send email** action uses
+your deployment's SMTP transport and sender. Configure `SMTP_HOST`, `SMTP_PORT`, `MAIL_FROM`, `MAIL_FROM_NAME`,
+and any authentication or TLS variables required by your provider.
+
+See [SMTP Configuration](/self-hosting/configuration/smtp) for the complete setup.
+
+### Retry and recovery behavior
+
+<Warning>
+  Workflow delivery supports retries and recovery; it is not an exactly-once guarantee. Formbricks uses
+  deterministic job IDs and guarded workflow run and step transitions to make redispatch safe, but operators
+  should still expect jobs to be retried after transient failures.
+</Warning>
 
 A recurring reconciliation job runs every three minutes to recover workflow runs that lost their queue or
 worker handoff:
@@ -109,6 +130,15 @@ worker handoff:
 
 When reconciliation changes runs, Formbricks writes `Workflow run reconciliation acted` with structured
 counts for redispatched, aged-out, and recovered runs.
+
+### Troubleshoot workflow jobs
+
+If workflow runs stay queued after the Job Runner is healthy:
+
+1. Search for `BullMQ job failed` entries where `jobName` is `workflow-run.process` or
+   `workflow-run.reconcile`.
+2. Search for `Workflow run reconciliation acted` and inspect the queued and stuck-running counts.
+3. Open the workflow's **Runs** view to inspect the run status and step-level error.
 
 ## Use a custom external worker
 
@@ -127,11 +157,11 @@ REDIS_URL=redis://redis:6379
 
 <Warning>
   `BULLMQ_EXTERNAL_WORKER_ENABLED=1` only keeps queueing enabled. It does not provide, start, or deploy a
-  worker. Only use this configuration after your custom consumer registers the full Formbricks job handlers
-  and is already consuming the same queue. Otherwise, queued workflow runs will not be processed.
+  worker. Only use this configuration after your custom consumer registers the complete Formbricks job
+  handlers and is already consuming the same queue. Otherwise, background jobs will remain queued.
 </Warning>
 
-## Troubleshoot the runner
+## Troubleshoot the Job Runner
 
 Formbricks writes structured logs to stdout and stderr. Search the `msg` field for these exact messages:
 
@@ -142,18 +172,17 @@ Formbricks writes structured logs to stdout and stderr. Search the `msg` field f
 | `Failed to start BullMQ runtime`                    | Review the attached `err` field, then confirm Redis is reachable from the web process.                      |
 | `BullMQ worker registration failed`                 | Worker startup failed. Formbricks schedules another attempt after 30 seconds.                               |
 | `BullMQ worker registration retry scheduled`        | A startup retry is pending. Fix the underlying Redis or configuration error before it runs.                 |
-| `BullMQ recurring job registration failed`          | Workflow reconciliation and other recurring schedules could not be registered. Check Redis connectivity.    |
+| `BullMQ recurring job registration failed`          | Recurring schedules could not be registered. Check Redis connectivity.                                      |
 | `BullMQ recurring job registration retry scheduled` | A recurring-schedule registration retry is pending for 30 seconds.                                          |
 | `BullMQ job failed`                                 | Inspect `jobName`, `jobId`, `attemptsMade`, and `err`. The job may retry until all three attempts are used. |
-| `Workflow run reconciliation acted`                 | Inspect the queued and stuck-running counts to see which recovery path ran.                                 |
 
-If workflow runs stay queued:
+If background jobs stay queued:
 
 1. Confirm `REDIS_URL` is present and identical on all web replicas.
 2. Confirm at least one in-process worker is enabled, or that a compatible external worker is running.
 3. Look for `BullMQ runtime started` after the latest deployment or restart.
-4. Check Redis connection and job failure logs.
-5. Open the workflow's **Runs** view to inspect the run status and step-level error.
+4. Check Redis connection and `BullMQ job failed` logs.
+5. Use the `jobName` field to identify the affected workload and continue in its feature-specific logs or UI.
 
-See [Environment Variables](/self-hosting/configuration/environment-variables) for every runner setting and
-[Monitoring](/self-hosting/setup/monitoring) for log collection guidance.
+See [Environment Variables](/self-hosting/configuration/environment-variables) for every Job Runner setting
+and [Monitoring](/self-hosting/setup/monitoring) for log collection guidance.
