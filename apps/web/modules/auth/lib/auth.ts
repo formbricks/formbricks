@@ -27,7 +27,7 @@ import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recove
 import { runAfterAuthHooks } from "./after-auth-hooks";
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
-import { hibpBreachCheckPlugin } from "./better-auth-hibp";
+import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
@@ -237,6 +237,10 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
+      // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
+      // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
+      // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
+      await hibpBreachCheckBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),
   },
@@ -311,10 +315,6 @@ export const auth = betterAuth({
     // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
     // path (recovery-scoped, not a general magic-link). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
-    // ENG-1587: reject known-breached passwords on set (signup / reset). Fails open when
-    // api.pwnedpasswords.com is unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See
-    // better-auth-hibp.ts.
-    hibpBreachCheckPlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],

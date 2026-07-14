@@ -1,22 +1,17 @@
 import "server-only";
-// `getCurrentAuthContext` reads a shared AsyncLocalStorage singleton that Better Auth populates per
-// request. It MUST resolve to the same `@better-auth/core` instance `better-auth` uses, so we rely on
-// the single transitively-hoisted copy rather than declaring `@better-auth/core` as a direct dep — a
-// second copy would have its own (empty) ALS and silently disable the check.
-import { getCurrentAuthContext } from "@better-auth/core/context";
-import type { BetterAuthPlugin } from "better-auth";
 import { APIError, isAPIError } from "better-auth/api";
 import { createHash } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import { PASSWORD_COMPROMISED_ERROR_CODE } from "@formbricks/types/errors";
 import { PASSWORD_HIBP_CHECK_DISABLED } from "@/lib/constants";
+import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 
 /**
  * Have-I-Been-Pwned breach check on password set (ENG-1587).
  *
- * A locally-owned replacement for Better Auth's stock `haveIBeenPwned` plugin. It performs the same
- * k-anonymity range query against api.pwnedpasswords.com (only the first 5 chars of the SHA-1 leave
- * the process) but changes two behaviors the stock plugin gets wrong for self-hosting:
+ * A locally-owned alternative to Better Auth's stock `haveIBeenPwned` plugin, run as a Better Auth
+ * `before` hook (see auth.ts `hooks.before`). Two behaviours differ from the stock plugin, both
+ * important for self-hosting:
  *
  *  1. FAIL OPEN. The stock plugin rejects the password on ANY network error (throws 500), which would
  *     break signup + password reset entirely on air-gapped / closed-network deployments. Here a
@@ -26,13 +21,16 @@ import { PASSWORD_HIBP_CHECK_DISABLED } from "@/lib/constants";
  *  2. OPERATOR OPT-OUT. `PASSWORD_HIBP_CHECK_DISABLED=1` skips the outbound call entirely, for
  *     deployments that want zero egress attempts.
  *
- * Like the stock plugin it wraps `password.hash`, so the check runs inline on the configured set
- * paths only. Formbricks sets a password via signup (`/sign-up/email`) and reset (`/reset-password`);
- * no other path sets a password, so those are the only two we intercept.
+ * WHY a `before` hook rather than the stock plugin's `password.hash` wrapper: on `/reset-password`,
+ * Better Auth *consumes the reset token before hashing* (api/routes/password.ts). Rejecting at hash
+ * time would burn the token, so a valid retry would fail with "link already used" (ENG-1587 review).
+ * Running before the endpoint handler rejects a breached password without consuming the token (and
+ * without creating the user on signup), and it covers the raw `/api/auth/*` endpoints as well as the
+ * server actions.
  */
 
-// Only the two paths that actually set a password in Formbricks (stock plugin also covers change /
-// admin / phone / email-otp paths we don't use).
+// The two Better Auth paths that set a password in Formbricks. Signup carries `password`; reset
+// carries `newPassword`.
 const CHECKED_PATHS = new Set(["/sign-up/email", "/reset-password"]);
 
 // Tight timeout: this call blocks a login-critical flow, so we bound it well under the license
@@ -82,41 +80,30 @@ const isPasswordCompromised = async (password: string): Promise<boolean> => {
 };
 
 /**
- * True when `error` is the breach-check rejection thrown by this plugin (a Better Auth APIError
- * carrying PASSWORD_COMPROMISED_ERROR_CODE). Sign-up / reset actions use this to re-surface it as a
- * Formbricks expected error with a stable, client-mappable code.
+ * Better Auth `before` hook: reject a breached password on the password-set paths before the endpoint
+ * handler runs (i.e. before the reset token is consumed / the user is created). No-ops on every other
+ * path and when the check is disabled.
+ */
+export const hibpBreachCheckBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
+  if (PASSWORD_HIBP_CHECK_DISABLED || !CHECKED_PATHS.has(ctx.path)) return;
+
+  const body = ctx.body as { password?: unknown; newPassword?: unknown } | undefined;
+  const password = body?.password ?? body?.newPassword;
+  if (typeof password !== "string" || password.length === 0) return;
+
+  if (await isPasswordCompromised(password)) {
+    throw new APIError("BAD_REQUEST", {
+      message: "The password you entered has been found in a data breach.",
+      code: PASSWORD_COMPROMISED_ERROR_CODE,
+    });
+  }
+};
+
+/**
+ * True when `error` is the breach-check rejection thrown by this hook (a Better Auth APIError carrying
+ * PASSWORD_COMPROMISED_ERROR_CODE). Sign-up / reset actions use this to re-surface it as a Formbricks
+ * expected error with a stable, client-mappable code.
  */
 export const isPasswordCompromisedError = (error: unknown): boolean =>
   isAPIError(error) &&
   (error.body as { code?: string } | undefined)?.code === PASSWORD_COMPROMISED_ERROR_CODE;
-
-export const hibpBreachCheckPlugin = {
-  id: "formbricks-hibp",
-  init(ctx) {
-    const originalHash = ctx.password.hash;
-    return {
-      context: {
-        password: {
-          ...ctx.password,
-          async hash(password: string) {
-            if (PASSWORD_HIBP_CHECK_DISABLED) return originalHash(password);
-
-            const authContext = await getCurrentAuthContext();
-            if (!authContext.path || !CHECKED_PATHS.has(authContext.path)) {
-              return originalHash(password);
-            }
-
-            if (await isPasswordCompromised(password)) {
-              throw new APIError("BAD_REQUEST", {
-                message: "The password you entered has been found in a data breach.",
-                code: PASSWORD_COMPROMISED_ERROR_CODE,
-              });
-            }
-
-            return originalHash(password);
-          },
-        },
-      },
-    };
-  },
-} satisfies BetterAuthPlugin;

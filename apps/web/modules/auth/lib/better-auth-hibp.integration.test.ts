@@ -3,13 +3,15 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
+import { sendPasswordResetLinkEmail } from "@/modules/email";
 
 /**
  * Integration coverage for the HIBP breach check (ENG-1587) — drives the REAL Better Auth instance
- * (with the hibpBreachCheckPlugin wired in auth.ts) against a real Postgres. Only the outbound range
- * call to api.pwnedpasswords.com is intercepted; everything else (the plugin's password.hash hook, BA
- * path routing, the bcrypt hash, user/account creation) runs for real. This is what proves BA actually
- * routes /sign-up/email through our hook — the one thing the pure unit test can't.
+ * (with the hibpBreachCheckBeforeHandler wired into auth.ts `hooks.before`) against a real Postgres.
+ * Only the outbound range call to api.pwnedpasswords.com is intercepted; everything else (the before
+ * hook, BA path routing, token consumption, the bcrypt hash, user/account creation) runs for real.
+ * This is what proves BA actually routes /sign-up/email and /reset-password through our hook — and,
+ * for reset, that a breached attempt does NOT consume the token (the ENG-1587 review finding).
  */
 
 // integration/setup.ts disables the HIBP check suite-wide (so other tests don't hit the network);
@@ -90,5 +92,41 @@ describe("HIBP breach check on sign-up (real Better Auth + Postgres)", () => {
     });
     expect(response.status).toBeLessThan(300);
     expect(await prisma.user.findUnique({ where: { email: "failopen@example.com" } })).not.toBeNull();
+  });
+});
+
+describe("HIBP breach check on password reset — token is preserved on rejection (ENG-1587 review)", () => {
+  // Drive a real reset token through Better Auth and capture it from the mocked reset email.
+  const provisionResetToken = async (email: string): Promise<string> => {
+    // beforeEach leaves the range response empty (no match), so this sign-up is treated as clean.
+    await auth.api.signUpEmail({ body: { email, password: "Initial-passphrase-1", name: "Rae" } });
+    vi.mocked(sendPasswordResetLinkEmail).mockClear();
+
+    // No redirectTo → avoids Better Auth's trusted-origin check. BA puts the token in the URL PATH
+    // (`/reset-password/<token>?callbackURL=`), not a query param.
+    await auth.api.requestPasswordReset({ body: { email } });
+    const verifyLink = vi.mocked(sendPasswordResetLinkEmail).mock.calls[0]?.[0]?.verifyLink;
+    const token = verifyLink ? new URL(verifyLink).pathname.split("/").filter(Boolean).pop() : null;
+    if (!token) throw new Error("failed to capture reset token from the mocked email");
+    return token;
+  };
+
+  test("a breached first attempt does not consume the token; a valid retry succeeds", async () => {
+    const email = "reset@example.com";
+    const token = await provisionResetToken(email);
+
+    // 1) Breached password → rejected. The before hook runs BEFORE the token is consumed.
+    setRangeResponse(new Response(rangeHitFor("Breached-reset-1")));
+    await expect(
+      auth.api.resetPassword({ body: { token, newPassword: "Breached-reset-1" } })
+    ).rejects.toMatchObject({ body: { code: "password_compromised" } });
+
+    // 2) Same token, a clean password → succeeds (the token was NOT burned in step 1).
+    setRangeResponse(new Response("0000000000:1"));
+    const ok = await auth.api.resetPassword({
+      body: { token, newPassword: "Fresh-unique-passphrase-2" },
+      asResponse: true,
+    });
+    expect(ok.status).toBeLessThan(300);
   });
 });

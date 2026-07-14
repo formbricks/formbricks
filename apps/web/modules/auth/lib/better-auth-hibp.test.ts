@@ -1,35 +1,27 @@
-import { getCurrentAuthContext } from "@better-auth/core/context";
 import { APIError } from "better-auth/api";
 import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 
-// Real SHA-1 (node:crypto) so prefix/suffix are the actual values the plugin computes.
+// Real SHA-1 (node:crypto) so prefix/suffix are the actual values the hook computes.
 const suffixOf = (password: string): string =>
   createHash("sha1").update(password).digest("hex").toUpperCase().substring(5);
 
-vi.mock("@better-auth/core/context", () => ({ getCurrentAuthContext: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 // Minimal constants mock so the heavy real module (and env) is not loaded; default: check enabled.
 vi.mock("@/lib/constants", () => ({ PASSWORD_HIBP_CHECK_DISABLED: false }));
 
-// Build a fetch Response for the range endpoint.
+// Fake fetch Response for the range endpoint.
 const rangeOk = (body: string) => ({ ok: true, status: 200, text: async () => body }) as unknown as Response;
 const rangeErr = (status: number) => ({ ok: false, status, text: async () => "" }) as unknown as Response;
 
-// A no-op original hash the plugin should delegate to when it allows a password.
-const ORIGINAL_HASH_RESULT = "hashed";
-const makeHash = async () => {
-  const { hibpBreachCheckPlugin } = await import("./better-auth-hibp");
-  const originalHash = vi.fn().mockResolvedValue(ORIGINAL_HASH_RESULT);
-  const ctx = { password: { hash: originalHash, verify: vi.fn() } } as never;
-  const wrapped = hibpBreachCheckPlugin.init(ctx).context.password.hash;
-  return { hash: wrapped, originalHash };
-};
+// Minimal AuthHookContext: the handler only reads `path` and `body`.
+const ctxFor = (path: string, body: Record<string, unknown>) => ({ path, body }) as never;
 
-describe("hibpBreachCheckPlugin — hash hook", () => {
+const loadHandler = async () => (await import("./better-auth-hibp")).hibpBreachCheckBeforeHandler;
+
+describe("hibpBreachCheckBeforeHandler", () => {
   beforeEach(() => {
-    vi.mocked(getCurrentAuthContext).mockResolvedValue({ path: "/sign-up/email" } as never);
     vi.stubGlobal("fetch", vi.fn());
   });
   afterEach(() => {
@@ -37,71 +29,77 @@ describe("hibpBreachCheckPlugin — hash hook", () => {
     vi.unstubAllGlobals();
   });
 
-  test("rejects a password confirmed in the breach corpus", async () => {
-    // CRLF + a leading/trailing space to prove trimming works.
+  test("rejects a breached password on /sign-up/email (body.password)", async () => {
+    // CRLF + surrounding whitespace to prove line-trimming works.
     vi.mocked(fetch).mockResolvedValue(rangeOk(` ${suffixOf("breached")}:42 \r\nDEADBEEF:1`));
-    const { hash, originalHash } = await makeHash();
+    const handler = await loadHandler();
 
-    await expect(hash("breached")).rejects.toBeInstanceOf(APIError);
-    await expect(hash("breached")).rejects.toMatchObject({ body: { code: "password_compromised" } });
-    expect(originalHash).not.toHaveBeenCalled();
+    const result = handler(ctxFor("/sign-up/email", { password: "breached" }));
+    await expect(result).rejects.toBeInstanceOf(APIError);
+    await expect(result).rejects.toMatchObject({ body: { code: "password_compromised" } });
+  });
+
+  test("rejects a breached password on /reset-password (body.newPassword)", async () => {
+    vi.mocked(fetch).mockResolvedValue(rangeOk(`${suffixOf("breached")}:9`));
+    const handler = await loadHandler();
+
+    await expect(handler(ctxFor("/reset-password", { newPassword: "breached" }))).rejects.toMatchObject({
+      body: { code: "password_compromised" },
+    });
   });
 
   test("allows a password absent from the corpus", async () => {
     vi.mocked(fetch).mockResolvedValue(rangeOk("0000000000:1\nDEADBEEF:2"));
-    const { hash, originalHash } = await makeHash();
+    const handler = await loadHandler();
 
-    await expect(hash("clean")).resolves.toBe(ORIGINAL_HASH_RESULT);
-    expect(originalHash).toHaveBeenCalledWith("clean");
+    await expect(handler(ctxFor("/sign-up/email", { password: "clean" }))).resolves.toBeUndefined();
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   test("fails open (allows) when the range API returns a non-OK status", async () => {
     vi.mocked(fetch).mockResolvedValue(rangeErr(503));
-    const { hash, originalHash } = await makeHash();
+    const handler = await loadHandler();
 
-    await expect(hash("clean")).resolves.toBe(ORIGINAL_HASH_RESULT);
-    expect(originalHash).toHaveBeenCalledOnce();
+    await expect(handler(ctxFor("/reset-password", { newPassword: "clean" }))).resolves.toBeUndefined();
     expect(logger.warn).toHaveBeenCalled();
   });
 
   test("fails open (allows) when the fetch throws (e.g. timeout)", async () => {
     vi.mocked(fetch).mockRejectedValue(new Error("The operation was aborted"));
-    const { hash, originalHash } = await makeHash();
+    const handler = await loadHandler();
 
-    await expect(hash("clean")).resolves.toBe(ORIGINAL_HASH_RESULT);
-    expect(originalHash).toHaveBeenCalledOnce();
+    await expect(handler(ctxFor("/sign-up/email", { password: "clean" }))).resolves.toBeUndefined();
     expect(logger.warn).toHaveBeenCalled();
   });
 
-  test("skips the check on a non-set path", async () => {
-    vi.mocked(getCurrentAuthContext).mockResolvedValue({ path: "/sign-in/email" } as never);
-    const { hash, originalHash } = await makeHash();
-
-    await expect(hash("whatever")).resolves.toBe(ORIGINAL_HASH_RESULT);
+  test("no-ops on a non-password-set path", async () => {
+    const handler = await loadHandler();
+    await expect(handler(ctxFor("/sign-in/email", { password: "whatever" }))).resolves.toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
-    expect(originalHash).toHaveBeenCalledOnce();
+  });
+
+  test("no-ops when the body carries no password", async () => {
+    const handler = await loadHandler();
+    await expect(handler(ctxFor("/reset-password", { token: "abc" }))).resolves.toBeUndefined();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   test("skips the check entirely when disabled by env flag", async () => {
     vi.resetModules();
     vi.doMock("@/lib/constants", () => ({ PASSWORD_HIBP_CHECK_DISABLED: true }));
-    const { hibpBreachCheckPlugin } = await import("./better-auth-hibp");
-    const originalHash = vi.fn().mockResolvedValue(ORIGINAL_HASH_RESULT);
-    const ctx = { password: { hash: originalHash, verify: vi.fn() } } as never;
+    const handler = (await import("./better-auth-hibp")).hibpBreachCheckBeforeHandler;
 
-    const hash = hibpBreachCheckPlugin.init(ctx).context.password.hash;
-    await expect(hash("breached")).resolves.toBe(ORIGINAL_HASH_RESULT);
+    await expect(handler(ctxFor("/sign-up/email", { password: "breached" }))).resolves.toBeUndefined();
     expect(fetch).not.toHaveBeenCalled();
-    expect(getCurrentAuthContext).not.toHaveBeenCalled();
 
-    vi.doUnmock("@/lib/constants");
+    // Restore the default (enabled) constants mock so later re-imports don't load the real env module.
+    vi.doMock("@/lib/constants", () => ({ PASSWORD_HIBP_CHECK_DISABLED: false }));
     vi.resetModules();
   });
 });
 
 describe("isPasswordCompromisedError", () => {
-  test("true only for the plugin's compromised APIError", async () => {
+  test("true only for the hook's compromised APIError", async () => {
     const { isPasswordCompromisedError } = await import("./better-auth-hibp");
     const compromised = new APIError("BAD_REQUEST", { message: "x", code: "password_compromised" });
     const otherApiError = new APIError("BAD_REQUEST", { message: "x", code: "SOMETHING_ELSE" });
