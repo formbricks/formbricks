@@ -87,19 +87,21 @@ in [Recall Data](/surveys/general-features/recall).
 Turn on **Attach response data** to include the triggering survey response with the email. You can then also
 turn on **Include variables** and **Include hidden fields**.
 
-## Validate or enable
+## Check validity or enable
 
-Select **Validate** whenever you want to manually verify that the current workflow definition is valid and
-executable. For the **Response completed** example, it checks that required configuration is present and that
-the linked survey and selected ending cards still exist.
+The status button in the upper-left corner shows whether the editor's client-side checks consider the
+workflow **Valid** or **Invalid**. Select it whenever you want Formbricks to manually verify that the current
+workflow definition is valid and executable. For the **Response completed** example, the manual check also
+confirms that required configuration is present and that the linked survey and selected ending cards still
+exist.
 
 <Note>
-  **Validate** is an optional, side-effect-free pre-flight check. It does not create a run or execute an
-  action. It is available for draft, enabled, and disabled workflows, but not archived workflows, and it
-  requires workspace write access.
+  Running the manual check is optional and side-effect-free. It does not create a run or execute an action. It
+  is available for draft, enabled, and disabled workflows, but not archived workflows, and it requires
+  workspace write access.
 </Note>
 
-You do not have to select **Validate** before enabling. Open the status menu and select **Enable** when you
+You do not have to run the manual check before enabling. Open the status menu and select **Enable** when you
 are ready to start the workflow. An enabled workflow listens for its configured trigger. Its definition is
 read-only while enabled; select **Disable** before editing it again.
 
