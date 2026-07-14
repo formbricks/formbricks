@@ -4,8 +4,8 @@ description: "Automate response-driven tasks in Formbricks with triggers, filter
 icon: "/images/platform/workflows/workflow.svg"
 ---
 
-Workflows automate what happens after someone completes a survey. You define the event that starts the
-workflow, narrow down which responses qualify, and choose the action Formbricks should perform.
+Workflows automate tasks in response to events in Formbricks. You define the event that starts the workflow,
+narrow down which events qualify, and choose the action Formbricks should perform.
 
 ## How Workflows work
 
@@ -30,13 +30,13 @@ workflow, narrow down which responses qualify, and choose the action Formbricks 
   </Card>
 </CardGroup>
 
-In the current builder, a workflow follows this sequence:
+For example, a workflow using the currently available trigger and action can follow this sequence:
 
 `Response completed trigger` → `optional ending card filter` → `Send email action`
 
 ## Current capabilities
 
-You can use Workflows to:
+You can currently use Workflows to:
 
 - Start when a response is completed for a selected survey
 - Run for all ending cards or only selected ending cards
@@ -44,16 +44,16 @@ You can use Workflows to:
 - Inspect workspace-wide or workflow-specific execution history
 
 <Note>
-  Workflows currently support one **Response completed** trigger, an optional ending card filter, and one
-  **Send email** action. User-authored condition nodes, branching, webhooks, schedules, delays, and loops are
-  not available yet.
+  The available options currently include the **Response completed** trigger, its optional ending card filter,
+  and the **Send email** action. User-authored condition nodes, branching, webhooks, schedules, delays, and
+  loops are not available yet.
 </Note>
 
 ## Get started
 
 <CardGroup cols={2}>
   <Card title="Build a workflow" icon="rocket" href="/platform/features/workflows/build">
-    Connect a survey, configure the trigger and email action, validate the workflow, and enable it.
+    Choose a trigger and action, configure them, optionally validate the workflow, and enable it.
   </Card>
 
   <Card
@@ -64,3 +64,13 @@ You can use Workflows to:
     Manage the workflow lifecycle and investigate runs and step logs.
   </Card>
 </CardGroup>
+
+## Self-host Workflows
+
+Self-hosted deployments run Workflows through the Redis-backed runner built into the Formbricks web process.
+Before using Workflows in production, configure Redis and any services required by your actions, such as SMTP
+for **Send email**.
+
+<Card title="Configure the Workflow Runner" icon="gears" href="/self-hosting/configuration/workflow-runner">
+  Set up the runner, scale it across replicas, and troubleshoot queued or failed runs.
+</Card>
