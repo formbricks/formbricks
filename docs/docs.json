@@ -59,7 +59,7 @@
               "platform/features/ai-features",
               {
                 "group": "Workflows",
-                "icon": "/images/platform/workflows/workflow.svg",
+                "icon": "https://d3gk2c5xim1je2.cloudfront.net/lucide/v1.16.0/workflow.svg",
                 "pages": [
                   "platform/features/workflows/overview",
                   "platform/features/workflows/build",
