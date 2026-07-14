@@ -152,6 +152,11 @@ The Formbricks container receives the supported AuthZed variables automatically.
 `AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
 `docker compose down` preserves the volume; `docker compose down -v` deletes both Formbricks and SpiceDB data.
 
+The bundled PostgreSQL service leaves `track_commit_timestamp` at its default `off` value, so SpiceDB reports
+that its Watch API is disabled. This does not affect schema writes, relationship writes, or permission checks.
+If a future integration consumes the Watch API, enable that PostgreSQL setting separately and plan for the
+required database restart.
+
 Repository development exposes SpiceDB on `127.0.0.1:50051`. To start the optional authenticated browser UI:
 
 ```bash

@@ -67,6 +67,10 @@ Existing one-click installations keep their customized Compose file during `form
 three AuthZed services and two generated secrets manually from the release-matched Compose file; back up the
 shared PostgreSQL volume first and never use `docker compose down -v` during migration or rollback.
 
+The bundled PostgreSQL service keeps `track_commit_timestamp` at its default `off` value. SpiceDB therefore
+logs that its Watch API is disabled; schema, relationship, and permission-check APIs are unaffected. A future
+consumer of the Watch API must explicitly enable that PostgreSQL setting and account for the required restart.
+
 ## Smart Functionality AI with Qwen/vLLM
 
 The Docker stack can optionally run Qwen through vLLM as an OpenAI-compatible `/v1` endpoint. Baseline installs are unchanged: `docker compose up -d` does not start the vLLM service and Formbricks can still run without AI.
