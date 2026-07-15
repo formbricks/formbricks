@@ -34,20 +34,21 @@ export const duplicateChartAndAddWidget = async ({
     [layout, ZWidgetLayout.optional()]
   );
 
+  let dashboard;
   try {
-    const dashboard = await prisma.dashboard.findFirst({
+    dashboard = await prisma.dashboard.findFirst({
       where: { id: dashboardId, workspaceId },
       select: { id: true },
     });
-
-    if (!dashboard) {
-      throw new ResourceNotFoundError("Dashboard", dashboardId);
-    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
     throw error;
+  }
+
+  if (!dashboard) {
+    throw new ResourceNotFoundError("Dashboard", dashboardId);
   }
 
   const chart = await duplicateChart(chartId, workspaceId, createdBy);
