@@ -58,6 +58,15 @@
             "pages": [
               "platform/features/ai-features",
               {
+                "group": "Workflows",
+                "icon": "https://d3gk2c5xim1je2.cloudfront.net/lucide/v1.16.0/workflow.svg",
+                "pages": [
+                  "platform/features/workflows/overview",
+                  "platform/features/workflows/build",
+                  "platform/features/workflows/manage-and-monitor"
+                ]
+              },
+              {
                 "group": "Integrations",
                 "icon": "bridge",
                 "pages": [
@@ -281,6 +290,7 @@
             "pages": [
               "self-hosting/configuration/custom-ssl",
               "self-hosting/configuration/environment-variables",
+              "self-hosting/configuration/job-runner",
               "self-hosting/configuration/smtp",
               "self-hosting/configuration/file-uploads",
               "self-hosting/configuration/domain-configuration",
@@ -1168,6 +1178,10 @@
     {
       "destination": "/docs/platform/features/email-customization",
       "source": "/docs/core-features/global/email-customization"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/job-runner",
+      "source": "/docs/self-hosting/configuration/workflow-runner"
     },
     {
       "destination": "/docs/self-hosting/setup/one-click",
