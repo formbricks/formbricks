@@ -50,8 +50,10 @@ export const ConfirmPasswordForm = ({
       setSecret(secret);
       setCurrentStep("scanQRCode");
     } else {
+      // Always surface something: getFormattedErrorMessage can resolve to an empty string for some
+      // action errors, which would show a blank toast (the "spinner then nothing" symptom).
       const errorMessage = getFormattedErrorMessage(setupTwoFactorAuthResponse);
-      toast.error(errorMessage);
+      toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
     }
   };
 
