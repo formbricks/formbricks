@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
@@ -447,7 +448,10 @@ export const SurveyMenuBar = ({
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
-        setLocalSurvey(updatedSurveyResponse.data);
+        // isSecondPublish is a transient action flag, not part of the survey — strip it so it
+        // doesn't linger in editor state and get echoed back on the next update.
+        const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = updatedSurveyResponse.data;
+        setLocalSurvey(updatedSurvey);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
@@ -514,6 +518,14 @@ export const SurveyMenuBar = ({
 
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
+
+      // When the user publishes their second survey, fire an in-app code action so a
+      // Formbricks survey can be triggered from the dashboard. The flag is computed
+      // server-side in updateSurveyAction, so there's no extra round-trip here.
+      if (publishResult.data.isSecondPublish) {
+        formbricks.track("second_survey_published").catch(() => undefined);
+      }
+
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?success=true`);

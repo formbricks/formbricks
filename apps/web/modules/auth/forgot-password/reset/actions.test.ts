@@ -2,8 +2,10 @@ import { APIError } from "better-auth/api";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
+  InvalidInputError,
   InvalidPasswordResetTokenError,
   OperationNotAllowedError,
+  PASSWORD_COMPROMISED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { auth } from "@/modules/auth/lib/auth";
 import { resetPasswordAction } from "./actions";
@@ -72,6 +74,20 @@ describe("resetPasswordAction", () => {
     const result = resetPasswordAction({ parsedInput } as any);
     await expect(result).rejects.toBeInstanceOf(InvalidPasswordResetTokenError);
     await expect(result).rejects.toThrow(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
+    expect(auth.api.resetPassword).toHaveBeenCalledTimes(1);
+  });
+
+  test("maps a compromised-password APIError to the compromised code, not the invalid-token error", async () => {
+    // The HIBP plugin rejects a breached password with its own APIError. This must be surfaced as the
+    // stable compromised code — NOT swallowed by the catch-all that maps every APIError to a bogus
+    // "invalid/expired token" message.
+    vi.mocked(auth.api.resetPassword).mockRejectedValue(
+      new APIError("BAD_REQUEST", { message: "breached", code: PASSWORD_COMPROMISED_ERROR_CODE })
+    );
+
+    const result = resetPasswordAction({ parsedInput } as any);
+    await expect(result).rejects.toBeInstanceOf(InvalidInputError);
+    await expect(result).rejects.toThrow(PASSWORD_COMPROMISED_ERROR_CODE);
     expect(auth.api.resetPassword).toHaveBeenCalledTimes(1);
   });
 

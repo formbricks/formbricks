@@ -60,7 +60,7 @@ Before getting started, make sure you have:
 
 - A running web application with user authentication in your chosen framework.
 
-- A Formbricks account with your **Workspace ID** and **API host**, available in the **Setup Checklist** under **Settings**.
+- A Formbricks account with your **Workspace ID** and **API host**, available on the **Connect Your App** page under **Settings → Workspace**.
 
 ## HTML
 
@@ -72,7 +72,7 @@ All you need to do is copy a `<script>` tag to your HTML head:
 !function(){
     var appUrl = "https://app.formbricks.com"; // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
     var workspaceId = "<your-workspace-id>";
-var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({workspaceId: workspaceId, appUrl: appUrl})},500)}();
+var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";t.onload=function(){window.formbricks.setup({workspaceId: workspaceId, appUrl: appUrl})};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```
@@ -599,7 +599,7 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 
 ## Validate your setup
 
-Once you've completed the steps above, validate your setup by checking the Setup Checklist in the Settings. The widget status indicator should change from this:
+Once you've completed the steps above, validate your setup by checking the Setup Checklist on the **Connect Your App** page under **Settings → Workspace**. The widget status indicator should change from this:
 
 ![first validate](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738122589/image_ecaovs.jpg)
 To this:

@@ -15,6 +15,10 @@ describe("AI schema context", () => {
     ["the CSAT average alias", '"CSAT average" means `FeedbackRecords.csatAverage`'],
     ["the CES alias", '"CES average" or "CES score" means `FeedbackRecords.cesAverage`'],
     [
+      "the rating average alias",
+      '"rating average" or "average rating" means `FeedbackRecords.ratingAverage`',
+    ],
+    [
       "the sentiment average alias",
       '"average sentiment" or "sentiment trend" means `FeedbackRecords.sentimentAverage`',
     ],

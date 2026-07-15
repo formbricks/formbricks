@@ -5,8 +5,8 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { getCredentialPasswordHash, verifyUserPassword } from "@/lib/user/password";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
-import { verifyPassword } from "@/modules/auth/lib/utils";
 
 export const setupTwoFactorAuth = async (
   userId: string,
@@ -34,16 +34,13 @@ export const setupTwoFactorAuth = async (
     throw new ResourceNotFoundError("user", userId);
   }
 
-  if (!user.password) {
-    throw new InvalidInputError("User does not have a password set");
-  }
-
   if (user.identityProvider !== "email") {
     throw new InvalidInputError("Third party login is already enabled");
   }
 
-  const isCorrectPassword = await verifyPassword(password, user.password);
-
+  // Password verification — the credential-account lookup and fail-closed "no password" handling —
+  // is owned by verifyUserPassword; 2FA setup just needs the yes/no answer.
+  const isCorrectPassword = await verifyUserPassword(userId, password);
   if (!isCorrectPassword) {
     throw new InvalidInputError("Incorrect password");
   }
@@ -81,12 +78,14 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
     throw new ResourceNotFoundError("user", id);
   }
 
-  if (!user.password) {
-    throw new InvalidInputError("User does not have a password set");
-  }
-
   if (user.identityProvider !== "email") {
     throw new InvalidInputError("Third party login is already enabled");
+  }
+
+  // Requires a credential account (password lives there post-ENG-1054, not on User.password).
+  const passwordHash = await getCredentialPasswordHash(id);
+  if (!passwordHash) {
+    throw new InvalidInputError("User does not have a password set");
   }
 
   if (user.twoFactorEnabled) {
@@ -142,10 +141,6 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
     throw new ResourceNotFoundError("user", id);
   }
 
-  if (!user.password) {
-    throw new InvalidInputError("User does not have a password set");
-  }
-
   if (!user.twoFactorEnabled) {
     throw new InvalidInputError("Two factor authentication is not enabled");
   }
@@ -155,8 +150,8 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
   }
 
   const { code, password, backupCode } = params;
-  const isCorrectPassword = await verifyPassword(password, user.password);
-
+  // Delegate password verification (credential lookup + fail-closed) to verifyUserPassword.
+  const isCorrectPassword = await verifyUserPassword(id, password);
   if (!isCorrectPassword) {
     throw new InvalidInputError("Incorrect password");
   }

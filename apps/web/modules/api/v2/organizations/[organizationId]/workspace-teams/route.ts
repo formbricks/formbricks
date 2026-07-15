@@ -28,6 +28,7 @@ import {
 export async function GET(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       query: ZGetWorkspaceTeamsFilter,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
@@ -59,6 +60,7 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
 export async function POST(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       body: ZWorkspaceTeamInput,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
@@ -143,6 +145,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
 export async function PUT(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       body: ZWorkspaceTeamInput,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
@@ -223,6 +226,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
 export async function DELETE(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       query: ZGetWorkspaceTeamUpdateFilter,
       params: z.object({ organizationId: ZOrganizationIdSchema }),

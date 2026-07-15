@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
-import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
@@ -154,6 +154,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isAccessControlAllowed={isAccessControlAllowed}
           responseCount={responseCount}
           newTrialBannerVariant={newTrialBannerVariant}
+          isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar

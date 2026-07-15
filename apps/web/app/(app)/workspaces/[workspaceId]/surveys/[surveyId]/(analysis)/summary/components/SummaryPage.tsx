@@ -158,17 +158,40 @@ export const SummaryPage = ({
     return registerAnalysisRefreshHandler(refreshSummary);
   }, [refreshSummary, registerAnalysisRefreshHandler]);
 
+  // Dedupe fetches by the actual filter VALUES. Every authenticated server action re-sets the
+  // Better Auth session cookie, and `cookies().set()` inside an action makes Next.js refresh the
+  // route; that refresh hands this component fresh `survey`/`initialSurveySummary`/`fetchSummary`
+  // references. Without this guard those new references re-fire the fetch effect → another action →
+  // another refresh, i.e. an infinite loop.
+  const lastFetchedFiltersKeyRef = useRef<string | null>(null);
+
   // Only fetch data when filters change or when there's no initial data
   useEffect(() => {
-    // If we have initial data and no filters are applied, don't fetch
-    const hasNoFilters =
-      (!selectedFilter || Object.keys(selectedFilter).length === 0 || selectedFilter.filter?.length === 0) &&
-      (!dateRange || (!dateRange.from && !dateRange.to));
+    // A default date range only sets `to` (today) with no `from`, which means "all time" and is
+    // NOT an active filter. Treat filters as active only when the user has actually narrowed the data.
+    const hasActiveFilters =
+      (selectedFilter?.filter?.length ?? 0) > 0 ||
+      (!!selectedFilter?.responseStatus && selectedFilter.responseStatus !== "all") ||
+      Boolean(dateRange?.from);
 
-    if (initialSurveySummary && hasNoFilters) {
+    // If we have server-provided initial data and no active filters, use it instead of refetching.
+    // (Also covers clearing filters: fall back to the unfiltered initial summary without a fetch.)
+    if (initialSurveySummary && !hasActiveFilters) {
+      lastFetchedFiltersKeyRef.current = null;
+      setSurveySummary(initialSurveySummary);
       setIsLoading(false);
       return;
     }
+
+    // Skip when only prop references changed (a route refresh) but the filter values are identical
+    // to the last fetch. getFormattedFilters is deterministic for fixed inputs.
+    const filtersKey = JSON.stringify(getFormattedFilters(survey, selectedFilter, dateRange));
+    if (filtersKey === lastFetchedFiltersKeyRef.current) {
+      return;
+    }
+    // Commit the key BEFORE awaiting so an action-triggered route refresh that re-runs this effect
+    // finds it already set and skips — this is what breaks the loop.
+    lastFetchedFiltersKeyRef.current = filtersKey;
 
     const fetchFilteredSummary = async () => {
       setIsLoading(true);
@@ -177,13 +200,17 @@ export const SummaryPage = ({
         await fetchSummary();
       } catch (error) {
         console.error(error);
+        // Roll back the key on failure so re-selecting the same filter retries the fetch.
+        lastFetchedFiltersKeyRef.current = null;
+        // fetchSummary throws an Error whose message is already the formatted server error.
+        toast.error(error instanceof Error ? error.message : t("common.something_went_wrong"));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchFilteredSummary();
-  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary]);
+  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, survey, t]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
