@@ -98,6 +98,9 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
+COPY --from=installer /app/apps/web/dist/docker/validate-env.mjs ./validate-env.mjs
+RUN chown nextjs:nextjs ./validate-env.mjs && chmod 444 ./validate-env.mjs
+
 COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
 RUN chmod 644 ./prisma.config.mjs
 
