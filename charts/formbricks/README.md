@@ -69,7 +69,9 @@ The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is
 When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
 If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
 
-When deployed with Argo CD, chart-managed Secrets and ExternalSecrets render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist before migration jobs start.
+Before migrations start, the migration Job waits for the effective PostgreSQL endpoint to accept TCP connections. `MIGRATE_DATABASE_URL` takes precedence over `DATABASE_URL`, matching the migration runner. Configure the timeout and retry interval under `migration.waitForDatabase`, or disable the readiness check for deployments that provide their own gate.
+
+When deployed with Argo CD, chart-managed Secrets, ExternalSecrets, and bundled PostgreSQL render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist and PostgreSQL become healthy before migration jobs start.
 
 Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
 
@@ -433,6 +435,10 @@ JSON that can call Vertex AI.
 | migration.resources.requests.cpu                                   | string | `"100m"`                                                                    |                                                           |
 | migration.resources.requests.memory                                | string | `"256Mi"`                                                                   |                                                           |
 | migration.ttlSecondsAfterFinished                                  | int    | `300`                                                                       |                                                           |
+| migration.waitForDatabase.connectionTimeoutSeconds                 | int    | `5`                                                                         | Per-attempt TCP connection timeout.                       |
+| migration.waitForDatabase.enabled                                  | bool   | `true`                                                                      | Wait for PostgreSQL before starting migrations.           |
+| migration.waitForDatabase.intervalSeconds                          | int    | `5`                                                                         | Delay between readiness attempts.                         |
+| migration.waitForDatabase.timeoutSeconds                           | int    | `900`                                                                       | Overall readiness timeout for each Job attempt.           |
 | nameOverride                                                       | string | `""`                                                                        |                                                           |
 | partOfOverride                                                     | string | `""`                                                                        |                                                           |
 | pdb.additionalLabels                                               | object | `{}`                                                                        |                                                           |
@@ -444,6 +450,7 @@ JSON that can call Vertex AI.
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |
 | postgresql.auth.username                                           | string | `"formbricks"`                                                              |                                                           |
+| postgresql.commonAnnotations                                       | object | `{"argocd.argoproj.io/sync-wave":"-2"}`                                   | Order bundled PostgreSQL before migration hooks in Argo.  |
 | postgresql.enabled                                                 | bool   | `true`                                                                      |                                                           |
 | postgresql.externalDatabaseUrl                                     | string | `""`                                                                        |                                                           |
 | postgresql.fullnameOverride                                        | string | `"formbricks-postgresql"`                                                   |                                                           |
