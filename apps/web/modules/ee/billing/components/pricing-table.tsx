@@ -372,13 +372,11 @@ export const PricingTable = ({
     }
     globalThis.window.sessionStorage.removeItem(BILLING_UPGRADE_RESULT_KEY);
     try {
-      const { plan, applied } = JSON.parse(raw) as { plan: TStandardPlan; applied: boolean };
+      const { plan } = JSON.parse(raw) as { plan: TStandardPlan };
       toast.success(
-        applied
-          ? t("workspace.settings.billing.upgrade_checkout_success", {
-              plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
-            })
-          : t("workspace.settings.billing.upgrade_checkout_pending")
+        t("workspace.settings.billing.upgrade_checkout_success", {
+          plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
+        })
       );
     } catch {
       // Malformed handoff payload — nothing to show.
@@ -421,11 +419,11 @@ export const PricingTable = ({
 
     // Once the plan is confirmed in our DB, a full reload is the only reliable way to render it
     // (router.refresh() did not consistently refetch the billing snapshot). Hand the toast across it.
-    const reloadWithToast = (plan: Exclude<TStandardPlan, "hobby"> | null, planApplied: boolean) => {
+    const reloadWithToast = (plan: Exclude<TStandardPlan, "hobby"> | null) => {
       if (globalThis.window === undefined) return;
       globalThis.window.sessionStorage.setItem(
         BILLING_UPGRADE_RESULT_KEY,
-        JSON.stringify({ plan: plan ?? "pro", applied: planApplied })
+        JSON.stringify({ plan: plan ?? "pro" })
       );
       globalThis.window.location.replace(billingUrl);
     };
@@ -455,7 +453,8 @@ export const PricingTable = ({
     };
 
     const run = async () => {
-      // Finalize attaches the card and applies the upgrade in one call, so it never races the webhook.
+      // Finalize attaches the saved card and applies the upgrade; the plan then reflects in our DB
+      // asynchronously, which is what pollUntilPlanApplied waits for below.
       const response = await finalizeSetupCheckoutUpgradeAction({ organizationId, checkoutSessionId });
 
       if (response?.serverError) {
@@ -476,14 +475,12 @@ export const PricingTable = ({
 
       if (!resolvedPlan) {
         // No target to verify against — best effort: reload so any applied change renders.
-        reloadWithToast(resolvedPlan, true);
+        reloadWithToast(resolvedPlan);
         return;
       }
 
-      const planApplied = await pollUntilPlanApplied(resolvedPlan);
-
-      if (planApplied) {
-        reloadWithToast(resolvedPlan, true);
+      if (await pollUntilPlanApplied(resolvedPlan)) {
+        reloadWithToast(resolvedPlan);
       } else {
         // Poll window elapsed without the plan reflecting; the webhook will still catch up.
         settleWithoutReload(t("workspace.settings.billing.upgrade_checkout_pending"));
