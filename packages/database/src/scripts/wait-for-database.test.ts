@@ -1,6 +1,5 @@
 import { once } from "node:events";
-import { Socket, createServer } from "node:net";
-import type { AddressInfo } from "node:net";
+import * as NodeNet from "node:net";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   checkDatabaseTcpConnection,
@@ -15,7 +14,7 @@ const { createConnectionMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("node:net", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:net")>();
+  const actual = await importOriginal<typeof NodeNet>();
   createConnectionMock.mockImplementation(actual.createConnection);
 
   return {
@@ -24,7 +23,7 @@ vi.mock("node:net", async (importOriginal) => {
   };
 });
 
-const servers: ReturnType<typeof createServer>[] = [];
+const servers: ReturnType<typeof NodeNet.createServer>[] = [];
 
 afterEach(async () => {
   await Promise.all(
@@ -175,8 +174,8 @@ describe("waitForDatabase", () => {
 
 describe("checkDatabaseTcpConnection", () => {
   test("closes the socket after a successful readiness check", async () => {
-    const serverSockets = new Set<Socket>();
-    const server = createServer((socket) => {
+    const serverSockets = new Set<NodeNet.Socket>();
+    const server = NodeNet.createServer((socket) => {
       serverSockets.add(socket);
       socket.once("close", () => {
         serverSockets.delete(socket);
@@ -185,7 +184,7 @@ describe("checkDatabaseTcpConnection", () => {
     servers.push(server);
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
-    const address = server.address() as AddressInfo;
+    const address = server.address() as NodeNet.AddressInfo;
 
     await checkDatabaseTcpConnection({ host: "127.0.0.1", port: address.port }, 1_000);
 
@@ -195,7 +194,7 @@ describe("checkDatabaseTcpConnection", () => {
   });
 
   test("handles errors emitted after timeout cleanup", async () => {
-    const socket = new Socket();
+    const socket = new NodeNet.Socket();
     const lateError = Object.assign(new Error("connection cancelled"), { code: "ECANCELED" });
     const destroySpy = vi.spyOn(socket, "destroy").mockImplementation(() => {
       queueMicrotask(() => {
@@ -209,7 +208,9 @@ describe("checkDatabaseTcpConnection", () => {
     socket.emit("timeout");
 
     await expect(connection).rejects.toMatchObject({ code: "ETIMEDOUT" });
-    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
     expect(destroySpy).toHaveBeenCalledOnce();
   });
 });
