@@ -1797,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "{count} diagram hozzáadása",
+        "chart_duplicate_failed": "A diagram másolása sikertelen volt",
+        "chart_duplicated": "A diagram másolása megtörtént és hozzáadásra került a műszerfalhoz",
         "chart_remove_failed": "A diagram eltávolítása sikertelen volt",
         "chart_removed": "A diagram eltávolítva a vezérlőpultról",
         "chart_restore_failed": "A diagram visszaállítása sikertelen volt",

@@ -1797,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "{count} Diagramm(e) hinzufügen",
+        "chart_duplicate_failed": "Diagramm konnte nicht dupliziert werden",
+        "chart_duplicated": "Diagramm wurde dupliziert und zum Dashboard hinzugefügt",
         "chart_remove_failed": "Diagramm konnte nicht entfernt werden",
         "chart_removed": "Diagramm vom Dashboard entfernt",
         "chart_restore_failed": "Diagramm konnte nicht wiederhergestellt werden",
