@@ -30,26 +30,29 @@ export const CHART_MEASURE_COLORS = [
   "#008300", // green
 ];
 
-/** Neutral gray for the "not enriched" bucket (empty sentiment/emotion values). Reads as muted in
- * both light and dark so it doesn't compete with the categorical palette. */
-export const CHART_NOT_ENRICHED_COLOR = "#94a3b8"; // slate-400
+/** Neutral gray for the "not enriched" bucket (empty sentiment/emotion values). A true gray (no
+ * slate blue cast) that reads as muted in both light and dark so it doesn't compete with the
+ * categorical palette. */
+export const CHART_NOT_ENRICHED_COLOR = "#a3a3a3"; // neutral-400
 
 /**
- * Semantic diverging scale for sentiment buckets, keyed by enum value (never by series index) so
- * "very negative" is always red-ish and "very positive" always green/teal regardless of which
- * buckets appear. Diverging warm→gray→cool with a neutral gray midpoint; lightness varies across
- * the scale so adjacent steps stay apart under color-vision deficiency (validated with the dataviz
- * palette script on white: lightness band and adjacent-pair CVD separation pass; the gray midpoint
- * intentionally sits below the categorical chroma floor). The neutral slate-500 is deliberately
- * darker than the slate-400 "not enriched" gray. Groundwork for the sentiment-only chart (ENG-1558).
+ * Semantic scale for sentiment buckets, keyed by enum value (never by series index) so each bucket
+ * keeps its color regardless of which buckets appear. Hues deliberately mirror the emotion chart,
+ * where the six emotion count measures take CHART_MEASURE_COLORS in EMOTION_MEASURE_ORDER: very
+ * negative = sadness red, negative = disgust orange, neutral = surprise blue, mixed = anger
+ * yellow; positive is the brand teal and very positive the next-darker brand step
+ * (--color-brandnew in globals.css). Validated with the dataviz palette script on white: lightness
+ * band and adjacent-pair CVD separation pass (worst adjacent ΔE 16.2, deutan); the dark brand teal
+ * sits just under the categorical chroma floor, acceptable for a brand hue. Groundwork for the
+ * sentiment-only chart (ENG-1558).
  */
 export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
-  very_negative: "#dc2626", // red-600
-  negative: "#f97316", // orange-500
-  neutral: "#64748b", // slate-500
-  positive: "#10b981", // emerald-500
-  very_positive: "#0d9488", // teal-600
-  mixed: "#8b5cf6", // violet-500
+  very_negative: "#e34948", // red (palette red — sadness)
+  negative: "#eb6834", // orange (palette orange — disgust)
+  neutral: "#2a78d6", // blue (palette blue — surprise)
+  positive: CHART_BRAND_DARK, // teal (brand)
+  very_positive: "#038178", // dark teal (brand, one step darker)
+  mixed: "#eda100", // yellow (palette yellow — anger)
 };
 
 /**
