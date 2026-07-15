@@ -202,9 +202,11 @@ envFrom:
 {{- end }}
 {{- end }}
 {{- end }}
+{{- if .Values.deployment.env }}
 env:
 {{- range $key, $value := .Values.deployment.env }}
   {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 2 }}
+{{- end }}
 {{- end }}
 {{- end }}
 
