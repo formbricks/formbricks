@@ -368,6 +368,50 @@ describe("useChartDialog", () => {
       expect(result.current.chartName).toBe("Custom Chart");
     });
 
+    test("replaces a previously suggested name when the chart is regenerated", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "Responses by Source",
+        });
+      });
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "NPS by Week",
+        });
+      });
+
+      expect(result.current.chartName).toBe("NPS by Week");
+    });
+
+    test("keeps a user-edited name when the chart is regenerated", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "Responses by Source",
+        });
+      });
+
+      await act(async () => {
+        result.current.setChartName("My Custom Name");
+      });
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "NPS by Week",
+        });
+      });
+
+      expect(result.current.chartName).toBe("My Custom Name");
+    });
+
     test("preserves custom chart name when user types before delayed AI response completes", async () => {
       const { result } = renderHook(() => useChartDialog(baseProps));
 
