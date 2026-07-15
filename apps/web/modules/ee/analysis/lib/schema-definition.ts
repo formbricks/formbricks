@@ -438,6 +438,25 @@ export function getTranslatedDimensionValueLabel(
 }
 
 /**
+ * Short x-axis label for a per-measure category axis (measure-only bar charts, where each
+ * measure is its own bar). Sentiment/emotion count measures reuse their enum value label
+ * ("Very positive") — the full measure label ("Sentiment: Very positive") is too wide for
+ * ticks, so recharts drops the overlapping ones and leaves bars unlabelled. Other measures
+ * fall back to their full column header.
+ */
+export function getMeasureAxisLabel(measureId: string, t: TFunction): string {
+  const sentiment = SENTIMENT_MEASURE_ORDER.find(
+    (value) => `FeedbackRecords.${toCountMeasureId(value)}Count` === measureId
+  );
+  const emotion = EMOTION_MEASURE_ORDER.find((value) => `FeedbackRecords.${value}Count` === measureId);
+  return (
+    (sentiment ? getTranslatedSentimentValueLabel(sentiment, t) : undefined) ??
+    (emotion ? getTranslatedEmotionValueLabel(emotion, t) : undefined) ??
+    formatCubeColumnHeader(measureId, t)
+  );
+}
+
+/**
  * Sort chart rows into the sentiment scale order (very_negative → very_positive, mixed
  * last) when the x-axis is the sentiment dimension. Unknown values keep their relative
  * position at the end; other dimensions are returned unchanged.

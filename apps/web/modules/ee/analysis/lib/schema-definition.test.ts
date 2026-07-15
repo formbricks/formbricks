@@ -13,6 +13,7 @@ import {
   formatCubeColumnHeader,
   getFieldById,
   getFilterOperatorsForType,
+  getMeasureAxisLabel,
   getTranslatedDimensionValueLabel,
   getTranslatedFieldLabel,
   isEnrichmentDimensionId,
@@ -303,6 +304,39 @@ describe("schema-definition", () => {
     test("does not label empty values on non-enrichment dimensions", () => {
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", "", t)).toBeUndefined();
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", null, t)).toBeUndefined();
+    });
+  });
+
+  describe("getMeasureAxisLabel", () => {
+    const t = ((key: string) => key) as TFunction;
+
+    test("labels sentiment count measures with their short value label", () => {
+      expect(getMeasureAxisLabel("FeedbackRecords.veryPositiveCount", t)).toBe(
+        "workspace.analysis.charts.sentiment_value_very_positive"
+      );
+      expect(getMeasureAxisLabel("FeedbackRecords.mixedCount", t)).toBe(
+        "workspace.analysis.charts.sentiment_value_mixed"
+      );
+    });
+
+    test("labels emotion count measures with their short value label", () => {
+      expect(getMeasureAxisLabel("FeedbackRecords.joyCount", t)).toBe(
+        "workspace.analysis.charts.emotion_value_joy"
+      );
+      expect(getMeasureAxisLabel("FeedbackRecords.disgustCount", t)).toBe(
+        "workspace.analysis.charts.emotion_value_disgust"
+      );
+    });
+
+    test("falls back to the full column header for other measures", () => {
+      expect(getMeasureAxisLabel("FeedbackRecords.count", t)).toBe(
+        "workspace.analysis.charts.field_label_count"
+      );
+      // promoterCount is an NPS measure, not a sentiment/emotion enum measure
+      expect(getMeasureAxisLabel("FeedbackRecords.promoterCount", t)).toBe(
+        "workspace.analysis.charts.field_label_promoter_count"
+      );
+      expect(getMeasureAxisLabel("Some.unknownKey", t)).toBe("Unknown Key");
     });
   });
 

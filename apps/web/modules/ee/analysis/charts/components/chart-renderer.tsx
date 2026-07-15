@@ -20,6 +20,7 @@ import {
 import {
   FEEDBACK_MEASURE_IDS,
   formatCubeColumnHeader,
+  getMeasureAxisLabel,
   getTranslatedDimensionValueLabel,
   isNotEnrichedDimensionValue,
   sortRowsByEnumDimension,
@@ -197,8 +198,11 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         const measureData = pivotMeasuresToCategories(sortedData, dataKeys, (key) =>
           formatCubeColumnHeader(key, t)
         );
+        // Ticks use the short value label ("Very positive") — the full measure label is too
+        // wide, so recharts would thin the ticks and bars would lose their name. The tooltip
+        // keeps the full label via tooltipLabel.
         const formatMeasureLabel = (value: unknown) =>
-          formatCubeColumnHeader(typeof value === "string" ? value : "", t);
+          getMeasureAxisLabel(typeof value === "string" ? value : "", t);
         return (
           <CartesianChart
             chart={BarChart}
