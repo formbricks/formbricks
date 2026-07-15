@@ -154,6 +154,16 @@ export const parseNumberValue = (value: string): number | null => {
 export const isPresetSourceType = (value: string): value is (typeof SOURCE_TYPE_PRESET_OPTIONS)[number] =>
   (SOURCE_TYPE_PRESET_OPTIONS as readonly string[]).includes(value);
 
+// Field types that are acronyms and should render fully upper-cased (e.g. "nps" -> "NPS").
+const FIELD_TYPE_ACRONYMS = new Set(["nps", "csat", "ces"]);
+
+// Human-readable field type: acronyms upper-cased, everything else capitalized ("text" -> "Text").
+export const formatFieldType = (fieldType: string): string => {
+  if (!fieldType) return fieldType;
+  if (FIELD_TYPE_ACRONYMS.has(fieldType)) return fieldType.toUpperCase();
+  return fieldType.charAt(0).toUpperCase() + fieldType.slice(1);
+};
+
 export const formatSourceType = (sourceType: string, t: TFunction): string => {
   switch (sourceType) {
     case "formbricks":

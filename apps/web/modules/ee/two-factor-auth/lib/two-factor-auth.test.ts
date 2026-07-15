@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { getCredentialPasswordHash, verifyUserPassword } from "@/lib/user/password";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
-import { verifyPassword } from "@/modules/auth/lib/utils";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "./two-factor-auth";
 
 vi.mock("@formbricks/database", () => ({
@@ -20,8 +20,9 @@ vi.mock("@/lib/crypto", () => ({
   symmetricDecrypt: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/utils", () => ({
-  verifyPassword: vi.fn(),
+vi.mock("@/lib/user/password", () => ({
+  getCredentialPasswordHash: vi.fn(),
+  verifyUserPassword: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/totp", () => ({
@@ -29,6 +30,14 @@ vi.mock("@/modules/auth/lib/totp", () => ({
 }));
 
 describe("Two Factor Auth", () => {
+  beforeEach(() => {
+    // Happy-path defaults: enable checks credential presence (getCredentialPasswordHash); setup and
+    // disable delegate password verification to verifyUserPassword. "No password" / "incorrect
+    // password" tests override these.
+    vi.mocked(getCredentialPasswordHash).mockResolvedValue("hashedPassword");
+    vi.mocked(verifyUserPassword).mockResolvedValue(true);
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -42,15 +51,17 @@ describe("Two Factor Auth", () => {
     });
   });
 
-  test("setupTwoFactorAuth should throw InvalidInputError when user has no password", async () => {
+  test("setupTwoFactorAuth should reject when the user has no password (via verifyUserPassword)", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user123",
-      password: null,
       identityProvider: "email",
     } as any);
+    vi.mocked(verifyUserPassword).mockRejectedValue(
+      new InvalidInputError("Password is not set for this user")
+    );
 
     await expect(setupTwoFactorAuth("user123", "password123")).rejects.toThrow(
-      new InvalidInputError("User does not have a password set")
+      new InvalidInputError("Password is not set for this user")
     );
   });
 
@@ -72,7 +83,7 @@ describe("Two Factor Auth", () => {
       password: "hashedPassword",
       identityProvider: "email",
     } as any);
-    vi.mocked(verifyPassword).mockResolvedValue(false);
+    vi.mocked(verifyUserPassword).mockResolvedValue(false);
 
     await expect(setupTwoFactorAuth("user123", "wrongPassword")).rejects.toThrow(
       new InvalidInputError("Incorrect password")
@@ -87,7 +98,7 @@ describe("Two Factor Auth", () => {
       email: "test@example.com",
     };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-    vi.mocked(verifyPassword).mockResolvedValue(true);
+    vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricEncrypt).mockImplementation((data) => `encrypted_${data}`);
     vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
 
@@ -113,9 +124,9 @@ describe("Two Factor Auth", () => {
   test("enableTwoFactorAuth should throw InvalidInputError when user has no password", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user123",
-      password: null,
       identityProvider: "email",
     } as any);
+    vi.mocked(getCredentialPasswordHash).mockResolvedValue(null);
 
     await expect(enableTwoFactorAuth("user123", "123456")).rejects.toThrow(
       new InvalidInputError("User does not have a password set")
@@ -225,15 +236,18 @@ describe("Two Factor Auth", () => {
     });
   });
 
-  test("disableTwoFactorAuth should throw InvalidInputError when user has no password", async () => {
+  test("disableTwoFactorAuth should reject when the user has no password (via verifyUserPassword)", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user123",
-      password: null,
       identityProvider: "email",
+      twoFactorEnabled: true,
     } as any);
+    vi.mocked(verifyUserPassword).mockRejectedValue(
+      new InvalidInputError("Password is not set for this user")
+    );
 
     await expect(disableTwoFactorAuth("user123", { password: "password123" })).rejects.toThrow(
-      new InvalidInputError("User does not have a password set")
+      new InvalidInputError("Password is not set for this user")
     );
   });
 
@@ -270,7 +284,7 @@ describe("Two Factor Auth", () => {
       identityProvider: "email",
       twoFactorEnabled: true,
     } as any);
-    vi.mocked(verifyPassword).mockResolvedValue(false);
+    vi.mocked(verifyUserPassword).mockResolvedValue(false);
 
     await expect(disableTwoFactorAuth("user123", { password: "wrongPassword" })).rejects.toThrow(
       new InvalidInputError("Incorrect password")
@@ -285,7 +299,7 @@ describe("Two Factor Auth", () => {
       twoFactorEnabled: true,
       backupCodes: "encrypted_backup_codes",
     } as any);
-    vi.mocked(verifyPassword).mockResolvedValue(true);
+    vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue(JSON.stringify(["code1", "code2"]));
 
     await expect(
@@ -301,7 +315,7 @@ describe("Two Factor Auth", () => {
       twoFactorEnabled: true,
       twoFactorSecret: "encrypted_secret",
     } as any);
-    vi.mocked(verifyPassword).mockResolvedValue(true);
+    vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue("12345678901234567890123456789012");
     vi.mocked(totpAuthenticatorCheck).mockReturnValue(false);
 
@@ -319,7 +333,7 @@ describe("Two Factor Auth", () => {
       backupCodes: "encrypted_backup_codes",
     };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-    vi.mocked(verifyPassword).mockResolvedValue(true);
+    vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue(JSON.stringify(["validcode", "code2"]));
     vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
 
@@ -348,7 +362,7 @@ describe("Two Factor Auth", () => {
       twoFactorSecret: "encrypted_secret",
     };
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-    vi.mocked(verifyPassword).mockResolvedValue(true);
+    vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue("12345678901234567890123456789012");
     vi.mocked(totpAuthenticatorCheck).mockReturnValue(true);
     vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);

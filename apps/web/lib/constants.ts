@@ -104,6 +104,10 @@ export const MAX_OTHER_OPTION_LENGTH = 250;
 export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 
+// Cloud-only kill-switch: when enabled, the personal-email sign-up block also applies to invited
+// users (default exempts invites). See @/modules/auth/lib/signup-email-domain.
+export const SIGNUP_DOMAIN_CHECK_ON_INVITES = env.SIGNUP_DOMAIN_CHECK_ON_INVITES === "1";
+
 export const SLACK_MESSAGE_LIMIT = 2995;
 export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;
 export const AIRTABLE_MESSAGE_LIMIT = 99995;
@@ -163,6 +167,11 @@ export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const TELEMETRY_DISABLED = env.TELEMETRY_DISABLED === "1";
 
+// Opt-out for the Have-I-Been-Pwned breach check (ENG-1587). Set to "1" on air-gapped /
+// closed-network deployments that can't reach api.pwnedpasswords.com and want no outbound
+// attempt at all. When unset the check is active but fails open on network errors.
+export const PASSWORD_HIBP_CHECK_DISABLED = env.PASSWORD_HIBP_CHECK_DISABLED === "1";
+
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
 
@@ -196,6 +205,12 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
 export const CHATWOOT_WEBSITE_TOKEN = env.CHATWOOT_WEBSITE_TOKEN;
 export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.com";
 export const IS_CHATWOOT_CONFIGURED = Boolean(env.CHATWOOT_WEBSITE_TOKEN);
+
+// Formbricks-in-Formbricks: in-app surveys served by a Formbricks instance
+// (defaults to Formbricks Cloud). The widget only mounts when a workspace id is set.
+export const FORMBRICKS_WORKSPACE_ID = env.FORMBRICKS_WORKSPACE_ID;
+export const FORMBRICKS_APP_URL = env.FORMBRICKS_APP_URL || "https://app.formbricks.com";
+export const IS_FORMBRICKS_SURVEYS_CONFIGURED = Boolean(env.FORMBRICKS_WORKSPACE_ID);
 
 export const POSTHOG_KEY = env.POSTHOG_KEY;
 

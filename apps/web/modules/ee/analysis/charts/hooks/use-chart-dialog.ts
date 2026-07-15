@@ -155,8 +155,12 @@ export function useChartDialog({
     return () => {
       cancelled = true;
     };
+    // Key on initialChart?.id, NOT the object reference. Every authenticated action here
+    // (getChartAction / executeQueryAction) re-sets the Better Auth session cookie → Next.js route
+    // refresh → new `initialChart` reference; depending on the object would re-fire executeQueryAction on
+    // every refresh → infinite loop. The id is the stable identity; content is unchanged across refreshes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, chartId, workspaceId, initialChart]);
+  }, [open, chartId, workspaceId, initialChart?.id]);
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);

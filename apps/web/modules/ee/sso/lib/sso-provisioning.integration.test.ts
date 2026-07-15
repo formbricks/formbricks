@@ -18,7 +18,7 @@ vi.mock("@/modules/auth/lib/brevo", () => ({
   createBrevoCustomer: vi.fn(),
   deleteBrevoCustomerByEmail: vi.fn(),
 }));
-vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), identifyPostHogPerson: vi.fn() }));
 // Pin multi-org OFF so the gate test exercises the fresh-instance branch specifically (the multi-org
 // branch returns the same shape; the license flag is an external input, not the behavior under test).
 vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => {

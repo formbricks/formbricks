@@ -20,8 +20,18 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   validAudiences: [getMcpResourceUrl()],
   allowDynamicClientRegistration: true,
   allowUnauthenticatedClientRegistration: true,
-  clientRegistrationDefaultScopes: ["openid", "profile", "email", "offline_access", "surveys:read"],
-  clientRegistrationAllowedScopes: ["surveys:write"],
+  // Register MCP clients with read + write by default so the consent screen offers write and the
+  // write tools are reachable (clients derive their DCR/authorize scopes from what we advertise, and
+  // the plugin validates authorize against the client's registered scopes). Granting the write scope
+  // is safe: actual write access is still enforced downstream by the user's workspace permissions.
+  clientRegistrationDefaultScopes: [
+    "openid",
+    "profile",
+    "email",
+    "offline_access",
+    "surveys:read",
+    "surveys:write",
+  ],
   accessTokenExpiresIn: 15 * 60,
   refreshTokenExpiresIn: 30 * 24 * 60 * 60,
   scopeExpirations: {

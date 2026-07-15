@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FingerprintIcon, LanguagesIcon, PlusIcon, SparklesIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -154,11 +154,18 @@ export const FeedbackRecordFormDrawer = ({
     setCustomSourceType("");
   }, [directories, form]);
 
+  // resetForCreate depends on `directories`, which is derived from a server prop (frdMap) that gets a
+  // fresh reference on every route refresh. Every authenticated action here (retrieveFeedbackRecordAction)
+  // re-sets the Better Auth session cookie → route refresh → new resetForCreate ref → this effect would
+  // re-fire the action → infinite loop. Read it through a ref so it isn't an effect trigger.
+  const resetForCreateRef = useRef(resetForCreate);
+  resetForCreateRef.current = resetForCreate;
+
   useEffect(() => {
     if (!open) return;
 
     if (mode === "create") {
-      resetForCreate();
+      resetForCreateRef.current();
       return;
     }
 
@@ -184,7 +191,7 @@ export const FeedbackRecordFormDrawer = ({
     };
 
     void loadRecord();
-  }, [form, mode, onOpenChange, open, recordId, resetForCreate, t, workspaceId]);
+  }, [form, mode, onOpenChange, open, recordId, t, workspaceId]);
 
   const requestClose = useCallback(() => {
     if (form.formState.isDirty && !isSubmitting) {

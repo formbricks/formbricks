@@ -3,8 +3,10 @@ import {
   captureSsoIdentity,
   getPendingSsoIdentity,
   getSsoAttributionProperties,
+  getSsoSignupRejectReason,
   runWithSsoRequestContext,
   setSsoAttributionProperties,
+  setSsoSignupRejectReason,
 } from "./sso-request-context";
 
 describe("captureSsoIdentity", () => {
@@ -54,5 +56,24 @@ describe("SSO attribution properties", () => {
   test("no-ops (does not throw) and returns {} outside a request context", () => {
     expect(() => setSsoAttributionProperties({ utm_source: "x" })).not.toThrow();
     expect(getSsoAttributionProperties()).toEqual({});
+  });
+});
+
+describe("SSO signup reject reason", () => {
+  test("stashes the reject reason for the redirect after-hook to read back", () => {
+    const stashed = runWithSsoRequestContext(() => {
+      setSsoSignupRejectReason("email_domain_not_allowed");
+      return getSsoSignupRejectReason();
+    });
+    expect(stashed).toBe("email_domain_not_allowed");
+  });
+
+  test("is undefined when none was stashed", () => {
+    expect(runWithSsoRequestContext(() => getSsoSignupRejectReason())).toBeUndefined();
+  });
+
+  test("no-ops (does not throw) and returns undefined outside a request context", () => {
+    expect(() => setSsoSignupRejectReason("email_domain_not_allowed")).not.toThrow();
+    expect(getSsoSignupRejectReason()).toBeUndefined();
   });
 });

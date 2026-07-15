@@ -113,6 +113,19 @@ export const FormTargetField = ({
   const comboboxGroupedOptions = useMemo((): TComboboxGroupedOption[] => {
     const groups: TComboboxGroupedOption[] = [];
 
+    // Enum fields lead with their allowed values as static picks — these are the primary choice for
+    // an enum field, so they come before the CSV columns.
+    if (isEnum && field.enumValues?.length) {
+      groups.push({
+        label: t("workspace.unify.enum"),
+        value: "enum-values",
+        options: field.enumValues.map((enumValue) => ({
+          value: `${SENTINEL.ENUM_PREFIX}${enumValue}`,
+          label: enumValue,
+        })),
+      });
+    }
+
     // CSV columns are mappable for every field type — including enum, where a column carries the
     // per-row enum value (this is what auto-mapping produces, e.g. field_type -> the "type" column).
     if (sourceFields.length > 0) {
@@ -137,18 +150,6 @@ export const FormTargetField = ({
             meta: Object.keys(meta).length > 0 ? meta : undefined,
           };
         }),
-      });
-    }
-
-    // Enum fields also offer their allowed values as static picks.
-    if (isEnum && field.enumValues?.length) {
-      groups.push({
-        label: t("workspace.unify.enum"),
-        value: "enum-values",
-        options: field.enumValues.map((enumValue) => ({
-          value: `${SENTINEL.ENUM_PREFIX}${enumValue}`,
-          label: enumValue,
-        })),
       });
     }
 

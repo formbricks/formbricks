@@ -56,6 +56,24 @@
 }
 
 /*
+ * Keep bold (<strong>/<b>) inside rich text actually bold. The headline /
+ * description font-weight rules injected by styles.ts target every descendant
+ * (`.label-headline *`), which would otherwise flatten bold spans to the base
+ * weight and erase the contrast between bold and non-bold text. Higher
+ * specificity + !important wins over those runtime rules.
+ */
+#fbjs .label-headline strong,
+#fbjs .label-headline b,
+#fbjs .label-description strong,
+#fbjs .label-description b,
+#fbjs .text-subheading strong,
+#fbjs .text-subheading b,
+#fbjs .htmlbody strong,
+#fbjs .htmlbody b {
+  font-weight: 700 !important;
+}
+
+/*
  * Restore list styling for rich text (questions/descriptions).
  * Preflight resets ul/ol with list-style:none; these overrides restore bullets/numbers.
  */

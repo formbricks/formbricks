@@ -7,6 +7,7 @@ import { getRoles } from "@/modules/api/v2/roles/lib/utils";
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     handler: async () => {
       const res = getRoles();
 
