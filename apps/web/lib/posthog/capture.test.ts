@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { capturePostHogEvent, groupIdentifyPostHog } from "./capture";
+import { capturePostHogEvent, groupIdentifyPostHog, identifyPostHogPerson } from "./capture";
 
 const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
   groupIdentify: vi.fn(),
+  identify: vi.fn(),
   loggerWarn: vi.fn(),
 }));
 
@@ -14,7 +15,11 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("./server", () => ({
-  posthogServerClient: { capture: mocks.capture, groupIdentify: mocks.groupIdentify },
+  posthogServerClient: {
+    capture: mocks.capture,
+    groupIdentify: mocks.groupIdentify,
+    identify: mocks.identify,
+  },
 }));
 
 describe("capturePostHogEvent", () => {
@@ -136,6 +141,42 @@ describe("groupIdentifyPostHog", () => {
   });
 });
 
+describe("identifyPostHogPerson", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("calls posthog identify with distinctId and properties", () => {
+    identifyPostHogPerson("user123", { email: "user@example.com", name: "Ada" });
+
+    expect(mocks.identify).toHaveBeenCalledWith({
+      distinctId: "user123",
+      properties: { email: "user@example.com", name: "Ada" },
+    });
+  });
+
+  test("passes undefined properties when none provided", () => {
+    identifyPostHogPerson("user123");
+
+    expect(mocks.identify).toHaveBeenCalledWith({
+      distinctId: "user123",
+      properties: undefined,
+    });
+  });
+
+  test("does not throw when identify throws", () => {
+    mocks.identify.mockImplementation(() => {
+      throw new Error("Network error");
+    });
+
+    expect(() => identifyPostHogPerson("user123", { email: "user@example.com" })).not.toThrow();
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      { error: expect.any(Error) },
+      "Failed to identify PostHog person"
+    );
+  });
+});
+
 describe("capturePostHogEvent with null client", () => {
   test("no-ops when posthogServerClient is null", async () => {
     vi.clearAllMocks();
@@ -149,14 +190,19 @@ describe("capturePostHogEvent with null client", () => {
       posthogServerClient: null,
     }));
 
-    const { capturePostHogEvent: captureWithNullClient, groupIdentifyPostHog: identifyWithNullClient } =
-      await import("./capture");
+    const {
+      capturePostHogEvent: captureWithNullClient,
+      groupIdentifyPostHog: identifyWithNullClient,
+      identifyPostHogPerson: identifyPersonWithNullClient,
+    } = await import("./capture");
 
     captureWithNullClient("user123", "test_event", { key: "value" });
     identifyWithNullClient("organization", "org_1");
+    identifyPersonWithNullClient("user123", { email: "user@example.com" });
 
     expect(mocks.capture).not.toHaveBeenCalled();
     expect(mocks.groupIdentify).not.toHaveBeenCalled();
+    expect(mocks.identify).not.toHaveBeenCalled();
     expect(mocks.loggerWarn).not.toHaveBeenCalled();
   });
 });

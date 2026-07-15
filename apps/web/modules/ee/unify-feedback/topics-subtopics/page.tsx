@@ -9,7 +9,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { TopicsSubtopicsPreview } from "./components/topics-subtopics-preview";
+import { TopicsSubtopicsPage } from "./pages/topics-subtopics-page";
 
 export const UnifyTopicsSubtopicsPage = async (
   props: Readonly<{ params: Promise<{ workspaceId: string }> }>
@@ -34,7 +34,7 @@ export const UnifyTopicsSubtopicsPage = async (
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="taxonomy" />
         </PageHeader>
         <div className="flex items-center justify-center">
           <UpgradePrompt
@@ -67,7 +67,7 @@ export const UnifyTopicsSubtopicsPage = async (
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
-          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="taxonomy" />
         </PageHeader>
         <FeedbackDataEmptyState
           variant="no-directory"
@@ -82,10 +82,6 @@ export const UnifyTopicsSubtopicsPage = async (
   const canWrite = isOwner || isManager || hasReadWriteAccess || hasManageAccess;
 
   return (
-    <TopicsSubtopicsPreview
-      workspaceId={params.workspaceId}
-      directoryMap={directoryMap}
-      canWrite={canWrite}
-    />
+    <TopicsSubtopicsPage workspaceId={params.workspaceId} directoryMap={directoryMap} canWrite={canWrite} />
   );
 };

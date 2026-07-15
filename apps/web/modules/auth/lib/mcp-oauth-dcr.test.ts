@@ -114,6 +114,33 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
     expect(registration.body.scope?.split(" ")).toEqual(expect.arrayContaining(advertisedScopes));
   });
 
+  test("default registration (no scope requested) grants read + write", async () => {
+    const auth = createAuthInstance();
+
+    // A client that registers without an explicit scope must receive write by default — otherwise the
+    // consent screen only offers "Read surveys" and every write tool 403s (the ENG-1055 QA regression:
+    // clients that key off the challenge/defaults rather than the PRM never requested write).
+    const response = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/oauth2/register`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          client_name: "MCP DCR default-scope client",
+          redirect_uris: [REDIRECT_URI],
+          grant_types: ["authorization_code", "refresh_token"],
+          response_types: ["code"],
+          token_endpoint_auth_method: "none",
+        }),
+      })
+    );
+    const body = (await response.json()) as { scope?: string };
+
+    expect(response.status).toBe(200);
+    expect(body.scope?.split(" ")).toEqual(
+      expect.arrayContaining(["surveys:read", "surveys:write", "offline_access"])
+    );
+  });
+
   test("authorize accepts the PRM-advertised scopes for a DCR client (no invalid_scope)", async () => {
     const auth = createAuthInstance();
     const advertisedScopes = await fetchAdvertisedScopes();

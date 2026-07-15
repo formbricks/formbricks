@@ -329,7 +329,7 @@ test.describe("Multi Language Survey Create", async () => {
       .filter({ hasText: /^Add BlockChoose the first question on your Block$/ })
       .nth(1)
       .click();
-    await page.getByRole("button", { name: "Multi-Select Ask respondents" }).click();
+    await page.getByRole("button", { name: "Multi-Select", exact: true }).click();
     await helper.fillRichTextEditor(page, "Question*", surveys.createAndSubmit.multiSelectQuestion.question);
     await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.multiSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.multiSelectQuestion.options[1]);

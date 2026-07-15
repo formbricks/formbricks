@@ -24,6 +24,7 @@ export const GET = async (
 ) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),
     },
@@ -51,6 +52,7 @@ export const DELETE = async (
 ) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     schemas: {
       params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),
     },
@@ -103,6 +105,7 @@ export const PUT = (
 ) =>
   authenticatedApiClient({
     request,
+    allowOrganizationOnlyApiKey: true,
     externalParams: props.params,
     schemas: {
       params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),

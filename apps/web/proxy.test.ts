@@ -107,4 +107,44 @@ describe("proxy", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("http://localhost:3000/environments/test");
   });
+
+  test("sets the active-workspace cookie from a /workspaces/[workspaceId] path", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const response = await proxy(new NextRequest("http://localhost:3000/workspaces/ws-123/surveys"));
+
+    expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-123");
+  });
+
+  test("does not set the active-workspace cookie on non-workspace paths", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const response = await proxy(
+      new NextRequest("http://localhost:3000/organizations/org-1/settings/general")
+    );
+
+    expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
+  });
+
+  test("does not re-set the active-workspace cookie when the request already carries the same value", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-123/surveys");
+    request.cookies.set("formbricks-workspace-id", "ws-123");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
+  });
+
+  test("updates the active-workspace cookie when navigating to a different workspace", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-456/surveys");
+    request.cookies.set("formbricks-workspace-id", "ws-123");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-456");
+  });
 });

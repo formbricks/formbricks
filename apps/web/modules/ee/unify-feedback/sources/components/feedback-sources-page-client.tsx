@@ -15,6 +15,7 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import {
   createFeedbackSourceWithMappingsAction,
   deleteFeedbackSourceAction,
+  importHistoricalResponsesAction,
   updateFeedbackSourceWithMappingsAction,
 } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -24,6 +25,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
+import { getSelectableQuestionIds } from "../utils";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
 import { EditFeedbackSourceModal } from "./edit-feedback-source-modal";
@@ -48,6 +50,8 @@ export function FeedbackSourcesSection({
   const { workspace } = useWorkspace();
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // Survey to prefill the create modal with when opened from a "Select questions for import" suggestion.
+  const [prefillSurveyId, setPrefillSurveyId] = useState<string | null>(null);
   const [editingFeedbackSource, setEditingFeedbackSource] = useState<TFeedbackSourceWithMappings | null>(
     null
   );
@@ -66,6 +70,11 @@ export function FeedbackSourcesSection({
       ),
     [initialFeedbackSources]
   );
+  // Surveys that aren't backing a source yet are surfaced as "Suggestions" below the table.
+  const suggestedSurveys = useMemo(() => {
+    const connectedSurveyIdSet = new Set(connectedSurveyIds);
+    return initialSurveys.filter((survey) => !connectedSurveyIdSet.has(survey.id));
+  }, [initialSurveys, connectedSurveyIds]);
   const directoryNames = directories.map((directory) => directory.name).join(", ");
   const feedbackDirectoryAccessText =
     directories.length === 1
@@ -156,6 +165,63 @@ export function FeedbackSourcesSection({
     router.refresh();
   };
 
+  // "Select questions for import": open the create modal prefilled with the suggested survey.
+  const handleSelectQuestions = (survey: TUnifySurvey): void => {
+    setPrefillSurveyId(survey.id);
+    setIsCreateModalOpen(true);
+  };
+
+  // "Import responses": one-click create the source (all supported questions) and import historical data.
+  const handleImportResponses = async (survey: TUnifySurvey): Promise<void> => {
+    const feedbackDirectoryId = directories[0]?.id;
+    if (!feedbackDirectoryId) {
+      toast.error(t("workspace.unify.no_feedback_directory_available"));
+      return;
+    }
+
+    const elementIds = getSelectableQuestionIds(survey);
+    if (elementIds.length === 0) {
+      toast.error(t("workspace.unify.error_source_questions_required"));
+      return;
+    }
+
+    const feedbackSourceId = await handleCreateFeedbackSource({
+      name: t("workspace.unify.source_connector_name", { surveyName: survey.name }),
+      type: "formbricks_survey",
+      feedbackDirectoryId,
+      surveyMappings: [{ surveyId: survey.id, elementIds }],
+    });
+
+    if (!feedbackSourceId) {
+      return;
+    }
+
+    try {
+      const importResult = await importHistoricalResponsesAction({
+        feedbackSourceId,
+        workspaceId,
+        surveyId: survey.id,
+      });
+
+      if (importResult?.data) {
+        toast.success(
+          t("workspace.unify.historical_import_complete", {
+            successes: importResult.data.successes,
+            failures: importResult.data.failures,
+            skipped: importResult.data.skipped,
+          })
+        );
+      } else {
+        // The source was created; only the historical import failed.
+        toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
+      }
+    } catch {
+      toast.error(t("common.something_went_wrong"));
+    }
+
+    router.refresh();
+  };
+
   const handleToggleStatus = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
     const newStatus = feedbackSource.status === "active" ? "paused" : "active";
     const result = await updateFeedbackSourceWithMappingsAction({
@@ -191,10 +257,14 @@ export function FeedbackSourcesSection({
       <FeedbackSourcesTable
         feedbackSources={initialFeedbackSources}
         surveyNameById={surveyNameById}
+        suggestedSurveys={suggestedSurveys}
+        workspaceId={workspaceId}
         onFeedbackSourceClick={setEditingFeedbackSource}
         onCsvImport={setCsvImportFeedbackSource}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDeleteFeedbackSource}
+        onImportResponses={handleImportResponses}
+        onSelectQuestions={handleSelectQuestions}
         isLoading={false}
         isReadOnly={isReadOnly}
       />
@@ -213,12 +283,16 @@ export function FeedbackSourcesSection({
 
       <CreateFeedbackSourceModal
         open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
+        onOpenChange={(open) => {
+          setIsCreateModalOpen(open);
+          if (!open) setPrefillSurveyId(null);
+        }}
         onCreateFeedbackSource={handleCreateFeedbackSource}
         surveys={initialSurveys}
         connectedSurveyIds={connectedSurveyIds}
         workspaceId={workspaceId}
         directories={directories}
+        initialSurveyId={prefillSurveyId}
         showTrigger={false}
       />
 
