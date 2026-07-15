@@ -42,6 +42,9 @@ import { UsageCard } from "./usage-card";
 const BILLING_CONFIRMATION_ORGANIZATION_ID_KEY = "billingConfirmationOrganizationId";
 const BILLING_PENDING_UPGRADE_PLAN_KEY = "billingPendingUpgradePlan";
 const BILLING_PENDING_UPGRADE_INTERVAL_KEY = "billingPendingUpgradeInterval";
+// Hands the post-upgrade success toast across the full reload the finalize path does to render the
+// synced plan.
+const BILLING_UPGRADE_RESULT_KEY = "billingUpgradeResult";
 
 // Stripe.js is loaded lazily and memoized across renders (one publishable key per deploy).
 let stripeJsPromise: Promise<StripeJs | null> | null = null;
@@ -350,6 +353,30 @@ export const PricingTable = ({
     };
   };
 
+  // Show the success toast that the finalize path stashed before its full reload (see finish()).
+  useEffect(() => {
+    if (globalThis.window === undefined) {
+      return;
+    }
+    const raw = globalThis.window.sessionStorage.getItem(BILLING_UPGRADE_RESULT_KEY);
+    if (!raw) {
+      return;
+    }
+    globalThis.window.sessionStorage.removeItem(BILLING_UPGRADE_RESULT_KEY);
+    try {
+      const { plan, applied } = JSON.parse(raw) as { plan: TStandardPlan; applied: boolean };
+      toast.success(
+        applied
+          ? t("workspace.settings.billing.upgrade_checkout_success", {
+              plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
+            })
+          : t("workspace.settings.billing.upgrade_checkout_pending")
+      );
+    } catch {
+      // Malformed handoff payload — nothing to show.
+    }
+  }, [t]);
+
   useEffect(() => {
     if (searchParams.get("checkout_success") !== "1") {
       return;
@@ -387,25 +414,27 @@ export const PricingTable = ({
       planApplied = true
     ) => {
       toast.dismiss(toastId);
-      if (kind === "success") {
-        // Only claim the plan is live once waitForBillingPlanAction actually observed it; otherwise the
-        // charge succeeded but Stripe hasn't reflected the plan within the poll window yet.
-        toast.success(
-          planApplied
-            ? t("workspace.settings.billing.upgrade_checkout_success", {
-                plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
-              })
-            : t("workspace.settings.billing.upgrade_checkout_pending")
-        );
-      } else {
-        toast.error(message ?? t("common.something_went_wrong_please_try_again"));
-      }
       clearUpgradeIntent();
-      // Strip the one-time checkout query params without a router navigation — router.replace() to the
-      // bare URL can serve a stale prefetched RSC — then refetch the billing route so the synced plan
-      // renders.
+      const billingUrl = `/organizations/${organizationId}/settings/billing`;
+
+      if (kind === "success") {
+        // router.refresh() does not reliably refetch the billing snapshot on this return, so the page
+        // keeps showing the old plan. Do a full reload (what a manual refresh does) to render the synced
+        // plan, and hand the success toast across the reload via sessionStorage.
+        if (globalThis.window !== undefined) {
+          globalThis.window.sessionStorage.setItem(
+            BILLING_UPGRADE_RESULT_KEY,
+            JSON.stringify({ plan: plan ?? "pro", applied: planApplied })
+          );
+          globalThis.window.location.replace(billingUrl);
+        }
+        return;
+      }
+
+      // Error: surface the message and clean the URL without a reload so the toast stays visible.
+      toast.error(message ?? t("common.something_went_wrong_please_try_again"));
       if (globalThis.window !== undefined) {
-        globalThis.window.history.replaceState(null, "", `/organizations/${organizationId}/settings/billing`);
+        globalThis.window.history.replaceState(null, "", billingUrl);
       }
       router.refresh();
     };
