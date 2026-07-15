@@ -1658,7 +1658,7 @@
         "dimensions_toggle_description": "Adatok csoportosítása hangulat, kérdéstípus és egyéb dimenziók szerint.",
         "edit_chart_description": "Diagram beállításainak megtekintése és szerkesztése.",
         "edit_chart_title": "Diagram szerkesztése",
-        "edit_chart_title_named": "\"{{name}}\" diagram szerkesztése",
+        "edit_chart_title_named": "„{name}“ szerkesztése",
         "emotion_value_anger": "Düh",
         "emotion_value_disgust": "Undor",
         "emotion_value_fear": "Félelem",

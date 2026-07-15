@@ -1658,7 +1658,7 @@
         "dimensions_toggle_description": "Gruppera data efter sentiment, frågetyp och andra dimensioner.",
         "edit_chart_description": "Visa och redigera din diagramkonfiguration.",
         "edit_chart_title": "Redigera diagram",
-        "edit_chart_title_named": "Redigera diagram \"{{name}}\"",
+        "edit_chart_title_named": "Redigera \"{name}\"",
         "emotion_value_anger": "Ilska",
         "emotion_value_disgust": "Avsky",
         "emotion_value_fear": "Rädsla",

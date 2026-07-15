@@ -1658,7 +1658,7 @@
         "dimensions_toggle_description": "Gruppiere Daten nach Stimmung, Fragetyp und anderen Dimensionen.",
         "edit_chart_description": "Sieh dir deine Diagrammkonfiguration an und bearbeite sie.",
         "edit_chart_title": "Diagramm bearbeiten",
-        "edit_chart_title_named": "Diagramm \"{{name}}\" bearbeiten",
+        "edit_chart_title_named": "„{name}“ bearbeiten",
         "emotion_value_anger": "Wut",
         "emotion_value_disgust": "Ekel",
         "emotion_value_fear": "Angst",

@@ -1658,7 +1658,7 @@
         "dimensions_toggle_description": "センチメント、質問タイプ、その他のディメンションでデータをグループ化します。",
         "edit_chart_description": "チャート設定を表示および編集します。",
         "edit_chart_title": "チャートを編集",
-        "edit_chart_title_named": "「{{name}}」チャートを編集",
+        "edit_chart_title_named": "「{name}」を編集",
         "emotion_value_anger": "怒り",
         "emotion_value_disgust": "嫌悪",
         "emotion_value_fear": "恐れ",
