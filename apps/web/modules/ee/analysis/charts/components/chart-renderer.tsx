@@ -10,8 +10,11 @@ import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
+  PIVOTED_MEASURE_KEY,
+  PIVOTED_VALUE_KEY,
   formatCellValue,
   formatXAxisTick,
+  pivotMeasuresToCategories,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
@@ -185,6 +188,40 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
 
   switch (chartType) {
     case "bar": {
+      // Measure-only queries (no dimension or time grouping) return a single row with one
+      // column per measure. Rendered as N bar series that row forms a single category band
+      // that recharts centers in the plot, leaving a wide empty gap before the first bar
+      // (ENG-1796). Pivot the measures into categories so the bars fill the axis from the
+      // left like any other category bar chart, labelled by measure on the x-axis.
+      if (!hasCategoryAxis) {
+        const measureData = pivotMeasuresToCategories(sortedData, dataKeys, (key) =>
+          formatCubeColumnHeader(key, t)
+        );
+        const formatMeasureLabel = (value: unknown) => formatCubeColumnHeader(String(value ?? ""), t);
+        return (
+          <CartesianChart
+            chart={BarChart}
+            data={measureData}
+            xAxisKey={PIVOTED_MEASURE_KEY}
+            dataKeys={[PIVOTED_VALUE_KEY]}
+            chartConfig={chartConfig}
+            tooltipCursor={false}
+            zeroBaseline
+            tooltipHideLabel
+            xAxisTickFormatter={formatMeasureLabel}>
+            <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
+              <LabelList
+                dataKey={PIVOTED_VALUE_KEY}
+                position="top"
+                className="fill-foreground"
+                fontSize={11}
+                formatter={(value: unknown) => formatCellValue(value)}
+              />
+            </Bar>
+          </CartesianChart>
+        );
+      }
+
       // Setting `fill` on the data row (not via <Cell>) is what propagates
       // the per-bar colour into the tooltip payload as well as the SVG.
       const barData = isMultiMeasure

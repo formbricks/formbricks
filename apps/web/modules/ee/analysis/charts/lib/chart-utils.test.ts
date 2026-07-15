@@ -3,8 +3,11 @@ import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
+  PIVOTED_MEASURE_KEY,
+  PIVOTED_VALUE_KEY,
   formatCellValue,
   formatXAxisTick,
+  pivotMeasuresToCategories,
   preparePieData,
   resolveChartType,
 } from "./chart-utils";
@@ -138,6 +141,53 @@ describe("chart-utils", () => {
     test("converts boolean and bigint", () => {
       expect(formatCellValue(true)).toBe("true");
       expect(formatCellValue(123n)).toBe("123");
+    });
+  });
+
+  describe("pivotMeasuresToCategories", () => {
+    const label = (key: string) => `label:${key}`;
+
+    test("pivots a single measure row into one category row per measure", () => {
+      const data = [{ "F.veryPositiveCount": 3, "F.negativeCount": "1" }];
+      const result = pivotMeasuresToCategories(data, ["F.veryPositiveCount", "F.negativeCount"], label);
+      expect(result).toEqual([
+        {
+          [PIVOTED_MEASURE_KEY]: "F.veryPositiveCount",
+          [PIVOTED_VALUE_KEY]: 3,
+          tooltipLabel: "label:F.veryPositiveCount",
+          fill: CHART_MEASURE_COLORS[0],
+        },
+        {
+          [PIVOTED_MEASURE_KEY]: "F.negativeCount",
+          [PIVOTED_VALUE_KEY]: 1,
+          tooltipLabel: "label:F.negativeCount",
+          fill: CHART_MEASURE_COLORS[1],
+        },
+      ]);
+    });
+
+    test("keeps the given measure order so bars fill the axis from the left", () => {
+      const data = [{ b: 2, a: 1 }];
+      const result = pivotMeasuresToCategories(data, ["a", "b"], label);
+      expect(result.map((row) => row[PIVOTED_MEASURE_KEY])).toEqual(["a", "b"]);
+    });
+
+    test("renders missing, null, and non-numeric values as 0 so empty measures keep a slot", () => {
+      const data = [{ a: null, b: "n/a" }];
+      const result = pivotMeasuresToCategories(data, ["a", "b", "missing"], label);
+      expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([0, 0, 0]);
+    });
+
+    test("handles empty data by emitting zero rows per measure", () => {
+      const result = pivotMeasuresToCategories([], ["a"], label);
+      expect(result).toHaveLength(1);
+      expect(result[0][PIVOTED_VALUE_KEY]).toBe(0);
+    });
+
+    test("cycles the palette when there are more measures than colors", () => {
+      const keys = Array.from({ length: CHART_MEASURE_COLORS.length + 1 }, (_, i) => `m${i}`);
+      const result = pivotMeasuresToCategories([{}], keys, label);
+      expect(result.at(-1)?.fill).toBe(CHART_MEASURE_COLORS[0]);
     });
   });
 
