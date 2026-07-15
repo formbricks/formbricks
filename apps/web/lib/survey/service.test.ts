@@ -552,7 +552,7 @@ describe("Tests for createSurvey", () => {
     name: "Test Survey",
     type: "app" as const,
     createdBy: mockUserId,
-    status: "inProgress" as const,
+    status: "draft" as const,
     welcomeCard: {
       enabled: true,
       headline: { default: "Welcome" },

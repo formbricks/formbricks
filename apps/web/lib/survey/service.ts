@@ -22,8 +22,10 @@ import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import {
+  APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
   checkForInvalidImagesInQuestions,
   checkForInvalidMediaInBlocks,
+  isAppSurveyMissingTriggersToPublish,
   stripIsDraftFromBlocks,
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
@@ -293,6 +295,12 @@ export const updateSurveyInternal = async (
 
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
+
+      // An app survey can never be shown without a trigger, so block publishing (non-draft status)
+      // one with zero triggers. The editor enforces this client-side only; mirror it server-side.
+      if (isAppSurveyMissingTriggersToPublish(type, updatedSurvey.status, triggers)) {
+        throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
+      }
     }
 
     // Add blocks media validation. The validation error is already an InvalidInputError, so the
@@ -665,6 +673,18 @@ export const createSurvey = async (
     const { createdBy, languages, segment, followUps, styling, ...restSurveyBody } = parsedSurveyBody;
     assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment);
+
+    // An app survey can never be shown without a trigger, so block creating one directly in a
+    // non-draft status with zero triggers (mirrors the editor's publish guard).
+    if (
+      isAppSurveyMissingTriggersToPublish(
+        restSurveyBody.type ?? "link",
+        restSurveyBody.status ?? "draft",
+        restSurveyBody.triggers
+      )
+    ) {
+      throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
+    }
     const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
     const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
     const surveyLanguagesCreateData: Prisma.SurveyLanguageCreateNestedManyWithoutSurveyInput | undefined =
