@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { verifyPassword } from "@/modules/auth/lib/utils";
-import { getCredentialPasswordHash, getUserAuthenticationData, verifyUserPassword } from "./password";
+import { getCredentialPasswordHash, verifyUserPassword } from "./password";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    user: {
-      findUnique: vi.fn(),
-    },
     account: {
       findUnique: vi.fn(),
     },
@@ -19,43 +16,12 @@ vi.mock("@/modules/auth/lib/utils", () => ({
   verifyPassword: vi.fn(),
 }));
 
-const mockPrismaUserFindUnique = vi.mocked(prisma.user.findUnique);
 const mockPrismaAccountFindUnique = vi.mocked(prisma.account.findUnique);
 const mockVerifyPassword = vi.mocked(verifyPassword);
 
 describe("user password helpers", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-  });
-
-  test("returns authentication data for an existing user", async () => {
-    const user = {
-      email: "user@example.com",
-      identityProvider: "email",
-      identityProviderAccountId: null,
-      password: "hashed-password",
-    };
-    mockPrismaUserFindUnique.mockResolvedValue(user as any);
-
-    await expect(getUserAuthenticationData("user-with-password")).resolves.toEqual(user);
-
-    expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
-      where: {
-        id: "user-with-password",
-      },
-      select: {
-        email: true,
-        password: true,
-        identityProvider: true,
-        identityProviderAccountId: true,
-      },
-    });
-  });
-
-  test("throws when authentication data is missing", async () => {
-    mockPrismaUserFindUnique.mockResolvedValue(null);
-
-    await expect(getUserAuthenticationData("missing-user")).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("getCredentialPasswordHash reads the credential Account scoped to the user", async () => {

@@ -1,33 +1,8 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { User } from "@formbricks/database/prisma";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { verifyPassword } from "@/modules/auth/lib/utils";
-
-export const getUserAuthenticationData = reactCache(
-  async (
-    userId: string
-  ): Promise<Pick<User, "email" | "password" | "identityProvider" | "identityProviderAccountId">> => {
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        email: true,
-        password: true,
-        identityProvider: true,
-        identityProviderAccountId: true,
-      },
-    });
-
-    if (!user) {
-      throw new ResourceNotFoundError("user", userId);
-    }
-
-    return user;
-  }
-);
 
 /**
  * Returns the bcrypt password hash on the user's Better Auth `credential` Account
