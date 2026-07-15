@@ -19,6 +19,7 @@ import {
   isEnrichmentDimensionId,
   isNotEnrichedDimensionValue,
   isSelectableValueDimension,
+  sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
 } from "./schema-definition";
 
@@ -304,6 +305,48 @@ describe("schema-definition", () => {
     test("does not label empty values on non-enrichment dimensions", () => {
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", "", t)).toBeUndefined();
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sourceName", null, t)).toBeUndefined();
+    });
+  });
+
+  describe("sortMeasureIdsForCategoryAxis", () => {
+    test("sorts sentiment count measures into the sentiment scale order", () => {
+      const pickerOrder = [
+        "FeedbackRecords.veryPositiveCount",
+        "FeedbackRecords.positiveCount",
+        "FeedbackRecords.neutralCount",
+        "FeedbackRecords.negativeCount",
+        "FeedbackRecords.veryNegativeCount",
+        "FeedbackRecords.mixedCount",
+      ];
+      expect(sortMeasureIdsForCategoryAxis(pickerOrder)).toEqual([
+        "FeedbackRecords.veryNegativeCount",
+        "FeedbackRecords.negativeCount",
+        "FeedbackRecords.neutralCount",
+        "FeedbackRecords.positiveCount",
+        "FeedbackRecords.veryPositiveCount",
+        "FeedbackRecords.mixedCount",
+      ]);
+    });
+
+    test("keeps non-sentiment measures in their relative order, after sentiment ones", () => {
+      const ids = [
+        "FeedbackRecords.joyCount",
+        "FeedbackRecords.positiveCount",
+        "FeedbackRecords.count",
+        "FeedbackRecords.veryNegativeCount",
+      ];
+      expect(sortMeasureIdsForCategoryAxis(ids)).toEqual([
+        "FeedbackRecords.veryNegativeCount",
+        "FeedbackRecords.positiveCount",
+        "FeedbackRecords.joyCount",
+        "FeedbackRecords.count",
+      ]);
+    });
+
+    test("does not mutate the input array", () => {
+      const ids = ["FeedbackRecords.positiveCount", "FeedbackRecords.veryNegativeCount"];
+      sortMeasureIdsForCategoryAxis(ids);
+      expect(ids).toEqual(["FeedbackRecords.positiveCount", "FeedbackRecords.veryNegativeCount"]);
     });
   });
 

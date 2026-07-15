@@ -23,6 +23,7 @@ import {
   getMeasureAxisLabel,
   getTranslatedDimensionValueLabel,
   isNotEnrichedDimensionValue,
+  sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
@@ -195,7 +196,10 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       // (ENG-1796). Pivot the measures into categories so the bars fill the axis from the
       // left like any other category bar chart, labelled by measure on the x-axis.
       if (!hasCategoryAxis) {
-        const measureData = pivotMeasuresToCategories(sortedData, dataKeys, (key) =>
+        // Sentiment measures pivot into the scale order the sentiment *dimension* axis uses,
+        // so this chart and a dimension-grouped one read in the same direction.
+        const axisKeys = sortMeasureIdsForCategoryAxis(dataKeys);
+        const measureData = pivotMeasuresToCategories(sortedData, axisKeys, (key) =>
           formatCubeColumnHeader(key, t)
         );
         // Ticks use the short value label ("Very positive") — the full measure label is too
