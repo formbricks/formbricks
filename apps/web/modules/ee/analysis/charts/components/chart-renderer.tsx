@@ -9,16 +9,16 @@ import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/po
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
-  CHART_NOT_ENRICHED_COLOR,
   formatCellValue,
   formatXAxisTick,
+  getSemanticDimensionColor,
+  getSentimentMeasureColor,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   FEEDBACK_MEASURE_IDS,
   formatCubeColumnHeader,
   getTranslatedDimensionValueLabel,
-  isNotEnrichedDimensionValue,
   sortRowsByEnumDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
@@ -171,12 +171,14 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     );
   }
 
+  // Sentiment count measures carry semantic colors keyed by enum value (red-ish for very negative →
+  // teal for very positive); every other series takes the generic palette by index.
   const chartConfig: ChartConfig = Object.fromEntries(
     dataKeys.map((key, i) => [
       key,
       {
         label: formatCubeColumnHeader(key, t),
-        color: CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
+        color: getSentimentMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
       },
     ])
   );
@@ -191,9 +193,9 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         ? sortedData
         : sortedData.map((row, index) => ({
             ...row,
-            fill: isNotEnrichedDimensionValue(xAxisKey, row[xAxisKey])
-              ? CHART_NOT_ENRICHED_COLOR
-              : CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
+            fill:
+              getSemanticDimensionColor(xAxisKey, row[xAxisKey]) ??
+              CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
           }));
 
       return (

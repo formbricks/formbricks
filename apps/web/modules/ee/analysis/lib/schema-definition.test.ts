@@ -13,6 +13,7 @@ import {
   formatCubeColumnHeader,
   getFieldById,
   getFilterOperatorsForType,
+  getSentimentValueForMeasureId,
   getTranslatedDimensionValueLabel,
   getTranslatedFieldLabel,
   isEnrichmentDimensionId,
@@ -215,6 +216,18 @@ describe("schema-definition", () => {
     test("measure display orders cover exactly their vocabularies", () => {
       expect([...EMOTION_MEASURE_ORDER].sort()).toEqual([...EMOTION_VALUES].sort());
       expect([...SENTIMENT_MEASURE_ORDER].sort()).toEqual([...SENTIMENT_VALUE_ORDER].sort());
+    });
+
+    test("maps each sentiment count measure id back to its enum value", () => {
+      expect(getSentimentValueForMeasureId("FeedbackRecords.veryNegativeCount")).toBe("very_negative");
+      expect(getSentimentValueForMeasureId("FeedbackRecords.negativeCount")).toBe("negative");
+      expect(getSentimentValueForMeasureId("FeedbackRecords.neutralCount")).toBe("neutral");
+      expect(getSentimentValueForMeasureId("FeedbackRecords.positiveCount")).toBe("positive");
+      expect(getSentimentValueForMeasureId("FeedbackRecords.veryPositiveCount")).toBe("very_positive");
+      expect(getSentimentValueForMeasureId("FeedbackRecords.mixedCount")).toBe("mixed");
+      // non-sentiment measures resolve to nothing
+      expect(getSentimentValueForMeasureId("FeedbackRecords.count")).toBeUndefined();
+      expect(getSentimentValueForMeasureId("FeedbackRecords.joyCount")).toBeUndefined();
     });
 
     test("labels each sentiment count measure (no raw-id fallback)", () => {

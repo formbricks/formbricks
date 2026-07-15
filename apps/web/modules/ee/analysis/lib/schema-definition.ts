@@ -363,8 +363,14 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
 
-const isSentimentValue = (value: string): value is TSentimentValue =>
+export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
+
+/** Map a sentiment count measure id (e.g. "FeedbackRecords.veryPositiveCount") back to its enum
+ * value. Charts use this to give the sentiment count series the same semantic colors as the
+ * sentiment dimension buckets. Returns undefined for every other measure. */
+export const getSentimentValueForMeasureId = (measureId: string): TSentimentValue | undefined =>
+  SENTIMENT_VALUE_ORDER.find((value) => measureId === `FeedbackRecords.${toCountMeasureId(value)}Count`);
 
 const isEmotionValue = (value: string): value is TEmotionValue =>
   (EMOTION_VALUES as readonly string[]).includes(value);
