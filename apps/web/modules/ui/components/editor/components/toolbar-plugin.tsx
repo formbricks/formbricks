@@ -22,7 +22,17 @@ import {
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
-import { AtSign, Bold, ChevronDownIcon, Italic, Link, PencilIcon, Underline } from "lucide-react";
+import {
+  AtSign,
+  Bold,
+  ChevronDownIcon,
+  Italic,
+  Link,
+  List,
+  ListOrdered,
+  PencilIcon,
+  Underline,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
@@ -352,6 +362,22 @@ export const ToolbarPlugin = (
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
       tooltipText: t("workspace.surveys.edit.underline"),
+      disabled: !props.editable,
+    },
+    {
+      key: "bulletList",
+      icon: List,
+      onClick: formatBulletList,
+      active: blockType === "ul",
+      tooltipText: t("workspace.surveys.edit.bulleted_list"),
+      disabled: !props.editable,
+    },
+    {
+      key: "orderedList",
+      icon: ListOrdered,
+      onClick: formatNumberedList,
+      active: blockType === "ol",
+      tooltipText: t("workspace.surveys.edit.numbered_list"),
       disabled: !props.editable,
     },
     {

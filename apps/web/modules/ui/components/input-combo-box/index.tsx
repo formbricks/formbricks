@@ -324,7 +324,15 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 }}
               />
             ) : (
-              <ChevronDownIcon className="size-5 shrink-0 text-slate-300 group-hover/icon:text-slate-400" />
+              <ChevronDownIcon
+                className={cn(
+                  "size-5 shrink-0 text-slate-300 group-hover/icon:text-slate-400",
+                  // Pin the chevron to the right even when there's no value/placeholder to render a
+                  // leading flex-1 element — otherwise it collapses to the left and looks broken.
+                  // Skip in the centered icon-only (withInput) variant so it stays centered.
+                  !(withInput && inputType !== "dropdown") && "ml-auto"
+                )}
+              />
             )}
           </div>
         </DropdownMenuTrigger>

@@ -23,6 +23,7 @@ interface SettingsNavigationProps {
   membershipRole?: TOrganizationRole;
   isFormbricksCloud: boolean;
   publicDomain: string;
+  isFormbricksSurveysConfigured: boolean;
   // Where the back arrow returns to (the surveys list of the current workspace).
   backUrl: string;
 }
@@ -39,6 +40,7 @@ export const SettingsNavigation = ({
   membershipRole,
   isFormbricksCloud,
   publicDomain,
+  isFormbricksSurveysConfigured,
   backUrl,
 }: Readonly<SettingsNavigationProps>) => {
   const router = useRouter();
@@ -108,7 +110,12 @@ export const SettingsNavigation = ({
           onOrganizationRetry={organizationSwitcher.retry}
         />
       </div>
-      <UserDropdown user={user} organizationId={organizationId} publicDomain={publicDomain} />
+      <UserDropdown
+        user={user}
+        organizationId={organizationId}
+        publicDomain={publicDomain}
+        isFormbricksSurveysConfigured={isFormbricksSurveysConfigured}
+      />
     </aside>
   );
 };

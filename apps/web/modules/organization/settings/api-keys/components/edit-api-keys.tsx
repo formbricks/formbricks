@@ -58,6 +58,7 @@ interface EditAPIKeysProps {
   locale: TUserLocale;
   isReadOnly: boolean;
   workspaces: TOrganizationWorkspace[];
+  isFormbricksCloud: boolean;
 }
 
 export const EditAPIKeys = ({
@@ -66,6 +67,7 @@ export const EditAPIKeys = ({
   locale,
   isReadOnly,
   workspaces,
+  isFormbricksCloud,
 }: EditAPIKeysProps) => {
   const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
@@ -239,6 +241,7 @@ export const EditAPIKeys = ({
         onSubmit={handleAddAPIKey}
         workspaces={workspaces}
         isCreatingAPIKey={isLoading}
+        isFormbricksCloud={isFormbricksCloud}
       />
       {activeKey && (
         <ViewPermissionModal

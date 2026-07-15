@@ -3,21 +3,30 @@
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { UnknownError } from "@formbricks/types/errors";
+import {
+  InvalidInputError,
+  SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+  UnknownError,
+} from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { capturePostHogEvent, groupIdentifyPostHog, identifyPostHogPerson } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { auth } from "@/modules/auth/lib/auth";
+import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import {
+  markSignupDomainAllowed,
+  runWithSignupRequestContext,
+} from "@/modules/auth/lib/signup-request-context";
 import { updateUser } from "@/modules/auth/lib/user";
-import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
+import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -247,12 +256,29 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
     await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
-    const { user, userAlreadyExisted } = await signUpUserSafely(
-      parsedInput.email,
-      parsedInput.name,
-      parsedInput.password,
-      parsedInput.userLocale
-    );
+    // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
+    // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
+    if (
+      await isSignupEmailDomainBlocked(
+        parsedInput.email,
+        async () => (await resolveInviteMatch(parsedInput.inviteToken, parsedInput.email)) === "valid"
+      )
+    ) {
+      throw new InvalidInputError(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
+    }
+
+    // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
+    // sign-up that went through this action apart from a direct POST to Better Auth's native
+    // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
+    const { user, userAlreadyExisted } = await runWithSignupRequestContext(() => {
+      markSignupDomainAllowed();
+      return signUpUserSafely(
+        parsedInput.email,
+        parsedInput.name,
+        parsedInput.password,
+        parsedInput.userLocale
+      );
+    });
 
     if (!userAlreadyExisted && user) {
       await handlePostUserCreation(ctx, user, parsedInput.inviteToken);
@@ -268,6 +294,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
       const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
 
+      identifyPostHogPerson(user.id, { email: user.email, name: user.name });
       capturePostHogEvent(
         user.id,
         "user_signed_up",

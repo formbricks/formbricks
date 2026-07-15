@@ -69,6 +69,7 @@ interface NavigationProps {
   isAccessControlAllowed: boolean;
   responseCount: number;
   newTrialBannerVariant: string | boolean;
+  isFormbricksSurveysConfigured: boolean;
 }
 
 export const MainNavigation = ({
@@ -84,6 +85,7 @@ export const MainNavigation = ({
   isAccessControlAllowed,
   responseCount,
   newTrialBannerVariant,
+  isFormbricksSurveysConfigured,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -124,7 +126,8 @@ export const MainNavigation = ({
     () => [
       {
         id: "ask",
-        name: t("common.ask"),
+        // Product section (IA) label — intentionally not localized (kept in English across all locales)
+        name: "Ask",
         items: [
           {
             name: t("common.surveys"),
@@ -150,7 +153,8 @@ export const MainNavigation = ({
         id: "unify-feedback",
         name: (
           <span className="inline-flex items-center gap-2">
-            <span>{t("workspace.unify.unify_feedback")}</span>
+            {/* Product section (IA) label — intentionally not localized (kept in English across all locales) */}
+            <span>Unify</span>
             <Badge
               text="Beta"
               type="gray"
@@ -627,6 +631,7 @@ export const MainNavigation = ({
                 isCollapsed={isCollapsed}
                 isTextVisible={isTextVisible}
                 className="rounded-br-xl"
+                isFormbricksSurveysConfigured={isFormbricksSurveysConfigured}
               />
             </div>
           </div>

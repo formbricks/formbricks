@@ -15,7 +15,12 @@ const mocks = {
   getAccessControlPermission: vi.fn(),
   getOrganizationWorkspacesLimit: vi.fn(),
   getPublicDomain: vi.fn(),
+  cookieGet: vi.fn(),
 };
+
+vi.mock("next/headers", () => ({
+  cookies: () => Promise.resolve({ get: (name: string) => mocks.cookieGet(name) }),
+}));
 
 vi.mock("@/modules/auth/lib/session", () => ({
   getSession: (...args: unknown[]) => mocks.getSession(...args),
@@ -57,6 +62,8 @@ const seedSuccess = () => {
   mocks.getOrganizationWorkspacesLimit.mockResolvedValue(3);
   mocks.getMonthlyOrganizationResponseCount.mockResolvedValue(42);
   mocks.getPublicDomain.mockReturnValue("https://app.formbricks.com");
+  // No active-workspace cookie by default.
+  mocks.cookieGet.mockReturnValue(undefined);
 };
 
 describe("getSettingsLayoutData", () => {
@@ -96,5 +103,29 @@ describe("getSettingsLayoutData", () => {
 
     expect(data?.currentWorkspace).toBeNull();
     expect(data?.backUrl).toBe("/");
+  });
+
+  test("uses the active-workspace cookie when it is in the accessible list", async () => {
+    seedSuccess();
+    mocks.getWorkspacesByUserId.mockResolvedValue([{ id: "ws-1" }, { id: "ws-2" }]);
+    mocks.getWorkspace.mockImplementation((id: string) => Promise.resolve({ id, name: "WS" }));
+    mocks.cookieGet.mockReturnValue({ value: "ws-2" });
+
+    const data = await getSettingsLayoutData("user-1", "org-1");
+
+    expect(data?.currentWorkspace?.id).toBe("ws-2");
+    expect(data?.backUrl).toBe("/workspaces/ws-2/surveys");
+  });
+
+  test("ignores the cookie and falls back to the first workspace when it is not accessible", async () => {
+    seedSuccess();
+    mocks.getWorkspacesByUserId.mockResolvedValue([{ id: "ws-1" }, { id: "ws-2" }]);
+    mocks.getWorkspace.mockImplementation((id: string) => Promise.resolve({ id, name: "WS" }));
+    mocks.cookieGet.mockReturnValue({ value: "ws-not-mine" });
+
+    const data = await getSettingsLayoutData("user-1", "org-1");
+
+    expect(data?.currentWorkspace?.id).toBe("ws-1");
+    expect(data?.backUrl).toBe("/workspaces/ws-1/surveys");
   });
 });

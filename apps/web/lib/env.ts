@@ -225,6 +225,9 @@ const parsedEnv = createEnv({
     DEBUG: z.string().optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
+    // Cloud-only: when "1", the personal-email sign-up block also applies to invited users.
+    // Default (unset/"0") exempts invites — see isSignupEmailDomainBlocked.
+    SIGNUP_DOMAIN_CHECK_ON_INVITES: z.enum(["1", "0"]).optional(),
     BULLMQ_WORKER_CONCURRENCY: z.coerce.number().int().min(1).optional(),
     BULLMQ_WORKER_COUNT: z.coerce.number().int().min(1).optional(),
     BULLMQ_EXTERNAL_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
@@ -276,6 +279,11 @@ const parsedEnv = createEnv({
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     CHATWOOT_WEBSITE_TOKEN: z.string().optional(),
     CHATWOOT_BASE_URL: z.url().optional(),
+    // Formbricks-in-Formbricks: dogfood in-app surveys. Points at the Formbricks
+    // instance that hosts the surveys (defaults to Formbricks Cloud). When
+    // FORMBRICKS_WORKSPACE_ID is set, the survey widget is mounted in the app.
+    FORMBRICKS_WORKSPACE_ID: z.string().optional(),
+    FORMBRICKS_APP_URL: z.url().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     POSTHOG_KEY: z.string().optional(),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "fatal"]).optional(),
@@ -396,6 +404,7 @@ const parsedEnv = createEnv({
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
+    SIGNUP_DOMAIN_CHECK_ON_INVITES: process.env.SIGNUP_DOMAIN_CHECK_ON_INVITES,
     BULLMQ_EXTERNAL_WORKER_ENABLED: process.env.BULLMQ_EXTERNAL_WORKER_ENABLED,
     BULLMQ_WORKER_CONCURRENCY: process.env.BULLMQ_WORKER_CONCURRENCY,
     BULLMQ_WORKER_COUNT: process.env.BULLMQ_WORKER_COUNT,
@@ -445,6 +454,8 @@ const parsedEnv = createEnv({
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     CHATWOOT_WEBSITE_TOKEN: process.env.CHATWOOT_WEBSITE_TOKEN,
     CHATWOOT_BASE_URL: process.env.CHATWOOT_BASE_URL,
+    FORMBRICKS_WORKSPACE_ID: process.env.FORMBRICKS_WORKSPACE_ID,
+    FORMBRICKS_APP_URL: process.env.FORMBRICKS_APP_URL,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
     POSTHOG_KEY: process.env.POSTHOG_KEY,
     LOG_LEVEL: process.env.LOG_LEVEL,

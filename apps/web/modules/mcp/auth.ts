@@ -19,6 +19,7 @@ import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import {
+  MCP_RESOURCE_SCOPES,
   getAuthIssuerUrl,
   getMcpOrigin,
   getMcpProtectedResourceMetadataUrl,
@@ -36,7 +37,13 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
+// Minimum scope required to authenticate against the MCP server at all.
 const DEFAULT_OAUTH_SCOPE = "surveys:read";
+// Scopes advertised in the 401 WWW-Authenticate challenge. Clients build their DCR + authorize
+// requests from this, so it must list every resource scope (read + write) or clients only ever
+// request read and can never reach the write tools. Actual write access is still gated downstream
+// by the user's workspace permissions in the v3 layer.
+const MCP_CHALLENGE_SCOPE = MCP_RESOURCE_SCOPES.join(" ");
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
 export type TMcpAuthInfo = AuthInfo & {
@@ -199,7 +206,7 @@ export function withMcpResponseHeaders(response: Response, requestId: string): R
   });
 }
 
-function withOAuthChallenge(response: Response, scope = DEFAULT_OAUTH_SCOPE): Response {
+function withOAuthChallenge(response: Response, scope = MCP_CHALLENGE_SCOPE): Response {
   const headers = new Headers(response.headers);
   headers.set(
     "WWW-Authenticate",

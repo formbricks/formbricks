@@ -37,6 +37,10 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
   // /callback/:id (social) and /oauth2/callback/:providerId (generic OAuth/SAML) both contain /callback/
   if (path.includes("/callback/")) return "sso";
   if (path === "/sign-in/email") return "password";
+  // Auto-login after email verification (autoSignInAfterVerification, ENG-1746) creates a session for
+  // a credential/email-password account, so audit it as "password". Idempotent replays of an
+  // already-verified token don't create a session, so this fires once, on the genuine first verify.
+  if (path === "/verify-email") return "password";
   // The 2FA challenge completes the credentials sign-in → "password" (matches NextAuth). Deliberately
   // NOT /two-factor/verify-otp (also the first-time-enable path) nor /two-factor/disable|enable.
   if (path === "/two-factor/verify-totp" || path === "/two-factor/verify-backup-code") return "password";
@@ -49,8 +53,9 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
 /**
  * Emit the `signedIn` success audit on session creation — parity with the NextAuth route's
  * `events.signIn`. Guarded to genuine sign-in completions (see getSignInAuthMethod) so non-sign-in
- * session re-issues don't produce spurious events. `autoSignIn` is off, so sign-up/verification don't
- * create a session either. Failures create no session, so they're audited separately by
+ * session re-issues don't produce spurious events. `autoSignIn` is off, so sign-up doesn't create a
+ * session; email verification does (autoSignInAfterVerification, ENG-1746) and is allow-listed above.
+ * Failures create no session, so they're audited separately by
  * `auditFailedAuthAfter` below (which inspects the returned error in `hooks.after`).
  */
 export const signInAuditDatabaseHook: NonNullable<

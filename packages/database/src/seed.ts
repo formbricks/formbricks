@@ -722,62 +722,64 @@ async function main(): Promise<void> {
   // Users
   const passwordHash = await hashPassword(SEED_CREDENTIALS.ADMIN.password, 10);
 
-  await prisma.user.upsert({
-    where: { id: SEED_IDS.USER_ADMIN },
-    update: {},
-    create: {
+  const seedUsers = [
+    {
       id: SEED_IDS.USER_ADMIN,
       name: "Admin User",
       email: SEED_CREDENTIALS.ADMIN.email,
-      password: passwordHash,
-      emailVerified: true,
-      memberships: {
-        create: {
-          organizationId: organization.id,
-          role: "owner",
-          accepted: true,
-        },
-      },
+      role: "owner",
     },
-  });
-
-  await prisma.user.upsert({
-    where: { id: SEED_IDS.USER_MANAGER },
-    update: {},
-    create: {
+    {
       id: SEED_IDS.USER_MANAGER,
       name: "Manager User",
       email: SEED_CREDENTIALS.MANAGER.email,
-      password: passwordHash,
-      emailVerified: true,
-      memberships: {
-        create: {
-          organizationId: organization.id,
-          role: "manager",
-          accepted: true,
-        },
-      },
+      role: "manager",
     },
-  });
-
-  await prisma.user.upsert({
-    where: { id: SEED_IDS.USER_MEMBER },
-    update: {},
-    create: {
+    {
       id: SEED_IDS.USER_MEMBER,
       name: "Member User",
       email: SEED_CREDENTIALS.MEMBER.email,
-      password: passwordHash,
-      emailVerified: true,
-      memberships: {
-        create: {
-          organizationId: organization.id,
-          role: "member",
-          accepted: true,
+      role: "member",
+    },
+  ] as const;
+
+  for (const { id, name, email, role } of seedUsers) {
+    await prisma.user.upsert({
+      where: { id },
+      update: {},
+      create: {
+        id,
+        name,
+        email,
+        password: passwordHash,
+        emailVerified: true,
+        memberships: {
+          create: {
+            organizationId: organization.id,
+            role,
+            accepted: true,
+          },
         },
       },
-    },
-  });
+    });
+
+    // Better Auth verifies email/password sign-in against a "credential" Account row
+    // (providerAccountId = user id), not User.password — same shape as the ENG-1054
+    // credential-account backfill migration.
+    await prisma.account.upsert({
+      where: {
+        provider_providerAccountId: { provider: "credential", providerAccountId: id },
+      },
+      update: { password: passwordHash },
+      create: {
+        userId: id,
+        type: "credential",
+        provider: "credential",
+        providerAccountId: id,
+        password: passwordHash,
+      },
+    });
+  }
 
   // Workspace
   const workspace = await prisma.workspace.upsert({

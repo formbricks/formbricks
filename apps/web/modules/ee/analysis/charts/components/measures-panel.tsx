@@ -9,6 +9,7 @@ import {
   type TMeasureGroup,
   getTranslatedFieldLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
+import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 
 interface MeasuresPanelProps {
@@ -56,8 +57,8 @@ export function MeasuresPanel({
       {!hideTitle && (
         <h3 className="text-md font-semibold text-gray-900">{t("workspace.analysis.charts.measures")}</h3>
       )}
-      <div className="flex flex-col gap-2">
-        <label className="text-sm">{t("workspace.analysis.charts.predefined_measures")}</label>
+      <div className="flex flex-col gap-3">
+        <Label className="text-sm">{t("workspace.analysis.charts.predefined_measures")}</Label>
         <MultiSelect
           options={measureOptions}
           value={selectedMeasures}

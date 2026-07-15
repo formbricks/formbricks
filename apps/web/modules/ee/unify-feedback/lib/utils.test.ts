@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
+  formatFieldType,
   formatSourceType,
   getCreateDefaults,
   getReadOnlyMetadataEntries,
@@ -166,6 +167,25 @@ describe("formatSourceType", () => {
 
   test("returns raw value for unknown types", () => {
     expect(formatSourceType("custom", t)).toBe("custom");
+  });
+});
+
+describe("formatFieldType", () => {
+  test("capitalizes non-acronym types", () => {
+    expect(formatFieldType("text")).toBe("Text");
+    expect(formatFieldType("categorical")).toBe("Categorical");
+    expect(formatFieldType("number")).toBe("Number");
+    expect(formatFieldType("date")).toBe("Date");
+  });
+
+  test("upper-cases acronym types", () => {
+    expect(formatFieldType("nps")).toBe("NPS");
+    expect(formatFieldType("csat")).toBe("CSAT");
+    expect(formatFieldType("ces")).toBe("CES");
+  });
+
+  test("returns empty string unchanged", () => {
+    expect(formatFieldType("")).toBe("");
   });
 });
 
