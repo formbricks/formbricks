@@ -109,7 +109,6 @@ export const checkDatabaseTcpConnection = async (
     const finish = (error?: Error): void => {
       if (settled) return;
       settled = true;
-      socket.removeAllListeners();
       socket.destroy();
 
       if (error) {
@@ -124,7 +123,7 @@ export const checkDatabaseTcpConnection = async (
     socket.once("connect", () => {
       finish();
     });
-    socket.once("error", (error) => {
+    socket.on("error", (error) => {
       finish(error);
     });
     socket.once("timeout", () => {

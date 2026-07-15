@@ -18,6 +18,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Helm
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
@@ -45,6 +47,7 @@ jobs:
           test "$(grep -c '^          image: ' "$render_dir/default.yaml")" -eq 2
           test "$(grep '^          image: ' "$render_dir/default.yaml" | sort -u | wc -l | tr -d ' ')" -eq 1
           test "$(grep -c 'name: formbricks-app-secrets' "$render_dir/default.yaml")" -eq 2
+          ! grep -q '^          env:$' "$render_dir/default.yaml"
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -65,6 +68,7 @@ jobs:
             --set-string deployment.env.MIGRATE_DATABASE_URL=postgresql://user:password@migrate-postgresql:5432/formbricks \
             --show-only templates/migration-job.yaml > "$render_dir/migrate-url.yaml"
           test "$(grep -c 'name: MIGRATE_DATABASE_URL' "$render_dir/migrate-url.yaml")" -eq 2
+          test "$(grep -c '^          env:' "$render_dir/migrate-url.yaml")" -eq 2
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
