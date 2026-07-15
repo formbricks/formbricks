@@ -65,7 +65,8 @@ describe("requestSsoAccountDeletionEmail (real Postgres)", () => {
     const mailArgs = sendDeleteAccountConfirmationEmailMock.mock.calls[0][0];
     expect(mailArgs.email).toBe(email);
     expect(mailArgs.deleteLink).toContain("/api/auth/delete-user/callback?token=");
-    expect(mailArgs.deleteLink).toContain("callbackURL=/");
+    // Self-hosted (IS_FORMBRICKS_CLOUD is false under test): the callback returns to the login page.
+    expect(mailArgs.deleteLink).toContain(`callbackURL=${encodeURIComponent("/auth/login")}`);
     const token = new URL(mailArgs.deleteLink).searchParams.get("token");
     expect(token).toBeTruthy();
 
