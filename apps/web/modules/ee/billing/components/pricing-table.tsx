@@ -1,7 +1,7 @@
 "use client";
 
 import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
-import { CheckIcon, LoaderCircleIcon } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
@@ -241,7 +241,6 @@ export const PricingTable = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const upgradeDriveRef = useRef(false);
-  const [isSyncingUpgrade, setIsSyncingUpgrade] = useState(false);
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
   // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
@@ -416,7 +415,8 @@ export const PricingTable = ({
     // StrictMode's mount→unmount→mount in dev would otherwise cancel the real run before it reaches
     // the reload, leaving the page stale (the bug looks identical to no fix at all).
     upgradeDriveRef.current = true;
-    setIsSyncingUpgrade(true);
+    // Loading toast at the top of this first post-checkout page, shown while we poll for the plan.
+    const toastId = toast.loading(t("workspace.settings.billing.upgrade_checkout_pending"));
     const billingUrl = `/organizations/${organizationId}/settings/billing`;
 
     // Once the plan is confirmed in our DB, a full reload is the only reliable way to render it
@@ -430,11 +430,11 @@ export const PricingTable = ({
       globalThis.window.location.replace(billingUrl);
     };
 
-    // Terminal state without a reload (error, or the poll timed out): clean the URL, stop the spinner,
-    // surface a message. The webhook will still land the plan; the user can refresh.
+    // Terminal state without a reload (error, or the poll timed out): clean the URL, dismiss the
+    // loading toast, surface a message. The webhook will still land the plan; the user can refresh.
     const settleWithoutReload = (message: string) => {
       clearUpgradeIntent();
-      setIsSyncingUpgrade(false);
+      toast.dismiss(toastId);
       toast.error(message);
       if (globalThis.window !== undefined) {
         globalThis.window.history.replaceState(null, "", billingUrl);
@@ -1137,12 +1137,6 @@ export const PricingTable = ({
   return (
     <main>
       <div className="flex max-w-6xl flex-col gap-4">
-        {isSyncingUpgrade && (
-          <div className="flex max-w-5xl items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-            {t("workspace.settings.billing.upgrade_checkout_pending")}
-          </div>
-        )}
         {trialDaysRemaining !== null &&
           (hasPaymentMethod ? (
             <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod className="max-w-5xl">
