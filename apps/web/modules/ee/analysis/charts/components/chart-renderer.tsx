@@ -197,7 +197,8 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         const measureData = pivotMeasuresToCategories(sortedData, dataKeys, (key) =>
           formatCubeColumnHeader(key, t)
         );
-        const formatMeasureLabel = (value: unknown) => formatCubeColumnHeader(String(value ?? ""), t);
+        const formatMeasureLabel = (value: unknown) =>
+          formatCubeColumnHeader(typeof value === "string" ? value : "", t);
         return (
           <CartesianChart
             chart={BarChart}
