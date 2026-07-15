@@ -83,6 +83,7 @@ checksums:
     auth/oauth/scopes/surveys_read: 8280264457fe7c3b759c82422052aed2
     auth/oauth/scopes/surveys_write: fb128cebe62dfd5685d086d706c432c2
     auth/oauth/unknown_client: 561bc5afdb90606fbc1ed97f20698ead
+    auth/password_compromised: d4ab0f66aaed039f956c2515328ed1c9
     auth/saml_connection_error: 03c69c534e7eaafcb2c22b7daf9f3efc
     auth/signup/captcha_failed: 4e1ed87800585b8c1da1514fa86ab943
     auth/signup/company_email_required: 997bf11a31512cedf4ab8acb7b4f56c3

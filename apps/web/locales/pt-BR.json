@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "Esta senha apareceu em um vazamento de dados. Escolha outra.",
     "saml_connection_error": "Algo deu errado. Por favor, verifica o console do app para mais detalhes.",
     "signup": {
       "captcha_failed": "reCAPTCHA falhou",

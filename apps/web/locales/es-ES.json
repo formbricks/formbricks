@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "Esta contraseña ha aparecido en una filtración de datos. Elige otra.",
     "saml_connection_error": "Algo salió mal. Por favor, consulta la consola de tu aplicación para más detalles.",
     "signup": {
       "captcha_failed": "Captcha fallido",

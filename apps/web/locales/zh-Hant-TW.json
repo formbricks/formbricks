@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "此密碼曾出現在資料外洩事件中，請選擇其他密碼。",
     "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
     "signup": {
       "captcha_failed": "驗證碼失敗",

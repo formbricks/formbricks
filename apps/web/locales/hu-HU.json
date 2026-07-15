@@ -100,6 +100,7 @@
       },
       "unknown_client": "Unknown client"
     },
+    "password_compromised": "Ez a jelszó megjelent egy adatszivárgásban. Kérjük, válassz másikat.",
     "saml_connection_error": "Valami probléma történt. A további részletekért nézze meg az alkalmazás konzolját.",
     "signup": {
       "captcha_failed": "A captcha sikertelen",
