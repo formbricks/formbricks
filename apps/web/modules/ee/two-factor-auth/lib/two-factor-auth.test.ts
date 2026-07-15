@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { getCredentialPasswordHash } from "@/lib/user/password";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "./two-factor-auth";
@@ -20,6 +21,10 @@ vi.mock("@/lib/crypto", () => ({
   symmetricDecrypt: vi.fn(),
 }));
 
+vi.mock("@/lib/user/password", () => ({
+  getCredentialPasswordHash: vi.fn(),
+}));
+
 vi.mock("@/modules/auth/lib/utils", () => ({
   verifyPassword: vi.fn(),
 }));
@@ -29,6 +34,12 @@ vi.mock("@/modules/auth/lib/totp", () => ({
 }));
 
 describe("Two Factor Auth", () => {
+  beforeEach(() => {
+    // Default: the user has a credential-account password hash. Individual "no password" tests
+    // override this with null. (Password now lives on the credential Account, not User.password.)
+    vi.mocked(getCredentialPasswordHash).mockResolvedValue("hashedPassword");
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -45,9 +56,9 @@ describe("Two Factor Auth", () => {
   test("setupTwoFactorAuth should throw InvalidInputError when user has no password", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user123",
-      password: null,
       identityProvider: "email",
     } as any);
+    vi.mocked(getCredentialPasswordHash).mockResolvedValue(null);
 
     await expect(setupTwoFactorAuth("user123", "password123")).rejects.toThrow(
       new InvalidInputError("User does not have a password set")
@@ -113,9 +124,9 @@ describe("Two Factor Auth", () => {
   test("enableTwoFactorAuth should throw InvalidInputError when user has no password", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user123",
-      password: null,
       identityProvider: "email",
     } as any);
+    vi.mocked(getCredentialPasswordHash).mockResolvedValue(null);
 
     await expect(enableTwoFactorAuth("user123", "123456")).rejects.toThrow(
       new InvalidInputError("User does not have a password set")
@@ -228,9 +239,10 @@ describe("Two Factor Auth", () => {
   test("disableTwoFactorAuth should throw InvalidInputError when user has no password", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user123",
-      password: null,
       identityProvider: "email",
+      twoFactorEnabled: true,
     } as any);
+    vi.mocked(getCredentialPasswordHash).mockResolvedValue(null);
 
     await expect(disableTwoFactorAuth("user123", { password: "password123" })).rejects.toThrow(
       new InvalidInputError("User does not have a password set")
