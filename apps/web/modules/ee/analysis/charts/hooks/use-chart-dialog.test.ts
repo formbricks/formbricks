@@ -413,6 +413,42 @@ describe("useChartDialog", () => {
       expect(result.current.chartName).toBe("Renamed Chart");
       expect(result.current.savedChartName).toBe("Loaded Chart");
     });
+
+    test("resets savedChartName when the dialog is closed without saving", async () => {
+      mockGetChartAction.mockResolvedValue({
+        data: {
+          id: CHART_ID,
+          name: "Loaded Chart",
+          type: "bar",
+          query: sampleChartData.query,
+          feedbackDirectoryId: DIRECTORY_ID,
+        },
+      });
+      mockExecuteQueryAction.mockResolvedValue({ data: [] });
+
+      const onOpenChange = vi.fn();
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange, chartId: CHART_ID }));
+
+      await waitFor(() => {
+        expect(result.current.savedChartName).toBe("Loaded Chart");
+      });
+
+      await act(async () => {
+        result.current.handleClose();
+      });
+
+      expect(result.current.savedChartName).toBe("");
+      expect(result.current.chartName).toBe("");
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    test("keeps savedChartName empty when opening in create mode", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await waitFor(() => {
+        expect(result.current.savedChartName).toBe("");
+      });
+    });
   });
 
   describe("handleSaveChart - validation + error paths", () => {
