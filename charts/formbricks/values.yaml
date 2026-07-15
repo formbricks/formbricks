@@ -32,9 +32,9 @@ enterprise:
 # Database Migration Job Configuration Helm
 ##########################################################
 migration:
-  # Enable migration job for ArgoCD deployments
-  # When enabled, migrations run as a PreSync hook before the deployment
-  # and the startup migration in the container is skipped
+  # Enable the migration job. In Argo CD, it runs as a Sync hook in wave -1
+  # after chart-managed secrets and bundled PostgreSQL are healthy. When enabled,
+  # the startup migration in the application container is skipped.
   enabled: true
 
   # Additional annotations for the migration job
@@ -45,6 +45,14 @@ migration:
 
   # Number of retries before marking the job as failed
   backoffLimit: 3
+
+  # Wait for the effective migration database endpoint before starting migrations.
+  # MIGRATE_DATABASE_URL takes precedence over DATABASE_URL, matching the migration runner.
+  waitForDatabase:
+    enabled: true
+    timeoutSeconds: 900
+    intervalSeconds: 5
+    connectionTimeoutSeconds: 5
 
   # Resource requests and limits for the migration job
   resources:
@@ -1232,6 +1240,9 @@ hub:
 postgresql:
   enabled: true # Enable/disable PostgreSQL
   externalDatabaseUrl: ""
+  # Argo CD waits for bundled PostgreSQL before running migration hooks in wave -1.
+  commonAnnotations:
+    argocd.argoproj.io/sync-wave: "-2"
   global:
     security:
       allowInsecureImages: true

@@ -169,6 +169,46 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{/*
+Render the database environment shared by the migration readiness and migration containers.
+Keeping this in one helper ensures both containers resolve DATABASE_URL and MIGRATE_DATABASE_URL identically.
+*/}}
+{{- define "formbricks.migrationEnvironment" -}}
+{{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
+envFrom:
+{{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+  - secretRef:
+      name: {{ template "formbricks.name" . }}-app-secrets
+{{- end }}
+{{- range $value := .Values.deployment.envFrom }}
+{{- if (eq .type "configmap") }}
+  - configMapRef:
+      {{- if .name }}
+      name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+      {{- else if .nameSuffix }}
+      name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+      {{- else }}
+      name: {{ template "formbricks.name" $ }}
+      {{- end }}
+{{- end }}
+{{- if (eq .type "secret") }}
+  - secretRef:
+      {{- if .name }}
+      name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+      {{- else if .nameSuffix }}
+      name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+      {{- else }}
+      name: {{ template "formbricks.name" $ }}
+      {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+env:
+{{- range $key, $value := .Values.deployment.env }}
+  {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
 Formbricks application image reference. A configured digest takes precedence over the tag.
 */}}
 {{- define "formbricks.deploymentImage" -}}
