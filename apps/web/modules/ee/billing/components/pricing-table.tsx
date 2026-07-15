@@ -383,20 +383,30 @@ export const PricingTable = ({
     const finish = (
       kind: "success" | "error",
       plan: Exclude<TStandardPlan, "hobby"> | null,
-      message?: string
+      message?: string,
+      planApplied = true
     ) => {
       toast.dismiss(toastId);
       if (kind === "success") {
+        // Only claim the plan is live once waitForBillingPlanAction actually observed it; otherwise the
+        // charge succeeded but Stripe hasn't reflected the plan within the poll window yet.
         toast.success(
-          t("workspace.settings.billing.upgrade_checkout_success", {
-            plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
-          })
+          planApplied
+            ? t("workspace.settings.billing.upgrade_checkout_success", {
+                plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
+              })
+            : t("workspace.settings.billing.upgrade_checkout_pending")
         );
       } else {
         toast.error(message ?? t("common.something_went_wrong_please_try_again"));
       }
       clearUpgradeIntent();
-      router.replace(`/organizations/${organizationId}/settings/billing`);
+      // Strip the one-time checkout query params without a router navigation — router.replace() to the
+      // bare URL can serve a stale prefetched RSC — then refetch the billing route so the synced plan
+      // renders.
+      if (globalThis.window !== undefined) {
+        globalThis.window.history.replaceState(null, "", `/organizations/${organizationId}/settings/billing`);
+      }
       router.refresh();
     };
 
@@ -422,11 +432,13 @@ export const PricingTable = ({
         }
       }
 
+      let planApplied = true;
       if (resolvedPlan) {
-        await waitForBillingPlanAction({ organizationId, targetPlan: resolvedPlan });
+        const waitResult = await waitForBillingPlanAction({ organizationId, targetPlan: resolvedPlan });
         if (cancelled) return;
+        planApplied = waitResult?.data?.plan === resolvedPlan;
       }
-      finish("success", resolvedPlan);
+      finish("success", resolvedPlan, undefined, planApplied);
     };
 
     void run();

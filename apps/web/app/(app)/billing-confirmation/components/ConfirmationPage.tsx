@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
@@ -45,10 +44,13 @@ export const ConfirmationPage = () => {
           </p>
         </div>
         <Button asChild className="w-full justify-center">
-          <Link
+          {/* Full-document navigation (not next/link): a client transition would serve the billing
+              page's prefetched RSC from before checkout, still showing the old plan. A full load
+              re-renders it fresh with the upgraded plan. */}
+          <a
             href={resolvedOrganizationId ? `/organizations/${resolvedOrganizationId}/settings/billing` : "/"}>
             {t("billing_confirmation.back_to_billing_overview")}
-          </Link>
+          </a>
         </Button>
       </div>
     </div>
