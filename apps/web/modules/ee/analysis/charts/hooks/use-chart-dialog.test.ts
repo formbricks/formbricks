@@ -428,6 +428,27 @@ describe("useChartDialog", () => {
 
       expect(result.current.chartName).toBe("User Typed Name");
     });
+
+    test("preserves the user's name even when invoked through a stale closure", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      // Captured before the user types — like a consumer holding the callback across renders
+      // while the AI request is in flight.
+      const staleHandleChartGenerated = result.current.handleChartGenerated;
+
+      await act(async () => {
+        result.current.setChartName("User Typed Name");
+      });
+
+      await act(async () => {
+        staleHandleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "AI Generated Name",
+        });
+      });
+
+      expect(result.current.chartName).toBe("User Typed Name");
+    });
   });
 
   describe("savedChartName", () => {

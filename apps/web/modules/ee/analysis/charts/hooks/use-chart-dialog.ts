@@ -174,9 +174,14 @@ export function useChartDialog({
     setChartData(data);
     setSelectedChartType(data.chartType);
     const suggestedName = data.suggestedName?.trim();
-    if (suggestedName && (!chartName.trim() || chartName === lastSuggestedNameRef.current)) {
-      lastSuggestedNameRef.current = suggestedName;
-      setChartName(suggestedName);
+    if (suggestedName) {
+      // Functional updater: the AI response lands async, so a closure over chartName could be
+      // stale and clobber a name the user typed while the request was in flight.
+      setChartName((prev) => {
+        if (prev.trim() && prev !== lastSuggestedNameRef.current) return prev;
+        lastSuggestedNameRef.current = suggestedName;
+        return suggestedName;
+      });
     }
   };
 
