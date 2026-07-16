@@ -151,6 +151,7 @@ describe("chart Cube actions", () => {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
       },
+      name: "Responses by Source Type",
     });
 
     const result = await generateAIChartAction({
@@ -173,6 +174,7 @@ describe("chart Cube actions", () => {
         dimensions: ["FeedbackRecords.sourceType"],
       },
       data: [{ "FeedbackRecords.count": 1 }],
+      suggestedName: "Responses by Source Type",
     });
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
       query: {
