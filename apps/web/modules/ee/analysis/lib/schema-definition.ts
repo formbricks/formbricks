@@ -190,6 +190,13 @@ export const FEEDBACK_FIELDS = {
         "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
     },
     {
+      id: "FeedbackRecords.valueId",
+      label: "Value (Option)",
+      type: "string",
+      description:
+        "Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.",
+    },
+    {
       id: "FeedbackRecords.valueBoolean",
       label: "Value (Boolean)",
       type: "boolean",

@@ -1,10 +1,22 @@
 "use server";
 
 import { z } from "zod";
-import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
+import {
+  type TChartQuery,
+  type TCubeFilter,
+  type TMemberFilter,
+  ZChartQuery,
+} from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import type { TSurveyElementChoice } from "@formbricks/types/surveys/elements";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
+import { getLocalizedValue } from "@/lib/i18n/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getSurvey } from "@/lib/survey/service";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -22,6 +34,90 @@ import { isSelectableValueDimension } from "@/modules/ee/analysis/lib/schema-def
 import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+
+// ── Single-select option-id resolution helpers ────────────────────────────────
+
+/** Extract the first `equals` value for a member filter by member name, searching top-level filters only. */
+function extractMemberEqualsValue(filters: TCubeFilter[], member: string): string | undefined {
+  for (const f of filters) {
+    if (
+      "member" in f &&
+      (f as TMemberFilter).member === member &&
+      (f as TMemberFilter).operator === "equals"
+    ) {
+      const values = (f as TMemberFilter).values;
+      if (Array.isArray(values) && values.length > 0) return values[0];
+    }
+  }
+  return undefined;
+}
+
+const getChoiceLabelDefault = (choice: { label: TSurveyElementChoice["label"] }): string =>
+  getTextContent(getLocalizedValue(choice.label, "default"));
+
+/**
+ * When a query groups by `FeedbackRecords.valueText` and a `FeedbackRecords.fieldId equals <id>`
+ * filter is present, check whether that element is a single-select question. If it is:
+ * - Rewrite the dimension to `FeedbackRecords.valueId` so Cube groups by stable option ids.
+ * - Return a `{ [value_id]: defaultLabel }` map so the renderer can translate ids back to labels.
+ *
+ * Returns `{ rewrittenQuery, optionLabels }`. When no rewrite is needed, `rewrittenQuery` is the
+ * original query and `optionLabels` is undefined.
+ */
+async function resolveOptionGrouping(
+  query: TChartQuery,
+  workspaceId: string
+): Promise<{ rewrittenQuery: TChartQuery; optionLabels?: Record<string, string> }> {
+  const dimensions = query.dimensions;
+  if (!dimensions?.includes("FeedbackRecords.valueText")) {
+    return { rewrittenQuery: query };
+  }
+
+  const fieldId = extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldId");
+  if (!fieldId) {
+    return { rewrittenQuery: query };
+  }
+
+  // Find the feedbackSource mapping for this fieldId to learn the surveyId.
+  const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
+  let surveyId: string | undefined;
+  for (const source of feedbackSources) {
+    const mapping = source.formbricksMappings.find((m) => m.elementId === fieldId);
+    if (mapping) {
+      surveyId = mapping.surveyId;
+      break;
+    }
+  }
+  if (!surveyId) {
+    return { rewrittenQuery: query };
+  }
+
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    return { rewrittenQuery: query };
+  }
+
+  const elements = getElementsFromBlocks(survey.blocks);
+  const element = elements.find((el) => el.id === fieldId);
+  if (!element || element.type !== TSurveyElementTypeEnum.MultipleChoiceSingle) {
+    return { rewrittenQuery: query };
+  }
+
+  // Build the choice-id → default-language label map.
+  const choices = (element as { choices: { id: string; label: TSurveyElementChoice["label"] }[] }).choices;
+  const optionLabels: Record<string, string> = {};
+  for (const choice of choices) {
+    optionLabels[choice.id] = getChoiceLabelDefault(choice);
+  }
+
+  // Rewrite valueText → valueId in dimensions.
+  const rewrittenQuery: TChartQuery = {
+    ...query,
+    dimensions: dimensions.map((d) => (d === "FeedbackRecords.valueText" ? "FeedbackRecords.valueId" : d)),
+  };
+
+  return { rewrittenQuery, optionLabels };
+}
 
 const checkDashboardsEnabled = async (organizationId: string) => {
   const isAllowed = await getIsDashboardsEnabled(organizationId);
@@ -278,14 +374,18 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      return executeTenantScopedQuery({
-        query: parsedInput.query,
+      const { rewrittenQuery, optionLabels } = await resolveOptionGrouping(parsedInput.query, workspaceId);
+
+      const rows = await executeTenantScopedQuery({
+        query: rewrittenQuery,
         feedbackDirectoryId,
         workspaceId,
         organizationId,
         userId: ctx.user.id,
         source: "charts.executeQueryAction",
       });
+
+      return { rows: Array.isArray(rows) ? rows : [], ...(optionLabels ? { optionLabels } : {}) };
     }
   );
 

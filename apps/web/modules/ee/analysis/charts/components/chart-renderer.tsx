@@ -124,9 +124,11 @@ interface ChartRendererProps {
   chartType: TChartType;
   data: TChartDataRow[];
   query: TChartQuery;
+  /** value_id → default-language label map, present when the query groups by valueId. */
+  optionLabels?: Record<string, string>;
 }
 
-export function ChartRenderer({ chartType, data, query }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
@@ -154,8 +156,13 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
   // Enum dimensions (e.g. sentiment) sort ordinally instead of alphabetically and
   // render translated labels instead of their raw machine tokens.
   const sortedData = sortRowsByEnumDimension(data, xAxisKey);
-  const formatDimensionValue = (value: unknown): string =>
-    getTranslatedDimensionValueLabel(xAxisKey, value, t) ?? formatXAxisTick(value);
+  const formatDimensionValue = (value: unknown): string => {
+    // If the x-axis is a valueId dimension, resolve via the option-label map first.
+    if (xAxisKey === "FeedbackRecords.valueId" && optionLabels && typeof value === "string") {
+      return optionLabels[value] ?? value;
+    }
+    return getTranslatedDimensionValueLabel(xAxisKey, value, t) ?? formatXAxisTick(value);
+  };
 
   const measureIds = query.measures?.filter((m) => rowKeys.includes(m)) ?? [];
   const rawDataKeys = measureIds.length > 0 ? measureIds : rowKeys.filter((k) => k !== xAxisKey);

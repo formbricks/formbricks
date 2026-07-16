@@ -322,6 +322,12 @@ cube(`FeedbackRecords`, {
       description: `Text answer value (open text, or the label of a multiple-choice / categorical answer). Pair with a fieldType filter to keep types consistent.`,
     },
 
+    valueId: {
+      sql: `value_id`,
+      type: `string`,
+      description: `Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.`,
+    },
+
     valueBoolean: {
       sql: `value_boolean`,
       type: `boolean`,

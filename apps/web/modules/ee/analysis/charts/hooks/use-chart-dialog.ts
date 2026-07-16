@@ -132,7 +132,8 @@ export function useChartDialog({
           return;
         }
 
-        if (!Array.isArray(queryResult?.data)) {
+        const queryRows = queryResult?.data;
+        if (!Array.isArray(queryRows?.rows)) {
           const errorMsg = t("workspace.analysis.charts.no_data_returned_for_chart");
           toast.error(errorMsg);
           setChartLoadError(errorMsg);
@@ -142,7 +143,8 @@ export function useChartDialog({
         setChartData({
           query: chart.query,
           chartType: resolveChartType(chart.type),
-          data: queryResult.data,
+          data: queryRows.rows,
+          ...(queryRows.optionLabels ? { optionLabels: queryRows.optionLabels } : {}),
         });
       } catch (error: unknown) {
         if (cancelled) return;
