@@ -46,12 +46,13 @@ interface NormalizedChoiceValue {
 /**
  * Normalize a choice answer for storage.
  *
- * - value_text = the ORIGINAL submitted label (fidelity). Callers that need a display label
- *   should resolve value_id → default-language label at read time (ENG-1673).
+ * - value_text = the choice's DEFAULT-language label (canonical) for any selection that matched
+ *   a known choice, so the same option reads and groups consistently regardless of the response
+ *   language. Unmatched values ("other" free text, edited labels) are stored as submitted.
  * - value_id   = stable cross-language grouping id consumed by charts. Set only for a
  *   single-value answer whose label matched a known choice. Multi-value arrays (ENG-1702)
- *   cannot carry multiple ids so they pass through unmatched. Unrecognised values ("other"
- *   free text, edited labels) also carry no id.
+ *   cannot carry multiple ids so they carry none, but each matched element is still
+ *   canonicalized to its default-language label.
  */
 const normalizeChoiceValue = (
   choices: { id: string; label: TSurveyElementChoice["label"] }[] | undefined,
@@ -62,8 +63,20 @@ const normalizeChoiceValue = (
 
   if (typeof value === "string") {
     const choice = findChoiceByLabel(choices, value, language);
-    // Store the original submitted label for fidelity; value_id is the stable grouping key.
-    return choice ? { value, valueId: choice.id } : { value };
+    // Canonicalize to the default-language label; value_id is the stable grouping key.
+    return choice ? { value: getChoiceLabel(choice, "default"), valueId: choice.id } : { value };
+  }
+
+  if (Array.isArray(value)) {
+    // Multi-select: canonicalize each matched selection to its default-language label so the
+    // set reads consistently across languages (unmatched "other" entries pass through as-is).
+    return {
+      value: value.map((entry) => {
+        if (typeof entry !== "string") return entry;
+        const choice = findChoiceByLabel(choices, entry, language);
+        return choice ? getChoiceLabel(choice, "default") : entry;
+      }),
+    };
   }
 
   return { value };
