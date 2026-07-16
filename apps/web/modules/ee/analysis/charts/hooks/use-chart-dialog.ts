@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -60,6 +60,9 @@ export function useChartDialog({
   const [chartLoadError, setChartLoadError] = useState<string | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
   const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories?.[0]?.id ?? null);
+  // Last name we prefilled from a suggestion; lets a regenerate replace its own
+  // stale suggestion without ever clobbering a name the user typed.
+  const lastSuggestedNameRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +90,7 @@ export function useChartDialog({
       setChartData(null);
       setChartName("");
       setSavedChartName("");
+      lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setSelectedDirectoryId(directories?.[0]?.id ?? null);
@@ -169,8 +173,15 @@ export function useChartDialog({
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
     setSelectedChartType(data.chartType);
-    if (data.suggestedName) {
-      setChartName((prev) => (prev.trim() ? prev : data.suggestedName!));
+    const suggestedName = data.suggestedName?.trim();
+    if (suggestedName) {
+      // Functional updater: the AI response lands async, so a closure over chartName could be
+      // stale and clobber a name the user typed while the request was in flight.
+      setChartName((prev) => {
+        if (prev.trim() && prev !== lastSuggestedNameRef.current) return prev;
+        lastSuggestedNameRef.current = suggestedName;
+        return suggestedName;
+      });
     }
   };
 
@@ -367,6 +378,7 @@ export function useChartDialog({
       setChartData(null);
       setChartName("");
       setSavedChartName("");
+      lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setChartLoadError(null);
