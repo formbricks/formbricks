@@ -9,7 +9,6 @@ import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/po
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
-  CHART_NOT_ENRICHED_COLOR,
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
   formatCellValue,
@@ -24,7 +23,6 @@ import {
   formatCubeColumnHeader,
   getMeasureAxisLabel,
   getTranslatedDimensionValueLabel,
-  isNotEnrichedDimensionValue,
   sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
