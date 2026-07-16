@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Sentiment",
         "field_label_sentiment_average": "Sentiment: Gemiddelde",
         "field_label_sentiment_score": "Sentimentscore",
+        "field_label_source_id": "Bron-ID",
         "field_label_source_name": "Bronnaam",
         "field_label_source_type": "Brontype",
         "field_label_surprise_count": "Emotie: Verrassing",

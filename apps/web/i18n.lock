@@ -1650,6 +1650,7 @@ checksums:
     workspace/analysis/charts/field_label_sentiment: 9ba5719c80c0136c2d0644217619aff6
     workspace/analysis/charts/field_label_sentiment_average: 6351961495851db39f8968f2995d0514
     workspace/analysis/charts/field_label_sentiment_score: 3bec3c4ec9c18ca77a9fb07963ec79da
+    workspace/analysis/charts/field_label_source_id: 134a9a7d473508c5623ac724a5ba4be9
     workspace/analysis/charts/field_label_source_name: 157675beca12efcd8ec512c5256b1a61
     workspace/analysis/charts/field_label_source_type: d1ff69af76c687eb189db72030717570
     workspace/analysis/charts/field_label_surprise_count: dc72d86e49a621972c24fc445554a38d

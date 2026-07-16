@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Duygu Durumu",
         "field_label_sentiment_average": "Duyarlılık: Ortalama",
         "field_label_sentiment_score": "Duygu Durumu Puanı",
+        "field_label_source_id": "Kaynak Kimliği",
         "field_label_source_name": "Kaynak Adı",
         "field_label_source_type": "Kaynak Türü",
         "field_label_surprise_count": "Duygu: Şaşkınlık",

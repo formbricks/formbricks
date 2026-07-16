@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Тональность",
         "field_label_sentiment_average": "Настроение: Среднее",
         "field_label_sentiment_score": "Оценка тональности",
+        "field_label_source_id": "ID источника",
         "field_label_source_name": "Название источника",
         "field_label_source_type": "Тип источника",
         "field_label_surprise_count": "Эмоция: Удивление",

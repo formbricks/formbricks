@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Sentiment",
         "field_label_sentiment_average": "Sentiment: Medelvärde",
         "field_label_sentiment_score": "Sentimentpoäng",
+        "field_label_source_id": "Käll-ID",
         "field_label_source_name": "Källnamn",
         "field_label_source_type": "Källtyp",
         "field_label_surprise_count": "Känsla: Överraskning",

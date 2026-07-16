@@ -241,6 +241,12 @@ cube(`FeedbackRecords`, {
       description: `Human-readable name of the source`,
     },
 
+    sourceId: {
+      sql: `source_id`,
+      type: `string`,
+      description: `Stable id of the source (e.g. the survey id). Group/filter to disambiguate sources with the same name.`,
+    },
+
     fieldType: {
       sql: `field_type`,
       type: `string`,

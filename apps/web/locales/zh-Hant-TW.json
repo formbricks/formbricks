@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "情感",
         "field_label_sentiment_average": "情感：平均值",
         "field_label_sentiment_score": "情感分數",
+        "field_label_source_id": "來源 ID",
         "field_label_source_name": "來源名稱",
         "field_label_source_type": "來源類型",
         "field_label_surprise_count": "情緒：驚訝",

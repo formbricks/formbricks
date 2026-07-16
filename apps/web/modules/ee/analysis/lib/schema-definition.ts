@@ -112,6 +112,12 @@ export const FEEDBACK_FIELDS = {
       description: "Human-readable name of the source",
     },
     {
+      id: "FeedbackRecords.sourceId",
+      label: "Source ID",
+      type: "string",
+      description: "Stable id of the source (e.g. the survey id).",
+    },
+    {
       id: "FeedbackRecords.fieldType",
       label: "Field Type",
       type: "string",
@@ -615,6 +621,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
     "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
+    "FeedbackRecords.sourceId": t("workspace.analysis.charts.field_label_source_id"),
     "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
     "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
     "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),

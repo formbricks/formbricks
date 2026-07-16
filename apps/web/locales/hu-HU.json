@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Hangulat",
         "field_label_sentiment_average": "Vélemény: Átlag",
         "field_label_sentiment_score": "Hangulatpontszám",
+        "field_label_source_id": "Forrásazonosító",
         "field_label_source_name": "Forrás neve",
         "field_label_source_type": "Forrás típusa",
         "field_label_surprise_count": "Érzelem: Meglepetés",

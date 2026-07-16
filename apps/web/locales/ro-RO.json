@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Sentiment",
         "field_label_sentiment_average": "Sentiment: Medie",
         "field_label_sentiment_score": "Scor de sentiment",
+        "field_label_source_id": "ID sursă",
         "field_label_source_name": "Nume sursă",
         "field_label_source_type": "Tip sursă",
         "field_label_surprise_count": "Emoție: Surpriză",

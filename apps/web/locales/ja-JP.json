@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "センチメント",
         "field_label_sentiment_average": "センチメント：平均",
         "field_label_sentiment_score": "センチメントスコア",
+        "field_label_source_id": "ソースID",
         "field_label_source_name": "ソース名",
         "field_label_source_type": "ソースタイプ",
         "field_label_surprise_count": "感情：驚き",

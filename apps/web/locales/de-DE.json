@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Stimmung",
         "field_label_sentiment_average": "Stimmung: Durchschnitt",
         "field_label_sentiment_score": "Stimmungswert",
+        "field_label_source_id": "Quellen-ID",
         "field_label_source_name": "Quellenname",
         "field_label_source_type": "Quellentyp",
         "field_label_surprise_count": "Emotion: Überraschung",

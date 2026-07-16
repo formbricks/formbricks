@@ -1713,6 +1713,7 @@
         "field_label_sentiment": "Sentiment",
         "field_label_sentiment_average": "Sentiment : Moyenne",
         "field_label_sentiment_score": "Score de sentiment",
+        "field_label_source_id": "ID source",
         "field_label_source_name": "Nom de la source",
         "field_label_source_type": "Type de source",
         "field_label_surprise_count": "Émotion : Surprise",
