@@ -552,7 +552,7 @@ describe("Tests for createSurvey", () => {
     name: "Test Survey",
     type: "app" as const,
     createdBy: mockUserId,
-    status: "inProgress" as const,
+    status: "draft" as const,
     welcomeCard: {
       enabled: true,
       headline: { default: "Welcome" },
@@ -661,6 +661,13 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when creating a non-draft app survey with no triggers", async () => {
+      await expect(
+        createSurvey(mockWorkspaceId, { ...mockCreateSurveyInput, type: "app", status: "inProgress" })
+      ).rejects.toThrow(InvalidInputError);
+      expect(prisma.survey.create).not.toHaveBeenCalled();
     });
 
     test("creates a private segment for app surveys", async () => {
