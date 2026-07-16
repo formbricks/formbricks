@@ -65,6 +65,7 @@ interface FormTargetFieldProps {
   autoMapState?: TAutoMapState;
   autoMapSourceColumn?: string;
   preview?: string;
+  disabled?: boolean;
 }
 
 export const FormTargetField = ({
@@ -77,6 +78,7 @@ export const FormTargetField = ({
   autoMapState,
   autoMapSourceColumn,
   preview,
+  disabled = false,
 }: FormTargetFieldProps) => {
   const { t } = useTranslation();
   const [isEditingFixed, setIsEditingFixed] = useState(false);
@@ -311,6 +313,7 @@ export const FormTargetField = ({
                 searchPlaceholder={t("common.search")}
                 emptyDropdownText={t("workspace.surveys.edit.no_option_found")}
                 showSearch
+                disabled={disabled}
                 comboboxClasses="h-9 w-full max-w-none [&_[role=combobox]]:h-9"
               />
             </div>
@@ -319,6 +322,7 @@ export const FormTargetField = ({
                 size="sm"
                 variant="secondary"
                 onClick={openFixedValueEditor}
+                disabled={disabled}
                 aria-label={t("workspace.unify.csv_fixed_value_action")}
                 className="shrink-0">
                 <PencilIcon className="size-3.5" />
