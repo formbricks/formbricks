@@ -102,6 +102,57 @@ const seedKeyboardSurvey = async (workspaceId: string, createdBy: string): Promi
   return survey.id;
 };
 
+/**
+ * Separate single-question survey for the picture-selection roving check (it
+ * auto-progresses, so it gets its own fixture instead of a slot in the walk).
+ * Public assets always resolve and satisfy ZStorageUrl (same trick as the axe
+ * suite's picture card).
+ */
+const seedPictureSurvey = async (
+  workspaceId: string,
+  createdBy: string,
+  baseURL: string
+): Promise<string> => {
+  const endings = [
+    {
+      id: createId(),
+      type: "endScreen" as const,
+      headline: i18nValue(ENDING_HEADLINE),
+      subheader: i18nValue("We appreciate your feedback."),
+    },
+  ] as unknown as TSurveyEnding[];
+  const questions = [
+    {
+      id: createId(),
+      type: "pictureSelection",
+      headline: i18nValue("Pick the image you prefer"),
+      required: true,
+      allowMulti: false,
+      choices: [
+        { id: createId(), imageUrl: new URL("/logo-transparent.png", baseURL).toString() },
+        { id: createId(), imageUrl: new URL("/favicon/android-chrome-192x192.png", baseURL).toString() },
+      ],
+    },
+  ];
+  const blocks = transformQuestionsToBlocks(questions as unknown as TLegacyQuestions, endings);
+
+  const survey = await prisma.survey.create({
+    data: {
+      workspaceId,
+      createdBy,
+      name: "Keyboard picture-selection survey",
+      type: "link",
+      status: "inProgress",
+      isAutoProgressingEnabled: true,
+      welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+      blocks: blocks as unknown as Prisma.InputJsonValue[],
+      endings: endings as unknown as Prisma.InputJsonValue[],
+    },
+    select: { id: true },
+  });
+  return survey.id;
+};
+
 // Off-screen stacked cards render a dummy copy of the nav button with tabindex="-1";
 // only the current card's button is focusable.
 const navButton = (page: Page, name: string) =>
@@ -122,13 +173,20 @@ test.describe("Survey keyboard interaction @slow", () => {
   // Seeded once and reused: the fixtures are per-test, so this is done lazily in
   // beforeEach (same pattern as survey-accessibility.spec.ts).
   let surveyUrl: string | undefined;
+  let pictureSurveyUrl: string | undefined;
 
-  test.beforeEach(async ({ users }) => {
+  test.beforeEach(async ({ users, baseURL }) => {
     if (surveyUrl) return;
     const user = await users.create({ skipSurveySeed: true });
     if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
     const surveyId = await seedKeyboardSurvey(user.workspaceId, user.id);
+    const pictureSurveyId = await seedPictureSurvey(
+      user.workspaceId,
+      user.id,
+      baseURL ?? "http://localhost:3000"
+    );
     surveyUrl = `/s/${surveyId}`;
+    pictureSurveyUrl = `/s/${pictureSurveyId}`;
   });
 
   test("arrows browse without selecting; Space selects and auto-progresses once", async ({ page }) => {
@@ -240,6 +298,26 @@ test.describe("Survey keyboard interaction @slow", () => {
     // Fixing the answer completes the survey.
     await page.keyboard.type("All good!");
     await navButton(page, "Finish").click();
+    await expect(page.getByText(ENDING_HEADLINE)).toBeVisible();
+  });
+
+  test("picture selection: arrows browse without selecting; Space selects and auto-progresses", async ({
+    page,
+  }) => {
+    await page.goto(pictureSurveyUrl ?? "");
+    await expect(page.getByText("Pick the image you prefer")).toBeVisible();
+
+    // First picture radio is focused on a link survey.
+    await expect.poll(async () => (await activeRadio(page)).isRadio, { timeout: 5000 }).toBe(true);
+
+    // Arrow browsing selects nothing and never advances.
+    await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(AUTO_PROGRESS_SETTLE_MS);
+    expect((await activeRadio(page)).checkedValue).toBeNull();
+    await expect(page.getByText("Pick the image you prefer")).toBeVisible();
+
+    // Space selects the focused picture and auto-progress completes the survey.
+    await page.keyboard.press("Space");
     await expect(page.getByText(ENDING_HEADLINE)).toBeVisible();
   });
 });
