@@ -1534,7 +1534,7 @@ checksums:
     workspace/analysis/charts/add_chart_to_dashboard_description: 08980a1849757e9aec21fca5881c6be4
     workspace/analysis/charts/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     workspace/analysis/charts/add_to_dashboard: 9941c3d30895bb8e25ce8d4e03d33a08
-    workspace/analysis/charts/advanced_chart_builder_config_prompt: c2fe2c1a076f27d3ae62a4db75474b0a
+    workspace/analysis/charts/advanced_chart_builder_config_prompt: 7f9c14402fde1aed759cea782bfcb6ba
     workspace/analysis/charts/ai_chart_generation: add72413077023d31590374e179d8784
     workspace/analysis/charts/ai_enable_in_settings: 426cb4525381e193e6c4dcce286e60c8
     workspace/analysis/charts/ai_instance_not_configured: 6deeb8aeaff3982d07e1d5a045e06d2d
@@ -1595,6 +1595,7 @@ checksums:
     workspace/analysis/charts/dimensions_toggle_description: 31eb28f3c83c04bbe37799758ca9f595
     workspace/analysis/charts/edit_chart_description: 822890e4b6068096e2fe8b7b78b4474f
     workspace/analysis/charts/edit_chart_title: fd3e7f8c53280bfad8f4034c055f4c71
+    workspace/analysis/charts/edit_chart_title_named: 216b4226fb611b3694bc222026722845
     workspace/analysis/charts/emotion_value_anger: 4fd64fc804c247fc3fcbc7dc147b62fe
     workspace/analysis/charts/emotion_value_disgust: e5860fbfc609c8c8686db8a18cadf932
     workspace/analysis/charts/emotion_value_fear: b7621ac47c2543dff100f55f948df8cf
@@ -1642,8 +1643,8 @@ checksums:
     workspace/analysis/charts/field_label_promoter_count: 81777f53b8067d63500314e24370dcf9
     workspace/analysis/charts/field_label_question: 0576462ce60d4263d7c482463fcc9547
     workspace/analysis/charts/field_label_question_group: b007e2cfd1262272de3260f8d14d5833
-    workspace/analysis/charts/field_label_rating_average: 923529bcb9afcd41ffe5ba2f5bbbb983
-    workspace/analysis/charts/field_label_rating_count: 719e4f6b5f22ba1ecdd55f5b17eda134
+    workspace/analysis/charts/field_label_rating_average: 04c27b457a97c3d46a6d983d7e32d18f
+    workspace/analysis/charts/field_label_rating_count: 69cda69fed73f6b7344aa92b17538660
     workspace/analysis/charts/field_label_response_id: 73375099cc976dc7203b8e27f5f709e0
     workspace/analysis/charts/field_label_sadness_count: 403dd156f90a59d1da049eda7fcd3a76
     workspace/analysis/charts/field_label_sentiment: 9ba5719c80c0136c2d0644217619aff6
@@ -1732,6 +1733,8 @@ checksums:
     workspace/analysis/charts/time_dimension_title: 9353ce9a075a0cc8c3ba7dfa9ef19a8d
     workspace/analysis/charts/time_dimension_toggle_description: 77251d8b3b564390bad8b76f56905190
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
+    workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4
+    workspace/analysis/dashboards/chart_duplicated: 52765f173bd6fd5382731f8e06e436e0
     workspace/analysis/dashboards/chart_remove_failed: 198f5c3bdd522b40b80cb7479d3051a1
     workspace/analysis/dashboards/chart_removed: 1ce20b8ee0b56bcd7d6fea2b5c1ae9fd
     workspace/analysis/dashboards/chart_restore_failed: 890c74046ed55df6f90c28cf905b7a30

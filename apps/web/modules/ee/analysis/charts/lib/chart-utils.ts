@@ -118,6 +118,45 @@ export const preparePieData = (
   return { processedData, colors };
 };
 
+/** Category key for rows produced by {@link pivotMeasuresToCategories}. */
+export const PIVOTED_MEASURE_KEY = "measure";
+/** Value key for rows produced by {@link pivotMeasuresToCategories}. */
+export const PIVOTED_VALUE_KEY = "value";
+
+/**
+ * Pivot a measure-only result row (one row with one column per measure) into one category row
+ * per measure. Rendering the raw row as N bar series leaves recharts with a single category
+ * band centered in the plot — a wide empty gap before the first bar. Pivoted, the measures
+ * become ordinary categories that fill the x-axis from the left.
+ *
+ * Missing/non-numeric values become 0 so empty measures keep a visible, hoverable slot.
+ * `formatLabel` supplies the translated measure label stored as `tooltipLabel` on each row.
+ */
+export function pivotMeasuresToCategories(
+  data: TChartDataRow[],
+  measureKeys: string[],
+  formatLabel: (measureKey: string) => string
+): TChartDataRow[] {
+  const row = data[0] ?? {};
+  // Like preparePieData: semantic buckets (sentiment counts) keep their meaning-bound colors and
+  // don't consume a categorical hue; the palette is handed out only to the remaining measures.
+  let paletteIndex = 0;
+  return measureKeys.map((key) => {
+    const num = Number(row[key]);
+    let fill = getSentimentMeasureColor(key);
+    if (!fill) {
+      fill = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
+      paletteIndex++;
+    }
+    return {
+      [PIVOTED_MEASURE_KEY]: key,
+      [PIVOTED_VALUE_KEY]: Number.isFinite(num) ? num : 0,
+      tooltipLabel: formatLabel(key),
+      fill,
+    };
+  });
+}
+
 // parseISO accepts year-only inputs (e.g. "1000" → Jan 1, 1000); require a
 // full YYYY-MM-DD prefix so numeric category labels aren't formatted as dates.
 const ISO_DATE_PREFIX = /^\d{4}-\d{2}-\d{2}/;

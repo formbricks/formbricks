@@ -5,7 +5,12 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { selectSurvey } from "@/lib/survey/service";
-import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
+import {
+  APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
+  isAppSurveyMissingTriggersToPublish,
+  stripIsDraftFromBlocks,
+  transformPrismaSurvey,
+} from "@/lib/survey/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -172,6 +177,16 @@ export async function executeV3SurveyPatch(params: {
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
   if (mediaInvalidParams.length > 0) {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
+  }
+
+  // An app survey can never be shown without a trigger, so reject setting a non-draft status with no
+  // effective triggers. Triggers only change when the patch carries a `distribution` (top-level
+  // replacement); otherwise the survey keeps its current triggers.
+  const effectiveTriggers = document.distribution ? document.distribution.triggers : currentSurvey.triggers;
+  if (isAppSurveyMissingTriggersToPublish(currentSurvey.type, document.status, effectiveTriggers)) {
+    throw new V3SurveyReferenceValidationError([
+      { name: "triggers", reason: APP_SURVEY_TRIGGER_REQUIRED_MESSAGE },
+    ]);
   }
 
   const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);
