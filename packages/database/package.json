@@ -59,6 +59,7 @@
     "generate": "node ./src/scripts/clean-generated-prisma.mjs && prisma generate",
     "lint": "eslint ./src --fix",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
