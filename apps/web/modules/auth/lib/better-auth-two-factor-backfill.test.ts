@@ -13,6 +13,8 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("better-auth/api", () => ({ isAPIError: vi.fn() }));
 
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
+
 vi.mock("@/modules/auth/lib/auth", () => ({
   auth: { $context: Promise.resolve({ secretConfig: "ba-secret-config" }) },
 }));
@@ -90,5 +92,11 @@ describe("twoFactorBackfillAfterHandler", () => {
     } as any);
     await twoFactorBackfillAfterHandler(ctx());
     expect(prisma.twoFactor.upsert).not.toHaveBeenCalled();
+  });
+
+  test("a heal failure is swallowed and never blocks sign-in", async () => {
+    vi.mocked(prisma.twoFactor.upsert).mockRejectedValue(new Error("ON CONFLICT constraint missing"));
+    // Must resolve, not reject — the sign-in it runs inside must not 500.
+    await expect(twoFactorBackfillAfterHandler(ctx())).resolves.toBeUndefined();
   });
 });

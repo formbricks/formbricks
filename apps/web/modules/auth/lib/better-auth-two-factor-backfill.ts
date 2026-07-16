@@ -1,6 +1,7 @@
 import "server-only";
 import { isAPIError } from "better-auth/api";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { buildReencodedTwoFactorData } from "@/modules/auth/lib/cutover/reencode-two-factor";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 
@@ -31,35 +32,42 @@ export const twoFactorBackfillAfterHandler = async (ctx: AuthHookContext): Promi
   const email = typeof body?.email === "string" ? body.email.trim() : undefined;
   if (!email) return;
 
-  // One indexed lookup on each successful password sign-in (a small, deliberate cost for this
-  // temporary heal shim — it can be removed together with the legacy `User.twoFactor*` columns once
-  // all enrollments are migrated). Case-insensitive so we match the same account the sign-in did,
-  // whatever the stored email case; emails are unique, so this resolves to exactly one user.
-  const user = await prisma.user.findFirst({
-    where: { email: { equals: email, mode: "insensitive" } },
-    select: { id: true, twoFactorEnabled: true, twoFactorSecret: true, backupCodes: true },
-  });
-  // Only a legacy-enrolled user (2FA on + legacy secret present) can be missing a BA row.
-  if (!user?.twoFactorEnabled || !user.twoFactorSecret) return;
+  // Best-effort: this heal is a convenience, so a failure here (transient DB error, drift, etc.) must
+  // never break the sign-in it runs inside. Swallow and log; the user still reaches the 2FA prompt, and
+  // a persistent failure surfaces as the pre-existing "TOTP not enabled" rather than a 500.
+  try {
+    // One indexed lookup on each successful password sign-in (a small, deliberate cost for this
+    // temporary heal shim — it can be removed together with the legacy `User.twoFactor*` columns once
+    // all enrollments are migrated). Case-insensitive so we match the same account the sign-in did,
+    // whatever the stored email case; emails are unique, so this resolves to exactly one user.
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true, twoFactorEnabled: true, twoFactorSecret: true, backupCodes: true },
+    });
+    // Only a legacy-enrolled user (2FA on + legacy secret present) can be missing a BA row.
+    if (!user?.twoFactorEnabled || !user.twoFactorSecret) return;
 
-  const existing = await prisma.twoFactor.findUnique({
-    where: { userId: user.id },
-    select: { id: true },
-  });
-  if (existing) return;
+    const existing = await prisma.twoFactor.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    if (existing) return;
 
-  // Lazy import: this module is loaded eagerly as part of the `hooks.after` chain in auth.ts, so a
-  // top-level `auth` import would be circular. We only need it once we're actually healing a row.
-  const { auth } = await import("@/modules/auth/lib/auth");
-  const { secretConfig } = await auth.$context;
-  const twoFactorRow = await buildReencodedTwoFactorData(
-    user.twoFactorSecret,
-    user.backupCodes,
-    secretConfig
-  );
-  await prisma.twoFactor.upsert({
-    where: { userId: user.id },
-    update: { ...twoFactorRow, verified: true },
-    create: { userId: user.id, ...twoFactorRow, verified: true },
-  });
+    // Lazy import: this module is loaded eagerly as part of the `hooks.after` chain in auth.ts, so a
+    // top-level `auth` import would be circular. We only need it once we're actually healing a row.
+    const { auth } = await import("@/modules/auth/lib/auth");
+    const { secretConfig } = await auth.$context;
+    const twoFactorRow = await buildReencodedTwoFactorData(
+      user.twoFactorSecret,
+      user.backupCodes,
+      secretConfig
+    );
+    await prisma.twoFactor.upsert({
+      where: { userId: user.id },
+      update: { ...twoFactorRow, verified: true },
+      create: { userId: user.id, ...twoFactorRow, verified: true },
+    });
+  } catch (error) {
+    logger.warn({ error }, "Two-factor credential backfill failed; continuing sign-in");
+  }
 };
