@@ -1658,6 +1658,7 @@
         "dimensions_toggle_description": "Groupe les données par sentiment, type de question et autres dimensions.",
         "edit_chart_description": "Consultez et modifiez la configuration de votre graphique.",
         "edit_chart_title": "Modifier le graphique",
+        "edit_chart_title_named": "Modifier \"{name}\"",
         "emotion_value_anger": "Colère",
         "emotion_value_disgust": "Dégoût",
         "emotion_value_fear": "Peur",

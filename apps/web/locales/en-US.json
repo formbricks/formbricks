@@ -1658,6 +1658,7 @@
         "dimensions_toggle_description": "Group data by sentiment, question type, and other dimensions.",
         "edit_chart_description": "View and edit your chart configuration.",
         "edit_chart_title": "Edit Chart",
+        "edit_chart_title_named": "Edit \"{name}\"",
         "emotion_value_anger": "Anger",
         "emotion_value_disgust": "Disgust",
         "emotion_value_fear": "Fear",
