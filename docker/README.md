@@ -55,6 +55,23 @@ starts SpiceDB on `127.0.0.1:50051`. Run the isolated persistence test with:
 pnpm authzed:smoke
 ```
 
+Run the read-only application client health check with:
+
+```bash
+pnpm authzed:health
+```
+
+The health command loads the repository `.env`, accepts an empty schema as healthy, prints exactly one JSON
+result, and exits `0` only for a healthy connection. Disabled, invalid, authentication, permission, timeout,
+overload, unavailable, and unexpected states exit `1` with a stable `authzed_*` code. It never prints the
+token, schema, raw SDK error, or stack trace. It is intentionally not exposed through a browser or HTTP route,
+and SpiceDB availability does not affect the normal Formbricks `/health` result. Restart Formbricks after
+changing AuthZed configuration.
+
+`AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. Unset means disabled and secure
+TLS, respectively. `AUTHZED_ENDPOINT` is a bare `host:port` (including bracketed IPv6) with no scheme or path;
+`AUTHZED_CONSISTENCY` accepts `minimize_latency` (the default) or `fully_consistent`.
+
 To use the optional authenticated grpcui browser in development:
 
 ```bash

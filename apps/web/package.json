@@ -22,6 +22,7 @@
     "i18n:generate": "dotenv -e ../../.env -- npx lingo.dev@latest run && dotenv -e ../../.env -- npx lingo.dev@latest lockfile --force"
   },
   "dependencies": {
+    "@authzed/authzed-node": "1.6.1",
     "@better-auth/oauth-provider": "1.6.18",
     "@boxyhq/saml-jackson": "26.2.0",
     "@cubejs-client/core": "1.6.6",
@@ -42,6 +43,7 @@
     "@formbricks/storage": "workspace:*",
     "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@grpc/grpc-js": "1.14.4",
     "@hookform/resolvers": "5.2.2",
     "@json2csv/node": "7.0.6",
     "@lexical/code": "0.41.0",

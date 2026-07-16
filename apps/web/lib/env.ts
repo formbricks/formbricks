@@ -201,6 +201,102 @@ const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
 const ZAuthzedBoolean = z.enum(["true", "false", "1", "0"]);
+const ZAuthzedConsistency = z.enum(["minimize_latency", "fully_consistent"]).optional();
+const ZAuthzedToken = z
+  .string()
+  .refine((value) => value.trim().length > 0, {
+    message: "AUTHZED_TOKEN must not be empty",
+  })
+  .optional();
+
+const isValidAuthzedEndpoint = (value: string): boolean => {
+  if (/\s/.test(value) || /[\/@?#]/.test(value)) {
+    return false;
+  }
+
+  const portMatch = value.startsWith("[") ? /^\[[^\]]+\]:(\d+)$/.exec(value) : /^[^:]+:(\d+)$/.exec(value);
+
+  if (!portMatch) {
+    return false;
+  }
+
+  const port = Number(portMatch[1]);
+
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    return false;
+  }
+
+  try {
+    const endpoint = new URL(`http://${value}`);
+
+    return (
+      endpoint.hostname.length > 0 &&
+      endpoint.username === "" &&
+      endpoint.password === "" &&
+      endpoint.pathname === "/" &&
+      endpoint.search === "" &&
+      endpoint.hash === ""
+    );
+  } catch {
+    return false;
+  }
+};
+
+const ZAuthzedEndpoint = z
+  .string()
+  .refine(isValidAuthzedEndpoint, {
+    message: "AUTHZED_ENDPOINT must be a valid host:port without a URL scheme or path",
+  })
+  .optional();
+const ZAuthzedSystemKey = z
+  .string()
+  .regex(/^(?=.{3,64}$)[a-z_](?:[a-z0-9_]*[a-z0-9])$/, {
+    message: "AUTHZED_SYSTEM_KEY must be a valid 3-64 character SpiceDB identifier",
+  })
+  .optional();
+
+const ZAuthzedConfigurationEnv = z.object({
+  AUTHZED_CONSISTENCY: ZAuthzedConsistency,
+  AUTHZED_ENABLED: ZAuthzedBoolean.optional(),
+  AUTHZED_ENDPOINT: ZAuthzedEndpoint,
+  AUTHZED_INSECURE: ZAuthzedBoolean.optional(),
+  AUTHZED_SYSTEM_KEY: ZAuthzedSystemKey,
+  AUTHZED_TOKEN: ZAuthzedToken,
+});
+
+type TAuthzedConfigurationEnv = z.infer<typeof ZAuthzedConfigurationEnv>;
+
+const addAuthzedEnvIssue = (
+  ctx: z.RefinementCtx,
+  path: keyof TAuthzedConfigurationEnv,
+  message: string
+): void => {
+  ctx.addIssue({
+    code: "custom",
+    path: [path],
+    message,
+  });
+};
+
+const validateAuthzedConfiguration = (values: TAuthzedConfigurationEnv, ctx: z.RefinementCtx): void => {
+  const isEnabled = values.AUTHZED_ENABLED === "true" || values.AUTHZED_ENABLED === "1";
+
+  if (!isEnabled) {
+    return;
+  }
+
+  if (!values.AUTHZED_ENDPOINT) {
+    addAuthzedEnvIssue(ctx, "AUTHZED_ENDPOINT", "AUTHZED_ENDPOINT is required when AuthZed is enabled");
+  }
+
+  if (!values.AUTHZED_TOKEN) {
+    addAuthzedEnvIssue(ctx, "AUTHZED_TOKEN", "AUTHZED_TOKEN is required when AuthZed is enabled");
+  }
+
+  if (!values.AUTHZED_SYSTEM_KEY) {
+    addAuthzedEnvIssue(ctx, "AUTHZED_SYSTEM_KEY", "AUTHZED_SYSTEM_KEY is required when AuthZed is enabled");
+  }
+};
 
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
@@ -226,12 +322,12 @@ const parsedEnv = createEnv({
     DEBUG: z.string().optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
-    AUTHZED_CONSISTENCY: ZOptionalNonEmptyString,
+    AUTHZED_CONSISTENCY: ZAuthzedConsistency,
     AUTHZED_ENABLED: ZAuthzedBoolean.optional(),
-    AUTHZED_ENDPOINT: ZOptionalNonEmptyString,
+    AUTHZED_ENDPOINT: ZAuthzedEndpoint,
     AUTHZED_INSECURE: ZAuthzedBoolean.optional(),
-    AUTHZED_SYSTEM_KEY: ZOptionalNonEmptyString,
-    AUTHZED_TOKEN: ZOptionalNonEmptyString,
+    AUTHZED_SYSTEM_KEY: ZAuthzedSystemKey,
+    AUTHZED_TOKEN: ZAuthzedToken,
     // Cloud-only: when "1", the personal-email sign-up block also applies to invited users.
     // Default (unset/"0") exempts invites — see isSignupEmailDomainBlocked.
     SIGNUP_DOMAIN_CHECK_ON_INVITES: z.enum(["1", "0"]).optional(),
@@ -531,6 +627,13 @@ const parsedEnv = createEnv({
   },
 });
 
-export const env = ZAIConfigurationEnv.superRefine(validateActiveAIProviderConfiguration)
-  .transform(() => parsedEnv)
-  .parse(parsedEnv);
+const ZPostParseEnv = ZAIConfigurationEnv.extend(ZAuthzedConfigurationEnv.shape)
+  .superRefine(validateActiveAIProviderConfiguration)
+  .superRefine(validateAuthzedConfiguration);
+const postParseResult = ZPostParseEnv.safeParse(parsedEnv);
+
+if (!postParseResult.success) {
+  throwEnvValidationError(postParseResult.error.issues);
+}
+
+export const env = parsedEnv;

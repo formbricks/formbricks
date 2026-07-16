@@ -52,7 +52,9 @@ const nextConfig = {
   // Enable source maps only when uploading to Sentry (CI/production); skip for faster local builds
   productionBrowserSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
   serverExternalPackages: [
+    "@authzed/authzed-node",
     "@aws-sdk",
+    "@grpc/grpc-js",
     "@opentelemetry/api",
     "@opentelemetry/auto-instrumentations-node",
     "@opentelemetry/exporter-metrics-otlp-http",
