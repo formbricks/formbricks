@@ -44,10 +44,15 @@ interface NormalizedChoiceValue {
 }
 
 /**
- * Selected choice values arrive as labels localized to the response language. The label
- * is stored as submitted; cross-language consolidation relies on value_id (ENG-1673),
- * the stable id of the matched choice. Values that match no choice (an "other" free-text
- * answer, or a choice label edited since submission) carry no id.
+ * Normalize a choice answer for storage.
+ *
+ * - value_text = the choice's DEFAULT-language label (canonical) for any selection that matched
+ *   a known choice, so the same option reads and groups consistently regardless of the response
+ *   language. Unmatched values ("other" free text, edited labels) are stored as submitted.
+ * - value_id   = stable cross-language grouping id consumed by charts. Set only for a
+ *   single-value answer whose label matched a known choice. Multi-value arrays (ENG-1702)
+ *   cannot carry multiple ids so they carry none, but each matched element is still
+ *   canonicalized to its default-language label.
  */
 const normalizeChoiceValue = (
   choices: { id: string; label: TSurveyElementChoice["label"] }[] | undefined,
@@ -58,7 +63,20 @@ const normalizeChoiceValue = (
 
   if (typeof value === "string") {
     const choice = findChoiceByLabel(choices, value, language);
-    return choice ? { value, valueId: choice.id } : { value };
+    // Canonicalize to the default-language label; value_id is the stable grouping key.
+    return choice ? { value: getChoiceLabel(choice, "default"), valueId: choice.id } : { value };
+  }
+
+  if (Array.isArray(value)) {
+    // Multi-select: canonicalize each matched selection to its default-language label so the
+    // set reads consistently across languages (unmatched "other" entries pass through as-is).
+    return {
+      value: value.map((entry) => {
+        if (typeof entry !== "string") return entry;
+        const choice = findChoiceByLabel(choices, entry, language);
+        return choice ? getChoiceLabel(choice, "default") : entry;
+      }),
+    };
   }
 
   return { value };
@@ -244,6 +262,39 @@ const expandRankingToRecords = (
 };
 
 /**
+ * Normalize an element's answer for storage. Choice elements canonicalize labels and resolve
+ * value_id via normalizeChoiceValue; every other element type stores the value as submitted.
+ *
+ * "Other" free-text answers never match a choice label, so they'd otherwise carry no
+ * value_id and each distinct free-text string would chart as its own bucket. When the
+ * element offers an "other" option, group them all under the stable "other" choice id
+ * (the survey convention: the other option's choice id is "other").
+ */
+const normalizeElementValue = (
+  element: TSurveyElement | undefined,
+  value: TResponseDataValue,
+  lookupLanguage: string
+): NormalizedChoiceValue => {
+  const isChoiceElement =
+    element &&
+    (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+      element.type === TSurveyElementTypeEnum.MultipleChoiceMulti);
+  if (!isChoiceElement) return { value };
+
+  const normalized = normalizeChoiceValue(element.choices, value, lookupLanguage);
+
+  if (
+    !normalized.valueId &&
+    typeof value === "string" &&
+    (element.otherOptionPlaceholder !== undefined || element.choices.some((c) => c.id === "other"))
+  ) {
+    normalized.valueId = "other";
+  }
+
+  return normalized;
+};
+
+/**
  * Transform a Formbricks survey response into FeedbackRecord payloads.
  * Called from the pipeline handler when a response is created/finished.
  *
@@ -287,14 +338,7 @@ export function transformResponseToFeedbackRecords(
 
     const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
 
-    const isChoiceElement =
-      element &&
-      (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-        element.type === TSurveyElementTypeEnum.MultipleChoiceMulti);
-    const normalized = isChoiceElement
-      ? normalizeChoiceValue(element.choices, value, lookupLanguage)
-      : { value };
-
+    const normalized = normalizeElementValue(element, value, lookupLanguage);
     const valueFields = convertValueToHubFields(normalized.value, mapping.hubFieldType);
 
     feedbackRecords.push({

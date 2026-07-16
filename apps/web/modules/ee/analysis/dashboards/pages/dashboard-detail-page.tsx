@@ -49,7 +49,10 @@ async function executeWidgetQuery(
       userId,
       source: "dashboards.widget",
     });
-    return { data: Array.isArray(data) ? data : [], query };
+    return {
+      data: Array.isArray(data) ? data : [],
+      query,
+    };
   } catch (error) {
     logger.error(error, "Failed to load dashboard widget data");
     return { error: DASHBOARD_WIDGET_LOAD_ERROR };

@@ -71,6 +71,27 @@ export const preparePieData = (
   return { processedData, colors };
 };
 
+export const PIE_MEASURE_NAME_KEY = "__measureName";
+export const PIE_MEASURE_VALUE_KEY = "__measureValue";
+
+/**
+ * Pivot several measures (one/few rows, N measure columns) into one row per measure, so a pie
+ * chart with multiple measures and no dimension renders a slice per measure instead of only the
+ * first one. Each measure is summed across the given rows.
+ */
+export const prepareMeasureSliceData = (
+  rows: TChartDataRow[],
+  measureKeys: string[],
+  labelFor: (key: string) => string
+): TChartDataRow[] =>
+  measureKeys.map((key) => ({
+    [PIE_MEASURE_NAME_KEY]: labelFor(key),
+    [PIE_MEASURE_VALUE_KEY]: rows.reduce(
+      (sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0),
+      0
+    ),
+  }));
+
 /** Category key for rows produced by {@link pivotMeasuresToCategories}. */
 export const PIVOTED_MEASURE_KEY = "measure";
 /** Value key for rows produced by {@link pivotMeasuresToCategories}. */

@@ -112,6 +112,12 @@ export const FEEDBACK_FIELDS = {
       description: "Human-readable name of the source",
     },
     {
+      id: "FeedbackRecords.sourceId",
+      label: "Source ID",
+      type: "string",
+      description: "Stable id of the source (e.g. the survey id).",
+    },
+    {
       id: "FeedbackRecords.fieldType",
       label: "Field Type",
       type: "string",
@@ -188,6 +194,13 @@ export const FEEDBACK_FIELDS = {
       type: "string",
       description:
         "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
+    },
+    {
+      id: "FeedbackRecords.valueId",
+      label: "Value (Option)",
+      type: "string",
+      description:
+        "Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.",
     },
     {
       id: "FeedbackRecords.valueBoolean",
@@ -524,6 +537,7 @@ export function sortRowsByEnumDimension<T extends Record<string, unknown>>(
  * free-text dimensions (e.g. valueText) are intentionally excluded.
  */
 export const SELECTABLE_VALUE_DIMENSION_IDS = [
+  "FeedbackRecords.sourceId",
   "FeedbackRecords.sourceName",
   "FeedbackRecords.sourceType",
   "FeedbackRecords.language",
@@ -608,6 +622,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
     "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
+    "FeedbackRecords.sourceId": t("workspace.analysis.charts.field_label_source_id"),
     "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
     "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
     "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),
