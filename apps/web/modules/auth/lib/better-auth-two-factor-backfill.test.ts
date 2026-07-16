@@ -6,7 +6,7 @@ import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    user: { findUnique: vi.fn() },
+    user: { findFirst: vi.fn() },
     twoFactor: { findUnique: vi.fn(), upsert: vi.fn() },
   },
 }));
@@ -38,7 +38,7 @@ describe("twoFactorBackfillAfterHandler", () => {
       secret: "ba-secret",
       backupCodes: "ba-codes",
     });
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: "user123",
       twoFactorEnabled: true,
       twoFactorSecret: "encrypted_secret",
@@ -64,14 +64,14 @@ describe("twoFactorBackfillAfterHandler", () => {
 
   test("no-op on a non-sign-in path", async () => {
     await twoFactorBackfillAfterHandler(ctx({ path: "/two-factor/verify-totp" }));
-    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(prisma.user.findFirst).not.toHaveBeenCalled();
     expect(prisma.twoFactor.upsert).not.toHaveBeenCalled();
   });
 
   test("no-op on a failed sign-in (APIError) — never a pre-auth write", async () => {
     vi.mocked(isAPIError).mockReturnValue(true);
     await twoFactorBackfillAfterHandler(ctx({ context: { returned: { message: "bad password" } } }));
-    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(prisma.user.findFirst).not.toHaveBeenCalled();
     expect(prisma.twoFactor.upsert).not.toHaveBeenCalled();
   });
 
@@ -82,7 +82,7 @@ describe("twoFactorBackfillAfterHandler", () => {
   });
 
   test("no-op for a non-2FA / SSO user (no legacy secret or flag off)", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: "sso1",
       twoFactorEnabled: false,
       twoFactorSecret: null,

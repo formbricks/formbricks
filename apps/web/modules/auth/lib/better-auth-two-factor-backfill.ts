@@ -28,11 +28,15 @@ export const twoFactorBackfillAfterHandler = async (ctx: AuthHookContext): Promi
   if (isAPIError(returned)) return;
 
   const body = ctx.body as { email?: unknown } | undefined;
-  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : undefined;
+  const email = typeof body?.email === "string" ? body.email.trim() : undefined;
   if (!email) return;
 
-  const user = await prisma.user.findUnique({
-    where: { email },
+  // One indexed lookup on each successful password sign-in (a small, deliberate cost for this
+  // temporary heal shim — it can be removed together with the legacy `User.twoFactor*` columns once
+  // all enrollments are migrated). Case-insensitive so we match the same account the sign-in did,
+  // whatever the stored email case; emails are unique, so this resolves to exactly one user.
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
     select: { id: true, twoFactorEnabled: true, twoFactorSecret: true, backupCodes: true },
   });
   // Only a legacy-enrolled user (2FA on + legacy secret present) can be missing a BA row.
