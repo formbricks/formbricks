@@ -15,6 +15,7 @@ import {
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
 import {
+  isDisplayIdUniqueConstraintError,
   isPrismaKnownRequestError,
   isSingleUseIdUniqueConstraintError,
 } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
@@ -119,11 +120,7 @@ export const createResponse = async (
     return buildClientResponse(responsePrisma, contact);
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
-      if (
-        error.code === "P2002" &&
-        Array.isArray(error.meta?.target) &&
-        error.meta.target.includes("displayId")
-      ) {
+      if (isDisplayIdUniqueConstraintError(error)) {
         throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
       }
       if (isSingleUseIdUniqueConstraintError(error)) {
