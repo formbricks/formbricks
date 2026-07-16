@@ -68,6 +68,9 @@ export const twoFactorBackfillAfterHandler = async (ctx: AuthHookContext): Promi
       create: { userId: user.id, ...twoFactorRow, verified: true },
     });
   } catch (error) {
-    logger.warn({ error }, "Two-factor credential backfill failed; continuing sign-in");
+    logger.warn(
+      { error: error instanceof Error ? error.message : error },
+      "Two-factor credential backfill failed; continuing sign-in"
+    );
   }
 };
