@@ -1796,6 +1796,8 @@
       },
       "dashboards": {
         "add_count_charts": "新增 {count} 個圖表",
+        "chart_duplicate_failed": "圖表複製失敗",
+        "chart_duplicated": "圖表已複製並新增至儀表板",
         "chart_remove_failed": "移除圖表失敗",
         "chart_removed": "圖表已從儀表板移除",
         "chart_restore_failed": "還原圖表失敗",

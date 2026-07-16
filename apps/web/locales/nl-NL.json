@@ -1796,6 +1796,8 @@
       },
       "dashboards": {
         "add_count_charts": "{count} grafiek(en) toevoegen",
+        "chart_duplicate_failed": "Dupliceren van grafiek mislukt",
+        "chart_duplicated": "Grafiek gedupliceerd en toegevoegd aan dashboard",
         "chart_remove_failed": "Grafiek verwijderen mislukt",
         "chart_removed": "Grafiek verwijderd van dashboard",
         "chart_restore_failed": "Grafiek herstellen mislukt",

@@ -1796,6 +1796,8 @@
       },
       "dashboards": {
         "add_count_charts": "Lägg till {count} diagram",
+        "chart_duplicate_failed": "Misslyckades med att duplicera diagram",
+        "chart_duplicated": "Diagram duplicerat och tillagt på instrumentpanelen",
         "chart_remove_failed": "Misslyckades med att ta bort diagram",
         "chart_removed": "Diagram borttaget från instrumentpanelen",
         "chart_restore_failed": "Misslyckades med att återställa diagram",
