@@ -164,4 +164,60 @@ describe("2FA secret re-encode (real Postgres)", () => {
     expect(second.skipped).toBe(1);
     expect(await prisma.twoFactor.count({ where: { userId: user.id } })).toBe(1);
   });
+
+  // ENG-1824: a user enrolled on the legacy flow has 2FA + a legacy backup code but NO `TwoFactor`
+  // row. On their next password sign-in the self-heal must materialize the row from their EXISTING
+  // (older) secret + backup codes — no migration run, no re-enrollment — so one of the codes they
+  // saved back then still verifies. Drives the real `hooks.after` heal (not a hand-written row) and
+  // the real BA verify-backup-code, end to end.
+  test("a legacy 2FA user's OLD backup code verifies after the sign-in self-heal (no pre-existing row)", async () => {
+    authenticator.options = { digits: 6, step: 30 };
+    const password = "Legacy-Heal1!";
+    const fbSecret = authenticator.generateSecret(20);
+    // Codes as the legacy setup stored them: bare 10-char hex, encrypted with ENCRYPTION_KEY.
+    const bareCodes = ["a1b2c3d4e5", "0f1e2d3c4b"];
+    const user = await prisma.user.create({
+      data: {
+        email: "legacy-heal-backup@example.com",
+        name: "LegacyHealBackup",
+        emailVerified: true,
+        password: await hashSecret(password),
+        twoFactorEnabled: true,
+        twoFactorSecret: symmetricEncrypt(fbSecret, ENCRYPTION_KEY),
+        backupCodes: symmetricEncrypt(JSON.stringify(bareCodes), ENCRYPTION_KEY),
+      },
+    });
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        type: "credential",
+        provider: "credential",
+        providerAccountId: user.id,
+        password: user.password!,
+      },
+    });
+
+    // No TwoFactor row yet — the heal is the only thing that can create it.
+    expect(await prisma.twoFactor.count({ where: { userId: user.id } })).toBe(0);
+
+    // Password step: BA returns the 2FA challenge (no session yet) and the after-hook heal runs.
+    const challenge = await auth.api.signInEmail({
+      body: { email: "legacy-heal-backup@example.com", password },
+      asResponse: true,
+    });
+    expect(challenge.status).toBe(200);
+    expect(await prisma.session.count()).toBe(0);
+
+    // The heal materialized a verified row from the legacy columns.
+    const healed = await prisma.twoFactor.findUnique({ where: { userId: user.id } });
+    expect(healed?.verified).toBe(true);
+
+    // The user enters an OLD backup code in the displayed hyphenated form; BA exact-matches it and
+    // promotes the partial session to a full one.
+    await auth.api.verifyBackupCode({
+      body: { code: "a1b2c-3d4e5" },
+      headers: { cookie: allCookies(challenge) },
+    });
+    expect(await prisma.session.count()).toBe(1);
+  });
 });
