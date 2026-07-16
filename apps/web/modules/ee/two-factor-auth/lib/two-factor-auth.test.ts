@@ -18,7 +18,7 @@ vi.mock("@formbricks/database", () => ({
       deleteMany: vi.fn(),
     },
     // Runs the passed prisma operations; the individual mocks above record their own calls.
-    $transaction: vi.fn((ops) => Promise.resolve(ops)),
+    $transaction: vi.fn((ops) => (Array.isArray(ops) ? Promise.all(ops) : Promise.resolve(ops))),
   },
 }));
 
