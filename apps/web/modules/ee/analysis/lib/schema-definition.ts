@@ -537,6 +537,7 @@ export function sortRowsByEnumDimension<T extends Record<string, unknown>>(
  * free-text dimensions (e.g. valueText) are intentionally excluded.
  */
 export const SELECTABLE_VALUE_DIMENSION_IDS = [
+  "FeedbackRecords.sourceId",
   "FeedbackRecords.sourceName",
   "FeedbackRecords.sourceType",
   "FeedbackRecords.language",
