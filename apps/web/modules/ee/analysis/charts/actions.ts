@@ -29,7 +29,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { splitMultiSelectRows } from "@/modules/ee/analysis/charts/lib/multi-select-split";
+import { type TCubeRow, splitMultiSelectRows } from "@/modules/ee/analysis/charts/lib/multi-select-split";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { isSelectableValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
@@ -56,6 +56,133 @@ function extractMemberEqualsValue(filters: TCubeFilter[], member: string): strin
 const getChoiceLabelDefault = (choice: { label: TSurveyElementChoice["label"] }): string =>
   getTextContent(getLocalizedValue(choice.label, "default"));
 
+interface TResolvedElement {
+  elementId: string;
+  surveyId: string;
+}
+
+interface TOptionGroupingResult {
+  rewrittenQuery: TChartQuery;
+  optionLabels?: Record<string, string>;
+  splitMultiSelect?: boolean;
+}
+
+/** Find the mapping that owns this elementId and return its element/survey pair. */
+const resolveElementByFieldId = async (
+  fieldId: string,
+  workspaceId: string
+): Promise<TResolvedElement | undefined> => {
+  const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
+  for (const source of feedbackSources) {
+    const mapping = source.formbricksMappings.find((m) => m.elementId === fieldId);
+    if (mapping) {
+      return { elementId: fieldId, surveyId: mapping.surveyId };
+    }
+  }
+  return undefined;
+};
+
+/**
+ * A mapping's effective label is customFieldLabel if set, otherwise the element's
+ * default-language headline (mirroring how transform.ts computes field_label on ingest).
+ */
+const getMappingEffectiveLabel = async (
+  mapping: { elementId: string; surveyId: string; customFieldLabel?: string | null },
+  loadSurvey: (surveyId: string) => Promise<Awaited<ReturnType<typeof getSurvey>> | undefined>
+): Promise<string | undefined> => {
+  // Fast path: customFieldLabel is already stored on the mapping. Even if it doesn't match,
+  // skip the survey load because the effective label is the custom one, not the headline.
+  if (mapping.customFieldLabel !== null && mapping.customFieldLabel !== undefined) {
+    return mapping.customFieldLabel;
+  }
+
+  const survey = await loadSurvey(mapping.surveyId);
+  if (!survey) return undefined;
+  const elements = getElementsFromBlocks(survey.blocks);
+  const element = elements.find((el) => el.id === mapping.elementId);
+  if (!element) return undefined;
+  return getTextContent(getLocalizedValue(element.headline ?? {}, "default"));
+};
+
+/**
+ * Users filter by "Question" (fieldLabel) rather than the internal fieldId, so we resolve the
+ * label → elementId by matching each mapping's effective label. If zero or multiple mappings
+ * share the same label (ambiguous), returns undefined rather than guessing.
+ */
+const resolveElementByFieldLabel = async (
+  fieldLabelFilter: string,
+  workspaceId: string
+): Promise<TResolvedElement | undefined> => {
+  const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
+
+  // Dedupe survey loads so we only call getSurvey once per distinct surveyId.
+  const surveyCache = new Map<string, Awaited<ReturnType<typeof getSurvey>>>();
+  const loadSurvey = async (surveyId: string) => {
+    if (!surveyCache.has(surveyId)) {
+      surveyCache.set(surveyId, await getSurvey(surveyId));
+    }
+    return surveyCache.get(surveyId);
+  };
+
+  // Collect candidates: mappings whose effective label exactly matches the filter value.
+  const candidates: TResolvedElement[] = [];
+  for (const source of feedbackSources) {
+    for (const mapping of source.formbricksMappings) {
+      const effectiveLabel = await getMappingEffectiveLabel(mapping, loadSurvey);
+      if (effectiveLabel === fieldLabelFilter) {
+        candidates.push({ elementId: mapping.elementId, surveyId: mapping.surveyId });
+      }
+    }
+  }
+
+  // Ambiguity guard: if zero or multiple mappings share this label, do not guess.
+  return candidates.length === 1 ? candidates[0] : undefined;
+};
+
+/**
+ * MultipleChoiceSingle: effective dimension is valueId. Ensure the dimension is valueId
+ * regardless of what the user picked (keep valueId as-is, swap valueText for it) and build
+ * the choice-id → default-language label map for the renderer.
+ */
+const buildSingleChoiceRewrite = (
+  query: TChartQuery,
+  dimensions: string[],
+  element: { choices: { id: string; label: TSurveyElementChoice["label"] }[] }
+): TOptionGroupingResult => {
+  const optionLabels: Record<string, string> = {};
+  for (const choice of element.choices) {
+    optionLabels[choice.id] = getChoiceLabelDefault(choice);
+  }
+
+  const rewrittenQuery: TChartQuery = {
+    ...query,
+    dimensions: dimensions.map((d) => (d === "FeedbackRecords.valueText" ? "FeedbackRecords.valueId" : d)),
+  };
+
+  return { rewrittenQuery, optionLabels };
+};
+
+/**
+ * MultipleChoiceMulti: effective dimension is valueText — no per-option value_id is stored
+ * for multi-select yet (blocked on a hub change). If the user selected valueId, swap it back
+ * to valueText so Cube groups by the joined text string that the splitter can parse.
+ */
+const buildMultiChoiceRewrite = (
+  query: TChartQuery,
+  dimensions: string[],
+  hasValueId: boolean
+): TOptionGroupingResult => {
+  const rewrittenQuery: TChartQuery = hasValueId
+    ? {
+        ...query,
+        dimensions: dimensions.map((d) =>
+          d === "FeedbackRecords.valueId" ? "FeedbackRecords.valueText" : d
+        ),
+      }
+    : query;
+  return { rewrittenQuery, splitMultiSelect: true };
+};
+
 /**
  * When a query groups by either `FeedbackRecords.valueText` or `FeedbackRecords.valueId`, and a
  * `FeedbackRecords.fieldId equals <id>` or `FeedbackRecords.fieldLabel equals <label>` filter is
@@ -81,142 +208,52 @@ const getChoiceLabelDefault = (choice: { label: TSurveyElementChoice["label"] })
 async function resolveOptionGrouping(
   query: TChartQuery,
   workspaceId: string
-): Promise<{
-  rewrittenQuery: TChartQuery;
-  optionLabels?: Record<string, string>;
-  splitMultiSelect?: boolean;
-}> {
-  const dimensions = query.dimensions;
-  const hasValueText = dimensions?.includes("FeedbackRecords.valueText") ?? false;
-  const hasValueId = dimensions?.includes("FeedbackRecords.valueId") ?? false;
+): Promise<TOptionGroupingResult> {
+  const dimensions = query.dimensions ?? [];
+  const hasValueText = dimensions.includes("FeedbackRecords.valueText");
+  const hasValueId = dimensions.includes("FeedbackRecords.valueId");
   if (!hasValueText && !hasValueId) {
     return { rewrittenQuery: query };
   }
 
-  const fieldId = extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldId");
-
   // ── Resolve element via fieldId (preferred) or fieldLabel (fallback) ──────
-  let resolvedElementId: string | undefined;
-  let resolvedSurveyId: string | undefined;
+  const fieldId = extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldId");
+  const fieldLabelFilter = fieldId
+    ? undefined
+    : extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldLabel");
 
+  let resolved: TResolvedElement | undefined;
   if (fieldId) {
-    // Existing path: fieldId filter is present — find the survey that owns this element.
-    const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
-    for (const source of feedbackSources) {
-      const mapping = source.formbricksMappings.find((m) => m.elementId === fieldId);
-      if (mapping) {
-        resolvedElementId = fieldId;
-        resolvedSurveyId = mapping.surveyId;
-        break;
-      }
-    }
-  } else {
-    // Fallback path: check for a FeedbackRecords.fieldLabel equals filter.
-    // Users filter by "Question" (fieldLabel) rather than the internal fieldId, so we
-    // resolve the label → elementId by matching the mapping's effective label — which is
-    // customFieldLabel if set, otherwise the element's default-language headline (mirroring
-    // how transform.ts computes field_label on ingest).
-    const fieldLabelFilter = extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldLabel");
-    if (!fieldLabelFilter) {
-      return { rewrittenQuery: query };
-    }
-
-    const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
-
-    // Collect candidates: mappings whose effective label exactly matches the filter value.
-    // Dedupe survey loads so we only call getSurvey once per distinct surveyId.
-    const surveyCache = new Map<string, Awaited<ReturnType<typeof getSurvey>>>();
-    const loadSurvey = async (surveyId: string) => {
-      if (!surveyCache.has(surveyId)) {
-        surveyCache.set(surveyId, await getSurvey(surveyId));
-      }
-      return surveyCache.get(surveyId);
-    };
-
-    const candidates: { elementId: string; surveyId: string }[] = [];
-
-    for (const source of feedbackSources) {
-      for (const mapping of source.formbricksMappings) {
-        // Fast path: customFieldLabel is already stored on the mapping.
-        if (mapping.customFieldLabel !== null && mapping.customFieldLabel !== undefined) {
-          if (mapping.customFieldLabel === fieldLabelFilter) {
-            candidates.push({ elementId: mapping.elementId, surveyId: mapping.surveyId });
-          }
-          // Even if customFieldLabel doesn't match, skip the survey load for this mapping
-          // because the effective label is the custom one, not the headline.
-          continue;
-        }
-
-        // No customFieldLabel → effective label is the element's default-language headline.
-        const survey = await loadSurvey(mapping.surveyId);
-        if (!survey) continue;
-        const elements = getElementsFromBlocks(survey.blocks);
-        const element = elements.find((el) => el.id === mapping.elementId);
-        if (!element) continue;
-        const headline = getTextContent(getLocalizedValue(element.headline ?? {}, "default"));
-        if (headline === fieldLabelFilter) {
-          candidates.push({ elementId: mapping.elementId, surveyId: mapping.surveyId });
-        }
-      }
-    }
-
-    // Ambiguity guard: if zero or multiple mappings share this label, do not guess.
-    if (candidates.length !== 1) {
-      return { rewrittenQuery: query };
-    }
-
-    resolvedElementId = candidates[0].elementId;
-    resolvedSurveyId = candidates[0].surveyId;
+    resolved = await resolveElementByFieldId(fieldId, workspaceId);
+  } else if (fieldLabelFilter) {
+    resolved = await resolveElementByFieldLabel(fieldLabelFilter, workspaceId);
   }
-
-  if (!resolvedElementId || !resolvedSurveyId) {
+  if (!resolved) {
     return { rewrittenQuery: query };
   }
+  const { elementId, surveyId } = resolved;
 
-  const survey = await getSurvey(resolvedSurveyId);
+  const survey = await getSurvey(surveyId);
   if (!survey) {
     return { rewrittenQuery: query };
   }
 
   const elements = getElementsFromBlocks(survey.blocks);
-  const element = elements.find((el) => el.id === resolvedElementId);
+  const element = elements.find((el) => el.id === elementId);
   if (!element) {
     return { rewrittenQuery: query };
   }
 
-  // ── MultipleChoiceSingle: effective dimension is valueId (rewrite valueText → valueId) ──
   if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
-    // Build the choice-id → default-language label map.
-    const choices = (element as { choices: { id: string; label: TSurveyElementChoice["label"] }[] }).choices;
-    const optionLabels: Record<string, string> = {};
-    for (const choice of choices) {
-      optionLabels[choice.id] = getChoiceLabelDefault(choice);
-    }
-
-    // Ensure the dimension is valueId regardless of what the user picked.
-    // If the user already picked valueId, keep it; if they picked valueText, swap it.
-    const rewrittenQuery: TChartQuery = {
-      ...query,
-      dimensions: dimensions.map((d) => (d === "FeedbackRecords.valueText" ? "FeedbackRecords.valueId" : d)),
-    };
-
-    return { rewrittenQuery, optionLabels };
+    return buildSingleChoiceRewrite(
+      query,
+      dimensions,
+      element as { choices: { id: string; label: TSurveyElementChoice["label"] }[] }
+    );
   }
 
-  // ── MultipleChoiceMulti: effective dimension is valueText (no per-option value_id stored) ──
   if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-    // No per-option value_id is stored for multi-select yet (blocked on a hub change).
-    // If the user selected valueId, swap it back to valueText so Cube groups by the joined
-    // text string that the splitter can parse. Flag for post-processing.
-    const rewrittenQuery: TChartQuery = hasValueId
-      ? {
-          ...query,
-          dimensions: dimensions.map((d) =>
-            d === "FeedbackRecords.valueId" ? "FeedbackRecords.valueText" : d
-          ),
-        }
-      : query;
-    return { rewrittenQuery, splitMultiSelect: true };
+    return buildMultiChoiceRewrite(query, dimensions, hasValueId);
   }
 
   return { rewrittenQuery: query };
@@ -491,16 +528,12 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      let rows = Array.isArray(rawRows) ? rawRows : [];
+      let rows: TCubeRow[] = Array.isArray(rawRows) ? rawRows : [];
 
       if (splitMultiSelect) {
         // Derive measure keys generically from the query so we don't hardcode only count.
         const measureKeys = rewrittenQuery.measures ?? [];
-        rows = splitMultiSelectRows(
-          rows as Record<string, string | number | boolean | null | undefined>[],
-          "FeedbackRecords.valueText",
-          measureKeys
-        );
+        rows = splitMultiSelectRows(rows, "FeedbackRecords.valueText", measureKeys);
       }
 
       return { rows, ...(optionLabels ? { optionLabels } : {}), effectiveQuery: rewrittenQuery };

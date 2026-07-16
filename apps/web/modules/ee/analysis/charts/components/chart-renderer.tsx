@@ -123,6 +123,196 @@ const PieCenterLabel = ({
   );
 };
 
+interface BarChartViewProps {
+  sortedData: TChartDataRow[];
+  dataKeys: string[];
+  isMultiMeasure: boolean;
+  hasCategoryAxis: boolean;
+  xAxisKey: string;
+  chartConfig: ChartConfig;
+  formatDimensionValue: (value: unknown) => string;
+}
+
+const BarChartView = ({
+  sortedData,
+  dataKeys,
+  isMultiMeasure,
+  hasCategoryAxis,
+  xAxisKey,
+  chartConfig,
+  formatDimensionValue,
+}: Readonly<BarChartViewProps>) => {
+  const { t } = useTranslation();
+
+  // Measure-only queries (no dimension or time grouping) return a single row with one
+  // column per measure. Rendered as N bar series that row forms a single category band
+  // that recharts centers in the plot, leaving a wide empty gap before the first bar
+  // (ENG-1796). Pivot the measures into categories so the bars fill the axis from the
+  // left like any other category bar chart, labelled by measure on the x-axis.
+  if (!hasCategoryAxis) {
+    // Sentiment measures pivot into the scale order the sentiment *dimension* axis uses,
+    // so this chart and a dimension-grouped one read in the same direction.
+    const axisKeys = sortMeasureIdsForCategoryAxis(dataKeys);
+    const measureData = pivotMeasuresToCategories(sortedData, axisKeys, (key) =>
+      formatCubeColumnHeader(key, t)
+    );
+    // Ticks use the short value label ("Very positive") — the full measure label is too
+    // wide, so recharts would thin the ticks and bars would lose their name. The tooltip
+    // keeps the full label via tooltipLabel.
+    const formatMeasureLabel = (value: unknown) =>
+      getMeasureAxisLabel(typeof value === "string" ? value : "", t);
+    return (
+      <CartesianChart
+        chart={BarChart}
+        data={measureData}
+        xAxisKey={PIVOTED_MEASURE_KEY}
+        dataKeys={[PIVOTED_VALUE_KEY]}
+        chartConfig={chartConfig}
+        tooltipCursor={false}
+        zeroBaseline
+        tooltipHideLabel
+        xAxisTickFormatter={formatMeasureLabel}>
+        <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
+          <LabelList
+            dataKey={PIVOTED_VALUE_KEY}
+            position="top"
+            className="fill-foreground"
+            fontSize={11}
+            formatter={(value: unknown) => formatCellValue(value)}
+          />
+        </Bar>
+      </CartesianChart>
+    );
+  }
+
+  // Setting `fill` on the data row (not via <Cell>) is what propagates
+  // the per-bar colour into the tooltip payload as well as the SVG.
+  const barData = isMultiMeasure
+    ? sortedData
+    : sortedData.map((row, index) => ({
+        ...row,
+        fill:
+          getSemanticDimensionColor(xAxisKey, row[xAxisKey]) ??
+          CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
+      }));
+
+  return (
+    <CartesianChart
+      chart={BarChart}
+      data={barData}
+      xAxisKey={xAxisKey}
+      dataKeys={dataKeys}
+      chartConfig={chartConfig}
+      showLegend={isMultiMeasure}
+      tooltipCursor={false}
+      zeroBaseline
+      hasCategoryAxis={hasCategoryAxis}
+      xAxisTickFormatter={formatDimensionValue}
+      chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
+      {dataKeys.map((key) => (
+        <Bar key={key} dataKey={key} fill={chartConfig[key]?.color} radius={4}>
+          {!isMultiMeasure && (
+            <LabelList
+              dataKey={key}
+              position="top"
+              className="fill-foreground"
+              fontSize={11}
+              formatter={(value: unknown) => formatCellValue(value)}
+            />
+          )}
+        </Bar>
+      ))}
+    </CartesianChart>
+  );
+};
+
+interface PieChartViewProps {
+  sortedData: TChartDataRow[];
+  dataKeys: string[];
+  dataKey: string;
+  isMultiMeasure: boolean;
+  query: TChartQuery;
+  timeDimKey: string | undefined;
+  xAxisKey: string;
+  chartConfig: ChartConfig;
+  formatDimensionValue: (value: unknown) => string;
+}
+
+const PieChartView = ({
+  sortedData,
+  dataKeys,
+  dataKey,
+  isMultiMeasure,
+  query,
+  timeDimKey,
+  xAxisKey,
+  chartConfig,
+  formatDimensionValue,
+}: Readonly<PieChartViewProps>) => {
+  const { t } = useTranslation();
+
+  // With several measures and no dimension (e.g. the six Emotion counts), each row column is a
+  // measure, not a slice — pivot the measures into one slice per measure so the pie shows them
+  // all instead of only the first. A dimension-based pie keeps its existing (rows = slices) shape.
+  const useMeasureSlices = isMultiMeasure && (query.dimensions?.length ?? 0) === 0 && !timeDimKey;
+  const pieDataKey = useMeasureSlices ? PIE_MEASURE_VALUE_KEY : dataKey;
+  const pieNameKey = useMeasureSlices ? PIE_MEASURE_NAME_KEY : xAxisKey;
+  const pieSource = useMeasureSlices
+    ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t))
+    : sortedData;
+  const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
+  if (!pieResult) {
+    return (
+      <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
+        {t("workspace.analysis.charts.no_valid_data_to_display")}
+      </div>
+    );
+  }
+  const { processedData, colors } = pieResult;
+  const total = processedData.reduce((sum, row) => sum + (Number(row[pieDataKey]) || 0), 0);
+  // Multi-measure pies have no single measure to name the center; show just the total.
+  const centerLabel = useMeasureSlices ? "" : formatCubeColumnHeader(dataKey, t);
+
+  return (
+    <div className="h-full min-h-64 w-full min-w-0">
+      <ChartContainer config={chartConfig} className="h-full w-full min-w-0">
+        <PieChart margin={{ top: 16, right: 32, bottom: 8, left: 32 }}>
+          <Pie
+            data={processedData}
+            dataKey={pieDataKey}
+            nameKey={pieNameKey}
+            cx="50%"
+            cy="45%"
+            innerRadius="55%"
+            outerRadius="75%"
+            paddingAngle={2}
+            minAngle={2}
+            // Recharts types `labelLine` as `ReactElement | function -> ReactElement`,
+            // but returning `null` from the function is supported at runtime and is
+            // how we hide the leader line for sub-2% slices.
+            labelLine={renderPieLabelLine as never}
+            label={renderPieLabel}>
+            {processedData.map((row, index) => {
+              const rowKey = row[pieNameKey] ?? `row-${index}`;
+              const uniqueKey = `${pieNameKey}-${String(rowKey)}-${index}`;
+              return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
+            })}
+            <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
+          </Pie>
+          <ChartTooltip content={<PolishedChartTooltip labelFormatter={formatDimensionValue} />} />
+          <Legend
+            verticalAlign="bottom"
+            height={36}
+            iconType="circle"
+            formatter={(value: string) => formatDimensionValue(value)}
+            wrapperStyle={{ fontSize: 12 }}
+          />
+        </PieChart>
+      </ChartContainer>
+    </div>
+  );
+};
+
 interface ChartRendererProps {
   chartType: TChartType;
   data: TChartDataRow[];
@@ -201,88 +391,18 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
   const isMultiMeasure = dataKeys.length > 1;
 
   switch (chartType) {
-    case "bar": {
-      // Measure-only queries (no dimension or time grouping) return a single row with one
-      // column per measure. Rendered as N bar series that row forms a single category band
-      // that recharts centers in the plot, leaving a wide empty gap before the first bar
-      // (ENG-1796). Pivot the measures into categories so the bars fill the axis from the
-      // left like any other category bar chart, labelled by measure on the x-axis.
-      if (!hasCategoryAxis) {
-        // Sentiment measures pivot into the scale order the sentiment *dimension* axis uses,
-        // so this chart and a dimension-grouped one read in the same direction.
-        const axisKeys = sortMeasureIdsForCategoryAxis(dataKeys);
-        const measureData = pivotMeasuresToCategories(sortedData, axisKeys, (key) =>
-          formatCubeColumnHeader(key, t)
-        );
-        // Ticks use the short value label ("Very positive") — the full measure label is too
-        // wide, so recharts would thin the ticks and bars would lose their name. The tooltip
-        // keeps the full label via tooltipLabel.
-        const formatMeasureLabel = (value: unknown) =>
-          getMeasureAxisLabel(typeof value === "string" ? value : "", t);
-        return (
-          <CartesianChart
-            chart={BarChart}
-            data={measureData}
-            xAxisKey={PIVOTED_MEASURE_KEY}
-            dataKeys={[PIVOTED_VALUE_KEY]}
-            chartConfig={chartConfig}
-            tooltipCursor={false}
-            zeroBaseline
-            tooltipHideLabel
-            xAxisTickFormatter={formatMeasureLabel}>
-            <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
-              <LabelList
-                dataKey={PIVOTED_VALUE_KEY}
-                position="top"
-                className="fill-foreground"
-                fontSize={11}
-                formatter={(value: unknown) => formatCellValue(value)}
-              />
-            </Bar>
-          </CartesianChart>
-        );
-      }
-
-      // Setting `fill` on the data row (not via <Cell>) is what propagates
-      // the per-bar colour into the tooltip payload as well as the SVG.
-      const barData = isMultiMeasure
-        ? sortedData
-        : sortedData.map((row, index) => ({
-            ...row,
-            fill:
-              getSemanticDimensionColor(xAxisKey, row[xAxisKey]) ??
-              CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
-          }));
-
+    case "bar":
       return (
-        <CartesianChart
-          chart={BarChart}
-          data={barData}
-          xAxisKey={xAxisKey}
+        <BarChartView
+          sortedData={sortedData}
           dataKeys={dataKeys}
-          chartConfig={chartConfig}
-          showLegend={isMultiMeasure}
-          tooltipCursor={false}
-          zeroBaseline
+          isMultiMeasure={isMultiMeasure}
           hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}
-          chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
-          {dataKeys.map((key) => (
-            <Bar key={key} dataKey={key} fill={chartConfig[key]?.color} radius={4}>
-              {!isMultiMeasure && (
-                <LabelList
-                  dataKey={key}
-                  position="top"
-                  className="fill-foreground"
-                  fontSize={11}
-                  formatter={(value: unknown) => formatCellValue(value)}
-                />
-              )}
-            </Bar>
-          ))}
-        </CartesianChart>
+          xAxisKey={xAxisKey}
+          chartConfig={chartConfig}
+          formatDimensionValue={formatDimensionValue}
+        />
       );
-    }
     case "line":
       // AreaChart with a thin stroke + gradient fade reads as a line with a soft tint.
       return (
@@ -350,68 +470,20 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           ))}
         </CartesianChart>
       );
-    case "pie": {
-      // With several measures and no dimension (e.g. the six Emotion counts), each row column is a
-      // measure, not a slice — pivot the measures into one slice per measure so the pie shows them
-      // all instead of only the first. A dimension-based pie keeps its existing (rows = slices) shape.
-      const useMeasureSlices = isMultiMeasure && (query.dimensions?.length ?? 0) === 0 && !timeDimKey;
-      const pieDataKey = useMeasureSlices ? PIE_MEASURE_VALUE_KEY : dataKey;
-      const pieNameKey = useMeasureSlices ? PIE_MEASURE_NAME_KEY : xAxisKey;
-      const pieSource = useMeasureSlices
-        ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t))
-        : sortedData;
-      const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
-      if (!pieResult) {
-        return (
-          <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
-            {t("workspace.analysis.charts.no_valid_data_to_display")}
-          </div>
-        );
-      }
-      const { processedData, colors } = pieResult;
-      const total = processedData.reduce((sum, row) => sum + (Number(row[pieDataKey]) || 0), 0);
-      // Multi-measure pies have no single measure to name the center; show just the total.
-      const centerLabel = useMeasureSlices ? "" : formatCubeColumnHeader(dataKey, t);
-
+    case "pie":
       return (
-        <div className="h-full min-h-64 w-full min-w-0">
-          <ChartContainer config={chartConfig} className="h-full w-full min-w-0">
-            <PieChart margin={{ top: 16, right: 32, bottom: 8, left: 32 }}>
-              <Pie
-                data={processedData}
-                dataKey={pieDataKey}
-                nameKey={pieNameKey}
-                cx="50%"
-                cy="45%"
-                innerRadius="55%"
-                outerRadius="75%"
-                paddingAngle={2}
-                minAngle={2}
-                // Recharts types `labelLine` as `ReactElement | function -> ReactElement`,
-                // but returning `null` from the function is supported at runtime and is
-                // how we hide the leader line for sub-2% slices.
-                labelLine={renderPieLabelLine as never}
-                label={renderPieLabel}>
-                {processedData.map((row, index) => {
-                  const rowKey = row[pieNameKey] ?? `row-${index}`;
-                  const uniqueKey = `${pieNameKey}-${String(rowKey)}-${index}`;
-                  return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
-                })}
-                <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
-              </Pie>
-              <ChartTooltip content={<PolishedChartTooltip labelFormatter={formatDimensionValue} />} />
-              <Legend
-                verticalAlign="bottom"
-                height={36}
-                iconType="circle"
-                formatter={(value: string) => formatDimensionValue(value)}
-                wrapperStyle={{ fontSize: 12 }}
-              />
-            </PieChart>
-          </ChartContainer>
-        </div>
+        <PieChartView
+          sortedData={sortedData}
+          dataKeys={dataKeys}
+          dataKey={dataKey}
+          isMultiMeasure={isMultiMeasure}
+          query={query}
+          timeDimKey={timeDimKey}
+          xAxisKey={xAxisKey}
+          chartConfig={chartConfig}
+          formatDimensionValue={formatDimensionValue}
+        />
       );
-    }
     case "big_number": {
       const total =
         data.length === 1

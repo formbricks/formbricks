@@ -262,6 +262,39 @@ const expandRankingToRecords = (
 };
 
 /**
+ * Normalize an element's answer for storage. Choice elements canonicalize labels and resolve
+ * value_id via normalizeChoiceValue; every other element type stores the value as submitted.
+ *
+ * "Other" free-text answers never match a choice label, so they'd otherwise carry no
+ * value_id and each distinct free-text string would chart as its own bucket. When the
+ * element offers an "other" option, group them all under the stable "other" choice id
+ * (the survey convention: the other option's choice id is "other").
+ */
+const normalizeElementValue = (
+  element: TSurveyElement | undefined,
+  value: TResponseDataValue,
+  lookupLanguage: string
+): NormalizedChoiceValue => {
+  const isChoiceElement =
+    element &&
+    (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+      element.type === TSurveyElementTypeEnum.MultipleChoiceMulti);
+  if (!isChoiceElement) return { value };
+
+  const normalized = normalizeChoiceValue(element.choices, value, lookupLanguage);
+
+  if (
+    !normalized.valueId &&
+    typeof value === "string" &&
+    (element.otherOptionPlaceholder !== undefined || element.choices.some((c) => c.id === "other"))
+  ) {
+    normalized.valueId = "other";
+  }
+
+  return normalized;
+};
+
+/**
  * Transform a Formbricks survey response into FeedbackRecord payloads.
  * Called from the pipeline handler when a response is created/finished.
  *
@@ -305,27 +338,7 @@ export function transformResponseToFeedbackRecords(
 
     const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
 
-    const isChoiceElement =
-      element &&
-      (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-        element.type === TSurveyElementTypeEnum.MultipleChoiceMulti);
-    const normalized: NormalizedChoiceValue = isChoiceElement
-      ? normalizeChoiceValue(element.choices, value, lookupLanguage)
-      : { value };
-
-    // "Other" free-text answers never match a choice label, so they'd otherwise carry no
-    // value_id and each distinct free-text string would chart as its own bucket. When the
-    // element offers an "other" option, group them all under the stable "other" choice id
-    // (the survey convention: the other option's choice id is "other").
-    if (
-      isChoiceElement &&
-      !normalized.valueId &&
-      typeof value === "string" &&
-      (element.otherOptionPlaceholder !== undefined || element.choices.some((c) => c.id === "other"))
-    ) {
-      normalized.valueId = "other";
-    }
-
+    const normalized = normalizeElementValue(element, value, lookupLanguage);
     const valueFields = convertValueToHubFields(normalized.value, mapping.hubFieldType);
 
     feedbackRecords.push({

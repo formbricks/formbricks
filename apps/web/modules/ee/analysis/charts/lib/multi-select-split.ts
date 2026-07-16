@@ -13,7 +13,7 @@
 
 const MULTI_SELECT_SEPARATOR = ", ";
 
-type CubeRow = Record<string, string | number | boolean | null | undefined>;
+export type TCubeRow = Record<string, string | number | boolean | null | undefined>;
 
 /**
  * Split multi-select rows (where one row holds a ", "-joined list of selected options
@@ -32,16 +32,16 @@ type CubeRow = Record<string, string | number | boolean | null | undefined>;
  *                      and preserved as-is in the output rows.
  */
 export function splitMultiSelectRows(
-  rows: CubeRow[],
+  rows: TCubeRow[],
   valueDimensionId: string,
   measureKeys: string[]
-): CubeRow[] {
+): TCubeRow[] {
   if (rows.length === 0) return [];
 
   const measureKeySet = new Set(measureKeys);
 
   // Map from composite key → accumulated row.
-  const accumulated = new Map<string, CubeRow>();
+  const accumulated = new Map<string, TCubeRow>();
 
   for (const row of rows) {
     const rawValue = row[valueDimensionId];
@@ -74,7 +74,7 @@ export function splitMultiSelectRows(
  * (which are summed, not grouped by).
  */
 function buildGroupKey(
-  row: CubeRow,
+  row: TCubeRow,
   valueDimensionId: string,
   measureKeySet: Set<string>,
   splitOption: string
@@ -86,15 +86,15 @@ function buildGroupKey(
     parts.push(`${key}=${String(val ?? "")}`);
   }
   // Sort for stability regardless of Object.entries iteration order.
-  parts.sort();
+  parts.sort((a, b) => a.localeCompare(b));
   parts.push(`${valueDimensionId}=${splitOption}`);
   return parts.join("|");
 }
 
 function mergeIntoAccumulated(
-  accumulated: Map<string, CubeRow>,
+  accumulated: Map<string, TCubeRow>,
   groupKey: string,
-  sourceRow: CubeRow,
+  sourceRow: TCubeRow,
   valueDimensionId: string,
   splitOption: string | null | undefined,
   measureKeys: string[]
@@ -102,7 +102,7 @@ function mergeIntoAccumulated(
   const existing = accumulated.get(groupKey);
   if (!existing) {
     // First occurrence — clone the row and set the split value.
-    const newRow: CubeRow = { ...sourceRow, [valueDimensionId]: splitOption };
+    const newRow: TCubeRow = { ...sourceRow, [valueDimensionId]: splitOption };
     accumulated.set(groupKey, newRow);
     return;
   }
