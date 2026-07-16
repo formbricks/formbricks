@@ -44,7 +44,9 @@ type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const addEnvIssue = (ctx: z.RefinementCtx, path: keyof TAIConfigurationEnv, message: string): void => {
+type TEnvironmentIssuePath = keyof TAIConfigurationEnv | keyof TAuthzedConfigurationEnv;
+
+const addEnvIssue = (ctx: z.RefinementCtx, path: TEnvironmentIssuePath, message: string): void => {
   ctx.addIssue({
     code: "custom",
     path: [path],
@@ -210,7 +212,7 @@ const ZAuthzedToken = z
   .optional();
 
 const isValidAuthzedEndpoint = (value: string): boolean => {
-  if (/\s/.test(value) || /[\/@?#]/.test(value)) {
+  if (/\s/.test(value) || value.includes("/") || /[@?#]/.test(value)) {
     return false;
   }
 
@@ -266,18 +268,6 @@ const ZAuthzedConfigurationEnv = z.object({
 
 type TAuthzedConfigurationEnv = z.infer<typeof ZAuthzedConfigurationEnv>;
 
-const addAuthzedEnvIssue = (
-  ctx: z.RefinementCtx,
-  path: keyof TAuthzedConfigurationEnv,
-  message: string
-): void => {
-  ctx.addIssue({
-    code: "custom",
-    path: [path],
-    message,
-  });
-};
-
 const validateAuthzedConfiguration = (values: TAuthzedConfigurationEnv, ctx: z.RefinementCtx): void => {
   const isEnabled = values.AUTHZED_ENABLED === "true" || values.AUTHZED_ENABLED === "1";
 
@@ -286,15 +276,15 @@ const validateAuthzedConfiguration = (values: TAuthzedConfigurationEnv, ctx: z.R
   }
 
   if (!values.AUTHZED_ENDPOINT) {
-    addAuthzedEnvIssue(ctx, "AUTHZED_ENDPOINT", "AUTHZED_ENDPOINT is required when AuthZed is enabled");
+    addEnvIssue(ctx, "AUTHZED_ENDPOINT", "AUTHZED_ENDPOINT is required when AuthZed is enabled");
   }
 
   if (!values.AUTHZED_TOKEN) {
-    addAuthzedEnvIssue(ctx, "AUTHZED_TOKEN", "AUTHZED_TOKEN is required when AuthZed is enabled");
+    addEnvIssue(ctx, "AUTHZED_TOKEN", "AUTHZED_TOKEN is required when AuthZed is enabled");
   }
 
   if (!values.AUTHZED_SYSTEM_KEY) {
-    addAuthzedEnvIssue(ctx, "AUTHZED_SYSTEM_KEY", "AUTHZED_SYSTEM_KEY is required when AuthZed is enabled");
+    addEnvIssue(ctx, "AUTHZED_SYSTEM_KEY", "AUTHZED_SYSTEM_KEY is required when AuthZed is enabled");
   }
 };
 

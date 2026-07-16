@@ -1,4 +1,5 @@
 import "server-only";
+import { randomInt } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import { logger } from "@formbricks/logger";
 import { AUTHZED_MAX_ATTEMPTS, AUTHZED_RETRY_BASE_DELAYS_MS, AUTHZED_RETRY_JITTER_RATIO } from "./constants";
@@ -10,9 +11,11 @@ type TAuthzedRetryDependencies = Readonly<{
   sleep: (delayMs: number) => Promise<void>;
 }>;
 
+const AUTHZED_RETRY_RANDOM_SCALE = 1_000_000;
+
 const defaultDependencies: TAuthzedRetryDependencies = {
   now: () => performance.now(),
-  random: () => Math.random(),
+  random: () => randomInt(AUTHZED_RETRY_RANDOM_SCALE + 1) / AUTHZED_RETRY_RANDOM_SCALE,
   sleep: (delayMs) => new Promise((resolve) => setTimeout(resolve, delayMs)),
 };
 

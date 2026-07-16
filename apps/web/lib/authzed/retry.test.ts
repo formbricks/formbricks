@@ -62,11 +62,10 @@ describe("AuthZed retry policy", () => {
 
   test("uses the scheduled delay before succeeding on the second attempt", async () => {
     vi.useFakeTimers();
-    vi.spyOn(Math, "random").mockReturnValue(0.5);
     const request = vi.fn().mockRejectedValueOnce({ code: status.ABORTED }).mockResolvedValue("success");
 
     try {
-      const resultPromise = executeAuthzedOperation("read_schema", request);
+      const resultPromise = executeAuthzedOperation("read_schema", request, { random: () => 0.5 });
       await vi.advanceTimersByTimeAsync(99);
       expect(request).toHaveBeenCalledTimes(1);
 

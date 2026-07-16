@@ -112,9 +112,7 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
 };
 
 export const getAuthzedClient = (): TAuthzedClient => {
-  if (!globalForAuthzed.formbricksAuthzedClient) {
-    globalForAuthzed.formbricksAuthzedClient = createAuthzedClient();
-  }
+  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient();
 
   return globalForAuthzed.formbricksAuthzedClient.facade;
 };
