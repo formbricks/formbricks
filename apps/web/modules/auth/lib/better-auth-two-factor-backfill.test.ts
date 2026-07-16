@@ -14,7 +14,7 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("better-auth/api", () => ({ isAPIError: vi.fn() }));
 
-vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn() } }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({
   auth: { $context: Promise.resolve({ secretConfig: "ba-secret-config" }) },

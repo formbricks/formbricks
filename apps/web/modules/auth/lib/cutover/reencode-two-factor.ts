@@ -42,13 +42,24 @@ export const reencodeTwoFactorSecret = async (
  * the hyphenated `XXXXX-XXXXX` form (`display-backup-codes.tsx` formatBackupCode), and BA's
  * verify-backup-code does an EXACT match with no hyphen-stripping. So we store the displayed form — the
  * string the user will actually enter.
+ *
+ * The legacy login CONSUMED a used backup code by nulling its slot in place (`backupCodes[i] = null`),
+ * so a real user who ever used one has `null` entries in the stored array. We drop those — a consumed
+ * code is spent, and BA's model is that the stored array is just the still-valid codes. Without this
+ * filter the re-encode throws on `null.slice(...)`, which the sign-in heal swallows → no `TwoFactor`
+ * row → "TOTP not enabled" (ENG-1824).
  */
 export const reencodeTwoFactorBackupCodes = async (
   encryptedFormbricksBackupCodes: string,
   secretConfig: string | SecretConfig
 ): Promise<string> => {
-  const bareCodes = JSON.parse(symmetricDecrypt(encryptedFormbricksBackupCodes, ENCRYPTION_KEY)) as string[];
-  const displayedCodes = bareCodes.map((code) => `${code.slice(0, 5)}-${code.slice(5, 10)}`);
+  const storedCodes = JSON.parse(symmetricDecrypt(encryptedFormbricksBackupCodes, ENCRYPTION_KEY)) as (
+    | string
+    | null
+  )[];
+  const displayedCodes = storedCodes
+    .filter((code): code is string => typeof code === "string")
+    .map((code) => `${code.slice(0, 5)}-${code.slice(5, 10)}`);
   return symmetricEncrypt({ key: secretConfig, data: JSON.stringify(displayedCodes) });
 };
 
