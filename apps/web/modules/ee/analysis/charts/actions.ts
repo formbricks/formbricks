@@ -29,6 +29,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
+import { splitMultiSelectRows } from "@/modules/ee/analysis/charts/lib/multi-select-split";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { isSelectableValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
@@ -57,17 +58,26 @@ const getChoiceLabelDefault = (choice: { label: TSurveyElementChoice["label"] })
 
 /**
  * When a query groups by `FeedbackRecords.valueText` and a `FeedbackRecords.fieldId equals <id>`
- * filter is present, check whether that element is a single-select question. If it is:
- * - Rewrite the dimension to `FeedbackRecords.valueId` so Cube groups by stable option ids.
- * - Return a `{ [value_id]: defaultLabel }` map so the renderer can translate ids back to labels.
+ * filter is present, inspect the element type and apply the appropriate grouping strategy:
  *
- * Returns `{ rewrittenQuery, optionLabels }`. When no rewrite is needed, `rewrittenQuery` is the
- * original query and `optionLabels` is undefined.
+ * - MultipleChoiceSingle: rewrite the dimension to `FeedbackRecords.valueId` so Cube groups
+ *   by stable option ids, and return a `{ [value_id]: defaultLabel }` map for the renderer.
+ *
+ * - MultipleChoiceMulti: Cube still groups by `valueText` (no per-option value_id is stored
+ *   yet — that requires a hub change tracked separately). Set `splitMultiSelect: true` so
+ *   the caller can post-process rows by splitting the ", "-joined value string server-side.
+ *
+ * Returns `{ rewrittenQuery, optionLabels, splitMultiSelect }`. When no rewrite is needed,
+ * `rewrittenQuery` is the original query and the other fields are undefined / false.
  */
 async function resolveOptionGrouping(
   query: TChartQuery,
   workspaceId: string
-): Promise<{ rewrittenQuery: TChartQuery; optionLabels?: Record<string, string> }> {
+): Promise<{
+  rewrittenQuery: TChartQuery;
+  optionLabels?: Record<string, string>;
+  splitMultiSelect?: boolean;
+}> {
   const dimensions = query.dimensions;
   if (!dimensions?.includes("FeedbackRecords.valueText")) {
     return { rewrittenQuery: query };
@@ -99,24 +109,36 @@ async function resolveOptionGrouping(
 
   const elements = getElementsFromBlocks(survey.blocks);
   const element = elements.find((el) => el.id === fieldId);
-  if (!element || element.type !== TSurveyElementTypeEnum.MultipleChoiceSingle) {
+  if (!element) {
     return { rewrittenQuery: query };
   }
 
-  // Build the choice-id → default-language label map.
-  const choices = (element as { choices: { id: string; label: TSurveyElementChoice["label"] }[] }).choices;
-  const optionLabels: Record<string, string> = {};
-  for (const choice of choices) {
-    optionLabels[choice.id] = getChoiceLabelDefault(choice);
+  // ── MultipleChoiceSingle: rewrite dimension to valueId for stable grouping ──
+  if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
+    // Build the choice-id → default-language label map.
+    const choices = (element as { choices: { id: string; label: TSurveyElementChoice["label"] }[] }).choices;
+    const optionLabels: Record<string, string> = {};
+    for (const choice of choices) {
+      optionLabels[choice.id] = getChoiceLabelDefault(choice);
+    }
+
+    // Rewrite valueText → valueId in dimensions.
+    const rewrittenQuery: TChartQuery = {
+      ...query,
+      dimensions: dimensions.map((d) => (d === "FeedbackRecords.valueText" ? "FeedbackRecords.valueId" : d)),
+    };
+
+    return { rewrittenQuery, optionLabels };
   }
 
-  // Rewrite valueText → valueId in dimensions.
-  const rewrittenQuery: TChartQuery = {
-    ...query,
-    dimensions: dimensions.map((d) => (d === "FeedbackRecords.valueText" ? "FeedbackRecords.valueId" : d)),
-  };
+  // ── MultipleChoiceMulti: split ", "-joined valueText server-side after the query ──
+  if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
+    // Do NOT rewrite to valueId — no per-option value_id is stored for multi-select yet
+    // (blocked on a hub change). Keep grouping by valueText and flag for post-processing.
+    return { rewrittenQuery: query, splitMultiSelect: true };
+  }
 
-  return { rewrittenQuery, optionLabels };
+  return { rewrittenQuery: query };
 }
 
 const checkDashboardsEnabled = async (organizationId: string) => {
@@ -374,9 +396,12 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      const { rewrittenQuery, optionLabels } = await resolveOptionGrouping(parsedInput.query, workspaceId);
+      const { rewrittenQuery, optionLabels, splitMultiSelect } = await resolveOptionGrouping(
+        parsedInput.query,
+        workspaceId
+      );
 
-      const rows = await executeTenantScopedQuery({
+      const rawRows = await executeTenantScopedQuery({
         query: rewrittenQuery,
         feedbackDirectoryId,
         workspaceId,
@@ -385,7 +410,19 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      return { rows: Array.isArray(rows) ? rows : [], ...(optionLabels ? { optionLabels } : {}) };
+      let rows = Array.isArray(rawRows) ? rawRows : [];
+
+      if (splitMultiSelect) {
+        // Derive measure keys generically from the query so we don't hardcode only count.
+        const measureKeys = rewrittenQuery.measures ?? [];
+        rows = splitMultiSelectRows(
+          rows as Record<string, string | number | boolean | null | undefined>[],
+          "FeedbackRecords.valueText",
+          measureKeys
+        );
+      }
+
+      return { rows, ...(optionLabels ? { optionLabels } : {}) };
     }
   );
 

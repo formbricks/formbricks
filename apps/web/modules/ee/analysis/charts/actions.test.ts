@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => {
     generateAIChartQuery: vi.fn(),
     updateChart: vi.fn(),
     getFeedbackSourcesWithMappings: vi.fn(),
+    getSurvey: vi.fn(),
+    getElementsFromBlocks: vi.fn(),
   };
 });
 
@@ -65,8 +67,8 @@ vi.mock("@/lib/feedback-source/service", () => ({
 }));
 
 // stub server-only modules pulled in by resolveOptionGrouping helpers
-vi.mock("@/lib/survey/service", () => ({ getSurvey: vi.fn().mockResolvedValue(null) }));
-vi.mock("@/lib/survey/utils", () => ({ getElementsFromBlocks: vi.fn().mockReturnValue([]) }));
+vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey }));
+vi.mock("@/lib/survey/utils", () => ({ getElementsFromBlocks: mocks.getElementsFromBlocks }));
 vi.mock("@formbricks/types/surveys/validation", () => ({ getTextContent: (s: string) => s }));
 vi.mock("@/lib/i18n/utils", () => ({
   getLocalizedValue: (obj: Record<string, string>, lang: string) => obj[lang] ?? obj["default"] ?? "",
@@ -103,6 +105,8 @@ describe("chart Cube actions", () => {
     });
     mocks.executeTenantScopedQuery.mockResolvedValue([{ "FeedbackRecords.count": 1 }]);
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([]);
+    mocks.getSurvey.mockResolvedValue(null);
+    mocks.getElementsFromBlocks.mockReturnValue([]);
     mocks.updateChart.mockResolvedValue({
       chart: { id: "chart-1", query: { measures: ["FeedbackRecords.count"] } },
       updatedChart: { id: "chart-1", query: { measures: ["FeedbackRecords.count"] } },
@@ -235,5 +239,93 @@ describe("chart Cube actions", () => {
     ).rejects.toThrow("AI failed");
 
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  // ── Multi-select (MultipleChoiceMulti) detection and splitting ──────────────
+
+  test("executeQueryAction does NOT rewrite the query for a MultipleChoiceMulti element", async () => {
+    // Wire up feedbackSources -> survey -> MultipleChoiceMulti element.
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
+      {
+        formbricksMappings: [{ elementId: "field-multi", surveyId: "survey-multi" }],
+      },
+    ]);
+    mocks.getSurvey.mockResolvedValue({ id: "survey-multi", blocks: [] });
+    mocks.getElementsFromBlocks.mockReturnValue([
+      {
+        id: "field-multi",
+        type: "multipleChoiceMulti",
+        choices: [
+          { id: "c1", label: { default: "One" } },
+          { id: "c2", label: { default: "Two" } },
+        ],
+      },
+    ]);
+
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueText"],
+      filters: [{ member: "FeedbackRecords.fieldId", operator: "equals", values: ["field-multi"] }],
+    };
+
+    // Cube returns a row with a joined value.
+    mocks.executeTenantScopedQuery.mockResolvedValue([
+      { "FeedbackRecords.valueText": "One, Two", "FeedbackRecords.count": 5 },
+      { "FeedbackRecords.valueText": "One", "FeedbackRecords.count": 3 },
+    ]);
+
+    const result = await executeQueryAction({
+      ctx,
+      parsedInput: { workspaceId: "workspace-1", query, feedbackDirectoryId: "frd-1" },
+    } as any);
+
+    // The query sent to Cube must still use valueText (no rewrite to valueId).
+    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
+      })
+    );
+
+    // The returned rows must be split and re-aggregated.
+    const rows = result?.rows ?? [];
+    const byOption = Object.fromEntries(
+      rows.map((r: Record<string, unknown>) => [r["FeedbackRecords.valueText"], r["FeedbackRecords.count"]])
+    );
+    expect(byOption["One"]).toBe(8); // 5 from the joined row + 3 from the plain row
+    expect(byOption["Two"]).toBe(5);
+
+    // No optionLabels in the multi-select path.
+    expect(result).not.toHaveProperty("optionLabels");
+  });
+
+  test("executeQueryAction does not split rows when the element is NOT MultipleChoiceMulti", async () => {
+    // A different element type — OpenText — should not trigger splitting.
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
+      {
+        formbricksMappings: [{ elementId: "field-open", surveyId: "survey-open" }],
+      },
+    ]);
+    mocks.getSurvey.mockResolvedValue({ id: "survey-open", blocks: [] });
+    mocks.getElementsFromBlocks.mockReturnValue([{ id: "field-open", type: "openText" }]);
+
+    const rawRows = [{ "FeedbackRecords.valueText": "Hello, World", "FeedbackRecords.count": 2 }];
+    mocks.executeTenantScopedQuery.mockResolvedValue(rawRows);
+
+    const result = await executeQueryAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        query: {
+          measures: ["FeedbackRecords.count"],
+          dimensions: ["FeedbackRecords.valueText"],
+          filters: [{ member: "FeedbackRecords.fieldId", operator: "equals", values: ["field-open"] }],
+        },
+        feedbackDirectoryId: "frd-1",
+      },
+    } as any);
+
+    // The comma in the OpenText value must NOT be treated as a separator.
+    expect(result?.rows).toHaveLength(1);
+    expect(result?.rows?.[0]?.["FeedbackRecords.valueText"]).toBe("Hello, World");
   });
 });
