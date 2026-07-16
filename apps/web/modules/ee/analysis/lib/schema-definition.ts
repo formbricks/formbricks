@@ -437,6 +437,46 @@ export function getTranslatedDimensionValueLabel(
   return undefined;
 }
 
+// Sentiment count measure ids in the sentiment *scale* order (very_negative → very_positive,
+// mixed last) — the order the sentiment dimension axis uses.
+const SENTIMENT_COUNT_MEASURE_IDS_BY_SCALE: string[] = SENTIMENT_VALUE_ORDER.map(
+  (value) => `FeedbackRecords.${toCountMeasureId(value)}Count`
+);
+
+/**
+ * Sort measure ids for a per-measure category axis (measure-only bar charts, where each
+ * measure is its own bar). Sentiment count measures follow the sentiment scale order so the
+ * pivoted chart reads in the same direction (and with the same per-slot colors) as a chart
+ * grouped by the sentiment dimension — not the positive-first SENTIMENT_MEASURE_ORDER used
+ * for series/legend lists. Other measures keep their relative order after them.
+ */
+export function sortMeasureIdsForCategoryAxis(measureIds: string[]): string[] {
+  const rank = (id: string): number => {
+    const index = SENTIMENT_COUNT_MEASURE_IDS_BY_SCALE.indexOf(id);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  return [...measureIds].sort((a, b) => rank(a) - rank(b));
+}
+
+/**
+ * Short x-axis label for a per-measure category axis (measure-only bar charts, where each
+ * measure is its own bar). Sentiment/emotion count measures reuse their enum value label
+ * ("Very positive") — the full measure label ("Sentiment: Very positive") is too wide for
+ * ticks, so recharts drops the overlapping ones and leaves bars unlabelled. Other measures
+ * fall back to their full column header.
+ */
+export function getMeasureAxisLabel(measureId: string, t: TFunction): string {
+  const sentiment = SENTIMENT_MEASURE_ORDER.find(
+    (value) => `FeedbackRecords.${toCountMeasureId(value)}Count` === measureId
+  );
+  const emotion = EMOTION_MEASURE_ORDER.find((value) => `FeedbackRecords.${value}Count` === measureId);
+  return (
+    (sentiment ? getTranslatedSentimentValueLabel(sentiment, t) : undefined) ??
+    (emotion ? getTranslatedEmotionValueLabel(emotion, t) : undefined) ??
+    formatCubeColumnHeader(measureId, t)
+  );
+}
+
 /**
  * Sort chart rows into the sentiment scale order (very_negative → very_positive, mixed
  * last) when the x-axis is the sentiment dimension. Unknown values keep their relative

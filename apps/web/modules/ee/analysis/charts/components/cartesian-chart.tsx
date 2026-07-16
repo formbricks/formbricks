@@ -26,6 +26,10 @@ export interface CartesianChartProps {
   /** False for measure-only charts with no real category: hides the meaningless x-axis tick and
    * tooltip header (which would otherwise show the fallback measure value, e.g. a stray "1"). */
   hasCategoryAxis?: boolean;
+  /** Overrides whether the tooltip header is hidden (defaults to `!hasCategoryAxis`). Pivoted
+   * measure charts keep their category axis but hide the header, since each tooltip row already
+   * carries the measure label and a header would just repeat it. */
+  tooltipHideLabel?: boolean;
 }
 
 const TARGET_TICK_COUNT = 5;
@@ -112,6 +116,7 @@ export function CartesianChart({
   zeroBaseline = false,
   xAxisTickFormatter,
   hasCategoryAxis = true,
+  tooltipHideLabel,
 }: Readonly<CartesianChartProps>) {
   const yScale = computeYAxis(data, dataKeys, zeroBaseline);
 
@@ -141,7 +146,10 @@ export function CartesianChart({
           />
           <ChartTooltip
             content={
-              <PolishedChartTooltip labelFormatter={xAxisTickFormatter} hideLabel={!hasCategoryAxis} />
+              <PolishedChartTooltip
+                labelFormatter={xAxisTickFormatter}
+                hideLabel={tooltipHideLabel ?? !hasCategoryAxis}
+              />
             }
             cursor={tooltipCursor}
             // Measure-only charts (no category) have one bar per measure, so a shared tooltip would
