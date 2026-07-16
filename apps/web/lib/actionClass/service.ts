@@ -4,11 +4,11 @@ import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ActionClass, Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "../utils/prisma-constraint";
 import { validateInputs } from "../utils/validate";
 
 const selectActionClass = {
@@ -127,11 +127,8 @@ export const createActionClass = async (actionClass: TActionClassInput): Promise
 
     return actionClassPrisma;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.UniqueConstraintViolation
-    ) {
-      const targetField = (error.meta?.target as string[] | undefined)?.[0];
+    if (isUniqueConstraintError(error)) {
+      const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
@@ -176,11 +173,8 @@ export const updateActionClass = async (
 
     return result;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.UniqueConstraintViolation
-    ) {
-      const targetField = (error.meta?.target as string[] | undefined)?.[0];
+    if (isUniqueConstraintError(error)) {
+      const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (inputActionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
