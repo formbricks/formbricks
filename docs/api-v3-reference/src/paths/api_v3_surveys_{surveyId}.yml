@@ -295,8 +295,8 @@ patch:
         parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation,
         and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is
         rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps;
-        and intra-document field-combination rules — notably `displayPercentage` is required when
-        `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need
+        and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1)
+        when `displayOption` is `displaySome`. Cross-reference failures that need
         stored state to detect return **422** instead. Every offending field is itemized in
         `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry
         `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey);
