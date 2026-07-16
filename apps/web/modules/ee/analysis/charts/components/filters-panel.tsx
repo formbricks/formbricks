@@ -1,8 +1,9 @@
 "use client";
 
-import { Plus, SparklesIcon, TrashIcon } from "lucide-react";
+import { Plus, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { FilterDateInput } from "@/modules/ee/analysis/charts/components/filter-date-input";
+import { FilterFieldCombobox } from "@/modules/ee/analysis/charts/components/filter-field-combobox";
 import { FilterValueCombobox } from "@/modules/ee/analysis/charts/components/filter-value-combobox";
 import type { FilterRow, TFilterFieldType } from "@/modules/ee/analysis/lib/query-builder";
 import {
@@ -210,9 +211,10 @@ export function FiltersPanel({
 
           return (
             <div key={filter.id} className="flex items-center gap-2">
-              <Select
+              <FilterFieldCombobox
+                options={fieldOptions}
                 value={filter.field}
-                onValueChange={(value) => {
+                onChange={(value) => {
                   const newField = getFieldById(value);
                   const newType = (newField?.type || "string") as TFilterFieldType;
                   const newOperators = getFilterOperatorsForType(newType);
@@ -226,23 +228,8 @@ export function FiltersPanel({
                     operator: defaultOperator,
                     values: null,
                   });
-                }}>
-                <SelectTrigger className="w-[200px] bg-white">
-                  <SelectValue placeholder={t("workspace.analysis.charts.select_field")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {fieldOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      <span className="flex items-center gap-1.5">
-                        {option.isGenerated && (
-                          <SparklesIcon className="size-4 text-slate-500" aria-hidden="true" />
-                        )}
-                        {option.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                }}
+              />
 
               <Select
                 value={filter.operator}
