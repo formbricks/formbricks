@@ -1794,7 +1794,6 @@
       },
       "dashboards": {
         "add_count_charts": "添加 {count} 个图表",
-        "chart_duplicate_failed": "复制图表失败",
         "chart_remove_failed": "删除图表失败",
         "chart_removed": "图表已从仪表板中移除",
         "chart_restore_failed": "恢复图表失败",

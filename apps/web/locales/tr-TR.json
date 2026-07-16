@@ -1794,7 +1794,6 @@
       },
       "dashboards": {
         "add_count_charts": "{count} grafik ekle",
-        "chart_duplicate_failed": "Grafik kopyalanamadı",
         "chart_remove_failed": "Grafik kaldırılamadı",
         "chart_removed": "Grafik gösterge panosundan kaldırıldı",
         "chart_restore_failed": "Grafik geri yüklenemedi",

@@ -1794,7 +1794,6 @@
       },
       "dashboards": {
         "add_count_charts": "Añadir {count} gráfico(s)",
-        "chart_duplicate_failed": "No se pudo duplicar el gráfico",
         "chart_remove_failed": "No se pudo eliminar el gráfico",
         "chart_removed": "Gráfico eliminado del panel",
         "chart_restore_failed": "No se pudo restaurar el gráfico",
