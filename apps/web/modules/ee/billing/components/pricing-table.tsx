@@ -42,6 +42,17 @@ import { UsageCard } from "./usage-card";
 const BILLING_CONFIRMATION_ORGANIZATION_ID_KEY = "billingConfirmationOrganizationId";
 const BILLING_PENDING_UPGRADE_PLAN_KEY = "billingPendingUpgradePlan";
 const BILLING_PENDING_UPGRADE_INTERVAL_KEY = "billingPendingUpgradeInterval";
+// Hands the post-upgrade success toast across the full reload the finalize path does to render the
+// synced plan.
+const BILLING_UPGRADE_RESULT_KEY = "billingUpgradeResult";
+
+// After checkout the plan lands in our DB via an async Stripe webhook (not instant). Poll a Stripe
+// force-sync until the plan reflects, so we can render the new plan without a manual refresh. Bounded
+// so a genuinely stuck upgrade doesn't spin forever.
+const UPGRADE_SYNC_POLL_INTERVAL_MS = 1500;
+const UPGRADE_SYNC_POLL_TIMEOUT_MS = 45000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Stripe.js is loaded lazily and memoized across renders (one publishable key per deploy).
 let stripeJsPromise: Promise<StripeJs | null> | null = null;
@@ -350,6 +361,28 @@ export const PricingTable = ({
     };
   };
 
+  // Show the success toast that the finalize path stashed before its full reload (see finish()).
+  useEffect(() => {
+    if (globalThis.window === undefined) {
+      return;
+    }
+    const raw = globalThis.window.sessionStorage.getItem(BILLING_UPGRADE_RESULT_KEY);
+    if (!raw) {
+      return;
+    }
+    globalThis.window.sessionStorage.removeItem(BILLING_UPGRADE_RESULT_KEY);
+    try {
+      const { plan } = JSON.parse(raw) as { plan: TStandardPlan };
+      toast.success(
+        t("workspace.settings.billing.upgrade_checkout_success", {
+          plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
+        })
+      );
+    } catch {
+      // Malformed handoff payload — nothing to show.
+    }
+  }, [t]);
+
   useEffect(() => {
     if (searchParams.get("checkout_success") !== "1") {
       return;
@@ -376,37 +409,56 @@ export const PricingTable = ({
       "hobby"
     > | null;
 
+    // upgradeDriveRef guarantees this runs once; deliberately no `cancelled` cleanup flag — React
+    // StrictMode's mount→unmount→mount in dev would otherwise cancel the real run before it reaches
+    // the reload, leaving the page stale (the bug looks identical to no fix at all).
     upgradeDriveRef.current = true;
-    let cancelled = false;
+    // Loading toast at the top of this first post-checkout page, shown while we poll for the plan.
     const toastId = toast.loading(t("workspace.settings.billing.upgrade_checkout_pending"));
+    const billingUrl = `/organizations/${organizationId}/settings/billing`;
 
-    const finish = (
-      kind: "success" | "error",
-      plan: Exclude<TStandardPlan, "hobby"> | null,
-      message?: string
-    ) => {
-      toast.dismiss(toastId);
-      if (kind === "success") {
-        toast.success(
-          t("workspace.settings.billing.upgrade_checkout_success", {
-            plan: getCurrentCloudPlanLabel(plan ?? "pro", t),
-          })
-        );
-      } else {
-        toast.error(message ?? t("common.something_went_wrong_please_try_again"));
-      }
+    // Once the plan is confirmed in our DB, a full reload is the only reliable way to render it
+    // (router.refresh() did not consistently refetch the billing snapshot). Hand the toast across it.
+    const reloadWithToast = (plan: Exclude<TStandardPlan, "hobby"> | null) => {
+      if (globalThis.window === undefined) return;
+      globalThis.window.sessionStorage.setItem(
+        BILLING_UPGRADE_RESULT_KEY,
+        JSON.stringify({ plan: plan ?? "pro" })
+      );
+      globalThis.window.location.replace(billingUrl);
+    };
+
+    // Terminal state without a reload (error, or the poll timed out): clean the URL, dismiss the
+    // loading toast, surface a message. The webhook will still land the plan; the user can refresh.
+    const settleWithoutReload = (message: string) => {
       clearUpgradeIntent();
-      router.replace(`/organizations/${organizationId}/settings/billing`);
+      toast.dismiss(toastId);
+      toast.error(message);
+      if (globalThis.window !== undefined) {
+        globalThis.window.history.replaceState(null, "", billingUrl);
+      }
       router.refresh();
     };
 
+    // Poll a Stripe force-sync until the plan reflects in our DB (waitForBillingPlanAction syncs +
+    // invalidates the cache each call). Doesn't depend on the async webhook.
+    const pollUntilPlanApplied = async (targetPlan: Exclude<TStandardPlan, "hobby">): Promise<boolean> => {
+      const deadline = Date.now() + UPGRADE_SYNC_POLL_TIMEOUT_MS;
+      for (;;) {
+        const waitResult = await waitForBillingPlanAction({ organizationId, targetPlan });
+        if (waitResult?.data?.plan === targetPlan) return true;
+        if (Date.now() >= deadline) return false;
+        await sleep(UPGRADE_SYNC_POLL_INTERVAL_MS);
+      }
+    };
+
     const run = async () => {
-      // Finalize attaches the card and applies the upgrade in one call, so it never races the webhook.
+      // Finalize attaches the saved card and applies the upgrade; the plan then reflects in our DB
+      // asynchronously, which is what pollUntilPlanApplied waits for below.
       const response = await finalizeSetupCheckoutUpgradeAction({ organizationId, checkoutSessionId });
-      if (cancelled) return;
 
       if (response?.serverError) {
-        finish("error", pendingPlan, getActionErrorMessage(response.serverError, t));
+        settleWithoutReload(getActionErrorMessage(response.serverError, t));
         return;
       }
 
@@ -415,26 +467,27 @@ export const PricingTable = ({
 
       if (response?.data) {
         const settled = await settleUpgradeConfirmation(response.data);
-        if (cancelled) return;
         if (!settled.applied) {
-          finish("error", resolvedPlan, settled.message ?? undefined);
+          settleWithoutReload(settled.message ?? t("common.something_went_wrong_please_try_again"));
           return;
         }
       }
 
-      if (resolvedPlan) {
-        await waitForBillingPlanAction({ organizationId, targetPlan: resolvedPlan });
-        if (cancelled) return;
+      if (!resolvedPlan) {
+        // No target to verify against — best effort: reload so any applied change renders.
+        reloadWithToast(resolvedPlan);
+        return;
       }
-      finish("success", resolvedPlan);
+
+      if (await pollUntilPlanApplied(resolvedPlan)) {
+        reloadWithToast(resolvedPlan);
+      } else {
+        // Poll window elapsed without the plan reflecting; the webhook will still catch up.
+        settleWithoutReload(t("workspace.settings.billing.upgrade_checkout_pending"));
+      }
     };
 
     void run();
-
-    return () => {
-      cancelled = true;
-      toast.dismiss(toastId);
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, router, t, organizationId]);
 

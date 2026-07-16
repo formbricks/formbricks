@@ -51,6 +51,8 @@ export function useChartDialog({
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
+  // Saved name of the chart being edited; unlike chartName it stays stable while the user types.
+  const [savedChartName, setSavedChartName] = useState("");
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedDashboardId, setSelectedDashboardId] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
@@ -87,6 +89,7 @@ export function useChartDialog({
     if (!chartId) {
       setChartData(null);
       setChartName("");
+      setSavedChartName("");
       lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
@@ -113,6 +116,7 @@ export function useChartDialog({
         if (cancelled) return;
 
         setChartName(chart.name);
+        setSavedChartName(chart.name);
         setSelectedChartType(resolveChartType(chart.type));
         setCurrentChartId(chart.id);
         setSelectedDirectoryId(chart.feedbackDirectoryId);
@@ -368,6 +372,7 @@ export function useChartDialog({
     if (!isSaving) {
       setChartData(null);
       setChartName("");
+      setSavedChartName("");
       lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
@@ -388,6 +393,7 @@ export function useChartDialog({
     chartData,
     chartName,
     setChartName,
+    savedChartName,
     selectedChartType,
     initialQuery,
     setSelectedChartType,

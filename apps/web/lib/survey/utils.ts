@@ -10,9 +10,29 @@ import {
   TSurveyElementTypeEnum,
   TSurveyPictureChoice,
 } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+  TSurveyStatus,
+  TSurveyType,
+} from "@formbricks/types/surveys/types";
 import { isValidVideoUrl } from "@/lib/utils/video-upload";
 import { isValidImageFile } from "@/modules/storage/utils";
+
+/**
+ * A live (non-draft) app survey must have at least one trigger, otherwise it can never be displayed
+ * ("live but dormant"). The survey editor only enforces this client-side, so every server write path
+ * (create + update, including the v3 API) applies this check to keep the API in parity with the UI.
+ */
+export const APP_SURVEY_TRIGGER_REQUIRED_MESSAGE =
+  "An app survey must have at least one trigger to be set to a non-draft status.";
+
+export const isAppSurveyMissingTriggersToPublish = (
+  type: TSurveyType,
+  status: TSurveyStatus,
+  triggers: readonly unknown[] | null | undefined
+): boolean => type === "app" && status !== "draft" && (triggers?.length ?? 0) === 0;
 
 /**
  * Actionable hint appended to invalid-image messages. Names the supported formats and explains why
