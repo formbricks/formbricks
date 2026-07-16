@@ -67,6 +67,7 @@ export function CreateChartView({
     chartLoadError,
     chartName,
     setChartName,
+    savedChartName,
     selectedChartType,
     handleChartTypeChange,
     handleChartGenerated,
@@ -121,18 +122,20 @@ export function CreateChartView({
   const chartType = selectedChartType ?? (isEditing ? (initialChart?.type ?? DEFAULT_CHART_TYPE) : undefined);
   const hasSelectedDirectory = !!selectedDirectoryId;
   const isAIQueryAvailable = isAIAvailable !== false;
+  const editChartTitle = savedChartName
+    ? t("workspace.analysis.charts.edit_chart_title_named", { name: savedChartName })
+    : t("workspace.analysis.charts.edit_chart_title");
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent
         width="full"
         disableCloseOnOutsideClick={!isEditing}
+        closeOnEscape
         onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader>
           <DialogTitle>
-            {isEditing
-              ? t("workspace.analysis.charts.edit_chart_title")
-              : t("workspace.analysis.charts.create_chart")}
+            {isEditing ? editChartTitle : t("workspace.analysis.charts.create_chart")}
           </DialogTitle>
           <DialogDescription>
             {isEditing

@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Group data by sentiment, question type, and other dimensions.",
         "edit_chart_description": "View and edit your chart configuration.",
         "edit_chart_title": "Edit Chart",
+        "edit_chart_title_named": "Edit \"{name}\"",
         "emotion_value_anger": "Anger",
         "emotion_value_disgust": "Disgust",
         "emotion_value_fear": "Fear",
@@ -1796,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "Add {count} chart(s)",
+        "chart_duplicate_failed": "Failed to duplicate chart",
+        "chart_duplicated": "Chart duplicated and added to dashboard",
         "chart_remove_failed": "Failed to remove chart",
         "chart_removed": "Chart removed from dashboard",
         "chart_restore_failed": "Failed to restore chart",

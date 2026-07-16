@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Agrupa dados por sentimento, tipo de pergunta e outras dimensões.",
         "edit_chart_description": "Visualize e edite a configuração do seu gráfico.",
         "edit_chart_title": "Editar gráfico",
+        "edit_chart_title_named": "Editar \"{name}\"",
         "emotion_value_anger": "Raiva",
         "emotion_value_disgust": "Repulsa",
         "emotion_value_fear": "Medo",
@@ -1796,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "Adicionar {count} gráfico(s)",
+        "chart_duplicate_failed": "Falha ao duplicar gráfico",
+        "chart_duplicated": "Gráfico duplicado e adicionado ao painel",
         "chart_remove_failed": "Falha ao remover gráfico",
         "chart_removed": "Gráfico removido do painel",
         "chart_restore_failed": "Falha ao restaurar gráfico",

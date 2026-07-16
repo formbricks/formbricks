@@ -321,7 +321,7 @@ export const generateAIChartAction = authenticatedActionClient
         source: "charts.generateAIChartAction",
       });
 
-      const { chartType, query } = await generateAIChartQuery({
+      const { chartType, query, name } = await generateAIChartQuery({
         organizationId,
         prompt: parsedInput.prompt,
       });
@@ -341,6 +341,8 @@ export const generateAIChartAction = authenticatedActionClient
         query: validatedQuery,
         chartType,
         data: Array.isArray(data) ? data : [],
+        // Prefills the chart-name input (only when the user hasn't typed a name).
+        suggestedName: name,
       };
     }
   );

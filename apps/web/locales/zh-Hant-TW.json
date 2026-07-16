@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "依情感、問題類型及其他維度分組資料。",
         "edit_chart_description": "檢視並編輯你的圖表設定。",
         "edit_chart_title": "編輯圖表",
+        "edit_chart_title_named": "編輯「{name}」",
         "emotion_value_anger": "憤怒",
         "emotion_value_disgust": "厭惡",
         "emotion_value_fear": "恐懼",
@@ -1796,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "新增 {count} 個圖表",
+        "chart_duplicate_failed": "圖表複製失敗",
+        "chart_duplicated": "圖表已複製並新增至儀表板",
         "chart_remove_failed": "移除圖表失敗",
         "chart_removed": "圖表已從儀表板移除",
         "chart_restore_failed": "還原圖表失敗",

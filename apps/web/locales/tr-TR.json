@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Verileri duygu durumu, soru türü ve diğer boyutlara göre grupla.",
         "edit_chart_description": "Grafik yapılandırmanı görüntüle ve düzenle.",
         "edit_chart_title": "Grafiği Düzenle",
+        "edit_chart_title_named": "\"{name}\" Düzenle",
         "emotion_value_anger": "Öfke",
         "emotion_value_disgust": "İğrenme",
         "emotion_value_fear": "Korku",
@@ -1796,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "{count} grafik ekle",
+        "chart_duplicate_failed": "Grafik kopyalanamadı",
+        "chart_duplicated": "Grafik kopyalandı ve panoya eklendi",
         "chart_remove_failed": "Grafik kaldırılamadı",
         "chart_removed": "Grafik gösterge panosundan kaldırıldı",
         "chart_restore_failed": "Grafik geri yüklenemedi",

@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Gruppera data efter sentiment, frågetyp och andra dimensioner.",
         "edit_chart_description": "Visa och redigera din diagramkonfiguration.",
         "edit_chart_title": "Redigera diagram",
+        "edit_chart_title_named": "Redigera \"{name}\"",
         "emotion_value_anger": "Ilska",
         "emotion_value_disgust": "Avsky",
         "emotion_value_fear": "Rädsla",
@@ -1796,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "Lägg till {count} diagram",
+        "chart_duplicate_failed": "Misslyckades med att duplicera diagram",
+        "chart_duplicated": "Diagram duplicerat och tillagt på instrumentpanelen",
         "chart_remove_failed": "Misslyckades med att ta bort diagram",
         "chart_removed": "Diagram borttaget från instrumentpanelen",
         "chart_restore_failed": "Misslyckades med att återställa diagram",

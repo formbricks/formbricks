@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Группируйте данные по настроению, типу вопроса и другим измерениям.",
         "edit_chart_description": "Просмотри и измени настройки своего графика.",
         "edit_chart_title": "Редактировать график",
+        "edit_chart_title_named": "Редактировать «{name}»",
         "emotion_value_anger": "Гнев",
         "emotion_value_disgust": "Отвращение",
         "emotion_value_fear": "Страх",
@@ -1796,6 +1797,8 @@
       },
       "dashboards": {
         "add_count_charts": "Добавить {count} график(ов)",
+        "chart_duplicate_failed": "Не удалось создать копию графика",
+        "chart_duplicated": "График скопирован и добавлен на дашборд",
         "chart_remove_failed": "Не удалось удалить диаграмму",
         "chart_removed": "График удалён с панели",
         "chart_restore_failed": "Не удалось восстановить диаграмму",
