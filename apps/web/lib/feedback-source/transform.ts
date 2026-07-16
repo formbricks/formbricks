@@ -296,9 +296,22 @@ export function transformResponseToFeedbackRecords(
       element &&
       (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
         element.type === TSurveyElementTypeEnum.MultipleChoiceMulti);
-    const normalized = isChoiceElement
+    const normalized: NormalizedChoiceValue = isChoiceElement
       ? normalizeChoiceValue(element.choices, value, lookupLanguage)
       : { value };
+
+    // "Other" free-text answers never match a choice label, so they'd otherwise carry no
+    // value_id and each distinct free-text string would chart as its own bucket. When the
+    // element offers an "other" option, group them all under the stable "other" choice id
+    // (the survey convention: the other option's choice id is "other").
+    if (
+      isChoiceElement &&
+      !normalized.valueId &&
+      typeof value === "string" &&
+      (element.otherOptionPlaceholder !== undefined || element.choices.some((c) => c.id === "other"))
+    ) {
+      normalized.valueId = "other";
+    }
 
     const valueFields = convertValueToHubFields(normalized.value, mapping.hubFieldType);
 
