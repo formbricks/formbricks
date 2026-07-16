@@ -328,4 +328,223 @@ describe("chart Cube actions", () => {
     expect(result?.rows).toHaveLength(1);
     expect(result?.rows?.[0]?.["FeedbackRecords.valueText"]).toBe("Hello, World");
   });
+
+  // ── fieldLabel filter fallback (ENG-1673) ────────────────────────────────────
+
+  test("executeQueryAction rewrites valueText → valueId and returns optionLabels for a single-select matched by fieldLabel", async () => {
+    // The mapping has no customFieldLabel, so the effective label comes from the element headline.
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
+      {
+        formbricksMappings: [{ elementId: "field-sc", surveyId: "survey-sc", customFieldLabel: null }],
+      },
+    ]);
+    mocks.getSurvey.mockResolvedValue({ id: "survey-sc", blocks: [] });
+    mocks.getElementsFromBlocks.mockReturnValue([
+      {
+        id: "field-sc",
+        type: "multipleChoiceSingle",
+        headline: { default: "Favourite colour?" },
+        choices: [
+          { id: "c1", label: { default: "Red" } },
+          { id: "c2", label: { default: "Blue" } },
+        ],
+      },
+    ]);
+
+    mocks.executeTenantScopedQuery.mockResolvedValue([
+      { "FeedbackRecords.valueId": "c1", "FeedbackRecords.count": 10 },
+      { "FeedbackRecords.valueId": "c2", "FeedbackRecords.count": 5 },
+    ]);
+
+    const result = await executeQueryAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        query: {
+          measures: ["FeedbackRecords.count"],
+          dimensions: ["FeedbackRecords.valueText"],
+          // User filtered by "Question" (fieldLabel), not by fieldId.
+          filters: [
+            { member: "FeedbackRecords.fieldLabel", operator: "equals", values: ["Favourite colour?"] },
+          ],
+        },
+        feedbackDirectoryId: "frd-1",
+      },
+    } as any);
+
+    // The query sent to Cube must have been rewritten to valueId.
+    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueId"] }),
+      })
+    );
+
+    // optionLabels must be returned so the renderer can map ids to human labels.
+    expect(result?.optionLabels).toEqual({ c1: "Red", c2: "Blue" });
+  });
+
+  test("executeQueryAction sets splitMultiSelect for a multi-select element matched by fieldLabel", async () => {
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
+      {
+        formbricksMappings: [{ elementId: "field-mc", surveyId: "survey-mc", customFieldLabel: null }],
+      },
+    ]);
+    mocks.getSurvey.mockResolvedValue({ id: "survey-mc", blocks: [] });
+    mocks.getElementsFromBlocks.mockReturnValue([
+      {
+        id: "field-mc",
+        type: "multipleChoiceMulti",
+        headline: { default: "Pick all that apply" },
+        choices: [
+          { id: "opt1", label: { default: "A" } },
+          { id: "opt2", label: { default: "B" } },
+        ],
+      },
+    ]);
+
+    mocks.executeTenantScopedQuery.mockResolvedValue([
+      { "FeedbackRecords.valueText": "A, B", "FeedbackRecords.count": 3 },
+      { "FeedbackRecords.valueText": "A", "FeedbackRecords.count": 2 },
+    ]);
+
+    const result = await executeQueryAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        query: {
+          measures: ["FeedbackRecords.count"],
+          dimensions: ["FeedbackRecords.valueText"],
+          filters: [
+            { member: "FeedbackRecords.fieldLabel", operator: "equals", values: ["Pick all that apply"] },
+          ],
+        },
+        feedbackDirectoryId: "frd-1",
+      },
+    } as any);
+
+    // valueText must NOT be rewritten to valueId for multi-select.
+    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
+      })
+    );
+
+    // Rows must be split and re-aggregated.
+    const rows = result?.rows ?? [];
+    const byOption = Object.fromEntries(
+      rows.map((r: Record<string, unknown>) => [r["FeedbackRecords.valueText"], r["FeedbackRecords.count"]])
+    );
+    expect(byOption["A"]).toBe(5); // 3 from joined row + 2 from plain row
+    expect(byOption["B"]).toBe(3);
+
+    // No optionLabels for multi-select path.
+    expect(result).not.toHaveProperty("optionLabels");
+  });
+
+  test("executeQueryAction does NOT rewrite when fieldLabel matches multiple mappings (ambiguous)", async () => {
+    // Two different mappings share the same effective label — must not guess.
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
+      {
+        formbricksMappings: [
+          { elementId: "field-a", surveyId: "survey-a", customFieldLabel: null },
+          { elementId: "field-b", surveyId: "survey-b", customFieldLabel: null },
+        ],
+      },
+    ]);
+    // Both surveys return an element with the same headline.
+    mocks.getSurvey.mockImplementation((id: string) => Promise.resolve({ id, blocks: [] }));
+    mocks.getElementsFromBlocks.mockImplementation((blocks: unknown[]) => {
+      // Return an element whose headline matches; the elementId will vary per survey.
+      // We use a stable element id here because getElementsFromBlocks is mocked globally,
+      // but the key point is that both mappings resolve to the same label.
+      return [
+        {
+          id: "field-a",
+          type: "multipleChoiceSingle",
+          headline: { default: "Duplicate label" },
+          choices: [],
+        },
+        {
+          id: "field-b",
+          type: "multipleChoiceSingle",
+          headline: { default: "Duplicate label" },
+          choices: [],
+        },
+      ];
+    });
+
+    const rawRows = [{ "FeedbackRecords.valueText": "X", "FeedbackRecords.count": 1 }];
+    mocks.executeTenantScopedQuery.mockResolvedValue(rawRows);
+
+    const result = await executeQueryAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        query: {
+          measures: ["FeedbackRecords.count"],
+          dimensions: ["FeedbackRecords.valueText"],
+          filters: [
+            { member: "FeedbackRecords.fieldLabel", operator: "equals", values: ["Duplicate label"] },
+          ],
+        },
+        feedbackDirectoryId: "frd-1",
+      },
+    } as any);
+
+    // Cube must be called with the ORIGINAL (unrewritten) query.
+    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
+      })
+    );
+
+    // No optionLabels returned.
+    expect(result).not.toHaveProperty("optionLabels");
+  });
+
+  test("executeQueryAction uses fieldId filter when both fieldId and fieldLabel filters are present", async () => {
+    // fieldId should take precedence; fieldLabel is ignored.
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
+      {
+        formbricksMappings: [{ elementId: "field-sc2", surveyId: "survey-sc2", customFieldLabel: null }],
+      },
+    ]);
+    mocks.getSurvey.mockResolvedValue({ id: "survey-sc2", blocks: [] });
+    mocks.getElementsFromBlocks.mockReturnValue([
+      {
+        id: "field-sc2",
+        type: "multipleChoiceSingle",
+        headline: { default: "Colour?" },
+        choices: [{ id: "cx1", label: { default: "Green" } }],
+      },
+    ]);
+
+    mocks.executeTenantScopedQuery.mockResolvedValue([
+      { "FeedbackRecords.valueId": "cx1", "FeedbackRecords.count": 7 },
+    ]);
+
+    const result = await executeQueryAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        query: {
+          measures: ["FeedbackRecords.count"],
+          dimensions: ["FeedbackRecords.valueText"],
+          filters: [
+            { member: "FeedbackRecords.fieldId", operator: "equals", values: ["field-sc2"] },
+            { member: "FeedbackRecords.fieldLabel", operator: "equals", values: ["Colour?"] },
+          ],
+        },
+        feedbackDirectoryId: "frd-1",
+      },
+    } as any);
+
+    // Dimension must be rewritten; the resolution path used fieldId (not fieldLabel).
+    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueId"] }),
+      })
+    );
+    expect(result?.optionLabels).toEqual({ cx1: "Green" });
+  });
 });

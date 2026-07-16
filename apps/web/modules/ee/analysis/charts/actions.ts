@@ -67,6 +67,12 @@ const getChoiceLabelDefault = (choice: { label: TSurveyElementChoice["label"] })
  *   yet — that requires a hub change tracked separately). Set `splitMultiSelect: true` so
  *   the caller can post-process rows by splitting the ", "-joined value string server-side.
  *
+ * If no `fieldId` filter is present, falls back to a `FeedbackRecords.fieldLabel equals <label>`
+ * filter: loads all source mappings, computes each mapping's effective label
+ * (customFieldLabel if set, else the element's default-language headline — same logic as
+ * transform.ts), and resolves exactly one match. If zero or multiple mappings share the same
+ * label (ambiguous), the query is returned unchanged rather than guessing.
+ *
  * Returns `{ rewrittenQuery, optionLabels, splitMultiSelect }`. When no rewrite is needed,
  * `rewrittenQuery` is the original query and the other fields are undefined / false.
  */
@@ -84,31 +90,92 @@ async function resolveOptionGrouping(
   }
 
   const fieldId = extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldId");
-  if (!fieldId) {
-    return { rewrittenQuery: query };
-  }
 
-  // Find the feedbackSource mapping for this fieldId to learn the surveyId.
-  const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
-  let surveyId: string | undefined;
-  for (const source of feedbackSources) {
-    const mapping = source.formbricksMappings.find((m) => m.elementId === fieldId);
-    if (mapping) {
-      surveyId = mapping.surveyId;
-      break;
+  // ── Resolve element via fieldId (preferred) or fieldLabel (fallback) ──────
+  let resolvedElementId: string | undefined;
+  let resolvedSurveyId: string | undefined;
+
+  if (fieldId) {
+    // Existing path: fieldId filter is present — find the survey that owns this element.
+    const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
+    for (const source of feedbackSources) {
+      const mapping = source.formbricksMappings.find((m) => m.elementId === fieldId);
+      if (mapping) {
+        resolvedElementId = fieldId;
+        resolvedSurveyId = mapping.surveyId;
+        break;
+      }
     }
+  } else {
+    // Fallback path: check for a FeedbackRecords.fieldLabel equals filter.
+    // Users filter by "Question" (fieldLabel) rather than the internal fieldId, so we
+    // resolve the label → elementId by matching the mapping's effective label — which is
+    // customFieldLabel if set, otherwise the element's default-language headline (mirroring
+    // how transform.ts computes field_label on ingest).
+    const fieldLabelFilter = extractMemberEqualsValue(query.filters ?? [], "FeedbackRecords.fieldLabel");
+    if (!fieldLabelFilter) {
+      return { rewrittenQuery: query };
+    }
+
+    const feedbackSources = await getFeedbackSourcesWithMappings(workspaceId);
+
+    // Collect candidates: mappings whose effective label exactly matches the filter value.
+    // Dedupe survey loads so we only call getSurvey once per distinct surveyId.
+    const surveyCache = new Map<string, Awaited<ReturnType<typeof getSurvey>>>();
+    const loadSurvey = async (surveyId: string) => {
+      if (!surveyCache.has(surveyId)) {
+        surveyCache.set(surveyId, await getSurvey(surveyId));
+      }
+      return surveyCache.get(surveyId);
+    };
+
+    const candidates: { elementId: string; surveyId: string }[] = [];
+
+    for (const source of feedbackSources) {
+      for (const mapping of source.formbricksMappings) {
+        // Fast path: customFieldLabel is already stored on the mapping.
+        if (mapping.customFieldLabel !== null && mapping.customFieldLabel !== undefined) {
+          if (mapping.customFieldLabel === fieldLabelFilter) {
+            candidates.push({ elementId: mapping.elementId, surveyId: mapping.surveyId });
+          }
+          // Even if customFieldLabel doesn't match, skip the survey load for this mapping
+          // because the effective label is the custom one, not the headline.
+          continue;
+        }
+
+        // No customFieldLabel → effective label is the element's default-language headline.
+        const survey = await loadSurvey(mapping.surveyId);
+        if (!survey) continue;
+        const elements = getElementsFromBlocks(survey.blocks);
+        const element = elements.find((el) => el.id === mapping.elementId);
+        if (!element) continue;
+        const headline = getTextContent(getLocalizedValue(element.headline ?? {}, "default"));
+        if (headline === fieldLabelFilter) {
+          candidates.push({ elementId: mapping.elementId, surveyId: mapping.surveyId });
+        }
+      }
+    }
+
+    // Ambiguity guard: if zero or multiple mappings share this label, do not guess.
+    if (candidates.length !== 1) {
+      return { rewrittenQuery: query };
+    }
+
+    resolvedElementId = candidates[0].elementId;
+    resolvedSurveyId = candidates[0].surveyId;
   }
-  if (!surveyId) {
+
+  if (!resolvedElementId || !resolvedSurveyId) {
     return { rewrittenQuery: query };
   }
 
-  const survey = await getSurvey(surveyId);
+  const survey = await getSurvey(resolvedSurveyId);
   if (!survey) {
     return { rewrittenQuery: query };
   }
 
   const elements = getElementsFromBlocks(survey.blocks);
-  const element = elements.find((el) => el.id === fieldId);
+  const element = elements.find((el) => el.id === resolvedElementId);
   if (!element) {
     return { rewrittenQuery: query };
   }
