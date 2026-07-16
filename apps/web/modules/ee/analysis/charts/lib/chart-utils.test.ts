@@ -178,7 +178,7 @@ describe("chart-utils", () => {
       expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([0, 0, 0]);
     });
 
-    test("handles empty data by emitting zero rows per measure", () => {
+    test("emits one zero-value row per measure key when data is empty", () => {
       const result = pivotMeasuresToCategories([], ["a"], label);
       expect(result).toHaveLength(1);
       expect(result[0][PIVOTED_VALUE_KEY]).toBe(0);
