@@ -3,16 +3,45 @@ import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
+  PIE_MEASURE_NAME_KEY,
+  PIE_MEASURE_VALUE_KEY,
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
   formatCellValue,
   formatXAxisTick,
   pivotMeasuresToCategories,
+  prepareMeasureSliceData,
   preparePieData,
   resolveChartType,
 } from "./chart-utils";
 
 describe("chart-utils", () => {
+  describe("prepareMeasureSliceData", () => {
+    const label = (k: string) => `L:${k}`;
+
+    test("pivots each measure column into its own slice", () => {
+      const rows = [{ "m.joy": 1163, "m.anger": 1050, "m.fear": 3 }];
+      const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger", "m.fear"], label);
+      expect(result).toEqual([
+        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 1163 },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 1050 },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.fear", [PIE_MEASURE_VALUE_KEY]: 3 },
+      ]);
+    });
+
+    test("sums a measure across multiple rows and treats non-numeric as 0", () => {
+      const rows = [
+        { "m.joy": 10, "m.anger": "x" },
+        { "m.joy": 5, "m.anger": 2 },
+      ];
+      const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger"], label);
+      expect(result).toEqual([
+        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 15 },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 2 },
+      ]);
+    });
+  });
+
   describe("resolveChartType", () => {
     test("returns valid chart types", () => {
       expect(resolveChartType("area")).toBe("area");

@@ -10,11 +10,14 @@ import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
+  PIE_MEASURE_NAME_KEY,
+  PIE_MEASURE_VALUE_KEY,
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
   formatCellValue,
   formatXAxisTick,
   pivotMeasuresToCategories,
+  prepareMeasureSliceData,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
@@ -350,7 +353,16 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
         </CartesianChart>
       );
     case "pie": {
-      const pieResult = preparePieData(sortedData, dataKey, xAxisKey);
+      // With several measures and no dimension (e.g. the six Emotion counts), each row column is a
+      // measure, not a slice — pivot the measures into one slice per measure so the pie shows them
+      // all instead of only the first. A dimension-based pie keeps its existing (rows = slices) shape.
+      const useMeasureSlices = isMultiMeasure && (query.dimensions?.length ?? 0) === 0 && !timeDimKey;
+      const pieDataKey = useMeasureSlices ? PIE_MEASURE_VALUE_KEY : dataKey;
+      const pieNameKey = useMeasureSlices ? PIE_MEASURE_NAME_KEY : xAxisKey;
+      const pieSource = useMeasureSlices
+        ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t))
+        : sortedData;
+      const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
       if (!pieResult) {
         return (
           <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
@@ -359,8 +371,9 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
         );
       }
       const { processedData, colors } = pieResult;
-      const total = processedData.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
-      const centerLabel = formatCubeColumnHeader(dataKey, t);
+      const total = processedData.reduce((sum, row) => sum + (Number(row[pieDataKey]) || 0), 0);
+      // Multi-measure pies have no single measure to name the center; show just the total.
+      const centerLabel = useMeasureSlices ? "" : formatCubeColumnHeader(dataKey, t);
 
       return (
         <div className="h-full min-h-64 w-full min-w-0">
@@ -368,8 +381,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
             <PieChart margin={{ top: 16, right: 32, bottom: 8, left: 32 }}>
               <Pie
                 data={processedData}
-                dataKey={dataKey}
-                nameKey={xAxisKey}
+                dataKey={pieDataKey}
+                nameKey={pieNameKey}
                 cx="50%"
                 cy="45%"
                 innerRadius="55%"
@@ -382,8 +395,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
                 labelLine={renderPieLabelLine as never}
                 label={renderPieLabel}>
                 {processedData.map((row, index) => {
-                  const rowKey = row[xAxisKey] ?? `row-${index}`;
-                  const uniqueKey = `${xAxisKey}-${String(rowKey)}-${index}`;
+                  const rowKey = row[pieNameKey] ?? `row-${index}`;
+                  const uniqueKey = `${pieNameKey}-${String(rowKey)}-${index}`;
                   return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
                 })}
                 <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
