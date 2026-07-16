@@ -68,6 +68,7 @@ interface NavigationProps {
   isAccessControlAllowed: boolean;
   responseCount: number;
   newTrialBannerVariant: string | boolean;
+  isFormbricksSurveysConfigured: boolean;
 }
 
 export const MainNavigation = ({
@@ -83,6 +84,7 @@ export const MainNavigation = ({
   isAccessControlAllowed,
   responseCount,
   newTrialBannerVariant,
+  isFormbricksSurveysConfigured,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -614,6 +616,7 @@ export const MainNavigation = ({
                 isCollapsed={isCollapsed}
                 isTextVisible={isTextVisible}
                 className="rounded-br-xl"
+                isFormbricksSurveysConfigured={isFormbricksSurveysConfigured}
               />
             </div>
           </div>

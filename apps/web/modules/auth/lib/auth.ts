@@ -21,21 +21,14 @@ import {
   accountDeletionConfig,
   requireDeletionConfirmationBeforeHandler,
 } from "@/modules/account/lib/better-auth-account-deletion";
-import {
-  ssoDatabaseHooks,
-  ssoLicenseGateBeforeHandler,
-  ssoRecoveryAfterHandler,
-} from "@/modules/ee/sso/lib/better-auth-hooks";
+import { ssoDatabaseHooks, ssoLicenseGateBeforeHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/better-auth-providers";
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
+import { runAfterAuthHooks } from "./after-auth-hooks";
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
-import {
-  auditFailedAuthAfter,
-  auditPasswordReset,
-  betterAuthLogger,
-  signInAuditDatabaseHook,
-} from "./better-auth-observability";
+import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
+import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
@@ -146,7 +139,11 @@ export const auth = betterAuth({
     // this flag BA would throw EMAIL_NOT_VERIFIED without sending anything, leaving no recovery path
     // and making that message untrue. (ENG-1054)
     sendOnSignIn: true,
-    autoSignInAfterVerification: false,
+    // Establish the session on a successful verification so the user lands in the app instead of
+    // bouncing to /auth/login (ENG-1746). Safe — clicking the signed link proves email ownership.
+    // Distinct from the sibling `autoSignIn: false` above, which stays off (no auto-login at sign-up,
+    // before ownership is proven; also enumeration-safe).
+    autoSignInAfterVerification: true,
     expiresIn: 60 * 60, // 1 hour
     sendVerificationEmail: async ({ user, url }) => {
       const { sendVerificationLinkEmail } = await import("@/modules/email");
@@ -240,11 +237,12 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
+      // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
+      // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
+      // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
+      await hibpBreachCheckBeforeHandler(ctx);
     }),
-    after: createAuthMiddleware(async (ctx) => {
-      await ssoRecoveryAfterHandler(ctx);
-      await auditFailedAuthAfter(ctx);
-    }),
+    after: createAuthMiddleware(runAfterAuthHooks),
   },
 
   rateLimit: {

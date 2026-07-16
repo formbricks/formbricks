@@ -41,6 +41,16 @@ export function capturePostHogEvent(
   }
 }
 
+export function identifyPostHogPerson(distinctId: string, properties?: PostHogEventProperties): void {
+  if (!posthogServerClient) return;
+
+  try {
+    posthogServerClient.identify({ distinctId, properties });
+  } catch (error) {
+    logger.warn({ error }, "Failed to identify PostHog person");
+  }
+}
+
 type PostHogGroupType = "organization" | "workspace";
 
 export function groupIdentifyPostHog(

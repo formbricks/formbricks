@@ -1,9 +1,13 @@
 import { ChatwootWidget } from "@/app/chatwoot/components/chatwoot-widget";
+import { FormbricksProvider } from "@/app/formbricks/components/formbricks-provider";
 import { PostHogIdentify } from "@/app/posthog/PostHogIdentify";
 import {
   CHATWOOT_BASE_URL,
   CHATWOOT_WEBSITE_TOKEN,
+  FORMBRICKS_APP_URL,
+  FORMBRICKS_WORKSPACE_ID,
   IS_CHATWOOT_CONFIGURED,
+  IS_FORMBRICKS_SURVEYS_CONFIGURED,
   POSTHOG_KEY,
 } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
@@ -34,6 +38,15 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
           userId={user?.id}
           chatwootWebsiteToken={CHATWOOT_WEBSITE_TOKEN}
           chatwootBaseUrl={CHATWOOT_BASE_URL}
+        />
+      )}
+      {IS_FORMBRICKS_SURVEYS_CONFIGURED && FORMBRICKS_WORKSPACE_ID && (
+        <FormbricksProvider
+          workspaceId={FORMBRICKS_WORKSPACE_ID}
+          appUrl={FORMBRICKS_APP_URL}
+          userId={user?.id}
+          userEmail={user?.email}
+          userName={user?.name}
         />
       )}
       <ToasterClient />

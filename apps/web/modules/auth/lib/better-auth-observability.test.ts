@@ -32,6 +32,7 @@ vi.mock("./utils", () => ({
 describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
   test.each([
     ["/sign-in/email", "password"],
+    ["/verify-email", "password"], // auto-login after email verification (ENG-1746)
     ["/two-factor/verify-totp", "password"],
     ["/two-factor/verify-backup-code", "password"],
     ["/callback/google", "sso"],
