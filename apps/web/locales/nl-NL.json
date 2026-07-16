@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Groepeer data op sentiment, vraagtype en andere dimensies.",
         "edit_chart_description": "Bekijk en bewerk je diagramconfiguratie.",
         "edit_chart_title": "Diagram bewerken",
+        "edit_chart_title_named": "Bewerk \"{name}\"",
         "emotion_value_anger": "Woede",
         "emotion_value_disgust": "Afkeer",
         "emotion_value_fear": "Angst",

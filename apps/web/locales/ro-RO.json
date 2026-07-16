@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Grupează datele după sentiment, tipul întrebării și alte dimensiuni.",
         "edit_chart_description": "Vezi și editează configurația graficului tău.",
         "edit_chart_title": "Editează graficul",
+        "edit_chart_title_named": "Editează \"{name}\"",
         "emotion_value_anger": "Furie",
         "emotion_value_disgust": "Dezgust",
         "emotion_value_fear": "Frică",

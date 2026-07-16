@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "按情感、问题类型和其他维度对数据进行分组。",
         "edit_chart_description": "查看并编辑你的图表配置。",
         "edit_chart_title": "编辑图表",
+        "edit_chart_title_named": "编辑“{name}”",
         "emotion_value_anger": "愤怒",
         "emotion_value_disgust": "厌恶",
         "emotion_value_fear": "恐惧",

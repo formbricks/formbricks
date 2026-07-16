@@ -1657,6 +1657,7 @@
         "dimensions_toggle_description": "Agrupe dados por sentimento, tipo de pergunta e outras dimensões.",
         "edit_chart_description": "Visualize e edite a configuração do seu gráfico.",
         "edit_chart_title": "Editar gráfico",
+        "edit_chart_title_named": "Editar \"{name}\"",
         "emotion_value_anger": "Raiva",
         "emotion_value_disgust": "Nojo",
         "emotion_value_fear": "Medo",
