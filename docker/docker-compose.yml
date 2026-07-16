@@ -272,10 +272,13 @@ services:
   formbricks-migrate:
     image: ghcr.io/formbricks/formbricks:latest
     restart: "no"
+    env_file:
+      - path: .env
+        required: false
     entrypoint: ["sh", "-c"]
     command:
       [
-        'if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi',
+        "node /home/nextjs/validate-env.mjs && if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi",
       ]
     depends_on:
       postgres:
