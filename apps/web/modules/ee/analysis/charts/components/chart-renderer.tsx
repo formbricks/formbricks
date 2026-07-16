@@ -9,13 +9,14 @@ import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/po
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
-  CHART_NOT_ENRICHED_COLOR,
   PIE_MEASURE_NAME_KEY,
   PIE_MEASURE_VALUE_KEY,
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
   formatCellValue,
   formatXAxisTick,
+  getSemanticDimensionColor,
+  getSentimentMeasureColor,
   pivotMeasuresToCategories,
   prepareMeasureSliceData,
   preparePieData,
@@ -25,7 +26,6 @@ import {
   formatCubeColumnHeader,
   getMeasureAxisLabel,
   getTranslatedDimensionValueLabel,
-  isNotEnrichedDimensionValue,
   sortMeasureIdsForCategoryAxis,
   sortRowsByEnumDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
@@ -186,12 +186,14 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
     );
   }
 
+  // Sentiment count measures carry semantic colors keyed by enum value (red-ish for very negative →
+  // green for very positive); every other series takes the generic palette by index.
   const chartConfig: ChartConfig = Object.fromEntries(
     dataKeys.map((key, i) => [
       key,
       {
         label: formatCubeColumnHeader(key, t),
-        color: CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
+        color: getSentimentMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
       },
     ])
   );
@@ -247,9 +249,9 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
         ? sortedData
         : sortedData.map((row, index) => ({
             ...row,
-            fill: isNotEnrichedDimensionValue(xAxisKey, row[xAxisKey])
-              ? CHART_NOT_ENRICHED_COLOR
-              : CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
+            fill:
+              getSemanticDimensionColor(xAxisKey, row[xAxisKey]) ??
+              CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
           }));
 
       return (
@@ -265,23 +267,19 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}
           chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
-          {dataKeys.map((key, i) => {
-            const fallbackColor =
-              chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
-            return (
-              <Bar key={key} dataKey={key} fill={fallbackColor} radius={4}>
-                {!isMultiMeasure && (
-                  <LabelList
-                    dataKey={key}
-                    position="top"
-                    className="fill-foreground"
-                    fontSize={11}
-                    formatter={(value: unknown) => formatCellValue(value)}
-                  />
-                )}
-              </Bar>
-            );
-          })}
+          {dataKeys.map((key) => (
+            <Bar key={key} dataKey={key} fill={chartConfig[key]?.color} radius={4}>
+              {!isMultiMeasure && (
+                <LabelList
+                  dataKey={key}
+                  position="top"
+                  className="fill-foreground"
+                  fontSize={11}
+                  formatter={(value: unknown) => formatCellValue(value)}
+                />
+              )}
+            </Bar>
+          ))}
         </CartesianChart>
       );
     }
@@ -298,8 +296,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}>
           <defs>
-            {dataKeys.map((key, i) => {
-              const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
+            {dataKeys.map((key) => {
+              const color = chartConfig[key]?.color;
               return (
                 <linearGradient key={key} id={`${gradientIdPrefix}-line-${key}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={color} stopOpacity={0.3} />
@@ -308,8 +306,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
               );
             })}
           </defs>
-          {dataKeys.map((key, i) => {
-            const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
+          {dataKeys.map((key) => {
+            const color = chartConfig[key]?.color;
             return (
               <Area
                 key={key}
@@ -338,13 +336,13 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           showLegend
           hasCategoryAxis={hasCategoryAxis}
           xAxisTickFormatter={formatDimensionValue}>
-          {dataKeys.map((key, i) => (
+          {dataKeys.map((key) => (
             <Area
               key={key}
               type="monotone"
               dataKey={key}
-              stroke={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
-              fill={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
+              stroke={chartConfig[key]?.color}
+              fill={chartConfig[key]?.color}
               fillOpacity={0.4}
               strokeWidth={2}
               connectNulls={false}

@@ -1,5 +1,11 @@
 import { format, isValid, parseISO } from "date-fns";
-import { isNotEnrichedDimensionValue } from "@/modules/ee/analysis/lib/schema-definition";
+import {
+  SENTIMENT_DIMENSION_ID,
+  type TSentimentValue,
+  getSentimentValueForMeasureId,
+  isNotEnrichedDimensionValue,
+  isSentimentValue,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 
@@ -24,9 +30,50 @@ export const CHART_MEASURE_COLORS = [
   "#008300", // green
 ];
 
-/** Neutral gray for the "not enriched" bucket (empty sentiment/emotion values). Reads as muted in
- * both light and dark so it doesn't compete with the categorical palette. */
-export const CHART_NOT_ENRICHED_COLOR = "#94a3b8"; // slate-400
+/** Neutral gray for the "not enriched" bucket (empty sentiment/emotion values). A true gray (no
+ * slate blue cast) that reads as muted in both light and dark so it doesn't compete with the
+ * categorical palette. */
+export const CHART_NOT_ENRICHED_COLOR = "#a3a3a3"; // neutral-400
+
+/**
+ * Semantic scale for sentiment buckets, keyed by enum value (never by series index) so each bucket
+ * keeps its color regardless of which buckets appear. Hues deliberately mirror the emotion chart,
+ * where the six emotion count measures take CHART_MEASURE_COLORS in EMOTION_MEASURE_ORDER: very
+ * negative = sadness red, negative = disgust orange, neutral = surprise blue, mixed = anger
+ * yellow; positive is the brand teal and very positive the next-darker brand step
+ * (--color-brandnew in globals.css). Validated with the dataviz palette script on white: lightness
+ * band and adjacent-pair CVD separation pass (worst adjacent ΔE 16.2, deutan); the dark brand teal
+ * sits just under the categorical chroma floor, acceptable for a brand hue. Groundwork for the
+ * sentiment-only chart (ENG-1558).
+ */
+export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
+  very_negative: "#e34948", // red (palette red — sadness)
+  negative: "#eb6834", // orange (palette orange — disgust)
+  neutral: "#2a78d6", // blue (palette blue — surprise)
+  positive: CHART_BRAND_DARK, // teal (brand)
+  very_positive: "#038178", // dark teal (brand, one step darker)
+  mixed: "#eda100", // yellow (palette yellow — anger)
+};
+
+/**
+ * Semantic color for an enum dimension value: gray for the "not enriched" bucket, the sentiment
+ * scale for sentiment values. Returns undefined when the value has no semantic color (other
+ * dimensions, unknown tokens) so callers fall back to the generic palette.
+ */
+export const getSemanticDimensionColor = (dimensionId: string, value: unknown): string | undefined => {
+  if (isNotEnrichedDimensionValue(dimensionId, value)) return CHART_NOT_ENRICHED_COLOR;
+  if (dimensionId === SENTIMENT_DIMENSION_ID && typeof value === "string" && isSentimentValue(value)) {
+    return CHART_SENTIMENT_COLORS[value];
+  }
+  return undefined;
+};
+
+/** Semantic series color for the sentiment count measures (e.g. "FeedbackRecords.veryPositiveCount"),
+ * matching the dimension buckets. Undefined for every other measure. */
+export const getSentimentMeasureColor = (measureId: string): string | undefined => {
+  const value = getSentimentValueForMeasureId(measureId);
+  return value ? CHART_SENTIMENT_COLORS[value] : undefined;
+};
 
 /** Validate a chart type string, defaulting to "bar" if unrecognized. */
 export const resolveChartType = (raw: string): TChartType => {
@@ -57,13 +104,13 @@ export const preparePieData = (
     .sort((a, b) => Number(b[dataKey]) - Number(a[dataKey]));
   if (processedData.length === 0) return null;
 
-  // The "not enriched" slice takes a neutral gray; palette colors are handed out only to the
-  // enriched slices so the gray bucket doesn't consume a categorical hue.
+  // Semantic slices (the gray "not enriched" bucket, the sentiment scale) keep their meaning-bound
+  // colors; palette colors are handed out only to the remaining slices so a semantic bucket doesn't
+  // consume a categorical hue.
   let paletteIndex = 0;
   const colors = processedData.map((row) => {
-    if (nameKey && isNotEnrichedDimensionValue(nameKey, row[nameKey])) {
-      return CHART_NOT_ENRICHED_COLOR;
-    }
+    const semanticColor = nameKey ? getSemanticDimensionColor(nameKey, row[nameKey]) : undefined;
+    if (semanticColor) return semanticColor;
     const color = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
     paletteIndex++;
     return color;
@@ -112,13 +159,21 @@ export function pivotMeasuresToCategories(
   formatLabel: (measureKey: string) => string
 ): TChartDataRow[] {
   const row = data[0] ?? {};
-  return measureKeys.map((key, index) => {
+  // Like preparePieData: semantic buckets (sentiment counts) keep their meaning-bound colors and
+  // don't consume a categorical hue; the palette is handed out only to the remaining measures.
+  let paletteIndex = 0;
+  return measureKeys.map((key) => {
     const num = Number(row[key]);
+    let fill = getSentimentMeasureColor(key);
+    if (!fill) {
+      fill = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
+      paletteIndex++;
+    }
     return {
       [PIVOTED_MEASURE_KEY]: key,
       [PIVOTED_VALUE_KEY]: Number.isFinite(num) ? num : 0,
       tooltipLabel: formatLabel(key),
-      fill: CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
+      fill,
     };
   });
 }
