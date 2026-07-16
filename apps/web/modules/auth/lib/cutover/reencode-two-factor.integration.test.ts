@@ -220,4 +220,55 @@ describe("2FA secret re-encode (real Postgres)", () => {
     });
     expect(await prisma.session.count()).toBe(1);
   });
+
+  // ENG-1824 regression: the legacy login consumed a used backup code by nulling its slot in place
+  // (`backupCodes[i] = null`), so a real upgraded user who ever used one has `null` entries. The heal's
+  // re-encode must skip those (not crash on `null.slice(...)`), materialize a row from the REMAINING
+  // valid codes, and let one of them verify. Reproduces the actual upgrade failure that "TOTP not
+  // enabled" masked.
+  test("a legacy 2FA user with a CONSUMED (null) backup code still heals and a remaining code verifies", async () => {
+    authenticator.options = { digits: 6, step: 30 };
+    const password = "Legacy-Heal2!";
+    const fbSecret = authenticator.generateSecret(20);
+    // First slot nulled = the code the user already spent on the legacy app; second is still valid.
+    const storedCodes = [null, "0f1e2d3c4b"];
+    const user = await prisma.user.create({
+      data: {
+        email: "legacy-consumed-backup@example.com",
+        name: "LegacyConsumed",
+        emailVerified: true,
+        password: await hashSecret(password),
+        twoFactorEnabled: true,
+        twoFactorSecret: symmetricEncrypt(fbSecret, ENCRYPTION_KEY),
+        backupCodes: symmetricEncrypt(JSON.stringify(storedCodes), ENCRYPTION_KEY),
+      },
+    });
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        type: "credential",
+        provider: "credential",
+        providerAccountId: user.id,
+        password: user.password!,
+      },
+    });
+
+    expect(await prisma.twoFactor.count({ where: { userId: user.id } })).toBe(0);
+
+    // Sign-in heal must NOT throw on the null slot; it materializes a verified row from the survivors.
+    const challenge = await auth.api.signInEmail({
+      body: { email: "legacy-consumed-backup@example.com", password },
+      asResponse: true,
+    });
+    expect(challenge.status).toBe(200);
+    const healed = await prisma.twoFactor.findUnique({ where: { userId: user.id } });
+    expect(healed?.verified).toBe(true);
+
+    // The still-valid code verifies; the consumed one was dropped (not carried over as a broken entry).
+    await auth.api.verifyBackupCode({
+      body: { code: "0f1e2-d3c4b" },
+      headers: { cookie: allCookies(challenge) },
+    });
+    expect(await prisma.session.count()).toBe(1);
+  });
 });

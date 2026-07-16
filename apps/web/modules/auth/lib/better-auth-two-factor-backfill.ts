@@ -68,9 +68,12 @@ export const twoFactorBackfillAfterHandler = async (ctx: AuthHookContext): Promi
       create: { userId: user.id, ...twoFactorRow, verified: true },
     });
   } catch (error) {
-    logger.warn(
+    // Error level, not warn: the sign-in still succeeds (we swallow so login never 500s), but a failure
+    // here means the user is left in the exact broken state this heal exists to fix ("TOTP not
+    // enabled"). It must be loud enough to catch in QA/monitoring rather than hide in the noise.
+    logger.error(
       { error: error instanceof Error ? error.message : error },
-      "Two-factor credential backfill failed; continuing sign-in"
+      "Two-factor credential backfill failed; user will still see 'TOTP not enabled' until resolved"
     );
   }
 };
