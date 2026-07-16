@@ -158,6 +158,50 @@ describe("useChartQuery", () => {
     expect(response).toEqual({ query: sampleQuery, data: sampleData, optionLabels });
   });
 
+  test("uses effectiveQuery from server response as the QueryResult query when present", async () => {
+    // Server rewrites valueText → valueId for a single-select question.
+    const effectiveQuery: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueId"],
+    };
+    const optionLabels = { opt1: "Option A", opt2: "Option B" };
+    mockExecuteQueryAction.mockResolvedValue({
+      data: { rows: sampleData, optionLabels, effectiveQuery },
+    });
+
+    const clientQuery: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueText"],
+    };
+
+    const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
+
+    let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
+    await act(async () => {
+      response = await result.current.runQuery(clientQuery);
+    });
+
+    // The returned QueryResult.query must be the server-rewritten effectiveQuery, not the
+    // client-side query. This ensures the renderer's xAxisKey matches the data columns.
+    expect(response).toEqual({ query: effectiveQuery, data: sampleData, optionLabels });
+    expect(result.current.query).toEqual(effectiveQuery);
+  });
+
+  test("falls back to client query when server does not return effectiveQuery", async () => {
+    // Server returns no effectiveQuery (e.g. no value dimension rewrite needed).
+    mockExecuteQueryAction.mockResolvedValue({ data: { rows: sampleData } });
+
+    const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
+
+    let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
+    await act(async () => {
+      response = await result.current.runQuery(sampleQuery);
+    });
+
+    expect(response).toEqual({ query: sampleQuery, data: sampleData });
+    expect(result.current.query).toEqual(sampleQuery);
+  });
+
   test("ignores stale responses when a newer query supersedes an older one", async () => {
     let resolveFirst: ((value: { data: { rows: typeof sampleData } }) => void) | undefined;
     const firstPromise = new Promise<{ data: { rows: typeof sampleData } }>((resolve) => {

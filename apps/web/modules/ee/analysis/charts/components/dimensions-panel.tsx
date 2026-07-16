@@ -20,15 +20,12 @@ export function DimensionsPanel({
 }: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
 
-  // valueId is an internal swap target used by resolveOptionGrouping — not a user-facing dimension.
-  const dimensionOptions = FEEDBACK_FIELDS.dimensions
-    .filter((d) => d.id !== "FeedbackRecords.valueId")
-    .map((d) => ({
-      value: d.id,
-      label: getTranslatedFieldLabel(d.id, t),
-      description: d.description,
-      icon: d.isGenerated ? <SparklesIcon className="size-4 text-slate-500" aria-hidden="true" /> : undefined,
-    }));
+  const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
+    value: d.id,
+    label: getTranslatedFieldLabel(d.id, t),
+    description: d.description,
+    icon: d.isGenerated ? <SparklesIcon className="size-4 text-slate-500" aria-hidden="true" /> : undefined,
+  }));
 
   return (
     <div className="w-full space-y-2">

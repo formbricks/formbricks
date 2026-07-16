@@ -140,8 +140,11 @@ export function useChartDialog({
           return;
         }
 
+        // Use the server-rewritten effective query so the renderer's xAxisKey matches
+        // the returned data columns (e.g. valueText → valueId for single-select).
+        const effectiveQuery = queryRows.effectiveQuery ?? chart.query;
         setChartData({
-          query: chart.query,
+          query: effectiveQuery,
           chartType: resolveChartType(chart.type),
           data: queryRows.rows,
           ...(queryRows.optionLabels ? { optionLabels: queryRows.optionLabels } : {}),

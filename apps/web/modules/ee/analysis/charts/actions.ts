@@ -57,14 +57,16 @@ const getChoiceLabelDefault = (choice: { label: TSurveyElementChoice["label"] })
   getTextContent(getLocalizedValue(choice.label, "default"));
 
 /**
- * When a query groups by `FeedbackRecords.valueText` and a `FeedbackRecords.fieldId equals <id>`
- * filter is present, inspect the element type and apply the appropriate grouping strategy:
+ * When a query groups by either `FeedbackRecords.valueText` or `FeedbackRecords.valueId`, and a
+ * `FeedbackRecords.fieldId equals <id>` or `FeedbackRecords.fieldLabel equals <label>` filter is
+ * present, inspect the element type and apply the appropriate grouping strategy:
  *
- * - MultipleChoiceSingle: rewrite the dimension to `FeedbackRecords.valueId` so Cube groups
- *   by stable option ids, and return a `{ [value_id]: defaultLabel }` map for the renderer.
+ * - MultipleChoiceSingle: effective dimension is `FeedbackRecords.valueId` (rewrite valueText →
+ *   valueId if needed; keep valueId as-is). Return a `{ [value_id]: defaultLabel }` map for the
+ *   renderer so slices display human-readable option labels.
  *
- * - MultipleChoiceMulti: Cube still groups by `valueText` (no per-option value_id is stored
- *   yet — that requires a hub change tracked separately). Set `splitMultiSelect: true` so
+ * - MultipleChoiceMulti: effective dimension is `FeedbackRecords.valueText` (rewrite valueId →
+ *   valueText if needed — no per-option value_id is stored yet). Set `splitMultiSelect: true` so
  *   the caller can post-process rows by splitting the ", "-joined value string server-side.
  *
  * If no `fieldId` filter is present, falls back to a `FeedbackRecords.fieldLabel equals <label>`
@@ -85,7 +87,9 @@ async function resolveOptionGrouping(
   splitMultiSelect?: boolean;
 }> {
   const dimensions = query.dimensions;
-  if (!dimensions?.includes("FeedbackRecords.valueText")) {
+  const hasValueText = dimensions?.includes("FeedbackRecords.valueText") ?? false;
+  const hasValueId = dimensions?.includes("FeedbackRecords.valueId") ?? false;
+  if (!hasValueText && !hasValueId) {
     return { rewrittenQuery: query };
   }
 
@@ -180,7 +184,7 @@ async function resolveOptionGrouping(
     return { rewrittenQuery: query };
   }
 
-  // ── MultipleChoiceSingle: rewrite dimension to valueId for stable grouping ──
+  // ── MultipleChoiceSingle: effective dimension is valueId (rewrite valueText → valueId) ──
   if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
     // Build the choice-id → default-language label map.
     const choices = (element as { choices: { id: string; label: TSurveyElementChoice["label"] }[] }).choices;
@@ -189,7 +193,8 @@ async function resolveOptionGrouping(
       optionLabels[choice.id] = getChoiceLabelDefault(choice);
     }
 
-    // Rewrite valueText → valueId in dimensions.
+    // Ensure the dimension is valueId regardless of what the user picked.
+    // If the user already picked valueId, keep it; if they picked valueText, swap it.
     const rewrittenQuery: TChartQuery = {
       ...query,
       dimensions: dimensions.map((d) => (d === "FeedbackRecords.valueText" ? "FeedbackRecords.valueId" : d)),
@@ -198,11 +203,20 @@ async function resolveOptionGrouping(
     return { rewrittenQuery, optionLabels };
   }
 
-  // ── MultipleChoiceMulti: split ", "-joined valueText server-side after the query ──
+  // ── MultipleChoiceMulti: effective dimension is valueText (no per-option value_id stored) ──
   if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-    // Do NOT rewrite to valueId — no per-option value_id is stored for multi-select yet
-    // (blocked on a hub change). Keep grouping by valueText and flag for post-processing.
-    return { rewrittenQuery: query, splitMultiSelect: true };
+    // No per-option value_id is stored for multi-select yet (blocked on a hub change).
+    // If the user selected valueId, swap it back to valueText so Cube groups by the joined
+    // text string that the splitter can parse. Flag for post-processing.
+    const rewrittenQuery: TChartQuery = hasValueId
+      ? {
+          ...query,
+          dimensions: dimensions.map((d) =>
+            d === "FeedbackRecords.valueId" ? "FeedbackRecords.valueText" : d
+          ),
+        }
+      : query;
+    return { rewrittenQuery, splitMultiSelect: true };
   }
 
   return { rewrittenQuery: query };
@@ -489,7 +503,7 @@ export const executeQueryAction = authenticatedActionClient
         );
       }
 
-      return { rows, ...(optionLabels ? { optionLabels } : {}) };
+      return { rows, ...(optionLabels ? { optionLabels } : {}), effectiveQuery: rewrittenQuery };
     }
   );
 

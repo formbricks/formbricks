@@ -8,6 +8,9 @@ import { executeQueryAction } from "@/modules/ee/analysis/charts/actions";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
 export interface QueryResult {
+  /** The effective (server-rewritten) query used by Cube. May differ from the query the user
+   * built when resolveOptionGrouping rewrote a value dimension (e.g. valueText → valueId for
+   * single-select). Renderers must use this so xAxisKey matches the returned data keys. */
   query: TChartQuery;
   data: TChartDataRow[];
   optionLabels?: Record<string, string>;
@@ -56,9 +59,12 @@ export function useChartQuery(
       const rows = result?.data;
       const data = Array.isArray(rows?.rows) ? rows.rows : [];
       const optionLabels = rows?.optionLabels;
+      // Use the server-rewritten effective query so the renderer's xAxisKey matches the
+      // actual data columns (e.g. valueText → valueId after single-select rewrite).
+      const effectiveQuery = rows?.effectiveQuery ?? cubeQuery;
       setChartData(data);
-      setQuery(cubeQuery);
-      return { query: cubeQuery, data, ...(optionLabels ? { optionLabels } : {}) };
+      setQuery(effectiveQuery);
+      return { query: effectiveQuery, data, ...(optionLabels ? { optionLabels } : {}) };
     } catch (err: unknown) {
       if (seq !== runSeqRef.current) return null;
       setError(err instanceof Error ? err.message : t("workspace.analysis.charts.failed_to_execute_query"));
