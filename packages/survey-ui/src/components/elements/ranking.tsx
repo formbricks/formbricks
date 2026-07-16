@@ -230,6 +230,7 @@ function Ranking({
           {/* Semantic ordered list so screen readers announce rank position and count;
               role="list" is kept explicitly because list-style removal (Tailwind preflight)
               makes Safari/VoiceOver drop implicit list semantics. */}
+          {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari/VoiceOver needs the explicit role once list-style is none */}
           <ol role="list" className="list-none space-y-2" ref={parent}>
             {allItems.map((item) => (
               <RankingItem
