@@ -266,6 +266,27 @@
     --fb-focus-ring-outer-width: 2px;
   }
 
+  /* Tailwind v4's transition-colors includes outline-color, and the focus rule
+     below sets a transparent outline (upgraded under forced-colors). Without a
+     transparent resting value, every focus would animate the outline from its
+     default (black) to transparent — a dark ring flashing outside the control.
+     Keep the resting outline-color transparent so that transition is a no-op. */
+  #fbjs a,
+  #fbjs button,
+  #fbjs input,
+  #fbjs select,
+  #fbjs textarea,
+  #fbjs summary,
+  #fbjs [tabindex],
+  #fbjs label:has(input[type="radio"]),
+  #fbjs label:has(input[type="checkbox"]),
+  #fbjs [data-fb-focus-ring],
+  #fbjs [role="menuitem"],
+  #fbjs [role="menuitemradio"],
+  #fbjs [role="menuitemcheckbox"] {
+    outline-color: transparent;
+  }
+
   #fbjs a:focus-visible,
   #fbjs button:focus-visible,
   #fbjs input:focus-visible,
