@@ -91,6 +91,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   // session cookie → Next.js route refresh → new `survey` reference; depending on it here would re-fire
   // getSurveyFilterDataAction on every refresh while the popover is open, i.e. an infinite loop.
   const surveyRef = useRef(survey);
+  // eslint-disable-next-line react-hooks/refs -- intentional latest-value ref (see above); the effect reads surveyRef.current, never renders from it
   surveyRef.current = survey;
 
   useEffect(() => {
