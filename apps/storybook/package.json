@@ -20,8 +20,6 @@
     "@storybook/addon-onboarding": "10.3.6",
     "@storybook/react-vite": "10.3.6",
     "@tailwindcss/vite": "4.2.4",
-    "@typescript-eslint/eslint-plugin": "8.57.2",
-    "@typescript-eslint/parser": "8.57.2",
     "@vitejs/plugin-react": "5.1.4",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.4.26",

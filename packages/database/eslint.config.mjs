@@ -1,11 +1,5 @@
 import library from "@formbricks/eslint-config/library";
 
-export default [
-  ...library,
-  {
-    // CLI/migration scripts log intentionally (carried over from the legacy config)
-    rules: {
-      "no-console": "off",
-    },
-  },
-];
+// The library tier (eslint + typescript-eslint recommended) does not enable `no-console`, so the
+// CLI/migration scripts here that log intentionally need no package-wide override.
+export default library;

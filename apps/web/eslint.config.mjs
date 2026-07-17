@@ -22,8 +22,10 @@ const config = [
       "react-hooks/incompatible-library": "off",
       "react-hooks/error-boundaries": "off",
       "react-hooks/immutability": "off",
-      "react-hooks/exhaustive-deps": "off",
       "react-hooks/preserve-manual-memoization": "off",
+      // Kept as a warning (not off): exhaustive-deps is the main guard against stale closures, and the
+      // web lint script has no `--max-warnings 0`, so it surfaces violations without blocking (ENG-1677).
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 ];
