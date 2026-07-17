@@ -4,6 +4,7 @@ import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -124,7 +125,11 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
             // picture): transformInput drops undefined fields that have no schema default, so this
             // prevents a prisma.user.create validation error on SSO sign-up.
             image: undefined,
-            ...(user.name ? {} : { name: deriveNameFromEmail(user.email) }),
+            // Normalize the IdP-supplied display name to a form ZUserName accepts (ENG-1743): external
+            // provider names are untrusted and may carry punctuation ("J. Smith", "Smith & Co") that
+            // would otherwise persist raw and later break a profile save. Fall back to the email
+            // local-part when the IdP gave no name, or normalization leaves nothing (e.g. only emoji).
+            name: (user.name && normalizeUserName(user.name)) || deriveNameFromEmail(user.email),
           },
         };
       },
