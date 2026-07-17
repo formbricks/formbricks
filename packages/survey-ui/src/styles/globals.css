@@ -307,15 +307,22 @@
 
   /* Scale cells (NPS / rating numbers) sit flush against each other and against the
      card's scroll edge, so the default outer ring is covered by the next cell and
-     clipped vertically (WCAG 2.4.11 obscured indicator). Paint the ring inside the
-     cell instead — brand ring at the edge, white halo inside it — and raise the
-     focused cell above its neighbours. */
+     clipped vertically (WCAG 2.4.11 obscured indicator). Paint a single brand ring
+     just inside the cell instead (no inner halo — cell backgrounds are light, and
+     the halo read as a stray white border) and raise the focused cell above its
+     neighbours. */
   #fbjs label[data-fb-scale-cell]:has(input[type="radio"]:focus-visible) {
     z-index: 20;
-    box-shadow:
-      inset 0 0 0 var(--fb-focus-ring-outer-width) var(--fb-focus-ring-outer-color),
-      inset 0 0 0 calc(var(--fb-focus-ring-inner-width) + var(--fb-focus-ring-outer-width))
-        var(--fb-focus-ring-inner-color) !important;
+    box-shadow: inset 0 0 0 var(--fb-focus-ring-outer-width) var(--fb-focus-ring-outer-color) !important;
+  }
+
+  /* Dropdown menu options: the menu content clips overflowing shadows (overflow-hidden
+     for its rounded corners), which cut the sides off the default outer ring. Paint the
+     ring inset for menu items as well. */
+  #fbjs [role="menuitem"]:focus-visible,
+  #fbjs [role="menuitemradio"]:focus-visible,
+  #fbjs [role="menuitemcheckbox"]:focus-visible {
+    box-shadow: inset 0 0 0 var(--fb-focus-ring-outer-width) var(--fb-focus-ring-outer-color) !important;
   }
 
   @media (forced-colors: active) {
