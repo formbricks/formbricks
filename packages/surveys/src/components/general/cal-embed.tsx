@@ -12,6 +12,9 @@ interface CalEmbedProps {
 export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
   const { t } = useTranslation();
   const iframeTitle = t("common.scheduling_calendar");
+  // Per-element id so multiple Cal questions on one page don't all inject into the
+  // first container (and so the iframe-title lookup below targets the right one).
+  const containerId = `cal-embed-${element.id}`;
 
   const cal = useMemo(() => {
     const calInline = snippet("https://cal.com/embed.js");
@@ -52,13 +55,13 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
     });
     cal("init", { calOrigin: element.calHost ? `https://${element.calHost}` : "https://cal.com" });
     cal("inline", {
-      elementOrSelector: "#cal-embed",
+      elementOrSelector: `#${containerId}`,
       calLink: element.calUserName,
     });
 
     // The snippet injects the iframe asynchronously without a title, so screen
     // readers announce it as just "iframe". Title it as soon as it appears.
-    const embedContainer = document.querySelector("#cal-embed");
+    const embedContainer = document.getElementById(containerId);
     if (!embedContainer) return;
     const titleIframe = (): boolean => {
       const iframe = embedContainer.querySelector("iframe");
@@ -74,11 +77,11 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
         observer.disconnect();
       };
     }
-  }, [cal, element.calHost, element.calUserName, iframeTitle]);
+  }, [cal, element.calHost, element.calUserName, iframeTitle, containerId]);
 
   return (
     <div className="relative mt-4 overflow-auto">
-      <div id="cal-embed" className={cn("border-border rounded-input border")} />
+      <div id={containerId} className={cn("border-border rounded-input border")} />
     </div>
   );
 }

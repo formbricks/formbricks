@@ -94,9 +94,8 @@ export const LinkSurveyWrapper = ({
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}
         style={cardMaxWidthStyle}>
-        {/* Standalone page: give the document a top-level heading for AT users.
-            The survey widget itself starts at h2 (it may also run embedded). */}
-        <h1 className="sr-only">{surveyName}</h1>
+        {/* No document-level heading here: this layout is the embedded variant, where
+            the host page owns the <h1>. The standalone layout adds the sr-only heading. */}
         {children}
       </main>
     </div>
