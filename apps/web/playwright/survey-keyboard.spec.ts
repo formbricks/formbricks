@@ -161,13 +161,30 @@ const navButton = (page: Page, name: string) =>
 const activeRadio = (page: Page) =>
   page.evaluate(() => {
     const a = document.activeElement as HTMLInputElement | null;
-    const checked = document.querySelector<HTMLInputElement>("input[type=radio]:checked");
+    const isRadio = a?.tagName === "INPUT" && a.type === "radio";
+    // Scope the checked lookup to the focused radio's own group: an off-screen
+    // previous card may still hold its answered (checked) radio mid-transition.
+    const checked = isRadio
+      ? Array.from(document.getElementsByName(a.name)).find(
+          (el): el is HTMLInputElement => el instanceof HTMLInputElement && el.checked
+        )
+      : undefined;
     return {
-      isRadio: a?.tagName === "INPUT" && a.type === "radio",
+      isRadio,
       focusedValue: a?.value ?? null,
       checkedValue: checked?.value ?? null,
     };
   });
+
+/**
+ * Asserts a non-event: auto-progress must NOT fire while the user is only
+ * browsing. The only way to prove nothing happens is to outwait the trigger
+ * window (350ms submit delay plus margin) — there is no observable condition
+ * to synchronize on, hence the deliberate fixed wait.
+ */
+const settleAutoProgressWindow = async (page: Page): Promise<void> => {
+  await page.waitForTimeout(AUTO_PROGRESS_SETTLE_MS); // NOSONAR(typescript:S2925) -- asserting the absence of auto-progress requires outwaiting its window
+};
 
 test.describe("Survey keyboard interaction @slow", () => {
   // Seeded once and reused: the fixtures are per-test, so this is done lazily in
@@ -199,7 +216,7 @@ test.describe("Survey keyboard interaction @slow", () => {
     // Browsing with arrows moves focus but selects nothing and never advances.
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("ArrowDown");
-    await page.waitForTimeout(AUTO_PROGRESS_SETTLE_MS);
+    await settleAutoProgressWindow(page);
     const browsed = await activeRadio(page);
     expect(browsed.checkedValue).toBeNull();
     await expect(page.getByText("Which plan are you on?")).toBeVisible();
@@ -214,7 +231,7 @@ test.describe("Survey keyboard interaction @slow", () => {
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(AUTO_PROGRESS_SETTLE_MS);
+    await settleAutoProgressWindow(page);
     expect((await activeRadio(page)).checkedValue).toBeNull();
     await expect(page.getByText("How likely are you to recommend us?")).toBeVisible();
 
@@ -312,7 +329,7 @@ test.describe("Survey keyboard interaction @slow", () => {
 
     // Arrow browsing selects nothing and never advances.
     await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(AUTO_PROGRESS_SETTLE_MS);
+    await settleAutoProgressWindow(page);
     expect((await activeRadio(page)).checkedValue).toBeNull();
     await expect(page.getByText("Pick the image you prefer")).toBeVisible();
 
