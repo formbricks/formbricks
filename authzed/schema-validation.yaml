@@ -19,6 +19,8 @@
 #   team:product   admin user:tom, contributor user:tina  -> readWrite on workspace:main
 #   team:analysts  contributor user:uma                   -> read      on workspace:main
 #   api_key:ci_reader                                     -> read      on workspace:main
+#   api_key:ci_writer                                     -> write     on workspace:main
+#   api_key:ci_manager                                    -> manage    on workspace:main
 #   survey:onboarding (workspace:main), survey:internal (workspace:other)
 #   dashboard:insights (workspace:main)
 #   response:r1 (survey:onboarding)
@@ -35,6 +37,8 @@ relationships: |-
   api_key:org_reader_key#organization@organization:acme
   api_key:org_writer_key#organization@organization:acme
   api_key:ci_reader#organization@organization:acme
+  api_key:ci_writer#organization@organization:acme
+  api_key:ci_manager#organization@organization:acme
   workspace:main#organization@organization:acme
   workspace:other#organization@organization:acme
   team:product#organization@organization:acme
@@ -45,6 +49,8 @@ relationships: |-
   workspace:main#writer_team@team:product#member
   workspace:main#reader_team@team:analysts#member
   workspace:main#reader@api_key:ci_reader
+  workspace:main#writer@api_key:ci_writer
+  workspace:main#manager@api_key:ci_manager
   survey:onboarding#workspace@workspace:main
   survey:internal#workspace@workspace:other
   dashboard:insights#workspace@workspace:main
@@ -71,14 +77,20 @@ assertions:
     - workspace:other#read@user:olivia
     - workspace:other#manage@user:mark
     - survey:onboarding#manage@user:olivia
+    - survey:onboarding#delete@user:olivia
     - survey:onboarding#response_read@user:mark
     - survey:onboarding#response_export@user:mark
+    - response:r1#write@user:olivia
+    - response:r1#manage@user:mark
     - response:r1#export@user:olivia
     - dashboard:insights#read@user:mark
+    - dashboard:insights#write@user:mark
     - api_key:org_reader_key#manage@user:olivia
     - api_key:org_reader_key#manage@user:mark
     # Members keep organization visibility (they belong to it) …
     - organization:acme#read@user:mia
+    - organization:acme#read_access@user:mia
+    - team:product#read@user:mia
 
     # ------------------------------------------------------------------
     # Scenario 2 — Billing role blocked from product data.
@@ -98,10 +110,13 @@ assertions:
     - workspace:main#read@user:tina
     - survey:onboarding#read@user:tina
     - survey:onboarding#write@user:tina
+    - survey:onboarding#delete@user:tina
     - survey:onboarding#publish@user:tina
     - survey:onboarding#response_read@user:tina
     - survey:onboarding#response_export@user:tina
+    - response:r1#write@user:tina
     - dashboard:insights#read@user:tina
+    - dashboard:insights#write@user:tina
     - team:product#manage@user:tom
     - team:product#member@user:tom
     - team:product#read@user:tina
@@ -140,7 +155,23 @@ assertions:
     - survey:onboarding#response_export@api_key:ci_reader
     - organization:acme#read@api_key:org_reader_key
     - organization:acme#read@api_key:org_writer_key
+    - organization:acme#read_access@api_key:org_reader_key
+    - organization:acme#read_access@api_key:org_writer_key
     - organization:acme#manage_access@api_key:org_writer_key
+    - team:product#read@api_key:org_reader_key
+    - team:product#read@api_key:org_writer_key
+    - team:product#manage@api_key:org_writer_key
+    - team:product#delete@api_key:org_writer_key
+    - workspace:main#write@api_key:ci_writer
+    - survey:onboarding#write@api_key:ci_writer
+    - survey:onboarding#delete@api_key:ci_writer
+    - dashboard:insights#write@api_key:ci_writer
+    - response:r1#write@api_key:ci_writer
+    - workspace:main#manage@api_key:ci_manager
+    - survey:onboarding#manage@api_key:ci_manager
+    - survey:onboarding#delete@api_key:ci_manager
+    - dashboard:insights#write@api_key:ci_manager
+    - response:r1#manage@api_key:ci_manager
 
   assertFalse:
     # Scenario 1 — managers must not update/delete the organization itself;
@@ -163,8 +194,11 @@ assertions:
     - survey:onboarding#read@user:bella
     - survey:onboarding#response_read@user:bella
     - response:r1#read@user:bella
+    - response:r1#write@user:bella
+    - response:r1#manage@user:bella
     - response:r1#export@user:bella
     - dashboard:insights#read@user:bella
+    - dashboard:insights#write@user:bella
 
     # Scenario 3 — readWrite teams stop below manage; team scope does not
     # leak into other workspaces; contributors do not manage the team.
@@ -172,14 +206,20 @@ assertions:
     - workspace:main#share@user:tina
     - workspace:other#read@user:tina
     - survey:internal#read@user:tina
+    - response:r1#manage@user:tina
     - team:product#manage@user:tina
+    - team:product#delete@user:tom
 
     # Scenario 4 — read-level access is view-only and stays inside the
     # granted workspace.
     - workspace:main#write@user:uma
     - survey:onboarding#write@user:uma
+    - survey:onboarding#delete@user:uma
     - survey:onboarding#publish@user:uma
     - survey:onboarding#manage@user:uma
+    - response:r1#write@user:uma
+    - response:r1#manage@user:uma
+    - dashboard:insights#write@user:uma
     - workspace:other#read@user:uma
     - survey:internal#read@user:uma
     - team:product#member@user:uma
@@ -194,12 +234,21 @@ assertions:
     - workspace:main#write@api_key:ci_reader
     - workspace:main#manage@api_key:ci_reader
     - workspace:main#share@api_key:ci_reader
+    - survey:onboarding#delete@api_key:ci_reader
+    - dashboard:insights#write@api_key:ci_reader
+    - response:r1#write@api_key:ci_reader
+    - response:r1#manage@api_key:ci_reader
+    - workspace:main#manage@api_key:ci_writer
+    - survey:onboarding#manage@api_key:ci_writer
+    - response:r1#manage@api_key:ci_writer
     - workspace:other#read@api_key:ci_reader
     - survey:internal#read@api_key:ci_reader
     - workspace:main#read@api_key:org_writer_key
     - workspace:main#read@api_key:org_reader_key
     - survey:onboarding#read@api_key:org_writer_key
     - organization:acme#manage_access@api_key:org_reader_key
+    - team:product#manage@api_key:org_reader_key
+    - team:product#delete@api_key:org_reader_key
     - organization:acme#manage_api_keys@api_key:org_writer_key
 
 # Expected-relations documentation: enumerates, for key permissions, every
@@ -208,6 +257,8 @@ assertions:
 validation:
   workspace:main#read:
     - "[api_key:ci_reader] is <workspace:main#reader>"
+    - "[api_key:ci_writer] is <workspace:main#writer>"
+    - "[api_key:ci_manager] is <workspace:main#manager>"
     - "[team:analysts#member] is <workspace:main#reader_team>"
     - "[team:product#member] is <workspace:main#writer_team>"
     - "[user:mark] is <organization:acme#manager>"
@@ -217,6 +268,8 @@ validation:
     - "[user:uma] is <team:analysts#contributor>"
   response:r1#export:
     - "[api_key:ci_reader] is <workspace:main#reader>"
+    - "[api_key:ci_writer] is <workspace:main#writer>"
+    - "[api_key:ci_manager] is <workspace:main#manager>"
     - "[team:analysts#member] is <workspace:main#reader_team>"
     - "[team:product#member] is <workspace:main#writer_team>"
     - "[user:mark] is <organization:acme#manager>"

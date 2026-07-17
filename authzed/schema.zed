@@ -85,6 +85,13 @@ definition organization {
     permission manage_billing: user = owner + manager + billing
 
     /**
+     * Who can read organization access-control resources such as teams and
+     * workspace-team assignments. The management API accepts
+     * `accessControl.read` and `accessControl.write` keys for these GET routes.
+     */
+    permission read_access: user | api_key = owner + manager + member + api_key_reader + api_key_writer
+
+    /**
      * Who can manage members, invites, teams, and workspace-team access:
      * owners and managers (`USER_MANAGEMENT_MINIMUM_ROLE`, team actions), plus
      * API keys holding `accessControl.write` (org access-control endpoints).
@@ -113,11 +120,20 @@ definition team {
     /** All members of the team; carries workspace access granted to the team. */
     permission member: user = admin + contributor
 
-    /** Who can view the team: its members plus organization owners/managers. */
-    permission read: user | api_key = member + organization->manage_access
+    /**
+     * Who can view the team: its members, organization owners/managers, and API
+     * keys with either read or write organization access-control permission.
+     */
+    permission read: user | api_key = member + organization->read_access
 
-    /** Who can manage the team (rename, membership): team admins plus organization owners/managers. */
+    /** Who can manage the team (rename, membership): team admins plus organization access-control writers. */
     permission manage: user | api_key = admin + organization->manage_access
+
+    /**
+     * Who can delete the team. Unlike other team mutations, deletion is limited
+     * to organization owners/managers and `accessControl.write` API keys.
+     */
+    permission delete: user | api_key = organization->manage_access
 }
 
 /**
@@ -191,8 +207,17 @@ definition survey {
     /** Create or edit the survey (workspace readWrite level). */
     permission write: user | api_key = workspace->write
 
-    /** Delete the survey and other manage-level operations. */
+    /**
+     * Manage-only survey operations, including language configuration and
+     * DELETE through the legacy management APIs.
+     */
     permission manage: user | api_key = workspace->manage
+
+    /**
+     * Delete through the Formbricks web application and V3 API. Both currently
+     * use the workspace readWrite gate rather than the manage gate.
+     */
+    permission delete: user | api_key = workspace->write
 
     /** Publish the survey / change its status — part of survey editing today. */
     permission publish: user | api_key = workspace->write
@@ -215,6 +240,12 @@ definition dashboard {
 
     /** View the dashboard and its widgets. */
     permission read: user | api_key = workspace->read
+
+    /**
+     * Create, update, duplicate, or delete the dashboard and mutate its widgets.
+     * Every dashboard mutation currently uses the workspace readWrite gate.
+     */
+    permission write: user | api_key = workspace->write
 }
 
 /**
@@ -227,6 +258,18 @@ definition response {
 
     /** View the response. */
     permission read: user | api_key = survey->response_read
+
+    /**
+     * Update a response and perform web-session mutations such as tagging or
+     * deleting it. These operations currently use the workspace readWrite gate.
+     */
+    permission write: user | api_key = survey->write
+
+    /**
+     * Delete a response through the legacy management APIs, whose DELETE method
+     * mapping currently requires workspace manage permission.
+     */
+    permission manage: user | api_key = survey->manage
 
     /** Export the response. */
     permission export: user | api_key = survey->response_export

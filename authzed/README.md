@@ -16,9 +16,10 @@ assertion-based validation suite.
 pnpm authzed:validate
 ```
 
-CI runs the same script on every pull request via
-`.github/workflows/authzed-schema-check.yml`. A failing assertion blocks the
-change: it means the schema no longer matches the documented semantics.
+CI runs the same script on every pull request as part of `.github/workflows/pr.yml`.
+The validation job is a dependency of the required `PR Check Summary`, so a
+failing assertion blocks the change: it means the schema no longer matches the
+documented semantics.
 
 ## Guiding principle: mirror the current system
 
@@ -41,6 +42,21 @@ updating the assertions in the same PR, with review.
 | `ApiKeyWorkspace.permission` (`read`/`write`/`manage`)               | `workspace` relations `reader`/`writer`/`manager` (subject `api_key`)                    |
 | `ApiKey.organizationAccess.accessControl` (`read`/`write`)           | `organization` relations `api_key_reader`/`api_key_writer`                               |
 | `Survey.workspaceId` / `Dashboard.workspaceId` / `Response.surveyId` | `survey`/`dashboard` relation `workspace`; `response` relation `survey`                  |
+
+Resource permissions preserve the operation-specific gates that exist today:
+
+| Current application operation                                    | Schema permission                           | Required access                                         |
+| ---------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
+| Read organization teams and workspace-team assignments           | `organization.read_access`, `team.read`     | organization membership or `accessControl.read`/`write` |
+| Rename teams or manage team membership                           | `organization.manage_access`, `team.manage` | team admin or `accessControl.write`                     |
+| Delete a team                                                    | `team.delete`                               | owner/manager or `accessControl.write`                  |
+| Read or edit a survey                                            | `survey.read`, `survey.write`               | workspace `read` or `readWrite`                         |
+| Delete a survey through the web application or V3 API            | `survey.delete`                             | workspace `readWrite`                                   |
+| Manage survey languages or delete through legacy management APIs | `survey.manage`                             | workspace `manage`                                      |
+| Read or mutate a dashboard, including deletion                   | `dashboard.read`, `dashboard.write`         | workspace `read` or `readWrite`                         |
+| Read/export a response                                           | `response.read`, `response.export`          | workspace `read`                                        |
+| Update, tag, or delete a response through the web application    | `response.write`                            | workspace `readWrite`                                   |
+| Delete a response through legacy management APIs                 | `response.manage`                           | workspace `manage`                                      |
 
 Behavioral sources of truth in the application (referenced from the schema's
 doc comments):
@@ -76,7 +92,8 @@ doc comments):
    which would be an asserted schema change.
 6. **API key as scoped principal** — workspace-scoped keys act only inside
    their granted workspace at their granted level; organization-level
-   `accessControl` rights grant no product access.
+   `accessControl` rights grant access to organization access-control resources
+   but no product data.
 
 ## Deliberately not modeled (stays in application code)
 
