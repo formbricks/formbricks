@@ -140,7 +140,7 @@ describe("TagOnResponse Service", () => {
       {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["responseId", "tagId"] },
+        meta: { driverAdapterError: { cause: { constraint: { fields: ["responseId", "tagId"] } } } },
       }
     );
     vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
@@ -164,7 +164,7 @@ describe("TagOnResponse Service", () => {
       {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["responseId", "tagId"] },
+        meta: { driverAdapterError: { cause: { constraint: { fields: ["responseId", "tagId"] } } } },
       }
     );
 
@@ -195,7 +195,7 @@ describe("TagOnResponse Service", () => {
       {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["someOtherField"] },
+        meta: { driverAdapterError: { cause: { constraint: { fields: ["someOtherField"] } } } },
       }
     );
     vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(prismaError);
