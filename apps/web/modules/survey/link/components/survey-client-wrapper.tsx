@@ -203,7 +203,6 @@ export const SurveyClientWrapper = ({
         workspace={workspace}
         workspaceId={survey.workspaceId}
         surveyId={survey.id}
-        surveyName={survey.name}
         isWelcomeCardEnabled={survey.welcomeCard.enabled}
         isPreview={isPreview}
         surveyType={survey.type}
