@@ -51,8 +51,18 @@ describe("resolveConsentRedirectUrl", () => {
   test("rejects dangerous schemes (XSS guard for the location.href sink)", () => {
     expect(resolveConsentRedirectUrl({ url: "javascript:alert(1)" })).toBeNull();
     expect(resolveConsentRedirectUrl({ url: "  JavaScript:alert(1)" })).toBeNull();
+    // URL parsing normalizes control-char-obfuscated schemes, so this is caught too.
+    expect(resolveConsentRedirectUrl({ url: "java\tscript:alert(1)" })).toBeNull();
     expect(resolveConsentRedirectUrl({ url: "data:text/html,<script>alert(1)</script>" })).toBeNull();
+    expect(resolveConsentRedirectUrl({ url: "file:///etc/passwd" })).toBeNull();
+    expect(resolveConsentRedirectUrl({ url: "blob:https://x/1" })).toBeNull();
     // falls through to the fallback, which is also dangerous → null
     expect(resolveConsentRedirectUrl({ url: "javascript:1", redirect_uri: "data:x" })).toBeNull();
+  });
+
+  test("rejects malformed / protocol-relative values (not a well-formed absolute URL)", () => {
+    expect(resolveConsentRedirectUrl({ url: "//evil.com/path" })).toBeNull();
+    expect(resolveConsentRedirectUrl({ url: "not a url" })).toBeNull();
+    expect(resolveConsentRedirectUrl({ url: "/relative/path" })).toBeNull();
   });
 });
