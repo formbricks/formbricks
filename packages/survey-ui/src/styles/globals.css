@@ -330,15 +330,11 @@
     outline: none !important;
   }
 
-  /* Scale cells (NPS / rating numbers) sit flush against each other and against the
-     card's scroll edge, so the default outer ring is covered by the next cell and
-     clipped vertically (WCAG 2.4.11 obscured indicator). Paint a single brand ring
-     just inside the cell instead (no inner halo — cell backgrounds are light, and
-     the halo read as a stray white border) and raise the focused cell above its
-     neighbours. */
-  /* The negative outline-offset keeps the indicator inset under forced-colors too:
-     that mode drops box-shadows and reveals the base rule's outline, whose positive
-     offset would reintroduce the clipping this rule exists to fix. */
+  /* Scale cells (NPS / rating numbers) sit flush together and against the card's
+     scroll edge, so the default outer ring is clipped (WCAG 2.4.11). Paint a single
+     brand ring inset instead and raise the focused cell. The negative outline-offset
+     keeps it inset under forced-colors too, where box-shadows drop and the base
+     rule's positive-offset outline would otherwise reintroduce the clipping. */
   #fbjs label[data-fb-scale-cell]:has(input[type="radio"]:focus-visible) {
     z-index: 20;
     outline-offset: calc(-1 * var(--fb-focus-ring-outer-width)) !important;

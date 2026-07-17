@@ -117,11 +117,8 @@ function PictureSelect({
       <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
-          // A native fieldset (implicit group role) named by the headline, like the
-          // multi-select list. Groups support neither aria-required nor aria-invalid;
-          // the visible error message conveys the invalid state.
-          // w-full/border-0/p-0 neutralize the fieldset UA defaults (shrink-to-content
-          // sizing and the default border) so it lays out exactly like the former div.
+          // Native fieldset (group role) named by the headline; m-0/p-0/border-0/w-full
+          // reset the fieldset UA defaults so it lays out like a plain div.
           <fieldset
             aria-labelledby={`${inputId}-headline`}
             className="m-0 grid w-full min-w-0 grid-cols-2 gap-2 border-0 p-0">
