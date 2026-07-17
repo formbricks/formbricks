@@ -336,17 +336,22 @@
      just inside the cell instead (no inner halo — cell backgrounds are light, and
      the halo read as a stray white border) and raise the focused cell above its
      neighbours. */
+  /* The negative outline-offset keeps the indicator inset under forced-colors too:
+     that mode drops box-shadows and reveals the base rule's outline, whose positive
+     offset would reintroduce the clipping this rule exists to fix. */
   #fbjs label[data-fb-scale-cell]:has(input[type="radio"]:focus-visible) {
     z-index: 20;
+    outline-offset: calc(-1 * var(--fb-focus-ring-outer-width)) !important;
     box-shadow: inset 0 0 0 var(--fb-focus-ring-outer-width) var(--fb-focus-ring-outer-color) !important;
   }
 
   /* Dropdown menu options: the menu content clips overflowing shadows (overflow-hidden
      for its rounded corners), which cut the sides off the default outer ring. Paint the
-     ring inset for menu items as well. */
+     ring inset for menu items as well (same forced-colors offset rationale as above). */
   #fbjs [role="menuitem"]:focus-visible,
   #fbjs [role="menuitemradio"]:focus-visible,
   #fbjs [role="menuitemcheckbox"]:focus-visible {
+    outline-offset: calc(-1 * var(--fb-focus-ring-outer-width)) !important;
     box-shadow: inset 0 0 0 var(--fb-focus-ring-outer-width) var(--fb-focus-ring-outer-color) !important;
   }
 
