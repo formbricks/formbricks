@@ -272,7 +272,9 @@
   #fbjs select:focus-visible,
   #fbjs textarea:focus-visible,
   #fbjs summary:focus-visible,
-  #fbjs [tabindex]:focus-visible,
+  /* tabindex="-1" targets are script-focus-only (e.g. the ending card container focused
+     for screen-reader announcement) — not operable controls, so no indicator. */
+  #fbjs [tabindex]:not([tabindex="-1"]):focus-visible,
   /* A visually-hidden radio/checkbox drives a visible label: paint the ring on the label. */
   #fbjs label:has(input[type="radio"]:focus-visible),
   #fbjs label:has(input[type="checkbox"]:focus-visible),
@@ -332,7 +334,7 @@
     #fbjs select:focus-visible,
     #fbjs textarea:focus-visible,
     #fbjs summary:focus-visible,
-    #fbjs [tabindex]:focus-visible,
+    #fbjs [tabindex]:not([tabindex="-1"]):focus-visible,
     #fbjs label:has(input[type="radio"]:focus-visible),
     #fbjs label:has(input[type="checkbox"]:focus-visible),
     #fbjs [data-fb-focus-ring]:has(:focus-visible),
