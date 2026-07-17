@@ -176,6 +176,11 @@ export function BlockConditional({
       })
     ) {
       autoProgressingInFlightRef.current = true;
+      // The selection is committed and the card is about to leave: drop focus now so
+      // the focus ring doesn't linger on the answered option during the submit delay
+      // (it read as a flashing ring). The next card focuses its first control on mount.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) active.blur();
       // Defer submission so element-level change handlers can finalize TTC updates first.
       setTimeout(() => {
         try {
