@@ -83,9 +83,10 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
       triggeredAt: response.updatedAt.toISOString(),
     });
     expect(dispatch).toHaveBeenCalledWith({ workflowRunId: "run_1", workflowId: "wf_1", workspaceId });
-    // Dispatch landed → recorded as a durable DB fact (ENG-1658).
+    // Dispatch landed → recorded as a durable DB fact (ENG-1658), tenant-scoped by workspaceId.
     expect(markDispatched).toHaveBeenCalledWith(
       "run_1",
+      workspaceId,
       expect.any(Date),
       expect.objectContaining({ workflowId: "wf_1" })
     );

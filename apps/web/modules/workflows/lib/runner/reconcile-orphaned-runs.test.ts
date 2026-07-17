@@ -58,6 +58,7 @@ describe("reconcileOrphanedWorkflowRuns", () => {
     expect(markDispatched).toHaveBeenCalledTimes(2);
     expect(markDispatched).toHaveBeenCalledWith(
       "run1",
+      "ws_run1",
       NOW,
       expect.objectContaining({ workflowRunId: "run1" })
     );
@@ -96,7 +97,7 @@ describe("reconcileOrphanedWorkflowRuns", () => {
     expect(dispatch).not.toHaveBeenCalled();
     expect(markDispatched).not.toHaveBeenCalled();
     expect(updateMany).toHaveBeenCalledWith({
-      where: { id: "stuck", status: "queued" },
+      where: { id: "stuck", workspaceId: "ws_stuck", status: "queued" },
       data: expect.objectContaining({ status: "failed", finishedAt: NOW, lastErrorAt: NOW }),
     });
     expect(result).toEqual({ scanned: 1, redispatched: 0, agedOutFailed: 1, neverDispatched: 0 });

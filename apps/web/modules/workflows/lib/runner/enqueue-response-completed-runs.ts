@@ -194,10 +194,9 @@ const createAndDispatchWorkflowRun = async ({
   // Dispatch landed — record it as a durable DB fact (ENG-1658) so recovery can tell a genuine
   // never-dispatched orphan (dispatchedAt IS NULL) from a dispatched-but-lagging run. Best-effort:
   // a missed stamp self-heals on the next reconcile tick.
-  await markWorkflowRunDispatched(workflowRunId, new Date(), {
+  await markWorkflowRunDispatched(workflowRunId, workspaceId, new Date(), {
     ...logContext,
     workflowId: match.workflowId,
-    workspaceId,
     responseId: response.id,
   });
 };
