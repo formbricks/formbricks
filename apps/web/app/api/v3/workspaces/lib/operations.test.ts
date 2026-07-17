@@ -61,6 +61,20 @@ describe("listV3Workspaces", () => {
     expect(Object.keys(body.data[0])).toEqual(["id", "name", "organizationId"]);
   });
 
+  test("returns workspaces in a deterministic order (name, then id)", async () => {
+    vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org_1", name: "Org 1" }] as any);
+    vi.mocked(getUserWorkspaces).mockResolvedValue([
+      ws("w3", "Zeta", "org_1"),
+      ws("w1", "alpha", "org_1"),
+      ws("w2", "Beta", "org_1"),
+    ]);
+
+    const res = await listV3Workspaces(params(sessionAuth));
+    const body = await res.json();
+
+    expect(body.data.map((w: { name: string }) => w.name)).toEqual(["alpha", "Beta", "Zeta"]);
+  });
+
   test("session user with no orgs → empty list, no workspace lookups", async () => {
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([] as any);
 

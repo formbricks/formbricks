@@ -88,6 +88,10 @@ export async function listV3Workspaces({
         .map(serializeV3WorkspaceListItem);
     }
 
+    // Stable, deterministic order (the underlying queries have no ORDER BY) so the tool output — and
+    // which items survive the cap — don't vary between calls. Name first, id as a tiebreaker.
+    items.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+
     const capped = items.slice(0, MAX_WORKSPACES);
     return successListResponse(
       capped,
