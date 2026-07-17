@@ -23,6 +23,14 @@ export interface MeasureDefinition {
   type: "count" | "number";
   group: TMeasureGroup;
   description?: string;
+  /**
+   * Candidate Y-axis maxima (ascending) for measures answered on a bounded rating scale. Charts pin
+   * the axis to the smallest candidate that contains the data (e.g. an average of 3.33 on a 1-5
+   * rating renders on a 0-5 axis, not a data-driven 0-4 one), so the bar height reads against the
+   * question's actual scale. The question's true scale is not stored on feedback records (see
+   * ratingAverage below), so multi-candidate lists are a best-effort inference from the data max.
+   */
+  axisMaxCandidates?: readonly number[];
 }
 
 /**
@@ -247,6 +255,7 @@ export const FEEDBACK_FIELDS = {
       type: "number",
       group: "average",
       description: "Average NPS rating (0-10)",
+      axisMaxCandidates: [10],
     },
     {
       id: "FeedbackRecords.promoterCount",
@@ -282,6 +291,7 @@ export const FEEDBACK_FIELDS = {
       type: "number",
       group: "average",
       description: "Average CSAT rating (1-5)",
+      axisMaxCandidates: [5],
     },
     {
       id: "FeedbackRecords.csatSatisfiedCount",
@@ -317,6 +327,7 @@ export const FEEDBACK_FIELDS = {
       type: "number",
       group: "average",
       description: "Average CES rating (scale is 1-5 or 1-7 depending on the question)",
+      axisMaxCandidates: [5, 7],
     },
     {
       id: "FeedbackRecords.cesCount",
@@ -331,6 +342,11 @@ export const FEEDBACK_FIELDS = {
       type: "number",
       group: "average",
       description: "Average rating value (scale depends on the question, e.g. 1-5 or 1-10)",
+      // Feedback records don't store the question's rating scale (transform.ts writes only
+      // value_number), so pin to the smallest standard rating scale that contains the data
+      // (ENG-1796). A 1-10 question whose averages stay <= 7 will render on a 0-7 axis until
+      // the scale is ingested as record metadata - see the measure docs on axisMaxCandidates.
+      axisMaxCandidates: [5, 7, 10],
     },
     {
       id: "FeedbackRecords.ratingCount",
@@ -354,6 +370,11 @@ export const FEEDBACK_FIELDS = {
 
 export const FEEDBACK_MEASURE_IDS: string[] = FEEDBACK_FIELDS.measures.map((m) => m.id);
 
+/** Candidate Y-axis maxima for fixed-scale measures (see MeasureDefinition.axisMaxCandidates),
+ * or undefined for measures whose axis should stay data-driven. */
+export const getMeasureAxisMaxCandidates = (measureId: string): readonly number[] | undefined =>
+  FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.axisMaxCandidates;
+
 export const FEEDBACK_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
 
 export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
@@ -363,8 +384,14 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
 
-const isSentimentValue = (value: string): value is TSentimentValue =>
+export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
+
+/** Map a sentiment count measure id (e.g. "FeedbackRecords.veryPositiveCount") back to its enum
+ * value. Charts use this to give the sentiment count series the same semantic colors as the
+ * sentiment dimension buckets. Returns undefined for every other measure. */
+export const getSentimentValueForMeasureId = (measureId: string): TSentimentValue | undefined =>
+  SENTIMENT_VALUE_ORDER.find((value) => measureId === `FeedbackRecords.${toCountMeasureId(value)}Count`);
 
 const isEmotionValue = (value: string): value is TEmotionValue =>
   (EMOTION_VALUES as readonly string[]).includes(value);
@@ -435,6 +462,46 @@ export function getTranslatedDimensionValueLabel(
     return labels.join(", ");
   }
   return undefined;
+}
+
+// Sentiment count measure ids in the sentiment *scale* order (very_negative → very_positive,
+// mixed last) — the order the sentiment dimension axis uses.
+const SENTIMENT_COUNT_MEASURE_IDS_BY_SCALE: string[] = SENTIMENT_VALUE_ORDER.map(
+  (value) => `FeedbackRecords.${toCountMeasureId(value)}Count`
+);
+
+/**
+ * Sort measure ids for a per-measure category axis (measure-only bar charts, where each
+ * measure is its own bar). Sentiment count measures follow the sentiment scale order so the
+ * pivoted chart reads in the same direction (and with the same per-slot colors) as a chart
+ * grouped by the sentiment dimension — not the positive-first SENTIMENT_MEASURE_ORDER used
+ * for series/legend lists. Other measures keep their relative order after them.
+ */
+export function sortMeasureIdsForCategoryAxis(measureIds: string[]): string[] {
+  const rank = (id: string): number => {
+    const index = SENTIMENT_COUNT_MEASURE_IDS_BY_SCALE.indexOf(id);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  return [...measureIds].sort((a, b) => rank(a) - rank(b));
+}
+
+/**
+ * Short x-axis label for a per-measure category axis (measure-only bar charts, where each
+ * measure is its own bar). Sentiment/emotion count measures reuse their enum value label
+ * ("Very positive") — the full measure label ("Sentiment: Very positive") is too wide for
+ * ticks, so recharts drops the overlapping ones and leaves bars unlabelled. Other measures
+ * fall back to their full column header.
+ */
+export function getMeasureAxisLabel(measureId: string, t: TFunction): string {
+  const sentiment = SENTIMENT_MEASURE_ORDER.find(
+    (value) => `FeedbackRecords.${toCountMeasureId(value)}Count` === measureId
+  );
+  const emotion = EMOTION_MEASURE_ORDER.find((value) => `FeedbackRecords.${value}Count` === measureId);
+  return (
+    (sentiment ? getTranslatedSentimentValueLabel(sentiment, t) : undefined) ??
+    (emotion ? getTranslatedEmotionValueLabel(emotion, t) : undefined) ??
+    formatCubeColumnHeader(measureId, t)
+  );
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -51,6 +51,8 @@ export function useChartDialog({
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
+  // Saved name of the chart being edited; unlike chartName it stays stable while the user types.
+  const [savedChartName, setSavedChartName] = useState("");
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedDashboardId, setSelectedDashboardId] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
@@ -58,6 +60,9 @@ export function useChartDialog({
   const [chartLoadError, setChartLoadError] = useState<string | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
   const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories?.[0]?.id ?? null);
+  // Last name we prefilled from a suggestion; lets a regenerate replace its own
+  // stale suggestion without ever clobbering a name the user typed.
+  const lastSuggestedNameRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +89,8 @@ export function useChartDialog({
     if (!chartId) {
       setChartData(null);
       setChartName("");
+      setSavedChartName("");
+      lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setSelectedDirectoryId(directories?.[0]?.id ?? null);
@@ -109,6 +116,7 @@ export function useChartDialog({
         if (cancelled) return;
 
         setChartName(chart.name);
+        setSavedChartName(chart.name);
         setSelectedChartType(resolveChartType(chart.type));
         setCurrentChartId(chart.id);
         setSelectedDirectoryId(chart.feedbackDirectoryId);
@@ -155,13 +163,25 @@ export function useChartDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, chartId, workspaceId, initialChart]);
+    // Key on initialChart?.id, NOT the object reference. Every authenticated action here
+    // (getChartAction / executeQueryAction) re-sets the Better Auth session cookie → Next.js route
+    // refresh → new `initialChart` reference; depending on the object would re-fire executeQueryAction on
+    // every refresh → infinite loop. The id is the stable identity; content is unchanged across refreshes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, chartId, workspaceId, initialChart?.id]);
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
     setSelectedChartType(data.chartType);
-    if (data.suggestedName) {
-      setChartName((prev) => (prev.trim() ? prev : data.suggestedName!));
+    const suggestedName = data.suggestedName?.trim();
+    if (suggestedName) {
+      // Functional updater: the AI response lands async, so a closure over chartName could be
+      // stale and clobber a name the user typed while the request was in flight.
+      setChartName((prev) => {
+        if (prev.trim() && prev !== lastSuggestedNameRef.current) return prev;
+        lastSuggestedNameRef.current = suggestedName;
+        return suggestedName;
+      });
     }
   };
 
@@ -357,6 +377,8 @@ export function useChartDialog({
     if (!isSaving) {
       setChartData(null);
       setChartName("");
+      setSavedChartName("");
+      lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setChartLoadError(null);
@@ -376,6 +398,7 @@ export function useChartDialog({
     chartData,
     chartName,
     setChartName,
+    savedChartName,
     selectedChartType,
     initialQuery,
     setSelectedChartType,

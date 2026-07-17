@@ -125,4 +125,26 @@ describe("proxy", () => {
 
     expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
   });
+
+  test("does not re-set the active-workspace cookie when the request already carries the same value", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-123/surveys");
+    request.cookies.set("formbricks-workspace-id", "ws-123");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")).toBeUndefined();
+  });
+
+  test("updates the active-workspace cookie when navigating to a different workspace", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const request = new NextRequest("http://localhost:3000/workspaces/ws-456/surveys");
+    request.cookies.set("formbricks-workspace-id", "ws-123");
+
+    const response = await proxy(request);
+
+    expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-456");
+  });
 });

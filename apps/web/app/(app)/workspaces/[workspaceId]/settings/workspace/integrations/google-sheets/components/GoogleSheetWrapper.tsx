@@ -41,13 +41,19 @@ export const GoogleSheetWrapper = ({
     (TIntegrationGoogleSheetsConfigData & { index: number }) | null
   >(null);
 
+  // Depend only on stable values (workspaceId is a primitive; isConnected is local state). The
+  // server-derived `googleSheetIntegration` object must NOT be a dependency: every authenticated
+  // server action re-sets the Better Auth session cookie, which refreshes the route and hands this
+  // component a new `googleSheetIntegration` reference — depending on it would re-fire the action in
+  // an infinite loop. `isConnected` already implies an integration exists, and the action only needs
+  // `workspaceId`, so the object isn't needed here.
   const validateConnection = useCallback(async () => {
-    if (!isConnected || !googleSheetIntegration) return;
+    if (!isConnected) return;
     const response = await validateGoogleSheetsConnectionAction({ workspaceId });
     if (response?.serverError === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
       setShowReconnectButton(true);
     }
-  }, [workspaceId, isConnected, googleSheetIntegration]);
+  }, [workspaceId, isConnected]);
 
   useEffect(() => {
     validateConnection();

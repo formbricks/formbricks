@@ -69,7 +69,9 @@ The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is
 When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
 If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
 
-When deployed with Argo CD, chart-managed Secrets and ExternalSecrets render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist before migration jobs start.
+Before migrations start, the migration Job waits for the effective PostgreSQL endpoint to accept TCP connections. `MIGRATE_DATABASE_URL` takes precedence over `DATABASE_URL`, matching the migration runner. Configure the timeout and retry interval under `migration.waitForDatabase`, or disable the readiness check for deployments that provide their own gate.
+
+When deployed with Argo CD, chart-managed Secrets, ExternalSecrets, and bundled PostgreSQL render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist and PostgreSQL become healthy before migration jobs start.
 
 Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
 
@@ -94,6 +96,40 @@ The generated Hub embedding configuration is:
 The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. For private or gated models, provide `hub.embeddings.huggingFace.token` or set `hub.embeddings.huggingFace.existingSecret`.
 
 When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
+
+Configure Hub enrichment providers through `hub.env`. API-key providers can keep their secrets in
+`hub.existingSecret`. Providers that need credential files, custom CA bundles, or other pod-level
+configuration can use the provider-neutral `hub.extraVolumes` and `hub.extraVolumeMounts`
+settings, which apply to both Hub API and hub-worker.
+
+For example, a Vertex AI deployment can mount an existing Google credential JSON Secret and point
+Application Default Credentials at it:
+
+```yaml
+hub:
+  extraVolumes:
+    - name: google-cloud-credentials
+      secret:
+        secretName: formbricks-app-secrets
+        items:
+          - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+            path: credentials.json
+
+  extraVolumeMounts:
+    - name: google-cloud-credentials
+      mountPath: /var/run/secrets/formbricks/google
+      readOnly: true
+
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: /var/run/secrets/formbricks/google/credentials.json
+    SENTIMENT_PROVIDER: google-gemini
+    SENTIMENT_MODEL: gemini-2.5-flash
+    SENTIMENT_GOOGLE_CLOUD_PROJECT: your-google-cloud-project
+    SENTIMENT_GOOGLE_CLOUD_LOCATION: global
+```
+
+The chart renders these additions unchanged into both Hub processes. Keep credential values out of
+values files and reference existing Kubernetes Secrets instead.
 
 Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
 
@@ -336,10 +372,12 @@ JSON that can call Vertex AI.
 | hub.embeddings.service.type                                        | string | `"ClusterIP"`                                                               |                                                           |
 | hub.env                                                            | object | `{}`                                                                        |                                                           |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
-| hub.image.digest                                                   | string | `"sha256:b22c5f8d1e2dd79224574f526a6714a3cc5372d18f4c047eaa9d18fe6ab75591"` | When set, takes precedence over tag (immutable pin).      |
+| hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
+| hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
+| hub.image.digest                                                   | string | `"sha256:5d7e7c6138ff77984db54b7c91693d8f56017cefa74bc69390fc7191403208c5"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |
-| hub.image.tag                                                      | string | `"0.6.0"`                                                                   | Fallback when digest is empty.                            |
+| hub.image.tag                                                      | string | `"0.8.1"`                                                                   | Fallback when digest is empty.                            |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |
@@ -397,6 +435,10 @@ JSON that can call Vertex AI.
 | migration.resources.requests.cpu                                   | string | `"100m"`                                                                    |                                                           |
 | migration.resources.requests.memory                                | string | `"256Mi"`                                                                   |                                                           |
 | migration.ttlSecondsAfterFinished                                  | int    | `300`                                                                       |                                                           |
+| migration.waitForDatabase.connectionTimeoutSeconds                 | int    | `5`                                                                         | Per-attempt TCP connection timeout.                       |
+| migration.waitForDatabase.enabled                                  | bool   | `true`                                                                      | Wait for PostgreSQL before starting migrations.           |
+| migration.waitForDatabase.intervalSeconds                          | int    | `5`                                                                         | Delay between readiness attempts.                         |
+| migration.waitForDatabase.timeoutSeconds                           | int    | `900`                                                                       | Overall readiness timeout for each Job attempt.           |
 | nameOverride                                                       | string | `""`                                                                        |                                                           |
 | partOfOverride                                                     | string | `""`                                                                        |                                                           |
 | pdb.additionalLabels                                               | object | `{}`                                                                        |                                                           |
@@ -408,6 +450,7 @@ JSON that can call Vertex AI.
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |
 | postgresql.auth.username                                           | string | `"formbricks"`                                                              |                                                           |
+| postgresql.commonAnnotations                                       | object | `{"argocd.argoproj.io/sync-wave":"-2"}`                                   | Order bundled PostgreSQL before migration hooks in Argo.  |
 | postgresql.enabled                                                 | bool   | `true`                                                                      |                                                           |
 | postgresql.externalDatabaseUrl                                     | string | `""`                                                                        |                                                           |
 | postgresql.fullnameOverride                                        | string | `"formbricks-postgresql"`                                                   |                                                           |

@@ -398,7 +398,11 @@ export const MainNavigation = ({
             <div>
               {/* Logo and Toggle */}
 
-              <div className="flex items-center justify-between px-3 pb-4">
+              <div
+                className={cn(
+                  "flex items-center px-3 pb-4",
+                  isCollapsed ? "justify-center" : "justify-between"
+                )}>
                 {!isCollapsed && (
                   <Link
                     href={mainNavigationLink}

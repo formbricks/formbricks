@@ -83,19 +83,19 @@ const getSmiley = ({
   );
 
   return (
-    <table
+    <table // NOSONAR S5256 - Need table layout for email compatibility (gmail)
       style={{
         width: `${containerSize}px`,
         height: `${containerSize}px`,
         ...(centered ? { marginLeft: "auto", marginRight: "auto" } : {}),
       }}>
-      {" "}
-      {/* NOSONAR S5256 - Need table layout for email compatibility (gmail) */}
-      <tr>
-        <td align="center" valign="middle">
-          {icon}
-        </td>
-      </tr>
+      <tbody>
+        <tr>
+          <td align="center" valign="middle">
+            {icon}
+          </td>
+        </tr>
+      </tbody>
     </table>
   );
 };

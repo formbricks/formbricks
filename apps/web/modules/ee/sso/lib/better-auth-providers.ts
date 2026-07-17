@@ -93,11 +93,16 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               discoveryUrl: `https://login.microsoftonline.com/${AZUREAD_TENANT_ID || "common"}/v2.0/.well-known/openid-configuration`,
               scopes: ["openid", "email", "profile"],
               pkce: true,
-              // RFC 9207 mix-up defense (parity with OIDC). Enabled only with a fixed tenant: a
-              // single-tenant discovery issuer is stable and matches the token's `iss`, whereas
-              // multi-tenant ("common") tokens carry the caller's home-tenant issuer, which a strict
-              // issuer check would reject.
-              requireIssuerValidation: !!AZUREAD_TENANT_ID,
+              // Must stay false for Azure. Better Auth's issuer check reads the RFC 9207
+              // authorization-RESPONSE `iss` query parameter, and Microsoft Entra does not implement
+              // RFC 9207 — its v2.0 metadata omits `authorization_response_iss_parameter_supported`
+              // and it never returns that param. So enabling this can only ever fail with
+              // `error=issuer_missing` (ENG-1800); it can never pass, regardless of tenant. The
+              // param's purpose (disambiguating which AS responded, to defend against mix-up) is
+              // already covered here structurally: the per-provider callback path pins the token
+              // endpoint to Azure's own, and PKCE (above) + state validation bind the exchange. OIDC
+              // (below) keeps the check on because a spec-compliant provider does return `iss`.
+              requireIssuerValidation: false,
               mapProfileToUser: (profile) => {
                 // Capture for verify-before-link recovery; name parity with the OIDC mapping.
                 captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
