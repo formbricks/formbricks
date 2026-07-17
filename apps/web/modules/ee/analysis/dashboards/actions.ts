@@ -23,6 +23,7 @@ import {
   updateDashboard,
   updateWidgetLayouts,
 } from "./lib/dashboards";
+import { duplicateChartAndAddWidget } from "./lib/duplicate-chart-and-add-widget";
 
 const checkDashboardsEnabled = async (organizationId: string) => {
   const isAllowed = await getIsDashboardsEnabled(organizationId);
@@ -327,6 +328,54 @@ export const addChartToDashboardAction = authenticatedActionClient
         ctx.auditLoggingCtx.workspaceId = workspaceId;
         ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
         ctx.auditLoggingCtx.newObject = widget;
+        return widget;
+      }
+    )
+  );
+
+const ZDuplicateChartAndAddWidgetAction = z.object({
+  workspaceId: ZId,
+  dashboardId: ZId,
+  chartId: ZId,
+  layout: ZWidgetLayout.optional(),
+});
+
+export const duplicateChartAndAddWidgetAction = authenticatedActionClient
+  .inputSchema(ZDuplicateChartAndAddWidgetAction)
+  .action(
+    withAuditLogging(
+      "created",
+      "dashboardWidget",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: z.infer<typeof ZDuplicateChartAndAddWidgetAction>;
+      }) => {
+        const { organizationId, workspaceId } = await checkWorkspaceAccess(
+          ctx.user.id,
+          parsedInput.workspaceId,
+          "readWrite"
+        );
+        await checkDashboardsEnabled(organizationId);
+
+        const { chart, widget } = await duplicateChartAndAddWidget({
+          dashboardId: parsedInput.dashboardId,
+          workspaceId,
+          chartId: parsedInput.chartId,
+          createdBy: ctx.user.id,
+          layout: parsedInput.layout,
+        });
+
+        revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
+        revalidatePath(`/workspaces/${workspaceId}/dashboards`);
+
+        ctx.auditLoggingCtx.organizationId = organizationId;
+        ctx.auditLoggingCtx.workspaceId = workspaceId;
+        ctx.auditLoggingCtx.chartId = chart.id;
+        ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
+        ctx.auditLoggingCtx.newObject = { chart, widget };
         return widget;
       }
     )

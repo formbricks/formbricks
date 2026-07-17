@@ -2,7 +2,7 @@ import { prisma } from "@formbricks/database";
 import { ActionClass } from "@formbricks/database/prisma";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError, UniqueConstraintError } from "@formbricks/types/errors";
-import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 
 export const createActionClass = async (
   workspaceId: string,
@@ -28,7 +28,7 @@ export const createActionClass = async (
     return actionClassPrisma;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      const targetField = (error.meta?.target as string[] | undefined)?.[0];
+      const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );

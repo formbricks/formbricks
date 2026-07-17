@@ -2,7 +2,7 @@ import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/prisma";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import { isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
   TGetUsersFilter,
@@ -144,14 +144,12 @@ export const createUser = async (
     return ok(returnedUser);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      const target = error.meta?.target as string[] | undefined;
-
-      if (target?.includes("email")) {
-        return err({
-          type: "conflict",
-          details: [{ field: "email", issue: "A user with this email already exists" }],
-        });
-      }
+      // `email` is the only user-facing unique constraint on this create, so map any P2002 to a
+      // conflict rather than gating on the (adapter-dependent) field list — this can never 500.
+      return err({
+        type: "conflict",
+        details: [{ field: "email", issue: "A user with this email already exists" }],
+      });
     }
 
     return err({

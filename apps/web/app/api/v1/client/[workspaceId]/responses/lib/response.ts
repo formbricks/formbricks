@@ -2,28 +2,19 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import {
-  DatabaseError,
-  InvalidInputError,
-  ResourceNotFoundError,
-  UniqueConstraintError,
-} from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import {
   buildClientResponse,
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
-import {
-  isDisplayIdUniqueConstraintError,
-  isSingleUseIdUniqueConstraintError,
-} from "@/app/api/client/[workspaceId]/responses/lib/response-error";
+import { handleClientResponseCreateError } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { isPrismaKnownRequestError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 
@@ -119,17 +110,6 @@ export const createResponse = async (
 
     return buildClientResponse(responsePrisma, contact);
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      if (isDisplayIdUniqueConstraintError(error)) {
-        throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
-      }
-      if (isSingleUseIdUniqueConstraintError(error)) {
-        throw new UniqueConstraintError("Response already submitted for this single-use link");
-      }
-
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
+    return handleClientResponseCreateError(error, responseInput.displayId);
   }
 };

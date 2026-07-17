@@ -1,10 +1,11 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "../utils/prisma-constraint";
 import { validateInputs } from "../utils/validate";
 
 const selectTagsOnResponse = {
@@ -30,17 +31,17 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
       tagId,
     };
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      const target = error.meta?.target;
-      const isTagsOnResponsesUniqueViolation =
-        Array.isArray(target) && target.includes("responseId") && target.includes("tagId");
-
-      if (isUniqueConstraintError(error) && isTagsOnResponsesUniqueViolation) {
+    if (isUniqueConstraintError(error)) {
+      const fields = getUniqueConstraintFields(error);
+      if (fields.includes("responseId") && fields.includes("tagId")) {
+        // Idempotent: the tag is already on the response.
         return {
           responseId,
           tagId,
         };
       }
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
 
@@ -65,7 +66,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
       responseId,
     };
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -92,7 +93,7 @@ export const getTagsOnResponsesCount = reactCache(async (workspaceId: string): P
 
     return tagsCount.map((tagCount) => ({ tagId: tagCount.tagId, count: tagCount._count._all }));
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
     throw error;

@@ -493,7 +493,9 @@ describe("createFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "name"] },
+        meta: {
+          driverAdapterError: { cause: { constraint: { fields: ["workspaceId", "name"] } } },
+        },
       })
     );
 
@@ -511,7 +513,11 @@ describe("createFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] },
+        meta: {
+          driverAdapterError: {
+            cause: { constraint: { fields: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] } },
+          },
+        },
       })
     );
 
@@ -529,7 +535,17 @@ describe("createFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "sourceFieldId", "targetFieldId"] },
+        // Real Prisma 7 + adapter-pg shape: no meta.target, and columns are the @map()-ed DB names
+        // (source_field_id / target_field_id) — verifies the helper's mapped-column handling.
+        meta: {
+          driverAdapterError: {
+            cause: {
+              constraint: {
+                fields: ["workspaceId", "feedbackSourceId", "source_field_id", "target_field_id"],
+              },
+            },
+          },
+        },
       })
     );
 
@@ -743,7 +759,9 @@ describe("updateFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "name"] },
+        meta: {
+          driverAdapterError: { cause: { constraint: { fields: ["workspaceId", "name"] } } },
+        },
       })
     );
 
@@ -757,7 +775,11 @@ describe("updateFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] },
+        meta: {
+          driverAdapterError: {
+            cause: { constraint: { fields: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] } },
+          },
+        },
       })
     );
 
@@ -771,7 +793,17 @@ describe("updateFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "sourceFieldId", "targetFieldId"] },
+        // Real Prisma 7 + adapter-pg shape: no meta.target, and columns are the @map()-ed DB names
+        // (source_field_id / target_field_id) — verifies the helper's mapped-column handling.
+        meta: {
+          driverAdapterError: {
+            cause: {
+              constraint: {
+                fields: ["workspaceId", "feedbackSourceId", "source_field_id", "target_field_id"],
+              },
+            },
+          },
+        },
       })
     );
 

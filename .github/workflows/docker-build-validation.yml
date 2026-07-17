@@ -78,6 +78,197 @@ jobs:
             cubejs_api_url=http://localhost:4000
             cubejs_api_secret=build-time-placeholder
 
+      - name: Reject Invalid Environment Before Database Setup
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          IMAGE="formbricks-test:$GITHUB_SHA"
+          COMMON_ENV=(
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks"
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY"
+            -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY"
+            -e REDIS_URL="redis://192.0.2.1:6379"
+            -e HUB_API_URL="http://192.0.2.1:4000"
+            -e HUB_API_KEY="build-time-placeholder"
+            -e CUBEJS_API_URL="http://192.0.2.1:4000"
+            -e CUBEJS_API_SECRET="build-time-placeholder"
+          )
+
+          run_invalid_case() {
+            local case_name="$1"
+            local expected_field="$2"
+            local secret_value="$3"
+            shift 3
+
+            set +e
+            local output
+            output="$(docker run --rm "${COMMON_ENV[@]}" "$@" "$IMAGE" 2>&1)"
+            local status=$?
+            set -e
+
+            if [ "$status" -eq 0 ]; then
+              echo "Expected $case_name to fail environment validation"
+              exit 1
+            fi
+
+            if ! grep -Fq "$expected_field" <<<"$output"; then
+              echo "Expected $case_name output to name $expected_field"
+              echo "$output"
+              exit 1
+            fi
+
+            if [ -n "$secret_value" ] && grep -Fq "$secret_value" <<<"$output"; then
+              echo "Environment validation leaked the configured value for $case_name"
+              exit 1
+            fi
+
+            if grep -Eq "Running database migrations|Running SAML database setup|Prisma|Can't reach database" <<<"$output"; then
+              echo "Database work started before $case_name environment validation failed"
+              echo "$output"
+              exit 1
+            fi
+          }
+
+          run_invalid_case \
+            "invalid provider" \
+            "AI_PROVIDER" \
+            "unsupported-provider-sentinel" \
+            -e AI_PROVIDER="unsupported-provider-sentinel"
+
+          run_invalid_case \
+            "missing model" \
+            "AI_MODEL" \
+            "" \
+            -e AI_PROVIDER="google" \
+            -e AI_GOOGLE_CLOUD_PROJECT="test-project" \
+            -e AI_GOOGLE_CLOUD_LOCATION="us-central1"
+
+          run_invalid_case \
+            "invalid credentials JSON" \
+            "AI_GOOGLE_CLOUD_CREDENTIALS_JSON" \
+            "credentials-secret-sentinel" \
+            -e AI_PROVIDER="google" \
+            -e AI_MODEL="gemini-2.5-flash" \
+            -e AI_GOOGLE_CLOUD_PROJECT="test-project" \
+            -e AI_GOOGLE_CLOUD_LOCATION="us-central1" \
+            -e AI_GOOGLE_CLOUD_CREDENTIALS_JSON="credentials-secret-sentinel"
+
+          run_invalid_case \
+            "invalid provider base URL" \
+            "AI_OPENAI_COMPATIBLE_BASE_URL" \
+            "base-url-secret-sentinel" \
+            -e AI_PROVIDER="openai-compatible" \
+            -e AI_MODEL="test-model" \
+            -e AI_OPENAI_COMPATIBLE_BASE_URL="base-url-secret-sentinel"
+
+          run_invalid_case \
+            "invalid Azure base URL" \
+            "AI_AZURE_BASE_URL" \
+            "azure-base-url-secret-sentinel" \
+            -e AI_PROVIDER="azure" \
+            -e AI_MODEL="test-model" \
+            -e AI_AZURE_API_KEY="azure-base-url-secret-sentinel" \
+            -e AI_AZURE_BASE_URL="azure-base-url-secret-sentinel"
+
+      - name: Validate Docker Compose Migration Environment
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          docker tag "formbricks-test:$GITHUB_SHA" ghcr.io/formbricks/formbricks:latest
+          trap 'rm -f docker/.env' EXIT
+          printf '%s\n' \
+            'WEBAPP_URL=http://localhost:3000' \
+            'NEXTAUTH_URL=http://localhost:3000' \
+            "ENCRYPTION_KEY=$DUMMY_ENCRYPTION_KEY" \
+            "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
+            'HUB_API_KEY=build-time-placeholder' \
+            'CUBEJS_API_SECRET=build-time-placeholder' \
+            'AI_PROVIDER=compose-provider-secret-sentinel' \
+            > docker/.env
+
+          set +e
+          output="$(docker compose -f docker/docker-compose.yml run --rm --no-deps formbricks-migrate 2>&1)"
+          status=$?
+          set -e
+
+          if [ "$status" -eq 0 ]; then
+            echo "Expected the Compose migration service to reject its invalid environment"
+            exit 1
+          fi
+
+          if ! grep -Fq "AI_PROVIDER" <<<"$output"; then
+            echo "Expected the Compose migration output to name AI_PROVIDER"
+            echo "$output"
+            exit 1
+          fi
+
+          if grep -Fq "compose-provider-secret-sentinel" <<<"$output"; then
+            echo "Compose migration validation leaked the configured provider value"
+            exit 1
+          fi
+
+          if grep -Eq "prisma migrate|Prisma|Can't reach database" <<<"$output"; then
+            echo "Compose started migrations before environment validation failed"
+            echo "$output"
+            exit 1
+          fi
+
+      - name: Preserve Startup Migration Skip Behavior
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          docker run --name formbricks-skip-test \
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks" \
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY" \
+            -e REDIS_URL="redis://192.0.2.1:6379" \
+            -e HUB_API_URL="http://192.0.2.1:4000" \
+            -e HUB_API_KEY="build-time-placeholder" \
+            -e CUBEJS_API_URL="http://192.0.2.1:4000" \
+            -e CUBEJS_API_SECRET="build-time-placeholder" \
+            -e SKIP_STARTUP_MIGRATION="true" \
+            -d "formbricks-test:$GITHUB_SHA"
+
+          trap 'docker rm -f formbricks-skip-test >/dev/null 2>&1 || true' EXIT
+
+          for _ in $(seq 1 30); do
+            if docker logs formbricks-skip-test 2>&1 | grep -Fq "Starting Next.js server"; then
+              break
+            fi
+
+            if [ "$(docker inspect -f '{{.State.Running}}' formbricks-skip-test 2>/dev/null)" != "true" ]; then
+              echo "Container exited before exercising the startup migration skip"
+              docker logs formbricks-skip-test
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          logs="$(docker logs formbricks-skip-test 2>&1)"
+          grep -Fq "Environment variables validated successfully" <<<"$logs"
+          grep -Fq "Skipping startup migrations" <<<"$logs"
+          grep -Fq "Running SAML database setup" <<<"$logs"
+          grep -Fq "Starting Next.js server" <<<"$logs"
+
+          if grep -Fq "Running database migrations" <<<"$logs"; then
+            echo "Startup migrations ran despite SKIP_STARTUP_MIGRATION=true"
+            echo "$logs"
+            exit 1
+          fi
+
       - name: Verify and Initialize PostgreSQL
         run: |
           echo "Verifying PostgreSQL connection..."
@@ -146,6 +337,7 @@ jobs:
             -p 3000:3000 \
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
             -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY" \
             -e REDIS_URL="redis://host.docker.internal:6379" \
             -e HUB_API_URL="http://localhost:4000" \
             -e HUB_API_KEY="build-time-placeholder" \
@@ -191,9 +383,24 @@ jobs:
             sleep 5
           done
 
-          # Show full container logs for debugging
+          # Show full container logs for debugging and verify startup work ran exactly once
           echo "📋 Full container logs:"
-          docker logs formbricks-test
+          CONTAINER_LOGS="$(docker logs formbricks-test 2>&1)"
+          echo "$CONTAINER_LOGS"
+
+          assert_log_once() {
+            local message="$1"
+            local count
+            count="$(grep -Fc "$message" <<<"$CONTAINER_LOGS" || true)"
+            if [ "$count" -ne 1 ]; then
+              echo "Expected '$message' exactly once, found $count occurrences"
+              exit 1
+            fi
+          }
+
+          assert_log_once "Environment variables validated successfully"
+          assert_log_once "Running database migrations"
+          assert_log_once "Running SAML database setup"
 
           # Clean up the container
           echo "🧹 Cleaning up..."

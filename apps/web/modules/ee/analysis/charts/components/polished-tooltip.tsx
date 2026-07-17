@@ -13,7 +13,7 @@ interface TooltipPayloadItem {
   name?: string | number;
   value?: unknown;
   color?: string;
-  payload?: { fill?: string };
+  payload?: { fill?: string; tooltipLabel?: string };
 }
 
 interface RechartsTooltipProps {
@@ -48,13 +48,16 @@ export const PolishedChartTooltip = ({
       <div className="flex flex-col gap-1.5">
         {payload.map((item) => {
           const key = item.dataKey ?? String(item.name ?? "");
+          // Rows pivoted from measures (see pivotMeasuresToCategories) carry their translated
+          // label on the row itself; otherwise the dataKey is a Cube column we can format.
+          const rowLabel = item.payload?.tooltipLabel ?? formatCubeColumnHeader(key, t);
           // payload.fill (per-row data.fill / pie <Cell>) wins over the Bar's series fallback.
           const indicatorColor = item.payload?.fill ?? item.color ?? CHART_BRAND_DARK;
           return (
             <div key={key} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <div className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: indicatorColor }} />
-                <span className="text-muted-foreground text-sm">{formatCubeColumnHeader(key, t)}</span>
+                <span className="text-muted-foreground text-sm">{rowLabel}</span>
               </div>
               <span className="text-foreground text-sm font-medium tabular-nums">
                 {formatCellValue(item.value)}

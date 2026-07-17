@@ -7,8 +7,8 @@ import { ActionClass, Prisma } from "@formbricks/database/prisma";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { ITEMS_PER_PAGE } from "../constants";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "../utils/prisma-constraint";
 import { validateInputs } from "../utils/validate";
 
 const selectActionClass = {
@@ -97,7 +97,7 @@ export const deleteActionClass = async (actionClassId: string): Promise<TActionC
 
     return actionClass;
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -128,7 +128,7 @@ export const createActionClass = async (actionClass: TActionClassInput): Promise
     return actionClassPrisma;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      const targetField = (error.meta?.target as string[] | undefined)?.[0];
+      const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
@@ -174,13 +174,13 @@ export const updateActionClass = async (
     return result;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      const targetField = (error.meta?.target as string[] | undefined)?.[0];
+      const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (inputActionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }
 
-    if (isPrismaKnownRequestError(error)) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
     throw error;
