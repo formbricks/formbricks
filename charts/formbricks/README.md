@@ -57,12 +57,30 @@ authzed:
     install: true
 ```
 
-This installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, generates a stable preshared
-key, and creates a dedicated `spicedb` database and role in the bundled PostgreSQL server. The operator runs
-datastore migrations before rolling out SpiceDB. The chart assigns explicit resource requests and limits to
-SpiceDB and uses a larger PostgreSQL allocation than the upstream `nano` preset so the database has enough
-headroom during SpiceDB rollouts. Override `authzed.cluster.resources` and `postgresql.primary.resources` to
-match the expected authorization traffic and the other workloads using the bundled database.
+This installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, and creates a dedicated
+`spicedb` database and role in the bundled PostgreSQL server. During normal Helm installs and upgrades, the
+chart reuses generated credentials from the existing cluster Secret. Renderers without live Secret access,
+including offline `helm template` and Argo CD manifest generation, must provide persistent credentials through
+`authzed.auth.existingSecret` and `authzed.datastore.existingSecret`; otherwise generated values are not stable
+between renders. The operator runs datastore migrations before rolling out SpiceDB.
+
+The chart preserves the bundled PostgreSQL dependency's existing resource baseline when AuthZed is disabled.
+When PostgreSQL also serves bundled SpiceDB, size it for both workloads. A reasonable starting override is:
+
+```yaml
+postgresql:
+  primary:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+```
+
+Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the expected authorization
+traffic and the other workloads using the bundled database.
 
 Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
 namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
@@ -90,8 +108,21 @@ authzed:
     existingSecret: formbricks-authzed
 ```
 
-To connect to an AuthZed-managed or otherwise external endpoint, set `authzed.mode=external`, provide
-`authzed.endpoint`, and reference a Secret containing `preshared_key`. The chart injects `AUTHZED_ENABLED`,
+To connect to an AuthZed-managed or otherwise external endpoint, use TLS, provide the endpoint without a URL
+scheme, and reference a Secret containing `preshared_key`:
+
+```yaml
+authzed:
+  enabled: true
+  mode: external
+  endpoint: grpc.authzed.com:443
+  insecure: false
+  auth:
+    existingSecret: formbricks-authzed
+```
+
+`authzed.insecure` defaults to `false` in external mode. Set it to `true` only for a trusted plaintext gRPC
+endpoint; plaintext transport sends the preshared token without TLS protection. The chart injects `AUTHZED_ENABLED`,
 `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and `AUTHZED_CONSISTENCY` into
 the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
 Formbricks readiness remains independent from transient SpiceDB availability.

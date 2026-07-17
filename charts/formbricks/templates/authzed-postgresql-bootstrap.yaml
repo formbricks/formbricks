@@ -23,6 +23,7 @@ metadata:
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
   backoffLimit: {{ $bootstrap.backoffLimit }}
+  activeDeadlineSeconds: 300
   ttlSecondsAfterFinished: 300
   template:
     metadata:
@@ -51,12 +52,12 @@ spec:
             - name: PGHOST
               value: formbricks-postgresql
             - name: PGUSER
-              value: {{ .Values.postgresql.auth.username | quote }}
+              value: postgres
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ $postgresSecretName }}
-                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+                  key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey }}
             - name: SPICEDB_DATABASE_NAME
               value: spicedb
             - name: SPICEDB_DATABASE_USERNAME
@@ -92,11 +93,19 @@ spec:
           args:
             - |
               if [ -n "${ADMIN_DATABASE_URL:-}" ]; then
-                admin_database_url="${ADMIN_DATABASE_URL%%\?*}?sslmode=require"
+                admin_database_url="$ADMIN_DATABASE_URL"
               else
                 admin_database_url=postgres
               fi
-              until pg_isready --dbname "$admin_database_url"; do sleep 2; done
+              readiness_attempt=1
+              until pg_isready --dbname "$admin_database_url"; do
+                if [ "$readiness_attempt" -ge 60 ]; then
+                  echo "PostgreSQL did not become ready after 60 attempts" >&2
+                  exit 1
+                fi
+                readiness_attempt=$((readiness_attempt + 1))
+                sleep 2
+              done
               psql --dbname "$admin_database_url" --set ON_ERROR_STOP=1 \
                 --set database_name="$SPICEDB_DATABASE_NAME" \
                 --set database_username="$SPICEDB_DATABASE_USERNAME" \

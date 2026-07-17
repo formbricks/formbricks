@@ -153,7 +153,7 @@ spec:
             {{- end }}
             {{- if not (hasKey .Values.deployment.env "AUTHZED_INSECURE") }}
             - name: AUTHZED_INSECURE
-              value: {{ .Values.authzed.insecure | quote }}
+              value: {{ include "formbricks.authzedInsecure" . | quote }}
             {{- end }}
             {{- if not (hasKey .Values.deployment.env "AUTHZED_CONSISTENCY") }}
             - name: AUTHZED_CONSISTENCY

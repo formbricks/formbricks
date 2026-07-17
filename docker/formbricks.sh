@@ -586,7 +586,11 @@ EOT
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
   echo "📥 Downloading AuthZed database bootstrap helper..."
-  curl -fsSL -o authzed-postgres-bootstrap.sh https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/authzed-postgres-bootstrap.sh
+  authzed_bootstrap_commit="10d5ad908491a8a818aef3c6ada91fa4fdc30b03"
+  authzed_bootstrap_sha256="70975701cdf0dcffef5d3573a7514360e87428bb07cc4bfb4dbf47ae0c2e93a5"
+  curl -fsSL -o authzed-postgres-bootstrap.sh \
+    "https://raw.githubusercontent.com/formbricks/formbricks/${authzed_bootstrap_commit}/docker/authzed-postgres-bootstrap.sh"
+  printf '%s  %s\n' "$authzed_bootstrap_sha256" authzed-postgres-bootstrap.sh | sha256sum --check --status -
   chmod 700 authzed-postgres-bootstrap.sh
   mkdir -p cube/schema
   echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."

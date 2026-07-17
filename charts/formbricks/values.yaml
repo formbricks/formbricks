@@ -566,7 +566,10 @@ authzed:
   # grpc:// is intentionally omitted. AuthZed SDKs accept host:port endpoints.
   # For selfHosted mode this defaults to formbricks-spicedb:50051.
   endpoint: ""
-  insecure: true
+  # null selects the safe mode-specific default: plaintext for the internal
+  # selfHosted service and TLS for external endpoints. Set true explicitly only
+  # when an external endpoint intentionally accepts plaintext gRPC.
+  insecure: null
   consistency: minimize_latency
 
   auth:
@@ -1333,15 +1336,6 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
-    # The upstream nano preset leaves too little memory headroom when the
-    # bundled database also serves SpiceDB.
-    resources:
-      requests:
-        cpu: 250m
-        memory: 512Mi
-      limits:
-        cpu: "1"
-        memory: 1Gi
     podSecurityContext:
       enabled: true
       fsGroup: 1001

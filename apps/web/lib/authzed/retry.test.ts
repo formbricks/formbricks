@@ -1,16 +1,8 @@
+import { loggerMocks } from "./__mocks__/logger";
 import { status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import { calculateAuthzedRetryDelayMs, executeAuthzedOperation } from "./retry";
-
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  warn: vi.fn(),
-}));
-
-vi.mock("@formbricks/logger", () => ({
-  logger: loggerMocks,
-}));
 
 describe("AuthZed retry policy", () => {
   beforeEach(() => {

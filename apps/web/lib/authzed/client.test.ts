@@ -1,45 +1,8 @@
+import { configMocks, envMock, retryMocks, sdkMocks } from "./__mocks__/client-dependencies";
 import { status } from "@grpc/grpc-js";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { closeAuthzedClient, getAuthzedClient } from "./client";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
-
-const sdkMocks = vi.hoisted(() => ({
-  close: vi.fn(),
-  deadlineInterceptor: vi.fn((timeoutMs: number) => ({ timeoutMs })),
-  newClient: vi.fn(),
-  readSchema: vi.fn(),
-}));
-const configMocks = vi.hoisted(() => ({
-  isAuthzedEnabled: vi.fn(),
-}));
-const envMock = vi.hoisted(() => ({
-  AUTHZED_CONSISTENCY: undefined as "minimize_latency" | "fully_consistent" | undefined,
-  AUTHZED_ENDPOINT: "spicedb:50051" as string | undefined,
-  AUTHZED_INSECURE: "true" as "true" | "false" | "1" | "0" | undefined,
-  AUTHZED_SYSTEM_KEY: "formbricks" as string | undefined,
-  AUTHZED_TOKEN: "private-token" as string | undefined,
-}));
-const retryMocks = vi.hoisted(() => ({
-  execute: vi.fn((_operation: string, request: () => Promise<unknown>) => request()),
-}));
-
-vi.mock("@authzed/authzed-node", () => ({
-  deadlineInterceptor: sdkMocks.deadlineInterceptor,
-  v1: {
-    ClientSecurity: {
-      INSECURE_PLAINTEXT_CREDENTIALS: 2,
-      SECURE: 0,
-    },
-    NewClient: sdkMocks.newClient,
-  },
-}));
-vi.mock("@/lib/env", () => ({ env: envMock }));
-vi.mock("./config", () => ({
-  isAuthzedEnabled: configMocks.isAuthzedEnabled,
-}));
-vi.mock("./retry", () => ({
-  executeAuthzedOperation: retryMocks.execute,
-}));
 
 describe("AuthZed client facade", () => {
   beforeEach(() => {
