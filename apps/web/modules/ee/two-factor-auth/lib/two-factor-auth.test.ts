@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getCredentialPasswordHash, verifyUserPassword } from "@/lib/user/password";
+import { buildReencodedTwoFactorData } from "@/modules/auth/lib/cutover/reencode-two-factor";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "./two-factor-auth";
 
@@ -12,6 +13,12 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    twoFactor: {
+      upsert: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    // Runs the passed prisma operations; the individual mocks above record their own calls.
+    $transaction: vi.fn((ops) => (Array.isArray(ops) ? Promise.all(ops) : Promise.resolve(ops))),
   },
 }));
 
@@ -25,6 +32,14 @@ vi.mock("@/lib/user/password", () => ({
   verifyUserPassword: vi.fn(),
 }));
 
+vi.mock("@/modules/auth/lib/auth", () => ({
+  auth: { $context: Promise.resolve({ secretConfig: "ba-secret-config" }) },
+}));
+
+vi.mock("@/modules/auth/lib/cutover/reencode-two-factor", () => ({
+  buildReencodedTwoFactorData: vi.fn(),
+}));
+
 vi.mock("@/modules/auth/lib/totp", () => ({
   totpAuthenticatorCheck: vi.fn(),
 }));
@@ -36,6 +51,10 @@ describe("Two Factor Auth", () => {
     // password" tests override these.
     vi.mocked(getCredentialPasswordHash).mockResolvedValue("hashedPassword");
     vi.mocked(verifyUserPassword).mockResolvedValue(true);
+    vi.mocked(buildReencodedTwoFactorData).mockResolvedValue({
+      secret: "ba-secret",
+      backupCodes: "ba-codes",
+    });
   });
 
   afterEach(() => {
