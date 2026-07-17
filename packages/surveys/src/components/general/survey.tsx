@@ -938,9 +938,19 @@ export function Survey({
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
+  // The outgoing card stays visible while the card transition cross-fades, so a
+  // control that kept focus would show its focus ring hanging mid-fade before
+  // vanishing with the card. Drop focus when navigation starts; the incoming
+  // card focuses its first control on mount.
+  const blurOutgoingCard = (): void => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+  };
+
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     isNavigatingBackRef.current = false;
     hasUserNavigatedRef.current = true;
+    blurOutgoingCard();
 
     // Get the first responded element ID for tracking
     const respondedElementIds = Object.keys(surveyResponseData);
@@ -1040,6 +1050,7 @@ export function Survey({
   const onBack = (): void => {
     isNavigatingBackRef.current = true;
     hasUserNavigatedRef.current = true;
+    blurOutgoingCard();
 
     let prevBlockId: string | undefined;
     // use history if available
