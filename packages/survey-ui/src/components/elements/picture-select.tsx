@@ -117,10 +117,14 @@ function PictureSelect({
       <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
-          // A checkbox group is role="group" (supports neither aria-required nor
-          // aria-invalid); it is named by the headline like the radiogroup below,
-          // and the visible error message conveys the invalid state.
-          <div role="group" aria-labelledby={`${inputId}-headline`} className="grid grid-cols-2 gap-2">
+          // A native fieldset (implicit group role) named by the headline, like the
+          // multi-select list. Groups support neither aria-required nor aria-invalid;
+          // the visible error message conveys the invalid state.
+          // w-full/border-0/p-0 neutralize the fieldset UA defaults (shrink-to-content
+          // sizing and the default border) so it lays out exactly like the former div.
+          <fieldset
+            aria-labelledby={`${inputId}-headline`}
+            className="m-0 grid w-full min-w-0 grid-cols-2 gap-2 border-0 p-0">
             {options.map((option) => {
               const isSelected = (selectedValues as string[]).includes(option.id);
               const optionId = `${inputId}-${option.id}`;
@@ -166,7 +170,7 @@ function PictureSelect({
                 </label>
               );
             })}
-          </div>
+          </fieldset>
         ) : (
           // Native radios instead of a Radix radio group: Radix moves selection with
           // arrow-key focus, which would trigger auto-progress while a keyboard user
