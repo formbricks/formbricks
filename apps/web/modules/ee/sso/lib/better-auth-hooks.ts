@@ -46,12 +46,13 @@ export const getSsoProviderFromContext = (
   return match ? match[1] : null;
 };
 
-/** Fallback display name derived from an email local-part (parity `provisionNewSsoUser`:372-377). */
+/**
+ * Fallback display name when the IdP supplies no name: humanize the email local-part (treat `. _ +` as
+ * word separators) and run it through the shared normalizer. The name allowlist lives only in
+ * normalizeUserName (tied to ZUserName), so there is no second name regex here that could drift.
+ */
 const deriveNameFromEmail = (email: string): string =>
-  email
-    .split("@")[0]
-    .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
-    .trim();
+  normalizeUserName(email.split("@")[0].replace(/[._+]+/g, " "));
 
 /**
  * Better Auth `databaseHooks` re-expressing Formbricks' SSO sign-up flow (design doc §13), reusing
