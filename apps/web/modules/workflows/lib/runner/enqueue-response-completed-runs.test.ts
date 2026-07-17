@@ -8,11 +8,13 @@ const { findMany, create, findUnique } = vi.hoisted(() => ({
   findUnique: vi.fn(),
 }));
 const { warn, error } = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn() }));
+const { markDispatched } = vi.hoisted(() => ({ markDispatched: vi.fn() }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: { workflow: { findMany }, workflowRun: { create, findUnique } },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn, error } }));
+vi.mock("./mark-dispatched", () => ({ markWorkflowRunDispatched: markDispatched }));
 
 const workspaceId = "cm9zr4mps000008l8btfy1vtz";
 const surveyId = "cm9zr4q7i000108l84gozfggr";
@@ -81,6 +83,12 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
       triggeredAt: response.updatedAt.toISOString(),
     });
     expect(dispatch).toHaveBeenCalledWith({ workflowRunId: "run_1", workflowId: "wf_1", workspaceId });
+    // Dispatch landed → recorded as a durable DB fact (ENG-1658).
+    expect(markDispatched).toHaveBeenCalledWith(
+      "run_1",
+      expect.any(Date),
+      expect.objectContaining({ workflowId: "wf_1" })
+    );
   });
 
   test("does nothing for an unfinished response", async () => {
@@ -239,5 +247,7 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
     // Attempted once (not retried here), the persisted run is surfaced as an orphan for the reconciler.
     expect(dispatch).toHaveBeenCalledTimes(1);
     expect(error).toHaveBeenCalled();
+    // Dispatch failed → the run is left unmarked (dispatchedAt stays null) for the reconciler to recover.
+    expect(markDispatched).not.toHaveBeenCalled();
   });
 });

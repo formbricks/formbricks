@@ -1,6 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { type DispatchWorkflowRun } from "./dispatch";
+import { markWorkflowRunDispatched } from "./mark-dispatched";
 import {
   WORKFLOW_RUN_ORPHAN_MAX_AGE_MS,
   WORKFLOW_RUN_ORPHAN_MIN_AGE_MS,
@@ -19,6 +20,13 @@ export interface ReconcileOrphanedWorkflowRunsResult {
   scanned: number;
   redispatched: number;
   agedOutFailed: number;
+  /**
+   * Of the re-dispatched runs, how many had never been handed off (`dispatchedAt IS NULL`) — genuine
+   * producer-side orphans. The remainder were already dispatched but still `queued` (executor lag or a
+   * lost job), re-dispatched idempotently. Lets operators tell a producer-dispatch problem from an
+   * executor-throughput one.
+   */
+  neverDispatched: number;
 }
 
 /**
@@ -49,6 +57,14 @@ export interface ReconcileOrphanedWorkflowRunsResult {
  * - **Safe under concurrency:** every write is status-guarded (`status: "queued"`) so a run claimed
  *   `queued → running` between the scan and the write is never clobbered; and re-dispatch idempotency
  *   means overlapping sweeps cannot double-dispatch.
+ * - **Dispatch marker (ENG-1658):** the scan still re-dispatches *every* eligible `queued` run (so a
+ *   Redis-loss recovery re-creates all lost jobs via the idempotent port — the `dispatchedAt IS NULL`
+ *   fact is deliberately *not* used to filter the scan, which would strand dispatched-but-lost runs).
+ *   Instead `dispatchedAt` distinguishes outcomes: a run with `dispatchedAt IS NULL` is a genuine
+ *   never-handed-off producer orphan (counted as `neverDispatched`, and stamped on this first
+ *   re-dispatch); one with `dispatchedAt` set was already handed off (executor lag or a lost job) and is
+ *   re-dispatched idempotently but neither counted nor re-stamped. Gives operators a producer-dispatch
+ *   vs executor-throughput signal from a DB fact.
  * - **Isolated:** one run's failure is logged and skipped so it never aborts the sweep.
  */
 export const reconcileOrphanedWorkflowRuns = async ({
@@ -68,11 +84,12 @@ export const reconcileOrphanedWorkflowRuns = async ({
     },
     orderBy: { createdAt: "asc" },
     take: WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
-    select: { id: true, workflowId: true, workspaceId: true, createdAt: true },
+    select: { id: true, workflowId: true, workspaceId: true, createdAt: true, dispatchedAt: true },
   });
 
   let redispatched = 0;
   let agedOutFailed = 0;
+  let neverDispatched = 0;
 
   for (const orphan of orphans) {
     const runLogContext = {
@@ -110,11 +127,19 @@ export const reconcileOrphanedWorkflowRuns = async ({
         workspaceId: orphan.workspaceId,
       });
       redispatched += 1;
+
+      if (orphan.dispatchedAt === null) {
+        // Genuine producer orphan (dispatch never landed): count it, and record this first successful
+        // hand-off as a durable DB fact. Already-dispatched-but-still-queued runs (dispatchedAt set) are
+        // re-dispatched idempotently above but neither counted nor re-stamped — no churn on the marker.
+        neverDispatched += 1;
+        await markWorkflowRunDispatched(orphan.id, now, runLogContext);
+      }
     } catch (error) {
       // Isolate per run: a single re-dispatch/mark failure must not abort the sweep; the next tick retries.
       logger.error({ ...runLogContext, err: error }, "Failed to reconcile orphaned workflow run");
     }
   }
 
-  return { scanned: orphans.length, redispatched, agedOutFailed };
+  return { scanned: orphans.length, redispatched, agedOutFailed, neverDispatched };
 };
