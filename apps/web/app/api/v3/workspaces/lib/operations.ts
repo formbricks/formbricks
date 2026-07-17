@@ -1,7 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { DatabaseError } from "@formbricks/types/errors";
 import { problemInternalError, problemUnauthorized, successListResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
@@ -34,14 +33,35 @@ const serializeV3WorkspaceListItem = (workspace: {
 });
 
 /**
- * List the workspaces the authenticated principal can access.
+ * Session user's accessible workspaces: every workspace across the orgs they're a member of. Scoping is
+ * enforced by the reused services — `getOrganizationsByUserId` limits to the user's own orgs, and
+ * `getUserWorkspaces` returns all of an org's workspaces for owners/managers but only team-scoped ones
+ * for `member`-role users.
+ */
+async function fetchSessionWorkspaces(userId: string): Promise<TV3WorkspaceListItem[]> {
+  const organizations = await getOrganizationsByUserId(userId);
+  const workspacesPerOrg = await Promise.all(
+    organizations.map((organization) => getUserWorkspaces(userId, organization.id))
+  );
+  return workspacesPerOrg.flat().map(serializeV3WorkspaceListItem);
+}
+
+/** API key's accessible workspaces: exactly the ones named in its `workspacePermissions`, nothing else. */
+async function fetchApiKeyWorkspaces(keyAuth: TAuthenticationApiKey): Promise<TV3WorkspaceListItem[]> {
+  const workspaceIds = Array.from(new Set(keyAuth.workspacePermissions.map((p) => p.workspaceId)));
+  const workspaces = await Promise.all(workspaceIds.map((id) => getWorkspace(id)));
+  return workspaces
+    .filter((workspace): workspace is NonNullable<typeof workspace> => workspace !== null)
+    .map(serializeV3WorkspaceListItem);
+}
+
+/**
+ * List the workspaces the authenticated principal can access (session user or API key). There is no
+ * `workspaceId` input, so there is no IDOR surface — the result is always derived from the caller's own
+ * live membership / key grants, never from client-supplied ids.
  *
- * - Session user: every workspace across the orgs they're a member of (org owners/managers see all of
- *   an org's workspaces; `member`-role users see only team-scoped ones — enforced by `getUserWorkspaces`).
- * - API key: only the workspaces in its `workspacePermissions`.
- *
- * There is no `workspaceId` input, so there is no IDOR surface — the result is always derived from the
- * caller's own live membership / key grants, never from client-supplied ids.
+ * Thin orchestrator: resolve the principal's workspaces → dedupe → order → cap → respond. The per-
+ * principal access resolution lives in the `fetch*Workspaces` helpers.
  */
 export async function listV3Workspaces({
   authentication,
@@ -58,51 +78,33 @@ export async function listV3Workspaces({
     let items: TV3WorkspaceListItem[];
 
     if ("user" in authentication && authentication.user?.id) {
-      const userId = authentication.user.id;
-      // Only the caller's own orgs; `getUserWorkspaces` then scopes to team-accessible workspaces for
-      // `member`-role users. Both together guarantee we never return a workspace the user can't access.
-      const organizations = await getOrganizationsByUserId(userId);
-      const workspacesPerOrg = await Promise.all(
-        organizations.map((organization) => getUserWorkspaces(userId, organization.id))
-      );
-
-      // Dedupe by id (a user can't be in the same org twice, but stay defensive).
-      const byId = new Map<string, TV3WorkspaceListItem>();
-      for (const workspace of workspacesPerOrg.flat()) {
-        byId.set(workspace.id, serializeV3WorkspaceListItem(workspace));
-      }
-      items = Array.from(byId.values());
+      items = await fetchSessionWorkspaces(authentication.user.id);
+    } else if (
+      "apiKeyId" in authentication &&
+      authentication.apiKeyId &&
+      Array.isArray(authentication.workspacePermissions)
+    ) {
+      items = await fetchApiKeyWorkspaces(authentication);
     } else {
-      const keyAuth = authentication as TAuthenticationApiKey;
-      if (!keyAuth.apiKeyId || !Array.isArray(keyAuth.workspacePermissions)) {
-        return problemUnauthorized(requestId, "Not authenticated", instance);
-      }
-
-      // The key's authorized set is exactly its workspacePermissions — resolve those, nothing else.
-      const workspaceIds = Array.from(
-        new Set(keyAuth.workspacePermissions.map((permission) => permission.workspaceId))
-      );
-      const workspaces = await Promise.all(workspaceIds.map((id) => getWorkspace(id)));
-      items = workspaces
-        .filter((workspace): workspace is NonNullable<typeof workspace> => workspace !== null)
-        .map(serializeV3WorkspaceListItem);
+      return problemUnauthorized(requestId, "Not authenticated", instance);
     }
 
-    // Stable, deterministic order (the underlying queries have no ORDER BY) so the tool output — and
-    // which items survive the cap — don't vary between calls. Name first, id as a tiebreaker.
-    items.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+    // Dedupe by id (defensive) + a stable, deterministic order — the underlying queries have no ORDER BY,
+    // so without this the output and which items survive the cap could vary between calls.
+    const deduped = Array.from(new Map(items.map((item) => [item.id, item])).values()).sort(
+      (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
+    );
 
-    const capped = items.slice(0, MAX_WORKSPACES);
+    const capped = deduped.slice(0, MAX_WORKSPACES);
     return successListResponse(
       capped,
       { limit: MAX_WORKSPACES, nextCursor: null, totalCount: capped.length },
       { requestId, cache: "private, no-store" }
     );
   } catch (error) {
-    if (error instanceof DatabaseError) {
-      log.error({ error, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-    throw error;
+    // Log every failure with request context (not just DatabaseError) so nothing significant is lost,
+    // and always return a clean 500 instead of throwing a raw error past this boundary.
+    log.error({ error, statusCode: 500 }, "Failed to list workspaces");
+    return problemInternalError(requestId, "An unexpected error occurred.", instance);
   }
 }

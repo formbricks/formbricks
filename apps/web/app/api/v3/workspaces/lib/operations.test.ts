@@ -113,4 +113,10 @@ describe("listV3Workspaces", () => {
     const res = await listV3Workspaces(params(null));
     expect(res.status).toBe(401);
   });
+
+  test("an unexpected service failure is logged and returned as a 500 (never thrown)", async () => {
+    vi.mocked(getOrganizationsByUserId).mockRejectedValue(new Error("db exploded"));
+    const res = await listV3Workspaces(params(sessionAuth));
+    expect(res.status).toBe(500);
+  });
 });
