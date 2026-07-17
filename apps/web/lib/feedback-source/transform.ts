@@ -7,6 +7,7 @@ import type {
   TSurveyElementChoice,
   TSurveyMatrixElement,
   TSurveyMatrixElementChoice,
+  TSurveyMultipleChoiceElement,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -36,23 +37,24 @@ const findChoiceByLabel = <T extends { id: string; label: TSurveyElementChoice["
 interface NormalizedChoiceValue {
   value: TResponseDataValue;
   /**
-   * Stable id of the matched choice (ENG-1673). Only set for single-value answers that
-   * matched a choice — multi-value answers collapse into one joined record that cannot
-   * carry multiple ids, and unmatched values ("other" free text, edited labels) have none.
+   * Stable id of the matched choice (ENG-1673), set when the submitted value matched a known
+   * choice. Unmatched values ("other" free text, edited labels) have none. Multi-select answers
+   * are split into one record per option upstream (expandMultiChoiceToRecords), so each selected
+   * option keeps its own id.
    */
   valueId?: string;
 }
 
 /**
- * Normalize a choice answer for storage.
+ * Normalize a single choice answer for storage.
  *
- * - value_text = the choice's DEFAULT-language label (canonical) for any selection that matched
- *   a known choice, so the same option reads and groups consistently regardless of the response
+ * - value_text = the choice's DEFAULT-language label (canonical) for a selection that matched a
+ *   known choice, so the same option reads and groups consistently regardless of the response
  *   language. Unmatched values ("other" free text, edited labels) are stored as submitted.
- * - value_id   = stable cross-language grouping id consumed by charts. Set only for a
- *   single-value answer whose label matched a known choice. Multi-value arrays (ENG-1702)
- *   cannot carry multiple ids so they carry none, but each matched element is still
- *   canonicalized to its default-language label.
+ * - value_id   = stable cross-language grouping id consumed by charts, set to the matched choice id.
+ *
+ * Multi-select answers are split into one record per option before they reach here
+ * (expandMultiChoiceToRecords), so this helper only ever sees a single value.
  */
 const normalizeChoiceValue = (
   choices: { id: string; label: TSurveyElementChoice["label"] }[] | undefined,
@@ -65,18 +67,6 @@ const normalizeChoiceValue = (
     const choice = findChoiceByLabel(choices, value, language);
     // Canonicalize to the default-language label; value_id is the stable grouping key.
     return choice ? { value: getChoiceLabel(choice, "default"), valueId: choice.id } : { value };
-  }
-
-  if (Array.isArray(value)) {
-    // Multi-select: canonicalize each matched selection to its default-language label so the
-    // set reads consistently across languages (unmatched "other" entries pass through as-is).
-    return {
-      value: value.map((entry) => {
-        if (typeof entry !== "string") return entry;
-        const choice = findChoiceByLabel(choices, entry, language);
-        return choice ? getChoiceLabel(choice, "default") : entry;
-      }),
-    };
   }
 
   return { value };
@@ -262,6 +252,59 @@ const expandRankingToRecords = (
 };
 
 /**
+ * Split a multi-select answer into one record per selected option (ENG-1702, building on the
+ * ENG-1673 stable-identity work). A single value_id column cannot hold multiple option ids, so —
+ * like matrix and ranking — the answer expands into one record per selection, each carrying its
+ * own value_id. Every record shares field_group_id (the element id) so analytics can aggregate
+ * across the set, and inherits submission_id via baseFields to stay tied to the respondent.
+ *
+ * value_text = the choice's DEFAULT-language label (canonical) for matched selections; unmatched
+ * entries ("other" free text, edited labels) keep the submitted text. When the element offers an
+ * "other" option, unmatched entries group under the stable "other" id (survey convention: the
+ * other option's choice id is "other"). Empty selections produce no records.
+ */
+const expandMultiChoiceToRecords = (
+  element: TSurveyMultipleChoiceElement,
+  mapping: TFeedbackSourceFormbricksMapping,
+  value: TResponseDataValue,
+  baseFields: BaseRecordFields,
+  lookupLanguage: string
+): FeedbackRecordCreateParams[] => {
+  if (!Array.isArray(value) || value.length === 0) return [];
+
+  const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
+  const choices = element.choices ?? [];
+  const hasOtherOption =
+    element.otherOptionPlaceholder !== undefined || choices.some((choice) => choice.id === "other");
+  const records: FeedbackRecordCreateParams[] = [];
+
+  value.forEach((entry) => {
+    if (typeof entry !== "string" || entry === "") return;
+
+    const choice = findChoiceByLabel(choices, entry, lookupLanguage);
+    // Matched choice → canonical default-language label + stable id. Unmatched entry → the "other"
+    // free text; group it under the stable "other" id when the element offers that option.
+    const valueId = choice?.id ?? (hasOtherOption ? "other" : undefined);
+    const canonicalValue = choice ? getChoiceLabel(choice, "default") : entry;
+    const valueFields = convertValueToHubFields(canonicalValue, mapping.hubFieldType);
+
+    records.push({
+      ...baseFields,
+      field_id: `${element.id}__${valueId ?? entry}`,
+      field_type: mapping.hubFieldType,
+      field_label: fieldLabel,
+      field_group_id: element.id,
+      field_group_label: fieldLabel,
+      metadata: { question_type: "multipleChoiceMulti" },
+      ...valueFields,
+      ...(valueId ? { value_id: valueId } : {}),
+    });
+  });
+
+  return records;
+};
+
+/**
  * Normalize an element's answer for storage. Choice elements canonicalize labels and resolve
  * value_id via normalizeChoiceValue; every other element type stores the value as submitted.
  *
@@ -298,8 +341,8 @@ const normalizeElementValue = (
  * Transform a Formbricks survey response into FeedbackRecord payloads.
  * Called from the pipeline handler when a response is created/finished.
  *
- * Matrix and ranking questions expand into one record per row/item, sharing a
- * field_group_id so Hub analytics can aggregate across them.
+ * Matrix, ranking, and multi-select questions expand into one record per row/item/option,
+ * sharing a field_group_id so Hub analytics can aggregate across them.
  */
 export function transformResponseToFeedbackRecords(
   response: TResponse,
@@ -333,6 +376,15 @@ export function transformResponseToFeedbackRecords(
 
     if (element?.type === TSurveyElementTypeEnum.Ranking) {
       feedbackRecords.push(...expandRankingToRecords(element, mapping, value, baseFields, lookupLanguage));
+      continue;
+    }
+
+    // Multi-select splits into one record per selected option so each keeps its own stable
+    // value_id (ENG-1702). A single string answer falls through to the generic path below.
+    if (element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
+      feedbackRecords.push(
+        ...expandMultiChoiceToRecords(element, mapping, value, baseFields, lookupLanguage)
+      );
       continue;
     }
 

@@ -245,7 +245,7 @@ describe("chart Cube actions", () => {
 
   // ── Multi-select (MultipleChoiceMulti) detection and splitting ──────────────
 
-  test("executeQueryAction does NOT rewrite the query for a MultipleChoiceMulti element", async () => {
+  test("executeQueryAction keeps the user's dimension and returns optionLabels for a MultipleChoiceMulti element (no rewrite, no split)", async () => {
     // Wire up feedbackSources -> survey -> MultipleChoiceMulti element.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
@@ -270,10 +270,11 @@ describe("chart Cube actions", () => {
       filters: [{ member: "FeedbackRecords.fieldId", operator: "equals", values: ["field-multi"] }],
     };
 
-    // Cube returns a row with a joined value.
+    // Multi-select now stores one record per option (see transform.ts), so rows arrive already
+    // per-option — no joined string to split.
     mocks.executeTenantScopedQuery.mockResolvedValue([
-      { "FeedbackRecords.valueText": "One, Two", "FeedbackRecords.count": 5 },
-      { "FeedbackRecords.valueText": "One", "FeedbackRecords.count": 3 },
+      { "FeedbackRecords.valueText": "One", "FeedbackRecords.count": 8 },
+      { "FeedbackRecords.valueText": "Two", "FeedbackRecords.count": 5 },
     ]);
 
     const result = await executeQueryAction({
@@ -281,27 +282,21 @@ describe("chart Cube actions", () => {
       parsedInput: { workspaceId: "workspace-1", query, feedbackDirectoryId: "frd-1" },
     } as any);
 
-    // The query sent to Cube must still use valueText (no rewrite to valueId).
+    // The query sent to Cube keeps the user's chosen dimension — no swap.
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
       expect.objectContaining({
         query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
       })
     );
 
-    // The returned rows must be split and re-aggregated.
-    const rows = result?.rows ?? [];
-    const byOption = Object.fromEntries(
-      rows.map((r: Record<string, unknown>) => [r["FeedbackRecords.valueText"], r["FeedbackRecords.count"]])
-    );
-    expect(byOption["One"]).toBe(8); // 5 from the joined row + 3 from the plain row
-    expect(byOption["Two"]).toBe(5);
-
-    // No optionLabels in the multi-select path.
-    expect(result).not.toHaveProperty("optionLabels");
+    // Rows pass through unchanged (no server-side splitting).
+    expect(result?.rows).toHaveLength(2);
+    // optionLabels is returned so a valueId grouping of the same question reads nicely.
+    expect(result?.optionLabels).toEqual({ c1: "One", c2: "Two" });
   });
 
-  test("executeQueryAction does not split rows when the element is NOT MultipleChoiceMulti", async () => {
-    // A different element type — OpenText — should not trigger splitting.
+  test("executeQueryAction passes rows through unchanged and adds no labels for a non-choice element", async () => {
+    // A non-choice element type — OpenText — must not be touched.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
         formbricksMappings: [{ elementId: "field-open", surveyId: "survey-open" }],
@@ -326,14 +321,14 @@ describe("chart Cube actions", () => {
       },
     } as any);
 
-    // The comma in the OpenText value must NOT be treated as a separator.
     expect(result?.rows).toHaveLength(1);
     expect(result?.rows?.[0]?.["FeedbackRecords.valueText"]).toBe("Hello, World");
+    expect(result).not.toHaveProperty("optionLabels");
   });
 
   // ── fieldLabel filter fallback (ENG-1673) ────────────────────────────────────
 
-  test("executeQueryAction rewrites valueText → valueId and returns optionLabels for a single-select matched by fieldLabel", async () => {
+  test("executeQueryAction keeps the user's dimension (no valueText → valueId swap) and still returns optionLabels for a single-select matched by fieldLabel", async () => {
     // The mapping has no customFieldLabel, so the effective label comes from the element headline.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
@@ -354,8 +349,8 @@ describe("chart Cube actions", () => {
     ]);
 
     mocks.executeTenantScopedQuery.mockResolvedValue([
-      { "FeedbackRecords.valueId": "c1", "FeedbackRecords.count": 10 },
-      { "FeedbackRecords.valueId": "c2", "FeedbackRecords.count": 5 },
+      { "FeedbackRecords.valueText": "Red", "FeedbackRecords.count": 10 },
+      { "FeedbackRecords.valueText": "Blue", "FeedbackRecords.count": 5 },
     ]);
 
     const result = await executeQueryAction({
@@ -374,18 +369,18 @@ describe("chart Cube actions", () => {
       },
     } as any);
 
-    // The query sent to Cube must have been rewritten to valueId.
+    // The query sent to Cube must preserve the user's chosen dimension — no silent swap to valueId.
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueId"] }),
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
       })
     );
 
-    // optionLabels must be returned so the renderer can map ids to human labels.
+    // optionLabels is still returned so a valueId grouping can map ids to human labels.
     expect(result?.optionLabels).toEqual({ c1: "Red", c2: "Blue" });
   });
 
-  test("executeQueryAction sets splitMultiSelect for a multi-select element matched by fieldLabel", async () => {
+  test("executeQueryAction returns optionLabels for a multi-select element matched by fieldLabel (no rewrite/split)", async () => {
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
         formbricksMappings: [{ elementId: "field-mc", surveyId: "survey-mc", customFieldLabel: null }],
@@ -405,8 +400,8 @@ describe("chart Cube actions", () => {
     ]);
 
     mocks.executeTenantScopedQuery.mockResolvedValue([
-      { "FeedbackRecords.valueText": "A, B", "FeedbackRecords.count": 3 },
-      { "FeedbackRecords.valueText": "A", "FeedbackRecords.count": 2 },
+      { "FeedbackRecords.valueText": "A", "FeedbackRecords.count": 5 },
+      { "FeedbackRecords.valueText": "B", "FeedbackRecords.count": 3 },
     ]);
 
     const result = await executeQueryAction({
@@ -424,23 +419,14 @@ describe("chart Cube actions", () => {
       },
     } as any);
 
-    // valueText must NOT be rewritten to valueId for multi-select.
+    // Dimension preserved (no swap), rows pass through unchanged.
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
       expect.objectContaining({
         query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
       })
     );
-
-    // Rows must be split and re-aggregated.
-    const rows = result?.rows ?? [];
-    const byOption = Object.fromEntries(
-      rows.map((r: Record<string, unknown>) => [r["FeedbackRecords.valueText"], r["FeedbackRecords.count"]])
-    );
-    expect(byOption["A"]).toBe(5); // 3 from joined row + 2 from plain row
-    expect(byOption["B"]).toBe(3);
-
-    // No optionLabels for multi-select path.
-    expect(result).not.toHaveProperty("optionLabels");
+    expect(result?.rows).toHaveLength(2);
+    expect(result?.optionLabels).toEqual({ opt1: "A", opt2: "B" });
   });
 
   test("executeQueryAction does NOT rewrite when fieldLabel matches multiple mappings (ambiguous)", async () => {
@@ -569,8 +555,9 @@ describe("chart Cube actions", () => {
     expect(result?.optionLabels).toEqual({ s: "Small", l: "Large" });
   });
 
-  test("executeQueryAction swaps valueId → valueText and sets splitMultiSelect for a multi-select queried by valueId + fieldId filter", async () => {
-    // User selected "Value (Option)" for a multi-select field — server must swap to valueText.
+  test("executeQueryAction keeps valueId (no swap) and returns optionLabels for a multi-select queried by valueId + fieldId filter", async () => {
+    // User selected "Value (Option)" for a multi-select field — it must stay valueId, not pop back
+    // to Value (Text). Multi-select stores one record per option with its own value_id now.
     mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
       {
         formbricksMappings: [{ elementId: "field-mc2", surveyId: "survey-mc2" }],
@@ -590,8 +577,8 @@ describe("chart Cube actions", () => {
     ]);
 
     mocks.executeTenantScopedQuery.mockResolvedValue([
-      { "FeedbackRecords.valueText": "Music, Sport", "FeedbackRecords.count": 7 },
-      { "FeedbackRecords.valueText": "Music", "FeedbackRecords.count": 3 },
+      { "FeedbackRecords.valueId": "opt-a", "FeedbackRecords.count": 10 },
+      { "FeedbackRecords.valueId": "opt-b", "FeedbackRecords.count": 7 },
     ]);
 
     const query = {
@@ -605,26 +592,18 @@ describe("chart Cube actions", () => {
       parsedInput: { workspaceId: "workspace-1", query, feedbackDirectoryId: "frd-1" },
     } as any);
 
-    // Cube must have been called with valueText (valueId → valueText swap for multi-select).
+    // Cube must have been called with valueId — no swap back to valueText.
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueId"] }),
       })
     );
 
-    // effectiveQuery uses valueText after the swap.
-    expect(result?.effectiveQuery).toMatchObject({ dimensions: ["FeedbackRecords.valueText"] });
+    // effectiveQuery stays on valueId (this is what the builder reflects back — no auto-pop).
+    expect(result?.effectiveQuery).toMatchObject({ dimensions: ["FeedbackRecords.valueId"] });
 
-    // Rows must be split and re-aggregated.
-    const rows = result?.rows ?? [];
-    const byOption = Object.fromEntries(
-      rows.map((r: Record<string, unknown>) => [r["FeedbackRecords.valueText"], r["FeedbackRecords.count"]])
-    );
-    expect(byOption["Music"]).toBe(10); // 7 from joined row + 3 from plain row
-    expect(byOption["Sport"]).toBe(7);
-
-    // No optionLabels for multi-select.
-    expect(result).not.toHaveProperty("optionLabels");
+    // optionLabels map the ids to human labels for the renderer.
+    expect(result?.optionLabels).toEqual({ "opt-a": "Music", "opt-b": "Sport" });
   });
 
   test("executeQueryAction uses fieldId filter when both fieldId and fieldLabel filters are present", async () => {
@@ -645,7 +624,7 @@ describe("chart Cube actions", () => {
     ]);
 
     mocks.executeTenantScopedQuery.mockResolvedValue([
-      { "FeedbackRecords.valueId": "cx1", "FeedbackRecords.count": 7 },
+      { "FeedbackRecords.valueText": "Green", "FeedbackRecords.count": 7 },
     ]);
 
     const result = await executeQueryAction({
@@ -664,10 +643,11 @@ describe("chart Cube actions", () => {
       },
     } as any);
 
-    // Dimension must be rewritten; the resolution path used fieldId (not fieldLabel).
+    // Dimension is preserved (no swap); the returned optionLabels confirm the element was
+    // resolved via the fieldId filter (its mapping is the only source that was mocked).
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueId"] }),
+        query: expect.objectContaining({ dimensions: ["FeedbackRecords.valueText"] }),
       })
     );
     expect(result?.optionLabels).toEqual({ cx1: "Green" });

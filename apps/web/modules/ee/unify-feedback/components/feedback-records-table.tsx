@@ -28,7 +28,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
@@ -107,7 +106,6 @@ export const FeedbackRecordsTable = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("edit");
   const [drawerRecordId, setDrawerRecordId] = useState<string | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [csvImportSource, setCsvImportSource] = useState<{
@@ -337,15 +335,8 @@ export const FeedbackRecordsTable = ({
     }
   };
 
-  const openEditDrawer = (recordId: string) => {
-    setDrawerMode("edit");
+  const openViewDrawer = (recordId: string) => {
     setDrawerRecordId(recordId);
-    setIsDrawerOpen(true);
-  };
-
-  const openCreateDrawer = () => {
-    setDrawerMode("create");
-    setDrawerRecordId(undefined);
     setIsDrawerOpen(true);
   };
 
@@ -370,38 +361,28 @@ export const FeedbackRecordsTable = ({
             onBulkDelete={() => setIsBulkDeleteDialogOpen(true)}
           />
           <div className="flex items-center gap-2">
-            {canWrite &&
-              (hasCsvSources ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="secondary">
-                      <PlusIcon className="size-4" />
-                      {t("workspace.unify.add_feedback_record")}
-                      <ChevronDownIcon className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={openCreateDrawer}>
-                      {t("workspace.unify.add_feedback_record")}
+            {canWrite && hasCsvSources && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="secondary">
+                    <PlusIcon className="size-4" />
+                    {t("workspace.unify.import_feedback")}
+                    <ChevronDownIcon className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {csvSources.map((source) => (
+                    <DropdownMenuItem
+                      key={source.id}
+                      onClick={() => {
+                        setCsvImportSource(source);
+                      }}>
+                      {t("workspace.unify.import_via_source_name", { sourceName: source.name })}
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {csvSources.map((source) => (
-                      <DropdownMenuItem
-                        key={source.id}
-                        onClick={() => {
-                          setCsvImportSource(source);
-                        }}>
-                        {t("workspace.unify.import_via_source_name", { sourceName: source.name })}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button size="sm" variant="secondary" onClick={openCreateDrawer}>
-                  <PlusIcon className="size-4" />
-                  {t("workspace.unify.add_feedback_record")}
-                </Button>
-              ))}
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button size="sm" asChild>
               <Link href={`/workspaces/${workspaceId}/unify/sources`}>
                 {t("workspace.unify.manage_feedback_sources")}
@@ -471,7 +452,7 @@ export const FeedbackRecordsTable = ({
                       t={t}
                       isSelected={selectedIds.has(record.id)}
                       onSelectChange={(checked) => toggleOne(record.id, checked)}
-                      onClick={() => openEditDrawer(record.id)}
+                      onClick={() => openViewDrawer(record.id)}
                     />
                   ))}
                 </tbody>
@@ -495,13 +476,12 @@ export const FeedbackRecordsTable = ({
       </div>
 
       <FeedbackRecordFormDrawer
-        mode={drawerMode}
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
         workspaceId={workspaceId}
         directories={directories}
         canWrite={canWrite}
-        recordId={drawerMode === "edit" ? drawerRecordId : undefined}
+        recordId={drawerRecordId}
         onSuccess={handleRefresh}
       />
 

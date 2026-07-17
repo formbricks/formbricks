@@ -177,11 +177,17 @@ describe("transformResponseToFeedbackRecords", () => {
     expect(result[0].value_boolean).toBe(true);
   });
 
-  test("transforms categorical (multi-select) field to comma-separated text", () => {
+  test("splits a multi-select answer into one record per selected option", () => {
     const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
     const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
-    expect(result).toHaveLength(1);
-    expect(result[0].value_text).toBe("feat-a, feat-b");
+    expect(result).toHaveLength(2);
+    // el-multi has no choices in this fixture, so entries stay unmatched (no value_id) but still
+    // split, each tied back to the question via field_group_id and to the respondent via submission_id.
+    expect(result.map((r) => r.field_id)).toEqual(["el-multi__feat-a", "el-multi__feat-b"]);
+    expect(result.map((r) => r.value_text)).toEqual(["feat-a", "feat-b"]);
+    expect(result.every((r) => r.field_group_id === "el-multi")).toBe(true);
+    expect(result.every((r) => r.submission_id === "resp-1")).toBe(true);
+    expect(result.every((r) => r.value_id === undefined)).toBe(true);
   });
 
   test("uses customFieldLabel when provided", () => {
@@ -238,9 +244,18 @@ describe("transformResponseToFeedbackRecords", () => {
 
   test("transforms all mappings in a single call", () => {
     const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, allMappings, mockTenantId);
-    expect(result).toHaveLength(6);
+    // el-multi splits into one record per selected option, so it contributes two rows.
+    expect(result).toHaveLength(7);
     const fieldIds = result.map((r) => r.field_id);
-    expect(fieldIds).toEqual(["el-text", "el-nps", "el-rating", "el-date", "el-bool", "el-multi"]);
+    expect(fieldIds).toEqual([
+      "el-text",
+      "el-nps",
+      "el-rating",
+      "el-date",
+      "el-bool",
+      "el-multi__feat-a",
+      "el-multi__feat-b",
+    ]);
   });
 
   test("falls back to 'Untitled' for element with no headline", () => {
@@ -366,24 +381,26 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].value_text).not.toBe("[object Object]");
     });
 
-    test("creates a record for a ranking response (string array)", () => {
+    test("joins array values to comma-separated text for non-choice elements", () => {
+      // An element absent from the survey definition has no type, so the generic path stores the
+      // raw array joined. The per-option split only applies to multipleChoiceMulti elements.
       const response = {
         ...mockResponse,
-        data: { "el-multi": ["LabelA", "LabelB", "LabelC"] },
+        data: { "el-array": ["LabelA", "LabelB", "LabelC"] },
       } as unknown as TResponse;
-      const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
+      const mappings = [createMapping({ elementId: "el-array", hubFieldType: "categorical" })];
       const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result).toHaveLength(1);
-      expect(result[0].field_id).toBe("el-multi");
+      expect(result[0].field_id).toBe("el-array");
       expect(result[0].value_text).toBe("LabelA, LabelB, LabelC");
     });
 
-    test("creates a record for an empty ranking response (empty array)", () => {
+    test("joins an empty array to an empty string for non-choice elements", () => {
       const response = {
         ...mockResponse,
-        data: { "el-multi": [] },
+        data: { "el-array": [] },
       } as unknown as TResponse;
-      const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
+      const mappings = [createMapping({ elementId: "el-array", hubFieldType: "categorical" })];
       const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result).toHaveLength(1);
       expect(result[0].value_text).toBe("");
@@ -667,24 +684,33 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].language).toBe("ar");
     });
 
-    test("stores default-language labels for a multi select answered in another language", () => {
+    test("splits a multi select answered in another language into per-option records with default-language labels", () => {
       const response = buildResponse({ "el-feats": ["سرعة", "جودة"] }, "ar");
       const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
 
       const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
 
-      expect(result).toHaveLength(1);
-      expect(result[0].value_text).toBe("Speed, Quality");
+      // One record per selection; each value_text is the canonical default-language label and each
+      // carries its stable choice id, regardless of the response language.
+      expect(result).toHaveLength(2);
+      expect(result.map((r) => r.value_text)).toEqual(["Speed", "Quality"]);
+      expect(result.map((r) => r.value_id)).toEqual(["c-speed", "c-quality"]);
+      expect(result.map((r) => r.field_id)).toEqual(["el-feats__c-speed", "el-feats__c-quality"]);
+      expect(result.every((r) => r.field_group_id === "el-feats")).toBe(true);
     });
 
-    test("passes through values that match no choice label (other / free text)", () => {
+    test("splits a multi select and passes unmatched free text through per option", () => {
       const response = buildResponse({ "el-feats": ["سرعة", "something else"] }, "ar");
       const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
 
       const result = transformResponseToFeedbackRecords(response, bilingualSurvey, mappings, mockTenantId);
 
-      // Matched entry is canonicalized to its default-language label; unmatched free text passes through.
-      expect(result[0].value_text).toBe("Speed, something else");
+      // Matched entry canonicalizes to its default-language label with its choice id; the unmatched
+      // free text passes through and carries no value_id (el-feats offers no "other" option).
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({ value_text: "Speed", value_id: "c-speed" });
+      expect(result[1]).toMatchObject({ value_text: "something else" });
+      expect(result[1].value_id).toBeUndefined();
     });
 
     test("stores the original label for default-language answers (unchanged since submitted=default)", () => {
@@ -836,16 +862,64 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].value_text).toBe("self-described");
     });
 
-    // Multi-select answers stay unmatched and split per language (ENG-1702 follow-up):
-    // the joined record cannot carry one id per selected option.
-    test("omits value_id for multi select (joined record cannot carry multiple ids)", () => {
+    // Multi-select splits into one record per selected option (ENG-1702), so each option keeps
+    // its own stable value_id instead of collapsing into a single joined record.
+    test("sets a value_id per selected option for multi select", () => {
       const response = buildResponse({ "el-feats": ["Speed", "Quality"] });
       const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
 
       const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
 
-      expect(result[0].value_id).toBeUndefined();
-      expect(result[0].value_text).toBe("Speed, Quality");
+      expect(result).toHaveLength(2);
+      expect(result.map((r) => r.value_id)).toEqual(["c-speed", "c-quality"]);
+      expect(result.map((r) => r.value_text)).toEqual(["Speed", "Quality"]);
+      expect(result.map((r) => r.field_id)).toEqual(["el-feats__c-speed", "el-feats__c-quality"]);
+      expect(result.every((r) => r.field_group_id === "el-feats")).toBe(true);
+    });
+
+    test("emits no records for an empty multi select selection", () => {
+      const response = buildResponse({ "el-feats": [] });
+      const mappings = [createMapping({ elementId: "el-feats", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+
+      expect(result).toEqual([]);
+    });
+
+    test("groups unmatched multi-select entries under the stable 'other' id when the element offers one", () => {
+      const otherSurvey = {
+        id: "survey-1",
+        name: "Other Survey",
+        languages: bilingualLanguages,
+        blocks: [
+          {
+            elements: [
+              {
+                id: "el-feats-other",
+                type: "multipleChoiceMulti",
+                headline: { default: "Select features" },
+                choices: [
+                  { id: "c-speed", label: { default: "Speed" } },
+                  { id: "other", label: { default: "Other" } },
+                ],
+              },
+            ],
+          },
+        ],
+      } as unknown as TSurvey;
+      const response = buildResponse({ "el-feats-other": ["Speed", "my own idea"] });
+      const mappings = [createMapping({ elementId: "el-feats-other", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, otherSurvey, mappings, mockTenantId);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({ value_text: "Speed", value_id: "c-speed" });
+      // The free-text entry groups under the stable "other" id and keeps the submitted text.
+      expect(result[1]).toMatchObject({
+        field_id: "el-feats-other__other",
+        value_text: "my own idea",
+        value_id: "other",
+      });
     });
 
     test("omits value_id for non-choice elements", () => {
