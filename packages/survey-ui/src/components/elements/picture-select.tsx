@@ -101,13 +101,14 @@ function PictureSelect({
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
-      {/* Headline */}
+      {/* Headline: referenced by the option group via aria-labelledby (a htmlFor here
+          would dangle — no control carries the bare inputId). */}
       <ElementHeader
+        headlineId={`${inputId}-headline`}
         headline={headline}
         description={description}
         required={required}
         requiredLabel={requiredLabel}
-        htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
@@ -116,7 +117,10 @@ function PictureSelect({
       <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
-          <div className="grid grid-cols-2 gap-2">
+          // A checkbox group is role="group" (supports neither aria-required nor
+          // aria-invalid); it is named by the headline like the radiogroup below,
+          // and the visible error message conveys the invalid state.
+          <div role="group" aria-labelledby={`${inputId}-headline`} className="grid grid-cols-2 gap-2">
             {options.map((option) => {
               const isSelected = (selectedValues as string[]).includes(option.id);
               const optionId = `${inputId}-${option.id}`;
@@ -167,7 +171,12 @@ function PictureSelect({
           // Native radios instead of a Radix radio group: Radix moves selection with
           // arrow-key focus, which would trigger auto-progress while a keyboard user
           // is still browsing the pictures. The roving hook decouples the two.
-          <div role="radiogroup" className="grid grid-cols-2 gap-2">
+          <div
+            role="radiogroup"
+            aria-labelledby={`${inputId}-headline`}
+            aria-required={required}
+            aria-invalid={Boolean(errorMessage)}
+            className="grid grid-cols-2 gap-2">
             {options.map((option) => {
               const optionId = `${inputId}-${option.id}`;
               const isSelected = selectedValues === option.id;
