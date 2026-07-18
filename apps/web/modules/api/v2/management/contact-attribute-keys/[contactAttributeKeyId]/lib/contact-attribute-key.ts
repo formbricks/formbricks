@@ -67,8 +67,8 @@ export const updateContactAttributeKey = async (
     return ok(updatedKey);
   } catch (error) {
     if (
-      isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist) ||
-      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)
+      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
+      isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)
     ) {
       return err({
         type: "not_found",
@@ -121,8 +121,8 @@ export const deleteContactAttributeKey = async (
     return ok(deletedKey);
   } catch (error) {
     if (
-      isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist) ||
-      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)
+      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
+      isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)
     ) {
       return err({
         type: "not_found",

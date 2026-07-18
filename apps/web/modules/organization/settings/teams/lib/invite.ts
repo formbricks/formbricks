@@ -2,6 +2,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Invite, Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import {
   DatabaseError,
   InvalidInputError,
@@ -25,7 +26,7 @@ export const refreshInviteExpiration = async (inviteId: string): Promise<Invite>
     return updatedInvite;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
+      if (error.code === PrismaErrorType.RecordNotFound) {
         throw new ResourceNotFoundError("Invite", inviteId);
       }
       throw new DatabaseError(error.message);

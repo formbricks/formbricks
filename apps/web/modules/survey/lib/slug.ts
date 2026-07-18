@@ -58,7 +58,7 @@ export const updateSurveySlug = async (
       throw new InvalidInputError("A survey with this slug already exists");
     }
 
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 

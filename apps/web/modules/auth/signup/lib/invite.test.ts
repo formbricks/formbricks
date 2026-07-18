@@ -69,7 +69,7 @@ describe("Invite Management", () => {
 
     test("throws DatabaseError when invite doesn't exist", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: PrismaErrorType.RecordDoesNotExist,
+        code: PrismaErrorType.RelatedRecordNotFound,
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.invite.delete).mockRejectedValue(errToThrow);

@@ -190,9 +190,9 @@ describe("Response Lib Tests", () => {
       expect(logger.error).not.toHaveBeenCalled(); // Should be caught and re-thrown as DatabaseError
     });
 
-    test("should handle RelatedRecordDoesNotExist error with specific message", async () => {
+    test("should handle RecordNotFound error with specific message", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Related record does not exist", {
-        code: "P2025", // PrismaErrorType.RelatedRecordDoesNotExist
+        code: "P2025", // PrismaErrorType.RecordNotFound
         clientVersion: "2.0",
       });
       vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(mockOrganization);

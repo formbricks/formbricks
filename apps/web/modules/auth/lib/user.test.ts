@@ -146,7 +146,7 @@ describe("User Management", () => {
 
     test("throws ResourceNotFoundError when user doesn't exist", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
-        code: PrismaErrorType.RecordDoesNotExist,
+        code: PrismaErrorType.RecordNotFound,
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.user.update).mockRejectedValueOnce(errToThrow);
@@ -191,9 +191,9 @@ describe("User Management", () => {
       await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("throws ResourceNotFoundError on a RecordDoesNotExist Prisma error", async () => {
+    test("throws ResourceNotFoundError on a RecordNotFound Prisma error", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
-        code: PrismaErrorType.RecordDoesNotExist,
+        code: PrismaErrorType.RecordNotFound,
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.$transaction).mockRejectedValueOnce(errToThrow);

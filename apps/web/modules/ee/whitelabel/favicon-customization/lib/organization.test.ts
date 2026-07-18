@@ -126,7 +126,7 @@ describe("favicon organization", () => {
       };
 
       const mockError = new Prisma.PrismaClientKnownRequestError("Record does not exist", {
-        code: "P2015", // PrismaErrorType.RecordDoesNotExist
+        code: "P2025", // PrismaErrorType.RecordNotFound
         clientVersion: "2.0.0",
       });
 

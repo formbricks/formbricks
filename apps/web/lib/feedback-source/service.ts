@@ -184,7 +184,7 @@ export const updateFeedbackSource = async (
 
     return feedbackSource;
   } catch (error) {
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
     }
     if (isPrismaKnownRequestError(error)) {
@@ -211,7 +211,7 @@ export const deleteFeedbackSource = async (
 
     return feedbackSource;
   } catch (error) {
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
     }
     if (isPrismaKnownRequestError(error)) {
@@ -432,7 +432,7 @@ export const updateFeedbackSourceWithMappings = async (
     if (isUniqueConstraintError(error)) {
       throw mapUniqueConstraintError(error);
     }
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
     }
     if (isPrismaKnownRequestError(error)) {

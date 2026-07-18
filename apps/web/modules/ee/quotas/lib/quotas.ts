@@ -81,7 +81,7 @@ export const updateQuota = async (quota: TSurveyQuotaInput, id: string): Promise
     if (isUniqueConstraintError(error)) {
       throw new InvalidInputError("Quota with this name already exists");
     }
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("Quota", id);
     }
     throw error;
@@ -96,7 +96,7 @@ export const deleteQuota = async (quotaId: string): Promise<TSurveyQuota> => {
 
     return deletedQuota;
   } catch (error) {
-    if (isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordDoesNotExist)) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("Quota", quotaId);
     }
     if (isPrismaKnownRequestError(error)) {
