@@ -19,9 +19,6 @@ type TV3WorkspaceListItem = {
   organizationId: string;
 };
 
-// Defensive cap: a user's accessible workspaces are naturally small, but never stream an unbounded list.
-const MAX_WORKSPACES = 500;
-
 const serializeV3WorkspaceListItem = (workspace: {
   id: string;
   name: string;
@@ -90,15 +87,17 @@ export async function listV3Workspaces({
     }
 
     // Dedupe by id (defensive) + a stable, deterministic order — the underlying queries have no ORDER BY,
-    // so without this the output and which items survive the cap could vary between calls.
+    // so without this the output would vary between calls.
     const deduped = Array.from(new Map(items.map((item) => [item.id, item])).values()).sort(
       (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
     );
 
-    const capped = deduped.slice(0, MAX_WORKSPACES);
+    // No pagination: a principal's accessible workspaces are bounded by their memberships (small), so we
+    // return them all. No arbitrary cap — a truncation here would silently hide workspaces (the tool
+    // accepts no cursor) without bounding DB work, which was already done above.
     return successListResponse(
-      capped,
-      { limit: MAX_WORKSPACES, nextCursor: null, totalCount: capped.length },
+      deduped,
+      { nextCursor: null, totalCount: deduped.length },
       { requestId, cache: "private, no-store" }
     );
   } catch (error) {

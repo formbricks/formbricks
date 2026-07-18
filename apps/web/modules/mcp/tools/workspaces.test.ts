@@ -54,7 +54,7 @@ describe("registerWorkspaceTools", () => {
     vi.mocked(listV3Workspaces).mockResolvedValue(
       successListResponse(
         [{ id: "w1", name: "Alpha", organizationId: "org_1" }],
-        { limit: 500, nextCursor: null, totalCount: 1 },
+        { nextCursor: null, totalCount: 1 },
         { requestId: "req_tool" }
       )
     );
@@ -70,7 +70,7 @@ describe("registerWorkspaceTools", () => {
     );
     expect(result.structuredContent).toEqual({
       data: [{ id: "w1", name: "Alpha", organizationId: "org_1" }],
-      meta: { limit: 500, nextCursor: null, totalCount: 1 },
+      meta: { nextCursor: null, totalCount: 1 },
       requestId: "req_tool",
     });
   });

@@ -221,6 +221,35 @@ describe("Workspace Service", () => {
     });
   });
 
+  test("getUserWorkspaces should team-scope a billing user (not return every workspace)", async () => {
+    const userId = createId();
+    const organizationId = createId();
+
+    vi.mocked(prisma.membership.findFirst).mockResolvedValue({
+      userId,
+      organizationId,
+      role: OrganizationRole.billing,
+      accepted: true,
+    });
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+    await getUserWorkspaces(userId, organizationId);
+
+    // Billing is not owner/manager, so it must be scoped to team-accessible workspaces — never the
+    // whole org (regression: `role === "member"` previously leaked all workspaces to billing users).
+    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId,
+        workspaceTeams: {
+          some: { team: { teamUsers: { some: { userId } } } },
+        },
+      },
+      select: expect.any(Object),
+      take: undefined,
+      skip: undefined,
+    });
+  });
+
   test("getUserWorkspaces should throw ValidationError when user is not a member of organization", async () => {
     const userId = createId();
     const organizationId = createId();
