@@ -4,7 +4,12 @@ import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma, WidgetPlacement, Workspace } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
-import { getUserWorkspaces, getWorkspace, getWorkspaces } from "./service";
+import {
+  getUserWorkspaces,
+  getUserWorkspacesByOrganizationIds,
+  getWorkspace,
+  getWorkspaces,
+} from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -218,6 +223,33 @@ describe("Workspace Service", () => {
       select: expect.any(Object),
       take: undefined,
       skip: undefined,
+    });
+  });
+
+  test("getUserWorkspacesByOrganizationIds team-scopes non-owner/manager roles (owner/manager get all)", async () => {
+    const userId = createId();
+    const orgManager = createId();
+    const orgBilling = createId();
+
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      { userId, organizationId: orgManager, role: OrganizationRole.manager, accepted: true },
+      { userId, organizationId: orgBilling, role: OrganizationRole.billing, accepted: true },
+    ]);
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+    await getUserWorkspacesByOrganizationIds([orgManager, orgBilling], userId);
+
+    const teamScope = { some: { team: { teamUsers: { some: { userId } } } } };
+    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          // manager: all of the org's workspaces (no team filter)
+          { organizationId: orgManager },
+          // billing: team-scoped only (regression: previously unscoped → every workspace)
+          { organizationId: orgBilling, workspaceTeams: teamScope },
+        ],
+      },
+      select: { id: true },
     });
   });
 
