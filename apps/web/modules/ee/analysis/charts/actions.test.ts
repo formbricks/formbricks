@@ -14,6 +14,9 @@ const mocks = vi.hoisted(() => {
     executeTenantScopedQuery: vi.fn(),
     generateAIChartQuery: vi.fn(),
     updateChart: vi.fn(),
+    getFeedbackSourcesWithMappings: vi.fn(),
+    getSurvey: vi.fn(),
+    getElementsFromBlocks: vi.fn(),
   };
 });
 
@@ -59,6 +62,18 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsDashboardsEnabled: mocks.getIsDashboardsEnabled,
 }));
 
+vi.mock("@/lib/feedback-source/service", () => ({
+  getFeedbackSourcesWithMappings: mocks.getFeedbackSourcesWithMappings,
+}));
+
+// stub server-only modules pulled in by resolveOptionGrouping helpers
+vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey }));
+vi.mock("@/lib/survey/utils", () => ({ getElementsFromBlocks: mocks.getElementsFromBlocks }));
+vi.mock("@formbricks/types/surveys/validation", () => ({ getTextContent: (s: string) => s }));
+vi.mock("@/lib/i18n/utils", () => ({
+  getLocalizedValue: (obj: Record<string, string>, lang: string) => obj[lang] ?? obj["default"] ?? "",
+}));
+
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
@@ -89,6 +104,9 @@ describe("chart Cube actions", () => {
       config: {},
     });
     mocks.executeTenantScopedQuery.mockResolvedValue([{ "FeedbackRecords.count": 1 }]);
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([]);
+    mocks.getSurvey.mockResolvedValue(null);
+    mocks.getElementsFromBlocks.mockReturnValue([]);
     mocks.updateChart.mockResolvedValue({
       chart: { id: "chart-1", query: { measures: ["FeedbackRecords.count"] } },
       updatedChart: { id: "chart-1", query: { measures: ["FeedbackRecords.count"] } },
@@ -107,7 +125,8 @@ describe("chart Cube actions", () => {
       parsedInput: { workspaceId: "workspace-1", query, feedbackDirectoryId: "frd-1" },
     } as any);
 
-    expect(result).toEqual([{ "FeedbackRecords.count": 1 }]);
+    // executeQueryAction now returns { rows, optionLabels?, effectiveQuery } instead of raw array.
+    expect(result).toMatchObject({ rows: [{ "FeedbackRecords.count": 1 }] });
     expect(mocks.checkWorkspaceAccess).toHaveBeenCalledWith("user-1", "workspace-1", "read");
     expect(mocks.checkFeedbackDirectoryAccess).toHaveBeenCalledWith({
       feedbackDirectoryId: "frd-1",
@@ -223,4 +242,5 @@ describe("chart Cube actions", () => {
 
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
   });
+
 });
