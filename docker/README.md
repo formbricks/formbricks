@@ -36,6 +36,41 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
 - **Production** (`docker/docker-compose.yml`): Set non-empty `HUB_API_KEY` and `CUBEJS_API_SECRET` in `.env` before starting the stack. `docker compose config >/dev/null` validates compose syntax, but missing secrets are reported by the service that needs them at startup. `HUB_API_URL` defaults to `http://hub:8080` and `CUBEJS_API_URL` defaults to `http://cube:4000` so the Formbricks app reaches Hub and Cube inside the compose network. Cube JWT issuer/audience default to `formbricks-web` and `formbricks-cube`, and the bundled Cube service exposes only `meta,data` API scopes. Override `HUB_DATABASE_URL` and `CUBEJS_DB_*` only if Hub or Cube should use a separate database. The Hub image tracks `:latest` by default so `formbricks.sh update` advances Hub in lockstep with the app. `hub` and `hub-migrate` always resolve to the same image. To pin to an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a tag (e.g. `:0.3.0`) or a digest (e.g. `@sha256:14db7b3d...`).
 - **Development** (`docker-compose.dev.yml`): Hub uses a dedicated local `hub` database and `HUB_API_KEY` defaults to `dev-api-key`. The dev stack starts `hub` plus `hub-worker`; set `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, and any provider credentials in the repo root `.env` to enable Hub embeddings locally. See the [Hub embeddings environment reference](https://hub.formbricks.com/reference/environment-variables/#embeddings) for provider-specific values. Cube starts with the dev stack, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`. The Hub image is pinned to a semver tag (`hub`, `hub-worker`, and `hub-migrate` share the same value); override `HUB_IMAGE_TAG` in the repo root `.env` to test a specific Hub release.
 
+## AuthZed / SpiceDB
+
+The production and development Compose stacks include one SpiceDB v1.52.0 service backed by a dedicated
+`spicedb` database and login in the bundled PostgreSQL server. `authzed-db-bootstrap` creates or updates the
+database credentials, `spicedb-migrate` applies datastore migrations, and only then does `spicedb` start. Both
+one-shot services are idempotent.
+
+For production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with
+`openssl rand -hex 32` and keep them in the mode-`0600` `.env` file. SpiceDB remains internal at
+`spicedb:50051`; it is not published through Traefik. The one-click installer generates both values and
+downloads `authzed-postgres-bootstrap.sh` automatically.
+
+For repository development, `pnpm dev:setup` generates and preserves the same credentials and `pnpm db:up`
+starts SpiceDB on `127.0.0.1:50051`. Run the isolated persistence test with:
+
+```bash
+pnpm authzed:smoke
+```
+
+To use the optional authenticated grpcui browser in development:
+
+```bash
+docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
+```
+
+Open `http://127.0.0.1:50052`. The browser UI and gRPC port are development-only.
+
+Existing one-click installations keep their customized Compose file during `formbricks.sh update`. Add the
+three AuthZed services and two generated secrets manually from the release-matched Compose file; back up the
+shared PostgreSQL volume first and never use `docker compose down -v` during migration or rollback.
+
+The bundled PostgreSQL service keeps `track_commit_timestamp` at its default `off` value. SpiceDB therefore
+logs that its Watch API is disabled; schema, relationship, and permission-check APIs are unaffected. A future
+consumer of the Watch API must explicitly enable that PostgreSQL setting and account for the required restart.
+
 ## Smart Functionality AI with Qwen/vLLM
 
 The Docker stack can optionally run Qwen through vLLM as an OpenAI-compatible `/v1` endpoint. Baseline installs are unchanged: `docker compose up -d` does not start the vLLM service and Formbricks can still run without AI.

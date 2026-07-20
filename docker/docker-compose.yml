@@ -251,6 +251,54 @@ services:
       retries: 30
       start_period: 30s
 
+  authzed-db-bootstrap:
+    image: pgvector/pgvector:pg18
+    restart: "no"
+    entrypoint: ["/bin/sh", "/usr/local/bin/authzed-postgres-bootstrap.sh"]
+    environment:
+      POSTGRES_ADMIN_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      AUTHZED_DATABASE_NAME: spicedb
+      AUTHZED_DATABASE_USERNAME: spicedb
+      AUTHZED_DATABASE_PASSWORD: ${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}
+    volumes:
+      - ./authzed-postgres-bootstrap.sh:/usr/local/bin/authzed-postgres-bootstrap.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  spicedb-migrate:
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    restart: "no"
+    command: datastore migrate head
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+    depends_on:
+      authzed-db-bootstrap:
+        condition: service_completed_successfully
+
+  spicedb:
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    restart: always
+    command: serve
+    mem_limit: 512m
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+      SPICEDB_GRPC_PRESHARED_KEY: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      SPICEDB_LOG_FORMAT: json
+      SPICEDB_LOG_LEVEL: info
+      SPICEDB_TELEMETRY_ENDPOINT: ""
+    depends_on:
+      spicedb-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:50051"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
   # Redis/Valkey service for caching, rate limiting, and audit logging
   # Remove this service if you want to use an external Redis/Valkey instance
   redis:
@@ -275,7 +323,7 @@ services:
     entrypoint: ["sh", "-c"]
     command:
       [
-        'if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi',
+        "if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi",
       ]
     depends_on:
       postgres:
@@ -302,6 +350,12 @@ services:
     environment:
       <<: *app-environment
       SKIP_STARTUP_MIGRATION: "true"
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-minimize_latency}
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.

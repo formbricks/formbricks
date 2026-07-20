@@ -163,6 +163,24 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
+write_base_env_file() {
+  local env_file="${1:-.env}"
+  local hub_key="$2"
+  local cube_secret="$3"
+  local authzed_token="$4"
+  local authzed_database_password="$5"
+
+  umask 077
+  : >"$env_file"
+  upsert_dotenv_var "HUB_API_KEY" "$hub_key" "$env_file"
+  upsert_dotenv_var "CUBEJS_API_SECRET" "$cube_secret" "$env_file"
+  upsert_dotenv_var "CUBEJS_JWT_ISSUER" "formbricks-web" "$env_file"
+  upsert_dotenv_var "CUBEJS_JWT_AUDIENCE" "formbricks-cube" "$env_file"
+  upsert_dotenv_var "AUTHZED_TOKEN" "$authzed_token" "$env_file"
+  upsert_dotenv_var "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password" "$env_file"
+  chmod 600 "$env_file"
+}
+
 add_formbricks_traefik_labels() {
   local compose_file="${1:-docker-compose.yml}"
   local formbricks_domain_name="$2"
@@ -567,6 +585,9 @@ EOT
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+  echo "📥 Downloading AuthZed database bootstrap helper..."
+  curl -fsSL -o authzed-postgres-bootstrap.sh https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/authzed-postgres-bootstrap.sh
+  chmod 700 authzed-postgres-bootstrap.sh
   mkdir -p cube/schema
   echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
   curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
@@ -587,13 +608,10 @@ EOT
 
   hub_api_key=$(openssl rand -hex 32)
   cubejs_api_secret=$(openssl rand -hex 32)
-cat <<EOF > .env
-HUB_API_KEY=$hub_api_key
-CUBEJS_API_SECRET=$cubejs_api_secret
-CUBEJS_JWT_ISSUER=formbricks-web
-CUBEJS_JWT_AUDIENCE=formbricks-cube
-EOF
-  echo "🚗 Generated Hub and Cube secrets in .env successfully!"
+  authzed_token=$(openssl rand -hex 32)
+  authzed_database_password=$(openssl rand -hex 32)
+  write_base_env_file ".env" "$hub_api_key" "$cubejs_api_secret" "$authzed_token" "$authzed_database_password"
+  echo "🚗 Generated Hub, Cube, and AuthZed secrets in .env successfully!"
   
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml

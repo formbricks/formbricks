@@ -131,6 +131,35 @@ spec:
             - name: SKIP_STARTUP_MIGRATION
               value: "true"
             {{- end }}
+            {{- if .Values.authzed.enabled }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_ENABLED") }}
+            - name: AUTHZED_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_ENDPOINT") }}
+            - name: AUTHZED_ENDPOINT
+              value: {{ include "formbricks.authzedEndpoint" . | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_TOKEN") }}
+            - name: AUTHZED_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.authzedAuthSecretName" . }}
+                  key: {{ .Values.authzed.auth.tokenKey }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_SYSTEM_KEY") }}
+            - name: AUTHZED_SYSTEM_KEY
+              value: {{ required "authzed.systemKey is required when AuthZed is enabled" .Values.authzed.systemKey | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_INSECURE") }}
+            - name: AUTHZED_INSECURE
+              value: {{ .Values.authzed.insecure | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_CONSISTENCY") }}
+            - name: AUTHZED_CONSISTENCY
+              value: {{ .Values.authzed.consistency | quote }}
+            {{- end }}
+            {{- end }}
             {{- if not (hasKey .Values.deployment.env "HUB_API_URL") }}
             - name: HUB_API_URL
               value: "http://{{ include "formbricks.hubname" . }}:8080"

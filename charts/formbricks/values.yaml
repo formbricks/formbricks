@@ -550,6 +550,87 @@ externalSecret:
   files: {}
 
 ##########################################################
+# AuthZed / SpiceDB Authorization Configuration
+##########################################################
+authzed:
+  # Enables the Formbricks AuthZed runtime contract. Product authorization
+  # enforcement is introduced separately; this section owns deployment only.
+  enabled: false
+
+  # selfHosted creates a SpiceDBCluster. external only configures the app client.
+  mode: selfHosted
+
+  # Stable identifier used by the Formbricks authorization model.
+  systemKey: formbricks
+
+  # grpc:// is intentionally omitted. AuthZed SDKs accept host:port endpoints.
+  # For selfHosted mode this defaults to formbricks-spicedb:50051.
+  endpoint: ""
+  insecure: true
+  consistency: minimize_latency
+
+  auth:
+    # Secret must contain tokenKey. When empty in selfHosted mode, the chart
+    # creates a stable secret and reuses it across Helm upgrades.
+    existingSecret: ""
+    tokenKey: preshared_key
+
+  datastore:
+    # Production deployments should provision a dedicated database and role,
+    # then expose its URI through this secret. The secret may be the same as auth.existingSecret.
+    existingSecret: ""
+    uriKey: datastore_uri
+
+  cluster:
+    name: ""
+    version: v1.52.0
+    channel: stable
+    replicas: 2
+    config:
+      datastoreEngine: postgres
+      logLevel: info
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    # Operator patches are applied after the generated resource patch and can
+    # override it when a deployment needs more specific container settings.
+    patches: []
+
+  # Creates the dedicated `spicedb` database and role only when the bundled
+  # PostgreSQL dependency is enabled and no datastore secret is supplied.
+  bundledPostgresqlBootstrap:
+    enabled: true
+    image: postgres:17-alpine
+    backoffLimit: 10
+
+  # Cloud installations can bootstrap a dedicated database on an existing
+  # PostgreSQL server. The admin Secret is read only by the short-lived Job.
+  externalPostgresqlBootstrap:
+    enabled: false
+    image: postgres:17-alpine
+    backoffLimit: 10
+    adminSecretName: ""
+    adminUrlKey: DATABASE_URL
+    databaseNameKey: database_name
+    databaseUsernameKey: database_username
+    databasePasswordKey: database_password
+
+  # Install one operator per cluster. Disable this when a shared operator
+  # already watches the Formbricks namespace (the Formbricks Cloud topology).
+  operator:
+    install: false
+
+# Values passed to the bundled spicedb-operator dependency when
+# authzed.operator.install=true.
+spicedbOperator:
+  watchNamespaces: []
+  serviceMonitor:
+    enabled: false
+
+##########################################################
 # Ingress Configuration
 ##########################################################
 ingress:
@@ -1258,6 +1339,15 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
+    # The upstream nano preset leaves too little memory headroom when the
+    # bundled database also serves SpiceDB.
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
     podSecurityContext:
       enabled: true
       fsGroup: 1001

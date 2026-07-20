@@ -144,6 +144,29 @@ bundled Docker Compose or Helm assets, the following variables apply:
 | HUB_API_URL      | Base URL the Formbricks app uses to call Hub. With the bundled Docker stack, keep this at `http://hub:8080` unless Hub runs elsewhere.             | required | `http://hub:8080` (bundled Docker), `http://localhost:8080` (local dev) |
 | HUB_DATABASE_URL | PostgreSQL connection URL for Hub. Omit to use the same database as Formbricks.    | optional | Same as Formbricks `DATABASE_URL` (shared database) |
 
+#### AuthZed / SpiceDB Authorization
+
+These variables define the supported authorization-client contract. The Helm chart injects them when
+`authzed.enabled=true`; the bundled Docker and development Compose stacks enable them by default.
+
+| Variable            | Description                                                                                                      | Required when enabled | Default            |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------ |
+| AUTHZED_ENABLED     | Enables the supported AuthZed authorization client path.                                                         | required              | `false` in Helm; `true` in bundled Docker/dev |
+| AUTHZED_ENDPOINT    | AuthZed gRPC endpoint as `host:port`. The default Helm-managed service is `formbricks-spicedb:50051`.             | required              | `spicedb:50051` in Docker; `localhost:50051` in dev |
+| AUTHZED_TOKEN       | Preshared API token. Always load this from a secret.                                                             | required              |                    |
+| AUTHZED_SYSTEM_KEY  | Stable namespace for Formbricks authorization objects and relationships.                                         | required              | `formbricks`       |
+| AUTHZED_INSECURE    | Allows plaintext gRPC for an in-cluster service. Keep disabled for endpoints outside the trusted cluster network. | optional              | `true` in Helm and bundled Docker/dev |
+| AUTHZED_CONSISTENCY | Default consistency policy used by the application client.                                                       | optional              | `minimize_latency` |
+
+Docker Compose additionally requires `AUTHZED_DATABASE_PASSWORD` for its dedicated `spicedb` PostgreSQL
+login. Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. `SPICEDB_IMAGE_REF` can override the
+bundled `authzed/spicedb:v1.52.0` image for an explicitly reviewed upgrade; the migration and server services
+always use the same reference.
+
+When authorization enforcement is enabled, failed or unavailable permission checks must deny the protected
+operation. Do not make the general application readiness probe depend on AuthZed availability; this avoids a
+transient authorization outage restarting unrelated Formbricks workloads.
+
 #### Cube Analytics
 
 Cube is part of the baseline Formbricks v5 stack and is required. Formbricks generates the backend

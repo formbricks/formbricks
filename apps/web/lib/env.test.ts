@@ -88,6 +88,31 @@ describe("env", () => {
     expect(env.DEBUG_SHOW_RESET_LINK).toBe("1");
   });
 
+  test.each(["true", "1"])("accepts enabled AuthZed boolean value %s", async (enabled) => {
+    setTestEnv({
+      AUTHZED_CONSISTENCY: "minimize_latency",
+      AUTHZED_ENABLED: enabled,
+      AUTHZED_ENDPOINT: "localhost:50051",
+      AUTHZED_INSECURE: enabled,
+      AUTHZED_SYSTEM_KEY: "formbricks",
+      AUTHZED_TOKEN: "test-authzed-token",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.AUTHZED_ENABLED).toBe(enabled);
+    expect(env.AUTHZED_INSECURE).toBe(enabled);
+    expect(env.AUTHZED_TOKEN).toBe("test-authzed-token");
+  });
+
+  test("rejects unsupported AuthZed boolean values", async () => {
+    setTestEnv({
+      AUTHZED_ENABLED: "yes",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AUTHZED_ENABLED");
+  });
+
   test("allows Google Cloud AI configuration to rely on ADC credentials", async () => {
     setTestEnv({
       AI_PROVIDER: "google",

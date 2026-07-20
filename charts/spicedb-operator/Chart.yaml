@@ -1,0 +1,16 @@
+apiVersion: v2
+name: spicedb-operator
+description: Namespace-scoped deployment of the AuthZed SpiceDB Operator
+type: application
+version: 0.1.0
+appVersion: "v1.25.1"
+home: https://github.com/authzed/spicedb-operator
+sources:
+  - https://github.com/authzed/spicedb-operator
+annotations:
+  artifacthub.io/crds: |
+    - kind: SpiceDBCluster
+      version: v1alpha1
+      name: spicedbclusters.authzed.com
+      displayName: SpiceDB Cluster
+      description: A SpiceDB cluster managed by the AuthZed operator.

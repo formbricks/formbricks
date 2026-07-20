@@ -1,0 +1,110 @@
+{{- $bundledBootstrap := and .Values.authzed.bundledPostgresqlBootstrap.enabled .Values.postgresql.enabled (not .Values.authzed.datastore.existingSecret) -}}
+{{- $externalBootstrap := .Values.authzed.externalPostgresqlBootstrap.enabled -}}
+{{- $postgresSecretName := .Values.postgresql.auth.existingSecret | default (include "formbricks.appSecretName" .) -}}
+{{- if and .Values.authzed.enabled (eq .Values.authzed.mode "selfHosted") (or $bundledBootstrap $externalBootstrap) }}
+{{- if and $externalBootstrap (not .Values.authzed.datastore.existingSecret) -}}
+{{- fail "authzed.datastore.existingSecret is required for external PostgreSQL bootstrap" -}}
+{{- end -}}
+{{- if and $externalBootstrap (not .Values.authzed.externalPostgresqlBootstrap.adminSecretName) -}}
+{{- fail "authzed.externalPostgresqlBootstrap.adminSecretName is required when external bootstrap is enabled" -}}
+{{- end -}}
+{{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "formbricks.authzedClusterName" . }}-database-bootstrap
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    argocd.argoproj.io/sync-wave: "-1"
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $bootstrap.backoffLimit }}
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: authzed-database-bootstrap
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bootstrap
+          image: {{ $bootstrap.image | quote }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 70
+          env:
+            {{- if $bundledBootstrap }}
+            - name: PGHOST
+              value: formbricks-postgresql
+            - name: PGUSER
+              value: {{ .Values.postgresql.auth.username | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $postgresSecretName }}
+                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+            - name: SPICEDB_DATABASE_NAME
+              value: spicedb
+            - name: SPICEDB_DATABASE_USERNAME
+              value: spicedb
+            - name: SPICEDB_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.authzedManagedSecretName" . }}
+                  key: database_password
+            {{- else }}
+            - name: ADMIN_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.authzed.externalPostgresqlBootstrap.adminSecretName }}
+                  key: {{ .Values.authzed.externalPostgresqlBootstrap.adminUrlKey }}
+            - name: SPICEDB_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.authzedDatastoreSecretName" . }}
+                  key: {{ .Values.authzed.externalPostgresqlBootstrap.databaseNameKey }}
+            - name: SPICEDB_DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.authzedDatastoreSecretName" . }}
+                  key: {{ .Values.authzed.externalPostgresqlBootstrap.databaseUsernameKey }}
+            - name: SPICEDB_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.authzedDatastoreSecretName" . }}
+                  key: {{ .Values.authzed.externalPostgresqlBootstrap.databasePasswordKey }}
+            {{- end }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              if [ -n "${ADMIN_DATABASE_URL:-}" ]; then
+                admin_database_url="${ADMIN_DATABASE_URL%%\?*}?sslmode=require"
+              else
+                admin_database_url=postgres
+              fi
+              until pg_isready --dbname "$admin_database_url"; do sleep 2; done
+              psql --dbname "$admin_database_url" --set ON_ERROR_STOP=1 \
+                --set database_name="$SPICEDB_DATABASE_NAME" \
+                --set database_username="$SPICEDB_DATABASE_USERNAME" \
+                --set database_password="$SPICEDB_DATABASE_PASSWORD" <<'SQL'
+              SELECT format('CREATE ROLE %I LOGIN', :'database_username')
+                WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'database_username') \gexec
+              SELECT format('ALTER ROLE %I WITH LOGIN PASSWORD %L', :'database_username', :'database_password') \gexec
+              SELECT format('CREATE DATABASE %I OWNER %I', :'database_name', :'database_username')
+                WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'database_name') \gexec
+              SQL
+{{- end }}

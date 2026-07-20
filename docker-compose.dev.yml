@@ -9,7 +9,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
-      - 5432:5432
+      - ${POSTGRES_PORT:-5432}:5432
     command: >
       postgres
       -c shared_preload_libraries=vector
@@ -19,6 +19,81 @@ services:
       timeout: 3s
       retries: 30
       start_period: 10s
+
+  authzed-db-bootstrap:
+    image: pgvector/pgvector:pg18
+    restart: "no"
+    entrypoint: ["/bin/sh", "/usr/local/bin/authzed-postgres-bootstrap.sh"]
+    environment:
+      POSTGRES_ADMIN_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      AUTHZED_DATABASE_NAME: spicedb
+      AUTHZED_DATABASE_USERNAME: spicedb
+      AUTHZED_DATABASE_PASSWORD: ${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}
+    volumes:
+      - ./docker/authzed-postgres-bootstrap.sh:/usr/local/bin/authzed-postgres-bootstrap.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  spicedb-migrate:
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    restart: "no"
+    command: datastore migrate head
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+    depends_on:
+      authzed-db-bootstrap:
+        condition: service_completed_successfully
+
+  spicedb:
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    restart: unless-stopped
+    command: serve
+    mem_limit: 512m
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+      SPICEDB_GRPC_PRESHARED_KEY: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      SPICEDB_LOG_FORMAT: json
+      SPICEDB_LOG_LEVEL: info
+      SPICEDB_TELEMETRY_ENDPOINT: ""
+    ports:
+      - 127.0.0.1:${SPICEDB_GRPC_PORT:-50051}:50051
+    depends_on:
+      spicedb-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:50051"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  authzed-cli:
+    image: ${ZED_IMAGE_REF:-authzed/zed:v1.1.1}
+    profiles: ["authzed-tools"]
+    entrypoint: ["zed"]
+    volumes:
+      - ./docker/authzed-smoke-schema.zed:/schema.zed:ro
+
+  authzed-ui:
+    image: ${GRPCUI_IMAGE_REF:-fullstorydev/grpcui:v1.5.2}
+    profiles: ["authzed-ui"]
+    command:
+      - -plaintext
+      - -bind
+      - 0.0.0.0
+      - -port
+      - "8080"
+      - -H
+      - "authorization: Bearer ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}"
+      - spicedb:50051
+    ports:
+      - 127.0.0.1:${AUTHZED_GRPCUI_PORT:-50052}:8080
+    depends_on:
+      spicedb:
+        condition: service_healthy
 
   mailhog:
     image: arjenz/mailhog
@@ -268,7 +343,8 @@ services:
   cube:
     image: cubejs/cube:v1.6.6
     env_file:
-      - apps/web/.env
+      - path: apps/web/.env
+        required: false
     command:
       - sh
       - -c
