@@ -83,7 +83,12 @@ shamefullyHoist: true
 sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
-legacyPeerDeps: true
+# Flat, npm-style node_modules. Deliberate for now: several packages still rely on hoisted
+# (undeclared) dependencies — e.g. @formbricks/js-core reaches into sibling packages (ENG-1681)
+# and react/react-dom are hoisted from the workspace root (ENG-1693). Moving to the strict
+# `isolated` linker is the long-term goal (ENG-1674); fix the undeclared deps first.
+# `shamefullyHoist` above is left untouched here — it becomes meaningful only under the isolated
+# linker, so it is handled together with that migration rather than in this cleanup.
 nodeLinker: hoisted
 saveExact: true
 # Supply-chain release cooldown: refuse to install package versions published less than
