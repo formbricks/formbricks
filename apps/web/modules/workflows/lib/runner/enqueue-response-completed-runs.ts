@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { type TWorkflowTriggerRunPayload, ZWorkflowTriggerRunPayload } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { type DispatchWorkflowRun } from "./dispatch";
+import { markWorkflowRunDispatched } from "./mark-dispatched";
 import {
   type WorkflowMatch,
   type WorkflowMatchCandidate,
@@ -187,7 +188,17 @@ const createAndDispatchWorkflowRun = async ({
       },
       "Workflow run persisted but dispatch failed; queued run is orphaned until the reconciler re-dispatches it"
     );
+    return;
   }
+
+  // Dispatch landed — record it as a durable DB fact (ENG-1658) so recovery can tell a genuine
+  // never-dispatched orphan (dispatchedAt IS NULL) from a dispatched-but-lagging run. Best-effort:
+  // a missed stamp self-heals on the next reconcile tick.
+  await markWorkflowRunDispatched(workflowRunId, workspaceId, new Date(), {
+    ...logContext,
+    workflowId: match.workflowId,
+    responseId: response.id,
+  });
 };
 
 /**
