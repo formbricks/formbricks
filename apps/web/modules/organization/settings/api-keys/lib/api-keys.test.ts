@@ -349,7 +349,7 @@ describe("API Key Management", () => {
           apiKeyWorkspaces: {
             include: {
               workspace: {
-                select: { id: true, name: true },
+                select: { id: true, name: true, organizationId: true },
               },
             },
           },
@@ -371,7 +371,7 @@ describe("API Key Management", () => {
           apiKeyWorkspaces: {
             include: {
               workspace: {
-                select: { id: true, name: true },
+                select: { id: true, name: true, organizationId: true },
               },
             },
           },
