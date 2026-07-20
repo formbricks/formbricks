@@ -2867,6 +2867,7 @@
         "ai_not_available": "AI-enquêtecreatie is niet beschikbaar.",
         "ai_not_enabled": "AI slimme tools zijn uitgeschakeld voor deze organisatie.",
         "ai_not_in_plan": "AI-enquêtecreatie is niet beschikbaar in je huidige abonnement.",
+        "ai_output_too_long": "Deze prompt vraagt om meer dan de AI in één keer kan genereren. Vereenvoudig het of splits het op in kleinere enquêtes.",
         "card_description": "Beschrijf wat je wilt leren en maak een conceptenquête.",
         "card_title": "Maak met AI",
         "characters": "{count}/{max}",

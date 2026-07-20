@@ -2867,6 +2867,7 @@
         "ai_not_available": "Crearea de chestionare cu AI nu este disponibilă.",
         "ai_not_enabled": "Instrumentele inteligente AI sunt dezactivate pentru această organizație.",
         "ai_not_in_plan": "Crearea de chestionare cu AI nu este disponibilă în planul tău actual.",
+        "ai_output_too_long": "Acest prompt solicită mai mult decât poate genera AI-ul dintr-o dată. Simplifică-l sau împarte-l în sondaje mai mici.",
         "card_description": "Descrie ce vrei să afli și creează o ciornă de chestionar.",
         "card_title": "Creează cu AI",
         "characters": "{count}/{max}",

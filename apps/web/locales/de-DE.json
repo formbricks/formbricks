@@ -2867,6 +2867,7 @@
         "ai_not_available": "KI-Umfragenerstellung ist nicht verfügbar.",
         "ai_not_enabled": "KI-Smart-Tools sind für diese Organisation deaktiviert.",
         "ai_not_in_plan": "KI-Umfragenerstellung ist in deinem aktuellen Tarif nicht verfügbar.",
+        "ai_output_too_long": "Diese Eingabe fordert mehr an, als die KI auf einmal generieren kann. Vereinfache sie oder teile sie in kleinere Umfragen auf.",
         "card_description": "Beschreibe, was du herausfinden möchtest, und erstelle einen Umfrage-Entwurf.",
         "card_title": "Mit KI erstellen",
         "characters": "{count}/{max}",

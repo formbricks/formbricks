@@ -2867,6 +2867,7 @@
         "ai_not_available": "AI survey creation is not available.",
         "ai_not_enabled": "AI smart tools are disabled for this organization.",
         "ai_not_in_plan": "AI survey creation is not available on your current plan.",
+        "ai_output_too_long": "This prompt asks for more than the AI can generate in one go. Simplify it or split it into smaller surveys.",
         "card_description": "Describe what you want to learn and create a draft survey.",
         "card_title": "Create with AI",
         "characters": "{count}/{max}",

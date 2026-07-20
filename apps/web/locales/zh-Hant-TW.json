@@ -2867,6 +2867,7 @@
         "ai_not_available": "AI 問卷建立功能目前無法使用。",
         "ai_not_enabled": "此組織已停用 AI 智慧工具。",
         "ai_not_in_plan": "你目前的方案不包含 AI 問卷建立功能。",
+        "ai_output_too_long": "這個提示要求的內容超過 AI 一次能生成的範圍。請簡化提示或將其拆分為多個較小的問卷。",
         "card_description": "描述你想了解的內容,即可建立問卷草稿。",
         "card_title": "使用 AI 建立",
         "characters": "{count}/{max}",

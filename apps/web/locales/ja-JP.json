@@ -2867,6 +2867,7 @@
         "ai_not_available": "AIによるアンケート作成は利用できません。",
         "ai_not_enabled": "この組織ではAIスマートツールが無効になっています。",
         "ai_not_in_plan": "現在のプランではAIによるアンケート作成は利用できません。",
+        "ai_output_too_long": "このプロンプトは、AIが一度に生成できる量を超えています。プロンプトを簡潔にするか、複数のアンケートに分割してください。",
         "card_description": "知りたいことを説明するだけで、アンケートの下書きを作成できます。",
         "card_title": "AIで作成",
         "characters": "{count}/{max}",

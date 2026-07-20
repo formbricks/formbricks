@@ -1,4 +1,5 @@
 import { Output, generateText } from "ai";
+import { AIOutputTokenLimitError } from "./errors";
 import { getAiModel } from "./provider";
 import type { AIEnvironment, TGenerateObjectOptions, TGenerateObjectResult } from "./types";
 
@@ -18,6 +19,18 @@ export const generateObject = async <T = unknown>(
   } as Parameters<typeof generateText>[0];
 
   const result = await generateText(request);
+
+  // With `output: Output.object(...)`, the AI SDK only parses `result.output` when the generation
+  // finished with "stop"; on "length" the getter throws a bare NoOutputGeneratedError. Throw a
+  // dedicated error first so callers can tell "output token limit reached" apart from other failures.
+  if (result.finishReason === "length") {
+    throw new AIOutputTokenLimitError({
+      maxOutputTokens: textOptions.maxOutputTokens,
+      outputTokens: result.usage.outputTokens,
+      reasoningTokens: result.usage.outputTokenDetails.reasoningTokens,
+    });
+  }
+
   const object = result.output as T;
 
   return {
