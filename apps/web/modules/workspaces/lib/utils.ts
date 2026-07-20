@@ -26,9 +26,13 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
 /**
- * Workspace-scoped equivalent of getEnvironmentAuth.
- * Accepts a workspaceId, resolves the production environment automatically,
- * and performs the same authorization checks as getEnvironmentAuth.
+ * Resolves a workspace and returns the caller's authorization context for it.
+ *
+ * This helper is self-contained: it enforces workspace-level access itself
+ * (org membership *and* a WorkspaceTeam grant / owner|manager|billing role) and
+ * throws when the caller has none, rather than relying on the route layout to
+ * gate. That makes it safe to reuse from any page or route without silently
+ * admitting org members who have no access to this specific workspace.
  */
 export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> => {
   const t = await getTranslate();
@@ -56,11 +60,26 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership.role);
 
-  const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);
+  // Enforce workspace access here instead of delegating to the route layout, so
+  // getWorkspaceAuth is safe to reuse anywhere. An org member with no WorkspaceTeam
+  // grant for this workspace has no access and must be rejected — not silently
+  // treated as a writer. Runs alongside the permission lookup to avoid extra latency.
+  const [hasWorkspaceAccess, workspacePermission] = await Promise.all([
+    hasUserWorkspaceAccess(session.user.id, workspace.id),
+    getWorkspacePermissionByUserId(session.user.id, workspace.id),
+  ]);
+
+  if (!hasWorkspaceAccess) {
+    throw new AuthorizationError(t("common.not_authorized"));
+  }
 
   const { hasReadAccess, hasReadWriteAccess, hasManageAccess } = getTeamPermissionFlags(workspacePermission);
 
-  const isReadOnly = isMember && hasReadAccess;
+  // Fail safe: a member is read-only unless they hold an explicit write or manage
+  // grant. Deriving from the *absence* of write access (rather than the presence of
+  // an exact "read" grant) means a member with no resolved permission is treated as
+  // the most restricted, never mislabeled as a writer.
+  const isReadOnly = isMember && !hasReadWriteAccess && !hasManageAccess;
 
   return {
     workspace,
