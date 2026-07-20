@@ -58,15 +58,6 @@
             "pages": [
               "platform/features/ai-features",
               {
-                "group": "Workflows",
-                "icon": "https://d3gk2c5xim1je2.cloudfront.net/lucide/v1.16.0/workflow.svg",
-                "pages": [
-                  "platform/features/workflows/overview",
-                  "platform/features/workflows/build",
-                  "platform/features/workflows/manage-and-monitor"
-                ]
-              },
-              {
                 "group": "Integrations",
                 "icon": "bridge",
                 "pages": [
@@ -228,7 +219,7 @@
             ]
           }
         ],
-        "tab": "Surveys"
+        "tab": "Surveys (Ask)"
       },
       {
         "groups": [
@@ -267,7 +258,20 @@
             "pages": ["unify-feedback/formbricks-hub"]
           }
         ],
-        "tab": "Unify Feedback"
+        "tab": "Unify Feedback (Analyze)"
+      },
+      {
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["workflows/overview"]
+          },
+          {
+            "group": "Workflow Features",
+            "pages": ["workflows/build", "workflows/manage-and-monitor"]
+          }
+        ],
+        "tab": "Workflows (Act)"
       },
       {
         "groups": [
@@ -342,7 +346,8 @@
                   "self-hosting/advanced/enterprise-features/audit-logging",
                   "self-hosting/advanced/enterprise-features/unify-feedback",
                   "self-hosting/advanced/enterprise-features/dashboards",
-                  "self-hosting/advanced/enterprise-features/ai-features"
+                  "self-hosting/advanced/enterprise-features/ai-features",
+                  "self-hosting/advanced/enterprise-features/workflows"
                 ]
               },
               "self-hosting/advanced/rate-limiting"
