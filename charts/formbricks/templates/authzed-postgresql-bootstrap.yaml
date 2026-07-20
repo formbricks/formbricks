@@ -8,6 +8,12 @@
 {{- if and $externalBootstrap (not .Values.authzed.externalPostgresqlBootstrap.adminSecretName) -}}
 {{- fail "authzed.externalPostgresqlBootstrap.adminSecretName is required when external bootstrap is enabled" -}}
 {{- end -}}
+{{- if and $bundledBootstrap (not .Values.postgresql.auth.enablePostgresUser) -}}
+{{- fail "postgresql.auth.enablePostgresUser must be true when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- end -}}
+{{- if and $bundledBootstrap (not .Values.postgresql.auth.secretKeys.adminPasswordKey) -}}
+{{- fail "postgresql.auth.secretKeys.adminPasswordKey is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- end -}}
 {{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}
 apiVersion: batch/v1
 kind: Job
@@ -23,6 +29,7 @@ metadata:
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
   backoffLimit: {{ $bootstrap.backoffLimit }}
+  activeDeadlineSeconds: 300
   ttlSecondsAfterFinished: 300
   template:
     metadata:
@@ -51,12 +58,12 @@ spec:
             - name: PGHOST
               value: formbricks-postgresql
             - name: PGUSER
-              value: {{ .Values.postgresql.auth.username | quote }}
+              value: postgres
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ $postgresSecretName }}
-                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+                  key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey }}
             - name: SPICEDB_DATABASE_NAME
               value: spicedb
             - name: SPICEDB_DATABASE_USERNAME
@@ -92,11 +99,48 @@ spec:
           args:
             - |
               if [ -n "${ADMIN_DATABASE_URL:-}" ]; then
-                admin_database_url="${ADMIN_DATABASE_URL%%\?*}?sslmode=require"
+                case "$ADMIN_DATABASE_URL" in
+                  *\?*) admin_database_query="${ADMIN_DATABASE_URL#*\?}" ;;
+                  *)
+                    echo "ADMIN_DATABASE_URL must explicitly enable TLS with sslmode=require, verify-ca, or verify-full" >&2
+                    exit 1
+                    ;;
+                esac
+
+                sslmode=""
+                remaining_query="$admin_database_query"
+                while [ -n "$remaining_query" ]; do
+                  parameter="${remaining_query%%&*}"
+                  if [ "$remaining_query" = "$parameter" ]; then
+                    remaining_query=""
+                  else
+                    remaining_query="${remaining_query#*&}"
+                  fi
+                  case "$parameter" in
+                    sslmode=*) sslmode="${parameter#sslmode=}" ;;
+                  esac
+                done
+
+                case "$sslmode" in
+                  require|verify-ca|verify-full) ;;
+                  *)
+                    echo "ADMIN_DATABASE_URL must explicitly enable TLS with sslmode=require, verify-ca, or verify-full" >&2
+                    exit 1
+                    ;;
+                esac
+                admin_database_url="$ADMIN_DATABASE_URL"
               else
                 admin_database_url=postgres
               fi
-              until pg_isready --dbname "$admin_database_url"; do sleep 2; done
+              readiness_attempt=1
+              until pg_isready --dbname "$admin_database_url"; do
+                if [ "$readiness_attempt" -ge 60 ]; then
+                  echo "PostgreSQL did not become ready after 60 attempts" >&2
+                  exit 1
+                fi
+                readiness_attempt=$((readiness_attempt + 1))
+                sleep 2
+              done
               psql --dbname "$admin_database_url" --set ON_ERROR_STOP=1 \
                 --set database_name="$SPICEDB_DATABASE_NAME" \
                 --set database_username="$SPICEDB_DATABASE_USERNAME" \

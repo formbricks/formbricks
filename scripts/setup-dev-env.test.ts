@@ -1,17 +1,15 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, test } from "vitest";
 
-const formbricksScriptPath = fileURLToPath(new URL("../formbricks.sh", import.meta.url));
-const setupDevEnvScriptPath = fileURLToPath(new URL("../../scripts/setup-dev-env.sh", import.meta.url));
-
+const setupDevEnvScriptPath = fileURLToPath(new URL("./setup-dev-env.sh", import.meta.url));
 const tempDirs: string[] = [];
 
 const createTempDir = (): string => {
-  const tempDir = mkdtempSync(join(tmpdir(), "formbricks-authzed-"));
+  const tempDir = mkdtempSync(join(tmpdir(), "formbricks-authzed-dev-"));
   tempDirs.push(tempDir);
   return tempDir;
 };
@@ -33,37 +31,8 @@ afterEach(() => {
   }
 });
 
-describe("AuthZed environment setup", () => {
-  test("one-click writes AuthZed secrets without printing them", () => {
-    const envPath = join(createTempDir(), ".env");
-    const authzedToken = "authzed-token-value";
-    const authzedDatabasePassword = "authzed-database-password";
-
-    const output = execFileSync(
-      "bash",
-      [
-        "-lc",
-        'source "$1"; write_base_env_file "$2" hub-key cube-secret "$3" "$4"',
-        "bash",
-        formbricksScriptPath,
-        envPath,
-        authzedToken,
-        authzedDatabasePassword,
-      ],
-      { encoding: "utf8" }
-    );
-
-    const env = parseEnvFile(readFileSync(envPath, "utf8"));
-
-    expect(output).toBe("");
-    expect(output).not.toContain(authzedToken);
-    expect(output).not.toContain(authzedDatabasePassword);
-    expect(env.get("AUTHZED_TOKEN")).toBe(authzedToken);
-    expect(env.get("AUTHZED_DATABASE_PASSWORD")).toBe(authzedDatabasePassword);
-    expect(statSync(envPath).mode & 0o777).toBe(0o600);
-  });
-
-  test("development setup generates and preserves AuthZed secrets", () => {
+describe("scripts/setup-dev-env.sh AuthZed setup", () => {
+  test("generates and preserves AuthZed secrets", () => {
     const tempDir = createTempDir();
     const templatePath = join(tempDir, ".env.example");
     const envPath = join(tempDir, ".env");

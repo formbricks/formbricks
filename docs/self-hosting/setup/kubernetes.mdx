@@ -109,8 +109,10 @@ authzed:
     existingSecret: formbricks-authzed
 ```
 
-Use `authzed.mode: external` plus `authzed.endpoint` when connecting to an externally managed AuthZed endpoint.
-The application endpoint remains internal by default when the chart owns SpiceDB.
+Use `authzed.mode: external`, `authzed.endpoint: <host>:<port>`, and `authzed.insecure: false` when connecting
+to an externally managed AuthZed endpoint. The external endpoint must serve TLS because the preshared token is
+sent on every authenticated request. The application endpoint remains internal and uses plaintext gRPC by
+default when the chart owns SpiceDB.
 
 ## 3. v5-Specific Deployment Notes
 

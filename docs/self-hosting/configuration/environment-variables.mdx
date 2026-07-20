@@ -163,6 +163,37 @@ login. Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. `SPICED
 bundled `authzed/spicedb:v1.52.0` image for an explicitly reviewed upgrade; the migration and server services
 always use the same reference.
 
+`AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, or `0`. When `AUTHZED_ENABLED` is unset,
+the application client is disabled; when `AUTHZED_INSECURE` is unset, it uses TLS. A configured endpoint must
+be a bare `host:port` with an explicit port from 1 through 65535, for example `spicedb:50051`,
+`grpc.authzed.com:443`, or `[::1]:50051`. Do not include a URL scheme, path, query, credentials, or whitespace.
+`AUTHZED_SYSTEM_KEY` must be a 3–64 character lowercase SpiceDB identifier made from letters, digits, and
+underscores; it must start with a letter or underscore and end with a letter or digit. The supported
+consistency values are `minimize_latency` and `fully_consistent`; the default is `minimize_latency`.
+
+Valid endpoint, token, and system-key values may be set before enabling AuthZed. Invalid supplied values are
+rejected even while it is disabled. Changing any AuthZed setting requires restarting the Formbricks process.
+Configuration validation never prints the token.
+
+From a repository checkout, validate the configured connection without installing a schema or changing data:
+
+```bash
+pnpm authzed:health
+```
+
+The command reads the repository `.env`, performs an authenticated read-only schema request, prints exactly
+one JSON result, and exits `0` only for `{"status":"healthy","latencyMs":12}` (the latency varies). Disabled
+or failed checks exit `1`. Failures use stable codes: `authzed_unauthenticated` or
+`authzed_permission_denied` for rejected credentials or schema-read access (the bundled SpiceDB preshared-key
+check reports a wrong token as permission denied), `authzed_timeout` when an attempt exceeds its deadline,
+`authzed_overloaded` when SpiceDB is resource constrained, `authzed_unavailable` when the service cannot be
+reached, and `authzed_internal` for an unexpected client failure. Schema text, tokens, raw SDK errors, and stack
+traces are never included.
+
+This check is intentionally a CLI rather than a browser page or HTTP endpoint. AuthZed is not part of the
+general `/health` response, Kubernetes readiness, or application startup, so a transient SpiceDB outage does
+not restart or mark the rest of Formbricks unhealthy.
+
 When authorization enforcement is enabled, failed or unavailable permission checks must deny the protected
 operation. Do not make the general application readiness probe depend on AuthZed availability; this avoids a
 transient authorization outage restarting unrelated Formbricks workloads.

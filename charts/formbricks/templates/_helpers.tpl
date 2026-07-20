@@ -164,7 +164,17 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end -}}
 {{- end }}
 
+{{- define "formbricks.authzedInsecure" -}}
+{{- if eq .Values.authzed.insecure nil -}}
+{{- eq .Values.authzed.mode "selfHosted" -}}
+{{- else -}}
+{{- .Values.authzed.insecure -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.authzedPresharedKey" -}}
+{{- /* Cluster-generated credentials are persisted through the managed Secret. Renderers without
+      live Secret access must use authzed.auth.existingSecret, as documented in the chart README. */ -}}
 {{- $secretName := include "formbricks.authzedManagedSecretName" . -}}
 {{- $secret := lookup "v1" "Secret" .Release.Namespace $secretName -}}
 {{- $secretData := dig "data" dict $secret -}}
@@ -176,6 +186,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.authzedDatabasePassword" -}}
+{{- /* See formbricks.authzedPresharedKey for the offline-rendering persistence contract. */ -}}
 {{- $secretName := include "formbricks.authzedManagedSecretName" . -}}
 {{- $secret := lookup "v1" "Secret" .Release.Namespace $secretName -}}
 {{- $secretData := dig "data" dict $secret -}}

@@ -164,8 +164,20 @@ docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
 ```
 
 Then open [http://127.0.0.1:50052](http://127.0.0.1:50052). Run `pnpm authzed:smoke` for an isolated
-schema, permission, migration-idempotency, and persistence check. The smoke command uses its own Compose
-project and removes its test data afterward.
+application-health, authentication-failure, bounded-outage, schema, permission, migration-idempotency, and
+persistence check. The smoke command uses its own Compose project and random host port, then removes its test
+data afterward.
+
+To check the developer stack through the Formbricks AuthZed client without writing data, run:
+
+```bash
+pnpm authzed:health
+```
+
+It reads the repository `.env`, prints one JSON result, and returns exit code `0` only when healthy. An empty
+SpiceDB schema is still a healthy connection. There is no AuthZed browser health page, and the normal
+Formbricks `/health` endpoint deliberately remains independent of SpiceDB. Restart Formbricks after changing
+any `AUTHZED_*` value.
 
 ## Optional Services
 

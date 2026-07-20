@@ -57,12 +57,32 @@ authzed:
     install: true
 ```
 
-This installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, generates a stable preshared
-key, and creates a dedicated `spicedb` database and role in the bundled PostgreSQL server. The operator runs
-datastore migrations before rolling out SpiceDB. The chart assigns explicit resource requests and limits to
-SpiceDB and uses a larger PostgreSQL allocation than the upstream `nano` preset so the database has enough
-headroom during SpiceDB rollouts. Override `authzed.cluster.resources` and `postgresql.primary.resources` to
-match the expected authorization traffic and the other workloads using the bundled database.
+This installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, and creates a dedicated
+`spicedb` database and role in the bundled PostgreSQL server. During normal Helm installs and upgrades, the
+chart reuses generated credentials from the existing cluster Secret. Renderers without live Secret access,
+including offline `helm template` and Argo CD manifest generation, must provide persistent credentials through
+`authzed.auth.existingSecret` and `authzed.datastore.existingSecret`; otherwise generated values are not stable
+between renders. The operator runs datastore migrations before rolling out SpiceDB.
+
+The bundled PostgreSQL dependency uses the following resource baseline, which was validated while PostgreSQL
+also served SpiceDB:
+
+```yaml
+postgresql:
+  primary:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+```
+
+Helm cannot condition values passed to the PostgreSQL dependency on the sibling `authzed.enabled` value, so the
+safe database baseline remains in effect when AuthZed is disabled. Override `authzed.cluster.resources` and
+`postgresql.primary.resources` to match the expected authorization traffic and the other workloads using the
+bundled database. Installations that keep AuthZed disabled may explicitly choose smaller PostgreSQL resources.
 
 Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
 namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
@@ -78,6 +98,29 @@ stringData:
   preshared_key: <strong-random-token>
 ```
 
+Alternatively, the chart can create the dedicated database and login with a short-lived bootstrap Job. Put a
+PostgreSQL administrator URL in a separate Secret and enable the external bootstrap:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: formbricks-postgresql-admin
+stringData:
+  DATABASE_URL: postgresql://postgres:<admin-password>@postgres.example:5432/postgres?sslmode=require
+```
+
+```yaml
+authzed:
+  externalPostgresqlBootstrap:
+    enabled: true
+    adminSecretName: formbricks-postgresql-admin
+```
+
+The administrator URL must explicitly set `sslmode=require`, `sslmode=verify-ca`, or `sslmode=verify-full`.
+The bootstrap Job validates the TLS mode without logging the URL and passes the URL through unchanged, so other
+connection parameters and certificate settings are preserved.
+
 Then reference it from the release:
 
 ```yaml
@@ -90,8 +133,21 @@ authzed:
     existingSecret: formbricks-authzed
 ```
 
-To connect to an AuthZed-managed or otherwise external endpoint, set `authzed.mode=external`, provide
-`authzed.endpoint`, and reference a Secret containing `preshared_key`. The chart injects `AUTHZED_ENABLED`,
+To connect to an AuthZed-managed or otherwise external endpoint, use TLS, provide the endpoint without a URL
+scheme, and reference a Secret containing `preshared_key`:
+
+```yaml
+authzed:
+  enabled: true
+  mode: external
+  endpoint: grpc.authzed.com:443
+  insecure: false
+  auth:
+    existingSecret: formbricks-authzed
+```
+
+`authzed.insecure` defaults to `false` in external mode. Set it to `true` only for a trusted plaintext gRPC
+endpoint; plaintext transport sends the preshared token without TLS protection. The chart injects `AUTHZED_ENABLED`,
 `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and `AUTHZED_CONSISTENCY` into
 the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
 Formbricks readiness remains independent from transient SpiceDB availability.
@@ -491,6 +547,7 @@ JSON that can call Vertex AI.
 | pdb.enabled                                                        | bool   | `true`                                                                      |                                                           |
 | pdb.minAvailable                                                   | int    | `1`                                                                         |                                                           |
 | postgresql.auth.database                                           | string | `"formbricks"`                                                              |                                                           |
+| postgresql.auth.enablePostgresUser                                 | bool   | `true`                                                                       | Required by the bundled AuthZed database bootstrap.       |
 | postgresql.auth.existingSecret                                     | string | `"formbricks-app-secrets"`                                                  |                                                           |
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |
@@ -510,6 +567,10 @@ JSON that can call Vertex AI.
 | postgresql.primary.podSecurityContext.enabled                      | bool   | `true`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.fsGroup                      | int    | `1001`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.runAsUser                    | int    | `1001`                                                                      |                                                           |
+| postgresql.primary.resources.limits.cpu                            | string | `"1"`                                                                       |                                                           |
+| postgresql.primary.resources.limits.memory                         | string | `"1Gi"`                                                                     |                                                           |
+| postgresql.primary.resources.requests.cpu                          | string | `"250m"`                                                                    |                                                           |
+| postgresql.primary.resources.requests.memory                       | string | `"512Mi"`                                                                   |                                                           |
 | rbac.enabled                                                       | bool   | `false`                                                                     |                                                           |
 | rbac.serviceAccount.additionalLabels                               | object | `{}`                                                                        |                                                           |
 | rbac.serviceAccount.annotations                                    | object | `{}`                                                                        |                                                           |

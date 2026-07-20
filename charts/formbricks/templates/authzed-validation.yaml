@@ -5,4 +5,7 @@
 {{- if and (eq .Values.authzed.mode "external") (not .Values.authzed.auth.existingSecret) -}}
 {{- fail "authzed.auth.existingSecret is required when authzed.mode=external" -}}
 {{- end -}}
+{{- if and (ne .Values.authzed.insecure nil) (not (kindIs "bool" .Values.authzed.insecure)) -}}
+{{- fail "authzed.insecure must be true, false, or null" -}}
+{{- end -}}
 {{- end -}}
