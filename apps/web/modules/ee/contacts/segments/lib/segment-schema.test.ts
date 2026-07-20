@@ -1,6 +1,24 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
-import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
+import {
+  ZSegmentCreateInput,
+  ZSegmentFilters,
+  ZSegmentSurveyInteractionFilterValue,
+  ZSegmentUpdateInput,
+} from "@formbricks/types/segment";
+
+const surveyInteractionFilter = (value: unknown) => [
+  {
+    id: createId(),
+    connector: null,
+    resource: {
+      id: createId(),
+      root: { type: "surveyInteraction" as const },
+      qualifier: { operator: "haveSeen" as const },
+      value,
+    },
+  },
+];
 
 const validFilters = [
   {
@@ -69,5 +87,102 @@ describe("segment schema validation", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("survey interaction filter value validation", () => {
+  test("accepts any-survey scope with empty surveyIds", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("accepts specific scope with at least one survey", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "specific",
+      surveyIds: ["survey_1"],
+      within: { amount: 3, unit: "weeks" },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects specific scope with empty surveyIds", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "specific",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("Select at least one survey");
+  });
+
+  test("rejects amount below 1", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 0, unit: "days" },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects amount above 999", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1000, unit: "days" },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects non-integer amount", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 2.5, unit: "days" },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects unsupported time unit", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "years" },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts a full survey interaction filter through ZSegmentFilters", () => {
+    const result = ZSegmentFilters.safeParse(
+      surveyInteractionFilter({
+        surveyScope: "specific",
+        surveyIds: ["survey_1", "survey_2"],
+        within: { amount: 6, unit: "months" },
+      })
+    );
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects a survey interaction filter with an invalid value through ZSegmentFilters", () => {
+    const result = ZSegmentFilters.safeParse(
+      surveyInteractionFilter({
+        surveyScope: "specific",
+        surveyIds: [],
+        within: { amount: 1, unit: "months" },
+      })
+    );
+
+    expect(result.success).toBe(false);
   });
 });

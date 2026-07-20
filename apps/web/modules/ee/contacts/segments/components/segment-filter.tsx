@@ -20,6 +20,8 @@ import {
   NUMBER_TYPE_OPERATORS,
   PERSON_OPERATORS,
   STRING_TYPE_OPERATORS,
+  SURVEY_INTERACTION_OPERATORS,
+  SURVEY_INTERACTION_TIME_UNITS,
   type TArithmeticOperator,
   type TAttributeOperator,
   type TBaseFilter,
@@ -33,6 +35,10 @@ import {
   type TSegmentOperator,
   type TSegmentPersonFilter,
   type TSegmentSegmentFilter,
+  type TSegmentSurveyInteractionFilter,
+  type TSegmentSurveyInteractionFilterValue,
+  type TSurveyInteractionOperator,
+  type TSurveyInteractionTimeUnit,
   isDateOperator,
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
@@ -47,6 +53,7 @@ import {
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
+  updateSurveyInteractionValueInFilter,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -57,6 +64,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
   Select,
   SelectContent,
@@ -64,6 +72,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { getSurveysForSegmentFilterAction } from "../actions";
 import { AddFilterModal } from "./add-filter-modal";
 import { AttributeValueInput } from "./attribute-value-input";
 import { DateFilterValue } from "./date-filter-value";
@@ -386,7 +395,7 @@ function AttributeSegmentFilter({
         }}
         value={attrKeyValue}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
@@ -553,7 +562,7 @@ function PersonSegmentFilter({
         }}
         value={personIdentifier}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
@@ -705,7 +714,7 @@ function SegmentSegmentFilter({
         }}
         value={currentSegment?.id}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="size-4 text-sm" />
@@ -850,6 +859,214 @@ function DeviceFilter({
   );
 }
 
+type TSurveyInteractionFilterProps = TSegmentFilterProps & {
+  onAddFilterBelow: () => void;
+  resource: TSegmentSurveyInteractionFilter;
+};
+
+function SurveyInteractionFilter({
+  connector,
+  onAddFilterBelow,
+  onCreateGroup,
+  onDeleteFilter,
+  onMoveFilter,
+  resource,
+  segment,
+  setSegment,
+  viewOnly,
+}: TSurveyInteractionFilterProps) {
+  const { t } = useTranslation();
+  const { value } = resource;
+  const [surveys, setSurveys] = useState<{ id: string; name: string; status: string }[]>([]);
+
+  // Load the workspace's surveys once so the "specific surveys" picker is ready the moment the user
+  // switches scope. Self-fetching here avoids prop-drilling surveys through the four SegmentEditor
+  // render sites.
+  useEffect(() => {
+    let active = true;
+    getSurveysForSegmentFilterAction({ workspaceId: segment.workspaceId }).then((result) => {
+      if (active && result?.data) {
+        setSurveys(result.data);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [segment.workspaceId]);
+
+  const commitValue = (newValue: TSegmentSurveyInteractionFilterValue) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateSurveyInteractionValueInFilter(updatedSegment.filters, resource.id, newValue);
+    }
+    setSegment(updatedSegment);
+  };
+
+  const updateOperatorInSegment = (newOperator: TSurveyInteractionOperator) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, resource.id, newOperator);
+    }
+    setSegment(updatedSegment);
+  };
+
+  const operatorArr = SURVEY_INTERACTION_OPERATORS.map((operator) => ({
+    id: operator,
+    name: convertOperatorToText(operator, t),
+  }));
+
+  const getTimeUnitLabel = (unit: TSurveyInteractionTimeUnit, amount: number) => {
+    const isSingular = amount === 1;
+    switch (unit) {
+      case "days":
+        return isSingular ? t("workspace.segments.time_unit_day") : t("workspace.segments.time_unit_days");
+      case "weeks":
+        return isSingular ? t("workspace.segments.time_unit_week") : t("workspace.segments.time_unit_weeks");
+      case "months":
+        return isSingular
+          ? t("workspace.segments.time_unit_month")
+          : t("workspace.segments.time_unit_months");
+    }
+  };
+
+  const surveyOptions = surveys.map((survey) => ({
+    // Chip shows the survey id (per ticket AC "display survey IDs in the field"); the dropdown shows
+    // the id with the name beneath it, and search matches both id and name via `description`.
+    value: survey.id,
+    label: survey.id,
+    description: survey.name,
+  }));
+
+  const handleAmountChange = (raw: string) => {
+    const parsed = Number.parseInt(raw, 10);
+    if (Number.isNaN(parsed)) return;
+    const clamped = Math.min(999, Math.max(1, parsed));
+    commitValue({ ...value, within: { ...value.within, amount: clamped } });
+  };
+
+  return (
+    <div className="flex flex-col gap-2 text-sm">
+      <div className="flex items-center gap-2">
+        <SegmentFilterItemConnector
+          connector={connector}
+          filterId={resource.id}
+          key={connector}
+          segment={segment}
+          setSegment={setSegment}
+          viewOnly={viewOnly}
+        />
+
+        <Select
+          disabled={viewOnly}
+          onValueChange={(operator: TSurveyInteractionOperator) => {
+            updateOperatorInSegment(operator);
+          }}
+          value={resource.qualifier.operator}>
+          <SelectTrigger
+            aria-label={t("workspace.segments.survey_interaction")}
+            className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
+            hideArrow>
+            <SelectValue placeholder={t("common.select")} />
+          </SelectTrigger>
+
+          <SelectContent>
+            {operatorArr.map((operator) => (
+              <SelectItem key={operator.id} value={operator.id}>
+                {operator.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          disabled={viewOnly}
+          onValueChange={(scope: "any" | "specific") => {
+            commitValue({ ...value, surveyScope: scope });
+          }}
+          value={value.surveyScope}>
+          <SelectTrigger
+            aria-label={t("common.surveys")}
+            className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
+            hideArrow>
+            <SelectValue />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="any">{t("workspace.segments.any_survey")}</SelectItem>
+            <SelectItem value="specific">{t("workspace.segments.specific_surveys")}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <p className="whitespace-nowrap text-slate-600">{t("workspace.segments.within_last")}</p>
+
+        <Input
+          aria-label={t("workspace.segments.number")}
+          className="h-9 w-16 bg-white"
+          disabled={viewOnly}
+          max={999}
+          min={1}
+          onChange={(e) => {
+            if (viewOnly) return;
+            handleAmountChange(e.target.value);
+          }}
+          step={1}
+          type="number"
+          value={value.within.amount}
+        />
+
+        <Select
+          disabled={viewOnly}
+          onValueChange={(unit: TSurveyInteractionTimeUnit) => {
+            commitValue({ ...value, within: { ...value.within, unit } });
+          }}
+          value={value.within.unit}>
+          <SelectTrigger
+            aria-label={t("workspace.segments.period")}
+            className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
+            hideArrow>
+            <SelectValue>{getTimeUnitLabel(value.within.unit, value.within.amount)}</SelectValue>
+          </SelectTrigger>
+
+          <SelectContent>
+            {SURVEY_INTERACTION_TIME_UNITS.map((unit) => (
+              <SelectItem key={unit} value={unit}>
+                {getTimeUnitLabel(unit, value.within.amount)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <SegmentFilterItemContextMenu
+          filterId={resource.id}
+          onAddFilterBelow={onAddFilterBelow}
+          onCreateGroup={onCreateGroup}
+          onDeleteFilter={onDeleteFilter}
+          onMoveFilter={onMoveFilter}
+          viewOnly={viewOnly}
+        />
+      </div>
+
+      {value.surveyScope === "specific" ? (
+        <div className="ml-[48px] flex flex-col gap-1 rounded-lg border border-slate-300 bg-white p-3">
+          <p className="text-xs font-medium text-slate-500">{t("common.surveys")}</p>
+          <MultiSelect
+            disabled={viewOnly}
+            onChange={(selected) => {
+              commitValue({ ...value, surveyIds: selected });
+            }}
+            options={surveyOptions}
+            placeholder={t("common.select")}
+            value={value.surveyIds}
+          />
+          {value.surveyIds.length === 0 ? (
+            <p className="text-xs text-red-500">{t("workspace.segments.select_at_least_one_survey")}</p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function SegmentFilter({
   resource,
   connector,
@@ -971,6 +1188,28 @@ export function SegmentFilter({
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentDeviceFilter}
+            segment={segment}
+            segments={segments}
+            setSegment={setSegment}
+            viewOnly={viewOnly}
+          />
+
+          {filterModal}
+        </>
+      );
+
+    case "surveyInteraction":
+      return (
+        <>
+          <SurveyInteractionFilter
+            contactAttributeKeys={contactAttributeKeys}
+            connector={connector}
+            handleAddFilterBelow={handleAddFilterBelow}
+            onAddFilterBelow={onAddFilterBelow}
+            onCreateGroup={onCreateGroup}
+            onDeleteFilter={onDeleteFilter}
+            onMoveFilter={onMoveFilter}
+            resource={resource as TSegmentSurveyInteractionFilter}
             segment={segment}
             segments={segments}
             setSegment={setSegment}

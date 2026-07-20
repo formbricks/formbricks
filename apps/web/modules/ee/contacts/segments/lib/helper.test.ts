@@ -1,8 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
-import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  assertSurveyInteractionSurveyIds,
+  checkForRecursiveSegmentFilter,
+  collectSurveyIdsFromSegmentFilters,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
+
+const mockSurveyFindMany = vi.fn();
+
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    survey: {
+      findMany: (...args: unknown[]) => mockSurveyFindMany(...args),
+    },
+  },
+}));
 
 // Mock dependencies
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
@@ -209,5 +223,117 @@ describe("checkForRecursiveSegmentFilter", () => {
 
     // Verify the number of calls to getSegment (should be 2)
     expect(getSegment).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("collectSurveyIdsFromSegmentFilters", () => {
+  test("collects ids from specific-scope survey interaction filters, including nested groups", () => {
+    const filters = [
+      {
+        id: "f1",
+        connector: null,
+        resource: {
+          id: "si1",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveSeen" },
+          value: { surveyScope: "specific", surveyIds: ["s1", "s2"], within: { amount: 1, unit: "months" } },
+        },
+      },
+      {
+        id: "group1",
+        connector: "and",
+        resource: [
+          {
+            id: "f2",
+            connector: null,
+            resource: {
+              id: "si2",
+              root: { type: "surveyInteraction" },
+              qualifier: { operator: "haveCompleted" },
+              value: { surveyScope: "specific", surveyIds: ["s3"], within: { amount: 1, unit: "months" } },
+            },
+          },
+        ],
+      },
+    ];
+
+    expect(collectSurveyIdsFromSegmentFilters(filters as unknown as TBaseFilters)).toEqual([
+      "s1",
+      "s2",
+      "s3",
+    ]);
+  });
+
+  test("ignores any-scope survey interaction filters and other filter types", () => {
+    const filters = [
+      {
+        id: "f1",
+        connector: null,
+        resource: {
+          id: "si1",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveSeen" },
+          value: { surveyScope: "any", surveyIds: [], within: { amount: 1, unit: "months" } },
+        },
+      },
+      {
+        id: "f2",
+        connector: "and",
+        resource: {
+          id: "attr1",
+          root: { type: "attribute", contactAttributeKey: "email" },
+          qualifier: { operator: "equals" },
+          value: "a@b.com",
+        },
+      },
+    ];
+
+    expect(collectSurveyIdsFromSegmentFilters(filters as unknown as TBaseFilters)).toEqual([]);
+  });
+});
+
+describe("assertSurveyInteractionSurveyIds", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const buildSpecificFilter = (surveyIds: string[]): TBaseFilters =>
+    [
+      {
+        id: "f1",
+        connector: null,
+        resource: {
+          id: "si1",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveSeen" },
+          value: { surveyScope: "specific", surveyIds, within: { amount: 1, unit: "months" } },
+        },
+      },
+    ] as unknown as TBaseFilters;
+
+  test("skips the DB lookup when there are no specific survey ids", async () => {
+    await assertSurveyInteractionSurveyIds(buildSpecificFilter([]), "workspace-1");
+    expect(mockSurveyFindMany).not.toHaveBeenCalled();
+  });
+
+  test("passes when every referenced survey belongs to the workspace", async () => {
+    mockSurveyFindMany.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
+
+    await expect(
+      assertSurveyInteractionSurveyIds(buildSpecificFilter(["s1", "s2"]), "workspace-1")
+    ).resolves.toBeUndefined();
+
+    expect(mockSurveyFindMany).toHaveBeenCalledWith({
+      where: { id: { in: ["s1", "s2"] }, workspaceId: "workspace-1" },
+      select: { id: true },
+    });
+  });
+
+  test("throws when a referenced survey is missing from the workspace", async () => {
+    mockSurveyFindMany.mockResolvedValue([{ id: "s1" }]);
+
+    await expect(
+      assertSurveyInteractionSurveyIds(buildSpecificFilter(["s1", "s2"]), "workspace-1")
+    ).rejects.toThrow(new InvalidInputError("Survey not found in workspace: s2"));
   });
 });

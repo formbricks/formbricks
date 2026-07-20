@@ -1787,3 +1787,123 @@ describe("segmentFilterToPrismaQuery", () => {
     });
   });
 });
+
+describe("survey interaction filters", () => {
+  const mockSegmentId = "segment-si";
+  const mockWorkspaceId = "workspace-si";
+  // Fixed clock so the window cutoff is deterministic.
+  const now = new Date("2026-07-20T00:00:00.000Z");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.resetAllMocks();
+  });
+
+  const buildFilter = (operator: string, value: unknown): TBaseFilters => [
+    {
+      id: "filter_si",
+      connector: null,
+      resource: {
+        id: "si_1",
+        root: { type: "surveyInteraction" as const },
+        qualifier: { operator: operator as never },
+        value: value as never,
+      },
+    },
+  ];
+
+  // Extract the single filter's where clause from the wrapped result.
+  const extractClause = (result: unknown) => {
+    const whereClause = (result as any).data.whereClause;
+    return whereClause.AND[1].AND[0];
+  };
+
+  test("haveSeen with any scope maps to displays within the window", async () => {
+    const filters = buildFilter("haveSeen", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.displays.some.createdAt.gte).toEqual(new Date("2026-06-20T00:00:00.000Z"));
+    expect(clause.displays.some.surveyId).toBeUndefined();
+  });
+
+  test("haveSeen with specific scope constrains surveyId", async () => {
+    const filters = buildFilter("haveSeen", {
+      surveyScope: "specific",
+      surveyIds: ["survey_a", "survey_b"],
+      within: { amount: 2, unit: "weeks" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.displays.some.surveyId).toEqual({ in: ["survey_a", "survey_b"] });
+    // 2 weeks = 14 days before the fixed clock
+    expect(clause.displays.some.createdAt.gte).toEqual(new Date("2026-07-06T00:00:00.000Z"));
+  });
+
+  test("haveNotSeen wraps the displays clause in NOT", async () => {
+    const filters = buildFilter("haveNotSeen", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "days" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.NOT.displays.some.createdAt.gte).toEqual(new Date("2026-07-19T00:00:00.000Z"));
+  });
+
+  test("haveStartedRespondingTo maps to responses without finished flag", async () => {
+    const filters = buildFilter("haveStartedRespondingTo", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.responses.some.finished).toBeUndefined();
+    expect(clause.responses.some.createdAt.gte).toEqual(new Date("2026-06-20T00:00:00.000Z"));
+  });
+
+  test("haveCompleted maps to responses with finished=true", async () => {
+    const filters = buildFilter("haveCompleted", {
+      surveyScope: "specific",
+      surveyIds: ["survey_a"],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.responses.some.finished).toBe(true);
+    expect(clause.responses.some.surveyId).toEqual({ in: ["survey_a"] });
+  });
+
+  test("haveNotCompleted wraps the completed clause in NOT", async () => {
+    const filters = buildFilter("haveNotCompleted", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.NOT.responses.some.finished).toBe(true);
+  });
+});

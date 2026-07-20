@@ -20,12 +20,16 @@ import {
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
-import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  assertSurveyInteractionSurveyIds,
+  checkForRecursiveSegmentFilter,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
   createSegment,
   deleteSegment,
   getSegment,
+  getSurveyRefsForWorkspace,
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
@@ -87,6 +91,8 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
       throw new InvalidInputError(errMsg);
     }
 
+    await assertSurveyInteractionSurveyIds(parsedFilters.data, workspaceId);
+
     const segment = await createSegment(parsedInput);
 
     // Set the segmentId in the context to be used in the audit log
@@ -145,6 +151,9 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
       }
 
       await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
+
+      const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
+      await assertSurveyInteractionSurveyIds(parsedFilters.data, segmentWorkspaceId);
     }
 
     const oldObject = await getSegment(parsedInput.segmentId);
@@ -336,4 +345,34 @@ export const getDistinctAttributeValuesAction = authenticatedActionClient
     });
 
     return await getDistinctAttributeValues(parsedInput.attributeKeyId);
+  });
+
+const ZGetSurveysForSegmentFilterAction = z.object({
+  workspaceId: ZId,
+});
+
+export const getSurveysForSegmentFilterAction = authenticatedActionClient
+  .inputSchema(ZGetSurveysForSegmentFilterAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "read",
+          workspaceId: parsedInput.workspaceId,
+        },
+      ],
+    });
+
+    await checkAdvancedTargetingPermission(organizationId);
+
+    return await getSurveyRefsForWorkspace(parsedInput.workspaceId);
   });

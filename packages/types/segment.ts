@@ -77,8 +77,29 @@ export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
 // operators for device filters
 export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
 
+// operators for survey interaction filters
+export const SURVEY_INTERACTION_OPERATORS = [
+  "haveCompleted",
+  "haveNotCompleted",
+  "haveSeen",
+  "haveNotSeen",
+  "haveStartedRespondingTo",
+] as const;
+
+export const ZSurveyInteractionOperator = z.enum(SURVEY_INTERACTION_OPERATORS);
+export type TSurveyInteractionOperator = z.infer<typeof ZSurveyInteractionOperator>;
+
+// time units allowed for the survey interaction window (subset of TIME_UNITS, no "years")
+export const SURVEY_INTERACTION_TIME_UNITS = ["days", "weeks", "months"] as const;
+export const ZSurveyInteractionTimeUnit = z.enum(SURVEY_INTERACTION_TIME_UNITS);
+export type TSurveyInteractionTimeUnit = z.infer<typeof ZSurveyInteractionTimeUnit>;
+
 // all operators
-export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS] as const;
+export const ALL_OPERATORS = [
+  ...ATTRIBUTE_OPERATORS,
+  ...SEGMENT_OPERATORS,
+  ...SURVEY_INTERACTION_OPERATORS,
+] as const;
 
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
 export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
@@ -112,11 +133,28 @@ export const ZRelativeDateValue = z.object({
 });
 export type TRelativeDateValue = z.infer<typeof ZRelativeDateValue>;
 
+// Structured value for survey interaction filters. Defined here (before ZSegmentFilterValue) so it
+// can be part of the shared filter-value union that generic helpers like updateFilterValue operate on.
+export const ZSegmentSurveyInteractionFilterValue = z
+  .object({
+    surveyScope: z.enum(["any", "specific"]),
+    surveyIds: z.array(z.string()),
+    within: z.object({
+      amount: z.number().int().min(1).max(999),
+      unit: ZSurveyInteractionTimeUnit,
+    }),
+  })
+  .refine((value) => value.surveyScope === "any" || value.surveyIds.length > 0, {
+    error: "Select at least one survey",
+  });
+export type TSegmentSurveyInteractionFilterValue = z.infer<typeof ZSegmentSurveyInteractionFilterValue>;
+
 export const ZSegmentFilterValue = z.union([
   z.string(),
   z.number(),
   ZRelativeDateValue,
   z.tuple([z.string(), z.string()]), // for "isBetween" operator
+  ZSegmentSurveyInteractionFilterValue,
 ]);
 export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
@@ -178,12 +216,39 @@ export const ZSegmentDeviceFilter = z.object({
 
 export type TSegmentDeviceFilter = z.infer<typeof ZSegmentDeviceFilter>;
 
+// Survey interaction filter -> root will always have type "surveyInteraction".
+// Behavioral targeting evaluated against the contact's Display/Response relations.
+// The structured value (ZSegmentSurveyInteractionFilterValue) is defined above with the shared
+// filter-value union.
+export const ZSegmentSurveyInteractionFilter = z.object({
+  id: z.cuid2(),
+  root: z.object({
+    type: z.literal("surveyInteraction"),
+  }),
+  value: ZSegmentSurveyInteractionFilterValue,
+  qualifier: z.object({
+    operator: ZSurveyInteractionOperator,
+  }),
+});
+export type TSegmentSurveyInteractionFilter = z.infer<typeof ZSegmentSurveyInteractionFilter>;
+
 // A segment filter is a union of all the different filter types
 export const ZSegmentFilter = z
-  .union([ZSegmentAttributeFilter, ZSegmentPersonFilter, ZSegmentSegmentFilter, ZSegmentDeviceFilter])
+  .union([
+    ZSegmentAttributeFilter,
+    ZSegmentPersonFilter,
+    ZSegmentSegmentFilter,
+    ZSegmentDeviceFilter,
+    ZSegmentSurveyInteractionFilter,
+  ])
   // we need to refine the filter to make sure that the filter is valid
   .refine(
     (filter) => {
+      // survey interaction filters carry a structured value validated by their own schema
+      if (filter.root.type === "surveyInteraction") {
+        return true;
+      }
+
       // if the operator is an arithmentic operator, the value must be a number
       if (
         ARITHMETIC_OPERATORS.includes(filter.qualifier.operator as (typeof ARITHMETIC_OPERATORS)[number]) &&
@@ -234,6 +299,11 @@ export const ZSegmentFilter = z
     (filter) => {
       const { value, qualifier } = filter;
       const { operator } = qualifier;
+
+      // survey interaction filters carry a structured value validated by their own schema
+      if (filter.root.type === "surveyInteraction") {
+        return true;
+      }
 
       // if the operator is "isSet" or "isNotSet", the value doesn't matter
       if (operator === "isSet" || operator === "isNotSet") {

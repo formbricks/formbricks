@@ -131,6 +131,35 @@ export const getSegments = reactCache(async (workspaceId: string): Promise<TSegm
   }
 });
 
+export interface TSurveyFilterRef {
+  id: string;
+  name: string;
+  status: string;
+}
+
+/**
+ * Minimal survey list for the segment survey-interaction filter picker: id + name + status,
+ * scoped to the workspace. Survey has a direct workspaceId column so no environment/project join
+ * is needed.
+ */
+export const getSurveyRefsForWorkspace = reactCache(
+  async (workspaceId: string): Promise<TSurveyFilterRef[]> => {
+    validateInputs([workspaceId, ZId]);
+    try {
+      return await prisma.survey.findMany({
+        where: { workspaceId },
+        select: { id: true, name: true, status: true },
+        orderBy: { updatedAt: "desc" },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 

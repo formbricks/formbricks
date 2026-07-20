@@ -2210,6 +2210,7 @@ checksums:
     workspace/look/unlock_remove_branding_with_lite_license: 4ad1f6e457297dec10705ce7760580b2
     workspace/segments/add_filter_below: be9b9c51d4d61903e782fb37931d8905
     workspace/segments/add_your_first_filter_to_get_started: 365f9fc1600e2e44e2502e9ad9fde46a
+    workspace/segments/any_survey: 7d0016d308c65b27dcabcaf725bb20a5
     workspace/segments/cannot_delete_segment_used_in_surveys: c103d594711c8a08970dc01787bcc93e
     workspace/segments/clone_and_edit_segment: dce49d8027b5efda6daebaf86533cf7f
     workspace/segments/create_group: 4566e056e5217dc02a383105892fe18c
@@ -2231,9 +2232,15 @@ checksums:
     workspace/segments/no_attributes_yet: 57beecc917dcd598ccdd0ccfb364a960
     workspace/segments/no_filters_yet: d885a68516840e15dd27f1c17d9a8975
     workspace/segments/no_segments_yet: 6307a4163a5bd553bb2aba074d24be9c
+    workspace/segments/number: bce5f14f4f0f190d9e23897b28b1a2e8
     workspace/segments/operator_contains: 06dd606c0a8f81f9a03b414e9ae89440
     workspace/segments/operator_does_not_contain: 854da2bdf10613ce62fb454bab16c58b
     workspace/segments/operator_ends_with: 2bd866369766c6a2ef74bb9fa74b1d7e
+    workspace/segments/operator_have_completed: 9945aa28b4a7724c396a52e3925afd37
+    workspace/segments/operator_have_not_completed: eea52b46f7a99f32a1f6856c9ad2c1ad
+    workspace/segments/operator_have_not_seen: d09cfdd531572edb24f339f841dcce14
+    workspace/segments/operator_have_seen: 330e5259fa18df4f39adf0c11313f5fa
+    workspace/segments/operator_have_started_responding_to: 16bb01bd0389c199c73cb78ee5e0da2d
     workspace/segments/operator_is_after: f9d9296eb9a5a7d168cc4e65a4095a87
     workspace/segments/operator_is_before: 2462480cf4e8d2832b64004fbd463e55
     workspace/segments/operator_is_between: 41ff45044d8a017a8a74f72be57916b8
@@ -2249,6 +2256,11 @@ checksums:
     workspace/segments/operator_title_equals: 73439e2839b8049e68079b1b6f2e3c41
     workspace/segments/operator_title_greater_equal: 556b342cee0ac7055171e41be80f49e4
     workspace/segments/operator_title_greater_than: e06dabbbf3a9c527502c997101edab40
+    workspace/segments/operator_title_have_completed: a48f4fd17e844420e8d01b787dd8e3d1
+    workspace/segments/operator_title_have_not_completed: 1e8e5e53a37cbc36b881a3ceb50786c6
+    workspace/segments/operator_title_have_not_seen: 16aa1bd390805c2fad597b7b721ed691
+    workspace/segments/operator_title_have_seen: 98f9d5d4fb8965690dc60b420a0cc633
+    workspace/segments/operator_title_have_started_responding_to: c7d449a391b0afb2528e5c64045ab55e
     workspace/segments/operator_title_is_after: bd4cf644e442fca330cb483528485e5f
     workspace/segments/operator_title_is_before: a47ce3825c5c7cea7ed7eb8d5505a2d5
     workspace/segments/operator_title_is_between: 5721c877c60f0005dc4ce78d4c0d3fdc
@@ -2265,6 +2277,7 @@ checksums:
     workspace/segments/operator_title_user_is_not_in: 99d576a3611d171947fd88c317aaf5f3
     workspace/segments/operator_user_is_in: 33ecd1bc30f56d97133368f1b244ee4b
     workspace/segments/operator_user_is_not_in: 99d576a3611d171947fd88c317aaf5f3
+    workspace/segments/period: 0b667ede258e73d2d0a9d2db187b2d84
     workspace/segments/person_and_attributes: 507023d577326a6326dd9603dcdc589d
     workspace/segments/phone: b9537ee90fc5b0116942e0af29d926cc
     workspace/segments/please_remove_the_segment_from_these_surveys_in_order_to_delete_it: 1858a8ae40bed3a8c06c3bb518e0b8aa
@@ -2280,8 +2293,17 @@ checksums:
     workspace/segments/segment_updated_successfully: 2eca3ff5c645bdccd16c306d663114a1
     workspace/segments/segment_used_in_other_surveys_make_changes_here: 64a5cb0e02c4868af68db022717a4f95
     workspace/segments/segments_help_you_target_users_with_same_characteristics_easily: b18b75bda13fe408a467dd625611ea06
+    workspace/segments/select_at_least_one_survey: b69861b2304733014a087565ac79ee2d
+    workspace/segments/specific_surveys: 623afb0cc476469640e419c054ee1fe3
+    workspace/segments/survey_interaction: 5a4fb7c1572fca37ad976cdf561f5e07
     workspace/segments/target_audience: ca47151c4f0ddb348e52ec43ce15eb03
     workspace/segments/this_action_resets_all_filters_in_this_survey: a7b342c25f0d3d6060bfdff38ade0682
+    workspace/segments/time_unit_day: cd54048cc134f397cad259e69dda0989
+    workspace/segments/time_unit_days: c95fe8aedde21a0b5653dbd0b3c58b48
+    workspace/segments/time_unit_month: 001abb365f085fae1e0b02d207e7b8ca
+    workspace/segments/time_unit_months: da74749fbe80394fa0f72973d7b0964a
+    workspace/segments/time_unit_week: a220b7dd32511c8c2ae1bb2b8960a228
+    workspace/segments/time_unit_weeks: 545de30df4f44d3f6d1d344af6a10815
     workspace/segments/title_is_required: e9b1d9309edf85645ab15cc90ae0a70f
     workspace/segments/unknown_filter_type: 67d05a804c1ad54434c0a90f47bb0304
     workspace/segments/unlock_segments_description: 5cb5aff50997e6265807a15ed1456be1
@@ -2292,6 +2314,7 @@ checksums:
     workspace/segments/value_must_be_positive: d17ad009f7845a6fbeddeb2aef532e10
     workspace/segments/view_filters: 791cd4bacb11e3eb0ffccee131270561
     workspace/segments/where: 23aecda7d27f26121b057ec7f7327069
+    workspace/segments/within_last: fce1ffc35d359b9f0b04f052646cbc2f
     workspace/settings/api_keys/add_api_key: 1c11117b1d4665ccdeb68530381c6a9d
     workspace/settings/api_keys/add_permission: 4f0481d26a32aef6137ee6f18aaf8e89
     workspace/settings/api_keys/api_keys_description: 42c2d587834d54f124b9541b32ff7133
