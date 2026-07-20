@@ -394,6 +394,37 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.segment.delete).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
+
+    // ENG-1749 sibling: the update path (incl. drafts, skipValidation=true) must not link a
+    // language from another workspace even when the caller is authorized for the survey.
+    test("rejects a language that belongs to another workspace", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            languages: [
+              {
+                language: {
+                  id: "cllangforeign00000000001",
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  code: "de",
+                  alias: null,
+                  workspaceId: "clforeignws0000000000001",
+                },
+                default: true,
+                enabled: true,
+              },
+            ],
+          },
+          true
+        )
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
   });
 });
 
