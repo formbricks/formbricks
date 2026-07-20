@@ -30,7 +30,7 @@ describe("getApiKeyWithPermissions", () => {
         {
           workspaceId: "workspace-1",
           permission: "manage" as const,
-          workspace: { id: "workspace-1", name: "Workspace 1" },
+          workspace: { id: "workspace-1", name: "Workspace 1", organizationId: "org-id" },
         },
       ],
     };
@@ -112,7 +112,7 @@ describe("authenticateRequest", () => {
         {
           workspaceId: "workspace-1",
           permission: "manage" as const,
-          workspace: { id: "workspace-1", name: "Workspace 1" },
+          workspace: { id: "workspace-1", name: "Workspace 1", organizationId: "org-id" },
         },
       ],
     };
