@@ -22,6 +22,7 @@ import {
   getSegment,
   getSegments,
   getSegmentsByAttributeKey,
+  getSurveyWorkspaceIdMap,
   resetSegmentInSurvey,
   selectSegment,
   transformPrismaSegment,
@@ -42,6 +43,7 @@ vi.mock("@formbricks/database", () => ({
     },
     survey: {
       update: vi.fn(),
+      findMany: vi.fn(),
     },
     $transaction: vi.fn((callback) => callback(prisma)), // Mock transaction to execute the callback
   },
@@ -164,6 +166,36 @@ describe("Segment Service Tests", () => {
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("DB error"));
       await expect(getSegments("workspace-id-mock")).rejects.toThrow(Error);
+    });
+  });
+
+  describe("getSurveyWorkspaceIdMap", () => {
+    test("builds an id→workspaceId map, selecting only id and workspaceId", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([
+        { id: "survey1", workspaceId: "ws-a" },
+        { id: "survey2", workspaceId: "ws-b" },
+      ] as any);
+
+      const result = await getSurveyWorkspaceIdMap(["survey1", "survey2"]);
+
+      expect(result).toEqual(
+        new Map([
+          ["survey1", "ws-a"],
+          ["survey2", "ws-b"],
+        ])
+      );
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ["survey1", "survey2"] } },
+        select: { id: true, workspaceId: true },
+      });
+    });
+
+    test("returns an empty map when no surveys match", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([] as any);
+
+      const result = await getSurveyWorkspaceIdMap(["missing"]);
+
+      expect(result.size).toBe(0);
     });
   });
 
