@@ -293,6 +293,11 @@ export const updateSurveyInternal = async (
 
     const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
 
+    // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
+    // segment belongs to this survey's workspace so a caller cannot mutate or delete another
+    // tenant's segment by supplying its id. Mirrors the create path guard.
+    await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
+
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
 
@@ -643,7 +648,7 @@ const assertSurveyLanguagesBelongToWorkspace = (
 
 const assertSurveySegmentBelongsToWorkspace = async (
   workspaceId: string,
-  segment: TSurveyCreateInput["segment"]
+  segment: { id?: string | null } | null | undefined
 ): Promise<void> => {
   if (!segment?.id) {
     return;
