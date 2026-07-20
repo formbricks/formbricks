@@ -184,6 +184,43 @@ export function AdvancedChartBuilder({
       </div>
 
       <AdvancedOptionToggle
+        isChecked={filtersOpen}
+        onToggle={() => {
+          if (filtersOpen) {
+            dispatch({ type: ACTION.SET_FILTERS, payload: [] });
+          } else if (state.filters.length === 0) {
+            const firstField = FEEDBACK_FIELDS.dimensions[0] ?? FEEDBACK_FIELDS.measures[0];
+            dispatch({
+              type: ACTION.SET_FILTERS,
+              payload: [
+                {
+                  id: crypto.randomUUID(),
+                  field: firstField?.id ?? "",
+                  operator: "equals" as const,
+                  values: null,
+                },
+              ],
+            });
+          }
+        }}
+        htmlId="chart-filters-toggle"
+        title={t("workspace.analysis.charts.filter_data")}
+        description={t("workspace.analysis.charts.filters_toggle_description")}
+        customContainerClass="mt-2 px-0"
+        childrenContainerClass="flex-col gap-3 p-4"
+        childBorder>
+        <FiltersPanel
+          hideTitle
+          workspaceId={workspaceId}
+          feedbackDirectoryId={feedbackDirectoryId}
+          filters={state.filters}
+          filterLogic={state.filterLogic}
+          onFiltersChange={(filters) => dispatch({ type: ACTION.SET_FILTERS, payload: filters })}
+          onFilterLogicChange={(logic) => dispatch({ type: ACTION.SET_FILTER_LOGIC, payload: logic })}
+        />
+      </AdvancedOptionToggle>
+
+      <AdvancedOptionToggle
         isChecked={dimensionsOpen}
         onToggle={(checked) => {
           setDimensionsOpen(checked);
@@ -226,43 +263,6 @@ export function AdvancedChartBuilder({
           hideTitle
           timeDimension={state.timeDimension}
           onTimeDimensionChange={(config) => dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: config })}
-        />
-      </AdvancedOptionToggle>
-
-      <AdvancedOptionToggle
-        isChecked={filtersOpen}
-        onToggle={() => {
-          if (filtersOpen) {
-            dispatch({ type: ACTION.SET_FILTERS, payload: [] });
-          } else if (state.filters.length === 0) {
-            const firstField = FEEDBACK_FIELDS.dimensions[0] ?? FEEDBACK_FIELDS.measures[0];
-            dispatch({
-              type: ACTION.SET_FILTERS,
-              payload: [
-                {
-                  id: crypto.randomUUID(),
-                  field: firstField?.id ?? "",
-                  operator: "equals" as const,
-                  values: null,
-                },
-              ],
-            });
-          }
-        }}
-        htmlId="chart-filters-toggle"
-        title={t("workspace.analysis.charts.filter_data")}
-        description={t("workspace.analysis.charts.filters_toggle_description")}
-        customContainerClass="mt-2 px-0"
-        childrenContainerClass="flex-col gap-3 p-4"
-        childBorder>
-        <FiltersPanel
-          hideTitle
-          workspaceId={workspaceId}
-          feedbackDirectoryId={feedbackDirectoryId}
-          filters={state.filters}
-          filterLogic={state.filterLogic}
-          onFiltersChange={(filters) => dispatch({ type: ACTION.SET_FILTERS, payload: filters })}
-          onFilterLogicChange={(logic) => dispatch({ type: ACTION.SET_FILTER_LOGIC, payload: logic })}
         />
       </AdvancedOptionToggle>
     </div>
