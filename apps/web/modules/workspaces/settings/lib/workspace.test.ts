@@ -102,6 +102,14 @@ describe("workspace lib", () => {
       const result = await updateWorkspace("p1", { name: "Workspace 1" });
       expect(result).toEqual({ ...baseWorkspace, id: 123 });
     });
+
+    // ENG-1919: a workspace must not be moved to another organization via update.
+    test("never persists a caller-supplied organizationId", async () => {
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace as any);
+      await updateWorkspace("p1", { name: "Workspace 1", organizationId: "attacker-target-org" });
+      const arg = vi.mocked(prisma.workspace.update).mock.calls[0][0];
+      expect(arg.data).not.toHaveProperty("organizationId");
+    });
   });
 
   describe("createWorkspace", () => {
