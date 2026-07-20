@@ -1,9 +1,8 @@
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
-import { RadioGroupItem } from "@/components/general/radio-group";
+import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
 
 /**
@@ -92,15 +91,24 @@ function PictureSelect({
     onChange(newValue);
   };
 
+  // Single select is a radio group whose selection can trigger auto-progress,
+  // so arrow-key focus moves must not select (see useRovingRadioGroup).
+  const { getRadioProps } = useRovingRadioGroup({
+    values: options.map((option) => option.id),
+    selectedValue: allowMulti ? undefined : (selectedValues as string | undefined),
+    onSelect: handleSingleSelectChange,
+  });
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
-      {/* Headline */}
+      {/* Headline: referenced by the option group via aria-labelledby (a htmlFor here
+          would dangle — no control carries the bare inputId). */}
       <ElementHeader
+        headlineId={`${inputId}-headline`}
         headline={headline}
         description={description}
         required={required}
         requiredLabel={requiredLabel}
-        htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
@@ -109,7 +117,11 @@ function PictureSelect({
       <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
-          <div className="grid grid-cols-2 gap-2">
+          // Native fieldset (group role) named by the headline; m-0/p-0/border-0/w-full
+          // reset the fieldset UA defaults so it lays out like a plain div.
+          <fieldset
+            aria-labelledby={`${inputId}-headline`}
+            className="m-0 grid w-full min-w-0 grid-cols-2 gap-2 border-0 p-0">
             {options.map((option) => {
               const isSelected = (selectedValues as string[]).includes(option.id);
               const optionId = `${inputId}-${option.id}`;
@@ -155,12 +167,16 @@ function PictureSelect({
                 </label>
               );
             })}
-          </div>
+          </fieldset>
         ) : (
-          <RadioGroupPrimitive.Root
-            value={selectedValues as string}
-            onValueChange={handleSingleSelectChange}
-            disabled={disabled}
+          // Native radios instead of a Radix radio group: Radix moves selection with
+          // arrow-key focus, which would trigger auto-progress while a keyboard user
+          // is still browsing the pictures. The roving hook decouples the two.
+          <div
+            role="radiogroup"
+            aria-labelledby={`${inputId}-headline`}
+            aria-required={required}
+            aria-invalid={Boolean(errorMessage)}
             className="grid grid-cols-2 gap-2">
             {options.map((option) => {
               const optionId = `${inputId}-${option.id}`;
@@ -174,6 +190,20 @@ function PictureSelect({
                     "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
                     disabled && "cursor-not-allowed opacity-50"
                   )}>
+                  <input
+                    type="radio"
+                    id={optionId}
+                    name={inputId}
+                    value={option.id}
+                    checked={isSelected}
+                    disabled={disabled}
+                    className="peer sr-only"
+                    aria-label={option.alt ?? `Select ${option.id}`}
+                    onChange={() => {
+                      handleSingleSelectChange(option.id);
+                    }}
+                    {...getRadioProps(option.id)}
+                  />
                   {/* Image container with border when selected */}
                   <div
                     className={cn(
@@ -187,24 +217,24 @@ function PictureSelect({
                       loading="lazy"
                     />
                   </div>
-                  {/* Selection indicator - Radio button for single select */}
-                  <div
-                    className="absolute top-[5%] right-[5%]"
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                    }}>
-                    <RadioGroupItem
-                      value={option.id}
-                      id={optionId}
-                      disabled={disabled}
-                      className="h-4 w-4 bg-white"
-                      aria-label={option.alt ?? `Select ${option.id}`}
+                  {/* Selection indicator dot, painted from the hidden input's state */}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "border-input-border absolute top-[5%] right-[5%] flex size-4 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
+                      isSelected && "border-brand"
+                    )}>
+                    <span
+                      className={cn(
+                        "size-2 rounded-full transition-colors",
+                        isSelected ? "bg-brand" : "bg-transparent"
+                      )}
                     />
-                  </div>
+                  </span>
                 </label>
               );
             })}
-          </RadioGroupPrimitive.Root>
+          </div>
         )}
       </div>
     </div>

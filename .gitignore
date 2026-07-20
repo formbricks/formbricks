@@ -51,6 +51,7 @@ yarn-error.log*
 /playwright/.cache/
 
 # project specific
+.local/
 packages/lib/uploads
 apps/web/public/js
 packages/database/generated
