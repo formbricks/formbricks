@@ -296,6 +296,11 @@ export const updateSurveyInternal = async (
     // tenant's segment by supplying its id. Mirrors the create path guard.
     await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
 
+    // ENG-1749 sibling: the languages block below links languages by language.id. Ensure every
+    // referenced language belongs to this survey's workspace so a caller cannot attach another
+    // tenant's language. Mirrors the create path guard (covers drafts too — runs before validation).
+    assertSurveyLanguagesBelongToWorkspace(currentSurvey.workspaceId, languages);
+
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
     }
@@ -628,7 +633,7 @@ const validateSurveyCreateDataMedia = (
 
 const assertSurveyLanguagesBelongToWorkspace = (
   workspaceId: string,
-  languages: TSurveyCreateInput["languages"]
+  languages: Array<{ language: { id: string; workspaceId: string } }> | null | undefined
 ): void => {
   for (const surveyLanguage of languages ?? []) {
     if (surveyLanguage.language.workspaceId !== workspaceId) {
