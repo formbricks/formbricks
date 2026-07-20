@@ -105,6 +105,25 @@ describe("env", () => {
     expect(env.AI_GOOGLE_CLOUD_LOCATION).toBe("us-central1");
   });
 
+  test("fails to load when the AI provider is invalid", async () => {
+    setTestEnv({
+      AI_PROVIDER: "unsupported-provider",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_PROVIDER");
+  });
+
+  test("fails to load when an AI provider is set without a model", async () => {
+    setTestEnv({
+      AI_PROVIDER: "google",
+      AI_MODEL: undefined,
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_MODEL is required when AI_PROVIDER is set");
+  });
+
   test("fails to load when Google Cloud credentials JSON is invalid", async () => {
     setTestEnv({
       AI_PROVIDER: "google",
@@ -115,6 +134,17 @@ describe("env", () => {
     });
 
     await expect(import("./env")).rejects.toThrow("AI_GOOGLE_CLOUD_CREDENTIALS_JSON");
+  });
+
+  test("fails to load when the Azure base URL is invalid", async () => {
+    setTestEnv({
+      AI_PROVIDER: "azure",
+      AI_MODEL: "gpt-4o-mini",
+      AI_AZURE_API_KEY: "test-api-key",
+      AI_AZURE_BASE_URL: "not-a-url",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_AZURE_BASE_URL");
   });
 
   test("loads OpenAI-compatible AI configuration with the base URL and model", async () => {
