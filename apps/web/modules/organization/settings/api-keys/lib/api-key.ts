@@ -62,6 +62,10 @@ export const getApiKeyWithPermissions = reactCache(
               select: {
                 id: true,
                 name: true,
+                // ENG-1749: needed so the auth layer can drop any workspace permission whose
+                // workspace is outside the key's organization (defense-in-depth for the read path,
+                // which authorizes off the permission list rather than resolveBodyIdsV2).
+                organizationId: true,
               },
             },
           },
