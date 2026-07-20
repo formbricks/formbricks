@@ -43,9 +43,17 @@ export function CardlessSurveyLayout({
     if (isSolidColorBackground && styling.background?.bg) {
       return styling.background.bg;
     }
+    if (styling.background?.bgType === "color") {
+      // Explicit color background without a value renders white (see MediaBackground).
+      return "#ffffff";
+    }
 
-    return "#ffffff";
-  }, [isSolidColorBackground, styling.background?.bg]);
+    // No background configured: the link-survey shell paints its default page
+    // gray, so the fades and the scroll-to-bottom button must match it instead
+    // of floating as white shapes on the gray page. The color itself lives in
+    // the stylesheet (survey-ui globals) so themes/shells can override it.
+    return "var(--fb-page-bg-color)";
+  }, [isSolidColorBackground, styling.background?.bg, styling.background?.bgType]);
 
   const checkScroll = useCallback(() => {
     if (!scrollRef.current) return;

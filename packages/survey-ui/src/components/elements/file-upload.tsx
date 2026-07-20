@@ -190,7 +190,7 @@ function UploadArea({
       )}>
       <Upload className="text-input-text h-6" aria-hidden="true" />
       <span
-        className="text-input-text font-input-weight m-2 [font-size:var(--fb-input-font-size)]"
+        className="text-input-text font-input-weight m-2 text-center [font-size:var(--fb-input-font-size)]"
         id={`${inputId}-label`}>
         {placeholderText}
       </span>

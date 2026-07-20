@@ -20,8 +20,10 @@ test.beforeEach(async ({ page }) => {
   await helper.mockStorageUploads(page);
 });
 
-const firstPictureChoiceAlt = "logo-transparent.png";
-const secondPictureChoiceAlt = "android-chrome-192x192.png";
+// The rendered alt is the human-readable form of the file name (decoded, no
+// extension or separator noise) — see getImageAltFromUrl in @formbricks/surveys.
+const firstPictureChoiceAlt = "logo transparent";
+const secondPictureChoiceAlt = "android chrome 192x192";
 
 const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
