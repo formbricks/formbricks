@@ -8,6 +8,12 @@
 {{- if and $externalBootstrap (not .Values.authzed.externalPostgresqlBootstrap.adminSecretName) -}}
 {{- fail "authzed.externalPostgresqlBootstrap.adminSecretName is required when external bootstrap is enabled" -}}
 {{- end -}}
+{{- if and $bundledBootstrap (not .Values.postgresql.auth.enablePostgresUser) -}}
+{{- fail "postgresql.auth.enablePostgresUser must be true when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- end -}}
+{{- if and $bundledBootstrap (not .Values.postgresql.auth.secretKeys.adminPasswordKey) -}}
+{{- fail "postgresql.auth.secretKeys.adminPasswordKey is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- end -}}
 {{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}
 apiVersion: batch/v1
 kind: Job
@@ -93,6 +99,35 @@ spec:
           args:
             - |
               if [ -n "${ADMIN_DATABASE_URL:-}" ]; then
+                case "$ADMIN_DATABASE_URL" in
+                  *\?*) admin_database_query="${ADMIN_DATABASE_URL#*\?}" ;;
+                  *)
+                    echo "ADMIN_DATABASE_URL must explicitly enable TLS with sslmode=require, verify-ca, or verify-full" >&2
+                    exit 1
+                    ;;
+                esac
+
+                sslmode=""
+                remaining_query="$admin_database_query"
+                while [ -n "$remaining_query" ]; do
+                  parameter="${remaining_query%%&*}"
+                  if [ "$remaining_query" = "$parameter" ]; then
+                    remaining_query=""
+                  else
+                    remaining_query="${remaining_query#*&}"
+                  fi
+                  case "$parameter" in
+                    sslmode=*) sslmode="${parameter#sslmode=}" ;;
+                  esac
+                done
+
+                case "$sslmode" in
+                  require|verify-ca|verify-full) ;;
+                  *)
+                    echo "ADMIN_DATABASE_URL must explicitly enable TLS with sslmode=require, verify-ca, or verify-full" >&2
+                    exit 1
+                    ;;
+                esac
                 admin_database_url="$ADMIN_DATABASE_URL"
               else
                 admin_database_url=postgres

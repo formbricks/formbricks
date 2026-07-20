@@ -611,6 +611,7 @@ authzed:
 
   # Cloud installations can bootstrap a dedicated database on an existing
   # PostgreSQL server. The admin Secret is read only by the short-lived Job.
+  # Its URL must explicitly set sslmode=require, verify-ca, or verify-full.
   externalPostgresqlBootstrap:
     enabled: false
     image: postgres:17-alpine
@@ -1324,6 +1325,9 @@ postgresql:
     repository: pgvector/pgvector
     tag: pg17
   auth:
+    # The bundled AuthZed bootstrap creates a dedicated role and database and
+    # therefore requires the PostgreSQL administrator account.
+    enablePostgresUser: true
     username: formbricks
     database: formbricks
     existingSecret: "formbricks-app-secrets"
@@ -1336,6 +1340,16 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
+    # The upstream nano preset leaves too little memory headroom when the
+    # bundled database also serves SpiceDB. Helm cannot condition dependency
+    # values on authzed.enabled, so retain the live-validated safe baseline.
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
     podSecurityContext:
       enabled: true
       fsGroup: 1001

@@ -64,8 +64,8 @@ including offline `helm template` and Argo CD manifest generation, must provide 
 `authzed.auth.existingSecret` and `authzed.datastore.existingSecret`; otherwise generated values are not stable
 between renders. The operator runs datastore migrations before rolling out SpiceDB.
 
-The chart preserves the bundled PostgreSQL dependency's existing resource baseline when AuthZed is disabled.
-When PostgreSQL also serves bundled SpiceDB, size it for both workloads. A reasonable starting override is:
+The bundled PostgreSQL dependency uses the following resource baseline, which was validated while PostgreSQL
+also served SpiceDB:
 
 ```yaml
 postgresql:
@@ -79,8 +79,10 @@ postgresql:
         memory: 1Gi
 ```
 
-Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the expected authorization
-traffic and the other workloads using the bundled database.
+Helm cannot condition values passed to the PostgreSQL dependency on the sibling `authzed.enabled` value, so the
+safe database baseline remains in effect when AuthZed is disabled. Override `authzed.cluster.resources` and
+`postgresql.primary.resources` to match the expected authorization traffic and the other workloads using the
+bundled database. Installations that keep AuthZed disabled may explicitly choose smaller PostgreSQL resources.
 
 Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
 namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
@@ -95,6 +97,29 @@ stringData:
   datastore_uri: postgresql://spicedb:<password>@postgres.example:5432/spicedb?sslmode=require
   preshared_key: <strong-random-token>
 ```
+
+Alternatively, the chart can create the dedicated database and login with a short-lived bootstrap Job. Put a
+PostgreSQL administrator URL in a separate Secret and enable the external bootstrap:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: formbricks-postgresql-admin
+stringData:
+  DATABASE_URL: postgresql://postgres:<admin-password>@postgres.example:5432/postgres?sslmode=require
+```
+
+```yaml
+authzed:
+  externalPostgresqlBootstrap:
+    enabled: true
+    adminSecretName: formbricks-postgresql-admin
+```
+
+The administrator URL must explicitly set `sslmode=require`, `sslmode=verify-ca`, or `sslmode=verify-full`.
+The bootstrap Job validates the TLS mode without logging the URL and passes the URL through unchanged, so other
+connection parameters and certificate settings are preserved.
 
 Then reference it from the release:
 
@@ -486,6 +511,7 @@ JSON that can call Vertex AI.
 | pdb.enabled                                                        | bool   | `true`                                                                      |                                                           |
 | pdb.minAvailable                                                   | int    | `1`                                                                         |                                                           |
 | postgresql.auth.database                                           | string | `"formbricks"`                                                              |                                                           |
+| postgresql.auth.enablePostgresUser                                 | bool   | `true`                                                                       | Required by the bundled AuthZed database bootstrap.       |
 | postgresql.auth.existingSecret                                     | string | `"formbricks-app-secrets"`                                                  |                                                           |
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |
@@ -505,6 +531,10 @@ JSON that can call Vertex AI.
 | postgresql.primary.podSecurityContext.enabled                      | bool   | `true`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.fsGroup                      | int    | `1001`                                                                      |                                                           |
 | postgresql.primary.podSecurityContext.runAsUser                    | int    | `1001`                                                                      |                                                           |
+| postgresql.primary.resources.limits.cpu                            | string | `"1"`                                                                       |                                                           |
+| postgresql.primary.resources.limits.memory                         | string | `"1Gi"`                                                                     |                                                           |
+| postgresql.primary.resources.requests.cpu                          | string | `"250m"`                                                                    |                                                           |
+| postgresql.primary.resources.requests.memory                       | string | `"512Mi"`                                                                   |                                                           |
 | rbac.enabled                                                       | bool   | `false`                                                                     |                                                           |
 | rbac.serviceAccount.additionalLabels                               | object | `{}`                                                                        |                                                           |
 | rbac.serviceAccount.annotations                                    | object | `{}`                                                                        |                                                           |
