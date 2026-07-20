@@ -129,8 +129,10 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
             // Normalize the IdP-supplied display name to a form ZUserName accepts (ENG-1743): external
             // provider names are untrusted and may carry punctuation ("J. Smith", "Smith & Co") that
             // would otherwise persist raw and later break a profile save. Fall back to the email
-            // local-part when the IdP gave no name, or normalization leaves nothing (e.g. only emoji).
-            name: (user.name && normalizeUserName(user.name)) || deriveNameFromEmail(user.email),
+            // local-part, then to a constant, so the stored name is always a valid, non-empty
+            // ZUserName — even for degenerate input (emoji-only name + symbol-only email local-part),
+            // which would otherwise re-trigger the ENG-1743 error on the user's first profile save.
+            name: (user.name && normalizeUserName(user.name)) || deriveNameFromEmail(user.email) || "User",
           },
         };
       },
@@ -177,7 +179,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
 
 /**
  * Request hook (`hooks.before`) that re-checks the SSO license on every SSO callback — parity with
- * `handleSsoCallback`'s runtime checks (sso-handlers.ts:492-523). Provider registration is gated by
+ * the legacy NextAuth SSO callback's runtime license checks. Provider registration is gated by
  * `ENTERPRISE_LICENSE_KEY` (broad); this verifies the specific `sso`/`saml` feature flags on every
  * callback. It runs for ALL SSO sign-ins (including existing users, who skip `user.create` and so
  * aren't seen by the databaseHooks gate) and catches a license that changes at runtime. Blocks with

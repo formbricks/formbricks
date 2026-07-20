@@ -137,7 +137,8 @@ export const gateSsoProvisioning = async ({
 };
 
 /**
- * Provisioning WRITES for a newly created SSO user — mirrors provisionNewSsoUser:404-452. Called from
+ * Provisioning WRITES for a newly created SSO user — mirrors the legacy NextAuth SSO provisioning
+ * writes. Called from
  * `databaseHooks.user.create.after` (post-commit), so it CANNOT share Better Auth's user/account
  * transaction (design doc §13). It runs its own transaction and is idempotent + best-effort:
  * `createMembership`/`createDefaultTeamMembership` upsert, and a failure is retried once then logged

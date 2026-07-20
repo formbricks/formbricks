@@ -181,6 +181,16 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     expect(result).toMatchObject({ data: { name: "jane doe" } });
   });
 
+  // ENG-1743 edge: if BOTH the provider name and the email local-part normalize to empty (a degenerate
+  // service/machine account), fall back to a constant so the stored name is a valid non-empty
+  // ZUserName — otherwise "" would pass Better Auth's create but throw on the user's first profile save.
+  test("falls back to a constant when the provider name and email local-part both normalize to empty", async () => {
+    const result = await runWithSsoRequestContext(() =>
+      before({ id: "u1", email: "🎉@example.com", name: "🎉🎉" } as never, callbackCtx as never)
+    );
+    expect(result).toMatchObject({ data: { name: "User" } });
+  });
+
   test("leaves email/password sign-ups untouched (gate not run)", async () => {
     const result = await before({ id: "u1", email: "a@b.com" } as never, { path: "/sign-up/email" } as never);
     expect(result).toBeUndefined();
