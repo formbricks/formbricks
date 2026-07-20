@@ -1,0 +1,276 @@
+use typechecking
+
+/**
+ * Canonical Formbricks authorization schema.
+ *
+ * This schema is a technical migration of the CURRENT Formbricks authorization
+ * system to SpiceDB. It models exactly what the application enforces today and
+ * deliberately contains no future capabilities: a principal must never gain or
+ * lose access by moving a check from the application code to this schema.
+ *
+ * Every permission documents the application rule it mirrors. The semantics are
+ * asserted by `authzed/schema-validation.yaml`; run `pnpm authzed:validate`.
+ */
+
+/** A human principal, identified by the Prisma `User.id`. */
+definition user {}
+
+/**
+ * An API key principal, identified by the Prisma `ApiKey.id`.
+ *
+ * API keys are organization-owned machine principals. They receive product
+ * access exclusively through explicit per-workspace grants (`ApiKeyWorkspace`)
+ * and organization-level access-control rights (`ApiKey.organizationAccess`).
+ */
+definition api_key {
+    /** The organization that owns this API key (`ApiKey.organizationId`). */
+    relation organization: organization
+
+    /** Who may view this API key: organization owners and managers. */
+    permission read: user = organization->manage_api_keys
+
+    /** Who may update or delete this API key: organization owners and managers. */
+    permission manage: user = organization->manage_api_keys
+}
+
+/**
+ * The billing and membership boundary, identified by the Prisma
+ * `Organization.id`. Roles mirror `Membership.role` (exactly one per user).
+ */
+definition organization {
+    /** Organization owner (`Membership.role = owner`). Full control, including organization update/delete. */
+    relation owner: user
+
+    /**
+     * Organization manager (`Membership.role = manager`). Full product access and
+     * member/billing/API-key management, but no organization update/delete.
+     */
+    relation manager: user
+
+    /**
+     * Organization member (`Membership.role = member`). No product access on its
+     * own; workspace access comes only through team membership.
+     */
+    relation member: user
+
+    /**
+     * Billing-only role (`Membership.role = billing`, Formbricks Cloud only).
+     * Sees billing surfaces exclusively; excluded from all product data.
+     */
+    relation billing: user
+
+    /** API key with `organizationAccess.accessControl.read` — may read org-level access-control resources. */
+    relation api_key_reader: api_key
+
+    /** API key with `organizationAccess.accessControl.write` — may manage org-level access-control resources. */
+    relation api_key_writer: api_key
+
+    /** Who can see the organization exists (any membership role or org-scoped API key). */
+    permission read: user | api_key = owner + manager + member + billing + api_key_reader + api_key_writer
+
+    /**
+     * Who can update or delete the organization record itself. Owner only —
+     * mirrors `verifyUserRoleAccess` (managers lack org create/update/delete).
+     */
+    permission write: user = owner
+
+    /**
+     * Full product access across all of the organization's workspaces. This is
+     * the arrow target that grants owners and managers unrestricted access to
+     * every workspace, survey, response, and dashboard.
+     */
+    permission manage: user = owner + manager
+
+    /** Who can access billing: owners, managers, and the billing role (`verifyUserRoleAccess.hasBillingAccess`). */
+    permission manage_billing: user = owner + manager + billing
+
+    /**
+     * Who can read organization access-control resources such as teams and
+     * workspace-team assignments. The management API accepts
+     * `accessControl.read` and `accessControl.write` keys for these GET routes.
+     */
+    permission read_access: user | api_key = owner + manager + member + api_key_reader + api_key_writer
+
+    /**
+     * Who can manage members, invites, teams, and workspace-team access:
+     * owners and managers (`USER_MANAGEMENT_MINIMUM_ROLE`, team actions), plus
+     * API keys holding `accessControl.write` (org access-control endpoints).
+     * Finer rules (managers may only assign the `member` role) stay in the app.
+     */
+    permission manage_access: user | api_key = owner + manager + api_key_writer
+
+    /** Who can create, update, or delete API keys: owners and managers (api-keys settings actions). */
+    permission manage_api_keys: user = owner + manager
+}
+
+/**
+ * A group of users inside one organization, identified by the Prisma `Team.id`.
+ * Teams are the only mechanism that grants users access to workspaces.
+ */
+definition team {
+    /** The organization this team belongs to (`Team.organizationId`). */
+    relation organization: organization
+
+    /** Team admin (`TeamUser.role = admin`) — may manage the team itself. */
+    relation admin: user
+
+    /** Team contributor (`TeamUser.role = contributor`). */
+    relation contributor: user
+
+    /** All members of the team; carries workspace access granted to the team. */
+    permission member: user = admin + contributor
+
+    /**
+     * Who can view the team: its members, organization owners/managers, and API
+     * keys with either read or write organization access-control permission.
+     */
+    permission read: user | api_key = member + organization->read_access
+
+    /** Who can manage the team (rename, membership): team admins plus organization access-control writers. */
+    permission manage: user | api_key = admin + organization->manage_access
+
+    /**
+     * Who can delete the team. Unlike other team mutations, deletion is limited
+     * to organization owners/managers and `accessControl.write` API keys.
+     */
+    permission delete: user | api_key = organization->manage_access
+}
+
+/**
+ * The product container (surveys, responses, dashboards, contacts …),
+ * identified by the Prisma `Workspace.id`.
+ *
+ * Users are never granted workspace access directly — only via teams
+ * (`WorkspaceTeam`) or their organization role (owner/manager). API keys are
+ * the only principals with direct grants (`ApiKeyWorkspace.permission`).
+ */
+definition workspace {
+    /** The owning organization (`Workspace.organizationId`). */
+    relation organization: organization
+
+    /** API key with `ApiKeyWorkspace.permission = read` — GET-level API access. */
+    relation reader: api_key
+
+    /** API key with `ApiKeyWorkspace.permission = write` — POST/PUT/PATCH-level API access. */
+    relation writer: api_key
+
+    /** API key with `ApiKeyWorkspace.permission = manage` — full API access including DELETE. */
+    relation manager: api_key
+
+    /** Teams granted `WorkspaceTeam.permission = read` (read-only workspace access). */
+    relation reader_team: team#member
+
+    /** Teams granted `WorkspaceTeam.permission = readWrite` (create/edit surveys). */
+    relation writer_team: team#member
+
+    /** Teams granted `WorkspaceTeam.permission = manage` (full workspace control). */
+    relation manager_team: team#member
+
+    /**
+     * Full workspace control: DELETE-level operations, workspace settings, and
+     * team-access management. Held by manage-level API keys and teams, and by
+     * organization owners/managers (`checkAuthorizationUpdated` org-role branch).
+     */
+    permission manage: user | api_key = manager + manager_team + organization->manage
+
+    /** Create and edit content in the workspace (readWrite level and above). */
+    permission write: user | api_key = writer + writer_team + manage
+
+    /** View the workspace and its content (read level and above). */
+    permission read: user | api_key = reader + reader_team + write
+
+    /**
+     * Manage who has access to the workspace (workspace team assignments).
+     * Requires manage today — mirrors the workspace access-management gate.
+     */
+    permission share: user | api_key = manage
+}
+
+/**
+ * A survey, identified by the Prisma `Survey.id`. Surveys carry no access
+ * control of their own today (`resultShareKey` was removed): every permission
+ * derives from the owning workspace.
+ *
+ * `response_read` and `response_export` currently both equal workspace read —
+ * the export gate (`getResponsesDownloadUrlAction`) is identical to the
+ * response-view gate. They are separate permissions so response access keeps a
+ * stable vocabulary; splitting them later is a schema change that the
+ * assertions in `schema-validation.yaml` will surface.
+ */
+definition survey {
+    /** The owning workspace (`Survey.workspaceId`). */
+    relation workspace: workspace
+
+    /** View the survey. */
+    permission read: user | api_key = workspace->read
+
+    /** Create or edit the survey (workspace readWrite level). */
+    permission write: user | api_key = workspace->write
+
+    /**
+     * Manage-only survey operations, including language configuration and
+     * DELETE through the legacy management APIs.
+     */
+    permission manage: user | api_key = workspace->manage
+
+    /**
+     * Delete through the Formbricks web application and V3 API. Both currently
+     * use the workspace readWrite gate rather than the manage gate.
+     */
+    permission delete: user | api_key = workspace->write
+
+    /** Publish the survey / change its status — part of survey editing today. */
+    permission publish: user | api_key = workspace->write
+
+    /** View the survey's responses and summaries. */
+    permission response_read: user | api_key = workspace->read
+
+    /** Download/export the survey's responses (CSV/XLSX) — same gate as viewing today. */
+    permission response_export: user | api_key = workspace->read
+}
+
+/**
+ * An analysis dashboard, identified by the Prisma `Dashboard.id`. Dashboards
+ * carry no access control of their own today: access derives from the owning
+ * workspace (`checkWorkspaceAccess`).
+ */
+definition dashboard {
+    /** The owning workspace (`Dashboard.workspaceId`). */
+    relation workspace: workspace
+
+    /** View the dashboard and its widgets. */
+    permission read: user | api_key = workspace->read
+
+    /**
+     * Create, update, duplicate, or delete the dashboard and mutate its widgets.
+     * Every dashboard mutation currently uses the workspace readWrite gate.
+     */
+    permission write: user | api_key = workspace->write
+}
+
+/**
+ * A survey response, identified by the Prisma `Response.id`. Responses belong
+ * to a survey and inherit all access from it.
+ */
+definition response {
+    /** The survey this response belongs to (`Response.surveyId`). */
+    relation survey: survey
+
+    /** View the response. */
+    permission read: user | api_key = survey->response_read
+
+    /**
+     * Update a response and perform web-session mutations such as tagging or
+     * deleting it. These operations currently use the workspace readWrite gate.
+     */
+    permission write: user | api_key = survey->write
+
+    /**
+     * Delete a response through the legacy management APIs, whose DELETE method
+     * mapping currently requires workspace manage permission.
+     */
+    permission manage: user | api_key = survey->manage
+
+    /** Export the response. */
+    permission export: user | api_key = survey->response_export
+}
