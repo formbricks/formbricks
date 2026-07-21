@@ -370,6 +370,32 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].value_text).toBe("single-choice");
     });
 
+    // ENG-1939: stored survey.blocks JSON is not re-validated on this path, so a choice element
+    // can arrive with choices absent even though the schema requires min(2). A single string
+    // answer routes through normalizeElementValue; with no choices and no otherOptionPlaceholder
+    // it must fall through, not throw on choices.some(...). Covers both types because a
+    // multipleChoiceMulti with a non-array value falls through the same as multipleChoiceSingle.
+    test.each(["multipleChoiceSingle", "multipleChoiceMulti"] as const)(
+      "does not crash when a %s element has no choices array (unmatched free-text answer)",
+      (type) => {
+        const surveyNoChoices = {
+          ...mockSurvey,
+          blocks: [{ elements: [{ id: "el-choice", type, headline: { default: "Pick one" } }] }],
+        } as unknown as TSurvey;
+        const response = {
+          ...mockResponse,
+          data: { "el-choice": "free text answer" },
+        } as unknown as TResponse;
+        const mappings = [createMapping({ elementId: "el-choice", hubFieldType: "categorical" })];
+
+        const result = transformResponseToFeedbackRecords(response, surveyNoChoices, mappings, mockTenantId);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].value_text).toBe("free text answer");
+        expect(result[0].value_id).toBeUndefined();
+      }
+    );
+
     test("JSON-stringifies object value for categorical field (matrix/ranking responses)", () => {
       const response = {
         ...mockResponse,

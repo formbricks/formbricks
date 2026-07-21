@@ -324,12 +324,16 @@ const normalizeElementValue = (
       element.type === TSurveyElementTypeEnum.MultipleChoiceMulti);
   if (!isChoiceElement) return { value };
 
-  const normalized = normalizeChoiceValue(element.choices, value, lookupLanguage);
+  // Elements come from stored survey.blocks JSON that is not re-validated here, so choices may be
+  // absent at runtime even though the schema requires it (min(2)). Fall back like the siblings
+  // (normalizeChoiceValue, expandMultiChoiceToRecords) instead of dereferencing it raw.
+  const choices = element.choices ?? [];
+  const normalized = normalizeChoiceValue(choices, value, lookupLanguage);
 
   if (
     !normalized.valueId &&
     typeof value === "string" &&
-    (element.otherOptionPlaceholder !== undefined || element.choices.some((c) => c.id === "other"))
+    (element.otherOptionPlaceholder !== undefined || choices.some((c) => c.id === "other"))
   ) {
     normalized.valueId = "other";
   }
