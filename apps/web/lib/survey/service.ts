@@ -12,6 +12,7 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -388,11 +389,7 @@ export const updateSurveyInternal = async (
         // another tenant's survey targeting). Done outside the try below, which masks errors as a
         // generic Error and would otherwise hide this rejection.
         if (segment.surveys && segment.surveys.length > 0) {
-          const connectedSurveys = await prisma.survey.findMany({
-            where: { id: { in: segment.surveys } },
-            select: { id: true, workspaceId: true },
-          });
-          const workspaceBySurveyId = new Map(connectedSurveys.map((s) => [s.id, s.workspaceId]));
+          const workspaceBySurveyId = await getSurveyWorkspaceIdMap(segment.surveys);
           if (
             !segment.surveys.every(
               (surveyId) => workspaceBySurveyId.get(surveyId) === currentSurvey.workspaceId
