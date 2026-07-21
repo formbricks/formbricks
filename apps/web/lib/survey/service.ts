@@ -283,14 +283,28 @@ export const updateSurveyInternal = async (
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.workspaceId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
+    // ENG-1749: workspaceId and id are the survey's tenant anchors. Always resolve the workspace from
+    // the existing survey (never the client payload), and strip workspaceId/id from the update below,
+    // so an authorized editor cannot re-point their own survey into another workspace/organization.
+    const actionClasses = await getActionClasses(currentSurvey.workspaceId);
+
+    const {
+      triggers,
+      segment,
+      questions,
+      languages,
+      type,
+      followUps,
+      workspaceId: _workspaceId,
+      id: _id,
+      ...surveyData
+    } = updatedSurvey;
 
     // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
     // segment belongs to this survey's workspace so a caller cannot mutate or delete another
@@ -450,7 +464,7 @@ export const updateSurveyInternal = async (
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
-        const workspaceId = updatedSurvey.workspaceId;
+        const workspaceId = currentSurvey.workspaceId;
         await prisma.survey.update({
           where: {
             id: surveyId,
