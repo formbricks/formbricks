@@ -113,11 +113,10 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
               <Image
                 src={background?.bg}
                 alt="Background image"
-                layout="fill"
-                objectFit="cover"
-                style={{ filter: `${filterStyle}` }}
+                fill
+                style={{ objectFit: "cover", filter: `${filterStyle}` }}
                 unoptimized={isExternalImageSrc(background?.bg)}
-                onLoadingComplete={() => setBackgroundLoaded(true)}
+                onLoad={() => setBackgroundLoaded(true)}
               />
               {authorDetailsForUnsplash.authorName && (
                 <div className="absolute right-6 bottom-4 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
@@ -149,11 +148,10 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
             <Image
               src={background?.bg}
               alt="Background image"
-              layout="fill"
-              objectFit="cover"
-              style={{ filter: `${filterStyle}` }}
+              fill
+              style={{ objectFit: "cover", filter: `${filterStyle}` }}
               unoptimized={isExternalImageSrc(background?.bg)}
-              onLoadingComplete={() => setBackgroundLoaded(true)}
+              onLoad={() => setBackgroundLoaded(true)}
             />
           </div>
         );
