@@ -167,6 +167,11 @@ export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const TELEMETRY_DISABLED = env.TELEMETRY_DISABLED === "1";
 
+// Opt-out for the Have-I-Been-Pwned breach check (ENG-1587). Set to "1" on air-gapped /
+// closed-network deployments that can't reach api.pwnedpasswords.com and want no outbound
+// attempt at all. When unset the check is active but fails open on network errors.
+export const PASSWORD_HIBP_CHECK_DISABLED = env.PASSWORD_HIBP_CHECK_DISABLED === "1";
+
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
 

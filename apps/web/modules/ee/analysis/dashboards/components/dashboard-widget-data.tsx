@@ -8,12 +8,14 @@ import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/anal
 import type { TDashboardWidgetError } from "../lib/widget-errors";
 
 interface DashboardWidgetDataProps {
-  dataPromise: Promise<{ data: TChartDataRow[] } | { error: TDashboardWidgetError }>;
+  dataPromise: Promise<
+    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
+    | { error: TDashboardWidgetError }
+  >;
   chartType: TChartType;
-  query: TChartQuery;
 }
 
-export function DashboardWidgetData({ dataPromise, chartType, query }: Readonly<DashboardWidgetDataProps>) {
+export function DashboardWidgetData({ dataPromise, chartType }: Readonly<DashboardWidgetDataProps>) {
   const { t } = useTranslation();
   const result = use(dataPromise);
 
@@ -25,5 +27,14 @@ export function DashboardWidgetData({ dataPromise, chartType, query }: Readonly<
     );
   }
 
-  return <ChartRenderer chartType={chartType} data={result.data} query={query} />;
+  // Use the resolved query + option labels from the promise (not the raw saved query): the label
+  // lookup only fires when the x-axis dimension is the effective value_id dimension.
+  return (
+    <ChartRenderer
+      chartType={chartType}
+      data={result.data}
+      query={result.query}
+      optionLabels={result.optionLabels}
+    />
+  );
 }

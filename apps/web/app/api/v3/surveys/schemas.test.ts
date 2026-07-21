@@ -405,43 +405,55 @@ describe("ZV3CreateSurveyBody", () => {
     }
   });
 
-  test("requires displayPercentage when displayOption is displaySome", () => {
+  test("accepts displaySome with displayLimit (show at most N times)", () => {
     const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "app",
+      distribution: { displayOption: "displaySome", displayLimit: 3 },
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.distribution).toMatchObject({ displayOption: "displaySome", displayLimit: 3 });
+    }
+  });
+
+  test("requires displayLimit >= 1 when displayOption is displaySome", () => {
+    const noLimit = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
       type: "app",
       distribution: { displayOption: "displaySome" },
     });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+    expect(noLimit.success).toBe(false);
+    if (!noLimit.success) {
+      expect(formatV3ZodInvalidParams(noLimit.error, "body")).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            name: "distribution.displayPercentage",
+            name: "distribution.displayLimit",
             code: "missing_required_field",
           }),
         ])
       );
     }
+
+    const zeroLimit = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "app",
+      distribution: { displayOption: "displaySome", displayLimit: 0 },
+    });
+    expect(zeroLimit.success).toBe(false);
   });
 
-  test("rejects displayPercentage when displayOption is not displaySome", () => {
+  test("accepts displayPercentage with any displayOption (independent throttle)", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
       type: "app",
       distribution: { displayOption: "displayOnce", displayPercentage: 50 },
     });
 
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: "distribution.displayPercentage",
-            code: "unsupported_field",
-          }),
-        ])
-      );
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.distribution).toMatchObject({ displayOption: "displayOnce", displayPercentage: 50 });
     }
   });
 

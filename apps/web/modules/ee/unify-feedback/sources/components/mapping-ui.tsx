@@ -17,6 +17,8 @@ interface MappingUIProps {
   feedbackSourceType: TFeedbackSourceType;
   confidenceByTargetId?: Record<string, TMappingConfidence>;
   sampleRow?: Record<string, string>;
+  /** When true, all mapping controls render read-only (e.g. for viewers). */
+  disabled?: boolean;
 }
 
 const toAutoMapState = (confidence?: TMappingConfidence): TAutoMapState | undefined => {
@@ -31,6 +33,7 @@ export function MappingUI({
   feedbackSourceType,
   confidenceByTargetId,
   sampleRow,
+  disabled = false,
 }: MappingUIProps) {
   switch (feedbackSourceType) {
     case "csv":
@@ -41,6 +44,7 @@ export function MappingUI({
           onMappingsChange={onMappingsChange}
           confidenceByTargetId={confidenceByTargetId}
           sampleRow={sampleRow}
+          disabled={disabled}
         />
       );
     default:
@@ -54,6 +58,7 @@ interface CsvMappingFormProps {
   onMappingsChange: (mappings: TFieldMapping[]) => void;
   confidenceByTargetId?: Record<string, TMappingConfidence>;
   sampleRow?: Record<string, string>;
+  disabled?: boolean;
 }
 
 const CsvMappingForm = ({
@@ -62,6 +67,7 @@ const CsvMappingForm = ({
   onMappingsChange,
   confidenceByTargetId,
   sampleRow,
+  disabled = false,
 }: CsvMappingFormProps) => {
   const { t } = useTranslation();
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -113,6 +119,7 @@ const CsvMappingForm = ({
         autoMapState={autoMapState}
         autoMapSourceColumn={sourceColumnName}
         preview={isResponseValue ? responseValuePreview : undefined}
+        disabled={disabled}
       />
     );
   };

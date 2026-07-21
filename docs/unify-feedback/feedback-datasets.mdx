@@ -1,0 +1,31 @@
+---
+title: "Feedback Datasets"
+description: "Org-level containers that group related Feedback Records and their sources."
+icon: "folder-tree"
+---
+
+A **Feedback Dataset** is the top-level container for feedback inside an organization. Every Feedback Record belongs to exactly one dataset, and every source writes into a single dataset.
+
+## When to create a new dataset
+
+Create one dataset per logically separate group of feedback. Common patterns:
+
+- **By product line** (e.g. "Mobile devices", "Web apps")
+- **By stakeholder group** (e.g. "Customers", "Employees")
+- **By region** (e.g. "Europe", "North America")
+
+## Workspace access
+
+Datasets live at the **organization** level but are exposed to **workspaces** through an access list. Each workspace can **only access one dataset.**
+
+Manage dataset access from **Settings → Organization → Feedback Datasets**:
+
+- Create new datasets
+- Rename or archive datasets
+- Add or remove workspace access
+
+Only **Owners** and **Managers** can manage datasets. Workspace members see the datasets their workspace has access to inside the Unify section.
+
+## Archiving
+
+Archiving a dataset hides it from default views but does not delete its records. Use it for one-off programs that have ended.

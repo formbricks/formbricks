@@ -28,7 +28,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
@@ -85,6 +84,7 @@ interface FeedbackRecordRowProps {
   contactId?: string;
   locale: string;
   t: TFunction;
+  canWrite: boolean;
   isSelected: boolean;
   onSelectChange: (checked: boolean) => void;
   onClick: () => void;
@@ -107,7 +107,6 @@ export const FeedbackRecordsTable = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("edit");
   const [drawerRecordId, setDrawerRecordId] = useState<string | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [csvImportSource, setCsvImportSource] = useState<{
@@ -337,15 +336,8 @@ export const FeedbackRecordsTable = ({
     }
   };
 
-  const openEditDrawer = (recordId: string) => {
-    setDrawerMode("edit");
+  const openViewDrawer = (recordId: string) => {
     setDrawerRecordId(recordId);
-    setIsDrawerOpen(true);
-  };
-
-  const openCreateDrawer = () => {
-    setDrawerMode("create");
-    setDrawerRecordId(undefined);
     setIsDrawerOpen(true);
   };
 
@@ -370,38 +362,28 @@ export const FeedbackRecordsTable = ({
             onBulkDelete={() => setIsBulkDeleteDialogOpen(true)}
           />
           <div className="flex items-center gap-2">
-            {canWrite &&
-              (hasCsvSources ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="secondary">
-                      <PlusIcon className="size-4" />
-                      {t("workspace.unify.add_feedback_record")}
-                      <ChevronDownIcon className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={openCreateDrawer}>
-                      {t("workspace.unify.add_feedback_record")}
+            {canWrite && hasCsvSources && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="secondary">
+                    <PlusIcon className="size-4" />
+                    {t("workspace.unify.import_feedback")}
+                    <ChevronDownIcon className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {csvSources.map((source) => (
+                    <DropdownMenuItem
+                      key={source.id}
+                      onClick={() => {
+                        setCsvImportSource(source);
+                      }}>
+                      {t("workspace.unify.import_via_source_name", { sourceName: source.name })}
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {csvSources.map((source) => (
-                      <DropdownMenuItem
-                        key={source.id}
-                        onClick={() => {
-                          setCsvImportSource(source);
-                        }}>
-                        {t("workspace.unify.import_via_source_name", { sourceName: source.name })}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button size="sm" variant="secondary" onClick={openCreateDrawer}>
-                  <PlusIcon className="size-4" />
-                  {t("workspace.unify.add_feedback_record")}
-                </Button>
-              ))}
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button size="sm" asChild>
               <Link href={`/workspaces/${workspaceId}/unify/sources`}>
                 {t("workspace.unify.manage_feedback_sources")}
@@ -422,7 +404,7 @@ export const FeedbackRecordsTable = ({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1040px] table-fixed">
               <colgroup>
-                <col className="w-10" />
+                {canWrite && <col className="w-10" />}
                 <col className="w-40" />
                 <col className="w-40" />
                 <col className="w-40" />
@@ -433,13 +415,15 @@ export const FeedbackRecordsTable = ({
               </colgroup>
               <thead>
                 <tr className="border-b border-slate-200 text-left text-sm text-slate-900 [&>th]:font-semibold">
-                  <th className="w-10 px-4 py-3">
-                    <Checkbox
-                      aria-label={t("common.select_all")}
-                      checked={headerCheckboxChecked}
-                      onCheckedChange={(checked) => toggleAllOnPage(checked === true)}
-                    />
-                  </th>
+                  {canWrite && (
+                    <th className="w-10 px-4 py-3">
+                      <Checkbox
+                        aria-label={t("common.select_all")}
+                        checked={headerCheckboxChecked}
+                        onCheckedChange={(checked) => toggleAllOnPage(checked === true)}
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.collected_at")}</th>
                   <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.source_type")}</th>
                   <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.source_name")}</th>
@@ -452,7 +436,7 @@ export const FeedbackRecordsTable = ({
               {isEmpty ? (
                 <tbody>
                   <tr>
-                    <td colSpan={8}>
+                    <td colSpan={canWrite ? 8 : 7}>
                       <div className="flex h-32 items-center justify-center">
                         <p className="text-sm text-slate-500">{t("workspace.unify.no_feedback_records")}</p>
                       </div>
@@ -469,9 +453,10 @@ export const FeedbackRecordsTable = ({
                       contactId={record.user_id ? contactIdByUserId[record.user_id] : undefined}
                       locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
                       t={t}
+                      canWrite={canWrite}
                       isSelected={selectedIds.has(record.id)}
                       onSelectChange={(checked) => toggleOne(record.id, checked)}
-                      onClick={() => openEditDrawer(record.id)}
+                      onClick={() => openViewDrawer(record.id)}
                     />
                   ))}
                 </tbody>
@@ -495,13 +480,12 @@ export const FeedbackRecordsTable = ({
       </div>
 
       <FeedbackRecordFormDrawer
-        mode={drawerMode}
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
         workspaceId={workspaceId}
         directories={directories}
         canWrite={canWrite}
-        recordId={drawerMode === "edit" ? drawerRecordId : undefined}
+        recordId={drawerRecordId}
         onSuccess={handleRefresh}
       />
 
@@ -537,6 +521,7 @@ const FeedbackRecordRow = ({
   contactId,
   locale,
   t,
+  canWrite,
   isSelected,
   onSelectChange,
   onClick,
@@ -562,16 +547,18 @@ const FeedbackRecordRow = ({
           onClick();
         }
       }}>
-      <td
-        className="w-10 px-4 py-3"
-        onClick={(event) => event.stopPropagation()}
-        onKeyDown={(event) => event.stopPropagation()}>
-        <Checkbox
-          aria-label={record.field_label ?? record.field_id}
-          checked={isSelected}
-          onCheckedChange={(checked) => onSelectChange(checked === true)}
-        />
-      </td>
+      {canWrite && (
+        <td
+          className="w-10 px-4 py-3"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}>
+          <Checkbox
+            aria-label={record.field_label ?? record.field_id}
+            checked={isSelected}
+            onCheckedChange={(checked) => onSelectChange(checked === true)}
+          />
+        </td>
+      )}
       <td className="px-4 py-3 text-slate-500" title={collectedAt}>
         <span className="block min-w-0 truncate">{collectedAt}</span>
       </td>

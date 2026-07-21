@@ -249,8 +249,15 @@ export const createFeedbackCSVDataSchema = (t: TFunction) =>
       }),
     })
     .superRefine((rows, ctx) => {
+      // `.min(1)` above already reports empty input, but zod still runs this refinement, so guard
+      // against `rows[0]` being undefined — otherwise `Object.keys(undefined)` throws a raw TypeError
+      // out of safeParse instead of surfacing the friendly CSV_AT_LEAST_ONE_ROW error (ENG-1799).
+      if (rows.length === 0) {
+        return;
+      }
       const localeSort = (a: string, b: string) => a.localeCompare(b);
-      const firstRowKeys = Object.keys(rows[0]).sort(localeSort).join(",");
+      const firstRowKeyList = Object.keys(rows[0]);
+      const firstRowKeys = [...firstRowKeyList].sort(localeSort).join(",");
 
       for (let i = 1; i < rows.length; i++) {
         const rowKeys = Object.keys(rows[i]).sort(localeSort).join(",");
@@ -263,7 +270,7 @@ export const createFeedbackCSVDataSchema = (t: TFunction) =>
         }
       }
 
-      const emptyHeaders = Object.keys(rows[0]).filter((k) => k.trim() === "");
+      const emptyHeaders = firstRowKeyList.filter((k) => k.trim() === "");
       if (emptyHeaders.length > 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

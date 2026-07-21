@@ -1118,9 +1118,11 @@ const ZV3SurveyDistribution = z
 const ZV3SurveyTargeting = z.object({ filters: ZSegmentFilters }).strict();
 
 /**
- * Body-level validation for app-survey distribution/targeting. `distribution`/`targeting` are
- * rejected for explicit `link` surveys; for `app` (or when the type is unknown, e.g. the generic
- * patch schema) the displayOption ↔ displayPercentage coupling is enforced.
+ * Body-level validation for app-survey distribution/targeting: `distribution`/`targeting` are
+ * app-only, so reject them on explicit `link` surveys. Within `distribution`, `displaySome` ("show a
+ * limited number of times") must carry a `displayLimit` >= 1 (mirrors the editor's required "show
+ * maximum of N times" input). `displayPercentage` is an INDEPENDENT throttle valid with ANY
+ * `displayOption` — never coupled to `displaySome` — matching `ZSurvey` and the js-core runtime.
  */
 function addAppDistributionIssues(
   survey: {
@@ -1150,26 +1152,20 @@ function addAppDistributionIssues(
     return;
   }
 
+  // "displaySome" is capped by displayLimit, so a "limited" survey must specify a real limit (>= 1),
+  // mirroring the editor. displayPercentage stays independent and is validated by the field schema.
   const distribution = survey.distribution;
-  if (!distribution) {
-    return;
-  }
-
-  if (distribution.displayOption === "displaySome") {
-    if (distribution.displayPercentage === null || distribution.displayPercentage === undefined) {
-      ctx.addIssue({
-        code: "custom",
-        message: "displayPercentage is required when displayOption is 'displaySome'",
-        params: { code: "missing_required_field" },
-        path: ["distribution", "displayPercentage"],
-      });
-    }
-  } else if (distribution.displayPercentage !== null && distribution.displayPercentage !== undefined) {
+  if (
+    distribution?.displayOption === "displaySome" &&
+    (distribution.displayLimit === null ||
+      distribution.displayLimit === undefined ||
+      distribution.displayLimit < 1)
+  ) {
     ctx.addIssue({
       code: "custom",
-      message: "displayPercentage is only allowed when displayOption is 'displaySome'",
-      params: { code: "unsupported_field" },
-      path: ["distribution", "displayPercentage"],
+      message: "displayLimit must be at least 1 when displayOption is 'displaySome'",
+      params: { code: "missing_required_field" },
+      path: ["distribution", "displayLimit"],
     });
   }
 }

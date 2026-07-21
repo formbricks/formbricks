@@ -17,6 +17,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
+import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { isSelectableValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
@@ -278,14 +279,20 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      return executeTenantScopedQuery({
-        query: parsedInput.query,
+      const { rewrittenQuery, optionLabels } = await resolveOptionGrouping(parsedInput.query, workspaceId);
+
+      const rawRows = await executeTenantScopedQuery({
+        query: rewrittenQuery,
         feedbackDirectoryId,
         workspaceId,
         organizationId,
         userId: ctx.user.id,
         source: "charts.executeQueryAction",
       });
+
+      const rows = Array.isArray(rawRows) ? rawRows : [];
+
+      return { rows, ...(optionLabels ? { optionLabels } : {}), effectiveQuery: rewrittenQuery };
     }
   );
 
@@ -321,7 +328,7 @@ export const generateAIChartAction = authenticatedActionClient
         source: "charts.generateAIChartAction",
       });
 
-      const { chartType, query } = await generateAIChartQuery({
+      const { chartType, query, name } = await generateAIChartQuery({
         organizationId,
         prompt: parsedInput.prompt,
       });
@@ -341,6 +348,8 @@ export const generateAIChartAction = authenticatedActionClient
         query: validatedQuery,
         chartType,
         data: Array.isArray(data) ? data : [],
+        // Prefills the chart-name input (only when the user hasn't typed a name).
+        suggestedName: name,
       };
     }
   );
@@ -361,7 +370,8 @@ const ZGetDimensionValuesAction = z.object({
 /**
  * Returns the distinct stored values for a low-cardinality string dimension, so the
  * filter UI can offer a pick-list instead of free-text entry. Picking a real value
- * guarantees an exact match for the `equals` / `notEquals` operators.
+ * guarantees an exact match for the `equals` / `notEquals` operators. Search narrows
+ * results server-side so dimensions with more than the lookup cap stay usable.
  */
 export const getDimensionValuesAction = authenticatedActionClient
   .inputSchema(ZGetDimensionValuesAction)
@@ -372,7 +382,7 @@ export const getDimensionValuesAction = authenticatedActionClient
     }: {
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetDimensionValuesAction>;
-    }) => {
+    }): Promise<string[]> => {
       const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
         parsedInput.workspaceId,

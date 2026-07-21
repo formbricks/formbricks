@@ -11,9 +11,27 @@ import {
   anySurveyHasFilters,
   checkForInvalidImagesInQuestions,
   checkForInvalidMediaInBlocks,
+  isAppSurveyMissingTriggersToPublish,
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
 } from "./utils";
+
+describe("isAppSurveyMissingTriggersToPublish", () => {
+  test("flags a non-draft app survey with no triggers", () => {
+    expect(isAppSurveyMissingTriggersToPublish("app", "inProgress", [])).toBe(true);
+    expect(isAppSurveyMissingTriggersToPublish("app", "paused", null)).toBe(true);
+    expect(isAppSurveyMissingTriggersToPublish("app", "completed", undefined)).toBe(true);
+  });
+
+  test("allows a non-draft app survey that has at least one trigger", () => {
+    expect(isAppSurveyMissingTriggersToPublish("app", "inProgress", [{ actionClassId: "a" }])).toBe(false);
+  });
+
+  test("ignores draft app surveys and non-app surveys", () => {
+    expect(isAppSurveyMissingTriggersToPublish("app", "draft", [])).toBe(false);
+    expect(isAppSurveyMissingTriggersToPublish("link", "inProgress", [])).toBe(false);
+  });
+});
 
 describe("transformPrismaSurvey", () => {
   test("transforms prisma survey without segment", () => {
