@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "8e2ce98eae3f",
+  "strategy": "manual-commit",
+  "branch": "matti/eng-1678-stop-nextimage-from-allowing-arbitrary-remote-hosts",
+  "checkpoints_count": 4,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/8e/2ce98eae3f/0/metadata.json",
+      "transcript": "/8e/2ce98eae3f/0/full.jsonl",
+      "compact_transcript": "/8e/2ce98eae3f/0/transcript.jsonl",
+      "content_hash": "/8e/2ce98eae3f/0/content_hash.txt",
+      "prompt": "/8e/2ce98eae3f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 107730,
+    "cache_creation_tokens": 5489606,
+    "cache_read_tokens": 180624196,
+    "output_tokens": 432222,
+    "api_call_count": 429
+  }
+}

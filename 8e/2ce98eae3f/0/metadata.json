@@ -1,0 +1,83 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "8e2ce98eae3f",
+  "session_id": "287890f8-0fc2-45ed-bb06-c028ba08e388",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-21T12:34:35.267687Z",
+  "branch": "matti/eng-1678-stop-nextimage-from-allowing-arbitrary-remote-hosts",
+  "checkpoints_count": 4,
+  "save_step_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "c2f6c0e3ab6c",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 107730,
+    "cache_creation_tokens": 5489606,
+    "cache_read_tokens": 180624196,
+    "output_tokens": 432222,
+    "api_call_count": 429
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01448YdB7z2uSj4bzjfNSXQk",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "nextjs-docs"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "c2f6c0e3ab6c",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 2084,
+        "end": 2085,
+        "entry_ids": [
+          "3e265ae2-7b57-4f93-83ce-ab1321d175ab"
+        ],
+        "tool_use_id": "toolu_01448YdB7z2uSj4bzjfNSXQk"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01448YdB7z2uSj4bzjfNSXQk"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: nextjs-docs",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 6
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 5341,
+      "user_lines_removed": 0,
+      "agent_lines_added": 316,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        "FORMBRICKS_VISION.md": 68,
+        "apps/agents/src/db/generated/browser.ts": 29,
+        "apps/agents/src/db/generated/client.ts": 53,
+        "apps/agents/src/db/generated/commonInputTypes.ts": 510,
+        "apps/agents/src/db/generated/enums.ts": 20,
+        "apps/agents/src/db/generated/internal/class.ts": 214,
+        "apps/agents/src/db/generated/internal/prismaNamespace.ts": 943,
+        "apps/agents/src/db/generated/internal/prismaNamespaceBrowser.ts": 157,
+        "apps/agents/src/db/generated/models.ts": 13,
+        "apps/agents/src/db/generated/models/AgentStepContent.ts": 1489,
+        "apps/agents/src/db/generated/models/AgentTask.ts": 1790
+      }
+    }
+  ]
+}
