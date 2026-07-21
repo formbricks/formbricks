@@ -210,7 +210,6 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "IMAGES_ALLOW_ALL_HTTPS_HOSTS",
         "NODE_ENV",
         "ASSET_PREFIX_URL",
         "BASE_PATH",

@@ -8,6 +8,7 @@ import { SurveyType } from "@formbricks/database/prisma-browser";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
@@ -115,6 +116,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
                 layout="fill"
                 objectFit="cover"
                 style={{ filter: `${filterStyle}` }}
+                unoptimized={isExternalImageSrc(background?.bg)}
                 onLoadingComplete={() => setBackgroundLoaded(true)}
               />
               {authorDetailsForUnsplash.authorName && (
@@ -150,6 +152,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
               layout="fill"
               objectFit="cover"
               style={{ filter: `${filterStyle}` }}
+              unoptimized={isExternalImageSrc(background?.bg)}
               onLoadingComplete={() => setBackgroundLoaded(true)}
             />
           </div>
