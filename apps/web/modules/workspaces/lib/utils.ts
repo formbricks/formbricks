@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
@@ -10,6 +11,7 @@ import {
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
@@ -55,6 +57,15 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
   }
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership.role);
+
+  // Billing-role members are scoped to billing/enterprise screens only. They must never reach
+  // workspace product data (contacts PII, survey summaries/responses, dashboards). This is the
+  // single choke point every product page flows through, so gating here closes all of them at
+  // once and keeps this helper aligned with hasUserWorkspaceAccessForAction, which already denies
+  // billing. Individual pages that also guard billing inline remain correct (defense in depth).
+  if (isBilling) {
+    redirect(getBillingFallbackPath(organization.id, IS_FORMBRICKS_CLOUD));
+  }
 
   const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);
 
