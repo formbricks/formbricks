@@ -337,7 +337,7 @@ export const AddApiKeyModal = ({
                 </div>
               ))}
               {isFormbricksCloud && (
-                <Alert variant="info" size="small">
+                <Alert variant="info">
                   <AlertDescription>
                     {t("workspace.api_keys.organization_access_cloud_note")}
                   </AlertDescription>

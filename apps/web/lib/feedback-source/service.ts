@@ -18,6 +18,7 @@ import {
   ZFeedbackSourceUpdateInput,
 } from "@formbricks/types/feedback-source";
 import { ITEMS_PER_PAGE } from "../constants";
+import { getUniqueConstraintFields } from "../utils/prisma-constraint";
 import { validateInputs } from "../utils/validate";
 
 const selectFeedbackSourceWithMappings = {
@@ -222,12 +223,15 @@ export const deleteFeedbackSource = async (
 // -- Composite functions --
 
 const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): InvalidInputError => {
-  const target = error.meta?.target;
-  const targetFields = Array.isArray(target) ? (target as string[]) : [];
-  if (targetFields.includes("elementId") || targetFields.includes("surveyId")) {
+  const fields = getUniqueConstraintFields(error);
+  // The driver adapter reports the underlying DB column names, so match the Prisma field name AND
+  // its @map()-ed column name for mapped fields (sourceFieldId/targetFieldId). Unmapped fields
+  // (elementId/surveyId) match by their identical column name.
+  const has = (...names: string[]): boolean => names.some((name) => fields.includes(name));
+  if (has("elementId", "surveyId")) {
     return new InvalidInputError("FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE");
   }
-  if (targetFields.includes("sourceFieldId") || targetFields.includes("targetFieldId")) {
+  if (has("sourceFieldId", "source_field_id", "targetFieldId", "target_field_id")) {
     return new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE");
   }
   return new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE");

@@ -503,8 +503,11 @@ describe("registerSurveyTools", () => {
     });
   });
 
-  test("validate_survey rejects write validations for read-only OAuth scopes", async () => {
+  test("validate_survey allows patch validations for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
+    vi.mocked(validateV3SurveyFromRawInput).mockResolvedValue(
+      successResponse({ valid: true, operation: "patch", invalid_params: [] }, { requestId: "req_tool" })
+    );
 
     const result = await tools.get("validate_survey")!.handler(
       {
@@ -517,12 +520,10 @@ describe("registerSurveyTools", () => {
       { authInfo: readOnlyOAuthAuthInfo }
     );
 
-    expect(validateV3SurveyFromRawInput).not.toHaveBeenCalled();
-    expect(result.isError).toBe(true);
-    expect(result.structuredContent.error).toMatchObject({
-      status: 403,
-      code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+    expect(validateV3SurveyFromRawInput).toHaveBeenCalled();
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({
+      data: { valid: true, operation: "patch", invalid_params: [] },
       requestId: "req_tool",
     });
   });

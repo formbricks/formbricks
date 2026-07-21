@@ -67,6 +67,7 @@ export interface InputComboboxProps {
   comboboxClasses?: string;
   emptyDropdownText?: string;
   iconClassName?: string;
+  disabled?: boolean;
 }
 
 // Helper to flatten all options and their children
@@ -154,6 +155,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   comboboxClasses,
   emptyDropdownText,
   iconClassName = "h-5 w-5 text-slate-400",
+  disabled = false,
 }) => {
   const { t } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -298,12 +300,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     <div
       className={cn(
         "group/icon flex max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
       {withInput && inputType !== "dropdown" && (
         <Input
           id={`${id}-input`}
           {...inputProps}
+          disabled={disabled || inputProps?.disabled}
           className={cn(
             "min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0",
             inputProps?.className
@@ -313,19 +317,21 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         />
       )}
 
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
         <DropdownMenuTrigger asChild className="z-10 min-w-0 flex-1">
           <div
             id={id}
             role="combobox"
-            tabIndex={0}
+            tabIndex={disabled ? -1 : 0}
             aria-controls="options"
             aria-expanded={open}
+            aria-disabled={disabled || undefined}
             className={cn(
               "flex h-10 w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
               {
                 "w-10 shrink-0 justify-center pr-0": withInput && inputType !== "dropdown",
-                "pointer-events-none": isClearing,
+                "pointer-events-none": isClearing || disabled,
+                "cursor-not-allowed bg-transparent": disabled,
               }
             )}>
             {inputType === "dropdown" ? (
@@ -348,7 +354,15 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 }}
               />
             ) : (
-              <ChevronDownIcon className="size-5 shrink-0 text-slate-300 group-hover/icon:text-slate-400" />
+              <ChevronDownIcon
+                className={cn(
+                  "size-5 shrink-0 text-slate-300 group-hover/icon:text-slate-400",
+                  // Pin the chevron to the right even when there's no value/placeholder to render a
+                  // leading flex-1 element — otherwise it collapses to the left and looks broken.
+                  // Skip in the centered icon-only (withInput) variant so it stays centered.
+                  !(withInput && inputType !== "dropdown") && "ml-auto"
+                )}
+              />
             )}
           </div>
         </DropdownMenuTrigger>

@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 
@@ -368,6 +368,50 @@ describe("useChartDialog", () => {
       expect(result.current.chartName).toBe("Custom Chart");
     });
 
+    test("replaces a previously suggested name when the chart is regenerated", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "Responses by Source",
+        });
+      });
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "NPS by Week",
+        });
+      });
+
+      expect(result.current.chartName).toBe("NPS by Week");
+    });
+
+    test("keeps a user-edited name when the chart is regenerated", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "Responses by Source",
+        });
+      });
+
+      await act(async () => {
+        result.current.setChartName("My Custom Name");
+      });
+
+      await act(async () => {
+        result.current.handleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "NPS by Week",
+        });
+      });
+
+      expect(result.current.chartName).toBe("My Custom Name");
+    });
+
     test("preserves custom chart name when user types before delayed AI response completes", async () => {
       const { result } = renderHook(() => useChartDialog(baseProps));
 
@@ -383,6 +427,92 @@ describe("useChartDialog", () => {
       });
 
       expect(result.current.chartName).toBe("User Typed Name");
+    });
+
+    test("preserves the user's name even when invoked through a stale closure", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      // Captured before the user types — like a consumer holding the callback across renders
+      // while the AI request is in flight.
+      const staleHandleChartGenerated = result.current.handleChartGenerated;
+
+      await act(async () => {
+        result.current.setChartName("User Typed Name");
+      });
+
+      await act(async () => {
+        staleHandleChartGenerated({
+          ...sampleChartData,
+          suggestedName: "AI Generated Name",
+        });
+      });
+
+      expect(result.current.chartName).toBe("User Typed Name");
+    });
+  });
+
+  describe("savedChartName", () => {
+    test("holds the loaded chart name and stays stable while the user renames", async () => {
+      mockGetChartAction.mockResolvedValue({
+        data: {
+          id: CHART_ID,
+          name: "Loaded Chart",
+          type: "bar",
+          query: sampleChartData.query,
+          feedbackDirectoryId: DIRECTORY_ID,
+        },
+      });
+      mockExecuteQueryAction.mockResolvedValue({ data: [] });
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+
+      await waitFor(() => {
+        expect(result.current.savedChartName).toBe("Loaded Chart");
+      });
+      expect(result.current.chartName).toBe("Loaded Chart");
+
+      await act(async () => {
+        result.current.setChartName("Renamed Chart");
+      });
+
+      expect(result.current.chartName).toBe("Renamed Chart");
+      expect(result.current.savedChartName).toBe("Loaded Chart");
+    });
+
+    test("resets savedChartName when the dialog is closed without saving", async () => {
+      mockGetChartAction.mockResolvedValue({
+        data: {
+          id: CHART_ID,
+          name: "Loaded Chart",
+          type: "bar",
+          query: sampleChartData.query,
+          feedbackDirectoryId: DIRECTORY_ID,
+        },
+      });
+      mockExecuteQueryAction.mockResolvedValue({ data: [] });
+
+      const onOpenChange = vi.fn();
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange, chartId: CHART_ID }));
+
+      await waitFor(() => {
+        expect(result.current.savedChartName).toBe("Loaded Chart");
+      });
+
+      await act(async () => {
+        result.current.handleClose();
+      });
+
+      expect(result.current.savedChartName).toBe("");
+      expect(result.current.chartName).toBe("");
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    test("keeps savedChartName empty when opening in create mode", async () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      await waitFor(() => {
+        expect(result.current.savedChartName).toBe("");
+      });
     });
   });
 

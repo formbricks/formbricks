@@ -1,6 +1,4 @@
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -12,13 +10,9 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import {
-  createMcpInsufficientScopeResponse,
-  getMcpAuthentication,
-  getMcpRequestId,
-  hasMcpScopes,
-} from "../auth";
+import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import { guardMcpScopes } from "./guard-scopes";
 import {
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
@@ -65,21 +59,6 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
   });
 
   return searchParams;
-}
-
-async function guardMcpScopes(
-  authInfo: AuthInfo | undefined,
-  requiredScopes: string[],
-  requestId: string
-): Promise<CallToolResult | null> {
-  if (hasMcpScopes(authInfo, requiredScopes)) {
-    return null;
-  }
-
-  return await responseToMcpToolResult(
-    createMcpInsufficientScopeResponse(requestId, requiredScopes),
-    requestId
-  );
 }
 
 export function registerSurveyTools(server: McpServer): void {
@@ -215,10 +194,10 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpValidateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const requiredScopes =
-        input.operation === "patch" || input.operation === "create" ? ["surveys:write"] : ["surveys:read"];
-
-      const scopeError = await guardMcpScopes(extra.authInfo, requiredScopes, requestId);
+      // validate_survey never persists changes (readOnlyHint) — a dry-run validation of a create or
+      // patch payload only needs read access. The actual write permission is enforced by the v3 layer
+      // when create_survey / patch_survey run.
+      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
       if (scopeError) {
         return scopeError;
       }

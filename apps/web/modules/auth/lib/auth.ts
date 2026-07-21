@@ -27,6 +27,7 @@ import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recove
 import { runAfterAuthHooks } from "./after-auth-hooks";
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
+import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
@@ -236,6 +237,10 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
+      // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
+      // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
+      // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
+      await hibpBreachCheckBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),
   },

@@ -75,7 +75,7 @@ function RankingItem({
   const displayNumber = isRanked ? rankIndex + 1 : undefined;
 
   return (
-    <div
+    <li
       dir={dir}
       className={cn(
         "rounded-option flex h-12 cursor-pointer items-center border px-3 transition-all",
@@ -144,7 +144,7 @@ function RankingItem({
           </button>
         </div>
       ) : null}
-    </div>
+    </li>
   );
 }
 
@@ -227,7 +227,11 @@ function Ranking({
         <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full" dir={dir}>
           <legend className="sr-only">Ranking options</legend>
-          <div className="space-y-2" ref={parent}>
+          {/* Semantic ordered list so screen readers announce rank position and count;
+              role="list" is kept explicitly because list-style removal (Tailwind preflight)
+              makes Safari/VoiceOver drop implicit list semantics. */}
+          {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari/VoiceOver needs the explicit role once list-style is none */}
+          <ol role="list" className="list-none space-y-2" ref={parent}>
             {allItems.map((item) => (
               <RankingItem
                 key={item.id}
@@ -239,7 +243,7 @@ function Ranking({
                 dir={dir}
               />
             ))}
-          </div>
+          </ol>
         </fieldset>
       </div>
     </div>

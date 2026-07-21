@@ -1,5 +1,26 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { getOriginalFileNameFromUrl } from "./storage";
+import { getImageAltFromUrl, getOriginalFileNameFromUrl } from "./storage";
+
+describe("getImageAltFromUrl", () => {
+  test("decodes URL-encoded file names and strips the extension", () => {
+    const url = "https://example.com/storage/ChatGPT%20Image%20Jun%205%2C%202026--fid--abc123.png";
+    expect(getImageAltFromUrl(url)).toBe("ChatGPT Image Jun 5, 2026");
+  });
+
+  test("handles double-encoded file names", () => {
+    const url = "https://example.com/storage/My%2520Holiday%2520Photo.jpeg";
+    expect(getImageAltFromUrl(url)).toBe("My Holiday Photo");
+  });
+
+  test("replaces separator noise with spaces", () => {
+    const url = "https://example.com/storage/team_photo-2026_final.webp";
+    expect(getImageAltFromUrl(url)).toBe("team photo 2026 final");
+  });
+
+  test("returns empty string when nothing readable is left", () => {
+    expect(getImageAltFromUrl("https://example.com/files/path/")).toBe("");
+  });
+});
 
 describe("getOriginalFileNameFromUrl", () => {
   let consoleErrorSpy: any; // Explicitly 'any' to avoid type issues for now

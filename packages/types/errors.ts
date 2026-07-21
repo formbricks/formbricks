@@ -202,6 +202,14 @@ export const RESPONSE_ALREADY_FINISHED_ERROR_CODE = "response_already_finished";
  */
 export const SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE = "email_domain_not_allowed";
 
+/**
+ * Stable, locale-independent marker used when a password is rejected because it appears in the
+ * Have-I-Been-Pwned breach corpus (ENG-1587). Set as the `code` on the Better Auth APIError thrown
+ * by the breach-check plugin, then re-surfaced as the sign-up / reset action's `serverError`
+ * sentinel so the client can map it to a localized message.
+ */
+export const PASSWORD_COMPROMISED_ERROR_CODE = "password_compromised";
+
 export interface ApiErrorResponse {
   code:
     | "not_found"

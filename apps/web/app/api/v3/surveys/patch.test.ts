@@ -425,6 +425,29 @@ describe("patchV3Survey", () => {
     );
   });
 
+  test("rejects setting a non-draft status on an app survey with no triggers", async () => {
+    await expect(
+      executeV3SurveyPatch({
+        currentSurvey: { ...currentSurvey, type: "app", triggers: [] } as TSurvey,
+        document: {
+          name: currentSurvey.name,
+          status: "inProgress",
+          metadata: currentSurvey.metadata,
+          defaultLanguage: "en-US",
+          languages: [{ code: "en-US", enabled: true }],
+          welcomeCard: currentSurvey.welcomeCard,
+          blocks: currentSurvey.blocks,
+          endings: currentSurvey.endings,
+          hiddenFields: currentSurvey.hiddenFields,
+          variables: currentSurvey.variables,
+        } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
+        languageRequests: [{ code: "en-US", default: true, enabled: true }],
+        requestId: "req_1",
+      })
+    ).rejects.toBeInstanceOf(V3SurveyReferenceValidationError);
+    expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
   test("reconciles due survey schedules without refetching when no schedule transition persisted", async () => {
     vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
     vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({

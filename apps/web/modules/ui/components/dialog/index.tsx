@@ -34,6 +34,8 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 interface DialogContentProps {
   hideCloseButton?: boolean;
   disableCloseOnOutsideClick?: boolean;
+  /** Keep Escape closing the dialog even when disableCloseOnOutsideClick is set. */
+  closeOnEscape?: boolean;
   width?: "default" | "wide" | "full" | "narrow";
   unconstrained?: boolean;
 }
@@ -61,6 +63,7 @@ const DialogContent = React.forwardRef<
       children,
       hideCloseButton,
       disableCloseOnOutsideClick,
+      closeOnEscape,
       width = "default",
       unconstrained = false,
       ...props
@@ -81,7 +84,9 @@ const DialogContent = React.forwardRef<
             className
           )}
           onPointerDownOutside={disableCloseOnOutsideClick ? (e) => e.preventDefault() : undefined}
-          onEscapeKeyDown={disableCloseOnOutsideClick ? (e) => e.preventDefault() : undefined}
+          onEscapeKeyDown={
+            disableCloseOnOutsideClick && !closeOnEscape ? (e) => e.preventDefault() : undefined
+          }
           {...props}>
           {children}
           {!hideCloseButton && (
