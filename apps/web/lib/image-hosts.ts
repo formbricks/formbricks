@@ -1,32 +1,9 @@
 import { type StaticImageData } from "next/image";
+import { OPTIMIZABLE_IMAGE_HOSTS } from "./optimizable-image-hosts.mjs";
 
-/**
- * Hosts whose images are safe to run through the Next.js image optimizer (ENG-1678).
- *
- * Two hard constraints shape this list:
- * - `next.config` (and therefore `images.remotePatterns`) is frozen into the build. The same Docker
- *   image serves multiple domains (app.formbricks.com, ksa.formbricks.com, and every self-hoster),
- *   so the deployment's own domain can NOT be baked in here and is intentionally absent.
- * - First-party uploads are served from same-origin `/storage/...` (relative) paths, which Next
- *   treats as local images (governed by `localPatterns`, default: optimize all) — they never consult
- *   `remotePatterns`, so the running domain does not need to be listed.
- *
- * This list therefore contains only *universal* provider/CDN hosts that are identical on every
- * deployment. It is the single source of truth: `next.config.mjs` builds `images.remotePatterns`
- * from it, and `isExternalImageSrc` uses it to decide which `<Image>` srcs must be rendered
- * `unoptimized` (arbitrary user-provided external URLs) versus optimized.
- */
-export const OPTIMIZABLE_IMAGE_HOSTS = [
-  // OAuth profile avatars
-  "avatars.githubusercontent.com",
-  "avatars.slack-edge.com",
-  "lh3.googleusercontent.com",
-  // survey editor's Unsplash background picker
-  "images.unsplash.com",
-  // local development
-  "localhost",
-  "127.0.0.1",
-] as const;
+// Re-exported from the plain `.mjs` source of truth (also imported by next.config.mjs) so
+// remotePatterns and the runtime check below share one list. See ./optimizable-image-hosts.mjs.
+export { OPTIMIZABLE_IMAGE_HOSTS };
 
 const OPTIMIZABLE_IMAGE_HOSTS_SET: ReadonlySet<string> = new Set(OPTIMIZABLE_IMAGE_HOSTS);
 
