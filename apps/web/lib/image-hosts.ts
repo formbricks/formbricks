@@ -17,11 +17,12 @@ import { type StaticImageData } from "next/image";
  * `unoptimized` (arbitrary user-provided external URLs) versus optimized.
  */
 export const OPTIMIZABLE_IMAGE_HOSTS = [
+  // OAuth profile avatars
   "avatars.githubusercontent.com",
   "avatars.slack-edge.com",
   "lh3.googleusercontent.com",
+  // survey editor's Unsplash background picker
   "images.unsplash.com",
-  "formbricks-cdn.s3.eu-central-1.amazonaws.com",
   // local development
   "localhost",
   "127.0.0.1",

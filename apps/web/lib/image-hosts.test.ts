@@ -19,15 +19,16 @@ describe("isExternalImageSrc", () => {
     expect(isExternalImageSrc({ src: "/x.png", height: 1, width: 1 } as StaticImageData)).toBe(false);
   });
 
-  test("treats absolute URLs on allowlisted provider/CDN hosts as optimizable", () => {
+  test("treats absolute URLs on allowlisted provider hosts as optimizable", () => {
     expect(isExternalImageSrc("https://images.unsplash.com/photo-1.jpg")).toBe(false);
-    expect(isExternalImageSrc("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/x.png")).toBe(false);
     expect(isExternalImageSrc("https://avatars.githubusercontent.com/u/1")).toBe(false);
   });
 
   test("treats arbitrary external URLs as external (must bypass the optimizer)", () => {
     expect(isExternalImageSrc("https://evil.example.com/x.png")).toBe(true);
     expect(isExternalImageSrc("http://random-host.test/logo.svg")).toBe(true);
+    // Cloud-specific infra is not in the universal allowlist — treated as external.
+    expect(isExternalImageSrc("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/x.png")).toBe(true);
   });
 
   test("treats an absolute URL to the deployment's own domain as external (relative is the supported first-party form)", () => {
