@@ -39,7 +39,7 @@ const DEFAULT_LANGUAGE_CODE = "default";
 const HTML_TAG_PATTERN = /<[a-z][\s\S]*>/i;
 
 const escapeHtml = (value: string): string =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
 // The recall Editor loads its initial value as HTML (root can only hold block nodes). Recall-token
 // bodies are already `<p>…</p>` HTML and pass through untouched; legacy plain-text bodies (e.g. the
@@ -50,7 +50,7 @@ const toEditorHtml = (body: string): string => {
   if (HTML_TAG_PATTERN.test(body)) return body;
   return body
     .split(/\n{2,}/)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replaceAll("\n", "<br>")}</p>`)
     .join("");
 };
 

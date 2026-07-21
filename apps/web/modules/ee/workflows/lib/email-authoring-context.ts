@@ -62,7 +62,7 @@ export const getWorkflowEmailAuthoringContext = async ({
 
   // Only serve context for a workflow that belongs to the URL workspace (defense in depth; the page
   // auth already gates workspace access).
-  if (!workflow || workflow.workspaceId !== workspaceId) {
+  if (workflow?.workspaceId !== workspaceId) {
     return { ...emptyContext, userEmail: userEmail ?? "", locale: locale ?? DEFAULT_LOCALE };
   }
 
@@ -75,7 +75,7 @@ export const getWorkflowEmailAuthoringContext = async ({
   // non-matching or missing survey resolves to null and the form degrades to plain inputs.
   const surveyId = readTriggerSurveyId(workflow.definition);
   const loadedSurvey = surveyId ? await getSurvey(surveyId).catch(() => null) : null;
-  const survey = loadedSurvey && loadedSurvey.workspaceId === workspaceId ? loadedSurvey : null;
+  const survey = loadedSurvey?.workspaceId === workspaceId ? loadedSurvey : null;
 
   return {
     survey,

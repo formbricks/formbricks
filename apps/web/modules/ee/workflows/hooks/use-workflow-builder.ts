@@ -243,8 +243,7 @@ export const useWorkflowBuilder = ({
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!store.get(isWorkflowDirtyAtom)) return;
       event.preventDefault();
-      // Legacy signal some Chromium versions still require for the dialog to appear.
-      event.returnValue = "";
+      event.returnValue = ""; // NOSONAR(typescript:S1874) -- legacy Chromium still requires returnValue for the confirm dialog
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
