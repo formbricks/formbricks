@@ -4,6 +4,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { type TWorkflowTriggerRunPayload, ZWorkflowTriggerRunPayload } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { type DispatchWorkflowRun } from "./dispatch";
 import { markWorkflowRunDispatched } from "./mark-dispatched";
 import {
@@ -26,6 +27,7 @@ interface RunnerResponse {
 interface EnqueueResponseCompletedWorkflowRunsInput {
   response: RunnerResponse;
   workspaceId: string;
+  organizationId: string;
   dispatch: DispatchWorkflowRun;
   logContext?: Record<string, unknown>;
 }
@@ -212,10 +214,16 @@ const createAndDispatchWorkflowRun = async ({
  * deterministic dispatch `jobId` mean a replayed `responseFinished` creates no duplicate runs or jobs.
  * Each match is isolated so one workflow's failure never blocks the others. The caller wraps the whole
  * call so a runner failure never affects the response pipeline.
+ *
+ * Entitlement gate: workflows is an EE feature (Cloud plan entitlement / self-hosted EE license).
+ * The check runs only after a workflow actually matched — the common no-workflow response pays
+ * nothing — and reads the Redis-cached entitlements context, so a non-entitled organization's
+ * enabled workflows stop producing runs without an uncached per-response query.
  */
 export const enqueueResponseCompletedWorkflowRuns = async ({
   response,
   workspaceId,
+  organizationId,
   dispatch,
   logContext,
 }: EnqueueResponseCompletedWorkflowRunsInput): Promise<void> => {
@@ -228,6 +236,21 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
   const candidates = await loadEnabledWorkflowCandidates(workspaceId, logContext);
   const matches = matchWorkflowsForResponse(candidates, { surveyId: response.surveyId, endingId });
   if (matches.length === 0) {
+    return;
+  }
+
+  const isWorkflowsEnabled = await getIsWorkflowsEnabled(organizationId);
+  if (!isWorkflowsEnabled) {
+    logger.info(
+      {
+        ...logContext,
+        workspaceId,
+        organizationId,
+        responseId: response.id,
+        matchedWorkflowIds: matches.map((match) => match.workflowId),
+      },
+      "Workflows entitlement missing for organization; skipping workflow run enqueue"
+    );
     return;
   }
 

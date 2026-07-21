@@ -36,6 +36,9 @@ const mapLicenseFeaturesToEntitlements = (
   if (features.dashboards) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS);
   }
+  if (features.workflows) {
+    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS);
+  }
 
   return entitlementKeys;
 };

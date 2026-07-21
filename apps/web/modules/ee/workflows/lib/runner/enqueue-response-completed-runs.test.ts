@@ -7,16 +7,19 @@ const { findMany, create, findUnique } = vi.hoisted(() => ({
   create: vi.fn(),
   findUnique: vi.fn(),
 }));
-const { warn, error } = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn() }));
+const { warn, error, info } = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }));
 const { markDispatched } = vi.hoisted(() => ({ markDispatched: vi.fn() }));
+const { getIsWorkflowsEnabled } = vi.hoisted(() => ({ getIsWorkflowsEnabled: vi.fn() }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: { workflow: { findMany }, workflowRun: { create, findUnique } },
 }));
-vi.mock("@formbricks/logger", () => ({ logger: { warn, error } }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn, error, info } }));
 vi.mock("./mark-dispatched", () => ({ markWorkflowRunDispatched: markDispatched }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsWorkflowsEnabled }));
 
 const workspaceId = "cm9zr4mps000008l8btfy1vtz";
+const organizationId = "cm9zr4org000008l8btfy1org";
 const surveyId = "cm9zr4q7i000108l84gozfggr";
 const responseId = "cm9zr4resp0000000000000a1";
 const endingId = "cm9zr4q7i000108l84goze001";
@@ -48,11 +51,14 @@ const enabledWorkflow = (workflowId: string, versionId: string, endingCardIds: s
 const dispatch =
   vi.fn<(input: { workflowRunId: string; workflowId: string; workspaceId: string }) => Promise<void>>();
 
-const run = (input = { response, workspaceId, dispatch }) => enqueueResponseCompletedWorkflowRuns(input);
+const run = (input = { response, workspaceId, organizationId, dispatch }) =>
+  enqueueResponseCompletedWorkflowRuns(input);
 
 beforeEach(() => {
   vi.clearAllMocks();
   dispatch.mockResolvedValue(undefined);
+  // Entitled by default; the entitlement-skip tests flip this off explicitly.
+  getIsWorkflowsEnabled.mockResolvedValue(true);
 });
 
 describe("enqueueResponseCompletedWorkflowRuns", () => {
@@ -93,7 +99,7 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
   });
 
   test("does nothing for an unfinished response", async () => {
-    await run({ response: { ...response, finished: false }, workspaceId, dispatch });
+    await run({ response: { ...response, finished: false }, workspaceId, organizationId, dispatch });
     expect(findMany).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();
@@ -103,7 +109,7 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
     findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
     create.mockResolvedValue({ id: "run_1" });
 
-    await run({ response: { ...response, endingId: null }, workspaceId, dispatch });
+    await run({ response: { ...response, endingId: null }, workspaceId, organizationId, dispatch });
 
     const data = create.mock.calls[0][0].data;
     expect(data).toMatchObject({ workflowId: "wf_1", status: "queued" });
@@ -115,7 +121,7 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
   test("a response without an ending card does not fire an ending-specific workflow", async () => {
     findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1", [endingId])]);
 
-    await run({ response: { ...response, endingId: null }, workspaceId, dispatch });
+    await run({ response: { ...response, endingId: null }, workspaceId, organizationId, dispatch });
 
     expect(create).not.toHaveBeenCalled();
     expect(dispatch).not.toHaveBeenCalled();
@@ -250,5 +256,29 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
     expect(error).toHaveBeenCalled();
     // Dispatch failed → the run is left unmarked (dispatchedAt stays null) for the reconciler to recover.
     expect(markDispatched).not.toHaveBeenCalled();
+  });
+
+  test("skips (and logs) enqueueing when the organization lacks the workflows entitlement", async () => {
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
+    getIsWorkflowsEnabled.mockResolvedValue(false);
+
+    await run();
+
+    expect(getIsWorkflowsEnabled).toHaveBeenCalledWith(organizationId);
+    expect(info).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, organizationId, responseId, matchedWorkflowIds: ["wf_1"] }),
+      expect.stringContaining("entitlement")
+    );
+    expect(create).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test("does not pay the entitlement lookup when no workflow matches the response", async () => {
+    findMany.mockResolvedValue([]);
+
+    await run();
+
+    expect(getIsWorkflowsEnabled).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 });

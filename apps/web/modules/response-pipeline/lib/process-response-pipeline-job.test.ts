@@ -254,6 +254,9 @@ describe("processResponsePipelineJob", () => {
       expect.objectContaining({
         response: expect.objectContaining({ id: "response_123" }),
         workspaceId: "workspace_123",
+        // The runner gates on the organization's workflows entitlement, so the pipeline must
+        // thread the resolved organization through.
+        organizationId: "org_123",
       })
     );
   });

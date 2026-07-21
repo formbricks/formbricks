@@ -8,9 +8,11 @@ import {
   createWorkflowsService,
 } from "@formbricks/workflows/server";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
  * Adapter glue between the Next.js v3 routes and the framework-agnostic `@formbricks/workflows`
@@ -101,8 +103,27 @@ export const buildWorkflowApiContext = (
   // HMAC key for redacting PII markers in audit snapshots; reuses the app's audit/encryption secret
   // so markers aren't offline-guessable. Injected as data to keep `@formbricks/workflows` agnostic.
   auditRedactionKey: ENCRYPTION_KEY,
-  authorize: (workspaceId, access) =>
-    requireV3WorkspaceAccess(authentication, workspaceId, access, requestId, instance),
+  // Workspace access first, then the workflows entitlement (Cloud plan / self-hosted EE license)
+  // for the resolved organization. Every v3 route handler and MCP tool authorizes through this
+  // capability, so this is the single enforcement point for both surfaces; the returned problem
+  // Response short-circuits through the package's error mapping like any authorization failure.
+  authorize: async (workspaceId, access) => {
+    const authorized = await requireV3WorkspaceAccess(
+      authentication,
+      workspaceId,
+      access,
+      requestId,
+      instance
+    );
+    if (authorized instanceof Response) {
+      return authorized;
+    }
+    const isWorkflowsEnabled = await getIsWorkflowsEnabled(authorized.organizationId);
+    if (!isWorkflowsEnabled) {
+      return problemForbidden(requestId, "Workflows are not enabled for this organization", instance);
+    }
+    return authorized;
+  },
   verifyTriggerSurvey,
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
 });

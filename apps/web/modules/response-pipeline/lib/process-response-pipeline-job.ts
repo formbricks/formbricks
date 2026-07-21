@@ -683,6 +683,7 @@ const runResponseFinishedSideEffects = async ({
     await enqueueResponseCompletedWorkflowRuns({
       response: data.response,
       workspaceId,
+      organizationId,
       dispatch: dispatchWorkflowRunViaJobs,
       logContext,
     });
