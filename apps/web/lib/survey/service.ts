@@ -12,6 +12,7 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -282,14 +283,38 @@ export const updateSurveyInternal = async (
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.workspaceId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
+    // ENG-1749: workspaceId and id are the survey's tenant anchors. Always resolve the workspace from
+    // the existing survey (never the client payload), and strip workspaceId/id from the update below,
+    // so an authorized editor cannot re-point their own survey into another workspace/organization.
+    const actionClasses = await getActionClasses(currentSurvey.workspaceId);
+
+    const {
+      triggers,
+      segment,
+      questions,
+      languages,
+      type,
+      followUps,
+      workspaceId: _workspaceId,
+      id: _id,
+      ...surveyData
+    } = updatedSurvey;
+
+    // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
+    // segment belongs to this survey's workspace so a caller cannot mutate or delete another
+    // tenant's segment by supplying its id. Mirrors the create path guard.
+    await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
+
+    // ENG-1749 sibling: the languages block below links languages by language.id. Ensure every
+    // referenced language belongs to this survey's workspace so a caller cannot attach another
+    // tenant's language. Mirrors the create path guard (covers drafts too — runs before validation).
+    await assertSurveyLanguagesBelongToWorkspace(currentSurvey.workspaceId, languages);
 
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
@@ -364,21 +389,33 @@ export const updateSurveyInternal = async (
           throw new InvalidInputError("Invalid user segment filters");
         }
 
-        try {
-          // update the segment:
-          let updatedInput: Prisma.SegmentUpdateInput = {
-            ...segment,
-            surveys: undefined,
-          };
-
-          if (segment.surveys) {
-            updatedInput = {
-              ...segment,
-              surveys: {
-                connect: segment.surveys.map((surveyId) => ({ id: surveyId })),
-              },
-            };
+        // ENG-1749/ENG-1920: the connected survey ids are client-supplied; ensure each belongs to
+        // this survey's workspace before re-pointing it to the segment (a foreign id would hijack
+        // another tenant's survey targeting). Done outside the try below, which masks errors as a
+        // generic Error and would otherwise hide this rejection.
+        if (segment.surveys && segment.surveys.length > 0) {
+          const workspaceBySurveyId = await getSurveyWorkspaceIdMap(segment.surveys);
+          if (
+            !segment.surveys.every(
+              (surveyId) => workspaceBySurveyId.get(surveyId) === currentSurvey.workspaceId
+            )
+          ) {
+            throw new InvalidInputError("Survey and segment are not in the same workspace");
           }
+        }
+
+        try {
+          // Update only the segment's own mutable fields — never mass-assign workspaceId/id/
+          // timestamps from the client-supplied segment object (ENG-1749).
+          const updatedInput: Prisma.SegmentUpdateInput = {
+            title: segment.title,
+            description: segment.description,
+            isPrivate: segment.isPrivate,
+            filters: segment.filters,
+            ...(segment.surveys
+              ? { surveys: { connect: segment.surveys.map((surveyId) => ({ id: surveyId })) } }
+              : {}),
+          };
 
           await prisma.segment.update({
             where: { id: segment.id },
@@ -427,7 +464,7 @@ export const updateSurveyInternal = async (
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
-        const workspaceId = updatedSurvey.workspaceId;
+        const workspaceId = currentSurvey.workspaceId;
         await prisma.survey.update({
           where: {
             id: surveyId,
@@ -621,20 +658,35 @@ const validateSurveyCreateDataMedia = (
   return data;
 };
 
-const assertSurveyLanguagesBelongToWorkspace = (
+const assertSurveyLanguagesBelongToWorkspace = async (
   workspaceId: string,
-  languages: TSurveyCreateInput["languages"]
-): void => {
-  for (const surveyLanguage of languages ?? []) {
-    if (surveyLanguage.language.workspaceId !== workspaceId) {
-      throw new ResourceNotFoundError("Language", surveyLanguage.language.id);
+  languages: Array<{ language: { id: string } }> | null | undefined
+): Promise<void> => {
+  const languageIds = [...new Set((languages ?? []).map((surveyLanguage) => surveyLanguage.language.id))];
+  if (languageIds.length === 0) {
+    return;
+  }
+
+  // ENG-1749: resolve each language's real owning workspace from the DB rather than trusting the
+  // caller-supplied language.workspaceId — the survey payload is client-controlled, so an attacker
+  // could otherwise claim a foreign language belongs to this workspace. A single batched query
+  // avoids a per-language fan-out; an unknown id is absent from the map and thus rejected.
+  const dbLanguages = await prisma.language.findMany({
+    where: { id: { in: languageIds } },
+    select: { id: true, workspaceId: true },
+  });
+  const workspaceByLanguageId = new Map(dbLanguages.map((language) => [language.id, language.workspaceId]));
+
+  for (const languageId of languageIds) {
+    if (workspaceByLanguageId.get(languageId) !== workspaceId) {
+      throw new ResourceNotFoundError("Language", languageId);
     }
   }
 };
 
 const assertSurveySegmentBelongsToWorkspace = async (
   workspaceId: string,
-  segment: TSurveyCreateInput["segment"]
+  segment: { id?: string | null } | null | undefined
 ): Promise<void> => {
   if (!segment?.id) {
     return;
@@ -658,7 +710,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
 
   try {
     const { createdBy, languages, segment, followUps, styling, ...restSurveyBody } = parsedSurveyBody;
-    assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
+    await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment);
     const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
     const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
