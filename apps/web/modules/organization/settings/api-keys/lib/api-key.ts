@@ -6,10 +6,11 @@ import { ApiKey, ApiKeyPermission, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { CONTROL_HASH } from "@/lib/constants";
 import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
+import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import {
   TApiKeyCreateInput,
   TApiKeyUpdateInput,
@@ -61,6 +62,10 @@ export const getApiKeyWithPermissions = reactCache(
               select: {
                 id: true,
                 name: true,
+                // ENG-1749: needed so the auth layer can drop any workspace permission whose
+                // workspace is outside the key's organization (defense-in-depth for the read path,
+                // which authorizes off the permission list rather than resolveBodyIdsV2).
+                organizationId: true,
               },
             },
           },
@@ -161,6 +166,24 @@ export const createApiKey = async (
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
   validateInputs([organizationId, ZId], [apiKeyData, ZApiKeyCreateInput]);
   try {
+    // ENG-1749: an API key is created at the organization level but carries per-workspace
+    // permissions. Reject any workspace that does not belong to the authorized organization,
+    // otherwise a caller could mint a key scoped to another tenant's workspace (cross-tenant
+    // BOLA). Validate before generating/hashing the secret so illegitimate input does no work.
+    const { workspacePermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
+    if (workspacePermissions && workspacePermissions.length > 0) {
+      const orgWorkspaceIds = new Set(
+        (await getWorkspacesByOrganizationId(organizationId)).map((workspace) => workspace.id)
+      );
+      for (const { workspaceId } of workspacePermissions) {
+        if (!orgWorkspaceIds.has(workspaceId)) {
+          throw new OperationNotAllowedError(
+            `Workspace ${workspaceId} does not belong to organization ${organizationId}`
+          );
+        }
+      }
+    }
+
     // Generate a secure random secret (32 bytes base64url)
     const secret = randomBytes(32).toString("base64url");
 
@@ -170,8 +193,6 @@ export const createApiKey = async (
 
     // 2. bcrypt hash
     const hashedKey = await hashSecret(secret, 12);
-
-    const { workspacePermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
 
     // Create the API key
     const result = await prisma.apiKey.create({
