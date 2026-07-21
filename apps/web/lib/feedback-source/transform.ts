@@ -184,13 +184,17 @@ const expandMatrixToRecords = (
 ): FeedbackRecordCreateParams[] => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return [];
 
+  // Guard against malformed/legacy blocks where rows is absent (same class as ENG-1939): the
+  // schema requires it, but stored survey.blocks JSON is not re-validated here. columns flows
+  // through normalizeChoiceValue below, which already tolerates an absent array.
+  const rows = element.rows ?? [];
   const groupLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
   const records: FeedbackRecordCreateParams[] = [];
 
   for (const [rowLabel, columnLabel] of Object.entries(value)) {
     if (columnLabel === undefined || columnLabel === null || columnLabel === "") continue;
 
-    const row = findChoiceByLabel<TSurveyMatrixElementChoice>(element.rows, rowLabel, lookupLanguage);
+    const row = findChoiceByLabel<TSurveyMatrixElementChoice>(rows, rowLabel, lookupLanguage);
     if (!row) continue;
 
     // Column labels are localized like the row labels — store the label as submitted and
@@ -227,13 +231,16 @@ const expandRankingToRecords = (
 ): FeedbackRecordCreateParams[] => {
   if (!Array.isArray(value) || value.length === 0) return [];
 
+  // Guard against malformed/legacy blocks where choices is absent (same class as ENG-1939): the
+  // schema requires it, but stored survey.blocks JSON is not re-validated here.
+  const choices = element.choices ?? [];
   const groupLabel = mapping.customFieldLabel || getHeadlineFromElement(element);
   const records: FeedbackRecordCreateParams[] = [];
 
   value.forEach((itemLabel, index) => {
     if (typeof itemLabel !== "string" || itemLabel === "") return;
 
-    const choice = findChoiceByLabel<TSurveyElementChoice>(element.choices, itemLabel, lookupLanguage);
+    const choice = findChoiceByLabel<TSurveyElementChoice>(choices, itemLabel, lookupLanguage);
     if (!choice) return;
 
     records.push({
