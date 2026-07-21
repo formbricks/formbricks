@@ -1,0 +1,122 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "33605bfa81a8",
+  "session_id": "287890f8-0fc2-45ed-bb06-c028ba08e388",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-21T12:14:36.050418Z",
+  "branch": "matti/eng-1678-stop-nextimage-from-allowing-arbitrary-remote-hosts",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    ".env.example",
+    "apps/web/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary.tsx",
+    "apps/web/lib/image-hosts.test.ts",
+    "apps/web/lib/image-hosts.ts",
+    "apps/web/modules/ee/whitelabel/email-customization/components/email-customization-settings.tsx",
+    "apps/web/modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings.tsx",
+    "apps/web/modules/survey/editor/components/logo-settings-card.tsx",
+    "apps/web/modules/survey/editor/components/option-ids.tsx",
+    "apps/web/modules/survey/editor/components/unsplash-images.tsx",
+    "apps/web/modules/ui/components/client-logo/index.tsx",
+    "apps/web/modules/ui/components/connect-integration/index.tsx",
+    "apps/web/modules/ui/components/file-input/index.tsx",
+    "apps/web/modules/ui/components/input-combo-box/index.tsx",
+    "apps/web/modules/ui/components/media-background/index.tsx",
+    "apps/web/modules/ui/components/picture-selection-response/index.tsx",
+    "apps/web/modules/workspaces/settings/look/components/edit-logo.tsx",
+    "apps/web/next.config.mjs",
+    "turbo.json"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "bc33f906c64e",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 107682,
+    "cache_creation_tokens": 5456388,
+    "cache_read_tokens": 162667626,
+    "output_tokens": 411502,
+    "api_call_count": 405
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01448YdB7z2uSj4bzjfNSXQk",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "nextjs-docs"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "bc33f906c64e",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 2084,
+        "end": 2085,
+        "entry_ids": [
+          "3e265ae2-7b57-4f93-83ce-ab1321d175ab"
+        ],
+        "tool_use_id": "toolu_01448YdB7z2uSj4bzjfNSXQk"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01448YdB7z2uSj4bzjfNSXQk"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: nextjs-docs",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-21T12:14:35.822592Z",
+    "agent_lines": 176,
+    "agent_removed": 64,
+    "human_added": 0,
+    "human_modified": 4,
+    "human_removed": 0,
+    "total_committed": 180,
+    "total_lines_changed": 244,
+    "agent_percentage": 98.36065573770492,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 5657,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        "FORMBRICKS_VISION.md": 68,
+        "MONOREPO_CONFIG_AUDIT.md": 316,
+        "apps/agents/src/db/generated/browser.ts": 29,
+        "apps/agents/src/db/generated/client.ts": 53,
+        "apps/agents/src/db/generated/commonInputTypes.ts": 510,
+        "apps/agents/src/db/generated/enums.ts": 20,
+        "apps/agents/src/db/generated/internal/class.ts": 214,
+        "apps/agents/src/db/generated/internal/prismaNamespace.ts": 943,
+        "apps/agents/src/db/generated/internal/prismaNamespaceBrowser.ts": 157,
+        "apps/agents/src/db/generated/models.ts": 13,
+        "apps/agents/src/db/generated/models/AgentStepContent.ts": 1489,
+        "apps/agents/src/db/generated/models/AgentTask.ts": 1790
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 5829,
+      "agent_lines_removed": 80
+    }
+  ]
+}

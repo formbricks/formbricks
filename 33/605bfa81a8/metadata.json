@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "33605bfa81a8",
+  "strategy": "manual-commit",
+  "branch": "matti/eng-1678-stop-nextimage-from-allowing-arbitrary-remote-hosts",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".env.example",
+    "apps/web/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary.tsx",
+    "apps/web/lib/image-hosts.test.ts",
+    "apps/web/lib/image-hosts.ts",
+    "apps/web/modules/ee/whitelabel/email-customization/components/email-customization-settings.tsx",
+    "apps/web/modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings.tsx",
+    "apps/web/modules/survey/editor/components/logo-settings-card.tsx",
+    "apps/web/modules/survey/editor/components/option-ids.tsx",
+    "apps/web/modules/survey/editor/components/unsplash-images.tsx",
+    "apps/web/modules/ui/components/client-logo/index.tsx",
+    "apps/web/modules/ui/components/connect-integration/index.tsx",
+    "apps/web/modules/ui/components/file-input/index.tsx",
+    "apps/web/modules/ui/components/input-combo-box/index.tsx",
+    "apps/web/modules/ui/components/media-background/index.tsx",
+    "apps/web/modules/ui/components/picture-selection-response/index.tsx",
+    "apps/web/modules/workspaces/settings/look/components/edit-logo.tsx",
+    "apps/web/next.config.mjs",
+    "turbo.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/33/605bfa81a8/0/metadata.json",
+      "transcript": "/33/605bfa81a8/0/full.jsonl",
+      "compact_transcript": "/33/605bfa81a8/0/transcript.jsonl",
+      "content_hash": "/33/605bfa81a8/0/content_hash.txt",
+      "prompt": "/33/605bfa81a8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 107682,
+    "cache_creation_tokens": 5456388,
+    "cache_read_tokens": 162667626,
+    "output_tokens": 411502,
+    "api_call_count": 405
+  }
+}
