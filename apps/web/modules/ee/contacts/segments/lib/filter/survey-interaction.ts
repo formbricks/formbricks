@@ -41,6 +41,15 @@ export interface TContactInteractionData {
   responses: TContactResponseRow[];
 }
 
+/**
+ * Deleted / unknown surveys and negation, by design: a negative operator asserts the ABSENCE of a
+ * matching interaction within the window, so "have not seen survey X" matches a contact when no such
+ * interaction exists — including when X was deleted after the segment was saved (its displays/responses
+ * are gone, so the absence holds). This is intentional (absence = "not seen"); write-time validation
+ * (`assertSurveyInteractionSurveyIds`) still rejects surveys that are foreign/unknown at save time.
+ * Operators are validated against the workspace on save; runtime does not re-check existence (that would
+ * cost a query on the hot path — the whole point of the in-memory evaluator is to avoid one).
+ */
 /** How a single operator resolves to a presence check over the contact's interaction relations. */
 interface TSurveyInteractionSemantics {
   /** Which relation the interaction lives on. */

@@ -141,7 +141,11 @@ export type TRelativeDateValue = z.infer<typeof ZRelativeDateValue>;
 // change the output shape.
 const ZSegmentSurveyInteractionFilterValueBase = z.object({
   surveyScope: z.enum(["any", "specific"]),
-  surveyIds: z.array(z.string()),
+  // Bounded to cap the payload from an untrusted client (no unbounded array). 100 surveys is far
+  // beyond any realistic single-filter selection. Id validity/ownership is enforced at write time by
+  // assertSurveyInteractionSurveyIds (checks the ids exist in the workspace), which is stronger than a
+  // format check, so we do not additionally constrain the string shape here.
+  surveyIds: z.array(z.string()).max(100),
   within: z.object({
     amount: z.number().int().min(1).max(999),
     unit: ZSurveyInteractionTimeUnit,
@@ -471,4 +475,15 @@ export interface TEvaluateSegmentUserData {
   userId: string;
   attributes: TEvaluateSegmentUserAttributeData;
   deviceType: "phone" | "desktop";
+  /**
+   * Optional interaction history for evaluating `surveyInteraction` filters in the in-process
+   * `evaluateSegment` path. When a segment contains a `surveyInteraction` filter and this is not
+   * provided, `evaluateSegment` throws rather than silently dropping the filter (which would corrupt
+   * membership). The contact-sync hot path and the Prisma preview path do not use this field — they
+   * evaluate interaction filters against loaded relations / the database directly.
+   */
+  interactionData?: {
+    displays: { surveyId: string; createdAt: Date }[];
+    responses: { surveyId: string; createdAt: Date; finished: boolean }[];
+  };
 }
