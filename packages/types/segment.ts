@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZId } from "./common";
 
 // The segment filter has operators, these are all the types of operators that can be used
 export const BASE_OPERATORS = [
@@ -164,7 +165,7 @@ export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 // Each filter has a qualifier, which usually contains the operator for evaluating the filter.
 // Attribute filter -> root will always have type "attribute"
 export const ZSegmentAttributeFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("attribute"),
     contactAttributeKey: z.string(),
@@ -178,7 +179,7 @@ export type TSegmentAttributeFilter = z.infer<typeof ZSegmentAttributeFilter>;
 
 // Person filter -> root will always have type "person"
 export const ZSegmentPersonFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("person"),
     personIdentifier: z.string(),
@@ -192,7 +193,7 @@ export type TSegmentPersonFilter = z.infer<typeof ZSegmentPersonFilter>;
 
 // Segment filter -> root will always have type "segment"
 export const ZSegmentSegmentFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("segment"),
     segmentId: z.string(),
@@ -206,7 +207,7 @@ export type TSegmentSegmentFilter = z.infer<typeof ZSegmentSegmentFilter>;
 
 // Device filter -> root will always have type "device"
 export const ZSegmentDeviceFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("device"),
     deviceType: z.string(),
@@ -224,7 +225,7 @@ export type TSegmentDeviceFilter = z.infer<typeof ZSegmentDeviceFilter>;
 // The structured value (ZSegmentSurveyInteractionFilterValue) is defined above with the shared
 // filter-value union.
 export const ZSegmentSurveyInteractionFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("surveyInteraction"),
   }),
@@ -365,7 +366,7 @@ export type TBaseFilters = TBaseFilter[];
 
 export const ZBaseFilter: z.ZodType<TBaseFilter> = z.lazy(() =>
   z.object({
-    id: z.cuid2(),
+    id: ZId,
     connector: ZSegmentConnector,
     resource: z.union([ZSegmentFilter, ZBaseFilters]),
   })
@@ -397,7 +398,7 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   .array(
     z.object({
-      id: z.cuid2(),
+      id: ZId,
       connector: ZSegmentConnector,
       resource: z.union([ZSegmentFilter, z.lazy(() => ZSegmentFilters)]),
     })
@@ -416,7 +417,7 @@ export const ZSegment = z.object({
   description: z.string().nullable(),
   isPrivate: z.boolean().prefault(true),
   filters: ZSegmentFilters,
-  workspaceId: z.cuid2(),
+  workspaceId: ZId,
   createdAt: z.date(),
   updatedAt: z.date(),
   surveys: z.array(z.string()),
