@@ -5,7 +5,6 @@ import type { TFunction } from "i18next";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -47,7 +46,9 @@ const runFailureMessageFromCode = (code: TaxonomyRun["error_code"], t: TFunction
     case "internal_error":
       return t("workspace.unify.taxonomy_failure_internal_error");
     default:
-      return t("workspace.unify.taxonomy_start_failed");
+      // Unknown/absent code (e.g. a future Hub failure code we don't map yet) — a neutral message,
+      // not the wrong-tense "failed to start" (the run did start, then failed).
+      return t("workspace.unify.taxonomy_failure_generation_failed");
   }
 };
 
@@ -90,6 +91,7 @@ export const TopicsSubtopicsContainer = ({
 
   const stateQuery = useTaxonomyState({ workspaceId, scope });
   const activeTree = stateQuery.data?.activeTree ?? null;
+  const stateUnavailable = stateQuery.data?.unavailable ?? false;
   const activeRunId = activeTree?.run.id ?? null;
   const runs = useMemo(() => stateQuery.data?.runs ?? [], [stateQuery.data]);
   const latestRun = runs[0] ?? null;
@@ -143,12 +145,17 @@ export const TopicsSubtopicsContainer = ({
   }, [runStatus, queryClient, workspaceId, scope]);
 
   const isRunning = runningRunId !== null || triggerMutation.isPending;
-  // The directory scope always has a target, so generation only depends on write access + no active run.
-  const canGenerate = canWrite && !isRunning;
+  // A failed run keeps generation enabled (that is the retry path); only block generation while the
+  // taxonomy service itself is unreachable, since a new run can't succeed then anyway.
+  const serviceUnavailable = fieldsUnavailable || stateUnavailable;
+  const canGenerate = canWrite && !isRunning && !serviceUnavailable;
   const hasActiveTree = Boolean(activeTree?.root?.children?.length);
+  // Surface the curated, localized failure message keyed on error_code — but only when there is NO
+  // active tree, so a failed *re*generate doesn't drop an error banner over a taxonomy that still works
+  // (the toast already gives a transient heads-up). The raw Hub `error` string stays server-side (logs).
   const runFailure =
-    latestRun?.status === "failed"
-      ? (latestRun.error ?? runFailureMessageFromCode(latestRun.error_code, t))
+    latestRun?.status === "failed" && !hasActiveTree
+      ? runFailureMessageFromCode(latestRun.error_code, t)
       : null;
 
   const handleGenerate = () => {
@@ -161,8 +168,10 @@ export const TopicsSubtopicsContainer = ({
               ? t("workspace.unify.taxonomy_run_in_progress")
               : t("workspace.unify.taxonomy_run_started")
           ),
-        onError: (error) =>
-          toast.error(getV3ApiErrorMessage(error, t("workspace.unify.taxonomy_start_failed"))),
+        // A trigger failure comes back as a raw upstream detail (502 / bad_gateway with the Hub's JSON
+        // blob), so show a clean localized message instead of dumping it. The specific failed-run alert
+        // (with the exact reason) still renders once /state refetches; raw detail stays in server logs.
+        onError: () => toast.error(t("workspace.unify.taxonomy_start_failed")),
       }
     );
   };
@@ -172,7 +181,8 @@ export const TopicsSubtopicsContainer = ({
       await renameMutation.mutateAsync({ nodeId, label });
       toast.success(t("workspace.unify.taxonomy_rename_success"));
     } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("workspace.unify.taxonomy_rename_failed")));
+      // Localized message only — never surface the raw upstream detail (see the trigger toast above).
+      toast.error(t("workspace.unify.taxonomy_rename_failed"));
       throw error;
     }
   };
@@ -203,8 +213,7 @@ export const TopicsSubtopicsContainer = ({
             });
           }
         },
-        onError: (error) =>
-          toast.error(getV3ApiErrorMessage(error, t("workspace.unify.taxonomy_remove_failed"))),
+        onError: () => toast.error(t("workspace.unify.taxonomy_remove_failed")),
       }
     );
   };
@@ -249,7 +258,7 @@ export const TopicsSubtopicsContainer = ({
           isLoadingFields={fieldsQuery.isLoading}
           hasActiveTree={hasActiveTree}
           canGenerate={canGenerate}
-          isGenerating={triggerMutation.isPending}
+          isGenerating={isRunning}
           onGenerate={handleGenerate}
           canWrite={canWrite}
         />
@@ -258,11 +267,16 @@ export const TopicsSubtopicsContainer = ({
           <EmbeddingProgressBanner current={gate.totalEmbeddedRecords} total={gate.totalOpenTextRecords} />
         )}
 
-        {fieldsUnavailable && (
-          <Alert variant="info" size="small">
-            <AlertDescription>
-              {fieldsQuery.data?.unavailableMessage ?? t("workspace.unify.taxonomy_fields_unavailable")}
-            </AlertDescription>
+        {serviceUnavailable && (
+          <Alert variant="error" size="small">
+            <AlertTitle>{t("workspace.unify.taxonomy_service_unavailable")}</AlertTitle>
+            <AlertButton
+              onClick={() => {
+                void fieldsQuery.refetch();
+                void stateQuery.refetch();
+              }}>
+              {t("common.retry")}
+            </AlertButton>
           </Alert>
         )}
 

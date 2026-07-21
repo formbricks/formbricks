@@ -5,6 +5,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import {
   InvalidInputError,
+  PASSWORD_COMPROMISED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
 } from "@formbricks/types/errors";
@@ -20,6 +21,7 @@ import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { auth } from "@/modules/auth/lib/auth";
+import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import {
   markSignupDomainAllowed,
@@ -96,6 +98,11 @@ async function signUpUserSafely(
     // legacy verification-token email.
     await auth.api.signUpEmail({ body: { email: normalizedEmail, password, name } });
   } catch (error) {
+    // A breached password is rejected before any user is created — surface it as an expected error
+    // with a stable code the sign-up form maps to a localized message (not an enumeration signal).
+    if (isPasswordCompromisedError(error)) {
+      throw new InvalidInputError(PASSWORD_COMPROMISED_ERROR_CODE);
+    }
     // Enumeration-safe: a duplicate email resolves to "already existed", not a surfaced error.
     const existing = await getUserByEmail(normalizedEmail);
     if (existing) {

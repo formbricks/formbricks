@@ -86,16 +86,33 @@ const config = ({ mode }) => {
   return defineConfig({
     ...sharedConfig,
     test: {
-      name: "surveys",
-      environment: "node",
-      environmentMatchGlobs: [
-        ["**/*.test.tsx", "jsdom"],
-        ["**/lib/**/*.test.ts", "jsdom"],
-      ],
       setupFiles: ["./vitestSetup.ts"],
-      include: ["**/*.test.ts", "**/*.test.tsx"],
       exclude: ["dist/**", "node_modules/**"],
       env: env,
+      // Environment selection (ENG-1680): Vitest 4 removed `environmentMatchGlobs`, so environments
+      // are assigned via projects. *.test.tsx (component tests) run in happy-dom automatically;
+      // *.test.ts default to node — the few DOM-dependent .ts tests keep their per-file
+      // `@vitest-environment happy-dom` pragma.
+      projects: [
+        {
+          extends: true,
+          test: {
+            name: "surveys-unit",
+            environment: "node",
+            include: ["**/*.test.ts"],
+            exclude: ["dist/**", "node_modules/**"],
+          },
+        },
+        {
+          extends: true,
+          test: {
+            name: "surveys-components",
+            environment: "happy-dom",
+            include: ["**/*.test.tsx"],
+            exclude: ["dist/**", "node_modules/**"],
+          },
+        },
+      ],
       coverage: {
         provider: "v8",
         reporter: ["text", "html", "lcov"],

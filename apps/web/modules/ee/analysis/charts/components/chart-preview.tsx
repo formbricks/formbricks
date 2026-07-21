@@ -82,12 +82,17 @@ export function ChartPreview({
 
         <TabsContent value="chart" className="mt-0">
           <ChartErrorBoundary fallbackMessage={t("workspace.analysis.charts.chart_render_error")}>
-            <ChartRenderer chartType={chartData.chartType} data={data} query={chartData.query} />
+            <ChartRenderer
+              chartType={chartData.chartType}
+              data={data}
+              query={chartData.query}
+              optionLabels={chartData.optionLabels}
+            />
           </ChartErrorBoundary>
         </TabsContent>
 
         <TabsContent value="data" className="mt-0">
-          <DataViewer data={data} />
+          <DataViewer data={data} optionLabels={chartData.optionLabels} />
         </TabsContent>
       </Tabs>
     );

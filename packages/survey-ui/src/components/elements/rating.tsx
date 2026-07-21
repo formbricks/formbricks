@@ -15,6 +15,7 @@ import {
   TiredFace,
   WearyFace,
 } from "@/components/general/smileys";
+import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn, getRTLScaleOptionClasses } from "@/lib/utils";
 
 /**
@@ -183,9 +184,17 @@ function Rating({
     }
   };
 
-  // Keyboard navigation is handled natively: the options share a radio group
-  // name, so arrow keys move and select, and Space selects. No manual handler
-  // is needed, and the focusable control is the native <input>, not the label.
+  // The options share a radio group name (single Tab stop, native <input> as
+  // the focusable control), but selection is decoupled from arrow-key focus
+  // moves because selecting can trigger auto-progress (see useRovingRadioGroup).
+  const ratingValues = Array.from({ length: range }, (_, i) => String(i + 1));
+  const { getRadioProps } = useRovingRadioGroup({
+    values: ratingValues,
+    selectedValue: currentValue === undefined ? undefined : String(currentValue),
+    onSelect: (v) => {
+      handleSelect(Number(v));
+    },
+  });
 
   // Get number option color for color coding
   const getRatingNumberOptionColor = (ratingRange: number, idx: number): string => {
@@ -217,6 +226,7 @@ function Rating({
     return (
       <label
         key={number}
+        data-fb-scale-cell
         className={cn(
           "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
           borderClasses,
@@ -260,6 +270,7 @@ function Rating({
           disabled={disabled}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of ${String(range)}`}
+          {...getRadioProps(String(number))}
         />
         <span className="text-sm">{number}</span>
       </label>
@@ -309,6 +320,7 @@ function Rating({
             disabled={disabled}
             className="sr-only"
             aria-label={`Rate ${String(number)} out of ${String(range)} stars`}
+            {...getRadioProps(String(number))}
           />
           <div className="pointer-events-none flex w-full items-center justify-center">
             {isActive ? (
@@ -365,6 +377,7 @@ function Rating({
             disabled={disabled}
             className="sr-only"
             aria-label={`Rate ${String(number)} out of ${String(range)}`}
+            {...getRadioProps(String(number))}
           />
           <div className="text-input-text pointer-events-none h-full w-full object-contain">
             <RatingSmiley active={isActive} idx={index} range={range} addColors={colorCoding} />

@@ -1,3 +1,4 @@
+# Node major must stay in sync with .nvmrc (single source of truth for dev + CI + prod).
 FROM node:24-alpine3.23 AS base
 
 #
@@ -101,6 +102,9 @@ RUN chmod 644 ./next.config.mjs
 
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
+
+COPY --from=installer /app/apps/web/dist/docker/validate-env.mjs ./validate-env.mjs
+RUN chown nextjs:nextjs ./validate-env.mjs && chmod 444 ./validate-env.mjs
 
 COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
 RUN chmod 644 ./prisma.config.mjs

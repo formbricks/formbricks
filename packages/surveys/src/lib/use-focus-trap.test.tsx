@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { type ComponentChildren } from "preact";
 import { afterEach, describe, expect, test, vi } from "vitest";

@@ -6,13 +6,38 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: "node",
-    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     // Integration tests run only via `pnpm test:integration` (vitest.integration.config.mts) against a
     // real Postgres + Redis; the unit config mocks the DB, so they must be excluded here (ENG-1054).
     exclude: ["playwright/**", "node_modules/**", ".next/**", "**/*.integration.test.ts"],
     setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
+    // Environment selection (ENG-1680): Vitest 4 removed `environmentMatchGlobs`, so environments
+    // are assigned via projects. *.test.ts run in node; *.test.tsx (component tests) run in jsdom
+    // automatically - no `@vitest-environment` pragma needed.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          environment: "node",
+          exclude: [
+            "playwright/**",
+            "node_modules/**",
+            ".next/**",
+            "**/*.integration.test.ts",
+            "**/*.test.tsx",
+          ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "components",
+          environment: "jsdom",
+          include: ["**/*.test.tsx"],
+        },
+      },
+    ],
     coverage: {
       provider: "v8", // Use V8 as the coverage provider
       reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports

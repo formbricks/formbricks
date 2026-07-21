@@ -426,7 +426,7 @@ paths:
                     $ref: '#/components/schemas/SurveyResource'
         '400':
           description: |
-            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayPercentage` is required when `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution` on a link survey, or `displayPercentage` without `displayOption: displaySome`); omissions carry `code: missing_required_field` (e.g. `displayPercentage` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
+            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown or forbidden fields carry `code: unsupported_field` (e.g. `distribution` on a link survey); omissions carry `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
           content:
             application/problem+json:
               schema:
@@ -1022,7 +1022,7 @@ paths:
                     $ref: '#/components/schemas/SurveyResource'
         '400':
           description: |
-            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation, and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayPercentage` is required when `displayOption` is `displaySome` and forbidden otherwise. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
+            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown, unsupported, or immutable fields (`type` cannot be changed after creation, and `distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `type`, or `distribution`/`targeting` on a link survey); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
           content:
             application/problem+json:
               schema:
@@ -3330,7 +3330,7 @@ components:
             - displaySome
           default: displayOnce
           description: |
-            How often the survey may be shown to a contact. `displaySome` shows it to `displayPercentage` of contacts.
+            How often the survey may be shown to a contact. `displaySome` shows it up to `displayLimit` times (or until the contact responds, whichever comes first).
         displayPercentage:
           type:
             - number
@@ -3339,14 +3339,15 @@ components:
           maximum: 100
           default: null
           description: |
-            Percentage of contacts to show the survey to. Required when `displayOption` is `displaySome`; must be null/omitted otherwise.
+            Independent throttle: show the survey to only this percentage of triggered contacts. Optional and valid with any `displayOption`; null/omitted means no throttle (shown to everyone).
         displayLimit:
           type:
             - integer
             - 'null'
           minimum: 0
           default: null
-          description: Maximum number of times the survey is shown to a single contact.
+          description: |
+            Maximum number of times the survey is shown to a single contact. Required (must be >= 1) when `displayOption` is `displaySome`; otherwise optional.
         recontactDays:
           type:
             - integer
@@ -3383,8 +3384,8 @@ components:
       additionalProperties: false
       example:
         displayOption: displaySome
-        displayPercentage: 50
-        displayLimit: null
+        displayLimit: 3
+        displayPercentage: null
         recontactDays: 7
         autoClose: null
         autoComplete: null

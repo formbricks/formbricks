@@ -176,7 +176,11 @@ export const VerifyEmail = ({
                               placeholder="engineering@acme.com"
                               className="h-10 bg-white"
                             />
-                            <Button type="submit" size="sm" loading={isSubmitting}>
+                            <Button
+                              type="submit"
+                              size="tall"
+                              loading={isSubmitting}
+                              className="focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2">
                               {t("s.verify_email_before_submission_button")}
                             </Button>
                           </div>

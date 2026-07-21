@@ -241,6 +241,12 @@ cube(`FeedbackRecords`, {
       description: `Human-readable name of the source`,
     },
 
+    sourceId: {
+      sql: `source_id`,
+      type: `string`,
+      description: `Stable id of the source (e.g. the survey id). Group/filter to disambiguate sources with the same name.`,
+    },
+
     fieldType: {
       sql: `field_type`,
       type: `string`,
@@ -320,6 +326,12 @@ cube(`FeedbackRecords`, {
       sql: `value_text`,
       type: `string`,
       description: `Text answer value (open text, or the label of a multiple-choice / categorical answer). Pair with a fieldType filter to keep types consistent.`,
+    },
+
+    valueId: {
+      sql: `value_id`,
+      type: `string`,
+      description: `Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.`,
     },
 
     valueBoolean: {
