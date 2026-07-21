@@ -390,6 +390,30 @@ export const addWorkflowTriggerAtom = atom(null, (get, set, triggerType: TWorkfl
   );
 });
 
+// Fallback canvas position when the reference node/edge carries no stored position.
+const SEND_EMAIL_FALLBACK_POSITION = { x: 220, y: 200 };
+
+// The default send_email node both insertion atoms create (append-after-node and split-edge).
+// The position is cloned so no two nodes ever share one mutable position object.
+const createDefaultSendEmailNode = (position: {
+  x: number;
+  y: number;
+}): TWorkflowDefinition["nodes"][number] => ({
+  id: createId(),
+  type: "action",
+  actionType: WORKFLOW_ACTIONS.SEND_EMAIL,
+  label: "Send email",
+  config: {
+    to: "",
+    from: "team@example.com",
+    replyTo: [],
+    subject: "",
+    body: "",
+    attachResponseData: false,
+  },
+  ui: { position: { ...position } },
+});
+
 // Append a fresh send_email node after `sourceNodeId` (used when the source has no outgoing
 // edge yet — i.e. the user is starting the chain).
 export const appendSendEmailAfterNodeAtom = atom(null, (get, set, sourceNodeId: string) => {
@@ -405,28 +429,14 @@ export const appendSendEmailAfterNodeAtom = atom(null, (get, set, sourceNodeId: 
           : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
       const newPosition = sourcePosition
         ? { x: sourcePosition.x, y: sourcePosition.y + 120 }
-        : { x: 220, y: 200 };
+        : SEND_EMAIL_FALLBACK_POSITION;
 
-      const newNodeId = createId();
-      definition.nodes.push({
-        id: newNodeId,
-        type: "action",
-        actionType: WORKFLOW_ACTIONS.SEND_EMAIL,
-        label: "Send email",
-        config: {
-          to: "",
-          from: "team@example.com",
-          replyTo: [],
-          subject: "",
-          body: "",
-          attachResponseData: false,
-        },
-        ui: { position: newPosition },
-      });
+      const newNode = createDefaultSendEmailNode(newPosition);
+      definition.nodes.push(newNode);
 
-      definition.edges.push({ id: createId(), source: sourceNodeId, target: newNodeId });
+      definition.edges.push({ id: createId(), source: sourceNodeId, target: newNode.id });
 
-      draft.selectedNodeId = newNodeId;
+      draft.selectedNodeId = newNode.id;
       draft.isNodeConfigModalOpen = true;
     })
   );
@@ -455,24 +465,10 @@ export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string
               x: Math.round((sourcePosition.x + targetPosition.x) / 2),
               y: Math.round((sourcePosition.y + targetPosition.y) / 2),
             }
-          : { x: 220, y: 200 };
+          : SEND_EMAIL_FALLBACK_POSITION;
 
-      const newNodeId = createId();
-      definition.nodes.push({
-        id: newNodeId,
-        type: "action",
-        actionType: WORKFLOW_ACTIONS.SEND_EMAIL,
-        label: "Send email",
-        config: {
-          to: "",
-          from: "team@example.com",
-          replyTo: [],
-          subject: "",
-          body: "",
-          attachResponseData: false,
-        },
-        ui: { position: midpoint },
-      });
+      const newNode = createDefaultSendEmailNode(midpoint);
+      definition.nodes.push(newNode);
 
       definition.edges.splice(
         edgeIndex,
@@ -480,13 +476,13 @@ export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string
         {
           id: createId(),
           source: edge.source,
-          target: newNodeId,
+          target: newNode.id,
           ...(edge.sourceHandle ? { sourceHandle: edge.sourceHandle } : {}),
         },
-        { id: createId(), source: newNodeId, target: edge.target }
+        { id: createId(), source: newNode.id, target: edge.target }
       );
 
-      draft.selectedNodeId = newNodeId;
+      draft.selectedNodeId = newNode.id;
       draft.isNodeConfigModalOpen = true;
     })
   );

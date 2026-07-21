@@ -35,7 +35,7 @@ interface LooseTriggerNode {
 export const readResponseCompletedTriggerConfig = (
   definition: TWorkflowExecutableDefinition
 ): { surveyId: string; endingCardIds: string[] } | null => {
-  const trigger = (definition as { trigger?: LooseTriggerNode }).trigger;
+  const trigger = (definition as { trigger?: LooseTriggerNode } | null | undefined)?.trigger;
   if (trigger?.triggerType !== WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) return null;
 
   const surveyId = trigger.config?.surveyId;

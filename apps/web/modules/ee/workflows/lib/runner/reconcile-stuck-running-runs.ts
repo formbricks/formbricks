@@ -84,10 +84,10 @@ export const reconcileStuckRunningWorkflowRuns = async ({
     };
 
     try {
-      // Claim-for-failure, status-guarded: only a run still `running` is ours to recover. A 0-row
-      // result means the owner finalized it between the scan and here — leave its verdict alone.
+      // Claim-for-failure, tenant- and status-guarded: only a run still `running` is ours to recover.
+      // A 0-row result means the owner finalized it between the scan and here — leave its verdict alone.
       const failed = await prisma.workflowRun.updateMany({
-        where: { id: run.id, status: "running" },
+        where: { id: run.id, workspaceId: run.workspaceId, status: "running" },
         data: {
           status: "failed",
           error: "Workflow run was abandoned mid-execution (stale running) and recovered by the reconciler",

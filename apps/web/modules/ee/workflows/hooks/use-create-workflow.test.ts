@@ -1,24 +1,13 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TCreateWorkflowInput } from "@formbricks/workflows";
 import { createEmptyWorkflowDefinition } from "../lib/default-workflow";
 import { workflowKeys } from "../lib/query";
+import { createWrapper, newQueryClient } from "./test-utils";
 import { useCreateWorkflow } from "./use-create-workflow";
-
-function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-  Wrapper.displayName = "UseCreateWorkflowTestWrapper";
-  return Wrapper;
-}
-
-const newQueryClient = () =>
-  new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
 
 const input: TCreateWorkflowInput = {
   workspaceId: "ws_1",

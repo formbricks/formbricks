@@ -30,4 +30,27 @@ describe("formatRelativeDate", () => {
   test("falls back to month/day for older timestamps", () => {
     expect(formatRelativeDate("2024-08-15T09:00:00.000Z", anchor, t)).not.toMatch(/days ago|Yesterday|Today/);
   });
+
+  test("derives Today/Yesterday from the supplied timeZone, not the machine's local day", () => {
+    // In Pacific/Kiritimati (UTC+14) the anchor is Sep 16, 01:00 and the date is Sep 15, 23:00 —
+    // different calendar days there, though both instants share the same UTC (and most machines')
+    // calendar day. The old system-local comparison labeled this "Today".
+    expect(
+      formatRelativeDate(
+        "2024-09-15T09:00:00.000Z",
+        new Date("2024-09-15T11:00:00.000Z"),
+        t,
+        "en-US",
+        "Pacific/Kiritimati"
+      )
+    ).toMatch(/^Yesterday, /);
+  });
+
+  test("counts calendar days, not elapsed 24h blocks, across midnight boundaries", () => {
+    // 26 elapsed hours but two UTC calendar-day boundaries crossed (Sep 13 23:00 → Sep 15 01:00).
+    // The old elapsed-ms division floored this to 1 and mislabeled it.
+    expect(formatRelativeDate("2024-09-13T23:00:00.000Z", new Date("2024-09-15T01:00:00.000Z"), t)).toMatch(
+      /^2 days ago, /
+    );
+  });
 });

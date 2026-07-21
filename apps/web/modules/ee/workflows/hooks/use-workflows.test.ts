@@ -1,26 +1,16 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createWrapper, newQueryClient } from "./test-utils";
 import { useWorkflows } from "./use-workflows";
-
-function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-  Wrapper.displayName = "UseWorkflowsTestWrapper";
-  return Wrapper;
-}
 
 const listResponse = (data: { id: string; name: string }[], nextCursor: string | null): Response =>
   new Response(JSON.stringify({ data, meta: { limit: 12, nextCursor } }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
-
-const newQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
 describe("useWorkflows", () => {
   beforeEach(() => {

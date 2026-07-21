@@ -1,21 +1,13 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TWorkflowListItem } from "@formbricks/workflows";
 import type { TWorkflowListPage } from "../lib/api-client";
 import { workflowKeys } from "../lib/query";
+import { createWrapper, newQueryClient } from "./test-utils";
 import { useArchiveWorkflow } from "./use-archive-workflow";
-
-function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-  Wrapper.displayName = "UseArchiveWorkflowTestWrapper";
-  return Wrapper;
-}
 
 const queryKey = workflowKeys.list({ workspaceId: "ws_1", limit: 12, nameContains: "" });
 
@@ -44,9 +36,6 @@ const seedData = (): { pages: TWorkflowListPage[]; pageParams: (string | null)[]
   ],
   pageParams: [null],
 });
-
-const newQueryClient = () =>
-  new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
 
 describe("useArchiveWorkflow", () => {
   beforeEach(() => {

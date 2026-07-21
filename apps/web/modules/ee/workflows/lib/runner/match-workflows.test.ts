@@ -79,6 +79,15 @@ describe("matchWorkflowsForResponse", () => {
     expect(matchWorkflowsForResponse([candidate], { surveyId: SURVEY, endingId: ENDING_A })).toEqual([]);
   });
 
+  test.each([null, undefined])("does not match (and does not throw) a JSON-%s definition", (definition) => {
+    const candidate = {
+      workflowId: "wf_bad",
+      publishedVersionId: "v",
+      definition: definition as unknown as TWorkflowExecutableDefinition,
+    };
+    expect(matchWorkflowsForResponse([candidate], { surveyId: SURVEY, endingId: ENDING_A })).toEqual([]);
+  });
+
   test("does not match (and does not throw) a trigger missing its config", () => {
     const candidate = {
       workflowId: "wf_bad",

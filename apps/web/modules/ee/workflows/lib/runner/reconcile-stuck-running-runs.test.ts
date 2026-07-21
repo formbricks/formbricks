@@ -55,7 +55,7 @@ describe("reconcileStuckRunningWorkflowRuns", () => {
     const result = await reconcile();
 
     expect(runUpdateMany).toHaveBeenCalledWith({
-      where: { id: "run1", status: "running" },
+      where: { id: "run1", workspaceId: "ws_run1", status: "running" },
       data: expect.objectContaining({ status: "failed", lastErrorAt: NOW, finishedAt: NOW }),
     });
     expect(logUpdateMany).toHaveBeenCalledWith({

@@ -1,22 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { workflowKeys } from "../lib/query";
+import { createWrapper, newQueryClient } from "./test-utils";
 import { useDuplicateWorkflow } from "./use-duplicate-workflow";
-
-function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-  Wrapper.displayName = "UseDuplicateWorkflowTestWrapper";
-  return Wrapper;
-}
-
-const newQueryClient = () =>
-  new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
 
 describe("useDuplicateWorkflow", () => {
   beforeEach(() => {

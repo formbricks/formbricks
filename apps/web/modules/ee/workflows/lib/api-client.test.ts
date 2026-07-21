@@ -219,6 +219,8 @@ describe("workflows api-client requests", () => {
     const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
     expect(url).toBe("/api/v3/workflows");
     expect(init).toMatchObject({ method: "POST", cache: "no-store" });
+    // Mutations are timeout-bounded so a stalled request can't hang the editor spinner.
+    expect((init as RequestInit).signal).toBeInstanceOf(AbortSignal);
     expect(JSON.parse(String((init as RequestInit).body))).toMatchObject({
       workspaceId: "ws_1",
       name: "New",
@@ -233,6 +235,7 @@ describe("workflows api-client requests", () => {
     expect(result).toEqual({ id: "wf_copy" });
     const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
     expect(url).toBe("/api/v3/workflows/wf_1/duplicate");
+    expect((init as RequestInit).signal).toBeInstanceOf(AbortSignal);
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({});
   });
 
@@ -266,7 +269,7 @@ describe("workflows api-client requests", () => {
     await expect(deleteWorkflow("wf_1")).resolves.toBeUndefined();
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/v3/workflows/wf_1",
-      expect.objectContaining({ method: "DELETE", cache: "no-store" })
+      expect.objectContaining({ method: "DELETE", cache: "no-store", signal: expect.any(AbortSignal) })
     );
   });
 

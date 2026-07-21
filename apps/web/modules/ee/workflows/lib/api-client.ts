@@ -110,16 +110,12 @@ export async function createWorkflow(input: TCreateWorkflowInput): Promise<TWork
   const response = await fetch("/api/v3/workflows", {
     method: "POST",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify(input),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
 
-  if (!response.ok) {
-    throw await parseV3ApiError(response);
-  }
-
-  const body = (await response.json()) as { data: TWorkflowResource };
-  return body.data;
+  return readWorkflowResponse(response);
 }
 
 export async function getWorkflow(workflowId: string, signal?: AbortSignal): Promise<TWorkflowResource> {
@@ -151,16 +147,12 @@ export async function duplicateWorkflow(workflowId: string, name?: string): Prom
   const response = await fetch(`/api/v3/workflows/${workflowId}/duplicate`, {
     method: "POST",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify(name ? { name } : {}),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
 
-  if (!response.ok) {
-    throw await parseV3ApiError(response);
-  }
-
-  const body = (await response.json()) as { data: TWorkflowResource };
-  return body.data;
+  return readWorkflowResponse(response);
 }
 
 async function postLifecycle(workflowId: string, action: string): Promise<TWorkflowResource> {
@@ -202,6 +194,7 @@ export async function deleteWorkflow(workflowId: string): Promise<void> {
   const response = await fetch(`/api/v3/workflows/${workflowId}`, {
     method: "DELETE",
     cache: "no-store",
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
 
   if (!response.ok) {
