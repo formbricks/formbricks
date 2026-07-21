@@ -9,6 +9,10 @@ import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import {
+  type TContactInteractionData,
+  tryEvaluateSurveyInteractionSegmentInMemory,
+} from "@/modules/ee/contacts/segments/lib/filter/survey-interaction";
 
 export const getSegments = reactCache(
   async (workspaceId: string) =>
@@ -41,7 +45,8 @@ export const getPersonSegmentIds = async (
   workspaceId: string,
   contactId: string,
   contactUserId: string,
-  deviceType: "phone" | "desktop"
+  deviceType: "phone" | "desktop",
+  interactionData: TContactInteractionData
 ): Promise<string[]> => {
   try {
     validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
@@ -52,10 +57,18 @@ export const getPersonSegmentIds = async (
       return [];
     }
 
-    // Phase 1: Build WHERE clauses sequentially to avoid connection pool contention.
-    // segmentFilterToPrismaQuery can itself hit the DB (e.g. unmigrated-row checks),
-    // so running all builds concurrently would saturate the pool.
+    // A single evaluation instant shared across every segment so all relative windows agree.
+    const now = new Date();
+
+    // Phase 1: Classify each segment.
+    // - Empty filters → always matches.
+    // - Interaction-only segments → evaluated in memory against the contact's already-loaded
+    //   displays/responses, avoiding a DB round trip entirely (the hot-path optimization).
+    // - Everything else → a Prisma membership check. Build the WHERE clauses sequentially to avoid
+    //   connection pool contention: segmentFilterToPrismaQuery can itself hit the DB (e.g.
+    //   unmigrated-row checks), so building all concurrently would saturate the pool.
     const alwaysMatchIds: string[] = [];
+    const inMemoryMatchIds: string[] = [];
     const dbChecks: { segmentId: string; whereClause: Prisma.ContactWhereInput }[] = [];
 
     for (const segment of segments) {
@@ -63,6 +76,14 @@ export const getPersonSegmentIds = async (
 
       if (!filters?.length) {
         alwaysMatchIds.push(segment.id);
+        continue;
+      }
+
+      const inMemoryResult = tryEvaluateSurveyInteractionSegmentInMemory(filters, interactionData, now);
+      if (inMemoryResult !== null) {
+        if (inMemoryResult) {
+          inMemoryMatchIds.push(segment.id);
+        }
         continue;
       }
 
@@ -80,10 +101,10 @@ export const getPersonSegmentIds = async (
     }
 
     if (dbChecks.length === 0) {
-      return alwaysMatchIds;
+      return [...alwaysMatchIds, ...inMemoryMatchIds];
     }
 
-    // Phase 2: Execute all membership checks in a single transaction.
+    // Phase 2: Execute the remaining membership checks in a single transaction.
     // Uses one connection instead of N concurrent ones, eliminating pool contention.
     const txResults = await prisma.$transaction(
       dbChecks.map(({ whereClause }) =>
@@ -94,9 +115,9 @@ export const getPersonSegmentIds = async (
       )
     );
 
-    const matchedIds = dbChecks.filter((_, i) => txResults[i] !== null).map(({ segmentId }) => segmentId);
+    const dbMatchedIds = dbChecks.filter((_, i) => txResults[i] !== null).map(({ segmentId }) => segmentId);
 
-    return [...alwaysMatchIds, ...matchedIds];
+    return [...alwaysMatchIds, ...inMemoryMatchIds, ...dbMatchedIds];
   } catch (error) {
     logger.warn({ workspaceId, contactId, error }, "Failed to get person segment IDs, returning empty array");
     return [];

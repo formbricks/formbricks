@@ -77,18 +77,24 @@ import { AddFilterModal } from "./add-filter-modal";
 import { AttributeValueInput } from "./attribute-value-input";
 import { DateFilterValue } from "./date-filter-value";
 
-interface TSegmentFilterProps {
+// Props shared by every leaf filter component. The dispatcher-only props (workspace segments, attribute
+// keys, add-filter callback) live on TSegmentFilterProps so individual leaves don't declare props they
+// never use.
+interface TBaseFilterProps {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
   segment: TSegment;
-  segments: TSegment[];
-  contactAttributeKeys: TContactAttributeKey[];
   setSegment: (segment: TSegment) => void;
-  handleAddFilterBelow: (resourceId: string, filter: TBaseFilter) => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
+}
+
+interface TSegmentFilterProps extends TBaseFilterProps {
+  segments: TSegment[];
+  contactAttributeKeys: TContactAttributeKey[];
+  handleAddFilterBelow: (resourceId: string, filter: TBaseFilter) => void;
 }
 
 function SegmentFilterItemConnector({
@@ -210,7 +216,8 @@ function SegmentFilterItemContextMenu({
   );
 }
 
-type TAttributeSegmentFilterProps = TSegmentFilterProps & {
+type TAttributeSegmentFilterProps = TBaseFilterProps & {
+  contactAttributeKeys: TContactAttributeKey[];
   onAddFilterBelow: () => void;
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
@@ -452,7 +459,7 @@ function AttributeSegmentFilter({
   );
 }
 
-type TPersonSegmentFilterProps = TSegmentFilterProps & {
+type TPersonSegmentFilterProps = TBaseFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentPersonFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
@@ -632,7 +639,8 @@ function PersonSegmentFilter({
   );
 }
 
-type TSegmentSegmentFilterProps = TSegmentFilterProps & {
+type TSegmentSegmentFilterProps = TBaseFilterProps & {
+  segments: TSegment[];
   onAddFilterBelow: () => void;
   resource: TSegmentSegmentFilter;
 };
@@ -745,7 +753,7 @@ function SegmentSegmentFilter({
   );
 }
 
-type TDeviceFilterProps = TSegmentFilterProps & {
+type TDeviceFilterProps = TBaseFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentDeviceFilter;
 };
@@ -859,7 +867,7 @@ function DeviceFilter({
   );
 }
 
-type TSurveyInteractionFilterProps = TSegmentFilterProps & {
+type TSurveyInteractionFilterProps = TBaseFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentSurveyInteractionFilter;
 };
@@ -876,7 +884,9 @@ function SurveyInteractionFilter({
   viewOnly,
 }: TSurveyInteractionFilterProps) {
   const { t } = useTranslation();
-  const { value } = resource;
+  // Pin to the concrete value type: the filter's `value` field is inferred from a refined Zod schema,
+  // which TypeScript does not treat as a plain (spreadable) object without this annotation.
+  const value: TSegmentSurveyInteractionFilterValue = resource.value;
   const [surveys, setSurveys] = useState<{ id: string; name: string; status: string }[]>([]);
 
   // Load the workspace's surveys once so the "specific surveys" picker is ready the moment the user
@@ -929,13 +939,17 @@ function SurveyInteractionFilter({
     }
   };
 
-  const surveyOptions = surveys.map((survey) => ({
-    // Chip shows the survey id (per ticket AC "display survey IDs in the field"); the dropdown shows
-    // the id with the name beneath it, and search matches both id and name via `description`.
-    value: survey.id,
-    label: survey.id,
-    description: survey.name,
-  }));
+  // Exclude the surveys this segment already gates (in the survey editor that's the survey being
+  // edited): targeting a segment by interaction with a survey it controls is circular.
+  const excludedSurveyIds = new Set(segment.surveys ?? []);
+  const surveyOptions = surveys
+    .filter((survey) => !excludedSurveyIds.has(survey.id))
+    .map((survey) => ({
+      // Name is the primary label (id beneath it as secondary); search matches both name and id.
+      value: survey.id,
+      label: survey.name || survey.id,
+      description: survey.id,
+    }));
 
   const handleAmountChange = (raw: string) => {
     const parsed = Number.parseInt(raw, 10);
@@ -1114,14 +1128,12 @@ export function SegmentFilter({
           <AttributeSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentAttributeFilter}
             segment={segment}
-            segments={segments}
             setSegment={setSegment}
             updateValueInLocalSurvey={updateFilterValueInSegment}
             viewOnly={viewOnly}
@@ -1135,16 +1147,13 @@ export function SegmentFilter({
       return (
         <>
           <PersonSegmentFilter
-            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentPersonFilter}
             segment={segment}
-            segments={segments}
             setSegment={setSegment}
             updateValueInLocalSurvey={updateFilterValueInSegment}
             viewOnly={viewOnly}
@@ -1158,9 +1167,7 @@ export function SegmentFilter({
       return (
         <>
           <SegmentSegmentFilter
-            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
@@ -1180,16 +1187,13 @@ export function SegmentFilter({
       return (
         <>
           <DeviceFilter
-            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentDeviceFilter}
             segment={segment}
-            segments={segments}
             setSegment={setSegment}
             viewOnly={viewOnly}
           />
@@ -1202,16 +1206,13 @@ export function SegmentFilter({
       return (
         <>
           <SurveyInteractionFilter
-            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentSurveyInteractionFilter}
             segment={segment}
-            segments={segments}
             setSegment={setSegment}
             viewOnly={viewOnly}
           />

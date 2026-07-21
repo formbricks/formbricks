@@ -135,19 +135,22 @@ export type TRelativeDateValue = z.infer<typeof ZRelativeDateValue>;
 
 // Structured value for survey interaction filters. Defined here (before ZSegmentFilterValue) so it
 // can be part of the shared filter-value union that generic helpers like updateFilterValue operate on.
-export const ZSegmentSurveyInteractionFilterValue = z
-  .object({
-    surveyScope: z.enum(["any", "specific"]),
-    surveyIds: z.array(z.string()),
-    within: z.object({
-      amount: z.number().int().min(1).max(999),
-      unit: ZSurveyInteractionTimeUnit,
-    }),
-  })
-  .refine((value) => value.surveyScope === "any" || value.surveyIds.length > 0, {
-    error: "Select at least one survey",
-  });
-export type TSegmentSurveyInteractionFilterValue = z.infer<typeof ZSegmentSurveyInteractionFilterValue>;
+// The base object is kept separate from the refined schema so the exported TYPE is inferred from a
+// plain ZodObject (spreadable in consumers); the refinement only adds runtime validation and does not
+// change the output shape.
+const ZSegmentSurveyInteractionFilterValueBase = z.object({
+  surveyScope: z.enum(["any", "specific"]),
+  surveyIds: z.array(z.string()),
+  within: z.object({
+    amount: z.number().int().min(1).max(999),
+    unit: ZSurveyInteractionTimeUnit,
+  }),
+});
+export const ZSegmentSurveyInteractionFilterValue = ZSegmentSurveyInteractionFilterValueBase.refine(
+  (value) => value.surveyScope === "any" || value.surveyIds.length > 0,
+  { error: "Select at least one survey" }
+);
+export type TSegmentSurveyInteractionFilterValue = z.infer<typeof ZSegmentSurveyInteractionFilterValueBase>;
 
 export const ZSegmentFilterValue = z.union([
   z.string(),

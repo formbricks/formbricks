@@ -31,9 +31,12 @@ const getContactWithFullData = async (workspaceId: string, userId: string) => {
           value: true,
         },
       },
-      // Include user state data in the same query
+      // Include user state data in the same query. `createdAt` and `finished` are also consumed by the
+      // in-memory survey-interaction segment evaluator (see getPersonSegmentIds), which relies on this
+      // load being complete — do NOT add a `take` limit here without also bounding it by the widest
+      // interaction window, or the in-memory and Prisma evaluators would diverge.
       responses: {
-        select: { surveyId: true },
+        select: { surveyId: true, createdAt: true, finished: true },
       },
       displays: {
         select: {
@@ -74,9 +77,10 @@ const createContact = async (workspaceId: string, userId: string) => {
           value: true,
         },
       },
-      // Include empty arrays for new contacts
+      // Include empty arrays for new contacts. Selection must mirror getContactWithFullData so the two
+      // branches produce the same contact shape (both feed buildUserStateFromContact).
       responses: {
-        select: { surveyId: true },
+        select: { surveyId: true, createdAt: true, finished: true },
       },
       displays: {
         select: {
@@ -103,7 +107,12 @@ const buildUserStateFromContact = async (
   // Ensure segments is always an array to prevent "segments is not iterable" error
   let segments: string[] = [];
   try {
-    segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device);
+    // The contact's displays/responses are already loaded here, so interaction-only segments can be
+    // evaluated in memory without any additional query (see getPersonSegmentIds).
+    segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device, {
+      displays: contactData.displays,
+      responses: contactData.responses,
+    });
     // Double-check that segments is actually an array
     if (!Array.isArray(segments)) {
       segments = [];

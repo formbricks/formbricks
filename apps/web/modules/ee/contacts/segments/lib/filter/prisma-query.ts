@@ -20,6 +20,7 @@ import {
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
 import { getSegment } from "../segments";
+import { SURVEY_INTERACTION_SEMANTICS, getSurveyInteractionWindowStart } from "./survey-interaction";
 
 // SQL operator mapping for number filters
 const SQL_OPERATORS: Record<string, string> = {
@@ -359,40 +360,27 @@ const buildDeviceFilterWhereClause = (
  * "completed" maps to Response rows with finished=true. Negative operators wrap the
  * positive clause in NOT, meaning "no matching interaction within the window".
  * "any" scope omits the surveyId condition; "specific" scope constrains to the chosen ids.
+ *
+ * Operator semantics and the window boundary come from the shared spec in `survey-interaction.ts`,
+ * which the in-memory evaluator (contact-sync hot path) also uses — keeping the two paths identical.
  */
 const buildSurveyInteractionFilterWhereClause = (
   filter: TSegmentSurveyInteractionFilter
 ): Prisma.ContactWhereInput => {
-  const { qualifier, value } = filter;
-  const { operator } = qualifier;
+  const { value } = filter;
+  const semantics = SURVEY_INTERACTION_SEMANTICS[filter.qualifier.operator];
+  const windowStart = getSurveyInteractionWindowStart(value, new Date());
 
-  const windowStart = subtractTimeUnit(new Date(), value.within.amount, value.within.unit);
-  const surveyIdCondition = value.surveyScope === "specific" ? { surveyId: { in: value.surveyIds } } : {};
-
-  const seenClause: Prisma.ContactWhereInput = {
-    displays: { some: { ...surveyIdCondition, createdAt: { gte: windowStart } } },
-  };
-  const startedClause: Prisma.ContactWhereInput = {
-    responses: { some: { ...surveyIdCondition, createdAt: { gte: windowStart } } },
-  };
-  const completedClause: Prisma.ContactWhereInput = {
-    responses: { some: { ...surveyIdCondition, finished: true, createdAt: { gte: windowStart } } },
+  const some = {
+    ...(value.surveyScope === "specific" ? { surveyId: { in: value.surveyIds } } : {}),
+    ...(semantics.requireFinished ? { finished: true } : {}),
+    createdAt: { gte: windowStart },
   };
 
-  switch (operator) {
-    case "haveSeen":
-      return seenClause;
-    case "haveNotSeen":
-      return { NOT: seenClause };
-    case "haveStartedRespondingTo":
-      return startedClause;
-    case "haveCompleted":
-      return completedClause;
-    case "haveNotCompleted":
-      return { NOT: completedClause };
-    default:
-      return {};
-  }
+  const relationClause: Prisma.ContactWhereInput =
+    semantics.source === "displays" ? { displays: { some } } : { responses: { some } };
+
+  return semantics.negate ? { NOT: relationClause } : relationClause;
 };
 
 /**

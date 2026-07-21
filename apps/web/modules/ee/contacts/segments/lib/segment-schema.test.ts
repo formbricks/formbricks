@@ -122,31 +122,15 @@ describe("survey interaction filter value validation", () => {
     expect(result.error?.issues[0]?.message).toBe("Select at least one survey");
   });
 
-  test("rejects amount below 1", () => {
+  test.each([
+    { description: "below 1", amount: 0 },
+    { description: "above 999", amount: 1000 },
+    { description: "non-integer", amount: 2.5 },
+  ])("rejects amount $description", ({ amount }) => {
     const result = ZSegmentSurveyInteractionFilterValue.safeParse({
       surveyScope: "any",
       surveyIds: [],
-      within: { amount: 0, unit: "days" },
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  test("rejects amount above 999", () => {
-    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
-      surveyScope: "any",
-      surveyIds: [],
-      within: { amount: 1000, unit: "days" },
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  test("rejects non-integer amount", () => {
-    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
-      surveyScope: "any",
-      surveyIds: [],
-      within: { amount: 2.5, unit: "days" },
+      within: { amount, unit: "days" },
     });
 
     expect(result.success).toBe(false);

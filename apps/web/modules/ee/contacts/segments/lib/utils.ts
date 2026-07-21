@@ -487,9 +487,7 @@ export const updateSurveyInteractionValueInFilter = (
   filterId: string,
   newValue: TSegmentSurveyInteractionFilterValue
 ) => {
-  for (let i = 0; i < group.length; i++) {
-    const { resource } = group[i];
-
+  for (const { resource } of group) {
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
         resource.value = newValue;
