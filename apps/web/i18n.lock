@@ -2358,6 +2358,7 @@ checksums:
     workspace/settings/billing/comparison_row_two_factor_auth: bc68ddd9c3c82225ef641f097e0940db
     workspace/settings/billing/comparison_row_unify_feedback: a5f13efd8f6df6163a2b4372b50d232e
     workspace/settings/billing/comparison_row_unlimited_seats: 478092018a27a4e588cb5c70968ef11a
+    workspace/settings/billing/comparison_row_workflows: b0c9c8615a9ba7d9cb73e767290a7f72
     workspace/settings/billing/comparison_row_workspaces: 8ba082a84aa35cf851af1cf874b853e2
     workspace/settings/billing/comparison_section_all_plans: 2a4543269f18647b8b2bd5f5cb399c24
     workspace/settings/billing/comparison_section_basic_usage: 16bd8c505c287b38de311ad6a2eaa3e9
@@ -2443,6 +2444,7 @@ checksums:
     workspace/settings/billing/plan_scale_feature_responses: f2be033ebf6c86a664b812b4a918647f
     workspace/settings/billing/plan_scale_feature_security: 6671961cf8d8413d1740b13901bcc033
     workspace/settings/billing/plan_scale_feature_semantic_analysis: 1441e34cacd26f0aa27af4ebad6e5c54
+    workspace/settings/billing/plan_scale_feature_workflows: b0c9c8615a9ba7d9cb73e767290a7f72
     workspace/settings/billing/plan_scale_feature_workspaces: 6bd1b676b9470ca8cc4e73be3ffd4bef
     workspace/settings/billing/plan_selection_description: 8367b137b31234cafe0e297a35b0b599
     workspace/settings/billing/plan_selection_title: 8b814effdaee1787281b740f67482d7d
@@ -4049,6 +4051,8 @@ checksums:
     workspace/workflows/unarchive: 671fc7e9d7c8cb4d182a25a46551c168
     workspace/workflows/unarchive_failed: 16568ba93941e8e71f9b4cc997d5eaf2
     workspace/workflows/unarchive_success: b1ae787ba6e1d4e9e8631ad35d73e5ee
+    workspace/workflows/upgrade_prompt_description: 526faca22b7a0b613fdce0ace49c0aa7
+    workspace/workflows/upgrade_prompt_title: 5546aa81302c33f2b53857b9c62c16e2
     workspace/workflows/validate: a64f87d802981d91f282768d530d600b
     workspace/workflows/validation_failed: fbba0e27eca222e81a86d3036919d11a
     workspace/workflows/zoom_in: 20244d74cc44e8606cbf4bb8b4e16e4b

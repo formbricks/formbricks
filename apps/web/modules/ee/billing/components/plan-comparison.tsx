@@ -196,6 +196,11 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
     },
     {
       type: "feature",
+      label: t("workspace.settings.billing.comparison_row_workflows"),
+      values: [false, false, true],
+    },
+    {
+      type: "feature",
       label: t("workspace.settings.billing.comparison_row_unify_feedback"),
       values: [false, false, "addon"],
     },
