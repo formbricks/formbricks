@@ -1,0 +1,230 @@
+<task-notification>
+<task-id>ac879873af87a9ae6</task-id>
+<tool-use-id>toolu_01G8RwLiLkmoofW5kQPmw2dW</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-matti-Developer-formbricks/287890f8-0fc2-45ed-bb06-c028ba08e388/tasks/ac879873af87a9ae6.output</output-file>
+<status>completed</status>
+<summary>Agent "Inventory next/image usages and helpers" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I have a complete inventory. Here is the structured report.
+
+---
+
+# Image-host reshaping: complete inventory
+
+## 1. Every `next/image` usage in `apps/web`
+
+No file currently uses the `unoptimized` prop anywhere (`grep unoptimized` = 0 hits). All 25 files import `Image from "next/image"`.
+
+### Group A — STATIC / first-party-relative (imported asset or hardcoded) → always optimizable, no change needed
+
+| File:line | `src` | Origin |
+|---|---|---|
+| `apps/web/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar.tsx:71` | `FBLogo` | static import `@/images/formbricks-wordmark.svg` |
+| `apps/web/app/(app)/workspaces/[workspaceId]/components/MainNavigation.tsx:413` | `FBLogo` | static import |
+| `apps/web/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/AddIntegrationModal.tsx:346` | `AirtableLogo` | static import |
+| `apps/web/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/components/AddIntegrationModal.tsx:258` | `GoogleSheetLogo` | static import |
+| `apps/web/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/AddIntegrationModal.tsx:291` | `NotionLogo` | static import |
+| `apps/web/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/page.tsx:77,91,105,119,133,147,161,175,189,205` | `ZapierLogo`, `WebhookLogo`, `GoogleSheetsLogo`, `AirtableLogo`, `SlackLogo`, `n8nLogo`, `MakeLogo`, `notionLogo`, `ActivePiecesLogo`, `JsLogo` | all static imports |
+| `apps/web/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/slack/components/AddChannelMappingModal.tsx:232` | `SlackLogo` | static import |
+| `apps/web/modules/ee/billing/components/select-plan-card.tsx:165` | `logo.src` | static imported customer-logo assets (`calLogo`, `ethereumLogo`, etc. from `@/images/customer-logos/...`) |
+| `apps/web/modules/survey/link/components/survey-completed-message.tsx:34` | `footerLogo` | static import `../lib/footerlogo.svg` |
+| `apps/web/modules/survey/link/components/survey-inactive.tsx:75` | `footerLogo` | static import `../lib/footerlogo.svg` |
+| `apps/web/modules/survey/link/components/survey-loading-animation.tsx:126` | `Logo` | static import `@/images/powered-by-formbricks.svg` |
+
+Special case (neither remote host nor asset):
+- `apps/web/modules/ee/two-factor-auth/components/scan-qr-code.tsx:31` — `src={dataUri}` where `dataUri: string` is a base64 `data:` URI (QR code). Not a remote host; not affected by `remotePatterns`. No change needed, though `unoptimized` would be harmless.
+
+### Group B — DYNAMIC / possibly-external (variable that can hold a user-provided/external absolute URL) → candidate for `unoptimized`
+
+| File:line | `src` | Notes |
+|---|---|---|
+| `apps/web/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary.tsx:66` | `result.imageUrl` | picture-choice image |
+| `apps/web/modules/ee/whitelabel/email-customization/components/email-customization-settings.tsx:217` | `logoUrl` | whitelabel logo (state, can be uploaded/blob/remote) |
+| `apps/web/modules/ee/whitelabel/email-customization/components/email-customization-settings.tsx:285` | `logoUrl \|\| fbLogoUrl` | `fbLogoUrl: string` prop |
+| `apps/web/modules/ee/whitelabel/favicon-customization/components/favicon-customization-settings.tsx:170` | `faviconUrl` | whitelabel favicon (`string \| undefined`) |
+| `apps/web/modules/survey/editor/components/logo-settings-card.tsx:186` | `logoUrl` | survey logo |
+| `apps/web/modules/survey/editor/components/option-ids.tsx:50` | `imageUrl` (from `choice.imageUrl`) | picture-choice image |
+| `apps/web/modules/survey/editor/components/unsplash-images.tsx:212` | `image.urls.regularWithAttribution` | **external Unsplash URL** (images.unsplash.com) |
+| `apps/web/modules/ui/components/client-logo/index.tsx:68` | `logoToUse?.url` | survey/brand logo |
+| `apps/web/modules/ui/components/connect-integration/index.tsx:56` | `integrationLogoSrc` | typed `string \| StaticImageData` — can be external |
+| `apps/web/modules/ui/components/file-input/index.tsx:256, 323` | `file.url`, `selectedFiles[0].url` | uploaded file previews |
+| `apps/web/modules/ui/components/input-combo-box/index.tsx:109, 240, 255, 412` | `option.imgSrc` / `opt.imgSrc` | typed `imgSrc?: string` — integration icons, can be external |
+| `apps/web/modules/ui/components/media-background/index.tsx:113, 148` | `background?.bg` | survey background image (user-provided/external) |
+| `apps/web/modules/ui/components/picture-selection-response/index.tsx:38` | `choiceImageMapping[id]` | picture-choice image |
+| `apps/web/modules/workspaces/settings/look/components/edit-logo.tsx:142` | `logoUrl` | workspace logo |
+
+Note: `media-background/index.tsx:101` also has a plain `&lt;source src={background?.bg || ""} type="video/mp4" /&gt;` (HTML `&lt;source&gt;`, not `next/image`).
+
+## 2. Existing URL / host helpers
+
+`apps/web/modules/storage/utils.ts` — **NOT client-safe** (`import "server-only"` at line 1):
+- `resolveStorageUrl(url: string | undefined | null, accessType: "public" | "private" = "public"): string` — line 369. Returns absolute URLs as-is; prepends `getPublicDomain()`/`WEBAPP_URL` to `/storage/...` paths.
+- `resolveStorageUrlAuto(url: string): string` — line 394. Uses `isStorageUrl` gate then resolves.
+- `resolveStorageUrlsInObject&lt;T&gt;(obj: T): T` — line 404. Recursive.
+- `parseStorageFileUrl(fileUrl: string): TParsedStorageFileUrl | null` — line 218.
+- `isValidImageFile(fileUrl: string): boolean` — line 326.
+- `isStorageUrl(value: string): boolean` — line 391, matches `/^\/storage\/[^/]+\/(public|private)\/.+/`. **NOT exported** (module-private).
+- Re-exports `getOriginalFileNameFromUrl` from `./url-helpers` (line 19).
+
+`apps/web/modules/storage/url-helpers.ts` — **client-safe** (explicit doc comment: "can be used in both server and client components", no `server-only` import):
+- `getOriginalFileNameFromUrl(fileURL: string): string` — line 12. Handles both `/storage/...` relative and absolute URLs.
+
+`apps/web/lib/getPublicUrl.ts` — **NOT client-safe** (`import "server-only"` at line 1):
+- `getPublicDomain(): string` — line 11. Returns `PUBLIC_URL` if set, else `WEBAPP_URL` (default `http://localhost:3000`).
+
+Other host helpers found:
+- `apps/web/app/middleware/domain-utils.ts:7` — `getPublicDomainHost(): string | null` (middleware-scoped).
+- `apps/web/app/middleware/route-config.ts:29` — `getPublicDomainRoutePatterns(): RegExp[]`.
+
+There is **no** existing `isAbsoluteUrl` / `isExternal` / generic URL-classification predicate. The closest logic is inline `url.startsWith("http://") || url.startsWith("https://")` inside `resolveStorageUrl` (utils.ts:376) and `fileURL.startsWith("/storage/")` in `getOriginalFileNameFromUrl` (url-helpers.ts:14). Any new client-safe "is-external" predicate would belong in `url-helpers.ts` (the only client-safe module).
+
+## 3. Does the survey SDK use `next/image`?
+
+Definitively **no**. `packages/surveys/src` and `packages/survey-ui/src` contain **zero** `next/image` imports. They use plain `&lt;img&gt;` (preact):
+- `packages/surveys/src/components/general/element-media.tsx:40` — `&lt;img`
+- `packages/survey-ui/src/components/general/element-media.tsx:40` — `&lt;img`
+- `packages/survey-ui/src/components/elements/picture-select.tsx:131, 183` — `&lt;img`
+
+`next/image` is `apps/web`-only, as expected.
+
+## 4. Current PR content to revert (branch `origin/matti/eng-1678-...`)
+
+### `apps/web/next.config.mjs` — `images` block (lines 93–135)
+```js
+  images: {
+    // Optimize image processing to reduce CPU time and prevent timeouts
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920], // Removed 3840 to avoid processing huge images
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Standard sizes for smaller images
+    formats: ["image/webp"], // WebP is faster to process and smaller than JPEG/PNG
+    minimumCacheTTL: 60, // Cache optimized images for at least 60 seconds
+    dangerouslyAllowSVG: true, // Allow SVG images
+    remotePatterns: [
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
+      { protocol: "https", hostname: "avatars.slack-edge.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "http",  hostname: "localhost" },
+      { protocol: "http",  hostname: "127.0.0.1" },
+      { protocol: "https", hostname: "app.formbricks.com" },
+      { protocol: "https", hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
+  },
+```
+Note: there is **no** `localPatterns` key currently (grep = 0 hits). `app.formbricks.com` IS present in `remotePatterns` (contradicts the "deployment's own domain NOT in remotePatterns" goal), plus the env-derived block below adds the deployment's own domain from `WEBAPP_URL`/`PUBLIC_URL`.
+
+### `apps/web/next.config.mjs` — env-derivation + allow-all block (lines 494–528)
+```js
+// next/image remote hosts (ENG-1678): the optimizer only fetches from the allowlist in
+// images.remotePatterns above. Uploaded files are served from same-origin /storage/... paths and
+// are unaffected. Instance-specific hosts (own domain, custom S3 endpoint) are derived from the
+// environment below. Deployments that render user-provided image URLs from arbitrary external
+// hosts can opt back into the previous allow-all behavior with IMAGES_ALLOW_ALL_HTTPS_HOSTS=1 —
+// note this exposes the image optimizer as an open proxy, so prefer extending the allowlist.
+const remoteImagePatternFromUrl = (url) =&gt; {
+  if (!url) return undefined;
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== "http:" &amp;&amp; protocol !== "https:") return undefined;
+    return { protocol: protocol.slice(0, -1), hostname };
+  } catch {
+    return undefined;
+  }
+};
+
+for (const candidateUrl of [process.env.WEBAPP_URL, process.env.PUBLIC_URL, process.env.S3_ENDPOINT_URL]) {
+  const pattern = remoteImagePatternFromUrl(candidateUrl);
+  if (
+    pattern &amp;&amp;
+    !nextConfig.images.remotePatterns.some(
+      (existing) =&gt; existing.hostname === pattern.hostname &amp;&amp; existing.protocol === pattern.protocol
+    )
+  ) {
+    nextConfig.images.remotePatterns.push(pattern);
+  }
+}
+
+if (process.env.IMAGES_ALLOW_ALL_HTTPS_HOSTS === "1") {
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: "**",
+  });
+}
+```
+
+### `turbo.json` — `tasks.build.env` (line 213)
+```json
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "IMAGES_ALLOW_ALL_HTTPS_HOSTS",
+        "NODE_ENV",
+        "ASSET_PREFIX_URL",
+        ...
+```
+
+### `.env.example` (lines 196–199)
+```
+# next/image only optimizes images from allowlisted hosts (own domain, S3 endpoint and a few
+# known providers). Set to 1 to allow any HTTPS host (previous behavior) if your surveys embed
+# images from arbitrary external URLs. Warning: this exposes the image optimizer as an open proxy.
+# IMAGES_ALLOW_ALL_HTTPS_HOSTS=1
+```
+
+## 5. Tests touching image config / these components
+
+- `apps/web/lib/turbo-build-env.test.ts` (exists on branch, 51 lines). This is the turbo-build-env guard test. It:
+  - Reads `next.config.mjs` and extracts every `process.env.X` / `process.env["X"]` read via regex (`getProcessEnvReads`, lines 18–25). Destructuring is intentionally NOT detected.
+  - **Test 1 (lines 35–45):** asserts every `process.env` read in `next.config.mjs` is present in `turbo.json` `tasks.build.env`; `missing` must equal `[]`. → Because the current config reads `process.env.IMAGES_ALLOW_ALL_HTTPS_HOSTS`, `WEBAPP_URL`, `PUBLIC_URL`, `S3_ENDPOINT_URL`, those must all be in `build.env`. If you remove the `IMAGES_ALLOW_ALL_HTTPS_HOSTS` read from the config, this test will still pass, but the leftover entry in `turbo.json` would be harmless; if you keep the read but remove the turbo entry, it FAILS.
+  - **Test 2 (lines 47–50):** asserts no var appears in both `env` and `passThroughEnv`.
+
+No component tests exist for `media-background`, `client-logo`, `picture-selection`, `picture-choice`, or `file-input` (find = 0 matches). No test references `remotePatterns` or `next/image` directly other than the env-coupling guard above.
+
+### Implementation-plan implications (facts, not recommendations)
+- Removing the `process.env.IMAGES_ALLOW_ALL_HTTPS_HOSTS` read from `next.config.mjs` means the `turbo-build-env.test.ts` no longer requires the `IMAGES_ALLOW_ALL_HTTPS_HOSTS` entry in `turbo.json` (it only requires that reads ⊆ build.env, not equality), so that turbo entry and the `.env.example` block can be dropped without breaking the test.
+- To adopt `localPatterns` for `/storage/...`, note the current config has none; the deployment's own domain currently reaches `remotePatterns` via both the literal `app.formbricks.com` entry and the `WEBAPP_URL`/`PUBLIC_URL` env-derivation loop — both would need removal to satisfy "own domain NOT in remotePatterns."
+- The only client-safe place to add an `isExternalUrl` predicate is `apps/web/modules/storage/url-helpers.ts`; `utils.ts` and `getPublicUrl.ts` are both `server-only`.</result>
+<usage><subagent_tokens>44865</subagent_tokens><tool_uses>16</tool_uses><duration_ms>156520</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b23z5gwn3</task-id>
+<tool-use-id>toolu_01L1Jja4hoBajazeJbQ2ZXSc</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-matti-Developer-formbricks/287890f8-0fc2-45ed-bb06-c028ba08e388/tasks/b23z5gwn3.output</output-file>
+<status>completed</status>
+<summary>Background command "Full build (background)" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+please merge the latest changes from main in here and verify again that all images are properly solved
+
+---
+
+<task-notification>
+<task-id>bz7q15plj</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-matti-Developer-formbricks/287890f8-0fc2-45ed-bb06-c028ba08e388/tasks/bz7q15plj.output</output-file>
+<status>completed</status>
+<summary>Background command "Full build on merged branch (background)" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+please update the PR description for first time readers. Only talk about the final state, not the iterations you took
+
+---
+
+why is this in the list:
+  "formbricks-cdn.s3.eu-central-1.amazonaws.com",
+
+this is formbricks cloud specific. do we run into issues for s3 buckets of self-hosting customers? what asset do we serve from this domain?
+
+---
+
+please make the change
+
+---
+
+sonarqube flagging this
