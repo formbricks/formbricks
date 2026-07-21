@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "2bab7c2c0e4a",
+  "strategy": "manual-commit",
+  "branch": "matti/eng-1678-stop-nextimage-from-allowing-arbitrary-remote-hosts",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/Dockerfile",
+    "apps/web/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter.tsx",
+    "apps/web/modules/auth/hooks/use-sign-out.test.tsx",
+    "apps/web/package.json",
+    "apps/web/vite.config.mts",
+    "packages/surveys/vite.config.mts",
+    "pnpm-workspace.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2b/ab7c2c0e4a/0/metadata.json",
+      "transcript": "/2b/ab7c2c0e4a/0/full.jsonl",
+      "compact_transcript": "/2b/ab7c2c0e4a/0/transcript.jsonl",
+      "content_hash": "/2b/ab7c2c0e4a/0/content_hash.txt",
+      "prompt": "/2b/ab7c2c0e4a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 107694,
+    "cache_creation_tokens": 5471686,
+    "cache_read_tokens": 167060259,
+    "output_tokens": 416679,
+    "api_call_count": 411
+  }
+}
