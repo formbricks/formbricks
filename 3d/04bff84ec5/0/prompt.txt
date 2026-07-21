@@ -266,3 +266,13 @@ with onLoad so both background image cases use modern Next.js props.
 <summary>Monitor event: "Wait for merged-branch build completion"</summary>
 <event>[Monitor timed out — re-arm if needed.]</event>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>bmwa4ygw4</task-id>
+<tool-use-id>toolu_01Uj78b23DTxwu2wZ4LXRywU</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-matti-Developer-formbricks/287890f8-0fc2-45ed-bb06-c028ba08e388/tasks/bmwa4ygw4.output</output-file>
+<status>completed</status>
+<summary>Background command "Build web to typecheck the modernized Image props (background)" completed (exit code 0)</summary>
+</task-notification>
