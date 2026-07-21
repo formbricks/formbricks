@@ -16,9 +16,18 @@ vi.mock("./transform", () => ({
   transformResponseToFeedbackRecords: vi.fn(),
 }));
 
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 const { getResponses } = vi.mocked(await import("../response/service"));
 const { createFeedbackRecordsBatch } = vi.mocked(await import("@/modules/hub"));
 const { transformResponseToFeedbackRecords } = vi.mocked(await import("./transform"));
+const { logger } = await import("@formbricks/logger");
 
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
 const FEEDBACK_SOURCE_ID = "clxxxxxxxxxxxxxxxx002";
@@ -167,5 +176,29 @@ describe("importHistoricalResponses", () => {
 
     expect(createFeedbackRecordsBatch).not.toHaveBeenCalled();
     expect(result).toEqual({ successes: 0, failures: 0, skipped: 2 });
+  });
+
+  test("contains a transform failure instead of aborting the whole import (ENG-1939)", async () => {
+    const mockResponses = [{ id: "r1" }, { id: "r2" }];
+    getResponses.mockResolvedValueOnce(mockResponses as never);
+    getResponses.mockResolvedValueOnce([]);
+
+    // First response throws (e.g. malformed choice element); the second is healthy.
+    transformResponseToFeedbackRecords
+      .mockImplementationOnce(() => {
+        throw new TypeError("Cannot read properties of undefined (reading 'some')");
+      })
+      .mockReturnValueOnce([{ field: "record2" }] as never);
+
+    createFeedbackRecordsBatch.mockResolvedValue({
+      results: [{ data: { id: "fb2" }, error: null }],
+    } as never);
+
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+    // The healthy response is still imported; the throwing one is contained and logged.
+    expect(result.successes).toBe(1);
+    expect(createFeedbackRecordsBatch).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(logger.error)).toHaveBeenCalledTimes(1);
   });
 });
