@@ -388,6 +388,13 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
 
+    // Mirror the client rule server-side: a paid plan change requires a collected payment method.
+    // The client routes no-card paid changes through the add-card checkout; this rejects any direct
+    // call that bypasses it (e.g. a trialing no-card org trying to launder into active paid Pro).
+    if (parsedInput.targetPlan !== "hobby" && organization.billing.stripe?.hasPaymentMethod !== true) {
+      throw new OperationNotAllowedError("payment_method_required");
+    }
+
     const result = await switchOrganizationToCloudPlan({
       organizationId,
       customerId: organization.billing.stripeCustomerId,

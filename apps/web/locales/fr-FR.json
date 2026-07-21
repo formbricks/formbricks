@@ -2471,6 +2471,7 @@
         "payment_error_contact_support": "Merci de contacter <supportLink>hola@formbricks.com</supportLink> pour obtenir de l'aide.",
         "payment_error_failed_invoice": "Le paiement n'a pas pu être effectué.",
         "payment_error_requires_action": "Le paiement nécessite une authentification supplémentaire.",
+        "payment_method_required": "Ajoute un moyen de paiement pour passer à un forfait payant.",
         "pending_change_removed": "Changement de formule programmé supprimé.",
         "pending_plan_badge": "Programmé",
         "pending_plan_change_description": "Votre forfait passera à {plan} le {date}.",

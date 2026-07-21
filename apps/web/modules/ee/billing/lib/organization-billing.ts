@@ -907,6 +907,75 @@ const scheduleSubscriptionPlanChange = async (
   return pendingChange;
 };
 
+/**
+ * Whether a payment method has been collected for the subscription. Checks the subscription
+ * default first, then falls back to the customer-level default so a card saved on the customer
+ * (but not yet attached to the subscription) still counts — this avoids falsely blocking a
+ * legitimately card-backed org on a paid switch.
+ */
+const hasCollectedPaymentMethod = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  customerId: string
+): Promise<boolean> => {
+  if (subscription.default_payment_method != null) {
+    return true;
+  }
+
+  if (!stripeClient) {
+    return false;
+  }
+
+  const customer = await stripeClient.customers.retrieve(customerId);
+  if (customer.deleted) {
+    return false;
+  }
+
+  return customer.invoice_settings?.default_payment_method != null;
+};
+
+/**
+ * Cancels a no-card trial at period end so the org lands on Hobby without ever being converted
+ * into a billable schedule. Releases any stray schedule first (a schedule would otherwise rebuild
+ * the trial into a billable Pro phase), then sets cancel_at_period_end so Stripe cancels the
+ * trialing subscription instead of charging it — no schedule, no card required.
+ */
+const cancelTrialToHobbyAtPeriodEnd = async (
+  organizationId: string,
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
+): Promise<TOrganizationStripePendingChange> => {
+  if (!stripeClient) {
+    throw new Error("Stripe is not configured");
+  }
+
+  if (subscription.schedule) {
+    const scheduleId =
+      typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+    await stripeClient.subscriptionSchedules.release(scheduleId, {
+      preserve_cancel_date: false,
+    });
+  }
+
+  await stripeClient.subscriptions.update(subscription.id, {
+    cancel_at_period_end: true,
+  });
+
+  const effectiveAt =
+    resolvePendingChangeEffectiveAt(subscription) ??
+    (subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null) ??
+    new Date().toISOString();
+
+  const pendingChange: TOrganizationStripePendingChange = {
+    type: "plan_change",
+    targetPlan: "hobby",
+    targetInterval: "monthly",
+    effectiveAt,
+  };
+
+  await updatePendingPlanChangeSnapshot(organizationId, pendingChange);
+
+  return pendingChange;
+};
+
 export const switchOrganizationToCloudPlan = async (input: {
   organizationId: string;
   customerId: string;
@@ -931,6 +1000,23 @@ export const switchOrganizationToCloudPlan = async (input: {
 
   if (isSameSelection) {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
+  }
+
+  // A trialing subscription with no payment method must never be converted into a billable
+  // subscription. The scheduled path rebuilds phases without the trial guard, ending the trial and
+  // turning phase 1 into a billable Pro phase; undoing that pending change would then leave the org
+  // on active paid Pro with no card. So special-case it: a downgrade cancels the trial (landing on
+  // Hobby, no card), and any paid switch is rejected and routed through the add-card checkout.
+  if (
+    subscription.status === "trialing" &&
+    !(await hasCollectedPaymentMethod(subscription, input.customerId))
+  ) {
+    if (input.targetPlan === "hobby") {
+      const pendingChange = await cancelTrialToHobbyAtPeriodEnd(input.organizationId, subscription);
+      return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
+    }
+
+    throw new OperationNotAllowedError("payment_method_required");
   }
 
   if (isImmediateUpgrade) {

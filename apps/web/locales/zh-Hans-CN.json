@@ -2471,6 +2471,7 @@
         "payment_error_contact_support": "请联系 <supportLink>hola@formbricks.com</supportLink> 获取支持。",
         "payment_error_failed_invoice": "支付无法完成。",
         "payment_error_requires_action": "支付需要额外验证。",
+        "payment_method_required": "添加付款方式以切换到付费套餐。",
         "pending_change_removed": "已取消预定的方案变更。",
         "pending_plan_badge": "已预定",
         "pending_plan_change_description": "你的套餐将在 {date} 切换为 {plan}。",
