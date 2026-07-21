@@ -20,18 +20,18 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { updateWorkspaceAction } from "../../actions";
 
-interface EditWaitingTimeProps {
+interface EditCooldownPeriodProps {
   workspace: TWorkspace;
   isReadOnly: boolean;
 }
 
 const ZWorkspaceRecontactDaysInput = ZWorkspace.pick({ recontactDays: true });
 
-type TEditWaitingTimeFormValues = z.infer<typeof ZWorkspaceRecontactDaysInput>;
+type TEditCooldownPeriodFormValues = z.infer<typeof ZWorkspaceRecontactDaysInput>;
 
-export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ workspace, isReadOnly }) => {
+export const EditCooldownPeriodForm: React.FC<EditCooldownPeriodProps> = ({ workspace, isReadOnly }) => {
   const { t } = useTranslation();
-  const form = useForm<TEditWaitingTimeFormValues>({
+  const form = useForm<TEditCooldownPeriodFormValues>({
     defaultValues: {
       recontactDays: workspace.recontactDays,
     },
@@ -41,11 +41,11 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ workspace,
 
   const { isDirty, isSubmitting } = form.formState;
 
-  const updateWaitingTime: SubmitHandler<TEditWaitingTimeFormValues> = async (data) => {
+  const updateCooldownPeriod: SubmitHandler<TEditCooldownPeriodFormValues> = async (data) => {
     try {
       const updatedWorkspaceResponse = await updateWorkspaceAction({ workspaceId: workspace.id, data });
       if (updatedWorkspaceResponse?.data) {
-        toast.success(t("workspace.general.waiting_period_updated_successfully"));
+        toast.success(t("workspace.general.cooldown_period_updated_successfully"));
         form.resetField("recontactDays", { defaultValue: updatedWorkspaceResponse.data.recontactDays });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
@@ -61,7 +61,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ workspace,
       <FormProvider {...form}>
         <form
           className="flex w-full max-w-sm flex-col gap-y-4"
-          onSubmit={form.handleSubmit(updateWaitingTime)}>
+          onSubmit={form.handleSubmit(updateCooldownPeriod)}>
           <FormField
             control={form.control}
             name="recontactDays"
