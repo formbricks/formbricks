@@ -96,13 +96,13 @@ export function SegmentFilterItemConnector({
   setSegment,
   filterId,
   viewOnly,
-}: {
+}: Readonly<{
   connector: TSegmentConnector;
   segment: TSegment;
   setSegment: (segment: TSegment) => void;
   filterId: string;
   viewOnly?: boolean;
-}) {
+}>) {
   const { t } = useTranslation();
   const updateLocalSurvey = (newConnector: TSegmentConnector) => {
     const updatedSegment = structuredClone(segment);
@@ -146,14 +146,14 @@ export function SegmentFilterItemContextMenu({
   onDeleteFilter,
   onMoveFilter,
   viewOnly,
-}: {
+}: Readonly<{
   filterId: string;
   onAddFilterBelow: () => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
-}) {
+}>) {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">

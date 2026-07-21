@@ -46,9 +46,7 @@ export const getPersonSegmentIds = async (
   contactId: string,
   contactUserId: string,
   deviceType: "phone" | "desktop",
-  // Defaults to empty so existing/other callers stay source-compatible: with no interaction history,
-  // interaction-only segments simply never match in memory and fall through to the Prisma path.
-  interactionData: TContactInteractionData = { displays: [], responses: [] }
+  interactionData: TContactInteractionData
 ): Promise<string[]> => {
   try {
     validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
