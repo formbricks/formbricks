@@ -9,13 +9,11 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { getResponses } from "../response/service";
 import { transformResponseToFeedbackRecords } from "./transform";
+import { getErrorMessage } from "./utils";
 
 const IMPORT_BATCH_SIZE = 50;
 
 export type TImportResult = { successes: number; failures: number; skipped: number };
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown error";
 
 const processBatch = async (
   responses: Awaited<ReturnType<typeof getResponses>>,
