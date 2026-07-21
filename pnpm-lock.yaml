@@ -539,6 +539,9 @@ importers:
       dotenv:
         specifier: 17.3.1
         version: 17.3.1
+      jsdom:
+        specifier: 29.1.1
+        version: 29.1.1(@noble/hashes@2.0.1)
       postcss:
         specifier: 8.5.14
         version: 8.5.14
