@@ -10,12 +10,31 @@ Fixes #(issue)
  Loom Video: https://www.loom.com/
 -->
 
-## How should this be tested?
+## QA / Test Plan
 
-<!-- Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration -->
+<!--
+This section is the source of truth for release QA — QA checklists are generated from it. Describe the
+PR's ACTUAL behavior, not the commit titles. Keep steps click-by-click and grounded in real behavior.
+Omit a subsection only when it genuinely does not apply. Flag any inferred specifics (thresholds, rate
+limits, timeouts) for human verification.
+-->
 
-- Test A
-- Test B
+**How to test** <!-- happy path first, then edge cases (boundaries, negative input, permissions) -->
+
+- [ ] Step → expected result (include route, error code, and any env flag/var)
+- [ ] Edge case → expected result
+
+**Preconditions / test data** <!-- accounts, seed data, feature flags, plan/entitlement, Cloud vs self-host -->
+
+-
+
+**Risks & regressions** <!-- what nearby behavior could break; what to re-check -->
+
+-
+
+**Migrations / env / cutover** <!-- new/changed env vars (diff .env.example), DB migrations, cutover steps; write "none" if none -->
+
+- none
 
 ## Checklist
 
@@ -23,7 +42,7 @@ Fixes #(issue)
 
 ### Required
 
-- [ ] Filled out the "How to test" section in this PR
+- [ ] Filled out the "QA / Test Plan" section in this PR (behavior, edge cases, preconditions, risks, migrations/env)
 - [ ] Read [How we Code at Formbricks](<[https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md](https://formbricks.com/docs/contributing/how-we-code)>)
 - [ ] Self-reviewed my own code
 - [ ] Commented on my code in hard-to-understand bits
