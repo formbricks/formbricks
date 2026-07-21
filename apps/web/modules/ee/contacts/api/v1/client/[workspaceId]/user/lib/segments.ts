@@ -79,7 +79,19 @@ export const getPersonSegmentIds = async (
         continue;
       }
 
-      const inMemoryResult = tryEvaluateSurveyInteractionSegmentInMemory(filters, interactionData, now);
+      // Isolate per-segment failures like the DB path below: an unexpected throw here must not bubble to
+      // the outer catch and wipe out every already-computed segment. On failure, leave the result null
+      // so this segment falls through to the Prisma path instead of being silently dropped.
+      let inMemoryResult: boolean | null = null;
+      try {
+        inMemoryResult = tryEvaluateSurveyInteractionSegmentInMemory(filters, interactionData, now);
+      } catch (error) {
+        logger.warn(
+          { segmentId: segment.id, workspaceId, error },
+          "Failed to evaluate segment in memory, falling back to DB query"
+        );
+      }
+
       if (inMemoryResult !== null) {
         if (inMemoryResult) {
           inMemoryMatchIds.push(segment.id);

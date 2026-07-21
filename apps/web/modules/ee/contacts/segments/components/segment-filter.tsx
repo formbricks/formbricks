@@ -234,7 +234,7 @@ function AttributeSegmentFilter({
   setSegment,
   contactAttributeKeys,
   viewOnly,
-}: TAttributeSegmentFilterProps) {
+}: Readonly<TAttributeSegmentFilterProps>) {
   const { contactAttributeKey } = resource.root;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -476,7 +476,7 @@ function PersonSegmentFilter({
   segment,
   setSegment,
   viewOnly,
-}: TPersonSegmentFilterProps) {
+}: Readonly<TPersonSegmentFilterProps>) {
   const { personIdentifier } = resource.root;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -655,7 +655,7 @@ function SegmentSegmentFilter({
   segments,
   setSegment,
   viewOnly,
-}: TSegmentSegmentFilterProps) {
+}: Readonly<TSegmentSegmentFilterProps>) {
   const { segmentId } = resource.root;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -767,7 +767,7 @@ function DeviceFilter({
   segment,
   setSegment,
   viewOnly,
-}: TDeviceFilterProps) {
+}: Readonly<TDeviceFilterProps>) {
   const { value } = resource;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -882,7 +882,7 @@ function SurveyInteractionFilter({
   segment,
   setSegment,
   viewOnly,
-}: TSurveyInteractionFilterProps) {
+}: Readonly<TSurveyInteractionFilterProps>) {
   const { t } = useTranslation();
   // Pin to the concrete value type: the filter's `value` field is inferred from a refined Zod schema,
   // which TypeScript does not treat as a plain (spreadable) object without this annotation.
@@ -1093,7 +1093,7 @@ export function SegmentFilter({
   onDeleteFilter,
   onMoveFilter,
   viewOnly = false,
-}: TSegmentFilterProps) {
+}: Readonly<TSegmentFilterProps>) {
   const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInSegment = (filterId: string, newValue: TSegmentFilterValue) => {

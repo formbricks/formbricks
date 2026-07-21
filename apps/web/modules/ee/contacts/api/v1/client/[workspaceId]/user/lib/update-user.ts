@@ -1,5 +1,6 @@
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
@@ -7,6 +8,31 @@ import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
+
+/**
+ * Shared select for the two contact-state branches (existing contact vs newly created). Kept in one
+ * place so both produce the identical shape that feeds buildUserStateFromContact and the in-memory
+ * survey-interaction evaluator. `createdAt`/`finished` on responses (and `createdAt` on displays) are
+ * consumed by that evaluator (see getPersonSegmentIds), which relies on the load being complete — do
+ * NOT add a `take` limit without also bounding it by the widest interaction window, or the in-memory
+ * and Prisma evaluators would diverge.
+ */
+const contactStateSelect = {
+  id: true,
+  attributes: {
+    select: {
+      attributeKey: { select: { key: true } },
+      value: true,
+    },
+  },
+  responses: {
+    select: { surveyId: true, createdAt: true, finished: true },
+  },
+  displays: {
+    select: { surveyId: true, createdAt: true },
+    orderBy: { createdAt: "desc" as const },
+  },
+} satisfies Prisma.ContactSelect;
 
 /**
  * Comprehensive contact data fetcher - gets everything needed in one query
@@ -23,29 +49,7 @@ const getContactWithFullData = async (workspaceId: string, userId: string) => {
         },
       },
     },
-    select: {
-      id: true,
-      attributes: {
-        select: {
-          attributeKey: { select: { key: true } },
-          value: true,
-        },
-      },
-      // Include user state data in the same query. `createdAt` and `finished` are also consumed by the
-      // in-memory survey-interaction segment evaluator (see getPersonSegmentIds), which relies on this
-      // load being complete — do NOT add a `take` limit here without also bounding it by the widest
-      // interaction window, or the in-memory and Prisma evaluators would diverge.
-      responses: {
-        select: { surveyId: true, createdAt: true, finished: true },
-      },
-      displays: {
-        select: {
-          surveyId: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-      },
-    },
+    select: contactStateSelect,
   });
 };
 
@@ -69,27 +73,7 @@ const createContact = async (workspaceId: string, userId: string) => {
         ],
       },
     },
-    select: {
-      id: true,
-      attributes: {
-        select: {
-          attributeKey: { select: { key: true } },
-          value: true,
-        },
-      },
-      // Include empty arrays for new contacts. Selection must mirror getContactWithFullData so the two
-      // branches produce the same contact shape (both feed buildUserStateFromContact).
-      responses: {
-        select: { surveyId: true, createdAt: true, finished: true },
-      },
-      displays: {
-        select: {
-          surveyId: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-      },
-    },
+    select: contactStateSelect,
   });
 };
 
