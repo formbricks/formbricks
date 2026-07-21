@@ -320,6 +320,21 @@ describe("Tests for updateSurvey", () => {
       expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
     });
 
+    test("does not persist workspaceId or id from the payload on update — pinned to the existing survey (ENG-1749)", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      // workspaceId/id are the survey's tenant anchors: they must come from the existing record,
+      // never the client payload, so an authorized editor cannot re-point their survey to another
+      // workspace/organization on update.
+      expect(updateArg?.data).not.toHaveProperty("workspaceId");
+      expect(updateArg?.data).not.toHaveProperty("id");
+      expect(updateArg?.where).toEqual({ id: updateSurveyInput.id });
+    });
+
     // Note: Language handling tests (for languages.length > 0 fix) are covered in
     // apps/web/modules/survey/editor/lib/survey.test.ts where we have better control
     // over the test mocks. The key fix ensures languages.length > 0 (not > 1) is used.
