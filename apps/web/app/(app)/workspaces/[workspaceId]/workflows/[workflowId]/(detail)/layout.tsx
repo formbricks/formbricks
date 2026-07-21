@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
+import { WorkflowEditorProvider } from "@/modules/ee/workflows/components/workflow-editor-provider";
+import { WorkflowHeaderCta } from "@/modules/ee/workflows/components/workflow-header-cta";
+import { WorkflowPageTitle } from "@/modules/ee/workflows/components/workflow-page-title";
+import { WorkflowSecondaryNavigation } from "@/modules/ee/workflows/components/workflow-secondary-navigation";
+import { getWorkflowsRouteAuth } from "@/modules/ee/workflows/lib/auth";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkflowEditorProvider } from "@/modules/workflows/components/workflow-editor-provider";
-import { WorkflowHeaderCta } from "@/modules/workflows/components/workflow-header-cta";
-import { WorkflowPageTitle } from "@/modules/workflows/components/workflow-page-title";
-import { WorkflowSecondaryNavigation } from "@/modules/workflows/components/workflow-secondary-navigation";
-import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
 
 const WorkflowDetailLayout = async (
   props: Readonly<{

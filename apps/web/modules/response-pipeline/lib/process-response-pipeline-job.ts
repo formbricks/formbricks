@@ -15,13 +15,13 @@ import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/util
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
+import { dispatchWorkflowRunViaJobs } from "@/modules/ee/workflows/lib/runner/dispatch";
+import { enqueueResponseCompletedWorkflowRuns } from "@/modules/ee/workflows/lib/runner/enqueue-response-completed-runs";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/lib/posthog";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
-import { dispatchWorkflowRunViaJobs } from "@/modules/workflows/lib/runner/dispatch";
-import { enqueueResponseCompletedWorkflowRuns } from "@/modules/workflows/lib/runner/enqueue-response-completed-runs";
 import { handleIntegrations } from "./handle-integrations";
 import { sendTelemetryEvents } from "./telemetry";
 

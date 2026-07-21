@@ -1,0 +1,253 @@
+"use client";
+
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { TFunction } from "i18next";
+import { X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
+import { ZWorkflowStatus } from "@formbricks/workflows";
+import { FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS } from "@/lib/localStorage";
+import { timeSince } from "@/lib/time";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { Button } from "@/modules/ui/components/button";
+import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
+import { SearchBar } from "@/modules/ui/components/search-bar";
+import {
+  type TWorkflowStatusFilterOption,
+  WorkflowFilterDropdown,
+} from "../components/workflow-filter-dropdown";
+import { WorkflowListActions } from "../components/workflow-list-actions";
+import { WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
+import { WorkflowStatusPill } from "../components/workflow-status-pill";
+import { WorkflowsEmptyState } from "../components/workflows-empty-state";
+import { useDebouncedValue } from "../hooks/use-debounced-value";
+import { useWorkflows } from "../hooks/use-workflows";
+import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
+import { WorkflowsListBodyLoading } from "../loading";
+
+interface WorkflowsListPageProps {
+  workspaceId: string;
+  isReadOnly: boolean;
+  workflowsPerPage: number;
+}
+
+// Status filter options. Archived is set apart by a divider and unchecked by default, so archived
+// workflows stay hidden until the user explicitly opts in.
+const getStatusFilterOptions = (t: TFunction): TWorkflowStatusFilterOption[] => [
+  { label: t("common.draft"), value: "draft" },
+  { label: t("common.enabled"), value: "enabled" },
+  { label: t("common.disabled"), value: "disabled" },
+  { label: t("common.archived"), value: "archived", separatorBefore: true },
+];
+
+export const WorkflowsListPage = ({
+  workspaceId,
+  isReadOnly,
+  workflowsPerPage,
+}: Readonly<WorkflowsListPageProps>) => {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const [animationParent] = useAutoAnimate();
+
+  const [searchValue, setSearchValue] = useState("");
+  const debouncedSearchValue = useDebouncedValue(searchValue, 300);
+  const [selectedStatuses, setSelectedStatuses] = useState<TWorkflowStatus[]>([]);
+  const [sortBy, setSortBy] = useState<TWorkflowSortBy>("updatedAt");
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [isFilterInitialized, setIsFilterInitialized] = useState(false);
+
+  const statusIn = useMemo(() => computeStatusIn(selectedStatuses), [selectedStatuses]);
+
+  // Hydrate the toolbar filters from localStorage once on mount (mirrors the surveys list). Reading
+  // happens post-mount because localStorage is unavailable during SSR.
+  useEffect(() => {
+    if (globalThis.window === undefined) return;
+    const stored = globalThis.window.localStorage.getItem(FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS);
+    const parsed = parseStoredWorkflowFilters(stored);
+    if (stored && !parsed) {
+      globalThis.window.localStorage.removeItem(FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS);
+    } else if (parsed) {
+      setSearchValue(parsed.searchValue);
+      setSelectedStatuses(parsed.selectedStatuses);
+      setSortBy(parsed.sortBy);
+    }
+    setIsFilterInitialized(true);
+  }, []);
+
+  // Persist on change, but only after hydration so the empty defaults don't overwrite the stored
+  // value before it has been read.
+  useEffect(() => {
+    if (!isFilterInitialized || globalThis.window === undefined) return;
+    globalThis.window.localStorage.setItem(
+      FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS,
+      JSON.stringify({ searchValue, selectedStatuses, sortBy })
+    );
+  }, [searchValue, selectedStatuses, sortBy, isFilterInitialized]);
+
+  const toggleStatus = (value: TWorkflowStatus) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(value) ? prev.filter((status) => status !== value) : [...prev, value]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedStatuses([]);
+    setSearchValue("");
+  };
+
+  const {
+    workflows,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    queryKey,
+  } = useWorkflows({
+    workspaceId,
+    limit: workflowsPerPage,
+    nameContains: debouncedSearchValue.trim(),
+    statusIn,
+    sortBy,
+  });
+
+  const showInitialLoading = isLoading && workflows.length === 0;
+  const hasActiveFilters = selectedStatuses.length > 0 || searchValue.length > 0;
+
+  const isListEmpty = !showInitialLoading && !isError && workflows.length === 0;
+
+  // Probe for ANY workflow including archived (the default query excludes archived) so an all-archived
+  // workspace isn't mistaken for an empty one — which would hide the toolbar and with it the archived filter.
+  const { workflows: anyWorkflows, isLoading: isProbingAnyWorkflows } = useWorkflows({
+    workspaceId,
+    limit: 1,
+    nameContains: "",
+    statusIn: [...ZWorkflowStatus.options],
+    enabled: isListEmpty,
+  });
+
+  // Mirror the surveys list: only a genuinely empty workspace hides the toolbar. If any workflow exists
+  // (even only archived ones), keep the toolbar so the filters stay reachable.
+  const isWorkspaceEmpty = isListEmpty && !isProbingAnyWorkflows && anyWorkflows.length === 0;
+
+  if (isWorkspaceEmpty) {
+    return (
+      <div className="space-y-6">
+        <WorkflowsEmptyState filtered={false} />
+      </div>
+    );
+  }
+
+  let listContent: React.ReactNode;
+
+  if (showInitialLoading) {
+    listContent = <WorkflowsListBodyLoading />;
+  } else if (isError && workflows.length === 0) {
+    listContent = (
+      <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
+        <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
+        <Button variant="secondary" size="sm" onClick={() => refetch()}>
+          {t("common.try_again")}
+        </Button>
+      </div>
+    );
+  } else if (workflows.length === 0) {
+    // Workspace has workflows but the active filters match none (a truly empty workspace exits early).
+    listContent = <WorkflowsEmptyState filtered={true} />;
+  } else {
+    listContent = (
+      <div>
+        <div ref={animationParent} className="space-y-3">
+          <CardTableHeader className="grid-cols-7">
+            <div className="col-span-2 place-self-start">{t("common.name")}</div>
+            <div className="col-span-1">{t("common.status")}</div>
+            <div className="col-span-1">{t("common.runs")}</div>
+            <div className="col-span-1">{t("common.created_at")}</div>
+            <div className="col-span-1">{t("common.updated_at")}</div>
+            <div className="col-span-1">{t("common.created_by")}</div>
+          </CardTableHeader>
+
+          {workflows.map((workflow) => (
+            <CardTableRow
+              key={workflow.id}
+              href={`/workspaces/${workspaceId}/workflows/${workflow.id}`}
+              className="grid-cols-7"
+              actions={
+                <WorkflowListActions
+                  workflowId={workflow.id}
+                  workflowName={workflow.name}
+                  status={workflow.status}
+                  workspaceId={workspaceId}
+                  isReadOnly={isReadOnly}
+                  queryKey={queryKey}
+                />
+              }>
+              <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
+                <div className="min-w-0 truncate">{workflow.name}</div>
+              </div>
+              <div className="col-span-1">
+                <WorkflowStatusPill status={workflow.status} />
+              </div>
+              <div className="col-span-1 text-sm text-slate-600">{workflow.runCount}</div>
+              <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+                {timeSince(workflow.createdAt, locale)}
+              </div>
+              <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+                {timeSince(workflow.updatedAt, locale)}
+              </div>
+              <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+                {workflow.creator?.name ?? "-"}
+              </div>
+            </CardTableRow>
+          ))}
+        </div>
+
+        {hasNextPage ? (
+          <div className="flex justify-center py-5">
+            <Button
+              onClick={() => fetchNextPage()}
+              variant="secondary"
+              size="sm"
+              loading={isFetchingNextPage}>
+              {t("common.load_more")}
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-x-2">
+          <SearchBar
+            value={searchValue}
+            onChange={setSearchValue}
+            placeholder={t("workspace.workflows.search_by_workflow_name")}
+            className="w-80 border-slate-700"
+          />
+          <WorkflowFilterDropdown
+            title={t("common.status")}
+            options={getStatusFilterOptions(t)}
+            selectedOptions={selectedStatuses}
+            onToggleOption={toggleStatus}
+            isOpen={isStatusDropdownOpen}
+            onOpenChange={setIsStatusDropdownOpen}
+          />
+          {hasActiveFilters ? (
+            <Button size="sm" className="h-8" onClick={clearFilters}>
+              {t("common.clear_filters")}
+              <X />
+            </Button>
+          ) : null}
+        </div>
+        <WorkflowSortDropdown sortBy={sortBy} onSortChange={setSortBy} />
+      </div>
+      {listContent}
+    </div>
+  );
+};

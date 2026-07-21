@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { getTranslate } from "@/lingodotdev/server";
+import { WorkspaceWorkflowsHeaderCta } from "@/modules/ee/workflows/components/workspace-workflows-header-cta";
+import { WorkspaceWorkflowsSecondaryNavigation } from "@/modules/ee/workflows/components/workspace-workflows-secondary-navigation";
+import { getWorkflowsRouteAuth } from "@/modules/ee/workflows/lib/auth";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkspaceWorkflowsHeaderCta } from "@/modules/workflows/components/workspace-workflows-header-cta";
-import { WorkspaceWorkflowsSecondaryNavigation } from "@/modules/workflows/components/workspace-workflows-secondary-navigation";
-import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
 import { WorkflowsQueryClientProvider } from "./query-client-provider";
 
 const WorkspaceWorkflowsLayout = async (

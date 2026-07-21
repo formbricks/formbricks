@@ -132,11 +132,11 @@ vi.mock("@/modules/survey/follow-ups/lib/follow-ups", () => ({
   sendFollowUpsForResponse: mockSendFollowUpsForResponse,
 }));
 
-vi.mock("@/modules/workflows/lib/runner/enqueue-response-completed-runs", () => ({
+vi.mock("@/modules/ee/workflows/lib/runner/enqueue-response-completed-runs", () => ({
   enqueueResponseCompletedWorkflowRuns: mockEnqueueResponseCompletedWorkflowRuns,
 }));
 
-vi.mock("@/modules/workflows/lib/runner/dispatch", () => ({
+vi.mock("@/modules/ee/workflows/lib/runner/dispatch", () => ({
   dispatchWorkflowRunViaJobs: vi.fn(),
 }));
 

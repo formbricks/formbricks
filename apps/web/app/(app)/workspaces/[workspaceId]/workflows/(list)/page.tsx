@@ -1,5 +1,5 @@
-import { getWorkflowsRouteAuth } from "@/modules/workflows/lib/auth";
-import { WorkflowsListPage } from "@/modules/workflows/pages/workflows-list-page";
+import { getWorkflowsRouteAuth } from "@/modules/ee/workflows/lib/auth";
+import { WorkflowsListPage } from "@/modules/ee/workflows/pages/workflows-list-page";
 
 const WORKFLOWS_PER_PAGE = 12;
 
