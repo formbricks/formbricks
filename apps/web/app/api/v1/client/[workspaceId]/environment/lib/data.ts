@@ -106,6 +106,10 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           where: {
             type: "app",
             status: "inProgress",
+            // Never ship archived surveys to SDK clients (belt-and-suspenders: archiving forces a
+            // survey out of "inProgress", so this can't currently match, but keep it explicit so an
+            // archived app survey can never be synced or triggered by a code action).
+            archivedAt: null,
           },
           orderBy: {
             createdAt: "desc",

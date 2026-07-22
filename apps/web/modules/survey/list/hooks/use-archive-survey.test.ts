@@ -7,13 +7,13 @@ import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListPage } from "@/modules/survey/list/lib/v3-surveys-client";
-import { useDeleteSurvey } from "./use-delete-survey";
+import { useArchiveSurvey } from "./use-archive-survey";
 
 function createWrapper(queryClient: QueryClient) {
   const Wrapper = ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
-  Wrapper.displayName = "UseDeleteSurveyTestWrapper";
+  Wrapper.displayName = "UseArchiveSurveyTestWrapper";
 
   return Wrapper;
 }
@@ -28,7 +28,7 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
             name: "Survey 1",
             workspaceId: "env_1",
             type: "link",
-            status: "draft",
+            status: "inProgress",
             publishOn: null,
             archivedAt: null,
             createdAt: new Date("2026-04-15T10:00:00.000Z"),
@@ -50,7 +50,13 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
   };
 }
 
-describe("useDeleteSurvey", () => {
+const queryKey = surveyKeys.list({
+  workspaceId: "env_1",
+  limit: 20,
+  filters: { name: "", status: [], type: [], sortBy: "relevance" },
+});
+
+describe("useArchiveSurvey", () => {
   beforeEach(() => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
       true;
@@ -61,7 +67,7 @@ describe("useDeleteSurvey", () => {
     vi.unstubAllGlobals();
   });
 
-  test("optimistically removes a survey and invalidates list queries on success", async () => {
+  test("optimistically removes the survey and invalidates list queries on success", async () => {
     let resolveFetch: ((value: Response) => void) | undefined;
     const fetchPromise = new Promise<Response>((resolve) => {
       resolveFetch = resolve;
@@ -70,26 +76,13 @@ describe("useDeleteSurvey", () => {
     vi.mocked(global.fetch).mockReturnValue(fetchPromise as Promise<Response>);
 
     const queryClient = new QueryClient({
-      defaultOptions: {
-        mutations: { retry: false },
-        queries: { retry: false },
-      },
-    });
-    const queryKey = surveyKeys.list({
-      workspaceId: "env_1",
-      limit: 20,
-      filters: {
-        name: "",
-        status: [],
-        type: [],
-        sortBy: "relevance",
-      },
+      defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
     });
     queryClient.setQueryData(queryKey, createQueryData());
 
     const invalidateQueriesSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-    const { result } = renderHook(() => useDeleteSurvey({ queryKey }), {
+    const { result } = renderHook(() => useArchiveSurvey({ queryKey }), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -98,17 +91,19 @@ describe("useDeleteSurvey", () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.data).toEqual([])
     );
-    expect(queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.meta.totalCount).toBe(
-      0
-    );
 
-    resolveFetch?.(new Response(null, { status: 204 }));
+    resolveFetch?.(
+      new Response(JSON.stringify({ data: { id: "survey_1", status: "paused", archivedAt: "2026-04-16" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: surveyKeys.lists() });
   });
 
-  test("rolls the cache back when delete fails", async () => {
+  test("rolls the cache back when archive fails", async () => {
     vi.mocked(global.fetch).mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -118,32 +113,16 @@ describe("useDeleteSurvey", () => {
           code: "forbidden",
           requestId: "req_1",
         }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/problem+json" },
-        }
+        { status: 403, headers: { "Content-Type": "application/problem+json" } }
       )
     );
 
     const queryClient = new QueryClient({
-      defaultOptions: {
-        mutations: { retry: false },
-        queries: { retry: false },
-      },
-    });
-    const queryKey = surveyKeys.list({
-      workspaceId: "env_1",
-      limit: 20,
-      filters: {
-        name: "",
-        status: [],
-        type: [],
-        sortBy: "relevance",
-      },
+      defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
     });
     queryClient.setQueryData(queryKey, createQueryData());
 
-    const { result } = renderHook(() => useDeleteSurvey({ queryKey }), {
+    const { result } = renderHook(() => useArchiveSurvey({ queryKey }), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -154,8 +133,5 @@ describe("useDeleteSurvey", () => {
     ).rejects.toThrow("You are not authorized to access this resource");
 
     expect(queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.data).toHaveLength(1);
-    expect(queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.meta.totalCount).toBe(
-      1
-    );
   });
 });

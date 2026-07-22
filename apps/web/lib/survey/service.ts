@@ -56,6 +56,7 @@ export const selectSurvey = {
   autoComplete: true,
   publishOn: true,
   closeOn: true,
+  archivedAt: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
@@ -233,6 +234,8 @@ export const getSurveys = reactCache(
       const surveysPrisma = await prisma.survey.findMany({
         where: {
           workspaceId,
+          // Archived surveys are hidden by default across the app.
+          archivedAt: null,
         },
         select: selectSurvey,
         orderBy: {
@@ -259,6 +262,8 @@ export const getSurveyCount = reactCache(async (workspaceId: string): Promise<nu
     const surveyCount = await prisma.survey.count({
       where: {
         workspaceId,
+        // Archived surveys are hidden by default across the app.
+        archivedAt: null,
       },
     });
 
@@ -291,6 +296,13 @@ export const updateSurveyInternal = async (
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
+    // Archived surveys are read-only. This covers every write path that flows through here
+    // (editor save, the summary status dropdown's server action, etc.) — not just the v3 API.
+    // Archive/restore themselves bypass this guard: they write archivedAt directly, not via update.
+    if (currentSurvey.archivedAt) {
+      throw new InvalidInputError("This survey is archived. Restore it before editing.");
+    }
+
     // ENG-1749: workspaceId and id are the survey's tenant anchors. Always resolve the workspace from
     // the existing survey (never the client payload), and strip workspaceId/id from the update below,
     // so an authorized editor cannot re-point their own survey into another workspace/organization.
@@ -305,6 +317,8 @@ export const updateSurveyInternal = async (
       followUps,
       workspaceId: _workspaceId,
       id: _id,
+      // archivedAt is owned exclusively by the archive/restore flows; never let a survey update touch it.
+      archivedAt: _archivedAt,
       ...surveyData
     } = updatedSurvey;
 

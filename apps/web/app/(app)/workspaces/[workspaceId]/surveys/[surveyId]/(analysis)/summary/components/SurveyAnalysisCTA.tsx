@@ -223,7 +223,7 @@ export const SurveyAnalysisCTA = ({
       icon: BellRing,
       tooltip: t("workspace.surveys.summary.configure_alerts"),
       onClick: () => router.push(`/account/settings/notifications`),
-      isVisible: !isReadOnly,
+      isVisible: !isReadOnly && !survey.archivedAt,
     },
     {
       icon: Eye,
@@ -239,13 +239,13 @@ export const SurveyAnalysisCTA = ({
       tooltip: exampleResponsesTooltip,
       onClick: handleGenerateExampleResponses,
       disabled: isGeneratingExamples || aiUnavailableReason !== null || responseCount > 0,
-      isVisible: !isReadOnly,
+      isVisible: !isReadOnly && !survey.archivedAt,
     },
     {
       icon: ListRestart,
       tooltip: t("workspace.surveys.summary.reset_survey"),
       onClick: () => setIsResetModalOpen(true),
-      isVisible: !isReadOnly,
+      isVisible: !isReadOnly && !survey.archivedAt,
     },
     {
       icon: SquarePenIcon,
@@ -255,7 +255,8 @@ export const SurveyAnalysisCTA = ({
           ? setIsCautionDialogOpen(true)
           : router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`);
       },
-      isVisible: !isReadOnly,
+      // Archived surveys are read-only; editing is blocked server-side, so hide the entry point too.
+      isVisible: !isReadOnly && !survey.archivedAt,
     },
   ];
 
@@ -266,14 +267,16 @@ export const SurveyAnalysisCTA = ({
       )}
 
       <IconBar actions={iconActions} />
-      <Button
-        onClick={() => {
-          setModalState((prev) => ({ ...prev, share: true }));
-        }}>
-        {t("workspace.surveys.summary.share_survey")}
-      </Button>
+      {!survey.archivedAt && (
+        <Button
+          onClick={() => {
+            setModalState((prev) => ({ ...prev, share: true }));
+          }}>
+          {t("workspace.surveys.summary.share_survey")}
+        </Button>
+      )}
 
-      {user && (
+      {user && !survey.archivedAt && (
         <ShareSurveyModal
           survey={survey}
           publicDomain={publicDomain}

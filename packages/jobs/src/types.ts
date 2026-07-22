@@ -43,3 +43,9 @@ export const ZSurveySchedulingJobData = z.object({
 });
 
 export type TSurveySchedulingJobData = z.infer<typeof ZSurveySchedulingJobData>;
+
+export const ZSurveyArchivePurgeJobData = z.object({
+  scope: z.literal("global"),
+});
+
+export type TSurveyArchivePurgeJobData = z.infer<typeof ZSurveyArchivePurgeJobData>;
