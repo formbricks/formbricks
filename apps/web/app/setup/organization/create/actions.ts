@@ -56,7 +56,10 @@ export const createOrganizationAction = authenticatedActionClient
       ctx.auditLoggingCtx.organizationId = newOrganization.id;
       ctx.auditLoggingCtx.newObject = newOrganization;
 
-      groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });
+      groupIdentifyPostHog("organization", newOrganization.id, {
+        name: newOrganization.name,
+        email_domain: ctx.user.email.split("@")[1],
+      });
       groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
 
       capturePostHogEvent(

@@ -53,7 +53,10 @@ export const createOrganizationAction = authenticatedActionClient
         name: DEFAULT_WORKSPACE_NAME,
       });
 
-      groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });
+      groupIdentifyPostHog("organization", newOrganization.id, {
+        name: newOrganization.name,
+        email_domain: ctx.user.email.split("@")[1],
+      });
       groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
 
       capturePostHogEvent(
