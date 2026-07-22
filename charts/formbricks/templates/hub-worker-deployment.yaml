@@ -99,8 +99,16 @@ spec:
             {{- end }}
             {{- end }}
           {{- end }}
+          {{- with .Values.hub.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if .Values.hub.worker.resources }}
           resources:
             {{- toYaml .Values.hub.worker.resources | nindent 12 }}
           {{- end }}
+      {{- with .Values.hub.extraVolumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end }}

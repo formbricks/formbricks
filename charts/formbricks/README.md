@@ -97,6 +97,40 @@ The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. 
 
 When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
 
+Configure Hub enrichment providers through `hub.env`. API-key providers can keep their secrets in
+`hub.existingSecret`. Providers that need credential files, custom CA bundles, or other pod-level
+configuration can use the provider-neutral `hub.extraVolumes` and `hub.extraVolumeMounts`
+settings, which apply to both Hub API and hub-worker.
+
+For example, a Vertex AI deployment can mount an existing Google credential JSON Secret and point
+Application Default Credentials at it:
+
+```yaml
+hub:
+  extraVolumes:
+    - name: google-cloud-credentials
+      secret:
+        secretName: formbricks-app-secrets
+        items:
+          - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+            path: credentials.json
+
+  extraVolumeMounts:
+    - name: google-cloud-credentials
+      mountPath: /var/run/secrets/formbricks/google
+      readOnly: true
+
+  env:
+    GOOGLE_APPLICATION_CREDENTIALS: /var/run/secrets/formbricks/google/credentials.json
+    SENTIMENT_PROVIDER: google-gemini
+    SENTIMENT_MODEL: gemini-2.5-flash
+    SENTIMENT_GOOGLE_CLOUD_PROJECT: your-google-cloud-project
+    SENTIMENT_GOOGLE_CLOUD_LOCATION: global
+```
+
+The chart renders these additions unchanged into both Hub processes. Keep credential values out of
+values files and reference existing Kubernetes Secrets instead.
+
 Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
 
 ## Web AI with self-hosted Qwen/vLLM
@@ -338,10 +372,12 @@ JSON that can call Vertex AI.
 | hub.embeddings.service.type                                        | string | `"ClusterIP"`                                                               |                                                           |
 | hub.env                                                            | object | `{}`                                                                        |                                                           |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
-| hub.image.digest                                                   | string | `"sha256:b22c5f8d1e2dd79224574f526a6714a3cc5372d18f4c047eaa9d18fe6ab75591"` | When set, takes precedence over tag (immutable pin).      |
+| hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
+| hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
+| hub.image.digest                                                   | string | `"sha256:5d7e7c6138ff77984db54b7c91693d8f56017cefa74bc69390fc7191403208c5"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |
-| hub.image.tag                                                      | string | `"0.6.0"`                                                                   | Fallback when digest is empty.                            |
+| hub.image.tag                                                      | string | `"0.8.1"`                                                                   | Fallback when digest is empty.                            |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |
