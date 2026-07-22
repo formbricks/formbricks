@@ -50,11 +50,11 @@ vi.mock("@/modules/survey/scheduling/lib/process-survey-scheduling-job", () => (
   processSurveySchedulingJob: mockProcessSurveySchedulingJob,
 }));
 
-vi.mock("@/modules/workflows/lib/runner/process-workflow-run-job", () => ({
+vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-job", () => ({
   processWorkflowRunJob: mockProcessWorkflowRunJob,
 }));
 
-vi.mock("@/modules/workflows/lib/runner/process-workflow-run-reconcile-job", () => ({
+vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job", () => ({
   processWorkflowRunReconcileJob: mockProcessWorkflowRunReconcileJob,
 }));
 
@@ -350,7 +350,7 @@ describe("instrumentation-jobs", () => {
       const { SURVEY_SCHEDULING_DAILY_CRON_PATTERN, SURVEY_SCHEDULING_TIME_ZONE } =
         await import("@/modules/survey/scheduling/lib/constants");
       const { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } =
-        await import("@/modules/workflows/lib/runner/reconcile-constants");
+        await import("@/modules/ee/workflows/lib/runner/reconcile-constants");
 
       await registerRecurringJobs();
       await registerRecurringJobs();

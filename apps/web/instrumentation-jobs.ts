@@ -13,6 +13,13 @@ import {
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
+import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
+import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
+import {
+  WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE,
+  WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
+  WORKFLOW_RUN_RECONCILE_SCHEDULE_ID,
+} from "@/modules/ee/workflows/lib/runner/reconcile-constants";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 import {
   SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
@@ -21,13 +28,6 @@ import {
   SURVEY_SCHEDULING_TIME_ZONE,
 } from "@/modules/survey/scheduling/lib/constants";
 import { processSurveySchedulingJob } from "@/modules/survey/scheduling/lib/process-survey-scheduling-job";
-import { processWorkflowRunJob } from "@/modules/workflows/lib/runner/process-workflow-run-job";
-import { processWorkflowRunReconcileJob } from "@/modules/workflows/lib/runner/process-workflow-run-reconcile-job";
-import {
-  WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE,
-  WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
-  WORKFLOW_RUN_RECONCILE_SCHEDULE_ID,
-} from "@/modules/workflows/lib/runner/reconcile-constants";
 
 const WORKER_STARTUP_RETRY_DELAY_MS = 30_000;
 

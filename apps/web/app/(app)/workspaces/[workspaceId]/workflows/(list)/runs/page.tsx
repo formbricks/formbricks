@@ -1,4 +1,4 @@
-import { WorkspaceWorkflowRunsPage } from "@/modules/workflows/pages/workspace-workflow-runs-page";
+import { WorkspaceWorkflowRunsPage } from "@/modules/ee/workflows/pages/workspace-workflow-runs-page";
 
 const WorkflowRunsPage = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
   const { workspaceId } = await props.params;

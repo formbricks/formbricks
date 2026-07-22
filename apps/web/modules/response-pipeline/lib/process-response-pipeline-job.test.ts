@@ -132,11 +132,11 @@ vi.mock("@/modules/survey/follow-ups/lib/follow-ups", () => ({
   sendFollowUpsForResponse: mockSendFollowUpsForResponse,
 }));
 
-vi.mock("@/modules/workflows/lib/runner/enqueue-response-completed-runs", () => ({
+vi.mock("@/modules/ee/workflows/lib/runner/enqueue-response-completed-runs", () => ({
   enqueueResponseCompletedWorkflowRuns: mockEnqueueResponseCompletedWorkflowRuns,
 }));
 
-vi.mock("@/modules/workflows/lib/runner/dispatch", () => ({
+vi.mock("@/modules/ee/workflows/lib/runner/dispatch", () => ({
   dispatchWorkflowRunViaJobs: vi.fn(),
 }));
 
@@ -254,6 +254,9 @@ describe("processResponsePipelineJob", () => {
       expect.objectContaining({
         response: expect.objectContaining({ id: "response_123" }),
         workspaceId: "workspace_123",
+        // The runner gates on the organization's workflows entitlement, so the pipeline must
+        // thread the resolved organization through.
+        organizationId: "org_123",
       })
     );
   });

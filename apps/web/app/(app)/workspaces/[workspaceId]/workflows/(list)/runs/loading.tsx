@@ -1,1 +1,1 @@
-export { WorkspaceWorkflowRunsBodyLoading as default } from "@/modules/workflows/loading";
+export { WorkspaceWorkflowRunsBodyLoading as default } from "@/modules/ee/workflows/loading";
