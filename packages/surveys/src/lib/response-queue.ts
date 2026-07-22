@@ -648,6 +648,7 @@ export class ResponseQueue {
         response = await this.api.updateResponse({
           ...responseUpdate,
           responseId: this.surveyState.responseId,
+          pinAuthToken: this.surveyState.pinAuthToken || null,
         });
 
         if (!response.ok) {

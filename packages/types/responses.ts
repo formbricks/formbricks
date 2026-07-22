@@ -398,6 +398,7 @@ export const ZResponseUpdateInput = z.object({
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtcInput.optional(),
   language: z.string().optional(),
+  pinAuthToken: z.string().nullish(),
 });
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
