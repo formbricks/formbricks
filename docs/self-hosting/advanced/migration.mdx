@@ -69,7 +69,7 @@ None of the following is required to run v5.2. Add them only if you want the ass
 
 #### Hub Enrichment (sentiment, emotion, translation)
 
-Hub `>= 0.7.1` can classify sentiment and emotion and translate feedback. These are **off** unless you set
+Hub `>= 0.8.0` can classify sentiment and emotion and translate feedback. These are **off** unless you set
 a provider and model, and they run in both the Hub API and the hub-worker, so set the variables on **both**
 services. Bump your Hub image to `>= 0.8.0` (via `HUB_IMAGE_REF`) to pick up these features.
 
@@ -90,7 +90,8 @@ Supported providers: `openai`, `google` (AI Studio, needs `*_PROVIDER_API_KEY`),
 An optional standalone taxonomy service, enabled in Docker Compose with `COMPOSE_PROFILES=taxonomy`. It
 shares an internal token with Hub:
 
-- `HUB_INTERNAL_API_TOKEN`, `TAXONOMY_SERVICE_URL`, `TAXONOMY_SERVICE_TOKEN` (strong random secrets)
+- `TAXONOMY_SERVICE_URL` (the internal URL to the taxonomy service)
+- `HUB_INTERNAL_API_TOKEN`, `TAXONOMY_SERVICE_TOKEN` (strong random secrets)
 - `TAXONOMY_LLM_PROVIDER` / `TAXONOMY_LLM_MODEL` / `TAXONOMY_LLM_BASE_URL` / `TAXONOMY_LLM_API_KEY`
   (`openai-compatible` by default; `bedrock` and `vertex-gemini` also supported)
 - `TAXONOMY_IMAGE_REF` to pin a released image (e.g. `:v0.1.0`)
