@@ -180,6 +180,7 @@
     "app_survey": "Alkalmazás-kérdőív",
     "appearance": "Megjelenés",
     "apply_filters": "Szűrők alkalmazása",
+    "archive": "Archiválás",
     "archived": "Archiválva",
     "are_you_sure": "Biztos benne?",
     "attributes": "Attribútumok",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "Mindent beállított! Ideje létrehozni az első kérdőívet",
       "alphabetical": "Ábécé-sorrend",
+      "archive": "Archiválás",
+      "archive_survey": "Archiválja ezt a felmérést?",
+      "archive_survey_warning": "Ez a felmérés és az összes válasz véglegesen törlésre kerül 30 nap elteltével.",
+      "archive_survey_warning_in_progress": "A válaszgyűjtés azonnal leáll. Ez a felmérés és az összes válasz véglegesen törlésre kerül 30 nap elteltével.",
+      "archiving_survey": "Felmérés archiválása folyamatban...",
       "change_status": "Állapot módosítása",
       "copy_survey": "Felmérés másolása",
       "copy_survey_description": "Válasszon ki egy munkaterületet, amelyre ezt a felmérést másolni szeretné.",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "A felmérés sikeresen másolva",
       "copy_survey_target_workspaces_label": "Cél munkaterületek",
       "copy_to": "Másolás ide...",
+      "delete_forever": "Végleges törlés",
       "delete_survey_and_responses_warning": "Biztosan törölni szeretné ezt a kérdőívet és az összes válaszát?",
       "edit": {
         "activate_translations": "Fordítások aktiválása",
@@ -3490,7 +3497,9 @@
         "your_web_app": "Saját webalkalmazás",
         "zip": "Irányítószám"
       },
+      "error_archiving_survey": "A felmérés archiválása sikertelen, kérjük, próbálja újra",
       "error_deleting_survey": "Hiba történt a kérdőív törlése során",
+      "error_restoring_survey": "A felmérés visszaállítása sikertelen, kérjük, próbálja újra",
       "error_updating_status": "Hiba történt a felmérés állapotának frissítése során",
       "featured_templates": {
         "churn_description": "Tudja meg, miért mondják le az emberek az előfizetésüket.",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "Ez a válasz folyamatban van.",
         "zip_post_code": "Irányítószám"
       },
+      "restore": "Visszaállítás",
+      "restoring_survey": "Felmérés visszaállítása folyamatban...",
       "search_by_survey_name": "Keresés kérdőívnév alapján",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "A felmérés állapota sikeresen frissítve",
       "status_updating": "A felmérés állapotának frissítése folyamatban...",
+      "stop_and_archive": "Leállítás és archiválás",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Szűrő hozzáadva azokhoz a válaszokhoz, ahol a(z) {questionIdx}. kérdésre adott válasz {filterComboBoxValue} – {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Szűrő hozzáadva azokhoz a válaszokhoz, ahol a(z) {questionIdx}. kérdésre adott válasz kihagyva",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "Felmérése élő",
         "youre_not_plugged_in_yet": "Még nincs csatlakoztatva!"
       },
+      "survey_archived_successfully": "Felmérés archiválva",
       "survey_deleted_successfully": "A kérdőív sikeresen törölve",
       "survey_duplicated_successfully": "A kérdőív sikeresen megkettőzve",
+      "survey_restored_successfully": "Felmérés visszaállítva",
       "templates": {
         "all_channels": "Összes csatorna",
         "all_industries": "Összes iparág",

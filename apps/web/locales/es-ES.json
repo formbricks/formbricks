@@ -180,6 +180,7 @@
     "app_survey": "Encuesta de aplicación",
     "appearance": "Apariencia",
     "apply_filters": "Aplicar filtros",
+    "archive": "Archivar",
     "archived": "Archivado",
     "are_you_sure": "¿Estás seguro?",
     "attributes": "Atributos",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "¡Todo listo! Es hora de crear tu primera encuesta",
       "alphabetical": "Alfabético",
+      "archive": "Archivar",
+      "archive_survey": "¿Archivar esta encuesta?",
+      "archive_survey_warning": "Esta encuesta y todas sus respuestas se eliminarán permanentemente después de 30 días.",
+      "archive_survey_warning_in_progress": "Dejará de recopilar respuestas inmediatamente. Esta encuesta y todas sus respuestas se eliminarán permanentemente después de 30 días.",
+      "archiving_survey": "Archivando encuesta...",
       "change_status": "Cambiar estado",
       "copy_survey": "Copiar encuesta",
       "copy_survey_description": "Elige un espacio de trabajo para copiar esta encuesta.",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "Encuesta copiada correctamente",
       "copy_survey_target_workspaces_label": "Espacios de trabajo de destino",
       "copy_to": "Copiar a...",
+      "delete_forever": "Eliminar definitivamente",
       "delete_survey_and_responses_warning": "¿Estás seguro de que quieres eliminar esta encuesta y todas sus respuestas?",
       "edit": {
         "activate_translations": "Activar traducciones",
@@ -3490,7 +3497,9 @@
         "your_web_app": "Tu aplicación web",
         "zip": "Código postal"
       },
+      "error_archiving_survey": "No se pudo archivar la encuesta, inténtalo de nuevo",
       "error_deleting_survey": "Se produjo un error al eliminar la encuesta",
+      "error_restoring_survey": "No se pudo restaurar la encuesta, inténtalo de nuevo",
       "error_updating_status": "Se produjo un error al actualizar el estado de la encuesta",
       "featured_templates": {
         "churn_description": "Descubre por qué la gente cancela sus suscripciones.",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "Esta respuesta está en curso.",
         "zip_post_code": "Código postal"
       },
+      "restore": "Restaurar",
+      "restoring_survey": "Restaurando encuesta...",
       "search_by_survey_name": "Buscar por nombre de encuesta",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "Estado de la encuesta actualizado correctamente",
       "status_updating": "Actualizando estado de la encuesta...",
+      "stop_and_archive": "Detener y archivar",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Se ha añadido un filtro para las respuestas donde la respuesta a la pregunta {questionIdx} es {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtro añadido para respuestas donde la respuesta a la pregunta {questionIdx} se ha omitido",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "Tu encuesta está activa",
         "youre_not_plugged_in_yet": "¡Aún no estás conectado!"
       },
+      "survey_archived_successfully": "Encuesta archivada",
       "survey_deleted_successfully": "¡Encuesta eliminada correctamente!",
       "survey_duplicated_successfully": "Encuesta duplicada correctamente.",
+      "survey_restored_successfully": "Encuesta restaurada",
       "templates": {
         "all_channels": "Todos los canales",
         "all_industries": "Todas las industrias",

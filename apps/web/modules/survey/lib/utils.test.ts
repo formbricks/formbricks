@@ -105,9 +105,31 @@ describe("Survey Utils", () => {
   });
 
   describe("buildWhereClause", () => {
-    test("should return an empty AND array if no filterCriteria is provided", () => {
+    test("should exclude archived surveys by default when no filterCriteria is provided", () => {
       const result = buildWhereClause();
-      expect(result).toEqual({ AND: [] });
+      expect(result).toEqual({ AND: [{ archivedAt: null }] });
+    });
+
+    test("should exclude archived surveys by default alongside a status filter", () => {
+      const filterCriteria: TSurveyFilterCriteria = { status: ["draft"] };
+      const result = buildWhereClause(filterCriteria);
+      expect(result.AND).toContainEqual({ archivedAt: null });
+      expect(result.AND).toContainEqual({ status: { in: ["draft"] } });
+    });
+
+    test("should return only archived surveys when includeArchived is set without a status filter", () => {
+      const filterCriteria: TSurveyFilterCriteria = { includeArchived: true };
+      const result = buildWhereClause(filterCriteria);
+      expect(result.AND).toContainEqual({ archivedAt: { not: null } });
+      expect(result.AND).not.toContainEqual({ archivedAt: null });
+    });
+
+    test("should OR active surveys of the selected status with all archived surveys", () => {
+      const filterCriteria: TSurveyFilterCriteria = { status: ["inProgress"], includeArchived: true };
+      const result = buildWhereClause(filterCriteria);
+      expect(result.AND).toContainEqual({
+        OR: [{ status: { in: ["inProgress"] }, archivedAt: null }, { archivedAt: { not: null } }],
+      });
     });
 
     test("should build where clause for name", () => {
@@ -165,6 +187,7 @@ describe("Survey Utils", () => {
       const result = buildWhereClause(filterCriteria);
       expect(result.AND).toEqual([
         { name: { contains: "Feedback Survey", mode: "insensitive" } },
+        { archivedAt: null },
         { status: { in: ["inProgress" as TSurveyStatus] } },
         { type: { in: ["app" as TSurveyType] } },
         { createdBy: "user456" },

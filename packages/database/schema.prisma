@@ -381,6 +381,7 @@ model Survey {
   delay               Int                     @default(0)
   publishOn           DateTime?
   closeOn             DateTime?
+  archivedAt          DateTime?
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   segmentId           String?
@@ -421,6 +422,7 @@ model Survey {
   @@index([segmentId])
   @@index([status, publishOn])
   @@index([status, closeOn])
+  @@index([archivedAt])
 }
 
 /// Represents a quota configuration for a survey.

@@ -180,6 +180,7 @@
     "app_survey": "App-enquête",
     "appearance": "Weergave",
     "apply_filters": "Pas filters toe",
+    "archive": "Archiveren",
     "archived": "Gearchiveerd",
     "are_you_sure": "Weet je het zeker?",
     "attributes": "Kenmerken",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "Je bent helemaal klaar! Tijd om uw eerste enquête te maken",
       "alphabetical": "Alfabetisch",
+      "archive": "Archiveren",
+      "archive_survey": "Deze enquête archiveren?",
+      "archive_survey_warning": "Deze enquête en alle bijbehorende reacties worden na 30 dagen definitief verwijderd.",
+      "archive_survey_warning_in_progress": "De enquête stopt direct met het verzamelen van reacties. Deze enquête en alle bijbehorende reacties worden na 30 dagen definitief verwijderd.",
+      "archiving_survey": "Enquête wordt gearchiveerd...",
       "change_status": "Status wijzigen",
       "copy_survey": "Enquête kopiëren",
       "copy_survey_description": "Kies een workspace waarnaar je deze enquête wilt kopiëren.",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "Enquête succesvol gekopieerd",
       "copy_survey_target_workspaces_label": "Doelwerkruimtes",
       "copy_to": "Kopiëren naar...",
+      "delete_forever": "Definitief verwijderen",
       "delete_survey_and_responses_warning": "Weet u zeker dat u deze enquête en alle antwoorden erop wilt verwijderen?",
       "edit": {
         "activate_translations": "Vertalingen activeren",
@@ -3490,7 +3497,9 @@
         "your_web_app": "Uw web-app",
         "zip": "Ritssluiting"
       },
+      "error_archiving_survey": "Kan enquête niet archiveren, probeer het opnieuw",
       "error_deleting_survey": "Er is een fout opgetreden bij het verwijderen van de enquête",
+      "error_restoring_survey": "Kan enquête niet herstellen, probeer het opnieuw",
       "error_updating_status": "Er is een fout opgetreden bij het bijwerken van de enquêtestatus",
       "featured_templates": {
         "churn_description": "Ontdek waarom mensen hun abonnementen opzeggen.",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "Deze reactie is in behandeling.",
         "zip_post_code": "Postcode"
       },
+      "restore": "Herstellen",
+      "restoring_survey": "Enquête wordt hersteld...",
       "search_by_survey_name": "Zoek op enquêtenaam",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "Enquêtestatus succesvol bijgewerkt",
       "status_updating": "Enquêtestatus wordt bijgewerkt...",
+      "stop_and_archive": "Stoppen en archiveren",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter toegevoegd voor reacties waar het antwoord op vraag {questionIdx} {filterComboBoxValue} - {filterValue} is",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter toegevoegd voor antwoorden waarbij het antwoord op vraag {questionIdx} wordt overgeslagen",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "Je enquête is live",
         "youre_not_plugged_in_yet": "Je bent nog niet aangesloten!"
       },
+      "survey_archived_successfully": "Enquête gearchiveerd",
       "survey_deleted_successfully": "Enquête succesvol verwijderd!",
       "survey_duplicated_successfully": "Enquête is succesvol gedupliceerd.",
+      "survey_restored_successfully": "Enquête hersteld",
       "templates": {
         "all_channels": "Alle kanalen",
         "all_industries": "Alle industrieën",

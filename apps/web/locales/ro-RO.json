@@ -180,6 +180,7 @@
     "app_survey": "Sondaj aplicație",
     "appearance": "Aspect",
     "apply_filters": "Aplică filtre",
+    "archive": "Arhivează",
     "archived": "Arhivat",
     "are_you_sure": "Ești sigur?",
     "attributes": "Atribute",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "Ești gata! Este timpul să creezi primul tău chestionar",
       "alphabetical": "Alfabetic",
+      "archive": "Arhivează",
+      "archive_survey": "Arhivezi acest sondaj?",
+      "archive_survey_warning": "Acest sondaj și toate răspunsurile sale vor fi șterse definitiv după 30 de zile.",
+      "archive_survey_warning_in_progress": "Va înceta imediat să colecteze răspunsuri. Acest sondaj și toate răspunsurile sale vor fi șterse definitiv după 30 de zile.",
+      "archiving_survey": "Se arhivează sondajul...",
       "change_status": "Schimbă status",
       "copy_survey": "Copiază chestionarul",
       "copy_survey_description": "Alege un spațiu de lucru în care să copiezi acest chestionar.",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "Chestionar copiat cu succes",
       "copy_survey_target_workspaces_label": "Spații de lucru destinație",
       "copy_to": "Copiază în...",
+      "delete_forever": "Șterge definitiv",
       "delete_survey_and_responses_warning": "Sigur doriți să ștergeți acest sondaj și toate răspunsurile sale?",
       "edit": {
         "activate_translations": "Activează traducerile",
@@ -3490,7 +3497,9 @@
         "your_web_app": "Aplicația dumneavoastră web",
         "zip": "Cod Poștal"
       },
+      "error_archiving_survey": "Nu s-a putut arhiva sondajul, încearcă din nou",
       "error_deleting_survey": "A apărut o eroare la ștergerea sondajului",
+      "error_restoring_survey": "Nu s-a putut restaura sondajul, încearcă din nou",
       "error_updating_status": "A apărut o eroare la actualizarea statusului sondajului",
       "featured_templates": {
         "churn_description": "Află de ce oamenii anulează abonamentele lor.",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "Acest răspuns este în curs de procesare.",
         "zip_post_code": "Cod poștal"
       },
+      "restore": "Restaurează",
+      "restoring_survey": "Se restaurează sondajul...",
       "search_by_survey_name": "Căutare după nume chestionar",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "Statusul sondajului a fost actualizat cu succes",
       "status_updating": "Se actualizează statusul sondajului...",
+      "stop_and_archive": "Oprește și arhivează",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "S-a adăugat un filtru pentru răspunsurile unde răspunsul la întrebarea {questionIdx} este {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtru adăugat pentru răspunsuri unde răspunsul la întrebarea {questionIdx} este omis",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "Chestionarul tău este activ",
         "youre_not_plugged_in_yet": "Nu sunteţi încă conectat!"
       },
+      "survey_archived_successfully": "Sondaj arhivat",
       "survey_deleted_successfully": "\"Sondaj șters cu succes!\"",
       "survey_duplicated_successfully": "\"Sondaj duplicat cu succes!\"",
+      "survey_restored_successfully": "Sondaj restaurat",
       "templates": {
         "all_channels": "Toate canalele",
         "all_industries": "Toate industriile",

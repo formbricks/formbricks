@@ -180,6 +180,7 @@
     "app_survey": "Inquérito (app)",
     "appearance": "Aparência",
     "apply_filters": "Aplicar filtros",
+    "archive": "Arquivar",
     "archived": "Arquivado",
     "are_you_sure": "Tem a certeza?",
     "attributes": "Atributos",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "Está tudo pronto! Hora de criar o seu primeiro inquérito",
       "alphabetical": "Alfabética",
+      "archive": "Arquivar",
+      "archive_survey": "Arquivar este inquérito?",
+      "archive_survey_warning": "Este inquérito e todas as suas respostas serão permanentemente eliminados após 30 dias.",
+      "archive_survey_warning_in_progress": "Deixará de recolher respostas imediatamente. Este inquérito e todas as suas respostas serão permanentemente eliminados após 30 dias.",
+      "archiving_survey": "A arquivar inquérito...",
       "change_status": "Alterar estado",
       "copy_survey": "Copiar inquérito",
       "copy_survey_description": "Escolhe um espaço de trabalho para copiar este inquérito.",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "Inquérito copiado com sucesso",
       "copy_survey_target_workspaces_label": "Espaços de trabalho de destino",
       "copy_to": "Copiar para...",
+      "delete_forever": "Eliminar permanentemente",
       "delete_survey_and_responses_warning": "Tem a certeza de que deseja eliminar este inquérito e todas as suas respostas?",
       "edit": {
         "activate_translations": "Ativar traduções",
@@ -3490,7 +3497,9 @@
         "your_web_app": "A sua aplicação web",
         "zip": "Comprimir"
       },
+      "error_archiving_survey": "Não foi possível arquivar o inquérito, tenta novamente",
       "error_deleting_survey": "Ocorreu um erro ao eliminar o inquérito",
+      "error_restoring_survey": "Não foi possível restaurar o inquérito, tenta novamente",
       "error_updating_status": "Ocorreu um erro ao atualizar o estado do inquérito",
       "featured_templates": {
         "churn_description": "Descobre porque é que as pessoas cancelam as suas subscrições.",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "Esta resposta está em progresso.",
         "zip_post_code": "Código Postal"
       },
+      "restore": "Restaurar",
+      "restoring_survey": "A restaurar inquérito...",
       "search_by_survey_name": "Pesquisar por nome do inquérito",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "Estado do inquérito atualizado com sucesso",
       "status_updating": "A atualizar o estado do inquérito...",
+      "stop_and_archive": "Parar e arquivar",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Foi adicionado um filtro para respostas em que a resposta à pergunta {questionIdx} é {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} é ignorada",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "O teu inquérito está no ar",
         "youre_not_plugged_in_yet": "Ainda não está ligado!"
       },
+      "survey_archived_successfully": "Inquérito arquivado",
       "survey_deleted_successfully": "Inquérito eliminado com sucesso!",
       "survey_duplicated_successfully": "Inquérito duplicado com sucesso.",
+      "survey_restored_successfully": "Inquérito restaurado",
       "templates": {
         "all_channels": "Todos os canais",
         "all_industries": "Todas as indústrias",

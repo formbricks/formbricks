@@ -37,7 +37,7 @@ describe("getPublishedLinkSurveys", () => {
     expect(result[2]).toEqual({ id: "survey3", name: "NPS Survey" });
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { workspaceId: workspaceId, status: "inProgress", type: "link" },
+      where: { workspaceId: workspaceId, status: "inProgress", type: "link", archivedAt: null },
       select: {
         id: true,
         name: true,

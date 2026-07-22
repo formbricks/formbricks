@@ -32,9 +32,26 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
     whereClause.push({ name: { contains: filterCriteria.name, mode: "insensitive" } });
   }
 
-  // for status
-  if (filterCriteria?.status && filterCriteria?.status?.length) {
-    whereClause.push({ status: { in: filterCriteria.status } });
+  // for status + archived (soft-delete) handling.
+  // Archived surveys (archivedAt not null) are hidden by default. The "Archived" filter
+  // sets includeArchived; the server never receives a real "archived" status.
+  const hasStatusFilter = Boolean(filterCriteria?.status?.length);
+  if (filterCriteria?.includeArchived) {
+    if (hasStatusFilter) {
+      // Selected active statuses OR any archived survey (Archived behaves like an extra status).
+      whereClause.push({
+        OR: [{ status: { in: filterCriteria!.status }, archivedAt: null }, { archivedAt: { not: null } }],
+      });
+    } else {
+      // Only archived surveys.
+      whereClause.push({ archivedAt: { not: null } });
+    }
+  } else {
+    // Default: exclude archived surveys, optionally narrowing to the selected statuses.
+    whereClause.push({ archivedAt: null });
+    if (hasStatusFilter) {
+      whereClause.push({ status: { in: filterCriteria!.status } });
+    }
   }
 
   // for type

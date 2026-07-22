@@ -1,5 +1,6 @@
 "use client";
 
+import { ArchiveIcon } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,6 +21,8 @@ interface SurveyCardProps {
   isReadOnly: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
   updateSurveyStatus: (surveyId: string, status: TSurveyStatus) => Promise<void>;
+  archiveSurvey: (surveyId: string) => Promise<void>;
+  restoreSurvey: (surveyId: string) => Promise<void>;
   locale: TUserLocale;
 }
 export const SurveyCard = ({
@@ -28,12 +31,15 @@ export const SurveyCard = ({
   isReadOnly,
   deleteSurvey,
   updateSurveyStatus,
+  archiveSurvey,
+  restoreSurvey,
   locale,
 }: Readonly<SurveyCardProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
-  const isScheduled = survey.status === "paused" && survey.publishOn !== null;
+  const isArchived = survey.archivedAt !== null;
+  const isScheduled = !isArchived && survey.status === "paused" && survey.publishOn !== null;
   const surveyStatusLabel = (() => {
     switch (survey.status) {
       case "inProgress":
@@ -52,12 +58,17 @@ export const SurveyCard = ({
   const isSurveyCreationDeletionDisabled = isReadOnly;
 
   const linkHref = useMemo(() => {
+    // Archived surveys are read-only; always send to summary (never the editor).
+    if (isArchived) {
+      return `${workspaceBasePath}/surveys/${survey.id}/summary`;
+    }
     return survey.status === "draft"
       ? `${workspaceBasePath}/surveys/${survey.id}/edit`
       : `${workspaceBasePath}/surveys/${survey.id}/summary`;
-  }, [survey.status, survey.id, workspaceBasePath]);
+  }, [isArchived, survey.status, survey.id, workspaceBasePath]);
 
-  const isDraftAndReadOnly = survey.status === "draft" && isReadOnly;
+  // A read-only draft, or an archived draft (which has no summary), is not clickable.
+  const isDraftAndReadOnly = survey.status === "draft" && (isReadOnly || isArchived);
 
   const CardBody = (
     <div
@@ -71,12 +82,25 @@ export const SurveyCard = ({
       <div
         className={cn(
           "col-span-1 flex w-fit items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm whitespace-nowrap text-slate-800",
-          survey.status === "inProgress" && "bg-emerald-50",
-          survey.status === "completed" && "bg-slate-200",
-          survey.status === "draft" && "bg-slate-100",
-          survey.status === "paused" && "bg-slate-100"
+          isArchived && "bg-slate-100",
+          !isArchived && survey.status === "inProgress" && "bg-emerald-50",
+          !isArchived && survey.status === "completed" && "bg-slate-200",
+          !isArchived && survey.status === "draft" && "bg-slate-100",
+          !isArchived && survey.status === "paused" && "bg-slate-100"
         )}>
-        <SurveyStatusIndicator status={survey.status} isScheduled={isScheduled} /> {surveyStatusLabel}{" "}
+        {isArchived ? (
+          <>
+            <div className="rounded-full bg-slate-300 p-1">
+              <ArchiveIcon className="size-3 text-slate-600" />
+            </div>{" "}
+            {t("common.archived")}
+          </>
+        ) : (
+          <>
+            <SurveyStatusIndicator status={survey.status} isScheduled={isScheduled} />{" "}
+            {surveyStatusLabel}{" "}
+          </>
+        )}
       </div>
       <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
         {survey.responseCount}
@@ -115,6 +139,8 @@ export const SurveyCard = ({
           isReadOnly={isReadOnly}
           deleteSurvey={deleteSurvey}
           updateSurveyStatus={updateSurveyStatus}
+          archiveSurvey={archiveSurvey}
+          restoreSurvey={restoreSurvey}
         />
       </div>
     </div>

@@ -180,6 +180,7 @@
     "app_survey": "アプリ内フォーム",
     "appearance": "外観",
     "apply_filters": "フィルターを適用",
+    "archive": "アーカイブ",
     "archived": "アーカイブ済み",
     "are_you_sure": "よろしいですか？",
     "attributes": "属性",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "すべての準備が整いました！最初のフォームを作成しましょう",
       "alphabetical": "アルファベット順",
+      "archive": "アーカイブ",
+      "archive_survey": "このアンケートをアーカイブしますか?",
+      "archive_survey_warning": "このアンケートとすべての回答は30日後に完全に削除されます。",
+      "archive_survey_warning_in_progress": "すぐに回答の収集を停止します。このアンケートとすべての回答は30日後に完全に削除されます。",
+      "archiving_survey": "アンケートをアーカイブ中...",
       "change_status": "ステータスを変更",
       "copy_survey": "アンケートをコピー",
       "copy_survey_description": "このアンケートをコピーするワークスペースを選択してください。",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "アンケートを正常にコピーしました",
       "copy_survey_target_workspaces_label": "コピー先のワークスペース",
       "copy_to": "コピー先...",
+      "delete_forever": "完全に削除",
       "delete_survey_and_responses_warning": "本当にこのフォームとすべての回答を削除しますか？",
       "edit": {
         "activate_translations": "翻訳を有効化",
@@ -3490,7 +3497,9 @@
         "your_web_app": "あなたのウェブアプリ",
         "zip": "郵便番号"
       },
+      "error_archiving_survey": "アンケートをアーカイブできませんでした。もう一度お試しください",
       "error_deleting_survey": "アンケートの削除中にエラーが発生しました",
+      "error_restoring_survey": "アンケートを復元できませんでした。もう一度お試しください",
       "error_updating_status": "アンケートのステータス更新中にエラーが発生しました",
       "featured_templates": {
         "churn_description": "サブスクリプションをキャンセルする理由を把握できます。",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "この回答は進行中です。",
         "zip_post_code": "郵便番号"
       },
+      "restore": "復元",
+      "restoring_survey": "アンケートを復元中...",
       "search_by_survey_name": "フォーム名で検索",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "アンケートのステータスが正常に更新されました",
       "status_updating": "アンケートのステータスを更新中...",
+      "stop_and_archive": "停止してアーカイブ",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "質問{questionIdx}の答えが{filterComboBoxValue} - {filterValue}の回答にフィルターを追加しました",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "質問 {questionIdx} の回答がスキップされた回答のフィルターを追加しました",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "アンケートが公開中です",
         "youre_not_plugged_in_yet": "まだ接続されていません！"
       },
+      "survey_archived_successfully": "アンケートをアーカイブしました",
       "survey_deleted_successfully": "フォームを正常に削除しました！",
       "survey_duplicated_successfully": "フォームを正常に複製しました。",
+      "survey_restored_successfully": "アンケートを復元しました",
       "templates": {
         "all_channels": "すべてのチャネル",
         "all_industries": "すべての業界",

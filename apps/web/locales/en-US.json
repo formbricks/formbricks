@@ -180,6 +180,7 @@
     "app_survey": "App Survey",
     "appearance": "Appearance",
     "apply_filters": "Apply filters",
+    "archive": "Archive",
     "archived": "Archived",
     "are_you_sure": "Are you sure?",
     "attributes": "Attributes",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "You are all set! Time to create your first survey",
       "alphabetical": "Alphabetical",
+      "archive": "Archive",
+      "archive_survey": "Archive this survey?",
+      "archive_survey_warning": "This survey and all its responses will be permanently deleted after 30 days.",
+      "archive_survey_warning_in_progress": "It will stop collecting responses immediately. This survey and all its responses will be permanently deleted after 30 days.",
+      "archiving_survey": "Archiving survey...",
       "change_status": "Change status",
       "copy_survey": "Copy survey",
       "copy_survey_description": "Choose a workspace to copy this survey to.",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "Survey copied successfully",
       "copy_survey_target_workspaces_label": "Target workspaces",
       "copy_to": "Copy to...",
+      "delete_forever": "Delete forever",
       "delete_survey_and_responses_warning": "Are you sure you want to delete this survey and all of its responses?",
       "edit": {
         "activate_translations": "Activate translations",
@@ -3490,7 +3497,9 @@
         "your_web_app": "Your web app",
         "zip": "Zip"
       },
+      "error_archiving_survey": "Couldn't archive survey, try again",
       "error_deleting_survey": "An error occurred while deleting survey",
+      "error_restoring_survey": "Couldn't restore survey, try again",
       "error_updating_status": "An error occurred while updating survey status",
       "featured_templates": {
         "churn_description": "Find out why people cancel their subscriptions.",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "This response is in progress.",
         "zip_post_code": "ZIP / Post code"
       },
+      "restore": "Restore",
+      "restoring_survey": "Restoring survey...",
       "search_by_survey_name": "Search by survey name",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "Survey status updated successfully",
       "status_updating": "Updating survey status...",
+      "stop_and_archive": "Stop and archive",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question {questionIdx} is {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Added filter for responses where answer to question {questionIdx} is skipped",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "Your survey is live",
         "youre_not_plugged_in_yet": "You are not plugged in yet!"
       },
+      "survey_archived_successfully": "Survey archived",
       "survey_deleted_successfully": "Survey deleted successfully",
       "survey_duplicated_successfully": "Survey duplicated successfully",
+      "survey_restored_successfully": "Survey restored",
       "templates": {
         "all_channels": "All channels",
         "all_industries": "All industries",

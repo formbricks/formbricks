@@ -180,6 +180,7 @@
     "app_survey": "Uygulama Anketi",
     "appearance": "Görünüm",
     "apply_filters": "Filtreleri uygula",
+    "archive": "Arşivle",
     "archived": "Arşivlenmiş",
     "are_you_sure": "Emin misiniz?",
     "attributes": "Öznitelikler",
@@ -2897,6 +2898,11 @@
       },
       "all_set_time_to_create_first_survey": "Her şey hazır! İlk anketini oluşturma zamanı",
       "alphabetical": "Alfabetik",
+      "archive": "Arşivle",
+      "archive_survey": "Bu anketi arşivle?",
+      "archive_survey_warning": "Bu anket ve tüm yanıtları 30 gün sonra kalıcı olarak silinecek.",
+      "archive_survey_warning_in_progress": "Hemen yanıt toplamayı durduracak. Bu anket ve tüm yanıtları 30 gün sonra kalıcı olarak silinecek.",
+      "archiving_survey": "Anket arşivleniyor...",
       "change_status": "Durumu değiştir",
       "copy_survey": "Anketi kopyala",
       "copy_survey_description": "Bu anketi kopyalamak için bir çalışma alanı seç.",
@@ -2907,6 +2913,7 @@
       "copy_survey_success": "Anket başarıyla kopyalandı",
       "copy_survey_target_workspaces_label": "Hedef çalışma alanları",
       "copy_to": "Şuraya kopyala...",
+      "delete_forever": "Kalıcı olarak sil",
       "delete_survey_and_responses_warning": "Bu anketi ve tüm yanıtlarını silmek istediğinden emin misin?",
       "edit": {
         "activate_translations": "Çevirileri etkinleştir",
@@ -3490,7 +3497,9 @@
         "your_web_app": "Web uygulaman",
         "zip": "Posta Kodu"
       },
+      "error_archiving_survey": "Anket arşivlenemedi, tekrar dene",
       "error_deleting_survey": "Anket silinirken bir hata oluştu",
+      "error_restoring_survey": "Anket geri yüklenemedi, tekrar dene",
       "error_updating_status": "Anket durumu güncellenirken bir hata oluştu",
       "featured_templates": {
         "churn_description": "İnsanların aboneliklerini neden iptal ettiğini öğren.",
@@ -3552,6 +3561,8 @@
         "this_response_is_in_progress": "Bu yanıt devam ediyor.",
         "zip_post_code": "Posta Kodu"
       },
+      "restore": "Geri yükle",
+      "restoring_survey": "Anket geri yükleniyor...",
       "search_by_survey_name": "Anket adına göre ara",
       "share": {
         "anonymous_links": {
@@ -3683,6 +3694,7 @@
       },
       "status_updated_successfully": "Anket durumu başarıyla güncellendi",
       "status_updating": "Anket durumu güncelleniyor...",
+      "stop_and_archive": "Durdur ve arşivle",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Soru {questionIdx}'ye verilen yanıtın {filterComboBoxValue} - {filterValue} olduğu yanıtlar için filtre eklendi",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Soru {questionIdx}'ye verilen yanıtın atlandığı yanıtlar için filtre eklendi",
@@ -3802,8 +3814,10 @@
         "your_survey_is_public": "Anketin yayında",
         "youre_not_plugged_in_yet": "Henüz bağlantı kurmadın!"
       },
+      "survey_archived_successfully": "Anket arşivlendi",
       "survey_deleted_successfully": "Anket başarıyla silindi",
       "survey_duplicated_successfully": "Anket başarıyla kopyalandı",
+      "survey_restored_successfully": "Anket geri yüklendi",
       "templates": {
         "all_channels": "Tüm kanallar",
         "all_industries": "Tüm sektörler",
