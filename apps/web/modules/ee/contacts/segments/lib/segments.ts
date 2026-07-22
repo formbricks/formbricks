@@ -388,6 +388,26 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
   }
 };
 
+// Batched lookup of the owning workspace for a set of surveys, used to keep segment↔survey links
+// within one workspace (ENG-1920). A single query avoids fanning out one lookup per survey id over
+// a caller-controlled, unbounded array. Missing ids are simply absent from the map.
+export const getSurveyWorkspaceIdMap = reactCache(
+  async (surveyIds: string[]): Promise<Map<string, string>> => {
+    try {
+      const surveys = await prisma.survey.findMany({
+        where: { id: { in: surveyIds } },
+        select: { id: true, workspaceId: true },
+      });
+      return new Map(surveys.map((survey) => [survey.id, survey.workspaceId]));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput): Promise<TSegment> => {
   validateInputs([segmentId, ZId], [data, ZSegmentUpdateInput]);
 

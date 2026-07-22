@@ -4,6 +4,131 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v5.2
+
+Formbricks v5.2 migrates authentication from NextAuth to **Better Auth**. For most self-hosted
+instances this is a drop-in upgrade, but **if you use SSO (Azure AD / Entra ID, generic OIDC, or SAML)
+you must re-register the OAuth callback URL at your identity provider before the first v5.2 restart**,
+or SSO sign-in will fail with a redirect-URI mismatch.
+
+<Warning>
+  All users are signed out once when you upgrade to v5.2. Better Auth takes over session handling and
+  there is no dual-read from the old NextAuth sessions, so the cutover is a one-time forced re-login.
+  Passwords are preserved — existing credential hashes are migrated automatically, so no password reset
+  is needed.
+</Warning>
+
+### SSO Callback URL Change (action required for SSO users)
+
+Better Auth serves the OAuth2/OIDC callback at a new path:
+
+- old (NextAuth): `/api/auth/callback/{provider}`
+- new (Better Auth): `/api/auth/oauth2/callback/{providerId}`
+
+Update the redirect / callback URIs at your identity provider to the new path. Replace `https://your-domain.com`
+with your instance URL:
+
+| Provider | Where to update | New callback URL |
+| --- | --- | --- |
+| Azure AD / Entra ID | Azure portal -> App registration -> Authentication -> Redirect URIs | `https://your-domain.com/api/auth/oauth2/callback/azuread` |
+| Generic OIDC | At your OIDC provider | `https://your-domain.com/api/auth/oauth2/callback/openid` |
+| SAML (BoxyHQ / Jackson) | The Jackson connection's `redirect_uri` | `https://your-domain.com/api/auth/oauth2/callback/saml` |
+
+<Note>
+  **Google and GitHub sign-in do not change.** They use Better Auth's built-in social providers, whose
+  callback path (`/api/auth/callback/{provider}`) is unchanged — nothing to do there.
+
+  For SAML, only the Jackson connection's `redirect_uri` changes. The IdP-side ACS endpoint
+  (`/api/auth/saml/callback`) is unchanged, so you do **not** need to reconfigure your IdP's SAML app.
+
+  Leave the old `/api/auth/callback/*` redirect URIs registered through the transition. Keeping them in
+  place is harmless and makes a rollback to v5.1 clean.
+</Note>
+
+### Authentication Environment Variables
+
+Better Auth introduces two optional variables. **Neither is required** for a standard upgrade — both fall
+back to your existing NextAuth configuration:
+
+- `BETTER_AUTH_SECRET` — cookie/session signing secret. Falls back to `NEXTAUTH_SECRET` when unset. If you
+  set it explicitly it must be at least 32 characters. Keeping the `NEXTAUTH_SECRET` fallback is
+  recommended so the value the forward-auth proxy already verifies with stays consistent.
+- `BETTER_AUTH_URL` — the auth base URL. Falls back to `NEXTAUTH_URL` (and then `WEBAPP_URL`) when unset.
+
+<Info>
+  If your instance already sets `NEXTAUTH_SECRET` and `NEXTAUTH_URL` (all v5.1 instances do), you can
+  upgrade without adding any new auth variables.
+</Info>
+
+**Removed:** `DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION` no longer exists. Remove it from your environment
+if you set it; it now has no effect.
+
+### Optional New Configuration
+
+None of the following is required to run v5.2. Add them only if you want the associated feature.
+
+#### Hub Enrichment (sentiment, emotion, translation)
+
+Hub `>= 0.8.0` can classify sentiment and emotion and translate feedback. These are **off** unless you set
+a provider and model, and they run in both the Hub API and the hub-worker, so set the variables on **both**
+services. Bump your Hub image to `>= 0.8.0` (via `HUB_IMAGE_REF`) to pick up these features.
+
+- `SENTIMENT_PROVIDER`, `SENTIMENT_MODEL`, `SENTIMENT_PROVIDER_API_KEY`
+- `EMOTIONS_PROVIDER`, `EMOTIONS_MODEL`, `EMOTIONS_PROVIDER_API_KEY`
+- `TRANSLATION_PROVIDER`, `TRANSLATION_MODEL`, `TRANSLATION_PROVIDER_API_KEY`, `TRANSLATION_DEFAULT_LANGUAGE`
+
+Supported providers: `openai`, `google` (AI Studio, needs `*_PROVIDER_API_KEY`), and `google-gemini`
+(Vertex, needs `*_GOOGLE_CLOUD_PROJECT` / `*_LOCATION` plus Application Default Credentials).
+
+<Warning>
+  A provider set **without** its required credentials crash-loops both Hub containers on startup — it does
+  not degrade gracefully. Set the credentials, or leave the provider unset.
+</Warning>
+
+#### AI Taxonomy (beta)
+
+An optional standalone taxonomy service, enabled in Docker Compose with `COMPOSE_PROFILES=taxonomy`. It
+shares an internal token with Hub:
+
+- `TAXONOMY_SERVICE_URL` (the internal URL to the taxonomy service)
+- `HUB_INTERNAL_API_TOKEN`, `TAXONOMY_SERVICE_TOKEN` (strong random secrets)
+- `TAXONOMY_LLM_PROVIDER` / `TAXONOMY_LLM_MODEL` / `TAXONOMY_LLM_BASE_URL` / `TAXONOMY_LLM_API_KEY`
+  (`openai-compatible` by default; `bedrock` and `vertex-gemini` also supported)
+- `TAXONOMY_IMAGE_REF` to pin a released image (e.g. `:v0.1.0`)
+
+Use `COMPOSE_PROFILES=qwen,taxonomy` to back it with the bundled Qwen/vLLM service.
+
+#### Bundled Qwen / vLLM Runtime
+
+Docker Compose can now run a bundled OpenAI-compatible LLM for self-hosted AI features with
+`COMPOSE_PROFILES=qwen`. Tunable via `QWEN_VLLM_IMAGE`, `QWEN_MODEL_ID`, `QWEN_SERVED_MODEL_NAME`,
+`QWEN_MAX_MODEL_LEN`, `QWEN_MAX_NUM_SEQS`, `QWEN_GPU_MEMORY_UTILIZATION`, `QWEN_VLLM_HOST`, and
+`QWEN_VLLM_PORT`.
+
+#### OpenTelemetry Log Export
+
+- `OTEL_LOGS_ENABLED=1` — export Pino application logs via OTLP (off by default; also needs
+  `OTEL_EXPORTER_OTLP_ENDPOINT`).
+
+### Upgrade Steps
+
+v5.2 requires no manual database migration step beyond the standard automatic Prisma migrations on startup
+(the credential-account backfill runs automatically). The Helm chart is unchanged from v5.1.
+
+1. **If you use SSO**, add the new `/api/auth/oauth2/callback/{providerId}` redirect URIs at your IdP (see
+   the table above), keeping the old ones in place.
+2. Back up your database.
+3. Pull the v5.2 images and restart (`docker compose pull && docker compose down && docker compose up -d`,
+   or `helm upgrade` with the new tag).
+4. After startup, sign in again (the one-time forced re-login) and verify each configured SSO provider
+   completes sign-in.
+
+### Rollback
+
+Because the old `/api/auth/callback/*` redirect URIs are left in place, rolling back to v5.1 is clean:
+revert your image tags / Helm values, and the previous NextAuth callback path works again. Restore the
+database backup only if you need to undo schema changes.
+
 ## v5
 
 Formbricks v5 changes the self-hosted runtime contract. If you are upgrading an existing Formbricks 4.x

@@ -30,6 +30,7 @@ import {
   deleteSegment,
   getSegment,
   getSurveyRefsForWorkspace,
+  getSurveyWorkspaceIdMap,
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
@@ -122,6 +123,7 @@ const ZUpdateSegmentAction = z.object({
 export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdateSegmentAction).action(
   withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
+    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -133,12 +135,26 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
+          workspaceId: segmentWorkspaceId,
         },
       ],
     });
 
     await checkAdvancedTargetingPermission(organizationId);
+
+    // ENG-1920: the surveys are connected to the segment by id alone, so ensure every survey
+    // belongs to the segment's workspace — otherwise a caller could re-point another tenant's
+    // survey to their segment. A single batched lookup avoids fanning out a query per survey id
+    // over the caller-controlled array; an unknown id is absent from the map and thus rejected.
+    if (parsedInput.data.surveys && parsedInput.data.surveys.length > 0) {
+      const surveyWorkspaceIdMap = await getSurveyWorkspaceIdMap(parsedInput.data.surveys);
+      const allInSegmentWorkspace = parsedInput.data.surveys.every(
+        (surveyId) => surveyWorkspaceIdMap.get(surveyId) === segmentWorkspaceId
+      );
+      if (!allInSegmentWorkspace) {
+        throw new InvalidInputError("Survey and segment are not in the same workspace");
+      }
+    }
 
     const { filters } = parsedInput.data;
     if (filters) {
