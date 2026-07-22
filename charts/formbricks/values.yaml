@@ -32,9 +32,9 @@ enterprise:
 # Database Migration Job Configuration Helm
 ##########################################################
 migration:
-  # Enable migration job for ArgoCD deployments
-  # When enabled, migrations run as a PreSync hook before the deployment
-  # and the startup migration in the container is skipped
+  # Enable the migration job. In Argo CD, it runs as a Sync hook in wave -1
+  # after chart-managed secrets and bundled PostgreSQL are healthy. When enabled,
+  # the startup migration in the application container is skipped.
   enabled: true
 
   # Additional annotations for the migration job
@@ -45,6 +45,14 @@ migration:
 
   # Number of retries before marking the job as failed
   backoffLimit: 3
+
+  # Wait for the effective migration database endpoint before starting migrations.
+  # MIGRATE_DATABASE_URL takes precedence over DATABASE_URL, matching the migration runner.
+  waitForDatabase:
+    enabled: true
+    timeoutSeconds: 900
+    intervalSeconds: 5
+    connectionTimeoutSeconds: 5
 
   # Resource requests and limits for the migration job
   resources:
@@ -931,10 +939,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.0.
-    digest: "sha256:619d6bc4572fced76720810c1ba1665943f0a91e1c0e20fadf2f27c35b0ada14"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.1.
+    digest: "sha256:5d7e7c6138ff77984db54b7c91693d8f56017cefa74bc69390fc7191403208c5"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.8.0"
+    tag: "0.8.1"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
@@ -944,6 +952,12 @@ hub:
   # When secret.enabled=true, the custom Hub secret must already exist at render time so Helm can copy HUB_API_KEY
   # into the generated app secret and Envoy credential.
   existingSecret: ""
+
+  # Provider-neutral pod extensions applied to both Hub API and hub-worker.
+  # Use these for credential files, custom CA bundles, or other provider-specific runtime
+  # requirements without placing secret values in Helm values.
+  extraVolumes: []
+  extraVolumeMounts: []
 
   # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
   # Applied to both the Hub API and hub-worker (the worker merges hub.env), so providers set here also
@@ -1232,6 +1246,9 @@ hub:
 postgresql:
   enabled: true # Enable/disable PostgreSQL
   externalDatabaseUrl: ""
+  # Argo CD waits for bundled PostgreSQL before running migration hooks in wave -1.
+  commonAnnotations:
+    argocd.argoproj.io/sync-wave: "-2"
   global:
     security:
       allowInsecureImages: true

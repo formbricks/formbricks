@@ -109,11 +109,19 @@ describe("Users Lib", () => {
     });
 
     test("returns conflict error if user with email already exists", async () => {
+      // Real Prisma 7 + adapter-pg P2002 shape: NO meta.target; columns nested under
+      // driverAdapterError.cause.constraint.fields. This is the shape that shipped the 500 bug.
       (prisma.user.create as any).mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError("Unique constraint failed on the fields: (`email`)", {
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
           code: PrismaErrorType.UniqueConstraintViolation,
           clientVersion: "1.0.0",
-          meta: { target: ["email"] },
+          meta: {
+            modelName: "User",
+            driverAdapterError: {
+              name: "DriverAdapterError",
+              cause: { kind: "UniqueConstraintViolation", constraint: { fields: ["email"] } },
+            },
+          },
         })
       );
       const result = await createUser(
@@ -129,16 +137,15 @@ describe("Users Lib", () => {
       }
     });
 
-    test("returns internal_server_error if unique constraint violation is not on email", async () => {
+    test("maps a driver-adapter P2002 with no recoverable fields to conflict, never 500 (ENG-1801)", async () => {
+      // Degrade-safe: even when neither meta.target nor constraint.fields is present, a P2002 on
+      // this create (email is the only unique key) must return 409, not fall through to a 500.
       (prisma.user.create as any).mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError(
-          "Unique constraint failed on the fields: (`organizationId`,`email`)",
-          {
-            code: PrismaErrorType.UniqueConstraintViolation,
-            clientVersion: "1.0.0",
-            meta: { target: ["organizationId"] },
-          }
-        )
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: PrismaErrorType.UniqueConstraintViolation,
+          clientVersion: "1.0.0",
+          meta: { modelName: "User", driverAdapterError: { cause: { kind: "UniqueConstraintViolation" } } },
+        })
       );
       const result = await createUser(
         { name: "Duplicate", email: "test@example.com", role: "member" },
@@ -146,7 +153,7 @@ describe("Users Lib", () => {
       );
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error.type).toBe("internal_server_error");
+        expect(result.error.type).toBe("conflict");
       }
     });
   });

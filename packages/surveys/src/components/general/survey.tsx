@@ -264,6 +264,11 @@ export function Survey({
     return localSurvey.blocks[0]?.id;
   });
 
+  // True once the user navigated between cards (Next/Back/auto-progress). Moving focus into
+  // the new card is then a response to a user action (safe under WCAG 3.2.x), unlike the
+  // initial render of an embedded survey, where stealing focus from the host page is not.
+  const hasUserNavigatedRef = useRef(false);
+
   const [errorType, setErrorType] = useState<TResponseErrorCodesEnum | undefined>(undefined);
   const [showError, setShowError] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -944,8 +949,19 @@ export function Survey({
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
+  // The outgoing card stays visible while the card transition cross-fades, so a
+  // control that kept focus would show its focus ring hanging mid-fade before
+  // vanishing with the card. Drop focus when navigation starts; the incoming
+  // card focuses its first control on mount.
+  const blurOutgoingCard = (): void => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+  };
+
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     isNavigatingBackRef.current = false;
+    hasUserNavigatedRef.current = true;
+    blurOutgoingCard();
 
     // Get the first responded element ID for tracking
     const respondedElementIds = Object.keys(surveyResponseData);
@@ -1044,6 +1060,8 @@ export function Survey({
 
   const onBack = (): void => {
     isNavigatingBackRef.current = true;
+    hasUserNavigatedRef.current = true;
+    blurOutgoingCard();
 
     let prevBlockId: string | undefined;
     // use history if available
@@ -1144,7 +1162,7 @@ export function Survey({
             survey={localSurvey}
             languageCode={selectedLanguage}
             responseCount={responseCount}
-            autoFocusEnabled={autoFocusEnabled}
+            autoFocusEnabled={autoFocusEnabled || hasUserNavigatedRef.current}
             isCurrent={offset === 0}
             responseData={responseData}
             variablesData={currentVariables}
@@ -1163,7 +1181,7 @@ export function Survey({
               survey={localSurvey}
               endingCard={endingCard}
               isRedirectDisabled={isRedirectDisabled}
-              autoFocusEnabled={autoFocusEnabled}
+              autoFocusEnabled={autoFocusEnabled || hasUserNavigatedRef.current}
               isCurrent={offset === 0}
               languageCode={selectedLanguage}
               isResponseSendingFinished={isResponseSendingFinished}
@@ -1204,6 +1222,7 @@ export function Survey({
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
+              shouldFocusOnMount={autoFocusEnabled || hasUserNavigatedRef.current}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               isAutoProgressingEnabled={localSurvey.isAutoProgressingEnabled}
               onOpenExternalURL={onOpenExternalURL}

@@ -135,6 +135,16 @@ const validateUpdateRequest = (
   responseUpdateInput: TResponseUpdateInput,
   workspaceId: string
 ): TRouteResult | undefined => {
+  // Mirror the POST endpoint: a closed survey accepts no submissions, including finalizing a partial
+  // response created while it was open (ENG-1654).
+  if (survey.status !== "inProgress") {
+    return {
+      response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+        surveyId: survey.id,
+      }),
+    };
+  }
+
   if (existingResponse.finished) {
     return {
       response: responses.badRequestResponse(

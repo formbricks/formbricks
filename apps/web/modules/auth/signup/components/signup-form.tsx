@@ -9,7 +9,10 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  PASSWORD_COMPROMISED_ERROR_CODE,
+  SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+} from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
@@ -152,6 +155,9 @@ export const SignupForm = ({
         // Personal-email block: surface under the email field rather than as a toast.
         if (errorMessage === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
           form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
+        } else if (errorMessage === PASSWORD_COMPROMISED_ERROR_CODE) {
+          // Breached password: surface under the password field with a clear, actionable message.
+          form.setError("password", { type: "manual", message: t("auth.password_compromised") });
         } else {
           toast.error(errorMessage);
         }

@@ -119,7 +119,11 @@ export const ZMcpDeleteSurveyInput = z.object({
   surveyId: z.cuid2().describe("Survey ID to delete."),
 });
 
+// list_workspaces takes no arguments — it returns the workspaces the authenticated caller can access.
+export const ZMcpListWorkspacesInput = z.object({});
+
 export type TMcpListSurveysInput = z.infer<typeof ZMcpListSurveysInput>;
+export type TMcpListWorkspacesInput = z.infer<typeof ZMcpListWorkspacesInput>;
 export type TMcpGetSurveyInput = z.infer<typeof ZMcpGetSurveyInput>;
 export type TMcpCreateSurveyInput = z.infer<typeof ZMcpCreateSurveyInput>;
 export type TMcpPatchSurveyInput = z.infer<typeof ZMcpPatchSurveyInput>;

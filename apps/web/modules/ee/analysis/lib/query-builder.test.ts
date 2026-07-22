@@ -106,6 +106,45 @@ describe("query-builder", () => {
       ]);
     });
 
+    test("swaps FeedbackRecords.valueText to FeedbackRecords.valueId when groupByOptionId is true", () => {
+      const config: ChartBuilderState = {
+        selectedMeasures: ["FeedbackRecords.count"],
+        selectedDimensions: ["FeedbackRecords.valueText"],
+        filters: [{ id: "f1", field: "FeedbackRecords.fieldId", operator: "equals", values: ["el-gender"] }],
+        filterLogic: "and",
+        timeDimension: null,
+        groupByOptionId: true,
+      };
+      const query = buildCubeQuery(config);
+      expect(query.dimensions).toEqual(["FeedbackRecords.valueId"]);
+    });
+
+    test("leaves dimensions unchanged when groupByOptionId is false", () => {
+      const config: ChartBuilderState = {
+        selectedMeasures: ["FeedbackRecords.count"],
+        selectedDimensions: ["FeedbackRecords.valueText"],
+        filters: [],
+        filterLogic: "and",
+        timeDimension: null,
+        groupByOptionId: false,
+      };
+      const query = buildCubeQuery(config);
+      expect(query.dimensions).toEqual(["FeedbackRecords.valueText"]);
+    });
+
+    test("leaves dimensions unchanged when groupByOptionId is true but valueText not present", () => {
+      const config: ChartBuilderState = {
+        selectedMeasures: ["FeedbackRecords.count"],
+        selectedDimensions: ["FeedbackRecords.userId"],
+        filters: [],
+        filterLogic: "and",
+        timeDimension: null,
+        groupByOptionId: true,
+      };
+      const query = buildCubeQuery(config);
+      expect(query.dimensions).toEqual(["FeedbackRecords.userId"]);
+    });
+
     test("adds OR filters wrapped in or", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],

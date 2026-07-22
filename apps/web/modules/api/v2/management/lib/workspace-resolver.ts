@@ -1,4 +1,4 @@
-import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -17,7 +17,7 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
  */
 export const resolveBodyIdsV2 = async (
   body: { workspaceId?: string; environmentId?: string },
-  permissions: TAPIKeyWorkspacePermission[],
+  authentication: Pick<TAuthenticationApiKey, "organizationId" | "workspacePermissions">,
   method: HttpMethod
 ): Promise<Result<{ workspaceId: string }, ApiErrorResponseV2>> => {
   const rawId = body.workspaceId ?? body.environmentId;
@@ -31,7 +31,14 @@ export const resolveBodyIdsV2 = async (
       });
     }
 
-    if (!hasPermission(permissions, workspace.id, method)) {
+    // ENG-1749 defense-in-depth: even if the API key somehow carries a permission row for this
+    // workspace, refuse it unless the workspace belongs to the key's own organization. This is a
+    // second, independent tenant boundary behind the create-time check in createApiKey.
+    if (workspace.organizationId !== authentication.organizationId) {
+      return err({ type: "forbidden" });
+    }
+
+    if (!hasPermission(authentication.workspacePermissions, workspace.id, method)) {
       return err({ type: "forbidden" });
     }
 

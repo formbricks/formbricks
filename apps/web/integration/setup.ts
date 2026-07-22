@@ -19,6 +19,10 @@ process.env.REDIS_URL = process.env.TEST_REDIS_URL ?? "redis://localhost:6379/15
 process.env.BETTER_AUTH_SECRET ??= "integration-test-better-auth-secret-0123456789abcdef";
 // Disable rate limiting in the harness — counters would accumulate in the shared Redis db across tests.
 process.env.RATE_LIMITING_DISABLED ??= "1";
+// Disable the HIBP breach check by default — otherwise every signup/reset in the suite would make a
+// live call to api.pwnedpasswords.com (ENG-1587). The dedicated better-auth-hibp.integration.test.ts
+// re-enables it for itself (with betterFetch mocked).
+process.env.PASSWORD_HIBP_CHECK_DISABLED ??= "1";
 
 // server-only is a Next.js build guard; no-op it under vitest.
 vi.mock("server-only", () => ({}));

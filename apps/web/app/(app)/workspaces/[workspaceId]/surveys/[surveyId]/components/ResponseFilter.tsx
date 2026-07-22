@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -86,29 +86,36 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     return typeof firstOption === "object" ? getLocalizedValue(firstOption, "default") : firstOption;
   };
 
+  // Keep the latest survey in a ref so the effect below can read it without listing `survey` (a
+  // server-derived object) as a dependency. Every authenticated server action re-sets the Better Auth
+  // session cookie → Next.js route refresh → new `survey` reference; depending on it here would re-fire
+  // getSurveyFilterDataAction on every refresh while the popover is open, i.e. an infinite loop.
+  const surveyRef = useRef(survey);
+  surveyRef.current = survey;
+
   useEffect(() => {
+    if (!isOpen) return;
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
-      if (isOpen) {
-        const surveyFilterData = await getSurveyFilterDataAction({ surveyId: survey.id });
+      const survey = surveyRef.current;
+      const surveyFilterData = await getSurveyFilterDataAction({ surveyId: survey.id });
 
-        if (!surveyFilterData?.data) return;
+      if (!surveyFilterData?.data) return;
 
-        const { attributes, meta, environmentTags, hiddenFields, quotas } = surveyFilterData.data;
-        const { elementFilterOptions, elementOptions } = generateElementAndFilterOptions(
-          survey,
-          environmentTags,
-          attributes,
-          meta,
-          hiddenFields,
-          quotas
-        );
-        setSelectedOptions({ elementFilterOptions: elementFilterOptions, elementOptions: elementOptions });
-      }
+      const { attributes, meta, environmentTags, hiddenFields, quotas } = surveyFilterData.data;
+      const { elementFilterOptions, elementOptions } = generateElementAndFilterOptions(
+        survey,
+        environmentTags,
+        attributes,
+        meta,
+        hiddenFields,
+        quotas
+      );
+      setSelectedOptions({ elementFilterOptions: elementFilterOptions, elementOptions: elementOptions });
     };
 
     handleInitialData();
-  }, [isOpen, setSelectedOptions, survey]);
+  }, [isOpen, setSelectedOptions]);
 
   const handleOnChangeElementComboBoxValue = (value: ElementOption, index: number) => {
     const matchingFilterOption = selectedOptions.elementFilterOptions.find(

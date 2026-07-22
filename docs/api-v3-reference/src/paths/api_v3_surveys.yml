@@ -413,12 +413,11 @@ post:
         unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are
         `app`-only); missing required fields; wrong types or out-of-range values; bad enum values;
         malformed multilingual maps; and intra-document field-combination rules — notably
-        `displayPercentage` is required when `displayOption` is `displaySome` and forbidden
-        otherwise. Cross-reference failures that need stored state to detect return **422** instead.
-        Every offending field is itemized in `invalid_params`. Unknown, forbidden, or wrongly-combined
-        fields carry `code: unsupported_field` (e.g. `distribution` on a link survey, or
-        `displayPercentage` without `displayOption: displaySome`); omissions carry
-        `code: missing_required_field` (e.g. `displayPercentage` when `displayOption` is `displaySome`).
+        `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`.
+        Cross-reference failures that need stored state to detect return **422** instead.
+        Every offending field is itemized in `invalid_params`. Unknown or forbidden fields carry
+        `code: unsupported_field` (e.g. `distribution` on a link survey); omissions carry
+        `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`).
         Bare type, range, enum, and malformed-locale-map violations report the field `name` with a
         human-readable `reason` and no machine `code`.
       content:

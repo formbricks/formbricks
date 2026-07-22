@@ -223,7 +223,7 @@
         "NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR",
         "NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE"
       ],
-      "outputs": ["dist/**", ".next/**"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"],
       "passThroughEnv": [
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",
@@ -316,6 +316,7 @@
         "OIDC_DISPLAY_NAME",
         "OIDC_ISSUER",
         "OIDC_SIGNING_ALGORITHM",
+        "PASSWORD_HIBP_CHECK_DISABLED",
         "PASSWORD_RESET_DISABLED",
         "PASSWORD_RESET_TOKEN_LIFETIME_MINUTES",
         "PLAYWRIGHT_CI",
