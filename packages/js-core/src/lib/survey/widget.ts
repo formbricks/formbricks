@@ -12,6 +12,7 @@ import {
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
+import { sendUpdates } from "@/lib/user/update";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
@@ -168,6 +169,16 @@ export const renderWidget = async (
           user: updatedUserState,
           filteredSurveys,
         });
+
+        // Refresh server-computed segment membership: a new display can change survey-interaction
+        // segments (e.g. "have seen X"). The optimistic update above keeps recontact/display-cap
+        // correct locally; this refetch pulls fresh `segments` so interaction targeting stays current
+        // without waiting for the state TTL. Identified users only; the display is already persisted
+        // (this fires after createDisplay), so the recompute counts it.
+        const displayUserId = previousConfig.user.data.userId;
+        if (displayUserId) {
+          void sendUpdates({ updates: { userId: displayUserId } });
+        }
       },
       onResponseCreated: () => {
         const responses = config.get().user.data.responses;
@@ -187,6 +198,16 @@ export const renderWidget = async (
           user: newPersonState,
           filteredSurveys,
         });
+
+        // Refresh server-computed segment membership: a new response can change survey-interaction
+        // segments (e.g. "have completed X" / "have not completed X"). The optimistic update keeps
+        // display-cap correct locally; this refetch pulls fresh `segments` so interaction targeting
+        // stays current without waiting for the state TTL. Identified users only; the response is
+        // already persisted (this fires after it is created), so the recompute counts it.
+        const responseUserId = config.get().user.data.userId;
+        if (responseUserId) {
+          void sendUpdates({ updates: { userId: responseUserId } });
+        }
       },
       onClose: closeSurvey,
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
