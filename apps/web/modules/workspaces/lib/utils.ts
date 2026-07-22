@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
@@ -10,6 +11,7 @@ import {
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
@@ -28,11 +30,11 @@ import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types
 /**
  * Resolves a workspace and returns the caller's authorization context for it.
  *
- * This helper is self-contained: it enforces workspace-level access itself
- * (org membership *and* a WorkspaceTeam grant / owner|manager|billing role) and
- * throws when the caller has none, rather than relying on the route layout to
- * gate. That makes it safe to reuse from any page or route without silently
- * admitting org members who have no access to this specific workspace.
+ * This helper is self-contained: it enforces workspace-level access itself rather
+ * than relying on the route layout to gate, so it is safe to reuse from any page or
+ * route. Billing-role members are redirected to billing/enterprise screens; any org
+ * member without a WorkspaceTeam grant (and who is not an owner/manager) is rejected
+ * with an AuthorizationError instead of being silently admitted as a writer.
  */
 export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> => {
   const t = await getTranslate();
@@ -59,6 +61,15 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
   }
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership.role);
+
+  // Billing-role members are scoped to billing/enterprise screens only. They must never reach
+  // workspace product data (contacts PII, survey summaries/responses, dashboards). This is the
+  // single choke point every product page flows through, so gating here closes all of them at
+  // once and keeps this helper aligned with hasUserWorkspaceAccessForAction, which already denies
+  // billing. Individual pages that also guard billing inline remain correct (defense in depth).
+  if (isBilling) {
+    redirect(getBillingFallbackPath(organization.id, IS_FORMBRICKS_CLOUD));
+  }
 
   // Enforce workspace access here instead of delegating to the route layout, so
   // getWorkspaceAuth is safe to reuse anywhere. An org member with no WorkspaceTeam

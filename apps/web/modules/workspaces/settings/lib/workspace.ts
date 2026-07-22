@@ -77,7 +77,10 @@ export const updateWorkspace = async (
   inputWorkspace: TWorkspaceUpdateInput
 ): Promise<TWorkspace> => {
   validateInputs([workspaceId, ZId], [inputWorkspace, ZWorkspaceUpdateInput]);
-  const { ...data } = inputWorkspace;
+  // ENG-1919: organizationId is the workspace's tenant anchor, set at creation and immutable on
+  // update. Persisting a caller-supplied organizationId here would let an authorized workspace
+  // owner move their workspace (and all its data) into another organization, so it is stripped.
+  const { organizationId: _organizationId, ...data } = inputWorkspace;
   let updatedWorkspace;
   try {
     updatedWorkspace = await prisma.workspace.update({

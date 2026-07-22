@@ -14,6 +14,7 @@ import { ResponseOptionsCard } from "@/modules/survey/editor/components/response
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
+import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 
 interface SettingsViewProps {
   localSurvey: TSurvey;
@@ -29,6 +30,7 @@ interface SettingsViewProps {
   isFormbricksCloud: boolean;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  surveySchedulingConfig: TSurveySchedulingConfig;
   locale: TUserLocale;
   appSetupCompleted: boolean;
   enterpriseLicenseRequestFormUrl: string;
@@ -48,6 +50,7 @@ export const SettingsView = ({
   workspacePermission,
   isFormbricksCloud,
   quotas,
+  surveySchedulingConfig,
   locale,
   appSetupCompleted,
   enterpriseLicenseRequestFormUrl,
@@ -108,6 +111,7 @@ export const SettingsView = ({
         setLocalSurvey={setLocalSurvey}
         responseCount={responseCount}
         isSpamProtectionAllowed={isSpamProtectionAllowed}
+        surveySchedulingConfig={surveySchedulingConfig}
         locale={locale}
       />
 
