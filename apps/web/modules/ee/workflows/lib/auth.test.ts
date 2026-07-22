@@ -53,7 +53,7 @@ describe("getWorkflowsRouteAuth", () => {
     vi.mocked(getWorkspaceAuth).mockResolvedValue(buildAuth({ isBilling: true, isOwner: true }));
 
     await expect(getWorkflowsRouteAuth(workspaceId)).rejects.toThrow("NEXT_REDIRECT");
-    expect(getBillingFallbackPath).toHaveBeenCalledWith(workspaceId, true);
+    expect(getBillingFallbackPath).toHaveBeenCalledWith("org_123", true);
     expect(redirect).toHaveBeenCalledWith("/billing-fallback");
     expect(notFound).not.toHaveBeenCalled();
   });

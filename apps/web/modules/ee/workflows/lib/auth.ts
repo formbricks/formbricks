@@ -9,7 +9,7 @@ export const getWorkflowsRouteAuth = async (workspaceId: string) => {
   const auth = await getWorkspaceAuth(workspaceId);
 
   if (auth.isBilling) {
-    redirect(getBillingFallbackPath(workspaceId, IS_FORMBRICKS_CLOUD));
+    redirect(getBillingFallbackPath(auth.organization.id, IS_FORMBRICKS_CLOUD));
   }
 
   const hasWorkspaceAccess =
