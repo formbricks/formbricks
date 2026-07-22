@@ -10,6 +10,7 @@ vi.mock("@formbricks/logger", () => ({
 const TEST_SECRET = "test-secret-at-least-32-chars-long!!";
 
 vi.mock("@/lib/constants", () => ({
+  BETTER_AUTH_SECRET: undefined,
   NEXTAUTH_SECRET: TEST_SECRET,
 }));
 
@@ -66,5 +67,36 @@ describe("verifyLinkSurveyPinToken", () => {
       expiresIn: -1,
     });
     expect(verifyLinkSurveyPinToken(expiredToken, SURVEY_ID)).toBe(false);
+  });
+});
+
+describe("secret resolution", () => {
+  test("prefers BETTER_AUTH_SECRET over NEXTAUTH_SECRET", async () => {
+    vi.resetModules();
+    const betterAuthSecret = "better-auth-secret-at-least-32-chars!!";
+    vi.doMock("@/lib/constants", () => ({
+      BETTER_AUTH_SECRET: betterAuthSecret,
+      NEXTAUTH_SECRET: TEST_SECRET,
+    }));
+    const mod = await import("./pin-token");
+
+    const token = mod.createLinkSurveyPinToken(SURVEY_ID);
+    // Verifies against BETTER_AUTH_SECRET, not the NextAuth fallback.
+    expect(() => jwt.verify(token, betterAuthSecret)).not.toThrow();
+    expect(() => jwt.verify(token, TEST_SECRET)).toThrow();
+    expect(mod.verifyLinkSurveyPinToken(token, SURVEY_ID)).toBe(true);
+  });
+
+  test("falls back to NEXTAUTH_SECRET when BETTER_AUTH_SECRET is unset", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/constants", () => ({
+      BETTER_AUTH_SECRET: undefined,
+      NEXTAUTH_SECRET: TEST_SECRET,
+    }));
+    const mod = await import("./pin-token");
+
+    const token = mod.createLinkSurveyPinToken(SURVEY_ID);
+    expect(() => jwt.verify(token, TEST_SECRET)).not.toThrow();
+    expect(mod.verifyLinkSurveyPinToken(token, SURVEY_ID)).toBe(true);
   });
 });
