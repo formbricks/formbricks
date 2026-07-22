@@ -39,7 +39,7 @@ export const ResponseOptionsCard = ({
   isSpamProtectionAllowed,
   surveySchedulingConfig,
   locale,
-}: ResponseOptionsCardProps) => {
+}: Readonly<ResponseOptionsCardProps>) => {
   const { t } = useTranslation();
   const { toCalendarDate, getMinimumSurveySchedulingCalendarDate } = useMemo(
     () => createSurveySchedulingDateUtils(surveySchedulingConfig),

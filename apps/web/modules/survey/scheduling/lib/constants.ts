@@ -1,40 +1,15 @@
+import { env } from "@/lib/env";
 import { type TSurveySchedulingConfig, getSurveySchedulingTimeLabel } from "./config";
 
-const parseSchedulingTimePart = (
-  value: string | undefined,
-  fallback: number,
-  { min, max }: { min: number; max: number }
-): number => {
-  if (!value) {
-    return fallback;
-  }
-
-  const parsedValue = Number.parseInt(value, 10);
-
-  if (!Number.isInteger(parsedValue) || parsedValue < min || parsedValue > max) {
-    return fallback;
-  }
-
-  return parsedValue;
-};
-
 // Read at runtime from server-only env vars (no NEXT_PUBLIC_ prefix) so self-hosted Docker
-// deployments can configure the scheduling execution time without rebuilding the image. The
-// editor UI receives these values as props instead of importing this module on the client.
-export const SURVEY_SCHEDULING_TIME_ZONE = process.env.SURVEY_SCHEDULING_TIME_ZONE ?? "Europe/Berlin";
-export const SURVEY_SCHEDULING_LOCAL_HOUR = parseSchedulingTimePart(
-  process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
-  0,
-  {
-    min: 0,
-    max: 23,
-  }
-);
-export const SURVEY_SCHEDULING_LOCAL_MINUTE = parseSchedulingTimePart(
-  process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
-  0,
-  { min: 0, max: 59 }
-);
+// deployments can configure the scheduling execution time without rebuilding the image. Values
+// are validated and normalized in apps/web/lib/env.ts (single source of truth): the time zone is
+// checked against Intl.DateTimeFormat and hour/minute are coerced to their valid ranges, so a bad
+// override is rejected there instead of silently reaching Intl.DateTimeFormat here. The editor UI
+// receives these values as props instead of importing this module on the client.
+export const SURVEY_SCHEDULING_TIME_ZONE = env.SURVEY_SCHEDULING_TIME_ZONE;
+export const SURVEY_SCHEDULING_LOCAL_HOUR = env.SURVEY_SCHEDULING_LOCAL_HOUR;
+export const SURVEY_SCHEDULING_LOCAL_MINUTE = env.SURVEY_SCHEDULING_LOCAL_MINUTE;
 
 export const SURVEY_SCHEDULING_CONFIG: TSurveySchedulingConfig = {
   timeZone: SURVEY_SCHEDULING_TIME_ZONE,
