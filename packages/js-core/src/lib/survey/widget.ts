@@ -199,14 +199,24 @@ export const renderWidget = async (
           filteredSurveys,
         });
 
-        // Refresh server-computed segment membership: a new response can change survey-interaction
-        // segments (e.g. "have completed X" / "have not completed X"). The optimistic update keeps
-        // display-cap correct locally; this refetch pulls fresh `segments` so interaction targeting
-        // stays current without waiting for the state TTL. Identified users only; the response is
-        // already persisted (this fires after it is created), so the recompute counts it.
+        // A created response flips "have started responding to X" segments. This fires when the
+        // response is first created (finished=false), so it only covers "started" — the "completed X"
+        // case is handled in onFinished below (which waits until the finished response is sent).
+        // Identified users only; refetch so interaction targeting updates without waiting for the TTL.
         const responseUserId = config.get().user.data.userId;
         if (responseUserId) {
           void sendUpdates({ updates: { userId: responseUserId } });
+        }
+      },
+      onFinished: () => {
+        // Survey completion flips "have completed X" (and clears "have not completed X") segments.
+        // onFinished only fires after the finished response has been sent to the backend (it is gated
+        // on isResponseSendingFinished), so the server recompute sees finished=true — no race. Without
+        // this, a multi-question survey would only refetch at onResponseCreated (finished=false), so
+        // "completed X → show Y" targeting would never fire until the person-state TTL expired.
+        const finishedUserId = config.get().user.data.userId;
+        if (finishedUserId) {
+          void sendUpdates({ updates: { userId: finishedUserId } });
         }
       },
       onClose: closeSurvey,
