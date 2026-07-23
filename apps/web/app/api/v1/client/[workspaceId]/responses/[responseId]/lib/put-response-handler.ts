@@ -1,13 +1,8 @@
-import { logger } from "@formbricks/logger";
-import {
-  DatabaseError,
-  InvalidInputError,
-  RESPONSE_ALREADY_FINISHED_ERROR_CODE,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { RESPONSE_ALREADY_FINISHED_ERROR_CODE, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -40,30 +35,13 @@ export type TPutRouteParams = {
   }>;
 };
 
-const handleDatabaseError = (
-  error: Error,
-  url: string,
-  endpoint: string,
-  responseId: string
-): TRouteResult => {
+const handleDatabaseError = (error: unknown, responseId: string): TRouteResult => {
+  // A missing resource keeps its route-specific "Response" framing; everything else (DatabaseError,
+  // unexpected) is generic-ized here and reported server-side by the wrapper via handleApiError.
   if (error instanceof ResourceNotFoundError) {
     return { response: responses.notFoundResponse("Response", responseId, true) };
   }
-  if (error instanceof InvalidInputError) {
-    return { response: responses.badRequestResponse(error.message, undefined, true) };
-  }
-  if (error instanceof DatabaseError) {
-    logger.error({ error, url }, `Error in ${endpoint}`);
-    return {
-      response: responses.internalServerErrorResponse(error.message, true),
-      error,
-    };
-  }
-
-  return {
-    response: responses.internalServerErrorResponse("Unknown error occurred", true),
-    error,
-  };
+  return handleApiError(error, { cors: true });
 };
 
 const validateResponse = (
@@ -94,7 +72,7 @@ const validateResponse = (
   }
 };
 
-const getExistingResponse = async (req: Request, responseId: string): Promise<TExistingResponseResult> => {
+const getExistingResponse = async (responseId: string): Promise<TExistingResponseResult> => {
   try {
     const existingResponse = await getResponse(responseId);
 
@@ -102,31 +80,17 @@ const getExistingResponse = async (req: Request, responseId: string): Promise<TE
       ? { existingResponse }
       : { response: responses.notFoundResponse("Response", responseId, true) };
   } catch (error) {
-    return handleDatabaseError(
-      error instanceof Error ? error : new Error(String(error)),
-      req.url,
-      "PUT /api/v1/client/[workspaceId]/responses/[responseId]",
-      responseId
-    );
+    return handleDatabaseError(error, responseId);
   }
 };
 
-const getSurveyForResponse = async (
-  req: Request,
-  responseId: string,
-  surveyId: string
-): Promise<TSurveyResult> => {
+const getSurveyForResponse = async (responseId: string, surveyId: string): Promise<TSurveyResult> => {
   try {
     const survey = await getSurvey(surveyId);
 
     return survey ? { survey } : { response: responses.notFoundResponse("Survey", surveyId, true) };
   } catch (error) {
-    return handleDatabaseError(
-      error instanceof Error ? error : new Error(String(error)),
-      req.url,
-      "PUT /api/v1/client/[workspaceId]/responses/[responseId]",
-      responseId
-    );
+    return handleDatabaseError(error, responseId);
   }
 };
 
@@ -192,7 +156,6 @@ const validateUpdateRequest = (
 };
 
 const getUpdatedResponse = async (
-  req: Request,
   responseId: string,
   responseUpdateInput: TResponseUpdateInput
 ): Promise<TUpdatedResponseResult> => {
@@ -201,36 +164,9 @@ const getUpdatedResponse = async (
     return { updatedResponse };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
-      return {
-        response: responses.notFoundResponse("Response", responseId, true),
-      };
+      return { response: responses.notFoundResponse("Response", responseId, true) };
     }
-    if (error instanceof InvalidInputError) {
-      return {
-        response: responses.badRequestResponse(error.message),
-      };
-    }
-    if (error instanceof DatabaseError) {
-      logger.error(
-        { error, url: req.url },
-        "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
-      );
-      return {
-        response: responses.internalServerErrorResponse(error.message),
-        error,
-      };
-    }
-
-    const unexpectedError = error instanceof Error ? error : new Error(String(error));
-
-    logger.error(
-      { error: unexpectedError, url: req.url },
-      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
-    );
-    return {
-      response: responses.internalServerErrorResponse("Something went wrong"),
-      error: unexpectedError,
-    };
+    return handleApiError(error, { cors: true });
   }
 };
 
@@ -261,13 +197,13 @@ export const putResponseHandler = async ({
   }
   const { responseUpdateInput } = validatedUpdateInput;
 
-  const existingResponseResult = await getExistingResponse(req, responseId);
+  const existingResponseResult = await getExistingResponse(responseId);
   if ("response" in existingResponseResult) {
     return existingResponseResult;
   }
   const { existingResponse } = existingResponseResult;
 
-  const surveyResult = await getSurveyForResponse(req, responseId, existingResponse.surveyId);
+  const surveyResult = await getSurveyForResponse(responseId, existingResponse.surveyId);
   if ("response" in surveyResult) {
     return surveyResult;
   }
@@ -295,7 +231,7 @@ export const putResponseHandler = async ({
     return validationResult;
   }
 
-  const updatedResponseResult = await getUpdatedResponse(req, responseId, responseUpdateInput);
+  const updatedResponseResult = await getUpdatedResponse(responseId, responseUpdateInput);
   if ("response" in updatedResponseResult) {
     return updatedResponseResult;
   }

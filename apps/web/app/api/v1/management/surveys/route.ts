@@ -1,5 +1,4 @@
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
@@ -8,6 +7,7 @@ import {
   addLegacyProjectOverwritesToList,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -51,12 +51,7 @@ export const GET = withV1ApiWrapper({
         ),
       };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
 });
@@ -157,19 +152,9 @@ export const POST = withV1ApiWrapper({
       };
     } catch (error) {
       // Invalid survey media (e.g. an unsupported/unparseable choice imageUrl) surfaces as an
-      // InvalidInputError — it's bad user input, so return a 400 with the message instead of
-      // letting it fall through to an unhandled 500 (which would page Sentry).
-      if (error instanceof InvalidInputError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.internalServerErrorResponse(error.message),
-        };
-      }
-      throw error;
+      // InvalidInputError, which handleApiError returns as a 400 with its message instead of a 500
+      // that would page Sentry. DatabaseError and unexpected errors become a generic, reported 500.
+      return handleApiError(error);
     }
   },
   action: "created",
