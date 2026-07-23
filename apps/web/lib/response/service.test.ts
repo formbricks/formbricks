@@ -376,7 +376,7 @@ describe("updateResponse", () => {
       vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
       vi.mocked(prisma.response.update).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Record does not exist", {
-          code: PrismaErrorType.RelatedRecordNotFound,
+          code: PrismaErrorType.RecordNotFound,
           clientVersion: "5.0.0",
         })
       );

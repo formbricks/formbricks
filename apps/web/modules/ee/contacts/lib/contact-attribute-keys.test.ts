@@ -156,7 +156,7 @@ describe("createContactAttributeKey", () => {
 
   test("rethrows unknown prisma error codes", async () => {
     const err = Object.assign(new Error("Some prisma error"), {
-      code: PrismaErrorType.RelatedRecordNotFound,
+      code: "P2016", // a Prisma code the service does not handle → must be rethrown as-is
     });
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValue(err);
 
