@@ -78,6 +78,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   const { t } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>(workspace.languages);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     text: "",
@@ -164,29 +165,35 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   };
 
   const handleSaveChanges = async () => {
+    if (isSaving) return;
     if (!validateLanguages(languages, t)) return;
-    const results = await Promise.all(
-      languages.map((lang) => {
-        return lang.id === "new"
-          ? createLanguageAction({
-              workspaceId: workspace.id,
-              languageInput: { code: lang.code, alias: lang.alias },
-            })
-          : updateLanguageAction({
-              workspaceId: workspace.id,
-              languageId: lang.id,
-              languageInput: { alias: lang.alias },
-            });
-      })
-    );
-    const errorResult = results.find((result) => result?.serverError);
-    if (errorResult) {
-      toast.error(getFormattedErrorMessage(errorResult));
-      return;
+    setIsSaving(true);
+    try {
+      const results = await Promise.all(
+        languages.map((lang) => {
+          return lang.id === "new"
+            ? createLanguageAction({
+                workspaceId: workspace.id,
+                languageInput: { code: lang.code, alias: lang.alias },
+              })
+            : updateLanguageAction({
+                workspaceId: workspace.id,
+                languageId: lang.id,
+                languageInput: { alias: lang.alias },
+              });
+        })
+      );
+      const errorResult = results.find((result) => result?.serverError);
+      if (errorResult) {
+        toast.error(getFormattedErrorMessage(errorResult));
+        return;
+      }
+      toast.success(t("workspace.languages.languages_updated_successfully"));
+      router.refresh();
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
     }
-    toast.success(t("workspace.languages.languages_updated_successfully"));
-    router.refresh();
-    setIsEditing(false);
   };
 
   return (
@@ -225,6 +232,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         isEditing={isEditing}
         onCancel={handleCancelChanges}
         disabled={isReadOnly}
+        isSaving={isSaving}
         onEdit={() => {
           setIsEditing(true);
         }}
@@ -256,17 +264,18 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 const EditSaveButtons: React.FC<{
   disabled: boolean;
   isEditing: boolean;
+  isSaving: boolean;
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
   t: TFunction;
-}> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
+}> = ({ isEditing, onEdit, onSave, onCancel, disabled, isSaving, t }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button onClick={onSave} size="sm" disabled={disabled}>
+      <Button onClick={onSave} size="sm" disabled={disabled} loading={isSaving}>
         {t("common.save_changes")}
       </Button>
-      <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled}>
+      <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled || isSaving}>
         {t("common.cancel")}
       </Button>
     </div>
