@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface PictureSelectionResponseProps {
@@ -40,6 +41,7 @@ export const PictureSelectionResponse = ({
                   fill
                   style={{ objectFit: "cover" }}
                   className="rounded-lg"
+                  unoptimized={isExternalImageSrc(choiceImageMapping[id])}
                 />
               </div>
               {showId && <IdBadge id={id} />}
