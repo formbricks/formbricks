@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -59,6 +60,49 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
   });
 
   return searchParams;
+}
+
+/**
+ * Run a survey mutation with the same audit lifecycle the v3 route wrapper provides: build the audit
+ * log, run the operation, mark success/failure, and always queue it. Mirrors runWorkflowMutation so
+ * every MCP mutation tool shares a single audit path instead of copy-pasting the try/catch per tool.
+ */
+async function runSurveyMutation(
+  extra: { authInfo?: NonNullable<Parameters<typeof getMcpAuthentication>[0]> },
+  action: Parameters<typeof buildV3AuditLog>[1],
+  logContext: Record<string, unknown>,
+  run: (args: {
+    authentication: ReturnType<typeof getMcpAuthentication>;
+    requestId: string;
+    auditLog: ReturnType<typeof buildV3AuditLog>;
+  }) => Promise<Response>
+): Promise<CallToolResult> {
+  const requestId = getMcpRequestId(extra.authInfo);
+  const authentication = getMcpAuthentication(extra.authInfo);
+  const log = logger.withContext({ requestId, ...logContext });
+  const auditLog = buildV3AuditLog(authentication, action, "survey", MCP_API_ROUTE);
+
+  try {
+    const response = await run({ authentication, requestId, auditLog });
+
+    if (auditLog) {
+      if (response.ok) {
+        auditLog.status = "success";
+      } else {
+        auditLog.eventId = requestId;
+      }
+    }
+
+    await queueV3AuditLog(auditLog, requestId, log);
+    return await responseToMcpToolResult(response, requestId);
+  } catch (error) {
+    if (auditLog) {
+      auditLog.eventId = requestId;
+      await queueV3AuditLog(auditLog, requestId, log);
+    }
+
+    throw error;
+  }
 }
 
 export function registerSurveyTools(server: McpServer): void {
@@ -134,40 +178,20 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     ["surveys:write"],
-    async (input: TMcpCreateSurveyInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const authentication = getMcpAuthentication(extra.authInfo);
-      const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
-      const auditLog = buildV3AuditLog(authentication, "created", "survey", MCP_API_ROUTE);
-
-      try {
-        const response = await createV3SurveyResponseFromRawInput({
-          body: input,
-          authentication,
-          requestId,
-          instance: MCP_API_ROUTE,
-          auditLog,
-        });
-
-        if (auditLog) {
-          if (response.ok) {
-            auditLog.status = "success";
-          } else {
-            auditLog.eventId = requestId;
-          }
-        }
-
-        await queueV3AuditLog(auditLog, requestId, log);
-        return await responseToMcpToolResult(response, requestId);
-      } catch (error) {
-        if (auditLog) {
-          auditLog.eventId = requestId;
-          await queueV3AuditLog(auditLog, requestId, log);
-        }
-
-        throw error;
-      }
-    }
+    async (input: TMcpCreateSurveyInput, extra) =>
+      runSurveyMutation(
+        extra,
+        "created",
+        { workspaceId: input.workspaceId },
+        ({ authentication, requestId, auditLog }) =>
+          createV3SurveyResponseFromRawInput({
+            body: input,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          })
+      )
   );
 
   registerScopedTool(
@@ -219,41 +243,21 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     ["surveys:write"],
-    async (input: TMcpPatchSurveyInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const authentication = getMcpAuthentication(extra.authInfo);
-      const log = logger.withContext({ requestId, surveyId: input.surveyId });
-      const auditLog = buildV3AuditLog(authentication, "updated", "survey", MCP_API_ROUTE);
-
-      try {
-        const response = await patchV3SurveyResponse({
-          surveyId: input.surveyId,
-          body: input.data,
-          authentication,
-          requestId,
-          instance: MCP_API_ROUTE,
-          auditLog,
-        });
-
-        if (auditLog) {
-          if (response.ok) {
-            auditLog.status = "success";
-          } else {
-            auditLog.eventId = requestId;
-          }
-        }
-
-        await queueV3AuditLog(auditLog, requestId, log);
-        return await responseToMcpToolResult(response, requestId);
-      } catch (error) {
-        if (auditLog) {
-          auditLog.eventId = requestId;
-          await queueV3AuditLog(auditLog, requestId, log);
-        }
-
-        throw error;
-      }
-    }
+    async (input: TMcpPatchSurveyInput, extra) =>
+      runSurveyMutation(
+        extra,
+        "updated",
+        { surveyId: input.surveyId },
+        ({ authentication, requestId, auditLog }) =>
+          patchV3SurveyResponse({
+            surveyId: input.surveyId,
+            body: input.data,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          })
+      )
   );
 
   registerScopedTool(
@@ -271,39 +275,19 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     ["surveys:write"],
-    async (input: TMcpDeleteSurveyInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const authentication = getMcpAuthentication(extra.authInfo);
-      const log = logger.withContext({ requestId, surveyId: input.surveyId });
-      const auditLog = buildV3AuditLog(authentication, "deleted", "survey", MCP_API_ROUTE);
-
-      try {
-        const response = await deleteV3Survey({
-          surveyId: input.surveyId,
-          authentication,
-          requestId,
-          instance: MCP_API_ROUTE,
-          auditLog,
-        });
-
-        if (auditLog) {
-          if (response.ok) {
-            auditLog.status = "success";
-          } else {
-            auditLog.eventId = requestId;
-          }
-        }
-
-        await queueV3AuditLog(auditLog, requestId, log);
-        return await responseToMcpToolResult(response, requestId);
-      } catch (error) {
-        if (auditLog) {
-          auditLog.eventId = requestId;
-          await queueV3AuditLog(auditLog, requestId, log);
-        }
-
-        throw error;
-      }
-    }
+    async (input: TMcpDeleteSurveyInput, extra) =>
+      runSurveyMutation(
+        extra,
+        "deleted",
+        { surveyId: input.surveyId },
+        ({ authentication, requestId, auditLog }) =>
+          deleteV3Survey({
+            surveyId: input.surveyId,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          })
+      )
   );
 }
