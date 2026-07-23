@@ -12,10 +12,6 @@ on:
       # Add other secrets if necessary
   workflow_dispatch:
 
-env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
 permissions:
   contents: read
   actions: read
@@ -56,13 +52,14 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: ./.github/actions/dangerous-git-checkout
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
       - name: Setup Node.js (version from .nvmrc)
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: ".nvmrc"
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
@@ -124,9 +121,35 @@ jobs:
             minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 \
             /tmp/rustfs-init.sh
 
-      - name: Build App
+      # NOTE: no build cache here. We measured caching Next's .next/cache
+      # incremental compiler cache too — warm build (4m17s) was no faster than
+      # cold (3m46s), because the Turbo-orchestrated `pnpm build` doesn't reuse
+      # it in this setup (and there's no Turbo remote cache). Build is ~4min
+      # regardless; a real reduction needs a Turbo cache backend, not local
+      # actions/cache.
+
+      # Cache the downloaded browser binaries so re-runs skip the ~100MB
+      # Chromium download. `--with-deps` below still runs the (uncacheable) apt
+      # step, but a cache hit avoids the browser fetch itself.
+      - name: Cache Playwright browsers
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Build App (with Playwright browser install in parallel)
         run: |
+          set -euo pipefail
+          # Install Playwright browsers + OS deps concurrently with the Next.js
+          # build. Both are largely I/O-bound, so overlapping them shaves the
+          # browser-install time (~1-2 min) off the critical path. `wait`
+          # surfaces a non-zero exit from either process.
+          pnpm exec playwright install --with-deps &
+          PW_INSTALL_PID=$!
           pnpm build --filter=@formbricks/web...
+          wait "$PW_INSTALL_PID"
 
       - name: Apply Prisma Migrations
         run: |
@@ -177,9 +200,6 @@ jobs:
             echo "Still waiting for the application to be ready..."
             sleep 10
           done
-
-      - name: Install Playwright
-        run: pnpm exec playwright install --with-deps
 
       - name: Determine Playwright execution mode
         shell: bash
