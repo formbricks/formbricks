@@ -174,7 +174,7 @@ describe("createDisplay", () => {
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
-  test("should throw InvalidInputError when survey does not exist (RelatedRecordDoesNotExist)", async () => {
+  test("should throw InvalidInputError when survey does not exist (RecordNotFound)", async () => {
     vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 

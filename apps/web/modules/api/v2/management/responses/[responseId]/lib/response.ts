@@ -120,8 +120,8 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
-        error.code === PrismaErrorType.RecordDoesNotExist ||
-        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+        error.code === PrismaErrorType.RelatedRecordNotFound ||
+        error.code === PrismaErrorType.RecordNotFound
       ) {
         return err({
           type: "not_found",
@@ -158,8 +158,8 @@ export const updateResponse = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
-        error.code === PrismaErrorType.RecordDoesNotExist ||
-        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+        error.code === PrismaErrorType.RelatedRecordNotFound ||
+        error.code === PrismaErrorType.RecordNotFound
       ) {
         return err({
           type: "not_found",

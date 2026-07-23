@@ -40,7 +40,7 @@ describe("Display Lib", () => {
   test("return a not_found error when the display is not found", async () => {
     vi.mocked(prisma.display.delete).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Display not found", {
-        code: PrismaErrorType.RelatedRecordDoesNotExist,
+        code: PrismaErrorType.RecordNotFound,
         clientVersion: "1.0.0",
         meta: {
           cause: "Display not found",
