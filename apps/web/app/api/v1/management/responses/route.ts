@@ -160,35 +160,31 @@ export const POST = withV1ApiWrapper({
         responseInput.updatedAt = responseInput.createdAt;
       }
 
-      try {
-        const response = await createResponseWithQuotaEvaluation(responseInput);
-        if (auditLog) {
-          auditLog.targetId = response.id;
-          auditLog.newObject = response;
-        }
+      const response = await createResponseWithQuotaEvaluation(responseInput);
+      if (auditLog) {
+        auditLog.targetId = response.id;
+        auditLog.newObject = response;
+      }
 
+      await sendToPipeline({
+        event: "responseCreated",
+        workspaceId: surveyResult.survey.workspaceId,
+        surveyId: response.surveyId,
+        response: response,
+      });
+
+      if (response.finished) {
         await sendToPipeline({
-          event: "responseCreated",
+          event: "responseFinished",
           workspaceId: surveyResult.survey.workspaceId,
           surveyId: response.surveyId,
           response: response,
         });
-
-        if (response.finished) {
-          await sendToPipeline({
-            event: "responseFinished",
-            workspaceId: surveyResult.survey.workspaceId,
-            surveyId: response.surveyId,
-            response: response,
-          });
-        }
-
-        return {
-          response: responses.successResponse(response, true),
-        };
-      } catch (error) {
-        return handleApiError(error);
       }
+
+      return {
+        response: responses.successResponse(response, true),
+      };
     } catch (error) {
       return handleApiError(error);
     }
