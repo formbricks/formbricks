@@ -49,11 +49,13 @@ export const ZOrganizationStripeBilling = z.object({
 });
 export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 
-// responses can be null to support the unlimited plan
+// responses / workflowRuns can be null to support the unlimited plan. workflowRuns defaults to null
+// so older billing rows written before workflows became metered (ENG-1936) still parse.
 export const ZOrganizationBillingPlanLimits = z.object({
   workspaces: z.number().nullable(),
   monthly: z.object({
     responses: z.number().nullable(),
+    workflowRuns: z.number().nullable().default(null),
   }),
 });
 
@@ -65,6 +67,7 @@ export const ZOrganizationBilling = z.object({
     workspaces: 3,
     monthly: {
       responses: 1500,
+      workflowRuns: null,
     },
   }),
   usageCycleAnchor: z.date().nullable(),

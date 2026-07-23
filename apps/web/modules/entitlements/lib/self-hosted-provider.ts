@@ -63,6 +63,8 @@ export const getSelfHostedOrganizationEntitlementsContext = async (
       workspaces: license.active ? (license.features?.workspaces ?? 3) : 3,
       // Self-hosted response limits are not license-server-managed today.
       monthlyResponses: null,
+      // Self-hosted workflows are gated by the boolean license feature, not metered (ENG-1936).
+      monthlyWorkflowRuns: null,
     },
     licenseStatus: license.status,
     licenseFeatures: license.features,

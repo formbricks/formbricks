@@ -53,7 +53,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "cloud_stripe",
       features: [],
-      limits: { workspaces: 1, monthlyResponses: 250 },
+      limits: { workspaces: 1, monthlyResponses: 250, monthlyWorkflowRuns: null },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: null,
@@ -80,7 +80,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "cloud_stripe",
       features: ["rbac", "spam-protection"],
-      limits: { workspaces: 5, monthlyResponses: 1000 },
+      limits: { workspaces: 5, monthlyResponses: 1000, monthlyWorkflowRuns: null },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: "cus_1",
@@ -96,7 +96,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
     expect(result.features).toEqual([]);
-    expect(result.limits).toEqual({ workspaces: null, monthlyResponses: null });
+    expect(result.limits).toEqual({ workspaces: null, monthlyResponses: null, monthlyWorkflowRuns: null });
     expect(result.stripeCustomerId).toBeNull();
     expect(result.subscriptionStatus).toBeNull();
     expect(result.usageCycleAnchor).toBeNull();

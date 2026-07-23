@@ -4,6 +4,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { type TWorkflowTriggerRunPayload, ZWorkflowTriggerRunPayload } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { recordWorkflowRunCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { type DispatchWorkflowRun } from "./dispatch";
 import { markWorkflowRunDispatched } from "./mark-dispatched";
@@ -28,6 +29,9 @@ interface EnqueueResponseCompletedWorkflowRunsInput {
   response: RunnerResponse;
   workspaceId: string;
   organizationId: string;
+  // Passed through for workflow-run metering (ENG-1936). Null/absent off Formbricks Cloud or when the
+  // org has no Stripe customer — the meter helper no-ops in those cases.
+  stripeCustomerId?: string | null;
   dispatch: DispatchWorkflowRun;
   logContext?: Record<string, unknown>;
 }
@@ -160,6 +164,7 @@ const createAndDispatchWorkflowRun = async ({
   match,
   response,
   workspaceId,
+  stripeCustomerId,
   triggerPayload,
   dispatch,
   logContext,
@@ -167,6 +172,7 @@ const createAndDispatchWorkflowRun = async ({
   match: WorkflowMatch;
   response: RunnerResponse;
   workspaceId: string;
+  stripeCustomerId?: string | null;
   triggerPayload: TWorkflowTriggerRunPayload;
   dispatch: DispatchWorkflowRun;
   logContext?: Record<string, unknown>;
@@ -175,6 +181,18 @@ const createAndDispatchWorkflowRun = async ({
   if (!workflowRunId) {
     return;
   }
+
+  // Meter the run as soon as it is persisted — a persisted run is billable regardless of whether
+  // dispatch later succeeds, matching how responses meter at creation (ENG-1936). These runs are
+  // always real (isDryRun: false); dry runs are metered nowhere. Cloud-only and fire-and-forget:
+  // the helper swallows its own errors, so metering never blocks or fails run creation. Keyed on the
+  // stable workflowRunId, so a pipeline retry that re-finds the same run re-emits an identical
+  // (deduped) meter event.
+  await recordWorkflowRunCreatedMeterEvent({
+    stripeCustomerId,
+    workflowRunId,
+    createdAt: response.updatedAt,
+  });
 
   try {
     await dispatch({ workflowRunId, workflowId: match.workflowId, workspaceId });
@@ -224,6 +242,7 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
   response,
   workspaceId,
   organizationId,
+  stripeCustomerId,
   dispatch,
   logContext,
 }: EnqueueResponseCompletedWorkflowRunsInput): Promise<void> => {
@@ -271,6 +290,7 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
       match,
       response,
       workspaceId,
+      stripeCustomerId,
       triggerPayload,
       dispatch,
       logContext,

@@ -742,6 +742,7 @@ describe("organization-billing", () => {
       data: [
         { id: "ent_0", lookup_key: "workspace-limit-5" },
         { id: "ent_00", lookup_key: "responses-included-2000" },
+        { id: "ent_000", lookup_key: "workflow-runs-included-1000" },
         { id: "ent_1", lookup_key: "custom-links-in-surveys" },
         { id: "ent_2", lookup_key: "custom-links-in-surveys" },
         { id: "ent_3", lookup_key: null },
@@ -759,12 +760,18 @@ describe("organization-billing", () => {
           workspaces: 5,
           monthly: {
             responses: 2000,
+            workflowRuns: 1000,
           },
         },
         stripe: expect.objectContaining({
           plan: "pro",
           subscriptionId: "sub_1",
-          features: ["workspace-limit-5", "responses-included-2000", "custom-links-in-surveys"],
+          features: [
+            "workspace-limit-5",
+            "responses-included-2000",
+            "workflow-runs-included-1000",
+            "custom-links-in-surveys",
+          ],
           lastSyncedEventId: "evt_new",
           lastStripeEventCreatedAt: expect.any(String),
           lastSyncedAt: expect.any(String),
@@ -776,8 +783,10 @@ describe("organization-billing", () => {
     expect(result?.stripe?.features).toEqual([
       "workspace-limit-5",
       "responses-included-2000",
+      "workflow-runs-included-1000",
       "custom-links-in-surveys",
     ]);
+    expect(result?.limits?.monthly?.workflowRuns).toBe(1000);
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
 
@@ -1634,6 +1643,7 @@ describe("organization-billing", () => {
           workspaces: 5,
           monthly: {
             responses: null,
+            workflowRuns: null,
           },
         },
         stripe: expect.objectContaining({
@@ -1722,6 +1732,7 @@ describe("organization-billing", () => {
           workspaces: 3,
           monthly: {
             responses: 1500,
+            workflowRuns: null,
           },
         },
         stripe: expect.objectContaining({

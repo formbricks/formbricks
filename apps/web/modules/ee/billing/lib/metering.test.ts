@@ -118,4 +118,68 @@ describe("metering", () => {
       "Failed to record Stripe meter event for response_created"
     );
   });
+
+  describe("recordWorkflowRunCreatedMeterEvent", () => {
+    test("records a workflow_run_created meter event with timestamp", async () => {
+      const { recordWorkflowRunCreatedMeterEvent } = await import("./metering");
+
+      await recordWorkflowRunCreatedMeterEvent({
+        stripeCustomerId: "cus_1",
+        workflowRunId: "wr_1",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+      });
+
+      expect(mocks.meterEventsCreate).toHaveBeenCalledWith({
+        event_name: "workflow_run_created",
+        identifier: "workflow_run_created:wr_1",
+        timestamp: Math.floor(new Date("2026-01-01T00:00:00Z").getTime() / 1000),
+        payload: { stripe_customer_id: "cus_1", value: "1" },
+      });
+    });
+
+    test("omits timestamp when createdAt is null", async () => {
+      const { recordWorkflowRunCreatedMeterEvent } = await import("./metering");
+
+      await recordWorkflowRunCreatedMeterEvent({
+        stripeCustomerId: "cus_1",
+        workflowRunId: "wr_2",
+        createdAt: null,
+      });
+
+      expect(mocks.meterEventsCreate).toHaveBeenCalledWith({
+        event_name: "workflow_run_created",
+        identifier: "workflow_run_created:wr_2",
+        payload: { stripe_customer_id: "cus_1", value: "1" },
+      });
+    });
+
+    test("skips when stripeCustomerId is null", async () => {
+      const { recordWorkflowRunCreatedMeterEvent } = await import("./metering");
+
+      await recordWorkflowRunCreatedMeterEvent({ stripeCustomerId: null, workflowRunId: "wr_3" });
+
+      expect(mocks.meterEventsCreate).not.toHaveBeenCalled();
+    });
+
+    test("skips when not cloud", async () => {
+      mocks.isCloud = false;
+      const { recordWorkflowRunCreatedMeterEvent } = await import("./metering");
+
+      await recordWorkflowRunCreatedMeterEvent({ stripeCustomerId: "cus_1", workflowRunId: "wr_4" });
+
+      expect(mocks.meterEventsCreate).not.toHaveBeenCalled();
+    });
+
+    test("logs warning on error", async () => {
+      mocks.meterEventsCreate.mockRejectedValue(new Error("stripe error"));
+      const { recordWorkflowRunCreatedMeterEvent } = await import("./metering");
+
+      await recordWorkflowRunCreatedMeterEvent({ stripeCustomerId: "cus_1", workflowRunId: "wr_5" });
+
+      expect(mocks.loggerWarn).toHaveBeenCalledWith(
+        { error: expect.any(Error), stripeCustomerId: "cus_1", workflowRunId: "wr_5" },
+        "Failed to record Stripe meter event for workflow_run_created"
+      );
+    });
+  });
 });

@@ -52,6 +52,9 @@ export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      // No included workflow runs by default — the Scale entitlement grants the volume, and
+      // self-hosted gates workflows by the boolean license feature rather than metering.
+      workflowRuns: null,
     },
   },
   stripeCustomerId: null,
@@ -1221,6 +1224,10 @@ const resolveEntitlementDrivenLimits = (
 ) => {
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
+  const workflowRunsIncludedFromEntitlements = parseEntitlementLimit(
+    featureLookupKeys,
+    "workflow-runs-included-"
+  );
 
   const workspacesLimit =
     workspaceLimitFromEntitlements === undefined
@@ -1246,10 +1253,18 @@ const resolveEntitlementDrivenLimits = (
     );
   }
 
+  // Absent workflow-runs entitlement preserves the previous value (or null). No warning: unlike
+  // responses, workflow metering is opt-in per plan, so most subscriptions legitimately have none.
+  const workflowRunsIncludedLimit =
+    workflowRunsIncludedFromEntitlements === undefined
+      ? (previousLimits?.monthly?.workflowRuns ?? null)
+      : workflowRunsIncludedFromEntitlements;
+
   return {
     workspaces: workspacesLimit,
     monthly: {
       responses: responsesIncludedLimit,
+      workflowRuns: workflowRunsIncludedLimit,
     },
   };
 };

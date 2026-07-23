@@ -32,6 +32,7 @@ export const getCloudOrganizationEntitlementsContext = async (
       limits: {
         workspaces: defaultBilling.limits?.workspaces ?? null,
         monthlyResponses: defaultBilling.limits?.monthly?.responses ?? null,
+        monthlyWorkflowRuns: defaultBilling.limits?.monthly?.workflowRuns ?? null,
       },
       licenseStatus: license.status,
       licenseFeatures: license.features,
@@ -48,6 +49,7 @@ export const getCloudOrganizationEntitlementsContext = async (
     limits: {
       workspaces: billing.limits?.workspaces ?? null,
       monthlyResponses: billing.limits?.monthly?.responses ?? null,
+      monthlyWorkflowRuns: billing.limits?.monthly?.workflowRuns ?? null,
     },
     licenseStatus: license.status,
     licenseFeatures: license.features,

@@ -607,12 +607,14 @@ const runResponseFinishedSideEffects = async ({
   data,
   logContext,
   organizationId,
+  stripeCustomerId,
   survey,
   workspaceId,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
+  stripeCustomerId: string | null | undefined;
   survey: TPipelineSurvey;
   workspaceId: string;
 }) => {
@@ -684,6 +686,7 @@ const runResponseFinishedSideEffects = async ({
       response: data.response,
       workspaceId,
       organizationId,
+      stripeCustomerId,
       dispatch: dispatchWorkflowRunViaJobs,
       logContext,
     });
@@ -797,6 +800,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
         data,
         logContext,
         organizationId: organization.id,
+        stripeCustomerId: organization.billing?.stripeCustomerId,
         survey,
         workspaceId: data.workspaceId,
       });
