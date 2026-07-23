@@ -201,6 +201,7 @@ describe("Organization Service", () => {
                 workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
                 monthly: {
                   responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+                  workflowRuns: null,
                 },
               },
               stripeCustomerId: null,
