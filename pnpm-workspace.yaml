@@ -24,11 +24,21 @@ overrides:
   # @grpc/grpc-js is patched in 1.14.4 against malformed-request and malformed-compressed-message crashes.
   "@grpc/grpc-js": 1.14.4
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
-  "@hono/node-server": 1.19.13
-  hono: 4.12.25
+  # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
+  # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
+  # GHSA-9mqv-5hh9-4cgg: 2.0.0–2.0.9 unauthenticated memory-leak DoS via aborted WebSocket handshake;
+  # patched in 2.0.10. Pinned to 2.0.10 to close both.
+  "@hono/node-server": 2.0.10
+  # ENG-1995 / GHSA-hvrm-45r6-mjfj (CVE-2026-59896), ENG-1996 / GHSA-w62v-xxxg-mg59 (CVE-2026-59895),
+  # ENG-1997 / GHSA-xgm2-5f3f-mvvc (CVE-2026-59897): hono <4.12.27 jsx cross-request context disclosure,
+  # cx() server-side XSS, and API Gateway v1 repeated-header de-dup; all patched in 4.12.27.
+  hono: 4.12.27
   # OpenTelemetry / protobuf chains.
-  protobufjs@7: 7.6.3
-  protobufjs@8: 8.6.3
+  # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
+  # patched in 7.6.5 / 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
+  # mutation, patched in 8.6.5. Each line pinned to its lowest release covering both advisories.
+  protobufjs@7: 7.6.5
+  protobufjs@8: 8.6.6
   # sqlite3 / node-gyp chain: tar advisory pins are safe here because sqlite3 is pulled in
   # transitively by typeorm but the project uses postgres; sqlite3 is never built at runtime.
   # Therefore node-gyp@8 / http-proxy-agent@4 compatibility is not a concern.
@@ -47,8 +57,13 @@ overrides:
   postcss: 8.5.14
   # SDK and runtime transitive security pins.
   fast-xml-parser: 5.7.0 # load-bearing: <5.7.0 vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # ENG-1942 / GHSA-v422-hmwv-36x6 (CVE-2026-12590): body-parser 2.0.0–2.2.x silently skips the request
+  # size check when given an invalid `limit`, disabling DoS protection; patched in 2.3.0.
+  body-parser: 2.3.0
   # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
-  typeorm: 0.3.29
+  # ENG-1990 / GHSA-2rp8-mm9q-fp49: typeorm <0.3.31 migration:generate template-literal code injection;
+  # patched in 0.3.31.
+  typeorm: 0.3.31
   # js-cookie / uuid: load-bearing security pins that are also MAJOR coercions on transitive consumers
   # (react-use@17 js-cookie v2->v3; @azure/msal-node + next-auth uuid v8/9->v11). Natural versions are
   # vulnerable (GHSA-qjx8-664m-686j / GHSA-w5hq-g745-h8pq), so the pins stay; runtime verified in build+tests.
@@ -65,7 +80,8 @@ overrides:
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
   "@babel/core": 7.29.6 # ENG-1376 / GHSA-4x5r-pxfx-6jf8
   "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf
-  dompurify: 3.4.11 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9); ENG-1527-batch / GHSA-cmwh-pvxp-8882 raises the pin to >=3.4.11 (3.4.9/3.4.10 vulnerable to clobbered-root / cross-realm / hook-pollution XSS)
+  # ENG-1991 / GHSA-c2j3-45gr-mqc4: dompurify <=3.4.11 CUSTOM_ELEMENT_HANDLING bypasses afterSanitizeElements for allowed custom elements; patched in 3.4.12.
+  dompurify: 3.4.12 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9); ENG-1527-batch / GHSA-cmwh-pvxp-8882 raised the pin to >=3.4.11 (3.4.9/3.4.10 vulnerable to clobbered-root / cross-realm / hook-pollution XSS)
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
   # ENG-1509 / ENG-1505 / GHSA-vmh5-mc38-953g: undici 7.x TLS certificate
   # validation bypass, patched in 7.28.0 (covers the jsdom transitive 7.25.0).
