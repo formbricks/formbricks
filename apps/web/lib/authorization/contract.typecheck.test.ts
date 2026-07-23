@@ -1,5 +1,5 @@
 import "server-only";
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import type {
   TAuthorizationAction,
   TAuthorizationActor,
@@ -79,8 +79,8 @@ const checkAuthorizationTypes = <TAction extends TAuthorizationAction>(
 
 describe("current authorization contract types", () => {
   test("keeps the action vocabulary and resource mappings exact", () => {
-    expect(actionVocabularyIsExact).toBe(true);
-    expect(allActionResourceMappingsAreExact).toBe(true);
+    expectTypeOf(actionVocabularyIsExact).toEqualTypeOf<true>();
+    expectTypeOf(allActionResourceMappingsAreExact).toEqualTypeOf<true>();
   });
 
   test("accepts current actors and matching action/resource pairs", () => {
