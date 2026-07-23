@@ -95,6 +95,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   // user-driven gate layered on top: even when permissions allow editing, the canvas stays
   // non-mutable until the user switches to pointer mode.
   const canMutate = isEditable && !isLocked;
+  // Shared by the picker overlay and the validation chip: while the centered add-trigger picker
+  // is the canvas's main event, the chip would only restate it ("1 problem: no trigger"), so the
+  // two are mutually exclusive by construction.
+  const isTriggerPickerVisible = Boolean(definition && !definition.trigger && isEditable);
 
   // Shared flag owned by the builder page (server context OR workspace survey-list membership),
   // so a just-picked survey clears the node's setup flag immediately.
@@ -251,7 +255,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
       {/* Empty drafts start with no nodes: the centered picker is how the trigger gets added.
           Gated on status-based editability (not the layout lock) — adding nodes is a content
           edit, same as the node config forms. */}
-      {definition && !definition.trigger && isEditable && (
+      {isTriggerPickerVisible && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
           <div className="pointer-events-auto">
             <WorkflowAddTriggerPicker onSelect={addTrigger} />
@@ -266,8 +270,9 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         onPointerMode={handlePointerMode}
       />
       {/* Always-on live validation state (replaces the former manual "Validate" dry-run button):
-          a passive badge while valid, a button listing the problems while not. */}
-      <WorkflowValidationStatus />
+          a passive badge while valid, a button listing the problems while not. Suppressed while
+          the add-trigger picker is up so a fresh draft isn't greeted with a problem count. */}
+      {!isTriggerPickerVisible && <WorkflowValidationStatus />}
     </div>
   );
 };
