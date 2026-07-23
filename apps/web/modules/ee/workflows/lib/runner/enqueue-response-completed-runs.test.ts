@@ -10,6 +10,9 @@ const { findMany, create, findUnique } = vi.hoisted(() => ({
 const { warn, error, info } = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }));
 const { markDispatched } = vi.hoisted(() => ({ markDispatched: vi.fn() }));
 const { getIsWorkflowsEnabled } = vi.hoisted(() => ({ getIsWorkflowsEnabled: vi.fn() }));
+const { recordWorkflowRunCreatedMeterEvent } = vi.hoisted(() => ({
+  recordWorkflowRunCreatedMeterEvent: vi.fn(),
+}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: { workflow: { findMany }, workflowRun: { create, findUnique } },
@@ -17,6 +20,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({ logger: { warn, error, info } }));
 vi.mock("./mark-dispatched", () => ({ markWorkflowRunDispatched: markDispatched }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsWorkflowsEnabled }));
+vi.mock("@/modules/ee/billing/lib/metering", () => ({ recordWorkflowRunCreatedMeterEvent }));
 
 const workspaceId = "cm9zr4mps000008l8btfy1vtz";
 const organizationId = "cm9zr4org000008l8btfy1org";
@@ -59,6 +63,8 @@ beforeEach(() => {
   dispatch.mockResolvedValue(undefined);
   // Entitled by default; the entitlement-skip tests flip this off explicitly.
   getIsWorkflowsEnabled.mockResolvedValue(true);
+  // The real helper never rejects (it owns its errors); the enqueue awaits the collected promises.
+  recordWorkflowRunCreatedMeterEvent.mockResolvedValue(undefined);
 });
 
 describe("enqueueResponseCompletedWorkflowRuns", () => {
@@ -168,6 +174,47 @@ describe("enqueueResponseCompletedWorkflowRuns", () => {
 
     expect(dispatch).toHaveBeenCalledWith({ workflowRunId: "existing_run", workflowId: "wf_1", workspaceId });
     expect(error).not.toHaveBeenCalled();
+  });
+
+  test("meters a newly created run exactly once, with the run id and its persisted createdAt", async () => {
+    const runCreatedAt = new Date("2026-06-12T09:30:02.000Z");
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
+    create.mockResolvedValue({ id: "run_1", createdAt: runCreatedAt });
+
+    await enqueueResponseCompletedWorkflowRuns({
+      response,
+      workspaceId,
+      organizationId,
+      stripeCustomerId: "cus_123",
+      dispatch,
+    });
+
+    // Timestamped from the run's own createdAt (not response.updatedAt) so usage lands in the
+    // correct billing period.
+    expect(recordWorkflowRunCreatedMeterEvent).toHaveBeenCalledTimes(1);
+    expect(recordWorkflowRunCreatedMeterEvent).toHaveBeenCalledWith({
+      stripeCustomerId: "cus_123",
+      workflowRunId: "run_1",
+      createdAt: runCreatedAt,
+    });
+  });
+
+  test("does not meter a unique-constraint replay that re-found the existing run", async () => {
+    findMany.mockResolvedValue([enabledWorkflow("wf_1", "ver_1")]);
+    create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+      })
+    );
+    findUnique.mockResolvedValue({ id: "existing_run", createdAt: new Date("2026-06-11T08:00:00.000Z") });
+
+    await run();
+
+    // The replayed run still dispatches, but is never re-metered: Stripe dedups a meter identifier
+    // for only ~24h, so re-emitting on a later replay would double-bill the same run (ENG-1936).
+    expect(dispatch).toHaveBeenCalledWith({ workflowRunId: "existing_run", workflowId: "wf_1", workspaceId });
+    expect(recordWorkflowRunCreatedMeterEvent).not.toHaveBeenCalled();
   });
 
   test("on a unique violation with no findable existing run, surfaces an error and does not dispatch", async () => {

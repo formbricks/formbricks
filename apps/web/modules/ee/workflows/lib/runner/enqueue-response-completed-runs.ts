@@ -170,6 +170,7 @@ const createAndDispatchWorkflowRun = async ({
   stripeCustomerId,
   triggerPayload,
   dispatch,
+  meterEvents,
   logContext,
 }: {
   match: WorkflowMatch;
@@ -178,6 +179,7 @@ const createAndDispatchWorkflowRun = async ({
   stripeCustomerId?: string | null;
   triggerPayload: TWorkflowTriggerRunPayload;
   dispatch: DispatchWorkflowRun;
+  meterEvents: Promise<void>[];
   logContext?: Record<string, unknown>;
 }): Promise<void> => {
   const persisted = await persistQueuedRun({ match, response, workspaceId, triggerPayload, logContext });
@@ -193,16 +195,19 @@ const createAndDispatchWorkflowRun = async ({
   // runs are metered nowhere. Timestamped from the run's own createdAt so usage lands in the correct
   // billing period (response.updatedAt could be stale/older than Stripe's 35-day accept window).
   //
-  // Cloud-only and fire-and-forget: the helper swallows its own errors, so metering never blocks or
-  // fails run creation. Deliberately NOT awaited — awaiting would add a Stripe round-trip to (and, on
-  // a Stripe hang, stall) the serialized per-match dispatch loop below. The helper owns its errors,
-  // so voiding cannot surface an unhandled rejection.
+  // Cloud-only; the helper swallows its own errors, so metering never blocks or fails run creation.
+  // The Stripe call starts here but is awaited by the caller only after the dispatch loop: it never
+  // adds a round-trip to (or, on a Stripe hang, stalls) the serialized per-match dispatch below, yet
+  // it is not dropped mid-flight if the worker exits right after the job completes — isNew is
+  // consumed on creation, so a dropped event would leave the run permanently unbilled.
   if (isNew) {
-    void recordWorkflowRunCreatedMeterEvent({
-      stripeCustomerId,
-      workflowRunId,
-      createdAt,
-    });
+    meterEvents.push(
+      recordWorkflowRunCreatedMeterEvent({
+        stripeCustomerId,
+        workflowRunId,
+        createdAt,
+      })
+    );
   }
 
   try {
@@ -296,6 +301,7 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
     triggeredAt: response.updatedAt.toISOString(),
   });
 
+  const meterEvents: Promise<void>[] = [];
   for (const match of matches) {
     await createAndDispatchWorkflowRun({
       match,
@@ -304,7 +310,13 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
       stripeCustomerId,
       triggerPayload,
       dispatch,
+      meterEvents,
       logContext,
     });
   }
+
+  // Meter events ran concurrently with the dispatch loop; settle them before returning so the job
+  // holds the worker alive until every billed run is actually reported (parity with the awaited
+  // response meter event). The helper owns its errors, so this only waits — it can never throw.
+  await Promise.all(meterEvents);
 };

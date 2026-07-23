@@ -1253,12 +1253,12 @@ const resolveEntitlementDrivenLimits = (
     );
   }
 
-  // Absent workflow-runs entitlement preserves the previous value (or null). No warning: unlike
-  // responses, workflow metering is opt-in per plan, so most subscriptions legitimately have none.
-  const workflowRunsIncludedLimit =
-    workflowRunsIncludedFromEntitlements === undefined
-      ? (previousLimits?.monthly?.workflowRuns ?? null)
-      : workflowRunsIncludedFromEntitlements;
+  // Absent workflow-runs entitlement resolves to null, NOT the previous value: unlike workspaces/
+  // responses (present on every plan, so absence signals a bad read worth preserving against), this
+  // entitlement only exists on plans with workflows — absence is the normal state, and preserving
+  // would keep a stale included volume forever after a downgrade. A transient bad read self-heals
+  // on the next sync; `unlimited` still parses to null upstream.
+  const workflowRunsIncludedLimit = workflowRunsIncludedFromEntitlements ?? null;
 
   return {
     workspaces: workspacesLimit,

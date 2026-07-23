@@ -790,6 +790,67 @@ describe("organization-billing", () => {
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
 
+  test("syncOrganizationBillingFromStripe clears a stale workflowRuns limit when the entitlement is absent (downgrade is not sticky)", async () => {
+    // Previous limits carry the Scale-era included volume; the new subscription has no
+    // workflow-runs entitlement (absence is the normal state on plans without workflows).
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        workspaces: 3,
+        monthly: {
+          responses: 1500,
+          workflowRuns: 1000,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          items: {
+            data: [
+              {
+                price: {
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
+                  recurring: { usage_type: "licensed", interval: "year" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.entitlementsList.mockResolvedValue({
+      data: [
+        { id: "ent_0", lookup_key: "workspace-limit-5" },
+        { id: "ent_00", lookup_key: "responses-included-2000" },
+      ],
+      has_more: false,
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_new", created: 1739923300 });
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          limits: {
+            workspaces: 5,
+            monthly: {
+              responses: 2000,
+              workflowRuns: null,
+            },
+          },
+        }),
+      })
+    );
+    expect(result?.limits?.monthly?.workflowRuns).toBeNull();
+  });
+
   test("createPaidPlanCheckoutSession rejects mixed-interval yearly checkout", async () => {
     await expect(
       createPaidPlanCheckoutSession({
