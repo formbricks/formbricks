@@ -85,6 +85,12 @@ the stored relationships.
 
 ## Guiding principle: mirror the current system
 
+The engine-independent application contract in
+`apps/web/lib/authorization` is the source of truth for Formbricks actor,
+action, and resource types. This SpiceDB schema is a downstream implementation
+of that contract; application types must never be generated from SDK or schema
+types.
+
 The schema is a **technical migration of the current Formbricks authorization
 system**. It models exactly what the application enforces today — no future
 capabilities, no permission changes. A principal must never gain or lose access
@@ -123,6 +129,8 @@ Resource permissions preserve the operation-specific gates that exist today:
 Behavioral sources of truth in the application (referenced from the schema's
 doc comments):
 
+- `apps/web/lib/authorization` — the engine-independent current-model
+  authorization contract and role/grant mapping.
 - `apps/web/lib/utils/action-client/action-client-middleware.ts` —
   `checkAuthorizationUpdated`: org-role OR team-permission, weighted
   `read < readWrite < manage`.
