@@ -19,6 +19,7 @@ import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
+import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -143,6 +144,12 @@ export const POST = withV1ApiWrapper({
         response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
           surveyId: survey.id,
         }),
+      };
+    }
+
+    if (survey.pin && !verifyLinkSurveyPinToken(responseInputData.pinAuthToken, survey.id)) {
+      return {
+        response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
       };
     }
 

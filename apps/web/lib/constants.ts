@@ -94,6 +94,7 @@ export const MAIL_FROM = env.MAIL_FROM;
 export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
+export const BETTER_AUTH_SECRET = env.BETTER_AUTH_SECRET;
 export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 25;

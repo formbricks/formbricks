@@ -14,7 +14,7 @@ export const PUT = async (request: Request) =>
       body: ZContactBulkUploadRequest,
     },
     bodyTransform: async (body, auth) => {
-      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "PUT");
+      const resolved = await resolveBodyIdsV2(body, auth, "PUT");
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },
