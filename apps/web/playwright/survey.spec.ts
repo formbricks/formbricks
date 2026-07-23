@@ -10,12 +10,6 @@ import {
   uploadImageChoicesForPictureSelection,
 } from "./utils/helper";
 
-test.use({
-  launchOptions: {
-    slowMo: 150,
-  },
-});
-
 test.beforeEach(async ({ page }) => {
   await helper.mockStorageUploads(page);
 });
