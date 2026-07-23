@@ -136,17 +136,22 @@ export function useChartDialog({
           return;
         }
 
-        if (!Array.isArray(queryResult?.data)) {
+        const queryRows = queryResult?.data;
+        if (!Array.isArray(queryRows?.rows)) {
           const errorMsg = t("workspace.analysis.charts.no_data_returned_for_chart");
           toast.error(errorMsg);
           setChartLoadError(errorMsg);
           return;
         }
 
+        // Use the server-rewritten effective query so the renderer's xAxisKey matches
+        // the returned data columns (e.g. valueText → valueId for single-select).
+        const effectiveQuery = queryRows.effectiveQuery ?? chart.query;
         setChartData({
-          query: chart.query,
+          query: effectiveQuery,
           chartType: resolveChartType(chart.type),
-          data: queryResult.data,
+          data: queryRows.rows,
+          ...(queryRows.optionLabels ? { optionLabels: queryRows.optionLabels } : {}),
         });
       } catch (error: unknown) {
         if (cancelled) return;

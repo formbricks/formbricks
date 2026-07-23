@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
@@ -10,6 +11,7 @@ import {
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
@@ -26,9 +28,13 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
 /**
- * Workspace-scoped equivalent of getEnvironmentAuth.
- * Accepts a workspaceId, resolves the production environment automatically,
- * and performs the same authorization checks as getEnvironmentAuth.
+ * Resolves a workspace and returns the caller's authorization context for it.
+ *
+ * This helper is self-contained: it enforces workspace-level access itself rather
+ * than relying on the route layout to gate, so it is safe to reuse from any page or
+ * route. Billing-role members are redirected to billing/enterprise screens; any org
+ * member without a WorkspaceTeam grant (and who is not an owner/manager) is rejected
+ * with an AuthorizationError instead of being silently admitted as a writer.
  */
 export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> => {
   const t = await getTranslate();
@@ -56,11 +62,35 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership.role);
 
-  const workspacePermission = await getWorkspacePermissionByUserId(session.user.id, workspace.id);
+  // Billing-role members are scoped to billing/enterprise screens only. They must never reach
+  // workspace product data (contacts PII, survey summaries/responses, dashboards). This is the
+  // single choke point every product page flows through, so gating here closes all of them at
+  // once and keeps this helper aligned with hasUserWorkspaceAccessForAction, which already denies
+  // billing. Individual pages that also guard billing inline remain correct (defense in depth).
+  if (isBilling) {
+    redirect(getBillingFallbackPath(organization.id, IS_FORMBRICKS_CLOUD));
+  }
+
+  // Enforce workspace access here instead of delegating to the route layout, so
+  // getWorkspaceAuth is safe to reuse anywhere. An org member with no WorkspaceTeam
+  // grant for this workspace has no access and must be rejected — not silently
+  // treated as a writer. Runs alongside the permission lookup to avoid extra latency.
+  const [hasWorkspaceAccess, workspacePermission] = await Promise.all([
+    hasUserWorkspaceAccess(session.user.id, workspace.id),
+    getWorkspacePermissionByUserId(session.user.id, workspace.id),
+  ]);
+
+  if (!hasWorkspaceAccess) {
+    throw new AuthorizationError(t("common.not_authorized"));
+  }
 
   const { hasReadAccess, hasReadWriteAccess, hasManageAccess } = getTeamPermissionFlags(workspacePermission);
 
-  const isReadOnly = isMember && hasReadAccess;
+  // Fail safe: a member is read-only unless they hold an explicit write or manage
+  // grant. Deriving from the *absence* of write access (rather than the presence of
+  // an exact "read" grant) means a member with no resolved permission is treated as
+  // the most restricted, never mislabeled as a writer.
+  const isReadOnly = isMember && !hasReadWriteAccess && !hasManageAccess;
 
   return {
     workspace,

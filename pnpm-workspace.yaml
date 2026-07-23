@@ -71,7 +71,10 @@ overrides:
   # ENG-1513 / GHSA-fjxv-7rqg-78g4: form-data <4.0.4 uses an unsafe random function for the
   # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
   form-data@4: 4.0.6
-  tar: 7.5.16
+  # ENG-1947 / GHSA-23hp-3jrh-7fpw (CVE-2026-59873): node-tar <=7.5.18 has no hard
+  # upper bound on total decompressed bytes / entry count, so a small gzip bomb can
+  # exhaust disk and CPU (DoS). Patched in 7.5.19.
+  tar: 7.5.19
   # ENG-1527-batch / GHSA-mh29-5h37-fv8m + GHSA-h67p-54hq-rp68: js-yaml <4.1.2 quadratic-complexity
   # DoS via merge keys / repeated aliases (dev-only, via @redocly/cli). No 4.1.2 published; 4.2.0 is the
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
@@ -83,7 +86,12 @@ shamefullyHoist: true
 sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
-legacyPeerDeps: true
+# Flat, npm-style node_modules. Deliberate for now: several packages still rely on hoisted
+# (undeclared) dependencies — e.g. @formbricks/js-core reaches into sibling packages (ENG-1681)
+# and react/react-dom are hoisted from the workspace root (ENG-1693). Moving to the strict
+# `isolated` linker is the long-term goal (ENG-1674); fix the undeclared deps first.
+# `shamefullyHoist` above is left untouched here — it becomes meaningful only under the isolated
+# linker, so it is handled together with that migration rather than in this cleanup.
 nodeLinker: hoisted
 saveExact: true
 # Supply-chain release cooldown: refuse to install package versions published less than

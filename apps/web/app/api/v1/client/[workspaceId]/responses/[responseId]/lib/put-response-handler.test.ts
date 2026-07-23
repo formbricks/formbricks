@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   validateClientFileUploads: vi.fn(),
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
+  verifyLinkSurveyPinToken: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -63,6 +64,10 @@ vi.mock("./response", () => ({
 
 vi.mock("./validated-response-update-input", () => ({
   getValidatedResponseUpdateInput: mocks.getValidatedResponseUpdateInput,
+}));
+
+vi.mock("@/modules/survey/link/lib/pin-token", () => ({
+  verifyLinkSurveyPinToken: mocks.verifyLinkSurveyPinToken,
 }));
 
 const workspaceId = "workspace_a";
@@ -139,6 +144,7 @@ describe("putResponseHandler", () => {
     mocks.validateClientFileUploads.mockReturnValue(true);
     mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
     mocks.validateResponseData.mockReturnValue(null);
+    mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
   });
 
   test("returns a bad request response when the response id is missing", async () => {
@@ -333,6 +339,53 @@ describe("putResponseHandler", () => {
       details: { surveyId },
     });
     expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("rejects updates to a PIN-protected survey without a valid PIN token", async () => {
+    mocks.getSurvey.mockResolvedValue({
+      ...getBaseSurvey(),
+      pin: "1234",
+    });
+    mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+      responseUpdateInput: { ...getBaseResponseUpdateInput(), pinAuthToken: "invalid" },
+    });
+    mocks.verifyLinkSurveyPinToken.mockReturnValue(false);
+
+    const result = await putResponseHandler(createHandlerParams());
+
+    expect(result.response.status).toBe(403);
+    await expect(result.response.json()).resolves.toEqual({
+      code: "forbidden",
+      message: "Survey is protected by a PIN",
+      details: { surveyId },
+    });
+    expect(mocks.verifyLinkSurveyPinToken).toHaveBeenCalledWith("invalid", surveyId);
+    expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("allows updates to a PIN-protected survey with a valid PIN token", async () => {
+    mocks.getSurvey.mockResolvedValue({
+      ...getBaseSurvey(),
+      pin: "1234",
+    });
+    mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+      responseUpdateInput: { ...getBaseResponseUpdateInput(), pinAuthToken: "valid-token" },
+    });
+    mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
+
+    const result = await putResponseHandler(createHandlerParams());
+
+    expect(result.response.status).toBe(200);
+    expect(mocks.verifyLinkSurveyPinToken).toHaveBeenCalledWith("valid-token", surveyId);
+    expect(mocks.updateResponseWithQuotaEvaluation).toHaveBeenCalled();
+  });
+
+  test("does not require a PIN token when the survey has no PIN", async () => {
+    const result = await putResponseHandler(createHandlerParams());
+
+    expect(result.response.status).toBe(200);
+    expect(mocks.verifyLinkSurveyPinToken).not.toHaveBeenCalled();
+    expect(mocks.updateResponseWithQuotaEvaluation).toHaveBeenCalled();
   });
 
   test("rejects invalid file upload updates", async () => {

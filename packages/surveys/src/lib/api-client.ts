@@ -97,6 +97,7 @@ export class ApiClient {
     ttc,
     variables,
     language,
+    pinAuthToken,
   }: TResponseUpdateInput & { responseId: string }): Promise<
     Result<TResponseUpdateResponse, ApiErrorResponse>
   > {
@@ -107,6 +108,7 @@ export class ApiClient {
       ttc,
       variables,
       language,
+      pinAuthToken,
     });
   }
 

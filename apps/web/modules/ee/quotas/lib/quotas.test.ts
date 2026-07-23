@@ -193,10 +193,23 @@ describe("Quota Service", () => {
       const result = await updateQuota(updateInput, mockQuotaId);
 
       expect(result).toEqual(updatedQuota);
+      // surveyId is immutable on update (ENG-1749) and is stripped from the persisted data.
+      const { surveyId: _omittedSurveyId, ...expectedData } = updateInput;
       expect(prisma.surveyQuota.update).toHaveBeenCalledWith({
         where: { id: mockQuotaId },
-        data: updateInput,
+        data: expectedData,
       });
+    });
+
+    // ENG-1749 sibling: updateQuota must not re-point a quota to a different (potentially
+    // cross-tenant) survey. Even when a foreign surveyId is supplied, it must not be persisted.
+    test("never persists a caller-supplied surveyId", async () => {
+      vi.mocked(prisma.surveyQuota.update).mockResolvedValue(mockQuota);
+
+      await updateQuota({ ...updateInput, surveyId: "clvictimsurvey0000000000001" }, mockQuotaId);
+
+      const arg = vi.mocked(prisma.surveyQuota.update).mock.calls[0][0];
+      expect(arg.data).not.toHaveProperty("surveyId");
     });
 
     test("should throw ResourceNotFoundError when quota not found", async () => {

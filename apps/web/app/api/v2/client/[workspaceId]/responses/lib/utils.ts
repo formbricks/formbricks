@@ -9,6 +9,7 @@ import { symmetricDecrypt } from "@/lib/crypto";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
+import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 
 export const RECAPTCHA_VERIFICATION_ERROR_CODE = "recaptcha_verification_failed";
 
@@ -31,6 +32,10 @@ export const checkSurveyValidity = async (
     return responses.forbiddenResponse("Survey is not accepting submissions", true, {
       surveyId: survey.id,
     });
+  }
+
+  if (survey.pin && !verifyLinkSurveyPinToken(responseInput.pinAuthToken, survey.id)) {
+    return responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id });
   }
 
   if (survey.type === "link" && survey.singleUse?.enabled) {

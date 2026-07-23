@@ -6,6 +6,7 @@ import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TWorkspace } from "@formbricks/types/workspace";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
@@ -145,6 +146,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
             height={56}
             style={{ backgroundColor: logoBgColor || undefined }}
             className="-mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
+            unoptimized={isExternalImageSrc(logoUrl)}
           />
         ) : (
           <FileInput

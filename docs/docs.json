@@ -230,7 +230,7 @@
           {
             "group": "Unify Feedback Features",
             "pages": [
-              "unify-feedback/feedback-directories",
+              "unify-feedback/feedback-datasets",
               "unify-feedback/feedback-sources",
               "unify-feedback/feedback-records",
               "unify-feedback/dashboards-charts",
@@ -457,6 +457,10 @@
     ]
   },
   "redirects": [
+    {
+      "destination": "/docs/unify-feedback/feedback-datasets",
+      "source": "/docs/unify-feedback/feedback-directories"
+    },
     {
       "destination": "/docs/platform/introduction",
       "source": "/docs/overview/introduction"

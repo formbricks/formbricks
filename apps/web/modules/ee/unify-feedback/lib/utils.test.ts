@@ -1,9 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
   formatFieldType,
   formatSourceType,
-  getCreateDefaults,
   getReadOnlyMetadataEntries,
   getValueFieldByType,
   isPresetSourceType,
@@ -13,8 +12,6 @@ import {
   toISOOrUndefined,
   toLocalDateTimeInput,
 } from "./utils";
-
-vi.mock("uuid", () => ({ v7: () => "mock-uuid-v7" }));
 
 const makeRecord = (overrides: Partial<FeedbackRecordData> = {}): FeedbackRecordData => ({
   id: "rec-1",
@@ -71,22 +68,6 @@ describe("toISOOrUndefined", () => {
 
   test("returns undefined for invalid date", () => {
     expect(toISOOrUndefined("not-a-date")).toBeUndefined();
-  });
-});
-
-describe("getCreateDefaults", () => {
-  test("uses first directory as tenant_id", () => {
-    const dirs = [{ id: "dir-1", name: "Dir 1" }];
-    const result = getCreateDefaults(dirs);
-    expect(result.tenant_id).toBe("dir-1");
-    expect(result.submission_id).toBe("mock-uuid-v7");
-    expect(result.field_type).toBe("text");
-    expect(result.metadataEntries).toEqual([]);
-  });
-
-  test("handles empty directories", () => {
-    const result = getCreateDefaults([]);
-    expect(result.tenant_id).toBe("");
   });
 });
 
