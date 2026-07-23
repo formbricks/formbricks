@@ -1153,7 +1153,7 @@ export const PricingTable = ({
           ))}
 
         {pendingChange && (
-          <Alert variant="info" className="max-w-5xl">
+          <Alert variant="info" className="max-w-5xl" role="status">
             <AlertTitle>{t("workspace.settings.billing.pending_plan_change_title")}</AlertTitle>
             <AlertDescription>
               {t("workspace.settings.billing.pending_plan_change_description", {
@@ -1175,7 +1175,7 @@ export const PricingTable = ({
         )}
 
         {isStripeSetupIncomplete && hasBillingRights && (
-          <Alert variant="warning" className="max-w-5xl">
+          <Alert variant="warning" className="max-w-5xl" role="status">
             <AlertTitle>{t("workspace.settings.billing.stripe_setup_incomplete")}</AlertTitle>
             <AlertDescription>
               {t("workspace.settings.billing.stripe_setup_incomplete_description")}
@@ -1187,7 +1187,7 @@ export const PricingTable = ({
         )}
 
         {currentCloudPlan === "custom" && (
-          <Alert className="max-w-5xl">
+          <Alert className="max-w-5xl" role="status">
             <AlertTitle>{t("workspace.settings.billing.custom_plan_title")}</AlertTitle>
             <AlertDescription>{t("workspace.settings.billing.custom_plan_description")}</AlertDescription>
           </Alert>

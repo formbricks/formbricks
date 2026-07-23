@@ -193,7 +193,7 @@ export const LoginForm = ({
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">{formLabel}</h1>
         {oauthAccountNotLinked && (
-          <Alert variant="error" className="mb-4 text-left">
+          <Alert variant="error" className="mb-4 text-left" role="status">
             <AlertTitle>{t("auth.login.oauth_account_not_linked_title")}</AlertTitle>
             <AlertDescription>
               <p>{t("auth.login.oauth_account_not_linked_description")}</p>

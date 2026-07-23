@@ -72,7 +72,7 @@ export const DeleteOrganization = ({
         </div>
       )}
       {isDeleteDisabled && (
-        <Alert variant="warning">
+        <Alert variant="warning" role="status">
           <AlertDescription>{deleteDisabledWarning}</AlertDescription>
         </Alert>
       )}

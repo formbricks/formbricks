@@ -11,7 +11,7 @@ export const CreateOrganizationCard = () => {
 
   return (
     <div className="max-w-4xl">
-      <Alert variant="info" size="small">
+      <Alert variant="info" size="small" role="status">
         <AlertDescription>
           {t("workspace.settings.general.create_new_organization_description")}
         </AlertDescription>

@@ -232,7 +232,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         t={t}
       />
       {isReadOnly && (
-        <Alert variant="warning" className="mt-4">
+        <Alert variant="warning" className="mt-4" role="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>
