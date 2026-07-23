@@ -43,7 +43,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/oauth-urls", () => ({
-  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write"],
+  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write", "workflows:read", "workflows:write"],
   getAuthIssuerUrl: () => "http://localhost/api/auth",
   getMcpOrigin: () => "http://localhost",
   getMcpProtectedResourceMetadataUrl: () => "http://localhost/.well-known/oauth-protected-resource/api/mcp",
@@ -161,7 +161,7 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(401);
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write"'
     );
     expect(applyIPRateLimit).toHaveBeenCalled();
   });
@@ -425,7 +425,7 @@ describe("POST /api/mcp", () => {
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
     expect(applyIPRateLimit).toHaveBeenCalled();
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write"'
     );
   });
 
@@ -467,6 +467,49 @@ describe("POST /api/mcp", () => {
       code: "forbidden",
       detail: "OAuth token does not include the required MCP scope",
       requestId: "req_read_only",
+    });
+  });
+
+  test("blocks workflow write tools for tokens without workflows:write", async () => {
+    // A write-capable user whose OAuth token was only granted read scopes (surveys:read + workflows:read)
+    // must not be able to reach a workflow mutation — the ENG-1967 token-scope boundary.
+    verifyAccessTokenMock.mockResolvedValueOnce({
+      sub: "user_1",
+      email: "person@example.com",
+      scope: "openid profile email surveys:read workflows:read",
+      exp: Math.floor(Date.now() / 1000) + 900,
+      azp: "client_wf_read_only",
+    });
+
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 10,
+          method: "tools/call",
+          params: {
+            name: "delete_workflow",
+            arguments: {
+              workflowId: "wf1234567890123456789012ab",
+            },
+          },
+        },
+        {
+          authorization: "Bearer eyJhbGciOiJFZERTQSJ9.wfreadonly.signature",
+          "x-api-key": "",
+          "x-request-id": "req_wf_read_only",
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const message = await readMcpResponse(response);
+    expect(message.result.isError).toBe(true);
+    expect(message.result.structuredContent.error).toMatchObject({
+      status: 403,
+      code: "forbidden",
+      detail: "OAuth token does not include the required MCP scope",
+      requestId: "req_wf_read_only",
     });
   });
 

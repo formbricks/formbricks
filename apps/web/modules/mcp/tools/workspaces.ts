@@ -3,11 +3,13 @@ import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { guardMcpScopes } from "./guard-scopes";
+import { registerScopedTool } from "./guard-scopes";
 import { type TMcpListWorkspacesInput, ZMcpListWorkspacesInput } from "./schemas";
 
 export function registerWorkspaceTools(server: McpServer): void {
-  server.registerTool(
+  // Listing workspaces is the read-prerequisite for the survey read tools, so it reuses surveys:read.
+  registerScopedTool(
+    server,
     "list_workspaces",
     {
       title: "List workspaces",
@@ -21,14 +23,9 @@ export function registerWorkspaceTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    ["surveys:read"],
     async (_input: TMcpListWorkspacesInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      // Listing workspaces is the read-prerequisite for the survey read tools, so it reuses surveys:read.
-      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const response = await listV3Workspaces({
         authentication: getMcpAuthentication(extra.authInfo),
         requestId,

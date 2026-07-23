@@ -43,7 +43,13 @@ describe("OAuth protected resource metadata", () => {
       // offline_access must stay advertised: MCP clients register (DCR) with exactly these
       // scopes, and the oauth-provider plugin validates /authorize against the client's
       // registered scopes — dropping it re-breaks refresh-token issuance for all MCP clients.
-      scopes_supported: ["surveys:read", "surveys:write", "offline_access"],
+      scopes_supported: [
+        "surveys:read",
+        "surveys:write",
+        "workflows:read",
+        "workflows:write",
+        "offline_access",
+      ],
       bearer_methods_supported: ["header"],
     });
   });

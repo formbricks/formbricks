@@ -137,7 +137,13 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
 
     expect(response.status).toBe(200);
     expect(body.scope?.split(" ")).toEqual(
-      expect.arrayContaining(["surveys:read", "surveys:write", "offline_access"])
+      expect.arrayContaining([
+        "surveys:read",
+        "surveys:write",
+        "workflows:read",
+        "workflows:write",
+        "offline_access",
+      ])
     );
   });
 

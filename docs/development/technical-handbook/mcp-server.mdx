@@ -76,23 +76,33 @@ Discovery endpoints:
 
 Supported scopes:
 
-| Scope             | Use                                                                       |
-| ----------------- | ------------------------------------------------------------------------- |
-| `surveys:read`    | `list_surveys`, `get_survey`, and read-only validation paths              |
-| `surveys:write`   | `create_survey`, `patch_survey`, `delete_survey`, and write validations   |
-| `openid`          | OpenID Connect subject interoperability                                   |
-| `profile`         | User profile claims                                                       |
-| `email`           | User email claim                                                          |
-| `offline_access`  | Refresh tokens for MCP clients                                            |
+| Scope              | Use                                                                       |
+| ------------------ | ------------------------------------------------------------------------- |
+| `surveys:read`     | `list_surveys`, `get_survey`, and read-only validation paths              |
+| `surveys:write`    | `create_survey`, `patch_survey`, `delete_survey`, and write validations   |
+| `workflows:read`   | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
+| `workflows:write`  | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
+| `openid`           | OpenID Connect subject interoperability                                   |
+| `profile`          | User profile claims                                                       |
+| `email`            | User email claim                                                          |
+| `offline_access`   | Refresh tokens for MCP clients                                            |
+
+**The rule:** every MCP tool is registered through `registerScopedTool`, which takes the required
+scope(s) as a mandatory argument and runs the gate before the handler. Read tools declare
+`<resource>:read`; every mutating tool declares `<resource>:write`. A tool cannot be registered
+without declaring a scope, so a new tool inherits enforcement by construction — the gate returns a
+`403 insufficient_scope` before the handler touches a v3 operation.
 
 The authorization server supports all of the above, but the MCP protected-resource metadata
-(`/.well-known/oauth-protected-resource/api/mcp`) advertises only `surveys:read`, `surveys:write`,
-and `offline_access` — the scopes an MCP client needs. Clients derive their Dynamic Client
-Registration scopes from that list, so `offline_access` must be advertised there for clients to be
-issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
+(`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
+needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, and `offline_access`.
+Clients derive their Dynamic Client Registration scopes from that list, so `offline_access` must be
+advertised there for clients to be issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes
+the MCP resource does not require).
 
-OAuth scopes only gate MCP tool categories. Actual workspace access is still evaluated at tool
-execution through the existing v3 authorization checks for the signed-in Formbricks user.
+OAuth scopes gate MCP tool categories at the token layer. Actual workspace access is still evaluated
+at tool execution through the existing v3 authorization checks for the signed-in Formbricks user, so
+a token scope and a workspace role are independent gates — a call must satisfy both.
 
 ### API-key fallback
 
@@ -135,9 +145,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `archive_workflow`    | `write` or `manage` |
 | `unarchive_workflow`  | `write` or `manage` |
 
-Advertised MCP scopes: `surveys:read` + `workflows:read` always; `surveys:write` + `workflows:write`
-when the key has `write` or `manage` on any workspace. Scopes are advisory — the per-workspace access
-check above is the real enforcement.
+Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` always; `surveys:write` +
+`workflows:write` when the key has `write` or `manage` on any workspace. The scope gate and the
+per-workspace access check above are independent — a `:write` tool requires **both** the `:write`
+scope on the token and write/manage on the target workspace.
 
 <Warning>
   Store fallback MCP API keys as environment variables or client secrets. Do not commit API keys into MCP client
@@ -179,14 +190,14 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
     "token_endpoint_auth_method": "none",
     "grant_types": ["authorization_code", "refresh_token"],
     "response_types": ["code"],
-    "scope": "openid profile email offline_access surveys:read surveys:write"
+    "scope": "openid profile email offline_access surveys:read surveys:write workflows:read workflows:write"
   }'
 ```
 
 <Note>
   This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
   clients register with the scopes from the protected-resource metadata's `scopes_supported`
-  (`surveys:read surveys:write offline_access`). Because the authorization server validates the
+  (`surveys:read surveys:write workflows:read workflows:write offline_access`). Because the authorization server validates the
   `/authorize` request against the client's **registered** scopes, a client that registers with a
   narrower set than it later requests (e.g. it registers surveys-only but requests `offline_access`)
   is rejected with `invalid_scope`. To smoke-test the real path, omit `scope` and let the client
@@ -228,14 +239,14 @@ Authenticate and request the scopes the agent needs:
 
 ```bash
 codex mcp login formbricks-local \
-  --scopes openid,profile,email,offline_access,surveys:read,surveys:write
+  --scopes openid,profile,email,offline_access,surveys:read,surveys:write,workflows:read,workflows:write
 ```
 
-For read-only usage, omit `surveys:write`:
+For read-only usage, omit the `:write` scopes:
 
 ```bash
 codex mcp login formbricks-local \
-  --scopes openid,profile,email,offline_access,surveys:read
+  --scopes openid,profile,email,offline_access,surveys:read,workflows:read
 ```
 
 Codex opens the browser to Formbricks, completes Dynamic Client Registration, and stores the OAuth
@@ -299,10 +310,11 @@ claude mcp add --transport http formbricks-local http://localhost:3000/api/mcp
 
 Run `/mcp` and authenticate `formbricks-local`. Claude Code discovers the MCP protected-resource
 metadata, registers a public client whose scopes are taken from that metadata's `scopes_supported`
-(`surveys:read surveys:write offline_access`), and launches the browser-based OAuth flow — there is
-no scope-entry step. You approve the requested scopes on the Formbricks consent screen. Workspace
-role determines whether `surveys:write` tools actually succeed at execution time (see
-[Authentication](#authentication)), regardless of the granted scope.
+(`surveys:read surveys:write workflows:read workflows:write offline_access`), and launches the
+browser-based OAuth flow — there is no scope-entry step. You approve the requested scopes on the
+Formbricks consent screen. A `:write` tool requires both the matching `:write` scope on the token and
+write/manage permission on the target workspace at execution time (see
+[Authentication](#authentication)).
 
 Verify it:
 

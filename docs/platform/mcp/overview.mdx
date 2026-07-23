@@ -36,16 +36,20 @@ The whole flow uses Authorization Code + PKCE, the standard the [MCP authorizati
 
 ## What the agent can do
 
-The MCP server exposes six survey tools, grouped into two scopes you approve on the consent screen:
+The MCP server exposes survey and workflow tools, grouped into scopes you approve on the consent
+screen. Read tools require the matching `:read` scope; tools that create, update, or delete require
+the `:write` scope:
 
 | Scope | Tools | What it allows |
 | --- | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` | Read surveys and validate survey documents |
 | `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` | Create, update, and delete surveys |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` | Read workflows and their runs |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
 
 <Warning>
   Scopes are only a coarse gate. **Access is always bounded by your Formbricks workspace role**: even
-  if a client holds `surveys:write`, a call only succeeds if you have write/manage permission on the
+  if a client holds a `:write` scope, a call only succeeds if you have write/manage permission on the
   target workspace. An agent can never do more than you can.
 </Warning>
 

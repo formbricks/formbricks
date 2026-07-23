@@ -12,7 +12,7 @@ import {
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { guardMcpScopes } from "./guard-scopes";
+import { registerScopedTool } from "./guard-scopes";
 import {
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
@@ -62,7 +62,8 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
 }
 
 export function registerSurveyTools(server: McpServer): void {
-  server.registerTool(
+  registerScopedTool(
+    server,
     "list_surveys",
     {
       title: "List surveys",
@@ -75,13 +76,9 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    ["surveys:read"],
     async (input: TMcpListSurveysInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const response = await listV3Surveys({
         searchParams: buildListSurveysSearchParams(input),
         authentication: getMcpAuthentication(extra.authInfo),
@@ -93,7 +90,8 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "get_survey",
     {
       title: "Get survey",
@@ -106,13 +104,9 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    ["surveys:read"],
     async (input: TMcpGetSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const response = await getV3Survey({
         surveyId: input.surveyId,
         lang: input.lang,
@@ -125,7 +119,8 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "create_survey",
     {
       title: "Create survey",
@@ -138,13 +133,9 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    ["surveys:write"],
     async (input: TMcpCreateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:write"], requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const authentication = getMcpAuthentication(extra.authInfo);
       const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
       const auditLog = buildV3AuditLog(authentication, "created", "survey", MCP_API_ROUTE);
@@ -179,7 +170,8 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "validate_survey",
     {
       title: "Validate survey",
@@ -192,16 +184,12 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    ["surveys:read"],
     async (input: TMcpValidateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
       // validate_survey never persists changes (readOnlyHint) — a dry-run validation of a create or
       // patch payload only needs read access. The actual write permission is enforced by the v3 layer
       // when create_survey / patch_survey run.
-      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:read"], requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const response = await validateV3SurveyFromRawInput({
         body: input,
         authentication: getMcpAuthentication(extra.authInfo),
@@ -213,7 +201,8 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "patch_survey",
     {
       title: "Patch survey",
@@ -229,13 +218,9 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    ["surveys:write"],
     async (input: TMcpPatchSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:write"], requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const authentication = getMcpAuthentication(extra.authInfo);
       const log = logger.withContext({ requestId, surveyId: input.surveyId });
       const auditLog = buildV3AuditLog(authentication, "updated", "survey", MCP_API_ROUTE);
@@ -271,7 +256,8 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  server.registerTool(
+  registerScopedTool(
+    server,
     "delete_survey",
     {
       title: "Delete survey",
@@ -284,13 +270,9 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    ["surveys:write"],
     async (input: TMcpDeleteSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, ["surveys:write"], requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
       const authentication = getMcpAuthentication(extra.authInfo);
       const log = logger.withContext({ requestId, surveyId: input.surveyId });
       const auditLog = buildV3AuditLog(authentication, "deleted", "survey", MCP_API_ROUTE);

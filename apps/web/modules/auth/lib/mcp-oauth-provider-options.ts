@@ -31,11 +31,14 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
     "offline_access",
     "surveys:read",
     "surveys:write",
+    "workflows:read",
+    "workflows:write",
   ],
   accessTokenExpiresIn: 15 * 60,
   refreshTokenExpiresIn: 30 * 24 * 60 * 60,
   scopeExpirations: {
     "surveys:write": "15m",
+    "workflows:write": "15m",
   },
   // Store opaque access-token and refresh-token lookup values as hashes. JWT access tokens are
   // stateless and bounded by the short 15-minute lifetime above.
