@@ -17,21 +17,13 @@ const mockT = vi.fn((key: string) => {
   return key;
 }) as unknown as TFunction;
 
-// Mock getLocalizedValue and getTranslations
-vi.mock("@/lib/i18n", () => {
+// Mock only getTranslations; keep the real getLocalizedValue so these tests exercise the actual
+// localization fallback the evaluator relies on (a hand-rolled mirror masked ENG-2001).
+vi.mock("@/lib/i18n", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/i18n")>();
   const mockTFn = vi.fn((key: string) => key) as unknown as TFunction;
   return {
-    // Mirror the real getLocalizedValue (ENG-2001): an empty or whitespace-only localized value
-    // falls back to `default`, so validation resolves the default label rather than an empty string.
-    getLocalizedValue: (
-      localizedString: Record<string, string> | undefined,
-      languageCode: string
-    ): string => {
-      if (!localizedString) return "";
-      const localized = localizedString[languageCode];
-      if (typeof localized === "string" && localized.trim() !== "") return localized;
-      return localizedString.default || "";
-    },
+    ...actual,
     getTranslations: () => mockTFn,
   };
 });
