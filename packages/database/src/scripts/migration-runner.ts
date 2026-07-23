@@ -62,16 +62,22 @@ const resolvePrismaBin = async (): Promise<string> => {
   }
 };
 
-// Postgres error code for `undefined_table`. On a fresh database the
-// `_prisma_migrations` table does not exist yet, so the applied-migrations
-// lookup below is expected to fail with exactly this code. Depending on the
-// Prisma driver adapter, `42P01` surfaces in different places: directly on the
-// error's `code` (raw pg), nested under `meta.driverAdapterError.cause`
-// (Prisma wraps it as a generic `P2010`), or — as a last resort — in the
-// message. We check all three so a fresh DB is reliably recognised.
+// Postgres error codes that mean "this database has never been migrated": the
+// database itself doesn't exist yet (`3D000`, when `migrate deploy` will create
+// it), or it exists but the `_prisma_migrations` table hasn't been created yet
+// (`42P01`). The startup lookups below run BEFORE the first `migrate deploy`, so
+// on a truly fresh target they hit one of these — we treat both as "nothing
+// applied". Depending on the Prisma driver adapter the code surfaces in
+// different places: directly on the error's `code` (raw pg), nested under
+// `meta.driverAdapterError.cause` (Prisma wraps it as a generic `P2010`), or —
+// as a last resort — in the message. We check all three so a fresh DB is
+// reliably recognised.
 const PG_UNDEFINED_TABLE = "42P01";
+const PG_INVALID_CATALOG_NAME = "3D000";
+const FRESH_DATABASE_PG_CODES = [PG_UNDEFINED_TABLE, PG_INVALID_CATALOG_NAME];
+const FRESH_DATABASE_ADAPTER_KINDS = ["TableDoesNotExist", "DatabaseDoesNotExist"];
 
-const isUndefinedTableError = (error: unknown): boolean => {
+const isFreshDatabaseError = (error: unknown): boolean => {
   if (typeof error !== "object" || error === null) {
     return false;
   }
@@ -82,16 +88,20 @@ const isUndefinedTableError = (error: unknown): boolean => {
     message?: unknown;
   };
 
-  if (err.code === PG_UNDEFINED_TABLE) {
+  if (typeof err.code === "string" && FRESH_DATABASE_PG_CODES.includes(err.code)) {
     return true;
   }
 
   const cause = err.meta?.driverAdapterError?.cause;
-  if (cause?.originalCode === PG_UNDEFINED_TABLE || cause?.kind === "TableDoesNotExist") {
+  if (
+    (typeof cause?.originalCode === "string" && FRESH_DATABASE_PG_CODES.includes(cause.originalCode)) ||
+    (typeof cause?.kind === "string" && FRESH_DATABASE_ADAPTER_KINDS.includes(cause.kind))
+  ) {
     return true;
   }
 
-  return typeof err.message === "string" && err.message.includes(PG_UNDEFINED_TABLE);
+  const message = err.message;
+  return typeof message === "string" && FRESH_DATABASE_PG_CODES.some((code) => message.includes(code));
 };
 
 // Load the set of schema migrations already recorded as fully applied in
@@ -109,12 +119,12 @@ const loadAppliedSchemaMigrations = async (): Promise<Set<string>> => {
     `;
     return new Set(rows.map((row) => row.migration_name));
   } catch (error: unknown) {
-    // Fresh database: `_prisma_migrations` doesn't exist yet. Treat as "nothing
-    // applied" and let the first `migrate deploy` create the table. Any other
-    // error is a real fault (e.g. connectivity) and must not be swallowed —
-    // otherwise we'd misread it as an empty DB and needlessly redeploy every
-    // migration.
-    if (isUndefinedTableError(error)) {
+    // Fresh database: the DB doesn't exist yet, or exists without a
+    // `_prisma_migrations` table. Treat as "nothing applied" and let the first
+    // `migrate deploy` create the database/table. Any other error is a real
+    // fault (e.g. connectivity) and must not be swallowed — otherwise we'd
+    // misread it as an empty DB and needlessly redeploy every migration.
+    if (isFreshDatabaseError(error)) {
       return new Set<string>();
     }
 
@@ -124,15 +134,16 @@ const loadAppliedSchemaMigrations = async (): Promise<Set<string>> => {
 };
 
 // Count data migrations already recorded in the DataMigration table. Returns 0
-// when the table doesn't exist yet (fresh DB — the table is created by a schema
-// migration). Used to decide whether the fresh-database fast path applies.
+// when the database or the table doesn't exist yet (fresh DB — the table is
+// created by a schema migration). Used to decide whether the fresh-database
+// fast path applies.
 const countRecordedDataMigrations = async (): Promise<number> => {
   try {
     const rows: { count: bigint }[] =
       await prisma.$queryRaw`SELECT COUNT(*)::bigint AS count FROM "DataMigration"`;
     return Number(rows[0]?.count ?? 0n);
   } catch (error: unknown) {
-    if (isUndefinedTableError(error)) {
+    if (isFreshDatabaseError(error)) {
       return 0;
     }
 
@@ -265,9 +276,17 @@ const runDataMigration = async (migration: MigrationScript): Promise<void> => {
   try {
     await prisma.$transaction(
       async (tx) => {
+        // All DataMigration bookkeeping runs on `tx` (not the outer `prisma`
+        // client) so the status transitions commit atomically with the changes
+        // migration.run makes through `tx`. If the transaction rolls back, the
+        // "applied" marker rolls back with it — a migration can never be
+        // recorded applied while its data changes are discarded. The failure
+        // path below intentionally stays on `prisma`, since it must persist
+        // after the transaction has already rolled back.
+
         // Check if migration has already been run
         const existingMigration: { status: "pending" | "applied" | "failed" }[] | undefined =
-          await prisma.$queryRaw`
+          await tx.$queryRaw`
             SELECT status FROM "DataMigration"
             WHERE id = ${migration.id}
           `;
@@ -291,7 +310,7 @@ const runDataMigration = async (migration: MigrationScript): Promise<void> => {
           logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
         } else {
           // create a new data migration entry with pending status
-          await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
+          await tx.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
           hasLock = true;
         }
 
@@ -303,7 +322,7 @@ const runDataMigration = async (migration: MigrationScript): Promise<void> => {
           });
 
           // Mark migration as applied
-          await prisma.$executeRaw`
+          await tx.$executeRaw`
               UPDATE "DataMigration"
               SET status = 'applied', finished_at = ${new Date()}
               WHERE id = ${migration.id};
