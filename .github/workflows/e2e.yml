@@ -140,6 +140,7 @@ jobs:
             ${{ github.workspace }}/apps/web/.next
             **/.turbo/**
             **/dist/**
+            !**/node_modules/**/dist/**
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}
           # Fall back to the most recent cache with the same lockfile hash when
           # source changes (key-2) invalidate the exact key. Turbo re-validates
