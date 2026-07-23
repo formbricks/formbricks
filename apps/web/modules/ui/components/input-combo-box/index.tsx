@@ -13,6 +13,7 @@ import React, {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import {
   Command,
   CommandEmpty,
@@ -107,7 +108,14 @@ function ComboboxOptionLabel({
       )}
       {option.icon && <option.icon className={iconClassName} />}
       {option.imgSrc && (
-        <Image src={option.imgSrc} alt={option.label} width={24} height={24} className="shrink-0" />
+        <Image
+          src={option.imgSrc}
+          alt={option.label}
+          width={24}
+          height={24}
+          className="shrink-0"
+          unoptimized={isExternalImageSrc(option.imgSrc)}
+        />
       )}
       {hasOptionDetails(option) ? (
         <span className="flex min-w-0 flex-col">
@@ -239,7 +247,15 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             {i > 0 && <span>, </span>}
             <div className="flex min-w-0 items-center gap-2 overflow-hidden">
               {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
-              {opt.imgSrc && <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} />}
+              {opt.imgSrc && (
+                <Image
+                  src={opt.imgSrc}
+                  alt={opt.label}
+                  width={24}
+                  height={24}
+                  unoptimized={isExternalImageSrc(opt.imgSrc)}
+                />
+              )}
               <span className="truncate" title={opt.label}>
                 {opt.label}
               </span>
@@ -254,7 +270,15 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     return (
       <div className="flex min-w-0 items-center gap-2 overflow-hidden">
         {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
-        {opt.imgSrc && <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} />}
+        {opt.imgSrc && (
+          <Image
+            src={opt.imgSrc}
+            alt={opt.label}
+            width={24}
+            height={24}
+            unoptimized={isExternalImageSrc(opt.imgSrc)}
+          />
+        )}
         <span className="truncate" title={opt.label}>
           {opt.label}
         </span>
@@ -420,6 +444,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                                     width={24}
                                     height={24}
                                     className="shrink-0"
+                                    unoptimized={isExternalImageSrc(opt.imgSrc)}
                                   />
                                 )}
                                 <span className="flex-1 truncate text-slate-900">{opt.label}</span>

@@ -11,6 +11,7 @@ import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationEmailLogoUrlAction,
@@ -219,6 +220,7 @@ export const EmailCustomizationSettings = ({
                         className="max-h-24 max-w-full object-contain"
                         width={192}
                         height={192}
+                        unoptimized={isExternalImageSrc(logoUrl)}
                       />
                     </div>
 
@@ -287,6 +289,7 @@ export const EmailCustomizationSettings = ({
                 className="mx-auto max-h-[100px] max-w-full object-contain"
                 width={192}
                 height={192}
+                unoptimized={isExternalImageSrc(logoUrl || fbLogoUrl)}
               />
               <P className="font-bold">
                 {t("workspace.settings.general.email_customization_preview_email_heading", {
