@@ -46,6 +46,8 @@ const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      // No included workflow runs by default (ENG-1936); the Scale entitlement grants the volume.
+      workflowRuns: null,
     },
   },
   stripeCustomerId: null,

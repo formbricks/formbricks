@@ -39,7 +39,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "self_hosted_license",
       features: [],
-      limits: { workspaces: 3, monthlyResponses: null },
+      limits: { workspaces: 3, monthlyResponses: null, monthlyWorkflowRuns: null },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: null,

@@ -26,6 +26,9 @@ export const isEntitlementFeature = (feature: string): feature is TEntitlementFe
 export type TEntitlementLimits = {
   workspaces: number | null;
   monthlyResponses: number | null;
+  // Included monthly workflow runs (ENG-1936). null = not metered / unlimited (e.g. self-hosted,
+  // where workflows are gated by the boolean license feature rather than metered).
+  monthlyWorkflowRuns: number | null;
 };
 
 export type TOrganizationEntitlementsContext = {

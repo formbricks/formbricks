@@ -52,6 +52,9 @@ export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      // No included workflow runs by default — the Scale entitlement grants the volume, and
+      // self-hosted gates workflows by the boolean license feature rather than metering.
+      workflowRuns: null,
     },
   },
   stripeCustomerId: null,
@@ -1221,6 +1224,10 @@ const resolveEntitlementDrivenLimits = (
 ) => {
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
+  const workflowRunsIncludedFromEntitlements = parseEntitlementLimit(
+    featureLookupKeys,
+    "workflow-runs-included-"
+  );
 
   const workspacesLimit =
     workspaceLimitFromEntitlements === undefined
@@ -1246,10 +1253,18 @@ const resolveEntitlementDrivenLimits = (
     );
   }
 
+  // Absent workflow-runs entitlement resolves to null, NOT the previous value: unlike workspaces/
+  // responses (present on every plan, so absence signals a bad read worth preserving against), this
+  // entitlement only exists on plans with workflows — absence is the normal state, and preserving
+  // would keep a stale included volume forever after a downgrade. A transient bad read self-heals
+  // on the next sync; `unlimited` still parses to null upstream.
+  const workflowRunsIncludedLimit = workflowRunsIncludedFromEntitlements ?? null;
+
   return {
     workspaces: workspacesLimit,
     monthly: {
       responses: responsesIncludedLimit,
+      workflowRuns: workflowRunsIncludedLimit,
     },
   };
 };

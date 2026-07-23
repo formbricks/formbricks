@@ -4,6 +4,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { type TWorkflowTriggerRunPayload, ZWorkflowTriggerRunPayload } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { recordWorkflowRunCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { type DispatchWorkflowRun } from "./dispatch";
 import { markWorkflowRunDispatched } from "./mark-dispatched";
@@ -28,6 +29,9 @@ interface EnqueueResponseCompletedWorkflowRunsInput {
   response: RunnerResponse;
   workspaceId: string;
   organizationId: string;
+  // Passed through for workflow-run metering (ENG-1936). Null/absent off Formbricks Cloud or when the
+  // org has no Stripe customer — the meter helper no-ops in those cases.
+  stripeCustomerId?: string | null;
   dispatch: DispatchWorkflowRun;
   logContext?: Record<string, unknown>;
 }
@@ -101,7 +105,7 @@ const persistQueuedRun = async ({
   workspaceId: string;
   triggerPayload: TWorkflowTriggerRunPayload;
   logContext?: Record<string, unknown>;
-}): Promise<string | null> => {
+}): Promise<{ id: string; createdAt: Date; isNew: boolean } | null> => {
   try {
     const run = await prisma.workflowRun.create({
       data: {
@@ -117,16 +121,19 @@ const persistQueuedRun = async ({
         idempotencyKey: response.id,
         triggerPayload,
       },
-      select: { id: true },
+      select: { id: true, createdAt: true },
     });
-    return run.id;
+    return { id: run.id, createdAt: run.createdAt, isNew: true };
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       const existing = await prisma.workflowRun.findUnique({
         where: { workflowId_idempotencyKey: { workflowId: match.workflowId, idempotencyKey: response.id } },
-        select: { id: true },
+        select: { id: true, createdAt: true },
       });
-      if (existing) return existing.id;
+      // isNew: false — a replayed enqueue re-found an already-persisted run. It must NOT be metered
+      // again: Stripe only dedups a meter identifier for ~24h, so a retry beyond that window would
+      // double-bill the same run (ENG-1936).
+      if (existing) return { id: existing.id, createdAt: existing.createdAt, isNew: false };
       // The unique violation says a run exists, but we can't find it by its idempotency key — a
       // contradictory state with no run id to dispatch. Surface it rather than silently drop it.
       logger.error(
@@ -160,20 +167,47 @@ const createAndDispatchWorkflowRun = async ({
   match,
   response,
   workspaceId,
+  stripeCustomerId,
   triggerPayload,
   dispatch,
+  meterEvents,
   logContext,
 }: {
   match: WorkflowMatch;
   response: RunnerResponse;
   workspaceId: string;
+  stripeCustomerId?: string | null;
   triggerPayload: TWorkflowTriggerRunPayload;
   dispatch: DispatchWorkflowRun;
+  meterEvents: Promise<void>[];
   logContext?: Record<string, unknown>;
 }): Promise<void> => {
-  const workflowRunId = await persistQueuedRun({ match, response, workspaceId, triggerPayload, logContext });
-  if (!workflowRunId) {
+  const persisted = await persistQueuedRun({ match, response, workspaceId, triggerPayload, logContext });
+  if (!persisted) {
     return;
+  }
+  const { id: workflowRunId, createdAt, isNew } = persisted;
+
+  // Meter the run once, only when it is newly created (isNew) — a persisted run is billable
+  // regardless of whether dispatch later succeeds, matching how responses meter at creation
+  // (ENG-1936). A replayed enqueue that re-found an existing run is skipped so it can't double-bill
+  // past Stripe's ~24h identifier-dedup window. These runs are always real (isDryRun: false); dry
+  // runs are metered nowhere. Timestamped from the run's own createdAt so usage lands in the correct
+  // billing period (response.updatedAt could be stale/older than Stripe's 35-day accept window).
+  //
+  // Cloud-only; the helper swallows its own errors, so metering never blocks or fails run creation.
+  // The Stripe call starts here but is awaited by the caller only after the dispatch loop: it never
+  // adds a round-trip to (or, on a Stripe hang, stalls) the serialized per-match dispatch below, yet
+  // it is not dropped mid-flight if the worker exits right after the job completes — isNew is
+  // consumed on creation, so a dropped event would leave the run permanently unbilled.
+  if (isNew) {
+    meterEvents.push(
+      recordWorkflowRunCreatedMeterEvent({
+        stripeCustomerId,
+        workflowRunId,
+        createdAt,
+      })
+    );
   }
 
   try {
@@ -224,6 +258,7 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
   response,
   workspaceId,
   organizationId,
+  stripeCustomerId,
   dispatch,
   logContext,
 }: EnqueueResponseCompletedWorkflowRunsInput): Promise<void> => {
@@ -266,14 +301,22 @@ export const enqueueResponseCompletedWorkflowRuns = async ({
     triggeredAt: response.updatedAt.toISOString(),
   });
 
+  const meterEvents: Promise<void>[] = [];
   for (const match of matches) {
     await createAndDispatchWorkflowRun({
       match,
       response,
       workspaceId,
+      stripeCustomerId,
       triggerPayload,
       dispatch,
+      meterEvents,
       logContext,
     });
   }
+
+  // Meter events ran concurrently with the dispatch loop; settle them before returning so the job
+  // holds the worker alive until every billed run is actually reported (parity with the awaited
+  // response meter event). The helper owns its errors, so this only waits — it can never throw.
+  await Promise.all(meterEvents);
 };
