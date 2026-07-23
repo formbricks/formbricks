@@ -12,10 +12,6 @@ on:
       # Add other secrets if necessary
   workflow_dispatch:
 
-# NOTE: no TURBO_TOKEN/TURBO_TEAM env — Turbo remote cache is not configured
-# (no backend), so these were inert. Re-add them if a Turbo cache backend is
-# set up later.
-
 permissions:
   contents: read
   actions: read
