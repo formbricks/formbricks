@@ -140,6 +140,49 @@ describe("deleteSurvey", () => {
     await expect(deleteSurvey(invalidSurveyId)).rejects.toThrow(validationError);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
+
+  test("skips the guarded delete when the survey was restored before the purge deletes it", async () => {
+    const cutoff = new Date("2026-07-01T00:00:00.000Z");
+    const queryRawMock = vi.fn().mockResolvedValue([]);
+    // archivedAt cleared -> restored between batch selection and delete.
+    const findUniqueMock = vi.fn().mockResolvedValue({ archivedAt: null });
+    const deleteMock = vi.fn();
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback({
+        $queryRaw: queryRawMock,
+        survey: { findUnique: findUniqueMock, delete: deleteMock },
+        segment: { delete: vi.fn() },
+      } as never)
+    );
+
+    await expect(deleteSurvey(surveyId, { requireArchivedBefore: cutoff })).rejects.toThrow(
+      ResourceNotFoundError
+    );
+    expect(queryRawMock).toHaveBeenCalled();
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  test("performs the guarded delete when the survey is still archived before the cutoff", async () => {
+    const cutoff = new Date("2026-07-01T00:00:00.000Z");
+    const queryRawMock = vi.fn().mockResolvedValue([]);
+    const findUniqueMock = vi.fn().mockResolvedValue({ archivedAt: new Date("2026-05-01T00:00:00.000Z") });
+    const deleteMock = vi.fn().mockResolvedValue(mockDeletedSurveyLink);
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback({
+        $queryRaw: queryRawMock,
+        survey: { findUnique: findUniqueMock, delete: deleteMock },
+        segment: { delete: vi.fn() },
+      } as never)
+    );
+
+    const result = await deleteSurvey(surveyId, { requireArchivedBefore: cutoff });
+
+    expect(queryRawMock).toHaveBeenCalled();
+    expect(deleteMock).toHaveBeenCalled();
+    expect(result).toEqual(mockDeletedSurveyLink);
+  });
 });
 
 describe("archiveSurvey", () => {
@@ -207,6 +250,18 @@ describe("archiveSurvey", () => {
 
     await expect(archiveSurvey(surveyId)).rejects.toThrow(ResourceNotFoundError);
   });
+
+  test("should map Prisma P2025 during archive to ResourceNotFoundError", async () => {
+    // A concurrent delete between findUnique and update raises P2025; match restoreSurvey's contract.
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
+      code: "P2025",
+      clientVersion: "4.0.0",
+    });
+    vi.mocked(prisma.$transaction).mockRejectedValue(prismaError);
+
+    await expect(archiveSurvey(surveyId)).rejects.toThrow(ResourceNotFoundError);
+    expect(logger.warn).toHaveBeenCalledWith({ surveyId }, "Survey not found during archive");
+  });
 });
 
 describe("restoreSurvey", () => {
@@ -238,5 +293,16 @@ describe("restoreSurvey", () => {
     vi.mocked(prisma.survey.update).mockRejectedValue(prismaError);
 
     await expect(restoreSurvey(surveyId)).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  test("should map a non-P2025 PrismaClientKnownRequestError during restore to DatabaseError", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Constraint failed", {
+      code: "P2003",
+      clientVersion: "4.0.0",
+    });
+    vi.mocked(prisma.survey.update).mockRejectedValue(prismaError);
+
+    await expect(restoreSurvey(surveyId)).rejects.toThrow(DatabaseError);
+    expect(logger.error).toHaveBeenCalledWith({ error: prismaError, surveyId }, "Error restoring survey");
   });
 });

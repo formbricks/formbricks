@@ -6,11 +6,33 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
-export const deleteSurvey = async (surveyId: string) => {
+/**
+ * Permanently deletes a survey and cascades private-segment cleanup.
+ *
+ * `options.requireArchivedBefore` guards the purge cron against a restore-vs-purge race: the survey
+ * row is locked FOR UPDATE and its `archivedAt` re-checked inside the same transaction as the delete,
+ * so a survey restored (archivedAt cleared) after the purge batch was selected is skipped rather than
+ * hard-deleted. When the guard fails the row is treated as gone (ResourceNotFoundError), never deleted.
+ */
+export const deleteSurvey = async (surveyId: string, options?: { requireArchivedBefore?: Date }) => {
   validateInputs([surveyId, ZId]);
 
   try {
     return await prisma.$transaction(async (tx) => {
+      if (options?.requireArchivedBefore) {
+        // Lock the row so a concurrent restore blocks until this transaction resolves, then re-read
+        // the current archivedAt. If the survey was restored (or moved out of the retention window),
+        // skip the delete entirely — do not permanently delete a survey that is no longer eligible.
+        await tx.$queryRaw`SELECT id FROM "Survey" WHERE id = ${surveyId} FOR UPDATE`;
+        const guard = await tx.survey.findUnique({
+          where: { id: surveyId },
+          select: { archivedAt: true },
+        });
+        if (!guard?.archivedAt || guard.archivedAt >= options.requireArchivedBefore) {
+          throw new ResourceNotFoundError("Survey", surveyId);
+        }
+      }
+
       const deletedSurvey = await tx.survey.delete({
         where: {
           id: surveyId,
@@ -91,6 +113,12 @@ export const archiveSurvey = async (surveyId: string) => {
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Match restoreSurvey's contract: a row deleted mid-transaction (P2025) is "not found", not a 500.
+      if (error.code === "P2025") {
+        logger.warn({ surveyId }, "Survey not found during archive");
+        throw new ResourceNotFoundError("Survey", surveyId);
+      }
+
       logger.error({ error, surveyId }, "Error archiving survey");
       throw new DatabaseError(error.message);
     }

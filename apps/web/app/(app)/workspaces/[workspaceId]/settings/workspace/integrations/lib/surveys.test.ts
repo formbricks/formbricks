@@ -109,6 +109,7 @@ describe("getSurveys", () => {
         status: {
           not: "completed",
         },
+        archivedAt: null,
       },
       select: selectSurvey,
       orderBy: {

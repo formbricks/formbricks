@@ -10,7 +10,7 @@ import { TSurveyListPage } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useRestoreSurvey } from "./use-restore-survey";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
   Wrapper.displayName = "UseRestoreSurveyTestWrapper";

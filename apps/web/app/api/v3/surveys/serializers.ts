@@ -224,6 +224,7 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     name: survey.name,
     type: survey.type,
     status: survey.status,
+    archivedAt: survey.archivedAt ? toIsoString(survey.archivedAt) : null,
     metadata: serializeMetadata(survey.metadata, defaultLanguage, languageCodes, {
       fallbackMissingTranslations: requestedLanguages.length > 0,
     }),

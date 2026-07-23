@@ -1,6 +1,5 @@
 import "server-only";
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
@@ -76,7 +75,9 @@ type TGetV3SurveyParams = {
   instance: string;
 };
 
-type TDeleteV3SurveyParams = {
+// Shared shape for the single-survey mutation operations (delete, archive, restore): all locate the
+// survey by its globally-unique id and enforce readWrite access + audit.
+type TV3SurveyMutationParams = {
   surveyId: string;
   authentication: TV3Authentication;
   requestId: string;
@@ -443,7 +444,7 @@ export async function deleteV3Survey({
   requestId,
   instance,
   auditLog,
-}: TDeleteV3SurveyParams): Promise<Response> {
+}: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
   try {
@@ -491,7 +492,7 @@ export async function archiveV3Survey({
   requestId,
   instance,
   auditLog,
-}: TDeleteV3SurveyParams): Promise<Response> {
+}: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
   try {
@@ -520,7 +521,11 @@ export async function archiveV3Survey({
       auditLog.newObject = archivedSurvey;
     }
 
-    return successResponse(archivedSurvey, { requestId, cache: "private, no-store" });
+    // Intentional lifecycle ack, not the full document resource: archive/restore operate on any
+    // survey (incl. legacy question-based ones that serializeV3SurveyResource rejects), so we return
+    // an explicit minimal shape rather than leaking the raw Prisma object or blocking those surveys.
+    const ack = { id: archivedSurvey.id, status: archivedSurvey.status, archivedAt: archivedSurvey.archivedAt };
+    return successResponse(ack, { requestId, cache: "private, no-store" });
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
@@ -543,7 +548,7 @@ export async function restoreV3Survey({
   requestId,
   instance,
   auditLog,
-}: TDeleteV3SurveyParams): Promise<Response> {
+}: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
   try {
@@ -572,7 +577,13 @@ export async function restoreV3Survey({
       auditLog.newObject = restoredSurvey;
     }
 
-    return successResponse(restoredSurvey, { requestId, cache: "private, no-store" });
+    // Intentional lifecycle ack (see archiveV3Survey) — explicit minimal shape, not the full resource.
+    const ack = {
+      id: restoredSurvey.id,
+      status: restoredSurvey.status,
+      archivedAt: restoredSurvey.archivedAt,
+    };
+    return successResponse(ack, { requestId, cache: "private, no-store" });
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
@@ -618,17 +629,15 @@ export async function patchV3SurveyResponse({
 
     // Archived surveys are read-only. Editing (esp. flipping status back to inProgress) would let an
     // archived survey collect responses while it is queued for permanent deletion. Require restore first.
-    const archiveState = await prisma.survey.findUnique({
-      where: { id: surveyId },
-      select: { archivedAt: true },
-    });
-    if (archiveState?.archivedAt) {
+    // archivedAt is already loaded on `survey` (selectSurvey includes it), so no extra query — and reading
+    // it from the same fetch the auth check used avoids a restore-between-reads TOCTOU.
+    if (survey.archivedAt) {
       log.warn({ statusCode: 422 }, "Attempted to patch an archived survey");
       return problemUnprocessableContent(requestId, "Survey is archived", {
         instance,
         invalid_params: [
           {
-            name: "survey",
+            name: "archivedAt",
             reason: "This survey is archived. Restore it before editing.",
           },
         ],
