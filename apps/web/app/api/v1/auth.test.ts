@@ -299,11 +299,12 @@ describe("handleErrorResponse", () => {
     expect(body.message).toBe("Action with name foo already exists");
   });
 
-  test("returns 400 badRequest for DatabaseError", async () => {
+  test("returns a generic 500 for DatabaseError without leaking the message", async () => {
     const response = handleErrorResponse(new DatabaseError("db boom"));
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(500);
     const body = await response.json();
-    expect(body.message).toBe("db boom");
+    expect(body.message).toBe("Something went wrong. Please try again.");
+    expect(JSON.stringify(body)).not.toContain("db boom");
   });
 
   test("returns 400 badRequest for InvalidInputError", async () => {
@@ -327,10 +328,10 @@ describe("handleErrorResponse", () => {
     });
   });
 
-  test("returns 500 internalServerError for unknown errors", async () => {
+  test("returns a generic 500 for unknown errors", async () => {
     const response = handleErrorResponse(new Error("something else"));
     expect(response.status).toBe(500);
     const body = await response.json();
-    expect(body.message).toBe("Some error occurred");
+    expect(body.message).toBe("Something went wrong. Please try again.");
   });
 });
