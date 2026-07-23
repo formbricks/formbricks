@@ -130,8 +130,10 @@ jobs:
 
       - name: Apply Prisma Migrations
         run: |
-          # pnpm prisma migrate deploy
-          pnpm db:migrate:dev
+          # @formbricks/database is already built by the "Build App" step above,
+          # so run the migration runner directly instead of db:migrate:dev
+          # (which would rebuild + re-generate the package unnecessarily).
+          pnpm --filter=@formbricks/database db:migrate:ci
 
       - name: Run Rate Limiter Load Tests
         run: |

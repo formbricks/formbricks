@@ -62,125 +62,214 @@ const resolvePrismaBin = async (): Promise<string> => {
   }
 };
 
+// Postgres error code for `undefined_table`. On a fresh database the
+// `_prisma_migrations` table does not exist yet, so the applied-migrations
+// lookup below is expected to fail with exactly this code. Depending on the
+// Prisma driver adapter, `42P01` surfaces in different places: directly on the
+// error's `code` (raw pg), nested under `meta.driverAdapterError.cause`
+// (Prisma wraps it as a generic `P2010`), or — as a last resort — in the
+// message. We check all three so a fresh DB is reliably recognised.
+const PG_UNDEFINED_TABLE = "42P01";
+
+const isUndefinedTableError = (error: unknown): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const err = error as {
+    code?: unknown;
+    meta?: { driverAdapterError?: { cause?: { originalCode?: unknown; kind?: unknown } } };
+    message?: unknown;
+  };
+
+  if (err.code === PG_UNDEFINED_TABLE) {
+    return true;
+  }
+
+  const cause = err.meta?.driverAdapterError?.cause;
+  if (cause?.originalCode === PG_UNDEFINED_TABLE || cause?.kind === "TableDoesNotExist") {
+    return true;
+  }
+
+  return typeof err.message === "string" && err.message.includes(PG_UNDEFINED_TABLE);
+};
+
+// Load the set of schema migrations already recorded as fully applied in
+// `_prisma_migrations`. We only ever read this once, before running anything:
+// `prisma migrate deploy` is idempotent, so a migration missing from this
+// snapshot simply gets (re)deployed, and re-applying an already-applied folder
+// is a no-op. The `finished_at IS NOT NULL` predicate excludes failed/partial
+// migrations so their batch is redeployed rather than silently skipped.
+const loadAppliedSchemaMigrations = async (): Promise<Set<string>> => {
+  try {
+    const rows: { migration_name: string }[] = await prisma.$queryRaw`
+      SELECT migration_name
+      FROM _prisma_migrations
+      WHERE finished_at IS NOT NULL
+    `;
+    return new Set(rows.map((row) => row.migration_name));
+  } catch (error: unknown) {
+    // Fresh database: `_prisma_migrations` doesn't exist yet. Treat as "nothing
+    // applied" and let the first `migrate deploy` create the table. Any other
+    // error is a real fault (e.g. connectivity) and must not be swallowed —
+    // otherwise we'd misread it as an empty DB and needlessly redeploy every
+    // migration.
+    if (isUndefinedTableError(error)) {
+      return new Set<string>();
+    }
+
+    logger.error(error, "Failed to load applied schema migrations");
+    throw error;
+  }
+};
+
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`Starting migrations: ${migrations.length.toString()} to run`);
   const startTime = Date.now();
 
   // packages/database/migration is the source of truth (checked in). We copy
-  // each migration into packages/database/migrations on demand for
+  // each schema migration into packages/database/migrations on demand for
   // `prisma migrate deploy`, then wipe between runs so stale or experimental
   // migrations from a previous local invocation can't influence this one.
   await fs.rm(PRISMA_MIGRATIONS_DIR, { recursive: true, force: true });
   await fs.mkdir(PRISMA_MIGRATIONS_DIR, { recursive: true });
 
-  for (let index = 0; index < migrations.length; index++) {
-    await runSingleMigration(migrations[index], index);
+  const appliedSchemaMigrations = await loadAppliedSchemaMigrations();
+
+  // Data and schema migrations are interleaved by timestamp and must run in
+  // that exact order. But `prisma migrate deploy` applies every pending
+  // migration in the migrations directory in one shot, so we can collapse a
+  // run of *consecutive* schema migrations into a single deploy call instead of
+  // spawning the Prisma CLI once per migration (which dominated runtime on
+  // empty DBs). We flush the accumulated schema batch right before each data
+  // migration — and once more at the end — which preserves ordering exactly:
+  // consecutive schema migrations are, by definition, not separated by a data
+  // migration, so batching them cannot reorder anything.
+  let schemaBatch: MigrationScript[] = [];
+
+  const flushSchemaBatch = async (): Promise<void> => {
+    if (schemaBatch.length === 0) {
+      return;
+    }
+
+    await runSchemaMigrationBatch(schemaBatch, appliedSchemaMigrations);
+    schemaBatch = [];
+  };
+
+  for (const migration of migrations) {
+    if (migration.type === "schema") {
+      schemaBatch.push(migration);
+    } else {
+      await flushSchemaBatch();
+      await runDataMigration(migration);
+    }
   }
+
+  await flushSchemaBatch();
 
   const endTime = Date.now();
   logger.info(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
 };
 
-const runSingleMigration = async (migration: MigrationScript, index: number): Promise<void> => {
-  if (migration.type === "data") {
-    let hasLock = false;
-    logger.info(`Running data migration: ${migration.name}`);
+const runDataMigration = async (migration: MigrationScript): Promise<void> => {
+  let hasLock = false;
+  logger.info(`Running data migration: ${migration.name}`);
 
-    try {
-      await prisma.$transaction(
-        async (tx) => {
-          // Check if migration has already been run
-          const existingMigration: { status: "pending" | "applied" | "failed" }[] | undefined =
-            await prisma.$queryRaw`
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        // Check if migration has already been run
+        const existingMigration: { status: "pending" | "applied" | "failed" }[] | undefined =
+          await prisma.$queryRaw`
             SELECT status FROM "DataMigration"
             WHERE id = ${migration.id}
           `;
 
-          if (existingMigration?.[0]?.status === "pending") {
-            logger.info(`Data migration ${migration.name} is pending.`);
-            logger.info("Either there is another migration which is currently running or this is an error.");
-            logger.info(
-              "If you are sure that there is no migration running, you need to manually resolve the issue."
-            );
+        if (existingMigration?.[0]?.status === "pending") {
+          logger.info(`Data migration ${migration.name} is pending.`);
+          logger.info("Either there is another migration which is currently running or this is an error.");
+          logger.info(
+            "If you are sure that there is no migration running, you need to manually resolve the issue."
+          );
 
-            throw new Error("Migration is pending. Please resolve the issue manually.");
-          }
+          throw new Error("Migration is pending. Please resolve the issue manually.");
+        }
 
-          if (existingMigration?.[0]?.status === "applied") {
-            logger.info(`Data migration ${migration.name} already completed. Skipping...`);
-            return;
-          }
+        if (existingMigration?.[0]?.status === "applied") {
+          logger.info(`Data migration ${migration.name} already completed. Skipping...`);
+          return;
+        }
 
-          if (existingMigration?.[0]?.status === "failed") {
-            logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
-          } else {
-            // create a new data migration entry with pending status
-            await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
-            hasLock = true;
-          }
+        if (existingMigration?.[0]?.status === "failed") {
+          logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
+        } else {
+          // create a new data migration entry with pending status
+          await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
+          hasLock = true;
+        }
 
-          if (migration.run) {
-            // Run the actual migration
-            await migration.run({
-              prisma,
-              tx,
-            });
+        if (migration.run) {
+          // Run the actual migration
+          await migration.run({
+            prisma,
+            tx,
+          });
 
-            // Mark migration as applied
-            await prisma.$executeRaw`
+          // Mark migration as applied
+          await prisma.$executeRaw`
               UPDATE "DataMigration"
               SET status = 'applied', finished_at = ${new Date()}
               WHERE id = ${migration.id};
             `;
-          }
+        }
 
-          logger.info(`Data migration ${migration.name} completed successfully`);
-        },
-        { timeout: TRANSACTION_TIMEOUT }
-      );
-    } catch (error) {
-      // Record migration failure
-      logger.error(error, `Data migration ${migration.name} failed`);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- we need to check if the migration has a lock
-      if (hasLock) {
-        // Mark migration as failed
-        await prisma.$queryRaw`
+        logger.info(`Data migration ${migration.name} completed successfully`);
+      },
+      { timeout: TRANSACTION_TIMEOUT }
+    );
+  } catch (error) {
+    // Record migration failure
+    logger.error(error, `Data migration ${migration.name} failed`);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- we need to check if the migration has a lock
+    if (hasLock) {
+      // Mark migration as failed
+      await prisma.$queryRaw`
           INSERT INTO "DataMigration" (id, name, status)
         VALUES (${migration.id}, ${migration.name}, 'failed')
           ON CONFLICT (id) DO UPDATE SET status = 'failed';
         `;
-      }
-
-      throw error;
     }
-  } else {
-    try {
-      logger.info(`Running schema migration: ${migration.name}`);
 
-      let copyOnly = false;
+    throw error;
+  }
+};
 
-      if (index > 0) {
-        const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
+// Applies a contiguous run of schema migrations with a single
+// `prisma migrate deploy` call. `prisma migrate deploy` scans the whole
+// migrations directory, applies every pending migration in timestamp order and
+// skips ones already recorded in `_prisma_migrations`, so one call per batch is
+// equivalent to (but far cheaper than) one call per migration.
+const runSchemaMigrationBatch = async (
+  batch: MigrationScript[],
+  appliedSchemaMigrations: Set<string>
+): Promise<void> => {
+  if (batch.length === 0) {
+    return;
+  }
 
-        if (isApplied) {
-          // schema migration is already applied, we can just copy the migration to the original migrations directory
-          copyOnly = true;
-        }
-      }
+  const batchNames = batch.map((migration) => migration.name);
+  logger.info(`Running schema migration batch (${batch.length.toString()}): ${batchNames.join(", ")}`);
 
-      const originalMigrationsDirExists = await fs
-        .access(PRISMA_MIGRATIONS_DIR)
-        .then(() => true)
-        .catch(() => false);
+  try {
+    const sourceDirs = await fs.readdir(MIGRATIONS_DIR);
 
-      if (!originalMigrationsDirExists) {
-        await fs.mkdir(PRISMA_MIGRATIONS_DIR, { recursive: true });
-      }
-
-      // Copy specific schema migration from temp migrations directory to original migrations directory
-      const migrationToCopy = await fs
-        .readdir(MIGRATIONS_DIR)
-        .then((files) => files.find((dir) => dir.includes(migration.name)));
+    // Always copy every folder in the batch into the scratch migrations dir —
+    // even the already-applied ones. A later batch's `migrate deploy` runs
+    // against this accumulated directory, and Prisma treats a migration recorded
+    // in `_prisma_migrations` but missing from the directory as a divergence
+    // error. So the directory must always mirror the applied history.
+    for (const migration of batch) {
+      const migrationToCopy = sourceDirs.find((dir) => dir.includes(migration.name));
 
       if (!migrationToCopy) {
         logger.error(`Schema migration not found: ${migration.name}`);
@@ -189,30 +278,34 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
 
       const sourcePath = path.join(MIGRATIONS_DIR, migrationToCopy);
       const destPath = path.join(PRISMA_MIGRATIONS_DIR, migrationToCopy);
-
-      // Copy migration folder
       await fs.cp(sourcePath, destPath, { recursive: true });
-
-      if (copyOnly) {
-        logger.info(`Schema migration ${migration.name} copied to migrations directory`);
-        return;
-      }
-
-      // Run Prisma migrate. Throws when migrate deploy fails.
-      // We pin DATABASE_URL on the child env to the same URL the in-process
-      // PrismaClient resolved above. prisma.config.mjs always reads
-      // env("DATABASE_URL"), so this is how MIGRATE_DATABASE_URL reaches the
-      // subprocess without leaking into the parent's env.
-      const prismaBin = await resolvePrismaBin();
-      await execFileAsync(prismaBin, ["migrate", "deploy", "--config", PRISMA_CONFIG_PATH], {
-        cwd: REPO_ROOT_DIR,
-        env: { ...process.env, DATABASE_URL: migrationDatabaseUrl },
-      });
-      logger.info(`Successfully applied schema migration: ${migration.name}`);
-    } catch (err) {
-      logger.error(err, `Schema migration ${migration.name} failed`);
-      throw err;
     }
+
+    // If every migration in this batch is already applied there is nothing to
+    // deploy — the copy above is enough to keep the directory consistent for
+    // later batches. This keeps steady-state runs (e.g. a fully-migrated
+    // production container restart) from spawning the Prisma CLI at all.
+    const allApplied = batch.every((migration) => appliedSchemaMigrations.has(migration.name));
+
+    if (allApplied) {
+      logger.info(`Schema migration batch already applied; copied ${batch.length.toString()} migration(s)`);
+      return;
+    }
+
+    // Run Prisma migrate. Throws when migrate deploy fails.
+    // We pin DATABASE_URL on the child env to the same URL the in-process
+    // PrismaClient resolved above. prisma.config.mjs always reads
+    // env("DATABASE_URL"), so this is how MIGRATE_DATABASE_URL reaches the
+    // subprocess without leaking into the parent's env.
+    const prismaBin = await resolvePrismaBin();
+    await execFileAsync(prismaBin, ["migrate", "deploy", "--config", PRISMA_CONFIG_PATH], {
+      cwd: REPO_ROOT_DIR,
+      env: { ...process.env, DATABASE_URL: migrationDatabaseUrl },
+    });
+    logger.info(`Successfully applied schema migration batch (${batch.length.toString()})`);
+  } catch (err) {
+    logger.error(err, `Schema migration batch failed: ${batchNames.join(", ")}`);
+    throw err;
   }
 };
 
@@ -328,21 +421,5 @@ export async function applyMigrations(): Promise<void> {
     await runMigrations(allMigrations);
   } finally {
     await prisma.$disconnect();
-  }
-}
-
-async function isSchemaMigrationApplied(migrationName: string, prismaClient: PrismaClient): Promise<boolean> {
-  try {
-    const applied: unknown[] = await prismaClient.$queryRaw`
-         SELECT 1
-         FROM _prisma_migrations
-         WHERE migration_name = ${migrationName}
-           AND finished_at IS NOT NULL
-         LIMIT 1;
-       `;
-    return applied.length > 0;
-  } catch (error: unknown) {
-    logger.error(error, `Failed to check migration status`);
-    throw new Error(`Could not verify migration status: ${error as string}`);
   }
 }
