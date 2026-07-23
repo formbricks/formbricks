@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
@@ -54,6 +55,7 @@ export const OptionIds = (props: OptionIdsProps) => {
                       style={{ objectFit: "cover" }}
                       quality={75}
                       className="rounded-lg transition-opacity duration-200"
+                      unoptimized={isExternalImageSrc(imageUrl)}
                     />
                   </div>
                   <IdBadge id={choice.id} />
