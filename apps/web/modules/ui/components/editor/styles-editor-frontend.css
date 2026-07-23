@@ -55,6 +55,24 @@
   list-style-type: none !important;
 }
 
+/*
+ * Nesting advances by exactly one moderate step per level: the structural wrapper <li> that
+ * Lexical puts around a nested list must not add its own horizontal offset (it also carries
+ * .fb-editor-listitem and its 32px margin), and the nested list itself indents 1.5em.
+ */
+.fb-editor-listitem.fb-editor-nested-listitem {
+  margin-inline: 0 !important;
+  padding-inline-start: 0 !important;
+}
+
+.fb-editor-list-ul .fb-editor-list-ul,
+.fb-editor-list-ul .fb-editor-list-ol,
+.fb-editor-list-ol .fb-editor-list-ul,
+.fb-editor-list-ol .fb-editor-list-ol {
+  margin-block: 0 !important;
+  padding-inline-start: 1.5em !important;
+}
+
 .fb-editor-rtl {
   text-align: right !important;
 }
