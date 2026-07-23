@@ -8,6 +8,8 @@ import {
   canMutateCanvasAtom,
   closeWorkflowNodeConfigModalAtom,
   deleteWorkflowNodeAtom,
+  deriveTriggerEndingProblems,
+  deriveWorkflowValidation,
   hasBoundTriggerSurveyAtom,
   hydrateWorkflowEditorAtom,
   insertSendEmailAfterEdgeAtom,
@@ -35,6 +37,7 @@ import {
   workflowDescriptionAtom,
   workflowFlowNodesAtom,
   workflowNameAtom,
+  workflowValidationProblemsAtom,
   workflowValidityAtom,
 } from "./editor";
 
@@ -588,5 +591,203 @@ describe("workflowValidityAtom", () => {
     store.set(hydrateWorkflowEditorAtom, { workflow: triggerless, flowNodes: [] });
 
     expect(store.get(workflowValidityAtom).isDefinitionExecutable).toBe(false);
+  });
+});
+
+describe("workflowValidationProblemsAtom", () => {
+  const executableEmailNode = () => ({
+    id: "email-1",
+    type: "action",
+    actionType: "send_email",
+    config: {
+      to: "jane@example.com",
+      from: "noreply@example.com",
+      replyTo: [],
+      subject: "Thanks",
+      body: "Thanks for your response.",
+      attachResponseData: false,
+    },
+  });
+
+  const executableDefinition = (overrides: Partial<TWorkflowDefinition> = {}) =>
+    ({
+      schemaVersion: 1,
+      trigger: {
+        id: "trigger-1",
+        type: "trigger",
+        triggerType: "response.completed",
+        config: { surveyId: "cm9zr4mps000008l8btfy1vtz", endingCardIds: [] },
+      },
+      nodes: [executableEmailNode()],
+      edges: [{ id: "e1", source: "trigger-1", target: "email-1" }],
+      entryNodeId: "trigger-1",
+      ...overrides,
+    }) as unknown as TWorkflowDefinition;
+
+  const hydrate = (store: ReturnType<typeof createStore>, definition: TWorkflowDefinition) => {
+    store.set(hydrateWorkflowEditorAtom, {
+      workflow: { ...workflow, definition } as unknown as TWorkflowResource,
+      flowNodes: [],
+    });
+  };
+
+  test("a ready workflow has no problems (empty exactly when workflowValidityAtom is ready)", () => {
+    const store = createStore();
+    hydrate(store, executableDefinition());
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([]);
+    expect(store.get(workflowValidityAtom).isReady).toBe(true);
+  });
+
+  test("an empty name yields name_missing", () => {
+    const store = createStore();
+    hydrate(store, executableDefinition());
+    store.set(setWorkflowNameAtom, "   ");
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([{ code: "name_missing", field: "name" }]);
+    expect(store.get(workflowValidityAtom).isReady).toBe(false);
+  });
+
+  test("an unresolved trigger survey yields trigger_survey_unbound", () => {
+    const store = createStore();
+    hydrate(store, executableDefinition());
+    store.set(hasBoundTriggerSurveyAtom, false);
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([
+      { code: "trigger_survey_unbound", field: "trigger.config.surveyId" },
+    ]);
+  });
+
+  test("a trigger-less draft collapses into exactly one trigger_missing", () => {
+    const store = createStore();
+    hydrate(store, executableDefinition({ trigger: null, nodes: [], edges: [], entryNodeId: null }));
+    // The builder page reports the survey unbound while there is no trigger; trigger_missing
+    // already says everything, so no trigger_survey_unbound problem should pile on.
+    store.set(hasBoundTriggerSurveyAtom, false);
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([
+      { code: "trigger_missing", field: "trigger" },
+    ]);
+    expect(store.get(workflowValidityAtom).isReady).toBe(false);
+  });
+
+  test("a trigger without a next step yields trigger_not_connected", () => {
+    const store = createStore();
+    hydrate(store, executableDefinition({ nodes: [], edges: [] }));
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([
+      { code: "trigger_not_connected", field: "edges" },
+    ]);
+  });
+
+  test("empty send_email content collapses into one step_incomplete per step", () => {
+    const store = createStore();
+    const emptyEmail = executableEmailNode();
+    emptyEmail.config = { ...emptyEmail.config, to: "", subject: "", body: "" };
+    hydrate(store, executableDefinition({ nodes: [emptyEmail] } as Partial<TWorkflowDefinition>));
+
+    // Three empty fields (to/subject/body) count as one unfinished step, not three errors.
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([
+      { code: "step_incomplete", field: "nodes.0.config" },
+    ]);
+  });
+
+  test("a cycle yields flow_invalid", () => {
+    const store = createStore();
+    const secondEmail = { ...executableEmailNode(), id: "email-2" };
+    hydrate(
+      store,
+      executableDefinition({
+        nodes: [executableEmailNode(), secondEmail],
+        edges: [
+          { id: "e1", source: "trigger-1", target: "email-1" },
+          { id: "e2", source: "email-1", target: "email-2" },
+          { id: "e3", source: "email-2", target: "email-1" },
+        ],
+      } as Partial<TWorkflowDefinition>)
+    );
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([{ code: "flow_invalid", field: "edges" }]);
+  });
+
+  test("an if_else step yields step_not_executable plus one flow_invalid for its missing branches", () => {
+    const store = createStore();
+    const ifElseNode = {
+      id: "ifelse-1",
+      type: "if_else",
+      config: {
+        condition: {
+          id: "group-1",
+          connector: "and",
+          conditions: [{ id: "c1", left: { path: "response.email" }, operator: "exists" }],
+        },
+      },
+    };
+    hydrate(
+      store,
+      executableDefinition({
+        nodes: [ifElseNode],
+        edges: [{ id: "e1", source: "trigger-1", target: "ifelse-1" }],
+      } as Partial<TWorkflowDefinition>)
+    );
+
+    const problems = store.get(workflowValidationProblemsAtom);
+    expect(problems).toHaveLength(2);
+    expect(problems).toContainEqual({ code: "step_not_executable", field: "nodes.0.type" });
+    expect(problems).toContainEqual({ code: "flow_invalid", field: "edges" });
+    expect(store.get(workflowValidityAtom).isReady).toBe(false);
+  });
+
+  test("independent problems accumulate, so the count matches what the user must fix", () => {
+    const store = createStore();
+    hydrate(store, executableDefinition());
+    store.set(setWorkflowNameAtom, "");
+    store.set(hasBoundTriggerSurveyAtom, false);
+
+    expect(store.get(workflowValidationProblemsAtom).map((problem) => problem.code)).toEqual([
+      "name_missing",
+      "trigger_survey_unbound",
+    ]);
+  });
+});
+
+describe("deriveWorkflowValidation", () => {
+  test("without a definition (editor not hydrated) only the name is checked and isReady stays false", () => {
+    const unnamed = deriveWorkflowValidation({
+      workflowName: "",
+      definition: null,
+      hasBoundTriggerSurvey: true,
+    });
+    expect(unnamed.problems).toEqual([{ code: "name_missing", field: "name" }]);
+    expect(unnamed.validity.isReady).toBe(false);
+
+    // An empty problem list is NOT readiness while unhydrated: isReady is structurally
+    // "definition present AND nothing to fix", so the two can never disagree once hydrated.
+    const named = deriveWorkflowValidation({
+      workflowName: "n",
+      definition: null,
+      hasBoundTriggerSurvey: false,
+    });
+    expect(named.problems).toEqual([]);
+    expect(named.validity).toEqual({
+      isNameValid: true,
+      isDefinitionExecutable: false,
+      hasBoundTriggerSurvey: false,
+      isReady: false,
+    });
+  });
+});
+
+describe("deriveTriggerEndingProblems", () => {
+  test("no problem while every configured ending still exists (or none are configured)", () => {
+    expect(deriveTriggerEndingProblems(["end-1", "end-2"], ["end-1", "end-2", "end-3"])).toEqual([]);
+    // Empty endingCardIds = "all endings" mode; nothing to go stale.
+    expect(deriveTriggerEndingProblems([], [])).toEqual([]);
+  });
+
+  test("stale endings collapse into one trigger_ending_not_found problem", () => {
+    expect(deriveTriggerEndingProblems(["end-1", "gone-1", "gone-2"], ["end-1"])).toEqual([
+      { code: "trigger_ending_not_found", field: "trigger.config.endingCardIds" },
+    ]);
   });
 });

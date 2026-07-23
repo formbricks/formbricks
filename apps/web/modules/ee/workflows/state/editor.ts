@@ -140,28 +140,188 @@ export type TWorkflowValidity = {
   isDefinitionExecutable: boolean;
   /** The trigger's surveyId resolves to a real survey (see hasBoundTriggerSurveyAtom). */
   hasBoundTriggerSurvey: boolean;
-  /** Everything above holds; the workflow would pass the server's enable/test pre-flight. */
+  /**
+   * The editor is hydrated and the derived problem list is empty. Matches the server's enable
+   * pre-flight except its ending-cards check, which needs server data (see the component-level
+   * merge in WorkflowValidationStatus) — the server still rejects enable on stale endings.
+   */
   isReady: boolean;
 };
 
-// Live whole-workflow validity, recomputed on every draft edit. Mirrors the server's enable/test
-// checks (ZWorkflowExecutableDefinition plus the survey binding) so the editor can flag an
-// unready workflow immediately instead of after a round-trip.
-export const workflowValidityAtom = atom<TWorkflowValidity>((get) => {
-  const state = get(workflowEditorAtom);
-  const hasBoundTriggerSurvey = get(hasBoundTriggerSurveyAtom);
-  const isNameValid = state.workflowName.trim().length > 0;
-  const isDefinitionExecutable = state.definition
-    ? ZWorkflowExecutableDefinition.safeParse(state.definition).success
-    : false;
+export type TWorkflowValidationProblemCode =
+  | "name_missing"
+  | "trigger_missing"
+  | "trigger_survey_unbound"
+  | "trigger_ending_not_found"
+  | "trigger_not_connected"
+  | "flow_invalid"
+  | "step_not_executable"
+  | "step_incomplete"
+  | "definition_invalid";
+
+export type TWorkflowValidationProblem = {
+  /** Machine-readable category the problems dialog localizes per code. */
+  code: TWorkflowValidationProblemCode;
+  /** Dotted path into the definition (or "name"), mirroring the server's test-problem fields. */
+  field: string;
+};
+
+// Buckets one ZWorkflowExecutableDefinition issue by its path. Total: every issue maps to some
+// code (worst case the generic fallback), so a failed parse always yields at least one problem
+// and the problem list can never read "valid" while workflowValidityAtom says not executable.
+const categorizeDefinitionIssue = (
+  issuePath: ReadonlyArray<PropertyKey>,
+  context: { hasTrigger: boolean; isTriggerConnected: boolean }
+): TWorkflowValidationProblem => {
+  const path = issuePath.map(String);
+  const field = path.join(".") || "definition";
+  const [root, , third] = path;
+
+  if (root === "trigger" || root === "entryNodeId") {
+    // Without a trigger both fields fail together; normalizing the field collapses them into a
+    // single "add a trigger" problem. With a trigger present this is an unexpected shape issue.
+    return context.hasTrigger
+      ? { code: "definition_invalid", field }
+      : { code: "trigger_missing", field: "trigger" };
+  }
+
+  if (root === "edges") {
+    // Several rules report at the bare `edges` path: the exactly-one-trigger-edge check, the
+    // if_else then/else branch counts, and the acyclic check. While the trigger has no outgoing
+    // edge they are all attributed to the unconnected trigger — a known conflation, but a bounded
+    // one: the editor cannot author branch/cycle failures in that state, and the API-authored
+    // definitions that can also carry companion problems (step_not_executable, unreachable
+    // nodes) that keep the count honest until the trigger is connected and these resurface as
+    // flow_invalid.
+    if (path.length === 1 && !context.isTriggerConnected) {
+      return { code: "trigger_not_connected", field };
+    }
+    return { code: "flow_invalid", field };
+  }
+
+  if (root === "nodes") {
+    if (path.length === 1) {
+      // Unreachable or duplicated nodes — the graph shape is broken.
+      return { code: "flow_invalid", field };
+    }
+    if (third === "type") {
+      // if_else nodes persist fine but cannot run in this version of workflows.
+      return { code: "step_not_executable", field };
+    }
+    if (third === "config") {
+      // Missing required content (send_email to/subject/body). Grouped per step, not per empty
+      // field, so the badge count matches what the user perceives as one unfinished step.
+      return { code: "step_incomplete", field: path.slice(0, 3).join(".") };
+    }
+  }
+
+  return { code: "definition_invalid", field };
+};
+
+export type TWorkflowValidation = {
+  problems: TWorkflowValidationProblem[];
+  validity: TWorkflowValidity;
+};
+
+/**
+ * The single implementation of the editor's live readiness rules (name, survey binding,
+ * executable-subset schema): one safeParse produces both the typed problem list the canvas
+ * status indicator counts and the boolean validity the header's Enable gate reads. `isReady`
+ * is defined AS "hydrated with an empty problem list", so the two views can never disagree.
+ */
+export const deriveWorkflowValidation = ({
+  workflowName,
+  definition,
+  hasBoundTriggerSurvey,
+}: {
+  workflowName: string;
+  definition: TWorkflowDefinition | null;
+  hasBoundTriggerSurvey: boolean;
+}): TWorkflowValidation => {
+  const problems: TWorkflowValidationProblem[] = [];
+
+  const isNameValid = workflowName.trim().length > 0;
+  if (!isNameValid) {
+    problems.push({ code: "name_missing", field: "name" });
+  }
+
+  // No definition means the editor isn't hydrated yet; there is nothing to validate (the status
+  // indicator doesn't render before hydration either) and the workflow cannot be ready.
+  let isDefinitionExecutable = false;
+  if (definition) {
+    const hasTrigger = definition.trigger !== null;
+    // The survey binding is only meaningful once a trigger exists — for trigger-less drafts the
+    // builder page reports it unbound, but `trigger_missing` already says everything.
+    if (hasTrigger && !hasBoundTriggerSurvey) {
+      problems.push({ code: "trigger_survey_unbound", field: "trigger.config.surveyId" });
+    }
+
+    const parsed = ZWorkflowExecutableDefinition.safeParse(definition);
+    isDefinitionExecutable = parsed.success;
+    if (!parsed.success) {
+      const isTriggerConnected = definition.edges.some((edge) => edge.source === definition.trigger?.id);
+      for (const issue of parsed.error.issues) {
+        problems.push(categorizeDefinitionIssue(issue.path, { hasTrigger, isTriggerConnected }));
+      }
+    }
+  }
+
+  // Categorization intentionally funnels related issues into one bucket (e.g. a missing trigger,
+  // a step's empty fields); dropping the duplicates keeps the badge count honest.
+  const seen = new Set<string>();
+  const dedupedProblems = problems.filter((problem) => {
+    const key = `${problem.code}:${problem.field}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   return {
-    isNameValid,
-    isDefinitionExecutable,
-    hasBoundTriggerSurvey,
-    isReady: isNameValid && isDefinitionExecutable && hasBoundTriggerSurvey,
+    problems: dedupedProblems,
+    validity: {
+      isNameValid,
+      isDefinitionExecutable,
+      hasBoundTriggerSurvey,
+      isReady: definition !== null && dedupedProblems.length === 0,
+    },
   };
+};
+
+/**
+ * The one readiness rule that needs server data: whether the trigger's configured ending cards
+ * still exist on the bound survey. Server data lives in the TanStack Query cache (never mirrored
+ * into Jotai), so WorkflowValidationStatus merges this at the component level instead of inside
+ * workflowValidationProblemsAtom — meaning workflowValidityAtom.isReady (the header's Enable
+ * gate) deliberately does not include it; the server's enable pre-flight still rejects stale
+ * endings. Grouped like step_incomplete: however many endings went stale, it is one problem.
+ */
+export const deriveTriggerEndingProblems = (
+  endingCardIds: readonly string[],
+  availableEndingIds: readonly string[]
+): TWorkflowValidationProblem[] => {
+  const available = new Set(availableEndingIds);
+  const hasMissingEnding = endingCardIds.some((endingCardId) => !available.has(endingCardId));
+  return hasMissingEnding
+    ? [{ code: "trigger_ending_not_found", field: "trigger.config.endingCardIds" }]
+    : [];
+};
+
+// Live validation, recomputed on every draft edit. Mirrors the server's enable/test checks
+// (ZWorkflowExecutableDefinition plus the survey binding) so the editor can flag an unready
+// workflow immediately instead of after a round-trip. Private: consumers read the slices below.
+const workflowValidationAtom = atom<TWorkflowValidation>((get) => {
+  const state = get(workflowEditorAtom);
+  return deriveWorkflowValidation({
+    workflowName: state.workflowName,
+    definition: state.definition,
+    hasBoundTriggerSurvey: get(hasBoundTriggerSurveyAtom),
+  });
 });
+
+export const workflowValidityAtom = atom((get) => get(workflowValidationAtom).validity);
+
+// The problem list behind the canvas's validation status indicator and its dialog.
+export const workflowValidationProblemsAtom = atom((get) => get(workflowValidationAtom).problems);
 
 // Locked = pan mode (pan/browse; nodes are inert), unlocked = pointer mode (select/inspect,
 // edit when status/permissions allow). Pointer is the default tool and the toggle is purely
