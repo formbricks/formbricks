@@ -19,7 +19,11 @@ type McpMutationExtra = { authInfo?: AuthInfo };
  */
 export async function runMcpMutation(
   extra: McpMutationExtra,
-  opts: {
+  {
+    action,
+    resource,
+    logContext = {},
+  }: {
     action: Parameters<typeof buildV3AuditLog>[1];
     resource: Parameters<typeof buildV3AuditLog>[2];
     logContext?: Record<string, unknown>;
@@ -32,8 +36,8 @@ export async function runMcpMutation(
 ): Promise<CallToolResult> {
   const requestId = getMcpRequestId(extra.authInfo);
   const authentication = getMcpAuthentication(extra.authInfo);
-  const log = logger.withContext({ requestId, ...(opts.logContext ?? {}) });
-  const auditLog = buildV3AuditLog(authentication, opts.action, opts.resource, MCP_API_ROUTE);
+  const log = logger.withContext({ requestId, ...logContext });
+  const auditLog = buildV3AuditLog(authentication, action, resource, MCP_API_ROUTE);
 
   try {
     const response = await run({ authentication, requestId, auditLog });
