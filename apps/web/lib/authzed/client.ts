@@ -10,10 +10,17 @@ export type TAuthzedSchema = Readonly<{
   schemaText: string;
 }>;
 
+export type TAuthzedSchemaDiff = Readonly<{
+  differenceCount: number;
+  differenceKinds: Readonly<Record<string, number>>;
+}>;
+
 export type TAuthzedClient = Readonly<{
   consistency: TAuthzedConsistency;
+  diffSchema: (schemaText: string) => Promise<TAuthzedSchemaDiff>;
   readSchema: () => Promise<TAuthzedSchema>;
   systemKey: string;
+  writeSchema: (schemaText: string) => Promise<void>;
 }>;
 
 type TAuthzedClientSingleton = Readonly<{
@@ -38,6 +45,36 @@ type TAuthzedConfig =
 
 const globalForAuthzed = globalThis as unknown as {
   formbricksAuthzedClient: TAuthzedClientSingleton | undefined;
+};
+
+const STABLE_SCHEMA_DIFF_KINDS = {
+  caveatAdded: "caveat_added",
+  caveatDocCommentChanged: "caveat_doc_comment_changed",
+  caveatExprChanged: "caveat_expr_changed",
+  caveatParameterAdded: "caveat_parameter_added",
+  caveatParameterRemoved: "caveat_parameter_removed",
+  caveatParameterTypeChanged: "caveat_parameter_type_changed",
+  caveatRemoved: "caveat_removed",
+  definitionAdded: "definition_added",
+  definitionDocCommentChanged: "definition_doc_comment_changed",
+  definitionRemoved: "definition_removed",
+  permissionAdded: "permission_added",
+  permissionDocCommentChanged: "permission_doc_comment_changed",
+  permissionExprChanged: "permission_expr_changed",
+  permissionRemoved: "permission_removed",
+  relationAdded: "relation_added",
+  relationDocCommentChanged: "relation_doc_comment_changed",
+  relationRemoved: "relation_removed",
+  relationSubjectTypeAdded: "relation_subject_type_added",
+  relationSubjectTypeRemoved: "relation_subject_type_removed",
+} as const;
+
+const toStableDiffKind = (kind: string | undefined): string => {
+  if (!kind || !Object.hasOwn(STABLE_SCHEMA_DIFF_KINDS, kind)) {
+    return "unknown";
+  }
+
+  return STABLE_SCHEMA_DIFF_KINDS[kind as keyof typeof STABLE_SCHEMA_DIFF_KINDS];
 };
 
 const getAuthzedConfig = (): TAuthzedConfig => {
@@ -85,6 +122,27 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
 
   const facade = Object.freeze<TAuthzedClient>({
     consistency: config.consistency,
+    diffSchema: async (schemaText) =>
+      executeAuthzedOperation("diff_schema", async () => {
+        const response = await sdkClient.promises.diffSchema({
+          comparisonSchema: schemaText,
+          // Operational schema checks must observe the latest write. The application's configurable
+          // permission-check consistency is intentionally not used for deployment verification.
+          consistency: {
+            requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" },
+          },
+        });
+        const differenceKinds = response.diffs.reduce<Record<string, number>>((counts, difference) => {
+          const kind = toStableDiffKind(difference.diff.oneofKind);
+          counts[kind] = (counts[kind] ?? 0) + 1;
+          return counts;
+        }, {});
+
+        return {
+          differenceCount: response.diffs.length,
+          differenceKinds: Object.freeze(differenceKinds),
+        };
+      }),
     readSchema: async () => {
       const schemaText = await executeAuthzedOperation("read_schema", async () => {
         try {
@@ -103,6 +161,13 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
       return { schemaText };
     },
     systemKey: config.systemKey,
+    // Repeating WriteSchema with the exact same schema is idempotent. Keep this explicit so future
+    // relationship writes cannot inherit retries accidentally.
+    writeSchema: async (schemaText) => {
+      await executeAuthzedOperation("write_schema", async () => {
+        await sdkClient.promises.writeSchema({ schema: schemaText });
+      });
+    },
   });
 
   return {

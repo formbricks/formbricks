@@ -1,6 +1,0 @@
-definition user {}
-
-definition document {
-  relation reader: user
-  permission view = reader
-}

@@ -49,6 +49,9 @@ jobs:
       - name: Build web workspace dependencies
         run: pnpm build --filter=@formbricks/web^...
 
+      - name: Test AuthZed client and schema lifecycle
+        run: pnpm --dir apps/web test lib/authzed
+
       - name: Validate Compose contracts
         run: bash docker/authzed-compose-contract.sh
 

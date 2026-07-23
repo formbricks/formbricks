@@ -75,7 +75,7 @@ services:
     profiles: ["authzed-tools"]
     entrypoint: ["zed"]
     volumes:
-      - ./docker/authzed-smoke-schema.zed:/schema.zed:ro
+      - ./authzed/schema.zed:/schema.zed:ro
 
   authzed-ui:
     image: ${GRPCUI_IMAGE_REF:-fullstorydev/grpcui:v1.5.2}

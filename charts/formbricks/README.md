@@ -152,6 +152,19 @@ endpoint; plaintext transport sends the preshared token without TLS protection. 
 the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
 Formbricks readiness remains independent from transient SpiceDB availability.
 
+The chart deliberately does not install or update the Formbricks authorization schema. After SpiceDB is ready,
+run the release-matched repository command from an operator workstation or controlled deployment runner:
+
+```bash
+pnpm authzed:schema check
+pnpm authzed:schema apply
+```
+
+The initial apply to an empty instance needs no digest. A non-empty instance must first be checked and then
+applied with `--expected-current-digest sha256:<digest-from-check>`. This separation keeps schema changes out of
+Helm hooks, app startup, migrations, liveness, and readiness. Back up the current schema and affected
+relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
+
 ## Cube
 
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default

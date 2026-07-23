@@ -3,8 +3,10 @@ import { vi } from "vitest";
 export const sdkMocks = {
   close: vi.fn(),
   deadlineInterceptor: vi.fn((timeoutMs: number) => ({ timeoutMs })),
+  diffSchema: vi.fn(),
   newClient: vi.fn(),
   readSchema: vi.fn(),
+  writeSchema: vi.fn(),
 };
 
 export const configMocks = {
