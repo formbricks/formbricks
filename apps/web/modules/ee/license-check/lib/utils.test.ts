@@ -85,6 +85,7 @@ const defaultEntitlementsContext: TOrganizationEntitlementsContext = {
   limits: {
     workspaces: 3,
     monthlyResponses: null,
+    monthlyWorkflowRuns: null,
   },
   licenseStatus: "active",
   licenseFeatures: defaultFeatures,

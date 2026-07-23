@@ -188,7 +188,11 @@ const createAndDispatchWorkflowRun = async ({
   // the helper swallows its own errors, so metering never blocks or fails run creation. Keyed on the
   // stable workflowRunId, so a pipeline retry that re-finds the same run re-emits an identical
   // (deduped) meter event.
-  await recordWorkflowRunCreatedMeterEvent({
+  //
+  // Deliberately NOT awaited: awaiting would add a Stripe round-trip to — and, on a Stripe hang, stall
+  // (the client has no explicit timeout) — the serialized per-match dispatch loop below. The helper
+  // owns its errors, so voiding cannot surface an unhandled rejection.
+  void recordWorkflowRunCreatedMeterEvent({
     stripeCustomerId,
     workflowRunId,
     createdAt: response.updatedAt,
