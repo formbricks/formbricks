@@ -431,7 +431,7 @@ export function TargetingCard({
         </div>
 
         <div>
-          <Alert className="flex items-center rounded-none bg-slate-50">
+          <Alert className="flex items-center rounded-none bg-slate-50" role="status">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
                 <Trans

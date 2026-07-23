@@ -40,7 +40,7 @@ export function DimensionsPanel({
           onChange={onDimensionsChange}
           placeholder={t("workspace.analysis.charts.select_dimensions")}
         />
-        <Alert variant="info" size="small">
+        <Alert variant="info" size="small" role="status">
           <AlertTitle>{t("workspace.analysis.charts.group_by_description")}</AlertTitle>
         </Alert>
       </div>

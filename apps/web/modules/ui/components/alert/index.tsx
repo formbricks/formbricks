@@ -68,14 +68,17 @@ const alertVariantIcons: Record<
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, size, ...props }, ref) => {
+>(({ className, variant, size, role = "alert", ...props }, ref) => {
   const variantIcon = variant && variant !== "default" ? alertVariantIcons[variant] : null;
 
   const contextValue = useMemo(() => ({ variant, size }), [variant, size]);
 
   return (
     <AlertContext.Provider value={contextValue}>
-      <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
+      {/* role="alert" is an assertive live region and belongs on alerts that appear dynamically
+          (e.g. validation or request errors). For banners already visible on first paint, pass
+          role="status" so screen readers don't spuriously announce them on mount. */}
+      <div ref={ref} role={role} className={cn(alertVariants({ variant, size }), className)} {...props}>
         {variantIcon}
         {props.children}
       </div>

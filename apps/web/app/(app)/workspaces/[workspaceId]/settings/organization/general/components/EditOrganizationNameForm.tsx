@@ -103,7 +103,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
         </form>
       </FormProvider>
       {!isOwner && (
-        <Alert variant="warning" className="mt-4">
+        <Alert variant="warning" className="mt-4" role="status">
           <AlertDescription>
             {t("workspace.settings.general.only_org_owner_can_perform_action")}
           </AlertDescription>

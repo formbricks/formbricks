@@ -76,7 +76,7 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
         <div className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <Alert variant="error">
+          <Alert variant="error" role="status">
             <AlertTitle>{t("auth.oauth.invalid_oauth_request")}</AlertTitle>
             <AlertDescription>{t("auth.oauth.invalid_oauth_request_description")}</AlertDescription>
           </Alert>
@@ -136,7 +136,7 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
         </dl>
 
         {isLocalhostHost(redirectHost) && (
-          <Alert variant="warning" size="small" className="mt-6">
+          <Alert variant="warning" size="small" className="mt-6" role="status">
             <AlertTitle>{t("auth.oauth.localhost_redirect_warning")}</AlertTitle>
             <AlertDescription>{t("auth.oauth.localhost_redirect_warning_description")}</AlertDescription>
           </Alert>

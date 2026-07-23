@@ -616,7 +616,7 @@ export const SurveyMenuBar = ({
         <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
         {!isStorageConfigured && (
           <div>
-            <Alert variant="warning" size="small">
+            <Alert variant="warning" size="small" role="status">
               <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
               <AlertButton className="flex items-center justify-center">
                 <a
@@ -632,7 +632,7 @@ export const SurveyMenuBar = ({
         )}
         {responseCount > 0 && (
           <div>
-            <Alert variant="warning" size="small">
+            <Alert variant="warning" size="small" role="status">
               <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
               <AlertButton onClick={() => setIsCautionDialogOpen(true)}>{t("common.learn_more")}</AlertButton>
             </Alert>

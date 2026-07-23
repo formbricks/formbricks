@@ -267,7 +267,7 @@ export const AnonymousLinksTab = ({
               />
 
               <div className="w-full">
-                <Alert variant="info" size="default">
+                <Alert variant="info" size="default" role="status">
                   <AlertTitle>
                     {t("workspace.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
                   </AlertTitle>
