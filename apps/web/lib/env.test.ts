@@ -105,6 +105,25 @@ describe("env", () => {
     expect(env.AI_GOOGLE_CLOUD_LOCATION).toBe("us-central1");
   });
 
+  test("fails to load when the AI provider is invalid", async () => {
+    setTestEnv({
+      AI_PROVIDER: "unsupported-provider",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_PROVIDER");
+  });
+
+  test("fails to load when an AI provider is set without a model", async () => {
+    setTestEnv({
+      AI_PROVIDER: "google",
+      AI_MODEL: undefined,
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_MODEL is required when AI_PROVIDER is set");
+  });
+
   test("fails to load when Google Cloud credentials JSON is invalid", async () => {
     setTestEnv({
       AI_PROVIDER: "google",
@@ -115,6 +134,17 @@ describe("env", () => {
     });
 
     await expect(import("./env")).rejects.toThrow("AI_GOOGLE_CLOUD_CREDENTIALS_JSON");
+  });
+
+  test("fails to load when the Azure base URL is invalid", async () => {
+    setTestEnv({
+      AI_PROVIDER: "azure",
+      AI_MODEL: "gpt-4o-mini",
+      AI_AZURE_API_KEY: "test-api-key",
+      AI_AZURE_BASE_URL: "not-a-url",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_AZURE_BASE_URL");
   });
 
   test("loads OpenAI-compatible AI configuration with the base URL and model", async () => {
@@ -271,35 +301,35 @@ describe("env", () => {
 
   test("uses the default survey scheduling configuration when env vars are not set", async () => {
     setTestEnv({
-      NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: undefined,
-      NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: undefined,
-      NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: undefined,
+      SURVEY_SCHEDULING_LOCAL_HOUR: undefined,
+      SURVEY_SCHEDULING_LOCAL_MINUTE: undefined,
+      SURVEY_SCHEDULING_TIME_ZONE: undefined,
     });
 
     const { env } = await import("./env");
 
-    expect(env.NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE).toBe("Europe/Berlin");
-    expect(env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR).toBe(0);
-    expect(env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE).toBe(0);
+    expect(env.SURVEY_SCHEDULING_TIME_ZONE).toBe("Europe/Berlin");
+    expect(env.SURVEY_SCHEDULING_LOCAL_HOUR).toBe(0);
+    expect(env.SURVEY_SCHEDULING_LOCAL_MINUTE).toBe(0);
   });
 
   test("uses the configured survey scheduling configuration", async () => {
     setTestEnv({
-      NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: "18",
-      NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: "45",
-      NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: "America/New_York",
+      SURVEY_SCHEDULING_LOCAL_HOUR: "18",
+      SURVEY_SCHEDULING_LOCAL_MINUTE: "45",
+      SURVEY_SCHEDULING_TIME_ZONE: "America/New_York",
     });
 
     const { env } = await import("./env");
 
-    expect(env.NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE).toBe("America/New_York");
-    expect(env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR).toBe(18);
-    expect(env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE).toBe(45);
+    expect(env.SURVEY_SCHEDULING_TIME_ZONE).toBe("America/New_York");
+    expect(env.SURVEY_SCHEDULING_LOCAL_HOUR).toBe(18);
+    expect(env.SURVEY_SCHEDULING_LOCAL_MINUTE).toBe(45);
   });
 
   test("fails to load when the survey scheduling timezone is invalid", async () => {
     setTestEnv({
-      NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: "Mars/OlympusMons",
+      SURVEY_SCHEDULING_TIME_ZONE: "Mars/OlympusMons",
     });
 
     await expect(import("./env")).rejects.toThrow("Invalid environment variables");
@@ -307,7 +337,7 @@ describe("env", () => {
 
   test("fails to load when the survey scheduling hour is out of range", async () => {
     setTestEnv({
-      NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: "24",
+      SURVEY_SCHEDULING_LOCAL_HOUR: "24",
     });
 
     await expect(import("./env")).rejects.toThrow("Invalid environment variables");
@@ -315,7 +345,7 @@ describe("env", () => {
 
   test("fails to load when the survey scheduling minute is out of range", async () => {
     setTestEnv({
-      NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: "60",
+      SURVEY_SCHEDULING_LOCAL_MINUTE: "60",
     });
 
     await expect(import("./env")).rejects.toThrow("Invalid environment variables");

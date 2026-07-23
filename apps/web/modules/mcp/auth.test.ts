@@ -105,6 +105,9 @@ describe("authenticateMcpRequest", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.response.status).toBe(401);
+      // The challenge must advertise read + write so clients request write at consent and can reach
+      // the write tools (advertising only read is why write was unreachable — ENG-1055 QA).
+      expect(result.response.headers.get("WWW-Authenticate")).toContain('scope="surveys:read surveys:write"');
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
         detail: "API key or OAuth access token required",

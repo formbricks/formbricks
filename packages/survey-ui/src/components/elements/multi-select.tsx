@@ -175,7 +175,6 @@ interface DropdownVariantProps {
   handleOptionAdd: (optionId: string) => void;
   handleOptionRemove: (optionId: string) => void;
   disabled: boolean;
-  headline: string;
   errorMessage?: string;
   displayText: string;
   hasOtherOption: boolean;
@@ -199,7 +198,6 @@ function DropdownVariant({
   handleOptionAdd,
   handleOptionRemove,
   disabled,
-  headline,
   errorMessage,
   displayText,
   hasOtherOption,
@@ -239,6 +237,8 @@ function DropdownVariant({
     hasNoResults,
     handleDropdownOpen,
     handleDropdownClose,
+    focusMenuItem,
+    handleContentKeyDown,
   } = useDropdownSearch({ options, hasOtherOption, otherOptionLabel, isSearchEnabled: showSearch });
 
   return (
@@ -250,13 +250,20 @@ function DropdownVariant({
           else handleDropdownClose();
         }}>
         <DropdownMenuTrigger asChild>
+          {/* Named via aria-labelledby (headline + visible value) instead of aria-label:
+              a rich-text headline would leak raw HTML into the accessible name, and the
+              name must contain the visible text (WCAG 2.5.3 Label in Name). */}
           <Button
             variant="outline"
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
             aria-invalid={Boolean(errorMessage)}
-            aria-label={headline}>
-            <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+            aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
+            <span
+              id={`${inputId}-trigger-value`}
+              className="font-input font-input-weight text-input-text truncate">
+              {displayText}
+            </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
@@ -265,7 +272,8 @@ function DropdownVariant({
           side={lockedSide}
           avoidCollisions={lockedSide === undefined}
           className="bg-option-bg border-input-border w-(--radix-dropdown-menu-trigger-width) overflow-hidden"
-          align="start">
+          align="start"
+          onKeyDown={handleContentKeyDown}>
           {showSearch ? (
             <DropdownSearchInput
               searchQuery={searchQuery}
@@ -273,6 +281,7 @@ function DropdownVariant({
               searchInputRef={searchInputRef}
               placeholder={searchPlaceholder}
               dir={dir}
+              onNavigateToOptions={focusMenuItem}
             />
           ) : null}
           <div className="max-h-[260px] overflow-y-auto">
@@ -602,9 +611,11 @@ function MultiSelect({
         </fieldset>
       ) : (
         <>
-          {/* Dropdown trigger is a Radix menu button that names itself via aria-label={headline};
-              the headline is a plain label here (no htmlFor) to avoid pointing at a non-input. */}
+          {/* Dropdown trigger is a Radix menu button named via aria-labelledby (headline id +
+              visible value id); the headline is a plain label here (no htmlFor) to avoid
+              pointing at a non-input. */}
           <ElementHeader
+            headlineId={`${inputId}-headline`}
             headline={headline}
             description={description}
             required={required}
@@ -620,7 +631,6 @@ function MultiSelect({
               handleOptionAdd={handleOptionAdd}
               handleOptionRemove={handleOptionRemove}
               disabled={disabled}
-              headline={headline}
               errorMessage={errorMessage}
               displayText={displayText}
               hasOtherOption={hasOtherOption}

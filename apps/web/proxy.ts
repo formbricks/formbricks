@@ -84,8 +84,14 @@ export const proxy = async (originalRequest: NextRequest) => {
 
   // Remember the active workspace so the workspace-agnostic org-settings shell can resolve it
   // server-side (localStorage is browser-only). Mirrors the /workspaces/[workspaceId] path segment.
+  // Only set the cookie when the value actually changes: a Set-Cookie on a server-action POST makes
+  // Next.js treat the action as revalidated, forcing a router refresh after every action — on pages
+  // that call an action on mount this becomes an infinite POST/refresh loop.
   const workspaceMatch = /^\/workspaces\/([^/]+)/.exec(request.nextUrl.pathname);
-  if (workspaceMatch?.[1]) {
+  if (
+    workspaceMatch?.[1] &&
+    request.cookies.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value !== workspaceMatch[1]
+  ) {
     nextResponseWithCustomHeader.cookies.set(FORMBRICKS_WORKSPACE_ID_COOKIE, workspaceMatch[1], {
       path: "/",
       sameSite: "lax",

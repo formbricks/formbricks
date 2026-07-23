@@ -46,7 +46,11 @@ export const getUserWorkspaces = reactCache(
 
     let workspaceWhereClause: Prisma.WorkspaceWhereInput = {};
 
-    if (orgMembership.role === "member") {
+    // Only org owners/managers get every workspace. Every other role (member, billing, …) is scoped to
+    // the workspaces whose teams they belong to — mirroring the per-workspace v3 authorization
+    // (`requireV3WorkspaceAccess`: org owner/manager OR workspace-team membership). Special-casing only
+    // `member` here previously leaked all workspaces to `billing` members, who cannot access them.
+    if (orgMembership.role !== "owner" && orgMembership.role !== "manager") {
       workspaceWhereClause = {
         workspaceTeams: {
           some: {
@@ -171,7 +175,9 @@ export const getUserWorkspacesByOrganizationIds = reactCache(
           organizationId: membership.organizationId,
         };
 
-        if (membership.role === "member") {
+        // Same scoping as getUserWorkspaces: only owner/manager see all of an org's workspaces; every
+        // other role (member, billing, …) is limited to their team-scoped workspaces.
+        if (membership.role !== "owner" && membership.role !== "manager") {
           workspaceWhereClause = {
             ...workspaceWhereClause,
             workspaceTeams: {

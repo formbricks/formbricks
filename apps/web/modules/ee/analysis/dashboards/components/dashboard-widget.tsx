@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2Icon, MoreVerticalIcon, SquarePenIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, Maximize2Icon, MoreVerticalIcon, SquarePenIcon, TrashIcon } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -16,6 +16,7 @@ interface DashboardWidgetProps {
   children: ReactNode;
   isEditing?: boolean;
   onEdit?: () => void;
+  onDuplicate?: () => void;
   onResize?: () => void;
   onRemove?: () => void;
 }
@@ -25,12 +26,13 @@ export function DashboardWidget({
   children,
   isEditing,
   onEdit,
+  onDuplicate,
   onResize,
   onRemove,
 }: Readonly<DashboardWidgetProps>) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const hasMenuActions = Boolean(onEdit || onResize || onRemove);
+  const hasMenuActions = Boolean(onEdit || onDuplicate || onResize || onRemove);
 
   return (
     <div
@@ -65,6 +67,16 @@ export function DashboardWidget({
                   }}>
                   <SquarePenIcon className="mr-2 size-4" />
                   {t("common.edit")}
+                </DropdownMenuItem>
+              )}
+              {onDuplicate && (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setMenuOpen(false);
+                    onDuplicate();
+                  }}>
+                  <CopyIcon className="mr-2 size-4" />
+                  {t("common.duplicate")}
                 </DropdownMenuItem>
               )}
               {onResize && (

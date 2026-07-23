@@ -23,6 +23,7 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import {
   addChartToDashboardAction,
+  duplicateChartAndAddWidgetAction,
   removeWidgetFromDashboardAction,
   updateDashboardAction,
   updateWidgetLayoutsAction,
@@ -36,7 +37,10 @@ interface DashboardDetailClientProps {
   dashboard: TDashboardDetail;
   widgetDataPromises: Map<
     string,
-    Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>
+    Promise<
+      | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
+      | { error: TDashboardWidgetError }
+    >
   >;
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
@@ -108,16 +112,15 @@ const MemoizedWidgetContent = memo(function WidgetContent({
   dataPromise,
 }: Readonly<{
   widget: TDashboardWidget;
-  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>;
+  dataPromise?: Promise<
+    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
+    | { error: TDashboardWidgetError }
+  >;
 }>) {
   if (widget.chart && dataPromise) {
     return (
       <Suspense fallback={<DashboardWidgetSkeleton />}>
-        <DashboardWidgetData
-          dataPromise={dataPromise}
-          chartType={widget.chart.type}
-          query={widget.chart.query}
-        />
+        <DashboardWidgetData dataPromise={dataPromise} chartType={widget.chart.type} />
       </Suspense>
     );
   }
@@ -129,13 +132,18 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   isEditing,
   dataPromise,
   onEdit,
+  onDuplicate,
   onResize,
   onRemove,
 }: Readonly<{
   widget: TDashboardWidget;
   isEditing: boolean;
-  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>;
+  dataPromise?: Promise<
+    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
+    | { error: TDashboardWidgetError }
+  >;
   onEdit?: () => void;
+  onDuplicate?: () => void;
   onResize?: () => void;
   onRemove?: () => void;
 }>) {
@@ -146,6 +154,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
       title={title}
       isEditing={isEditing}
       onEdit={onEdit}
+      onDuplicate={onDuplicate}
       onResize={onResize}
       onRemove={onRemove}>
       <MemoizedWidgetContent widget={widget} dataPromise={dataPromise} />
@@ -210,6 +219,28 @@ export function DashboardDetailClient({
   const handleEditChart = useCallback((chartId: string) => {
     setEditingChartId(chartId);
   }, []);
+
+  const handleDuplicateWidget = useCallback(
+    async (widget: TDashboardWidget) => {
+      try {
+        const result = await duplicateChartAndAddWidgetAction({
+          workspaceId,
+          dashboardId: dashboard.id,
+          chartId: widget.chartId,
+          layout: widget.layout,
+        });
+        if (!result?.data) {
+          toast.error(getFormattedErrorMessage(result));
+          return;
+        }
+        toast.success(t("workspace.analysis.dashboards.chart_duplicated"));
+        startTransition(() => router.refresh());
+      } catch {
+        toast.error(t("workspace.analysis.dashboards.chart_duplicate_failed"));
+      }
+    },
+    [workspaceId, dashboard.id, router, t, startTransition]
+  );
 
   const handleUndoRemoveWidget = useCallback(
     async (snapshot: TDashboardWidget) => {
@@ -418,6 +449,9 @@ export function DashboardDetailClient({
                       isEditing={isEditing}
                       dataPromise={widgetDataPromises.get(widget.id)}
                       onEdit={isReadOnly ? undefined : () => handleEditChart(widget.chartId)}
+                      // Duplicate is hidden in edit mode: saving edit-mode drafts removes any
+                      // widget not present in the draft, which would delete the fresh copy.
+                      onDuplicate={isReadOnly || isEditing ? undefined : () => handleDuplicateWidget(widget)}
                       onResize={isReadOnly ? undefined : handleEnterEditMode}
                       onRemove={isReadOnly ? undefined : () => handleRemoveWidgetFromMenu(widget.id)}
                     />

@@ -15,6 +15,8 @@ const CUBE_NAME = "FeedbackRecords";
 const DEFAULT_MEASURE = `${CUBE_NAME}.count`;
 const AI_CHART_GENERATION_TIMEOUT_MS = 30_000;
 const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 1024;
+// Matches the maxLength of the chart-name input and the persisted chart name.
+const MAX_CHART_NAME_LENGTH = 255;
 
 const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
   if (values.length === 0) {
@@ -70,6 +72,10 @@ const ZFilter = z
   });
 
 export const ZAIQueryResponse = z.object({
+  name: z
+    .string()
+    .nullable()
+    .describe("Short, descriptive chart name reflecting the user's request (max 255 characters)"),
   measures: z.array(ZMeasureId),
   dimensions: z.array(ZDimensionId).nullable(),
   timeDimensions: z
@@ -90,6 +96,8 @@ type AIQueryResponse = z.infer<typeof ZAIQueryResponse>;
 export type AIChartQueryResult = {
   chartType: TChartType;
   query: TChartQuery;
+  /** AI-suggested chart name; omitted when the model returns none. */
+  name?: string;
 };
 
 type GenerateAIChartQueryInput = {
@@ -159,5 +167,12 @@ const normalizeChartQuery = (output: AIQueryResponse): AIChartQueryResult => {
     }));
   }
 
-  return { chartType: output.chartType, query };
+  const result: AIChartQueryResult = { chartType: output.chartType, query };
+
+  const name = output.name?.trim();
+  if (name) {
+    result.name = name.slice(0, MAX_CHART_NAME_LENGTH);
+  }
+
+  return result;
 };

@@ -30,6 +30,7 @@ describe("generateAIChartQuery", () => {
   test("returns the AI-generated chart type and normalized query for a clean response", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        name: "Responses by Source Type",
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
         timeDimensions: null,
@@ -45,6 +46,7 @@ describe("generateAIChartQuery", () => {
 
     expect(result).toEqual({
       chartType: "bar",
+      name: "Responses by Source Type",
       query: {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
@@ -65,6 +67,7 @@ describe("generateAIChartQuery", () => {
   test("maps NPS score prompts to the NPS score measure", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        name: null,
         measures: ["FeedbackRecords.npsScore"],
         dimensions: null,
         timeDimensions: null,
@@ -87,6 +90,7 @@ describe("generateAIChartQuery", () => {
   test("falls back to the total count measure when the AI returns no measures", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        name: null,
         measures: [],
         dimensions: null,
         timeDimensions: null,
@@ -106,6 +110,7 @@ describe("generateAIChartQuery", () => {
   test("normalizes filters and time dimensions, dropping null-only optional fields", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
+        name: null,
         measures: ["FeedbackRecords.count"],
         dimensions: null,
         timeDimensions: [
@@ -137,6 +142,7 @@ describe("generateAIChartQuery", () => {
 
   test("rejects value-based filters without a non-empty values array", () => {
     const result = ZAIQueryResponse.safeParse({
+      name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
       timeDimensions: null,
@@ -153,6 +159,7 @@ describe("generateAIChartQuery", () => {
 
   test("rejects valueless filters that include values", () => {
     const result = ZAIQueryResponse.safeParse({
+      name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
       timeDimensions: null,
@@ -167,6 +174,7 @@ describe("generateAIChartQuery", () => {
 
   test("allows valueless filters with omitted values", () => {
     const result = ZAIQueryResponse.safeParse({
+      name: null,
       measures: ["FeedbackRecords.count"],
       dimensions: null,
       timeDimensions: null,
@@ -175,6 +183,46 @@ describe("generateAIChartQuery", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  test("trims the AI-suggested name and caps it at 255 characters", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        name: `  ${"a".repeat(300)}  `,
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: null,
+        chartType: "bar",
+        filters: null,
+      },
+    });
+
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      prompt: "responses",
+    });
+
+    expect(result.name).toBe("a".repeat(255));
+  });
+
+  test("omits the name when the AI returns a blank name", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
+        name: "   ",
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: null,
+        chartType: "bar",
+        filters: null,
+      },
+    });
+
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      prompt: "responses",
+    });
+
+    expect(result).not.toHaveProperty("name");
   });
 
   test("converts AI structured-output failures into a prompt error", async () => {

@@ -59,7 +59,7 @@ const ZApiKeyWorkspaceWithWorkspace = z.object({
   apiKeyId: z.string(),
   workspaceId: z.string(),
   permission: ZApiKeyPermission,
-  workspace: ZWorkspace.pick({ id: true, name: true }),
+  workspace: ZWorkspace.pick({ id: true, name: true, organizationId: true }),
 });
 
 const ZApiKey = z.object({
