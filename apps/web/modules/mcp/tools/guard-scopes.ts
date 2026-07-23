@@ -9,7 +9,7 @@ import { responseToMcpToolResult } from "../errors";
  * Shared MCP scope gate: returns `null` when the caller holds all `requiredScopes`, otherwise an
  * insufficient-scope tool result. Used by every tool before it touches a v3 operation.
  */
-export async function guardMcpScopes(
+async function guardMcpScopes(
   authInfo: AuthInfo | undefined,
   requiredScopes: string[],
   requestId: string
