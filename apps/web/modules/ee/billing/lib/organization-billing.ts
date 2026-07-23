@@ -1483,6 +1483,10 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const pendingChange = await resolvePendingPlanChange(subscription);
+  // Match the guard in switchOrganizationToCloudPlan / changeBillingPlanAction: a card saved on the
+  // customer (but not yet attached to the subscription) still counts, so the cached flag must not
+  // falsely block a legitimately card-backed org on a paid switch.
+  const hasPaymentMethod = subscription ? await hasCollectedPaymentMethod(subscription, customerId) : false;
 
   const transition = resolveSubscriptionLifecycleTransition(
     existingStripeSnapshot,
@@ -1509,7 +1513,7 @@ export const syncOrganizationBillingFromStripe = async (
       interval: billingInterval,
       subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
-      hasPaymentMethod: subscription?.default_payment_method != null,
+      hasPaymentMethod,
       features: featureLookupKeys,
       pendingChange,
       // Clear the payment-failure banner only when this sync reflects a real settlement:
