@@ -31,5 +31,29 @@ describe("i18n", () => {
       };
       expect(getLocalizedValue(i18nString, "fr")).toBe("French text");
     });
+
+    test("should fall back to default when the requested language key is an empty string", () => {
+      const i18nString: TI18nString = {
+        default: "Default text",
+        "en-GB": "",
+      };
+      expect(getLocalizedValue(i18nString, "en-GB")).toBe("Default text");
+    });
+
+    test("should fall back to default when the requested language key is whitespace-only", () => {
+      const i18nString: TI18nString = {
+        default: "Default text",
+        "en-GB": "   ",
+      };
+      expect(getLocalizedValue(i18nString, "en-GB")).toBe("Default text");
+    });
+
+    test("should still return the localized value when it is a non-empty string", () => {
+      const i18nString: TI18nString = {
+        default: "Default text",
+        "en-GB": "British text",
+      };
+      expect(getLocalizedValue(i18nString, "en-GB")).toBe("British text");
+    });
   });
 });

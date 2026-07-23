@@ -3398,6 +3398,7 @@
         "then": "Entonces",
         "this_action_will_remove_all_the_translations_from_this_survey": "Esta acción eliminará todas las traducciones de esta encuesta.",
         "this_will_remove_the_language_and_all_its_translations": "Esto eliminará este idioma y todas sus traducciones de esta encuesta. Esta acción no se puede deshacer.",
+        "this_will_remove_the_language_from_this_survey": "Esto eliminará este idioma de esta encuesta. Esta acción no se puede deshacer.",
         "three_points": "3 puntos",
         "translated": "Traducido",
         "trigger_survey_when_one_of_the_actions_is_fired": "Activar encuesta cuando se dispare una de las acciones...",

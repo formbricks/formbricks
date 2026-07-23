@@ -3398,6 +3398,7 @@
         "then": "Sedan",
         "this_action_will_remove_all_the_translations_from_this_survey": "Denna åtgärd kommer att ta bort alla översättningar från denna enkät.",
         "this_will_remove_the_language_and_all_its_translations": "Detta tar bort språket och alla dess översättningar från denna enkät. Denna åtgärd kan inte ångras.",
+        "this_will_remove_the_language_from_this_survey": "Detta tar bort språket från den här undersökningen. Åtgärden kan inte ångras.",
         "three_points": "3 poäng",
         "translated": "Översatt",
         "trigger_survey_when_one_of_the_actions_is_fired": "Utlös enkät när en av åtgärderna aktiveras...",

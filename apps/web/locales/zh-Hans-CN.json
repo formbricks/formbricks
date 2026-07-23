@@ -3398,6 +3398,7 @@
         "then": "然后",
         "this_action_will_remove_all_the_translations_from_this_survey": "此操作将删除该调查中的所有翻译。",
         "this_will_remove_the_language_and_all_its_translations": "这将从此调查问卷中删除该语言及其所有翻译。此操作无法撤销。",
+        "this_will_remove_the_language_from_this_survey": "这将从此调查中删除该语言。此操作无法撤销。",
         "three_points": "3 分",
         "translated": "已翻译",
         "trigger_survey_when_one_of_the_actions_is_fired": "当 其中 一个 动作 被 触发 时 启动 调查…",
