@@ -353,6 +353,37 @@ describe("registerWorkflowTools", () => {
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
   });
 
+  test("a thrown mutation still queues the audit log and re-propagates the error", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const boom = new Error("workflow operation exploded");
+    vi.mocked(workflowsHandlers.create).mockRejectedValue(boom);
+    const body = { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } };
+
+    // The shared runner must not swallow errors: it flags the audit eventId, queues it, then rethrows.
+    await expect(tools.get("create_workflow")!.handler(body, { authInfo })).rejects.toThrow(boom);
+    expect(auditLog).toMatchObject({ eventId: "req_tool" });
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
+  test("a null audit log is tolerated (still queues, no crash)", async () => {
+    const { tools } = createToolServer();
+    // buildV3AuditLog can return null (auditing disabled); the runner must not dereference it.
+    vi.mocked(buildV3AuditLog).mockReturnValue(null as any);
+    vi.mocked(workflowsHandlers.enable).mockResolvedValue(
+      successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(queueV3AuditLog).toHaveBeenCalledWith(null, "req_tool", expect.any(Object));
+    expect(result.structuredContent).toEqual({
+      data: { id: WORKFLOW_ID, status: "enabled" },
+      requestId: "req_tool",
+    });
+  });
+
   test("patch_workflow sends a body request with params and queues an updated audit log", async () => {
     const { tools } = createToolServer();
     const auditLog: any = { status: "failure" };
