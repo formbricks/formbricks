@@ -133,4 +133,23 @@ describe("runAuthzedSchemaCli", () => {
     );
     expect(JSON.stringify(writeOutput.mock.calls)).not.toContain(secret);
   });
+
+  test("preserves the schema result when closing the client fails", async () => {
+    const writeOutput = vi.fn();
+
+    await expect(
+      runAuthzedSchemaCli(
+        { action: "check" },
+        {
+          checkSchema: vi.fn().mockResolvedValue(driftedResult),
+          closeClient: vi.fn(() => {
+            throw new Error("close failed");
+          }),
+          writeOutput,
+        }
+      )
+    ).resolves.toBe(2);
+
+    expect(writeOutput).toHaveBeenCalledWith(`${JSON.stringify(driftedResult)}\n`);
+  });
 });

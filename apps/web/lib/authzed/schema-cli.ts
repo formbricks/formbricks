@@ -62,7 +62,11 @@ export const runAuthzedSchemaCli = async (
     result = toFailureResult(error);
     exitCode = 1;
   } finally {
-    dependencies.closeClient();
+    try {
+      dependencies.closeClient();
+    } catch {
+      // Cleanup failures must not replace the schema operation's result or exit code.
+    }
   }
 
   dependencies.writeOutput(`${JSON.stringify(result)}\n`);

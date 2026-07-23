@@ -1,16 +1,5 @@
 import "server-only";
-
-const INVALID_REQUEST_RESULT = {
-  code: "authzed_invalid_request",
-  retryable: false,
-  status: "failed",
-} as const;
-
-const INVALID_CONFIGURATION_RESULT = {
-  code: "authzed_internal",
-  retryable: false,
-  status: "failed",
-} as const;
+import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "./authzed-schema-results";
 
 type TSchemaCommand =
   | Readonly<{ action: "check" }>

@@ -10,7 +10,8 @@ readonly AUTHZED_TOKEN="00000000000000000000000000000000000000000000000000000000
 readonly AUTHZED_DATABASE_PASSWORD="0000000000000000000000000000000000000000000000000000000000000002"
 readonly WRONG_AUTHZED_TOKEN="0000000000000000000000000000000000000000000000000000000000000003"
 readonly SCHEMA_LOG_SENTINEL="Canonical Formbricks authorization schema."
-readonly SMOKE_TEMP_DIR="$(mktemp -d)"
+SMOKE_TEMP_DIR="$(mktemp -d)" || exit 1
+readonly SMOKE_TEMP_DIR
 readonly DRIFT_SCHEMA_FILE="${SMOKE_TEMP_DIR}/schema-with-drift.zed"
 
 compose() {
@@ -183,12 +184,14 @@ zed() {
 
 cp "${REPO_ROOT}/authzed/schema.zed" "${DRIFT_SCHEMA_FILE}"
 printf '\n/** Disposable smoke-test drift. */\ndefinition smoke_test_drift {}\n' >>"${DRIFT_SCHEMA_FILE}"
-compose run --rm --no-deps --volume "${DRIFT_SCHEMA_FILE}:/drift-schema.zed:ro" authzed-cli \
-  schema write /drift-schema.zed \
-  --endpoint spicedb:50051 \
-  --token "${AUTHZED_TOKEN}" \
-  --insecure \
-  --skip-version-check
+drift_schema_write="$(
+  compose run --rm --no-deps --volume "${DRIFT_SCHEMA_FILE}:/drift-schema.zed:ro" authzed-cli \
+    schema write /drift-schema.zed \
+    --endpoint spicedb:50051 \
+    --token "${AUTHZED_TOKEN}" \
+    --insecure \
+    --skip-version-check 2>&1
+)"
 
 if drifted_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check 2>&1)"; then
   printf '%s\n' "Schema check unexpectedly matched a deliberately drifted schema." >&2
@@ -243,7 +246,7 @@ persisted_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check)"
 jq --exit-status '.status == "matched" and .differenceCount == 0' <<<"${persisted_schema_check}" >/dev/null
 
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drifted_schema_check}${restored_apply}${unavailable_health}${restored_health}${persisted_schema_check}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${unavailable_health}${restored_health}${persisted_schema_check}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \

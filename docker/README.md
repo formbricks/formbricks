@@ -72,7 +72,13 @@ Installations from source can check or explicitly apply the canonical Formbricks
 
 ```bash
 pnpm authzed:schema check
+
+# Empty instances only
 pnpm authzed:schema apply
+
+# Non-empty instances: use the remoteDigest returned by the immediately preceding check
+pnpm authzed:schema apply \
+  --expected-current-digest sha256:<digest-from-check>
 ```
 
 The first apply to an empty SpiceDB needs no additional argument. Replacing a non-empty schema requires

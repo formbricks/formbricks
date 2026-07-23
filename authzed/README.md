@@ -55,6 +55,8 @@ pnpm authzed:schema apply \
 ```
 
 This guards against applying over a schema the operator did not inspect.
+The digest precondition is not atomic because SpiceDB schema writes do not support compare-and-swap, so ensure
+there is no concurrent schema writer between `check` and `apply`.
 `apply` exits `0` only after reading the schema back and confirming that its
 semantic diff is empty. Applying an already matching schema returns
 `status: "unchanged"` without issuing another write. Invalid configuration,

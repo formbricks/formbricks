@@ -157,7 +157,13 @@ run the release-matched repository command from an operator workstation or contr
 
 ```bash
 pnpm authzed:schema check
+
+# Empty instances only
 pnpm authzed:schema apply
+
+# Non-empty instances: use the remoteDigest returned by the immediately preceding check
+pnpm authzed:schema apply \
+  --expected-current-digest sha256:<digest-from-check>
 ```
 
 The initial apply to an empty instance needs no digest. A non-empty instance must first be checked and then
