@@ -3398,6 +3398,7 @@
         "then": "Ardından",
         "this_action_will_remove_all_the_translations_from_this_survey": "Bu işlem bu anketteki tüm çevirileri kaldıracak.",
         "this_will_remove_the_language_and_all_its_translations": "Bu işlem bu dili ve tüm çevirilerini anketten kaldıracak. Bu işlem geri alınamaz.",
+        "this_will_remove_the_language_from_this_survey": "Bu dil bu anketten kaldırılacak. Bu işlem geri alınamaz.",
         "three_points": "3 puan",
         "translated": "Çevrildi",
         "trigger_survey_when_one_of_the_actions_is_fired": "İşlemlerden biri gerçekleştiğinde anketi tetikle…",

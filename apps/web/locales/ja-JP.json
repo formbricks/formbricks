@@ -3398,6 +3398,7 @@
         "then": "その後",
         "this_action_will_remove_all_the_translations_from_this_survey": "このアクションは、このフォームからすべての翻訳を削除します。",
         "this_will_remove_the_language_and_all_its_translations": "この言語とすべての翻訳がこのアンケートから削除されます。この操作は元に戻せません。",
+        "this_will_remove_the_language_from_this_survey": "この言語がこのアンケートから削除されます。この操作は元に戻せません。",
         "three_points": "3点",
         "translated": "翻訳済み",
         "trigger_survey_when_one_of_the_actions_is_fired": "以下のアクションのいずれかが発火したときにフォームをトリガーします...",

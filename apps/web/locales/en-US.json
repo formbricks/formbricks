@@ -3398,6 +3398,7 @@
         "then": "Then",
         "this_action_will_remove_all_the_translations_from_this_survey": "This action will remove all the translations from this survey.",
         "this_will_remove_the_language_and_all_its_translations": "This will remove this language and all its translations from this survey. This action cannot be undone.",
+        "this_will_remove_the_language_from_this_survey": "This will remove this language from this survey. This action cannot be undone.",
         "three_points": "3 points",
         "translated": "Translated",
         "trigger_survey_when_one_of_the_actions_is_fired": "Trigger survey when one of the actions is fired…",

@@ -3398,6 +3398,7 @@
         "then": "Então",
         "this_action_will_remove_all_the_translations_from_this_survey": "Essa ação vai remover todas as traduções dessa pesquisa.",
         "this_will_remove_the_language_and_all_its_translations": "Isso removerá este idioma e todas as suas traduções desta pesquisa. Esta ação não pode ser desfeita.",
+        "this_will_remove_the_language_from_this_survey": "Isso vai remover este idioma desta pesquisa. Esta ação não pode ser desfeita.",
         "three_points": "3 pontos",
         "translated": "Traduzido",
         "trigger_survey_when_one_of_the_actions_is_fired": "Disparar pesquisa quando uma das ações for executada...",

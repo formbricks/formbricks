@@ -3398,6 +3398,7 @@
         "then": "Alors",
         "this_action_will_remove_all_the_translations_from_this_survey": "Cette action supprimera toutes les traductions de cette enquête.",
         "this_will_remove_the_language_and_all_its_translations": "Cela supprimera cette langue et toutes ses traductions de ce questionnaire. Cette action est irréversible.",
+        "this_will_remove_the_language_from_this_survey": "Cela supprimera cette langue de ce sondage. Cette action est irréversible.",
         "three_points": "3 points",
         "translated": "Traduit",
         "trigger_survey_when_one_of_the_actions_is_fired": "Déclencher l'enquête lorsqu'une des actions est déclenchée...",

@@ -3398,6 +3398,7 @@
         "then": "Apoi",
         "this_action_will_remove_all_the_translations_from_this_survey": "Această acțiune va elimina toate traducerile din acest sondaj.",
         "this_will_remove_the_language_and_all_its_translations": "Aceasta va elimina această limbă și toate traducerile ei din acest chestionar. Această acțiune nu poate fi anulată.",
+        "this_will_remove_the_language_from_this_survey": "Aceasta va elimina această limbă din acest sondaj. Această acțiune nu poate fi anulată.",
         "three_points": "3 puncte",
         "translated": "Tradus",
         "trigger_survey_when_one_of_the_actions_is_fired": "Declanșați sondajul atunci când una dintre acțiuni este realizată...",
