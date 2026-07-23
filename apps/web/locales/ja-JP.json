@@ -3184,6 +3184,7 @@
         "follow_ups_modal_trigger_type_response": "回答者がフォームを完了したとき",
         "follow_ups_modal_updated_successfull_toast": "フォローアップ が 更新され、 アンケートを 保存すると保存されます。",
         "follow_ups_new": "新しいフォローアップ",
+        "follow_ups_workflows_alert_title": "より柔軟性が必要ですか？ワークフローでフォローアップなどを自動化しましょう。",
         "formbricks_sdk_is_not_connected": "Formbricks SDKが接続されていません",
         "four_points": "4点",
         "heading": "見出し",
