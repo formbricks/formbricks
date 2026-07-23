@@ -133,25 +133,7 @@ Heuristic:
 
 Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat:`) and usually append the PR number, e.g. `fix: update OpenAPI schema (#6617)`. Keep commits scoped and lint-clean. Pull requests should outline the problem, summarize the solution, and link to issues or product specs. Attach screenshots or gifs for UI-facing work, list any migrations or env changes, and paste the output of relevant commands (`pnpm test`, `pnpm lint`, `pnpm db:migrate:dev`) so reviewers can verify readiness.
 
-### PR QA / Test Plan (required, agent-maintained)
-
-Every PR body MUST contain a `## QA / Test Plan` section. This section is the source of truth for release QA — QA checklists are generated from it first, falling back to the diff only for gaps — so it must describe the PR's **actual behavior**, not restate commit titles.
-
-Agents open and maintain this section automatically; do not wait for the author to ask:
-
-- **On PR open:** write the section from the change.
-- **On every PR update (new commits, scope changes, review fixes):** re-read your own diff and update the section in the same turn so it never drifts from the code. Treat a stale QA section as a bug.
-
-Fill the `## QA / Test Plan` section that `.github/pull_request_template.md` already scaffolds — keep its subsection headings verbatim so every PR stays consistent (do not invent an alternate layout). The overall intent stays in the template's separate `## What does this PR do?` section; do not duplicate it here. Replace each placeholder, and omit a subsection only when it genuinely does not apply.
-
-The template's subsections and what goes in each:
-
-- **How to test** — click-by-click steps, each as `- [ ] action → expected result`, with concrete routes, error codes, and any env flags/vars to set. Cover happy path first, then **edge cases** (boundaries, negative input, permissions). For UI-facing work include all relevant states/variants; for accessibility work include an "all question types / all states" pass.
-- **Preconditions / test data** — accounts, seed data, feature flags, plan/entitlement, Cloud vs self-host.
-- **Risks & regressions** — what nearby behavior could break; what to re-check.
-- **Migrations / env / cutover** — new or changed env vars (diff `.env.example`), DB migrations, and any cutover steps (secrets, redirect URIs, migration order). State "none" explicitly if there are none.
-
-Keep every item executable and grounded in real behavior. Flag any inferred specifics (thresholds, rate limits, timeouts) for human verification rather than asserting them. If the template's structure changes, this list follows it — the template is canonical.
+Every PR must use `.github/pull_request_template.md` — including its `## QA / Test Plan` section, which is the source of truth for release QA (follow the guidance inline in the template; keep its subsection headings). Agents fill it on PR open and re-update it in the same turn on every PR change (new commits, scope or review fixes) so it never drifts from the diff — treat a stale QA section as a bug.
 
 ## Next.js Documentation
 
