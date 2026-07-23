@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
-import { PrismaClient } from "../prisma";
+import { Prisma, PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -123,6 +123,53 @@ const loadAppliedSchemaMigrations = async (): Promise<Set<string>> => {
   }
 };
 
+// Count data migrations already recorded in the DataMigration table. Returns 0
+// when the table doesn't exist yet (fresh DB — the table is created by a schema
+// migration). Used to decide whether the fresh-database fast path applies.
+const countRecordedDataMigrations = async (): Promise<number> => {
+  try {
+    const rows: { count: bigint }[] =
+      await prisma.$queryRaw`SELECT COUNT(*)::bigint AS count FROM "DataMigration"`;
+    return Number(rows[0]?.count ?? 0n);
+  } catch (error: unknown) {
+    if (isUndefinedTableError(error)) {
+      return 0;
+    }
+
+    logger.error(error, "Failed to count recorded data migrations");
+    throw error;
+  }
+};
+
+// Record data migrations as applied WITHOUT running them. On a fresh database
+// there is no data to transform, so every data migration is a no-op; several
+// older ones also reference columns/tables dropped by later schema migrations,
+// so they cannot even execute against the final schema. Baselining writes the
+// exact end-state a successful `runDataMigration` leaves (status 'applied' +
+// finished_at), so a later normal run sees them applied and skips. This is a
+// single atomic INSERT: it commits all rows or none, so an interrupted fast
+// path is safely resumed by the trigger in `runMigrations`.
+const baselineDataMigrations = async (dataMigrations: MigrationScript[]): Promise<void> => {
+  if (dataMigrations.length === 0) {
+    return;
+  }
+
+  const finishedAt = new Date();
+  const rows = dataMigrations.map(
+    (migration) => Prisma.sql`(${migration.id}, ${migration.name}, 'applied', ${finishedAt})`
+  );
+
+  await prisma.$executeRaw`
+    INSERT INTO "DataMigration" ("id", "name", "status", "finished_at")
+    VALUES ${Prisma.join(rows)}
+    ON CONFLICT ("id") DO NOTHING
+  `;
+
+  logger.info(
+    `Baselined ${dataMigrations.length.toString()} data migration(s) as applied without running them`
+  );
+};
+
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`Starting migrations: ${migrations.length.toString()} to run`);
   const startTime = Date.now();
@@ -135,6 +182,46 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   await fs.mkdir(PRISMA_MIGRATIONS_DIR, { recursive: true });
 
   const appliedSchemaMigrations = await loadAppliedSchemaMigrations();
+
+  const schemaMigrations = migrations.filter((migration) => migration.type === "schema");
+  const dataMigrations = migrations.filter((migration) => migration.type === "data");
+
+  // Fresh-database fast path. On a brand-new DB there is no data, so every data
+  // migration is a guaranteed no-op — apply the ENTIRE schema history in a
+  // single `migrate deploy` and baseline the data migrations without running
+  // them, instead of interleaving (which needs one deploy per contiguous schema
+  // segment). It triggers when no data migration has been recorded yet AND
+  // either the DB is untouched (no schema applied) or the full schema is already
+  // present. The second case makes the path resume-safe: if a previous fast run
+  // was interrupted between the schema deploy and the (atomic) baseline INSERT,
+  // this re-runs it — the deploy is a no-op and the baseline is idempotent —
+  // rather than falling through to the interleaved path, which would try to run
+  // data migrations against the final schema (some reference dropped columns and
+  // would fail). A normal partial upgrade always has recorded data migrations,
+  // so it never matches. Invariant: data migrations must be no-ops on an empty
+  // DB (see README) — seed essential data via the seed script, not a migration.
+  if (dataMigrations.length > 0) {
+    const recordedDataMigrations = await countRecordedDataMigrations();
+    const allSchemaApplied = schemaMigrations.every((migration) =>
+      appliedSchemaMigrations.has(migration.name)
+    );
+
+    if (recordedDataMigrations === 0 && (appliedSchemaMigrations.size === 0 || allSchemaApplied)) {
+      logger.info(
+        `Fresh database detected: applying ${schemaMigrations.length.toString()} schema migrations in a single batch and baselining ${dataMigrations.length.toString()} data migrations without running them`
+      );
+
+      // Applies all pending schema migrations in one `migrate deploy` (also
+      // creates the DataMigration table the baseline writes to). On resume,
+      // every schema migration is already applied so this is copy-only.
+      await runSchemaMigrationBatch(schemaMigrations, appliedSchemaMigrations);
+      await baselineDataMigrations(dataMigrations);
+
+      const endTime = Date.now();
+      logger.info(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+      return;
+    }
+  }
 
   // Data and schema migrations are interleaved by timestamp and must run in
   // that exact order. But `prisma migrate deploy` applies every pending
