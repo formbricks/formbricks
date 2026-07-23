@@ -154,3 +154,7 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - '@formbricks/hub'
+  # Urgent CVE fixes may need a version-scoped exception (e.g. 'next@16.2.11') to bypass the
+  # cooldown before it naturally ages out. This file is CODEOWNERS-gated specifically so that
+  # never happens without human sign-off — see
+  # docs/development/standards/practices/dependency-security-exceptions.mdx for the process.

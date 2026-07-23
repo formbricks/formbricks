@@ -1,0 +1,84 @@
+---
+title: Dependency Cooldown Security Exceptions
+description: When and how to bypass pnpm's minimumReleaseAge cooldown for an urgent CVE fix, without weakening our supply-chain protection.
+icon: shield-halved
+---
+
+## Background
+
+`pnpm-workspace.yaml` sets `minimumReleaseAge: 4320` (3 days). Any `pnpm install` refuses to
+install a package version published more recently than that, so a compromised publish (a stolen
+publish token, a hijacked maintainer account) has a window to be caught, reported, and pulled from
+the registry before we ever pull it into our tree. `trustLockfile: false` means this check re-runs
+on every install, not just on first bump, so it protects us even against an already-committed
+lockfile entry.
+
+Three days is a deliberate, well-calibrated choice, not an arbitrary one: it matches GitHub
+Dependabot's own default cooldown, and it comfortably covers the detection time of essentially
+every confirmed npm supply-chain compromise in recent history — most are caught and pulled within
+hours, not days. We are not proposing to lower it.
+
+## The problem this doc solves
+
+The cooldown has no concept of "why" a version was published. A brand-new **security patch** for a
+disclosed CVE is published by the same trusted maintainer as every routine release, but it gets
+blocked exactly like a routine bump would. That creates a gap: if a vendor ships the fix for a
+high-severity CVE the same day it's disclosed, our own cooldown can consume up to 3 of the 7 days we
+commit to for high-severity remediation under our SOC 2 / ISO 27001 vulnerability management policy
+— before we've even attempted the fix.
+
+This doc defines a narrow, auditable way to bypass the cooldown for a specific, confirmed security
+patch, without opening a general escape hatch that could be used (by a person or by an automated
+agent) to sneak in an unvetted fresh package.
+
+## When an exception is appropriate
+
+Only when **all** of the following hold:
+
+- The vulnerability is tracked against a specific advisory (GitHub Security Advisory / CVE) that
+  names an exact patched version range.
+- The version being installed is the exact version (or one of the exact versions) that advisory
+  lists as patched — never "whatever is newest," and never used as a shortcut to grab an unrelated
+  feature release early.
+- Waiting for the cooldown to naturally clear would put us at meaningful risk of missing our
+  documented remediation SLA for the vulnerability's severity.
+
+If the cooldown will clear before the SLA deadline anyway (as is often the case), just wait — an
+exception is not needed and should not be filed.
+
+## What an exception is not
+
+- Not a way to skip the cooldown for routine dependency bumps, feature upgrades, or "we want it
+  now" convenience.
+- Not something an automated agent, bot, or CI job may grant to itself. An agent may *propose* an
+  exception in a PR; it must never merge one.
+- Not a permanent carve-out for a package. Exceptions are scoped to the exact version(s) that fix
+  the vulnerability, not the package name — `pnpm`'s `minimumReleaseAgeExclude` supports
+  version-scoped entries (e.g. `next@16.2.11`), so a blanket `next` entry that would silently exempt
+  every future release should never be used for this purpose.
+
+## Process
+
+1. Open a PR that bumps the dependency to the exact patched version and adds a version-scoped entry
+   to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`, for example:
+
+   ```yaml
+   minimumReleaseAgeExclude:
+     - '@formbricks/hub' # unrelated, pre-existing entry
+     - next@16.2.11 # GHSA-6gpp-xcg3-4w24 and related — remove once >3 days old, see PR #NNNN
+   ```
+
+2. In the PR description, cite the advisory ID(s) being fixed, the exact patched version, and the
+   remediation deadline this is racing against.
+3. `pnpm-workspace.yaml` is protected by `CODEOWNERS` — the PR requires approval from a core team
+   reviewer before it can merge. This is the human-in-the-loop control: an agent or contributor can
+   author the PR, but only a designated reviewer can approve the bypass itself.
+4. Once the excluded version is more than 3 days old, remove the entry in a small follow-up PR so
+   the exclusion list doesn't accumulate stale, unused entries.
+
+## Why not just lower the default instead
+
+A shorter global cooldown weakens protection for the 99% of installs that are routine bumps, to fix
+a problem that only affects the rare urgent-CVE case. Keeping the default at 3 days and handling the
+rare exception explicitly gives us the SLA flexibility we need without giving up the protection the
+cooldown exists for.

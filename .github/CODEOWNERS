@@ -1,0 +1,13 @@
+# This file intentionally starts scoped to a single high-risk path rather than
+# declaring blanket ownership across the repo.
+#
+# pnpm's supply-chain cooldown (minimumReleaseAge) is only as strong as who can
+# grant exceptions to it. Require a core team review on any change to this file
+# so a dependency-cooldown bypass always has a human sign-off, and can never be
+# self-approved by a contributor or an automated agent.
+# See docs/development/standards/practices/dependency-security-exceptions.mdx
+pnpm-workspace.yaml @formbricks/team
+
+# Note: for this to be enforced, the repo's branch protection rule for the
+# default branch must have "Require review from Code Owners" enabled. That is
+# a GitHub repo setting, not something this file alone can turn on.

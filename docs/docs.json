@@ -386,7 +386,8 @@
                 "pages": [
                   "development/standards/practices/code-formatting",
                   "development/standards/practices/documentation",
-                  "development/standards/practices/error-handling"
+                  "development/standards/practices/error-handling",
+                  "development/standards/practices/dependency-security-exceptions"
                 ]
               },
               {
