@@ -3398,6 +3398,7 @@
         "then": "Dan",
         "this_action_will_remove_all_the_translations_from_this_survey": "Met deze actie worden alle vertalingen uit deze enquête verwijderd.",
         "this_will_remove_the_language_and_all_its_translations": "Dit verwijdert deze taal en alle vertalingen uit deze enquête. Deze actie kan niet ongedaan worden gemaakt.",
+        "this_will_remove_the_language_from_this_survey": "Hiermee verwijder je deze taal uit deze enquête. Deze actie kan niet ongedaan worden gemaakt.",
         "three_points": "3 punten",
         "translated": "Vertaald",
         "trigger_survey_when_one_of_the_actions_is_fired": "Enquête activeren wanneer een van de acties wordt afgevuurd...",

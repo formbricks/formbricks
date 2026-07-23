@@ -3398,6 +3398,7 @@
         "then": "Azután",
         "this_action_will_remove_all_the_translations_from_this_survey": "Ez a művelet eltávolítja az összes fordítást ebből a kérdőívből.",
         "this_will_remove_the_language_and_all_its_translations": "Ez el fogja távolítani ezt a nyelvet és annak összes fordítását ebből a kérdőívből. Ezt a műveletet nem lehet visszavonni.",
+        "this_will_remove_the_language_from_this_survey": "Ezzel eltávolítja ezt a nyelvet ebből a felmérésből. Ez a művelet nem vonható vissza.",
         "three_points": "3 pont",
         "translated": "Lefordítva",
         "trigger_survey_when_one_of_the_actions_is_fired": "A kérdőív aktiválása, ha a műveletek egyikét elindítják…",

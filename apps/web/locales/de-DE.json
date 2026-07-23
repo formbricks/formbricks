@@ -3398,6 +3398,7 @@
         "then": "Dann",
         "this_action_will_remove_all_the_translations_from_this_survey": "Diese Aktion entfernt alle Übersetzungen aus dieser Umfrage.",
         "this_will_remove_the_language_and_all_its_translations": "Dies entfernt diese Sprache und alle zugehörigen Übersetzungen aus dieser Umfrage. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "this_will_remove_the_language_from_this_survey": "Dadurch wird diese Sprache aus dieser Umfrage entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
         "three_points": "3 Punkte",
         "translated": "Übersetzt",
         "trigger_survey_when_one_of_the_actions_is_fired": "Umfrage auslösen, wenn eine der Aktionen ausgeführt wird...",

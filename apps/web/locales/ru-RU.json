@@ -3398,6 +3398,7 @@
         "then": "Затем",
         "this_action_will_remove_all_the_translations_from_this_survey": "Это действие удалит все переводы из этого опроса.",
         "this_will_remove_the_language_and_all_its_translations": "Это удалит данный язык и все его переводы из этого опроса. Это действие нельзя отменить.",
+        "this_will_remove_the_language_from_this_survey": "Это удалит данный язык из этого опроса. Это действие нельзя отменить.",
         "three_points": "3 балла",
         "translated": "Переведено",
         "trigger_survey_when_one_of_the_actions_is_fired": "Запустить опрос при выполнении одного из действий...",

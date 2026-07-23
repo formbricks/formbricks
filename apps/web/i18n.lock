@@ -3279,6 +3279,7 @@ checksums:
     workspace/surveys/edit/then: 5e941fb7dd51a18651fcfb865edd5ba6
     workspace/surveys/edit/this_action_will_remove_all_the_translations_from_this_survey: 3340c89696f10bdc01b9a1047ff0b987
     workspace/surveys/edit/this_will_remove_the_language_and_all_its_translations: 6a71ae70abbd61f13f15323d825a47f6
+    workspace/surveys/edit/this_will_remove_the_language_from_this_survey: 65cfdf7f8ce806cc4f1a5a34466de080
     workspace/surveys/edit/three_points: d7f299aec752d7d690ef0ab6373327ae
     workspace/surveys/edit/translated: 5b9d805410310b726f12bacb06da44e3
     workspace/surveys/edit/trigger_survey_when_one_of_the_actions_is_fired: 8570291668ec9879d204f10e861112db

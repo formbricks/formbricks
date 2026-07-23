@@ -21,12 +21,16 @@ const mockT = vi.fn((key: string) => {
 vi.mock("@/lib/i18n", () => {
   const mockTFn = vi.fn((key: string) => key) as unknown as TFunction;
   return {
+    // Mirror the real getLocalizedValue (ENG-2001): an empty or whitespace-only localized value
+    // falls back to `default`, so validation resolves the default label rather than an empty string.
     getLocalizedValue: (
       localizedString: Record<string, string> | undefined,
       languageCode: string
     ): string => {
       if (!localizedString) return "";
-      return localizedString[languageCode] || localizedString.default || "";
+      const localized = localizedString[languageCode];
+      if (typeof localized === "string" && localized.trim() !== "") return localized;
+      return localizedString.default || "";
     },
     getTranslations: () => mockTFn,
   };
@@ -252,6 +256,43 @@ describe("validateElementResponse", () => {
       } as unknown as TSurveyElement;
 
       const result = validateElementResponse(element, ["Option 1", "injected"], "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].ruleId).toBe("invalidOption");
+    });
+
+    test("should accept a choice by its default label when the response language code's label is empty (ENG-2001)", () => {
+      // Reproduces the broken-survey state: the default language is keyed by its real code
+      // ("en-GB") but that key is empty, while the actual label text lives under "default".
+      // The submitted value is the default label; membership must still resolve via the fallback.
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick", "en-GB": "" },
+        required: true,
+        choices: [
+          { id: "c1", label: { default: "AdJUST", "en-GB": "" } },
+          { id: "c2", label: { default: "Keep", "en-GB": "" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      // Response recorded under the default language's real code (see getDefaultLanguageCode).
+      expect(validateElementResponse(element, "AdJUST", "en-GB").valid).toBe(true);
+      expect(validateElementResponse(element, "c2", "en-GB").valid).toBe(true); // still matches by id
+    });
+
+    test("should still reject a genuinely invalid value when labels are empty for the language (ENG-2001)", () => {
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick", "en-GB": "" },
+        required: true,
+        choices: [
+          { id: "c1", label: { default: "AdJUST", "en-GB": "" } },
+          { id: "c2", label: { default: "Keep", "en-GB": "" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, "INJECTED", "en-GB");
       expect(result.valid).toBe(false);
       expect(result.errors[0].ruleId).toBe("invalidOption");
     });
