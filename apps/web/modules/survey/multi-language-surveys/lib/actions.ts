@@ -8,6 +8,7 @@ import {
   deleteLanguage,
   getLanguage,
   getSurveysUsingGivenLanguage,
+  setWorkspaceDefaultLanguage,
   updateLanguage,
 } from "@/lib/language/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -18,6 +19,7 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromLanguageId,
 } from "@/lib/utils/helper";
+import { getWorkspace } from "@/lib/workspace/service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateLanguageAction = z.object({
@@ -182,3 +184,57 @@ export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdat
     return result;
   })
 );
+
+const ZUpdateWorkspaceDefaultLanguageAction = z.object({
+  workspaceId: ZId,
+  // null clears the default (new surveys fall back to the creator's UI locale).
+  languageCode: z.string().nullable(),
+});
+
+export const updateWorkspaceDefaultLanguageAction = authenticatedActionClient
+  .inputSchema(ZUpdateWorkspaceDefaultLanguageAction)
+  .action(
+    withAuditLogging("updated", "workspace", async ({ ctx, parsedInput }) => {
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            workspaceId: parsedInput.workspaceId,
+            minPermission: "manage",
+          },
+        ],
+      });
+
+      const oldObject = await getWorkspace(parsedInput.workspaceId);
+      const defaultLanguageCode = await setWorkspaceDefaultLanguage(
+        parsedInput.workspaceId,
+        parsedInput.languageCode
+      );
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
+      ctx.auditLoggingCtx.oldObject = oldObject;
+      // Build the new snapshot from the persisted code — re-reading here would return the request-cached
+      // pre-update workspace.
+      ctx.auditLoggingCtx.newObject = oldObject ? { ...oldObject, defaultLanguageCode } : null;
+
+      capturePostHogEvent(
+        ctx.user.id,
+        "workspace_default_language_set",
+        {
+          organization_id: organizationId,
+          workspace_id: parsedInput.workspaceId,
+          language_code: parsedInput.languageCode,
+        },
+        { organizationId, workspaceId: parsedInput.workspaceId }
+      );
+    })
+  );

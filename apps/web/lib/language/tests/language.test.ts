@@ -9,10 +9,10 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { getWorkspace } from "@/lib/workspace/service";
-import { createLanguage, deleteLanguage, updateLanguage } from "../service";
+import { createLanguage, deleteLanguage, setWorkspaceDefaultLanguage, updateLanguage } from "../service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -20,6 +20,9 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    workspace: {
+      update: vi.fn(),
     },
   },
 }));
@@ -155,6 +158,34 @@ describe("deleteLanguage", () => {
     expect(result).toEqual(mockLanguage);
   });
 
+  test("clears the workspace default when the deleted language was it (matching on canonical tag)", async () => {
+    // Workspace default stored as legacy "de", deleted language is canonical "de-DE" — they must match.
+    vi.mocked(getWorkspace).mockResolvedValue({
+      ...fakeWorkspace,
+      defaultLanguageCode: "de",
+    } as TWorkspace);
+    vi.mocked(prisma.language.delete).mockResolvedValue({ ...mockLanguage, code: "de-DE" });
+
+    await deleteLanguage(mockLanguageId, mockWorkspaceId);
+
+    expect(prisma.workspace.update).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      data: { defaultLanguageCode: null },
+    });
+  });
+
+  test("leaves the workspace default untouched when a different language is deleted", async () => {
+    vi.mocked(getWorkspace).mockResolvedValue({
+      ...fakeWorkspace,
+      defaultLanguageCode: "fr-FR",
+    } as TWorkspace);
+    vi.mocked(prisma.language.delete).mockResolvedValue({ ...mockLanguage, code: "de-DE" });
+
+    await deleteLanguage(mockLanguageId, mockWorkspaceId);
+
+    expect(prisma.workspace.update).not.toHaveBeenCalled();
+  });
+
   describe("sad path", () => {
     testInputValidation(deleteLanguage, "bad-id", mockWorkspaceId);
 
@@ -165,6 +196,74 @@ describe("deleteLanguage", () => {
       });
       vi.mocked(prisma.language.delete).mockRejectedValue(err);
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
+    });
+  });
+});
+
+describe("setWorkspaceDefaultLanguage", () => {
+  const workspaceWithLanguages = {
+    ...fakeWorkspace,
+    languages: [
+      { ...mockLanguage, code: "en-US" },
+      { ...mockLanguage, id: "lang_de", code: "de-DE" },
+    ],
+  } as TWorkspace;
+
+  beforeEach(() => {
+    vi.mocked(getWorkspace).mockResolvedValue(workspaceWithLanguages);
+  });
+
+  test("persists the canonical default when the code is a configured language", async () => {
+    await setWorkspaceDefaultLanguage(mockWorkspaceId, "de-DE");
+    expect(prisma.workspace.update).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      data: { defaultLanguageCode: "de-DE" },
+    });
+  });
+
+  test("normalizes a legacy code before matching and persisting", async () => {
+    await setWorkspaceDefaultLanguage(mockWorkspaceId, "de");
+    expect(prisma.workspace.update).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      data: { defaultLanguageCode: "de-DE" },
+    });
+  });
+
+  test("clears the default when passed null", async () => {
+    await setWorkspaceDefaultLanguage(mockWorkspaceId, null);
+    expect(prisma.workspace.update).toHaveBeenCalledWith({
+      where: { id: mockWorkspaceId },
+      data: { defaultLanguageCode: null },
+    });
+  });
+
+  describe("sad path", () => {
+    test("throws ValidationError when the code is not configured for the workspace", async () => {
+      await expect(setWorkspaceDefaultLanguage(mockWorkspaceId, "fr-FR")).rejects.toThrow(ValidationError);
+      expect(prisma.workspace.update).not.toHaveBeenCalled();
+    });
+
+    test("throws ValidationError on an unparseable code", async () => {
+      await expect(setWorkspaceDefaultLanguage(mockWorkspaceId, "not a language")).rejects.toThrow(
+        ValidationError
+      );
+      expect(prisma.workspace.update).not.toHaveBeenCalled();
+    });
+
+    test("throws ResourceNotFoundError when the workspace does not exist", async () => {
+      vi.mocked(getWorkspace).mockResolvedValue(null);
+      await expect(setWorkspaceDefaultLanguage(mockWorkspaceId, "de-DE")).rejects.toThrow(
+        ResourceNotFoundError
+      );
+    });
+
+    test("throws DatabaseError on PrismaKnownRequestError", async () => {
+      const err = new Prisma.PrismaClientKnownRequestError("boom", {
+        code: "P2002",
+        clientVersion: "1",
+      });
+      vi.mocked(prisma.workspace.update).mockRejectedValue(err);
+      await expect(setWorkspaceDefaultLanguage(mockWorkspaceId, "de-DE")).rejects.toThrow(DatabaseError);
     });
   });
 });

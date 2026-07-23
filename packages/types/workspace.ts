@@ -72,6 +72,9 @@ export const ZWorkspace = z.object({
   clickOutsideClose: z.boolean(),
   overlay: ZOverlay,
   languages: z.array(ZLanguage),
+  // Canonical BCP-47 code of the workspace's default survey language (mirrors one of `languages[].code`).
+  // Newly created surveys adopt it as their default language. Null/undefined = fall back to the creator's UI locale.
+  defaultLanguageCode: z.string().nullish(),
   appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
   customHeadScripts: z.string().nullish(),

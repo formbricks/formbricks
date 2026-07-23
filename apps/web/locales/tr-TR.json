@@ -2176,6 +2176,8 @@
       "cannot_remove_language_warning": "Bu dili kaldıramazsın çünkü şu anketlerde hala kullanılıyor:",
       "conflict_between_identifier_and_alias": "Eklenen bir dilin tanımlayıcısı ile takma adlarından biri arasında çakışma var. Takma adlar ve tanımlayıcılar aynı olamaz.",
       "conflict_between_selected_alias_and_another_language": "Seçilen takma ad ile bu tanımlayıcıya sahip başka bir dil arasında çakışma var. Tutarsızlıkları önlemek için lütfen bunun yerine bu tanımlayıcıya sahip dili çalışma alanına ekle.",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "Bu dili silmek istediğinden emin misin? Bu işlem geri alınamaz.",
       "duplicate_language_or_language_id": "Tekrarlanan dil veya dil kimliği",
       "edit_languages": "Dilleri düzenle",
@@ -2189,7 +2191,8 @@
       "please_select_a_language": "Lütfen bir dil seç",
       "remove_language": "Dili Kaldır",
       "remove_language_from_surveys_to_remove_it_from_workspace": "Çalışma alanından kaldırmak için lütfen önce bu dili anketlerden kaldır.",
-      "search_items": "Öğeleri ara"
+      "search_items": "Öğeleri ara",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "Arka plan rengi ekle",
