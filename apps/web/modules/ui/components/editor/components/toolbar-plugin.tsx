@@ -99,6 +99,7 @@ const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText, disabled }: T
           variant="ghost"
           size="icon"
           type="button"
+          aria-label={tooltipText}
           tabIndex={-1}
           onClick={onClick}
           disabled={disabled}

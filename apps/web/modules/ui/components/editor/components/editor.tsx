@@ -24,6 +24,7 @@ import "../styles-editor.css";
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./auto-link-plugin";
 import { EditorContentChecker } from "./editor-content-checker";
 import { LinkEditor } from "./link-editor";
+import { ListTabIndentationPlugin } from "./list-tab-indentation-plugin";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
 import { ToolbarPlugin } from "./toolbar-plugin";
@@ -138,6 +139,7 @@ export const Editor = (props: TextEditorProps) => {
                 ErrorBoundary={LexicalErrorBoundary}
               />
               <ListPlugin />
+              <ListTabIndentationPlugin />
               {props.isExternalUrlsAllowed && <LinkPlugin />}
               {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
               {props.autoFocus && <AutoFocusPlugin />}

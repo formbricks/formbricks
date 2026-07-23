@@ -102,6 +102,15 @@
 #fbjs [data-variant="description"] li {
   margin: 0.25em 0;
 }
+/*
+ * Lexical wraps a nested list in an extra <li class="fb-editor-nested-listitem"> (theme class kept
+ * in the stored HTML); hide that structural item's marker so nesting shows no stray bullet/number.
+ */
+#fbjs .htmlbody li.fb-editor-nested-listitem,
+#fbjs [data-variant="headline"] li.fb-editor-nested-listitem,
+#fbjs [data-variant="description"] li.fb-editor-nested-listitem {
+  list-style-type: none;
+}
 
 /* without this, it wont override the color */
 #fbjs p.editor-paragraph {
