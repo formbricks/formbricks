@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -58,22 +58,26 @@ export const WorkflowValidationStatus = () => {
     // Polite live region so validity flips are announced without interrupting the user's editing.
     <div className="absolute right-4 bottom-4 z-10" aria-live="polite">
       {problems.length === 0 ? (
-        <span className={cn(PILL_CLASS_NAME, "cursor-default border-green-600 bg-green-50 text-green-800")}>
-          <CheckIcon className="size-3.5" aria-hidden="true" />
+        // Deliberately quiet: valid is the steady state, so the pill matches the neutral canvas
+        // chrome and only the check carries a soft green accent — attention belongs to problems.
+        <span className={cn(PILL_CLASS_NAME, "cursor-default border-slate-200 bg-white text-slate-600")}>
+          <CheckIcon className="size-3.5 text-green-600" aria-hidden="true" />
           {t("workspace.workflows.validation_status_valid")}
         </span>
       ) : (
+        // Problems while drafting are unfinished setup, not failure — amber (the Badge "warning"
+        // tokens), never red, and "problems" (the dialog's own word), never "errors".
         <button
           type="button"
           aria-haspopup="dialog"
           className={cn(
             PILL_CLASS_NAME,
-            "border-red-200 bg-red-100 text-red-800 transition-colors hover:bg-red-200",
+            "border-amber-200 bg-amber-100 text-amber-800 transition-colors hover:bg-amber-200",
             "focus-visible:ring-ring focus-visible:ring-1 focus-visible:outline-hidden"
           )}
           onClick={() => setIsProblemsDialogOpen(true)}>
-          <XIcon className="size-3.5" aria-hidden="true" />
-          {t("workspace.workflows.validation_error_count", { count: problems.length })}
+          <TriangleAlertIcon className="size-3.5" aria-hidden="true" />
+          {t("workspace.workflows.validation_problems_count", { count: problems.length })}
         </button>
       )}
       <WorkflowValidationProblemsDialog

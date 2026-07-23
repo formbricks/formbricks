@@ -4045,7 +4045,6 @@ checksums:
     workspace/workflows/unarchive_success: b1ae787ba6e1d4e9e8631ad35d73e5ee
     workspace/workflows/upgrade_prompt_description: 526faca22b7a0b613fdce0ace49c0aa7
     workspace/workflows/upgrade_prompt_title: 5546aa81302c33f2b53857b9c62c16e2
-    workspace/workflows/validation_error_count: 8ef39431ef98cccb08f47776218d05a4
     workspace/workflows/validation_failed: fbba0e27eca222e81a86d3036919d11a
     workspace/workflows/validation_problem_flow_invalid: e2aaaf90f60d72553f93c3153202c542
     workspace/workflows/validation_problem_generic: a58601a8dd434a0ee3f8cdd4aca86213
@@ -4056,6 +4055,7 @@ checksums:
     workspace/workflows/validation_problem_trigger_missing: 7a9243dac736efe6023063de872b716f
     workspace/workflows/validation_problem_trigger_not_connected: 69a851839a4179bb9c2e995140b2ba93
     workspace/workflows/validation_problem_trigger_survey_unbound: ad18f1043275f229a8d4d2ff5ffc4e45
+    workspace/workflows/validation_problems_count: 1855046d8540d697167fa8d2be11beba
     workspace/workflows/validation_problems_description: 3d86d4b78cd9444a4d0161e13c29523f
     workspace/workflows/validation_problems_title: dca6132844fcd065bc5ab7fd2dd3ca40
     workspace/workflows/validation_status_valid: 4a3ddc0ebe876ff26001201203348d2c
