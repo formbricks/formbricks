@@ -9,6 +9,10 @@ readonly PROJECT_NAME="formbricks-authzed-smoke-${$}"
 readonly AUTHZED_TOKEN="0000000000000000000000000000000000000000000000000000000000000001"
 readonly AUTHZED_DATABASE_PASSWORD="0000000000000000000000000000000000000000000000000000000000000002"
 readonly WRONG_AUTHZED_TOKEN="0000000000000000000000000000000000000000000000000000000000000003"
+readonly SCHEMA_LOG_SENTINEL="Canonical Formbricks authorization schema."
+SMOKE_TEMP_DIR="$(mktemp -d)" || exit 1
+readonly SMOKE_TEMP_DIR
+readonly DRIFT_SCHEMA_FILE="${SMOKE_TEMP_DIR}/schema-with-drift.zed"
 
 compose() {
   docker compose --project-name "${PROJECT_NAME}" --file "${COMPOSE_FILE}" "$@"
@@ -34,6 +38,21 @@ refresh_spicedb_port() {
 authzed_health() {
   local token="$1"
 
+  authzed_cli "${token}" ./scripts/authzed-health.ts
+}
+
+authzed_schema() {
+  local token="$1"
+  shift
+
+  authzed_cli "${token}" ./scripts/authzed-schema.ts "$@"
+}
+
+authzed_cli() {
+  local token="$1"
+  local script="$2"
+  shift 2
+
   env \
     AUTHZED_CONSISTENCY=minimize_latency \
     AUTHZED_ENABLED=true \
@@ -50,7 +69,7 @@ authzed_health() {
     LOG_LEVEL=fatal \
     NODE_ENV=test \
     NODE_OPTIONS=--conditions=react-server \
-    pnpm --dir "${REPO_ROOT}/apps/web" exec tsx ./scripts/authzed-health.ts
+    pnpm --dir "${REPO_ROOT}/apps/web" exec tsx "${script}" "$@"
 }
 
 assert_health_result() {
@@ -94,6 +113,7 @@ cleanup() {
   fi
 
   compose down --volumes --remove-orphans >/dev/null 2>&1 || true
+  rm -rf "${SMOKE_TEMP_DIR}"
   exit "${exit_code}"
 }
 
@@ -130,6 +150,30 @@ fi
 assert_health_result "${wrong_token_health}" "unhealthy" "authzed_permission_denied"
 jq --exit-status '.retryable == false' <<<"${wrong_token_health}" >/dev/null
 
+if empty_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check 2>&1)"; then
+  printf '%s\n' "Schema check unexpectedly matched before schema installation." >&2
+  exit 1
+else
+  empty_schema_check_exit_code=$?
+fi
+[[ "${empty_schema_check_exit_code}" -eq 2 ]]
+jq --exit-status \
+  '.status == "drifted" and .remoteState == "empty" and .remoteDigest == null and .differenceCount > 0' \
+  <<<"${empty_schema_check}" >/dev/null
+
+initial_apply="$(authzed_schema "${AUTHZED_TOKEN}" apply)"
+jq --exit-status \
+  '.status == "applied" and .remoteState == "present" and .differenceCount == 0 and (.sourceDigest | startswith("sha256:"))' \
+  <<<"${initial_apply}" >/dev/null
+
+matched_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check)"
+jq --exit-status \
+  '.status == "matched" and .differenceCount == 0 and (.remoteDigest | startswith("sha256:"))' \
+  <<<"${matched_schema_check}" >/dev/null
+
+unchanged_apply="$(authzed_schema "${AUTHZED_TOKEN}" apply)"
+jq --exit-status '.status == "unchanged" and .differenceCount == 0' <<<"${unchanged_apply}" >/dev/null
+
 zed() {
   compose run --rm --no-deps authzed-cli "$@" \
     --endpoint spicedb:50051 \
@@ -138,12 +182,40 @@ zed() {
     --skip-version-check
 }
 
-zed schema write /schema.zed
+cp "${REPO_ROOT}/authzed/schema.zed" "${DRIFT_SCHEMA_FILE}"
+printf '\n/** Disposable smoke-test drift. */\ndefinition smoke_test_drift {}\n' >>"${DRIFT_SCHEMA_FILE}"
+drift_schema_write="$(
+  compose run --rm --no-deps --volume "${DRIFT_SCHEMA_FILE}:/drift-schema.zed:ro" authzed-cli \
+    schema write /drift-schema.zed \
+    --endpoint spicedb:50051 \
+    --token "${AUTHZED_TOKEN}" \
+    --insecure \
+    --skip-version-check 2>&1
+)"
 
-zed relationship create document:smoke reader user:alice
+if drifted_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check 2>&1)"; then
+  printf '%s\n' "Schema check unexpectedly matched a deliberately drifted schema." >&2
+  exit 1
+else
+  drifted_schema_check_exit_code=$?
+fi
+[[ "${drifted_schema_check_exit_code}" -eq 2 ]]
+jq --exit-status \
+  '.status == "drifted" and .remoteState == "present" and .differenceCount > 0 and (.remoteDigest | startswith("sha256:"))' \
+  <<<"${drifted_schema_check}" >/dev/null
+drifted_schema_digest="$(jq --raw-output '.remoteDigest' <<<"${drifted_schema_check}")"
 
-alice_result="$(zed permission check document:smoke view user:alice --consistency-full)"
-bob_result="$(zed permission check document:smoke view user:bob --consistency-full)"
+restored_apply="$(
+  authzed_schema "${AUTHZED_TOKEN}" apply --expected-current-digest "${drifted_schema_digest}"
+)"
+jq --exit-status '.status == "applied" and .differenceCount == 0' <<<"${restored_apply}" >/dev/null
+
+zed relationship create organization:smoke owner user:alice
+zed relationship create workspace:smoke organization organization:smoke
+zed relationship create survey:smoke workspace workspace:smoke
+
+alice_result="$(zed permission check survey:smoke read user:alice --consistency-full)"
+bob_result="$(zed permission check survey:smoke read user:bob --consistency-full)"
 
 [[ "${alice_result}" == *"true"* ]]
 [[ "${bob_result}" == *"false"* ]]
@@ -167,16 +239,20 @@ if ! restored_health="$(authzed_health "${AUTHZED_TOKEN}" 2>&1)"; then
 fi
 assert_health_result "${restored_health}" "healthy"
 
-[[ "$(zed permission check document:smoke view user:alice --consistency-full)" == *"true"* ]]
-[[ "$(zed permission check document:smoke view user:bob --consistency-full)" == *"false"* ]]
+[[ "$(zed permission check survey:smoke read user:alice --consistency-full)" == *"true"* ]]
+[[ "$(zed permission check survey:smoke read user:bob --consistency-full)" == *"false"* ]]
+
+persisted_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check)"
+jq --exit-status '.status == "matched" and .differenceCount == 0' <<<"${persisted_schema_check}" >/dev/null
 
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${unavailable_health}${restored_health}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${unavailable_health}${restored_health}${persisted_schema_check}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
-  "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* ]]; then
-  printf '%s\n' "AuthZed service logs exposed a configured secret." >&2
+  "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \
+  "${service_logs}${application_outputs}" == *"${SCHEMA_LOG_SENTINEL}"* ]]; then
+  printf '%s\n' "AuthZed logs exposed a configured secret or schema content." >&2
   exit 1
 fi
 
-printf '%s\n' "AuthZed smoke test passed: application health, authentication failure, bounded outage handling, idempotent migrations, and persistence were verified."
+printf '%s\n' "AuthZed smoke test passed: schema check/apply/drift recovery, application health, authentication failure, bounded outage handling, idempotent migrations, and persistence were verified."

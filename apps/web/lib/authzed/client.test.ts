@@ -9,8 +9,10 @@ describe("AuthZed client facade", () => {
     closeAuthzedClient();
     sdkMocks.close.mockReset();
     sdkMocks.deadlineInterceptor.mockClear();
+    sdkMocks.diffSchema.mockReset();
     sdkMocks.newClient.mockReset();
     sdkMocks.readSchema.mockReset();
+    sdkMocks.writeSchema.mockReset();
     configMocks.isAuthzedEnabled.mockReset();
     retryMocks.execute.mockClear();
     envMock.AUTHZED_CONSISTENCY = undefined;
@@ -20,7 +22,11 @@ describe("AuthZed client facade", () => {
     envMock.AUTHZED_TOKEN = "private-token";
     sdkMocks.newClient.mockReturnValue({
       close: sdkMocks.close,
-      promises: { readSchema: sdkMocks.readSchema },
+      promises: {
+        diffSchema: sdkMocks.diffSchema,
+        readSchema: sdkMocks.readSchema,
+        writeSchema: sdkMocks.writeSchema,
+      },
     });
     configMocks.isAuthzedEnabled.mockReturnValue(true);
   });
@@ -87,7 +93,13 @@ describe("AuthZed client facade", () => {
 
     expect(first).toBe(second);
     expect(sdkMocks.newClient).toHaveBeenCalledTimes(1);
-    expect(Object.keys(first).sort()).toEqual(["consistency", "readSchema", "systemKey"]);
+    expect(Object.keys(first).sort()).toEqual([
+      "consistency",
+      "diffSchema",
+      "readSchema",
+      "systemKey",
+      "writeSchema",
+    ]);
     expect(first).not.toHaveProperty("token");
     expect(first).not.toHaveProperty("promises");
     expect(first).not.toHaveProperty("close");
@@ -122,5 +134,47 @@ describe("AuthZed client facade", () => {
 
     await expect(getAuthzedClient().readSchema()).resolves.toEqual({ schemaText: "" });
     expect(retryMocks.execute).toHaveBeenCalledWith("read_schema", expect.any(Function));
+  });
+
+  test("returns only aggregate schema differences without SDK details", async () => {
+    sdkMocks.diffSchema.mockResolvedValue({
+      diffs: [
+        { diff: { definitionAdded: { name: "private_definition" }, oneofKind: "definitionAdded" } },
+        { diff: { definitionAdded: { name: "another_private_definition" }, oneofKind: "definitionAdded" } },
+        {
+          diff: {
+            oneofKind: "permissionExprChanged",
+            permissionExprChanged: { name: "private_permission" },
+          },
+        },
+        { diff: { oneofKind: undefined } },
+      ],
+      readAt: { token: "private-revision" },
+    });
+
+    await expect(getAuthzedClient().diffSchema("definition user {}")).resolves.toEqual({
+      differenceCount: 4,
+      differenceKinds: {
+        definition_added: 2,
+        permission_expr_changed: 1,
+        unknown: 1,
+      },
+    });
+    expect(sdkMocks.diffSchema).toHaveBeenCalledWith({
+      comparisonSchema: "definition user {}",
+      consistency: {
+        requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" },
+      },
+    });
+    expect(retryMocks.execute).toHaveBeenCalledWith("diff_schema", expect.any(Function));
+  });
+
+  test("writes the supplied schema through an explicitly retried schema operation", async () => {
+    sdkMocks.writeSchema.mockResolvedValue({ writtenAt: { token: "private-revision" } });
+
+    await expect(getAuthzedClient().writeSchema("definition user {}")).resolves.toBeUndefined();
+
+    expect(sdkMocks.writeSchema).toHaveBeenCalledWith({ schema: "definition user {}" });
+    expect(retryMocks.execute).toHaveBeenCalledWith("write_schema", expect.any(Function));
   });
 });

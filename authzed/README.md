@@ -21,6 +21,68 @@ The validation job is a dependency of the required `PR Check Summary`, so a
 failing assertion blocks the change: it means the schema no longer matches the
 documented semantics.
 
+## Checking and applying the schema
+
+Schema deployment is an explicit operational action. Formbricks never writes a
+schema during application startup, database migration, health checks,
+readiness, or Helm reconciliation.
+
+Configure the normal server-only AuthZed variables, then check the connected
+SpiceDB instance without changing it:
+
+```bash
+pnpm authzed:schema check
+```
+
+The command compares the checked-in schema with SpiceDB semantically by using
+the AuthZed schema-diff API. It does not compare raw formatted text. A matching
+schema exits `0`; drift exits `2`. Both cases print exactly one sanitized JSON
+object containing source and remote SHA-256 digests and aggregate difference
+counts. Schema contents and changed object names are never printed.
+
+An empty SpiceDB installation can be initialized explicitly:
+
+```bash
+pnpm authzed:schema apply
+```
+
+Replacing a non-empty schema requires the exact remote digest returned by the
+immediately preceding check:
+
+```bash
+pnpm authzed:schema apply \
+  --expected-current-digest sha256:<digest-from-check>
+```
+
+This guards against applying over a schema the operator did not inspect.
+The digest precondition is not atomic because SpiceDB schema writes do not support compare-and-swap, so ensure
+there is no concurrent schema writer between `check` and `apply`.
+`apply` exits `0` only after reading the schema back and confirming that its
+semantic diff is empty. Applying an already matching schema returns
+`status: "unchanged"` without issuing another write. Invalid configuration,
+transport failures, digest mismatches, unsafe SpiceDB schema changes, and
+read-back failures exit `1` with a stable `authzed_*` code.
+
+The command loads the repository `.env`. For an external TLS endpoint use a
+bare `host:port` with `AUTHZED_INSECURE=false`; internal Docker or Kubernetes
+plaintext endpoints use `AUTHZED_INSECURE=true`. Restart long-running
+Formbricks processes after changing AuthZed environment values.
+
+### Backups and rollback
+
+Before replacing any non-empty schema:
+
+1. Export the current schema with the pinned `zed` CLI.
+2. Export relationships that depend on definitions or relations being removed.
+3. Store both files with mode `0600`.
+4. Run `check` and retain its remote digest.
+5. Apply only the reviewed canonical schema.
+
+Rollback is safe only while no relationships depend on definitions introduced
+by the new schema. Once relationships exist, do not force a downgrade. Use an
+expand, backfill, and contract migration so every intermediate schema accepts
+the stored relationships.
+
 ## Guiding principle: mirror the current system
 
 The schema is a **technical migration of the current Formbricks authorization

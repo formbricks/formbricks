@@ -68,6 +68,25 @@ token, schema, raw SDK error, or stack trace. It is intentionally not exposed th
 and SpiceDB availability does not affect the normal Formbricks `/health` result. Restart Formbricks after
 changing AuthZed configuration.
 
+Installations from source can check or explicitly apply the canonical Formbricks schema with:
+
+```bash
+pnpm authzed:schema check
+
+# Empty instances only
+pnpm authzed:schema apply
+
+# Non-empty instances: use the remoteDigest returned by the immediately preceding check
+pnpm authzed:schema apply \
+  --expected-current-digest sha256:<digest-from-check>
+```
+
+The first apply to an empty SpiceDB needs no additional argument. Replacing a non-empty schema requires
+`--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
+the schema again. It is never invoked by `docker compose up`, Formbricks startup, or `/health`. See
+[`authzed/README.md`](../authzed/README.md) for the JSON contract, exit codes, backup requirements, and rollback
+rules.
+
 `AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. Unset means disabled and secure
 TLS, respectively. `AUTHZED_ENDPOINT` is a bare `host:port` (including bracketed IPv6) with no scheme or path;
 `AUTHZED_CONSISTENCY` accepts `minimize_latency` (the default) or `fully_consistent`.
