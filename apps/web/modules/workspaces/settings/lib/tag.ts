@@ -1,10 +1,10 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { TagError } from "@/modules/workspaces/settings/types/tag";
 
@@ -22,13 +22,11 @@ export const deleteTag = async (
 
     return ok(tag);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        return err({
-          code: TagError.TAG_NOT_FOUND,
-          message: "Tag not found",
-        });
-      }
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
+      return err({
+        code: TagError.TAG_NOT_FOUND,
+        message: "Tag not found",
+      });
     }
 
     return err({
@@ -50,13 +48,11 @@ export const updateTagName = async (
 
     return ok(tag);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        return err({
-          code: TagError.TAG_NAME_ALREADY_EXISTS,
-          message: "Tag with this name already exists",
-        });
-      }
+    if (isUniqueConstraintError(error)) {
+      return err({
+        code: TagError.TAG_NAME_ALREADY_EXISTS,
+        message: "Tag with this name already exists",
+      });
     }
 
     return err({
