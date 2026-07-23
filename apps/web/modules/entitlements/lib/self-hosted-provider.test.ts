@@ -141,6 +141,33 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     expect(result.features).not.toContain("feedback-directories");
   });
 
+  test("maps workflows feature to workflows entitlement", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { workflows: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("workflows");
+    expect(result.features).not.toContain("dashboards");
+  });
+
+  test("does not map workflows entitlement when the license flag is off", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { workflows: false, dashboards: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).not.toContain("workflows");
+  });
+
   test("maps both Hub features when all enabled", async () => {
     mockGetOrg.mockResolvedValue({ id: "org1" } as any);
     mockGetLicense.mockResolvedValue({

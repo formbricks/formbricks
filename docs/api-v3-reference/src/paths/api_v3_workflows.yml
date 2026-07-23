@@ -1,0 +1,224 @@
+get:
+  operationId: listWorkflowsV3
+  summary: List workflows
+  description: >
+    Returns workflow list items for a workspace, sorted by `sortBy` (default
+    `updatedAt`,
+
+    newest first). Workflows are workspace-scoped and exposed through the same
+    v3
+
+    session-or-`x-api-key` authorization model as surveys.
+
+
+    List items are intentionally slim: they include the derived `triggerType`
+    and `surveyId`
+
+    plus a `lastRun` summary, but not the full `definition`. Use
+
+    `GET /api/v3/workflows/{workflowId}` to read the definition.
+
+
+    `archived` workflows are excluded unless explicitly requested with
+
+    `filter[status][in]=archived`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/LimitQuery.yml
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: filter[name][contains]
+      schema:
+        type: string
+        maxLength: 512
+      description: >-
+        Case-insensitive substring match on workflow name (same semantics as the
+        survey list filter).
+    - in: query
+      name: filter[status][in]
+      schema:
+        type: array
+        items:
+          $ref: ../components/schemas/WorkflowStatus.yml
+      style: form
+      explode: true
+      description: >
+        Workflow lifecycle-state filter. Repeat the parameter
+        (`filter[status][in]=draft&filter[status][in]=disabled`)
+
+        or use comma-separated values (`filter[status][in]=draft,disabled`).
+        Omitting the filter returns
+
+        every status except `archived`. Invalid values → **400**.
+    - in: query
+      name: sortBy
+      schema:
+        type: string
+        enum:
+          - createdAt
+          - updatedAt
+          - name
+      description: >-
+        Sort order. Defaults to `updatedAt` (newest first). The `cursor` token
+        is bound to the selected sort order.
+  responses:
+    '200':
+      description: Workflows retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/WorkflowListItem.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+post:
+  operationId: createWorkflowV3
+  summary: Create a workflow
+  description: >
+    Creates a `draft` workflow. The workflow definition is the public source of
+    truth used by
+
+    the dashboard and external clients, following the document-first pattern
+    established by the
+
+    v3 Survey API. Runtime persistence, revision creation, and version
+    snapshotting are
+
+    implementation details behind this contract.
+
+
+    Workflows are always created as drafts; use `POST
+    /api/v3/workflows/{workflowId}/enable` to
+
+    make them respond to trigger events. Graph reference failures (duplicate
+    node ids, edges
+
+    pointing at missing nodes, `entryNodeId` not referencing the trigger,
+    unknown `surveyId` or
+
+    `endingCardIds` in the workspace) are rejected with **400** and structured
+    `invalid_params`.
+  tags:
+    - V3 Workflows
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateWorkflowRequest.yml
+        examples:
+          responseCompletedEmail:
+            summary: Create a response-completed email workflow
+            value:
+              workspaceId: clworkspace000000000000000
+              name: Notify team after CSAT completion
+              description: >-
+                Sends an internal email when a respondent reaches the negative
+                CSAT ending.
+              status: draft
+              definition:
+                schemaVersion: 1
+                trigger:
+                  id: trigger
+                  type: trigger
+                  triggerType: response.completed
+                  label: CSAT survey completed
+                  config:
+                    surveyId: clsurvey000000000000000000
+                    endingCardIds:
+                      - clending000000000000000000
+                nodes:
+                  - id: send-email
+                    type: action
+                    actionType: send_email
+                    label: Notify support team
+                    config:
+                      to: support@example.com
+                      from: noreply@example.com
+                      replyTo:
+                        - support@example.com
+                      subject: Thanks for your feedback
+                      body: We saw your feedback and will follow up soon.
+                      attachResponseData: true
+                      includeVariables: true
+                      includeHiddenFields: false
+                    ui:
+                      position:
+                        x: 260
+                        'y': 120
+                edges:
+                  - id: edge-trigger-email
+                    source: trigger
+                    target: send-email
+                entryNodeId: trigger
+  responses:
+    '201':
+      description: Workflow created successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/workflows/clworkflow000000000000000
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowResource.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '422':
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

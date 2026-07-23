@@ -103,13 +103,9 @@ jobs:
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
         shell: bash
 
-      # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so
-      # vite can resolve their package.json `exports` → dist. Deps only (`^...`), not the Next app.
-      - name: Build workspace package dependencies
-        if: steps.harness.outputs.present == 'true'
-        run: pnpm build --filter=@formbricks/web^...
-        shell: bash
-
+      # The .env must exist before the package build: @formbricks/database's prisma.config.ts
+      # resolves DATABASE_URL at config load (dotenv from the repo root), so `prisma generate`
+      # fails without it. Same order as e2e.yml.
       - name: Create .env
         if: steps.harness.outputs.present == 'true'
         run: pnpm dev:setup
@@ -123,6 +119,13 @@ jobs:
         run: |
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks_ba_test?schema=public|" .env
+        shell: bash
+
+      # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so
+      # vite can resolve their package.json `exports` → dist. Deps only (`^...`), not the Next app.
+      - name: Build workspace package dependencies
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm build --filter=@formbricks/web^...
         shell: bash
 
       - name: Create the test database

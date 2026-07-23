@@ -2,6 +2,11 @@ import { createId } from "@paralleldrive/cuid2";
 import bcryptjs from "bcryptjs";
 import { logger } from "@formbricks/logger";
 import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import type {
+  TWorkflowDefinition,
+  TWorkflowRunData,
+  TWorkflowTriggerRunPayload,
+} from "@formbricks/workflows";
 import { type Prisma, PrismaClient } from "./prisma";
 import { createPrismaPgAdapter } from "./prisma-adapter";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
@@ -71,6 +76,341 @@ interface SurveyQuestion {
   company?: { show: boolean; required: boolean; placeholder: { default: string } };
   allowMultipleFiles?: boolean;
   maxSizeInMB?: number;
+}
+
+interface WorkflowSeedSpec {
+  id: string;
+  /// Short lowercase-alphanumeric key used to derive stable run/log ids (must satisfy z.cuid2()).
+  runKey: string;
+  name: string;
+  description: string;
+  status: "draft" | "enabled" | "disabled";
+  triggerId: string;
+  actionId: string;
+  edgeId: string;
+  endingCardIds?: string[];
+  email: { to: string; subject: string; body: string };
+}
+
+type SeedRunStatus = "queued" | "running" | "completed" | "failed" | "canceled";
+type SeedLogStatus = "pending" | "running" | "succeeded" | "failed" | "skipped";
+
+interface WorkflowRunSeedSpec {
+  /// Appended to the workflow runKey to build deterministic run/log ids; lowercase-alphanumeric.
+  suffix: string;
+  status: SeedRunStatus;
+  /// How long before "now" the run was enqueued, so the list shows a realistic timeline.
+  minutesAgo: number;
+  started: boolean;
+  finished: boolean;
+  durationMs?: number;
+  attempt?: number;
+  error?: string;
+  /// The single send_email step trace. null mirrors a queued run that never executed a step.
+  log: { status: SeedLogStatus; error?: string } | null;
+}
+
+const WORKFLOW_RUN_SEEDS: Record<string, WorkflowRunSeedSpec[]> = {
+  [SEED_IDS.WORKFLOW_RESPONSE_FOLLOW_UP]: [
+    {
+      suffix: "01",
+      status: "completed",
+      minutesAgo: 4,
+      started: true,
+      finished: true,
+      durationMs: 820,
+      log: { status: "succeeded" },
+    },
+    {
+      suffix: "02",
+      status: "completed",
+      minutesAgo: 47,
+      started: true,
+      finished: true,
+      durationMs: 610,
+      log: { status: "succeeded" },
+    },
+    {
+      suffix: "03",
+      status: "running",
+      minutesAgo: 1,
+      started: true,
+      finished: false,
+      log: { status: "running" },
+    },
+    {
+      suffix: "04",
+      status: "failed",
+      minutesAgo: 133,
+      started: true,
+      finished: true,
+      durationMs: 1480,
+      attempt: 2,
+      error: "SMTP connection timed out",
+      log: { status: "failed", error: "SMTP connection timed out" },
+    },
+    { suffix: "05", status: "queued", minutesAgo: 0, started: false, finished: false, log: null },
+    {
+      suffix: "06",
+      status: "canceled",
+      minutesAgo: 221,
+      started: true,
+      finished: true,
+      durationMs: 240,
+      log: { status: "skipped" },
+    },
+  ],
+  [SEED_IDS.WORKFLOW_TEAM_NOTIFICATION]: [
+    {
+      suffix: "01",
+      status: "completed",
+      minutesAgo: 1440,
+      started: true,
+      finished: true,
+      durationMs: 540,
+      log: { status: "succeeded" },
+    },
+    {
+      suffix: "02",
+      status: "failed",
+      minutesAgo: 1505,
+      started: true,
+      finished: true,
+      durationMs: 910,
+      attempt: 1,
+      error: "Recipient mailbox full",
+      log: { status: "failed", error: "Recipient mailbox full" },
+    },
+  ],
+};
+
+async function seedDemoWorkflows(workspaceId: string, surveyId: string): Promise<void> {
+  logger.info("Seeding demo workflows...");
+
+  const specs: WorkflowSeedSpec[] = [
+    {
+      id: SEED_IDS.WORKFLOW_RESPONSE_FOLLOW_UP,
+      runKey: "fup",
+      name: "Response follow-up",
+      description: "Email respondents after they complete the survey.",
+      status: "enabled",
+      triggerId: "trigresponsefollowupseed",
+      actionId: "actresponsefollowupseed1",
+      edgeId: "edgresponsefollowupseed1",
+      email: {
+        to: "respondent@example.com",
+        subject: "Thanks for your answers!",
+        body: "Hi there, thanks for completing the survey.",
+      },
+    },
+    {
+      id: SEED_IDS.WORKFLOW_ENDING_CARD_FOLLOW_UP,
+      runKey: "ending",
+      name: "Ending card follow-up",
+      description: "Notify the team when a specific ending card is reached.",
+      status: "draft",
+      triggerId: "trigendingfollowupseed01",
+      actionId: "actendingfollowupseed001",
+      edgeId: "edgendcardfollowupseed01",
+      email: {
+        to: "team@example.com",
+        subject: "Respondent reached a key ending",
+        body: "A respondent reached a tracked ending card.",
+      },
+    },
+    {
+      id: SEED_IDS.WORKFLOW_TEAM_NOTIFICATION,
+      runKey: "team",
+      name: "Team notification",
+      description: "Send an internal notification for every completed response.",
+      status: "disabled",
+      triggerId: "trigteamnotificationseed",
+      actionId: "actteamnotificationseed1",
+      edgeId: "edgteamnotificationseed1",
+      email: {
+        to: "team@example.com",
+        subject: "New survey response received",
+        body: "A new response was completed. Check Formbricks for details.",
+      },
+    },
+  ];
+
+  for (const spec of specs) {
+    const definition: TWorkflowDefinition = {
+      schemaVersion: 1,
+      entryNodeId: spec.triggerId,
+      trigger: {
+        id: spec.triggerId,
+        type: "trigger",
+        triggerType: "response.completed",
+        config: { surveyId, endingCardIds: spec.endingCardIds ?? [] },
+        ui: { position: { x: 220, y: 80 } },
+      },
+      nodes: [
+        {
+          id: spec.actionId,
+          type: "action",
+          actionType: "send_email",
+          label: "Send email",
+          config: {
+            to: spec.email.to,
+            from: "team@example.com",
+            replyTo: [],
+            subject: spec.email.subject,
+            body: spec.email.body,
+            attachResponseData: false,
+          },
+          ui: { position: { x: 220, y: 200 } },
+        },
+      ],
+      edges: [{ id: spec.edgeId, source: spec.triggerId, target: spec.actionId }],
+    };
+
+    await prisma.workflow.upsert({
+      where: { id: spec.id },
+      update: {
+        name: spec.name,
+        description: spec.description,
+        status: spec.status,
+        definition,
+      },
+      create: {
+        id: spec.id,
+        workspaceId,
+        name: spec.name,
+        description: spec.description,
+        status: spec.status,
+        definition,
+      },
+    });
+  }
+
+  await seedDemoWorkflowRuns(workspaceId, surveyId, specs);
+}
+
+/**
+ * Seed historical runs (and their per-step logs) for the demo workflows so the runs list and the
+ * run-detail drawer have data to show. Runs are linked to real seeded responses so the trigger
+ * payload's `responseId` is a valid cuid, matching what the v3 run API validates on read.
+ */
+async function seedDemoWorkflowRuns(
+  workspaceId: string,
+  surveyId: string,
+  specs: WorkflowSeedSpec[]
+): Promise<void> {
+  logger.info("Seeding demo workflow runs...");
+
+  const responses = await prisma.response.findMany({
+    where: { surveyId },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+    take: 16,
+  });
+
+  if (responses.length === 0) {
+    logger.warn(`No responses found for survey ${surveyId}; skipping workflow run seeding.`);
+    return;
+  }
+
+  const now = Date.now();
+  let responseCursor = 0;
+
+  for (const spec of specs) {
+    const runSeeds = WORKFLOW_RUN_SEEDS[spec.id] ?? [];
+
+    for (const runSeed of runSeeds) {
+      const responseId = responses[responseCursor % responses.length].id;
+      responseCursor += 1;
+
+      const runId = `clseedwfrun${spec.runKey}${runSeed.suffix}`;
+      const logId = `clseedwfrunlog${spec.runKey}${runSeed.suffix}`;
+
+      const createdAt = new Date(now - runSeed.minutesAgo * 60_000);
+      const startedAt = runSeed.started ? new Date(createdAt.getTime() + 2_000) : null;
+      const finishedAt =
+        runSeed.finished && startedAt ? new Date(startedAt.getTime() + (runSeed.durationMs ?? 500)) : null;
+
+      const triggerPayload: TWorkflowTriggerRunPayload = {
+        type: "response.completed",
+        workspaceId,
+        surveyId,
+        responseId,
+        triggeredAt: createdAt.toISOString(),
+      };
+
+      const stepInput = { to: spec.email.to, subject: spec.email.subject };
+      const stepOutput =
+        runSeed.log?.status === "succeeded"
+          ? { provider: "smtp", messageId: `seed-${runId}`, accepted: [spec.email.to] }
+          : {};
+
+      const steps: TWorkflowRunData["steps"] = runSeed.log
+        ? [
+            {
+              stepId: spec.actionId,
+              stepType: "send_email",
+              status: runSeed.log.status,
+              input: stepInput,
+              output: stepOutput,
+              ...(runSeed.log.error ? { error: runSeed.log.error } : {}),
+              ...(startedAt ? { startedAt: startedAt.toISOString() } : {}),
+              ...(finishedAt ? { finishedAt: finishedAt.toISOString() } : {}),
+            },
+          ]
+        : [];
+
+      const data: TWorkflowRunData = { trigger: triggerPayload, steps };
+
+      const runFields = {
+        workflowId: spec.id,
+        workspaceId,
+        workflowVersionId: null,
+        responseId,
+        status: runSeed.status,
+        triggerType: "response.completed",
+        surveyId,
+        isDryRun: false,
+        idempotencyKey: null,
+        attempt: runSeed.attempt ?? 0,
+        nextAttemptAt: null,
+        lastErrorAt: runSeed.error ? finishedAt : null,
+        triggerPayload,
+        data,
+        error: runSeed.error ?? null,
+        createdAt,
+        updatedAt: finishedAt ?? startedAt ?? createdAt,
+        startedAt,
+        finishedAt,
+      };
+
+      await prisma.workflowRun.upsert({
+        where: { id: runId },
+        update: runFields,
+        create: { id: runId, ...runFields },
+      });
+
+      // Reset logs so re-seeding without a full wipe stays consistent with the run's current shape.
+      await prisma.workflowRunLog.deleteMany({ where: { runId } });
+
+      if (runSeed.log) {
+        await prisma.workflowRunLog.create({
+          data: {
+            id: logId,
+            runId,
+            sequence: 0,
+            stepId: spec.actionId,
+            stepType: "send_email",
+            status: runSeed.log.status,
+            input: stepInput,
+            output: stepOutput,
+            error: runSeed.log.error ?? null,
+            startedAt,
+            finishedAt,
+          },
+        });
+      }
+    }
+  }
 }
 
 async function deleteData(): Promise<void> {
@@ -560,6 +900,8 @@ async function main(): Promise<void> {
   await generateResponses(SEED_IDS.SURVEY_KITCHEN_SINK, 50);
   await generateResponses(SEED_IDS.SURVEY_CSAT, 50);
   await generateResponses(SEED_IDS.SURVEY_COMPLETED, 50);
+
+  await seedDemoWorkflows(workspace.id, SEED_IDS.SURVEY_KITCHEN_SINK);
 
   logger.info(`\n${"=".repeat(50)}`);
   logger.info("SEEDING COMPLETED SUCCESSFULLY");

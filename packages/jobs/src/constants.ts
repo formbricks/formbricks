@@ -7,6 +7,8 @@ export const JOB_NAMES = {
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
   surveyScheduling: "survey-scheduling.reconcile",
+  workflowRun: "workflow-run.process",
+  workflowRunReconcile: "workflow-run.reconcile",
 } as const;
 
 const JOBS_DEFAULT_BACKOFF = Object.freeze({

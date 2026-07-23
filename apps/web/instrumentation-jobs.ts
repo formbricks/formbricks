@@ -3,12 +3,23 @@ import {
   type JobsRuntimeHandle,
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
+  type TWorkflowRunJobData,
+  type TWorkflowRunReconcileJobData,
   removeRecurringSurveySchedulingJobSchedule,
+  removeRecurringWorkflowRunReconcileJobSchedule,
   startJobsRuntime,
   upsertRecurringSurveySchedulingJobSchedule,
+  upsertRecurringWorkflowRunReconcileJobSchedule,
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
+import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
+import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
+import {
+  WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE,
+  WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
+  WORKFLOW_RUN_RECONCILE_SCHEDULE_ID,
+} from "@/modules/ee/workflows/lib/runner/reconcile-constants";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 import {
   SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
@@ -32,12 +43,20 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 const RESPONSE_PIPELINE_JOB_NAME = "response-pipeline.process";
 const SURVEY_SCHEDULING_JOB_NAME = "survey-scheduling.reconcile";
+const WORKFLOW_RUN_JOB_NAME = "workflow-run.process";
+const WORKFLOW_RUN_RECONCILE_JOB_NAME = "workflow-run.reconcile";
 
 const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processResponsePipelineJob(data as TResponsePipelineJobData, context);
 };
 const surveySchedulingJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processSurveySchedulingJob(data as TSurveySchedulingJobData, context);
+};
+const workflowRunJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
+  await processWorkflowRunJob(data as TWorkflowRunJobData, context);
+};
+const workflowRunReconcileJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
+  await processWorkflowRunReconcileJob(data as TWorkflowRunReconcileJobData, context);
 };
 
 const registerSurveySchedulingSchedule = async (): Promise<void> => {
@@ -58,6 +77,27 @@ const registerSurveySchedulingSchedule = async (): Promise<void> => {
     },
     {
       scope: SURVEY_SCHEDULING_GLOBAL_SCOPE,
+    }
+  );
+};
+
+const registerWorkflowRunReconcileSchedule = async (): Promise<void> => {
+  await removeRecurringWorkflowRunReconcileJobSchedule({
+    scheduleId: WORKFLOW_RUN_RECONCILE_SCHEDULE_ID,
+    scope: WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE,
+  });
+
+  await upsertRecurringWorkflowRunReconcileJobSchedule(
+    {
+      scheduleId: WORKFLOW_RUN_RECONCILE_SCHEDULE_ID,
+      scope: WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE,
+    },
+    {
+      everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
+      kind: "every",
+    },
+    {
+      scope: WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE,
     }
   );
 };
@@ -132,6 +172,7 @@ export const registerRecurringJobs = async (): Promise<void> => {
 
   globalForJobsRuntime.formbricksJobsRecurringRegistration = (async () => {
     await registerSurveySchedulingSchedule();
+    await registerWorkflowRunReconcileSchedule();
     clearRecurringJobsRetryTimeout();
     globalForJobsRuntime.formbricksJobsRecurringRegistered = true;
     globalForJobsRuntime.formbricksJobsRecurringRegistration = undefined;
@@ -170,10 +211,14 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
         ...runtimeOptions.jobHandlerOverrides,
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
+        [WORKFLOW_RUN_RECONCILE_JOB_NAME]: workflowRunReconcileJobHandler,
       }
     : {
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
+        [WORKFLOW_RUN_RECONCILE_JOB_NAME]: workflowRunReconcileJobHandler,
       };
 
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = (async () => {

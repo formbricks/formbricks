@@ -24,9 +24,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint && pnpm api:v3:lint",
-    "api:v3:bundle": "node docs/api-v3-reference/scripts/bundle.mjs",
-    "api:v3:lint": "node docs/api-v3-reference/scripts/bundle.mjs --lint",
-    "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --no-cache",
     "test:coverage": "turbo run test:coverage --no-cache",
@@ -41,6 +38,9 @@
     "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
     "i18n": "pnpm generate-translations && pnpm scan-translations",
     "i18n:validate": "pnpm scan-translations",
+    "api:v3:bundle": "node docs/api-v3-reference/scripts/bundle.mjs",
+    "api:v3:lint": "node docs/api-v3-reference/scripts/bundle.mjs --lint",
+    "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
     "dev:setup": "bash scripts/setup-dev-env.sh"
   },
   "dependencies": {
@@ -68,8 +68,8 @@
     "*.json": [
       "prettier --write"
     ],
-    "packages/database/schema.prisma": [
-      "prisma format"
+    "packages/database/schema/**/*.prisma": [
+      "prisma format --schema packages/database/schema"
     ]
   },
   "engines": {

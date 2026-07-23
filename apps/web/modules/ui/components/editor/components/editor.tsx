@@ -4,6 +4,7 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import { LINK, TRANSFORMERS } from "@lexical/markdown";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
@@ -12,7 +13,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { type Dispatch, type SetStateAction, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
@@ -82,6 +83,21 @@ const editorConfig = {
   ],
 };
 
+// LexicalComposer only reads `initialConfig.editable` at mount; without this sync a mounted
+// editor keeps its initial mode when the `editable` prop flips (e.g. a workflow being enabled
+// while its email body is open in the inspector).
+const SyncEditablePlugin = ({ editable }: Readonly<{ editable: boolean }>) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    if (editor.isEditable() !== editable) {
+      editor.setEditable(editable);
+    }
+  }, [editor, editable]);
+
+  return null;
+};
+
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -96,6 +112,7 @@ export const Editor = (props: TextEditorProps) => {
     <>
       <div className="editor cursor-text rounded-md">
         <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
+          <SyncEditablePlugin editable={editable} />
           <div
             ref={editorContainerRef}
             className={cn("editor-container rounded-md p-0", props.isInvalid && "border! border-red-500!")}>
@@ -131,7 +148,13 @@ export const Editor = (props: TextEditorProps) => {
                   />
                 }
                 placeholder={
-                  <div className="-mt-11 cursor-text p-3 text-sm text-slate-400" dir="auto">
+                  // Overlay the (empty-state-only) placeholder on the contentEditable instead of
+                  // flowing after it — a static sibling would render below the input, which shows
+                  // once the input's min-height exceeds one line. pointer-events-none keeps clicks
+                  // on the placeholder text focusing the editor. Padding/leading mirror .editor-input.
+                  <div
+                    className="pointer-events-none absolute top-0 left-0 px-2.5 pt-[5px] text-sm leading-6 text-slate-400"
+                    dir="auto">
                     {props.placeholder ?? ""}
                   </div>
                 }

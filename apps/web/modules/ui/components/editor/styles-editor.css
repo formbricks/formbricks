@@ -44,6 +44,10 @@
 
 .editor-input {
   height: auto;
+  /* Fill the wrapper's min-height so a click anywhere in the visible box focuses the editor —
+     with height:auto alone, the area below the last line belongs to .editor-inner and clicks
+     there land outside the contentEditable. */
+  min-height: var(--editor-min-height, 48px);
   font-size: 14px;
   position: relative;
   tab-size: 1;

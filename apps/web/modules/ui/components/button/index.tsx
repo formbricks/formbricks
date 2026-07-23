@@ -26,7 +26,7 @@ const buttonVariants = cva(
         tall: "h-10 rounded-md px-3 text-xs",
       },
       loading: {
-        true: "cursor-not-allowed opacity-50",
+        true: "relative cursor-not-allowed opacity-50",
       },
     },
     defaultVariants: {
@@ -53,9 +53,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
         disabled={loading || disabled}>
         {loading ? (
+          // Keep the label in the layout but invisible and center the spinner over it, so the
+          // button's width never changes between idle and loading (no layout shift).
           <>
-            <Loader2 className="animate-spin" />
-            {children}
+            <Loader2 className="absolute inset-0 m-auto animate-spin" />
+            <span className="invisible inline-flex items-center gap-2">{children}</span>
           </>
         ) : (
           children

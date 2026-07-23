@@ -1,0 +1,40 @@
+type: object
+description: >
+  Result of dry-running (testing) a workflow: whether it would execute and, if not, why not. No run
+  is created and no side effects occur.
+required:
+  - workflowId
+  - ok
+  - problems
+properties:
+  workflowId:
+    type: string
+    format: cuid2
+    example: clworkflow0000000000000000
+  ok:
+    type: boolean
+    description: True when the definition is executable and every trigger reference resolves.
+  problems:
+    type: array
+    description: Every problem found, so all issues can be fixed at once. Empty when `ok` is true.
+    items:
+      type: object
+      required:
+        - code
+        - field
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - definition_not_executable
+            - survey_not_found
+            - ending_card_not_found
+          description: Machine-readable problem category.
+        field:
+          type: string
+          description: >
+            Dotted path to the offending field, e.g. `definition.trigger.config.surveyId`.
+        message:
+          type: string
+          description: Human-readable explanation of the problem.

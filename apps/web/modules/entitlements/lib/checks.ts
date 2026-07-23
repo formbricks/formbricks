@@ -13,6 +13,7 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   "ai-smart-tools": "aiSmartTools",
   "feedback-directories": "feedbackDirectories",
   dashboards: "dashboards",
+  workflows: "workflows",
 };
 
 const TRIAL_RESTRICTED_ENTITLEMENT_KEYS = [

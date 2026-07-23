@@ -23,6 +23,8 @@ import {
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
   type TTestLogJobData,
+  type TWorkflowRunJobData,
+  type TWorkflowRunReconcileJobData,
 } from "@/src/types";
 
 export interface JobsQueueHandle {
@@ -241,6 +243,27 @@ export const enqueueSurveySchedulingJob = async (data: TSurveySchedulingJobData)
   }
 };
 
+export const enqueueWorkflowRunJob = async (
+  data: TWorkflowRunJobData,
+  options?: { jobId: string }
+): Promise<Job> => {
+  try {
+    // Inherit the shared retry policy (attempts + backoff from the queue's defaultJobOptions): the
+    // executor is idempotent per step (claim-before-send + @@unique([runId, stepId]), ENG-1228), so a
+    // BullMQ retry resumes without re-sending. The deterministic jobId (the run id) keeps a re-enqueue
+    // idempotent (no duplicate job) — e.g. when the reconciler re-dispatches an orphaned run.
+    return await enqueueBackgroundJob(JOB_NAMES.workflowRun, data, {
+      ...(options?.jobId ? { jobId: options.jobId } : {}),
+    });
+  } catch (error) {
+    logger.error(
+      { err: error, jobName: JOB_NAMES.workflowRun, workflowRunId: data.workflowRunId },
+      "Failed to enqueue BullMQ workflow run job"
+    );
+    throw error;
+  }
+};
+
 export const scheduleTestLogJobAt = async (
   schedule: TRunAtBackgroundJobSchedule,
   data: TTestLogJobData
@@ -371,10 +394,57 @@ export const removeRecurringSurveySchedulingJobSchedule = async (
   }
 };
 
+export const upsertRecurringWorkflowRunReconcileJobSchedule = async (
+  identity: TBackgroundJobScheduleIdentity,
+  schedule: TRecurringBackgroundJobSchedule,
+  data: TWorkflowRunReconcileJobData
+): Promise<Job> => {
+  try {
+    return await upsertRecurringBackgroundJobSchedule(
+      JOB_NAMES.workflowRunReconcile,
+      identity,
+      schedule,
+      data
+    );
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        jobName: JOB_NAMES.workflowRunReconcile,
+        schedule,
+        scheduleId: identity.scheduleId,
+        scope: identity.scope,
+      },
+      "Failed to upsert BullMQ workflow run reconcile schedule"
+    );
+    throw error;
+  }
+};
+
+export const removeRecurringWorkflowRunReconcileJobSchedule = async (
+  identity: TBackgroundJobScheduleIdentity
+): Promise<boolean> => {
+  try {
+    return await removeRecurringBackgroundJobSchedule(JOB_NAMES.workflowRunReconcile, identity);
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        jobName: JOB_NAMES.workflowRunReconcile,
+        scheduleId: identity.scheduleId,
+        scope: identity.scope,
+      },
+      "Failed to remove BullMQ workflow run reconcile schedule"
+    );
+    throw error;
+  }
+};
+
 export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
   enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),
   enqueueSurveyScheduling: async (data) => toEnqueuedJob(await enqueueSurveySchedulingJob(data)),
   enqueueTestLog: async (data) => toEnqueuedJob(await enqueueTestLogJob(data)),
+  enqueueWorkflowRun: async (data, options) => toEnqueuedJob(await enqueueWorkflowRunJob(data, options)),
   scheduleResponsePipelineAt: async (schedule, data) =>
     toEnqueuedJob(await scheduleResponsePipelineJobAt(schedule, data)),
   scheduleSurveySchedulingAt: async (schedule, data) =>
@@ -393,6 +463,11 @@ export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
   upsertRecurringTestLogSchedule: async (identity, schedule, data) =>
     toUpsertedRecurringJobSchedule(
       await upsertRecurringTestLogJobSchedule(identity, schedule, data),
+      identity
+    ),
+  upsertRecurringWorkflowRunReconcileSchedule: async (identity, schedule, data) =>
+    toUpsertedRecurringJobSchedule(
+      await upsertRecurringWorkflowRunReconcileJobSchedule(identity, schedule, data),
       identity
     ),
 });

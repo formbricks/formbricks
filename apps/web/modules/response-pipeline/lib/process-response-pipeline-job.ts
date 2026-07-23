@@ -4,17 +4,19 @@ import { prisma } from "@formbricks/database";
 import { PipelineTriggers, Prisma, type Webhook } from "@formbricks/database/prisma";
 import { type JobHandler, type TResponsePipelineJobData, UnrecoverableError } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
-import { DatabaseError } from "@formbricks/types/errors";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
 import { getIntegrations } from "@/lib/integration/service";
+import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
+import { dispatchWorkflowRunViaJobs } from "@/modules/ee/workflows/lib/runner/dispatch";
+import { enqueueResponseCompletedWorkflowRuns } from "@/modules/ee/workflows/lib/runner/enqueue-response-completed-runs";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/lib/posthog";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -110,20 +112,6 @@ const toError = (error: unknown, fallbackMessage: string): Error =>
 const toUserLocale = (locale: string): TUserLocale => {
   const parsedLocale = ZUserLocale.safeParse(locale);
   return parsedLocale.success ? parsedLocale.data : DEFAULT_NOTIFICATION_LOCALE;
-};
-
-export const isPipelinePoolExhaustionError = (error: unknown): boolean => {
-  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2024") {
-    return true;
-  }
-
-  if (error instanceof DatabaseError || error instanceof Error) {
-    return /Timed out fetching a new connection from the connection pool|connection pool timeout/i.test(
-      error.message
-    );
-  }
-
-  return false;
 };
 
 const createWebhookMessageId = ({
@@ -688,6 +676,26 @@ const runResponseFinishedSideEffects = async ({
     responseCount,
     survey,
   });
+
+  // Workflow runner (producer): enqueue runs for matching enabled workflows. Isolated so a runner
+  // failure never breaks the response pipeline job, its retries, or the other side-effects above.
+  try {
+    await enqueueResponseCompletedWorkflowRuns({
+      response: data.response,
+      workspaceId,
+      organizationId,
+      dispatch: dispatchWorkflowRunViaJobs,
+      logContext,
+    });
+  } catch (error) {
+    // Transient DB pool exhaustion must propagate so the job retries (same contract as the outer
+    // pipeline catch); otherwise a completed-response trigger is silently lost. Only non-retryable
+    // failures are swallowed, so they never break the other responseFinished side-effects above.
+    if (isDatabasePoolExhaustionError(error)) {
+      throw error;
+    }
+    logger.error({ ...logContext, err: error }, "Response pipeline workflow run enqueue failed");
+  }
 };
 
 const runResponseCreatedSideEffects = async ({
@@ -804,7 +812,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
       });
     }
   } catch (error) {
-    if (isPipelinePoolExhaustionError(error)) {
+    if (isDatabasePoolExhaustionError(error)) {
       logger.warn(
         {
           ...logContext,

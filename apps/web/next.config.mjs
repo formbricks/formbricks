@@ -89,7 +89,7 @@ const nextConfig = {
   experimental: {
     proxyClientMaxBodySize: "16mb",
   },
-  transpilePackages: ["@formbricks/database"],
+  transpilePackages: ["@formbricks/database", "@formbricks/workflows"],
   images: {
     // Optimize image processing to reduce CPU time and prevent timeouts
     deviceSizes: [640, 750, 828, 1080, 1200, 1920], // Removed 3840 to avoid processing huge images

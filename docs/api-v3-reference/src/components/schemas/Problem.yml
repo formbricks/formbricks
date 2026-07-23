@@ -29,13 +29,16 @@ properties:
       - ai_smart_tools_disabled
       - bad_gateway
       - bad_request
+      - conflict
       - forbidden
       - internal_server_error
+      - invalid_workflow_state
       - not_authenticated
       - not_found
       - payload_too_large
       - too_many_requests
       - unprocessable_content
+      - workflow_not_executable
   requestId:
     type: string
   details:

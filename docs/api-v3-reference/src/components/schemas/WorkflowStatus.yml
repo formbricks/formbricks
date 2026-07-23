@@ -1,0 +1,26 @@
+type: string
+enum:
+  - draft
+  - enabled
+  - disabled
+  - archived
+description: >
+  Workflow lifecycle state. `draft` workflows are editable and inert. `enabled`
+  workflows
+
+  respond to trigger events. `disabled` workflows keep their configuration but
+  are inert.
+
+  `archived` workflows are soft-deleted: read-only, excluded from default list
+  reads, and
+
+  restorable via unarchive.
+
+
+  Status only changes through lifecycle endpoints. Valid transitions: `draft` →
+  `enabled`,
+
+  `enabled` ↔ `disabled`, `enabled`/`disabled` → `draft`, any non-archived state
+  → `archived`
+
+  (archive), and `archived` → `draft` (unarchive).

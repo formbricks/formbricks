@@ -219,7 +219,7 @@
             ]
           }
         ],
-        "tab": "Surveys"
+        "tab": "Surveys (Ask)"
       },
       {
         "groups": [
@@ -258,7 +258,20 @@
             "pages": ["unify-feedback/formbricks-hub"]
           }
         ],
-        "tab": "Unify Feedback"
+        "tab": "Unify Feedback (Analyze)"
+      },
+      {
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["workflows/overview"]
+          },
+          {
+            "group": "Workflow Features",
+            "pages": ["workflows/build", "workflows/manage-and-monitor"]
+          }
+        ],
+        "tab": "Workflows (Act)"
       },
       {
         "groups": [
@@ -281,6 +294,7 @@
             "pages": [
               "self-hosting/configuration/custom-ssl",
               "self-hosting/configuration/environment-variables",
+              "self-hosting/configuration/job-runner",
               "self-hosting/configuration/smtp",
               "self-hosting/configuration/file-uploads",
               "self-hosting/configuration/domain-configuration",
@@ -332,7 +346,8 @@
                   "self-hosting/advanced/enterprise-features/audit-logging",
                   "self-hosting/advanced/enterprise-features/unify-feedback",
                   "self-hosting/advanced/enterprise-features/dashboards",
-                  "self-hosting/advanced/enterprise-features/ai-features"
+                  "self-hosting/advanced/enterprise-features/ai-features",
+                  "self-hosting/advanced/enterprise-features/workflows"
                 ]
               },
               "self-hosting/advanced/rate-limiting"
@@ -1172,6 +1187,10 @@
     {
       "destination": "/docs/platform/features/email-customization",
       "source": "/docs/core-features/global/email-customization"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/job-runner",
+      "source": "/docs/self-hosting/configuration/workflow-runner"
     },
     {
       "destination": "/docs/self-hosting/setup/one-click",
