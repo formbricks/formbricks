@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
+import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   createdResponse,
   problemBadRequest,
@@ -511,6 +512,10 @@ describe("POST /api/mcp", () => {
       detail: "OAuth token does not include the required MCP scope",
       requestId: "req_wf_read_only",
     });
+    // The scope gate must fire BEFORE any mutation side effect: no audit log is built or queued for a
+    // request that never reaches the workflow handler.
+    expect(buildV3AuditLog).not.toHaveBeenCalled();
+    expect(queueV3AuditLog).not.toHaveBeenCalled();
   });
 
   test("calls create_survey through the MCP route", async () => {

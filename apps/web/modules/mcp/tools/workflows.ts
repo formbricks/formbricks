@@ -1,12 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { logger } from "@formbricks/logger";
-import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { buildV3AuditLog } from "@/app/api/v3/lib/audit";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { registerScopedTool } from "./guard-scopes";
+import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateWorkflowInput,
   type TMcpDuplicateWorkflowInput,
@@ -119,33 +119,11 @@ async function runWorkflowMutation(
   action: Parameters<typeof buildV3AuditLog>[1],
   run: (ctx: WorkflowApiContext) => Promise<Response>
 ): Promise<CallToolResult> {
-  const requestId = getMcpRequestId(extra.authInfo);
-  const authentication = getMcpAuthentication(extra.authInfo);
-  const log = logger.withContext({ requestId });
-  const auditLog = buildV3AuditLog(authentication, action, "workflow", MCP_API_ROUTE);
-
-  try {
-    const ctx = buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined);
-    const response = await run(ctx);
-
-    if (auditLog) {
-      if (response.ok) {
-        auditLog.status = "success";
-      } else {
-        auditLog.eventId = requestId;
-      }
-    }
-
-    await queueV3AuditLog(auditLog, requestId, log);
-    return await responseToMcpToolResult(response, requestId);
-  } catch (error) {
-    if (auditLog) {
-      auditLog.eventId = requestId;
-      await queueV3AuditLog(auditLog, requestId, log);
-    }
-
-    throw error;
-  }
+  // The shared runner owns the audit lifecycle; workflows only differ in building their API context
+  // (which threads the same auditLog through) before delegating to the caller's operation.
+  return runMcpMutation(extra, { action, resource: "workflow" }, ({ authentication, requestId, auditLog }) =>
+    run(buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined))
+  );
 }
 
 export function registerWorkflowTools(server: McpServer): void {

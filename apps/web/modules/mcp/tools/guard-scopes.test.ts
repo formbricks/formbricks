@@ -3,6 +3,11 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, test, vi } from "vitest";
 import { registerScopedTool } from "./guard-scopes";
 
+// The insufficient-scope shape the guard puts on structuredContent — narrowed from `unknown`.
+type ScopeErrorContent = {
+  error: { status: number; code: string; detail: string; requestId: string };
+};
+
 // A minimal stand-in for McpServer that captures what registerScopedTool registers.
 function createToolServer() {
   const tools = new Map<
@@ -68,7 +73,7 @@ describe("registerScopedTool", () => {
 
     expect(handler).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    expect((result.structuredContent as any).error).toMatchObject({
+    expect((result.structuredContent as ScopeErrorContent).error).toMatchObject({
       status: 403,
       code: "forbidden",
       detail: "OAuth token does not include the required MCP scope",

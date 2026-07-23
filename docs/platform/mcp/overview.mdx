@@ -44,8 +44,10 @@ the `:write` scope:
 | --- | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` | Read surveys and validate survey documents |
 | `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` | Create, update, and delete surveys |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` | Read workflows and their runs |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹ | Read workflows and their runs |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
+
+¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
 <Warning>
   Scopes are only a coarse gate. **Access is always bounded by your Formbricks workspace role**: even

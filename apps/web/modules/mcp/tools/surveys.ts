@@ -1,7 +1,4 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { logger } from "@formbricks/logger";
-import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -14,6 +11,7 @@ import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { registerScopedTool } from "./guard-scopes";
+import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
@@ -60,49 +58,6 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
   });
 
   return searchParams;
-}
-
-/**
- * Run a survey mutation with the same audit lifecycle the v3 route wrapper provides: build the audit
- * log, run the operation, mark success/failure, and always queue it. Mirrors runWorkflowMutation so
- * every MCP mutation tool shares a single audit path instead of copy-pasting the try/catch per tool.
- */
-async function runSurveyMutation(
-  extra: { authInfo?: NonNullable<Parameters<typeof getMcpAuthentication>[0]> },
-  action: Parameters<typeof buildV3AuditLog>[1],
-  logContext: Record<string, unknown>,
-  run: (args: {
-    authentication: ReturnType<typeof getMcpAuthentication>;
-    requestId: string;
-    auditLog: ReturnType<typeof buildV3AuditLog>;
-  }) => Promise<Response>
-): Promise<CallToolResult> {
-  const requestId = getMcpRequestId(extra.authInfo);
-  const authentication = getMcpAuthentication(extra.authInfo);
-  const log = logger.withContext({ requestId, ...logContext });
-  const auditLog = buildV3AuditLog(authentication, action, "survey", MCP_API_ROUTE);
-
-  try {
-    const response = await run({ authentication, requestId, auditLog });
-
-    if (auditLog) {
-      if (response.ok) {
-        auditLog.status = "success";
-      } else {
-        auditLog.eventId = requestId;
-      }
-    }
-
-    await queueV3AuditLog(auditLog, requestId, log);
-    return await responseToMcpToolResult(response, requestId);
-  } catch (error) {
-    if (auditLog) {
-      auditLog.eventId = requestId;
-      await queueV3AuditLog(auditLog, requestId, log);
-    }
-
-    throw error;
-  }
 }
 
 export function registerSurveyTools(server: McpServer): void {
@@ -179,10 +134,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     ["surveys:write"],
     async (input: TMcpCreateSurveyInput, extra) =>
-      runSurveyMutation(
+      runMcpMutation(
         extra,
-        "created",
-        { workspaceId: input.workspaceId },
+        { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
         ({ authentication, requestId, auditLog }) =>
           createV3SurveyResponseFromRawInput({
             body: input,
@@ -244,10 +198,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     ["surveys:write"],
     async (input: TMcpPatchSurveyInput, extra) =>
-      runSurveyMutation(
+      runMcpMutation(
         extra,
-        "updated",
-        { surveyId: input.surveyId },
+        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
         ({ authentication, requestId, auditLog }) =>
           patchV3SurveyResponse({
             surveyId: input.surveyId,
@@ -276,10 +229,9 @@ export function registerSurveyTools(server: McpServer): void {
     },
     ["surveys:write"],
     async (input: TMcpDeleteSurveyInput, extra) =>
-      runSurveyMutation(
+      runMcpMutation(
         extra,
-        "deleted",
-        { surveyId: input.surveyId },
+        { action: "deleted", resource: "survey", logContext: { surveyId: input.surveyId } },
         ({ authentication, requestId, auditLog }) =>
           deleteV3Survey({
             surveyId: input.surveyId,

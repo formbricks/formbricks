@@ -45,7 +45,8 @@ export function registerScopedTool<InputArgs extends ZodRawShape>(
   server: McpServer,
   name: string,
   config: ScopedToolConfig<InputArgs>,
-  requiredScopes: string[],
+  // Non-empty tuple: a tool cannot be registered with `[]`, which would gate on nothing.
+  requiredScopes: [string, ...string[]],
   handler: ToolCallback<InputArgs>
 ): void {
   const guardedHandler = (async (input: unknown, extra: { authInfo?: AuthInfo }) => {
