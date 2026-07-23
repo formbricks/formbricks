@@ -213,7 +213,6 @@
         "NODE_ENV",
         "ASSET_PREFIX_URL",
         "BASE_PATH",
-        "PUBLIC_URL",
         "SENTRY_AUTH_TOKEN",
         "E2E_TESTING",
         "WEBAPP_URL",
