@@ -512,6 +512,16 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.segment.update).not.toHaveBeenCalled();
     });
+
+    // Archived surveys are read-only on every write path that flows through updateSurveyInternal
+    // (editor save, summary status dropdown, v1/v3 update) — not just the v3 API layer.
+    test("rejects updating an archived survey and does not write", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, archivedAt: new Date() } as any);
+
+      await expect(updateSurveyInternal({ ...updateSurveyInput }, true)).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
   });
 });
 

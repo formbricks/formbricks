@@ -639,9 +639,8 @@ describe("deleteV3Survey", () => {
 describe("patchV3SurveyResponse", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // Not archived by default (survey fixture has no archivedAt) so the read-only guard lets patches through.
     vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
-    // Not archived by default so the archive read-only guard lets patches through.
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ archivedAt: null } as any);
     vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
     vi.mocked(serializeV3SurveyResource).mockImplementation((input) => {
       return (input as any).name === "Updated Survey"
@@ -701,7 +700,12 @@ describe("patchV3SurveyResponse", () => {
   });
 
   test("rejects patches to an archived survey with 422 and does not patch", async () => {
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ archivedAt: new Date() } as any);
+    // archivedAt is read from the survey already loaded by getAuthorizedV3Survey — no extra query.
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey: { ...survey, archivedAt: new Date() },
+      authResult,
+      response: null,
+    } as any);
 
     const response = await patchV3SurveyResponse({
       surveyId: "survey_1",

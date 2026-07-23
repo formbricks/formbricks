@@ -10,7 +10,7 @@ import { TSurveyListPage } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useArchiveSurvey } from "./use-archive-survey";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
   Wrapper.displayName = "UseArchiveSurveyTestWrapper";

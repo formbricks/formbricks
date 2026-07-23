@@ -61,7 +61,7 @@ export const SurveyFilters = ({
   setSurveyFilters,
   currentWorkspaceChannel,
   hasArchived = false,
-}: SurveyFilterProps) => {
+}: Readonly<SurveyFilterProps>) => {
   const { sortBy, status, type } = surveyFilters;
   const [name, setName] = useState(surveyFilters.name);
   const { t } = useTranslation();

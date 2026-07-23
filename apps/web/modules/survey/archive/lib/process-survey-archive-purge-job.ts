@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { JobHandler, TSurveyArchivePurgeJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import {
   SURVEY_ARCHIVE_PURGE_BATCH_SIZE,
@@ -20,13 +21,26 @@ export const getSurveyArchivePurgeCutoff = (now: Date): Date =>
  * Each survey is deleted independently so a single failure does not abort the batch, and each
  * deletion is recorded in the audit log with a system actor.
  */
+// Upper bound on batches per run. Progress is normally guaranteed (each batch either purges rows or
+// excludes failed ones), so this is a defensive backstop against an unforeseen non-terminating state,
+// not the expected exit. At 100/batch this covers 1M eligible surveys before deferring to the next run.
+const MAX_PURGE_BATCHES = 10_000;
+
 export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promise<number> => {
   const cutoff = getSurveyArchivePurgeCutoff(now);
   let purgedCount = 0;
+  let batches = 0;
+  // Surveys that threw a non-recoverable error this run. Excluded from subsequent batches so a single
+  // poison-pill row cannot be re-selected forever (it sorts to the head of every archivedAt-asc page).
+  const failedSurveyIds = new Set<string>();
 
-  while (true) {
+  while (batches < MAX_PURGE_BATCHES) {
+    batches += 1;
     const expiredSurveys = await prisma.survey.findMany({
-      where: { archivedAt: { lt: cutoff } },
+      where: {
+        archivedAt: { lt: cutoff },
+        ...(failedSurveyIds.size > 0 ? { id: { notIn: Array.from(failedSurveyIds) } } : {}),
+      },
       orderBy: { archivedAt: "asc" },
       take: SURVEY_ARCHIVE_PURGE_BATCH_SIZE,
       select: {
@@ -40,28 +54,42 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
       break;
     }
 
-    const purgedBeforeBatch = purgedCount;
-
     for (const survey of expiredSurveys) {
       try {
-        await deleteSurvey(survey.id);
+        // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a
+        // survey restored after this batch was selected is skipped, not permanently deleted.
+        await deleteSurvey(survey.id, { requireArchivedBefore: cutoff });
         purgedCount += 1;
 
-        await queueAuditEventWithoutRequest({
-          action: "deleted",
-          organizationId: survey.workspace.organizationId,
-          status: "success",
-          targetId: survey.id,
-          targetType: "survey",
-          userId: "system",
-          userType: "system",
-        }).catch((auditError) => {
+        // Await the audit enqueue so a hard delete is not left without an audit record if the process
+        // exits before a fire-and-forget promise flushes. A failed enqueue is logged, not fatal —
+        // the survey is already deleted and per-survey isolation must hold.
+        try {
+          await queueAuditEventWithoutRequest({
+            action: "deleted",
+            organizationId: survey.workspace.organizationId,
+            status: "success",
+            targetId: survey.id,
+            targetType: "survey",
+            userId: "system",
+            userType: "system",
+          });
+        } catch (auditError) {
           logger.error(
             { err: auditError, surveyId: survey.id, workspaceId: survey.workspaceId },
             "Survey archive purge audit log failed"
           );
-        });
+        }
       } catch (error) {
+        // The survey was restored or already gone between selection and delete — no longer eligible,
+        // and it won't reappear (archivedAt is null or the row is gone), so do not treat it as failed.
+        if (error instanceof ResourceNotFoundError) {
+          continue;
+        }
+
+        // A real deletion failure: exclude this survey from further batches this run so it cannot
+        // stall the loop, and let the next scheduled run retry it.
+        failedSurveyIds.add(survey.id);
         logger.error(
           { err: error, surveyId: survey.id, workspaceId: survey.workspaceId },
           "Failed to purge archived survey"
@@ -69,20 +97,17 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
       }
     }
 
-    // A short final batch means we've reached the tail; stop looping.
+    // A short batch means every remaining eligible survey has been attempted; stop looping.
     if (expiredSurveys.length < SURVEY_ARCHIVE_PURGE_BATCH_SIZE) {
       break;
     }
+  }
 
-    // No progress on a full batch means every deletion failed and would repeat forever.
-    // Stop and let the next scheduled run retry.
-    if (purgedCount === purgedBeforeBatch) {
-      logger.error(
-        { cutoff: cutoff.toISOString() },
-        "Survey archive purge made no progress on a full batch; aborting run"
-      );
-      break;
-    }
+  if (batches >= MAX_PURGE_BATCHES) {
+    logger.warn(
+      { cutoff: cutoff.toISOString(), purgedCount, batches },
+      "Survey archive purge hit the batch cap; remaining surveys defer to the next scheduled run"
+    );
   }
 
   return purgedCount;
