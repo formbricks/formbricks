@@ -13,7 +13,7 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
   getDefaultOrganizationBilling: () => ({
-    limits: { workspaces: 1, monthly: { responses: 250 } },
+    limits: { workspaces: 1, monthly: { responses: 250, workflowRuns: null } },
     stripeCustomerId: null,
     usageCycleAnchor: null,
   }),
@@ -32,6 +32,7 @@ const createBillingFixture = (overrides: Partial<TOrganizationBilling> = {}): TO
     workspaces: null,
     monthly: {
       responses: null,
+      workflowRuns: null,
     },
   },
   usageCycleAnchor: null,
@@ -67,7 +68,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     mockGetBilling.mockResolvedValue(
       createBillingFixture({
         stripeCustomerId: "cus_1",
-        limits: { workspaces: 5, monthly: { responses: 1000 } },
+        limits: { workspaces: 5, monthly: { responses: 1000, workflowRuns: null } },
         usageCycleAnchor,
         stripe: { features: ["rbac", "spam-protection"], plan: "pro" },
       })
@@ -133,7 +134,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     mockGetBilling.mockResolvedValue(
       createBillingFixture({
         stripeCustomerId: "cus_1",
-        limits: { workspaces: 5, monthly: { responses: 1000 } },
+        limits: { workspaces: 5, monthly: { responses: 1000, workflowRuns: null } },
         stripe: { features: ["follow-ups"], subscriptionStatus: "trialing" },
       })
     );

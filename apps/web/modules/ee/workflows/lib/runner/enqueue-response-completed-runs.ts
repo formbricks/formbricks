@@ -105,7 +105,7 @@ const persistQueuedRun = async ({
   workspaceId: string;
   triggerPayload: TWorkflowTriggerRunPayload;
   logContext?: Record<string, unknown>;
-}): Promise<string | null> => {
+}): Promise<{ id: string; createdAt: Date; isNew: boolean } | null> => {
   try {
     const run = await prisma.workflowRun.create({
       data: {
@@ -121,16 +121,19 @@ const persistQueuedRun = async ({
         idempotencyKey: response.id,
         triggerPayload,
       },
-      select: { id: true },
+      select: { id: true, createdAt: true },
     });
-    return run.id;
+    return { id: run.id, createdAt: run.createdAt, isNew: true };
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       const existing = await prisma.workflowRun.findUnique({
         where: { workflowId_idempotencyKey: { workflowId: match.workflowId, idempotencyKey: response.id } },
-        select: { id: true },
+        select: { id: true, createdAt: true },
       });
-      if (existing) return existing.id;
+      // isNew: false — a replayed enqueue re-found an already-persisted run. It must NOT be metered
+      // again: Stripe only dedups a meter identifier for ~24h, so a retry beyond that window would
+      // double-bill the same run (ENG-1936).
+      if (existing) return { id: existing.id, createdAt: existing.createdAt, isNew: false };
       // The unique violation says a run exists, but we can't find it by its idempotency key — a
       // contradictory state with no run id to dispatch. Surface it rather than silently drop it.
       logger.error(
@@ -177,26 +180,30 @@ const createAndDispatchWorkflowRun = async ({
   dispatch: DispatchWorkflowRun;
   logContext?: Record<string, unknown>;
 }): Promise<void> => {
-  const workflowRunId = await persistQueuedRun({ match, response, workspaceId, triggerPayload, logContext });
-  if (!workflowRunId) {
+  const persisted = await persistQueuedRun({ match, response, workspaceId, triggerPayload, logContext });
+  if (!persisted) {
     return;
   }
+  const { id: workflowRunId, createdAt, isNew } = persisted;
 
-  // Meter the run as soon as it is persisted — a persisted run is billable regardless of whether
-  // dispatch later succeeds, matching how responses meter at creation (ENG-1936). These runs are
-  // always real (isDryRun: false); dry runs are metered nowhere. Cloud-only and fire-and-forget:
-  // the helper swallows its own errors, so metering never blocks or fails run creation. Keyed on the
-  // stable workflowRunId, so a pipeline retry that re-finds the same run re-emits an identical
-  // (deduped) meter event.
+  // Meter the run once, only when it is newly created (isNew) — a persisted run is billable
+  // regardless of whether dispatch later succeeds, matching how responses meter at creation
+  // (ENG-1936). A replayed enqueue that re-found an existing run is skipped so it can't double-bill
+  // past Stripe's ~24h identifier-dedup window. These runs are always real (isDryRun: false); dry
+  // runs are metered nowhere. Timestamped from the run's own createdAt so usage lands in the correct
+  // billing period (response.updatedAt could be stale/older than Stripe's 35-day accept window).
   //
-  // Deliberately NOT awaited: awaiting would add a Stripe round-trip to — and, on a Stripe hang, stall
-  // (the client has no explicit timeout) — the serialized per-match dispatch loop below. The helper
-  // owns its errors, so voiding cannot surface an unhandled rejection.
-  void recordWorkflowRunCreatedMeterEvent({
-    stripeCustomerId,
-    workflowRunId,
-    createdAt: response.updatedAt,
-  });
+  // Cloud-only and fire-and-forget: the helper swallows its own errors, so metering never blocks or
+  // fails run creation. Deliberately NOT awaited — awaiting would add a Stripe round-trip to (and, on
+  // a Stripe hang, stall) the serialized per-match dispatch loop below. The helper owns its errors,
+  // so voiding cannot surface an unhandled rejection.
+  if (isNew) {
+    void recordWorkflowRunCreatedMeterEvent({
+      stripeCustomerId,
+      workflowRunId,
+      createdAt,
+    });
+  }
 
   try {
     await dispatch({ workflowRunId, workflowId: match.workflowId, workspaceId });

@@ -49,13 +49,15 @@ export const ZOrganizationStripeBilling = z.object({
 });
 export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilling>;
 
-// responses / workflowRuns can be null to support the unlimited plan. workflowRuns defaults to null
-// so older billing rows written before workflows became metered (ENG-1936) still parse.
+// responses / workflowRuns can be null to support the unlimited plan. workflowRuns is optional (not
+// yet present on billing rows written before workflows became metered, ENG-1936); consumers treat an
+// absent value as "not metered" (null). Kept optional rather than defaulted so the field stays
+// absent from the inferred type unless explicitly set, avoiding churn across every limits literal.
 export const ZOrganizationBillingPlanLimits = z.object({
   workspaces: z.number().nullable(),
   monthly: z.object({
     responses: z.number().nullable(),
-    workflowRuns: z.number().nullable().default(null),
+    workflowRuns: z.number().nullable().optional(),
   }),
 });
 
