@@ -113,6 +113,34 @@ export const createWorkspace = async (
   const { teamIds, ...data } = workspaceInput;
 
   try {
+    // ENG-1922: teamIds are caller-supplied. Validate that every team belongs to this
+    // organization before linking it — otherwise a caller could attach another org's team
+    // to their workspace (a cross-tenant WorkspaceTeam write). The FK only enforces that the
+    // team exists, not that it belongs here, so this must be checked at the app layer. A
+    // foreign-but-real id and a nonexistent id fail identically, so this is not an
+    // existence oracle for other orgs' teams.
+    if (teamIds && teamIds.length > 0) {
+      const uniqueTeamIds = new Set(teamIds);
+      if (uniqueTeamIds.size !== teamIds.length) {
+        throw new ValidationError("teamIds must be unique");
+      }
+      const teams = await prisma.team.findMany({
+        where: { id: { in: teamIds }, organizationId },
+        select: { id: true },
+      });
+      if (teams.length !== uniqueTeamIds.size) {
+        const foundTeamIds = new Set(teams.map((team) => team.id));
+        const foreignTeamIds = [...uniqueTeamIds].filter((teamId) => !foundTeamIds.has(teamId));
+        // ENG-1922: log the rejected cross-organization attempt for security observability.
+        // Only tenant identifiers (org id + the caller-supplied team ids) are logged — no PII.
+        logger.warn(
+          { organizationId, foreignTeamIds },
+          "Rejected cross-organization team assignment on workspace creation (ENG-1922)"
+        );
+        throw new ValidationError("teamIds must belong to the organization");
+      }
+    }
+
     const workspace = await prisma.workspace.create({
       data: {
         config: {

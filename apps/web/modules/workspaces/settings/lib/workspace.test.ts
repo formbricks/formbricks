@@ -39,6 +39,9 @@ vi.mock("@formbricks/database", () => ({
     workspaceTeam: {
       createMany: vi.fn(),
     },
+    team: {
+      findMany: vi.fn(),
+    },
     feedbackDirectory: {
       upsert: vi.fn(),
       findFirst: vi.fn(),
@@ -60,6 +63,7 @@ const expectNoFrdSideEffects = () => {
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -130,15 +134,66 @@ describe("workspace lib", () => {
   describe("createWorkspace", () => {
     test("creates workspace with team links and no FRD side-effects", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([{ id: "t1" }] as any);
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
 
       const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
 
       expect(result).toEqual(createdWorkspace);
+      // ENG-1922: teamIds must be validated against the target org before linking.
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ["t1"] }, organizationId: "org1" } })
+      );
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
       expectNoFrdSideEffects();
+    });
+
+    // ENG-1922: a caller must not link a team from another organization to their workspace.
+    test("rejects teamIds that belong to another organization", async () => {
+      // Foreign team: the org-scoped lookup returns nothing.
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([]);
+
+      await expect(
+        createWorkspace("org1", { name: "Workspace 1", teamIds: ["foreign-team"] })
+      ).rejects.toThrow(ValidationError);
+
+      // The membership check must run org-scoped...
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ["foreign-team"] }, organizationId: "org1" } })
+      );
+      // ...and the workspace and the join rows must never be written.
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
+    });
+
+    // ENG-1922: a mix of own-org and foreign teamIds must be rejected wholesale (count mismatch),
+    // not partially linked.
+    test("rejects when only some teamIds belong to the organization", async () => {
+      // Only t1 is in the org; the org-scoped lookup omits the foreign id.
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([{ id: "t1" }] as any);
+
+      await expect(
+        createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "foreign-team"] })
+      ).rejects.toThrow(ValidationError);
+
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ["t1", "foreign-team"] }, organizationId: "org1" } })
+      );
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
+    });
+
+    test("rejects duplicate teamIds", async () => {
+      await expect(createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "t1"] })).rejects.toThrow(
+        ValidationError
+      );
+
+      // Rejected before any lookup or write.
+      expect(prisma.team.findMany).not.toHaveBeenCalled();
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
     });
 
     test("seeds English as the default survey language when creating a workspace", async () => {
