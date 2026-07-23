@@ -125,13 +125,22 @@ jobs:
             minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 \
             /tmp/rustfs-init.sh
 
-      # NOTE: no local build cache here. Without Turbo remote cache (not
-      # configured — no Vercel plan), restoring .next/.turbo does not let
-      # `pnpm build` short-circuit; it recompiles cold either way, so caching
-      # the build only added save/restore overhead. Measured cold==warm at
-      # ~4min. If a build cache is wanted later, reuse build-web.yml's artifact
-      # and SKIP the build on a cache hit (as cache-build-web does), rather than
-      # restore-then-rebuild.
+      # Cache Next.js's incremental compiler cache (.next/cache), NOT the build
+      # output. This lets `pnpm build` recompile incrementally instead of cold
+      # — the standard Turbo-free way to speed up `next build` in CI. (An
+      # earlier attempt cached the whole .next via an absolute path that never
+      # persisted; caching only .next/cache with a relative path is the fix.)
+      # The per-commit key (github.sha) guarantees a fresh save every run so the
+      # cache never goes stale; restore-keys restores the most recent prior one.
+      - name: Cache Next.js build cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            apps/web/.next/cache
+            node_modules/.cache
+          key: ${{ runner.os }}-nextcache-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextcache-${{ hashFiles('pnpm-lock.yaml') }}-
 
       # Cache the downloaded browser binaries so re-runs skip the ~100MB
       # Chromium download. `--with-deps` below still runs the (uncacheable) apt
