@@ -2,7 +2,7 @@ import { RESPONSE_ALREADY_FINISHED_ERROR_CODE, ResourceNotFoundError } from "@fo
 import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { handleApiError } from "@/app/lib/api/handle-api-error";
+import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-error";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
@@ -17,10 +17,7 @@ import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { updateResponseWithQuotaEvaluation } from "./response";
 import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
-type TRouteResult = {
-  response: Response;
-  error?: unknown;
-};
+type TRouteResult = ApiErrorResult;
 
 type TExistingResponseResult = { existingResponse: TResponse } | TRouteResult;
 type TSurveyResult = { survey: TSurvey } | TRouteResult;

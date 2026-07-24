@@ -44,6 +44,11 @@ export const handleApiError = (
   { cors = false }: HandleApiErrorOptions = {}
 ): ApiErrorResult => {
   if (error instanceof Error && isExpectedError(error)) {
+    // ResourceNotFoundError is the only expected 404 and needs its resource fields, so handle it
+    // explicitly before the status switch.
+    if (error instanceof ResourceNotFoundError) {
+      return { response: responses.notFoundResponse(error.resourceType, error.resourceId, cors) };
+    }
     // `isExpectedError` also matches business errors that are technically 5xx (e.g.
     // QueryExecutionError), so gate on the status: only 4xx messages are safe to surface.
     const statusCode = (error as { statusCode?: number }).statusCode ?? 500;
@@ -55,13 +60,6 @@ export const handleApiError = (
           return { response: responses.notAuthenticatedResponse(cors) };
         case 403:
           return { response: responses.forbiddenResponse(error.message, cors) };
-        case 404:
-          return {
-            response:
-              error instanceof ResourceNotFoundError
-                ? responses.notFoundResponse(error.resourceType, error.resourceId, cors)
-                : responses.notFoundResponse("Resource", null, cors),
-          };
         case 409:
           return { response: responses.conflictResponse(error.message, undefined, cors) };
         case 429:

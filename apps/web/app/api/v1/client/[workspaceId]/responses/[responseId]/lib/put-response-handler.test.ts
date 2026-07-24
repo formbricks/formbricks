@@ -13,7 +13,6 @@ const mocks = vi.hoisted(() => ({
   getResponse: vi.fn(),
   getSurvey: vi.fn(),
   getValidatedResponseUpdateInput: vi.fn(),
-  loggerError: vi.fn(),
   resolveClientApiIds: vi.fn(),
   sendToPipeline: vi.fn(),
   updateResponseWithQuotaEvaluation: vi.fn(),
@@ -21,12 +20,6 @@ const mocks = vi.hoisted(() => ({
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
   verifyLinkSurveyPinToken: vi.fn(),
-}));
-
-vi.mock("@formbricks/logger", () => ({
-  logger: {
-    error: mocks.loggerError,
-  },
 }));
 
 vi.mock("@/app/lib/pipelines", () => ({
