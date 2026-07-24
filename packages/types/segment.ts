@@ -434,6 +434,22 @@ export const ZJsWorkspaceStateSegment = z.object({
 });
 export type TJsWorkspaceStateSegment = z.infer<typeof ZJsWorkspaceStateSegment>;
 
+/**
+ * Recursively scans a segment's filter tree for any `surveyInteraction` leaf. Used server-side to
+ * expose a single `hasSurveyInteractionSegments` flag in the workspace state so the SDK only pays for
+ * a post-interaction `/user` segment refresh when interaction-based targeting is actually in play.
+ */
+export const segmentFiltersContainSurveyInteraction = (filters: TBaseFilters): boolean => {
+  for (const group of filters) {
+    if (Array.isArray(group.resource)) {
+      if (segmentFiltersContainSurveyInteraction(group.resource)) return true;
+    } else if (group.resource.root.type === "surveyInteraction") {
+      return true;
+    }
+  }
+  return false;
+};
+
 export const ZSegmentCreateInput = z.object({
   workspaceId: z.string(),
   title: z.string(),

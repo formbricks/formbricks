@@ -59,11 +59,19 @@ export function SurveyInteractionFilter({
   // render sites.
   useEffect(() => {
     let active = true;
-    getSurveysForSegmentFilterAction({ workspaceId: segment.workspaceId }).then((result) => {
-      if (active && result?.data) {
-        setSurveys(result.data);
+    const loadSurveys = async () => {
+      try {
+        const result = await getSurveysForSegmentFilterAction({ workspaceId: segment.workspaceId });
+        if (active && result?.data) {
+          setSurveys(result.data);
+        }
+      } catch (error) {
+        // Non-fatal: the picker just stays empty. Log so a failing action is observable rather than
+        // silently swallowed.
+        console.error("Failed to load surveys for segment filter", error);
       }
-    });
+    };
+    void loadSurveys();
     return () => {
       active = false;
     };

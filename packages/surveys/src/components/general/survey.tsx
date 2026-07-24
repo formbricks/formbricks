@@ -389,6 +389,11 @@ export function Survey({
   // restoration so we can skip creating a new display if a session was restored.
   const displayCreatedRef = useRef(false);
 
+  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
+  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
+  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
+  const responseCreatedRef = useRef(false);
+
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
 
@@ -854,9 +859,12 @@ export function Survey({
         return;
       }
 
-      // Skip response creation in preview mode but still trigger the onResponseCreated callback
+      // Skip response creation in preview mode but still trigger the onResponseCreated callback (once)
       if (isPreviewMode) {
-        onResponseCreated?.();
+        if (!responseCreatedRef.current) {
+          responseCreatedRef.current = true;
+          onResponseCreated?.();
+        }
 
         // When in preview mode, set isResponseSendingFinished to true if the response is finished
         if (responseUpdate.finished) {
@@ -891,7 +899,11 @@ export function Survey({
           hiddenFields: hiddenFieldsRecord,
         });
 
-        onResponseCreated?.();
+        // Fire once — the queue creates the response on the first add and updates it thereafter.
+        if (!responseCreatedRef.current) {
+          responseCreatedRef.current = true;
+          onResponseCreated?.();
+        }
       }
     },
     [

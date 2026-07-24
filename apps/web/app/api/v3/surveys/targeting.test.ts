@@ -5,7 +5,7 @@ import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-k
 import { DatabaseError } from "@formbricks/types/errors";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSegments, getSurveyRefsForWorkspace } from "@/modules/ee/contacts/segments/lib/segments";
+import { getExistingWorkspaceSurveyIds, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyTargeting } from "./schemas";
@@ -36,7 +36,7 @@ vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
 
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   getSegments: vi.fn(),
-  getSurveyRefsForWorkspace: vi.fn(),
+  getExistingWorkspaceSurveyIds: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -217,11 +217,7 @@ const surveyInteractionNode = (id: string, surveyScope: "any" | "specific", surv
 });
 
 const mockSurveyRefs = (ids: string[]): void => {
-  vi.mocked(getSurveyRefsForWorkspace).mockResolvedValueOnce(
-    ids.map((id) => ({ id, name: id, status: "inProgress" })) as Awaited<
-      ReturnType<typeof getSurveyRefsForWorkspace>
-    >
-  );
+  vi.mocked(getExistingWorkspaceSurveyIds).mockResolvedValueOnce(new Set(ids));
 };
 
 describe("assertV3SurveyTargetingFilterReferences", () => {
@@ -381,7 +377,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     const filters = [surveyInteractionNode("f1", "any", [])] as unknown as TFilterTree;
 
     await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
-    expect(getSurveyRefsForWorkspace).not.toHaveBeenCalled();
+    expect(getExistingWorkspaceSurveyIds).not.toHaveBeenCalled();
   });
 
   test("resolves a specific-scope survey interaction filter against workspace surveys", async () => {
@@ -389,7 +385,8 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     const filters = [surveyInteractionNode("f1", "specific", ["survey_known"])] as unknown as TFilterTree;
 
     await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
-    expect(getSurveyRefsForWorkspace).toHaveBeenCalledWith("ws_1");
+    // Validated by the exact referenced ids (unbounded), not the picker's recent-window list.
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_known"]);
   });
 
   test("rejects a survey interaction filter referencing an unknown or foreign survey", async () => {

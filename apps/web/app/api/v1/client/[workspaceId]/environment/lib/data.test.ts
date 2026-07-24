@@ -121,6 +121,8 @@ describe("getWorkspaceStateData", () => {
         },
       ],
       actionClasses: mockWorkspaceData.actionClasses,
+      // Mock surveys have a null segment, so no survey-interaction targeting exists.
+      hasSurveyInteractionSegments: false,
     });
 
     expect(prisma.workspace.findUnique).toHaveBeenCalledWith({

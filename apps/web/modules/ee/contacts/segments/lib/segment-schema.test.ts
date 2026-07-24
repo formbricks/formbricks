@@ -1,10 +1,12 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import {
+  type TBaseFilters,
   ZSegmentCreateInput,
   ZSegmentFilters,
   ZSegmentSurveyInteractionFilterValue,
   ZSegmentUpdateInput,
+  segmentFiltersContainSurveyInteraction,
 } from "@formbricks/types/segment";
 
 const surveyInteractionFilter = (value: unknown) => [
@@ -168,5 +170,35 @@ describe("survey interaction filter value validation", () => {
     );
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("segmentFiltersContainSurveyInteraction", () => {
+  const validValue = { surveyScope: "any" as const, within: { amount: 1, unit: "months" as const } };
+
+  test("returns false for filters without any surveyInteraction leaf", () => {
+    expect(segmentFiltersContainSurveyInteraction(validFilters as unknown as TBaseFilters)).toBe(false);
+  });
+
+  test("returns true for a top-level surveyInteraction leaf", () => {
+    expect(
+      segmentFiltersContainSurveyInteraction(surveyInteractionFilter(validValue) as unknown as TBaseFilters)
+    ).toBe(true);
+  });
+
+  test("detects a surveyInteraction leaf nested inside a group", () => {
+    const nested = [
+      {
+        id: createId(),
+        connector: null,
+        resource: [...validFilters, { ...surveyInteractionFilter(validValue)[0], connector: "and" as const }],
+      },
+    ];
+
+    expect(segmentFiltersContainSurveyInteraction(nested as unknown as TBaseFilters)).toBe(true);
+  });
+
+  test("returns false for an empty filter list", () => {
+    expect(segmentFiltersContainSurveyInteraction([])).toBe(false);
   });
 });

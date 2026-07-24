@@ -116,6 +116,9 @@ export interface TWorkspaceState {
     actionClasses: TWorkspaceStateActionClass[];
     settings: TWorkspaceStateSettings;
     recaptchaSiteKey?: string;
+    // True when the workspace has survey-interaction segments; gates the post-interaction segment
+    // refresh in the survey widget. Optional: absent in states cached before this field shipped.
+    hasSurveyInteractionSegments?: boolean;
   };
 }
 

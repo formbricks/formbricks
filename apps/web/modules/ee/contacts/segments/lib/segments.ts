@@ -1,4 +1,5 @@
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -162,6 +163,32 @@ export const getSurveyRefsForWorkspace = reactCache(
         orderBy: { updatedAt: "desc" },
         take: SURVEY_FILTER_REF_LIMIT,
       });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
+/**
+ * Returns the subset of `surveyIds` that actually belong to `workspaceId`. Unlike
+ * {@link getSurveyRefsForWorkspace} (which caps at {@link SURVEY_FILTER_REF_LIMIT} for the picker),
+ * this queries by the exact ids being validated, so it stays correct for workspaces with more than
+ * that many surveys — a referenced-but-valid survey outside the picker's recent window is no longer
+ * wrongly rejected. Returns an empty set for an empty input without hitting the DB.
+ */
+export const getExistingWorkspaceSurveyIds = reactCache(
+  async (workspaceId: string, surveyIds: string[]): Promise<Set<string>> => {
+    validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
+    if (surveyIds.length === 0) return new Set();
+    try {
+      const surveys = await prisma.survey.findMany({
+        where: { workspaceId, id: { in: surveyIds } },
+        select: { id: true },
+      });
+      return new Set(surveys.map((survey) => survey.id));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

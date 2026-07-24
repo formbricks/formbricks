@@ -51,6 +51,8 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
 const mockUpdateQueue = {
   hasPendingWork: vi.fn().mockReturnValue(false),
   waitForPendingWork: vi.fn().mockResolvedValue(true),
+  updateUserId: vi.fn(),
+  processUpdates: vi.fn().mockResolvedValue(undefined),
 };
 
 vi.mock("@/lib/user/update-queue", () => ({
@@ -733,5 +735,109 @@ describe("widget-file", () => {
     expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalled();
 
     vi.useRealTimers();
+  });
+
+  describe("post-interaction segment refresh", () => {
+    // Renders the widget and returns the interaction callbacks handed to renderSurvey, so each test can
+    // trigger onDisplayCreated / onResponseCreated / onFinished directly and assert whether a refresh
+    // (updateUserId + processUpdates through the UpdateQueue) was enqueued.
+    const renderAndGetCallbacks = async ({
+      hasSurveyInteractionSegments,
+      userId,
+    }: {
+      hasSurveyInteractionSegments?: boolean;
+      userId: string | null;
+    }): Promise<{
+      onDisplayCreated: () => void;
+      onResponseCreated: () => void;
+      onFinished: () => void;
+    }> => {
+      const mockConfigValue = {
+        get: vi.fn().mockReturnValue({
+          appUrl: "https://fake.app",
+          workspaceId: "env_123",
+          workspace: {
+            data: {
+              settings: { clickOutsideClose: true, overlay: "none", placement: "bottomRight" },
+              hasSurveyInteractionSegments,
+            },
+          },
+          user: {
+            data: { userId, contactId: "contact_abc", displays: [], responses: [], lastDisplayAt: null },
+          },
+        }),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+      (filterSurveys as Mock).mockReturnValue([]);
+      widget.setIsSurveyRunning(false);
+      window.formbricksSurveys = createMockFormbricksSurveys();
+
+      vi.useFakeTimers();
+      await widget.renderWidget({ ...mockSurvey, delay: 0 } as unknown as TWorkspaceStateSurvey);
+      vi.advanceTimersByTime(0);
+      vi.useRealTimers();
+
+      return (getFormbricksSurveys().renderSurvey as Mock).mock.calls[0][0] as {
+        onDisplayCreated: () => void;
+        onResponseCreated: () => void;
+        onFinished: () => void;
+      };
+    };
+
+    test("refreshes on each interaction when the workspace has interaction segments", async () => {
+      const callbacks = await renderAndGetCallbacks({
+        hasSurveyInteractionSegments: true,
+        userId: "user_abc",
+      });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).toHaveBeenCalledTimes(3);
+      expect(mockUpdateQueue.updateUserId).toHaveBeenCalledWith("user_abc");
+      expect(mockUpdateQueue.processUpdates).toHaveBeenCalledTimes(3);
+    });
+
+    test("skips the refresh entirely when the workspace has no interaction segments", async () => {
+      const callbacks = await renderAndGetCallbacks({
+        hasSurveyInteractionSegments: false,
+        userId: "user_abc",
+      });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
+      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
+
+    test("skips the refresh for anonymous users even with interaction segments", async () => {
+      const callbacks = await renderAndGetCallbacks({
+        hasSurveyInteractionSegments: true,
+        userId: null,
+      });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
+      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
+
+    test("treats an absent hasSurveyInteractionSegments flag (older state) as no refresh", async () => {
+      const callbacks = await renderAndGetCallbacks({ userId: "user_abc" });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
+      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
   });
 });

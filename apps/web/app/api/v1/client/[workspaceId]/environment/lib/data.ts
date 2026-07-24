@@ -9,6 +9,7 @@ import {
   TJsWorkspaceStateSurvey,
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
+import { type TBaseFilters, segmentFiltersContainSurveyInteraction } from "@formbricks/types/segment";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -27,6 +28,9 @@ export interface WorkspaceStateData {
   };
   surveys: TJsWorkspaceStateSurvey[];
   actionClasses: TJsWorkspaceStateActionClass[];
+  // True when any live app survey's segment uses a `surveyInteraction` filter. Lets the SDK skip the
+  // post-interaction `/user` refresh entirely when no interaction-based targeting exists.
+  hasSurveyInteractionSegments: boolean;
 }
 
 /**
@@ -202,6 +206,15 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       },
     };
 
+    // Coarse workspace-level gate for the SDK's post-interaction segment refresh: does any live app
+    // survey's segment reference a `surveyInteraction` filter? If not, no interaction can change
+    // membership and the SDK can skip the extra `/user` call.
+    const hasSurveyInteractionSegments = workspaceData.surveys.some((survey) =>
+      Array.isArray(survey.segment?.filters)
+        ? segmentFiltersContainSurveyInteraction(survey.segment.filters as unknown as TBaseFilters)
+        : false
+    );
+
     const transformedSurveys = workspaceData.surveys.map((survey) => {
       const realHasFilters =
         Array.isArray(survey.segment?.filters) && (survey.segment.filters as unknown[]).length > 0;
@@ -269,6 +282,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       // intentional and only this endpoint's response widens the type.
       surveys: resolveStorageUrlsInObject(transformedSurveys) as unknown as TJsWorkspaceStateSurvey[],
       actionClasses: workspaceData.actionClasses,
+      hasSurveyInteractionSegments,
     };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {

@@ -12,7 +12,7 @@ import type {
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSegments, getSurveyRefsForWorkspace } from "@/modules/ee/contacts/segments/lib/segments";
+import { getExistingWorkspaceSurveyIds, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyTargeting } from "./schemas";
@@ -291,9 +291,12 @@ export async function assertV3SurveyTargetingFilterReferences(
   const surveyRefs = references.filter((ref) => ref.kind === "survey");
   if (surveyRefs.length > 0) {
     // Scope to the workspace's own surveys so a survey-interaction filter cannot reference another
-    // workspace's survey.
-    const surveys = await getSurveyRefsForWorkspace(workspaceId);
-    const knownSurveyIds = new Set(surveys.map((survey) => survey.id));
+    // workspace's survey. Look up by the exact referenced ids (not the picker's bounded recent list)
+    // so a valid survey in a large workspace isn't wrongly rejected for being outside that window.
+    const knownSurveyIds = await getExistingWorkspaceSurveyIds(
+      workspaceId,
+      surveyRefs.map((ref) => ref.value)
+    );
     for (const reference of surveyRefs.filter((ref) => !knownSurveyIds.has(ref.value))) {
       invalidParams.push({
         name: reference.path,

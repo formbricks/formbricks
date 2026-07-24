@@ -12,7 +12,6 @@ import {
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
-import { sendUpdates } from "@/lib/user/update";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
@@ -21,6 +20,31 @@ let isSurveyRunning = false;
 
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
+};
+
+/**
+ * Refresh server-computed segment membership after a survey interaction (display / response / finish).
+ *
+ * A `surveyInteraction` segment can change who a contact is in the moment they interact (e.g. "have
+ * seen X", "have completed X"), so we pull fresh `segments` instead of waiting for the state TTL.
+ * But that refresh is a heavy `/user` recompute, so it is:
+ *   - Gated on `hasSurveyInteractionSegments`: workspaces without interaction targeting (the majority)
+ *     pay nothing — the refetched segments couldn't have changed anyway.
+ *   - Routed through the UpdateQueue instead of a raw `sendUpdates`: the display → response → finish
+ *     burst coalesces into a single debounced call, and the ordered flush removes the last-writer-wins
+ *     race that concurrent `void sendUpdates` calls had (a stale snapshot could clobber fresh state).
+ *
+ * No-op for anonymous users (no `userId`) and when no interaction segments exist.
+ */
+const refreshSegmentsAfterInteraction = (userId: string | null): void => {
+  if (!userId) return;
+
+  const config = Config.getInstance();
+  if (!config.get().workspace.data.hasSurveyInteractionSegments) return;
+
+  const updateQueue = UpdateQueue.getInstance();
+  updateQueue.updateUserId(userId);
+  void updateQueue.processUpdates();
 };
 
 export const triggerSurvey = async (
@@ -170,15 +194,11 @@ export const renderWidget = async (
           filteredSurveys,
         });
 
-        // Refresh server-computed segment membership: a new display can change survey-interaction
-        // segments (e.g. "have seen X"). The optimistic update above keeps recontact/display-cap
-        // correct locally; this refetch pulls fresh `segments` so interaction targeting stays current
-        // without waiting for the state TTL. Identified users only; the display is already persisted
-        // (this fires after createDisplay), so the recompute counts it.
-        const displayUserId = previousConfig.user.data.userId;
-        if (displayUserId) {
-          void sendUpdates({ updates: { userId: displayUserId } });
-        }
+        // A new display can flip "have seen X" / "have not seen X" segments. The optimistic update
+        // above keeps recontact/display-cap correct locally; this pulls fresh `segments` (gated +
+        // coalesced) so interaction targeting is current by the time this survey closes and the next
+        // trigger evaluates. The display is already persisted (fires after createDisplay).
+        refreshSegmentsAfterInteraction(previousConfig.user.data.userId);
       },
       onResponseCreated: () => {
         const responses = config.get().user.data.responses;
@@ -199,25 +219,18 @@ export const renderWidget = async (
           filteredSurveys,
         });
 
-        // A created response flips "have started responding to X" segments. This fires when the
-        // response is first created (finished=false), so it only covers "started" — the "completed X"
-        // case is handled in onFinished below (which waits until the finished response is sent).
-        // Identified users only; refetch so interaction targeting updates without waiting for the TTL.
-        const responseUserId = config.get().user.data.userId;
-        if (responseUserId) {
-          void sendUpdates({ updates: { userId: responseUserId } });
-        }
+        // A created response flips "have started responding to X" segments. onResponseCreated fires
+        // once, on the first answer (not on subsequent question submits — see survey.tsx), so this is
+        // a single refresh covering "started". The "completed X" case is handled in onFinished below.
+        refreshSegmentsAfterInteraction(config.get().user.data.userId);
       },
       onFinished: () => {
         // Survey completion flips "have completed X" (and clears "have not completed X") segments.
         // onFinished only fires after the finished response has been sent to the backend (it is gated
         // on isResponseSendingFinished), so the server recompute sees finished=true — no race. Without
-        // this, a multi-question survey would only refetch at onResponseCreated (finished=false), so
+        // this, a multi-question survey would only refresh at onResponseCreated (finished=false), so
         // "completed X → show Y" targeting would never fire until the person-state TTL expired.
-        const finishedUserId = config.get().user.data.userId;
-        if (finishedUserId) {
-          void sendUpdates({ updates: { userId: finishedUserId } });
-        }
+        refreshSegmentsAfterInteraction(config.get().user.data.userId);
       },
       onClose: closeSurvey,
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
