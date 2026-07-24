@@ -372,6 +372,13 @@ describe("organization-billing", () => {
     }));
     mocks.subscriptionSchedulesRelease.mockResolvedValue({});
     mocks.subscriptionsUpdate.mockResolvedValue({});
+    // Default: no card at the customer level either. The payment-method check falls back to the
+    // customer default when the subscription has none, so it must always resolve to a customer.
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: null },
+    });
   });
 
   test("ensureStripeCustomerForOrganization returns null when org does not exist", async () => {
