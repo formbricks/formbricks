@@ -3184,6 +3184,7 @@
         "follow_ups_modal_trigger_type_response": "A válaszadó kitölti a kérdőívet",
         "follow_ups_modal_updated_successfull_toast": "Az utókövetés frissítve, és akkor lesz elmentve, ha elmenti a kérdőívet.",
         "follow_ups_new": "Új utókövetés",
+        "follow_ups_workflows_alert_title": "Nagyobb rugalmasságra van szüksége? Automatizálja az utókövetéseket és még sok mást a Workflows segítségével.",
         "formbricks_sdk_is_not_connected": "A Formbricks SDK nincs csatlakoztatva",
         "four_points": "4 pont",
         "heading": "Címsor",
