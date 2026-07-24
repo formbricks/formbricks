@@ -13,7 +13,6 @@ const mocks = vi.hoisted(() => ({
   getResponse: vi.fn(),
   getSurvey: vi.fn(),
   getValidatedResponseUpdateInput: vi.fn(),
-  loggerError: vi.fn(),
   resolveClientApiIds: vi.fn(),
   sendToPipeline: vi.fn(),
   updateResponseWithQuotaEvaluation: vi.fn(),
@@ -21,12 +20,6 @@ const mocks = vi.hoisted(() => ({
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
   verifyLinkSurveyPinToken: vi.fn(),
-}));
-
-vi.mock("@formbricks/logger", () => ({
-  logger: {
-    error: mocks.loggerError,
-  },
 }));
 
 vi.mock("@/app/lib/pipelines", () => ({
@@ -220,26 +213,20 @@ describe("putResponseHandler", () => {
     });
   });
 
-  test("maps database lookup errors to a reported internal server error", async () => {
+  test("maps database lookup errors to an internal server error without leaking the message", async () => {
     const error = new DatabaseError("Lookup failed");
     mocks.getResponse.mockRejectedValue(error);
 
     const result = await putResponseHandler(createHandlerParams());
 
+    // The real error is threaded back so the wrapper logs/reports it; the client sees a generic message.
     expect(result.error).toBe(error);
     expect(result.response.status).toBe(500);
     await expect(result.response.json()).resolves.toEqual({
       code: "internal_server_error",
-      message: "Lookup failed",
+      message: "Something went wrong. Please try again.",
       details: {},
     });
-    expect(mocks.loggerError).toHaveBeenCalledWith(
-      {
-        error,
-        url: createRequest().url,
-      },
-      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
-    );
   });
 
   test("maps unknown lookup failures to a generic internal server error", async () => {
@@ -252,7 +239,7 @@ describe("putResponseHandler", () => {
     expect(result.response.status).toBe(500);
     await expect(result.response.json()).resolves.toEqual({
       code: "internal_server_error",
-      message: "Unknown error occurred",
+      message: "Something went wrong. Please try again.",
       details: {},
     });
   });
@@ -470,7 +457,7 @@ describe("putResponseHandler", () => {
     });
   });
 
-  test("returns a reported internal server error for database update failures", async () => {
+  test("returns an internal server error for database update failures without leaking the message", async () => {
     const error = new DatabaseError("Update failed");
     mocks.updateResponseWithQuotaEvaluation.mockRejectedValue(error);
 
@@ -480,16 +467,9 @@ describe("putResponseHandler", () => {
     expect(result.response.status).toBe(500);
     await expect(result.response.json()).resolves.toEqual({
       code: "internal_server_error",
-      message: "Update failed",
+      message: "Something went wrong. Please try again.",
       details: {},
     });
-    expect(mocks.loggerError).toHaveBeenCalledWith(
-      {
-        error,
-        url: createRequest().url,
-      },
-      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
-    );
   });
 
   test("returns a generic internal server error for unexpected update failures", async () => {
@@ -502,16 +482,9 @@ describe("putResponseHandler", () => {
     expect(result.response.status).toBe(500);
     await expect(result.response.json()).resolves.toEqual({
       code: "internal_server_error",
-      message: "Something went wrong",
+      message: "Something went wrong. Please try again.",
       details: {},
     });
-    expect(mocks.loggerError).toHaveBeenCalledWith(
-      {
-        error,
-        url: createRequest().url,
-      },
-      "Error in PUT /api/v1/client/[workspaceId]/responses/[responseId]"
-    );
   });
 
   test("returns a success payload and emits a responseUpdated pipeline event", async () => {

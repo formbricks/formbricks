@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -54,12 +54,7 @@ export const GET = withV1ApiWrapper({
         ),
       };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
 });
@@ -165,54 +160,33 @@ export const POST = withV1ApiWrapper({
         responseInput.updatedAt = responseInput.createdAt;
       }
 
-      try {
-        const response = await createResponseWithQuotaEvaluation(responseInput);
-        if (auditLog) {
-          auditLog.targetId = response.id;
-          auditLog.newObject = response;
-        }
+      const response = await createResponseWithQuotaEvaluation(responseInput);
+      if (auditLog) {
+        auditLog.targetId = response.id;
+        auditLog.newObject = response;
+      }
 
+      await sendToPipeline({
+        event: "responseCreated",
+        workspaceId: surveyResult.survey.workspaceId,
+        surveyId: response.surveyId,
+        response: response,
+      });
+
+      if (response.finished) {
         await sendToPipeline({
-          event: "responseCreated",
+          event: "responseFinished",
           workspaceId: surveyResult.survey.workspaceId,
           surveyId: response.surveyId,
           response: response,
         });
-
-        if (response.finished) {
-          await sendToPipeline({
-            event: "responseFinished",
-            workspaceId: surveyResult.survey.workspaceId,
-            surveyId: response.surveyId,
-            response: response,
-          });
-        }
-
-        return {
-          response: responses.successResponse(response, true),
-        };
-      } catch (error) {
-        logger.error({ error, url: req.url }, "Error in POST /api/v1/management/responses");
-
-        if (error instanceof InvalidInputError) {
-          return {
-            response: responses.badRequestResponse(error.message),
-          };
-        }
-
-        return {
-          response: responses.internalServerErrorResponse(
-            error instanceof Error ? error.message : "Unknown error occurred"
-          ),
-        };
       }
+
+      return {
+        response: responses.successResponse(response, true),
+      };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse("An unexpected error occurred while creating the response"),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
   action: "created",
