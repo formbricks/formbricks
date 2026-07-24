@@ -2434,7 +2434,7 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
     expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
     // Lock is scoped to this org so it can't gate a different tenant's sync.
-    expect(mocks.cacheTryLock).toHaveBeenCalledWith("org:org_1:billing-sync-lock", "1", expect.any(Number));
+    expect(mocks.cacheTryLock).toHaveBeenCalledWith("org:org_1:billing-sync-lock", "1", 30_000);
   });
 
   test("getOrganizationBillingWithReadThroughSync serves cached and skips sync when the lock backend is unavailable", async () => {
@@ -2451,6 +2451,34 @@ describe("organization-billing", () => {
     expect(result).toEqual(cachedBilling);
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
     expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+  });
+
+  test("getOrganizationBillingWithReadThroughSync stops waiting at the deadline and serves cached (never overruns the lease)", async () => {
+    vi.useFakeTimers();
+    try {
+      const cachedBilling = {
+        stripeCustomerId: "cus_1",
+        // Fixed old timestamp so staleness doesn't depend on the fake clock.
+        stripe: { lastSyncedAt: new Date("2020-01-01T00:00:00.000Z").toISOString() },
+      };
+      mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
+      // Sync hangs on its first DB read → it would run past the 20s deadline (which is < the 30s lease).
+      mocks.prismaOrganizationBillingFindUnique.mockReturnValue(new Promise(() => {}));
+
+      const resultPromise = getOrganizationBillingWithReadThroughSync("org_1");
+      await vi.advanceTimersByTimeAsync(20_000 + 1);
+      const result = await resultPromise;
+
+      expect(result).toEqual(cachedBilling);
+      // Deadline fired before any write, so the request returns without blocking or writing.
+      expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      expect(mocks.loggerWarn).toHaveBeenCalledWith(
+        { error: expect.any(Error), organizationId: "org_1" },
+        "Failed to refresh billing snapshot from Stripe"
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("getOrganizationBillingWithReadThroughSync bypasses Redis cache in self-hosted mode", async () => {

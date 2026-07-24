@@ -178,7 +178,7 @@ describe("User Management", () => {
       expect(result).toEqual(previousLastLoginAt);
     });
 
-    test("locks the row with FOR NO KEY UPDATE (not FOR UPDATE) to avoid the sign-in FK deadlock (ENG-2038)", async () => {
+    test("locks with FOR NO KEY UPDATE, not FOR UPDATE (sign-in FK deadlock, ENG-2038)", async () => {
       const queryRaw = vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: null }]);
       vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
         callback({
