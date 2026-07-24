@@ -68,13 +68,17 @@ export const SurveyCard = ({
   }, [isArchived, survey.status, survey.id, workspaceBasePath]);
 
   // A read-only draft, or an archived draft (which has no summary), is not clickable.
-  const isDraftAndReadOnly = survey.status === "draft" && (isReadOnly || isArchived);
+  const isCardNotClickable = survey.status === "draft" && (isReadOnly || isArchived);
+
+  // The dropdown must stay enabled for archived surveys so they can be restored or deleted; only a
+  // read-only draft (which has no available actions) disables it.
+  const isDropdownDisabled = survey.status === "draft" && isReadOnly;
 
   const CardBody = (
     <div
       className={cn(
         "grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8 shadow-xs transition-colors ease-in-out",
-        !isDraftAndReadOnly && "hover:border-slate-400"
+        !isCardNotClickable && "hover:border-slate-400"
       )}>
       <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
         <div className="w-full truncate">{survey.name}</div>
@@ -122,7 +126,7 @@ export const SurveyCard = ({
 
   return (
     <div className="relative block">
-      {isDraftAndReadOnly ? (
+      {isCardNotClickable ? (
         CardBody
       ) : (
         <Link href={linkHref} key={survey.id} className="block">
@@ -134,7 +138,7 @@ export const SurveyCard = ({
           survey={survey}
           key={`surveys-${survey.id}`}
           publicDomain={publicDomain}
-          disabled={isDraftAndReadOnly}
+          disabled={isDropdownDisabled}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           isReadOnly={isReadOnly}
           deleteSurvey={deleteSurvey}
