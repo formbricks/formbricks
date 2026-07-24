@@ -2868,6 +2868,7 @@
         "ai_not_available": "La création de questionnaires par IA n'est pas disponible.",
         "ai_not_enabled": "Les outils intelligents IA sont désactivés pour cette organisation.",
         "ai_not_in_plan": "La création de questionnaires par IA n'est pas disponible avec ton forfait actuel.",
+        "ai_output_too_long": "Cette instruction demande plus que ce que l'IA peut générer en une seule fois. Simplifie-la ou divise-la en plusieurs questionnaires.",
         "card_description": "Décris ce que tu veux apprendre et crée un brouillon de questionnaire.",
         "card_title": "Créer avec l'IA",
         "characters": "{count}/{max}",

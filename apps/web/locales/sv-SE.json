@@ -2868,6 +2868,7 @@
         "ai_not_available": "AI-enkätskapande är inte tillgängligt.",
         "ai_not_enabled": "AI-smarta verktyg är inaktiverade för den här organisationen.",
         "ai_not_in_plan": "AI-enkätskapande är inte tillgängligt i din nuvarande plan.",
+        "ai_output_too_long": "Den här prompten begär mer än vad AI:n kan generera på en gång. Förenkla den eller dela upp den i mindre enkäter.",
         "card_description": "Beskriv vad du vill lära dig och skapa ett utkast till enkät.",
         "card_title": "Skapa med AI",
         "characters": "{count}/{max}",

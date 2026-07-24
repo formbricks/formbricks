@@ -1,3 +1,4 @@
+import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
 import {
   OperationNotAllowedError,
@@ -107,6 +108,17 @@ export const POST = withV3ApiWrapper({
           code: "ai_generated_payload_invalid",
           invalid_params: error.invalidParams,
         });
+      }
+
+      if (error instanceof AIOutputTokenLimitError) {
+        return problemUnprocessableContent(
+          requestId,
+          "The generated survey exceeded the AI output token limit. Simplify the prompt or split it into smaller surveys.",
+          {
+            instance,
+            code: "ai_output_too_long",
+          }
+        );
       }
 
       if (error instanceof ResourceNotFoundError) {

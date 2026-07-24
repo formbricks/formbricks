@@ -149,6 +149,7 @@ describe("useCreateSurveyWithAI", () => {
     ["ai_smart_tools_disabled", "workspace.surveys.ai_create.ai_not_enabled"],
     ["ai_instance_not_configured", "workspace.surveys.ai_create.ai_instance_not_configured"],
     ["ai_generated_payload_invalid", "workspace.surveys.ai_create.generated_payload_invalid"],
+    ["ai_output_too_long", "workspace.surveys.ai_create.ai_output_too_long"],
   ])("maps %s errors to the matching message", async (code, expectedMessage) => {
     vi.mocked(generateSurveyCreatePayload).mockRejectedValueOnce(
       new V3ApiError({ status: 403, detail: "API error", code })

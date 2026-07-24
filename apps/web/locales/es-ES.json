@@ -2868,6 +2868,7 @@
         "ai_not_available": "La creación de encuestas con IA no está disponible.",
         "ai_not_enabled": "Las herramientas inteligentes de IA están desactivadas para esta organización.",
         "ai_not_in_plan": "La creación de encuestas con IA no está disponible en tu plan actual.",
+        "ai_output_too_long": "Este prompt solicita más de lo que la IA puede generar de una sola vez. Simplifícalo o divídelo en encuestas más pequeñas.",
         "card_description": "Describe lo que quieres aprender y crea un borrador de encuesta.",
         "card_title": "Crear con IA",
         "characters": "{count}/{max}",

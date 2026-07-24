@@ -2868,6 +2868,7 @@
         "ai_not_available": "Az AI kérdőív-készítés nem elérhető.",
         "ai_not_enabled": "Az AI intelligens eszközök le vannak tiltva ezen szervezet számára.",
         "ai_not_in_plan": "Az AI kérdőív-készítés nem elérhető az Ön jelenlegi csomagjában.",
+        "ai_output_too_long": "Ez a felkérés többet kér, mint amennyit a mesterséges intelligencia egyszerre képes generálni. Kérem, egyszerűsítse le, vagy ossza fel kisebb felmérésekre.",
         "card_description": "Írja le, hogy mit szeretne megtudni, és hozzon létre egy kérdőívtervezetet.",
         "card_title": "Készítsen AI-val",
         "characters": "{count}/{max}",
