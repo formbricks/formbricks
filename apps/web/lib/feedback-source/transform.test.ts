@@ -370,6 +370,32 @@ describe("transformResponseToFeedbackRecords", () => {
       expect(result[0].value_text).toBe("single-choice");
     });
 
+    // ENG-1939: stored survey.blocks JSON is not re-validated on this path, so a choice element
+    // can arrive with choices absent even though the schema requires min(2). A single string
+    // answer routes through normalizeElementValue; with no choices and no otherOptionPlaceholder
+    // it must fall through, not throw on choices.some(...). Covers both types because a
+    // multipleChoiceMulti with a non-array value falls through the same as multipleChoiceSingle.
+    test.each(["multipleChoiceSingle", "multipleChoiceMulti"] as const)(
+      "does not crash when a %s element has no choices array (unmatched free-text answer)",
+      (type) => {
+        const surveyNoChoices = {
+          ...mockSurvey,
+          blocks: [{ elements: [{ id: "el-choice", type, headline: { default: "Pick one" } }] }],
+        } as unknown as TSurvey;
+        const response = {
+          ...mockResponse,
+          data: { "el-choice": "free text answer" },
+        } as unknown as TResponse;
+        const mappings = [createMapping({ elementId: "el-choice", hubFieldType: "categorical" })];
+
+        const result = transformResponseToFeedbackRecords(response, surveyNoChoices, mappings, mockTenantId);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].value_text).toBe("free text answer");
+        expect(result[0].value_id).toBeUndefined();
+      }
+    );
+
     test("JSON-stringifies object value for categorical field (matrix/ranking responses)", () => {
       const response = {
         ...mockResponse,
@@ -543,6 +569,25 @@ describe("transformResponseToFeedbackRecords", () => {
 
       expect(result).toEqual([]);
     });
+
+    // ENG-1939 (same class): a matrix element can reach this path with rows absent even though
+    // the schema requires it, since stored survey.blocks JSON is not re-validated. Must not throw.
+    test("does not crash when the matrix element has no rows array", () => {
+      const surveyNoRows = {
+        ...matrixSurvey,
+        blocks: [{ elements: [{ id: "el-matrix", type: "matrix", headline: { default: "Rate" } }] }],
+      } as unknown as TSurvey;
+      const response = {
+        id: "resp-matrix-no-rows",
+        createdAt: NOW,
+        data: { "el-matrix": { Speed: "Good" } },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, surveyNoRows, mappings, mockTenantId);
+
+      expect(result).toEqual([]);
+    });
   });
 
   describe("ranking expansion", () => {
@@ -612,6 +657,25 @@ describe("transformResponseToFeedbackRecords", () => {
       const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
 
       const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings, mockTenantId);
+
+      expect(result).toEqual([]);
+    });
+
+    // ENG-1939 (same class): a ranking element can reach this path with choices absent even though
+    // the schema requires it, since stored survey.blocks JSON is not re-validated. Must not throw.
+    test("does not crash when the ranking element has no choices array", () => {
+      const surveyNoChoices = {
+        ...rankingSurvey,
+        blocks: [{ elements: [{ id: "el-ranking", type: "ranking", headline: { default: "Rank" } }] }],
+      } as unknown as TSurvey;
+      const response = {
+        id: "resp-ranking-no-choices",
+        createdAt: NOW,
+        data: { "el-ranking": ["Reports", "Dashboards"] },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, surveyNoChoices, mappings, mockTenantId);
 
       expect(result).toEqual([]);
     });
