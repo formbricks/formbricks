@@ -19,8 +19,8 @@ export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ 
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const contactAttributeKeys = await getContactAttributeKeys(workspace.id);
-  const initialContacts = await getContacts(workspace.id, 0);
+  const contactAttributeKeys = isContactsEnabled ? await getContactAttributeKeys(workspace.id) : [];
+  const initialContacts = isContactsEnabled ? await getContacts(workspace.id, 0) : [];
 
   const AddContactsButton = (
     <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
