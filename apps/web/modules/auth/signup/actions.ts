@@ -147,7 +147,10 @@ async function handleInviteAcceptance(
   try {
     const invitedOrganization = await getOrganization(invite.organizationId);
     if (invitedOrganization) {
-      groupIdentifyPostHog("organization", invitedOrganization.id, { name: invitedOrganization.name });
+      groupIdentifyPostHog("organization", invitedOrganization.id, {
+        name: invitedOrganization.name,
+        email_domain: invite.creator.email.split("@")[1],
+      });
     }
   } catch (error) {
     logger.warn({ error, organizationId: invite.organizationId }, "Failed to identify org group in PostHog");
@@ -207,7 +210,10 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     name: DEFAULT_WORKSPACE_NAME,
   });
 
-  groupIdentifyPostHog("organization", organization.id, { name: organization.name });
+  groupIdentifyPostHog("organization", organization.id, {
+    name: organization.name,
+    email_domain: user.email.split("@")[1],
+  });
   groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
 
   capturePostHogEvent(
