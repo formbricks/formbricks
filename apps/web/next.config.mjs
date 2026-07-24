@@ -5,13 +5,12 @@ import { fileURLToPath } from "node:url";
 // Single source of truth for image-optimizer hosts (ENG-1678); shared with the runtime
 // `isExternalImageSrc` check in lib/image-hosts.ts so remotePatterns and the per-<Image>
 // `unoptimized` decision can never drift apart.
-import { OPTIMIZABLE_IMAGE_HOSTS } from "./lib/optimizable-image-hosts.mjs";
+import { LOOPBACK_HOSTS, OPTIMIZABLE_IMAGE_HOSTS } from "./lib/optimizable-image-hosts.mjs";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 jiti("./lib/env");
 
-const LOOPBACK_HOSTS = ["localhost", "127.0.0.1"];
 const LOOPBACK_WILDCARD_ORIGINS = LOOPBACK_HOSTS.map((host) => `http://${host}:*`);
 
 const getLoopbackOriginVariants = (value) => {
