@@ -26,7 +26,7 @@ const createSurveySeed = async ({
   });
 };
 
-test.describe("Survey archive", () => {
+test.describe("Survey archive @slow", () => {
   test("archives an in-progress survey, filters, restores, then deletes it forever", async ({
     page,
     users,

@@ -438,6 +438,31 @@ export async function getV3Survey({
   }
 }
 
+// Shared catch-block mapper for the single-survey mutation ops (delete/archive/restore): they share
+// one error contract — not-found → 403, DatabaseError → 500, anything else → 500.
+function mapV3SurveyMutationError(
+  error: unknown,
+  {
+    log,
+    requestId,
+    instance,
+    operation,
+  }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string; operation: string }
+): Response {
+  if (error instanceof ResourceNotFoundError) {
+    log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
+    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+  }
+
+  if (error instanceof DatabaseError) {
+    log.error({ error, statusCode: 500 }, "Database error");
+    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+  }
+
+  log.error({ error, statusCode: 500 }, `V3 survey ${operation} unexpected error`);
+  return problemInternalError(requestId, "An unexpected error occurred.", instance);
+}
+
 export async function deleteV3Survey({
   surveyId,
   authentication,
@@ -471,28 +496,22 @@ export async function deleteV3Survey({
 
     return noContentResponse({ requestId });
   } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-    }
-
-    if (error instanceof DatabaseError) {
-      log.error({ error, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-
-    log.error({ error, statusCode: 500 }, "V3 survey delete unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3SurveyMutationError(error, { log, requestId, instance, operation: "delete" });
   }
 }
 
-export async function archiveV3Survey({
-  surveyId,
-  authentication,
-  requestId,
-  instance,
-  auditLog,
-}: TV3SurveyMutationParams): Promise<Response> {
+// archive and restore share the exact same flow (authorize readWrite → audit old → run the lifecycle
+// service → audit new → return a minimal lifecycle ack); only the service and log label differ.
+async function runV3SurveyLifecycleMutation(
+  { surveyId, authentication, requestId, instance, auditLog }: TV3SurveyMutationParams,
+  {
+    operation,
+    mutate,
+  }: {
+    operation: "archive" | "restore";
+    mutate: (id: string) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
+  }
+): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
   try {
@@ -515,89 +534,32 @@ export async function archiveV3Survey({
       auditLog.oldObject = survey;
     }
 
-    const archivedSurvey = await archiveSurvey(surveyId);
+    const mutatedSurvey = await mutate(surveyId);
 
     if (auditLog) {
-      auditLog.newObject = archivedSurvey;
+      auditLog.newObject = mutatedSurvey;
     }
 
     // Intentional lifecycle ack, not the full document resource: archive/restore operate on any
     // survey (incl. legacy question-based ones that serializeV3SurveyResource rejects), so we return
     // an explicit minimal shape rather than leaking the raw Prisma object or blocking those surveys.
-    const ack = { id: archivedSurvey.id, status: archivedSurvey.status, archivedAt: archivedSurvey.archivedAt };
-    return successResponse(ack, { requestId, cache: "private, no-store" });
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-    }
-
-    if (error instanceof DatabaseError) {
-      log.error({ error, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-
-    log.error({ error, statusCode: 500 }, "V3 survey archive unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
-  }
-}
-
-export async function restoreV3Survey({
-  surveyId,
-  authentication,
-  requestId,
-  instance,
-  auditLog,
-}: TV3SurveyMutationParams): Promise<Response> {
-  const log = logger.withContext({ requestId, surveyId });
-
-  try {
-    const { survey, authResult, response } = await getAuthorizedV3Survey({
-      surveyId,
-      authentication,
-      access: "readWrite",
-      requestId,
-      instance,
-    });
-
-    if (response) {
-      log.warn({ statusCode: 403 }, "Survey not found or not accessible");
-      return response;
-    }
-
-    if (auditLog) {
-      auditLog.targetId = survey.id;
-      auditLog.organizationId = authResult.organizationId;
-      auditLog.oldObject = survey;
-    }
-
-    const restoredSurvey = await restoreSurvey(surveyId);
-
-    if (auditLog) {
-      auditLog.newObject = restoredSurvey;
-    }
-
-    // Intentional lifecycle ack (see archiveV3Survey) — explicit minimal shape, not the full resource.
     const ack = {
-      id: restoredSurvey.id,
-      status: restoredSurvey.status,
-      archivedAt: restoredSurvey.archivedAt,
+      id: mutatedSurvey.id,
+      status: mutatedSurvey.status,
+      archivedAt: mutatedSurvey.archivedAt,
     };
     return successResponse(ack, { requestId, cache: "private, no-store" });
   } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-    }
-
-    if (error instanceof DatabaseError) {
-      log.error({ error, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-
-    log.error({ error, statusCode: 500 }, "V3 survey restore unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3SurveyMutationError(error, { log, requestId, instance, operation });
   }
+}
+
+export async function archiveV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
+  return runV3SurveyLifecycleMutation(params, { operation: "archive", mutate: archiveSurvey });
+}
+
+export async function restoreV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
+  return runV3SurveyLifecycleMutation(params, { operation: "restore", mutate: restoreSurvey });
 }
 
 export async function patchV3SurveyResponse({
