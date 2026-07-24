@@ -827,35 +827,22 @@ describe("Auth Utils", () => {
     });
   });
 
-  describe("Sentry Integration", () => {
-    test("should capture authentication failures to Sentry", () => {
+  describe("Sentry Integration (ENG-2037)", () => {
+    test("does NOT capture expected auth failures to Sentry, but still audits them", () => {
       logAuthEvent("authenticationAttempted", "failure", "user_123", "user@example.com", {
         failureReason: "invalid_password",
         provider: "credentials",
         authMethod: "password_validation",
-        tags: { security_event: "password_failure" },
       });
 
-      expect(Sentry.captureException).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          tags: expect.objectContaining({
-            component: "authentication",
-            action: "authenticationAttempted",
-            status: "failure",
-            security_event: "password_failure",
-          }),
-          extra: expect.objectContaining({
-            userId: "user_123",
-            provider: "credentials",
-            authMethod: "password_validation",
-            failureReason: "invalid_password",
-          }),
-        })
+      // Expected auth failures are noise in Sentry — the audit log is the security record.
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "authenticationAttempted", status: "failure" })
       );
     });
 
-    test("should not capture successful authentication to Sentry", () => {
+    test("does not capture successful authentication to Sentry", () => {
       vi.clearAllMocks();
 
       logAuthEvent("passwordVerified", "success", "user_123", "user@example.com", {
