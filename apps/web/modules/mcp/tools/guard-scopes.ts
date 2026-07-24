@@ -55,6 +55,11 @@ export function registerScopedTool<InputArgs extends ZodRawShape>(
     if (scopeError) {
       return scopeError;
     }
+    // Cast needed only because ToolCallback<InputArgs> is an overloaded/conditional signature that
+    // TS can't call with the erased `unknown` params here. It's safe: the SDK validates `input`
+    // against this tool's inputSchema (InputArgs) BEFORE invoking guardedHandler, and we forward the
+    // exact same `input`/`extra` through unchanged — so the runtime value already conforms to the
+    // handler's declared type; nothing is reshaped.
     return (handler as (input: unknown, extra: unknown) => Promise<CallToolResult>)(input, extra);
   }) as ToolCallback<InputArgs>;
 

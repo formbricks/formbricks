@@ -93,6 +93,13 @@ scope(s) as a mandatory argument and runs the gate before the handler. Read tool
 without declaring a scope, so a new tool inherits enforcement by construction — the gate returns a
 `403 insufficient_scope` before the handler touches a v3 operation.
 
+**`surveys:read` is the mandatory baseline read scope.** Authentication rejects any MCP token that
+lacks it, and `list_workspaces` — the workspaceId-discovery prerequisite for *all* resource tools,
+including the workflow tools — gates on it. `workflows:*` is additive, always granted alongside
+`surveys:read` (API keys include both; DCR clients default to the full advertised set). A
+**workflows-only token is therefore not currently supported**; enabling one would mean relaxing the
+baseline to "any resource read scope".
+
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
 needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, and `offline_access`.
