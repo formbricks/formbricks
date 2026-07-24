@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "575cf692eb35",
+  "strategy": "manual-commit",
+  "branch": "matti/eng-1677-migrate-eslint-to-v9-flat-config",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "packages/config-eslint/README.md",
+    "packages/config-eslint/base.mjs",
+    "packages/config-eslint/package.json",
+    "pnpm-lock.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/57/5cf692eb35/0/metadata.json",
+      "transcript": "/57/5cf692eb35/0/full.jsonl",
+      "compact_transcript": "/57/5cf692eb35/0/transcript.jsonl",
+      "content_hash": "/57/5cf692eb35/0/content_hash.txt",
+      "prompt": "/57/5cf692eb35/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 107920,
+    "cache_creation_tokens": 7092434,
+    "cache_read_tokens": 254652939,
+    "output_tokens": 505881,
+    "api_call_count": 525
+  }
+}

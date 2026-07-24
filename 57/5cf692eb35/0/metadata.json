@@ -1,0 +1,227 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "575cf692eb35",
+  "session_id": "287890f8-0fc2-45ed-bb06-c028ba08e388",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-24T12:08:31.134624Z",
+  "branch": "matti/eng-1677-migrate-eslint-to-v9-flat-config",
+  "checkpoints_count": 6,
+  "save_step_count": 5,
+  "files_touched": [
+    "packages/config-eslint/README.md",
+    "packages/config-eslint/base.mjs",
+    "packages/config-eslint/package.json",
+    "pnpm-lock.yaml"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "1370756eea3b",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 107920,
+    "cache_creation_tokens": 7092434,
+    "cache_read_tokens": 254652939,
+    "output_tokens": 505881,
+    "api_call_count": 525
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01448YdB7z2uSj4bzjfNSXQk",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "nextjs-docs"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "1370756eea3b",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 2084,
+        "end": 2085,
+        "entry_ids": [
+          "3e265ae2-7b57-4f93-83ce-ab1321d175ab"
+        ],
+        "tool_use_id": "toolu_01448YdB7z2uSj4bzjfNSXQk"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01448YdB7z2uSj4bzjfNSXQk"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: nextjs-docs",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_0157v5L851sBkZwtnwTmWdhb",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "review"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "1370756eea3b",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 2847,
+        "end": 2848,
+        "entry_ids": [
+          "dd951ef5-27fc-45cb-a08f-7bb4a58004d9"
+        ],
+        "tool_use_id": "toolu_0157v5L851sBkZwtnwTmWdhb"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_0157v5L851sBkZwtnwTmWdhb"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: review",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 18
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-24T12:08:30.821607Z",
+    "agent_lines": 1084,
+    "agent_removed": 1604,
+    "human_added": 0,
+    "human_modified": 28,
+    "human_removed": 0,
+    "total_committed": 1103,
+    "total_lines_changed": 2716,
+    "agent_percentage": 98.96907216494846,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 5341,
+      "user_lines_removed": 0,
+      "agent_lines_added": 316,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        "FORMBRICKS_VISION.md": 68,
+        "apps/agents/src/db/generated/browser.ts": 29,
+        "apps/agents/src/db/generated/client.ts": 53,
+        "apps/agents/src/db/generated/commonInputTypes.ts": 510,
+        "apps/agents/src/db/generated/enums.ts": 20,
+        "apps/agents/src/db/generated/internal/class.ts": 214,
+        "apps/agents/src/db/generated/internal/prismaNamespace.ts": 943,
+        "apps/agents/src/db/generated/internal/prismaNamespaceBrowser.ts": 157,
+        "apps/agents/src/db/generated/models.ts": 13,
+        "apps/agents/src/db/generated/models/AgentStepContent.ts": 1489,
+        "apps/agents/src/db/generated/models/AgentTask.ts": 1790
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 5341,
+      "user_lines_removed": 0,
+      "agent_lines_added": 316,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        "FORMBRICKS_VISION.md": 68,
+        "apps/agents/src/db/generated/browser.ts": 29,
+        "apps/agents/src/db/generated/client.ts": 53,
+        "apps/agents/src/db/generated/commonInputTypes.ts": 510,
+        "apps/agents/src/db/generated/enums.ts": 20,
+        "apps/agents/src/db/generated/internal/class.ts": 214,
+        "apps/agents/src/db/generated/internal/prismaNamespace.ts": 943,
+        "apps/agents/src/db/generated/internal/prismaNamespaceBrowser.ts": 157,
+        "apps/agents/src/db/generated/models.ts": 13,
+        "apps/agents/src/db/generated/models/AgentStepContent.ts": 1489,
+        "apps/agents/src/db/generated/models/AgentTask.ts": 1790
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 5351,
+      "user_lines_removed": 10,
+      "agent_lines_added": 351,
+      "agent_lines_removed": 5,
+      "user_added_per_file": {
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        "FORMBRICKS_VISION.md": 68,
+        "apps/agents/src/db/generated/browser.ts": 29,
+        "apps/agents/src/db/generated/client.ts": 53,
+        "apps/agents/src/db/generated/commonInputTypes.ts": 510,
+        "apps/agents/src/db/generated/enums.ts": 20,
+        "apps/agents/src/db/generated/internal/class.ts": 214,
+        "apps/agents/src/db/generated/internal/prismaNamespace.ts": 943,
+        "apps/agents/src/db/generated/internal/prismaNamespaceBrowser.ts": 157,
+        "apps/agents/src/db/generated/models.ts": 13,
+        "apps/agents/src/db/generated/models/AgentStepContent.ts": 1489,
+        "apps/agents/src/db/generated/models/AgentTask.ts": 1790,
+        "pnpm-lock.yaml": 10
+      },
+      "user_removed_per_file": {
+        "pnpm-lock.yaml": 10
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 5341,
+      "user_lines_removed": 0,
+      "agent_lines_added": 361,
+      "agent_lines_removed": 15,
+      "user_added_per_file": {
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        "FORMBRICKS_VISION.md": 68,
+        "apps/agents/src/db/generated/browser.ts": 29,
+        "apps/agents/src/db/generated/client.ts": 53,
+        "apps/agents/src/db/generated/commonInputTypes.ts": 510,
+        "apps/agents/src/db/generated/enums.ts": 20,
+        "apps/agents/src/db/generated/internal/class.ts": 214,
+        "apps/agents/src/db/generated/internal/prismaNamespace.ts": 943,
+        "apps/agents/src/db/generated/internal/prismaNamespaceBrowser.ts": 157,
+        "apps/agents/src/db/generated/models.ts": 13,
+        "apps/agents/src/db/generated/models/AgentStepContent.ts": 1489,
+        "apps/agents/src/db/generated/models/AgentTask.ts": 1790
+      }
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 5350,
+      "user_lines_removed": 9,
+      "agent_lines_added": 361,
+      "agent_lines_removed": 15,
+      "user_added_per_file": {
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        "FORMBRICKS_VISION.md": 68,
+        "apps/agents/src/db/generated/browser.ts": 29,
+        "apps/agents/src/db/generated/client.ts": 53,
+        "apps/agents/src/db/generated/commonInputTypes.ts": 510,
+        "apps/agents/src/db/generated/enums.ts": 20,
+        "apps/agents/src/db/generated/internal/class.ts": 214,
+        "apps/agents/src/db/generated/internal/prismaNamespace.ts": 943,
+        "apps/agents/src/db/generated/internal/prismaNamespaceBrowser.ts": 157,
+        "apps/agents/src/db/generated/models.ts": 13,
+        "apps/agents/src/db/generated/models/AgentStepContent.ts": 1489,
+        "apps/agents/src/db/generated/models/AgentTask.ts": 1790,
+        "pnpm-lock.yaml": 9
+      },
+      "user_removed_per_file": {
+        "pnpm-lock.yaml": 9
+      }
+    }
+  ]
+}
