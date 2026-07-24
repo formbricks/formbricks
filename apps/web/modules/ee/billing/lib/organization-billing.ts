@@ -28,6 +28,10 @@ import { stripeClient } from "./stripe-client";
 import { CLOUD_PLAN_LEVEL, type TCloudStripePlan, getCloudPlanFromProduct } from "./stripe-plan";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
+// Single-flight lock TTL for the stale read-through Stripe sync: long enough to cover a few Stripe
+// round-trips + the write, short enough that a crashed holder can't block refreshes for long. The
+// lock is released by expiry (no explicit unlock), matching the license-fetch pattern.
+const BILLING_SYNC_LOCK_TTL_MS = 30 * 1000;
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "past_due", "unpaid", "paused"]);
 
 const ORGANIZATION_BILLING_SELECT = {
@@ -1656,6 +1660,20 @@ export const getOrganizationBillingWithReadThroughSync = async (
   }
 
   if (!isSnapshotStale(cachedBilling)) {
+    return cachedBilling;
+  }
+
+  // Single-flight the stale refresh: withCache does NOT dedupe concurrent callers, so without this a
+  // burst of requests for the same org (e.g. the post-login workspace layout render) would each run
+  // the Stripe sync + OrganizationBilling write — a thundering herd and a deadlock surface (ENG-2038).
+  // Only the lock winner refreshes; everyone else (incl. the Redis-unavailable case) serves the
+  // already-cached snapshot, which is at most one stale cycle old — acceptable for billing display.
+  const lockResult = await cache.tryLock(
+    createCacheKey.organization.billingSyncLock(organizationId),
+    "1",
+    BILLING_SYNC_LOCK_TTL_MS
+  );
+  if (!(lockResult.ok && lockResult.data === true)) {
     return cachedBilling;
   }
 
