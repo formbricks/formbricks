@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { handleApiError } from "@/app/lib/api/handle-api-error";
+import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-error";
 import { responses } from "@/app/lib/api/response";
 import {
   type AuthenticateApiKeyOptions,
@@ -14,15 +14,17 @@ export const authenticateRequest = async (
   return await authenticateApiKeyFromHeaders(request.headers, options);
 };
 
-export const handleErrorResponse = (error: any): Response => {
-  switch (error.message) {
+export const handleErrorResponse = (error: unknown): ApiErrorResult => {
+  const message = error instanceof Error ? error.message : undefined;
+  switch (message) {
     case "NotAuthenticated":
-      return responses.notAuthenticatedResponse();
+      return { response: responses.notAuthenticatedResponse() };
     case "Unauthorized":
-      return responses.unauthorizedResponse();
+      return { response: responses.unauthorizedResponse() };
     default:
-      // Delegate to the shared boundary: expected 4xx errors keep their status/message; a
-      // DatabaseError or anything unexpected becomes a generic 500 (never echo internals).
-      return handleApiError(error).response;
+      // Delegate to the shared boundary and return its full { response, error } result — not just
+      // `.response` — so the wrapper's reportApiError receives the real 5xx error (e.g. a
+      // DatabaseError) instead of a synthetic one. Expected 4xx errors keep their status/message.
+      return handleApiError(error);
   }
 };

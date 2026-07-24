@@ -8,6 +8,13 @@ import { responses } from "@/app/lib/api/response";
  */
 export const GENERIC_API_ERROR_MESSAGE = "Something went wrong. Please try again.";
 
+/** The `{ response, error? }` result shape v1 route handlers return to `withV1ApiWrapper`. */
+export interface ApiErrorResult {
+  response: Response;
+  /** The real caught error, threaded back so the wrapper's `reportApiError` logs/reports it (5xx path). */
+  error?: unknown;
+}
+
 interface HandleApiErrorOptions {
   /** Pass `true` for public/client routes so the error response carries CORS headers. */
   cors?: boolean;
@@ -34,7 +41,7 @@ interface HandleApiErrorOptions {
 export const handleApiError = (
   error: unknown,
   { cors = false }: HandleApiErrorOptions = {}
-): { response: Response; error?: unknown } => {
+): ApiErrorResult => {
   if (error instanceof Error && isExpectedError(error)) {
     // `isExpectedError` also matches business errors that are technically 5xx (e.g.
     // QueryExecutionError), so gate on the status: only 4xx messages are safe to surface.

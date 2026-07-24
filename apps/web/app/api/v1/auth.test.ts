@@ -278,29 +278,33 @@ describe("authenticateRequest", () => {
 
 describe("handleErrorResponse", () => {
   test("returns 401 notAuthenticated for 'NotAuthenticated' message", async () => {
-    const response = handleErrorResponse(new Error("NotAuthenticated"));
+    const { response } = handleErrorResponse(new Error("NotAuthenticated"));
     expect(response.status).toBe(401);
     const body = await response.json();
     expect(body.code).toBe("not_authenticated");
   });
 
   test("returns 401 unauthorized for 'Unauthorized' message", async () => {
-    const response = handleErrorResponse(new Error("Unauthorized"));
+    const { response } = handleErrorResponse(new Error("Unauthorized"));
     expect(response.status).toBe(401);
     const body = await response.json();
     expect(body.code).toBe("unauthorized");
   });
 
   test("returns 409 conflict for UniqueConstraintError", async () => {
-    const response = handleErrorResponse(new UniqueConstraintError("Action with name foo already exists"));
+    const { response } = handleErrorResponse(new UniqueConstraintError("Action with name foo already exists"));
     expect(response.status).toBe(409);
     const body = await response.json();
     expect(body.code).toBe("conflict");
     expect(body.message).toBe("Action with name foo already exists");
   });
 
-  test("returns a generic 500 for DatabaseError without leaking the message", async () => {
-    const response = handleErrorResponse(new DatabaseError("db boom"));
+  test("returns a generic 500 for DatabaseError, threads the real error, and doesn't leak the message", async () => {
+    const error = new DatabaseError("db boom");
+    const { response, error: reportedError } = handleErrorResponse(error);
+    // The real error must reach the wrapper's reportApiError (not a synthetic one), so 5xx errors
+    // from routes still on handleErrorResponse keep their Sentry signal.
+    expect(reportedError).toBe(error);
     expect(response.status).toBe(500);
     const body = await response.json();
     expect(body.message).toBe("Something went wrong. Please try again.");
@@ -308,14 +312,14 @@ describe("handleErrorResponse", () => {
   });
 
   test("returns 400 badRequest for InvalidInputError", async () => {
-    const response = handleErrorResponse(new InvalidInputError("bad input"));
+    const { response } = handleErrorResponse(new InvalidInputError("bad input"));
     expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.message).toBe("bad input");
   });
 
   test("returns 404 notFound for ResourceNotFoundError", async () => {
-    const response = handleErrorResponse(new ResourceNotFoundError("Survey", "id-1"));
+    const { response } = handleErrorResponse(new ResourceNotFoundError("Survey", "id-1"));
     expect(response.status).toBe(404);
     const body = await response.json();
     expect(body).toEqual({
@@ -329,7 +333,7 @@ describe("handleErrorResponse", () => {
   });
 
   test("returns a generic 500 for unknown errors", async () => {
-    const response = handleErrorResponse(new Error("something else"));
+    const { response } = handleErrorResponse(new Error("something else"));
     expect(response.status).toBe(500);
     const body = await response.json();
     expect(body.message).toBe("Something went wrong. Please try again.");

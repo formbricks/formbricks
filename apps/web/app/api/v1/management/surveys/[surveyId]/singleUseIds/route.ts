@@ -77,9 +77,7 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(surveyLinks),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
 });
