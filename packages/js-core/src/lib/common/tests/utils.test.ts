@@ -1287,3 +1287,163 @@ describe("utils.ts", () => {
     });
   });
 });
+
+describe("filterSurveys() — interaction targeting × recontact/display-cap matrix", () => {
+  // Composition seam (ENG-1275): the client decides show/no-show from server-computed segment
+  // membership (`user.segments`) combined with local displayOption / recontactDays / workspace
+  // cooldown / lastDisplayAt. Interaction-segment membership is computed server-side, so at this
+  // layer it's an input ("is the survey's segment in user.segments?"). This matrix locks the
+  // interplay — a survey shows only when membership AND display-cap AND recontact all pass.
+  const SURVEY = "e3kxlpnzmdp84op9qzxl9olj";
+  const SEGMENT = "p6yrnz3s2tvoe5r0l28unq7k";
+  const DAY = 1000 * 60 * 60 * 24;
+  const daysAgo = (n: number): Date => new Date(Date.now() - n * DAY);
+
+  const buildWorkspace = (survey: TWorkspaceStateSurvey, cooldownDays: number): TWorkspaceState => ({
+    expiresAt: new Date(),
+    data: {
+      settings: {
+        recontactDays: cooldownDays,
+        clickOutsideClose: false,
+        overlay: "none",
+        placement: "bottomRight",
+        inAppSurveyBranding: true,
+        styling: { allowStyleOverwrite: false },
+      } as TWorkspaceStateSettings,
+      surveys: [survey],
+      actionClasses: [],
+    },
+  });
+
+  const buildUser = (data: Partial<TUserState["data"]>): TUserState => ({
+    expiresAt: null,
+    data: {
+      userId: "user_abc",
+      contactId: null,
+      segments: [],
+      displays: [],
+      responses: [],
+      lastDisplayAt: null,
+      ...data,
+    },
+  });
+
+  const buildSurvey = (survey: Partial<TWorkspaceStateSurvey>): TWorkspaceStateSurvey =>
+    ({
+      id: SURVEY,
+      displayOption: "respondMultiple",
+      displayLimit: null,
+      recontactDays: null,
+      languages: [],
+      segment: { id: SEGMENT, hasFilters: true },
+      ...survey,
+    }) as TWorkspaceStateSurvey;
+
+  const cases: {
+    name: string;
+    survey: Partial<TWorkspaceStateSurvey>;
+    cooldownDays?: number;
+    user: Partial<TUserState["data"]>;
+    shown: boolean;
+  }[] = [
+    {
+      name: "in segment + respondMultiple → shown",
+      survey: { displayOption: "respondMultiple" },
+      user: { segments: [SEGMENT] },
+      shown: true,
+    },
+    {
+      name: "identified but not in segment → hidden (membership gates it out)",
+      survey: { displayOption: "respondMultiple" },
+      user: { segments: [] },
+      shown: false,
+    },
+    {
+      name: "in segment but displayOnce + already displayed → hidden (display cap beats membership)",
+      survey: { displayOption: "displayOnce", displayLimit: 1 },
+      user: { segments: [SEGMENT], displays: [{ surveyId: SURVEY, createdAt: daysAgo(0) }] },
+      shown: false,
+    },
+    {
+      name: "in segment + displayOnce + never displayed → shown",
+      survey: { displayOption: "displayOnce", displayLimit: 1 },
+      user: { segments: [SEGMENT] },
+      shown: true,
+    },
+    {
+      name: "in segment but survey recontactDays not elapsed → hidden",
+      survey: { displayOption: "respondMultiple", recontactDays: 7 },
+      user: { segments: [SEGMENT], lastDisplayAt: daysAgo(2) },
+      shown: false,
+    },
+    {
+      name: "in segment + survey recontactDays elapsed → shown",
+      survey: { displayOption: "respondMultiple", recontactDays: 7 },
+      user: { segments: [SEGMENT], lastDisplayAt: daysAgo(10) },
+      shown: true,
+    },
+    {
+      name: "in segment but workspace cooldown not elapsed (survey recontactDays null) → hidden",
+      survey: { displayOption: "respondMultiple", recontactDays: null },
+      cooldownDays: 7,
+      user: { segments: [SEGMENT], lastDisplayAt: daysAgo(3) },
+      shown: false,
+    },
+    {
+      name: "in segment + workspace cooldown elapsed → shown",
+      survey: { displayOption: "respondMultiple", recontactDays: null },
+      cooldownDays: 7,
+      user: { segments: [SEGMENT], lastDisplayAt: daysAgo(8) },
+      shown: true,
+    },
+    {
+      name: "in segment + displayMultiple + already responded → hidden",
+      survey: { displayOption: "displayMultiple" },
+      user: { segments: [SEGMENT], responses: [SURVEY] },
+      shown: false,
+    },
+    {
+      name: "in segment + displayMultiple + no response → shown",
+      survey: { displayOption: "displayMultiple" },
+      user: { segments: [SEGMENT] },
+      shown: true,
+    },
+    {
+      name: "in segment + displaySome under limit → shown",
+      survey: { displayOption: "displaySome", displayLimit: 2 },
+      user: { segments: [SEGMENT], displays: [{ surveyId: SURVEY, createdAt: daysAgo(0) }] },
+      shown: true,
+    },
+    {
+      name: "in segment + displaySome at limit → hidden",
+      survey: { displayOption: "displaySome", displayLimit: 2 },
+      user: {
+        segments: [SEGMENT],
+        displays: [
+          { surveyId: SURVEY, createdAt: daysAgo(0) },
+          { surveyId: SURVEY, createdAt: daysAgo(1) },
+        ],
+      },
+      shown: false,
+    },
+    {
+      name: "anonymous (no userId) + interaction segment (hasFilters) → hidden (needs identity)",
+      survey: { displayOption: "respondMultiple", segment: { id: SEGMENT, hasFilters: true } },
+      user: { userId: null, segments: [] },
+      shown: false,
+    },
+    {
+      name: "anonymous (no userId) + segment without filters → shown",
+      survey: { displayOption: "respondMultiple", segment: { id: SEGMENT, hasFilters: false } },
+      user: { userId: null, segments: [] },
+      shown: true,
+    },
+  ];
+
+  test.each(cases)("$name", ({ survey, cooldownDays = 7, user, shown }) => {
+    const workspace = buildWorkspace(buildSurvey(survey), cooldownDays);
+    const userState = buildUser(user);
+    const result = filterSurveys(workspace, userState);
+    expect(result.some((s) => s.id === SURVEY)).toBe(shown);
+  });
+});

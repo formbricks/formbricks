@@ -875,6 +875,8 @@ export const ZSurveyBase = z.object({
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
   triggers: z.array(z.object({ actionClass: ZActionClass })),
+  // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
+  // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).
   recontactDays: z.number().nullable(),
   displayLimit: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,

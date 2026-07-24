@@ -27,7 +27,8 @@ export const getWorkspaceState = async (
   return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
-      const { workspace, surveys, actionClasses } = await getWorkspaceStateData(workspaceId);
+      const { workspace, surveys, actionClasses, hasSurveyInteractionSegments } =
+        await getWorkspaceStateData(workspaceId);
 
       // Handle app setup completion update if needed
       // This is a one-time setup flag that can tolerate TTL-based cache expiration
@@ -61,6 +62,7 @@ export const getWorkspaceState = async (
         surveys: addLegacyProjectOverwritesToList(surveys),
         actionClasses,
         workspace: workspace.workspaceSettings,
+        hasSurveyInteractionSegments,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       } as TJsWorkspaceState["data"]);
 

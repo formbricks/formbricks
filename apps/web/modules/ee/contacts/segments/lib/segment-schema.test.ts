@@ -1,6 +1,26 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
-import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
+import {
+  type TBaseFilters,
+  ZSegmentCreateInput,
+  ZSegmentFilters,
+  ZSegmentSurveyInteractionFilterValue,
+  ZSegmentUpdateInput,
+  segmentFiltersContainSurveyInteraction,
+} from "@formbricks/types/segment";
+
+const surveyInteractionFilter = (value: unknown) => [
+  {
+    id: createId(),
+    connector: null,
+    resource: {
+      id: createId(),
+      root: { type: "surveyInteraction" as const },
+      qualifier: { operator: "haveSeen" as const },
+      value,
+    },
+  },
+];
 
 const validFilters = [
   {
@@ -69,5 +89,116 @@ describe("segment schema validation", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("survey interaction filter value validation", () => {
+  test("accepts any-survey scope with empty surveyIds", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("accepts specific scope with at least one survey", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "specific",
+      surveyIds: ["survey_1"],
+      within: { amount: 3, unit: "weeks" },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects specific scope with empty surveyIds", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "specific",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe("Select at least one survey");
+  });
+
+  test.each([
+    { description: "below 1", amount: 0 },
+    { description: "above 999", amount: 1000 },
+    { description: "non-integer", amount: 2.5 },
+  ])("rejects amount $description", ({ amount }) => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount, unit: "days" },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects unsupported time unit", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "years" },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts a full survey interaction filter through ZSegmentFilters", () => {
+    const result = ZSegmentFilters.safeParse(
+      surveyInteractionFilter({
+        surveyScope: "specific",
+        surveyIds: ["survey_1", "survey_2"],
+        within: { amount: 6, unit: "months" },
+      })
+    );
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects a survey interaction filter with an invalid value through ZSegmentFilters", () => {
+    const result = ZSegmentFilters.safeParse(
+      surveyInteractionFilter({
+        surveyScope: "specific",
+        surveyIds: [],
+        within: { amount: 1, unit: "months" },
+      })
+    );
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("segmentFiltersContainSurveyInteraction", () => {
+  const validValue = { surveyScope: "any" as const, within: { amount: 1, unit: "months" as const } };
+
+  test("returns false for filters without any surveyInteraction leaf", () => {
+    expect(segmentFiltersContainSurveyInteraction(validFilters as unknown as TBaseFilters)).toBe(false);
+  });
+
+  test("returns true for a top-level surveyInteraction leaf", () => {
+    expect(
+      segmentFiltersContainSurveyInteraction(surveyInteractionFilter(validValue) as unknown as TBaseFilters)
+    ).toBe(true);
+  });
+
+  test("detects a surveyInteraction leaf nested inside a group", () => {
+    const nested = [
+      {
+        id: createId(),
+        connector: null,
+        resource: [...validFilters, { ...surveyInteractionFilter(validValue)[0], connector: "and" as const }],
+      },
+    ];
+
+    expect(segmentFiltersContainSurveyInteraction(nested as unknown as TBaseFilters)).toBe(true);
+  });
+
+  test("returns false for an empty filter list", () => {
+    expect(segmentFiltersContainSurveyInteraction([])).toBe(false);
   });
 });

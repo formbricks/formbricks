@@ -57,6 +57,8 @@ export const ZWorkspace = z.object({
   }),
   organizationId: z.string(),
   styling: ZWorkspaceStyling,
+  // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
+  // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).
   recontactDays: z
     .int()
     .min(0, {
@@ -89,6 +91,8 @@ export const ZWorkspaceUpdateInput = z.object({
     .optional(),
   organizationId: z.string().optional(),
   highlightBorderColor: ZColor.nullish(),
+  // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
+  // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).
   recontactDays: z.int().optional(),
   inAppSurveyBranding: z.boolean().optional(),
   linkSurveyBranding: z.boolean().optional(),

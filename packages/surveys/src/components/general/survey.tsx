@@ -400,6 +400,11 @@ export function Survey({
   // restoration so we can skip creating a new display if a session was restored.
   const displayCreatedRef = useRef(false);
 
+  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
+  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
+  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
+  const responseCreatedRef = useRef(false);
+
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
 
@@ -850,6 +855,14 @@ export function Survey({
     };
   }, [isWebEnvironment]);
 
+  // Fire onResponseCreated exactly once per survey lifecycle. The queue creates the response on the
+  // first add and updates it on later submits, so a multi-question survey must not re-trigger it.
+  const triggerResponseCreatedOnce = useCallback(() => {
+    if (responseCreatedRef.current) return;
+    responseCreatedRef.current = true;
+    onResponseCreated?.();
+  }, [onResponseCreated]);
+
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
@@ -865,9 +878,9 @@ export function Survey({
         return;
       }
 
-      // Skip response creation in preview mode but still trigger the onResponseCreated callback
+      // Skip response creation in preview mode but still trigger the onResponseCreated callback (once)
       if (isPreviewMode) {
-        onResponseCreated?.();
+        triggerResponseCreatedOnce();
 
         // When in preview mode, set isResponseSendingFinished to true if the response is finished
         if (responseUpdate.finished) {
@@ -902,7 +915,7 @@ export function Survey({
           hiddenFields: hiddenFieldsRecord,
         });
 
-        onResponseCreated?.();
+        triggerResponseCreatedOnce();
       }
     },
     [
@@ -912,7 +925,7 @@ export function Survey({
       surveyState,
       responseQueue,
       onResponse,
-      onResponseCreated,
+      triggerResponseCreatedOnce,
       contactId,
       userId,
       survey,

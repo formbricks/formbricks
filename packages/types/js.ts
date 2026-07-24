@@ -66,6 +66,10 @@ export const ZJsWorkspaceState = z.object({
     actionClasses: z.array(ZJsWorkspaceStateActionClass),
     workspace: ZJsWorkspaceStateWorkspaceSetting,
     recaptchaSiteKey: z.string().optional(),
+    // True when at least one segment attached to a live app survey uses a `surveyInteraction` filter.
+    // Gates the SDK's post-interaction segment refresh: when false, an interaction can't change
+    // membership, so the extra `/user` call is skipped. Optional for back-compat with cached states.
+    hasSurveyInteractionSegments: z.boolean().optional(),
   }),
 });
 
