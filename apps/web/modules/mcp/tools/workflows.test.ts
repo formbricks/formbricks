@@ -53,16 +53,28 @@ const apiKeyAuth = {
   organizationId: "org_1",
   organizationAccess: { accessControl: { read: true, write: true } },
   workspacePermissions: [
-    { workspaceId: WORKSPACE_ID, workspaceName: "Workspace", permission: ApiKeyPermission.read },
+    { workspaceId: WORKSPACE_ID, workspaceName: "Workspace", permission: ApiKeyPermission.write },
   ],
 };
 
+// Full-scope token used by the behavior tests below.
 const authInfo = {
   token: "key_1",
   clientId: "key_1",
-  scopes: ["workflows:read"],
+  scopes: ["workflows:read", "workflows:write"],
   extra: { formbricksAuthentication: apiKeyAuth, requestId: "req_tool" },
 };
+
+// A write-capable user's OAuth token that was only granted read scope — the ENG-1967 case: workspace
+// permissions would allow the write, but the token scope must not.
+const readOnlyAuthInfo = {
+  ...authInfo,
+  token: "oauth:user_1:client_1",
+  clientId: "client_1",
+  scopes: ["workflows:read"],
+  extra: { ...authInfo.extra, authMethod: "oauth" },
+};
+const noScopeAuthInfo = { ...readOnlyAuthInfo, scopes: [] as string[] };
 
 function createToolServer() {
   const tools = new Map<
@@ -341,6 +353,37 @@ describe("registerWorkflowTools", () => {
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
   });
 
+  test("a thrown mutation still queues the audit log and re-propagates the error", async () => {
+    const { tools } = createToolServer();
+    const auditLog: any = { status: "failure" };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const boom = new Error("workflow operation exploded");
+    vi.mocked(workflowsHandlers.create).mockRejectedValue(boom);
+    const body = { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } };
+
+    // The shared runner must not swallow errors: it flags the audit eventId, queues it, then rethrows.
+    await expect(tools.get("create_workflow")!.handler(body, { authInfo })).rejects.toThrow(boom);
+    expect(auditLog).toMatchObject({ eventId: "req_tool" });
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
+  test("a null audit log is tolerated (still queues, no crash)", async () => {
+    const { tools } = createToolServer();
+    // buildV3AuditLog can return null (auditing disabled); the runner must not dereference it.
+    vi.mocked(buildV3AuditLog).mockReturnValue(null as any);
+    vi.mocked(workflowsHandlers.enable).mockResolvedValue(
+      successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(queueV3AuditLog).toHaveBeenCalledWith(null, "req_tool", expect.any(Object));
+    expect(result.structuredContent).toEqual({
+      data: { id: WORKFLOW_ID, status: "enabled" },
+      requestId: "req_tool",
+    });
+  });
+
   test("patch_workflow sends a body request with params and queues an updated audit log", async () => {
     const { tools } = createToolServer();
     const auditLog: any = { status: "failure" };
@@ -412,5 +455,87 @@ describe("registerWorkflowTools", () => {
       params: { workflowId: WORKFLOW_ID },
     });
     expect(auditLog.status).toBe("success");
+  });
+});
+
+describe("MCP scope enforcement (ENG-1967)", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+    vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
+  });
+
+  const INSUFFICIENT_SCOPE = {
+    status: 403,
+    code: "forbidden",
+    detail: "OAuth token does not include the required MCP scope",
+  };
+
+  // Every mutating tool + a representative valid input for it.
+  const writeTools: { name: string; handlerKey: keyof typeof workflowsHandlers; input: unknown }[] = [
+    {
+      name: "create_workflow",
+      handlerKey: "create",
+      input: { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } },
+    },
+    { name: "patch_workflow", handlerKey: "patch", input: { workflowId: WORKFLOW_ID, data: { name: "x" } } },
+    { name: "duplicate_workflow", handlerKey: "duplicate", input: { workflowId: WORKFLOW_ID } },
+    { name: "delete_workflow", handlerKey: "delete", input: { workflowId: WORKFLOW_ID } },
+    { name: "enable_workflow", handlerKey: "enable", input: { workflowId: WORKFLOW_ID } },
+    { name: "disable_workflow", handlerKey: "disable", input: { workflowId: WORKFLOW_ID } },
+    { name: "archive_workflow", handlerKey: "archive", input: { workflowId: WORKFLOW_ID } },
+    { name: "unarchive_workflow", handlerKey: "unarchive", input: { workflowId: WORKFLOW_ID } },
+  ];
+
+  test.each(writeTools)(
+    "$name is denied for a read-scoped token before the mutation runs",
+    async ({ name, handlerKey, input }) => {
+      const { tools } = createToolServer();
+
+      const result = await tools.get(name)!.handler(input, { authInfo: readOnlyAuthInfo });
+
+      // The mutation never runs, and no audit log is queued for a request that was blocked at the gate.
+      expect(workflowsHandlers[handlerKey]).not.toHaveBeenCalled();
+      expect(queueV3AuditLog).not.toHaveBeenCalled();
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent.error).toMatchObject({ ...INSUFFICIENT_SCOPE, requestId: "req_tool" });
+    }
+  );
+
+  test("write tools succeed once the token carries workflows:write", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+    vi.mocked(workflowsHandlers.enable).mockResolvedValue(
+      successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
+    );
+
+    await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
+
+    expect(workflowsHandlers.enable).toHaveBeenCalledTimes(1);
+  });
+
+  test("read tools require workflows:read", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("list_workflows")!
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { authInfo: noScopeAuthInfo });
+
+    expect(workflowsHandlers.list).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ ...INSUFFICIENT_SCOPE, requestId: "req_tool" });
+  });
+
+  test("read tools succeed for a read-only token", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.list).mockResolvedValue(
+      successListResponse([{ id: WORKFLOW_ID }], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+
+    await tools
+      .get("list_workflows")!
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { authInfo: readOnlyAuthInfo });
+
+    expect(workflowsHandlers.list).toHaveBeenCalledTimes(1);
   });
 });
