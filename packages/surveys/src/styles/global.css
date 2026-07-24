@@ -102,6 +102,35 @@
 #fbjs [data-variant="description"] li {
   margin: 0.25em 0;
 }
+/*
+ * Lexical wraps a nested list in an extra <li class="fb-editor-nested-listitem"> (theme class kept
+ * in the stored HTML); hide that structural item's marker so nesting shows no stray bullet/number.
+ * The wrapper must not add horizontal offset either (the editor stylesheet bundled into the runtime
+ * gives every .fb-editor-listitem a 32px !important margin), so each nesting level advances by
+ * exactly the one 1.5em list padding step above.
+ */
+#fbjs .htmlbody li.fb-editor-nested-listitem,
+#fbjs [data-variant="headline"] li.fb-editor-nested-listitem,
+#fbjs [data-variant="description"] li.fb-editor-nested-listitem {
+  list-style-type: none;
+  margin-inline: 0 !important;
+  padding-inline-start: 0;
+}
+/* Nested lists add no extra vertical gap; the 0.5em block margin stays on top-level lists only. */
+#fbjs .htmlbody ul ul,
+#fbjs .htmlbody ul ol,
+#fbjs .htmlbody ol ul,
+#fbjs .htmlbody ol ol,
+#fbjs [data-variant="headline"] ul ul,
+#fbjs [data-variant="headline"] ul ol,
+#fbjs [data-variant="headline"] ol ul,
+#fbjs [data-variant="headline"] ol ol,
+#fbjs [data-variant="description"] ul ul,
+#fbjs [data-variant="description"] ul ol,
+#fbjs [data-variant="description"] ol ul,
+#fbjs [data-variant="description"] ol ol {
+  margin-block: 0;
+}
 
 /* without this, it wont override the color */
 #fbjs p.editor-paragraph {

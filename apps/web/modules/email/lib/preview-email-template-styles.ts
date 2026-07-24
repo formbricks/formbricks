@@ -73,8 +73,12 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
 } as const;
 
 const RICH_TEXT_PARAGRAPH_TAG_REGEX = /<p\b([^>]*)>/gi;
+const RICH_TEXT_LIST_ITEM_TAG_REGEX = /<li\b([^>]*)>/gi;
 const RICH_TEXT_STYLE_ATTRIBUTE_REGEX = /\sstyle=(["'])(.*?)\1/i;
 const RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX = /\sstyle=(["'])(.*?)\1/gi;
+const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
+const NESTED_LIST_ITEM_CLASS = "fb-editor-nested-listitem";
+const NESTED_LIST_ITEM_MARKER_STYLE = "list-style-type:none";
 
 export const importantStyle = (value: string): string => `${value} !important`;
 
@@ -93,6 +97,39 @@ export const normalizeRichTextSpacing = (html: string): string =>
     }
 
     return `<p${attributes} style="margin:0">`;
+  });
+
+/**
+ * Lexical wraps a nested list in a structural <li class="fb-editor-nested-listitem"> that must not
+ * show its own bullet/number. Email clients ignore the app stylesheets, so the suppression is
+ * inlined per list item (best effort: legacy Outlook's Word engine ignores list-style-type).
+ */
+export const suppressNestedListMarkers = (html: string): string =>
+  html.replaceAll(RICH_TEXT_LIST_ITEM_TAG_REGEX, (tag: string, attributes: string = "") => {
+    const classMatch = RICH_TEXT_CLASS_ATTRIBUTE_REGEX.exec(attributes);
+    const classNames = classMatch ? classMatch[2].split(/\s+/) : [];
+    if (!classNames.includes(NESTED_LIST_ITEM_CLASS)) {
+      return tag;
+    }
+
+    if (RICH_TEXT_STYLE_ATTRIBUTE_REGEX.test(attributes)) {
+      return `<li${attributes.replaceAll(
+        RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX,
+        (_styleAttribute, quote: string, styleValue: string) => {
+          const trimmedStyle = styleValue.trim();
+          if (trimmedStyle.includes(NESTED_LIST_ITEM_MARKER_STYLE)) {
+            return ` style=${quote}${styleValue}${quote}`;
+          }
+          const styleWithMarker = trimmedStyle
+            ? `${trimmedStyle};${NESTED_LIST_ITEM_MARKER_STYLE}`
+            : NESTED_LIST_ITEM_MARKER_STYLE;
+
+          return ` style=${quote}${styleWithMarker}${quote}`;
+        }
+      )}>`;
+    }
+
+    return `<li${attributes} style="${NESTED_LIST_ITEM_MARKER_STYLE}">`;
   });
 
 const getPreviewDimension = (value: PreviewStyleValue, fallback: PreviewStyleValue): string => {
