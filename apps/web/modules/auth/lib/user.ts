@@ -43,11 +43,16 @@ export const updateUserLastLoginAt = async (email: string) => {
 
   try {
     return await prisma.$transaction(async (tx) => {
+      // FOR NO KEY UPDATE (not FOR UPDATE): this serializes concurrent same-user updates of
+      // lastLoginAt, but — unlike FOR UPDATE — does NOT conflict with the FOR KEY SHARE lock that a
+      // concurrent Session→User FK insert takes on this row during sign-in. FOR UPDATE here was
+      // stronger than the subsequent UPDATE needs and created a deadlock cycle on the login path
+      // (ENG-2038). The row is only read to return the previous lastLoginAt for a login analytics flag.
       const lockedUsers = await tx.$queryRaw<Array<{ id: string; lastLoginAt: Date | null }>>`
         SELECT "id", "lastLoginAt"
         FROM "User"
         WHERE "email" = ${email}
-        FOR UPDATE
+        FOR NO KEY UPDATE
       `;
       const lockedUser = lockedUsers[0];
 

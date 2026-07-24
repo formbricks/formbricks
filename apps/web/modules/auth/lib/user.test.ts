@@ -178,6 +178,26 @@ describe("User Management", () => {
       expect(result).toEqual(previousLastLoginAt);
     });
 
+    test("locks the row with FOR NO KEY UPDATE (not FOR UPDATE) to avoid the sign-in FK deadlock (ENG-2038)", async () => {
+      const queryRaw = vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: null }]);
+      vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+        callback({
+          $queryRaw: queryRaw,
+          user: {
+            update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }),
+          },
+        } as any)
+      );
+
+      await updateUserLastLoginAt(mockUser.email);
+
+      // $queryRaw is a tagged template: the first call arg is the array of string literals.
+      const sql = (queryRaw.mock.calls[0][0] as string[]).join(" ").replace(/\s+/g, " ");
+      expect(sql).toContain("FOR NO KEY UPDATE");
+      // FOR UPDATE conflicts with the FK FOR KEY SHARE lock — a revert must fail this test.
+      expect(sql).not.toContain("FOR UPDATE");
+    });
+
     test("throws ResourceNotFoundError when user doesn't exist", async () => {
       vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
         callback({
