@@ -4180,7 +4180,7 @@
       "pointer_mode": "指针模式",
       "read_only": "只读",
       "relative_date": "{date} {time}",
-      "relative_days_ago": "{count, plural, other {# 天前}},{time}",
+      "relative_days_ago": "{count, plural, other {# 天前}} {time}",
       "relative_today": "今天 {time}",
       "relative_yesterday": "昨天 {time}",
       "response_completed": "回复已完成",
