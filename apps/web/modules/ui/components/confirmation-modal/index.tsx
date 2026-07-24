@@ -116,7 +116,7 @@ export const ConfirmationModal = ({
           ) : (
             <CircleAlert className="size-4 text-slate-500" />
           )}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <DialogTitle className="w-full truncate text-left">{title}</DialogTitle>
             <DialogDescription className="w-full text-left">
               <span className="whitespace-pre-wrap">
