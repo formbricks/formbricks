@@ -1,10 +1,13 @@
 import type { TFunction } from "i18next";
 import type {
+  TWorkflowDefinition,
   TWorkflowRunLogStatus,
   TWorkflowRunStatus,
   TWorkflowStatus,
   TWorkflowTriggerType,
 } from "@formbricks/workflows";
+import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
+import type { TWorkflowValidationProblem } from "@/modules/ee/workflows/state/editor";
 
 type TBadgeType = "warning" | "success" | "error" | "gray";
 
@@ -69,4 +72,36 @@ export const getWorkflowTriggerTypeLabel = (triggerType: TWorkflowTriggerType, t
   };
 
   return labels[triggerType];
+};
+
+const NODE_FIELD_PATTERN = /^nodes\.(\d+)(?:\.|$)/;
+
+/**
+ * Human-readable location for a validation problem, shown under its message in the problems
+ * dialog: the display title of the step or trigger the problem's `field` points into (the same
+ * title the canvas card shows — a user-authored label or the localized node-type name). Null for
+ * whole-flow problems (missing/unconnected trigger, broken flow shape) and any field that does
+ * not resolve to a concrete node — raw machine paths are never shown.
+ */
+export const getWorkflowValidationProblemLocation = (
+  problem: TWorkflowValidationProblem,
+  definition: TWorkflowDefinition | null,
+  t: TFunction
+): string | null => {
+  if (!definition) return null;
+
+  const nodeMatch = NODE_FIELD_PATTERN.exec(problem.field);
+  if (nodeMatch) {
+    const node = definition.nodes[Number(nodeMatch[1])];
+    if (!node) return null;
+    return getNodeRegistryEntry(node).title(node, t);
+  }
+
+  // Only fields inside the trigger's config locate an existing node; the bare "trigger" field
+  // (= trigger_missing) has nothing on the canvas to point at.
+  if (problem.field.startsWith("trigger.") && definition.trigger) {
+    return getNodeRegistryEntry(definition.trigger).title(definition.trigger, t);
+  }
+
+  return null;
 };
