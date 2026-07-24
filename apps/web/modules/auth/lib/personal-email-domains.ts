@@ -34,6 +34,7 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "proton.me",
   "protonmail.com",
   "pm.me",
+  "mailbox.org",
   // Other mainstream / international
   "gmx.com",
   "gmx.net",
@@ -44,4 +45,5 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "qq.com",
   "163.com",
   "126.com",
+  "yeah.net",
 ];
