@@ -232,7 +232,7 @@ export const SurveyAnalysisCTA = ({
         const previewUrl = await getPreviewUrl();
         window.open(previewUrl, "_blank");
       },
-      isVisible: survey.type === "link",
+      isVisible: survey.type === "link" && !survey.archivedAt,
     },
     {
       icon: Wand2,

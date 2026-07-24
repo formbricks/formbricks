@@ -64,7 +64,9 @@ export const renderSurvey = async ({
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
 
-  if (survey.status === "draft" || survey.type !== "link") {
+  // Archived surveys are absent from the workspace for respondents — treat the public link as a
+  // missing survey (same as a draft or non-link survey) rather than showing an inactive/scheduled state.
+  if (survey.status === "draft" || survey.type !== "link" || survey.archivedAt) {
     notFound();
   }
 
