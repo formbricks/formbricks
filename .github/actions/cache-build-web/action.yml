@@ -5,12 +5,6 @@ inputs:
     description: "Set E2E Testing Mode"
     required: false
     default: "0"
-  turbo_token:
-    description: "Turborepo token"
-    required: false
-  turbo_team:
-    description: "Turborepo team"
-    required: false
 
 runs:
   using: "composite"
@@ -38,14 +32,15 @@ runs:
       run: echo "cache-hit=${{ steps.cache-build.outputs.cache-hit }}" >> "$GITHUB_OUTPUT"
       shell: bash
 
+    - name: Install pnpm
+      uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      if: steps.cache-build.outputs.cache-hit != 'true'
+
     - name: Setup Node.js (version from .nvmrc)
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version-file: ".nvmrc"
-      if: steps.cache-build.outputs.cache-hit != 'true'
-
-    - name: Install pnpm
-      uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        cache: pnpm
       if: steps.cache-build.outputs.cache-hit != 'true'
 
     - name: Install dependencies
@@ -68,6 +63,3 @@ runs:
         pnpm build --filter=@formbricks/web...
       if: steps.cache-build.outputs.cache-hit != 'true'
       shell: bash
-      env:
-        TURBO_TOKEN: ${{ inputs.turbo_token }}
-        TURBO_TEAM: ${{ inputs.turbo_team }}
