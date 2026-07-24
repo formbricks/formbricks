@@ -844,6 +844,14 @@ export function Survey({
     };
   }, [isWebEnvironment]);
 
+  // Fire onResponseCreated exactly once per survey lifecycle. The queue creates the response on the
+  // first add and updates it on later submits, so a multi-question survey must not re-trigger it.
+  const triggerResponseCreatedOnce = useCallback(() => {
+    if (responseCreatedRef.current) return;
+    responseCreatedRef.current = true;
+    onResponseCreated?.();
+  }, [onResponseCreated]);
+
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
@@ -861,10 +869,7 @@ export function Survey({
 
       // Skip response creation in preview mode but still trigger the onResponseCreated callback (once)
       if (isPreviewMode) {
-        if (!responseCreatedRef.current) {
-          responseCreatedRef.current = true;
-          onResponseCreated?.();
-        }
+        triggerResponseCreatedOnce();
 
         // When in preview mode, set isResponseSendingFinished to true if the response is finished
         if (responseUpdate.finished) {
@@ -899,11 +904,7 @@ export function Survey({
           hiddenFields: hiddenFieldsRecord,
         });
 
-        // Fire once — the queue creates the response on the first add and updates it thereafter.
-        if (!responseCreatedRef.current) {
-          responseCreatedRef.current = true;
-          onResponseCreated?.();
-        }
+        triggerResponseCreatedOnce();
       }
     },
     [
@@ -913,7 +914,7 @@ export function Survey({
       surveyState,
       responseQueue,
       onResponse,
-      onResponseCreated,
+      triggerResponseCreatedOnce,
       contactId,
       userId,
       survey,
