@@ -130,8 +130,6 @@ export const SurveyEditor = ({
         setActiveElementId(firstBlock.elements?.[0]?.id);
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
   useEffect(() => {
@@ -158,7 +156,6 @@ export const SurveyEditor = ({
     if (firstBlock) {
       setActiveElementId(firstBlock.elements[0]?.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
   useEffect(() => {

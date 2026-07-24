@@ -130,6 +130,7 @@ export const SurveyClientWrapper = ({
       if (answer) fieldsRecord[field] = answer;
     }
     return fieldsRecord;
+    // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
   }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
 
   // Include verified email in hidden fields if available

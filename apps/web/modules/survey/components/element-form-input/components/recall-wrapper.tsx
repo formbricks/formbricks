@@ -242,7 +242,6 @@ export const RecallWrapper = ({
     };
 
     setRenderedText(processInput());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [internalValue, recallItems]);
 
   return (

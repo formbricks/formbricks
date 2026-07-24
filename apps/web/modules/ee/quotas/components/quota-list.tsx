@@ -21,7 +21,7 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
     <div className="space-y-3">
       {quotas.map((quota) => (
         // Using div instead of button to avoid nested button HTML validation errors
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/prefer-tag-over-role
+
         <div
           key={quota.id}
           className="flex w-full cursor-pointer items-center justify-between rounded-lg bg-slate-50 p-4 transition-colors hover:bg-slate-100"

@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- Required for logging */
 type LogLevel = "debug" | "error";
 
 interface LoggerConfig {

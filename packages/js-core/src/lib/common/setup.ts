@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- required for logging */
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
@@ -89,7 +88,7 @@ export const setup = async (
 
     // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
     // otherwise, we just sync again!
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- user could be undefined
+
     if (newState && !newState.user?.data?.userId) {
       config.update(newState);
     }
@@ -282,7 +281,6 @@ export const setup = async (
       });
 
       if (!workspaceResponse.ok) {
-        // eslint-disable-next-line @typescript-eslint/only-throw-error -- error is ApiErrorResponse
         throw workspaceResponse.error;
       }
 

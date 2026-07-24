@@ -13,7 +13,7 @@
     "start": "next start",
     "typecheck": "pnpm typegen && tsc --noEmit --project tsconfig.typecheck.json",
     "typegen": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks ENCRYPTION_KEY=example REDIS_URL=redis://localhost:6379 next typegen",
-    "lint": "eslint . --fix --ext .ts,.js,.tsx,.jsx",
+    "lint": "eslint . --fix",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
     "test:integration": "node integration/gen-boolean-client.mjs && dotenv -e ../../.env -- vitest run --config vitest.integration.config.mts",

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await -- used for mocking*/
 import {
   DeleteObjectCommand,
   DeleteObjectsCommand,

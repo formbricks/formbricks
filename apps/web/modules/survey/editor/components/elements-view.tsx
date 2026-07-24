@@ -727,79 +727,75 @@ export const ElementsView = ({
 
   // Validate survey when changes are made to languages or elements
   // using set for O(1) lookup
-  useEffect(
-    () => {
-      if (!invalidElements) return;
+  useEffect(() => {
+    if (!invalidElements) return;
 
-      const currentInvalidSet = new Set(invalidElements);
-      let hasChanges = false;
+    const currentInvalidSet = new Set(invalidElements);
+    let hasChanges = false;
 
-      // Live re-validation: clear errors as elements become valid (including
-      // drafts), but don't flag freshly added drafts — save/publish does that.
-      elements.forEach((element) => {
-        const isValid = validateElement(element, surveyLanguages);
-        if (isValid) {
-          if (currentInvalidSet.has(element.id)) {
-            currentInvalidSet.delete(element.id);
-            hasChanges = true;
-          }
-        } else if (!element.isDraft && !currentInvalidSet.has(element.id)) {
-          currentInvalidSet.add(element.id);
+    // Live re-validation: clear errors as elements become valid (including
+    // drafts), but don't flag freshly added drafts — save/publish does that.
+    elements.forEach((element) => {
+      const isValid = validateElement(element, surveyLanguages);
+      if (isValid) {
+        if (currentInvalidSet.has(element.id)) {
+          currentInvalidSet.delete(element.id);
           hasChanges = true;
         }
-      });
-
-      // Check welcome card
-      if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-        if (!currentInvalidSet.has("start")) {
-          currentInvalidSet.add("start");
-          hasChanges = true;
-        }
-      } else if (currentInvalidSet.has("start")) {
-        currentInvalidSet.delete("start");
+      } else if (!element.isDraft && !currentInvalidSet.has(element.id)) {
+        currentInvalidSet.add(element.id);
         hasChanges = true;
       }
+    });
 
-      // Check thank you card
-      localSurvey.endings.forEach((ending) => {
-        if (!isEndingCardValid(ending, surveyLanguages)) {
-          if (!currentInvalidSet.has(ending.id)) {
-            currentInvalidSet.add(ending.id);
-            hasChanges = true;
-          }
-        } else if (currentInvalidSet.has(ending.id)) {
-          currentInvalidSet.delete(ending.id);
+    // Check welcome card
+    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
+      if (!currentInvalidSet.has("start")) {
+        currentInvalidSet.add("start");
+        hasChanges = true;
+      }
+    } else if (currentInvalidSet.has("start")) {
+      currentInvalidSet.delete("start");
+      hasChanges = true;
+    }
+
+    // Check thank you card
+    localSurvey.endings.forEach((ending) => {
+      if (!isEndingCardValid(ending, surveyLanguages)) {
+        if (!currentInvalidSet.has(ending.id)) {
+          currentInvalidSet.add(ending.id);
+          hasChanges = true;
+        }
+      } else if (currentInvalidSet.has(ending.id)) {
+        currentInvalidSet.delete(ending.id);
+        hasChanges = true;
+      }
+    });
+
+    // Live-clear conditional logic errors as they get fixed. We only clear
+    // here (never add) so freshly added, not-yet-filled-in rules aren't
+    // flagged prematurely — logic errors are added on save/publish instead.
+    localSurvey.blocks.forEach((block) => {
+      (block.logic ?? []).forEach((logicItem) => {
+        if (currentInvalidSet.has(logicItem.id) && isBlockLogicItemValid(logicItem)) {
+          currentInvalidSet.delete(logicItem.id);
           hasChanges = true;
         }
       });
+    });
 
-      // Live-clear conditional logic errors as they get fixed. We only clear
-      // here (never add) so freshly added, not-yet-filled-in rules aren't
-      // flagged prematurely — logic errors are added on save/publish instead.
-      localSurvey.blocks.forEach((block) => {
-        (block.logic ?? []).forEach((logicItem) => {
-          if (currentInvalidSet.has(logicItem.id) && isBlockLogicItemValid(logicItem)) {
-            currentInvalidSet.delete(logicItem.id);
-            hasChanges = true;
-          }
-        });
-      });
-
-      if (hasChanges) {
-        setInvalidElements(Array.from(currentInvalidSet));
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      elements,
-      surveyLanguages,
-      invalidElements,
-      setInvalidElements,
-      localSurvey.welcomeCard,
-      localSurvey.endings,
-      localSurvey.blocks,
-    ]
-  );
+    if (hasChanges) {
+      setInvalidElements(Array.from(currentInvalidSet));
+    }
+  }, [
+    elements,
+    surveyLanguages,
+    invalidElements,
+    setInvalidElements,
+    localSurvey.welcomeCard,
+    localSurvey.endings,
+    localSurvey.blocks,
+  ]);
 
   useEffect(() => {
     const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
@@ -807,7 +803,6 @@ export const ElementsView = ({
       setActiveElementId(elementWithEmptyFallback.id);
       toast.error(t("workspace.surveys.edit.fallback_missing"));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode]);
 
   const sensors = useSensors(

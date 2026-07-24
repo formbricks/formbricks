@@ -223,7 +223,6 @@ export const FileInput = ({
         onFileUpload([videoUrlTemp], "video");
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run when file type changes to avoid loops
   }, [fileType]);
 
   return (

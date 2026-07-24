@@ -18,7 +18,7 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
     "build": "tsc && vite build",
-    "lint": "eslint . --ext .ts,.js",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

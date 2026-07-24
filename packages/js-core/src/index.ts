@@ -1,4 +1,3 @@
-/* eslint-disable import/no-default-export -- required for default export*/
 import { CommandQueue, CommandType } from "@/lib/common/command-queue";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
@@ -24,7 +23,6 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
   ) {
     const isDebug = getIsDebug();
     if (isDebug) {
-      // eslint-disable-next-line no-console -- legacy init
       console.warn("🧱 Formbricks - Warning: Using legacy init");
     }
     await queue.add(Setup.setup, CommandType.Setup, false, {
@@ -92,7 +90,7 @@ const setNonce = (nonce: string | undefined): void => {
   globalThis.window.__formbricksNonce = nonce;
 
   // Set nonce in surveys package if it's already loaded
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
+
   globalThis.window.formbricksSurveys?.setNonce?.(nonce);
 };
 

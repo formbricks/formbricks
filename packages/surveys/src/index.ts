@@ -101,7 +101,6 @@ export const onFilePick = (files: { name: string; type: string; base64: string }
 
 // Initialize the global formbricksSurveys object if it doesn't exist
 if (globalThis.window !== undefined) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Type definition is in @formbricks/types package
   (globalThis.window as any).formbricksSurveys = {
     renderSurveyInline,
     renderSurveyModal,

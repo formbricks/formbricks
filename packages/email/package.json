@@ -10,7 +10,7 @@
     "dev": "email dev --port 3456",
     "build": "pnpm typecheck",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --fix --ext .ts,.tsx",
+    "lint": "eslint src --fix",
     "clean": "rimraf .turbo node_modules dist"
   },
   "dependencies": {
