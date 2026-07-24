@@ -4,14 +4,15 @@ description: "How Formbricks decides whether to show an app survey to a user —
 icon: "traffic-light"
 ---
 
-Whether an app survey is shown to a given user comes down to a few independent layers. A survey appears only when **all** of them pass **and** a matching trigger fires. This page builds that model up one layer at a time, from the simplest case to the most advanced.
+Whether an app survey is shown to a given user comes down to a matching **trigger** plus a few independent **eligibility gates**. When a trigger fires, the survey appears only if it passes **all** of the gates. This page builds that model up one layer at a time, from the simplest case to the most advanced.
 
-The layers, in the order Formbricks applies them:
+Formbricks decides a survey's eligibility from three gates, evaluated in this order:
 
 1. **Recontact Options** — how often may *this* survey be shown to the same user?
 2. **Cooldown Period** — has enough time passed since the user last saw *any* survey?
 3. **Targeting** — is the user in the survey's audience?
-4. **Trigger** — did a matching action fire?
+
+A **Trigger** (a matching action) is the event that then shows an already-eligible survey — it is not a fourth gate, it is what starts a display attempt. The gates are computed up front (on load and whenever the user's data syncs); the trigger is checked against that result.
 
 ## Level 0 — Always show
 
@@ -113,7 +114,7 @@ A filter reads as one sentence:
 
 ### Primary use case: a true per-survey Cooldown Period
 
-This is what interaction segments unlock over the built-in Cooldown Period. To show an **NPS survey every 3 months regardless of other surveys**:
+This is what interaction segments unlock over the built-in Cooldown Period. To show an **NPS survey on its own ~3-month cadence**, driven by that survey's own history rather than the shared cross-survey clock:
 
 - **Recontact:** *Keep showing while conditions match*.
 - **Cooldown Period:** set a **small** custom value (e.g. *1 day*) — a short guard so it can't repeat within a session (see the note below). Do **not** use *Ignore Cooldown Period*.
