@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 
 const {
   mockAuthenticatedApiClient,
@@ -53,12 +54,15 @@ describe("POST /organizations/[organizationId]/teams", () => {
     vi.clearAllMocks();
 
     mockAuthenticatedApiClient.mockImplementation(
-      async ({ handler }: any) =>
+      async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>
         await handler({
+          request: buildRequest(),
           auditLog: undefined,
           authentication: {
+            type: "apiKey",
             apiKeyId,
             organizationId,
+            workspacePermissions: [],
             organizationAccess: { accessControl: { read: true, write: true } },
           },
           parsedInput: {
@@ -97,6 +101,8 @@ describe("POST /organizations/[organizationId]/teams", () => {
     const { POST } = await import("./route");
     const response = await POST(buildRequest(), { params: Promise.resolve({ organizationId }) });
 
+    expect(mockGetApiKeyCreatorRole).toHaveBeenCalledWith(apiKeyId, organizationId);
+    expect(mockCanManageOrganizationUsers).toHaveBeenCalledWith("manager");
     expect(mockCreateTeam).toHaveBeenCalledWith(teamInput, organizationId);
     expect(response.status).toBe(201);
   });
