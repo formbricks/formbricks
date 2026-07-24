@@ -24,6 +24,48 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
   return transformedSurvey;
 };
 
+// Status + archived (soft-delete) handling.
+// Archived surveys (archivedAt not null) are hidden by default. The "Archived" filter sets
+// includeArchived; the server never receives a real "archived" status.
+const buildStatusArchivedClauses = (filterCriteria?: TSurveyFilterCriteria): Prisma.SurveyWhereInput[] => {
+  const hasStatusFilter = Boolean(filterCriteria?.status?.length);
+
+  if (filterCriteria?.includeArchived) {
+    if (hasStatusFilter) {
+      // Selected active statuses OR any archived survey (Archived behaves like an extra status).
+      return [
+        { OR: [{ status: { in: filterCriteria!.status }, archivedAt: null }, { archivedAt: { not: null } }] },
+      ];
+    }
+    // Only archived surveys.
+    return [{ archivedAt: { not: null } }];
+  }
+
+  // Default: exclude archived surveys, optionally narrowing to the selected statuses.
+  const clauses: Prisma.SurveyWhereInput[] = [{ archivedAt: null }];
+  if (hasStatusFilter) {
+    clauses.push({ status: { in: filterCriteria!.status } });
+  }
+  return clauses;
+};
+
+const buildCreatedByClause = (
+  createdBy?: TSurveyFilterCriteria["createdBy"]
+): Prisma.SurveyWhereInput | null => {
+  // Only a single-value createdBy filter maps to a clause ("you" or "others").
+  if (createdBy?.value?.length !== 1) {
+    return null;
+  }
+
+  if (createdBy.value[0] === "you") {
+    return { createdBy: createdBy.userId };
+  }
+  if (createdBy.value[0] === "others") {
+    return { OR: [{ createdBy: { not: createdBy.userId } }, { createdBy: null }] };
+  }
+  return null;
+};
+
 export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
   const whereClause: Prisma.SurveyWhereInput["AND"] = [];
 
@@ -32,54 +74,17 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
     whereClause.push({ name: { contains: filterCriteria.name, mode: "insensitive" } });
   }
 
-  // for status + archived (soft-delete) handling.
-  // Archived surveys (archivedAt not null) are hidden by default. The "Archived" filter
-  // sets includeArchived; the server never receives a real "archived" status.
-  const hasStatusFilter = Boolean(filterCriteria?.status?.length);
-  if (filterCriteria?.includeArchived) {
-    if (hasStatusFilter) {
-      // Selected active statuses OR any archived survey (Archived behaves like an extra status).
-      whereClause.push({
-        OR: [{ status: { in: filterCriteria!.status }, archivedAt: null }, { archivedAt: { not: null } }],
-      });
-    } else {
-      // Only archived surveys.
-      whereClause.push({ archivedAt: { not: null } });
-    }
-  } else {
-    // Default: exclude archived surveys, optionally narrowing to the selected statuses.
-    whereClause.push({ archivedAt: null });
-    if (hasStatusFilter) {
-      whereClause.push({ status: { in: filterCriteria!.status } });
-    }
-  }
+  whereClause.push(...buildStatusArchivedClauses(filterCriteria));
 
   // for type
-  if (filterCriteria?.type && filterCriteria?.type?.length) {
+  if (filterCriteria?.type?.length) {
     whereClause.push({ type: { in: filterCriteria.type } });
   }
 
   // for createdBy
-  if (filterCriteria?.createdBy?.value && filterCriteria?.createdBy?.value?.length) {
-    if (filterCriteria.createdBy.value.length === 1) {
-      if (filterCriteria.createdBy.value[0] === "you") {
-        whereClause.push({ createdBy: filterCriteria.createdBy.userId });
-      }
-      if (filterCriteria.createdBy.value[0] === "others") {
-        whereClause.push({
-          OR: [
-            {
-              createdBy: {
-                not: filterCriteria.createdBy.userId,
-              },
-            },
-            {
-              createdBy: null,
-            },
-          ],
-        });
-      }
-    }
+  const createdByClause = buildCreatedByClause(filterCriteria?.createdBy);
+  if (createdByClause) {
+    whereClause.push(createdByClause);
   }
 
   return { AND: whereClause };

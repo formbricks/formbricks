@@ -26,6 +26,61 @@ export const getSurveyArchivePurgeCutoff = (now: Date): Date =>
 // not the expected exit. At 100/batch this covers 1M eligible surveys before deferring to the next run.
 const MAX_PURGE_BATCHES = 10_000;
 
+type TExpiredSurvey = {
+  id: string;
+  workspaceId: string;
+  workspace: { organizationId: string };
+};
+
+type TPurgeOutcome = "purged" | "skipped" | "failed";
+
+/**
+ * Permanently delete one archived survey and record the audit event. Returns the outcome so the
+ * caller can count purges and isolate failures without unwinding the batch:
+ * - "purged":  the survey was deleted (audit failures are logged, not fatal — the row is already gone)
+ * - "skipped": the survey was restored or already gone (no longer eligible, will not reappear)
+ * - "failed":  a real deletion error; the caller excludes it from later batches this run
+ */
+const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promise<TPurgeOutcome> => {
+  try {
+    // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a
+    // survey restored after this batch was selected is skipped, not permanently deleted.
+    await deleteSurvey(survey.id, { requireArchivedBefore: cutoff });
+  } catch (error) {
+    // Restored or already gone between selection and delete — no longer eligible, won't reappear.
+    if (error instanceof ResourceNotFoundError) {
+      return "skipped";
+    }
+
+    logger.error(
+      { err: error, surveyId: survey.id, workspaceId: survey.workspaceId },
+      "Failed to purge archived survey"
+    );
+    return "failed";
+  }
+
+  // Await the audit enqueue so a hard delete is not left without an audit record if the process exits
+  // before a fire-and-forget promise flushes. A failed enqueue is logged, not fatal.
+  try {
+    await queueAuditEventWithoutRequest({
+      action: "deleted",
+      organizationId: survey.workspace.organizationId,
+      status: "success",
+      targetId: survey.id,
+      targetType: "survey",
+      userId: "system",
+      userType: "system",
+    });
+  } catch (auditError) {
+    logger.error(
+      { err: auditError, surveyId: survey.id, workspaceId: survey.workspaceId },
+      "Survey archive purge audit log failed"
+    );
+  }
+
+  return "purged";
+};
+
 export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promise<number> => {
   const cutoff = getSurveyArchivePurgeCutoff(now);
   let purgedCount = 0;
@@ -55,45 +110,11 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
     }
 
     for (const survey of expiredSurveys) {
-      try {
-        // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a
-        // survey restored after this batch was selected is skipped, not permanently deleted.
-        await deleteSurvey(survey.id, { requireArchivedBefore: cutoff });
+      const outcome = await purgeArchivedSurvey(survey, cutoff);
+      if (outcome === "purged") {
         purgedCount += 1;
-
-        // Await the audit enqueue so a hard delete is not left without an audit record if the process
-        // exits before a fire-and-forget promise flushes. A failed enqueue is logged, not fatal —
-        // the survey is already deleted and per-survey isolation must hold.
-        try {
-          await queueAuditEventWithoutRequest({
-            action: "deleted",
-            organizationId: survey.workspace.organizationId,
-            status: "success",
-            targetId: survey.id,
-            targetType: "survey",
-            userId: "system",
-            userType: "system",
-          });
-        } catch (auditError) {
-          logger.error(
-            { err: auditError, surveyId: survey.id, workspaceId: survey.workspaceId },
-            "Survey archive purge audit log failed"
-          );
-        }
-      } catch (error) {
-        // The survey was restored or already gone between selection and delete — no longer eligible,
-        // and it won't reappear (archivedAt is null or the row is gone), so do not treat it as failed.
-        if (error instanceof ResourceNotFoundError) {
-          continue;
-        }
-
-        // A real deletion failure: exclude this survey from further batches this run so it cannot
-        // stall the loop, and let the next scheduled run retry it.
+      } else if (outcome === "failed") {
         failedSurveyIds.add(survey.id);
-        logger.error(
-          { err: error, surveyId: survey.id, workspaceId: survey.workspaceId },
-          "Failed to purge archived survey"
-        );
       }
     }
 
