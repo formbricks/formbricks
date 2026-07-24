@@ -359,7 +359,7 @@ describe("Response Lib", () => {
     test("handle prisma client error code P2025", async () => {
       vi.mocked(prisma.response.delete).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Response not found", {
-          code: PrismaErrorType.RelatedRecordDoesNotExist,
+          code: PrismaErrorType.RecordNotFound,
           clientVersion: "1.0.0",
           meta: {
             cause: "Response not found",
@@ -413,7 +413,7 @@ describe("Response Lib", () => {
     test("return a not_found error when the response is not found", async () => {
       vi.mocked(prisma.response.update).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Response not found", {
-          code: PrismaErrorType.RelatedRecordDoesNotExist,
+          code: PrismaErrorType.RecordNotFound,
           clientVersion: "1.0.0",
           meta: {
             cause: "Response not found",
@@ -575,7 +575,7 @@ describe("Response Lib", () => {
     test("propagate error when updateResponse fails", async () => {
       vi.mocked(mockTx.response.update).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Response not found", {
-          code: PrismaErrorType.RelatedRecordDoesNotExist,
+          code: PrismaErrorType.RecordNotFound,
           clientVersion: "1.0.0",
           meta: {
             cause: "Response not found",

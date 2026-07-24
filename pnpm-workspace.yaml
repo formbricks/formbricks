@@ -24,11 +24,21 @@ overrides:
   # @grpc/grpc-js is patched in 1.14.4 against malformed-request and malformed-compressed-message crashes.
   "@grpc/grpc-js": 1.14.4
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
-  "@hono/node-server": 1.19.13
-  hono: 4.12.25
+  # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
+  # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
+  # GHSA-9mqv-5hh9-4cgg: 2.0.0–2.0.9 unauthenticated memory-leak DoS via aborted WebSocket handshake;
+  # patched in 2.0.10. Pinned to 2.0.10 to close both.
+  "@hono/node-server": 2.0.10
+  # ENG-1995 / GHSA-hvrm-45r6-mjfj (CVE-2026-59896), ENG-1996 / GHSA-w62v-xxxg-mg59 (CVE-2026-59895),
+  # ENG-1997 / GHSA-xgm2-5f3f-mvvc (CVE-2026-59897): hono <4.12.27 jsx cross-request context disclosure,
+  # cx() server-side XSS, and API Gateway v1 repeated-header de-dup; all patched in 4.12.27.
+  hono: 4.12.27
   # OpenTelemetry / protobuf chains.
-  protobufjs@7: 7.6.3
-  protobufjs@8: 8.6.3
+  # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
+  # patched in 7.6.5 / 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
+  # mutation, patched in 8.6.5. Each line pinned to its lowest release covering both advisories.
+  protobufjs@7: 7.6.5
+  protobufjs@8: 8.6.6
   # sqlite3 / node-gyp chain: tar advisory pins are safe here because sqlite3 is pulled in
   # transitively by typeorm but the project uses postgres; sqlite3 is never built at runtime.
   # Therefore node-gyp@8 / http-proxy-agent@4 compatibility is not a concern.
@@ -38,7 +48,7 @@ overrides:
   "@tootallnate/once": 2.0.1
   # SAML and XML processing chains.
   "@xmldom/xmldom": 0.9.10 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
-  axios: 1.16.0
+  axios: 1.18.0 # ENG-1958 / GHSA-gcfj-64vw-6mp9: <1.18.0 Node HTTP adapter can use an inherited proxy after interceptor config cloning; patched in 1.18.0.
   lodash: 4.18.1
   node-forge: 1.4.0 # load-bearing: 1.3.3 still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
   # Webpack / linting / schema validation chains.
@@ -47,8 +57,13 @@ overrides:
   postcss: 8.5.14
   # SDK and runtime transitive security pins.
   fast-xml-parser: 5.7.0 # load-bearing: <5.7.0 vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # ENG-1942 / GHSA-v422-hmwv-36x6 (CVE-2026-12590): body-parser 2.0.0–2.2.x silently skips the request
+  # size check when given an invalid `limit`, disabling DoS protection; patched in 2.3.0.
+  body-parser: 2.3.0
   # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
-  typeorm: 0.3.29
+  # ENG-1990 / GHSA-2rp8-mm9q-fp49: typeorm <0.3.31 migration:generate template-literal code injection;
+  # patched in 0.3.31.
+  typeorm: 0.3.31
   # js-cookie / uuid: load-bearing security pins that are also MAJOR coercions on transitive consumers
   # (react-use@17 js-cookie v2->v3; @azure/msal-node + next-auth uuid v8/9->v11). Natural versions are
   # vulnerable (GHSA-qjx8-664m-686j / GHSA-w5hq-g745-h8pq), so the pins stay; runtime verified in build+tests.
@@ -57,13 +72,16 @@ overrides:
   uuid@9: 11.1.1
   uuid@11: 11.1.1
   # ENG-1302 / GHSA-w7jw-789q-3m8p: shell-quote quote() does not escape newlines, patched in 1.8.4.
-  shell-quote: 1.8.4
+  # ENG-1951 / GHSA-395f-4hp3-45gv (CVE-2026-13311): shell-quote parse() <=1.8.4 has quadratic-complexity
+  # DoS via Array.prototype.concat accumulator; patched in 1.9.0.
+  shell-quote: 1.9.0
   # ENG-1111 / GHSA-58qx-3vcg-4xpx: ws is patched in 8.20.1+.
   ws@8: 8.21.0
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
   "@babel/core": 7.29.6 # ENG-1376 / GHSA-4x5r-pxfx-6jf8
   "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf
-  dompurify: 3.4.11 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9); ENG-1527-batch / GHSA-cmwh-pvxp-8882 raises the pin to >=3.4.11 (3.4.9/3.4.10 vulnerable to clobbered-root / cross-realm / hook-pollution XSS)
+  # ENG-1991 / GHSA-c2j3-45gr-mqc4: dompurify <=3.4.11 CUSTOM_ELEMENT_HANDLING bypasses afterSanitizeElements for allowed custom elements; patched in 3.4.12.
+  dompurify: 3.4.12 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9); ENG-1527-batch / GHSA-cmwh-pvxp-8882 raised the pin to >=3.4.11 (3.4.9/3.4.10 vulnerable to clobbered-root / cross-realm / hook-pollution XSS)
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
   # ENG-1509 / ENG-1505 / GHSA-vmh5-mc38-953g: undici 7.x TLS certificate
   # validation bypass, patched in 7.28.0 (covers the jsdom transitive 7.25.0).
@@ -71,11 +89,41 @@ overrides:
   # ENG-1513 / GHSA-fjxv-7rqg-78g4: form-data <4.0.4 uses an unsafe random function for the
   # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
   form-data@4: 4.0.6
-  tar: 7.5.16
+  # ENG-1947 / GHSA-23hp-3jrh-7fpw (CVE-2026-59873): node-tar <=7.5.18 has no hard
+  # upper bound on total decompressed bytes / entry count, so a small gzip bomb can
+  # exhaust disk and CPU (DoS). Patched in 7.5.19.
+  tar: 7.5.19
   # ENG-1527-batch / GHSA-mh29-5h37-fv8m + GHSA-h67p-54hq-rp68: js-yaml <4.1.2 quadratic-complexity
   # DoS via merge keys / repeated aliases (dev-only, via @redocly/cli). No 4.1.2 published; 4.2.0 is the
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
-  js-yaml@4: 4.2.0
+  # ENG-1952 / GHSA-52cp-r559-cp3m (CVE-2026-59869): js-yaml 4.0.0–4.2.x can spend quadratic CPU on a
+  # merge-key mapping chain; patched in 4.3.0. Raises the 4.x pin from 4.2.0 to 4.3.0 (still <5).
+  js-yaml@4: 4.3.0
+  # === Dependabot security batch (ENG-1988..ENG-1999) ===
+  # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
+  # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
+  # sharp 0.34.5 that next@16 declares as an optional peer, which otherwise keeps the alert open.
+  sharp: 0.35.0
+  # ENG-1950 / GHSA-r635-g3xr-vw7x (CVE-2026-59725): engine.io <6.6.7 polling transport connection
+  # exhaustion DoS (via socket.io); patched in 6.6.7.
+  engine.io@6: 6.6.7
+  # ENG-1955 / ENG-1954 / ENG-1953 / GHSA-3jxr-9vmj-r5cp (CVE-2026-13149): brace-expansion expand()
+  # exhibits O(2ⁿ) DoS on consecutive non-expanding {} groups. Three affected major lines are present in
+  # the tree; each is pinned to its lowest patched release: 1.x→1.1.16, 2.x→2.1.2, 3.x–5.x→5.0.7.
+  brace-expansion@1: 1.1.16
+  brace-expansion@2: 2.1.2
+  brace-expansion@5: 5.0.7
+  # ENG-1994 / GHSA-4c8g-83qw-93j6 (CVE-2026-13676) + ENG-1988 / GHSA-v2hh-gcrm-f6hx (CVE-2026-16221):
+  # fast-uri 3.x host confusion via failed IDN canonicalization and via literal-backslash authority
+  # delimiter. 3.1.4 patches both (3.1.3 fixes only the first). Scoped to the 3.x line.
+  fast-uri@3: 3.1.4
+  # ENG-1993 / GHSA-v245-v573-v5vm (CVE-2026-59887): linkify-it <=5.0.1 quadratic-complexity DoS via the
+  # mailto: validator scan-loop; patched in 5.0.2.
+  linkify-it: 5.0.2
+  # ENG-1992 / GHSA-45rx-2jwx-cxfr (CVE-2026-59892): @opentelemetry/propagator-jaeger <2.9.0 DoS via an
+  # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
+  # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).
+  "@opentelemetry/propagator-jaeger": 2.9.0
 
 autoInstallPeers: true
 linkWorkspacePackages: true
@@ -83,7 +131,12 @@ shamefullyHoist: true
 sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
-legacyPeerDeps: true
+# Flat, npm-style node_modules. Deliberate for now: several packages still rely on hoisted
+# (undeclared) dependencies — e.g. @formbricks/js-core reaches into sibling packages (ENG-1681)
+# and react/react-dom are hoisted from the workspace root (ENG-1693). Moving to the strict
+# `isolated` linker is the long-term goal (ENG-1674); fix the undeclared deps first.
+# `shamefullyHoist` above is left untouched here — it becomes meaningful only under the isolated
+# linker, so it is handled together with that migration rather than in this cleanup.
 nodeLinker: hoisted
 saveExact: true
 # Supply-chain release cooldown: refuse to install package versions published less than
@@ -101,3 +154,21 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - '@formbricks/hub'
+  # Urgent CVE fix, approved via the dependency-cooldown exception process (see the
+  # "Dependency Cooldown Security Exceptions" page in the engineering handbook / Notion):
+  # next@16.2.11 fixes GHSA-6gpp-xcg3-4w24, GHSA-m99w-x7hq-7vfj, GHSA-89xv-2m56-2m9x,
+  # GHSA-p9j2-gv94-2wf4 (high) and GHSA-68g3-v927-f742, GHSA-4633-3j49-mh5q,
+  # GHSA-4c39-4ccg-62r3, GHSA-q8wf-6r8g-63ch, GHSA-955p-x3mx-jcvp (moderate). Published
+  # 2026-07-21, cooldown clears 2026-07-24T16:00 UTC — remove this entry once past that date.
+  # `next`'s platform-specific companion packages publish under the same version and need their
+  # own entries; pnpm's release-age check applies per npm package, not per dependency graph.
+  - next@16.2.11
+  - '@next/env@16.2.11'
+  - '@next/swc-darwin-arm64@16.2.11'
+  - '@next/swc-darwin-x64@16.2.11'
+  - '@next/swc-linux-arm64-gnu@16.2.11'
+  - '@next/swc-linux-arm64-musl@16.2.11'
+  - '@next/swc-linux-x64-gnu@16.2.11'
+  - '@next/swc-linux-x64-musl@16.2.11'
+  - '@next/swc-win32-arm64-msvc@16.2.11'
+  - '@next/swc-win32-x64-msvc@16.2.11'

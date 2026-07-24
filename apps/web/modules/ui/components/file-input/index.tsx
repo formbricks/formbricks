@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -260,6 +261,7 @@ export const FileInput = ({
                               style={{ objectFit: "cover" }}
                               quality={100}
                               className={!file.uploaded ? "opacity-50" : ""}
+                              unoptimized={isExternalImageSrc(file.url)}
                             />
                             {file.uploaded ? (
                               <button
@@ -327,6 +329,7 @@ export const FileInput = ({
                           style={{ objectFit: imageFit }}
                           quality={100}
                           className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
+                          unoptimized={isExternalImageSrc(selectedFiles[0].url)}
                         />
                         {selectedFiles[0].uploaded ? (
                           <button

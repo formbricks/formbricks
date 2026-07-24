@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
@@ -65,27 +66,25 @@ export const updateContactAttributeKey = async (
 
     return ok(updatedKey);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (
-        error.code === PrismaErrorType.RecordDoesNotExist ||
-        error.code === PrismaErrorType.RelatedRecordDoesNotExist
-      ) {
-        return err({
-          type: "not_found",
-          details: [{ field: "contactAttributeKey", issue: "not found" }],
-        });
-      }
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        return err({
-          type: "conflict",
-          details: [
-            {
-              field: "contactAttributeKey",
-              issue: "Contact attribute key update conflict",
-            },
-          ],
-        });
-      }
+    if (
+      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
+      isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)
+    ) {
+      return err({
+        type: "not_found",
+        details: [{ field: "contactAttributeKey", issue: "not found" }],
+      });
+    }
+    if (isUniqueConstraintError(error)) {
+      return err({
+        type: "conflict",
+        details: [
+          {
+            field: "contactAttributeKey",
+            issue: "Contact attribute key update conflict",
+          },
+        ],
+      });
     }
     return err({
       type: "internal_server_error",
@@ -121,16 +120,14 @@ export const deleteContactAttributeKey = async (
 
     return ok(deletedKey);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (
-        error.code === PrismaErrorType.RecordDoesNotExist ||
-        error.code === PrismaErrorType.RelatedRecordDoesNotExist
-      ) {
-        return err({
-          type: "not_found",
-          details: [{ field: "contactAttributeKey", issue: "not found" }],
-        });
-      }
+    if (
+      isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
+      isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)
+    ) {
+      return err({
+        type: "not_found",
+        details: [{ field: "contactAttributeKey", issue: "not found" }],
+      });
     }
     return err({
       type: "internal_server_error",

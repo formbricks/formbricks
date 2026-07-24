@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { TLogo } from "@formbricks/types/styling";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 
 interface ClientLogoProps {
   workspaceLogo: Workspace["logo"] | null;
@@ -73,6 +74,7 @@ export const ClientLogo = ({
           width={256}
           height={64}
           alt={t("workspace.surveys.edit.company_logo")}
+          unoptimized={isExternalImageSrc(logoToUse?.url)}
         />
       ) : disableLinks ? (
         <span className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-xs">

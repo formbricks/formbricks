@@ -161,6 +161,10 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
     return t("workspace.settings.billing.yearly_checkout_unavailable");
   }
 
+  if (serverError === "payment_method_required") {
+    return t("workspace.settings.billing.payment_method_required");
+  }
+
   return t("common.something_went_wrong_please_try_again");
 };
 

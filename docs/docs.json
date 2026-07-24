@@ -169,9 +169,11 @@
                     "icon": "wrench",
                     "pages": [
                       "surveys/website-app-surveys/actions",
-                      "surveys/website-app-surveys/advanced-targeting",
                       "surveys/website-app-surveys/user-identification",
+                      "surveys/website-app-surveys/attribute-based-targeting",
                       "surveys/website-app-surveys/recontact",
+                      "surveys/website-app-surveys/cooldown-period",
+                      "surveys/website-app-surveys/survey-display-logic",
                       "surveys/website-app-surveys/show-survey-to-percent-of-users"
                     ]
                   }
@@ -230,7 +232,7 @@
           {
             "group": "Unify Feedback Features",
             "pages": [
-              "unify-feedback/feedback-directories",
+              "unify-feedback/feedback-datasets",
               "unify-feedback/feedback-sources",
               "unify-feedback/feedback-records",
               "unify-feedback/dashboards-charts",
@@ -457,6 +459,10 @@
     ]
   },
   "redirects": [
+    {
+      "destination": "/docs/unify-feedback/feedback-datasets",
+      "source": "/docs/unify-feedback/feedback-directories"
+    },
     {
       "destination": "/docs/platform/introduction",
       "source": "/docs/overview/introduction"
@@ -846,12 +852,16 @@
       "source": "/docs/app-surveys/actions"
     },
     {
-      "destination": "/docs/surveys/website-app-surveys/advanced-targeting",
+      "destination": "/docs/surveys/website-app-surveys/attribute-based-targeting",
       "source": "/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting"
     },
     {
-      "destination": "/docs/surveys/website-app-surveys/advanced-targeting",
+      "destination": "/docs/surveys/website-app-surveys/attribute-based-targeting",
       "source": "/docs/app-surveys/advanced-targeting"
+    },
+    {
+      "destination": "/docs/surveys/website-app-surveys/attribute-based-targeting",
+      "source": "/docs/surveys/website-app-surveys/advanced-targeting"
     },
     {
       "destination": "/docs/surveys/website-app-surveys/user-identification",

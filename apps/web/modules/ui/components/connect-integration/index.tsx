@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import { TIntegrationType } from "@formbricks/types/integration";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { Button } from "@/modules/ui/components/button";
 import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
 import { getIntegrationDetails } from "./lib/utils";
@@ -53,7 +54,12 @@ export const ConnectIntegration = ({
             <FormbricksLogo />
           </div>
           <div className="flex size-32 items-center justify-center rounded-full bg-white p-4 shadow-md">
-            <Image className="w-1/2" src={integrationLogoSrc} alt="logo" />
+            <Image
+              className="w-1/2"
+              src={integrationLogoSrc}
+              alt="logo"
+              unoptimized={isExternalImageSrc(integrationLogoSrc)}
+            />
           </div>
         </div>
         <p className="my-8">{integrationDetails?.text}</p>

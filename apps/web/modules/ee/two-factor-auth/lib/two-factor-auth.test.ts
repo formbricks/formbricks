@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getCredentialPasswordHash, verifyUserPassword } from "@/lib/user/password";
+import { buildReencodedTwoFactorData } from "@/modules/auth/lib/cutover/reencode-two-factor";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "./two-factor-auth";
 
@@ -12,6 +13,12 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    twoFactor: {
+      upsert: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    // Runs the passed prisma operations; the individual mocks above record their own calls.
+    $transaction: vi.fn((ops) => (Array.isArray(ops) ? Promise.all(ops) : Promise.resolve(ops))),
   },
 }));
 
@@ -25,6 +32,14 @@ vi.mock("@/lib/user/password", () => ({
   verifyUserPassword: vi.fn(),
 }));
 
+vi.mock("@/modules/auth/lib/auth", () => ({
+  auth: { $context: Promise.resolve({ secretConfig: "ba-secret-config" }) },
+}));
+
+vi.mock("@/modules/auth/lib/cutover/reencode-two-factor", () => ({
+  buildReencodedTwoFactorData: vi.fn(),
+}));
+
 vi.mock("@/modules/auth/lib/totp", () => ({
   totpAuthenticatorCheck: vi.fn(),
 }));
@@ -36,6 +51,10 @@ describe("Two Factor Auth", () => {
     // password" tests override these.
     vi.mocked(getCredentialPasswordHash).mockResolvedValue("hashedPassword");
     vi.mocked(verifyUserPassword).mockResolvedValue(true);
+    vi.mocked(buildReencodedTwoFactorData).mockResolvedValue({
+      secret: "ba-secret",
+      backupCodes: "ba-codes",
+    });
   });
 
   afterEach(() => {
@@ -223,6 +242,18 @@ describe("Two Factor Auth", () => {
       where: { id: "user123" },
       data: { twoFactorEnabled: true },
     });
+    // ENG-1824: also materialize the Better Auth TwoFactor row (which login verifies against).
+    expect(buildReencodedTwoFactorData).toHaveBeenCalledWith(
+      "encrypted_secret",
+      undefined,
+      "ba-secret-config"
+    );
+    expect(prisma.twoFactor.upsert).toHaveBeenCalledWith({
+      where: { userId: "user123" },
+      update: { secret: "ba-secret", backupCodes: "ba-codes", verified: true },
+      create: { userId: "user123", secret: "ba-secret", backupCodes: "ba-codes", verified: true },
+    });
+    expect(prisma.$transaction).toHaveBeenCalled();
   });
 
   test("disableTwoFactorAuth should throw ResourceNotFoundError when user not found", async () => {
@@ -351,6 +382,9 @@ describe("Two Factor Auth", () => {
         twoFactorSecret: null,
       },
     });
+    // ENG-1824: also remove the Better Auth TwoFactor row so 2FA is fully off.
+    expect(prisma.twoFactor.deleteMany).toHaveBeenCalledWith({ where: { userId: "user123" } });
+    expect(prisma.$transaction).toHaveBeenCalled();
   });
 
   test("disableTwoFactorAuth should successfully disable 2FA with 2FA code", async () => {
@@ -378,5 +412,8 @@ describe("Two Factor Auth", () => {
         twoFactorSecret: null,
       },
     });
+    // ENG-1824: also remove the Better Auth TwoFactor row so 2FA is fully off.
+    expect(prisma.twoFactor.deleteMany).toHaveBeenCalledWith({ where: { userId: "user123" } });
+    expect(prisma.$transaction).toHaveBeenCalled();
   });
 });

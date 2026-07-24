@@ -152,7 +152,7 @@ describe("createContactAttributeKey", () => {
 
   test("returns not found error when related record does not exist", async () => {
     const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
-      code: PrismaErrorType.RelatedRecordDoesNotExist,
+      code: PrismaErrorType.RelatedRecordNotFound,
       clientVersion: "0.0.1",
     });
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValueOnce(errToThrow);
