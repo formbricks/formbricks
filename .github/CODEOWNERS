@@ -5,7 +5,7 @@
 # grant exceptions to it. Require a core team review on any change to this file
 # so a dependency-cooldown bypass always has a human sign-off, and can never be
 # self-approved by a contributor or an automated agent.
-# See docs/development/standards/practices/dependency-security-exceptions.mdx
+# See the "Dependency Cooldown Security Exceptions" page in the engineering handbook (Notion).
 pnpm-workspace.yaml @formbricks/team
 
 # Note: for this to be enforced, the repo's branch protection rule for the
