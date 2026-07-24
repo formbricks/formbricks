@@ -430,10 +430,10 @@ export const SurveyDropDownMenu = ({
           title={t("workspace.surveys.archive_survey")}
           description={
             isInProgress
-              ? t("workspace.surveys.archive_survey_warning_in_progress")
-              : t("workspace.surveys.archive_survey_warning")
+              ? t("workspace.surveys.archive_survey_description_in_progress")
+              : t("workspace.surveys.archive_survey_description")
           }
-          body=""
+          body={t("workspace.surveys.archive_survey_warning")}
           buttonText={isInProgress ? t("workspace.surveys.stop_and_archive") : t("common.archive")}
           buttonVariant={isInProgress ? "destructive" : "default"}
           buttonLoading={isArchiving}
