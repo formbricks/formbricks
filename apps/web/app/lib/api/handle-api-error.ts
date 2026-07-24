@@ -31,9 +31,10 @@ interface HandleApiErrorOptions {
  *   `error` back so the wrapper's `reportApiError` logs it (and reports it to Sentry on 5xx). This
  *   guarantees no raw `error.message` is ever echoed on the unexpected/5xx path.
  *
- * Rate-limit (429) and payload-too-large (413) errors are handled at their own boundaries (the
- * wrapper's rate limiter and `parseJsonBodyWithLimit` respectively) and never reach here, so they
- * are not mapped explicitly.
+ * A `TooManyRequestsError` (429) is mapped defensively: it is normally handled by the wrapper's
+ * rate limiter before a handler runs, but mapping it keeps this shared boundary from turning a
+ * stray 429 into a mis-statused, falsely Sentry-reported 500. `RequestBodyTooLargeError` (413) has
+ * no `statusCode` and is always caught at the `parseJsonBodyWithLimit` boundary, so it isn't mapped.
  *
  * @param error - The caught error (unknown).
  * @param options.cors - Whether the response should include CORS headers (public/client routes).
@@ -63,6 +64,8 @@ export const handleApiError = (
           };
         case 409:
           return { response: responses.conflictResponse(error.message, undefined, cors) };
+        case 429:
+          return { response: responses.tooManyRequestsResponse(error.message, cors) };
       }
     }
   }

@@ -7,6 +7,7 @@ import {
   OperationNotAllowedError,
   QueryExecutionError,
   ResourceNotFoundError,
+  TooManyRequestsError,
   UniqueConstraintError,
   UnknownError,
   ValidationError,
@@ -108,6 +109,17 @@ describe("handleApiError", () => {
 
       expect(result.response.status).toBe(401);
       expect((await result.response.json()).code).toBe("not_authenticated");
+    });
+
+    test("TooManyRequestsError -> 429, message surfaced, not threaded for reporting", async () => {
+      const result = handleApiError(new TooManyRequestsError("Rate limit exceeded"));
+
+      expect(result.response.status).toBe(429);
+      // Expected error → must NOT be threaded (no false Sentry report on the 4xx path).
+      expect(result.error).toBeUndefined();
+      const body = await result.response.json();
+      expect(body.code).toBe("too_many_requests");
+      expect(body.message).toBe("Rate limit exceeded");
     });
   });
 
