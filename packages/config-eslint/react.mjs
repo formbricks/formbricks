@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
@@ -17,6 +18,9 @@ export const react = [
   unusedVarsConvention,
   reactPlugin.configs.flat.recommended,
   reactPlugin.configs.flat["jsx-runtime"],
+  // Accessibility rules (parity with the old @vercel/style-guide/react config; eslint-config-next
+  // already provides these for the app, so this brings the react-library tier in line).
+  jsxA11y.flatConfigs.recommended,
   reactHooks.configs["recommended-latest"],
   {
     languageOptions: {
