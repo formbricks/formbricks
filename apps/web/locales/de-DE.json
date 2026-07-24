@@ -180,6 +180,7 @@
     "app_survey": "App-Umfrage",
     "appearance": "Erscheinungsbild",
     "apply_filters": "Filter anwenden",
+    "archive": "Archivieren",
     "archived": "Archiviert",
     "are_you_sure": "Bist du sicher?",
     "attributes": "Attribute",
@@ -2897,6 +2898,12 @@
       },
       "all_set_time_to_create_first_survey": "Alles klar! Zeit, deine erste Umfrage zu erstellen",
       "alphabetical": "alphabetisch",
+      "archive": "Archivieren",
+      "archive_survey": "Diese Umfrage archivieren?",
+      "archive_survey_description": "Du kannst sie jederzeit innerhalb der nächsten 30 Tage wiederherstellen.",
+      "archive_survey_description_in_progress": "Die Umfrage wird sofort keine Antworten mehr sammeln.",
+      "archive_survey_warning": "Diese Umfrage und alle zugehörigen Antworten werden nach 30 Tagen endgültig gelöscht.",
+      "archiving_survey": "Umfrage wird archiviert...",
       "change_status": "Status ändern",
       "copy_survey": "Umfrage kopieren",
       "copy_survey_description": "Wähle einen Workspace aus, in den du diese Umfrage kopieren möchtest.",
@@ -2907,6 +2914,7 @@
       "copy_survey_success": "Umfrage erfolgreich kopiert",
       "copy_survey_target_workspaces_label": "Ziel-Workspaces",
       "copy_to": "Kopieren nach...",
+      "delete_forever": "Endgültig löschen",
       "delete_survey_and_responses_warning": "Bist Du sicher, dass Du diese Umfrage und alle ihre Antworten löschen möchtest?",
       "edit": {
         "activate_translations": "Übersetzungen aktivieren",
@@ -3491,7 +3499,9 @@
         "your_web_app": "Deine Web-App",
         "zip": "PLZ"
       },
+      "error_archiving_survey": "Umfrage konnte nicht archiviert werden, versuch es noch mal",
       "error_deleting_survey": "Beim Löschen der Umfrage ist ein Fehler aufgetreten",
+      "error_restoring_survey": "Umfrage konnte nicht wiederhergestellt werden, versuch es noch mal",
       "error_updating_status": "Beim Aktualisieren des Umfragestatus ist ein Fehler aufgetreten",
       "featured_templates": {
         "churn_description": "Finde heraus, warum Leute ihre Abos kündigen.",
@@ -3553,6 +3563,8 @@
         "this_response_is_in_progress": "Diese Antwort ist in Bearbeitung.",
         "zip_post_code": "Postleitzahl"
       },
+      "restore": "Wiederherstellen",
+      "restoring_survey": "Umfrage wird wiederhergestellt...",
       "search_by_survey_name": "Nach Umfragename suchen",
       "share": {
         "anonymous_links": {
@@ -3684,6 +3696,7 @@
       },
       "status_updated_successfully": "Umfragestatus erfolgreich aktualisiert",
       "status_updating": "Umfragestatus wird aktualisiert...",
+      "stop_and_archive": "Stoppen und archivieren",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} {filterComboBoxValue} - {filterValue} ist",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage {questionIdx} übersprungen wurde",
@@ -3803,8 +3816,10 @@
         "your_survey_is_public": "Deine Umfrage ist live",
         "youre_not_plugged_in_yet": "Du bist noch nicht verbunden!"
       },
+      "survey_archived_successfully": "Umfrage archiviert",
       "survey_deleted_successfully": "Umfrage erfolgreich gelöscht",
       "survey_duplicated_successfully": "Umfrage erfolgreich dupliziert",
+      "survey_restored_successfully": "Umfrage wiederhergestellt",
       "templates": {
         "all_channels": "Alle Kanäle",
         "all_industries": "Alle Branchen",

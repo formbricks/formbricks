@@ -16,8 +16,8 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { deleteSurvey } from "@/modules/survey/lib/surveys";
-import { getSurveyCount } from "@/modules/survey/list/lib/survey";
+import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
+import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { type TV3SurveyCreateOptions, V3SurveyCreatePermissionError, createV3Survey } from "../create";
@@ -75,7 +75,9 @@ type TGetV3SurveyParams = {
   instance: string;
 };
 
-type TDeleteV3SurveyParams = {
+// Shared shape for the single-survey mutation operations (delete, archive, restore): all locate the
+// survey by its globally-unique id and enforce readWrite access + audit.
+type TV3SurveyMutationParams = {
   surveyId: string;
   authentication: TV3Authentication;
   requestId: string;
@@ -175,10 +177,19 @@ export async function listV3Surveys({
       sortBy: parsed.sortBy,
       filterCriteria: parsed.filterCriteria,
     });
+    // totalCount and hasArchived are only computed on the first page (same gate),
+    // matching the client which reads them from pages[0].meta.
     const totalCountPromise = parsed.includeTotalCount
       ? getSurveyCount(workspaceId, parsed.filterCriteria)
       : Promise.resolve(null);
-    const [surveyPage, totalCount] = await Promise.all([surveyPagePromise, totalCountPromise]);
+    const hasArchivedPromise = parsed.includeTotalCount
+      ? hasArchivedSurveys(workspaceId)
+      : Promise.resolve(null);
+    const [surveyPage, totalCount, hasArchived] = await Promise.all([
+      surveyPagePromise,
+      totalCountPromise,
+      hasArchivedPromise,
+    ]);
 
     return successListResponse(
       surveyPage.surveys.map(serializeV3SurveyListItem),
@@ -186,6 +197,7 @@ export async function listV3Surveys({
         limit: parsed.limit,
         nextCursor: surveyPage.nextCursor,
         totalCount,
+        hasArchived,
       },
       { requestId, cache: "private, no-store" }
     );
@@ -426,13 +438,38 @@ export async function getV3Survey({
   }
 }
 
+// Shared catch-block mapper for the single-survey mutation ops (delete/archive/restore): they share
+// one error contract — not-found → 403, DatabaseError → 500, anything else → 500.
+function mapV3SurveyMutationError(
+  error: unknown,
+  {
+    log,
+    requestId,
+    instance,
+    operation,
+  }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string; operation: string }
+): Response {
+  if (error instanceof ResourceNotFoundError) {
+    log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
+    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+  }
+
+  if (error instanceof DatabaseError) {
+    log.error({ error, statusCode: 500 }, "Database error");
+    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+  }
+
+  log.error({ error, statusCode: 500 }, `V3 survey ${operation} unexpected error`);
+  return problemInternalError(requestId, "An unexpected error occurred.", instance);
+}
+
 export async function deleteV3Survey({
   surveyId,
   authentication,
   requestId,
   instance,
   auditLog,
-}: TDeleteV3SurveyParams): Promise<Response> {
+}: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
   try {
@@ -459,19 +496,135 @@ export async function deleteV3Survey({
 
     return noContentResponse({ requestId });
   } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      log.warn({ errorCode: error.name, statusCode: 403 }, "Survey not found or not accessible");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+    return mapV3SurveyMutationError(error, { log, requestId, instance, operation: "delete" });
+  }
+}
+
+// archive and restore share the exact same flow (authorize readWrite → audit old → run the lifecycle
+// service → audit new → return a minimal lifecycle ack); only the service and log label differ.
+async function runV3SurveyLifecycleMutation(
+  { surveyId, authentication, requestId, instance, auditLog }: TV3SurveyMutationParams,
+  {
+    operation,
+    mutate,
+  }: {
+    operation: "archive" | "restore";
+    mutate: (id: string) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
+  }
+): Promise<Response> {
+  const log = logger.withContext({ requestId, surveyId });
+
+  try {
+    const { survey, authResult, response } = await getAuthorizedV3Survey({
+      surveyId,
+      authentication,
+      access: "readWrite",
+      requestId,
+      instance,
+    });
+
+    if (response) {
+      log.warn({ statusCode: 403 }, "Survey not found or not accessible");
+      return response;
     }
 
-    if (error instanceof DatabaseError) {
-      log.error({ error, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    if (auditLog) {
+      auditLog.targetId = survey.id;
+      auditLog.organizationId = authResult.organizationId;
+      auditLog.oldObject = survey;
     }
 
-    log.error({ error, statusCode: 500 }, "V3 survey delete unexpected error");
+    const mutatedSurvey = await mutate(surveyId);
+
+    if (auditLog) {
+      auditLog.newObject = mutatedSurvey;
+    }
+
+    // Intentional lifecycle ack, not the full document resource: archive/restore operate on any
+    // survey (incl. legacy question-based ones that serializeV3SurveyResource rejects), so we return
+    // an explicit minimal shape rather than leaking the raw Prisma object or blocking those surveys.
+    const ack = {
+      id: mutatedSurvey.id,
+      status: mutatedSurvey.status,
+      archivedAt: mutatedSurvey.archivedAt,
+    };
+    return successResponse(ack, { requestId, cache: "private, no-store" });
+  } catch (error) {
+    return mapV3SurveyMutationError(error, { log, requestId, instance, operation });
+  }
+}
+
+export async function archiveV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
+  return runV3SurveyLifecycleMutation(params, { operation: "archive", mutate: archiveSurvey });
+}
+
+export async function restoreV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
+  return runV3SurveyLifecycleMutation(params, { operation: "restore", mutate: restoreSurvey });
+}
+
+/**
+ * Map an error thrown during survey patch to its problem+json Response. Extracted from
+ * patchV3SurveyResponse to keep that handler's cognitive complexity within bounds.
+ */
+function mapV3SurveyPatchError(
+  err: unknown,
+  {
+    log,
+    requestId,
+    instance,
+    workspaceId,
+  }: {
+    log: ReturnType<typeof logger.withContext>;
+    requestId: string;
+    instance: string;
+    workspaceId: string | undefined;
+  }
+): Response {
+  if (err instanceof V3SurveyReferenceValidationError) {
+    // Semantic/reference validation failure on a well-formed document → 422 (see create handler).
+    log.warn(
+      { statusCode: 422, workspaceId, invalidParamCount: err.invalidParams.length },
+      "Survey document validation failed"
+    );
+    return problemUnprocessableContent(requestId, "Survey document failed validation", {
+      invalid_params: err.invalidParams,
+      instance,
+    });
+  }
+
+  if (err instanceof V3SurveyUnsupportedShapeError) {
+    log.warn({ statusCode: 400, workspaceId, errorCode: err.name }, "Unsupported v3 survey shape");
+    return problemBadRequest(requestId, err.message, {
+      instance,
+      invalid_params: [{ name: "survey", reason: err.message }],
+    });
+  }
+
+  if (err instanceof V3SurveyWritePermissionError) {
+    log.warn({ statusCode: 403, workspaceId, errorCode: err.name }, "Survey patch permission check failed");
+    return problemForbidden(requestId, err.message, instance);
+  }
+
+  if (err instanceof ResourceNotFoundError) {
+    log.warn({ errorCode: err.name, workspaceId, statusCode: 403 }, "Survey not found or not accessible");
+    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+  }
+
+  if (err instanceof InvalidInputError) {
+    log.warn({ errorCode: err.name, workspaceId, statusCode: 400 }, "Invalid survey input");
+    return problemBadRequest(requestId, err.message, {
+      invalid_params: [{ name: "body", reason: err.message }],
+      instance,
+    });
+  }
+
+  if (err instanceof DatabaseError) {
+    log.error({ error: err, workspaceId, statusCode: 500 }, "Database error");
     return problemInternalError(requestId, "An unexpected error occurred.", instance);
   }
+
+  log.error({ error: err, workspaceId, statusCode: 500 }, "V3 survey patch unexpected error");
+  return problemInternalError(requestId, "An unexpected error occurred.", instance);
 }
 
 export async function patchV3SurveyResponse({
@@ -500,6 +653,24 @@ export async function patchV3SurveyResponse({
     }
 
     workspaceId = survey.workspaceId;
+
+    // Archived surveys are read-only. Editing (esp. flipping status back to inProgress) would let an
+    // archived survey collect responses while it is queued for permanent deletion. Require restore first.
+    // archivedAt is already loaded on `survey` (selectSurvey includes it), so no extra query — and reading
+    // it from the same fetch the auth check used avoids a restore-between-reads TOCTOU.
+    if (survey.archivedAt) {
+      log.warn({ statusCode: 422 }, "Attempted to patch an archived survey");
+      return problemUnprocessableContent(requestId, "Survey is archived", {
+        instance,
+        invalid_params: [
+          {
+            name: "archivedAt",
+            reason: "This survey is archived. Restore it before editing.",
+          },
+        ],
+      });
+    }
+
     const updatedSurvey = await patchV3Survey(survey, body, requestId, authResult.organizationId);
     const resource = serializeV3SurveyResource(updatedSurvey);
 
@@ -515,59 +686,7 @@ export async function patchV3SurveyResponse({
       cache: "private, no-store",
     });
   } catch (error) {
-    if (error instanceof V3SurveyReferenceValidationError) {
-      // Semantic/reference validation failure on a well-formed document → 422 (see create handler).
-      log.warn(
-        { statusCode: 422, workspaceId, invalidParamCount: error.invalidParams.length },
-        "Survey document validation failed"
-      );
-      return problemUnprocessableContent(requestId, "Survey document failed validation", {
-        invalid_params: error.invalidParams,
-        instance,
-      });
-    }
-
-    if (error instanceof V3SurveyUnsupportedShapeError) {
-      log.warn({ statusCode: 400, workspaceId, errorCode: error.name }, "Unsupported v3 survey shape");
-      return problemBadRequest(requestId, error.message, {
-        instance,
-        invalid_params: [
-          {
-            name: "survey",
-            reason: error.message,
-          },
-        ],
-      });
-    }
-
-    if (error instanceof V3SurveyWritePermissionError) {
-      log.warn(
-        { statusCode: 403, workspaceId, errorCode: error.name },
-        "Survey patch permission check failed"
-      );
-      return problemForbidden(requestId, error.message, instance);
-    }
-
-    if (error instanceof ResourceNotFoundError) {
-      log.warn({ errorCode: error.name, workspaceId, statusCode: 403 }, "Survey not found or not accessible");
-      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-    }
-
-    if (error instanceof InvalidInputError) {
-      log.warn({ errorCode: error.name, workspaceId, statusCode: 400 }, "Invalid survey input");
-      return problemBadRequest(requestId, error.message, {
-        invalid_params: [{ name: "body", reason: error.message }],
-        instance,
-      });
-    }
-
-    if (error instanceof DatabaseError) {
-      log.error({ error, workspaceId, statusCode: 500 }, "Database error");
-      return problemInternalError(requestId, "An unexpected error occurred.", instance);
-    }
-
-    log.error({ error, workspaceId, statusCode: 500 }, "V3 survey patch unexpected error");
-    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    return mapV3SurveyPatchError(error, { log, requestId, instance, workspaceId });
   }
 }
 

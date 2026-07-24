@@ -5,10 +5,14 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { normalizeSurveyFilters } from "@/modules/survey/list/lib/utils";
 import { TSurveyListItem, TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 
-type TV3SurveyListItemResponse = Omit<TSurveyListItem, "createdAt" | "publishOn" | "updatedAt"> & {
+type TV3SurveyListItemResponse = Omit<
+  TSurveyListItem,
+  "createdAt" | "publishOn" | "updatedAt" | "archivedAt"
+> & {
   createdAt: string;
   publishOn: string | null;
   updatedAt: string;
+  archivedAt: string | null;
 };
 
 type TV3SurveyListResponse = {
@@ -58,6 +62,9 @@ export type TSurveyListPage = {
     limit: number;
     nextCursor: string | null;
     totalCount: number | null;
+    // Whether the workspace has any archived surveys. Only computed on the first
+    // page (when includeTotalCount is not false); null on subsequent pages.
+    hasArchived: boolean | null;
   };
 };
 
@@ -67,6 +74,7 @@ function mapSurveyListItem(survey: TV3SurveyListItemResponse): TSurveyListItem {
     createdAt: new Date(survey.createdAt),
     publishOn: survey.publishOn ? new Date(survey.publishOn) : null,
     updatedAt: new Date(survey.updatedAt),
+    archivedAt: survey.archivedAt ? new Date(survey.archivedAt) : null,
   };
 }
 
@@ -192,6 +200,46 @@ export async function deleteSurvey(surveyId: string): Promise<void> {
   if (!response.ok) {
     throw await parseV3ApiError(response);
   }
+}
+
+type TV3ArchiveSurveyResponse = {
+  data: {
+    id: string;
+    status: TSurveyStatus;
+    archivedAt: string | null;
+  };
+};
+
+export async function archiveSurvey(
+  surveyId: string
+): Promise<{ id: string; status: TSurveyStatus; archivedAt: string | null }> {
+  const response = await fetch(`/api/v3/surveys/${surveyId}/archive`, {
+    method: "POST",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as TV3ArchiveSurveyResponse;
+  return responseBody.data;
+}
+
+export async function restoreSurvey(
+  surveyId: string
+): Promise<{ id: string; status: TSurveyStatus; archivedAt: string | null }> {
+  const response = await fetch(`/api/v3/surveys/${surveyId}/restore`, {
+    method: "POST",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const responseBody = (await response.json()) as TV3ArchiveSurveyResponse;
+  return responseBody.data;
 }
 
 export async function generateSurveyCreatePayload(

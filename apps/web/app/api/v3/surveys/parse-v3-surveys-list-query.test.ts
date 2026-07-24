@@ -104,6 +104,27 @@ describe("parseV3SurveysListQuery", () => {
     expect(r.ok).toBe(false);
   });
 
+  test("maps the 'archived' pseudo-status to includeArchived and keeps real statuses", () => {
+    const r = parseV3SurveysListQuery(
+      params(`workspaceId=${wid}&filter[status][in]=inProgress&filter[status][in]=archived`)
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.filterCriteria).toEqual({
+        status: ["inProgress"],
+        includeArchived: true,
+      });
+    }
+  });
+
+  test("maps a lone 'archived' status to includeArchived without a status filter", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filter[status][in]=archived`));
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.filterCriteria).toEqual({ includeArchived: true });
+    }
+  });
+
   test("rejects the createdBy filter", () => {
     const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filter[createdBy][in]=you`));
     expect(r.ok).toBe(false);

@@ -180,6 +180,7 @@
     "app_survey": "Опрос о приложении",
     "appearance": "Внешний вид",
     "apply_filters": "Применить фильтры",
+    "archive": "Архивировать",
     "archived": "Архивный",
     "are_you_sure": "Вы уверены?",
     "attributes": "Атрибуты",
@@ -2897,6 +2898,12 @@
       },
       "all_set_time_to_create_first_survey": "Всё готово! Пора создать первый опрос",
       "alphabetical": "По алфавиту",
+      "archive": "Архивировать",
+      "archive_survey": "Архивировать этот опрос?",
+      "archive_survey_description": "Вы можете восстановить его в любое время в течение следующих 30 дней.",
+      "archive_survey_description_in_progress": "Сбор ответов будет немедленно остановлен.",
+      "archive_survey_warning": "Этот опрос и все его ответы будут безвозвратно удалены через 30 дней.",
+      "archiving_survey": "Архивируем опрос...",
       "change_status": "Изменить статус",
       "copy_survey": "Копировать опрос",
       "copy_survey_description": "Выбери рабочее пространство, в которое хочешь скопировать этот опрос.",
@@ -2907,6 +2914,7 @@
       "copy_survey_success": "Опрос успешно скопирован",
       "copy_survey_target_workspaces_label": "Целевые рабочие пространства",
       "copy_to": "Копировать в...",
+      "delete_forever": "Удалить навсегда",
       "delete_survey_and_responses_warning": "Вы уверены, что хотите удалить этот опрос и все его ответы?",
       "edit": {
         "activate_translations": "Активировать переводы",
@@ -3491,7 +3499,9 @@
         "your_web_app": "Ваше веб-приложение",
         "zip": "Zip"
       },
+      "error_archiving_survey": "Не удалось архивировать опрос, попробуй ещё раз",
       "error_deleting_survey": "Произошла ошибка при удалении опроса",
+      "error_restoring_survey": "Не удалось восстановить опрос, попробуй ещё раз",
       "error_updating_status": "Произошла ошибка при обновлении статуса опроса",
       "featured_templates": {
         "churn_description": "Узнайте, почему люди отменяют свои подписки.",
@@ -3553,6 +3563,8 @@
         "this_response_is_in_progress": "Этот ответ в процессе заполнения.",
         "zip_post_code": "Индекс"
       },
+      "restore": "Восстановить",
+      "restoring_survey": "Восстанавливаем опрос...",
       "search_by_survey_name": "Поиск по названию опроса",
       "share": {
         "anonymous_links": {
@@ -3684,6 +3696,7 @@
       },
       "status_updated_successfully": "Статус опроса успешно обновлен",
       "status_updating": "Обновление статуса опроса...",
+      "stop_and_archive": "Остановить и архивировать",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Добавлен фильтр для ответов, где ответ на вопрос {questionIdx} — {filterComboBoxValue} — {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Добавлен фильтр для ответов, где вопрос {questionIdx} был пропущен",
@@ -3803,8 +3816,10 @@
         "your_survey_is_public": "Ваш опрос запущен",
         "youre_not_plugged_in_yet": "Вы ещё не подключены!"
       },
+      "survey_archived_successfully": "Опрос архивирован",
       "survey_deleted_successfully": "Опрос успешно удалён!",
       "survey_duplicated_successfully": "Опрос успешно продублирован.",
+      "survey_restored_successfully": "Опрос восстановлен",
       "templates": {
         "all_channels": "Все каналы",
         "all_industries": "Все отрасли",

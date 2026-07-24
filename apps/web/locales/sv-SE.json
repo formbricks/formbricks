@@ -180,6 +180,7 @@
     "app_survey": "App-enkät",
     "appearance": "Utseende",
     "apply_filters": "Tillämpa filter",
+    "archive": "Arkivera",
     "archived": "Arkiverad",
     "are_you_sure": "Är du säker?",
     "attributes": "Attribut",
@@ -2897,6 +2898,12 @@
       },
       "all_set_time_to_create_first_survey": "Allt klart! Dags att skapa din första enkät",
       "alphabetical": "Alfabetisk",
+      "archive": "Arkivera",
+      "archive_survey": "Arkivera denna undersökning?",
+      "archive_survey_description": "Du kan återställa den när som helst inom de kommande 30 dagarna.",
+      "archive_survey_description_in_progress": "Den kommer att sluta samla in svar omedelbart.",
+      "archive_survey_warning": "Denna undersökning och alla dess svar kommer att raderas permanent efter 30 dagar.",
+      "archiving_survey": "Arkiverar undersökning...",
       "change_status": "Ändra status",
       "copy_survey": "Kopiera undersökning",
       "copy_survey_description": "Välj en arbetsyta att kopiera den här undersökningen till.",
@@ -2907,6 +2914,7 @@
       "copy_survey_success": "Undersökningen kopierades",
       "copy_survey_target_workspaces_label": "Målarbetsytor",
       "copy_to": "Kopiera till...",
+      "delete_forever": "Radera permanent",
       "delete_survey_and_responses_warning": "Är du säker på att du vill ta bort denna enkät och alla dess svar?",
       "edit": {
         "activate_translations": "Aktivera översättningar",
@@ -3491,7 +3499,9 @@
         "your_web_app": "Din webbapp",
         "zip": "Postnummer"
       },
+      "error_archiving_survey": "Kunde inte arkivera undersökningen, försök igen",
       "error_deleting_survey": "Ett fel uppstod vid borttagning av enkät",
+      "error_restoring_survey": "Kunde inte återställa undersökningen, försök igen",
       "error_updating_status": "Ett fel uppstod när undersökningens status uppdaterades",
       "featured_templates": {
         "churn_description": "Ta reda på varför människor avslutar sina prenumerationer.",
@@ -3553,6 +3563,8 @@
         "this_response_is_in_progress": "Detta svar pågår.",
         "zip_post_code": "Postnummer"
       },
+      "restore": "Återställ",
+      "restoring_survey": "Återställer undersökning...",
       "search_by_survey_name": "Sök efter enkätnamn",
       "share": {
         "anonymous_links": {
@@ -3684,6 +3696,7 @@
       },
       "status_updated_successfully": "Undersökningens status har uppdaterats",
       "status_updating": "Uppdaterar undersökningens status...",
+      "stop_and_archive": "Stoppa och arkivera",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter har lagts till för svar där svaret på fråga {questionIdx} är {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Lade till filter för svar där svar på fråga {questionIdx} är överhoppad",
@@ -3803,8 +3816,10 @@
         "your_survey_is_public": "Din enkät är publicerad",
         "youre_not_plugged_in_yet": "Du är inte ansluten ännu!"
       },
+      "survey_archived_successfully": "Undersökningen arkiverad",
       "survey_deleted_successfully": "Enkät borttagen!",
       "survey_duplicated_successfully": "Enkät duplicerad.",
+      "survey_restored_successfully": "Undersökningen återställd",
       "templates": {
         "all_channels": "Alla kanaler",
         "all_industries": "Alla branscher",

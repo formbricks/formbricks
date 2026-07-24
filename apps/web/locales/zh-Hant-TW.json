@@ -180,6 +180,7 @@
     "app_survey": "應用程式問卷",
     "appearance": "外觀",
     "apply_filters": "套用篩選器",
+    "archive": "封存",
     "archived": "已封存",
     "are_you_sure": "您確定嗎？",
     "attributes": "屬性",
@@ -2897,6 +2898,12 @@
       },
       "all_set_time_to_create_first_survey": "您已準備就緒！是時候建立您的第一個問卷",
       "alphabetical": "依字母順序",
+      "archive": "封存",
+      "archive_survey": "要封存這份問卷嗎?",
+      "archive_survey_description": "你可以在接下來的 30 天內隨時還原。",
+      "archive_survey_description_in_progress": "它將立即停止收集回覆。",
+      "archive_survey_warning": "這份問卷及其所有回覆將在 30 天後永久刪除。",
+      "archiving_survey": "正在封存問卷...",
       "change_status": "變更狀態",
       "copy_survey": "複製問卷",
       "copy_survey_description": "選擇要將此問卷複製到的工作區。",
@@ -2907,6 +2914,7 @@
       "copy_survey_success": "問卷複製成功",
       "copy_survey_target_workspaces_label": "目標工作區",
       "copy_to": "複製到...",
+      "delete_forever": "永久刪除",
       "delete_survey_and_responses_warning": "您確定要刪除此問卷及其所有回應嗎？",
       "edit": {
         "activate_translations": "啟用翻譯",
@@ -3491,7 +3499,9 @@
         "your_web_app": "您的 Web 應用程式",
         "zip": "郵遞區號"
       },
+      "error_archiving_survey": "無法封存問卷,請再試一次",
       "error_deleting_survey": "刪除問卷時發生錯誤",
+      "error_restoring_survey": "無法還原問卷,請再試一次",
       "error_updating_status": "更新問卷狀態時發生錯誤",
       "featured_templates": {
         "churn_description": "了解用戶取消訂閱的原因。",
@@ -3553,6 +3563,8 @@
         "this_response_is_in_progress": "此回應正在進行中。",
         "zip_post_code": "郵遞區號"
       },
+      "restore": "還原",
+      "restoring_survey": "正在還原問卷...",
       "search_by_survey_name": "依問卷名稱搜尋",
       "share": {
         "anonymous_links": {
@@ -3684,6 +3696,7 @@
       },
       "status_updated_successfully": "問卷狀態已成功更新",
       "status_updating": "正在更新問卷狀態...",
+      "stop_and_archive": "停止並封存",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "已新增回答第 {questionIdx} 題為 {filterComboBoxValue} - {filterValue} 的回覆篩選器",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "已新增回應的篩選器，其中問題 {questionIdx} 的答案被跳過",
@@ -3803,8 +3816,10 @@
         "your_survey_is_public": "您的問卷已上線",
         "youre_not_plugged_in_yet": "您尚未插入任何內容！"
       },
+      "survey_archived_successfully": "問卷已封存",
       "survey_deleted_successfully": "問卷已成功刪除！",
       "survey_duplicated_successfully": "問卷已成功複製。",
+      "survey_restored_successfully": "問卷已還原",
       "templates": {
         "all_channels": "所有管道",
         "all_industries": "所有產業",

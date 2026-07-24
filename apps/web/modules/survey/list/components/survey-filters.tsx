@@ -22,13 +22,19 @@ interface SurveyFilterProps {
   surveyFilters: TSurveyOverviewFilters;
   setSurveyFilters: Dispatch<SetStateAction<TSurveyOverviewFilters>>;
   currentWorkspaceChannel: TWorkspaceConfigChannel;
+  // Whether the workspace has any archived surveys; the "Archived" option is hidden when false.
+  hasArchived?: boolean;
 }
 
-const getStatusOptions = (t: TFunction): TFilterOption[] => [
+// Real statuses users can filter on, plus the "archived" pseudo-status.
+const SELECTABLE_STATUS_VALUES = new Set(["draft", "inProgress", "paused", "completed", "archived"]);
+
+const getStatusOptions = (t: TFunction, hasArchived: boolean): TFilterOption[] => [
   { label: t("common.draft"), value: "draft" },
   { label: t("common.in_progress"), value: "inProgress" },
   { label: t("common.paused"), value: "paused" },
   { label: t("common.completed"), value: "completed" },
+  ...(hasArchived ? [{ label: t("common.archived"), value: "archived" }] : []),
 ];
 
 const getSortOptions = (t: TFunction): TSortOption[] => [
@@ -54,7 +60,8 @@ export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
   currentWorkspaceChannel,
-}: SurveyFilterProps) => {
+  hasArchived = false,
+}: Readonly<SurveyFilterProps>) => {
   const { sortBy, status, type } = surveyFilters;
   const [name, setName] = useState(surveyFilters.name);
   const { t } = useTranslation();
@@ -81,11 +88,12 @@ export const SurveyFilters = ({
   };
 
   const handleStatusChange = (value: string) => {
-    if (value === "inProgress" || value === "paused" || value === "completed" || value === "draft") {
-      if (status.includes(value)) {
-        setSurveyFilters((prev) => ({ ...prev, status: prev.status.filter((v) => v !== value) }));
+    if (SELECTABLE_STATUS_VALUES.has(value)) {
+      const statusValue = value as TSurveyOverviewFilters["status"][number];
+      if (status.includes(statusValue)) {
+        setSurveyFilters((prev) => ({ ...prev, status: prev.status.filter((v) => v !== statusValue) }));
       } else {
-        setSurveyFilters((prev) => ({ ...prev, status: [...prev.status, value] }));
+        setSurveyFilters((prev) => ({ ...prev, status: [...prev.status, statusValue] }));
       }
     }
   };
@@ -117,7 +125,7 @@ export const SurveyFilters = ({
           <SurveyFilterDropdown
             title={t("common.status")}
             id="status"
-            options={getStatusOptions(t)}
+            options={getStatusOptions(t, hasArchived)}
             selectedOptions={status}
             setSelectedOptions={handleStatusChange}
             isOpen={dropdownOpenStates.get("status")}

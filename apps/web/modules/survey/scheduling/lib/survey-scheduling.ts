@@ -177,6 +177,8 @@ const loadDueTransitionCandidates = async (
         not: null,
       },
       status: currentStatus,
+      // Never auto-transition archived surveys (belt-and-suspenders: archive already clears publishOn).
+      archivedAt: null,
     },
   });
 };
@@ -202,6 +204,7 @@ const applyTransition = async (
         },
         id: candidate.id,
         status: currentStatus,
+        archivedAt: null,
       },
     });
 

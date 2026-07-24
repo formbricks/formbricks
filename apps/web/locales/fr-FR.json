@@ -180,6 +180,7 @@
     "app_survey": "Sondage d'application",
     "appearance": "Apparence",
     "apply_filters": "Appliquer des filtres",
+    "archive": "Archiver",
     "archived": "Archivé",
     "are_you_sure": "Es-tu sûr ?",
     "attributes": "Attributs",
@@ -2897,6 +2898,12 @@
       },
       "all_set_time_to_create_first_survey": "Vous êtes prêt ! Il est temps de créer votre première enquête.",
       "alphabetical": "Alphabétique",
+      "archive": "Archiver",
+      "archive_survey": "Archiver ce sondage ?",
+      "archive_survey_description": "Tu pourras le restaurer à tout moment dans les 30 prochains jours.",
+      "archive_survey_description_in_progress": "Il cessera immédiatement de collecter des réponses.",
+      "archive_survey_warning": "Ce sondage et toutes ses réponses seront définitivement supprimés après 30 jours.",
+      "archiving_survey": "Archivage du sondage...",
       "change_status": "Changer le statut",
       "copy_survey": "Copier l'enquête",
       "copy_survey_description": "Choisis un espace de travail vers lequel copier cette enquête.",
@@ -2907,6 +2914,7 @@
       "copy_survey_success": "Enquête copiée avec succès",
       "copy_survey_target_workspaces_label": "Espaces de travail cibles",
       "copy_to": "Copier vers...",
+      "delete_forever": "Supprimer définitivement",
       "delete_survey_and_responses_warning": "Êtes-vous sûr de vouloir supprimer cette enquête et toutes ses réponses?",
       "edit": {
         "activate_translations": "Activer les traductions",
@@ -3491,7 +3499,9 @@
         "your_web_app": "Votre application web",
         "zip": "Zip"
       },
+      "error_archiving_survey": "Impossible d'archiver le sondage, réessaye",
       "error_deleting_survey": "Une erreur s'est produite lors de la suppression du sondage",
+      "error_restoring_survey": "Impossible de restaurer le sondage, réessaye",
       "error_updating_status": "Une erreur s'est produite lors de la mise à jour du statut de l'enquête",
       "featured_templates": {
         "churn_description": "Découvrez pourquoi les utilisateurs annulent leur abonnement.",
@@ -3553,6 +3563,8 @@
         "this_response_is_in_progress": "Cette réponse est en cours.",
         "zip_post_code": "Code postal"
       },
+      "restore": "Restaurer",
+      "restoring_survey": "Restauration du sondage...",
       "search_by_survey_name": "Recherche par nom d'enquête",
       "share": {
         "anonymous_links": {
@@ -3684,6 +3696,7 @@
       },
       "status_updated_successfully": "Le statut de l'enquête a été mis à jour avec succès",
       "status_updating": "Mise à jour du statut de l'enquête...",
+      "stop_and_archive": "Arrêter et archiver",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtre ajouté pour les réponses où la réponse à la question {questionIdx} est {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est ignorée",
@@ -3803,8 +3816,10 @@
         "your_survey_is_public": "Ton enquête est en ligne",
         "youre_not_plugged_in_yet": "Vous n'êtes pas encore branché !"
       },
+      "survey_archived_successfully": "Sondage archivé",
       "survey_deleted_successfully": "Enquête supprimée avec succès !",
       "survey_duplicated_successfully": "Enquête dupliquée avec succès.",
+      "survey_restored_successfully": "Sondage restauré",
       "templates": {
         "all_channels": "Tous les canaux",
         "all_industries": "Tous les secteurs",
