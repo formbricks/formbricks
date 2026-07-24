@@ -12,6 +12,37 @@ type TUserDbClient = PrismaClient | Prisma.TransactionClient;
 
 const getDbClient = (tx?: Prisma.TransactionClient): TUserDbClient => tx ?? prisma;
 
+// A Postgres deadlock aborts ONE transaction in the cycle (SQLSTATE 40P01) and is safe to retry.
+// Prisma reports it as P2034 on interactive transactions; the pg driver adapter can also surface it as
+// a DriverAdapterError whose message carries "deadlock detected" (the shape seen in Sentry for ENG-2038).
+const isDeadlockError = (error: unknown): boolean => {
+  if (isPrismaKnownRequestError(error) && error.code === "P2034") {
+    return true;
+  }
+  const message = error instanceof Error ? error.message : "";
+  return /deadlock detected/i.test(message) || message.includes("40P01");
+};
+
+const DEADLOCK_MAX_ATTEMPTS = 3;
+
+/**
+ * Retry a DB operation a bounded number of times when it fails with a deadlock, with a short linear
+ * backoff so retried transactions don't re-collide in lockstep. Non-deadlock errors propagate on the
+ * first attempt. Defense-in-depth for the login write path (ENG-2038); the caller must be idempotent.
+ */
+const retryOnDeadlock = async <T>(operation: () => Promise<T>): Promise<T> => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt >= DEADLOCK_MAX_ATTEMPTS || !isDeadlockError(error)) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 25));
+    }
+  }
+};
+
 export const updateUser = async (id: string, data: TUserUpdateInput, tx?: Prisma.TransactionClient) => {
   validateInputs([id, ZId], [data, ZUserUpdateInput.partial()]);
 
@@ -42,30 +73,39 @@ export const updateUserLastLoginAt = async (email: string) => {
   validateInputs([email, ZUserEmail]);
 
   try {
-    return await prisma.$transaction(async (tx) => {
-      const lockedUsers = await tx.$queryRaw<Array<{ id: string; lastLoginAt: Date | null }>>`
+    // Retry on a transient deadlock (40P01): the last-login bump is idempotent, so a bounded retry
+    // clears rare cross-transaction contention on the hot login path instead of surfacing a 500.
+    return await retryOnDeadlock(() =>
+      prisma.$transaction(async (tx) => {
+        // FOR NO KEY UPDATE (not FOR UPDATE): this serializes concurrent same-user updates of
+        // lastLoginAt, but — unlike FOR UPDATE — does NOT conflict with the FOR KEY SHARE lock that a
+        // concurrent Session→User FK insert takes on this row during sign-in. FOR UPDATE here was
+        // stronger than the subsequent UPDATE needs and created a deadlock cycle on the login path
+        // (ENG-2038). The row is only read to return the previous lastLoginAt for a login analytics flag.
+        const lockedUsers = await tx.$queryRaw<Array<{ id: string; lastLoginAt: Date | null }>>`
         SELECT "id", "lastLoginAt"
         FROM "User"
         WHERE "email" = ${email}
-        FOR UPDATE
+        FOR NO KEY UPDATE
       `;
-      const lockedUser = lockedUsers[0];
+        const lockedUser = lockedUsers[0];
 
-      if (!lockedUser) {
-        throw new ResourceNotFoundError("email", email);
-      }
+        if (!lockedUser) {
+          throw new ResourceNotFoundError("email", email);
+        }
 
-      await tx.user.update({
-        where: {
-          id: lockedUser.id,
-        },
-        data: {
-          lastLoginAt: new Date(),
-        },
-      });
+        await tx.user.update({
+          where: {
+            id: lockedUser.id,
+          },
+          data: {
+            lastLoginAt: new Date(),
+          },
+        });
 
-      return lockedUser.lastLoginAt;
-    });
+        return lockedUser.lastLoginAt;
+      })
+    );
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       throw error;
