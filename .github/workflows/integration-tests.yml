@@ -132,7 +132,10 @@ jobs:
 
       - name: Apply schema + data migrations to the test database
         if: steps.harness.outputs.present == 'true'
-        run: pnpm db:migrate:dev
+        # @formbricks/database is already built by the "Build workspace package
+        # dependencies" step above, so run the migration runner directly instead
+        # of db:migrate:dev (which would rebuild + re-generate the package).
+        run: pnpm --filter=@formbricks/database db:migrate:ci
         shell: bash
 
       # Shared with apps/web/integration/global-setup.ts (the local harness applies the same file) so
