@@ -29,7 +29,7 @@
     "clean": "rimraf .turbo node_modules coverage dist",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+    "lint:report": "eslint . --format json --output-file ../../lint-results/logger.json",
     "typecheck": "tsc --noEmit",
     "build": "rimraf dist && vite build && tsc --project tsconfig.build.json",
     "test": "vitest run"
