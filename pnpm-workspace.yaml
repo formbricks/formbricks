@@ -154,3 +154,21 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - '@formbricks/hub'
+  # Urgent CVE fix, approved via the dependency-cooldown exception process (see the
+  # "Dependency Cooldown Security Exceptions" page in the engineering handbook / Notion):
+  # next@16.2.11 fixes GHSA-6gpp-xcg3-4w24, GHSA-m99w-x7hq-7vfj, GHSA-89xv-2m56-2m9x,
+  # GHSA-p9j2-gv94-2wf4 (high) and GHSA-68g3-v927-f742, GHSA-4633-3j49-mh5q,
+  # GHSA-4c39-4ccg-62r3, GHSA-q8wf-6r8g-63ch, GHSA-955p-x3mx-jcvp (moderate). Published
+  # 2026-07-21, cooldown clears 2026-07-24T16:00 UTC — remove this entry once past that date.
+  # `next`'s platform-specific companion packages publish under the same version and need their
+  # own entries; pnpm's release-age check applies per npm package, not per dependency graph.
+  - next@16.2.11
+  - '@next/env@16.2.11'
+  - '@next/swc-darwin-arm64@16.2.11'
+  - '@next/swc-darwin-x64@16.2.11'
+  - '@next/swc-linux-arm64-gnu@16.2.11'
+  - '@next/swc-linux-arm64-musl@16.2.11'
+  - '@next/swc-linux-x64-gnu@16.2.11'
+  - '@next/swc-linux-x64-musl@16.2.11'
+  - '@next/swc-win32-arm64-msvc@16.2.11'
+  - '@next/swc-win32-x64-msvc@16.2.11'
