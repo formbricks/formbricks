@@ -52,5 +52,13 @@ export const commonIgnores = {
   ignores: ["**/node_modules/**", "**/dist/**", "**/coverage/**", "**/.turbo/**"],
 };
 
+// Surface stale `eslint-disable` comments everywhere as warnings (non-blocking) so obsolete
+// suppressions can't silently accumulate again after the ENG-1677 cleanup.
+export const unusedDirectivesConvention = {
+  linterOptions: {
+    reportUnusedDisableDirectives: "warn",
+  },
+};
+
 // Turbo checks + test conventions + prettier-compat. Keep prettier last.
-export const base = [...turbo, vitestConventions, prettier];
+export const base = [...turbo, vitestConventions, unusedDirectivesConvention, prettier];
