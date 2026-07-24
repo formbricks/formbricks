@@ -3039,7 +3039,10 @@ checksums:
     workspace/surveys/edit/follow_ups_modal_action_attach_response_data_label: 32eff1a88e1a044fc22b0bff54f3c683
     workspace/surveys/edit/follow_ups_modal_action_body_label: e88eb1ea71f5ef886aa43ea6ba292d87
     workspace/surveys/edit/follow_ups_modal_action_body_placeholder: 4a658fa2f0af640a07f956551043eb88
+    workspace/surveys/edit/follow_ups_modal_action_email_already_added: 14fdaf283e2f26c7fca18c803a1afd58
     workspace/surveys/edit/follow_ups_modal_action_email_content: 9825583500908e6b16f7ffffb5a3aef4
+    workspace/surveys/edit/follow_ups_modal_action_email_input_placeholder: ea0d5679e1d1c3219ca3c61fd9afdabe
+    workspace/surveys/edit/follow_ups_modal_action_email_invalid: 8de4bc8832b11b380bc4cbcedc16e48b
     workspace/surveys/edit/follow_ups_modal_action_email_settings: 18728b7e2096854c12f442e323dc10c0
     workspace/surveys/edit/follow_ups_modal_action_from_description: 6bc80080a4a3513e0e7c7e7194b2d4ad
     workspace/surveys/edit/follow_ups_modal_action_from_label: 3d84daca8c92c8609deeab4b294b4afb
