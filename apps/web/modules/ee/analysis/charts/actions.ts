@@ -431,3 +431,82 @@ export const getDimensionValuesAction = authenticatedActionClient
       return values;
     }
   );
+
+// Max distinct questions returned for a directory. The cap keeps the picker query bounded;
+// a single directory rarely exposes more distinct question labels than this.
+const DIRECTORY_QUESTION_LOOKUP_LIMIT = 200;
+
+const FIELD_LABEL_DIMENSION = "FeedbackRecords.fieldLabel";
+const FIELD_TYPE_DIMENSION = "FeedbackRecords.fieldType";
+
+const ZGetDirectoryQuestionsAction = z.object({
+  workspaceId: ZId,
+  feedbackDirectoryId: ZId,
+});
+
+/**
+ * Returns the distinct questions (label + field type) that have feedback records in the
+ * directory, so the question chart picker can populate its dropdown. Reads distinct
+ * `fieldLabel` values off FeedbackRecords, so — by construction — only questions with
+ * records in this directory appear. Deduped by label; the first field type seen wins.
+ */
+export const getDirectoryQuestionsAction = authenticatedActionClient
+  .inputSchema(ZGetDirectoryQuestionsAction)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: AuthenticatedActionClientCtx;
+      parsedInput: z.infer<typeof ZGetDirectoryQuestionsAction>;
+    }) => {
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+
+      await checkDashboardsEnabled(organizationId);
+
+      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.getDirectoryQuestionsAction",
+      });
+
+      const query: TChartQuery = {
+        dimensions: [FIELD_LABEL_DIMENSION, FIELD_TYPE_DIMENSION],
+        order: [[FIELD_LABEL_DIMENSION, "asc"]],
+        limit: DIRECTORY_QUESTION_LOOKUP_LIMIT,
+      };
+
+      const rows = await executeTenantScopedQuery({
+        query,
+        feedbackDirectoryId,
+        workspaceId,
+        organizationId,
+        userId: ctx.user.id,
+        source: "charts.getDirectoryQuestionsAction",
+      });
+
+      const seen = new Set<string>();
+      const questions: { fieldLabel: string; fieldType: string }[] = [];
+      for (const row of Array.isArray(rows) ? rows : []) {
+        const record = row as Record<string, unknown>;
+        const rawLabel = record[FIELD_LABEL_DIMENSION];
+        const rawType = record[FIELD_TYPE_DIMENSION];
+        if (typeof rawLabel !== "string") continue;
+        const fieldLabel = rawLabel.trim();
+        if (!fieldLabel || seen.has(fieldLabel)) continue;
+        seen.add(fieldLabel);
+        questions.push({
+          fieldLabel,
+          fieldType: typeof rawType === "string" ? rawType.trim() : "",
+        });
+      }
+
+      return questions;
+    }
+  );
