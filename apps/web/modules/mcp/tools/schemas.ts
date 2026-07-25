@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
+import {
+  ZV3FeedbackRecordCreateBody,
+  ZV3FeedbackRecordListFilters,
+} from "@/app/api/v3/feedbackRecords/lib/schemas";
 
 export const ZMcpListSurveysInput = z.object({
   workspaceId: ZId.describe("Workspace ID whose surveys should be listed."),
@@ -122,6 +126,32 @@ export const ZMcpDeleteSurveyInput = z.object({
 // list_workspaces takes no arguments — it returns the workspaces the authenticated caller can access.
 export const ZMcpListWorkspacesInput = z.object({});
 
+// Feedback records live in the Hub, addressed by a tenant that is always resolved server-side from the
+// caller's workspace + feedback directory. No schema here accepts a tenant_id.
+const feedbackDirectoryIdField = ZId.optional().describe(
+  "Feedback directory (tenant) to target. Optional when the workspace has exactly one active directory; required when it has more than one. Use list_feedback_directories to discover ids."
+);
+
+export const ZMcpListFeedbackDirectoriesInput = z.object({
+  workspaceId: ZId.describe("Workspace ID whose feedback directories should be listed."),
+});
+
+export const ZMcpListFeedbackRecordsInput = ZV3FeedbackRecordListFilters.extend({
+  workspaceId: ZId.describe("Workspace ID whose feedback records should be listed."),
+  feedbackDirectoryId: feedbackDirectoryIdField,
+});
+
+export const ZMcpGetFeedbackRecordInput = z.object({
+  workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
+  feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to fetch."),
+  feedbackDirectoryId: feedbackDirectoryIdField,
+});
+
+export const ZMcpCreateFeedbackRecordInput = ZV3FeedbackRecordCreateBody.extend({
+  workspaceId: ZId.describe("Workspace ID to create the feedback record in."),
+  feedbackDirectoryId: feedbackDirectoryIdField,
+});
+
 export type TMcpListSurveysInput = z.infer<typeof ZMcpListSurveysInput>;
 export type TMcpListWorkspacesInput = z.infer<typeof ZMcpListWorkspacesInput>;
 export type TMcpGetSurveyInput = z.infer<typeof ZMcpGetSurveyInput>;
@@ -129,3 +159,7 @@ export type TMcpCreateSurveyInput = z.infer<typeof ZMcpCreateSurveyInput>;
 export type TMcpPatchSurveyInput = z.infer<typeof ZMcpPatchSurveyInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
+export type TMcpListFeedbackDirectoriesInput = z.infer<typeof ZMcpListFeedbackDirectoriesInput>;
+export type TMcpListFeedbackRecordsInput = z.infer<typeof ZMcpListFeedbackRecordsInput>;
+export type TMcpGetFeedbackRecordInput = z.infer<typeof ZMcpGetFeedbackRecordInput>;
+export type TMcpCreateFeedbackRecordInput = z.infer<typeof ZMcpCreateFeedbackRecordInput>;
