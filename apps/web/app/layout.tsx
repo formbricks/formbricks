@@ -14,7 +14,8 @@ import "../modules/ui/globals.css";
 // can't read server-only env itself, reads this back off `window.__sentryRuntimeConfig`.
 const getSentryRuntimeConfigScript = () => {
   const config: SentryRuntimeConfig = { dsn: SENTRY_DSN, environment: SENTRY_ENVIRONMENT };
-  return `window.__sentryRuntimeConfig = ${JSON.stringify(config).replace(/</g, "\\u003c")};`;
+  const escapedConfig = JSON.stringify(config).replaceAll("<", String.raw`\u003c`);
+  return `window.__sentryRuntimeConfig = ${escapedConfig};`;
 };
 
 export const metadata: Metadata = {

@@ -54,7 +54,7 @@ if (sentryDsn && isProduction) {
       const error = hint.originalException as Error;
 
       // @ts-expect-error
-      if (error && error.digest === "NEXT_NOT_FOUND") {
+      if (error?.digest === "NEXT_NOT_FOUND") {
         return null;
       }
 
