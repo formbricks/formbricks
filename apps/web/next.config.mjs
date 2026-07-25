@@ -475,11 +475,13 @@ const nextConfig = {
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
-    // Inlined for instrumentation-client.ts, which runs in the browser bundle and can't read
-    // server-only env (lib/constants.ts is guarded by `import "server-only"`). The Sentry DSN is
-    // not a secret — Sentry's own client SDKs are designed to ship it in the browser bundle.
-    SENTRY_DSN: process.env.SENTRY_DSN,
-    SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
+    // SENTRY_RELEASE is a build-artifact property (derived from package.json's version), not
+    // per-deployment config, so baking it in is safe. SENTRY_DSN/SENTRY_ENVIRONMENT are NOT baked
+    // in here on purpose: self-hosted Docker images are built once and configure Sentry at
+    // container start (see docker/docker-compose.yml), with no SENTRY_DSN build secret. Baking
+    // them into the client bundle at build time would freeze DSN/environment into the image and
+    // ignore the runtime value entirely. instrumentation-client.ts instead reads them at request
+    // time from a small inline script layout.tsx renders (see SentryRuntimeConfigScript).
     SENTRY_RELEASE: getSentryRelease(),
   },
 };

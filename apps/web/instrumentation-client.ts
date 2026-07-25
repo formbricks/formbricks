@@ -3,15 +3,26 @@
 // errors that a useEffect-based init would miss.
 // https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
 import * as Sentry from "@sentry/nextjs";
+import type { SentryRuntimeConfig } from "@/lib/sentry-runtime-config";
 
-const sentryDsn = process.env.SENTRY_DSN;
+declare global {
+  interface Window {
+    // Set by an inline `beforeInteractive` script in app/layout.tsx, populated from the request-time
+    // SENTRY_DSN/SENTRY_ENVIRONMENT. DSN/environment can't be inlined at build time here: self-hosted
+    // Docker images are built once and configure Sentry at container start, so a build-time value
+    // would freeze in "unset" forever regardless of what operators set at runtime.
+    __sentryRuntimeConfig?: SentryRuntimeConfig;
+  }
+}
+
+const sentryDsn = window.__sentryRuntimeConfig?.dsn;
 const isProduction = process.env.NODE_ENV === "production";
 
 if (sentryDsn && isProduction) {
   Sentry.init({
     dsn: sentryDsn,
     release: process.env.SENTRY_RELEASE,
-    environment: process.env.SENTRY_ENVIRONMENT,
+    environment: window.__sentryRuntimeConfig?.environment,
 
     // No tracing while Sentry doesn't update to telemetry 2.0.0.
     // https://github.com/getsentry/sentry-javascript/issues/15737
