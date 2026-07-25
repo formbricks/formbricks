@@ -13,7 +13,8 @@ if (sentryDsn && isProduction) {
     release: process.env.SENTRY_RELEASE,
     environment: process.env.SENTRY_ENVIRONMENT,
 
-    // No tracing while Sentry doesn't update to telemetry 2.0.0 - https://github.com/getsentry/sentry-javascript/issues/15737
+    // No tracing while Sentry doesn't update to telemetry 2.0.0.
+    // https://github.com/getsentry/sentry-javascript/issues/15737
     tracesSampleRate: 0,
 
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
