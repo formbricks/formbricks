@@ -1,19 +1,18 @@
 import "server-only";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
-import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 /**
  * Authorize a Unify Feedback taxonomy request against a workspace + feedback directory.
  *
  * Reproduces the exact guard the legacy server actions applied (`ensureAccess` + `ensureDirectoryAccess`):
- * `requireV3WorkspaceAccess` covers the org owner/manager OR workspace-team permission array, and this
- * wrapper adds the two checks v3 workspace auth does NOT do — the `feedbackDirectories` entitlement and
- * the directory-belongs-to-workspace membership check. Omitting either would widen access beyond today.
+ * the shared `requireUnifyFeedbackWorkspaceAccess` covers workspace permission plus the
+ * `feedbackDirectories` entitlement, and this wrapper adds the directory-belongs-to-workspace membership
+ * check. Omitting either would widen access beyond today.
  *
  * Returns a `Response` (401/403) to short-circuit on failure, or the resolved workspace context on success.
  */
@@ -25,7 +24,7 @@ export async function requireUnifyDirectoryAccess(
   requestId: string,
   instance?: string
 ): Promise<Response | V3WorkspaceContext> {
-  const context = await requireV3WorkspaceAccess(
+  const context = await requireUnifyFeedbackWorkspaceAccess(
     authentication,
     workspaceId,
     minPermission,
@@ -34,11 +33,6 @@ export async function requireUnifyDirectoryAccess(
   );
   if (context instanceof Response) {
     return context;
-  }
-
-  const isEnabled = await getIsFeedbackDirectoriesEnabled(context.organizationId);
-  if (!isEnabled) {
-    return problemForbidden(requestId, "Unify Feedback is not enabled for this organization", instance);
   }
 
   const directories = await getFeedbackDirectoriesByWorkspaceId(context.workspaceId);
