@@ -76,23 +76,30 @@ Discovery endpoints:
 
 Supported scopes:
 
-| Scope             | Use                                                                       |
-| ----------------- | ------------------------------------------------------------------------- |
-| `surveys:read`    | `list_surveys`, `get_survey`, and read-only validation paths              |
-| `surveys:write`   | `create_survey`, `patch_survey`, `delete_survey`, and write validations   |
-| `openid`          | OpenID Connect subject interoperability                                   |
-| `profile`         | User profile claims                                                       |
-| `email`           | User email claim                                                          |
-| `offline_access`  | Refresh tokens for MCP clients                                            |
+| Scope                   | Use                                                                         |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                |
+| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations     |
+| `feedbackRecords:read`  | `list_feedback_directories`, `list_feedback_records`, `get_feedback_record` |
+| `feedbackRecords:write` | `create_feedback_record`                                                    |
+| `openid`                | OpenID Connect subject interoperability                                     |
+| `profile`               | User profile claims                                                         |
+| `email`                 | User email claim                                                            |
+| `offline_access`        | Refresh tokens for MCP clients                                              |
 
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only `surveys:read`, `surveys:write`,
-and `offline_access` — the scopes an MCP client needs. Clients derive their Dynamic Client
+`feedbackRecords:read`, `feedbackRecords:write`, and `offline_access` — the scopes an MCP client
+needs. Clients derive their Dynamic Client
 Registration scopes from that list, so `offline_access` must be advertised there for clients to be
 issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
 OAuth scopes only gate MCP tool categories. Actual workspace access is still evaluated at tool
 execution through the existing v3 authorization checks for the signed-in Formbricks user.
+
+Scope groups are **independent**: a token authenticates as long as it holds at least one resource
+scope, so a `feedbackRecords:read`-only grant is valid and simply can't reach the survey tools.
+`list_workspaces` is the shared discovery tool and accepts either read scope.
 
 ### API-key fallback
 
@@ -121,6 +128,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `validate_survey` | `write` or `manage` when the validation request checks write access |
 | `patch_survey`    | `write` or `manage`                                                 |
 | `delete_survey`   | `write` or `manage`                                                 |
+| `list_feedback_directories` | `read`                                                    |
+| `list_feedback_records`     | `read`                                                    |
+| `get_feedback_record`       | `read`                                                    |
+| `create_feedback_record`    | `write` or `manage`                                       |
 
 <Warning>
   Store fallback MCP API keys as environment variables or client secrets. Do not commit API keys into MCP client
@@ -162,14 +173,14 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
     "token_endpoint_auth_method": "none",
     "grant_types": ["authorization_code", "refresh_token"],
     "response_types": ["code"],
-    "scope": "openid profile email offline_access surveys:read surveys:write"
+    "scope": "openid profile email offline_access surveys:read surveys:write feedbackRecords:read feedbackRecords:write"
   }'
 ```
 
 <Note>
   This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
   clients register with the scopes from the protected-resource metadata's `scopes_supported`
-  (`surveys:read surveys:write offline_access`). Because the authorization server validates the
+  (`surveys:read surveys:write feedbackRecords:read feedbackRecords:write offline_access`). Because the authorization server validates the
   `/authorize` request against the client's **registered** scopes, a client that registers with a
   narrower set than it later requests (e.g. it registers surveys-only but requests `offline_access`)
   is rejected with `invalid_scope`. To smoke-test the real path, omit `scope` and let the client
@@ -211,15 +222,19 @@ Authenticate and request the scopes the agent needs:
 
 ```bash
 codex mcp login formbricks-local \
-  --scopes openid,profile,email,offline_access,surveys:read,surveys:write
+  --scopes openid,profile,email,offline_access,surveys:read,surveys:write,feedbackRecords:read,feedbackRecords:write
 ```
 
-For read-only usage, omit `surveys:write`:
+For read-only usage, omit the write scopes:
 
 ```bash
 codex mcp login formbricks-local \
-  --scopes openid,profile,email,offline_access,surveys:read
+  --scopes openid,profile,email,offline_access,surveys:read,feedbackRecords:read
 ```
+
+Scope groups are independent — a token needs at least one resource scope, but not all of them. To use
+only the feedback-record tools, request `feedbackRecords:read` (plus `feedbackRecords:write` to create)
+and omit the survey scopes.
 
 Codex opens the browser to Formbricks, completes Dynamic Client Registration, and stores the OAuth
 client and tokens in Codex's credential store. The user approves the requested scopes on the
@@ -282,9 +297,9 @@ claude mcp add --transport http formbricks-local http://localhost:3000/api/mcp
 
 Run `/mcp` and authenticate `formbricks-local`. Claude Code discovers the MCP protected-resource
 metadata, registers a public client whose scopes are taken from that metadata's `scopes_supported`
-(`surveys:read surveys:write offline_access`), and launches the browser-based OAuth flow — there is
-no scope-entry step. You approve the requested scopes on the Formbricks consent screen. Workspace
-role determines whether `surveys:write` tools actually succeed at execution time (see
+(`surveys:read surveys:write feedbackRecords:read feedbackRecords:write offline_access`), and launches
+the browser-based OAuth flow — there is no scope-entry step. You approve the requested scopes on the
+Formbricks consent screen. Workspace role determines whether write tools actually succeed at execution time (see
 [Authentication](#authentication)), regardless of the granted scope.
 
 Verify it:
@@ -653,6 +668,108 @@ so callers can correlate the audit trail:
 }
 ```
 
+### list_feedback_directories
+
+Lists the active feedback directories assigned to a workspace. Read-only and idempotent. Use the
+returned `id` as `feedbackDirectoryId` for the other feedback-record tools.
+
+Input:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Output:
+
+```json
+{
+  "data": [{ "id": "clfd1234567890123456789012", "name": "Support" }],
+  "meta": { "nextCursor": null, "totalCount": 1 },
+  "requestId": "req_..."
+}
+```
+
+### list_feedback_records
+
+Lists feedback records in a workspace's feedback directory. Read-only and idempotent, with opaque
+cursor pagination. `feedbackDirectoryId` is optional when the workspace has exactly one active
+directory (the common case) and required when it has more than one.
+
+Input:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "feedbackDirectoryId": "clfd1234567890123456789012",
+  "limit": 50,
+  "cursor": "opaque-cursor-from-previous-response",
+  "sourceType": "survey",
+  "fieldType": "text",
+  "since": "2026-01-01T00:00:00Z",
+  "until": "2026-12-31T23:59:59Z"
+}
+```
+
+Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor`:
+
+```json
+{
+  "data": [
+    {
+      "id": "018e1234-5678-9abc-def0-123456789abc",
+      "tenant_id": "clfd1234567890123456789012",
+      "submission_id": "…",
+      "source_type": "survey",
+      "field_id": "q1",
+      "field_type": "text",
+      "value_text": "Great support!",
+      "collected_at": "2026-04-21T10:00:00.000Z"
+    }
+  ],
+  "meta": { "limit": 50, "nextCursor": null },
+  "requestId": "req_..."
+}
+```
+
+### get_feedback_record
+
+Gets one feedback record by its Hub UUID. Read-only and idempotent. The record must belong to a
+feedback directory assigned to the workspace; otherwise the tool returns a generic authorization
+error and never reveals whether a record id exists in another tenant.
+
+Input:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "feedbackRecordId": "018e1234-5678-9abc-def0-123456789abc"
+}
+```
+
+### create_feedback_record
+
+Creates a feedback record in a workspace's feedback directory. Writes data and is not idempotent, and
+requires `feedbackRecords:write` (API keys need `write` or `manage`). The tenant is derived from the
+resolved feedback directory and is never taken from the request body. `submission_id` is optional — a
+UUID is generated when omitted.
+
+Input:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "source_type": "call_notes",
+  "field_id": "note",
+  "field_type": "text",
+  "value_text": "Customer asked for SSO and a longer trial.",
+  "field_label": "Call summary"
+}
+```
+
+Output is the created feedback record (Hub shape) plus the MCP `requestId`.
+
 ## Relationship To V3 Surveys API
 
 The MCP server does not run custom survey database queries. Each tool calls the shared server-only v3
@@ -670,14 +787,35 @@ survey operations used by the REST routes:
 When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The hand-maintained
 v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
 
+## Feedback Records And The Hub
+
+Feedback-record tools do not map to a v3 REST route. They call the shared server-only Hub service
+(`@/modules/hub/service`) — the same client the Unify Feedback UI uses — and enforce the same
+`feedbackDirectories` Enterprise entitlement.
+
+A feedback record lives in the Formbricks Hub, addressed by an opaque `tenant_id`. Every tool
+resolves that tenant server-side: it authorizes the caller's access to `workspaceId`, checks the
+`feedbackDirectories` license, then maps the workspace to its assigned feedback directory — the
+`FeedbackDirectory` id **is** the Hub `tenant_id`.
+
+Assignment is a join table, but the application enforces at most one *non-archived* directory per
+workspace, so in practice `feedbackDirectoryId` can be omitted and the single active directory is used.
+It becomes required only if a workspace somehow has several active directories, in which case the tools
+return `400` rather than guessing. `tenant_id` is never accepted from tool input, and
+`get_feedback_record` additionally verifies the fetched record's tenant — the named directory when one
+was given, otherwise any directory the workspace owns.
+
 ## Limitations
 
 - OAuth is user-delegated only. Machine-to-machine client credentials for MCP are not supported.
 - OAuth access tokens must be JWTs audience-bound to `/api/mcp`; opaque MCP access token introspection is not
   accepted by the MCP route.
 - API-key authentication remains supported for compatibility and fallback use.
-- The MCP server exposes only the v3 survey operations listed on this page.
-- Tool coverage depends on the current v3 Surveys REST endpoint coverage.
+- The MCP server exposes the survey and feedback-record operations listed on this page.
+- Survey tool coverage depends on the current v3 Surveys REST endpoint coverage; feedback-record tool
+  coverage depends on the Hub feedback-records API.
+- Feedback-record tools require the `feedbackDirectories` Enterprise entitlement and a feedback
+  directory assigned to the workspace; without either they return 403 / 422.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
   part of the current v3 create operation.
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
@@ -694,5 +832,8 @@ v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
 - `apps/web/modules/mcp/auth.ts`
 - `apps/web/modules/mcp/server.ts`
 - `apps/web/modules/mcp/tools/surveys.ts`
+- `apps/web/modules/mcp/tools/workspaces.ts`
+- `apps/web/modules/mcp/tools/feedback-records.ts`
 - `apps/web/modules/mcp/tools/schemas.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`
+- `apps/web/app/api/v3/feedbackRecords/lib/operations.ts`

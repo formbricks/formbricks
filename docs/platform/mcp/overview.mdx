@@ -1,10 +1,10 @@
 ---
 title: "Connect AI Agents (MCP)"
-description: "Let AI assistants like Claude and Codex read and manage your Formbricks surveys through the Model Context Protocol (MCP), authorized securely with your own login."
+description: "Let AI assistants like Claude and Codex read and manage your Formbricks surveys and feedback records through the Model Context Protocol (MCP), authorized securely with your own login."
 icon: "robot"
 ---
 
-Formbricks ships a **Model Context Protocol (MCP) server** that lets AI assistants — Claude Code, the Claude apps, Codex, and other MCP-capable clients — work with the surveys in your workspace: list and read surveys, create link surveys, and update or delete them. The agent calls the same v3 Surveys API you use in the app, so it always respects your permissions.
+Formbricks ships a **Model Context Protocol (MCP) server** that lets AI assistants — Claude Code, the Claude apps, Codex, and other MCP-capable clients — work with your workspace: list and read surveys, create link surveys, update or delete them, and read or add Unify Feedback records. The agent goes through the same APIs and permission checks you use in the app, so it always respects your permissions.
 
 You connect a client **with your own Formbricks login over OAuth 2.1** — there are no API keys to generate, copy, or paste. You approve the connection once on a consent screen, and you can revoke it at any time.
 
@@ -36,12 +36,25 @@ The whole flow uses Authorization Code + PKCE, the standard the [MCP authorizati
 
 ## What the agent can do
 
-The MCP server exposes six survey tools, grouped into two scopes you approve on the consent screen:
+The MCP server exposes survey and feedback-record tools, grouped into scopes you approve on the consent screen:
 
 | Scope | Tools | What it allows |
 | --- | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` | Read surveys and validate survey documents |
 | `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` | Create, update, and delete surveys |
+| `feedbackRecords:read` | `list_feedback_directories`, `list_feedback_records`, `get_feedback_record` | Read feedback records from a workspace's feedback directory |
+| `feedbackRecords:write` | `create_feedback_record` | Create feedback records |
+
+Scope groups are independent — a client can be granted feedback-record access without survey access,
+or the other way around. `list_workspaces` is available to either read scope, since every other tool
+needs a workspace id.
+
+<Note>
+  The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition
+  (`feedbackDirectories`), plus a feedback directory assigned to the workspace. Without the
+  entitlement or a directory, those tools return an authorization or validation error while the
+  survey tools keep working.
+</Note>
 
 <Warning>
   Scopes are only a coarse gate. **Access is always bounded by your Formbricks workspace role**: even
@@ -71,5 +84,7 @@ The MCP server exposes six survey tools, grouped into two scopes you approve on 
 </Card>
 
 For the tool schemas, response formats, discovery endpoints, and the API-key fallback, see the
-[MCP server technical handbook](/development/technical-handbook/mcp-server). Each tool maps to the
-[v3 Surveys API](/development/technical-handbook/mcp-server#relationship-to-v3-surveys-api) it wraps.
+[MCP server technical handbook](/development/technical-handbook/mcp-server). Survey tools map to the
+[v3 Surveys API](/development/technical-handbook/mcp-server#relationship-to-v3-surveys-api) they wrap;
+feedback-record tools read and write
+[Unify Feedback data](/development/technical-handbook/mcp-server#feedback-records-and-the-hub).
