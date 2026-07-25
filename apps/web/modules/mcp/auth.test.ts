@@ -46,8 +46,17 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/oauth-urls", () => ({
-  MCP_OAUTH_SCOPES: ["openid", "profile", "email", "offline_access", "surveys:read", "surveys:write"],
-  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write"],
+  MCP_OAUTH_SCOPES: [
+    "openid",
+    "profile",
+    "email",
+    "offline_access",
+    "surveys:read",
+    "surveys:write",
+    "feedbackRecords:read",
+    "feedbackRecords:write",
+  ],
+  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write", "feedbackRecords:read", "feedbackRecords:write"],
   getAuthIssuerUrl: vi.fn(() => "https://app.example.com/api/auth"),
   getMcpOrigin: vi.fn(() => "https://app.example.com"),
   getMcpProtectedResourceMetadataUrl: vi.fn(
@@ -105,9 +114,11 @@ describe("authenticateMcpRequest", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.response.status).toBe(401);
-      // The challenge must advertise read + write so clients request write at consent and can reach
-      // the write tools (advertising only read is why write was unreachable — ENG-1055 QA).
-      expect(result.response.headers.get("WWW-Authenticate")).toContain('scope="surveys:read surveys:write"');
+      // The challenge must advertise every resource scope so clients request them at consent and can
+      // reach the write tools (advertising only read is why write was unreachable — ENG-1055 QA).
+      expect(result.response.headers.get("WWW-Authenticate")).toContain(
+        'scope="surveys:read surveys:write feedbackRecords:read feedbackRecords:write"'
+      );
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
         detail: "API key or OAuth access token required",
@@ -213,8 +224,35 @@ describe("authenticateMcpRequest", () => {
       expect(result.authInfo.token).toBe("key_1");
       expect(getMcpAuthentication(result.authInfo)).toEqual(apiKeyAuth);
       expect(getMcpRequestId(result.authInfo)).toBe("req_1");
+      // A write-capable key must reach both tool groups' read AND write tools.
+      expect(result.authInfo.scopes).toEqual(
+        expect.arrayContaining([
+          "surveys:read",
+          "surveys:write",
+          "feedbackRecords:read",
+          "feedbackRecords:write",
+        ])
+      );
     }
     expect(applyRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:v3" }), "key_1");
+  });
+
+  test("grants only read scopes to a read-only API key", async () => {
+    vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue({
+      ...apiKeyAuth,
+      workspacePermissions: [
+        { workspaceId: "workspace_1", workspaceName: "Workspace", permission: ApiKeyPermission.read },
+      ],
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { "x-api-key": "fbk_test" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.authInfo.scopes).toEqual(["surveys:read", "feedbackRecords:read"]);
+    }
   });
 
   test("returns 429 when rate limited", async () => {
@@ -314,11 +352,11 @@ describe("authenticateMcpRequest", () => {
     expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
-  test("rejects OAuth bearer tokens without the read scope", async () => {
+  test("rejects OAuth bearer tokens holding no MCP resource scope at all", async () => {
     verifyAccessTokenMock.mockResolvedValue({
       sub: "user_1",
       client_id: "client_2",
-      scope: "surveys:write",
+      scope: "openid profile email",
     });
 
     const result = await authenticateMcpRequest(
@@ -331,10 +369,32 @@ describe("authenticateMcpRequest", () => {
     if (!result.ok) {
       expect(result.response.status).toBe(403);
       expect(result.response.headers.get("WWW-Authenticate")).toContain('error="insufficient_scope"');
-      expect(result.response.headers.get("WWW-Authenticate")).toContain('scope="surveys:read"');
+      expect(result.response.headers.get("WWW-Authenticate")).toContain(
+        'scope="surveys:read surveys:write feedbackRecords:read feedbackRecords:write"'
+      );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();
   });
+
+  // Any single resource scope is enough to authenticate: a feedbackRecords-only grant is a legitimate
+  // MCP client and must not be turned away for lacking surveys:read (per-tool guards still apply).
+  test.each([["feedbackRecords:read"], ["surveys:write"]])(
+    "authenticates an OAuth token scoped only to %s",
+    async (scope) => {
+      verifyAccessTokenMock.mockResolvedValue({ sub: "user_1", azp: "client_1", scope });
+
+      const result = await authenticateMcpRequest(
+        createRequest("http://localhost/api/mcp", {
+          authorization: "Bearer oauth_access_token",
+        })
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.authInfo.scopes).toEqual([scope]);
+      }
+    }
+  );
 
   test("rejects OAuth bearer tokens without a user subject", async () => {
     verifyAccessTokenMock.mockResolvedValue({

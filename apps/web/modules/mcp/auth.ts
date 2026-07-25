@@ -37,8 +37,11 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
-// Minimum scope required to authenticate against the MCP server at all.
-const DEFAULT_OAUTH_SCOPE = "surveys:read";
+// Minimum grant required to authenticate against the MCP server at all: at least ONE resource scope.
+// Any single one is enough — a token granted only `feedbackRecords:read` is a legitimate MCP client and
+// must not be rejected here for lacking `surveys:read`. Which tools it can actually call is enforced
+// per-tool by guardMcpScopes at call time.
+const MCP_MINIMUM_SCOPES = MCP_RESOURCE_SCOPES;
 // Scopes advertised in the 401 WWW-Authenticate challenge. Clients build their DCR + authorize
 // requests from this, so it must list every resource scope (read + write) or clients only ever
 // request read and can never reach the write tools. Actual write access is still gated downstream
@@ -92,13 +95,14 @@ function isOriginAllowed(request: NextRequest): boolean {
 }
 
 function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
-  const scopes = new Set(["surveys:read"]);
+  const scopes = new Set(["surveys:read", "feedbackRecords:read"]);
   if (
     authentication.workspacePermissions.some(
       (permission) => permission.permission === "write" || permission.permission === "manage"
     )
   ) {
     scopes.add("surveys:write");
+    scopes.add("feedbackRecords:write");
   }
 
   return Array.from(scopes);
@@ -365,14 +369,14 @@ async function authenticateMcpOAuthBearer(
     };
   }
 
-  if (!hasMcpScopes(authInfo, [DEFAULT_OAUTH_SCOPE])) {
-    log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing read scope");
+  if (!hasAnyMcpScope(authInfo, MCP_MINIMUM_SCOPES)) {
+    log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing every MCP scope");
     return {
       ok: false,
       requestId,
       response: withInsufficientScopeChallenge(
         problemForbidden(requestId, "OAuth token does not include the required MCP scope", instance),
-        [DEFAULT_OAUTH_SCOPE]
+        [...MCP_MINIMUM_SCOPES]
       ),
     };
   }
@@ -405,6 +409,12 @@ async function authenticateMcpOAuthBearer(
 export function hasMcpScopes(authInfo: AuthInfo | undefined, requiredScopes: string[]): boolean {
   const scopes = authInfo?.scopes ?? [];
   return requiredScopes.every((scope) => scopes.includes(scope));
+}
+
+/** True when the caller holds at least one of `allowedScopes` (any-of, unlike `hasMcpScopes`). */
+export function hasAnyMcpScope(authInfo: AuthInfo | undefined, allowedScopes: readonly string[]): boolean {
+  const scopes = authInfo?.scopes ?? [];
+  return allowedScopes.some((scope) => scopes.includes(scope));
 }
 
 export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
