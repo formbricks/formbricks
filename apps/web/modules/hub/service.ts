@@ -205,9 +205,9 @@ export const listFeedbackRecords = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err }, "Hub: listFeedbackRecords failed");
-    const status = getErrorStatus(err);
-    const message = getErrorMessage(err);
-    return { data: null, error: { status, message, detail: message } };
+    // Via the shared helper so callers also get the Hub's problem members (e.g. an invalid cursor or
+    // malformed since/until arrives as a relayable 400 rather than an opaque failure).
+    return createHubResultFromError(err);
   }
 };
 
