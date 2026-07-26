@@ -884,12 +884,15 @@ model VerificationToken {
 /// User.backupCodes columns (kept until cutover). `secret` and `backupCodes` are encrypted
 /// at rest by Better Auth using BETTER_AUTH_SECRET.
 model TwoFactor {
-  id          String  @id @default(cuid())
-  secret      String
-  backupCodes String
-  userId      String
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  verified    Boolean @default(true)
+  id                      String    @id @default(cuid())
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean   @default(true)
+  /// Added for better-auth@1.6.22's two-factor lockout hardening (getAuthTables).
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
 
   @@unique([userId])
 }
