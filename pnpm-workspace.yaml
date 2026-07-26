@@ -54,7 +54,9 @@ overrides:
   # Webpack / linting / schema validation chains.
   ajv@6: 6.14.0
   minimatch@10: 10.2.5
-  postcss: 8.5.14
+  # GHSA-r28c-9q8g-f849: postcss <=8.5.17 previous-sourcemap auto-loading follows a `sourceMappingURL`
+  # path outside the project root, disclosing arbitrary .map files; patched in 8.5.18.
+  postcss: 8.5.18
   # SDK and runtime transitive security pins.
   fast-xml-parser: 5.7.0 # load-bearing: <5.7.0 vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
   # ENG-1942 / GHSA-v422-hmwv-36x6 (CVE-2026-12590): body-parser 2.0.0–2.2.x silently skips the request
@@ -92,7 +94,9 @@ overrides:
   # ENG-1947 / GHSA-23hp-3jrh-7fpw (CVE-2026-59873): node-tar <=7.5.18 has no hard
   # upper bound on total decompressed bytes / entry count, so a small gzip bomb can
   # exhaust disk and CPU (DoS). Patched in 7.5.19.
-  tar: 7.5.19
+  # GHSA-r292-9mhp-454m: node-tar <=7.5.20 has uncontrolled recursion in mapHas/filesFilter, letting a
+  # crafted long-path tar entry crash the process via stack overflow; patched in 7.5.21.
+  tar: 7.5.21
   # ENG-1527-batch / GHSA-mh29-5h37-fv8m + GHSA-h67p-54hq-rp68: js-yaml <4.1.2 quadratic-complexity
   # DoS via merge keys / repeated aliases (dev-only, via @redocly/cli). No 4.1.2 published; 4.2.0 is the
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
@@ -110,9 +114,14 @@ overrides:
   # ENG-1955 / ENG-1954 / ENG-1953 / GHSA-3jxr-9vmj-r5cp (CVE-2026-13149): brace-expansion expand()
   # exhibits O(2ⁿ) DoS on consecutive non-expanding {} groups. Three affected major lines are present in
   # the tree; each is pinned to its lowest patched release: 1.x→1.1.16, 2.x→2.1.2, 3.x–5.x→5.0.7.
+  # GHSA-mh99-v99m-4gvg: a second, distinct unbounded-expansion-length DoS was fixed in 5.0.8 for the
+  # actively maintained 5.x line. The 1.x (1.1.16) and 2.x (2.1.2) lines above are also affected and are
+  # no longer receiving patches upstream (1.1.16/2.1.2 are each the latest release in their line); both
+  # are devDependency-only (eslint/prettier/typescript tooling), never shipped or run against untrusted
+  # input, so the residual risk is accepted until their consumers move to brace-expansion@5.
   brace-expansion@1: 1.1.16
   brace-expansion@2: 2.1.2
-  brace-expansion@5: 5.0.7
+  brace-expansion@5: 5.0.8
   # ENG-1994 / GHSA-4c8g-83qw-93j6 (CVE-2026-13676) + ENG-1988 / GHSA-v2hh-gcrm-f6hx (CVE-2026-16221):
   # fast-uri 3.x host confusion via failed IDN canonicalization and via literal-backslash authority
   # delimiter. 3.1.4 patches both (3.1.3 fixes only the first). Scoped to the 3.x line.
@@ -124,6 +133,10 @@ overrides:
   # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
   # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).
   "@opentelemetry/propagator-jaeger": 2.9.0
+  # GHSA-5qjj-4xww-7phc: valibot <=1.4.1 record() issue paths can make flatten() throw on inherited
+  # Object property names (e.g. "constructor"), crashing callers that rely on flatten() for error
+  # handling; patched in 1.4.2. Pulled in transitively via prisma's dev tooling and @t3-oss/env.
+  valibot: 1.4.2
 
 autoInstallPeers: true
 linkWorkspacePackages: true
@@ -172,3 +185,9 @@ minimumReleaseAgeExclude:
   - '@next/swc-linux-x64-musl@16.2.11'
   - '@next/swc-win32-arm64-msvc@16.2.11'
   - '@next/swc-win32-x64-msvc@16.2.11'
+  # Urgent CVE fix, approved via the dependency-cooldown exception process (see the
+  # "Dependency Cooldown Security Exceptions" page in the engineering handbook / Notion):
+  # brace-expansion@5.0.8 fixes GHSA-mh99-v99m-4gvg (O(2ⁿ) DoS via unbounded expansion length).
+  # Published 2026-07-23T11:39 UTC, cooldown clears 2026-07-26T11:39 UTC — remove this entry
+  # once past that date.
+  - brace-expansion@5.0.8
