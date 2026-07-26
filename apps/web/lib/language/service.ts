@@ -130,6 +130,19 @@ export const deleteLanguage = async (languageId: string, workspaceId: string): P
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
     });
 
+    // Clear the workspace default when the deleted language was it, so a dangling code can't linger and
+    // silently apply to new surveys as an (unlisted) default.
+    if (
+      workspace.defaultLanguageCode &&
+      (normalizeLanguageCode(prismaLanguage.code) ?? prismaLanguage.code) ===
+        (normalizeLanguageCode(workspace.defaultLanguageCode) ?? workspace.defaultLanguageCode)
+    ) {
+      await prisma.workspace.update({
+        where: { id: workspaceId },
+        data: { defaultLanguageCode: null },
+      });
+    }
+
     // delete unused surveyLanguages
     const language = { ...prismaLanguage, surveyLanguages: undefined };
 
@@ -170,6 +183,51 @@ export const updateLanguage = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error updating language");
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Set (or clear, with `null`) the workspace's default survey language. The code must match one of the
+ * workspace's configured languages — comparison is on the canonical BCP-47 tag so a legacy-stored code
+ * (e.g. `de`) still matches its canonical form (`de-DE`). The stored value is always canonical.
+ */
+export const setWorkspaceDefaultLanguage = async (
+  workspaceId: string,
+  languageCode: string | null
+): Promise<string | null> => {
+  try {
+    validateInputs([workspaceId, ZId]);
+    const workspace = await getWorkspace(workspaceId);
+    if (!workspace) throw new ResourceNotFoundError("Workspace not found", workspaceId);
+
+    let normalizedCode: string | null = null;
+    if (languageCode !== null) {
+      normalizedCode = normalizeLanguageCode(languageCode);
+      if (!normalizedCode) {
+        throw new ValidationError(`Invalid language code: '${languageCode}'`);
+      }
+      const isConfigured = workspace.languages.some(
+        (language) => (normalizeLanguageCode(language.code) ?? language.code) === normalizedCode
+      );
+      if (!isConfigured) {
+        throw new ValidationError(`Language '${languageCode}' is not configured for this workspace`);
+      }
+    }
+
+    await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: { defaultLanguageCode: normalizedCode },
+    });
+
+    // Return the canonical code that was persisted so callers can report the new value without re-reading
+    // through the request-cached `getWorkspace` (which would still hold the pre-update snapshot).
+    return normalizedCode;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      logger.error(error, "Error setting workspace default language");
       throw new DatabaseError(error.message);
     }
     throw error;

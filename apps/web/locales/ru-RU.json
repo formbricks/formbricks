@@ -2176,6 +2176,8 @@
       "cannot_remove_language_warning": "Вы не можете удалить этот язык, так как он всё ещё используется в следующих опросах:",
       "conflict_between_identifier_and_alias": "Обнаружен конфликт между идентификатором добавленного языка и одним из ваших псевдонимов. Псевдонимы и идентификаторы не могут совпадать.",
       "conflict_between_selected_alias_and_another_language": "Обнаружен конфликт между выбранным псевдонимом и другим языком, который использует этот идентификатор. Пожалуйста, добавьте язык с этим идентификатором в рабочую область, чтобы избежать несоответствий.",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "Вы уверены, что хотите удалить этот язык? Это действие нельзя будет отменить.",
       "duplicate_language_or_language_id": "Дублирующийся язык или идентификатор языка",
       "edit_languages": "Редактировать языки",
@@ -2189,7 +2191,8 @@
       "please_select_a_language": "Пожалуйста, выберите язык",
       "remove_language": "Удалить язык",
       "remove_language_from_surveys_to_remove_it_from_workspace": "Пожалуйста, удалите язык из этих опросов, чтобы удалить его из рабочей области.",
-      "search_items": "Поиск элементов"
+      "search_items": "Поиск элементов",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "Добавить цвет фона",

@@ -2088,6 +2088,8 @@ checksums:
     workspace/languages/cannot_remove_language_warning: 24f18b6c2e127b5d967f36229f983089
     workspace/languages/conflict_between_identifier_and_alias: e1ebeb085c7f336bb17717765392cd9f
     workspace/languages/conflict_between_selected_alias_and_another_language: 3df7377a54909e439e38ec76514e5439
+    workspace/languages/default: d9c6dc5c412fe94143dfd1d332ec81d4
+    workspace/languages/default_language_tooltip: 6bd4e9ad624a458ecc7206cd4ba00a33
     workspace/languages/delete_language_confirmation: 4f83321fed95d689f7ff3aa47a82ce68
     workspace/languages/duplicate_language_or_language_id: 0e17e3794b24e2428ca6ffadae0d08f3
     workspace/languages/edit_languages: c9d36f6b28557cc7d54e87c37dc18fdd
@@ -2102,6 +2104,7 @@ checksums:
     workspace/languages/remove_language: 1a64563b0f37109f97b78eddd493e381
     workspace/languages/remove_language_from_surveys_to_remove_it_from_workspace: 61bc96f9db31a29a649cc9ecd684bc39
     workspace/languages/search_items: b54b751c8b075200be579d6c8e58096b
+    workspace/languages/set_as_default: 5da44c397db07d6ed10c2c5ff14aa1d9
     workspace/look/add_background_color: 9be512ee1246e32d3958c56097d202d9
     workspace/look/add_background_color_description: adb6fcb392862b3d0e9420d9b5405ddb
     workspace/look/advanced_styling_field_border_radius: 63b8f3541a9792d705e67d5aca7b6451

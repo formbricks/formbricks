@@ -2176,6 +2176,8 @@
       "cannot_remove_language_warning": "No puedes eliminar este idioma porque todavía se usa en estas encuestas:",
       "conflict_between_identifier_and_alias": "Hay un conflicto entre el identificador de un idioma añadido y uno de tus alias. Los alias y los identificadores no pueden ser idénticos.",
       "conflict_between_selected_alias_and_another_language": "Hay un conflicto entre el alias seleccionado y otro idioma que tiene este identificador. Por favor, añade el idioma con este identificador a tu espacio de trabajo para evitar inconsistencias.",
+      "default": "Default",
+      "default_language_tooltip": "Newly created surveys in this workspace use this language as their default, so built-in labels like buttons start in it instead of English.",
       "delete_language_confirmation": "¿Estás seguro de que quieres eliminar este idioma? Esta acción no se puede deshacer.",
       "duplicate_language_or_language_id": "Idioma o ID de idioma duplicado",
       "edit_languages": "Editar idiomas",
@@ -2189,7 +2191,8 @@
       "please_select_a_language": "Por favor, selecciona un idioma",
       "remove_language": "Eliminar idioma",
       "remove_language_from_surveys_to_remove_it_from_workspace": "Por favor, elimina el idioma de estas encuestas para poder eliminarlo del espacio de trabajo.",
-      "search_items": "Buscar elementos"
+      "search_items": "Buscar elementos",
+      "set_as_default": "Set as default language"
     },
     "look": {
       "add_background_color": "Añadir color de fondo",

@@ -59,6 +59,7 @@ const selectWorkspace = {
   name: true,
   organizationId: true,
   languages: true,
+  defaultLanguageCode: true,
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,

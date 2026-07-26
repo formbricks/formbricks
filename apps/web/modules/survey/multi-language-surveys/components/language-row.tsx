@@ -10,15 +10,36 @@ import { LanguageSelect } from "./language-select";
 interface LanguageRowProps {
   language: Language;
   isEditing: boolean;
+  isDefault: boolean;
   onLanguageChange: (newLanguage: Language) => void;
+  onSetDefault: () => void;
   onDelete: () => void;
   locale: TUserLocale;
 }
 
-export function LanguageRow({ language, isEditing, onLanguageChange, onDelete, locale }: LanguageRowProps) {
+export function LanguageRow({
+  language,
+  isEditing,
+  isDefault,
+  onLanguageChange,
+  onSetDefault,
+  onDelete,
+  locale,
+}: LanguageRowProps) {
   const { t } = useTranslation();
   return (
-    <div className="my-3 grid grid-cols-4 gap-4">
+    <div className="my-3 grid grid-cols-5 items-center gap-4">
+      <div className="flex justify-center">
+        <input
+          type="radio"
+          name="workspace-default-language"
+          className="size-4 cursor-pointer accent-brand-dark disabled:cursor-not-allowed"
+          aria-label={t("workspace.languages.set_as_default")}
+          checked={isDefault}
+          disabled={!isEditing || !language.code}
+          onChange={onSetDefault}
+        />
+      </div>
       <LanguageSelect
         disabled={language.id !== "new"}
         language={language}

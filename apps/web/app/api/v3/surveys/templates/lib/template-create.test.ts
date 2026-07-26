@@ -96,6 +96,64 @@ describe("createTrustedTemplateSurveyResponse", () => {
     );
   });
 
+  test("applies a configured, translatable workspace default language to the new survey and its copy", async () => {
+    vi.mocked(getWorkspace).mockResolvedValue({
+      ...workspace,
+      defaultLanguageCode: "de-DE",
+      languages: [{ code: "de-DE" }],
+    } as any);
+
+    await createTrustedTemplateSurveyResponse({
+      body: {
+        workspaceId,
+        templateId: "product-market-fit-superhuman",
+        source: "catalog",
+        surveyType: "app",
+        defaultLanguage: "en-US",
+      },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    // Copy is authored in the workspace default (German), and the survey default language is German too.
+    expect(getTranslate).toHaveBeenCalledWith("de-DE");
+    expect(createV3SurveyResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ defaultLanguage: "de-DE" }),
+      })
+    );
+  });
+
+  test("sets a non-UI-locale workspace default as the survey default but keeps the copy in the creator's locale", async () => {
+    vi.mocked(getWorkspace).mockResolvedValue({
+      ...workspace,
+      defaultLanguageCode: "it-IT",
+      languages: [{ code: "it-IT" }],
+    } as any);
+
+    await createTrustedTemplateSurveyResponse({
+      body: {
+        workspaceId,
+        templateId: "product-market-fit-superhuman",
+        source: "catalog",
+        surveyType: "app",
+        defaultLanguage: "en-US",
+      },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    // No Italian UI translations ship, so the copy stays English while the survey default becomes Italian.
+    expect(getTranslate).toHaveBeenCalledWith("en-US");
+    expect(createV3SurveyResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ defaultLanguage: "it-IT" }),
+      })
+    );
+  });
+
   test("creates blank custom templates with created_from blank", async () => {
     await createTrustedTemplateSurveyResponse({
       body: {

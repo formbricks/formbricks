@@ -14,6 +14,7 @@ import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { createV3SurveyResponse } from "../../lib/operations";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "../../schemas";
+import { resolveSurveyDefaultLanguage } from "./resolve-default-language";
 import { buildV3SurveyCreatePayloadFromTemplate } from "./template-to-v3";
 
 export const ZV3TrustedTemplateCreateBody = z.object({
@@ -30,17 +31,27 @@ type TCreatedFrom = "blank" | "template" | "xm-template";
 type TResolvedTemplate = {
   template: TTemplate;
   createdFrom: TCreatedFrom;
+  // Canonical BCP-47 code the new survey adopts as its default language (workspace default, or the
+  // creator's UI locale when the workspace has no configured default).
+  surveyDefaultLanguageCode: string;
 };
 
 async function resolveTrustedTemplate(body: TTrustedTemplateCreateBody): Promise<TResolvedTemplate | null> {
-  const [workspace, t] = await Promise.all([
-    getWorkspace(body.workspaceId),
-    getTranslate(body.defaultLanguage),
-  ]);
+  const workspace = await getWorkspace(body.workspaceId);
 
   if (!workspace) {
     return null;
   }
+
+  // The workspace default language wins over the creator's UI locale; `translationLocale` is the UI
+  // locale the template copy is authored in (so built-in labels render in the right language).
+  const { surveyDefaultLanguageCode, translationLocale } = resolveSurveyDefaultLanguage({
+    requestLocale: body.defaultLanguage,
+    workspaceDefaultLanguageCode: workspace.defaultLanguageCode,
+    workspaceLanguageCodes: (workspace.languages ?? []).map((language) => language.code),
+  });
+
+  const t = await getTranslate(translationLocale);
 
   if (body.source === "custom" && body.templateId !== CUSTOM_SURVEY_TEMPLATE_ID) {
     return null;
@@ -63,6 +74,7 @@ async function resolveTrustedTemplate(body: TTrustedTemplateCreateBody): Promise
   return {
     template: replacePresetPlaceholders(template, workspace),
     createdFrom: body.source === "custom" ? "blank" : body.source === "xm" ? "xm-template" : "template",
+    surveyDefaultLanguageCode,
   };
 }
 
@@ -109,7 +121,7 @@ export async function createTrustedTemplateSurveyResponse({
         template: resolvedTemplate.template,
         workspaceId: authResult.workspaceId,
         surveyType: body.surveyType,
-        defaultLanguage: body.defaultLanguage,
+        defaultLanguage: resolvedTemplate.surveyDefaultLanguageCode,
       })
     );
 
