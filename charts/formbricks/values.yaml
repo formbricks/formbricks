@@ -884,6 +884,9 @@ cube:
     # the Cube listener port through envFrom.
     CUBEJS_DB_TYPE: "postgres"
     CUBEJS_DEFAULT_API_SCOPES: "meta,data"
+    # The bundled schema has no external pre-aggregations, so Cube Store is not required.
+    # Override this only after configuring Cube Store for custom external pre-aggregations.
+    CUBEJS_EXTERNAL_DEFAULT: "false"
     # Keep the in-memory cache/queue driver at one Cube replica only. The chart
     # fails rendering when this remains "memory" and cube.replicas is greater than 1.
     CUBEJS_CACHE_AND_QUEUE_DRIVER: "memory"
