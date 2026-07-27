@@ -48,6 +48,7 @@
     "dev": "vite build --watch",
     "db:migrate:deploy": "node ./dist/scripts/apply-migrations.js",
     "db:migrate:dev": "pnpm build && dotenv -e ../../.env -- sh -c \"pnpm generate && node ./dist/scripts/apply-migrations.js\"",
+    "db:migrate:ci": "dotenv -e ../../.env -- node ./dist/scripts/apply-migrations.js",
     "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" node ./dist/scripts/create-saml-database.js",
     "db:create-saml-database:dev": "dotenv -e ../../.env -- node ./dist/scripts/create-saml-database.js",
     "db:push": "prisma db push --accept-data-loss",
