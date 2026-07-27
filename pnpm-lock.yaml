@@ -1026,15 +1026,9 @@ importers:
       '@formbricks/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
-      '@formbricks/database':
-        specifier: workspace:*
-        version: link:../database
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
-      '@formbricks/types':
-        specifier: workspace:*
-        version: link:../types
       '@formbricks/vite-plugins':
         specifier: workspace:*
         version: link:../vite-plugins
