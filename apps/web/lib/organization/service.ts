@@ -141,6 +141,37 @@ export const getOrganizationByWorkspaceId = reactCache(
   }
 );
 
+/**
+ * Lowercased set of the email addresses of every member of an organization. Used as the recipient
+ * allowlist for workflow `send_email` actions (ENG-2029): a literal recipient address is only
+ * permitted when it belongs to an organization member, so a workflow cannot silently forward
+ * response data to an arbitrary external inbox. Emails are lowercased for case-insensitive matching.
+ */
+export const getOrganizationMemberEmails = reactCache(
+  async (organizationId: string): Promise<Set<string>> => {
+    validateInputs([organizationId, ZString]);
+
+    try {
+      const memberships = await prisma.membership.findMany({
+        where: { organizationId },
+        select: { user: { select: { email: true } } },
+      });
+
+      return new Set(
+        memberships
+          .map((membership) => membership.user?.email?.trim().toLowerCase())
+          .filter((email): email is string => Boolean(email))
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
 export const getOrganization = reactCache(async (organizationId: string): Promise<TOrganization | null> => {
   validateInputs([organizationId, ZString]);
 

@@ -79,6 +79,7 @@ const readJson = async <T>(res: Response): Promise<T> => (await res.json()) as T
 
 const authorizeAllow = vi.fn<WorkflowApiContext["authorize"]>();
 const verifyTriggerSurvey = vi.fn<WorkflowApiContext["verifyTriggerSurvey"]>();
+const verifyRecipientsAllowed = vi.fn<WorkflowApiContext["verifyRecipientsAllowed"]>();
 const logger: WorkflowsLogger = { warn: vi.fn(), error: vi.fn() };
 
 const authorized: AuthorizedWorkspace = { workspaceId, organizationId: "cm9zr5org00000000000000000" };
@@ -90,6 +91,7 @@ const makeCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContex
   logger,
   authorize: authorizeAllow,
   verifyTriggerSurvey,
+  verifyRecipientsAllowed,
   ...overrides,
 });
 
@@ -103,6 +105,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   authorizeAllow.mockResolvedValue(authorized);
   verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: [] });
+  verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: [] });
 });
 
 describe("get", () => {
@@ -533,6 +536,59 @@ describe("enable", () => {
     expect(body.code).toBe("workflow_not_executable");
     expect(body.invalid_params.map((p) => p.name)).toContain("definition.trigger.config.endingCardIds");
     expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("checks literal send_email recipients against the org allowlist and rejects an external one (ENG-2029)", async () => {
+    // Default definition's send_email targets a literal address (support@example.com).
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: ["support@example.com"] });
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(verifyRecipientsAllowed).toHaveBeenCalledWith({
+      workspaceId,
+      emails: ["support@example.com"],
+    });
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; invalid_params: { name: string }[] }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(body.invalid_params.map((p) => p.name)).toContain("definition.nodes.config.to");
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("allows enabling when the literal recipient is an org member", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+    verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: [] });
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    expect(service.enableWorkflow).toHaveBeenCalled();
+  });
+
+  test("skips the recipient allowlist check when the recipient is a respondent field (not a literal email)", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({
+        status: "draft",
+        definition: {
+          ...definition,
+          nodes: [
+            {
+              ...definition.nodes[0],
+              config: { ...definition.nodes[0].config, to: "email-question-id" },
+            },
+          ],
+        },
+      })
+    );
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    expect(verifyRecipientsAllowed).not.toHaveBeenCalled();
+    expect(service.enableWorkflow).toHaveBeenCalled();
   });
 
   test("maps a concurrent-enable conflict from the service to 409", async () => {

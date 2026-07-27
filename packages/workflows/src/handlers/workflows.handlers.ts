@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   type TWorkflowIdInput,
   type TWorkflowRunIdInput,
@@ -24,7 +25,7 @@ import {
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
-import { ZWorkflowExecutableDefinition } from "../types/document";
+import { type TWorkflowExecutableDefinition, ZWorkflowExecutableDefinition } from "../types/document";
 import { redactWorkflowDefinitionPII } from "./audit-redaction";
 import type { TriggerSurveyCheck, WorkflowApiAccess, WorkflowApiContext } from "./context";
 import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-list-query";
@@ -118,6 +119,35 @@ const recordAuditSafely = async (
     ctx.logger.error({ error }, "Failed to record workflow audit detail");
   }
 };
+
+const ZLiteralEmail = z.email();
+
+/**
+ * The literal email recipients configured on a definition's `send_email` actions. A `to` that is
+ * itself a valid email is a literal recipient and must be allowlisted (ENG-2029); a `to` that is a
+ * survey element id resolves to the respondent's own address at send time and is always allowed, so
+ * it is excluded here. Deduplicated so the same address is checked once.
+ */
+const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition): string[] => {
+  const emails = new Set<string>();
+  for (const node of definition.nodes) {
+    // `send_email` is the only action type today, so `type === "action"` already narrows to its
+    // config (which carries `to`); revisit this guard if another action type is added.
+    if (node.type === "action") {
+      const { to } = node.config;
+      if (ZLiteralEmail.safeParse(to).success) {
+        emails.add(to);
+      }
+    }
+  }
+  return [...emails];
+};
+
+const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInvalidParam[] =>
+  disallowedEmails.map((email) => ({
+    name: "definition.nodes.config.to",
+    reason: `Recipient ${email} is not a member of this organization. A send_email action may only address an organization member or a respondent field.`,
+  }));
 
 /** Map a failed trigger-survey check to field-level `invalid_params` on the definition's trigger config. */
 const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidParam[] => {
@@ -389,6 +419,21 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       });
       if (!surveyCheck.surveyExists || surveyCheck.missingEndingCardIds.length > 0) {
         throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
+      }
+
+      // Recipient allowlist: a send_email action addressing a literal email may only target an
+      // organization member — otherwise enabling the workflow would let it forward response data to
+      // an arbitrary external inbox on every completed response (ENG-2029). Respondent-field
+      // recipients resolve at send time and are not checked here.
+      const literalRecipients = collectLiteralRecipientEmails(executable.data);
+      if (literalRecipients.length > 0) {
+        const { disallowedEmails } = await ctx.verifyRecipientsAllowed({
+          workspaceId: loaded.workspaceId,
+          emails: literalRecipients,
+        });
+        if (disallowedEmails.length > 0) {
+          throw new WorkflowNotExecutableError(buildDisallowedRecipientParams(disallowedEmails));
+        }
       }
 
       const updated = await service.enableWorkflow(

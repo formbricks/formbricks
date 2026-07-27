@@ -19,12 +19,13 @@ import {
   planExecutableSteps,
 } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
-import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId, getOrganizationMemberEmails } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { sendEmail } from "@/modules/email";
 import {
   buildSurveyResponseEmailHtml,
+  isLiteralEmailRecipient,
   resolveResponseRecipient,
 } from "@/modules/email/lib/survey-response-email";
 
@@ -147,6 +148,12 @@ interface RunEmailContext {
   survey: TSurvey;
   response: TResponse;
   logoUrl: string;
+  /**
+   * Lowercased allowlist of the organization's member emails. A literal `to` recipient must be in
+   * this set to receive response data (ENG-2029); loaded once per run. Empty when the organization
+   * can't be resolved, which fails closed — a literal external recipient is then rejected.
+   */
+  allowedRecipientEmails: Set<string>;
 }
 
 /**
@@ -166,6 +173,21 @@ const sendResolvedEmail = async (
   const recipient = resolveResponseRecipient(config.to, emailContext.response);
   if (!recipient.ok) {
     return { status: "failed", error: recipient.error, output: {} };
+  }
+
+  // Recipient allowlist (ENG-2029): a literal `to` address may only be an organization member, so a
+  // live workflow can't silently forward response data to an arbitrary external inbox. A
+  // respondent-field `to` resolves to the respondent's own address and is always allowed. This is
+  // the send-time backstop to the enable-time check — it also covers a member removed after enable.
+  if (
+    isLiteralEmailRecipient(config.to) &&
+    !emailContext.allowedRecipientEmails.has(recipient.email.trim().toLowerCase())
+  ) {
+    return {
+      status: "failed",
+      error: `Recipient ${recipient.email} is not a member of the organization`,
+      output: {},
+    };
   }
 
   const messageId = buildMessageId(workflowRunId, stepId, config.from);
@@ -452,8 +474,13 @@ const loadRunEmailContext = async (
 
   const organization = await getOrganizationByWorkspaceId(workspaceId);
   const logoUrl = organization?.whitelabel?.logoUrl ?? "";
+  // Fail closed: no resolvable organization means an empty allowlist, so a literal external
+  // recipient is rejected rather than allowed through unchecked.
+  const allowedRecipientEmails = organization
+    ? await getOrganizationMemberEmails(organization.id)
+    : new Set<string>();
 
-  return { survey, response, logoUrl };
+  return { survey, response, logoUrl, allowedRecipientEmails };
 };
 
 /**
