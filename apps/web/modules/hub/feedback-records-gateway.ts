@@ -20,10 +20,9 @@ import {
   type TFeedbackRecordsGatewayPermission,
   hasApiKeyImplicitFeedbackDirectoryAccess,
 } from "@/modules/hub/feedback-records-gateway-authz";
+import { normalizeFeedbackRecordsPath } from "@/modules/hub/feedback-records-routing";
 import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
-const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
-const FEEDBACK_RECORDS_SDK_PREFIX = "/v1/feedback-records";
 const ZFeedbackRecordId = z.uuid();
 
 type TFeedbackRecordsGatewayOperation =
@@ -41,32 +40,6 @@ type TParsedGatewayRoute = {
   requiredPermission: TFeedbackRecordsGatewayPermission;
   recordId?: string;
   tenantSource: "query" | "body" | "recordLookup";
-};
-
-const stripFeedbackRecordsPrefix = (pathname: string, prefix: string): string | null => {
-  if (pathname === prefix) {
-    return "/";
-  }
-
-  if (!pathname.startsWith(`${prefix}/`)) {
-    return null;
-  }
-
-  return pathname.slice(prefix.length) || "/";
-};
-
-const normalizeFeedbackRecordsPath = (pathname: string): string | null => {
-  const v3Path = stripFeedbackRecordsPrefix(pathname, FEEDBACK_RECORDS_V3_PREFIX);
-  if (v3Path) {
-    return v3Path;
-  }
-
-  const sdkPath = stripFeedbackRecordsPrefix(pathname, FEEDBACK_RECORDS_SDK_PREFIX);
-  if (sdkPath) {
-    return sdkPath;
-  }
-
-  return null;
 };
 
 const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {

@@ -152,3 +152,9 @@ The one-click Traefik installer exposes Hub-backed FeedbackRecords on the Formbr
 `/api/v3/feedbackRecords` and `/v1/feedback-records`. Traefik uses Formbricks gateway auth, rewrites the v3
 path to Hub's `/v1/feedback-records`, injects `Authorization: Bearer ${HUB_API_KEY}` for Hub, and strips client
 API key/cookie headers before the Hub hop.
+
+The local development server exposes the same routes at `http://localhost:3000`. With `HUB_API_URL` and
+`HUB_API_KEY` configured as shown in `.env.example`, the Next.js app applies the same Formbricks gateway
+authorization, rewrites `/api/v3/feedbackRecords` to Hub's `/v1/feedback-records`, replaces client credentials
+with the Hub API key, and proxies the request to the Hub service running on port **8080**. This app-level proxy
+is development-only; production deployments continue to use Traefik or Envoy for FeedbackRecords routing.

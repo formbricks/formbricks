@@ -85,6 +85,40 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
       ).toBe(true);
     });
 
+    test("grants a read op via a read workspace permission (equal weight)", () => {
+      const workspaceKey = makeApiKeyAuth({
+        workspacePermissions: [
+          { workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission: "read" },
+        ],
+      });
+
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          workspaceKey,
+          DIRECTORY_ORG_ID,
+          [DIRECTORY_WORKSPACE_ID],
+          "read"
+        )
+      ).toBe(true);
+    });
+
+    test("grants a write op via a manage workspace permission (higher weight)", () => {
+      const workspaceKey = makeApiKeyAuth({
+        workspacePermissions: [
+          { workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission: "manage" },
+        ],
+      });
+
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          workspaceKey,
+          DIRECTORY_ORG_ID,
+          [DIRECTORY_WORKSPACE_ID],
+          "write"
+        )
+      ).toBe(true);
+    });
+
     test("denies when the read-only workspace permission is below the required write weight", () => {
       const workspaceKey = makeApiKeyAuth({
         workspacePermissions: [
