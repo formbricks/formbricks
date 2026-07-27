@@ -94,6 +94,17 @@ needs. Clients derive their Dynamic Client
 Registration scopes from that list, so `offline_access` must be advertised there for clients to be
 issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
+<Warning>
+  Adding a resource scope breaks already-connected OAuth clients until they re-register. The
+  authorization server validates `/authorize` against the scopes the **client** registered with, so a
+  client registered before the change requests the newly advertised scope and is rejected with
+  `invalid_scope` — it does not fall back to the scopes it already holds, and re-consenting does not help
+  because the same `client_id` is reused. The client has to run Dynamic Client Registration again: remove
+  and re-add the MCP server (for example `claude mcp remove <name>` then `claude mcp add …`), or delete
+  its `oauthClient` row so the next connection re-registers. Ship a release note whenever this list
+  changes.
+</Warning>
+
 OAuth scopes only gate MCP tool categories. Actual workspace access is still evaluated at tool
 execution through the existing v3 authorization checks for the signed-in Formbricks user.
 
