@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { hasApiKeyImplicitFeedbackDirectoryAccess } from "./feedback-records-gateway-authz";
 
 const DIRECTORY_ORG_ID = "org_directory";
@@ -82,10 +82,11 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
     });
   });
 
-  describe("workspace-permission path (org-scoped by construction)", () => {
-    test("grants when a workspace permission matches a directory workspace with sufficient weight", () => {
+  describe("workspace-permission path (same-organization keys only)", () => {
+    test("grants a same-organization key (no org-level access) via a matching workspace permission", () => {
+      // Fall-through: org-level accessControl is all-false, so access comes solely from the
+      // per-workspace permission.
       const workspaceKey = makeApiKeyAuth({
-        organizationId: "org_attacker",
         workspacePermissions: [
           { workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission: "write" },
         ],
@@ -99,6 +100,27 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           "write"
         )
       ).toBe(true);
+    });
+
+    test("denies a foreign-organization key even with a matching workspace permission (defense-in-depth, ENG-1980)", () => {
+      // Upstream (authenticateApiKeyFromHeaders) filters workspacePermissions to the key's own org,
+      // so this shape shouldn't occur in production — but the authz function must deny it on its own
+      // rather than rely on that invariant holding.
+      const foreignKey = makeApiKeyAuth({
+        organizationId: "org_attacker",
+        workspacePermissions: [
+          { workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission: "manage" },
+        ],
+      });
+
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          foreignKey,
+          DIRECTORY_ORG_ID,
+          [DIRECTORY_WORKSPACE_ID],
+          "write"
+        )
+      ).toBe(false);
     });
 
     test("denies when the read-only workspace permission is below the required write weight", () => {
