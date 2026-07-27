@@ -205,49 +205,37 @@ const toInvalidParams = (error: z.ZodError): InvalidParam[] =>
   error.issues.map((issue) => ({ name: issue.path.join("."), reason: issue.message }));
 
 /**
- * Optional fields copied verbatim from the validated body to the Hub payload. An explicit allowlist —
- * never a spread — so nothing the caller invents (a `tenant_id` above all) can reach the Hub.
+ * Build the Hub create payload. This field list *is* the allowlist — never a spread of the input — so
+ * nothing the caller invents (a `tenant_id` above all) can reach the Hub. Optional fields are assigned
+ * unconditionally: `undefined` ones are dropped by JSON serialization, so the wire payload only ever
+ * carries what the caller actually sent.
  */
-const HUB_OPTIONAL_CREATE_FIELDS = [
-  "value_text",
-  "value_number",
-  "value_boolean",
-  "value_date",
-  "value_id",
-  "user_id",
-  "language",
-  "source_id",
-  "source_name",
-  "field_group_id",
-  "field_group_label",
-  "field_label",
-  "collected_at",
-  "metadata",
-] as const satisfies readonly (keyof TV3FeedbackRecordCreateBody & keyof FeedbackRecordCreateParams)[];
-
-/** Build the Hub create payload: required fields, the server-resolved tenant, then the allowlist. */
 function buildHubCreateParams(
   data: TV3FeedbackRecordCreateBody,
   tenantId: string
 ): FeedbackRecordCreateParams {
-  const params: FeedbackRecordCreateParams = {
+  return {
     tenant_id: tenantId,
     // Generated when omitted so a single ad-hoc record still groups cleanly.
     submission_id: data.submission_id ?? randomUUID(),
     source_type: data.source_type,
     field_id: data.field_id,
     field_type: data.field_type,
+    value_text: data.value_text,
+    value_number: data.value_number,
+    value_boolean: data.value_boolean,
+    value_date: data.value_date,
+    value_id: data.value_id,
+    user_id: data.user_id,
+    language: data.language,
+    source_id: data.source_id,
+    source_name: data.source_name,
+    field_group_id: data.field_group_id,
+    field_group_label: data.field_group_label,
+    field_label: data.field_label,
+    collected_at: data.collected_at,
+    metadata: data.metadata,
   };
-
-  const target = params as Record<string, unknown>;
-  const source = data as Record<string, unknown>;
-  for (const field of HUB_OPTIONAL_CREATE_FIELDS) {
-    if (source[field] !== undefined) {
-      target[field] = source[field];
-    }
-  }
-
-  return params;
 }
 
 type TListV3FeedbackDirectoriesParams = {
