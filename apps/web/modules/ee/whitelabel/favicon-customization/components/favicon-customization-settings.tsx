@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationFaviconUrlAction,
@@ -172,6 +173,7 @@ export const FaviconCustomizationSettings = ({
               width={64}
               height={64}
               className="-mb-2 size-16 rounded-lg border object-contain p-1"
+              unoptimized={isExternalImageSrc(faviconUrl)}
             />
           ) : (
             <FileInput

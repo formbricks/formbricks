@@ -64,8 +64,7 @@ export const updateMembership = async (
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === PrismaErrorType.RecordDoesNotExist ||
-        error.code === PrismaErrorType.RelatedRecordDoesNotExist)
+      (error.code === PrismaErrorType.RelatedRecordNotFound || error.code === PrismaErrorType.RecordNotFound)
     ) {
       throw new ResourceNotFoundError("Membership", `userId: ${userId}, organizationId: ${organizationId}`);
     }

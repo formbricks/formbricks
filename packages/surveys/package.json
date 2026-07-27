@@ -61,15 +61,21 @@
     "@preact/preset-vite": "2.10.5",
     "@tailwindcss/postcss": "4.2.4",
     "@testing-library/preact": "3.2.4",
+    "@types/node": "25.4.0",
     "@types/react": "19.2.14",
     "autoprefixer": "10.4.27",
     "concurrently": "9.2.1",
+    "cross-env": "10.1.0",
+    "dotenv-cli": "11.0.0",
     "fake-indexeddb": "6.2.5",
     "happy-dom": "20.8.9",
     "postcss": "8.5.14",
     "rollup-plugin-visualizer": "7.0.1",
     "tailwindcss": "4.2.4",
+    "typescript": "5.9.3",
     "vite": "7.3.5",
-    "vite-tsconfig-paths": "6.1.1"
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "4.1.6",
+    "zod": "4.3.6"
   }
 }

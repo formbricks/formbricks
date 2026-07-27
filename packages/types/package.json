@@ -20,6 +20,7 @@
     "node-html-parser": "7.1.0"
   },
   "devDependencies": {
-    "@formbricks/config-typescript": "workspace:*"
+    "@formbricks/config-typescript": "workspace:*",
+    "typescript": "5.9.3"
   }
 }

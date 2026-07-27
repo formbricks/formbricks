@@ -320,6 +320,21 @@ describe("Tests for updateSurvey", () => {
       expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
     });
 
+    test("does not persist workspaceId or id from the payload on update — pinned to the existing survey (ENG-1749)", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+      await updateSurvey(updateSurveyInput);
+
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      // workspaceId/id are the survey's tenant anchors: they must come from the existing record,
+      // never the client payload, so an authorized editor cannot re-point their survey to another
+      // workspace/organization on update.
+      expect(updateArg?.data).not.toHaveProperty("workspaceId");
+      expect(updateArg?.data).not.toHaveProperty("id");
+      expect(updateArg?.where).toEqual({ id: updateSurveyInput.id });
+    });
+
     // Note: Language handling tests (for languages.length > 0 fix) are covered in
     // apps/web/modules/survey/editor/lib/survey.test.ts where we have better control
     // over the test mocks. The key fix ensures languages.length > 0 (not > 1) is used.
@@ -357,6 +372,145 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.survey.update.mockRejectedValue(new Error(mockErrorMessage));
       await expect(updateSurvey(updateSurveyInput)).rejects.toThrow(Error);
+    });
+
+    // ENG-1749 sibling: the update path must not update/delete a segment from another workspace
+    // even when the caller is authorized for the survey being updated.
+    test("rejects a segment that belongs to another workspace", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        id: "clseg123456789012345678901",
+        title: "Segment",
+        description: null,
+        isPrivate: true,
+        filters: [],
+        workspaceId: "clotherworkspace1234567890",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await expect(
+        updateSurvey({
+          ...updateSurveyInput,
+          segment: {
+            id: "clseg123456789012345678901",
+            title: "Segment",
+            description: null,
+            isPrivate: true,
+            filters: [],
+            workspaceId: updateSurveyInput.workspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.segment.delete).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    // ENG-1749 sibling: the update path (incl. drafts, skipValidation=true) must not link a language
+    // from another workspace. The guard resolves the language's workspace from the DB, so a request
+    // that LIES about language.workspaceId (claiming this survey's workspace) is still rejected.
+    test("rejects a language whose real (DB) workspace differs, even when the input claims otherwise", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.language.findMany.mockResolvedValueOnce([
+        { id: "cllangforeign00000000001", workspaceId: "clforeignws0000000000001" },
+      ] as any);
+
+      await expect(
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            languages: [
+              {
+                language: {
+                  id: "cllangforeign00000000001",
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  code: "de",
+                  alias: null,
+                  workspaceId: updateSurveyInput.workspaceId, // the lie: claims the survey's own workspace
+                },
+                default: true,
+                enabled: true,
+              },
+            ],
+          },
+          true
+        )
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.language.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ["cllangforeign00000000001"] } },
+        select: { id: true, workspaceId: true },
+      });
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("rejects a language id that does not exist (absent from the DB result)", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.language.findMany.mockResolvedValueOnce([] as any);
+
+      await expect(
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            languages: [
+              {
+                language: {
+                  id: "cllangmissing0000000001",
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  code: "de",
+                  alias: null,
+                  workspaceId: updateSurveyInput.workspaceId,
+                },
+                default: true,
+                enabled: true,
+              },
+            ],
+          },
+          true
+        )
+      ).rejects.toThrow(ResourceNotFoundError);
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    // ENG-1749/ENG-1920: the app-survey segment block connects segment.surveys by id; a survey from
+    // another workspace must not be connectable (would re-point that survey's targeting).
+    test("rejects connecting a survey from another workspace to the segment (app survey update)", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput); // getSurvey → current survey (own workspace)
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: updateSurveyInput.workspaceId,
+      } as any); // segment.id belongs to the survey's workspace (passes the segment guard)
+      prisma.survey.findMany.mockResolvedValueOnce([
+        { id: "clvictimsurvey0000000001", workspaceId: "clforeignws0000000000001" },
+      ] as any); // the connected survey is in ANOTHER workspace
+
+      await expect(
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            type: "app",
+            segment: {
+              id: "clownsegment000000000001",
+              title: "seg",
+              description: null,
+              isPrivate: false,
+              filters: [],
+              workspaceId: updateSurveyInput.workspaceId,
+              surveys: ["clvictimsurvey0000000001"],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          } as any,
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.segment.update).not.toHaveBeenCalled();
     });
   });
 });
@@ -784,6 +938,9 @@ describe("Tests for createSurvey", () => {
 
     test("creates survey languages from validated language inputs", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.language.findMany.mockResolvedValueOnce([
+        { id: "cllang12345678901234567890", workspaceId: mockWorkspaceId },
+      ] as any);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
@@ -938,6 +1095,11 @@ describe("Tests for createSurvey", () => {
     });
 
     test("rejects survey languages from a different workspace", async () => {
+      // The DB says this language belongs to another workspace, regardless of what the input claims.
+      prisma.language.findMany.mockResolvedValueOnce([
+        { id: "cllang12345678901234567890", workspaceId: "clotherworkspace0000000000" },
+      ] as any);
+
       await expect(
         createSurvey(mockWorkspaceId, {
           ...mockCreateSurveyInput,
@@ -949,7 +1111,7 @@ describe("Tests for createSurvey", () => {
                 id: "cllang12345678901234567890",
                 code: "en-US",
                 alias: null,
-                workspaceId: "clotherworkspace0000000000",
+                workspaceId: mockWorkspaceId,
                 createdAt: new Date(),
                 updatedAt: new Date(),
               },

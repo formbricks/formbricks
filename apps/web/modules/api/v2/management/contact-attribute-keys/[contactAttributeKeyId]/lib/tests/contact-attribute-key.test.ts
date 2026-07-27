@@ -44,7 +44,7 @@ const mockUpdateInput: TContactAttributeKeyUpdateSchema = {
 };
 
 const prismaNotFoundError = new Prisma.PrismaClientKnownRequestError("Mock error message", {
-  code: PrismaErrorType.RelatedRecordDoesNotExist,
+  code: PrismaErrorType.RecordNotFound,
   clientVersion: "0.0.1",
 });
 

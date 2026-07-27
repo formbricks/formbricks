@@ -45,6 +45,7 @@
     "@types/node": "^25.4.0",
     "@types/object-hash": "^3.0.6",
     "tsx": "^4.21.0",
+    "typescript": "5.9.3",
     "vite": "7.3.5",
     "vitest": "4.1.6"
   }

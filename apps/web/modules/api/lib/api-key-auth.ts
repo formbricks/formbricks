@@ -52,19 +52,32 @@ export const authenticateApiKeyFromHeaders = async (
     return null;
   }
 
+  // ENG-1749 defense-in-depth: only honor workspace permissions whose workspace belongs to the
+  // key's own organization. API keys are org-scoped, so a permission on a foreign workspace is
+  // always illegitimate (it can only exist from a pre-fix bug/exploit). Filtering here — the single
+  // point where the permission list is built — protects every consumer, including the read/list
+  // routes that authorize off this list directly rather than through resolveBodyIdsV2.
+  const workspacePermissions = (apiKeyData.apiKeyWorkspaces ?? [])
+    .filter(
+      (workspacePermission) => workspacePermission.workspace.organizationId === apiKeyData.organizationId
+    )
+    .map((workspacePermission) => ({
+      permission: workspacePermission.permission,
+      workspaceId: workspacePermission.workspaceId,
+      workspaceName: workspacePermission.workspace.name,
+    }));
+
   // Reject org-only API keys for routes that require workspace-scoped permissions
   // (those routes opt in via allowOrganizationOnlyApiKey when an org-only key is acceptable).
-  if (!options.allowOrganizationOnlyApiKey && (apiKeyData.apiKeyWorkspaces?.length ?? 0) === 0) {
+  // Uses the filtered list so a key left with only cross-org (now-dropped) permissions is treated
+  // as having no workspace access.
+  if (!options.allowOrganizationOnlyApiKey && workspacePermissions.length === 0) {
     return null;
   }
 
   return {
     type: "apiKey",
-    workspacePermissions: (apiKeyData.apiKeyWorkspaces ?? []).map((workspacePermission) => ({
-      permission: workspacePermission.permission,
-      workspaceId: workspacePermission.workspaceId,
-      workspaceName: workspacePermission.workspace.name,
-    })),
+    workspacePermissions,
     apiKeyId: apiKeyData.id,
     organizationId: apiKeyData.organizationId,
     organizationAccess: apiKeyData.organizationAccess,

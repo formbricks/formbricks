@@ -25,5 +25,3 @@ jobs:
         id: cache-build-web
         with:
           e2e_testing_mode: "0"
-          turbo_token: ${{ secrets.TURBO_TOKEN }}
-          turbo_team: ${{ vars.TURBO_TEAM }}

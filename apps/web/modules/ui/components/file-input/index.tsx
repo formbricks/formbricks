@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -261,11 +262,12 @@ export const FileInput = ({
                               style={{ objectFit: "cover" }}
                               quality={100}
                               className={!file.uploaded ? "opacity-50" : ""}
+                              unoptimized={isExternalImageSrc(file.url)}
                             />
                             {file.uploaded ? (
                               <button
                                 type="button"
-                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleRemove(idx);
@@ -287,7 +289,7 @@ export const FileInput = ({
                             {file.uploaded ? (
                               <button
                                 type="button"
-                                className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                                className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleRemove(idx);
@@ -328,11 +330,12 @@ export const FileInput = ({
                           style={{ objectFit: imageFit }}
                           quality={100}
                           className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
+                          unoptimized={isExternalImageSrc(selectedFiles[0].url)}
                         />
                         {selectedFiles[0].uploaded ? (
                           <button
                             type="button"
-                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={(e) => {
                               e.preventDefault();
                               handleRemove(0);
@@ -352,7 +355,7 @@ export const FileInput = ({
                         {selectedFiles[0].uploaded ? (
                           <button
                             type="button"
-                            className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                            className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={(e) => {
                               e.preventDefault();
                               handleRemove(0);

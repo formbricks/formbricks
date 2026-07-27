@@ -15,6 +15,10 @@ import {
   ZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import {
+  canManageOrganizationUsers,
+  getApiKeyCreatorRole,
+} from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
@@ -73,6 +77,18 @@ export const DELETE = async (
         );
       }
 
+      const assignerRole = await getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId);
+      if (!canManageOrganizationUsers(assignerRole)) {
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "team", issue: "You are not allowed to manage teams in this organization" }],
+          },
+          auditLog
+        );
+      }
+
       let oldTeamData: any = UNKNOWN_DATA;
       try {
         const oldTeamResult = await getTeam(params.organizationId, params.teamId);
@@ -122,6 +138,18 @@ export const PUT = (
           {
             type: "unauthorized",
             details: [{ field: "organizationId", issue: "unauthorized" }],
+          },
+          auditLog
+        );
+      }
+
+      const assignerRole = await getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId);
+      if (!canManageOrganizationUsers(assignerRole)) {
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [{ field: "team", issue: "You are not allowed to manage teams in this organization" }],
           },
           auditLog
         );

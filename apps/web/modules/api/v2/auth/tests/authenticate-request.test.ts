@@ -40,6 +40,7 @@ describe("authenticateRequest", () => {
           workspace: {
             id: "workspace-id-1",
             name: "Workspace 1",
+            organizationId: "org-id",
           },
         },
         {
@@ -49,6 +50,7 @@ describe("authenticateRequest", () => {
           workspace: {
             id: "workspace-id-2",
             name: "Workspace 2",
+            organizationId: "org-id",
           },
         },
       ],

@@ -15,16 +15,21 @@
   },
   "dependencies": {
     "@react-email/components": "1.0.12",
+    "@react-email/render": "2.0.6",
+    "lucide-react": "0.577.0",
+    "react": "19.2.6",
     "react-email": "5.2.11"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@types/react": "19.2.14",
     "autoprefixer": "10.4.27",
     "clsx": "2.1.1",
     "postcss": "8.5.14",
     "tailwind-merge": "3.5.0",
-    "tailwindcss": "3.4.19"
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3"
   }
 }
