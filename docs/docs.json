@@ -86,11 +86,6 @@
                   "platform/features/user-management/two-factor-auth"
                 ]
               },
-              {
-                "group": "MCP",
-                "icon": "robot",
-                "pages": ["platform/mcp/overview", "platform/mcp/setup"]
-              },
               "platform/features/styling-theme",
               "platform/features/email-customization"
             ]
@@ -235,6 +230,7 @@
               "unify-feedback/feedback-datasets",
               "unify-feedback/feedback-sources",
               "unify-feedback/feedback-records",
+              "unify-feedback/enrichment",
               "unify-feedback/dashboards-charts",
               "unify-feedback/topics-subtopics"
             ]
@@ -429,6 +425,15 @@
           }
         ],
         "tab": "Development"
+      },
+      {
+        "groups": [
+          {
+            "group": "MCP",
+            "pages": ["platform/mcp/overview", "platform/mcp/setup"]
+          }
+        ],
+        "tab": "MCP"
       },
       {
         "groups": [
