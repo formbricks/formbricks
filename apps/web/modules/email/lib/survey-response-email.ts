@@ -153,13 +153,9 @@ export const buildSurveyResponseEmailHtml = async ({
 /** Outcome of resolving a `to` value (literal email or question/hidden-field id) against a response. */
 export type ResolveRecipientResult = { ok: true; email: string } | { ok: false; error: string };
 
-/**
- * Whether a `to` value is a literal email address (rather than a survey element id resolved against
- * the response). Literal recipients are the ones a workflow author picks freely, so callers that
- * enforce a recipient allowlist (workflow `send_email`, ENG-2029) only need to gate this case; an
- * element-id `to` always resolves to the respondent's own address.
- */
-export const isLiteralEmailRecipient = (to: string): boolean => z.email().safeParse(to).success;
+// Re-exported from `@formbricks/workflows` so the enable-time gate and this send-time path share a
+// single literal-vs-field classifier that cannot drift (ENG-2029).
+export { isLiteralEmailRecipient } from "@formbricks/workflows";
 
 /**
  * Resolves an email recipient from a `to` value the same way survey Follow-Ups do:

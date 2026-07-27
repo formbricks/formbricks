@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   type TWorkflowIdInput,
   type TWorkflowRunIdInput,
@@ -22,6 +21,7 @@ import {
   toProblemResponse,
   validateOutput,
 } from "../errors";
+import { isLiteralEmailRecipient } from "../recipients";
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
@@ -120,8 +120,6 @@ const recordAuditSafely = async (
   }
 };
 
-const ZLiteralEmail = z.email();
-
 /**
  * The literal email recipients configured on a definition's `send_email` actions. A `to` that is
  * itself a valid email is a literal recipient and must be allowlisted (ENG-2029); a `to` that is a
@@ -135,7 +133,7 @@ const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition
     // config (which carries `to`); revisit this guard if another action type is added.
     if (node.type === "action") {
       const { to } = node.config;
-      if (ZLiteralEmail.safeParse(to).success) {
+      if (isLiteralEmailRecipient(to)) {
         emails.add(to);
       }
     }

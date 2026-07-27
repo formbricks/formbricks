@@ -341,6 +341,42 @@ describe("processWorkflowRunJob", () => {
     );
   });
 
+  test("matches a literal recipient against the allowlist case-insensitively (ENG-2029)", async () => {
+    // The member allowlist is lowercased; a mixed-case literal `to` must still match and send.
+    mockGetOrganizationMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("Teammate@Example.com") },
+      workflow: { definition: makeDefinition("Teammate@Example.com") },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "Teammate@Example.com" }));
+  });
+
+  test("fails closed for a literal recipient when the organization cannot be resolved (ENG-2029)", async () => {
+    // No organization → empty allowlist → a literal recipient is rejected rather than sent unchecked.
+    mockGetOrganizationByWorkspaceId.mockResolvedValue(null);
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("teammate@example.com") },
+      workflow: { definition: makeDefinition("teammate@example.com") },
+    });
+
+    await processWorkflowRunJob(data, finalAttemptContext);
+
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "failed",
+          error: expect.stringContaining("not a member of the organization"),
+        }),
+      })
+    );
+  });
+
   test("still sends to a respondent-field recipient even when it is outside the member allowlist", async () => {
     // A field-resolved recipient is the respondent's own address, always allowed regardless of the
     // org allowlist — only literal addresses are gated.

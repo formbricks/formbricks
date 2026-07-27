@@ -143,18 +143,21 @@ export const getOrganizationByWorkspaceId = reactCache(
 );
 
 /**
- * Lowercased set of the email addresses of every member of an organization. Used as the recipient
- * allowlist for workflow `send_email` actions (ENG-2029): a literal recipient address is only
- * permitted when it belongs to an organization member, so a workflow cannot silently forward
- * response data to an arbitrary external inbox. Emails are lowercased for case-insensitive matching.
+ * Lowercased set of the email addresses of every active member of an organization. Used as the
+ * recipient allowlist for workflow `send_email` actions (ENG-2029): a literal recipient address is
+ * only permitted when it belongs to an active organization member, so a workflow cannot silently
+ * forward response data to an arbitrary external inbox. Emails are lowercased for case-insensitive
+ * matching.
  */
 export const getOrganizationMemberEmails = reactCache(
   async (organizationId: string): Promise<Set<string>> => {
     validateInputs([organizationId, ZString]);
 
     try {
+      // Only active users: a deactivated (soft-deleted) member has had access revoked and must not
+      // remain on the send_email recipient allowlist (ENG-2029).
       const memberships = await prisma.membership.findMany({
-        where: { organizationId },
+        where: { organizationId, user: { isActive: true } },
         select: { user: { select: { email: true } } },
       });
 
