@@ -17,6 +17,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
 import { deleteHubTenantData } from "@/modules/hub/service";
@@ -159,7 +160,9 @@ export const getOrganizationMemberEmails = reactCache(
 
       return new Set(
         memberships
-          .map((membership) => membership.user?.email?.trim().toLowerCase())
+          .map((membership) =>
+            membership.user?.email ? normalizeEmailForComparison(membership.user.email) : undefined
+          )
           .filter((email): email is string => Boolean(email))
       );
     } catch (error) {

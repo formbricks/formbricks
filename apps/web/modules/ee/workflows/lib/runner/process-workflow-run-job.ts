@@ -22,6 +22,7 @@ import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getOrganizationByWorkspaceId, getOrganizationMemberEmails } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { sendEmail } from "@/modules/email";
 import {
   buildSurveyResponseEmailHtml,
@@ -181,7 +182,7 @@ const sendResolvedEmail = async (
   // the send-time backstop to the enable-time check — it also covers a member removed after enable.
   if (
     isLiteralEmailRecipient(config.to) &&
-    !emailContext.allowedRecipientEmails.has(recipient.email.trim().toLowerCase())
+    !emailContext.allowedRecipientEmails.has(normalizeEmailForComparison(recipient.email))
   ) {
     return {
       status: "failed",

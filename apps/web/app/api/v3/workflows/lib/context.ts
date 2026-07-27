@@ -12,6 +12,7 @@ import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { getOrganizationMemberEmails } from "@/lib/organization/service";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -103,7 +104,7 @@ const verifyRecipientsAllowed: WorkflowApiContext["verifyRecipientsAllowed"] = a
 }) => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   const memberEmails = await getOrganizationMemberEmails(organizationId);
-  const disallowedEmails = emails.filter((email) => !memberEmails.has(email.trim().toLowerCase()));
+  const disallowedEmails = emails.filter((email) => !memberEmails.has(normalizeEmailForComparison(email)));
   return { disallowedEmails };
 };
 
