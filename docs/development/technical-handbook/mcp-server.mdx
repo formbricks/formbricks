@@ -872,6 +872,14 @@ out to one Hub create per record, in parallel. Two consequences are deliberate:
 The 50-record cap is an amplification bound as much as a payload one: one authorized request must not
 become an unbounded burst of upstream writes.
 
+<Warning>
+  **A batch is not a submission.** Each record without a `submission_id` gets its own generated one, exactly
+  as in the single-record case — so several answers that belong to the same submission (a survey response, or
+  a call with both a rating and a comment) must carry the *same* `submission_id`, set by the caller. Omit it
+  and they are stored as unrelated submissions, which nothing downstream can distinguish from the intended
+  shape.
+</Warning>
+
 Input:
 
 ```json

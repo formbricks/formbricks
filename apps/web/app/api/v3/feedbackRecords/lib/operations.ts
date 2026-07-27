@@ -506,10 +506,12 @@ type TCreateV3FeedbackRecordsParams = {
   requestId: string;
   instance: string;
   /**
-   * One audit log per input record, in the same order. Entries for records that were actually created come
-   * back with `targetId` set; the caller queues those as successes. Left undefined when auditing is off.
+   * One audit log per input record, **indexed by record position** — pass a sparse array rather than a
+   * compacted one, or entries will be attributed to the wrong records. Entries for records that were
+   * actually created come back with `targetId` set; the caller queues those as successes. Empty or all-holes
+   * when auditing is off.
    */
-  auditLogs?: TV3AuditLog[];
+  auditLogs?: (TV3AuditLog | undefined)[];
 };
 
 /**
@@ -524,6 +526,11 @@ type TCreateV3FeedbackRecordsParams = {
  *   duplicate submission, say) returns the ones that were created plus a per-index account of the rest, so
  *   a caller can retry precisely. If nothing was created at all, the upstream failure is returned as the
  *   response instead — an empty success would read as "there was nothing to do".
+ *
+ * A batch is not a submission: each record without a `submission_id` gets its own generated one, exactly as
+ * in the single-record case. Callers that mean "these answers were given together" must set a shared
+ * `submission_id` themselves — otherwise the records are stored as unrelated submissions, which nothing
+ * downstream can tell apart from the intended shape.
  */
 export async function createV3FeedbackRecords({
   workspaceId,
@@ -715,8 +722,8 @@ type TSearchV3FeedbackRecordsParams = {
  * Semantic search over the resolved dataset: the query is embedded and compared to record embeddings by
  * cosine similarity, so it matches meaning rather than keywords.
  *
- * `tenant_id` is injected from the resolved dataset, trimmed — the Hub uses it verbatim in the vector
- * query (no trimming of its own), so a stray space would silently match nothing instead of failing.
+ * `tenant_id` is injected from the resolved dataset — never from input — and is normalised by the resolver,
+ * because the Hub uses it verbatim in the vector query.
  */
 export async function searchV3FeedbackRecords({
   workspaceId,
@@ -755,8 +762,8 @@ export async function searchV3FeedbackRecords({
     }
 
     const result = await semanticSearchFeedbackRecords({
-      // Never from input. Trimmed because the Hub matches on the raw value.
-      tenant_id: resolution.tenantId.trim(),
+      // Never from input. Already normalised by the resolver, which every operation shares.
+      tenant_id: resolution.tenantId,
       query: filters.data.query,
       ...buildSimilarityParams(filters.data),
     });

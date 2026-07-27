@@ -234,7 +234,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Create feedback records",
       description:
-        "Create several feedback records in one call — use this instead of calling create_feedback_record repeatedly when importing a batch. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch. If the feedback service rejects some records (a duplicate submission, say), the created ones are returned and meta.failures lists the rest by index, so only those need retrying; check meta.failed.",
+        "Create several feedback records in one call — use this instead of calling create_feedback_record repeatedly when importing a batch. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch. If the feedback service rejects some records (a duplicate submission, say), the created ones are returned and meta.failures lists the rest by index, so only those need retrying; check meta.failed. Records in one call are NOT automatically treated as one submission: each record without a submission_id gets its own generated one, so to record several answers given together (a survey response, a call with a rating and a comment) set the same submission_id on all of them.",
       inputSchema: ZMcpCreateFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: false,
@@ -253,23 +253,30 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       const authentication = getMcpAuthentication(extra.authInfo);
       const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
       // One audit event per record, not per call: N records created is N creations to an auditor. The
-      // operation stamps the entries it actually created (identified by `targetId`).
-      const auditLogs = input.records
-        .map(() => buildV3AuditLog(authentication, "created", "feedbackRecord", MCP_API_ROUTE))
-        .filter((auditLog): auditLog is TV3AuditLog => Boolean(auditLog));
+      // operation stamps the entries it created (identified by `targetId`) — and indexes this array by
+      // record position, so it is deliberately NOT compacted. Dropping an entry would shift the rest and
+      // attribute a creation to the wrong record. `buildV3AuditLog` returns undefined for every record or
+      // none (it only depends on whether auditing is enabled), so the holes are all-or-nothing.
+      const auditLogs = input.records.map(() =>
+        buildV3AuditLog(authentication, "created", "feedbackRecord", MCP_API_ROUTE)
+      );
 
-      const queueOutcome = async (response?: Response) => {
-        const stamped = auditLogs.filter((auditLog) => auditLog.targetId);
+      const queueOutcome = async () => {
+        const stamped = auditLogs.filter((auditLog) => auditLog?.targetId);
         for (const auditLog of stamped) {
+          if (!auditLog) continue;
           auditLog.status = "success";
           await queueV3AuditLog(auditLog, requestId, log);
         }
-        // Nothing created — record the attempt once rather than once per record.
-        if (stamped.length === 0 && auditLogs.length > 0) {
-          auditLogs[0].eventId = requestId;
-          await queueV3AuditLog(auditLogs[0], requestId, log);
+        if (stamped.length > 0) {
+          return;
         }
-        return response;
+        // Nothing created — record the attempt once rather than once per record.
+        const first = auditLogs.find(Boolean);
+        if (first) {
+          first.eventId = requestId;
+          await queueV3AuditLog(first, requestId, log);
+        }
       };
 
       try {

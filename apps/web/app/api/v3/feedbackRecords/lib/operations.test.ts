@@ -1085,6 +1085,34 @@ describe("createV3FeedbackRecords", () => {
     expect(createFeedbackRecordsBatch).not.toHaveBeenCalled();
   });
 
+  // A batch is not a submission. Grouping is the caller's job, and getting it wrong stores data nothing
+  // downstream can distinguish from the intended shape — so both halves are pinned.
+  test("gives each record its own submission_id when omitted, and preserves a shared one", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [
+        { data: hubRecord(1), error: null },
+        { data: hubRecord(2), error: null },
+      ],
+    });
+
+    await createV3FeedbackRecords({ ...base, body: { records: [record(1), record(2)] } });
+    const generated = vi.mocked(createFeedbackRecordsBatch).mock.calls[0][0];
+    expect(generated[0].submission_id).not.toBe(generated[1].submission_id);
+
+    vi.mocked(createFeedbackRecordsBatch).mockClear();
+    await createV3FeedbackRecords({
+      ...base,
+      body: {
+        records: [
+          { ...record(1), submission_id: "sub-shared" },
+          { ...record(2), submission_id: "sub-shared" },
+        ],
+      },
+    });
+    const shared = vi.mocked(createFeedbackRecordsBatch).mock.calls[0][0];
+    expect(shared.map((p) => p.submission_id)).toEqual(["sub-shared", "sub-shared"]);
+  });
+
   test("ignores a tenant_id smuggled into a record", async () => {
     vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
       results: [{ data: hubRecord(1), error: null }],

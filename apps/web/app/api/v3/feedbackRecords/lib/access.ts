@@ -68,7 +68,11 @@ export async function resolveWorkspaceFeedbackTenant({
   const { workspaceId: resolvedWorkspaceId, organizationId } = authResult;
 
   const directories = await getFeedbackDirectoriesByWorkspaceId(resolvedWorkspaceId);
-  const allowedTenantIds = directories.map((directory) => directory.id);
+  // Normalised once, here: the Hub uses `tenant_id` verbatim — in SQL filters and, for semantic search, in
+  // the vector query — with no trimming of its own, so a stray space silently matches nothing instead of
+  // failing. Doing it at the source means every consumer gets a usable value; doing it per call site meant
+  // whichever site was written last got it right.
+  const allowedTenantIds = directories.map((directory) => directory.id.trim());
 
   if (datasetId) {
     const requested = directories.find((directory) => directory.id === datasetId);
@@ -86,7 +90,7 @@ export async function resolveWorkspaceFeedbackTenant({
       ok: true,
       workspaceId: resolvedWorkspaceId,
       organizationId,
-      tenantId: requested.id,
+      tenantId: requested.id.trim(),
       datasetName: requested.name,
       allowedTenantIds,
     };
@@ -119,7 +123,7 @@ export async function resolveWorkspaceFeedbackTenant({
     ok: true,
     workspaceId: resolvedWorkspaceId,
     organizationId,
-    tenantId: directories[0].id,
+    tenantId: directories[0].id.trim(),
     datasetName: directories[0].name,
     allowedTenantIds,
   };
