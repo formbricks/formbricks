@@ -36,7 +36,13 @@ export async function requireUnifyFeedbackWorkspaceAccess(
   }
 
   if (!(await getIsFeedbackDirectoriesEnabled(context.organizationId))) {
-    return problemForbidden(requestId, "Unify Feedback is not enabled for this organization", instance);
+    // Keeps the recognizable leading phrase used elsewhere, plus a next step — an API or MCP caller has
+    // no upgrade prompt to fall back on, so the response has to say who can act.
+    return problemForbidden(
+      requestId,
+      "Unify Feedback is not enabled for this organization. It requires an Enterprise plan or license — an organization owner can enable it from the organization's settings.",
+      instance
+    );
   }
 
   return context;
