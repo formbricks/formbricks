@@ -176,7 +176,13 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
           request,
           {
             type: "bad_request",
-            details: [{ field: "response", issue: "Invalid file upload response" }],
+            details: [
+              {
+                field: "response",
+                issue:
+                  "Invalid file upload response: each file URL must reference a file uploaded to this survey's file-upload element",
+              },
+            ],
           },
           auditLog
         );

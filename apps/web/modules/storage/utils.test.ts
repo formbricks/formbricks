@@ -494,6 +494,88 @@ describe("storage utils", () => {
 
       expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
     });
+
+    test("should accept an app-origin absolute URL (the shape a GET response returns for re-submission)", () => {
+      // A response GET resolves the stored relative URL to an absolute one against the app's base
+      // (resolveStorageUrl); re-submitting that value must still validate. Build it via the same
+      // helper so the origin matches whatever WEBAPP_URL is in the test environment.
+      const absoluteUrl = resolveStorageUrl(
+        `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+        "private"
+      );
+      const responseData = { [elementId]: [absoluteUrl] };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(true);
+    });
+
+    test("should reject a foreign-origin absolute URL even when its path is correctly scoped", () => {
+      // A scoped path under a non-app origin must not slip through — otherwise an attacker could
+      // persist a link that renders to users pointing at an arbitrary host.
+      const responseData = {
+        [elementId]: [
+          `https://attacker.example.com/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+        ],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+
+    describe("questions-only surveys (legacy shape passed by all four management routes)", () => {
+      const questions = [
+        {
+          id: elementId,
+          type: "fileUpload" as const,
+          allowedFileExtensions: ["pdf"],
+        },
+      ] as unknown as TSurveyQuestion[];
+
+      test("accepts a scoped URL resolved from a fileUpload question", () => {
+        const responseData = {
+          [elementId]: [
+            `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+          ],
+        };
+
+        expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, questions })).toBe(
+          true
+        );
+      });
+
+      test("rejects a cross-tenant URL resolved from a fileUpload question", () => {
+        const responseData = {
+          [elementId]: [
+            `/storage/otherWorkspace/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+          ],
+        };
+
+        expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, questions })).toBe(
+          false
+        );
+      });
+    });
+
+    test("returns true when there is no response data", () => {
+      expect(validateClientFileUploads({ data: undefined, workspaceId, surveyId, blocks })).toBe(true);
+    });
+
+    test("rejects when a file-upload answer is not an array", () => {
+      const responseData = {
+        [elementId]: `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+      } as unknown as TResponseData;
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+
+    test("rejects when a file-upload answer array contains a non-string entry", () => {
+      const responseData = {
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+          123,
+        ],
+      } as unknown as TResponseData;
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
   });
 
   describe("parseStorageFileUrl", () => {

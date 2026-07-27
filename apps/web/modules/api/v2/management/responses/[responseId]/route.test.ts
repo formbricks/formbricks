@@ -190,4 +190,18 @@ describe("PUT /modules/api/v2/management/responses/[responseId]", () => {
       workspaceId,
     });
   });
+
+  test("authorizes the file-upload check with the resolved workspace and survey ids", async () => {
+    const { PUT } = await import("./route");
+    await PUT(new Request("http://localhost/api/v2/management/responses/resp_1", { method: "PUT" }), {
+      params: Promise.resolve({ responseId }),
+    });
+
+    // The security invariant: the route binds the file-upload scope check to the server-resolved
+    // workspace (from the response's directory) and the existing response's survey — never to
+    // caller-supplied values.
+    expect(mockValidateClientFileUploads).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, surveyId })
+    );
+  });
 });

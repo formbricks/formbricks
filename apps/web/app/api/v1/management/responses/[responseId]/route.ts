@@ -148,7 +148,9 @@ export const PUT = withV1ApiWrapper({
         })
       ) {
         return {
-          response: responses.badRequestResponse("Invalid file upload response"),
+          response: responses.badRequestResponse(
+            "Invalid file upload response: each file URL must reference a file uploaded to this survey's file-upload element"
+          ),
         };
       }
 

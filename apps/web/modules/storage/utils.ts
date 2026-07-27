@@ -184,10 +184,43 @@ export const validateSurveyAllowsFileUpload = ({
       };
 };
 
-const getStorageUrlPathSegments = (fileUrl: string): string[] | null => {
-  if (!fileUrl.startsWith("/storage/")) return null;
+// Origins that may legitimately prefix an absolute storage URL. A response GET resolves stored
+// relative `/storage/...` URLs to absolute ones against these app bases (see resolveStorageUrl), so
+// a client that reads a response and re-submits the same file-upload answer sends back an absolute
+// URL. Those must still validate — but only for the app's own origins, so a foreign absolute URL
+// can never be smuggled past the scope check.
+const getAppStorageOrigins = (): string[] => {
+  const origins: string[] = [];
+  for (const base of [WEBAPP_URL, getPublicDomain()]) {
+    if (!base) continue;
+    try {
+      origins.push(new URL(base).origin);
+    } catch {
+      // Ignore a misconfigured base URL rather than throwing during validation.
+    }
+  }
+  return origins;
+};
 
-  const pathWithoutSearch = fileUrl.split(/[?#]/)[0];
+const getStorageUrlPathSegments = (fileUrl: string): string[] | null => {
+  let pathname: string;
+
+  if (fileUrl.startsWith("/storage/")) {
+    pathname = fileUrl;
+  } else {
+    let parsed: URL;
+    try {
+      parsed = new URL(fileUrl);
+    } catch {
+      return null;
+    }
+    // Absolute URLs are only accepted when they point at one of the app's own origins.
+    if (!getAppStorageOrigins().includes(parsed.origin)) return null;
+    pathname = parsed.pathname;
+  }
+
+  const pathWithoutSearch = pathname.split(/[?#]/)[0];
+  if (!pathWithoutSearch.startsWith("/storage/")) return null;
   return pathWithoutSearch.split("/").filter(Boolean);
 };
 

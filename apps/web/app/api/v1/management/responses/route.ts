@@ -135,14 +135,18 @@ export const POST = withV1ApiWrapper({
       if (
         !validateClientFileUploads({
           data: responseInput.data,
-          workspaceId: responseInput.workspaceId,
+          // Survey-authoritative workspace id (validateSurvey already asserts it equals the
+          // request-body workspaceId); binds the file-upload scope check to the resolved survey.
+          workspaceId: surveyResult.survey.workspaceId,
           surveyId: surveyResult.survey.id,
           blocks: surveyResult.survey.blocks,
           questions: surveyResult.survey.questions,
         })
       ) {
         return {
-          response: responses.badRequestResponse("Invalid file upload response"),
+          response: responses.badRequestResponse(
+            "Invalid file upload response: each file URL must reference a file uploaded to this survey's file-upload element"
+          ),
         };
       }
 
