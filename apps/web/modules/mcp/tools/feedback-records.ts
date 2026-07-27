@@ -78,7 +78,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "List feedback records",
       description:
-        "List feedback records for a workspace's feedback dataset, with cursor pagination and optional filters.",
+        "List feedback records for a workspace's feedback dataset, with cursor pagination and optional filters. meta.datasetId and meta.datasetName report which dataset was searched, so an empty data array means that dataset holds no matching records — there is no need to call list_feedback_datasets to check. A workspace with no dataset at all fails with 422 instead.",
       inputSchema: ZMcpListFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: true,

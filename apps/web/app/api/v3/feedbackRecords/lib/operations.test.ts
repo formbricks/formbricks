@@ -173,9 +173,46 @@ describe("listV3FeedbackRecords", () => {
         field_type: "text",
       })
     );
-    expect(body.meta).toEqual({ limit: 50, nextCursor: "next" });
+    expect(body.meta).toEqual({
+      limit: 50,
+      nextCursor: "next",
+      datasetId: directoryId,
+      datasetName: "Support",
+    });
     expect(body.data[0].id).toBe(record.id);
     expect(body.data[0].value_text).toBe("Love it");
+  });
+
+  // An empty list used to be ambiguous — a caller could not tell "this dataset has no matching records"
+  // from "I don't know which dataset was searched", and had to make a second call to find out. The
+  // response now names the dataset it resolved, empty or not.
+  test("names the resolved dataset even when no records match", async () => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+
+    const body = await (await listV3FeedbackRecords(base)).json();
+
+    expect(body.data).toEqual([]);
+    expect(body.meta.datasetId).toBe(directoryId);
+    expect(body.meta.datasetName).toBe("Support");
+  });
+
+  test("names the dataset the caller asked for when one is given explicitly", async () => {
+    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([
+      { id: directoryId, name: "Support" },
+      { id: otherDirectoryId, name: "Sales" },
+    ]);
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+
+    const body = await (await listV3FeedbackRecords({ ...base, datasetId: otherDirectoryId })).json();
+
+    expect(body.meta.datasetId).toBe(otherDirectoryId);
+    expect(body.meta.datasetName).toBe("Sales");
   });
 
   // The Hub's `tenant_id` is Hub-internal vocabulary; the outward-facing name is `dataset_id`. Same

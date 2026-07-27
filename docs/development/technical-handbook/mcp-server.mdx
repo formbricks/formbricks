@@ -729,7 +729,9 @@ Input:
 }
 ```
 
-Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor`:
+Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor`. `meta` also names the
+dataset that was searched, so an empty `data` array unambiguously means that dataset holds no matching
+records — a caller that let the dataset auto-resolve does not need a second call to find out which one it was:
 
 ```json
 {
@@ -745,7 +747,12 @@ Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor
       "collected_at": "2026-04-21T10:00:00.000Z"
     }
   ],
-  "meta": { "limit": 50, "nextCursor": null },
+  "meta": {
+    "limit": 50,
+    "nextCursor": null,
+    "datasetId": "clfd1234567890123456789012",
+    "datasetName": "Support"
+  },
   "requestId": "req_..."
 }
 ```

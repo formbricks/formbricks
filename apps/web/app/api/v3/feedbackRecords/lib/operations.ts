@@ -47,6 +47,8 @@ type TResolveResult =
       workspaceId: string;
       organizationId: string;
       tenantId: string;
+      /** Name of the resolved dataset, echoed to the caller so a response is self-describing. */
+      datasetName: string;
       allowedTenantIds: string[];
     }
   | { ok: false; response: Response };
@@ -82,7 +84,8 @@ async function resolveWorkspaceFeedbackTenant({
   const allowedTenantIds = directories.map((directory) => directory.id);
 
   if (datasetId) {
-    if (!allowedTenantIds.includes(datasetId)) {
+    const requested = directories.find((directory) => directory.id === datasetId);
+    if (!requested) {
       return {
         ok: false,
         response: problemForbidden(
@@ -96,7 +99,8 @@ async function resolveWorkspaceFeedbackTenant({
       ok: true,
       workspaceId: resolvedWorkspaceId,
       organizationId,
-      tenantId: datasetId,
+      tenantId: requested.id,
+      datasetName: requested.name,
       allowedTenantIds,
     };
   }
@@ -128,7 +132,8 @@ async function resolveWorkspaceFeedbackTenant({
     ok: true,
     workspaceId: resolvedWorkspaceId,
     organizationId,
-    tenantId: allowedTenantIds[0],
+    tenantId: directories[0].id,
+    datasetName: directories[0].name,
     allowedTenantIds,
   };
 }
@@ -347,7 +352,15 @@ export async function listV3FeedbackRecords({
 
     return successListResponse(
       result.data.data.map(serializeV3FeedbackRecord),
-      { limit: result.data.limit, nextCursor: result.data.next_cursor ?? null },
+      {
+        limit: result.data.limit,
+        nextCursor: result.data.next_cursor ?? null,
+        // Echo the dataset we resolved. Without it an empty `data` is ambiguous to the caller — "this
+        // dataset holds no matching records" reads identically to "I don't know what was searched" — and
+        // a caller that auto-resolved the dataset would have to make a second call to find out.
+        datasetId: resolution.tenantId,
+        datasetName: resolution.datasetName,
+      },
       { requestId, cache: CACHE }
     );
   } catch (err) {
