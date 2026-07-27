@@ -127,8 +127,8 @@ describe("authorizeEnvoyRequest", () => {
       type: "apiKey",
       apiKeyId: "key_1",
       organizationId: "org_1",
-      organizationAccess: { accessControl: { read: true, write: true } },
-      workspacePermissions: [],
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "manage" }],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -241,8 +241,8 @@ describe("authorizeEnvoyRequest", () => {
       type: "apiKey",
       apiKeyId: "key_1",
       organizationId: "org_1",
-      organizationAccess: { accessControl: { read: true, write: false } },
-      workspacePermissions: [],
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "read" }],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -453,7 +453,7 @@ describe("authorizeEnvoyRequest", () => {
     expect(response.status).toBe(403);
   });
 
-  test("allows API key with org-level read access for a read op even without workspace match", async () => {
+  test("denies an API key with only org-level access and no workspace match (org access does not grant feedback data)", async () => {
     mockGetFeedbackDirectoryAuthContext.mockResolvedValue({
       organizationId: "org_1",
       workspaceIds: [],
@@ -476,7 +476,7 @@ describe("authorizeEnvoyRequest", () => {
       })
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(403);
   });
 
   test("returns 403 when unify feedback entitlement is disabled", async () => {

@@ -136,8 +136,8 @@ describe("authorizeTraefikRequest", () => {
       type: "apiKey",
       apiKeyId: "key_1",
       organizationId: "org_1",
-      organizationAccess: { accessControl: { read: true, write: true } },
-      workspacePermissions: [],
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "manage" }],
     });
 
     const response = await authorizeTraefikRequest(
@@ -163,8 +163,8 @@ describe("authorizeTraefikRequest", () => {
       type: "apiKey",
       apiKeyId: "key_1",
       organizationId: "org_1",
-      organizationAccess: { accessControl: { read: true, write: true } },
-      workspacePermissions: [],
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "manage" }],
     });
 
     const response = await authorizeTraefikRequest(
