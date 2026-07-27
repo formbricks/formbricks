@@ -1,17 +1,22 @@
 import { Metadata } from "next";
+import Script from "next/script";
 import React from "react";
 import { NoScriptWarning } from "@/app/components/NoScriptWarning";
-import { SentryProvider } from "@/app/sentry/SentryProvider";
-import {
-  DEFAULT_LOCALE,
-  IS_PRODUCTION,
-  SENTRY_DSN,
-  SENTRY_ENVIRONMENT,
-  SENTRY_RELEASE,
-} from "@/lib/constants";
+import { DEFAULT_LOCALE, SENTRY_DSN, SENTRY_ENVIRONMENT } from "@/lib/constants";
+import { SentryRuntimeConfig } from "@/lib/sentry-runtime-config";
 import { I18nProvider } from "@/lingodotdev/client";
 import { getLocale } from "@/lingodotdev/language";
 import "../modules/ui/globals.css";
+
+// Read at request time (unlike next.config.mjs's `env`, which bakes values in at build time) so
+// that self-hosted Docker images — built once, with SENTRY_DSN only ever supplied when the
+// container starts — pick up whatever the operator configured. instrumentation-client.ts, which
+// can't read server-only env itself, reads this back off `window.__sentryRuntimeConfig`.
+const getSentryRuntimeConfigScript = () => {
+  const config: SentryRuntimeConfig = { dsn: SENTRY_DSN, environment: SENTRY_ENVIRONMENT };
+  const escapedConfig = JSON.stringify(config).replaceAll("<", String.raw`\u003c`);
+  return `window.__sentryRuntimeConfig = ${escapedConfig};`;
+};
 
 export const metadata: Metadata = {
   title: {
@@ -27,16 +32,15 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang={locale} translate="no">
       <body className="flex h-dvh flex-col transition-all ease-in-out">
+        <Script
+          id="sentry-runtime-config"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: getSentryRuntimeConfigScript() }}
+        />
         <NoScriptWarning locale={locale} />
-        <SentryProvider
-          sentryDsn={SENTRY_DSN}
-          sentryRelease={SENTRY_RELEASE}
-          sentryEnvironment={SENTRY_ENVIRONMENT}
-          isEnabled={IS_PRODUCTION}>
-          <I18nProvider language={locale} defaultLanguage={DEFAULT_LOCALE}>
-            {children}
-          </I18nProvider>
-        </SentryProvider>
+        <I18nProvider language={locale} defaultLanguage={DEFAULT_LOCALE}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

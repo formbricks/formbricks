@@ -214,6 +214,7 @@
         "ASSET_PREFIX_URL",
         "BASE_PATH",
         "SENTRY_AUTH_TOKEN",
+        "SENTRY_RELEASE",
         "E2E_TESTING",
         "WEBAPP_URL",
         "NEXTAUTH_URL",

@@ -39,6 +39,22 @@ const getLoopbackOriginVariants = (value) => {
 
 const getUniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
+// Use the app version for Sentry release (updated during build in production); mirrors the
+// fallback logic in lib/constants.ts's SENTRY_RELEASE, but this copy also gets inlined into the
+// client bundle via the `env` block below for instrumentation-client.ts.
+const getSentryRelease = () => {
+  if (process.env.NODE_ENV !== "production") {
+    return undefined;
+  }
+
+  try {
+    const pkg = require("./package.json");
+    return pkg.version === "0.0.0" ? undefined : `${pkg.version}`;
+  } catch {
+    return undefined;
+  }
+};
+
 // NOTE: every `process.env.*` read in this file shapes the build output and MUST be listed in the
 // root turbo.json `build.env` array so Turborepo hashes it into the cache key. Adding a read here
 // without updating turbo.json serves stale cached builds — from the local Turbo cache and the CI
@@ -459,6 +475,14 @@ const nextConfig = {
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
+    // SENTRY_RELEASE is a build-artifact property (derived from package.json's version), not
+    // per-deployment config, so baking it in is safe. SENTRY_DSN/SENTRY_ENVIRONMENT are NOT baked
+    // in here on purpose: self-hosted Docker images are built once and configure Sentry at
+    // container start (see docker/docker-compose.yml), with no SENTRY_DSN build secret. Baking
+    // them into the client bundle at build time would freeze DSN/environment into the image and
+    // ignore the runtime value entirely. instrumentation-client.ts instead reads them at request
+    // time from a small inline script layout.tsx renders (see SentryRuntimeConfigScript).
+    SENTRY_RELEASE: getSentryRelease(),
   },
 };
 
