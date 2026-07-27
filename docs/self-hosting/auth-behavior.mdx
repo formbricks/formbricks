@@ -10,6 +10,7 @@ In self-hosted Formbricks, user management and authentication can be customized 
 
 - `AUTH_SKIP_INVITE_FOR_SSO`
 - `AUTH_SSO_DEFAULT_TEAM_ID`
+- `SIGNUP_DOMAIN_CHECK_DISABLED`
 
 ## License Requirement for Role Management and SSO Behavior
 
@@ -42,6 +43,18 @@ In self-hosted Formbricks, user management and authentication can be customized 
   - Set this to the ID of your default team to streamline onboarding for new users.
   - If not set, users will not be automatically assigned to any team upon signup or invite acceptance.
 
+### `SIGNUP_DOMAIN_CHECK_DISABLED`
+
+- **Type:** Boolean (0 or 1)
+- **Default:** 0 (the check is enabled — personal email domains are blocked)
+- **Description:**
+  - Formbricks blocks new sign-ups from personal / free / disposable email domains (`gmail.com`, `yahoo.com`, `outlook.com`, `mailinator.com`, …) by default. Rejected users see "Please sign up with your company email address."
+  - Set this to `1` to accept personal addresses.
+  - The check applies wherever a **new** account would be created: the first admin on a fresh instance, SSO just-in-time provisioning, and the sign-up form. Existing users are never affected — they can always log in. Invited users are exempt unless `SIGNUP_DOMAIN_CHECK_ON_INVITES=1`.
+- **Use case:**
+  - Set this to `1` if you (or your users) sign up with a personal address. **This includes creating the first admin account on a fresh instance** — if your admin email is a personal one, set this before running the setup flow, otherwise the sign-up is rejected.
+  - Keep it at `0` to require company email addresses, e.g. combined with `AUTH_SKIP_INVITE_FOR_SSO=1` so anyone with a company email can self-provision via SSO while personal accounts are refused.
+
 ## Example `.env` Configuration
 
 ```env
@@ -50,6 +63,9 @@ AUTH_SKIP_INVITE_FOR_SSO=1
 
 # Automatically assign new users to this team
 AUTH_SSO_DEFAULT_TEAM_ID=team-123
+
+# Accept personal email addresses (gmail.com, …) at signup — blocked by default
+SIGNUP_DOMAIN_CHECK_DISABLED=1
 ```
 
 Refer to the [Environment Variables documentation](./configuration/environment-variables) for a full list and details.
@@ -65,5 +81,7 @@ For more information on SSO setup, see:
 - [SAML SSO](./configuration/auth-sso/saml-sso)
 
 <Note>
-  Formbricks does not support special characters, such as Cyrillic, in account email addresses to avoid technical, compatibility, and security issues. Additionally, universal support for such addresses is still limited. 
+  Formbricks does not support special characters, such as Cyrillic, in account email addresses to avoid
+  technical, compatibility, and security issues. Additionally, universal support for such addresses is still
+  limited.
 </Note>

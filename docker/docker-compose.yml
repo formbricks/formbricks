@@ -100,6 +100,11 @@ x-environment: &environment
     # Set the below to 1 to disable invites
     # INVITE_DISABLED:
 
+    # Sign-ups from personal / free / disposable email domains (gmail.com, yahoo.com, …) are blocked
+    # by default. Set the below to 1 to accept them — including for the first admin account you create
+    # on a fresh instance, if that email is a personal one.
+    # SIGNUP_DOMAIN_CHECK_DISABLED: 1
+
     # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
     # ASSET_PREFIX_URL:
 

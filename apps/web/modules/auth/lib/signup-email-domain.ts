@@ -49,7 +49,10 @@ export const isBlockedEmailDomain = (email: string): boolean => {
  *
  * - Enabled by default on every deployment (Cloud and self-hosted); operators opt out with
  *   `SIGNUP_DOMAIN_CHECK_DISABLED=1`. Previously this was gated on `IS_FORMBRICKS_CLOUD`, which
- *   conflated a deployment flag with a sign-up policy and gave self-hosters no way to turn it on.
+ *   conflated a deployment flag with a sign-up policy: the policy was unconditional on Cloud and
+ *   unavailable everywhere else. Note self-hosted credential sign-up is already gated separately by
+ *   `SIGNUP_ENABLED`, so on self-hosted this check mainly bites the fresh-instance admin sign-up,
+ *   SSO just-in-time provisioning, and direct POSTs to Better Auth's `/sign-up/email`.
  * - Invited users are exempt unless the `SIGNUP_DOMAIN_CHECK_ON_INVITES` kill-switch is enabled.
  *   The exemption is decided by a caller-supplied check (a validated invite token whose email
  *   matches the address), invoked lazily so the token/DB work only runs when the domain is

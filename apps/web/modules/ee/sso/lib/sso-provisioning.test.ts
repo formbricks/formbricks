@@ -247,8 +247,9 @@ describe("gateSsoProvisioning — personal email domain block", () => {
   });
 
   test("does not block a personal domain when SIGNUP_DOMAIN_CHECK_DISABLED=1", async () => {
-    // SIGNUP_DOMAIN_CHECK_ENABLED stays false (default); fresh instance so it provisions cleanly.
-    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+    constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED = false; // explicit, not relying on the default
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true); // fresh instance so it provisions cleanly
+
     expect(await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "" })).toEqual({
       action: "provision",
       organizationId: null,
