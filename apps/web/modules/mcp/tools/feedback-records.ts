@@ -393,7 +393,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Find similar feedback records",
       description:
-        "Find the feedback records most similar to a given one — use it to see how widely a piece of feedback is echoed by others. Returns scored matches, best first, excluding the record itself. If the record has no embedding yet (embeddings are generated in the background, and records without text are never embedded) this reports a retryable conflict rather than an empty result. Requires an embedding model on the feedback service; without one this fails with 503.",
+        "Find the feedback records most similar to a given one — use it to see how widely a piece of feedback is echoed by others. Returns scored matches, best first, excluding the record itself. If the record has no embedding this reports a conflict rather than an empty result, and says which case it is: worth retrying for a record that was just created and is still being embedded, not worth retrying for one with no text (including text cleared by an update). Requires an embedding model on the feedback service; without one this fails with 503.",
       inputSchema: ZMcpFindSimilarFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: true,

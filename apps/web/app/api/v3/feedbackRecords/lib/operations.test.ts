@@ -868,8 +868,11 @@ describe("findSimilarV3FeedbackRecords", () => {
     const body = await response.json();
 
     expect(response.status).toBe(409);
-    expect(body.detail).toContain("no embedding yet");
+    expect(body.detail).toContain("no embedding");
     expect(body.detail).toContain("background");
+    // An update can *clear* a record's text, which removes its embedding for good — so the message must
+    // not tell the caller to keep retrying something that will never succeed.
+    expect(body.detail).toContain("retrying will not help");
   });
 
   test("turns the Hub's 503 into an actionable configuration message", async () => {
@@ -1312,14 +1315,37 @@ describe("updateV3FeedbackRecord", () => {
     expect(updateFeedbackRecord).not.toHaveBeenCalled();
   });
 
-  test("applies the same bounds as create (30k text cap)", async () => {
-    const response = await updateV3FeedbackRecord({
-      ...updateBase,
-      body: { value_text: "x".repeat(30_001) },
-    });
+  // The whole reason the update schema is `.pick()`ed from the create fields is that field-level
+  // refinements come with it. If that ever stopped holding, update would silently lose create's bounds.
+  test.each([
+    ["30k text cap", { value_text: "x".repeat(30_001) }],
+    ["32KB metadata byte cap", { metadata: { blob: "x".repeat(40_000) } }],
+    ["metadata measured in bytes, not code units", { metadata: { blob: "字".repeat(20_000) } }],
+  ])("inherits create's %s", async (_name, body) => {
+    const response = await updateV3FeedbackRecord({ ...updateBase, body });
 
     expect(response.status).toBe(422);
     expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  // The body is validated before the ownership check, so this confirms that ordering can't be used to
+  // distinguish a record you own from one you don't.
+  test("gives the same 422 for an invalid body whether or not the record is yours", async () => {
+    const own = await updateV3FeedbackRecord({
+      ...updateBase,
+      body: { value_text: "x".repeat(30_001) },
+    }).then((r) => r.json());
+
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, tenant_id: otherDirectoryId },
+      error: null,
+    });
+    const foreign = await updateV3FeedbackRecord({
+      ...updateBase,
+      body: { value_text: "x".repeat(30_001) },
+    }).then((r) => r.json());
+
+    expect(foreign).toEqual(own);
   });
 
   // PATCH is IDOR-shaped upstream exactly like get and delete: the Hub derives the tenant from the record.

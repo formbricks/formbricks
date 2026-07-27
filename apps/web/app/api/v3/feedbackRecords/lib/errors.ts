@@ -35,10 +35,12 @@ export const EMBEDDINGS_UNAVAILABLE_DETAIL =
 
 /**
  * A record that exists and belongs to the caller, yet has no embedding — the only thing a Hub 404 can
- * mean once ownership is proven. Reported as 409 (retryable state), not 404: the record is there.
+ * mean once ownership is proven. Reported as 409, not 404, because the record *is* there; the message
+ * distinguishes the two causes, because only one of them is worth retrying (a fresh record is still being
+ * embedded, whereas a record with no text has no embedding to wait for).
  */
 export const EMBEDDING_PENDING_DETAIL =
-  "This feedback record has no embedding yet, so similar records cannot be found. Embeddings are generated in the background shortly after a record is created; retry in a moment. Records without text are never embedded.";
+  "This feedback record has no embedding, so similar records cannot be found. If it was just created, embeddings are generated in the background — retry in a moment. If it has no text, or its text was cleared by an update, it has no embedding at all and retrying will not help.";
 
 /**
  * Hub statuses whose detail describes the *caller's own* request, and may therefore be echoed: a rejected

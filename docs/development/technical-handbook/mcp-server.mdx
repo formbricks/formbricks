@@ -1056,8 +1056,9 @@ Ownership of the anchor record is verified before any neighbour is fetched (see
   Both search tools need embeddings, which are optional in the Hub. Without `EMBEDDING_PROVIDER` and
   `EMBEDDING_MODEL` configured on **both** the Hub API and the Hub worker they return `503` with that
   instruction as the detail. Embedding is also asynchronous and only covers records that have text, so a
-  record created moments ago is not searchable yet; `find_similar_feedback_records` reports that case as a
-  retryable `409` rather than an empty result, and `search_feedback_records` simply won't match it yet.
+  record created moments ago is not searchable yet; `find_similar_feedback_records` reports that as a `409`
+  rather than an empty result, distinguishing "still being embedded, retry" from "no text, so there is no
+  embedding to wait for" — the latter also covers text cleared by an update.
 </Note>
 
 `limit` (1–100, default 10) and `minScore` (0–1, default 0.5) are validated by Formbricks rather than

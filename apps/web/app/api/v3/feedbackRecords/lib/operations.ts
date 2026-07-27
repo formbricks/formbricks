@@ -669,6 +669,11 @@ type TUpdateV3FeedbackRecordParams = {
  * stored record, so ownership is asserted first — and the record that guard returns is also the pre-update
  * state the audit log needs, so the check costs nothing extra.
  *
+ * There is a window between that check and the write, but it cannot be used to cross a tenant boundary: a
+ * record's `tenant_id` is not in the Hub's updatable set, so the record the guard approved is still in the
+ * same dataset when the write lands. The only thing that can change in the window is the record ceasing to
+ * exist, which is handled below.
+ *
  * Two Hub behaviours the caller has to know about, both documented in its contract:
  * - Changing `value_text` **clears** the fields derived from it (`sentiment`, `sentiment_score`,
  *   `emotions`, `value_text_translated`, `translation_lang_key`) and re-queues enrichment; changing
