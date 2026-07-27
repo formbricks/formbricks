@@ -1,9 +1,7 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/api/request-body";
@@ -18,13 +16,16 @@ import {
   allowGatewayRequest,
   buildGatewayStatusResponse,
 } from "@/modules/gateway-auth/lib/request";
+import {
+  type TFeedbackRecordsGatewayPermission,
+  hasApiKeyImplicitFeedbackDirectoryAccess,
+} from "@/modules/hub/feedback-records-gateway-authz";
 import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
 const FEEDBACK_RECORDS_SDK_PREFIX = "/v1/feedback-records";
 const ZFeedbackRecordId = z.uuid();
 
-type TFeedbackRecordsGatewayPermission = "read" | "write";
 type TFeedbackRecordsGatewayOperation =
   | "list"
   | "create"
@@ -40,17 +41,6 @@ type TParsedGatewayRoute = {
   requiredPermission: TFeedbackRecordsGatewayPermission;
   recordId?: string;
   tenantSource: "query" | "body" | "recordLookup";
-};
-
-const apiKeyPermissionWeight: Record<ApiKeyPermission, number> = {
-  read: 1,
-  write: 2,
-  manage: 3,
-};
-
-const gatewayPermissionToApiKeyPermissionWeight: Record<TFeedbackRecordsGatewayPermission, number> = {
-  read: apiKeyPermissionWeight.read,
-  write: apiKeyPermissionWeight.write,
 };
 
 const stripFeedbackRecordsPrefix = (pathname: string, prefix: string): string | null => {
@@ -184,31 +174,6 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
   return getBearerTokenFromHeaders(headers);
 };
 
-const hasApiKeyImplicitFeedbackDirectoryAccess = (
-  authentication: TAuthenticationApiKey,
-  workspaceIds: string[],
-  requiredPermission: TFeedbackRecordsGatewayPermission
-): boolean => {
-  const orgAccessControl = authentication.organizationAccess?.accessControl;
-  if (orgAccessControl?.write) {
-    return true;
-  }
-  if (orgAccessControl?.read && requiredPermission === "read") {
-    return true;
-  }
-
-  const matchingWeights = authentication.workspacePermissions
-    .filter((permission) => workspaceIds.includes(permission.workspaceId))
-    .map((permission) => apiKeyPermissionWeight[permission.permission]);
-
-  if (matchingWeights.length === 0) {
-    return false;
-  }
-
-  const maxWeight = Math.max(...matchingWeights);
-  return maxWeight >= gatewayPermissionToApiKeyPermissionWeight[requiredPermission];
-};
-
 const resolveTenantId = async (
   request: NextRequest,
   route: TParsedGatewayRoute,
@@ -298,6 +263,7 @@ const authorizeFeedbackRecordsGatewayRequest = async (
   if (principal.type === "apiKey") {
     return hasApiKeyImplicitFeedbackDirectoryAccess(
       principal.authentication,
+      feedbackDirectory.organizationId,
       feedbackDirectory.workspaceIds,
       requiredPermission
     )
