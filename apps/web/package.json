@@ -184,7 +184,7 @@
     "dotenv-cli": "11.0.0",
     "playwright": "1.58.2",
     "jsdom": "29.1.1",
-    "postcss": "8.5.14",
+    "postcss": "8.5.18",
     "resize-observer-polyfill": "1.5.1",
     "storybook": "10.3.6",
     "tailwindcss-animate": "1.0.7",
