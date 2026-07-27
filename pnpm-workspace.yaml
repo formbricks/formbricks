@@ -118,13 +118,18 @@ overrides:
   # the tree; each is pinned to its lowest patched release: 1.x→1.1.16, 2.x→2.1.2, 3.x–5.x→5.0.7.
   brace-expansion@1: 1.1.16
   brace-expansion@2: 2.1.2
-  # GHSA-mh99-v99m-4gvg: brace-expansion@5 <=5.0.7 DoS via unbounded expansion length causing
-  # an out-of-memory crash; patched in 5.0.8 (published 2026-07-23T11:39 UTC). NOT yet bumped: 5.0.8 is
-  # still inside the minimumReleaseAge (4320min/3-day) cooldown, which clears 2026-07-26T11:39 UTC. Only
-  # transitive dev-tooling path affected (@redocly/cli openapi tooling via minimatch), not a runtime web
-  # dependency. Bump this pin to 5.0.8 once the cooldown clears — do not add a minimumReleaseAgeExclude
-  # entry for this without going through the dependency-cooldown exception process first.
-  brace-expansion@5: 5.0.7
+  # GHSA-mh99-v99m-4gvg (CVE-2026-14257): brace-expansion expand() bounds result *count* (`max`) but not
+  # result *length*, so a chained-group input (e.g. '{a,b}'.repeat(1500)) can exhaust memory with an
+  # uncatchable OOM. Upstream's advisory says the 1.x/2.x/3.x/4.x lines share the vulnerable combine logic
+  # and are "expected to be affected", but as of this pin only the 5.x line has a published fix (5.0.8,
+  # adds a maxLength cap); no 1.1.17/2.1.3 exists yet. brace-expansion@1/@2 above stay on their newest
+  # available release pending an upstream backport — accepted because every path resolving those two
+  # lines here is transitive dev/build tooling (eslint, glob, rimraf, node-gyp, minimatch@<10 chains),
+  # never reachable from production request handling with attacker-influenced input. Re-check on the next
+  # audit and bump as soon as a patched 1.x/2.x release ships. The minimumReleaseAge (4320min/3-day)
+  # cooldown on 5.0.8 (published 2026-07-23T11:39 UTC) cleared 2026-07-26T11:39 UTC, so that line is
+  # bumped to the patched release now.
+  brace-expansion@5: 5.0.8
   # ENG-1994 / GHSA-4c8g-83qw-93j6 (CVE-2026-13676) + ENG-1988 / GHSA-v2hh-gcrm-f6hx (CVE-2026-16221):
   # fast-uri 3.x host confusion via failed IDN canonicalization and via literal-backslash authority
   # delimiter. 3.1.4 patches both (3.1.3 fixes only the first). Scoped to the 3.x line.
@@ -140,6 +145,17 @@ overrides:
   # inherited Object property names (e.g. "constructor"). Pulled in transitively via prisma's dev-only
   # tooling (@prisma/dev); patched in 1.4.2.
   valibot: 1.4.2
+
+# Known audit finding NOT overridden here (direct dependency, no override applies):
+# GHSA-p2fr-6hmx-4528 (moderate): @better-auth/oauth-provider >=1.4.8 <1.7.0-beta.4 fails to bind
+# resource requests to authorization grants, letting a client that completed a normal auth flow request
+# a token audienced for a resource server its authorization never covered. No stable fix has shipped —
+# only 1.7.0-beta.4+ / rc.x patch it, and upgrading is a breaking change (requires `npx auth migrate`
+# and reworking `customAccessTokenClaims`). Not exploitable in this deployment today: our MCP OAuth
+# config (apps/web/modules/auth/lib/mcp-oauth-provider-options.ts) sets a single `validAudiences` entry,
+# and the escalation requires multiple configured audiences. Re-evaluate once better-auth ships a
+# stable 1.7.x (or later) release; do not pin apps/web's better-auth/@better-auth/* deps to a beta/rc
+# without a deliberate, tested upgrade of the auth stack.
 
 autoInstallPeers: true
 linkWorkspacePackages: true
