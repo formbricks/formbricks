@@ -26,6 +26,7 @@ module.exports = {
     "<THIRD_PARTY_MODULES>",
     "^@formbricks/(.*)$",
     "^~/(.*)$",
+    "^@/(.*)$",
     "^[./]",
   ],
   importOrderSeparation: false,
@@ -116,8 +117,7 @@ Using Husky and lint-staged for automated checks:
 {
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
-      "prettier --write",
-      "eslint --fix"
+      "prettier --write"
     ],
     "*.json": [
       "prettier --write"
@@ -128,6 +128,8 @@ Using Husky and lint-staged for automated checks:
   }
 }
 ```
+
+The hook formats staged files only — ESLint is not part of it. Lint violations are caught by `pnpm lint` and the "Run Linters" CI job.
 
 ### ESLint Configuration
 ESLint runs on the flat config format. Every package and app has its own `eslint.config.mjs` that imports one of the composable tiers exported by `@formbricks/eslint-config`:
