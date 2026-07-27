@@ -98,7 +98,11 @@ export function hubErrorToProblemResponse(
 
   // The Hub's body cap is lower than ours, so this is reachable with a large (but locally valid) payload.
   if (status === 413) {
-    return problemPayloadTooLarge(requestId, "The feedback record is too large.", instance);
+    return problemPayloadTooLarge(
+      requestId,
+      relayableHubDetail(error, "The feedback record is too large."),
+      instance
+    );
   }
 
   // Embeddings are optional in the Hub, and the search endpoints are the only ones that need them. A

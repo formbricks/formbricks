@@ -126,6 +126,23 @@ describe("shared authorization + tenant resolution", () => {
     expect(response.status).toBe(400);
   });
 
+  // The resolver normalises the id it hands back as `dataset_id`, so a caller echoing that value on its
+  // next request must still match. Comparing the raw id would 403 a legitimate round trip.
+  test("accepts the normalised datasetId it would have echoed back", async () => {
+    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([
+      { id: ` ${directoryId} `, name: "Support" },
+    ]);
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+
+    const response = await listV3FeedbackRecords({ ...base, datasetId: directoryId });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(listFeedbackRecords).mock.calls[0][0].tenant_id).toBe(directoryId);
+  });
+
   test("returns 403 when an explicit datasetId is not assigned to the workspace", async () => {
     const response = await listV3FeedbackRecords({ ...base, datasetId: otherDirectoryId });
 
@@ -518,6 +535,26 @@ describe("createV3FeedbackRecord", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).detail).toContain("duplicate record");
+  });
+
+  test("relays the Hub's own size-limit detail on a 413", async () => {
+    vi.mocked(createFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: {
+        status: 413,
+        message: "413",
+        detail: "413",
+        problemDetail: "request body exceeds 512 KiB",
+      },
+    });
+
+    const relayed = await createV3FeedbackRecord({
+      ...base,
+      body: { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "hi" },
+    });
+
+    expect(relayed.status).toBe(413);
+    expect((await relayed.json()).detail).toContain("512 KiB");
   });
 
   test("maps a Hub 413 to payload-too-large rather than a misleading 502", async () => {
@@ -967,6 +1004,29 @@ describe("countV3FeedbackRecords", () => {
 
     expect(response.status).toBe(502);
     expect(JSON.stringify(await response.json())).not.toContain("10.0.0.1");
+  });
+});
+
+describe("list/count validate their own input", () => {
+  // These operations are the transport-independent face of this surface, so they can't assume an MCP
+  // schema screened the input first — and the Hub silently coerces an out-of-range limit to its default.
+  test.each([
+    ["limit", { limit: 5000 }],
+    ["limit", { limit: 0 }],
+    ["sourceType", { sourceType: "x".repeat(256) }],
+  ])("listV3FeedbackRecords rejects an out-of-range %s without calling the Hub", async (_f, override) => {
+    const response = await listV3FeedbackRecords({ ...base, ...override });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params.length).toBeGreaterThan(0);
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("countV3FeedbackRecords rejects an out-of-range filter without calling the Hub", async () => {
+    const response = await countV3FeedbackRecords({ ...base, userId: "u".repeat(256) });
+
+    expect(response.status).toBe(422);
+    expect(countFeedbackRecords).not.toHaveBeenCalled();
   });
 });
 

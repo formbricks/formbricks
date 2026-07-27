@@ -75,7 +75,9 @@ export async function resolveWorkspaceFeedbackTenant({
   const allowedTenantIds = directories.map((directory) => directory.id.trim());
 
   if (datasetId) {
-    const requested = directories.find((directory) => directory.id === datasetId);
+    // Trimmed on both sides: the id we hand back as `dataset_id` is normalised, so the value a caller
+    // echoes on its next request must match a normalised id too, or a legitimate round trip would 403.
+    const requested = directories.find((directory) => directory.id.trim() === datasetId.trim());
     if (!requested) {
       return {
         ok: false,

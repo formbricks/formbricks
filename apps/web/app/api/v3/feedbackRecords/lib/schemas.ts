@@ -246,21 +246,7 @@ export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreate
  *
  * At least one field is required: an empty patch is a caller mistake, not a no-op worth a round trip.
  */
-export const ZV3FeedbackRecordUpdateBody = ZV3FeedbackRecordCreateBodyFields.pick({
-  value_text: true,
-  value_number: true,
-  value_boolean: true,
-  value_date: true,
-  value_id: true,
-  user_id: true,
-  language: true,
-  metadata: true,
-}).refine((data) => Object.values(data).some((value) => value !== undefined), {
-  message: "at least one field to update is required",
-});
-export type TV3FeedbackRecordUpdateBody = z.infer<typeof ZV3FeedbackRecordUpdateBody>;
-
-/** The plain object form, for `inputSchema` shapes which need a raw shape rather than a refined schema. */
+/** The plain object form first, because `inputSchema` needs a raw shape rather than a refined schema. */
 export const ZV3FeedbackRecordUpdateBodyFields = ZV3FeedbackRecordCreateBodyFields.pick({
   value_text: true,
   value_number: true,
@@ -271,6 +257,13 @@ export const ZV3FeedbackRecordUpdateBodyFields = ZV3FeedbackRecordCreateBodyFiel
   language: true,
   metadata: true,
 });
+
+/** The refined form is derived from it, so the mutable field list exists exactly once. */
+export const ZV3FeedbackRecordUpdateBody = ZV3FeedbackRecordUpdateBodyFields.refine(
+  (data) => Object.values(data).some((value) => value !== undefined),
+  { message: "at least one field to update is required" }
+);
+export type TV3FeedbackRecordUpdateBody = z.infer<typeof ZV3FeedbackRecordUpdateBody>;
 
 /**
  * Batch create. The Hub has no bulk-create endpoint (its only bulk write is the delete-by-user erasure

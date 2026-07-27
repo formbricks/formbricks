@@ -254,6 +254,20 @@ describe("create_feedback_record", () => {
     expect(createV3FeedbackRecord).not.toHaveBeenCalled();
   });
 
+  // The invariant is "a failed mutation is never silently unaudited" — including when the operation throws
+  // rather than returning a problem response. Without this the catch branch is unguarded.
+  test("still queues a failure audit event when the operation throws, and rethrows", async () => {
+    const auditLog = { status: "failure" } as any;
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(createV3FeedbackRecord).mockRejectedValue(new Error("boom"));
+    const { tools } = createToolServer();
+
+    await expect(tools.get("create_feedback_record")!.handler(body, { authInfo })).rejects.toThrow("boom");
+
+    expect(auditLog.eventId).toBe("req_tool");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.anything());
+  });
+
   // buildAuditLogBaseObject seeds status:"failure"; a failed create must keep that and carry an eventId
   // for correlation. The operations layer intentionally no longer sets eventId (this layer does), so this
   // is the only guard on that invariant.
@@ -468,6 +482,22 @@ describe("create_feedback_records", () => {
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
     expect(built[0].status).toBe("success");
     expect(built[1].status).toBe("failure");
+  });
+
+  test("still queues a failure event when the batch operation throws, and rethrows", async () => {
+    const built: any[] = [];
+    vi.mocked(buildV3AuditLog).mockImplementation(() => {
+      const auditLog = { status: "failure" } as any;
+      built.push(auditLog);
+      return auditLog;
+    });
+    vi.mocked(createV3FeedbackRecords).mockRejectedValue(new Error("boom"));
+    const { tools } = createToolServer();
+
+    await expect(tools.get("create_feedback_records")!.handler(input, { authInfo })).rejects.toThrow("boom");
+
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(built[0].eventId).toBe("req_tool");
   });
 
   test("queues a single failure event when nothing was created", async () => {

@@ -24,16 +24,9 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   // write tools are reachable (clients derive their DCR/authorize scopes from what we advertise, and
   // the plugin validates authorize against the client's registered scopes). Granting the write scope
   // is safe: actual write access is still enforced downstream by the user's workspace permissions.
-  clientRegistrationDefaultScopes: [
-    "openid",
-    "profile",
-    "email",
-    "offline_access",
-    "surveys:read",
-    "surveys:write",
-    "feedbackRecords:read",
-    "feedbackRecords:write",
-  ],
+  // Derived from the shared list rather than repeated: a scope added there must reach default client
+  // registration too, or clients would be told about a scope they can't register for.
+  clientRegistrationDefaultScopes: [...MCP_OAUTH_SCOPES],
   accessTokenExpiresIn: 15 * 60,
   refreshTokenExpiresIn: 30 * 24 * 60 * 60,
   scopeExpirations: {

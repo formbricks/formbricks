@@ -53,6 +53,8 @@ import {
   type TV3FeedbackRecordUpdateBody,
   ZV3FeedbackRecordBatchCreateBody,
   ZV3FeedbackRecordCreateBody,
+  ZV3FeedbackRecordFilters,
+  ZV3FeedbackRecordListFilters,
   ZV3FeedbackRecordSearchFilters,
   ZV3FeedbackRecordSimilarityFilters,
   ZV3FeedbackRecordUpdateBody,
@@ -180,13 +182,17 @@ const buildSimilarityParams = (filters: {
 };
 
 /**
- * Validate similarity input against our own bounds. The Hub coerces out-of-range `limit`/`min_score` to its
- * defaults instead of rejecting them, so without this a caller would silently get something other than
- * what it asked for.
+ * Validate query input against our own bounds, and turn a failure into `invalid_params`.
+ *
+ * Every operation validates rather than trusting its caller: these operations are the transport-independent
+ * face of this surface, so they cannot assume an MCP schema has already screened the input. It also matters
+ * upstream — the Hub silently coerces an out-of-range `limit`/`min_score` to its own default instead of
+ * rejecting it, so without this a caller would quietly get something other than what it asked for.
  */
-function parseSimilarityFilters<T>(
+function parseQueryInput<T>(
   schema: z.ZodType<T>,
   input: unknown,
+  label: string,
   log: ReturnType<typeof logger.withContext>,
   requestId: string,
   instance: string
@@ -196,10 +202,10 @@ function parseSimilarityFilters<T>(
     return { ok: true, data: parsed.data };
   }
 
-  log.warn({ statusCode: 422 }, "Invalid feedback record similarity parameters");
+  log.warn({ statusCode: 422 }, `Invalid feedback record ${label}`);
   return {
     ok: false,
-    response: problemUnprocessableContent(requestId, "Invalid similarity parameters", {
+    response: problemUnprocessableContent(requestId, `Invalid ${label}`, {
       invalid_params: toInvalidParams(parsed.error),
       instance,
     }),
@@ -309,11 +315,23 @@ export async function listV3FeedbackRecords({
       return resolution.response;
     }
 
+    const parsed = parseQueryInput(
+      ZV3FeedbackRecordListFilters,
+      { ...filters, limit, cursor },
+      "list parameters",
+      log,
+      requestId,
+      instance
+    );
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+
     const listParams: FeedbackRecordListParams = {
-      ...buildHubFilterParams(resolution.tenantId, filters),
-      limit: limit ?? DEFAULT_LIST_LIMIT,
+      ...buildHubFilterParams(resolution.tenantId, parsed.data),
+      limit: parsed.data.limit ?? DEFAULT_LIST_LIMIT,
     };
-    if (cursor) listParams.cursor = cursor;
+    if (parsed.data.cursor) listParams.cursor = parsed.data.cursor;
 
     const result = await listFeedbackRecords(listParams);
     if (result.error || !result.data) {
@@ -375,7 +393,12 @@ export async function countV3FeedbackRecords({
       return resolution.response;
     }
 
-    const result = await countFeedbackRecords(buildHubFilterParams(resolution.tenantId, filters));
+    const parsed = parseQueryInput(ZV3FeedbackRecordFilters, filters, "filters", log, requestId, instance);
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+
+    const result = await countFeedbackRecords(buildHubFilterParams(resolution.tenantId, parsed.data));
     if (result.error || !result.data) {
       log.warn(
         {
@@ -886,9 +909,10 @@ export async function searchV3FeedbackRecords({
       return resolution.response;
     }
 
-    const filters = parseSimilarityFilters(
+    const filters = parseQueryInput(
       ZV3FeedbackRecordSearchFilters,
       { query, limit, cursor, minScore },
+      "search parameters",
       log,
       requestId,
       instance
@@ -969,9 +993,10 @@ export async function findSimilarV3FeedbackRecords({
       return resolution.response;
     }
 
-    const filters = parseSimilarityFilters(
+    const filters = parseQueryInput(
       ZV3FeedbackRecordSimilarityFilters,
       { limit, cursor, minScore },
+      "similarity parameters",
       log,
       requestId,
       instance
