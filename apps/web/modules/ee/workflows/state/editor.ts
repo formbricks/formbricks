@@ -402,7 +402,9 @@ const createDefaultSendEmailNode = (position: {
   id: createId(),
   type: "action",
   actionType: WORKFLOW_ACTIONS.SEND_EMAIL,
-  label: "Send email",
+  // No hardcoded label: the node title falls back to the translated
+  // `workspace.workflows.send_email` key (see node-registry). A label is only set when the
+  // user renames the node, so the default stays localized.
   config: {
     to: "",
     from: "team@example.com",
