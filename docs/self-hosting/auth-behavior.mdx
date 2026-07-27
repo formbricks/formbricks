@@ -48,9 +48,9 @@ In self-hosted Formbricks, user management and authentication can be customized 
 - **Type:** Boolean (0 or 1)
 - **Default:** 0 (the check is enabled — personal email domains are blocked)
 - **Description:**
-  - Formbricks blocks new sign-ups from personal / free / disposable email domains (`gmail.com`, `yahoo.com`, `outlook.com`, `mailinator.com`, …) by default. Rejected users see "Please sign up with your company email address."
+  - Formbricks blocks new sign-ups from personal / free / disposable email domains (`gmail.com`, `yahoo.com`, `outlook.com`, `mailinator.com`, …) by default. On the sign-up form the address is rejected with "Please sign up with your company email address."
   - Set this to `1` to accept personal addresses.
-  - The check applies wherever a **new** account would be created: the first admin on a fresh instance, SSO just-in-time provisioning, and the sign-up form. Existing users are never affected — they can always log in. Invited users are exempt unless `SIGNUP_DOMAIN_CHECK_ON_INVITES=1`.
+  - The check applies wherever a **new** account would be created: the first admin on a fresh instance, SSO just-in-time provisioning (see `AUTH_SKIP_INVITE_FOR_SSO`), and the sign-up form where it is reachable. Existing users are never affected — they can always log in. Invited users are exempt unless `SIGNUP_DOMAIN_CHECK_ON_INVITES=1`.
 - **Use case:**
   - Set this to `1` if you (or your users) sign up with a personal address. **This includes creating the first admin account on a fresh instance** — if your admin email is a personal one, set this before running the setup flow, otherwise the sign-up is rejected.
   - Keep it at `0` to require company email addresses, e.g. combined with `AUTH_SKIP_INVITE_FOR_SSO=1` so anyone with a company email can self-provision via SSO while personal accounts are refused.

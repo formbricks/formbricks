@@ -24,7 +24,7 @@ const blockedEmailDomains = new Set<string>(
 /**
  * Pure predicate: is the email's domain a known personal/free/disposable provider?
  *
- * Environment-agnostic — callers apply the Cloud gate and invite exemption via
+ * Environment-agnostic — the enabled-check and invite exemption are applied by
  * {@link isSignupEmailDomainBlocked}. Assumes the address has already passed email-format
  * validation; malformed or absent input (missing/empty address, empty local part, empty domain) is
  * treated as not-blocked, so an unexpected caller degrades to "allow" rather than throwing.
@@ -50,9 +50,10 @@ export const isBlockedEmailDomain = (email: string): boolean => {
  * - Enabled by default on every deployment (Cloud and self-hosted); operators opt out with
  *   `SIGNUP_DOMAIN_CHECK_DISABLED=1`. Previously this was gated on `IS_FORMBRICKS_CLOUD`, which
  *   conflated a deployment flag with a sign-up policy: the policy was unconditional on Cloud and
- *   unavailable everywhere else. Note self-hosted credential sign-up is already gated separately by
- *   `SIGNUP_ENABLED`, so on self-hosted this check mainly bites the fresh-instance admin sign-up,
- *   SSO just-in-time provisioning, and direct POSTs to Better Auth's `/sign-up/email`.
+ *   unavailable everywhere else. Note `SIGNUP_ENABLED` only 404s the self-hosted sign-up *page*, not
+ *   the action behind it, so on self-hosted this check newly covers the fresh-instance admin sign-up,
+ *   SSO just-in-time provisioning, an invited user submitting a different address, and direct POSTs to
+ *   `createUserAction` / Better Auth's `/sign-up/email`.
  * - Invited users are exempt unless the `SIGNUP_DOMAIN_CHECK_ON_INVITES` kill-switch is enabled.
  *   The exemption is decided by a caller-supplied check (a validated invite token whose email
  *   matches the address), invoked lazily so the token/DB work only runs when the domain is
