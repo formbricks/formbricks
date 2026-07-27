@@ -56,7 +56,7 @@
     "build:dev": "vite build --mode dev && node scripts/assert-scoped-css.mjs",
     "go": "vite build --watch --mode dev",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
+    "lint": "eslint src --fix",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist coverage",
     "ui:add": "npx shadcn@latest add",

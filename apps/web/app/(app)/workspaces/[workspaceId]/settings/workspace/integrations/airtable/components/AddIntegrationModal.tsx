@@ -216,7 +216,6 @@ export const AddIntegrationModal = ({
     } else {
       reset();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode]);
 
   const survey = watch("survey");

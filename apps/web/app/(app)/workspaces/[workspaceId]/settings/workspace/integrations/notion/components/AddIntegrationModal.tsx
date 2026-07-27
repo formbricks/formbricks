@@ -110,7 +110,6 @@ export const AddIntegrationModal = ({
         type: dbProperties[fieldKey].type,
       })) || []
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDatabase?.id]);
 
   const elementItems = useMemo(() => {
@@ -156,7 +155,6 @@ export const AddIntegrationModal = ({
     }));
 
     return [...mappedElements, ...variables, ...hiddenFields, ...Metadata, ...createdAt, ...personAttributes];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id, contactAttributeKeys]);
 
   useEffect(() => {

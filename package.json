@@ -55,7 +55,7 @@
     "@redocly/cli": "1.34.3",
     "@trivago/prettier-plugin-sort-imports": "6.0.2",
     "dotenv": "17.3.1",
-    "eslint": "8.57.1",
+    "eslint": "9.39.5",
     "husky": "9.1.7",
     "lint-staged": "16.4.0",
     "prettier": "3.8.3",
