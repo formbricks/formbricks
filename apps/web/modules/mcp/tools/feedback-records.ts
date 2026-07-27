@@ -134,7 +134,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Create feedback record",
       description:
-        "Create a feedback record in a workspace's feedback dataset. The dataset is derived from the workspace; it is never taken from input.",
+        "Create a feedback record in a workspace's feedback dataset. The dataset is resolved from workspaceId, or from datasetId when the workspace has more than one; it can never be set through the record body.",
       inputSchema: ZMcpCreateFeedbackRecordInput.shape,
       annotations: {
         readOnlyHint: false,

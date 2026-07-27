@@ -121,7 +121,9 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
     .describe("When the feedback was collected, as an ISO 8601 timestamp. Defaults to now."),
   metadata: z
     .record(z.string(), z.unknown())
-    .refine((value) => JSON.stringify(value).length <= MAX_METADATA_BYTES, {
+    // Byte length, not string length: JSON.stringify(...).length counts UTF-16 code units, so a CJK or
+    // emoji payload would slip through at several times the advertised size.
+    .refine((value) => Buffer.byteLength(JSON.stringify(value), "utf8") <= MAX_METADATA_BYTES, {
       message: `must serialize to at most ${MAX_METADATA_BYTES} bytes`,
     })
     .optional()

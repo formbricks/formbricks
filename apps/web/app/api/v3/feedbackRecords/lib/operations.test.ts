@@ -462,6 +462,24 @@ describe("createV3FeedbackRecord", () => {
     expect(response.status).toBe(413);
   });
 
+  // The cap is a byte budget, so it must not be fooled by multi-byte characters: 20k CJK characters is
+  // ~60 KB of UTF-8 but only 20k UTF-16 code units.
+  test("measures the metadata cap in bytes, not string length", async () => {
+    const response = await createV3FeedbackRecord({
+      ...base,
+      body: {
+        source_type: "call_notes",
+        field_id: "note",
+        field_type: "text",
+        value_text: "hi",
+        metadata: { blob: "字".repeat(20_000) },
+      },
+    });
+
+    expect(response.status).toBe(422);
+    expect(createFeedbackRecord).not.toHaveBeenCalled();
+  });
+
   test("rejects oversized metadata locally instead of letting the Hub reject the request", async () => {
     const response = await createV3FeedbackRecord({
       ...base,

@@ -40,7 +40,7 @@ export async function requireUnifyFeedbackWorkspaceAccess(
     // no upgrade prompt to fall back on, so the response has to say who can act.
     return problemForbidden(
       requestId,
-      "Unify Feedback is not enabled for this organization. It requires an Enterprise plan or license — an organization owner can enable it from the organization's settings.",
+      "Unify Feedback is not enabled for this organization. It requires an Enterprise plan or license — an organization owner can enable it from the organization's billing or license settings.",
       instance
     );
   }
