@@ -38,12 +38,12 @@ The whole flow uses Authorization Code + PKCE, the standard the [MCP authorizati
 
 The MCP server exposes survey and feedback-record tools, grouped into scopes you approve on the consent screen:
 
-| Scope                   | Tools                                                                                                                                | What it allows                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `surveys:read`          | `list_surveys`, `get_survey`, `validate_survey`                                                                                      | Read surveys and validate survey documents                         |
-| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`                                                                                     | Create, update, and delete surveys                                 |
-| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read and search feedback records in a workspace's feedback dataset |
-| `feedbackRecords:write` | `create_feedback_record`, `delete_feedback_record`                                                                                   | Create and delete feedback records                                 |
+| Scope                   | Tools                                                                                                                                                          | What it allows                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `surveys:read`          | `list_surveys`, `get_survey`, `validate_survey`                                                                                                                | Read surveys and validate survey documents                                |
+| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`                                                                                                               | Create, update, and delete surveys                                        |
+| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
+| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `delete_feedback_record`                                                                                  | Create and delete feedback records                                        |
 
 Scope groups are independent — a client can be granted feedback-record access without survey access,
 or the other way around. `list_workspaces` is available to either read scope, since every other tool
@@ -60,6 +60,10 @@ needs a workspace id.
   `feedbackRecords:write` only to clients you want to be able to delete feedback, and keep read-only agents on
   `feedbackRecords:read`.
 </Warning>
+
+Feedback records can be filtered by source, question, submission, end user, chosen option and date range,
+and `count_feedback_records` answers "how many" without fetching the records themselves — so an agent can
+report totals without pulling anyone's feedback text into the conversation.
 
 The two search tools match by meaning rather than keywords ("checkout is confusing" finds "I couldn't
 figure out how to pay"), and `find_similar_feedback_records` shows how widely one piece of feedback is

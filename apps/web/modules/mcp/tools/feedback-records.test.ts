@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
+  countV3FeedbackRecords,
   createV3FeedbackRecord,
+  createV3FeedbackRecords,
   deleteV3FeedbackRecord,
   findSimilarV3FeedbackRecords,
   getV3FeedbackRecord,
@@ -20,7 +22,9 @@ import {
 import { registerFeedbackRecordTools } from "./feedback-records";
 
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
+  countV3FeedbackRecords: vi.fn(),
   createV3FeedbackRecord: vi.fn(),
+  createV3FeedbackRecords: vi.fn(),
   deleteV3FeedbackRecord: vi.fn(),
   findSimilarV3FeedbackRecords: vi.fn(),
   getV3FeedbackRecord: vi.fn(),
@@ -80,13 +84,15 @@ beforeEach(() => {
 });
 
 describe("registerFeedbackRecordTools", () => {
-  test("registers the seven feedback-record tools in order", () => {
+  test("registers the nine feedback-record tools in order", () => {
     const { tools } = createToolServer();
     expect(Array.from(tools.keys())).toEqual([
       "list_feedback_datasets",
       "list_feedback_records",
+      "count_feedback_records",
       "get_feedback_record",
       "create_feedback_record",
+      "create_feedback_records",
       "delete_feedback_record",
       "search_feedback_records",
       "find_similar_feedback_records",
@@ -377,5 +383,97 @@ describe("find_similar_feedback_records", () => {
 
     expect(result.isError).toBe(true);
     expect(findSimilarV3FeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("count_feedback_records", () => {
+  test("passes the filters through and returns the count", async () => {
+    vi.mocked(countV3FeedbackRecords).mockResolvedValue(
+      successResponse(
+        { count: 7, dataset_id: directoryId, dataset_name: "Support" },
+        { requestId: "req_tool" }
+      )
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("count_feedback_records")!
+      .handler({ workspaceId, userId: "user-1", fieldType: "text" }, { authInfo });
+
+    expect(countV3FeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, userId: "user-1", fieldType: "text", instance: "/api/mcp" })
+    );
+    expect(result.structuredContent.data.count).toBe(7);
+  });
+
+  test("requires the read scope", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("count_feedback_records")!
+      .handler({ workspaceId }, { authInfo: noFeedbackScopeAuthInfo });
+
+    expect(result.isError).toBe(true);
+    expect(countV3FeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("create_feedback_records", () => {
+  const records = [
+    { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "one" },
+    { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "two" },
+  ];
+  const input = { workspaceId, records };
+
+  test("requires the write scope", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools.get("create_feedback_records")!.handler(input, { authInfo: readOnlyAuthInfo });
+
+    expect(result.isError).toBe(true);
+    expect(createV3FeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  // One creation is one audit event, so a batch of N creations must be N events — not one summary event
+  // that loses which records were written.
+  test("queues one success audit event per created record", async () => {
+    const built: any[] = [];
+    vi.mocked(buildV3AuditLog).mockImplementation(() => {
+      const auditLog = { status: "failure" } as any;
+      built.push(auditLog);
+      return auditLog;
+    });
+    vi.mocked(createV3FeedbackRecords).mockImplementation(async ({ auditLogs }: any) => {
+      // Stand in for the operation: it stamps only the records it actually created.
+      auditLogs[0].targetId = "rec-1";
+      return successListResponse([{ id: "rec-1" }], { created: 1, failed: 1 }, { requestId: "req_tool" });
+    });
+    const { tools } = createToolServer();
+
+    await tools.get("create_feedback_records")!.handler(input, { authInfo });
+
+    expect(built).toHaveLength(2);
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(built[0].status).toBe("success");
+    expect(built[1].status).toBe("failure");
+  });
+
+  test("queues a single failure event when nothing was created", async () => {
+    const built: any[] = [];
+    vi.mocked(buildV3AuditLog).mockImplementation(() => {
+      const auditLog = { status: "failure" } as any;
+      built.push(auditLog);
+      return auditLog;
+    });
+    vi.mocked(createV3FeedbackRecords).mockResolvedValue(
+      problemBadRequest("req_tool", "rejected", { instance: "/api/mcp" })
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools.get("create_feedback_records")!.handler(input, { authInfo });
+
+    expect(result.isError).toBe(true);
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(built[0].eventId).toBe("req_tool");
   });
 });

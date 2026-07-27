@@ -26,6 +26,11 @@ export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListRe
   data: FeedbackRecordData[];
 };
 
+// `GET /v1/feedback-records/count` — the Hub documents it as taking the same query parameters as the
+// list endpoint, minus pagination, and answering with a single total.
+export type FeedbackRecordCountParams = FormbricksHub.FeedbackRecordCountParams;
+export type FeedbackRecordCountResponse = FormbricksHub.FeedbackRecordCountResponse;
+
 export type SemanticSearchInput = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchParams;
 export type SemanticSearchResponse = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse;
 export type SemanticSearchResultItem = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse.Data;

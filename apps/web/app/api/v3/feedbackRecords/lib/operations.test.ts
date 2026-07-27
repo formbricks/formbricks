@@ -5,7 +5,9 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
+  countFeedbackRecords,
   createFeedbackRecord,
+  createFeedbackRecordsBatch,
   deleteFeedbackRecord,
   findSimilarFeedbackRecords,
   listFeedbackRecords,
@@ -14,7 +16,9 @@ import {
 } from "@/modules/hub/service";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
+  countV3FeedbackRecords,
   createV3FeedbackRecord,
+  createV3FeedbackRecords,
   deleteV3FeedbackRecord,
   findSimilarV3FeedbackRecords,
   getV3FeedbackRecord,
@@ -36,6 +40,8 @@ vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
 }));
 vi.mock("@/modules/hub/service", () => ({
   listFeedbackRecords: vi.fn(),
+  countFeedbackRecords: vi.fn(),
+  createFeedbackRecordsBatch: vi.fn(),
   retrieveFeedbackRecord: vi.fn(),
   createFeedbackRecord: vi.fn(),
   deleteFeedbackRecord: vi.fn(),
@@ -881,5 +887,318 @@ describe("findSimilarV3FeedbackRecords", () => {
     expect(response.status).toBe(422);
     expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
     expect(findSimilarFeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("countV3FeedbackRecords", () => {
+  beforeEach(() => {
+    vi.mocked(countFeedbackRecords).mockResolvedValue({ data: { count: 42 }, error: null });
+  });
+
+  test("returns the count and names the dataset it came from", async () => {
+    const response = await countV3FeedbackRecords(base);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      data: { count: 42, dataset_id: directoryId, dataset_name: "Support" },
+    });
+    expect(countFeedbackRecords).toHaveBeenCalledWith({ tenant_id: directoryId });
+  });
+
+  // A count answers "how many" without any record content crossing the boundary — that is the whole point
+  // of having it rather than making the caller page through records.
+  test("returns no record content at all", async () => {
+    const body = JSON.stringify(await (await countV3FeedbackRecords(base)).json());
+
+    expect(body).not.toContain("value_text");
+    expect(body).not.toContain("Love it");
+  });
+
+  test("passes every filter through under the Hub's parameter names", async () => {
+    await countV3FeedbackRecords({
+      ...base,
+      sourceType: "survey",
+      sourceId: "svy_1",
+      fieldType: "text",
+      fieldId: "q1",
+      fieldGroupId: "grp_1",
+      submissionId: "sub-1",
+      userId: "user-1",
+      valueId: "opt_1",
+      since: "2026-01-01T00:00:00Z",
+      until: "2026-12-31T00:00:00Z",
+    });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith({
+      tenant_id: directoryId,
+      source_type: "survey",
+      source_id: "svy_1",
+      field_type: "text",
+      field_id: "q1",
+      field_group_id: "grp_1",
+      submission_id: "sub-1",
+      user_id: "user-1",
+      value_id: "opt_1",
+      since: "2026-01-01T00:00:00Z",
+      until: "2026-12-31T00:00:00Z",
+    });
+  });
+
+  test("cannot be pointed at another workspace's dataset", async () => {
+    const response = await countV3FeedbackRecords({ ...base, datasetId: otherDirectoryId });
+
+    expect(response.status).toBe(403);
+    expect(countFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("maps a Hub failure through the shared error mapping", async () => {
+    vi.mocked(countFeedbackRecords).mockResolvedValue({
+      data: null,
+      error: { status: 500, message: "boom", detail: "boom", problemDetail: "panic at 10.0.0.1" },
+    });
+
+    const response = await countV3FeedbackRecords(base);
+
+    expect(response.status).toBe(502);
+    expect(JSON.stringify(await response.json())).not.toContain("10.0.0.1");
+  });
+});
+
+describe("listV3FeedbackRecords filters", () => {
+  // The Hub's count endpoint takes the same parameters as list, and both go through one mapper — so this
+  // pins that list really does send the full filter set, not a subset of it.
+  test("sends every filter to the Hub alongside pagination", async () => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 10, next_cursor: undefined },
+      error: null,
+    });
+
+    await listV3FeedbackRecords({
+      ...base,
+      limit: 10,
+      cursor: "abc",
+      sourceType: "survey",
+      sourceId: "svy_1",
+      fieldType: "text",
+      fieldId: "q1",
+      fieldGroupId: "grp_1",
+      submissionId: "sub-1",
+      userId: "user-1",
+      valueId: "opt_1",
+      since: "2026-01-01T00:00:00Z",
+      until: "2026-12-31T00:00:00Z",
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith({
+      tenant_id: directoryId,
+      limit: 10,
+      cursor: "abc",
+      source_type: "survey",
+      source_id: "svy_1",
+      field_type: "text",
+      field_id: "q1",
+      field_group_id: "grp_1",
+      submission_id: "sub-1",
+      user_id: "user-1",
+      value_id: "opt_1",
+      since: "2026-01-01T00:00:00Z",
+      until: "2026-12-31T00:00:00Z",
+    });
+  });
+});
+
+describe("createV3FeedbackRecords", () => {
+  const record = (i: number) => ({
+    source_type: "call_notes",
+    field_id: "note",
+    field_type: "text",
+    value_text: `note ${i}`,
+  });
+  const hubRecord = (i: number) =>
+    ({
+      id: `019fa338-f494-7384-b34e-0173978300${i}0`,
+      tenant_id: directoryId,
+      value_text: `note ${i}`,
+    }) as FeedbackRecordData;
+
+  test("requires readWrite access", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [{ data: hubRecord(1), error: null }],
+    });
+
+    await createV3FeedbackRecords({ ...base, body: { records: [record(1)] } });
+
+    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
+      null,
+      workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
+  });
+
+  test("creates every record with the resolved tenant injected", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [
+        { data: hubRecord(1), error: null },
+        { data: hubRecord(2), error: null },
+      ],
+    });
+
+    const response = await createV3FeedbackRecords({
+      ...base,
+      body: { records: [record(1), record(2)] },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toHaveLength(2);
+    expect(body.meta).toMatchObject({ requested: 2, created: 2, failed: 0, failures: [] });
+    for (const params of vi.mocked(createFeedbackRecordsBatch).mock.calls[0][0]) {
+      expect(params.tenant_id).toBe(directoryId);
+    }
+  });
+
+  // Validation is all-or-nothing on purpose: a half-written batch is far worse to recover from than a
+  // rejected one, and the caller can fix and resend.
+  test("rejects the whole batch when one record is invalid, before writing anything", async () => {
+    const response = await createV3FeedbackRecords({
+      ...base,
+      body: { records: [record(1), { ...record(2), value_text: undefined }] },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(body.invalid_params[0].name).toBe("records.1.value_text");
+    expect(createFeedbackRecordsBatch).not.toHaveBeenCalled();
+  });
+
+  test("rejects a batch over the cap and an empty batch", async () => {
+    const tooMany = await createV3FeedbackRecords({
+      ...base,
+      body: { records: Array.from({ length: 51 }, (_, i) => record(i)) },
+    });
+    const empty = await createV3FeedbackRecords({ ...base, body: { records: [] } });
+
+    expect(tooMany.status).toBe(422);
+    expect(empty.status).toBe(422);
+    expect(createFeedbackRecordsBatch).not.toHaveBeenCalled();
+  });
+
+  test("ignores a tenant_id smuggled into a record", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [{ data: hubRecord(1), error: null }],
+    });
+
+    await createV3FeedbackRecords({
+      ...base,
+      body: { records: [{ ...record(1), tenant_id: "attacker-tenant" }] },
+    });
+
+    expect(vi.mocked(createFeedbackRecordsBatch).mock.calls[0][0][0].tenant_id).toBe(directoryId);
+  });
+
+  // Partial success has to be visible: the caller needs to know which records to retry, by index.
+  test("reports partial failure per index while returning what was created", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [
+        { data: hubRecord(1), error: null },
+        {
+          data: null,
+          error: {
+            status: 409,
+            message: "409",
+            detail: "409",
+            problemDetail: "duplicate record for (tenant_id, submission_id, field_id)",
+          },
+        },
+      ],
+    });
+
+    const body = await (
+      await createV3FeedbackRecords({ ...base, body: { records: [record(1), record(2)] } })
+    ).json();
+
+    expect(body.data).toHaveLength(1);
+    expect(body.meta).toMatchObject({ requested: 2, created: 1, failed: 1 });
+    expect(body.meta.failures).toEqual([{ index: 1, detail: expect.stringContaining("duplicate record") }]);
+  });
+
+  // A 5xx can carry upstream internals, so a per-record failure must be as tight-lipped as a whole-request
+  // one — the batch path must not become the leak the single path isn't.
+  test("does not relay upstream internals in a per-record failure", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [
+        { data: hubRecord(1), error: null },
+        {
+          data: null,
+          error: { status: 500, message: "boom", detail: "boom", problemDetail: "panic at 10.0.0.1" },
+        },
+      ],
+    });
+
+    const body = await (
+      await createV3FeedbackRecords({ ...base, body: { records: [record(1), record(2)] } })
+    ).json();
+
+    expect(JSON.stringify(body)).not.toContain("10.0.0.1");
+    expect(body.meta.failures[0].detail).toBe("The feedback service rejected this record.");
+  });
+
+  // Per-record relay follows the same status allowlist as a whole request: a Hub 401 is about *our*
+  // credentials, so its detail must not reach the caller even though 401 is a 4xx.
+  test("does not relay a Hub auth failure detail in a per-record failure", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [
+        { data: hubRecord(1), error: null },
+        {
+          data: null,
+          error: {
+            status: 401,
+            message: "401",
+            detail: "401",
+            problemDetail: "invalid api key for tenant-service",
+          },
+        },
+      ],
+    });
+
+    const body = await (
+      await createV3FeedbackRecords({ ...base, body: { records: [record(1), record(2)] } })
+    ).json();
+
+    expect(JSON.stringify(body)).not.toContain("invalid api key");
+    expect(body.meta.failures[0].detail).toBe("The feedback service rejected this record.");
+  });
+
+  // An empty 200 would read as "there was nothing to do" rather than "the service refused everything".
+  test("returns the upstream failure when nothing could be created", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [
+        { data: null, error: { status: 503, message: "unavailable", detail: "unavailable" } },
+        { data: null, error: { status: 503, message: "unavailable", detail: "unavailable" } },
+      ],
+    });
+
+    const response = await createV3FeedbackRecords({ ...base, body: { records: [record(1), record(2)] } });
+
+    expect(response.status).toBe(503);
+  });
+
+  test("stamps one audit log per created record and leaves failed ones unstamped", async () => {
+    vi.mocked(createFeedbackRecordsBatch).mockResolvedValue({
+      results: [
+        { data: hubRecord(1), error: null },
+        { data: null, error: { status: 409, message: "dupe", detail: "dupe" } },
+      ],
+    });
+    const auditLogs = [{ status: "failure" }, { status: "failure" }] as unknown as TV3AuditLog[];
+
+    await createV3FeedbackRecords({ ...base, body: { records: [record(1), record(2)] }, auditLogs });
+
+    expect(auditLogs[0].targetId).toBe(hubRecord(1).id);
+    expect(auditLogs[0].organizationId).toBe("org_1");
+    expect(auditLogs[0].newObject).toBeDefined();
+    expect(auditLogs[1].targetId).toBeUndefined();
   });
 });

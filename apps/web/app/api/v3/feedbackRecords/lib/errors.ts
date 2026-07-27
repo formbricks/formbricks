@@ -41,6 +41,31 @@ export const EMBEDDING_PENDING_DETAIL =
   "This feedback record has no embedding yet, so similar records cannot be found. Embeddings are generated in the background shortly after a record is created; retry in a moment. Records without text are never embedded.";
 
 /**
+ * Hub statuses whose detail describes the *caller's own* request, and may therefore be echoed: a rejected
+ * field value, a duplicate submission, an oversized record.
+ *
+ * Deliberately not "any 4xx". A Hub 401/403 means *our* Hub credentials were refused and a 404 can reveal
+ * upstream addressing — neither is the caller's business, and both would be describing our infrastructure
+ * rather than their request.
+ */
+const RELAYABLE_HUB_STATUSES = new Set([400, 409, 413, 422]);
+
+/**
+ * The one place that decides what a Hub failure may say to a caller.
+ *
+ * The Hub owns content rules we deliberately don't duplicate (NULL bytes, its own length limits), so for
+ * the statuses above its message is relayed — bounded — because without it an agent cannot correct its own
+ * request. Everything else is replaced by a fixed string. Used both for whole-request problem responses and
+ * for the per-record failures of a batch write, so neither can drift into leaking more than the other.
+ */
+export function relayableHubDetail(error: HubError | null, fallback: string): string {
+  if (!error?.problemDetail || !RELAYABLE_HUB_STATUSES.has(error.status)) {
+    return fallback;
+  }
+  return error.problemDetail.slice(0, MAX_RELAYED_DETAIL_LENGTH);
+}
+
+/**
  * Map a Hub service error to a controlled v3 problem response.
  *
  * A Hub 400/422 describes the *caller's own* input, so its field-level detail is relayed: the Hub owns
@@ -64,8 +89,7 @@ export function hubErrorToProblemResponse(
   if (status === 409) {
     return problemConflict(
       requestId,
-      error?.problemDetail?.slice(0, MAX_RELAYED_DETAIL_LENGTH) ??
-        "The feedback service reported a conflict.",
+      relayableHubDetail(error, "The feedback service reported a conflict."),
       instance
     );
   }
@@ -91,9 +115,7 @@ export function hubErrorToProblemResponse(
         name: name.slice(0, MAX_RELAYED_DETAIL_LENGTH),
         reason: reason.slice(0, MAX_RELAYED_DETAIL_LENGTH),
       }));
-    const detail =
-      error?.problemDetail?.slice(0, MAX_RELAYED_DETAIL_LENGTH) ??
-      "The feedback service rejected the request.";
+    const detail = relayableHubDetail(error, "The feedback service rejected the request.");
 
     return status === 400
       ? problemBadRequest(requestId, detail, { instance, invalid_params: invalidParams })

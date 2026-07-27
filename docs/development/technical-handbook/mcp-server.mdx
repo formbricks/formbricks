@@ -77,16 +77,16 @@ Discovery endpoints:
 
 Supported scopes:
 
-| Scope                   | Use                                                                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                                                                         |
-| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations                                                              |
-| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
-| `feedbackRecords:write` | `create_feedback_record`, `delete_feedback_record`                                                                                   |
-| `openid`                | OpenID Connect subject interoperability                                                                                              |
-| `profile`               | User profile claims                                                                                                                  |
-| `email`                 | User email claim                                                                                                                     |
-| `offline_access`        | Refresh tokens for MCP clients                                                                                                       |
+| Scope                   | Use                                                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                                                                                                   |
+| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations                                                                                        |
+| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
+| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `delete_feedback_record`                                                                                  |
+| `openid`                | OpenID Connect subject interoperability                                                                                                                        |
+| `profile`               | User profile claims                                                                                                                                            |
+| `email`                 | User email claim                                                                                                                                               |
+| `offline_access`        | Refresh tokens for MCP clients                                                                                                                                 |
 
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only `surveys:read`, `surveys:write`,
@@ -142,10 +142,12 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_survey`                 | `write` or `manage`                                                 |
 | `list_feedback_datasets`        | `read`                                                              |
 | `list_feedback_records`         | `read`                                                              |
+| `count_feedback_records`        | `read`                                                              |
 | `get_feedback_record`           | `read`                                                              |
 | `search_feedback_records`       | `read`                                                              |
 | `find_similar_feedback_records` | `read`                                                              |
 | `create_feedback_record`        | `write` or `manage`                                                 |
+| `create_feedback_records`       | `write` or `manage`                                                 |
 | `delete_feedback_record`        | `write` or `manage`                                                 |
 
 <Warning>
@@ -724,14 +726,35 @@ Input:
 {
   "cursor": "opaque-cursor-from-previous-response",
   "datasetId": "clfd1234567890123456789012",
+  "fieldGroupId": "grp_1",
+  "fieldId": "q1",
   "fieldType": "text",
   "limit": 50,
   "since": "2026-01-01T00:00:00Z",
+  "sourceId": "svy_1",
   "sourceType": "survey",
+  "submissionId": "sub_1",
   "until": "2026-12-31T23:59:59Z",
+  "userId": "user_1",
+  "valueId": "opt_1",
   "workspaceId": "clxx1234567890123456789012"
 }
 ```
+
+All filters are optional, match exactly, and combine with AND. They mirror the Hub's own
+`GET /v1/feedback-records` parameters:
+
+| Filter            | Selects                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `sourceType`      | a kind of source, e.g. `survey`, `review`, `call_notes`              |
+| `sourceId`        | one survey/form/ticket                                               |
+| `fieldType`       | one field type (`text`, `nps`, `rating`, …)                          |
+| `fieldId`         | all answers to one question                                          |
+| `fieldGroupId`    | one grouped question (ranking, matrix, grid)                         |
+| `submissionId`    | the sibling answers given in one submission                          |
+| `userId`          | everything one end user submitted                                    |
+| `valueId`         | everyone who picked one particular choice                            |
+| `since` / `until` | a `collected_at` range (must fall between 1970-01-01 and 2080-12-31) |
 
 Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor`. `meta` also names the
 dataset that was searched, so an empty `data` array unambiguously means that dataset holds no matching
@@ -756,6 +779,38 @@ records — a caller that let the dataset auto-resolve does not need a second ca
     "datasetName": "Support",
     "limit": 50,
     "nextCursor": null
+  },
+  "requestId": "req_..."
+}
+```
+
+### count_feedback_records
+
+Counts the feedback records matching a filter set, without fetching them — for "how many" questions that
+would otherwise mean paging through records. Read-only and idempotent. Takes the same filters as
+`list_feedback_records` (no `limit`/`cursor`), because the Hub documents its count endpoint as accepting
+the same query parameters as its list endpoint; both go through one mapper in `lib/operations.ts`, so a
+count always describes the same set as the equivalent list.
+
+Input:
+
+```json
+{
+  "since": "2026-01-01T00:00:00Z",
+  "userId": "user_1",
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Output is the total and the dataset it came from — **no record content**, which is the point: a caller
+asking "how many" never pulls end-user text into its context to find out.
+
+```json
+{
+  "data": {
+    "count": 42,
+    "dataset_id": "clfd1234567890123456789012",
+    "dataset_name": "Support"
   },
   "requestId": "req_..."
 }
@@ -797,6 +852,68 @@ Input:
 ```
 
 Output is the created feedback record (Hub shape) plus the MCP `requestId`.
+
+### create_feedback_records
+
+Creates several feedback records in one call — the batch form of `create_feedback_record`, for imports.
+Writes data, is not idempotent, and requires `feedbackRecords:write`. Between 1 and 50 records per call.
+
+The Hub has no bulk-create endpoint (its only bulk write is the delete-by-user erasure path), so this fans
+out to one Hub create per record, in parallel. Two consequences are deliberate:
+
+- **Validation is all-or-nothing.** Every record is validated before any is written, so a malformed batch
+  is rejected without leaving half of it stored. `invalid_params` names the offending index, e.g.
+  `records.3.value_text`.
+- **Partial success is reported, not hidden.** If the Hub rejects some records — a duplicate
+  `(submission_id, field_id)`, say — the created ones are returned and `meta.failures` accounts for the
+  rest by index, so only those need retrying. If _nothing_ could be created, the upstream failure is
+  returned as the response instead, because an empty success would read as "there was nothing to do".
+
+The 50-record cap is an amplification bound as much as a payload one: one authorized request must not
+become an unbounded burst of upstream writes.
+
+Input:
+
+```json
+{
+  "records": [
+    {
+      "field_id": "note",
+      "field_type": "text",
+      "source_type": "call_notes",
+      "value_text": "Asked for SSO."
+    },
+    {
+      "field_id": "score",
+      "field_type": "nps",
+      "source_type": "call_notes",
+      "value_number": 9
+    }
+  ],
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Output:
+
+```json
+{
+  "data": [{ "dataset_id": "clfd…", "id": "019fa338-…", "value_text": "Asked for SSO." }],
+  "meta": {
+    "created": 1,
+    "datasetId": "clfd1234567890123456789012",
+    "datasetName": "Support",
+    "failed": 1,
+    "failures": [{ "detail": "duplicate record for (tenant_id, submission_id, field_id)", "index": 1 }],
+    "requested": 2
+  },
+  "requestId": "req_..."
+}
+```
+
+Per-record failure text goes through the same relay rules as a whole-request failure: a Hub 4xx explains
+itself, anything else becomes a fixed message. Each record actually created produces its own `created`
+audit event — N creations are N events, not one summary.
 
 ### delete_feedback_record
 
@@ -951,7 +1068,10 @@ query, like `create_feedback_record`.
   (sentiment, emotions, translations) are derived by the Hub rather than written by callers.
 - `delete_feedback_record` deletes one record at a time. The Hub's bulk and delete-by-user endpoints are
   deliberately not exposed: they are erasure operations whose blast radius does not belong on an agent
-  surface.
+  surface. There is deliberately no batch _delete_ to match `create_feedback_records`.
+- Counting and filtering cover the Hub's own filter set only. There is no aggregation by sentiment or
+  emotion, and semantic search cannot be narrowed by source or date — the Hub's search endpoint takes only
+  a query and a tenant. Those need Hub-side support first.
 - The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
   one they return 503. Embedding is asynchronous and covers only records with text.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not

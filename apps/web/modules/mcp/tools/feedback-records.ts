@@ -3,7 +3,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "@formbricks/logger";
 import {
+  countV3FeedbackRecords,
   createV3FeedbackRecord,
+  createV3FeedbackRecords,
   deleteV3FeedbackRecord,
   findSimilarV3FeedbackRecords,
   getV3FeedbackRecord,
@@ -18,14 +20,18 @@ import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { guardMcpScopes } from "./guard-scopes";
 import {
+  type TMcpCountFeedbackRecordsInput,
   type TMcpCreateFeedbackRecordInput,
+  type TMcpCreateFeedbackRecordsInput,
   type TMcpDeleteFeedbackRecordInput,
   type TMcpFindSimilarFeedbackRecordsInput,
   type TMcpGetFeedbackRecordInput,
   type TMcpListFeedbackDatasetsInput,
   type TMcpListFeedbackRecordsInput,
   type TMcpSearchFeedbackRecordsInput,
+  ZMcpCountFeedbackRecordsInput,
   ZMcpCreateFeedbackRecordInput,
+  ZMcpCreateFeedbackRecordsInput,
   ZMcpDeleteFeedbackRecordInput,
   ZMcpFindSimilarFeedbackRecordsInput,
   ZMcpGetFeedbackRecordInput,
@@ -144,20 +150,30 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
+    // The validated input is exactly the operation's filter contract, so it is spread rather than copied
+    // field by field: adding a filter to the schema can't silently fail to reach the operation. Safe
+    // because MCP strips unknown keys and the operation allowlists what reaches the Hub.
     readOnlyHandler<TMcpListFeedbackRecordsInput>((input, authentication, requestId) =>
-      listV3FeedbackRecords({
-        workspaceId: input.workspaceId,
-        datasetId: input.datasetId,
-        limit: input.limit,
-        cursor: input.cursor,
-        sourceType: input.sourceType,
-        fieldType: input.fieldType,
-        since: input.since,
-        until: input.until,
-        authentication,
-        requestId,
-        instance: MCP_API_ROUTE,
-      })
+      listV3FeedbackRecords({ ...input, authentication, requestId, instance: MCP_API_ROUTE })
+    )
+  );
+
+  server.registerTool(
+    "count_feedback_records",
+    {
+      title: "Count feedback records",
+      description:
+        "Count the feedback records matching a set of filters, without fetching them. Use this for 'how many' questions — how many responses to one question, from one person, or in a date range — instead of paging through records to count them. Returns only the total plus the dataset it came from, never record content. Takes the same filters as list_feedback_records.",
+      inputSchema: ZMcpCountFeedbackRecordsInput.shape,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    readOnlyHandler<TMcpCountFeedbackRecordsInput>((input, authentication, requestId) =>
+      countV3FeedbackRecords({ ...input, authentication, requestId, instance: MCP_API_ROUTE })
     )
   );
 
@@ -211,6 +227,69 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         auditLog,
       })
     )
+  );
+
+  server.registerTool(
+    "create_feedback_records",
+    {
+      title: "Create feedback records",
+      description:
+        "Create several feedback records in one call — use this instead of calling create_feedback_record repeatedly when importing a batch. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch. If the feedback service rejects some records (a duplicate submission, say), the created ones are returned and meta.failures lists the rest by index, so only those need retrying; check meta.failed.",
+      inputSchema: ZMcpCreateFeedbackRecordsInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpCreateFeedbackRecordsInput, extra) => {
+      const requestId = getMcpRequestId(extra.authInfo);
+      const scopeError = await guardMcpScopes(extra.authInfo, FEEDBACK_RECORDS_WRITE_SCOPE, requestId);
+      if (scopeError) {
+        return scopeError;
+      }
+
+      const authentication = getMcpAuthentication(extra.authInfo);
+      const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
+      // One audit event per record, not per call: N records created is N creations to an auditor. The
+      // operation stamps the entries it actually created (identified by `targetId`).
+      const auditLogs = input.records
+        .map(() => buildV3AuditLog(authentication, "created", "feedbackRecord", MCP_API_ROUTE))
+        .filter((auditLog): auditLog is TV3AuditLog => Boolean(auditLog));
+
+      const queueOutcome = async (response?: Response) => {
+        const stamped = auditLogs.filter((auditLog) => auditLog.targetId);
+        for (const auditLog of stamped) {
+          auditLog.status = "success";
+          await queueV3AuditLog(auditLog, requestId, log);
+        }
+        // Nothing created — record the attempt once rather than once per record.
+        if (stamped.length === 0 && auditLogs.length > 0) {
+          auditLogs[0].eventId = requestId;
+          await queueV3AuditLog(auditLogs[0], requestId, log);
+        }
+        return response;
+      };
+
+      try {
+        const response = await createV3FeedbackRecords({
+          workspaceId: input.workspaceId,
+          datasetId: input.datasetId,
+          body: input,
+          authentication,
+          requestId,
+          instance: MCP_API_ROUTE,
+          auditLogs,
+        });
+
+        await queueOutcome();
+        return await responseToMcpToolResult(response, requestId);
+      } catch (error) {
+        await queueOutcome();
+        throw error;
+      }
+    }
   );
 
   server.registerTool(

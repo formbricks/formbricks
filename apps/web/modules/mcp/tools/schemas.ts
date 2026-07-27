@@ -2,7 +2,10 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
+  MAX_FEEDBACK_RECORDS_PER_BATCH,
+  ZV3FeedbackRecordCreateBody,
   ZV3FeedbackRecordCreateBodyFields,
+  ZV3FeedbackRecordFilters,
   ZV3FeedbackRecordListFilters,
   ZV3FeedbackRecordSearchFilters,
   ZV3FeedbackRecordSimilarityFilters,
@@ -158,6 +161,25 @@ export const ZMcpCreateFeedbackRecordInput = ZV3FeedbackRecordCreateBodyFields.e
   datasetId: datasetIdField,
 });
 
+export const ZMcpCountFeedbackRecordsInput = ZV3FeedbackRecordFilters.extend({
+  workspaceId: ZId.describe("Workspace ID whose feedback records should be counted."),
+  datasetId: datasetIdField,
+});
+
+// The refined body is used here (unlike the single-record tool): a batch is a nested array, so there is no
+// raw shape to flatten, and the value/field_type rule can be enforced per element right in the schema.
+export const ZMcpCreateFeedbackRecordsInput = z.object({
+  workspaceId: ZId.describe("Workspace ID to create the feedback records in."),
+  datasetId: datasetIdField,
+  records: z
+    .array(ZV3FeedbackRecordCreateBody)
+    .min(1)
+    .max(MAX_FEEDBACK_RECORDS_PER_BATCH)
+    .describe(
+      `Feedback records to create, 1–${MAX_FEEDBACK_RECORDS_PER_BATCH} per call. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch.`
+    ),
+});
+
 export const ZMcpDeleteFeedbackRecordInput = z.object({
   workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
   feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to delete permanently."),
@@ -186,6 +208,8 @@ export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatas
 export type TMcpListFeedbackRecordsInput = z.infer<typeof ZMcpListFeedbackRecordsInput>;
 export type TMcpGetFeedbackRecordInput = z.infer<typeof ZMcpGetFeedbackRecordInput>;
 export type TMcpCreateFeedbackRecordInput = z.infer<typeof ZMcpCreateFeedbackRecordInput>;
+export type TMcpCountFeedbackRecordsInput = z.infer<typeof ZMcpCountFeedbackRecordsInput>;
+export type TMcpCreateFeedbackRecordsInput = z.infer<typeof ZMcpCreateFeedbackRecordsInput>;
 export type TMcpDeleteFeedbackRecordInput = z.infer<typeof ZMcpDeleteFeedbackRecordInput>;
 export type TMcpSearchFeedbackRecordsInput = z.infer<typeof ZMcpSearchFeedbackRecordsInput>;
 export type TMcpFindSimilarFeedbackRecordsInput = z.infer<typeof ZMcpFindSimilarFeedbackRecordsInput>;

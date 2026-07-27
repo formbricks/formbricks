@@ -62,6 +62,18 @@ describe("hubErrorToProblemResponse", () => {
     expect(JSON.stringify(body)).not.toContain("10.0.0.1");
   });
 
+  // Not "any 4xx": a Hub 401/403 means our own Hub credentials were refused, and a 404 can reveal upstream
+  // addressing. Echoing either would describe our infrastructure rather than the caller's request.
+  test.each([401, 403, 404])("never relays the detail of a Hub %i", async (status) => {
+    const body = await hubErrorToProblemResponse(
+      hubError(status, { problemDetail: "invalid api key for tenant-service" }),
+      requestId,
+      instance
+    ).json();
+
+    expect(JSON.stringify(body)).not.toContain("invalid api key");
+  });
+
   test("maps a null error (Hub unconfigured) to a generic 502", async () => {
     const response = hubErrorToProblemResponse(null, requestId, instance);
 

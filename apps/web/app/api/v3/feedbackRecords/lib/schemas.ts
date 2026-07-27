@@ -9,9 +9,60 @@ import { ZHubFieldType } from "@formbricks/types/feedback-source";
  * the caller's workspace + feedback directory and never accepted from input (tenant isolation).
  */
 
-// Filters + pagination for listing feedback records. Mirrors the Hub `GET /v1/feedback-records` query
-// contract (cursor/keyset paging). Date filters are passed through as strings; the Hub validates format.
-export const ZV3FeedbackRecordListFilters = z.object({
+/**
+ * The filter set shared by listing and counting feedback records — the Hub documents its `/count` endpoint
+ * as taking "the same query parameters as the list endpoint", minus pagination, so both are described once
+ * here and mapped to Hub params by one function in `operations.ts`.
+ *
+ * Field semantics follow the Hub's own `GET /v1/feedback-records` parameter documentation (hub 0.8.1
+ * `openapi.yaml`). Every filter is a plain equality match, combined with AND, and always scoped to the
+ * resolved dataset. Length caps mirror the Hub's (1–255); it additionally rejects NULL bytes and relays
+ * that as a 400 we pass through.
+ */
+const ZFeedbackRecordFilterId = z.string().trim().min(1).max(255);
+
+export const ZV3FeedbackRecordFilters = z.object({
+  sourceType: ZFeedbackRecordFilterId.optional().describe(
+    "Filter by feedback source type, e.g. survey, review, call_notes."
+  ),
+  sourceId: ZFeedbackRecordFilterId.optional().describe(
+    "Filter by source id — the survey/form/ticket the feedback came from."
+  ),
+  fieldType: ZHubFieldType.optional().describe("Filter by field type."),
+  fieldId: ZFeedbackRecordFilterId.optional().describe("Filter by field id — all answers to one question."),
+  fieldGroupId: ZFeedbackRecordFilterId.optional().describe(
+    "Filter by field group id, which groups related fields of one question (ranking, matrix, grid)."
+  ),
+  submissionId: ZFeedbackRecordFilterId.optional().describe(
+    "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time."
+  ),
+  userId: ZFeedbackRecordFilterId.optional().describe(
+    "Filter by end-user identifier — everything one person submitted."
+  ),
+  valueId: ZFeedbackRecordFilterId.optional().describe(
+    "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice."
+  ),
+  since: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Only records collected at or after this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+    ),
+  until: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe(
+      "Only records collected at or before this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+    ),
+});
+export type TV3FeedbackRecordFilters = z.infer<typeof ZV3FeedbackRecordFilters>;
+
+// Listing adds keyset pagination on top of the shared filters (the Hub's cursor/keyset contract).
+export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
   limit: z
     .number()
     .int()
@@ -24,26 +75,6 @@ export const ZV3FeedbackRecordListFilters = z.object({
     .min(1)
     .optional()
     .describe("Opaque keyset cursor from a previous response's nextCursor. Omit for the first page."),
-  sourceType: z
-    .string()
-    .trim()
-    .min(1)
-    .max(255)
-    .optional()
-    .describe("Filter by feedback source type, e.g. survey."),
-  fieldType: ZHubFieldType.optional().describe("Filter by field type."),
-  since: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe("Only records collected at or after this ISO 8601 timestamp (bounds collected_at)."),
-  until: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe("Only records collected at or before this ISO 8601 timestamp (bounds collected_at)."),
 });
 export type TV3FeedbackRecordListFilters = z.infer<typeof ZV3FeedbackRecordListFilters>;
 
@@ -203,3 +234,24 @@ export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.sup
 });
 
 export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreateBody>;
+
+/**
+ * Batch create. The Hub has no bulk-create endpoint (its only bulk write is the delete-by-user erasure
+ * path), so this fans out to one Hub call per record. The cap is therefore an amplification bound as much
+ * as a payload bound: one authorized request must not turn into an unbounded burst of upstream writes.
+ *
+ * 50 covers the case this exists for — importing a batch of feedback without one round trip per record —
+ * and stays well inside the 2 MiB request-body limit even with sizeable metadata on every record.
+ */
+export const MAX_FEEDBACK_RECORDS_PER_BATCH = 50;
+
+export const ZV3FeedbackRecordBatchCreateBody = z.object({
+  records: z
+    .array(ZV3FeedbackRecordCreateBody)
+    .min(1)
+    .max(MAX_FEEDBACK_RECORDS_PER_BATCH)
+    .describe(
+      `Feedback records to create, 1–${MAX_FEEDBACK_RECORDS_PER_BATCH} per call. Every record is validated before any of them is written, so an invalid record fails the whole call without a partial write.`
+    ),
+});
+export type TV3FeedbackRecordBatchCreateBody = z.infer<typeof ZV3FeedbackRecordBatchCreateBody>;

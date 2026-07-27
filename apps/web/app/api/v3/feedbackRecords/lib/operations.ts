@@ -2,7 +2,6 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { z } from "zod";
 import { logger } from "@formbricks/logger";
-import type { THubFieldType } from "@formbricks/types/feedback-source";
 import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import {
   noContentResponse,
@@ -14,13 +13,16 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import {
+  countFeedbackRecords,
   createFeedbackRecord,
+  createFeedbackRecordsBatch,
   deleteFeedbackRecord,
   findSimilarFeedbackRecords,
   listFeedbackRecords,
   semanticSearchFeedbackRecords,
 } from "@/modules/hub/service";
 import type {
+  FeedbackRecordCountParams,
   FeedbackRecordCreateParams,
   FeedbackRecordListParams,
   SemanticSearchResultItem,
@@ -36,17 +38,22 @@ import {
   EMBEDDING_PENDING_DETAIL,
   handleUnexpectedError,
   hubErrorToProblemResponse,
+  relayableHubDetail,
   toInvalidParams,
 } from "./errors";
 import {
   SIMILARITY_LIMIT_DEFAULT,
   SIMILARITY_MIN_SCORE_DEFAULT,
+  type TV3FeedbackRecordBatchCreateBody,
   type TV3FeedbackRecordCreateBody,
+  type TV3FeedbackRecordFilters,
+  ZV3FeedbackRecordBatchCreateBody,
   ZV3FeedbackRecordCreateBody,
   ZV3FeedbackRecordSearchFilters,
   ZV3FeedbackRecordSimilarityFilters,
 } from "./schemas";
 import {
+  type TV3FeedbackRecord,
   serializeV3FeedbackDataset,
   serializeV3FeedbackRecord,
   serializeV3FeedbackRecordMatch,
@@ -92,6 +99,35 @@ function buildHubCreateParams(
     collected_at: data.collected_at,
     metadata: data.metadata,
   };
+}
+
+/** The Hub's own default is 100; we page smaller by default and let callers raise it. */
+const DEFAULT_LIST_LIMIT = 50;
+
+/**
+ * Map our camelCase filters onto the Hub's query parameters, with the resolved tenant injected.
+ *
+ * Shared by list and count: the Hub documents `/count` as accepting the same parameters as the list
+ * endpoint, so the two must agree about what a filter means — otherwise a count could describe a
+ * different set of records than the list it is supposed to be counting. `tenant_id` is always ours, never
+ * the caller's. Absent filters are left off entirely rather than sent as undefined.
+ */
+function buildHubFilterParams(
+  tenantId: string,
+  filters: TV3FeedbackRecordFilters
+): FeedbackRecordCountParams {
+  const params: FeedbackRecordCountParams = { tenant_id: tenantId };
+  if (filters.sourceType) params.source_type = filters.sourceType;
+  if (filters.sourceId) params.source_id = filters.sourceId;
+  if (filters.fieldType) params.field_type = filters.fieldType;
+  if (filters.fieldId) params.field_id = filters.fieldId;
+  if (filters.fieldGroupId) params.field_group_id = filters.fieldGroupId;
+  if (filters.submissionId) params.submission_id = filters.submissionId;
+  if (filters.userId) params.user_id = filters.userId;
+  if (filters.valueId) params.value_id = filters.valueId;
+  if (filters.since) params.since = filters.since;
+  if (filters.until) params.until = filters.until;
+  return params;
 }
 
 /**
@@ -206,18 +242,18 @@ export async function listV3FeedbackDatasets({
   }
 }
 
-type TListV3FeedbackRecordsParams = {
+/** Workspace/dataset selection plus the shared filter set — the common input of list and count. */
+type TFeedbackRecordQueryParams = TV3FeedbackRecordFilters & {
   workspaceId: string;
   datasetId?: string;
-  limit?: number;
-  cursor?: string;
-  sourceType?: string;
-  fieldType?: THubFieldType;
-  since?: string;
-  until?: string;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
+};
+
+type TListV3FeedbackRecordsParams = TFeedbackRecordQueryParams & {
+  limit?: number;
+  cursor?: string;
 };
 
 /** List feedback records for the resolved tenant, with cursor pagination and optional filters. */
@@ -226,13 +262,10 @@ export async function listV3FeedbackRecords({
   datasetId,
   limit,
   cursor,
-  sourceType,
-  fieldType,
-  since,
-  until,
   authentication,
   requestId,
   instance,
+  ...filters
 }: TListV3FeedbackRecordsParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
@@ -249,14 +282,10 @@ export async function listV3FeedbackRecords({
     }
 
     const listParams: FeedbackRecordListParams = {
-      tenant_id: resolution.tenantId,
-      limit: limit ?? 50,
+      ...buildHubFilterParams(resolution.tenantId, filters),
+      limit: limit ?? DEFAULT_LIST_LIMIT,
     };
     if (cursor) listParams.cursor = cursor;
-    if (sourceType) listParams.source_type = sourceType;
-    if (fieldType) listParams.field_type = fieldType;
-    if (since) listParams.since = since;
-    if (until) listParams.until = until;
 
     const result = await listFeedbackRecords(listParams);
     if (result.error || !result.data) {
@@ -281,6 +310,62 @@ export async function listV3FeedbackRecords({
         // a caller that auto-resolved the dataset would have to make a second call to find out.
         datasetId: resolution.tenantId,
         datasetName: resolution.datasetName,
+      },
+      { requestId, cache: CACHE }
+    );
+  } catch (err) {
+    return handleUnexpectedError(err, log, requestId, instance);
+  }
+}
+
+/**
+ * Count the feedback records matching a filter set, without returning any of them.
+ *
+ * Answers "how many" in one upstream call instead of paging, and deliberately returns only the total: a
+ * caller asking for a count never has record content — end-user text, ids, metadata — pulled into its
+ * context to get it.
+ */
+export async function countV3FeedbackRecords({
+  workspaceId,
+  datasetId,
+  authentication,
+  requestId,
+  instance,
+  ...filters
+}: TFeedbackRecordQueryParams): Promise<Response> {
+  const log = logger.withContext({ requestId, workspaceId });
+  try {
+    const resolution = await resolveWorkspaceFeedbackTenant({
+      authentication,
+      workspaceId,
+      datasetId,
+      minPermission: "read",
+      requestId,
+      instance,
+    });
+    if (!resolution.ok) {
+      return resolution.response;
+    }
+
+    const result = await countFeedbackRecords(buildHubFilterParams(resolution.tenantId, filters));
+    if (result.error || !result.data) {
+      log.warn(
+        {
+          hubStatus: result.error?.status,
+          hubCode: result.error?.code,
+          datasetId: resolution.tenantId,
+        },
+        "Hub countFeedbackRecords failed"
+      );
+      return hubErrorToProblemResponse(result.error, requestId, instance);
+    }
+
+    return successResponse(
+      {
+        count: result.data.count,
+        // Named for the same reason as on list: a zero count must say which dataset produced it.
+        dataset_id: resolution.tenantId,
+        dataset_name: resolution.datasetName,
       },
       { requestId, cache: CACHE }
     );
@@ -408,6 +493,124 @@ export async function createV3FeedbackRecord({
     }
 
     return successResponse(serialized, { requestId, status: 201, cache: CACHE });
+  } catch (err) {
+    return handleUnexpectedError(err, log, requestId, instance);
+  }
+}
+
+type TCreateV3FeedbackRecordsParams = {
+  workspaceId: string;
+  datasetId?: string;
+  body: unknown;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance: string;
+  /**
+   * One audit log per input record, in the same order. Entries for records that were actually created come
+   * back with `targetId` set; the caller queues those as successes. Left undefined when auditing is off.
+   */
+  auditLogs?: TV3AuditLog[];
+};
+
+/**
+ * Create several feedback records in one request.
+ *
+ * The Hub has no bulk-create endpoint, so this fans out to one create per record, in parallel. That makes
+ * two things deliberate:
+ *
+ * - **Validation is all-or-nothing.** Every record is checked before any is written, so a malformed batch
+ *   fails without leaving half of it stored. Only *upstream* failures can produce a partial result.
+ * - **Partial success is reported, not hidden.** A batch where some records were rejected by the Hub (a
+ *   duplicate submission, say) returns the ones that were created plus a per-index account of the rest, so
+ *   a caller can retry precisely. If nothing was created at all, the upstream failure is returned as the
+ *   response instead — an empty success would read as "there was nothing to do".
+ */
+export async function createV3FeedbackRecords({
+  workspaceId,
+  datasetId,
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLogs,
+}: TCreateV3FeedbackRecordsParams): Promise<Response> {
+  const log = logger.withContext({ requestId, workspaceId });
+  try {
+    const resolution = await resolveWorkspaceFeedbackTenant({
+      authentication,
+      workspaceId,
+      datasetId,
+      minPermission: "readWrite",
+      requestId,
+      instance,
+    });
+    if (!resolution.ok) {
+      return resolution.response;
+    }
+
+    const parsed = ZV3FeedbackRecordBatchCreateBody.safeParse(body);
+    if (!parsed.success) {
+      log.warn({ statusCode: 422 }, "Invalid feedback record batch");
+      // Zod paths carry the offending index, so `invalid_params` names e.g. `records.3.value_text`.
+      return problemUnprocessableContent(requestId, "Invalid feedback records", {
+        invalid_params: toInvalidParams(parsed.error),
+        instance,
+      });
+    }
+
+    const { records } = parsed.data satisfies TV3FeedbackRecordBatchCreateBody;
+    const { results } = await createFeedbackRecordsBatch(
+      records.map((record) => buildHubCreateParams(record, resolution.tenantId))
+    );
+
+    const created: TV3FeedbackRecord[] = [];
+    const failures: { index: number; detail: string }[] = [];
+    results.forEach((result, index) => {
+      if (result.data) {
+        const serialized = serializeV3FeedbackRecord(result.data);
+        created.push(serialized);
+        const auditLog = auditLogs?.[index];
+        if (auditLog) {
+          auditLog.organizationId = resolution.organizationId;
+          auditLog.targetId = result.data.id;
+          auditLog.newObject = serialized;
+        }
+        return;
+      }
+      failures.push({
+        index,
+        // Same relay rules as a single-record failure: a 4xx explains itself, anything else does not.
+        detail: relayableHubDetail(result.error, "The feedback service rejected this record."),
+      });
+    });
+
+    if (created.length === 0) {
+      log.warn(
+        { hubStatus: results[0]?.error?.status, hubCode: results[0]?.error?.code, requested: records.length },
+        "Hub createFeedbackRecordsBatch created nothing"
+      );
+      return hubErrorToProblemResponse(results[0]?.error ?? null, requestId, instance);
+    }
+
+    if (failures.length > 0) {
+      log.warn(
+        { requested: records.length, created: created.length, failed: failures.length },
+        "Hub createFeedbackRecordsBatch partially failed"
+      );
+    }
+
+    return successListResponse(
+      created,
+      {
+        requested: records.length,
+        created: created.length,
+        failed: failures.length,
+        failures,
+        datasetId: resolution.tenantId,
+        datasetName: resolution.datasetName,
+      },
+      { requestId, cache: CACHE }
+    );
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }

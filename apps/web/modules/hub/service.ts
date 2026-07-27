@@ -6,6 +6,8 @@ import { getHubClient } from "./hub-client";
 import type {
   CreateTaxonomyRunInput,
   CreateTaxonomyRunResponse,
+  FeedbackRecordCountParams,
+  FeedbackRecordCountResponse,
   FeedbackRecordCreateParams,
   FeedbackRecordData,
   FeedbackRecordListParams,
@@ -209,6 +211,32 @@ export const listFeedbackRecords = async (
     logger.warn({ err }, "Hub: listFeedbackRecords failed");
     // Via the shared helper so callers also get the Hub's problem members (e.g. an invalid cursor or
     // malformed since/until arrives as a relayable 400 rather than an opaque failure).
+    return createHubResultFromError(err);
+  }
+};
+
+export type CountFeedbackRecordsResult = {
+  data: FeedbackRecordCountResponse | null;
+  error: HubError | null;
+};
+
+/**
+ * Total number of feedback records matching a filter set. The Hub takes the same filters as the list
+ * endpoint (minus pagination) and answers with just the count, so callers that only need "how many" don't
+ * page through records to find out.
+ */
+export const countFeedbackRecords = async (
+  params: FeedbackRecordCountParams
+): Promise<CountFeedbackRecordsResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+  try {
+    const data = await client.feedbackRecords.count(params);
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId: params.tenant_id }, "Hub: countFeedbackRecords failed");
     return createHubResultFromError(err);
   }
 };

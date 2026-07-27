@@ -3,6 +3,7 @@ import { createCacheKey } from "@formbricks/cache";
 import FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import {
+  countFeedbackRecords,
   createFeedbackRecord,
   createFeedbackRecordsBatch,
   createTaxonomyRun,
@@ -207,6 +208,44 @@ describe("hub service", () => {
       const result = await retrieveFeedbackRecord("rec-1");
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ message: "Not found" });
+    });
+  });
+
+  describe("countFeedbackRecords", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await countFeedbackRecords({ tenant_id: "env-1" });
+
+      expect(result.data).toBeNull();
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    test("passes the filters through and returns the count", async () => {
+      const count = vi.fn().mockResolvedValue({ count: 42 });
+      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { count } } as any);
+
+      const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: "user-1" });
+
+      expect(count).toHaveBeenCalledWith({ tenant_id: "env-1", user_id: "user-1" });
+      expect(result.data).toEqual({ count: 42 });
+      expect(result.error).toBeNull();
+    });
+
+    test("returns a relayable error when the Hub rejects the filters", async () => {
+      const apiError = Object.assign(new (FormbricksHub.APIError as any)("400 Bad Request", 400), {
+        error: { code: "validation", detail: "since must be a valid timestamp" },
+      });
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { count: vi.fn().mockRejectedValue(apiError) },
+      } as any);
+
+      const result = await countFeedbackRecords({ tenant_id: "env-1", since: "not-a-date" });
+
+      expect(result.error).toMatchObject({
+        status: 400,
+        problemDetail: "since must be a valid timestamp",
+      });
     });
   });
 
