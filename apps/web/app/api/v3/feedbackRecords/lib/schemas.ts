@@ -236,6 +236,43 @@ export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.sup
 export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreateBody>;
 
 /**
+ * Update body — the **mutable subset** of the create fields, picked from them rather than redeclared so the
+ * two can never drift on a bound or a description.
+ *
+ * The subset is the Hub's (`UpdateFeedbackRecordInputBody` in hub 0.8.1): a record's provenance is
+ * immutable, so `source_*`, `field_*`, `submission_id` and `collected_at` cannot be changed — correcting
+ * those means deleting and recreating. The Hub also refuses to accept the derived enrichment fields
+ * (`sentiment`, `emotions`, translations) from a caller, so there is nothing to exclude there.
+ *
+ * At least one field is required: an empty patch is a caller mistake, not a no-op worth a round trip.
+ */
+export const ZV3FeedbackRecordUpdateBody = ZV3FeedbackRecordCreateBodyFields.pick({
+  value_text: true,
+  value_number: true,
+  value_boolean: true,
+  value_date: true,
+  value_id: true,
+  user_id: true,
+  language: true,
+  metadata: true,
+}).refine((data) => Object.values(data).some((value) => value !== undefined), {
+  message: "at least one field to update is required",
+});
+export type TV3FeedbackRecordUpdateBody = z.infer<typeof ZV3FeedbackRecordUpdateBody>;
+
+/** The plain object form, for `inputSchema` shapes which need a raw shape rather than a refined schema. */
+export const ZV3FeedbackRecordUpdateBodyFields = ZV3FeedbackRecordCreateBodyFields.pick({
+  value_text: true,
+  value_number: true,
+  value_boolean: true,
+  value_date: true,
+  value_id: true,
+  user_id: true,
+  language: true,
+  metadata: true,
+});
+
+/**
  * Batch create. The Hub has no bulk-create endpoint (its only bulk write is the delete-by-user erasure
  * path), so this fans out to one Hub call per record. The cap is therefore an amplification bound as much
  * as a payload bound: one authorized request must not turn into an unbounded burst of upstream writes.

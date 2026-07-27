@@ -148,6 +148,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `find_similar_feedback_records` | `read`                                                              |
 | `create_feedback_record`        | `write` or `manage`                                                 |
 | `create_feedback_records`       | `write` or `manage`                                                 |
+| `update_feedback_record`        | `write` or `manage`                                                 |
 | `delete_feedback_record`        | `write` or `manage`                                                 |
 
 <Warning>
@@ -923,6 +924,51 @@ Per-record failure text goes through the same relay rules as a whole-request fai
 itself, anything else becomes a fixed message. Each record actually created produces its own `created`
 audit event — N creations are N events, not one summary.
 
+### update_feedback_record
+
+Corrects the value of an existing feedback record. Writes data, is annotated `destructiveHint: true` (it
+overwrites a stored value; the previous one survives only in the audit log), and requires
+`feedbackRecords:write`. Only the fields sent are changed; at least one is required.
+
+Updatable — the Hub's own mutable set: `value_text`, `value_number`, `value_boolean`, `value_date`,
+`value_id`, `user_id`, `language`, `metadata`. The schema is `.pick()`ed from the create fields, so bounds
+can't drift between creating and correcting a record.
+
+**Not** updatable: a record's provenance — `source_type`, `source_id`, `source_name`, `field_id`,
+`field_type`, `field_label`, `field_group_*`, `submission_id`, `collected_at`. Correcting those means
+deleting the record and creating it again. The derived enrichment fields (`sentiment`, `sentiment_score`,
+`emotions`, `value_text_translated`, `translation_lang_key`) are not accepted from callers either — they are
+the Hub's to compute.
+
+`metadata` is the one field that is **replaced, not merged** — the Hub assigns it wholesale, so adding a key
+means sending the existing ones too. Everything else is left untouched when omitted.
+
+Ownership is verified before the update, the same way as for get and delete: `PATCH /{id}` is another Hub
+endpoint that derives the tenant from the stored record. A record deleted in the window between that check
+and the write returns the same generic authorization error, not a 502 — nothing was updated and the service
+is fine.
+
+Input:
+
+```json
+{
+  "feedbackRecordId": "019fa338-f494-7384-b34e-01739783d280",
+  "value_text": "Actually the export works fine, it was the filter that confused me",
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Output is the updated record.
+
+<Warning>
+  **Editing the text resets what was derived from it.** Per the Hub's contract, changing `value_text` clears
+  `sentiment`, `sentiment_score`, `emotions`, `value_text_translated` and `translation_lang_key` and queues
+  re-enrichment; changing `language` re-queues the translation pair only. The response reflects the
+  **cleared** state, so those fields being absent right after an update means "being recomputed", not "none".
+  Changing `value_text` (or a field label) also re-queues the embedding, so semantic search catches up
+  asynchronously — and clearing a record's text removes its embedding, making it unsearchable.
+</Warning>
+
 ### delete_feedback_record
 
 Permanently deletes one feedback record. Writes data, is not idempotent, is annotated
@@ -1071,9 +1117,9 @@ query, like `create_feedback_record`.
   coverage depends on the Hub feedback-records API.
 - Feedback-record tools require the `feedbackDirectories` Enterprise entitlement and a feedback
   directory assigned to the workspace; without either they return 403 / 422.
-- Feedback records can be created, read, searched and deleted, but not updated: there is no
-  `patch_feedback_record` tool. Records are treated as immutable submissions, and the enrichment fields
-  (sentiment, emotions, translations) are derived by the Hub rather than written by callers.
+- A feedback record's **provenance** is immutable: `update_feedback_record` changes values, users, language
+  and metadata, but not which source, question or submission a record belongs to, nor when it was
+  collected. The derived enrichment fields are the Hub's to compute and are never accepted from callers.
 - `delete_feedback_record` deletes one record at a time. The Hub's bulk and delete-by-user endpoints are
   deliberately not exposed: they are erasure operations whose blast radius does not belong on an agent
   surface. There is deliberately no batch _delete_ to match `create_feedback_records`.

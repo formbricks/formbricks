@@ -168,7 +168,7 @@ export async function requireOwnedFeedbackRecord({
     if (status === 404) {
       // Logged like the tenant-mismatch denial below, so both halves of the 403 are observable.
       log.warn({ statusCode: 403, hubStatus: 404 }, "Feedback record not found");
-      return { ok: false, response: forbidRecord(requestId, instance) };
+      return { ok: false, response: forbidFeedbackRecord(requestId, instance) };
     }
     log.warn({ hubStatus: status, hubCode: result.error?.code }, "Hub retrieveFeedbackRecord failed");
     return { ok: false, response: hubErrorToProblemResponse(result.error, requestId, instance) };
@@ -179,11 +179,16 @@ export async function requireOwnedFeedbackRecord({
   const permittedTenantIds = datasetId ? [resolution.tenantId] : resolution.allowedTenantIds;
   if (!result.data.tenant_id || !permittedTenantIds.includes(result.data.tenant_id)) {
     log.warn({ statusCode: 403 }, "Feedback record tenant outside caller's workspace datasets");
-    return { ok: false, response: forbidRecord(requestId, instance) };
+    return { ok: false, response: forbidFeedbackRecord(requestId, instance) };
   }
 
   return { ok: true, record: result.data };
 }
 
-const forbidRecord = (requestId: string, instance: string): Response =>
+/**
+ * The single record-level 403. Exported so every path that must be indistinguishable from the others —
+ * the ownership guard above, and a record that vanishes mid-update — produces a byte-identical body by
+ * construction rather than by two copies of the same string staying in sync.
+ */
+export const forbidFeedbackRecord = (requestId: string, instance: string): Response =>
   problemForbidden(requestId, "You are not authorized to access this feedback record", instance);

@@ -10,6 +10,7 @@ import {
   listV3FeedbackDatasets,
   listV3FeedbackRecords,
   searchV3FeedbackRecords,
+  updateV3FeedbackRecord,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -31,6 +32,7 @@ vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   listV3FeedbackDatasets: vi.fn(),
   listV3FeedbackRecords: vi.fn(),
   searchV3FeedbackRecords: vi.fn(),
+  updateV3FeedbackRecord: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
@@ -84,7 +86,7 @@ beforeEach(() => {
 });
 
 describe("registerFeedbackRecordTools", () => {
-  test("registers the nine feedback-record tools in order", () => {
+  test("registers the ten feedback-record tools in order", () => {
     const { tools } = createToolServer();
     expect(Array.from(tools.keys())).toEqual([
       "list_feedback_datasets",
@@ -93,6 +95,7 @@ describe("registerFeedbackRecordTools", () => {
       "get_feedback_record",
       "create_feedback_record",
       "create_feedback_records",
+      "update_feedback_record",
       "delete_feedback_record",
       "search_feedback_records",
       "find_similar_feedback_records",
@@ -113,7 +116,16 @@ describe("registerFeedbackRecordTools", () => {
 
   // The destructive hint is what lets a client warn (or ask) before an irreversible call, so it is pinned:
   // delete is the only tool here that removes data, and the searches must not be mistaken for writes.
-  test("marks only delete as destructive, and both searches as read-only", () => {
+  test("marks update destructive too, matching patch_survey", () => {
+    const { tools } = createToolServer();
+    expect(tools.get("update_feedback_record")!.config.annotations).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+    });
+  });
+
+  test("marks delete destructive, and both searches as read-only", () => {
     const { tools } = createToolServer();
     expect(tools.get("delete_feedback_record")!.config.annotations).toMatchObject({
       readOnlyHint: false,
@@ -475,5 +487,35 @@ describe("create_feedback_records", () => {
     expect(result.isError).toBe(true);
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
     expect(built[0].eventId).toBe("req_tool");
+  });
+});
+
+describe("update_feedback_record", () => {
+  const input = { workspaceId, feedbackRecordId: recordId, value_text: "corrected" };
+
+  test("delegates with the whole input as the body and audits as an update", async () => {
+    const auditLog = { status: "failure" } as any;
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(updateV3FeedbackRecord).mockResolvedValue(
+      successResponse({ id: recordId, value_text: "corrected" }, { requestId: "req_tool" })
+    );
+    const { tools } = createToolServer();
+
+    await tools.get("update_feedback_record")!.handler(input, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "feedbackRecord", "/api/mcp");
+    expect(updateV3FeedbackRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, feedbackRecordId: recordId, body: input, auditLog })
+    );
+    expect(auditLog.status).toBe("success");
+  });
+
+  test("requires the write scope", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools.get("update_feedback_record")!.handler(input, { authInfo: readOnlyAuthInfo });
+
+    expect(result.isError).toBe(true);
+    expect(updateV3FeedbackRecord).not.toHaveBeenCalled();
   });
 });

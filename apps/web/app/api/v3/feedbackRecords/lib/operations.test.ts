@@ -13,6 +13,7 @@ import {
   listFeedbackRecords,
   retrieveFeedbackRecord,
   semanticSearchFeedbackRecords,
+  updateFeedbackRecord,
 } from "@/modules/hub/service";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
@@ -25,6 +26,7 @@ import {
   listV3FeedbackDatasets,
   listV3FeedbackRecords,
   searchV3FeedbackRecords,
+  updateV3FeedbackRecord,
 } from "./operations";
 
 vi.mock("server-only", () => ({}));
@@ -47,6 +49,7 @@ vi.mock("@/modules/hub/service", () => ({
   deleteFeedbackRecord: vi.fn(),
   semanticSearchFeedbackRecords: vi.fn(),
   findSimilarFeedbackRecords: vi.fn(),
+  updateFeedbackRecord: vi.fn(),
 }));
 
 const workspaceId = "clxx1234567890123456789012";
@@ -1228,5 +1231,171 @@ describe("createV3FeedbackRecords", () => {
     expect(auditLogs[0].organizationId).toBe("org_1");
     expect(auditLogs[0].newObject).toBeDefined();
     expect(auditLogs[1].targetId).toBeUndefined();
+  });
+});
+
+describe("updateV3FeedbackRecord", () => {
+  const updateBase = { ...base, feedbackRecordId: record.id };
+  const updated = { ...record, value_text: "Actually, love it a lot" } as FeedbackRecordData;
+
+  beforeEach(() => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
+    vi.mocked(updateFeedbackRecord).mockResolvedValue({ data: updated, error: null });
+  });
+
+  test("requires readWrite access", async () => {
+    await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
+
+    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
+      null,
+      workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
+  });
+
+  test("sends only the fields the caller provided", async () => {
+    const response = await updateV3FeedbackRecord({
+      ...updateBase,
+      body: { value_text: "Actually, love it a lot" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(updateFeedbackRecord).toHaveBeenCalledWith(record.id, {
+      value_text: "Actually, love it a lot",
+    });
+    expect((await response.json()).data.value_text).toBe("Actually, love it a lot");
+  });
+
+  // Provenance is immutable in the Hub, and the allowlist is what enforces it: these have nowhere to go.
+  test("drops immutable provenance fields instead of forwarding them", async () => {
+    await updateV3FeedbackRecord({
+      ...updateBase,
+      body: {
+        value_text: "x",
+        source_type: "hacked",
+        source_id: "hacked",
+        field_id: "hacked",
+        field_type: "nps",
+        submission_id: "hacked",
+        collected_at: "1999-01-01T00:00:00Z",
+        tenant_id: "attacker-tenant",
+      },
+    });
+
+    expect(updateFeedbackRecord).toHaveBeenCalledWith(record.id, { value_text: "x" });
+  });
+
+  // The derived enrichment fields are the Hub's to compute; a caller must not be able to assert them.
+  test("drops derived enrichment fields", async () => {
+    await updateV3FeedbackRecord({
+      ...updateBase,
+      body: {
+        value_text: "x",
+        sentiment: "positive",
+        sentiment_score: 1,
+        emotions: ["joy"],
+        value_text_translated: "fake",
+        translation_lang_key: "de-DE",
+      },
+    });
+
+    expect(updateFeedbackRecord).toHaveBeenCalledWith(record.id, { value_text: "x" });
+  });
+
+  test("rejects an empty patch rather than making a pointless round trip", async () => {
+    const response = await updateV3FeedbackRecord({ ...updateBase, body: {} });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].reason).toContain("at least one field");
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("applies the same bounds as create (30k text cap)", async () => {
+    const response = await updateV3FeedbackRecord({
+      ...updateBase,
+      body: { value_text: "x".repeat(30_001) },
+    });
+
+    expect(response.status).toBe(422);
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  // PATCH is IDOR-shaped upstream exactly like get and delete: the Hub derives the tenant from the record.
+  test("refuses a cross-tenant record with 403 and never calls the Hub update", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, tenant_id: otherDirectoryId },
+      error: null,
+    });
+
+    const response = await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
+
+    expect(response.status).toBe(403);
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("refuses an unknown record with the same 403 body as a cross-tenant one", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, tenant_id: otherDirectoryId },
+      error: null,
+    });
+    const crossTenant = await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } }).then((r) =>
+      r.json()
+    );
+
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 404, message: "not found", detail: "not found" },
+    });
+    const notFound = await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
+
+    expect(notFound.status).toBe(403);
+    expect(await notFound.json()).toEqual(crossTenant);
+  });
+
+  // An edit is only reviewable if both sides are recorded.
+  test("audits both the previous and the new state", async () => {
+    const auditLog = { status: "failure" } as unknown as TV3AuditLog;
+
+    await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "new" }, auditLog });
+
+    expect(auditLog.organizationId).toBe("org_1");
+    expect(auditLog.targetId).toBe(record.id);
+    expect(auditLog.oldObject).toMatchObject({ value_text: "Love it" });
+    expect(auditLog.newObject).toMatchObject({ value_text: "Actually, love it a lot" });
+  });
+
+  // The guard read the record a moment earlier, so a 404 from the write means it was deleted in between:
+  // nothing happened, the service is healthy, and the answer must stay indistinguishable from no-access.
+  test("answers a concurrent delete with the guard's 403, not a misleading 502", async () => {
+    vi.mocked(updateFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 404, message: "not found", detail: "not found" },
+    });
+
+    const response = await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You are not authorized to access this feedback record");
+  });
+
+  test("relays the Hub's field-level rejection", async () => {
+    vi.mocked(updateFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: {
+        status: 400,
+        message: "400",
+        detail: "400",
+        problemDetail: "One or more request parameters are invalid",
+        invalidParams: [{ name: "value_text", reason: "must not contain NULL bytes" }],
+      },
+    });
+
+    const response = await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.invalid_params).toEqual([{ name: "value_text", reason: "must not contain NULL bytes" }]);
   });
 });

@@ -221,6 +221,7 @@ describe("POST /api/mcp", () => {
       "get_feedback_record",
       "create_feedback_record",
       "create_feedback_records",
+      "update_feedback_record",
       "delete_feedback_record",
       "search_feedback_records",
       "find_similar_feedback_records",

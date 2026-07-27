@@ -20,17 +20,20 @@ import {
   findSimilarFeedbackRecords,
   listFeedbackRecords,
   semanticSearchFeedbackRecords,
+  updateFeedbackRecord,
 } from "@/modules/hub/service";
 import type {
   FeedbackRecordCountParams,
   FeedbackRecordCreateParams,
   FeedbackRecordListParams,
+  FeedbackRecordUpdateParams,
   SemanticSearchResultItem,
   SimilarRecordsParams,
   SimilarRecordsResultItem,
 } from "@/modules/hub/types";
 import {
   type TResolvedFeedbackTenant,
+  forbidFeedbackRecord,
   requireOwnedFeedbackRecord,
   resolveWorkspaceFeedbackTenant,
 } from "./access";
@@ -47,10 +50,12 @@ import {
   type TV3FeedbackRecordBatchCreateBody,
   type TV3FeedbackRecordCreateBody,
   type TV3FeedbackRecordFilters,
+  type TV3FeedbackRecordUpdateBody,
   ZV3FeedbackRecordBatchCreateBody,
   ZV3FeedbackRecordCreateBody,
   ZV3FeedbackRecordSearchFilters,
   ZV3FeedbackRecordSimilarityFilters,
+  ZV3FeedbackRecordUpdateBody,
 } from "./schemas";
 import {
   type TV3FeedbackRecord,
@@ -99,6 +104,29 @@ function buildHubCreateParams(
     collected_at: data.collected_at,
     metadata: data.metadata,
   };
+}
+
+/**
+ * Build the Hub update payload. An allowlist for the same reason as the create builder — and it is what
+ * enforces immutability of a record's provenance: a `source_type` or `submission_id` in the input simply has
+ * nowhere to go. Only the fields the caller actually sent are assigned, so an omitted field is left
+ * untouched rather than being overwritten with null.
+ *
+ * One field is not additive: the Hub assigns `metadata` wholesale (`metadata = $n`), so sending it replaces
+ * the stored object rather than merging into it. A caller adding one key must send the existing keys too —
+ * hence the warning in the tool description, since the failure is silent.
+ */
+function buildHubUpdateParams(data: TV3FeedbackRecordUpdateBody): FeedbackRecordUpdateParams {
+  const params: FeedbackRecordUpdateParams = {};
+  if (data.value_text !== undefined) params.value_text = data.value_text;
+  if (data.value_number !== undefined) params.value_number = data.value_number;
+  if (data.value_boolean !== undefined) params.value_boolean = data.value_boolean;
+  if (data.value_date !== undefined) params.value_date = data.value_date;
+  if (data.value_id !== undefined) params.value_id = data.value_id;
+  if (data.user_id !== undefined) params.user_id = data.user_id;
+  if (data.language !== undefined) params.language = data.language;
+  if (data.metadata !== undefined) params.metadata = data.metadata;
+  return params;
 }
 
 /** The Hub's own default is 100; we page smaller by default and let callers raise it. */
@@ -618,6 +646,109 @@ export async function createV3FeedbackRecords({
       },
       { requestId, cache: CACHE }
     );
+  } catch (err) {
+    return handleUnexpectedError(err, log, requestId, instance);
+  }
+}
+
+type TUpdateV3FeedbackRecordParams = {
+  workspaceId: string;
+  feedbackRecordId: string;
+  datasetId?: string;
+  body: unknown;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance: string;
+  auditLog?: TV3AuditLog;
+};
+
+/**
+ * Update the mutable fields of one feedback record.
+ *
+ * Like get/delete/similar, the Hub's `PATCH /{id}` takes a bare record id and derives the tenant from the
+ * stored record, so ownership is asserted first — and the record that guard returns is also the pre-update
+ * state the audit log needs, so the check costs nothing extra.
+ *
+ * Two Hub behaviours the caller has to know about, both documented in its contract:
+ * - Changing `value_text` **clears** the fields derived from it (`sentiment`, `sentiment_score`,
+ *   `emotions`, `value_text_translated`, `translation_lang_key`) and re-queues enrichment; changing
+ *   `language` re-queues the translation pair only. The response therefore reflects the *cleared* state,
+ *   which must not be read as "this record has no sentiment".
+ * - Changing `value_text` (or a field label) re-queues the embedding, so semantic search catches up with
+ *   the edit asynchronously — and clearing the text removes the embedding, making the record unsearchable.
+ */
+export async function updateV3FeedbackRecord({
+  workspaceId,
+  feedbackRecordId,
+  datasetId,
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TUpdateV3FeedbackRecordParams): Promise<Response> {
+  const log = logger.withContext({ requestId, workspaceId });
+  try {
+    const resolution = await resolveWorkspaceFeedbackTenant({
+      authentication,
+      workspaceId,
+      datasetId,
+      minPermission: "readWrite",
+      requestId,
+      instance,
+    });
+    if (!resolution.ok) {
+      return resolution.response;
+    }
+
+    const parsed = ZV3FeedbackRecordUpdateBody.safeParse(body);
+    if (!parsed.success) {
+      log.warn({ statusCode: 422 }, "Invalid feedback record update");
+      return problemUnprocessableContent(requestId, "Invalid feedback record update", {
+        invalid_params: toInvalidParams(parsed.error),
+        instance,
+      });
+    }
+
+    const owned = await requireOwnedFeedbackRecord({
+      feedbackRecordId,
+      resolution,
+      datasetId,
+      log,
+      requestId,
+      instance,
+    });
+    if (!owned.ok) {
+      return owned.response;
+    }
+
+    const result = await updateFeedbackRecord(feedbackRecordId, buildHubUpdateParams(parsed.data));
+    if (result.error || !result.data) {
+      // The record was there a moment ago (the guard just read it), so a 404 means it was deleted in
+      // between. Nothing was updated, and the service is fine — reporting the generic 502 would blame an
+      // outage. Answered with the guard's own 403, so a vanished record is indistinguishable from one the
+      // caller never had access to.
+      if (result.error?.status === 404) {
+        log.info({ statusCode: 403, hubStatus: 404 }, "Feedback record deleted during update");
+        return forbidFeedbackRecord(requestId, instance);
+      }
+      log.warn(
+        { hubStatus: result.error?.status, hubCode: result.error?.code },
+        "Hub updateFeedbackRecord failed"
+      );
+      return hubErrorToProblemResponse(result.error, requestId, instance);
+    }
+
+    const serialized = serializeV3FeedbackRecord(result.data);
+    if (auditLog) {
+      auditLog.organizationId = resolution.organizationId;
+      auditLog.targetId = feedbackRecordId;
+      // Both sides: an edit is only reviewable if the previous value is recorded too.
+      auditLog.oldObject = serializeV3FeedbackRecord(owned.record);
+      auditLog.newObject = serialized;
+    }
+
+    return successResponse(serialized, { requestId, cache: CACHE });
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }

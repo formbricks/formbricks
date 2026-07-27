@@ -12,6 +12,7 @@ import {
   listV3FeedbackDatasets,
   listV3FeedbackRecords,
   searchV3FeedbackRecords,
+  updateV3FeedbackRecord,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
@@ -29,6 +30,7 @@ import {
   type TMcpListFeedbackDatasetsInput,
   type TMcpListFeedbackRecordsInput,
   type TMcpSearchFeedbackRecordsInput,
+  type TMcpUpdateFeedbackRecordInput,
   ZMcpCountFeedbackRecordsInput,
   ZMcpCreateFeedbackRecordInput,
   ZMcpCreateFeedbackRecordsInput,
@@ -38,6 +40,7 @@ import {
   ZMcpListFeedbackDatasetsInput,
   ZMcpListFeedbackRecordsInput,
   ZMcpSearchFeedbackRecordsInput,
+  ZMcpUpdateFeedbackRecordInput,
 } from "./schemas";
 
 const FEEDBACK_RECORDS_READ_SCOPE = ["feedbackRecords:read"];
@@ -68,7 +71,7 @@ function readOnlyHandler<TInput>(
  * throw still queues the log, so a failed mutation is never silently unaudited.
  */
 function writeHandler<TInput extends { workspaceId: string }>(
-  action: "created" | "deleted",
+  action: "created" | "updated" | "deleted",
   run: (
     input: TInput,
     authentication: TV3Authentication,
@@ -297,6 +300,36 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         throw error;
       }
     }
+  );
+
+  server.registerTool(
+    "update_feedback_record",
+    {
+      title: "Update feedback record",
+      description:
+        "Correct the value of an existing feedback record — the text, number, boolean, date or chosen option, plus user_id, language and metadata. Only the fields you send are changed, with one exception: metadata is REPLACED wholesale, so to add a key you must send the existing keys too (fetch the record first with get_feedback_record). A record's provenance cannot be changed (which source, question, submission or when it was collected); correcting those means deleting the record and creating it again. Editing the text clears the derived sentiment, emotions and translation and regenerates them in the background, so the response comes back without them — that means 'being recomputed', not 'none'. Semantic search catches up with an edit a moment later, and clearing a record's text makes it unsearchable.",
+      inputSchema: ZMcpUpdateFeedbackRecordInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        // Overwrites a stored value irreversibly (the previous value survives only in the audit log), so
+        // the same hints as patch_survey — a client should be able to warn before calling it.
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    writeHandler<TMcpUpdateFeedbackRecordInput>("updated", (input, authentication, requestId, auditLog) =>
+      updateV3FeedbackRecord({
+        workspaceId: input.workspaceId,
+        feedbackRecordId: input.feedbackRecordId,
+        datasetId: input.datasetId,
+        body: input,
+        authentication,
+        requestId,
+        instance: MCP_API_ROUTE,
+        auditLog,
+      })
+    )
   );
 
   server.registerTool(

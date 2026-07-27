@@ -9,6 +9,7 @@ import {
   ZV3FeedbackRecordListFilters,
   ZV3FeedbackRecordSearchFilters,
   ZV3FeedbackRecordSimilarityFilters,
+  ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
 
 export const ZMcpListSurveysInput = z.object({
@@ -180,6 +181,14 @@ export const ZMcpCreateFeedbackRecordsInput = z.object({
     ),
 });
 
+// The plain field object again (not the refined one): `inputSchema` needs a raw shape. The
+// at-least-one-field rule is enforced by the operations layer.
+export const ZMcpUpdateFeedbackRecordInput = ZV3FeedbackRecordUpdateBodyFields.extend({
+  workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
+  feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to update."),
+  datasetId: datasetIdField,
+});
+
 export const ZMcpDeleteFeedbackRecordInput = z.object({
   workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
   feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to delete permanently."),
@@ -210,6 +219,7 @@ export type TMcpGetFeedbackRecordInput = z.infer<typeof ZMcpGetFeedbackRecordInp
 export type TMcpCreateFeedbackRecordInput = z.infer<typeof ZMcpCreateFeedbackRecordInput>;
 export type TMcpCountFeedbackRecordsInput = z.infer<typeof ZMcpCountFeedbackRecordsInput>;
 export type TMcpCreateFeedbackRecordsInput = z.infer<typeof ZMcpCreateFeedbackRecordsInput>;
+export type TMcpUpdateFeedbackRecordInput = z.infer<typeof ZMcpUpdateFeedbackRecordInput>;
 export type TMcpDeleteFeedbackRecordInput = z.infer<typeof ZMcpDeleteFeedbackRecordInput>;
 export type TMcpSearchFeedbackRecordsInput = z.infer<typeof ZMcpSearchFeedbackRecordsInput>;
 export type TMcpFindSimilarFeedbackRecordsInput = z.infer<typeof ZMcpFindSimilarFeedbackRecordsInput>;
