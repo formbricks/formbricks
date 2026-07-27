@@ -42,7 +42,7 @@ The MCP server exposes survey and feedback-record tools, grouped into scopes you
 | --- | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` | Read surveys and validate survey documents |
 | `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` | Create, update, and delete surveys |
-| `feedbackRecords:read` | `list_feedback_directories`, `list_feedback_records`, `get_feedback_record` | Read feedback records from a workspace's feedback directory |
+| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `get_feedback_record` | Read feedback records from a workspace's feedback dataset |
 | `feedbackRecords:write` | `create_feedback_record` | Create feedback records |
 
 Scope groups are independent — a client can be granted feedback-record access without survey access,
@@ -51,7 +51,7 @@ needs a workspace id.
 
 <Note>
   The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition
-  (`feedbackDirectories`), plus a feedback directory assigned to the workspace. Without the
+  (`feedbackDirectories`), plus a feedback dataset assigned to the workspace. Without the
   entitlement or a directory, those tools return an authorization or validation error while the
   survey tools keep working.
 </Note>

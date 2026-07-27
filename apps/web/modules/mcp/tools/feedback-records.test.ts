@@ -3,7 +3,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
   createV3FeedbackRecord,
   getV3FeedbackRecord,
-  listV3FeedbackDirectories,
+  listV3FeedbackDatasets,
   listV3FeedbackRecords,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
@@ -13,7 +13,7 @@ import { registerFeedbackRecordTools } from "./feedback-records";
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   createV3FeedbackRecord: vi.fn(),
   getV3FeedbackRecord: vi.fn(),
-  listV3FeedbackDirectories: vi.fn(),
+  listV3FeedbackDatasets: vi.fn(),
   listV3FeedbackRecords: vi.fn(),
 }));
 
@@ -69,7 +69,7 @@ describe("registerFeedbackRecordTools", () => {
   test("registers the four feedback-record tools in order", () => {
     const { tools } = createToolServer();
     expect(Array.from(tools.keys())).toEqual([
-      "list_feedback_directories",
+      "list_feedback_datasets",
       "list_feedback_records",
       "get_feedback_record",
       "create_feedback_record",
@@ -89,9 +89,9 @@ describe("registerFeedbackRecordTools", () => {
   });
 });
 
-describe("list_feedback_directories", () => {
-  test("delegates to listV3FeedbackDirectories and returns structured content", async () => {
-    vi.mocked(listV3FeedbackDirectories).mockResolvedValue(
+describe("list_feedback_datasets", () => {
+  test("delegates to listV3FeedbackDatasets and returns structured content", async () => {
+    vi.mocked(listV3FeedbackDatasets).mockResolvedValue(
       successListResponse(
         [{ id: directoryId, name: "Support" }],
         { nextCursor: null, totalCount: 1 },
@@ -102,9 +102,9 @@ describe("list_feedback_directories", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("list_feedback_directories")!.handler({ workspaceId }, { authInfo });
+    const result = await tools.get("list_feedback_datasets")!.handler({ workspaceId }, { authInfo });
 
-    expect(listV3FeedbackDirectories).toHaveBeenCalledWith(
+    expect(listV3FeedbackDatasets).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, authentication: apiKeyAuth, instance: "/api/mcp" })
     );
     expect(result.structuredContent.data).toEqual([{ id: directoryId, name: "Support" }]);
@@ -121,14 +121,14 @@ describe("list_feedback_records", () => {
     await tools
       .get("list_feedback_records")!
       .handler(
-        { workspaceId, feedbackDirectoryId: directoryId, limit: 25, sourceType: "survey", fieldType: "text" },
+        { workspaceId, datasetId: directoryId, limit: 25, sourceType: "survey", fieldType: "text" },
         { authInfo }
       );
 
     expect(listV3FeedbackRecords).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId,
-        feedbackDirectoryId: directoryId,
+        datasetId: directoryId,
         limit: 25,
         sourceType: "survey",
         fieldType: "text",

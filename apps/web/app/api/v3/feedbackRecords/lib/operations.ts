@@ -24,7 +24,7 @@ import { createFeedbackRecord, listFeedbackRecords, retrieveFeedbackRecord } fro
 import type { FeedbackRecordCreateParams, FeedbackRecordListParams } from "@/modules/hub/types";
 import type { HubError } from "@/modules/hub/utils";
 import { type TV3FeedbackRecordCreateBody, ZV3FeedbackRecordCreateBody } from "./schemas";
-import { serializeV3FeedbackDirectory, serializeV3FeedbackRecord } from "./serializers";
+import { serializeV3FeedbackDataset, serializeV3FeedbackRecord } from "./serializers";
 
 const CACHE = "private, no-store" as const;
 
@@ -38,7 +38,7 @@ type TResolveParams = {
   minPermission: "read" | "readWrite";
   requestId: string;
   instance: string;
-  feedbackDirectoryId?: string;
+  datasetId?: string;
 };
 
 type TResolveResult =
@@ -54,7 +54,8 @@ type TResolveResult =
 /**
  * Resolve (and authorize) the Hub tenant for a feedback-records request. This is the single tenant-
  * isolation choke point for every tool: workspace access → feedback-directories license gate →
- * directory membership → the resolved `tenant_id` (= the FeedbackDirectory id). Mirrors the Unify
+ * dataset membership → the resolved Hub tenant (= the FeedbackDirectory id, `dataset_id` on the wire).
+ * Mirrors the Unify
  * read path (`modules/ee/unify-feedback/page.tsx`). `tenant_id` is never taken from caller input.
  */
 async function resolveWorkspaceFeedbackTenant({
@@ -63,7 +64,7 @@ async function resolveWorkspaceFeedbackTenant({
   minPermission,
   requestId,
   instance,
-  feedbackDirectoryId,
+  datasetId,
 }: TResolveParams): Promise<TResolveResult> {
   const authResult = await requireUnifyFeedbackWorkspaceAccess(
     authentication,
@@ -81,13 +82,13 @@ async function resolveWorkspaceFeedbackTenant({
   const directories = await getFeedbackDirectoriesByWorkspaceId(resolvedWorkspaceId);
   const allowedTenantIds = directories.map((directory) => directory.id);
 
-  if (feedbackDirectoryId) {
-    if (!allowedTenantIds.includes(feedbackDirectoryId)) {
+  if (datasetId) {
+    if (!allowedTenantIds.includes(datasetId)) {
       return {
         ok: false,
         response: problemForbidden(
           requestId,
-          "You are not authorized to access this feedback directory",
+          "You are not authorized to access this feedback dataset",
           instance
         ),
       };
@@ -96,7 +97,7 @@ async function resolveWorkspaceFeedbackTenant({
       ok: true,
       workspaceId: resolvedWorkspaceId,
       organizationId,
-      tenantId: feedbackDirectoryId,
+      tenantId: datasetId,
       allowedTenantIds,
     };
   }
@@ -104,9 +105,11 @@ async function resolveWorkspaceFeedbackTenant({
   if (allowedTenantIds.length === 0) {
     return {
       ok: false,
+      // Actionable on purpose: an agent hitting this can only help if the response says who has to do
+      // what, and where. Datasets are organization-level, so a workspace member cannot self-serve.
       response: problemUnprocessableContent(
         requestId,
-        "No feedback directory is assigned to this workspace",
+        "No feedback dataset is assigned to this workspace. An organization owner or manager can create one and grant this workspace access under Settings → Organization → Feedback Datasets.",
         { instance }
       ),
     };
@@ -116,7 +119,7 @@ async function resolveWorkspaceFeedbackTenant({
       ok: false,
       response: problemBadRequest(
         requestId,
-        "Multiple feedback directories are assigned to this workspace; specify feedbackDirectoryId",
+        "Multiple feedback datasets are assigned to this workspace; specify datasetId",
         { instance }
       ),
     };
@@ -238,20 +241,20 @@ function buildHubCreateParams(
   };
 }
 
-type TListV3FeedbackDirectoriesParams = {
+type TListV3FeedbackDatasetsParams = {
   workspaceId: string;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
 };
 
-/** List the active feedback directories assigned to a workspace (discovery for the other tools). */
-export async function listV3FeedbackDirectories({
+/** List the active feedback datasets assigned to a workspace (discovery for the other tools). */
+export async function listV3FeedbackDatasets({
   workspaceId,
   authentication,
   requestId,
   instance,
-}: TListV3FeedbackDirectoriesParams): Promise<Response> {
+}: TListV3FeedbackDatasetsParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
   try {
     // Not the tenant resolver: this operation *is* how a caller discovers directory ids, so it stops at
@@ -269,7 +272,7 @@ export async function listV3FeedbackDirectories({
 
     const directories = await getFeedbackDirectoriesByWorkspaceId(authResult.workspaceId);
     return successListResponse(
-      directories.map(serializeV3FeedbackDirectory),
+      directories.map(serializeV3FeedbackDataset),
       { nextCursor: null, totalCount: directories.length },
       { requestId, cache: CACHE }
     );
@@ -280,7 +283,7 @@ export async function listV3FeedbackDirectories({
 
 type TListV3FeedbackRecordsParams = {
   workspaceId: string;
-  feedbackDirectoryId?: string;
+  datasetId?: string;
   limit?: number;
   cursor?: string;
   sourceType?: string;
@@ -295,7 +298,7 @@ type TListV3FeedbackRecordsParams = {
 /** List feedback records for the resolved tenant, with cursor pagination and optional filters. */
 export async function listV3FeedbackRecords({
   workspaceId,
-  feedbackDirectoryId,
+  datasetId,
   limit,
   cursor,
   sourceType,
@@ -311,7 +314,7 @@ export async function listV3FeedbackRecords({
     const resolution = await resolveWorkspaceFeedbackTenant({
       authentication,
       workspaceId,
-      feedbackDirectoryId,
+      datasetId,
       minPermission: "read",
       requestId,
       instance,
@@ -336,7 +339,7 @@ export async function listV3FeedbackRecords({
         {
           hubStatus: result.error?.status,
           hubCode: result.error?.code,
-          feedbackDirectoryId: resolution.tenantId,
+          datasetId: resolution.tenantId,
         },
         "Hub listFeedbackRecords failed"
       );
@@ -356,7 +359,7 @@ export async function listV3FeedbackRecords({
 type TGetV3FeedbackRecordParams = {
   workspaceId: string;
   feedbackRecordId: string;
-  feedbackDirectoryId?: string;
+  datasetId?: string;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
@@ -370,7 +373,7 @@ type TGetV3FeedbackRecordParams = {
 export async function getV3FeedbackRecord({
   workspaceId,
   feedbackRecordId,
-  feedbackDirectoryId,
+  datasetId,
   authentication,
   requestId,
   instance,
@@ -380,7 +383,7 @@ export async function getV3FeedbackRecord({
     const resolution = await resolveWorkspaceFeedbackTenant({
       authentication,
       workspaceId,
-      feedbackDirectoryId,
+      datasetId,
       minPermission: "read",
       requestId,
       instance,
@@ -404,7 +407,7 @@ export async function getV3FeedbackRecord({
 
     // When the caller named a directory, the record must live in THAT one; otherwise any directory the
     // workspace owns is acceptable. Same 403 either way — see the doc comment above.
-    const permittedTenantIds = feedbackDirectoryId ? [resolution.tenantId] : resolution.allowedTenantIds;
+    const permittedTenantIds = datasetId ? [resolution.tenantId] : resolution.allowedTenantIds;
     if (!result.data.tenant_id || !permittedTenantIds.includes(result.data.tenant_id)) {
       log.warn({ statusCode: 403 }, "Feedback record tenant outside caller's workspace directories");
       return problemForbidden(requestId, "You are not authorized to access this feedback record", instance);
@@ -418,7 +421,7 @@ export async function getV3FeedbackRecord({
 
 type TCreateV3FeedbackRecordParams = {
   workspaceId: string;
-  feedbackDirectoryId?: string;
+  datasetId?: string;
   body: unknown;
   authentication: TV3Authentication;
   requestId: string;
@@ -433,7 +436,7 @@ type TCreateV3FeedbackRecordParams = {
  */
 export async function createV3FeedbackRecord({
   workspaceId,
-  feedbackDirectoryId,
+  datasetId,
   body,
   authentication,
   requestId,
@@ -445,7 +448,7 @@ export async function createV3FeedbackRecord({
     const resolution = await resolveWorkspaceFeedbackTenant({
       authentication,
       workspaceId,
-      feedbackDirectoryId,
+      datasetId,
       minPermission: "readWrite",
       requestId,
       instance,

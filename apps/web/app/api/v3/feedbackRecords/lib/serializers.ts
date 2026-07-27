@@ -4,13 +4,18 @@ import type { FeedbackRecordData } from "@/modules/hub/types";
  * Public DTO for a feedback record. Field names mirror the Hub's feedback-record contract (snake_case)
  * so the MCP surface, the Unify UI, and the Hub API documentation all describe the same shape.
  *
+ * One deliberate exception: the Hub's `tenant_id` is emitted as **`dataset_id`**. The value is the same
+ * (a `FeedbackDirectory.id`), but "tenant" is Hub-internal vocabulary — the product, its UI and its docs
+ * call this a Feedback Dataset, so that is what the outward-facing surface says. Internal code keeps the
+ * `feedbackDirectory*` names; this serializer is the one place the outbound mapping happens.
+ *
  * This is an explicit allowlist (not a pass-through of the SDK object): only the documented Hub fields
  * are ever emitted, so a future SDK/bridge addition can't silently widen the response (OWASP API3).
  * Read-only enrichment fields (sentiment/emotions/translation) are included when present.
  */
 export type TV3FeedbackRecord = {
   id: string;
-  tenant_id?: string;
+  dataset_id?: string;
   submission_id?: string;
   source_type?: string;
   source_id?: string;
@@ -38,9 +43,9 @@ export type TV3FeedbackRecord = {
   updated_at?: string;
 };
 
-// Allowlisted optional fields copied from the Hub record when present (explicit nulls preserved).
+// Allowlisted optional fields copied verbatim from the Hub record when present (explicit nulls
+// preserved). `tenant_id` is absent on purpose — it is renamed to `dataset_id` below.
 const FEEDBACK_RECORD_FIELDS = [
-  "tenant_id",
   "submission_id",
   "source_type",
   "source_id",
@@ -72,6 +77,12 @@ export const serializeV3FeedbackRecord = (record: FeedbackRecordData): TV3Feedba
   const source = record as unknown as Record<string, unknown>;
   const dto: TV3FeedbackRecord = { id: record.id };
   const writable = dto as Record<string, unknown>;
+
+  // The Hub's tenant is our dataset — same value, outward-facing name.
+  if (record.tenant_id !== undefined) {
+    dto.dataset_id = record.tenant_id;
+  }
+
   for (const key of FEEDBACK_RECORD_FIELDS) {
     if (source[key] !== undefined) {
       writable[key] = source[key];
@@ -80,15 +91,12 @@ export const serializeV3FeedbackRecord = (record: FeedbackRecordData): TV3Feedba
   return dto;
 };
 
-export type TV3FeedbackDirectory = {
+export type TV3FeedbackDataset = {
   id: string;
   name: string;
 };
 
-export const serializeV3FeedbackDirectory = (directory: {
-  id: string;
-  name: string;
-}): TV3FeedbackDirectory => ({
-  id: directory.id,
-  name: directory.name,
+export const serializeV3FeedbackDataset = (dataset: { id: string; name: string }): TV3FeedbackDataset => ({
+  id: dataset.id,
+  name: dataset.name,
 });

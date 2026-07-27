@@ -80,7 +80,7 @@ Supported scopes:
 | ----------------------- | --------------------------------------------------------------------------- |
 | `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                |
 | `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations     |
-| `feedbackRecords:read`  | `list_feedback_directories`, `list_feedback_records`, `get_feedback_record` |
+| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `get_feedback_record` |
 | `feedbackRecords:write` | `create_feedback_record`                                                    |
 | `openid`                | OpenID Connect subject interoperability                                     |
 | `profile`               | User profile claims                                                         |
@@ -128,7 +128,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `validate_survey` | `write` or `manage` when the validation request checks write access |
 | `patch_survey`    | `write` or `manage`                                                 |
 | `delete_survey`   | `write` or `manage`                                                 |
-| `list_feedback_directories` | `read`                                                    |
+| `list_feedback_datasets` | `read`                                                    |
 | `list_feedback_records`     | `read`                                                    |
 | `get_feedback_record`       | `read`                                                    |
 | `create_feedback_record`    | `write` or `manage`                                       |
@@ -668,10 +668,10 @@ so callers can correlate the audit trail:
 }
 ```
 
-### list_feedback_directories
+### list_feedback_datasets
 
-Lists the active feedback directories assigned to a workspace. Read-only and idempotent. Use the
-returned `id` as `feedbackDirectoryId` for the other feedback-record tools.
+Lists the active feedback datasets assigned to a workspace. Read-only and idempotent. Use the
+returned `id` as `datasetId` for the other feedback-record tools.
 
 Input:
 
@@ -693,16 +693,16 @@ Output:
 
 ### list_feedback_records
 
-Lists feedback records in a workspace's feedback directory. Read-only and idempotent, with opaque
-cursor pagination. `feedbackDirectoryId` is optional when the workspace has exactly one active
-directory (the common case) and required when it has more than one.
+Lists feedback records in a workspace's feedback dataset. Read-only and idempotent, with opaque
+cursor pagination. `datasetId` is optional when the workspace has exactly one active
+dataset (the common case) and required when it has more than one.
 
 Input:
 
 ```json
 {
   "workspaceId": "clxx1234567890123456789012",
-  "feedbackDirectoryId": "clfd1234567890123456789012",
+  "datasetId": "clfd1234567890123456789012",
   "limit": 50,
   "cursor": "opaque-cursor-from-previous-response",
   "sourceType": "survey",
@@ -719,7 +719,7 @@ Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor
   "data": [
     {
       "id": "019fa338-f494-7384-b34e-01739783d280",
-      "tenant_id": "clfd1234567890123456789012",
+      "dataset_id": "clfd1234567890123456789012",
       "submission_id": "…",
       "source_type": "survey",
       "field_id": "q1",
@@ -736,7 +736,7 @@ Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor
 ### get_feedback_record
 
 Gets one feedback record by its Hub UUID. Read-only and idempotent. The record must belong to a
-feedback directory assigned to the workspace; otherwise the tool returns a generic authorization
+feedback dataset assigned to the workspace; otherwise the tool returns a generic authorization
 error and never reveals whether a record id exists in another tenant.
 
 Input:
@@ -750,9 +750,9 @@ Input:
 
 ### create_feedback_record
 
-Creates a feedback record in a workspace's feedback directory. Writes data and is not idempotent, and
+Creates a feedback record in a workspace's feedback dataset. Writes data and is not idempotent, and
 requires `feedbackRecords:write` (API keys need `write` or `manage`). The tenant is derived from the
-resolved feedback directory and is never taken from the request body. `submission_id` is optional — a
+resolved feedback dataset and is never taken from the request body. `submission_id` is optional — a
 UUID is generated when omitted.
 
 Input:
@@ -793,15 +793,15 @@ Feedback-record tools do not map to a v3 REST route. They call the shared server
 (`@/modules/hub/service`) — the same client the Unify Feedback UI uses — and enforce the same
 `feedbackDirectories` Enterprise entitlement.
 
-A feedback record lives in the Formbricks Hub, addressed by an opaque `tenant_id`. Every tool
+A feedback record lives in the Formbricks Hub, addressed by an opaque tenant id. Every tool
 resolves that tenant server-side: it authorizes the caller's access to `workspaceId`, checks the
-`feedbackDirectories` license, then maps the workspace to its assigned feedback directory — the
-`FeedbackDirectory` id **is** the Hub `tenant_id`.
+`feedbackDirectories` license, then maps the workspace to its assigned feedback dataset — the
+`FeedbackDirectory` id **is** the Hub tenant id, and it is surfaced to callers as `dataset_id`.
 
 Assignment is a join table, but the application enforces at most one *non-archived* directory per
-workspace, so in practice `feedbackDirectoryId` can be omitted and the single active directory is used.
+workspace, so in practice `datasetId` can be omitted and the single active dataset is used.
 It becomes required only if a workspace somehow has several active directories, in which case the tools
-return `400` rather than guessing. `tenant_id` is never accepted from tool input, and
+return `400` rather than guessing. A tenant id is never accepted from tool input, and
 `get_feedback_record` additionally verifies the fetched record's tenant — the named directory when one
 was given, otherwise any directory the workspace owns.
 

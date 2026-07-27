@@ -5,7 +5,7 @@ import { logger } from "@formbricks/logger";
 import {
   createV3FeedbackRecord,
   getV3FeedbackRecord,
-  listV3FeedbackDirectories,
+  listV3FeedbackDatasets,
   listV3FeedbackRecords,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
@@ -17,11 +17,11 @@ import { guardMcpScopes } from "./guard-scopes";
 import {
   type TMcpCreateFeedbackRecordInput,
   type TMcpGetFeedbackRecordInput,
-  type TMcpListFeedbackDirectoriesInput,
+  type TMcpListFeedbackDatasetsInput,
   type TMcpListFeedbackRecordsInput,
   ZMcpCreateFeedbackRecordInput,
   ZMcpGetFeedbackRecordInput,
-  ZMcpListFeedbackDirectoriesInput,
+  ZMcpListFeedbackDatasetsInput,
   ZMcpListFeedbackRecordsInput,
 } from "./schemas";
 
@@ -50,12 +50,12 @@ function readOnlyHandler<TInput>(
 
 export function registerFeedbackRecordTools(server: McpServer): void {
   server.registerTool(
-    "list_feedback_directories",
+    "list_feedback_datasets",
     {
-      title: "List feedback directories",
+      title: "List feedback datasets",
       description:
-        "List the feedback directories assigned to a Formbricks workspace. Use the returned id as feedbackDirectoryId for the other feedback-record tools.",
-      inputSchema: ZMcpListFeedbackDirectoriesInput.shape,
+        "List the feedback datasets assigned to a Formbricks workspace. Use the returned id as datasetId for the other feedback-record tools.",
+      inputSchema: ZMcpListFeedbackDatasetsInput.shape,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -63,8 +63,8 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    readOnlyHandler<TMcpListFeedbackDirectoriesInput>((input, authentication, requestId) =>
-      listV3FeedbackDirectories({
+    readOnlyHandler<TMcpListFeedbackDatasetsInput>((input, authentication, requestId) =>
+      listV3FeedbackDatasets({
         workspaceId: input.workspaceId,
         authentication,
         requestId,
@@ -78,7 +78,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "List feedback records",
       description:
-        "List feedback records for a workspace's feedback directory, with cursor pagination and optional filters.",
+        "List feedback records for a workspace's feedback dataset, with cursor pagination and optional filters.",
       inputSchema: ZMcpListFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: true,
@@ -90,7 +90,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     readOnlyHandler<TMcpListFeedbackRecordsInput>((input, authentication, requestId) =>
       listV3FeedbackRecords({
         workspaceId: input.workspaceId,
-        feedbackDirectoryId: input.feedbackDirectoryId,
+        datasetId: input.datasetId,
         limit: input.limit,
         cursor: input.cursor,
         sourceType: input.sourceType,
@@ -108,7 +108,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     "get_feedback_record",
     {
       title: "Get feedback record",
-      description: "Get one feedback record by id from a workspace's feedback directory.",
+      description: "Get one feedback record by id from a workspace's feedback dataset.",
       inputSchema: ZMcpGetFeedbackRecordInput.shape,
       annotations: {
         readOnlyHint: true,
@@ -121,7 +121,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       getV3FeedbackRecord({
         workspaceId: input.workspaceId,
         feedbackRecordId: input.feedbackRecordId,
-        feedbackDirectoryId: input.feedbackDirectoryId,
+        datasetId: input.datasetId,
         authentication,
         requestId,
         instance: MCP_API_ROUTE,
@@ -134,7 +134,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Create feedback record",
       description:
-        "Create a feedback record in a workspace's feedback directory. The tenant is derived from the workspace/directory; it is never taken from input.",
+        "Create a feedback record in a workspace's feedback dataset. The dataset is derived from the workspace; it is never taken from input.",
       inputSchema: ZMcpCreateFeedbackRecordInput.shape,
       annotations: {
         readOnlyHint: false,
@@ -157,7 +157,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       try {
         const response = await createV3FeedbackRecord({
           workspaceId: input.workspaceId,
-          feedbackDirectoryId: input.feedbackDirectoryId,
+          datasetId: input.datasetId,
           body: input,
           authentication,
           requestId,

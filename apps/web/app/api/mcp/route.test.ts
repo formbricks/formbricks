@@ -215,7 +215,7 @@ describe("POST /api/mcp", () => {
       "patch_survey",
       "delete_survey",
       "list_workspaces",
-      "list_feedback_directories",
+      "list_feedback_datasets",
       "list_feedback_records",
       "get_feedback_record",
       "create_feedback_record",

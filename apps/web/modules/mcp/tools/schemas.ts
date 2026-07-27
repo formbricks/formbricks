@@ -127,24 +127,25 @@ export const ZMcpDeleteSurveyInput = z.object({
 export const ZMcpListWorkspacesInput = z.object({});
 
 // Feedback records live in the Hub, addressed by a tenant that is always resolved server-side from the
-// caller's workspace + feedback directory. No schema here accepts a tenant_id.
-const feedbackDirectoryIdField = ZId.optional().describe(
-  "Feedback directory (tenant) to target. Optional when the workspace has exactly one active directory; required when it has more than one. Use list_feedback_directories to discover ids."
+// caller's workspace + feedback dataset. No schema here accepts a tenant_id; the Hub's `tenant_id` is
+// surfaced outward as `dataset_id`.
+const datasetIdField = ZId.optional().describe(
+  "Feedback dataset to target. Optional when the workspace has exactly one active dataset; required when it has more than one. Use list_feedback_datasets to discover ids."
 );
 
-export const ZMcpListFeedbackDirectoriesInput = z.object({
-  workspaceId: ZId.describe("Workspace ID whose feedback directories should be listed."),
+export const ZMcpListFeedbackDatasetsInput = z.object({
+  workspaceId: ZId.describe("Workspace ID whose feedback datasets should be listed."),
 });
 
 export const ZMcpListFeedbackRecordsInput = ZV3FeedbackRecordListFilters.extend({
   workspaceId: ZId.describe("Workspace ID whose feedback records should be listed."),
-  feedbackDirectoryId: feedbackDirectoryIdField,
+  datasetId: datasetIdField,
 });
 
 export const ZMcpGetFeedbackRecordInput = z.object({
   workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
   feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to fetch."),
-  feedbackDirectoryId: feedbackDirectoryIdField,
+  datasetId: datasetIdField,
 });
 
 // Extends the plain field object (not the refined body): `inputSchema` needs a raw shape, and the
@@ -152,7 +153,7 @@ export const ZMcpGetFeedbackRecordInput = z.object({
 // keys become visible as a missing value.
 export const ZMcpCreateFeedbackRecordInput = ZV3FeedbackRecordCreateBodyFields.extend({
   workspaceId: ZId.describe("Workspace ID to create the feedback record in."),
-  feedbackDirectoryId: feedbackDirectoryIdField,
+  datasetId: datasetIdField,
 });
 
 export type TMcpListSurveysInput = z.infer<typeof ZMcpListSurveysInput>;
@@ -162,7 +163,7 @@ export type TMcpCreateSurveyInput = z.infer<typeof ZMcpCreateSurveyInput>;
 export type TMcpPatchSurveyInput = z.infer<typeof ZMcpPatchSurveyInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
-export type TMcpListFeedbackDirectoriesInput = z.infer<typeof ZMcpListFeedbackDirectoriesInput>;
+export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatasetsInput>;
 export type TMcpListFeedbackRecordsInput = z.infer<typeof ZMcpListFeedbackRecordsInput>;
 export type TMcpGetFeedbackRecordInput = z.infer<typeof ZMcpGetFeedbackRecordInput>;
 export type TMcpCreateFeedbackRecordInput = z.infer<typeof ZMcpCreateFeedbackRecordInput>;

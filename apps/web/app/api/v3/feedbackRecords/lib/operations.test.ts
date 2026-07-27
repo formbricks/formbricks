@@ -9,7 +9,7 @@ import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
   createV3FeedbackRecord,
   getV3FeedbackRecord,
-  listV3FeedbackDirectories,
+  listV3FeedbackDatasets,
   listV3FeedbackRecords,
 } from "./operations";
 
@@ -79,16 +79,21 @@ describe("shared authorization + tenant resolution", () => {
     expect(listFeedbackRecords).not.toHaveBeenCalled();
   });
 
-  test("returns 422 when no directory is assigned to the workspace", async () => {
+  // An agent can only help the user if the dead-end says who does what, and where — so the detail has
+  // to name the role and the settings location, not just the problem.
+  test("returns an actionable 422 when no dataset is assigned to the workspace", async () => {
     vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([]);
 
     const response = await listV3FeedbackRecords(base);
+    const body = await response.json();
 
     expect(response.status).toBe(422);
+    expect(body.detail).toContain("organization owner or manager");
+    expect(body.detail).toContain("Settings → Organization → Feedback Datasets");
     expect(listFeedbackRecords).not.toHaveBeenCalled();
   });
 
-  test("returns 400 when multiple directories exist and none is specified", async () => {
+  test("returns 400 when multiple datasets exist and none is specified", async () => {
     vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([
       { id: directoryId, name: "A" },
       { id: otherDirectoryId, name: "B" },
@@ -99,17 +104,17 @@ describe("shared authorization + tenant resolution", () => {
     expect(response.status).toBe(400);
   });
 
-  test("returns 403 when an explicit feedbackDirectoryId is not assigned to the workspace", async () => {
-    const response = await listV3FeedbackRecords({ ...base, feedbackDirectoryId: otherDirectoryId });
+  test("returns 403 when an explicit datasetId is not assigned to the workspace", async () => {
+    const response = await listV3FeedbackRecords({ ...base, datasetId: otherDirectoryId });
 
     expect(response.status).toBe(403);
     expect(listFeedbackRecords).not.toHaveBeenCalled();
   });
 });
 
-describe("listV3FeedbackDirectories", () => {
-  test("returns the workspace's active directories", async () => {
-    const response = await listV3FeedbackDirectories(base);
+describe("listV3FeedbackDatasets", () => {
+  test("returns the workspace's active datasets", async () => {
+    const response = await listV3FeedbackDatasets(base);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
@@ -124,7 +129,7 @@ describe("listV3FeedbackDirectories", () => {
     const denied = new Response("forbidden", { status: 403 });
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(denied);
 
-    const response = await listV3FeedbackDirectories(base);
+    const response = await listV3FeedbackDatasets(base);
 
     expect(response).toBe(denied);
     expect(getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
@@ -133,16 +138,16 @@ describe("listV3FeedbackDirectories", () => {
   test("returns 403 when the feedbackDirectories feature is not licensed", async () => {
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(false);
 
-    const response = await listV3FeedbackDirectories(base);
+    const response = await listV3FeedbackDatasets(base);
 
     expect(response.status).toBe(403);
     expect(getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
   });
 
-  test("returns an empty list when the workspace has no directory", async () => {
+  test("returns an empty list when the workspace has no dataset", async () => {
     vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([]);
 
-    const response = await listV3FeedbackDirectories(base);
+    const response = await listV3FeedbackDatasets(base);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: [], meta: { nextCursor: null, totalCount: 0 } });
@@ -150,7 +155,7 @@ describe("listV3FeedbackDirectories", () => {
 });
 
 describe("listV3FeedbackRecords", () => {
-  test("auto-resolves the single directory as tenant_id and returns serialized records", async () => {
+  test("auto-resolves the single dataset as the Hub tenant and returns serialized records", async () => {
     vi.mocked(listFeedbackRecords).mockResolvedValue({
       data: { data: [record], limit: 50, next_cursor: "next" },
       error: null,
@@ -171,6 +176,21 @@ describe("listV3FeedbackRecords", () => {
     expect(body.meta).toEqual({ limit: 50, nextCursor: "next" });
     expect(body.data[0].id).toBe(record.id);
     expect(body.data[0].value_text).toBe("Love it");
+  });
+
+  // The Hub's `tenant_id` is Hub-internal vocabulary; the outward-facing name is `dataset_id`. Same
+  // value, and `tenant_id` must not appear in a response at all.
+  test("emits the tenant as dataset_id and never as tenant_id", async () => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [record], limit: 50, next_cursor: null },
+      error: null,
+    });
+
+    const body = await (await listV3FeedbackRecords(base)).json();
+
+    expect(body.data[0].dataset_id).toBe(directoryId);
+    expect(body.data[0]).not.toHaveProperty("tenant_id");
+    expect(JSON.stringify(body)).not.toContain("tenant_id");
   });
 
   test("maps a Hub rate-limit error to 429", async () => {
@@ -260,7 +280,7 @@ describe("getV3FeedbackRecord", () => {
       error: null,
     });
 
-    const response = await getV3FeedbackRecord({ ...getBase, feedbackDirectoryId: directoryId });
+    const response = await getV3FeedbackRecord({ ...getBase, datasetId: directoryId });
 
     expect(response.status).toBe(403);
   });
