@@ -15,39 +15,18 @@ const makeApiKeyAuth = (overrides: Partial<TAuthenticationApiKey> = {}): TAuthen
 });
 
 describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
-  describe("organization-level access control is bound to the API key's own organization (ENG-1980)", () => {
-    test("denies a foreign-organization key that has org-level write, for read and write", () => {
-      const foreignKey = makeApiKeyAuth({
-        organizationId: "org_attacker",
+  describe("organization-level access control does not grant feedback-record access", () => {
+    // organizationAccess.accessControl governs org management (members/teams), NOT workspace data.
+    // Feedback records are workspace-scoped, so they must never be reachable via org-level access —
+    // only via a matching workspace permission.
+    test("denies a same-organization key with org-level write and no matching workspace permission", () => {
+      const ownerKey = makeApiKeyAuth({
         organizationAccess: { accessControl: { read: true, write: true } },
       });
 
       expect(
-        hasApiKeyImplicitFeedbackDirectoryAccess(
-          foreignKey,
-          DIRECTORY_ORG_ID,
-          [DIRECTORY_WORKSPACE_ID],
-          "read"
-        )
-      ).toBe(false);
-      expect(
-        hasApiKeyImplicitFeedbackDirectoryAccess(
-          foreignKey,
-          DIRECTORY_ORG_ID,
-          [DIRECTORY_WORKSPACE_ID],
-          "write"
-        )
-      ).toBe(false);
-    });
-
-    test("grants a same-organization key with org-level write, for read and write", () => {
-      const ownerKey = makeApiKeyAuth({
-        organizationAccess: { accessControl: { read: false, write: true } },
-      });
-
-      expect(
         hasApiKeyImplicitFeedbackDirectoryAccess(ownerKey, DIRECTORY_ORG_ID, [DIRECTORY_WORKSPACE_ID], "read")
-      ).toBe(true);
+      ).toBe(false);
       expect(
         hasApiKeyImplicitFeedbackDirectoryAccess(
           ownerKey,
@@ -55,25 +34,29 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           [DIRECTORY_WORKSPACE_ID],
           "write"
         )
-      ).toBe(true);
+      ).toBe(false);
     });
 
-    test("grants a same-organization key with org-level read only for read", () => {
-      const readerKey = makeApiKeyAuth({
-        organizationAccess: { accessControl: { read: true, write: false } },
+    test("denies a foreign-organization key regardless of org-level or workspace access (ENG-1980)", () => {
+      const foreignKey = makeApiKeyAuth({
+        organizationId: "org_attacker",
+        organizationAccess: { accessControl: { read: true, write: true } },
+        workspacePermissions: [
+          { workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission: "manage" },
+        ],
       });
 
       expect(
         hasApiKeyImplicitFeedbackDirectoryAccess(
-          readerKey,
+          foreignKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
           "read"
         )
-      ).toBe(true);
+      ).toBe(false);
       expect(
         hasApiKeyImplicitFeedbackDirectoryAccess(
-          readerKey,
+          foreignKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
           "write"
@@ -100,27 +83,6 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           "write"
         )
       ).toBe(true);
-    });
-
-    test("denies a foreign-organization key even with a matching workspace permission (defense-in-depth, ENG-1980)", () => {
-      // Upstream (authenticateApiKeyFromHeaders) filters workspacePermissions to the key's own org,
-      // so this shape shouldn't occur in production — but the authz function must deny it on its own
-      // rather than rely on that invariant holding.
-      const foreignKey = makeApiKeyAuth({
-        organizationId: "org_attacker",
-        workspacePermissions: [
-          { workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission: "manage" },
-        ],
-      });
-
-      expect(
-        hasApiKeyImplicitFeedbackDirectoryAccess(
-          foreignKey,
-          DIRECTORY_ORG_ID,
-          [DIRECTORY_WORKSPACE_ID],
-          "write"
-        )
-      ).toBe(false);
     });
 
     test("denies when the read-only workspace permission is below the required write weight", () => {
