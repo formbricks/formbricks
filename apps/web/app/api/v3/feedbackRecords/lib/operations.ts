@@ -133,8 +133,8 @@ async function resolveWorkspaceFeedbackTenant({
  * Map a Hub service error to a controlled v3 problem response.
  *
  * A Hub 400/422 describes the *caller's own* input, so its field-level detail is relayed: the Hub owns
- * the cross-field rules we deliberately don't duplicate here (which `value_*` a `field_type` requires,
- * timestamp bounds, NULL bytes), and without them an agent can't correct its request. Everything else —
+ * the content rules we deliberately don't duplicate here (NULL bytes, its own length limits), and
+ * without them an agent can't correct its request. Everything else —
  * unconfigured/unreachable Hub, our own Hub credentials being rejected, upstream 5xx — collapses to a
  * generic 502 and is only ever logged, never echoed.
  */

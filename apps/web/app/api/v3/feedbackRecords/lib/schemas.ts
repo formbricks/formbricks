@@ -50,8 +50,12 @@ export type TV3FeedbackRecordListFilters = z.infer<typeof ZV3FeedbackRecordListF
 /**
  * Create body — mirrors the Hub `CreateFeedbackRecordInputBody`, WITHOUT `tenant_id`. Length/type
  * bounds match the Hub contract so oversized/invalid input is rejected early; the Hub remains the
- * source of truth for cross-field rules (which `value_*` a `field_type` requires, no NULL bytes, etc.).
- * Its field-level failures are relayed to the caller by `hubErrorToProblemResponse`.
+ * source of truth for the remaining content rules (no NULL bytes, its own length limits), and its
+ * field-level failures are relayed to the caller by `hubErrorToProblemResponse`.
+ *
+ * Note: neither side currently enforces that the populated `value_*` matches `field_type` — the Hub
+ * accepts e.g. `field_type: "text"` with only `value_number`. Callers are expected to send the matching
+ * field (the descriptions say which); tightening this belongs in the Hub, next to the field-type enum.
  */
 export const ZV3FeedbackRecordCreateBody = z.object({
   source_type: z
