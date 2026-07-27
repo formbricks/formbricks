@@ -9,8 +9,10 @@ import {
   type InvalidParam,
   problemBadGateway,
   problemBadRequest,
+  problemConflict,
   problemForbidden,
   problemInternalError,
+  problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnprocessableContent,
   successListResponse,
@@ -21,7 +23,7 @@ import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-direc
 import { createFeedbackRecord, listFeedbackRecords, retrieveFeedbackRecord } from "@/modules/hub/service";
 import type { FeedbackRecordCreateParams, FeedbackRecordListParams } from "@/modules/hub/types";
 import type { HubError } from "@/modules/hub/utils";
-import { ZV3FeedbackRecordCreateBody } from "./schemas";
+import { type TV3FeedbackRecordCreateBody, ZV3FeedbackRecordCreateBody } from "./schemas";
 import { serializeV3FeedbackDirectory, serializeV3FeedbackRecord } from "./serializers";
 
 const CACHE = "private, no-store" as const;
@@ -144,6 +146,22 @@ function hubErrorToProblemResponse(error: HubError | null, requestId: string, in
     return problemTooManyRequests(requestId, "The feedback service is rate limiting requests.");
   }
 
+  // A duplicate (submission_id, field_id) or an in-progress tenant purge — the caller's request, not an
+  // outage, and retryable in the purge case. Reported as 409 so an agent doesn't retry-loop on a 502.
+  if (status === 409) {
+    return problemConflict(
+      requestId,
+      error?.problemDetail?.slice(0, MAX_RELAYED_DETAIL_LENGTH) ??
+        "The feedback service reported a conflict.",
+      instance
+    );
+  }
+
+  // The Hub's body cap is lower than ours, so this is reachable with a large (but locally valid) payload.
+  if (status === 413) {
+    return problemPayloadTooLarge(requestId, "The feedback record is too large.", instance);
+  }
+
   if (status === 400 || status === 422) {
     // Only name/reason cross over: the Hub's `code` vocabulary is its own, not the v3 InvalidParamCode set.
     // Bounded on both axes — the Hub is a remote service, so we don't let it size our response body.
@@ -185,6 +203,52 @@ function handleUnexpectedError(
 
 const toInvalidParams = (error: z.ZodError): InvalidParam[] =>
   error.issues.map((issue) => ({ name: issue.path.join("."), reason: issue.message }));
+
+/**
+ * Optional fields copied verbatim from the validated body to the Hub payload. An explicit allowlist —
+ * never a spread — so nothing the caller invents (a `tenant_id` above all) can reach the Hub.
+ */
+const HUB_OPTIONAL_CREATE_FIELDS = [
+  "value_text",
+  "value_number",
+  "value_boolean",
+  "value_date",
+  "value_id",
+  "user_id",
+  "language",
+  "source_id",
+  "source_name",
+  "field_group_id",
+  "field_group_label",
+  "field_label",
+  "collected_at",
+  "metadata",
+] as const satisfies readonly (keyof TV3FeedbackRecordCreateBody & keyof FeedbackRecordCreateParams)[];
+
+/** Build the Hub create payload: required fields, the server-resolved tenant, then the allowlist. */
+function buildHubCreateParams(
+  data: TV3FeedbackRecordCreateBody,
+  tenantId: string
+): FeedbackRecordCreateParams {
+  const params: FeedbackRecordCreateParams = {
+    tenant_id: tenantId,
+    // Generated when omitted so a single ad-hoc record still groups cleanly.
+    submission_id: data.submission_id ?? randomUUID(),
+    source_type: data.source_type,
+    field_id: data.field_id,
+    field_type: data.field_type,
+  };
+
+  const target = params as Record<string, unknown>;
+  const source = data as Record<string, unknown>;
+  for (const field of HUB_OPTIONAL_CREATE_FIELDS) {
+    if (source[field] !== undefined) {
+      target[field] = source[field];
+    }
+  }
+
+  return params;
+}
 
 type TListV3FeedbackDirectoriesParams = {
   workspaceId: string;
@@ -411,30 +475,7 @@ export async function createV3FeedbackRecord({
       });
     }
 
-    const data = parsed.data;
-    const createParams: FeedbackRecordCreateParams = {
-      tenant_id: resolution.tenantId,
-      submission_id: data.submission_id ?? randomUUID(),
-      source_type: data.source_type,
-      field_id: data.field_id,
-      field_type: data.field_type,
-    };
-    if (data.value_text !== undefined) createParams.value_text = data.value_text;
-    if (data.value_number !== undefined) createParams.value_number = data.value_number;
-    if (data.value_boolean !== undefined) createParams.value_boolean = data.value_boolean;
-    if (data.value_date !== undefined) createParams.value_date = data.value_date;
-    if (data.value_id !== undefined) createParams.value_id = data.value_id;
-    if (data.user_id !== undefined) createParams.user_id = data.user_id;
-    if (data.language !== undefined) createParams.language = data.language;
-    if (data.source_id !== undefined) createParams.source_id = data.source_id;
-    if (data.source_name !== undefined) createParams.source_name = data.source_name;
-    if (data.field_group_id !== undefined) createParams.field_group_id = data.field_group_id;
-    if (data.field_group_label !== undefined) createParams.field_group_label = data.field_group_label;
-    if (data.field_label !== undefined) createParams.field_label = data.field_label;
-    if (data.collected_at !== undefined) createParams.collected_at = data.collected_at;
-    if (data.metadata !== undefined) createParams.metadata = data.metadata;
-
-    const result = await createFeedbackRecord(createParams);
+    const result = await createFeedbackRecord(buildHubCreateParams(parsed.data, resolution.tenantId));
     if (result.error || !result.data) {
       log.warn(
         { hubStatus: result.error?.status, hubCode: result.error?.code },

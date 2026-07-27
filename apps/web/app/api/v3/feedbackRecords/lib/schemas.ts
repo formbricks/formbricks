@@ -53,11 +53,29 @@ export type TV3FeedbackRecordListFilters = z.infer<typeof ZV3FeedbackRecordListF
  * source of truth for the remaining content rules (no NULL bytes, its own length limits), and its
  * field-level failures are relayed to the caller by `hubErrorToProblemResponse`.
  *
- * Note: neither side currently enforces that the populated `value_*` matches `field_type` — the Hub
- * accepts e.g. `field_type: "text"` with only `value_number`. Callers are expected to send the matching
- * field (the descriptions say which); tightening this belongs in the Hub, next to the field-type enum.
+ * The Hub does NOT check that the populated `value_*` matches `field_type` (it accepts `field_type:
+ * "text"` carrying only `value_number`, and even a record with no value at all), so we enforce it here.
+ * Without this a mistyped field name — MCP strips unknown keys before we ever see them, so `valueText`
+ * simply vanishes — would store a permanently empty record and report success.
  */
-export const ZV3FeedbackRecordCreateBody = z.object({
+const VALUE_FIELD_BY_TYPE: Record<z.infer<typeof ZHubFieldType>, string[]> = {
+  text: ["value_text"],
+  // A choice can be identified by its label, its stable option id, or both.
+  categorical: ["value_text", "value_id"],
+  nps: ["value_number"],
+  csat: ["value_number"],
+  ces: ["value_number"],
+  rating: ["value_number"],
+  number: ["value_number"],
+  boolean: ["value_boolean"],
+  date: ["value_date"],
+};
+
+// Keep well under the Hub's 512 KiB request cap so an oversized payload fails here, with a clear
+// message, instead of arriving as an opaque upstream rejection.
+const MAX_METADATA_BYTES = 32_768;
+
+export const ZV3FeedbackRecordCreateBodyFields = z.object({
   source_type: z
     .string()
     .trim()
@@ -101,6 +119,27 @@ export const ZV3FeedbackRecordCreateBody = z.object({
     .min(1)
     .optional()
     .describe("When the feedback was collected, as an ISO 8601 timestamp. Defaults to now."),
-  metadata: z.record(z.string(), z.unknown()).optional().describe("Additional context (device, tags, etc.)."),
+  metadata: z
+    .record(z.string(), z.unknown())
+    .refine((value) => JSON.stringify(value).length <= MAX_METADATA_BYTES, {
+      message: `must serialize to at most ${MAX_METADATA_BYTES} bytes`,
+    })
+    .optional()
+    .describe("Additional context (device, tags, etc.)."),
 });
+
+export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.superRefine((data, ctx) => {
+  const accepted = VALUE_FIELD_BY_TYPE[data.field_type];
+  if (accepted.some((field) => data[field as keyof typeof data] !== undefined)) {
+    return;
+  }
+
+  ctx.addIssue({
+    code: "custom",
+    // Report against the field the caller should have sent, so the error points at the fix.
+    path: [accepted[0]],
+    message: `is required for field_type "${data.field_type}" (expected one of: ${accepted.join(", ")})`,
+  });
+});
+
 export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreateBody>;

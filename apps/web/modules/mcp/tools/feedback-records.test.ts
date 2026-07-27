@@ -157,10 +157,10 @@ describe("get_feedback_record", () => {
 
     await tools
       .get("get_feedback_record")!
-      .handler({ workspaceId, feedbackRecordId: "018e1234-5678-9abc-def0-123456789abc" }, { authInfo });
+      .handler({ workspaceId, feedbackRecordId: "019fa338-f494-7384-b34e-01739783d280" }, { authInfo });
 
     expect(getV3FeedbackRecord).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId, feedbackRecordId: "018e1234-5678-9abc-def0-123456789abc" })
+      expect.objectContaining({ workspaceId, feedbackRecordId: "019fa338-f494-7384-b34e-01739783d280" })
     );
   });
 });

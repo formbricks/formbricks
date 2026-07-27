@@ -39,7 +39,7 @@ const requestId = "req_1";
 const base = { authentication: null, workspaceId, requestId, instance };
 
 const record: FeedbackRecordData = {
-  id: "018e1234-5678-9abc-def0-123456789abc",
+  id: "019fa338-f494-7384-b34e-01739783d280",
   collected_at: "2026-07-01T00:00:00.000Z",
   created_at: "2026-07-01T00:00:00.000Z",
   updated_at: "2026-07-01T00:00:00.000Z",
@@ -341,30 +341,121 @@ describe("createV3FeedbackRecord", () => {
     expect(createFeedbackRecord).not.toHaveBeenCalled();
   });
 
-  // The Hub owns the cross-field rules (e.g. field_type text needs value_text), so its field-level
-  // failures must reach the caller — otherwise an agent can't correct its own request.
-  test("relays the Hub's validation detail and invalid_params on a 422", async () => {
+  // The Hub still owns content rules we don't duplicate (NUL bytes, its own limits) and reports them as
+  // 400 — its field-level detail must reach the caller, or an agent can't correct its own request.
+  // (Verified against a real Hub: a NUL byte in value_text produces exactly this shape.)
+  test("relays the Hub's validation detail and invalid_params on a 400", async () => {
     vi.mocked(createFeedbackRecord).mockResolvedValue({
       data: null,
       error: {
-        status: 422,
-        message: "422 Unprocessable Entity",
-        detail: "422 Unprocessable Entity",
+        status: 400,
+        message: "400 Bad Request",
+        detail: "400 Bad Request",
         code: "validation",
         problemDetail: "One or more request parameters are invalid",
-        invalidParams: [{ name: "value_text", reason: "required when field_type is text" }],
+        invalidParams: [{ name: "value_text", reason: "must not contain NULL bytes" }],
       },
     });
 
     const response = await createV3FeedbackRecord({
       ...base,
-      body: { source_type: "call_notes", field_id: "note", field_type: "text", value_number: 1 },
+      body: { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "hi" },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.detail).toBe("One or more request parameters are invalid");
+    expect(body.invalid_params).toEqual([{ name: "value_text", reason: "must not contain NULL bytes" }]);
+  });
+
+  // The Hub accepts a record with no value at all, and MCP strips unknown keys before we see them, so a
+  // mistyped field name would otherwise store an empty record and report success.
+  test("rejects a body whose field_type has no matching value, naming the expected field", async () => {
+    const response = await createV3FeedbackRecord({
+      ...base,
+      // `valueText` is what an agent typo looks like after MCP has stripped it: no value at all.
+      body: { source_type: "call_notes", field_id: "note", field_type: "text" },
     });
     const body = await response.json();
 
     expect(response.status).toBe(422);
-    expect(body.detail).toBe("One or more request parameters are invalid");
-    expect(body.invalid_params).toEqual([{ name: "value_text", reason: "required when field_type is text" }]);
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({ name: "value_text", reason: expect.stringContaining("field_type") }),
+    ]);
+    expect(createFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["nps", "value_number"],
+    ["boolean", "value_boolean"],
+    ["date", "value_date"],
+  ])("requires %s to carry %s", async (fieldType, expectedField) => {
+    const response = await createV3FeedbackRecord({
+      ...base,
+      body: { source_type: "survey", field_id: "q", field_type: fieldType },
+    });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe(expectedField);
+  });
+
+  test("accepts a categorical record identified only by value_id", async () => {
+    const response = await createV3FeedbackRecord({
+      ...base,
+      body: { source_type: "survey", field_id: "q", field_type: "categorical", value_id: "opt_1" },
+    });
+
+    expect(response.status).toBe(201);
+  });
+
+  test("maps a Hub duplicate/purge conflict to 409 rather than a misleading 502", async () => {
+    vi.mocked(createFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: {
+        status: 409,
+        message: "409 Conflict",
+        detail: "409 Conflict",
+        problemDetail: "duplicate record for (tenant_id, submission_id, field_id)",
+      },
+    });
+
+    const response = await createV3FeedbackRecord({
+      ...base,
+      body: { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "hi" },
+    });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toContain("duplicate record");
+  });
+
+  test("maps a Hub 413 to payload-too-large rather than a misleading 502", async () => {
+    vi.mocked(createFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 413, message: "too big", detail: "too big" },
+    });
+
+    const response = await createV3FeedbackRecord({
+      ...base,
+      body: { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "hi" },
+    });
+
+    expect(response.status).toBe(413);
+  });
+
+  test("rejects oversized metadata locally instead of letting the Hub reject the request", async () => {
+    const response = await createV3FeedbackRecord({
+      ...base,
+      body: {
+        source_type: "call_notes",
+        field_id: "note",
+        field_type: "text",
+        value_text: "hi",
+        metadata: { blob: "x".repeat(40_000) },
+      },
+    });
+
+    expect(response.status).toBe(422);
+    expect(createFeedbackRecord).not.toHaveBeenCalled();
   });
 
   test("does not relay upstream detail on a Hub 5xx", async () => {

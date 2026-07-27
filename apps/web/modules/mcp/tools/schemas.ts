@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
-  ZV3FeedbackRecordCreateBody,
+  ZV3FeedbackRecordCreateBodyFields,
   ZV3FeedbackRecordListFilters,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
 
@@ -147,7 +147,10 @@ export const ZMcpGetFeedbackRecordInput = z.object({
   feedbackDirectoryId: feedbackDirectoryIdField,
 });
 
-export const ZMcpCreateFeedbackRecordInput = ZV3FeedbackRecordCreateBody.extend({
+// Extends the plain field object (not the refined body): `inputSchema` needs a raw shape, and the
+// value/field_type rule is enforced by the operations layer, which is also where MCP-stripped unknown
+// keys become visible as a missing value.
+export const ZMcpCreateFeedbackRecordInput = ZV3FeedbackRecordCreateBodyFields.extend({
   workspaceId: ZId.describe("Workspace ID to create the feedback record in."),
   feedbackDirectoryId: feedbackDirectoryIdField,
 });

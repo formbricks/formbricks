@@ -1,4 +1,6 @@
+import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "@formbricks/logger";
 import {
   createV3FeedbackRecord,
@@ -7,6 +9,7 @@ import {
   listV3FeedbackRecords,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
@@ -25,6 +28,26 @@ import {
 const FEEDBACK_RECORDS_READ_SCOPE = ["feedbackRecords:read"];
 const FEEDBACK_RECORDS_WRITE_SCOPE = ["feedbackRecords:write"];
 
+/**
+ * Shared handler body for the read-only tools: resolve the request id, gate on the read scope, run the
+ * v3 operation, map its Response to a tool result. Only `run` differs between them; `create` keeps its
+ * own handler because of the audit-log lifecycle.
+ */
+function readOnlyHandler<TInput>(
+  run: (input: TInput, authentication: TV3Authentication, requestId: string) => Promise<Response>
+) {
+  return async (input: TInput, extra: { authInfo?: AuthInfo }): Promise<CallToolResult> => {
+    const requestId = getMcpRequestId(extra.authInfo);
+    const scopeError = await guardMcpScopes(extra.authInfo, FEEDBACK_RECORDS_READ_SCOPE, requestId);
+    if (scopeError) {
+      return scopeError;
+    }
+
+    const response = await run(input, getMcpAuthentication(extra.authInfo), requestId);
+    return await responseToMcpToolResult(response, requestId);
+  };
+}
+
 export function registerFeedbackRecordTools(server: McpServer): void {
   server.registerTool(
     "list_feedback_directories",
@@ -40,22 +63,14 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    async (input: TMcpListFeedbackDirectoriesInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, FEEDBACK_RECORDS_READ_SCOPE, requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
-      const response = await listV3FeedbackDirectories({
+    readOnlyHandler<TMcpListFeedbackDirectoriesInput>((input, authentication, requestId) =>
+      listV3FeedbackDirectories({
         workspaceId: input.workspaceId,
-        authentication: getMcpAuthentication(extra.authInfo),
+        authentication,
         requestId,
         instance: MCP_API_ROUTE,
-      });
-
-      return await responseToMcpToolResult(response, requestId);
-    }
+      })
+    )
   );
 
   server.registerTool(
@@ -72,14 +87,8 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    async (input: TMcpListFeedbackRecordsInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, FEEDBACK_RECORDS_READ_SCOPE, requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
-      const response = await listV3FeedbackRecords({
+    readOnlyHandler<TMcpListFeedbackRecordsInput>((input, authentication, requestId) =>
+      listV3FeedbackRecords({
         workspaceId: input.workspaceId,
         feedbackDirectoryId: input.feedbackDirectoryId,
         limit: input.limit,
@@ -88,13 +97,11 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         fieldType: input.fieldType,
         since: input.since,
         until: input.until,
-        authentication: getMcpAuthentication(extra.authInfo),
+        authentication,
         requestId,
         instance: MCP_API_ROUTE,
-      });
-
-      return await responseToMcpToolResult(response, requestId);
-    }
+      })
+    )
   );
 
   server.registerTool(
@@ -110,24 +117,16 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    async (input: TMcpGetFeedbackRecordInput, extra) => {
-      const requestId = getMcpRequestId(extra.authInfo);
-      const scopeError = await guardMcpScopes(extra.authInfo, FEEDBACK_RECORDS_READ_SCOPE, requestId);
-      if (scopeError) {
-        return scopeError;
-      }
-
-      const response = await getV3FeedbackRecord({
+    readOnlyHandler<TMcpGetFeedbackRecordInput>((input, authentication, requestId) =>
+      getV3FeedbackRecord({
         workspaceId: input.workspaceId,
         feedbackRecordId: input.feedbackRecordId,
         feedbackDirectoryId: input.feedbackDirectoryId,
-        authentication: getMcpAuthentication(extra.authInfo),
+        authentication,
         requestId,
         instance: MCP_API_ROUTE,
-      });
-
-      return await responseToMcpToolResult(response, requestId);
-    }
+      })
+    )
   );
 
   server.registerTool(

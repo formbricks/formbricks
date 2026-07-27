@@ -169,6 +169,13 @@ export function problemUnprocessableContent(
   });
 }
 
+export function problemConflict(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(409, "Conflict", detail, requestId, {
+    code: "conflict",
+    instance,
+  });
+}
+
 export function problemBadGateway(requestId: string, detail: string, instance?: string): Response {
   return problemResponse(502, "Bad Gateway", detail, requestId, {
     code: "bad_gateway",
