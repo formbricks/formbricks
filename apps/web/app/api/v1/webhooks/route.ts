@@ -1,7 +1,7 @@
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -23,12 +23,7 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(webhooks),
       };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.internalServerErrorResponse(error.message),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
 });
@@ -93,17 +88,7 @@ export const POST = withV1ApiWrapper({
         response: responses.successResponse(webhook),
       };
     } catch (error) {
-      if (error instanceof InvalidInputError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.internalServerErrorResponse(error.message),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
   action: "created",
