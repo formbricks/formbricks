@@ -10,7 +10,7 @@ import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 type TUncheckedResponseUpdate = Record<string, unknown> & {
@@ -138,7 +138,15 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      if (!validateFileUploads(responseUpdate.data, result.survey.questions)) {
+      if (
+        !validateClientFileUploads({
+          data: responseUpdate.data,
+          workspaceId: result.survey.workspaceId,
+          surveyId: result.survey.id,
+          blocks: result.survey.blocks,
+          questions: result.survey.questions,
+        })
+      ) {
         return {
           response: responses.badRequestResponse("Invalid file upload response"),
         };

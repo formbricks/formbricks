@@ -15,7 +15,7 @@ import {
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
@@ -163,7 +163,15 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, questionsResponse.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!validateFileUploads(body.data, questionsResponse.data.questions)) {
+      if (
+        !validateClientFileUploads({
+          data: body.data,
+          workspaceId: workspaceIdResult.data.workspaceId,
+          surveyId: existingResponse.data.surveyId,
+          blocks: questionsResponse.data.blocks,
+          questions: questionsResponse.data.questions,
+        })
+      ) {
         return handleApiError(
           request,
           {

@@ -13,7 +13,6 @@ import {
   resolveStorageUrlsInObject,
   sanitizeFileName,
   validateClientFileUploads,
-  validateFileUploads,
   validateSingleFile,
   validateSurveyAllowsFileUpload,
 } from "@/modules/storage/utils";
@@ -220,138 +219,6 @@ describe("storage utils", () => {
     test("should return false when file has no extension", () => {
       mockGetOriginalFileNameFromUrl.mockReturnValueOnce("filewithoutextension");
       expect(validateSingleFile("https://example.com/filewithoutextension", ["jpg"])).toBe(false);
-    });
-  });
-
-  describe("validateFileUploads", () => {
-    test("should return true for valid file uploads in response data", () => {
-      const responseData = {
-        question1: ["https://example.com/storage/file1.jpg", "https://example.com/storage/file2.pdf"],
-      };
-
-      const questions = [
-        {
-          id: "question1",
-          type: "fileUpload" as const,
-          allowedFileExtensions: ["jpg", "pdf"],
-        } as TSurveyQuestion,
-      ];
-
-      expect(validateFileUploads(responseData, questions)).toBe(true);
-    });
-
-    test("should return false when file url is not a string", () => {
-      const responseData = {
-        question1: [123, "https://example.com/storage/file.jpg"],
-      } as TResponseData;
-
-      const questions = [
-        {
-          id: "question1",
-          type: "fileUpload" as const,
-          allowedFileExtensions: ["jpg"],
-        } as TSurveyQuestion,
-      ];
-
-      expect(validateFileUploads(responseData, questions)).toBe(false);
-    });
-
-    test("should return false when file urls are not in an array", () => {
-      const responseData = {
-        question1: "https://example.com/storage/file.jpg",
-      };
-
-      const questions = [
-        {
-          id: "question1",
-          type: "fileUpload" as const,
-          allowedFileExtensions: ["jpg"],
-        } as TSurveyQuestion,
-      ];
-
-      expect(validateFileUploads(responseData, questions)).toBe(false);
-    });
-
-    test("should return false when file extension is not allowed", () => {
-      const responseData = {
-        question1: ["https://example.com/storage/file.exe"],
-      };
-
-      const questions = [
-        {
-          id: "question1",
-          type: "fileUpload" as const,
-          allowedFileExtensions: ["jpg", "pdf"],
-        } as TSurveyQuestion,
-      ];
-
-      expect(validateFileUploads(responseData, questions)).toBe(false);
-    });
-
-    test("should return false when file name cannot be extracted", () => {
-      // Mock implementation to return null for this specific URL
-      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => undefined);
-
-      const responseData = {
-        question1: ["https://example.com/invalid-url"],
-      };
-
-      const questions = [
-        {
-          id: "question1",
-          type: "fileUpload" as const,
-          allowedFileExtensions: ["jpg"],
-        } as TSurveyQuestion,
-      ];
-
-      expect(validateFileUploads(responseData, questions)).toBe(false);
-    });
-
-    test("should return false when file has no extension", () => {
-      mockGetOriginalFileNameFromUrl.mockImplementationOnce(() => "file-without-extension");
-
-      const responseData = {
-        question1: ["https://example.com/storage/file-without-extension"],
-      };
-
-      const questions = [
-        {
-          id: "question1",
-          type: "fileUpload" as const,
-          allowedFileExtensions: ["jpg"],
-        } as TSurveyQuestion,
-      ];
-
-      expect(validateFileUploads(responseData, questions)).toBe(false);
-    });
-
-    test("should ignore non-fileUpload questions", () => {
-      const responseData = {
-        question1: ["https://example.com/storage/file.jpg"],
-        question2: "Some text answer",
-      };
-
-      const questions = [
-        {
-          id: "question1",
-          type: "fileUpload" as const,
-          allowedFileExtensions: ["jpg"],
-        },
-        {
-          id: "question2",
-          type: "text" as const,
-        },
-      ] as TSurveyQuestion[];
-
-      expect(validateFileUploads(responseData, questions)).toBe(true);
-    });
-
-    test("should return true when no questions are provided", () => {
-      const responseData = {
-        question1: ["https://example.com/storage/file.jpg"],
-      };
-
-      expect(validateFileUploads(responseData)).toBe(true);
     });
   });
 
@@ -573,6 +440,18 @@ describe("storage utils", () => {
     test("should reject unscoped legacy storage URLs for new client submissions", () => {
       const responseData = {
         [elementId]: [`/storage/${workspaceId}/private/report--fid--abc.pdf`],
+      };
+
+      expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+
+    test("should reject scoped URLs for a different workspace (cross-tenant, ENG-1981)", () => {
+      // A storage URL whose workspace segment belongs to ANOTHER tenant must never validate:
+      // persisting it would let response-deletion cleanup delete that tenant's file by storageId.
+      const responseData = {
+        [elementId]: [
+          `/storage/otherWorkspace/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+        ],
       };
 
       expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);

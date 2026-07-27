@@ -10,7 +10,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses, getResponsesByWorkspaceIds } from "./lib/response";
 
 export const GET = withV1ApiWrapper({
@@ -132,7 +132,15 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
+      if (
+        !validateClientFileUploads({
+          data: responseInput.data,
+          workspaceId: responseInput.workspaceId,
+          surveyId: surveyResult.survey.id,
+          blocks: surveyResult.survey.blocks,
+          questions: surveyResult.survey.questions,
+        })
+      ) {
         return {
           response: responses.badRequestResponse("Invalid file upload response"),
         };

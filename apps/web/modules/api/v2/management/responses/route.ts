@@ -12,7 +12,7 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
 
 export const GET = async (request: NextRequest) =>
@@ -97,7 +97,15 @@ export const POST = async (request: Request) =>
         return handleApiError(request, surveyQuestions.error as ApiErrorResponseV2, auditLog); // NOSONAR
       }
 
-      if (!validateFileUploads(body.data, surveyQuestions.data.questions)) {
+      if (
+        !validateClientFileUploads({
+          data: body.data,
+          workspaceId,
+          surveyId: body.surveyId,
+          blocks: surveyQuestions.data.blocks,
+          questions: surveyQuestions.data.questions,
+        })
+      ) {
         return handleApiError(
           request,
           {

@@ -12,7 +12,7 @@ const {
   mockSendToPipeline,
   mockSuccessResponse,
   mockUpdateResponseWithQuotaEvaluation,
-  mockValidateFileUploads,
+  mockValidateClientFileUploads,
   mockValidateOtherOptionLengthForMultipleChoice,
   mockValidateResponseData,
 } = vi.hoisted(() => ({
@@ -27,7 +27,7 @@ const {
   mockSendToPipeline: vi.fn(),
   mockSuccessResponse: vi.fn(),
   mockUpdateResponseWithQuotaEvaluation: vi.fn(),
-  mockValidateFileUploads: vi.fn(),
+  mockValidateClientFileUploads: vi.fn(),
   mockValidateOtherOptionLengthForMultipleChoice: vi.fn(),
   mockValidateResponseData: vi.fn(),
 }));
@@ -69,7 +69,7 @@ vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
 
 vi.mock("@/modules/storage/utils", () => ({
   resolveStorageUrlsInObject: vi.fn((value) => value),
-  validateFileUploads: mockValidateFileUploads,
+  validateClientFileUploads: mockValidateClientFileUploads,
 }));
 
 vi.mock("./lib/response", () => ({
@@ -157,7 +157,7 @@ describe("PUT /modules/api/v2/management/responses/[responseId]", () => {
     mockHasPermission.mockReturnValue(true);
     mockGetResponse.mockResolvedValue({ data: existingResponse, ok: true });
     mockGetSurveyQuestions.mockResolvedValue({ data: { blocks: [], questions: [] }, ok: true });
-    mockValidateFileUploads.mockReturnValue(true);
+    mockValidateClientFileUploads.mockReturnValue(true);
     mockValidateOtherOptionLengthForMultipleChoice.mockReturnValue(undefined);
     mockValidateResponseData.mockReturnValue(null);
     mockUpdateResponseWithQuotaEvaluation.mockResolvedValue({ data: updatedResponse, ok: true });

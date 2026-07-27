@@ -101,24 +101,6 @@ export const validateSingleFile = (
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };
 
-export const validateFileUploads = (data?: TResponseData, questions?: TSurveyQuestion[]): boolean => {
-  if (!data) return true;
-  for (const key of Object.keys(data)) {
-    const question = questions?.find((q) => q.id === key);
-    if (!question || question.type !== TSurveyQuestionTypeEnum.FileUpload) continue;
-
-    const fileUrls = data[key];
-
-    if (!Array.isArray(fileUrls) || !fileUrls.every((url) => typeof url === "string")) return false;
-
-    for (const fileUrl of fileUrls) {
-      if (!validateSingleFile(fileUrl, question.allowedFileExtensions)) return false;
-    }
-  }
-
-  return true;
-};
-
 export type TSurveyFileUploadPermissionResult =
   | {
       ok: true;
