@@ -1,4 +1,11 @@
-import type { FeedbackRecordData } from "@/modules/hub/types";
+import type {
+  FeedbackRecordData,
+  SemanticSearchResultItem,
+  SimilarRecordsResultItem,
+} from "@/modules/hub/types";
+
+/** The two similarity endpoints return the same row shape; either is acceptable here. */
+type FeedbackRecordMatchSource = SemanticSearchResultItem | SimilarRecordsResultItem;
 
 /**
  * Public DTO for a feedback record. Field names mirror the Hub's feedback-record contract (snake_case)
@@ -90,6 +97,29 @@ export const serializeV3FeedbackRecord = (record: FeedbackRecordData): TV3Feedba
   }
   return dto;
 };
+
+/**
+ * One scored match from a similarity search. The Hub returns an identical row shape for text search and
+ * for "records like this one", so both go through this serializer.
+ *
+ * Only the fields needed to triage a hit are emitted — the id (to fetch the full record), the score, and
+ * the embedded text with its field label. Hydrating each hit into a full record would cost one Hub call
+ * per result; the caller can do that selectively via the get operation.
+ */
+export type TV3FeedbackRecordMatch = {
+  feedback_record_id: string;
+  /** Cosine similarity, 0 (unrelated) to 1 (identical). Results are ordered best first. */
+  score: number;
+  field_label: string;
+  value_text: string;
+};
+
+export const serializeV3FeedbackRecordMatch = (match: FeedbackRecordMatchSource): TV3FeedbackRecordMatch => ({
+  feedback_record_id: match.feedback_record_id,
+  score: match.score,
+  field_label: match.field_label,
+  value_text: match.value_text,
+});
 
 export type TV3FeedbackDataset = {
   id: string;

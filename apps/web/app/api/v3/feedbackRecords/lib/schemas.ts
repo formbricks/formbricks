@@ -48,6 +48,64 @@ export const ZV3FeedbackRecordListFilters = z.object({
 export type TV3FeedbackRecordListFilters = z.infer<typeof ZV3FeedbackRecordListFilters>;
 
 /**
+ * Shared parameters for the two similarity searches (by text, and by example record). Both hit the Hub's
+ * vector index and return the same scored-row shape.
+ *
+ * The bounds are enforced here rather than left to the Hub, which silently coerces out-of-range values to
+ * its defaults instead of rejecting them — so `limit: 999` or `minScore: 5` would quietly return
+ * something other than what was asked for. Locally they become an actionable `invalid_params` error.
+ */
+export const SIMILARITY_LIMIT_DEFAULT = 10;
+export const SIMILARITY_LIMIT_MAX = 100;
+
+/**
+ * Our default, deliberately below the Hub's own 0.7: at 0.7 a paraphrase of a record often scores just
+ * under and the caller sees an empty result, which reads as "nothing matched" rather than "the threshold
+ * was strict". 0.5 matches what the Unify topic UI already treats as a meaningful match.
+ */
+export const SIMILARITY_MIN_SCORE_DEFAULT = 0.5;
+
+// Every search embeds its query with the configured provider, so the query is a cost and a rate-limit
+// input, not just a string. Well above any real question, well below a pasted document.
+const MAX_SEARCH_QUERY_LENGTH = 2000;
+
+export const ZV3FeedbackRecordSimilarityFilters = z.object({
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(SIMILARITY_LIMIT_MAX)
+    .optional()
+    .describe(
+      `Maximum number of matches to return (1–${SIMILARITY_LIMIT_MAX}). Defaults to ${SIMILARITY_LIMIT_DEFAULT}.`
+    ),
+  cursor: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Opaque keyset cursor from a previous response's nextCursor. Omit for the first page."),
+  minScore: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe(
+      `Minimum similarity score to include, from 0 (unrelated) to 1 (identical). Defaults to ${SIMILARITY_MIN_SCORE_DEFAULT}. Raise it for stricter matches; lower it when a search returns nothing.`
+    ),
+});
+export type TV3FeedbackRecordSimilarityFilters = z.infer<typeof ZV3FeedbackRecordSimilarityFilters>;
+
+export const ZV3FeedbackRecordSearchFilters = ZV3FeedbackRecordSimilarityFilters.extend({
+  query: z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_SEARCH_QUERY_LENGTH)
+    .describe("Natural-language text to match feedback records against by meaning, not by keyword."),
+});
+export type TV3FeedbackRecordSearchFilters = z.infer<typeof ZV3FeedbackRecordSearchFilters>;
+
+/**
  * Create body — mirrors the Hub `CreateFeedbackRecordInputBody`, WITHOUT `tenant_id`. Length/type
  * bounds match the Hub contract so oversized/invalid input is rejected early; the Hub remains the
  * source of truth for the remaining content rules (no NULL bytes, its own length limits), and its

@@ -184,6 +184,17 @@ export function problemBadGateway(requestId: string, detail: string, instance?: 
 }
 
 /**
+ * 503 for a capability that is not enabled on this deployment (as opposed to a transient outage, which
+ * is a 502). `detail` should say what to configure — a bare "unavailable" is not actionable.
+ */
+export function problemServiceUnavailable(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(503, "Service Unavailable", detail, requestId, {
+    code: "service_unavailable",
+    instance,
+  });
+}
+
+/**
  * 404 with resource details. Do not use for auth-sensitive or existence-sensitive resources:
  * the body includes resource_type and resource_id, which can leak existence to unauthenticated or unauthorized callers.
  * Prefer problemForbidden with a generic message for those cases.

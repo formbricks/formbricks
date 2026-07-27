@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { FeedbackRecordData } from "@/modules/hub/types";
-import { serializeV3FeedbackDataset, serializeV3FeedbackRecord } from "./serializers";
+import {
+  serializeV3FeedbackDataset,
+  serializeV3FeedbackRecord,
+  serializeV3FeedbackRecordMatch,
+} from "./serializers";
 
 /**
  * The serializer is an explicit allowlist, so the risk it carries is *silent omission*: dropping a field
@@ -107,6 +111,36 @@ describe("serializeV3FeedbackRecord", () => {
     const orphan = { id: fullRecord.id } as unknown as FeedbackRecordData;
 
     expect(serializeV3FeedbackRecord(orphan)).toEqual({ id: fullRecord.id });
+  });
+});
+
+describe("serializeV3FeedbackRecordMatch", () => {
+  test("emits exactly the four match fields", () => {
+    const match = {
+      feedback_record_id: "019fa338-f494-7384-b34e-01739783d280",
+      score: 0.8123,
+      field_label: "What can we improve?",
+      value_text: "payment step was unclear",
+    };
+
+    expect(serializeV3FeedbackRecordMatch(match)).toEqual(match);
+  });
+
+  test("drops anything the Hub adds beyond the match contract", () => {
+    const withExtras = {
+      feedback_record_id: "019fa338-f494-7384-b34e-01739783d280",
+      score: 0.5,
+      field_label: "Q",
+      value_text: "text",
+      distance: 0.5,
+      tenant_id: "clfd1234567890123456789012",
+    } as unknown as Parameters<typeof serializeV3FeedbackRecordMatch>[0];
+
+    const dto = serializeV3FeedbackRecordMatch(withExtras) as Record<string, unknown>;
+
+    expect(dto.distance).toBeUndefined();
+    expect(dto.tenant_id).toBeUndefined();
+    expect(Object.keys(dto)).toEqual(["feedback_record_id", "score", "field_label", "value_text"]);
   });
 });
 

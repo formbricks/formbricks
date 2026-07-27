@@ -12,12 +12,13 @@ rate limiting, response handling, and audit logging paths as the REST routes.
 
 <Note>
   OAuth 2.1 is the preferred authentication path for MCP clients. Formbricks API keys remain supported as a
-  backwards-compatible fallback for local development, self-hosters, and clients that do not support MCP OAuth yet.
+  backwards-compatible fallback for local development, self-hosters, and clients that do not support MCP OAuth
+  yet.
 </Note>
 
 <Note>
-  Looking for step-by-step setup guides for Claude Code, the Claude apps, and Codex? See
-  [Connect AI agents (MCP)](/platform/mcp/overview). This handbook covers the technical internals.
+  Looking for step-by-step setup guides for Claude Code, the Claude apps, and Codex? See [Connect AI agents
+  (MCP)](/platform/mcp/overview). This handbook covers the technical internals.
 </Note>
 
 ## Endpoint
@@ -65,27 +66,27 @@ https://app.formbricks.com/api/auth
 
 Discovery endpoints:
 
-| Endpoint                                                           | Purpose                              |
-| ------------------------------------------------------------------ | ------------------------------------ |
-| `/api/auth/.well-known/oauth-authorization-server`                 | Better Auth authorization metadata   |
-| `/api/auth/.well-known/openid-configuration`                       | OpenID Connect metadata              |
-| `/.well-known/oauth-authorization-server/api/auth`                 | RFC 8414 path-insertion alias        |
-| `/.well-known/openid-configuration/api/auth`                       | RFC 8414 OpenID path-insertion alias |
-| `/.well-known/oauth-protected-resource`                            | MCP protected resource metadata      |
-| `/.well-known/oauth-protected-resource/api/mcp`                    | MCP resource-specific metadata       |
+| Endpoint                                           | Purpose                              |
+| -------------------------------------------------- | ------------------------------------ |
+| `/api/auth/.well-known/oauth-authorization-server` | Better Auth authorization metadata   |
+| `/api/auth/.well-known/openid-configuration`       | OpenID Connect metadata              |
+| `/.well-known/oauth-authorization-server/api/auth` | RFC 8414 path-insertion alias        |
+| `/.well-known/openid-configuration/api/auth`       | RFC 8414 OpenID path-insertion alias |
+| `/.well-known/oauth-protected-resource`            | MCP protected resource metadata      |
+| `/.well-known/oauth-protected-resource/api/mcp`    | MCP resource-specific metadata       |
 
 Supported scopes:
 
-| Scope                   | Use                                                                         |
-| ----------------------- | --------------------------------------------------------------------------- |
-| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                |
-| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations     |
-| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `get_feedback_record` |
-| `feedbackRecords:write` | `create_feedback_record`                                                    |
-| `openid`                | OpenID Connect subject interoperability                                     |
-| `profile`               | User profile claims                                                         |
-| `email`                 | User email claim                                                            |
-| `offline_access`        | Refresh tokens for MCP clients                                              |
+| Scope                   | Use                                                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                                                                         |
+| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations                                                              |
+| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
+| `feedbackRecords:write` | `create_feedback_record`, `delete_feedback_record`                                                                                   |
+| `openid`                | OpenID Connect subject interoperability                                                                                              |
+| `profile`               | User profile claims                                                                                                                  |
+| `email`                 | User email claim                                                                                                                     |
+| `offline_access`        | Refresh tokens for MCP clients                                                                                                       |
 
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only `surveys:read`, `surveys:write`,
@@ -131,22 +132,25 @@ Do not pass credentials in the query string. The MCP route rejects query credent
 
 API key permissions are enforced through the same workspace access checks as the v3 REST API:
 
-| Tool              | Minimum Workspace Permission                                        |
-| ----------------- | ------------------------------------------------------------------- |
-| `list_surveys`    | `read`                                                              |
-| `get_survey`      | `read`                                                              |
-| `create_survey`   | `write` or `manage`                                                 |
-| `validate_survey` | `write` or `manage` when the validation request checks write access |
-| `patch_survey`    | `write` or `manage`                                                 |
-| `delete_survey`   | `write` or `manage`                                                 |
-| `list_feedback_datasets` | `read`                                                    |
-| `list_feedback_records`     | `read`                                                    |
-| `get_feedback_record`       | `read`                                                    |
-| `create_feedback_record`    | `write` or `manage`                                       |
+| Tool                            | Minimum Workspace Permission                                        |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `list_surveys`                  | `read`                                                              |
+| `get_survey`                    | `read`                                                              |
+| `create_survey`                 | `write` or `manage`                                                 |
+| `validate_survey`               | `write` or `manage` when the validation request checks write access |
+| `patch_survey`                  | `write` or `manage`                                                 |
+| `delete_survey`                 | `write` or `manage`                                                 |
+| `list_feedback_datasets`        | `read`                                                              |
+| `list_feedback_records`         | `read`                                                              |
+| `get_feedback_record`           | `read`                                                              |
+| `search_feedback_records`       | `read`                                                              |
+| `find_similar_feedback_records` | `read`                                                              |
+| `create_feedback_record`        | `write` or `manage`                                                 |
+| `delete_feedback_record`        | `write` or `manage`                                                 |
 
 <Warning>
-  Store fallback MCP API keys as environment variables or client secrets. Do not commit API keys into MCP client
-  config files.
+  Store fallback MCP API keys as environment variables or client secrets. Do not commit API keys into MCP
+  client config files.
 </Warning>
 
 ## Local Setup
@@ -160,9 +164,9 @@ pnpm --filter @formbricks/web dev
 ```
 
 <Note>
-  Restart the dev server after changing tool registrations. The MCP server is built once at module scope
-  by `createMcpHandler`, so hot reload does not pick up an added, removed or renamed tool — `tools/list`
-  keeps serving the previous set until the process restarts.
+  Restart the dev server after changing tool registrations. The MCP server is built once at module scope by
+  `createMcpHandler`, so hot reload does not pick up an added, removed or renamed tool — `tools/list` keeps
+  serving the previous set until the process restarts.
 </Note>
 
 Verify OAuth discovery:
@@ -195,13 +199,13 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
 ```
 
 <Note>
-  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
-  clients register with the scopes from the protected-resource metadata's `scopes_supported`
-  (`surveys:read surveys:write feedbackRecords:read feedbackRecords:write offline_access`). Because the authorization server validates the
-  `/authorize` request against the client's **registered** scopes, a client that registers with a
-  narrower set than it later requests (e.g. it registers surveys-only but requests `offline_access`)
-  is rejected with `invalid_scope`. To smoke-test the real path, omit `scope` and let the client
-  adopt the advertised set, or pass exactly what the metadata advertises.
+  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP clients
+  register with the scopes from the protected-resource metadata's `scopes_supported` (`surveys:read
+  surveys:write feedbackRecords:read feedbackRecords:write offline_access`). Because the authorization server
+  validates the `/authorize` request against the client's **registered** scopes, a client that registers with
+  a narrower set than it later requests (e.g. it registers surveys-only but requests `offline_access`) is
+  rejected with `invalid_scope`. To smoke-test the real path, omit `scope` and let the client adopt the
+  advertised set, or pass exactly what the metadata advertises.
 </Note>
 
 The consent screen is served at `/account/authorize`. Users can revoke approved MCP clients from
@@ -718,14 +722,14 @@ Input:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "datasetId": "clfd1234567890123456789012",
-  "limit": 50,
   "cursor": "opaque-cursor-from-previous-response",
-  "sourceType": "survey",
+  "datasetId": "clfd1234567890123456789012",
   "fieldType": "text",
+  "limit": 50,
   "since": "2026-01-01T00:00:00Z",
-  "until": "2026-12-31T23:59:59Z"
+  "sourceType": "survey",
+  "until": "2026-12-31T23:59:59Z",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -737,21 +741,21 @@ records — a caller that let the dataset auto-resolve does not need a second ca
 {
   "data": [
     {
-      "id": "019fa338-f494-7384-b34e-01739783d280",
+      "collected_at": "2026-04-21T10:00:00.000Z",
       "dataset_id": "clfd1234567890123456789012",
-      "submission_id": "…",
-      "source_type": "survey",
       "field_id": "q1",
       "field_type": "text",
-      "value_text": "Great support!",
-      "collected_at": "2026-04-21T10:00:00.000Z"
+      "id": "019fa338-f494-7384-b34e-01739783d280",
+      "source_type": "survey",
+      "submission_id": "…",
+      "value_text": "Great support!"
     }
   ],
   "meta": {
-    "limit": 50,
-    "nextCursor": null,
     "datasetId": "clfd1234567890123456789012",
-    "datasetName": "Support"
+    "datasetName": "Support",
+    "limit": 50,
+    "nextCursor": null
   },
   "requestId": "req_..."
 }
@@ -767,8 +771,8 @@ Input:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "feedbackRecordId": "019fa338-f494-7384-b34e-01739783d280"
+  "feedbackRecordId": "019fa338-f494-7384-b34e-01739783d280",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -783,16 +787,112 @@ Input:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "source_type": "call_notes",
   "field_id": "note",
+  "field_label": "Call summary",
   "field_type": "text",
+  "source_type": "call_notes",
   "value_text": "Customer asked for SSO and a longer trial.",
-  "field_label": "Call summary"
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
 Output is the created feedback record (Hub shape) plus the MCP `requestId`.
+
+### delete_feedback_record
+
+Permanently deletes one feedback record. Writes data, is not idempotent, is annotated
+`destructiveHint: true`, and requires `feedbackRecords:write` (API keys need `write` or `manage`). The
+record and its derived embedding are removed with no soft delete, so this cannot be undone — the audit log
+entry keeps the deleted record as its `oldObject` and is the only remaining trace.
+
+Ownership is verified before the delete: the record must belong to a feedback dataset assigned to the
+workspace, and a record in another tenant is refused with the same generic authorization error as an
+unknown id, without deleting anything. Single-record only — there is no bulk delete tool.
+
+Input:
+
+```json
+{
+  "feedbackRecordId": "019fa338-f494-7384-b34e-01739783d280",
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Returns `204 No Content` on success (the tool result carries only the `requestId`).
+
+### search_feedback_records
+
+Searches a workspace's feedback dataset semantically: the query is embedded and compared to record
+embeddings by cosine similarity, so it matches meaning rather than keywords. Read-only and idempotent.
+
+Input:
+
+```json
+{
+  "cursor": "opaque-cursor-from-previous-response",
+  "limit": 10,
+  "minScore": 0.5,
+  "query": "checkout is confusing",
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Output is scored matches, best first — record ids with the embedded text, not full records. Pass a
+`feedback_record_id` to `get_feedback_record` for the rest of a record:
+
+```json
+{
+  "data": [
+    {
+      "feedback_record_id": "019fa338-f494-7384-b34e-01739783d280",
+      "field_label": "What can we improve?",
+      "score": 0.82,
+      "value_text": "I couldn't figure out how to pay"
+    }
+  ],
+  "meta": {
+    "datasetId": "clfd1234567890123456789012",
+    "datasetName": "Support",
+    "limit": 10,
+    "minScore": 0.5,
+    "nextCursor": null
+  },
+  "requestId": "req_..."
+}
+```
+
+### find_similar_feedback_records
+
+Finds the records most similar to a given one, by embedding distance — useful for gauging how widely a
+piece of feedback is echoed. Read-only and idempotent. Same output shape as `search_feedback_records`;
+the anchor record is excluded from its own results.
+
+Input:
+
+```json
+{
+  "feedbackRecordId": "019fa338-f494-7384-b34e-01739783d280",
+  "limit": 10,
+  "minScore": 0.5,
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Ownership of the anchor record is verified before any neighbour is fetched (see
+[Feedback Records And The Hub](#feedback-records-and-the-hub)).
+
+<Note>
+  Both search tools need embeddings, which are optional in the Hub. Without `EMBEDDING_PROVIDER` and
+  `EMBEDDING_MODEL` configured on **both** the Hub API and the Hub worker they return `503` with that
+  instruction as the detail. Embedding is also asynchronous and only covers records that have text, so a
+  record created moments ago is not searchable yet; `find_similar_feedback_records` reports that case as a
+  retryable `409` rather than an empty result, and `search_feedback_records` simply won't match it yet.
+</Note>
+
+`limit` (1–100, default 10) and `minScore` (0–1, default 0.5) are validated by Formbricks rather than
+passed straight through: the Hub silently coerces out-of-range values to its own defaults, which would
+return something other than what was asked for. The default `minScore` of 0.5 is Formbricks' own — the Hub
+defaults to 0.7, which is strict enough that a fair paraphrase often falls just below it.
 
 ## Relationship To V3 Surveys API
 
@@ -822,12 +922,18 @@ resolves that tenant server-side: it authorizes the caller's access to `workspac
 `feedbackDirectories` license, then maps the workspace to its assigned feedback dataset — the
 `FeedbackDirectory` id **is** the Hub tenant id, and it is surfaced to callers as `dataset_id`.
 
-Assignment is a join table, but the application enforces at most one *non-archived* directory per
+Assignment is a join table, but the application enforces at most one _non-archived_ directory per
 workspace, so in practice `datasetId` can be omitted and the single active dataset is used.
 It becomes required only if a workspace somehow has several active directories, in which case the tools
-return `400` rather than guessing. A tenant id is never accepted from tool input, and
-`get_feedback_record` additionally verifies the fetched record's tenant — the named directory when one
-was given, otherwise any directory the workspace owns.
+return `400` rather than guessing. A tenant id is never accepted from tool input.
+
+Three Hub endpoints — get, delete, and similar — take a bare record id and derive the tenant from the
+stored record, delegating record-level authorization to the product. So `get_feedback_record`,
+`delete_feedback_record` and `find_similar_feedback_records` all retrieve the record first and verify its
+tenant — the named dataset when one was given, otherwise any dataset the workspace owns — before acting.
+A foreign record and an unknown record produce the same generic authorization error, so record ids cannot
+be probed across tenants. `search_feedback_records` instead has the resolved tenant injected into the Hub
+query, like `create_feedback_record`.
 
 ## Limitations
 
@@ -840,6 +946,14 @@ was given, otherwise any directory the workspace owns.
   coverage depends on the Hub feedback-records API.
 - Feedback-record tools require the `feedbackDirectories` Enterprise entitlement and a feedback
   directory assigned to the workspace; without either they return 403 / 422.
+- Feedback records can be created, read, searched and deleted, but not updated: there is no
+  `patch_feedback_record` tool. Records are treated as immutable submissions, and the enrichment fields
+  (sentiment, emotions, translations) are derived by the Hub rather than written by callers.
+- `delete_feedback_record` deletes one record at a time. The Hub's bulk and delete-by-user endpoints are
+  deliberately not exposed: they are erasure operations whose blast radius does not belong on an agent
+  surface.
+- The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
+  one they return 503. Embedding is asynchronous and covers only records with text.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
   part of the current v3 create operation.
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
@@ -861,3 +975,5 @@ was given, otherwise any directory the workspace owns.
 - `apps/web/modules/mcp/tools/schemas.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`
 - `apps/web/app/api/v3/feedbackRecords/lib/operations.ts`
+- `apps/web/app/api/v3/feedbackRecords/lib/access.ts` (tenant resolution + per-record ownership guard)
+- `apps/web/app/api/v3/feedbackRecords/lib/errors.ts` (Hub error → v3 problem mapping)

@@ -10,6 +10,7 @@ import {
   problemForbidden,
   problemInternalError,
   problemPayloadTooLarge,
+  problemServiceUnavailable,
   problemTooManyRequests,
   problemUnprocessableContent,
 } from "@/app/api/v3/lib/response";
@@ -24,6 +25,20 @@ import type { HubError } from "@/modules/hub/utils";
 // Bounds on what a Hub 4xx may contribute to our response body (see `hubErrorToProblemResponse`).
 const MAX_RELAYED_INVALID_PARAMS = 20;
 const MAX_RELAYED_DETAIL_LENGTH = 512;
+
+/**
+ * Semantic search and similarity need embeddings, which are optional in the Hub. Our own static message,
+ * not the upstream body: it names the setting to change, on both processes that need it.
+ */
+export const EMBEDDINGS_UNAVAILABLE_DETAIL =
+  "Semantic search is not available: the feedback service has no embedding model configured. A self-hosting administrator can enable it by setting EMBEDDING_PROVIDER and EMBEDDING_MODEL on both the Hub API and the Hub worker.";
+
+/**
+ * A record that exists and belongs to the caller, yet has no embedding — the only thing a Hub 404 can
+ * mean once ownership is proven. Reported as 409 (retryable state), not 404: the record is there.
+ */
+export const EMBEDDING_PENDING_DETAIL =
+  "This feedback record has no embedding yet, so similar records cannot be found. Embeddings are generated in the background shortly after a record is created; retry in a moment. Records without text are never embedded.";
 
 /**
  * Map a Hub service error to a controlled v3 problem response.
@@ -58,6 +73,13 @@ export function hubErrorToProblemResponse(
   // The Hub's body cap is lower than ours, so this is reachable with a large (but locally valid) payload.
   if (status === 413) {
     return problemPayloadTooLarge(requestId, "The feedback record is too large.", instance);
+  }
+
+  // Embeddings are optional in the Hub, and the search endpoints are the only ones that need them. A
+  // deployment-level "not enabled", not an outage — so it must not collapse into the generic 502 below,
+  // which would read as "retry later" for something no retry can fix.
+  if (status === 503) {
+    return problemServiceUnavailable(requestId, EMBEDDINGS_UNAVAILABLE_DETAIL, instance);
   }
 
   if (status === 400 || status === 422) {

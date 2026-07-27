@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { createCacheKey } from "@formbricks/cache";
 import FormbricksHub from "@formbricks/hub";
 import {
@@ -7,6 +7,7 @@ import {
   createTaxonomyRun,
   deleteFeedbackRecord,
   deleteHubTenantData,
+  findSimilarFeedbackRecords,
   getActiveTaxonomyTree,
   getFeedbackRecordTenant,
   getTaxonomyRun,
@@ -289,6 +290,72 @@ describe("hub service", () => {
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
     });
+
+    // Callers map the Hub's problem members to their own response (an actionable message for the 503,
+    // relayed field errors on a 4xx). A hand-built error object would drop them and degrade to generic text.
+    test("preserves the Hub's RFC 9457 problem members", async () => {
+      const apiError = Object.assign(new (FormbricksHub.APIError as any)("503 unavailable", 503), {
+        error: { code: "service_unavailable", detail: "embeddings are not configured" },
+      });
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { search: { performSemanticSearch: vi.fn().mockRejectedValue(apiError) } },
+      } as any);
+
+      const result = await semanticSearchFeedbackRecords({ tenant_id: "env-1", query: "q" });
+
+      expect(result.error).toMatchObject({
+        status: 503,
+        code: "service_unavailable",
+        problemDetail: "embeddings are not configured",
+      });
+    });
+  });
+
+  describe("findSimilarFeedbackRecords", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await findSimilarFeedbackRecords("rec-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    test("passes the record id and params through and returns the matches", async () => {
+      const response = {
+        data: [
+          {
+            feedback_record_id: "018e1234-5678-9abc-def0-123456789abc",
+            score: 0.77,
+            field_label: "What can we improve?",
+            value_text: "payment step was unclear",
+          },
+        ],
+        limit: 10,
+      };
+      const retrieveSimilar = vi.fn().mockResolvedValue(response);
+      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { retrieveSimilar } } as any);
+
+      const result = await findSimilarFeedbackRecords("rec-1", { limit: 10, min_score: 0.5 });
+
+      expect(retrieveSimilar).toHaveBeenCalledWith("rec-1", { limit: 10, min_score: 0.5 });
+      expect(result.data).toEqual(response);
+      expect(result.error).toBeNull();
+    });
+
+    // The 404 is load-bearing: callers translate it into "no embedding yet" once they know the record
+    // exists, so it must arrive with its status intact rather than as a generic failure.
+    test("surfaces a 404 with its status when the record has no embedding", async () => {
+      const apiError = new (FormbricksHub.APIError as any)("embedding not found", 404);
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { retrieveSimilar: vi.fn().mockRejectedValue(apiError) },
+      } as any);
+
+      const result = await findSimilarFeedbackRecords("rec-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 404 });
+    });
   });
 
   describe("updateFeedbackRecord", () => {
@@ -363,6 +430,25 @@ describe("hub service", () => {
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "network" });
+    });
+
+    // A tenant purge in progress is reported as a 409 with a detail the caller relays as retryable; that
+    // detail only survives if the error goes through the shared problem-parsing helper.
+    test("preserves the Hub's RFC 9457 problem members on a conflict", async () => {
+      const apiError = Object.assign(new (FormbricksHub.APIError as any)("409 Conflict", 409), {
+        error: { code: "tenant_write_conflict", detail: "tenant data deletion in progress" },
+      });
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { delete: vi.fn().mockRejectedValue(apiError) },
+      } as any);
+
+      const result = await deleteFeedbackRecord("rec-1");
+
+      expect(result.error).toMatchObject({
+        status: 409,
+        code: "tenant_write_conflict",
+        problemDetail: "tenant data deletion in progress",
+      });
     });
   });
 

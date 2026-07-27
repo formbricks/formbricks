@@ -2,19 +2,31 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
   createV3FeedbackRecord,
+  deleteV3FeedbackRecord,
+  findSimilarV3FeedbackRecords,
   getV3FeedbackRecord,
   listV3FeedbackDatasets,
   listV3FeedbackRecords,
+  searchV3FeedbackRecords,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
-import { problemBadRequest, successListResponse, successResponse } from "@/app/api/v3/lib/response";
+import {
+  noContentResponse,
+  problemBadRequest,
+  problemForbidden,
+  successListResponse,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import { registerFeedbackRecordTools } from "./feedback-records";
 
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   createV3FeedbackRecord: vi.fn(),
+  deleteV3FeedbackRecord: vi.fn(),
+  findSimilarV3FeedbackRecords: vi.fn(),
   getV3FeedbackRecord: vi.fn(),
   listV3FeedbackDatasets: vi.fn(),
   listV3FeedbackRecords: vi.fn(),
+  searchV3FeedbackRecords: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
@@ -23,8 +35,10 @@ vi.mock("@/app/api/v3/lib/audit", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn() })) },
+  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
 }));
+
+const recordId = "019fa338-f494-7384-b34e-01739783d280";
 
 const workspaceId = "clxx1234567890123456789012";
 const directoryId = "clfd1234567890123456789012";
@@ -66,13 +80,16 @@ beforeEach(() => {
 });
 
 describe("registerFeedbackRecordTools", () => {
-  test("registers the four feedback-record tools in order", () => {
+  test("registers the seven feedback-record tools in order", () => {
     const { tools } = createToolServer();
     expect(Array.from(tools.keys())).toEqual([
       "list_feedback_datasets",
       "list_feedback_records",
       "get_feedback_record",
       "create_feedback_record",
+      "delete_feedback_record",
+      "search_feedback_records",
+      "find_similar_feedback_records",
     ]);
   });
 
@@ -86,6 +103,24 @@ describe("registerFeedbackRecordTools", () => {
       readOnlyHint: false,
       idempotentHint: false,
     });
+  });
+
+  // The destructive hint is what lets a client warn (or ask) before an irreversible call, so it is pinned:
+  // delete is the only tool here that removes data, and the searches must not be mistaken for writes.
+  test("marks only delete as destructive, and both searches as read-only", () => {
+    const { tools } = createToolServer();
+    expect(tools.get("delete_feedback_record")!.config.annotations).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+    });
+    for (const name of ["search_feedback_records", "find_similar_feedback_records"]) {
+      expect(tools.get(name)!.config.annotations).toMatchObject({
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      });
+    }
   });
 });
 
@@ -157,10 +192,10 @@ describe("get_feedback_record", () => {
 
     await tools
       .get("get_feedback_record")!
-      .handler({ workspaceId, feedbackRecordId: "019fa338-f494-7384-b34e-01739783d280" }, { authInfo });
+      .handler({ workspaceId, feedbackRecordId: recordId }, { authInfo });
 
     expect(getV3FeedbackRecord).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId, feedbackRecordId: "019fa338-f494-7384-b34e-01739783d280" })
+      expect.objectContaining({ workspaceId, feedbackRecordId: recordId })
     );
   });
 });
@@ -218,5 +253,129 @@ describe("create_feedback_record", () => {
     expect(auditLog.status).toBe("failure");
     expect(auditLog.eventId).toBe("req_tool");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.anything());
+  });
+});
+
+describe("delete_feedback_record", () => {
+  const input = { workspaceId, feedbackRecordId: recordId, datasetId: directoryId };
+
+  test("delegates to deleteV3FeedbackRecord and audits the deletion as a success", async () => {
+    const auditLog = { status: "failure" } as any;
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(deleteV3FeedbackRecord).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
+    const { tools } = createToolServer();
+
+    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "feedbackRecord", "/api/mcp");
+    expect(deleteV3FeedbackRecord).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId,
+        feedbackRecordId: recordId,
+        datasetId: directoryId,
+        authentication: apiKeyAuth,
+        auditLog,
+      })
+    );
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalled();
+    // A 204 carries no body; the tool result must still read as a success, not an error.
+    expect(result.isError).toBeUndefined();
+  });
+
+  // A read-only key must not be able to destroy data — the single most important guard on this tool.
+  test("requires the write scope and never reaches the operation", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo: readOnlyAuthInfo });
+
+    expect(result.isError).toBe(true);
+    expect(deleteV3FeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("queues a failure audit event with an eventId when the delete is refused", async () => {
+    const auditLog = { status: "failure" } as any;
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(deleteV3FeedbackRecord).mockResolvedValue(
+      problemForbidden("req_tool", "You are not authorized to access this feedback record", "/api/mcp")
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
+
+    expect(result.isError).toBe(true);
+    expect(auditLog.status).toBe("failure");
+    expect(auditLog.eventId).toBe("req_tool");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.anything());
+  });
+});
+
+describe("search_feedback_records", () => {
+  test("passes the query and similarity params through", async () => {
+    vi.mocked(searchV3FeedbackRecords).mockResolvedValue(
+      successListResponse(
+        [{ feedback_record_id: recordId, score: 0.82, field_label: "Q1", value_text: "slow checkout" }],
+        { limit: 10, nextCursor: null, minScore: 0.5 },
+        { requestId: "req_tool" }
+      )
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("search_feedback_records")!
+      .handler({ workspaceId, query: "checkout is confusing", limit: 5, minScore: 0.6 }, { authInfo });
+
+    expect(searchV3FeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId,
+        query: "checkout is confusing",
+        limit: 5,
+        minScore: 0.6,
+        authentication: apiKeyAuth,
+        instance: "/api/mcp",
+      })
+    );
+    expect(result.structuredContent.data).toEqual([
+      { feedback_record_id: recordId, score: 0.82, field_label: "Q1", value_text: "slow checkout" },
+    ]);
+  });
+
+  test("requires the read scope", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("search_feedback_records")!
+      .handler({ workspaceId, query: "anything" }, { authInfo: noFeedbackScopeAuthInfo });
+
+    expect(result.isError).toBe(true);
+    expect(searchV3FeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("find_similar_feedback_records", () => {
+  test("delegates to findSimilarV3FeedbackRecords with the anchor record id", async () => {
+    vi.mocked(findSimilarV3FeedbackRecords).mockResolvedValue(
+      successListResponse([], { limit: 10, nextCursor: null, minScore: 0.5 }, { requestId: "req_tool" })
+    );
+    const { tools } = createToolServer();
+
+    await tools
+      .get("find_similar_feedback_records")!
+      .handler({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 }, { authInfo });
+
+    expect(findSimilarV3FeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 })
+    );
+  });
+
+  test("requires the read scope", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("find_similar_feedback_records")!
+      .handler({ workspaceId, feedbackRecordId: recordId }, { authInfo: noFeedbackScopeAuthInfo });
+
+    expect(result.isError).toBe(true);
+    expect(findSimilarV3FeedbackRecords).not.toHaveBeenCalled();
   });
 });

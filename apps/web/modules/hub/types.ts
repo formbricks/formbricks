@@ -30,6 +30,13 @@ export type SemanticSearchInput = FormbricksHub.FeedbackRecords.SearchPerformSem
 export type SemanticSearchResponse = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse;
 export type SemanticSearchResultItem = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse.Data;
 
+// Nearest-neighbour lookup for one record. The Hub returns the same row shape as semantic search (id +
+// score + field label + text), so the two are interchangeable downstream — one serializer covers both.
+export type SimilarRecordsParams = FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarParams;
+export type SimilarRecordsResponse = FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse;
+export type SimilarRecordsResultItem =
+  FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse.Data;
+
 export type TaxonomyScope = {
   tenant_id: string;
   source_type: string;

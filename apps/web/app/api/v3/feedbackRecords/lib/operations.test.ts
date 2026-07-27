@@ -4,19 +4,29 @@ import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
-import { createFeedbackRecord, listFeedbackRecords, retrieveFeedbackRecord } from "@/modules/hub/service";
+import {
+  createFeedbackRecord,
+  deleteFeedbackRecord,
+  findSimilarFeedbackRecords,
+  listFeedbackRecords,
+  retrieveFeedbackRecord,
+  semanticSearchFeedbackRecords,
+} from "@/modules/hub/service";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import {
   createV3FeedbackRecord,
+  deleteV3FeedbackRecord,
+  findSimilarV3FeedbackRecords,
   getV3FeedbackRecord,
   listV3FeedbackDatasets,
   listV3FeedbackRecords,
+  searchV3FeedbackRecords,
 } from "./operations";
 
 vi.mock("server-only", () => ({}));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn() })) },
+  logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() })) },
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
@@ -28,6 +38,9 @@ vi.mock("@/modules/hub/service", () => ({
   listFeedbackRecords: vi.fn(),
   retrieveFeedbackRecord: vi.fn(),
   createFeedbackRecord: vi.fn(),
+  deleteFeedbackRecord: vi.fn(),
+  semanticSearchFeedbackRecords: vi.fn(),
+  findSimilarFeedbackRecords: vi.fn(),
 }));
 
 const workspaceId = "clxx1234567890123456789012";
@@ -219,7 +232,7 @@ describe("listV3FeedbackRecords", () => {
   // value, and `tenant_id` must not appear in a response at all.
   test("emits the tenant as dataset_id and never as tenant_id", async () => {
     vi.mocked(listFeedbackRecords).mockResolvedValue({
-      data: { data: [record], limit: 50, next_cursor: null },
+      data: { data: [record], limit: 50, next_cursor: undefined },
       error: null,
     });
 
@@ -305,6 +318,19 @@ describe("getV3FeedbackRecord", () => {
     const notFound = await getV3FeedbackRecord(getBase).then((r) => r.json());
 
     expect(crossTenant).toEqual(notFound);
+  });
+
+  // A Hub failure that isn't a 404 is an upstream problem, not an authorization one — collapsing it into
+  // the 403 would tell the caller its permissions are wrong when the service is simply down.
+  test("maps a non-404 Hub failure on retrieval to 502, not 403", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 500, message: "boom", detail: "boom" },
+    });
+
+    const response = await getV3FeedbackRecord(getBase);
+
+    expect(response.status).toBe(502);
   });
 
   test("rejects a record from another directory the workspace owns when a directory is named", async () => {
@@ -552,5 +578,295 @@ describe("createV3FeedbackRecord", () => {
 
     expect(response.status).toBe(502);
     expect(JSON.stringify(body)).not.toContain("panic");
+  });
+});
+
+describe("deleteV3FeedbackRecord", () => {
+  const deleteBase = { ...base, feedbackRecordId: record.id };
+
+  beforeEach(() => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
+    vi.mocked(deleteFeedbackRecord).mockResolvedValue({ data: { deleted: true }, error: null });
+  });
+
+  test("requires readWrite access", async () => {
+    await deleteV3FeedbackRecord(deleteBase);
+
+    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
+      null,
+      workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
+  });
+
+  test("returns 204 and deletes the record when it belongs to the workspace", async () => {
+    const response = await deleteV3FeedbackRecord(deleteBase);
+
+    expect(response.status).toBe(204);
+    expect(deleteFeedbackRecord).toHaveBeenCalledWith(record.id);
+  });
+
+  // The whole point of the ownership guard: the Hub's delete derives the tenant from the record, so a
+  // foreign id must be refused *before* the delete call — not merely reported as failed afterwards.
+  test("refuses a cross-tenant record with 403 and never calls the Hub delete", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, tenant_id: otherDirectoryId },
+      error: null,
+    });
+
+    const response = await deleteV3FeedbackRecord(deleteBase);
+
+    expect(response.status).toBe(403);
+    expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("refuses an unknown record with the same 403 body as a cross-tenant one", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, tenant_id: otherDirectoryId },
+      error: null,
+    });
+    const crossTenant = await deleteV3FeedbackRecord(deleteBase).then((r) => r.json());
+
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 404, message: "not found", detail: "not found" },
+    });
+    const notFoundResponse = await deleteV3FeedbackRecord(deleteBase);
+
+    expect(notFoundResponse.status).toBe(403);
+    expect(await notFoundResponse.json()).toEqual(crossTenant);
+    expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  // The record is gone afterwards, so the audit entry is the only remaining trace of what was deleted.
+  test("stamps the audit log with the target and the pre-delete record", async () => {
+    const auditLog = { status: "failure" } as unknown as TV3AuditLog;
+
+    await deleteV3FeedbackRecord({ ...deleteBase, auditLog });
+
+    expect(auditLog.organizationId).toBe("org_1");
+    expect(auditLog.targetId).toBe(record.id);
+    expect(auditLog.oldObject).toEqual(expect.objectContaining({ id: record.id, value_text: "Love it" }));
+    // Even in the audit log the outward name is used, so an exported log matches the API vocabulary.
+    expect(auditLog.oldObject).not.toHaveProperty("tenant_id");
+  });
+
+  test("maps an in-progress tenant purge to a retryable 409", async () => {
+    vi.mocked(deleteFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: {
+        status: 409,
+        message: "409 Conflict",
+        detail: "409 Conflict",
+        problemDetail: "tenant data deletion in progress",
+      },
+    });
+
+    const response = await deleteV3FeedbackRecord(deleteBase);
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toContain("tenant data deletion in progress");
+  });
+});
+
+describe("searchV3FeedbackRecords", () => {
+  const searchBase = { ...base, query: "checkout is confusing" };
+  const match = {
+    feedback_record_id: record.id,
+    score: 0.82,
+    field_label: "What can we improve?",
+    value_text: "I couldn't figure out how to pay",
+  };
+
+  beforeEach(() => {
+    vi.mocked(semanticSearchFeedbackRecords).mockResolvedValue({
+      data: { data: [match], limit: 10, next_cursor: undefined },
+      error: null,
+    });
+  });
+
+  test("injects the resolved tenant and applies our defaults", async () => {
+    const response = await searchV3FeedbackRecords(searchBase);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(semanticSearchFeedbackRecords).toHaveBeenCalledWith({
+      tenant_id: directoryId,
+      query: "checkout is confusing",
+      limit: 10,
+      min_score: 0.5,
+    });
+    expect(body.data).toEqual([match]);
+    expect(body.meta).toEqual({
+      limit: 10,
+      nextCursor: null,
+      minScore: 0.5,
+      datasetId: directoryId,
+      datasetName: "Support",
+    });
+  });
+
+  // The Hub uses `tenant_id` verbatim in the vector query (no trimming of its own), so an untrimmed value
+  // would match nothing and look like "no results" rather than a failure.
+  test("trims the tenant before sending it to the Hub", async () => {
+    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([
+      { id: ` ${directoryId} `, name: "Support" },
+    ]);
+
+    await searchV3FeedbackRecords({ ...searchBase, datasetId: ` ${directoryId} ` });
+
+    expect(vi.mocked(semanticSearchFeedbackRecords).mock.calls[0][0].tenant_id).toBe(directoryId);
+  });
+
+  test("passes an explicit limit, cursor and minScore through", async () => {
+    await searchV3FeedbackRecords({ ...searchBase, limit: 25, cursor: "abc", minScore: 0.9 });
+
+    expect(semanticSearchFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 25, cursor: "abc", min_score: 0.9 })
+    );
+  });
+
+  // The Hub silently coerces out-of-range limit/min_score to its own defaults, so a caller would get
+  // results that quietly don't match what it asked for. Rejected locally instead.
+  test.each([
+    ["limit", { limit: 999 }],
+    ["limit", { limit: 0 }],
+    ["minScore", { minScore: 1.1 }],
+    ["minScore", { minScore: -1 }],
+    ["query", { query: "" }],
+  ])("rejects an out-of-range %s locally without calling the Hub", async (_field, override) => {
+    const response = await searchV3FeedbackRecords({ ...searchBase, ...override });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params.length).toBeGreaterThan(0);
+    expect(semanticSearchFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  // Embeddings are optional in the Hub, so most self-hosted installs land here. A bare "unavailable"
+  // leaves the caller with nothing to act on.
+  test("turns the Hub's 503 into an actionable configuration message", async () => {
+    vi.mocked(semanticSearchFeedbackRecords).mockResolvedValue({
+      data: null,
+      error: { status: 503, message: "unavailable", detail: "unavailable" },
+    });
+
+    const response = await searchV3FeedbackRecords(searchBase);
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body.detail).toContain("EMBEDDING_PROVIDER");
+    expect(body.detail).toContain("EMBEDDING_MODEL");
+  });
+
+  test("reports an empty result against the named dataset rather than an error", async () => {
+    vi.mocked(semanticSearchFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 10, next_cursor: undefined },
+      error: null,
+    });
+
+    const body = await (await searchV3FeedbackRecords(searchBase)).json();
+
+    expect(body.data).toEqual([]);
+    expect(body.meta.datasetId).toBe(directoryId);
+    expect(body.meta.minScore).toBe(0.5);
+  });
+});
+
+describe("findSimilarV3FeedbackRecords", () => {
+  const similarBase = { ...base, feedbackRecordId: record.id };
+  const neighbour = {
+    feedback_record_id: "019fa338-f494-7384-b34e-01739783d999",
+    score: 0.77,
+    field_label: "What can we improve?",
+    value_text: "payment step was unclear",
+  };
+
+  beforeEach(() => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
+    vi.mocked(findSimilarFeedbackRecords).mockResolvedValue({
+      data: { data: [neighbour], limit: 10, next_cursor: undefined },
+      error: null,
+    });
+  });
+
+  test("returns the neighbours of an owned record", async () => {
+    const response = await findSimilarV3FeedbackRecords(similarBase);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(findSimilarFeedbackRecords).toHaveBeenCalledWith(record.id, { limit: 10, min_score: 0.5 });
+    expect(body.data).toEqual([neighbour]);
+    expect(body.meta.datasetId).toBe(directoryId);
+  });
+
+  // Without the ownership guard this endpoint reads another tenant's records: the Hub scopes the
+  // neighbour search to whatever tenant the anchor belongs to, with no authorization of its own.
+  test("refuses a cross-tenant anchor with 403 and returns no neighbours", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, tenant_id: otherDirectoryId },
+      error: null,
+    });
+
+    const response = await findSimilarV3FeedbackRecords(similarBase);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(findSimilarFeedbackRecords).not.toHaveBeenCalled();
+    expect(JSON.stringify(body)).not.toContain(neighbour.feedback_record_id);
+  });
+
+  test("refuses an unknown anchor with the same 403 body as a cross-tenant one", async () => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: { ...record, tenant_id: otherDirectoryId },
+      error: null,
+    });
+    const crossTenant = await findSimilarV3FeedbackRecords(similarBase).then((r) => r.json());
+
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 404, message: "not found", detail: "not found" },
+    });
+    const notFound = await findSimilarV3FeedbackRecords(similarBase);
+
+    expect(notFound.status).toBe(403);
+    expect(await notFound.json()).toEqual(crossTenant);
+  });
+
+  // Once ownership is proven the Hub's 404 can only mean "no embedding for this record" — reporting it as
+  // the generic 403 would be actively misleading, since the caller does own the record.
+  test("reports a post-ownership 404 as a retryable embedding-pending conflict, not a 403", async () => {
+    vi.mocked(findSimilarFeedbackRecords).mockResolvedValue({
+      data: null,
+      error: { status: 404, message: "not found", detail: "embedding not found" },
+    });
+
+    const response = await findSimilarV3FeedbackRecords(similarBase);
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.detail).toContain("no embedding yet");
+    expect(body.detail).toContain("background");
+  });
+
+  test("turns the Hub's 503 into an actionable configuration message", async () => {
+    vi.mocked(findSimilarFeedbackRecords).mockResolvedValue({
+      data: null,
+      error: { status: 503, message: "unavailable", detail: "unavailable" },
+    });
+
+    const response = await findSimilarV3FeedbackRecords(similarBase);
+
+    expect(response.status).toBe(503);
+    expect((await response.json()).detail).toContain("EMBEDDING_PROVIDER");
+  });
+
+  test("rejects an out-of-range minScore locally, before retrieving the record", async () => {
+    const response = await findSimilarV3FeedbackRecords({ ...similarBase, minScore: 1.1 });
+
+    expect(response.status).toBe(422);
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(findSimilarFeedbackRecords).not.toHaveBeenCalled();
   });
 });

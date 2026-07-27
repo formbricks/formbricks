@@ -4,6 +4,8 @@ import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/su
 import {
   ZV3FeedbackRecordCreateBodyFields,
   ZV3FeedbackRecordListFilters,
+  ZV3FeedbackRecordSearchFilters,
+  ZV3FeedbackRecordSimilarityFilters,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
 
 export const ZMcpListSurveysInput = z.object({
@@ -156,6 +158,23 @@ export const ZMcpCreateFeedbackRecordInput = ZV3FeedbackRecordCreateBodyFields.e
   datasetId: datasetIdField,
 });
 
+export const ZMcpDeleteFeedbackRecordInput = z.object({
+  workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
+  feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to delete permanently."),
+  datasetId: datasetIdField,
+});
+
+export const ZMcpSearchFeedbackRecordsInput = ZV3FeedbackRecordSearchFilters.extend({
+  workspaceId: ZId.describe("Workspace ID whose feedback records should be searched."),
+  datasetId: datasetIdField,
+});
+
+export const ZMcpFindSimilarFeedbackRecordsInput = ZV3FeedbackRecordSimilarityFilters.extend({
+  workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
+  feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to find similar records for."),
+  datasetId: datasetIdField,
+});
+
 export type TMcpListSurveysInput = z.infer<typeof ZMcpListSurveysInput>;
 export type TMcpListWorkspacesInput = z.infer<typeof ZMcpListWorkspacesInput>;
 export type TMcpGetSurveyInput = z.infer<typeof ZMcpGetSurveyInput>;
@@ -167,3 +186,6 @@ export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatas
 export type TMcpListFeedbackRecordsInput = z.infer<typeof ZMcpListFeedbackRecordsInput>;
 export type TMcpGetFeedbackRecordInput = z.infer<typeof ZMcpGetFeedbackRecordInput>;
 export type TMcpCreateFeedbackRecordInput = z.infer<typeof ZMcpCreateFeedbackRecordInput>;
+export type TMcpDeleteFeedbackRecordInput = z.infer<typeof ZMcpDeleteFeedbackRecordInput>;
+export type TMcpSearchFeedbackRecordsInput = z.infer<typeof ZMcpSearchFeedbackRecordsInput>;
+export type TMcpFindSimilarFeedbackRecordsInput = z.infer<typeof ZMcpFindSimilarFeedbackRecordsInput>;

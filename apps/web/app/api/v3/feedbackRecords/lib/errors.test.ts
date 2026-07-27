@@ -68,6 +68,17 @@ describe("hubErrorToProblemResponse", () => {
     expect(response.status).toBe(502);
     expect((await response.json()).detail).toBe("The feedback service is unavailable.");
   });
+
+  // A 503 means embeddings aren't configured — a deployment-level fact no retry fixes, so it must not be
+  // folded into the generic "unavailable" 502 that reads as "try again".
+  test("maps a 503 to an actionable configuration message rather than a 502", async () => {
+    const response = hubErrorToProblemResponse(hubError(503), requestId, instance);
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body.code).toBe("service_unavailable");
+    expect(body.detail).toContain("EMBEDDING_PROVIDER");
+  });
 });
 
 describe("handleUnexpectedError", () => {

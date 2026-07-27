@@ -15,6 +15,8 @@ import type {
   RenameTaxonomyNodeInput,
   SemanticSearchInput,
   SemanticSearchResponse,
+  SimilarRecordsParams,
+  SimilarRecordsResponse,
   TaxonomyFieldsResponse,
   TaxonomyNode,
   TaxonomyNodeRecordsResponse,
@@ -118,9 +120,9 @@ export const deleteFeedbackRecord = async (id: string): Promise<HubFeedbackRecor
     return { data: { deleted: true }, error: null };
   } catch (err) {
     logger.warn({ err, id }, "Hub: deleteFeedbackRecord failed");
-    const status = getErrorStatus(err);
-    const message = getErrorMessage(err);
-    return { data: null, error: { status, message, detail: message } };
+    // Via the shared helper so callers also get the Hub's problem members — an in-progress tenant purge
+    // arrives as a relayable, retryable 409 instead of an opaque failure.
+    return createHubResultFromError(err);
   }
 };
 
@@ -211,6 +213,12 @@ export const listFeedbackRecords = async (
   }
 };
 
+/**
+ * Semantic (vector) search over a tenant's feedback records. Only available when the Hub has an embedding
+ * model configured — otherwise it fails with 503, which callers surface as an actionable message.
+ *
+ * The query text is never logged: it is caller-authored content.
+ */
 export const semanticSearchFeedbackRecords = async (
   input: SemanticSearchInput
 ): Promise<SemanticSearchFeedbackRecordsResult> => {
@@ -223,9 +231,39 @@ export const semanticSearchFeedbackRecords = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId: input.tenant_id }, "Hub: semanticSearchFeedbackRecords failed");
-    const status = getErrorStatus(err);
-    const message = getErrorMessage(err);
-    return { data: null, error: { status, message, detail: message } };
+    // Via the shared helper so the Hub's problem members survive — most importantly the 503 that says
+    // embeddings aren't configured, which would otherwise be indistinguishable from an outage.
+    return createHubResultFromError(err);
+  }
+};
+
+export type SimilarFeedbackRecordsResult = {
+  data: SimilarRecordsResponse | null;
+  error: HubError | null;
+};
+
+/**
+ * Nearest neighbours of one feedback record, by embedding similarity. The Hub derives the tenant from the
+ * record itself and applies no authorization, so callers MUST verify the record belongs to them first
+ * (see `requireOwnedFeedbackRecord`) — otherwise this reads across tenants.
+ *
+ * A 404 here means "no embedding for this record", not "no such record": the row may exist but not have
+ * been embedded yet (embedding is asynchronous, and records without text are never embedded).
+ */
+export const findSimilarFeedbackRecords = async (
+  id: string,
+  params: SimilarRecordsParams = {}
+): Promise<SimilarFeedbackRecordsResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+  try {
+    const data = await client.feedbackRecords.retrieveSimilar(id, params);
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, id }, "Hub: findSimilarFeedbackRecords failed");
+    return createHubResultFromError(err);
   }
 };
 
