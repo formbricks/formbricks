@@ -890,8 +890,9 @@ model TwoFactor {
   userId                  String
   user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   verified                Boolean   @default(true)
-  /// Added for better-auth@1.6.22's two-factor lockout hardening (getAuthTables).
+  /// Better Auth 1.6.23+ two-factor brute-force lockout: consecutive failed verification attempts.
   failedVerificationCount Int       @default(0)
+  /// Better Auth 1.6.23+ two-factor brute-force lockout: set once failedVerificationCount trips the limit.
   lockedUntil             DateTime?
 
   @@unique([userId])

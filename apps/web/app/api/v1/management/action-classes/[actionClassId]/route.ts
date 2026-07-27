@@ -51,9 +51,7 @@ export const GET = withV1ApiWrapper({
         response: responses.notFoundResponse("Action Class", params.actionClassId),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
 });
@@ -138,9 +136,7 @@ export const PUT = withV1ApiWrapper({
         response: responses.internalServerErrorResponse("Some error occurred while updating action"),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "updated",
@@ -180,9 +176,7 @@ export const DELETE = withV1ApiWrapper({
         response: responses.successResponse(deletedActionClass),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "deleted",

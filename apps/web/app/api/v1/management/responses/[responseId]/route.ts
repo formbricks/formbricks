@@ -62,9 +62,7 @@ export const GET = withV1ApiWrapper({
         }),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
 });
@@ -95,9 +93,7 @@ export const DELETE = withV1ApiWrapper({
         response: responses.successResponse(deletedResponse),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "deleted",
@@ -201,9 +197,7 @@ export const PUT = withV1ApiWrapper({
         response: responses.successResponse({ ...updated, data: resolveStorageUrlsInObject(updated.data) }),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "updated",
