@@ -47,9 +47,16 @@ export const MCP_OAUTH_SCOPES = [
   "offline_access",
   "surveys:read",
   "surveys:write",
+  "workflows:read",
+  "workflows:write",
 ] as const;
 
-export const MCP_RESOURCE_SCOPES = ["surveys:read", "surveys:write"] as const;
+export const MCP_RESOURCE_SCOPES = [
+  "surveys:read",
+  "surveys:write",
+  "workflows:read",
+  "workflows:write",
+] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their
 // Dynamic Client Registration + authorize scopes from this list (NOT from the AS metadata),

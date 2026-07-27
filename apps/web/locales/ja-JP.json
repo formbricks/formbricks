@@ -96,7 +96,9 @@
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
         "surveys_read": "Read surveys",
-        "surveys_write": "Create, update, and delete surveys"
+        "surveys_write": "Create, update, and delete surveys",
+        "workflows_read": "Read workflows",
+        "workflows_write": "Create, update, and delete workflows"
       },
       "unknown_client": "Unknown client"
     },

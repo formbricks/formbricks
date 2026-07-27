@@ -32,6 +32,8 @@ describe("OAuth client metadata helpers", () => {
     expect(getOAuthScopeLabel("offline_access", t)).toBe("translated:auth.oauth.scopes.offline_access");
     expect(getOAuthScopeLabel("surveys:read", t)).toBe("translated:auth.oauth.scopes.surveys_read");
     expect(getOAuthScopeLabel("surveys:write", t)).toBe("translated:auth.oauth.scopes.surveys_write");
+    expect(getOAuthScopeLabel("workflows:read", t)).toBe("translated:auth.oauth.scopes.workflows_read");
+    expect(getOAuthScopeLabel("workflows:write", t)).toBe("translated:auth.oauth.scopes.workflows_write");
   });
 
   test("keeps unknown OAuth scopes readable", () => {

@@ -46,8 +46,17 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/oauth-urls", () => ({
-  MCP_OAUTH_SCOPES: ["openid", "profile", "email", "offline_access", "surveys:read", "surveys:write"],
-  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write"],
+  MCP_OAUTH_SCOPES: [
+    "openid",
+    "profile",
+    "email",
+    "offline_access",
+    "surveys:read",
+    "surveys:write",
+    "workflows:read",
+    "workflows:write",
+  ],
+  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write", "workflows:read", "workflows:write"],
   getAuthIssuerUrl: vi.fn(() => "https://app.example.com/api/auth"),
   getMcpOrigin: vi.fn(() => "https://app.example.com"),
   getMcpProtectedResourceMetadataUrl: vi.fn(
@@ -107,7 +116,9 @@ describe("authenticateMcpRequest", () => {
       expect(result.response.status).toBe(401);
       // The challenge must advertise read + write so clients request write at consent and can reach
       // the write tools (advertising only read is why write was unreachable — ENG-1055 QA).
-      expect(result.response.headers.get("WWW-Authenticate")).toContain('scope="surveys:read surveys:write"');
+      expect(result.response.headers.get("WWW-Authenticate")).toContain(
+        'scope="surveys:read surveys:write workflows:read workflows:write"'
+      );
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
         detail: "API key or OAuth access token required",

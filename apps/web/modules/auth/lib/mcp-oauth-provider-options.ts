@@ -20,23 +20,19 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   validAudiences: [getMcpResourceUrl()],
   allowDynamicClientRegistration: true,
   allowUnauthenticatedClientRegistration: true,
-  // Register MCP clients with read + write by default so the consent screen offers write and the
-  // write tools are reachable (clients derive their DCR/authorize scopes from what we advertise, and
-  // the plugin validates authorize against the client's registered scopes). Granting the write scope
-  // is safe: actual write access is still enforced downstream by the user's workspace permissions.
-  clientRegistrationDefaultScopes: [
-    "openid",
-    "profile",
-    "email",
-    "offline_access",
-    "surveys:read",
-    "surveys:write",
-  ],
+  // Register MCP clients with the full advertised scope set by default so the consent screen offers
+  // write and the write tools are reachable (clients derive their DCR/authorize scopes from what we
+  // advertise, and the plugin validates authorize against the client's registered scopes). Granting
+  // write is safe: actual write access is still enforced downstream by the user's workspace
+  // permissions. Spread the single source of truth so the defaults can't drift from MCP_OAUTH_SCOPES.
+  clientRegistrationDefaultScopes: [...MCP_OAUTH_SCOPES],
   accessTokenExpiresIn: 15 * 60,
   refreshTokenExpiresIn: 30 * 24 * 60 * 60,
-  scopeExpirations: {
-    "surveys:write": "15m",
-  },
+  // Every write scope gets the 15-minute step-up expiry, derived from the scope list so a new
+  // `<resource>:write` scope inherits it automatically (no separate hand-edit to keep in sync).
+  scopeExpirations: Object.fromEntries(
+    MCP_OAUTH_SCOPES.filter((scope) => scope.endsWith(":write")).map((scope) => [scope, "15m"])
+  ),
   // Store opaque access-token and refresh-token lookup values as hashes. JWT access tokens are
   // stateless and bounded by the short 15-minute lifetime above.
   storeTokens: "hashed",

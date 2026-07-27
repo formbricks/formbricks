@@ -82,6 +82,8 @@ checksums:
     auth/oauth/scopes/profile: ea073dc28851ee1a00365047be103d50
     auth/oauth/scopes/surveys_read: 8280264457fe7c3b759c82422052aed2
     auth/oauth/scopes/surveys_write: fb128cebe62dfd5685d086d706c432c2
+    auth/oauth/scopes/workflows_read: b3b216cd6e77b26500068bdf7afad004
+    auth/oauth/scopes/workflows_write: c9ce0488b4188718bf4c235855ca5c5a
     auth/oauth/unknown_client: 561bc5afdb90606fbc1ed97f20698ead
     auth/password_compromised: d4ab0f66aaed039f956c2515328ed1c9
     auth/saml_connection_error: 03c69c534e7eaafcb2c22b7daf9f3efc
