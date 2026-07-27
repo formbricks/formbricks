@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 interface SignupRequestStore {
   /**
-   * Set by `createUserAction` once its personal-email domain policy (Cloud gate + invite exemption)
+   * Set by `createUserAction` once its personal-email domain policy (domain check + invite exemption)
    * has passed, immediately before it calls `auth.api.signUpEmail`. `user.create.before` reads it to
    * know the credential sign-up already went through the action; its ABSENCE means a direct POST to
    * Better Auth's native `/sign-up/email`, which bypasses the action — the hook re-enforces the block

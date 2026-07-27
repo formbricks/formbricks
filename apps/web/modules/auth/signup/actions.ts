@@ -263,7 +263,8 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
     await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
-    // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
+    // Reject personal/free/disposable email domains before any user is created (enabled by default,
+    // opt out with SIGNUP_DOMAIN_CHECK_DISABLED=1).
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
     if (
       await isSignupEmailDomainBlocked(

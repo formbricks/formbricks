@@ -77,7 +77,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         const provider = getSsoProviderFromContext(context);
         const identityProvider = provider ? normalizeSsoProvider(provider) : null;
         if (!identityProvider) {
-          // Credential sign-up. createUserAction runs the full personal-email policy (Cloud gate +
+          // Credential sign-up. createUserAction runs the full personal-email policy (domain check +
           // invite exemption) and marks the request scope before calling signUpEmail. If that mark is
           // absent, this is a direct POST to Better Auth's native /sign-up/email — which bypasses the
           // action — so re-enforce the domain block here (no invite is carried on that raw path).

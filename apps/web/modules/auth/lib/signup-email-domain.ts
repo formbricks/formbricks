@@ -1,6 +1,6 @@
 import "server-only";
 import disposableEmailDomains from "disposable-email-domains/index.json";
-import { IS_FORMBRICKS_CLOUD, SIGNUP_DOMAIN_CHECK_ON_INVITES } from "@/lib/constants";
+import { SIGNUP_DOMAIN_CHECK_ENABLED, SIGNUP_DOMAIN_CHECK_ON_INVITES } from "@/lib/constants";
 import { PERSONAL_EMAIL_DOMAINS } from "./personal-email-domains";
 
 /**
@@ -47,7 +47,9 @@ export const isBlockedEmailDomain = (email: string): boolean => {
 /**
  * Sign-up policy: should this email be blocked from creating a new account?
  *
- * - Enforced only on Formbricks Cloud (`IS_FORMBRICKS_CLOUD`); self-hosted is never affected.
+ * - Enabled by default on every deployment (Cloud and self-hosted); operators opt out with
+ *   `SIGNUP_DOMAIN_CHECK_DISABLED=1`. Previously this was gated on `IS_FORMBRICKS_CLOUD`, which
+ *   conflated a deployment flag with a sign-up policy and gave self-hosters no way to turn it on.
  * - Invited users are exempt unless the `SIGNUP_DOMAIN_CHECK_ON_INVITES` kill-switch is enabled.
  *   The exemption is decided by a caller-supplied check (a validated invite token whose email
  *   matches the address), invoked lazily so the token/DB work only runs when the domain is
@@ -60,7 +62,7 @@ export const isSignupEmailDomainBlocked = async (
   email: string,
   hasValidMatchingInvite: () => Promise<boolean>
 ): Promise<boolean> => {
-  if (!IS_FORMBRICKS_CLOUD) return false;
+  if (!SIGNUP_DOMAIN_CHECK_ENABLED) return false;
   if (!isBlockedEmailDomain(email)) return false;
   if (!SIGNUP_DOMAIN_CHECK_ON_INVITES && (await hasValidMatchingInvite())) return false;
   return true;

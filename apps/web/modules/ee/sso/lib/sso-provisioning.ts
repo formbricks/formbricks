@@ -81,11 +81,12 @@ export const gateSsoProvisioning = async ({
   email: string;
   callbackUrl: string;
 }): Promise<TSsoProvisioningDecision> => {
-  // Formbricks Cloud only: block SSO sign-ups from personal/free/disposable email domains, before any
-  // org resolution. Placed above the multi-org / fresh-instance bypass below (Cloud is multi-org, so
-  // the bypass would otherwise let these through). Invited users — a valid token whose email matches —
-  // are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is set; the exemption reuses the same invite
-  // validation as the gate below and runs lazily, only when the domain is actually blocked.
+  // Block SSO sign-ups from personal/free/disposable email domains, before any org resolution
+  // (enabled by default; opt out with SIGNUP_DOMAIN_CHECK_DISABLED=1). Placed above the multi-org /
+  // fresh-instance bypass below, which would otherwise let these through on Cloud. Invited users — a
+  // valid token whose email matches — are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is set; the
+  // exemption reuses the same invite validation as the gate below and runs lazily, only when the
+  // domain is actually blocked.
   const isDomainBlocked = await isSignupEmailDomainBlocked(
     email,
     async () => (await validateSsoInviteToken(email, callbackUrl)) === null

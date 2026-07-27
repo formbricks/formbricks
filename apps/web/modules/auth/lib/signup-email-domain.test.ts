@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 // Mock the (server-only) constants module so the tests are environment-independent. Getters let each
 // test flip the flags at runtime — the utility reads them through live import bindings at call time.
 const constantsOverrides = vi.hoisted(() => ({
-  IS_FORMBRICKS_CLOUD: true,
+  // Mirrors production: the check is enabled unless SIGNUP_DOMAIN_CHECK_DISABLED=1.
+  SIGNUP_DOMAIN_CHECK_ENABLED: true,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false,
 }));
 
@@ -11,8 +12,8 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
   return {
     ...actual,
-    get IS_FORMBRICKS_CLOUD() {
-      return constantsOverrides.IS_FORMBRICKS_CLOUD;
+    get SIGNUP_DOMAIN_CHECK_ENABLED() {
+      return constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED;
     },
     get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
       return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
@@ -23,7 +24,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 const { isBlockedEmailDomain, isSignupEmailDomainBlocked } = await import("./signup-email-domain");
 
 beforeEach(() => {
-  constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+  constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED = true;
   constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
 });
 
@@ -104,7 +105,7 @@ describe("isSignupEmailDomainBlocked", () => {
   const noInvite = () => Promise.resolve(false);
   const validInvite = () => Promise.resolve(true);
 
-  test("blocks a personal domain on Cloud when there is no matching invite", async () => {
+  test("blocks a personal domain by default when there is no matching invite", async () => {
     expect(await isSignupEmailDomainBlocked("user@gmail.com", noInvite)).toBe(true);
   });
 
@@ -121,8 +122,8 @@ describe("isSignupEmailDomainBlocked", () => {
     expect(await isSignupEmailDomainBlocked("user@gmail.com", validInvite)).toBe(true);
   });
 
-  test("never blocks when not on Formbricks Cloud", async () => {
-    constantsOverrides.IS_FORMBRICKS_CLOUD = false;
+  test("never blocks when the check is disabled (SIGNUP_DOMAIN_CHECK_DISABLED=1)", async () => {
+    constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED = false;
     expect(await isSignupEmailDomainBlocked("user@gmail.com", noInvite)).toBe(false);
     expect(await isSignupEmailDomainBlocked("user@mailinator.com", validInvite)).toBe(false);
   });
@@ -133,8 +134,8 @@ describe("isSignupEmailDomainBlocked", () => {
     expect(inviteCheck).not.toHaveBeenCalled();
   });
 
-  test("does not run the invite check when not on Cloud", async () => {
-    constantsOverrides.IS_FORMBRICKS_CLOUD = false;
+  test("does not run the invite check when the check is disabled", async () => {
+    constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED = false;
     const inviteCheck = vi.fn().mockResolvedValue(true);
     expect(await isSignupEmailDomainBlocked("user@gmail.com", inviteCheck)).toBe(false);
     expect(inviteCheck).not.toHaveBeenCalled();

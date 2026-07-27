@@ -50,10 +50,13 @@ vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({ subscribeUserT
 vi.mock("@/modules/email", () => ({ sendInviteAcceptedEmail: vi.fn() }));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace: vi.fn() }));
 
-// Getters so individual tests can flip the Cloud gate / invite kill-switch at runtime. The real
+// Getters so individual tests can flip the domain check / invite kill-switch at runtime. The real
 // signup-email-domain utility reads these through live bindings; only the constants are mocked.
+// IS_FORMBRICKS_CLOUD is separate from the domain check now — the action still reads it for the
+// Cloud-only mailing subscription and the PostHog property.
 const constantsOverrides = vi.hoisted(() => ({
   IS_FORMBRICKS_CLOUD: false,
+  SIGNUP_DOMAIN_CHECK_ENABLED: false,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false,
 }));
 
@@ -63,6 +66,9 @@ vi.mock("@/lib/constants", () => ({
   TURNSTILE_SECRET_KEY: undefined,
   get IS_FORMBRICKS_CLOUD() {
     return constantsOverrides.IS_FORMBRICKS_CLOUD;
+  },
+  get SIGNUP_DOMAIN_CHECK_ENABLED() {
+    return constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED;
   },
   get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
     return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
@@ -96,6 +102,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
+    constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED = false; // this suite isn't about the domain block
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
@@ -153,7 +160,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
   });
 });
 
-describe("createUserAction — personal email domain block (Cloud)", () => {
+describe("createUserAction — personal email domain block", () => {
   const createdUser = {
     id: "user-2",
     email: "spammer@gmail.com",
@@ -166,7 +173,8 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    constantsOverrides.IS_FORMBRICKS_CLOUD = true; // this suite runs as Formbricks Cloud
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true; // unrelated to the block; kept for the Cloud mailing path
+    constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED = true; // the default in production
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
@@ -182,6 +190,21 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
       SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE
     );
     expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+  });
+
+  test("blocks a personal-domain signup on self-hosted too (no longer gated on Cloud)", async () => {
+    constantsOverrides.IS_FORMBRICKS_CLOUD = false;
+    await expect(createUserAction({ ctx: newCtx(), parsedInput: blockedInput } as never)).rejects.toThrow(
+      SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE
+    );
+    expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+  });
+
+  test("allows a personal-domain signup when SIGNUP_DOMAIN_CHECK_DISABLED=1", async () => {
+    constantsOverrides.SIGNUP_DOMAIN_CHECK_ENABLED = false;
+    const result = await createUserAction({ ctx: newCtx(), parsedInput: blockedInput } as never);
+    expect(result).toEqual({ success: true });
+    expect(auth.api.signUpEmail).toHaveBeenCalled();
   });
 
   test("allows a personal-domain signup backed by a valid matching invite", async () => {

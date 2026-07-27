@@ -330,6 +330,7 @@
         "SESSION_MAX_AGE",
         "SENTRY_DSN",
         "SENTRY_ENVIRONMENT",
+        "SIGNUP_DOMAIN_CHECK_DISABLED",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
         "SMTP_HOST",
