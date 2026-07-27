@@ -5,7 +5,6 @@ import { defineConfig } from "vitest/config";
 import type { ViteUserConfig } from "vitest/config";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
-import packageJson from "./package.json";
 
 type VitestPluginOption = NonNullable<ViteUserConfig["plugins"]>[number];
 
@@ -14,9 +13,6 @@ export default defineConfig({
     alias: {
       "@": resolve(__dirname, "src"),
     },
-  },
-  define: {
-    "import.meta.env.VERSION": JSON.stringify(packageJson.version),
   },
   build: {
     rollupOptions: {
