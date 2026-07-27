@@ -1026,9 +1026,18 @@ importers:
       '@formbricks/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
+      '@formbricks/database':
+        specifier: workspace:*
+        version: link:../database
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
+      '@formbricks/vite-plugins':
+        specifier: workspace:*
+        version: link:../vite-plugins
       '@types/node':
         specifier: 25.4.0
         version: 25.4.0
@@ -2101,14 +2110,8 @@ packages:
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
 
-  '@better-auth/utils@0.4.1':
-    resolution: {integrity: sha512-SZBPRPF3z0nBvE5ygOkxae35wnnXPRShmqFo78S+qslLeFoPu/pMgnXAuNKFMMybac3tiLaVg1e3MQW5MC+1iA==}
-
   '@better-auth/utils@0.4.2':
     resolution: {integrity: sha512-AUxrvu+HaaODsUyzDxFgwd/8RZ1yZaYo42LXKSrU2oGgR38pS1ij8nqQKNgtTWoYGpNevNXtCfgTy6loHveW9A==}
-
-  '@better-fetch/fetch@1.3.0':
-    resolution: {integrity: sha512-Lgkl18IrUURFqa1nE38GNDWXf7XGzfxXQDCE/alCQV0yZ98YrPGtlmW61ch1T4YRt3lxrSAGA+Ft73FzuWWb3A==}
 
   '@better-fetch/fetch@1.3.1':
     resolution: {integrity: sha512-ABkD1WhyfPZprKRQI3bhATjeiFuNWC9PXhfGWqL+sg/gKrM977oFrYkdb4msM3hgUGonr7KlOsOFT5TU2rht9g==}
@@ -14160,15 +14163,9 @@ snapshots:
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
 
-  '@better-auth/utils@0.4.1':
-    dependencies:
-      '@noble/hashes': 2.0.1
-
   '@better-auth/utils@0.4.2':
     dependencies:
       '@noble/hashes': 2.0.1
-
-  '@better-fetch/fetch@1.3.0': {}
 
   '@better-fetch/fetch@1.3.1': {}
 
@@ -19948,8 +19945,8 @@ snapshots:
 
   better-call@1.3.7(zod@4.3.6):
     dependencies:
-      '@better-auth/utils': 0.4.1
-      '@better-fetch/fetch': 1.3.0
+      '@better-auth/utils': 0.4.2
+      '@better-fetch/fetch': 1.3.1
       rou3: 0.7.12
       set-cookie-parser: 3.1.0
     optionalDependencies:
