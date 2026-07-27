@@ -228,6 +228,9 @@ export const WorkflowEmailActionForm = ({
       {/* Reply To */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="workflow-email-reply-to">{t("workspace.workflows.email_reply_to_label")}</Label>
+        <p className="text-xs text-slate-500">
+          {t("workspace.surveys.edit.follow_ups_modal_action_replyTo_description")}
+        </p>
         <FollowUpActionMultiEmailInput
           disabled={!isEditable}
           emails={node.config.replyTo}
