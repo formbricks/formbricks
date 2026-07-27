@@ -148,6 +148,12 @@ pnpm db:migrate:dev
 pnpm --filter @formbricks/web dev
 ```
 
+<Note>
+  Restart the dev server after changing tool registrations. The MCP server is built once at module scope
+  by `createMcpHandler`, so hot reload does not pick up an added, removed or renamed tool — `tools/list`
+  keeps serving the previous set until the process restarts.
+</Note>
+
 Verify OAuth discovery:
 
 ```bash
