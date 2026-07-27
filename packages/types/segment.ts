@@ -450,6 +450,101 @@ export const segmentFiltersContainSurveyInteraction = (filters: TBaseFilters): b
   return false;
 };
 
+/**
+ * Per-survey gate for the SDK's post-interaction segment refresh. Each flag says whether interacting
+ * with THIS survey via that event can change some live survey's segment membership:
+ *   - `onDisplay`  — a `Display` is created (drives `have seen` / `have not seen`)
+ *   - `onResponse` — a `Response` is created (drives `have started responding to`)
+ *   - `onFinished` — the response is finished (drives `have completed` / `have not completed`)
+ */
+export interface TSurveyInteractionRefresh {
+  onDisplay: boolean;
+  onResponse: boolean;
+  onFinished: boolean;
+}
+
+/**
+ * Maps each survey-interaction operator to the SDK callback whose event can flip a membership that
+ * depends on it. Negative operators map to the SAME source as their positive counterpart — the event
+ * flips the membership in the opposite direction, but a refresh is needed either way.
+ */
+const SURVEY_INTERACTION_OPERATOR_SOURCE: Record<
+  TSurveyInteractionOperator,
+  keyof TSurveyInteractionRefresh
+> = {
+  haveSeen: "onDisplay",
+  haveNotSeen: "onDisplay",
+  haveStartedRespondingTo: "onResponse",
+  haveCompleted: "onFinished",
+  haveNotCompleted: "onFinished",
+};
+
+/**
+ * Reverse-indexes the `surveyInteraction` filters used across a workspace's live app surveys onto the
+ * surveys they REFERENCE, so the SDK knows — per survey, per event — whether an interaction can change
+ * any live survey's membership, and can skip the heavy post-interaction `/user` refetch otherwise.
+ *
+ * The flag belongs on the referenced (target) survey, not the survey that owns the filter: it is the
+ * Display/Response of the *target* that flips membership. `deliveredSurveyIds` is the set the SDK can
+ * actually render (and thus fire callbacks for), so bits are only ever set on surveys in that set —
+ * `any` scope therefore sets the source bit on every delivered survey.
+ *
+ * `resolveSegmentFilters` resolves a nested `userIsIn` / `userIsNotIn` segment reference to its filter
+ * tree (returns `undefined` for unknown / foreign / deleted segments, mirroring runtime evaluation),
+ * so interaction filters hiding inside a referenced segment are not missed. A per-walk `visited` set
+ * guards against segment-reference cycles.
+ */
+export const buildSurveyInteractionRefreshMap = (
+  surveys: { id: string; segmentFilters: TBaseFilters | null }[],
+  resolveSegmentFilters: (segmentId: string) => TBaseFilters | undefined
+): { refreshBySurveyId: Record<string, TSurveyInteractionRefresh>; hasAny: boolean } => {
+  const deliveredSurveyIds = surveys.map((survey) => survey.id);
+  const deliveredSurveyIdSet = new Set(deliveredSurveyIds);
+  const refreshBySurveyId: Record<string, TSurveyInteractionRefresh> = {};
+  for (const id of deliveredSurveyIds) {
+    refreshBySurveyId[id] = { onDisplay: false, onResponse: false, onFinished: false };
+  }
+
+  let hasAny = false;
+
+  const applyLeaf = (filter: TSegmentSurveyInteractionFilter): void => {
+    const source = SURVEY_INTERACTION_OPERATOR_SOURCE[filter.qualifier.operator];
+    const targetIds = filter.value.surveyScope === "specific" ? filter.value.surveyIds : deliveredSurveyIds;
+    for (const targetId of targetIds) {
+      // Only surveys the SDK can render carry a bit; a target outside the delivered set can't fire a
+      // callback, so no refresh is possible (or needed) for it.
+      if (!deliveredSurveyIdSet.has(targetId)) continue;
+      refreshBySurveyId[targetId][source] = true;
+      hasAny = true;
+    }
+  };
+
+  const walk = (filters: TBaseFilters, visited: Set<string>): void => {
+    for (const group of filters) {
+      const { resource } = group;
+      if (Array.isArray(resource)) {
+        walk(resource, visited);
+      } else if (resource.root.type === "surveyInteraction") {
+        applyLeaf(resource as TSegmentSurveyInteractionFilter);
+      } else if (resource.root.type === "segment") {
+        const { segmentId } = resource.root;
+        if (visited.has(segmentId)) continue;
+        visited.add(segmentId);
+        const nested = resolveSegmentFilters(segmentId);
+        if (nested) walk(nested, visited);
+      }
+    }
+  };
+
+  for (const survey of surveys) {
+    if (survey.segmentFilters) {
+      walk(survey.segmentFilters, new Set<string>());
+    }
+  }
+
+  return { refreshBySurveyId, hasAny };
+};
+
 export const ZSegmentCreateInput = z.object({
   workspaceId: z.string(),
   title: z.string(),

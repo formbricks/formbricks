@@ -744,9 +744,11 @@ describe("widget-file", () => {
     const renderAndGetCallbacks = async ({
       hasSurveyInteractionSegments,
       userId,
+      interactionRefresh,
     }: {
       hasSurveyInteractionSegments?: boolean;
       userId: string | null;
+      interactionRefresh?: { onDisplay: boolean; onResponse: boolean; onFinished: boolean };
     }): Promise<{
       onDisplayCreated: () => void;
       onResponseCreated: () => void;
@@ -775,7 +777,11 @@ describe("widget-file", () => {
       window.formbricksSurveys = createMockFormbricksSurveys();
 
       vi.useFakeTimers();
-      await widget.renderWidget({ ...mockSurvey, delay: 0 } as unknown as TWorkspaceStateSurvey);
+      await widget.renderWidget({
+        ...mockSurvey,
+        delay: 0,
+        ...(interactionRefresh ? { interactionRefresh } : {}),
+      } as unknown as TWorkspaceStateSurvey);
       vi.advanceTimersByTime(0);
       vi.useRealTimers();
 
@@ -838,6 +844,56 @@ describe("widget-file", () => {
 
       expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
       expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
+
+    test("per-survey interactionRefresh gates each event independently (seen-only → display only)", async () => {
+      // The seen-only example: this survey is referenced only by a "have seen" filter, so only its
+      // display can change membership — response/finish must not trigger a refresh even though the
+      // workspace has interaction segments.
+      const callbacks = await renderAndGetCallbacks({
+        hasSurveyInteractionSegments: true,
+        userId: "user_abc",
+        interactionRefresh: { onDisplay: true, onResponse: false, onFinished: false },
+      });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).toHaveBeenCalledTimes(1);
+      expect(mockUpdateQueue.processUpdates).toHaveBeenCalledTimes(1);
+    });
+
+    test("per-survey interactionRefresh all-false skips every event (survey referenced by nobody)", async () => {
+      // interactionRefresh present but all-false wins over a truthy coarse flag: this survey can't
+      // change any membership, so none of its interactions refresh.
+      const callbacks = await renderAndGetCallbacks({
+        hasSurveyInteractionSegments: true,
+        userId: "user_abc",
+        interactionRefresh: { onDisplay: false, onResponse: false, onFinished: false },
+      });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
+      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
+
+    test("per-survey interactionRefresh takes precedence over an absent coarse flag", async () => {
+      // No coarse flag (older-style state) but per-survey info present → the per-survey bit decides.
+      const callbacks = await renderAndGetCallbacks({
+        userId: "user_abc",
+        interactionRefresh: { onDisplay: false, onResponse: false, onFinished: true },
+      });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).toHaveBeenCalledTimes(1);
+      expect(mockUpdateQueue.processUpdates).toHaveBeenCalledTimes(1);
     });
   });
 });
