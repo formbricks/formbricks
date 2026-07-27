@@ -115,10 +115,11 @@ describe("proxyFeedbackRecordsRequest", () => {
       new NextRequest("http://localhost:3000/v1/feedback-records?tenant_id=dir_1", {
         headers: {
           authorization: "Bearer client-token",
-          connection: "keep-alive",
+          connection: "keep-alive, X-Client-Context",
           cookie: "session=secret",
           host: "localhost:3000",
           "x-api-key": "fbk_client-key",
+          "x-client-context": "sensitive-client-context",
         },
       })
     );
@@ -129,6 +130,7 @@ describe("proxyFeedbackRecordsRequest", () => {
     expect(hubRequest.headers.has("x-api-key")).toBe(false);
     expect(hubRequest.headers.has("connection")).toBe(false);
     expect(hubRequest.headers.has("host")).toBe(false);
+    expect(hubRequest.headers.has("x-client-context")).toBe(false);
   });
 
   test("passes the Hub response through unchanged", async () => {

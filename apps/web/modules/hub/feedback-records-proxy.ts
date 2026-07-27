@@ -19,6 +19,7 @@ const HOP_BY_HOP_REQUEST_HEADERS = [
   "transfer-encoding",
   "upgrade",
 ] as const;
+const HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 
 const buildHubRequestUrl = (requestUrl: URL): URL | null => {
   const hubPathname = getFeedbackRecordsHubPathname(requestUrl.pathname);
@@ -36,11 +37,17 @@ const buildHubRequestUrl = (requestUrl: URL): URL | null => {
 
 const buildHubRequest = (request: NextRequest, hubUrl: URL): Request => {
   const hubRequest = new Request(hubUrl, request);
+  const connectionHeaders = (request.headers.get("connection") ?? "")
+    .split(",")
+    .map((header) => header.trim().toLowerCase())
+    .filter((header) => HEADER_NAME_PATTERN.test(header));
+  const headersToRemove = new Set([
+    ...FORWARDED_CREDENTIAL_HEADERS,
+    ...HOP_BY_HOP_REQUEST_HEADERS,
+    ...connectionHeaders,
+  ]);
 
-  for (const header of FORWARDED_CREDENTIAL_HEADERS) {
-    hubRequest.headers.delete(header);
-  }
-  for (const header of HOP_BY_HOP_REQUEST_HEADERS) {
+  for (const header of headersToRemove) {
     hubRequest.headers.delete(header);
   }
 
