@@ -1,6 +1,7 @@
+import "server-only";
 import { compare, hash } from "bcryptjs";
-import { prisma } from "@formbricks/database";
 import { AuthenticationError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
 
 export const hashPassword = async (password: string) => {
   const hashedPassword = await hash(password, 12);
@@ -12,52 +13,14 @@ export const verifyPassword = async (password: string, hashedPassword: string) =
   return isValid;
 };
 
-export const hasOrganizationAccess = async (userId: string, organizationId: string): Promise<boolean> => {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_organizationId: {
-        userId,
-        organizationId,
-      },
-    },
-  });
+export const hasOrganizationAccess = (userId: string, organizationId: string): Promise<boolean> =>
+  can({ type: "user", id: userId }, "organization.read", { type: "organization", id: organizationId });
 
-  return !!membership;
-};
+export const isManagerOrOwner = (userId: string, organizationId: string): Promise<boolean> =>
+  can({ type: "user", id: userId }, "organization.manage", { type: "organization", id: organizationId });
 
-export const isManagerOrOwner = async (userId: string, organizationId: string) => {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_organizationId: {
-        userId,
-        organizationId,
-      },
-    },
-  });
-
-  if (membership && (membership.role === "owner" || membership.role === "manager")) {
-    return true;
-  }
-
-  return false;
-};
-
-export const isOwner = async (userId: string, organizationId: string) => {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_organizationId: {
-        userId,
-        organizationId,
-      },
-    },
-  });
-
-  if (membership && membership.role === "owner") {
-    return true;
-  }
-
-  return false;
-};
+export const isOwner = (userId: string, organizationId: string): Promise<boolean> =>
+  can({ type: "user", id: userId }, "organization.write", { type: "organization", id: organizationId });
 
 export const hasOrganizationAuthority = async (userId: string, organizationId: string) => {
   const hasAccess = await hasOrganizationAccess(userId, organizationId);

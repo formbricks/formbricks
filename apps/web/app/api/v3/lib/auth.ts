@@ -5,7 +5,8 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { assertCan } from "@/lib/authorization";
+import { getWorkspaceActionForPermission } from "@/lib/authorization/compatibility";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
@@ -55,14 +56,9 @@ export async function requireSessionWorkspaceAccess(
     // Resolve workspaceId → workspaceId, organizationId (single place to change when Workspace exists).
     const context = await resolveV3WorkspaceContext(workspaceId);
 
-    // Org + workspace-team access; we use internal IDs from context.
-    await checkAuthorizationUpdated({
-      userId,
-      organizationId: context.organizationId,
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", workspaceId: context.workspaceId, minPermission },
-      ],
+    await assertCan({ type: "user", id: userId }, getWorkspaceActionForPermission(minPermission), {
+      type: "workspace",
+      id: context.workspaceId,
     });
 
     return context;

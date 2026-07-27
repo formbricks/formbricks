@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { assertCan } from "@/lib/authorization";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
 import { requireSessionWorkspaceAccess, requireV3WorkspaceAccess } from "./auth";
@@ -23,8 +23,8 @@ vi.mock("@/lib/workspace/service", () => ({
   getWorkspace: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
+vi.mock("@/lib/authorization", () => ({
+  assertCan: vi.fn(),
 }));
 
 const requestId = "req-123";
@@ -40,7 +40,7 @@ describe("requireSessionWorkspaceAccess", () => {
     expect(body.status).toBe(401);
     expect(body.code).toBe("not_authenticated");
     expect(getWorkspace).not.toHaveBeenCalled();
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(assertCan).not.toHaveBeenCalled();
   });
 
   test("returns 401 when authentication is API key (no user)", async () => {
@@ -73,13 +73,13 @@ describe("requireSessionWorkspaceAccess", () => {
     expect(body.requestId).toBe(requestId);
     expect(body.code).toBe("forbidden");
     expect(getWorkspace).toHaveBeenCalledWith("ws_nonexistent");
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(assertCan).not.toHaveBeenCalled();
   });
 
   test("returns 403 when user has no access to workspace", async () => {
     vi.mocked(getWorkspace).mockResolvedValueOnce({ id: "proj_abc" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_1");
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValueOnce(new AuthorizationError("Not authorized"));
+    vi.mocked(assertCan).mockRejectedValueOnce(new AuthorizationError("Not authorized"));
     const result = await requireSessionWorkspaceAccess(
       { user: { id: "user_1" }, expires: "" } as any,
       "proj_abc",
@@ -91,20 +91,16 @@ describe("requireSessionWorkspaceAccess", () => {
     const body = await (result as Response).json();
     expect(body.requestId).toBe(requestId);
     expect(body.code).toBe("forbidden");
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: "org_1",
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", workspaceId: "proj_abc", minPermission: "read" },
-      ],
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "workspace.read", {
+      type: "workspace",
+      id: "proj_abc",
     });
   });
 
   test("returns workspace context when session is valid and user has access", async () => {
     vi.mocked(getWorkspace).mockResolvedValueOnce({ id: "proj_abc" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_1");
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(undefined as any);
+    vi.mocked(assertCan).mockResolvedValueOnce(undefined);
     const result = await requireSessionWorkspaceAccess(
       { user: { id: "user_1" }, expires: "" } as any,
       "proj_abc",
@@ -116,13 +112,9 @@ describe("requireSessionWorkspaceAccess", () => {
       workspaceId: "proj_abc",
       organizationId: "org_1",
     });
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: "org_1",
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", workspaceId: "proj_abc", minPermission: "readWrite" },
-      ],
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "workspace.write", {
+      type: "workspace",
+      id: "proj_abc",
     });
   });
 });
@@ -156,7 +148,7 @@ describe("requireV3WorkspaceAccess", () => {
   test("delegates to session flow when user is present", async () => {
     vi.mocked(getWorkspace).mockResolvedValueOnce({ id: "proj_s" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_s");
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(undefined as any);
+    vi.mocked(assertCan).mockResolvedValueOnce(undefined);
     const r = await requireV3WorkspaceAccess(
       { user: { id: "user_1" }, expires: "" } as any,
       "proj_s",

@@ -5,7 +5,7 @@ import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "./access";
 vi.mock("server-only", () => ({}));
 
 const mocks = vi.hoisted(() => ({
-  checkAuthorizationUpdated: vi.fn(),
+  assertCan: vi.fn(),
   getFeedbackDirectoryAuthContext: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
   loggerError: vi.fn(),
@@ -19,8 +19,8 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mocks.checkAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
@@ -52,7 +52,7 @@ beforeEach(() => {
 describe("checkWorkspaceAccess", () => {
   test("returns organizationId and workspaceId on successful access check", async () => {
     mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(workspaceAccessInput.organizationId);
-    mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
 
     const result = await checkWorkspaceAccess(
       workspaceAccessInput.userId,
@@ -65,23 +65,35 @@ describe("checkWorkspaceAccess", () => {
       workspaceId: workspaceAccessInput.workspaceId,
     });
     expect(mocks.getOrganizationIdFromWorkspaceId).toHaveBeenCalledWith(workspaceAccessInput.workspaceId);
-    expect(mocks.checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: workspaceAccessInput.userId,
-      organizationId: workspaceAccessInput.organizationId,
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", minPermission: "readWrite", workspaceId: workspaceAccessInput.workspaceId },
-      ],
-    });
+    expect(mocks.assertCan).toHaveBeenCalledWith(
+      { type: "user", id: workspaceAccessInput.userId },
+      "workspace.write",
+      { type: "workspace", id: workspaceAccessInput.workspaceId }
+    );
   });
 
-  test("propagates authorization errors from checkAuthorizationUpdated", async () => {
+  test("propagates authorization errors from the central interface", async () => {
     mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(workspaceAccessInput.organizationId);
-    mocks.checkAuthorizationUpdated.mockRejectedValue(new Error("Unauthorized"));
+    mocks.assertCan.mockRejectedValue(new Error("Unauthorized"));
 
     await expect(
       checkWorkspaceAccess(workspaceAccessInput.userId, workspaceAccessInput.workspaceId, "manage")
     ).rejects.toThrow("Unauthorized");
+  });
+
+  test.each([
+    ["read", "workspace.read"],
+    ["readWrite", "workspace.write"],
+    ["manage", "workspace.manage"],
+  ] as const)("maps %s permission to %s", async (permission, action) => {
+    mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(workspaceAccessInput.organizationId);
+
+    await checkWorkspaceAccess(workspaceAccessInput.userId, workspaceAccessInput.workspaceId, permission);
+
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: workspaceAccessInput.userId }, action, {
+      type: "workspace",
+      id: workspaceAccessInput.workspaceId,
+    });
   });
 });
 

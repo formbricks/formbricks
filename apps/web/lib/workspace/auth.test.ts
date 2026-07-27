@@ -1,19 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { hasUserWorkspaceAccessForAction } from "./auth";
+import { can } from "@/lib/authorization";
+import { validateInputs } from "../utils/validate";
+import { hasUserWorkspaceAccess, hasUserWorkspaceAccessForAction } from "./auth";
 
 const mocks = vi.hoisted(() => ({
   membershipFindFirst: vi.fn(),
-  workspaceTeamFindMany: vi.fn(),
+  teamUserFindFirst: vi.fn(),
+}));
+
+vi.mock("@/lib/authorization", () => ({
+  can: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    membership: {
-      findFirst: mocks.membershipFindFirst,
-    },
-    workspaceTeam: {
-      findMany: mocks.workspaceTeamFindMany,
-    },
+    membership: { findFirst: mocks.membershipFindFirst },
+    teamUser: { findFirst: mocks.teamUserFindFirst },
   },
 }));
 
@@ -27,89 +29,64 @@ describe("hasUserWorkspaceAccessForAction", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.workspaceTeamFindMany.mockResolvedValue([]);
+    vi.mocked(can).mockResolvedValue(true);
   });
 
-  test("returns false when the user has no organization membership for the workspace", async () => {
-    mocks.membershipFindFirst.mockResolvedValue(null);
+  test.each([
+    ["GET", "workspace.read"],
+    ["POST", "workspace.write"],
+    ["PUT", "workspace.write"],
+    ["PATCH", "workspace.write"],
+    ["DELETE", "workspace.manage"],
+  ] as const)("maps %s to %s", async (method, action) => {
+    await expect(hasUserWorkspaceAccessForAction(userId, workspaceId, method)).resolves.toBe(true);
 
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).toBe(false);
-    expect(mocks.workspaceTeamFindMany).not.toHaveBeenCalled();
+    expect(validateInputs).toHaveBeenCalledWith(
+      [userId, expect.anything()],
+      [workspaceId, expect.anything()]
+    );
+    expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, action, {
+      type: "workspace",
+      id: workspaceId,
+    });
   });
 
-  test.each(["GET", "POST", "PUT", "PATCH", "DELETE"] as const)(
-    "returns false for billing role on %s",
-    async (action) => {
-      mocks.membershipFindFirst.mockResolvedValue({ role: "billing" });
+  test("returns the central authorization denial", async () => {
+    vi.mocked(can).mockResolvedValue(false);
 
-      expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, action)).toBe(false);
-      expect(mocks.workspaceTeamFindMany).not.toHaveBeenCalled();
-    }
-  );
+    await expect(hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).resolves.toBe(false);
+  });
 
-  test.each(["owner", "manager"] as const)(
-    "returns true for %s role on any action without consulting team permissions",
-    async (role) => {
-      mocks.membershipFindFirst.mockResolvedValue({ role });
+  test("propagates central evaluator failures", async () => {
+    vi.mocked(can).mockRejectedValue(new Error("database unavailable"));
 
-      expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "DELETE")).toBe(true);
-      expect(mocks.workspaceTeamFindMany).not.toHaveBeenCalled();
-    }
-  );
+    await expect(hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).rejects.toThrow(
+      "database unavailable"
+    );
+  });
+});
 
-  test("returns false for member role when no team grants workspace access", async () => {
+describe("hasUserWorkspaceAccess navigation compatibility", () => {
+  const userId = "00000000-0000-0000-0000-000000000001";
+  const workspaceId = "00000000-0000-0000-0000-000000000002";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("preserves billing-role navigation access", async () => {
+    mocks.membershipFindFirst.mockResolvedValue({ role: "billing" });
+
+    await expect(hasUserWorkspaceAccess(userId, workspaceId)).resolves.toBe(true);
+
+    expect(can).not.toHaveBeenCalled();
+    expect(mocks.teamUserFindFirst).not.toHaveBeenCalled();
+  });
+
+  test("preserves member navigation access through any workspace team", async () => {
     mocks.membershipFindFirst.mockResolvedValue({ role: "member" });
-    mocks.workspaceTeamFindMany.mockResolvedValue([]);
+    mocks.teamUserFindFirst.mockResolvedValue({ userId });
 
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).toBe(false);
-  });
-
-  test("member with read team permission can GET but cannot POST or DELETE", async () => {
-    mocks.membershipFindFirst.mockResolvedValue({ role: "member" });
-    mocks.workspaceTeamFindMany.mockResolvedValue([{ permission: "read" }]);
-
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "POST")).toBe(false);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "DELETE")).toBe(false);
-  });
-
-  test("member with readWrite team permission can GET/POST/PUT/PATCH but cannot DELETE", async () => {
-    mocks.membershipFindFirst.mockResolvedValue({ role: "member" });
-    mocks.workspaceTeamFindMany.mockResolvedValue([{ permission: "readWrite" }]);
-
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "POST")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "PUT")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "PATCH")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "DELETE")).toBe(false);
-  });
-
-  test("member with manage team permission can perform any action", async () => {
-    mocks.membershipFindFirst.mockResolvedValue({ role: "member" });
-    mocks.workspaceTeamFindMany.mockResolvedValue([{ permission: "manage" }]);
-
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "POST")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "DELETE")).toBe(true);
-  });
-
-  test("member in multiple teams uses the highest permission across them", async () => {
-    mocks.membershipFindFirst.mockResolvedValue({ role: "member" });
-    mocks.workspaceTeamFindMany.mockResolvedValue([
-      { permission: "read" },
-      { permission: "manage" },
-      { permission: "readWrite" },
-    ]);
-
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "DELETE")).toBe(true);
-  });
-
-  test("member in multiple teams none of which grant sufficient permission is denied", async () => {
-    mocks.membershipFindFirst.mockResolvedValue({ role: "member" });
-    mocks.workspaceTeamFindMany.mockResolvedValue([{ permission: "read" }, { permission: "readWrite" }]);
-
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "POST")).toBe(true);
-    expect(await hasUserWorkspaceAccessForAction(userId, workspaceId, "DELETE")).toBe(false);
+    await expect(hasUserWorkspaceAccess(userId, workspaceId)).resolves.toBe(true);
   });
 });
