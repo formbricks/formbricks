@@ -402,12 +402,18 @@ export async function deleteV3FeedbackRecord({
     }
 
     const result = await deleteFeedbackRecord(feedbackRecordId);
-    if (result.error || !result.data) {
+    // A 404 here means the record was deleted between our ownership check and this call — the caller's
+    // intended end state holds, so it is reported as success. Reporting the generic 502 instead would tell
+    // an agent the service is down and invite a retry loop against a record that is already gone.
+    if (result.error && result.error.status !== 404) {
       log.warn(
-        { hubStatus: result.error?.status, hubCode: result.error?.code },
+        { hubStatus: result.error.status, hubCode: result.error.code },
         "Hub deleteFeedbackRecord failed"
       );
       return hubErrorToProblemResponse(result.error, requestId, instance);
+    }
+    if (result.error?.status === 404) {
+      log.info({ datasetId: resolution.tenantId }, "Feedback record already deleted");
     }
 
     if (auditLog) {

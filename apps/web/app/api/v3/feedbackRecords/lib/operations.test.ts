@@ -653,6 +653,19 @@ describe("deleteV3FeedbackRecord", () => {
     expect(auditLog.oldObject).not.toHaveProperty("tenant_id");
   });
 
+  // Deleted concurrently between our ownership check and the delete call: the caller's intended end state
+  // holds, and a 502 here would read as an outage and invite a retry loop against a record already gone.
+  test("treats a concurrent delete (Hub 404) as success rather than a 502", async () => {
+    vi.mocked(deleteFeedbackRecord).mockResolvedValue({
+      data: null,
+      error: { status: 404, message: "not found", detail: "not found" },
+    });
+
+    const response = await deleteV3FeedbackRecord(deleteBase);
+
+    expect(response.status).toBe(204);
+  });
+
   test("maps an in-progress tenant purge to a retryable 409", async () => {
     vi.mocked(deleteFeedbackRecord).mockResolvedValue({
       data: null,
