@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import type { z } from "zod";
 import { logger } from "@formbricks/logger";
 import type { THubFieldType } from "@formbricks/types/feedback-source";
 import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
@@ -22,9 +23,15 @@ import {
 import type {
   FeedbackRecordCreateParams,
   FeedbackRecordListParams,
+  SemanticSearchResultItem,
   SimilarRecordsParams,
+  SimilarRecordsResultItem,
 } from "@/modules/hub/types";
-import { requireOwnedFeedbackRecord, resolveWorkspaceFeedbackTenant } from "./access";
+import {
+  type TResolvedFeedbackTenant,
+  requireOwnedFeedbackRecord,
+  resolveWorkspaceFeedbackTenant,
+} from "./access";
 import {
   EMBEDDING_PENDING_DETAIL,
   handleUnexpectedError,
@@ -87,7 +94,14 @@ function buildHubCreateParams(
   };
 }
 
-/** Pagination/threshold params shared by the two similarity searches, with our defaults applied. */
+/**
+ * The two similarity searches — by query text and by example record — differ only in what they send to
+ * the Hub. Everything around that is shared: the same locally-enforced bounds, the same scored-match rows,
+ * and the same `meta`. These three helpers hold that common part so each operation states just its own
+ * difference.
+ */
+
+/** Pagination/threshold params, with our defaults applied. */
 const buildSimilarityParams = (filters: {
   limit?: number;
   cursor?: string;
@@ -100,6 +114,57 @@ const buildSimilarityParams = (filters: {
   if (filters.cursor) params.cursor = filters.cursor;
   return params;
 };
+
+/**
+ * Validate similarity input against our own bounds. The Hub coerces out-of-range `limit`/`min_score` to its
+ * defaults instead of rejecting them, so without this a caller would silently get something other than
+ * what it asked for.
+ */
+function parseSimilarityFilters<T>(
+  schema: z.ZodType<T>,
+  input: unknown,
+  log: ReturnType<typeof logger.withContext>,
+  requestId: string,
+  instance: string
+): { ok: true; data: T } | { ok: false; response: Response } {
+  const parsed = schema.safeParse(input);
+  if (parsed.success) {
+    return { ok: true, data: parsed.data };
+  }
+
+  log.warn({ statusCode: 422 }, "Invalid feedback record similarity parameters");
+  return {
+    ok: false,
+    response: problemUnprocessableContent(requestId, "Invalid similarity parameters", {
+      invalid_params: toInvalidParams(parsed.error),
+      instance,
+    }),
+  };
+}
+
+/** Envelope for a page of scored matches: the rows, the page cursor, the threshold, and the dataset. */
+const similarityMatchesResponse = (
+  page: {
+    data: (SemanticSearchResultItem | SimilarRecordsResultItem)[];
+    limit: number;
+    next_cursor?: string;
+  },
+  resolution: TResolvedFeedbackTenant,
+  minScore: number | undefined,
+  requestId: string
+): Response =>
+  successListResponse(
+    page.data.map(serializeV3FeedbackRecordMatch),
+    {
+      limit: page.limit,
+      nextCursor: page.next_cursor ?? null,
+      minScore: minScore ?? SIMILARITY_MIN_SCORE_DEFAULT,
+      // Echoed for the same reason as on list: an empty result must say which dataset was searched.
+      datasetId: resolution.tenantId,
+      datasetName: resolution.datasetName,
+    },
+    { requestId, cache: CACHE }
+  );
 
 type TListV3FeedbackDatasetsParams = {
   workspaceId: string;
@@ -475,21 +540,22 @@ export async function searchV3FeedbackRecords({
       return resolution.response;
     }
 
-    // Bounds are ours, not the Hub's: it coerces out-of-range values to its defaults instead of failing.
-    const parsed = ZV3FeedbackRecordSearchFilters.safeParse({ query, limit, cursor, minScore });
-    if (!parsed.success) {
-      log.warn({ statusCode: 422 }, "Invalid feedback record search parameters");
-      return problemUnprocessableContent(requestId, "Invalid search parameters", {
-        invalid_params: toInvalidParams(parsed.error),
-        instance,
-      });
+    const filters = parseSimilarityFilters(
+      ZV3FeedbackRecordSearchFilters,
+      { query, limit, cursor, minScore },
+      log,
+      requestId,
+      instance
+    );
+    if (!filters.ok) {
+      return filters.response;
     }
 
     const result = await semanticSearchFeedbackRecords({
       // Never from input. Trimmed because the Hub matches on the raw value.
       tenant_id: resolution.tenantId.trim(),
-      query: parsed.data.query,
-      ...buildSimilarityParams(parsed.data),
+      query: filters.data.query,
+      ...buildSimilarityParams(filters.data),
     });
     if (result.error || !result.data) {
       // The query itself is never logged: it is caller-authored text.
@@ -504,17 +570,7 @@ export async function searchV3FeedbackRecords({
       return hubErrorToProblemResponse(result.error, requestId, instance);
     }
 
-    return successListResponse(
-      result.data.data.map(serializeV3FeedbackRecordMatch),
-      {
-        limit: result.data.limit,
-        nextCursor: result.data.next_cursor ?? null,
-        minScore: parsed.data.minScore ?? SIMILARITY_MIN_SCORE_DEFAULT,
-        datasetId: resolution.tenantId,
-        datasetName: resolution.datasetName,
-      },
-      { requestId, cache: CACHE }
-    );
+    return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }
@@ -567,13 +623,15 @@ export async function findSimilarV3FeedbackRecords({
       return resolution.response;
     }
 
-    const parsed = ZV3FeedbackRecordSimilarityFilters.safeParse({ limit, cursor, minScore });
-    if (!parsed.success) {
-      log.warn({ statusCode: 422 }, "Invalid feedback record similarity parameters");
-      return problemUnprocessableContent(requestId, "Invalid similarity parameters", {
-        invalid_params: toInvalidParams(parsed.error),
-        instance,
-      });
+    const filters = parseSimilarityFilters(
+      ZV3FeedbackRecordSimilarityFilters,
+      { limit, cursor, minScore },
+      log,
+      requestId,
+      instance
+    );
+    if (!filters.ok) {
+      return filters.response;
     }
 
     const owned = await requireOwnedFeedbackRecord({
@@ -588,7 +646,7 @@ export async function findSimilarV3FeedbackRecords({
       return owned.response;
     }
 
-    const result = await findSimilarFeedbackRecords(feedbackRecordId, buildSimilarityParams(parsed.data));
+    const result = await findSimilarFeedbackRecords(feedbackRecordId, buildSimilarityParams(filters.data));
     if (result.error || !result.data) {
       const status = result.error?.status ?? 0;
       // Ownership is already proven, so a 404 is not an authorization signal — the record is there and
@@ -608,17 +666,7 @@ export async function findSimilarV3FeedbackRecords({
       return hubErrorToProblemResponse(result.error, requestId, instance);
     }
 
-    return successListResponse(
-      result.data.data.map(serializeV3FeedbackRecordMatch),
-      {
-        limit: result.data.limit,
-        nextCursor: result.data.next_cursor ?? null,
-        minScore: parsed.data.minScore ?? SIMILARITY_MIN_SCORE_DEFAULT,
-        datasetId: resolution.tenantId,
-        datasetName: resolution.datasetName,
-      },
-      { requestId, cache: CACHE }
-    );
+    return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance);
   }

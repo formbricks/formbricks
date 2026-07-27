@@ -30,7 +30,7 @@ describe("hubErrorToProblemResponse", () => {
     const body = await response.json();
 
     expect(response.status).toBe(422);
-    expect(body.detail.length).toBe(512);
+    expect(body.detail).toHaveLength(512);
   });
 
   test("caps the number of relayed invalid_params", async () => {
@@ -46,7 +46,7 @@ describe("hubErrorToProblemResponse", () => {
     ).json();
 
     expect(body.invalid_params).toHaveLength(20);
-    expect(body.invalid_params[0].reason.length).toBe(512);
+    expect(body.invalid_params[0].reason).toHaveLength(512);
     expect(body.invalid_params[0].name).toBe("field_0");
   });
 

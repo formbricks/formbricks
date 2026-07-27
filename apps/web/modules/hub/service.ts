@@ -262,7 +262,14 @@ export const findSimilarFeedbackRecords = async (
     const data = await client.feedbackRecords.retrieveSimilar(id, params);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, id }, "Hub: findSimilarFeedbackRecords failed");
+    // "No embedding for this record" is an expected state, not a fault: embedding is asynchronous and
+    // records without text are never embedded. Logged at debug so the normal case doesn't write a stack
+    // trace on every call — same treatment as a missing taxonomy tree below.
+    if (getErrorStatus(err) === 404) {
+      logger.debug({ id }, "Hub: no embedding for feedback record yet");
+    } else {
+      logger.warn({ err, id }, "Hub: findSimilarFeedbackRecords failed");
+    }
     return createHubResultFromError(err);
   }
 };

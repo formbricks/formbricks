@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { createCacheKey } from "@formbricks/cache";
 import FormbricksHub from "@formbricks/hub";
+import { logger } from "@formbricks/logger";
 import {
   createFeedbackRecord,
   createFeedbackRecordsBatch,
@@ -25,7 +26,7 @@ import {
 import type { FeedbackRecordCreateParams } from "./types";
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@formbricks/hub", () => ({
@@ -344,17 +345,23 @@ describe("hub service", () => {
     });
 
     // The 404 is load-bearing: callers translate it into "no embedding yet" once they know the record
-    // exists, so it must arrive with its status intact rather than as a generic failure.
-    test("surfaces a 404 with its status when the record has no embedding", async () => {
+    // exists, so it must arrive with its status intact rather than as a generic failure. It is also an
+    // expected state, so it must not be logged as a fault — a warning per call would carry a stack trace.
+    test("surfaces a 404 with its status, logged as debug rather than a warning", async () => {
       const apiError = new (FormbricksHub.APIError as any)("embedding not found", 404);
       vi.mocked(getHubClient).mockReturnValue({
         feedbackRecords: { retrieveSimilar: vi.fn().mockRejectedValue(apiError) },
       } as any);
+      // This file has no shared reset, so clear the shared logger spies before asserting on them.
+      vi.mocked(logger.warn).mockClear();
+      vi.mocked(logger.debug).mockClear();
 
       const result = await findSimilarFeedbackRecords("rec-1");
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 404 });
+      expect(logger.debug).toHaveBeenCalled();
+      expect(logger.warn).not.toHaveBeenCalled();
     });
   });
 
