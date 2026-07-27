@@ -115,7 +115,8 @@ overrides:
   engine.io@6: 6.6.7
   # ENG-1955 / ENG-1954 / ENG-1953 / GHSA-3jxr-9vmj-r5cp (CVE-2026-13149): brace-expansion expand()
   # exhibits O(2ⁿ) DoS on consecutive non-expanding {} groups. Three affected major lines are present in
-  # the tree; each is pinned to its lowest patched release: 1.x→1.1.16, 2.x→2.1.2, 3.x–5.x→5.0.7.
+  # the tree; each was pinned to its lowest patched release for this advisory: 1.x→1.1.16, 2.x→2.1.2,
+  # 3.x–5.x→5.0.7. The 5.x pin has since moved to 5.0.8 for the separate GHSA-mh99-v99m-4gvg advisory below.
   brace-expansion@1: 1.1.16
   brace-expansion@2: 2.1.2
   # GHSA-mh99-v99m-4gvg (CVE-2026-14257): brace-expansion expand() bounds result *count* (`max`) but not
