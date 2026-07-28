@@ -829,9 +829,21 @@ export const PricingTable = ({
     );
   };
 
-  // Gate the immediate-charge upgrade behind a confirmation modal; everything else runs as before.
+  // A no-card trial upgrading to a different paid plan adds a card and is then charged immediately
+  // (redirectToPlanCheckout -> openUpgradeCheckout -> applySetupCheckoutUpgrade). It must go behind
+  // the same confirm modal so the charge is shown up front. Continuing the same trial plan only
+  // saves a card (billed at trial_end, not now), so it is intentionally excluded.
+  const willChargeAfterAddingCard = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
+    isTrialingWithoutPayment &&
+    plan !== "hobby" &&
+    !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
+
+  // Gate any charge-now upgrade behind a confirmation modal; everything else runs as before.
   const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
-    if (plan !== "hobby" && willChargeImmediately(plan, interval)) {
+    if (
+      plan !== "hobby" &&
+      (willChargeImmediately(plan, interval) || willChargeAfterAddingCard(plan, interval))
+    ) {
       setUpgradeConfirmation({ plan, interval });
       // Fetch the prorated charge to show in the modal. On failure we fall back to the generic copy.
       setUpgradePreview(null);
