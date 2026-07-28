@@ -265,6 +265,10 @@ export const PricingTable = ({
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
   const canShowSubscriptionButton = hasBillingRights && !!organization.billing.stripeCustomerId;
   const isTrialingWithoutPayment = isTrialing && !hasPaymentMethod;
+  // Trialing with a card on file: selecting a paid plan converts the trial to paid and charges now
+  // (so the user unlocks links/follow-ups immediately instead of waiting out the trial), behind the
+  // charge-confirmation modal so they know they're billed now.
+  const isTrialingWithPayment = isTrialing && hasPaymentMethod;
   const showPlanSelector = !isStripeSetupIncomplete;
   const usageCycleLabel = `${formatDateForDisplay(usageCycleStart, locale, {
     year: "numeric",
@@ -804,21 +808,26 @@ export const PricingTable = ({
     }
   };
 
-  // True only for the in-place upgrade that charges the card immediately (the path with no prior confirmation).
-  const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
-    hasPaymentMethod &&
-    plan !== "hobby" &&
-    currentPlanLevel !== null &&
-    STANDARD_PLAN_LEVEL[plan] > currentPlanLevel &&
-    !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval) &&
-    !canCancelCurrentPaidPlanAtPeriodEnd(
-      plan,
-      interval,
-      currentCloudPlan,
-      currentBillingInterval,
-      isTrialingWithoutPayment,
-      pendingChange
+  // True for any card-on-file path that bills immediately (so it goes behind the confirm modal):
+  // a tier upgrade, or a trial conversion to any paid plan (which ends the trial and charges now,
+  // even for the plan being trialed).
+  const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean => {
+    if (plan === "hobby" || !hasPaymentMethod) return false;
+    if (isTrialingWithPayment) return true;
+    return (
+      currentPlanLevel !== null &&
+      STANDARD_PLAN_LEVEL[plan] > currentPlanLevel &&
+      !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval) &&
+      !canCancelCurrentPaidPlanAtPeriodEnd(
+        plan,
+        interval,
+        currentCloudPlan,
+        currentBillingInterval,
+        isTrialingWithoutPayment,
+        pendingChange
+      )
     );
+  };
 
   // Gate the immediate-charge upgrade behind a confirmation modal; everything else runs as before.
   const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
@@ -875,6 +884,9 @@ export const PricingTable = ({
 
     if (isCurrentSelection && isTrialingWithoutPayment) return "continue_with_plan_after_trial";
     if (isTrialingWithoutPayment && plan === "hobby") return "downgrade_to_hobby";
+    // Trial + card: any paid plan converts the trial and charges now (even the trialed plan itself),
+    // so it reads as an upgrade rather than "current plan".
+    if (isTrialingWithPayment && plan !== "hobby") return "upgrade_now";
     if (
       canCancelCurrentPaidPlanAtPeriodEnd(
         plan,
@@ -910,6 +922,10 @@ export const PricingTable = ({
 
     if (isTrialingWithoutPayment && plan === "hobby") {
       return t("workspace.settings.billing.downgrade_to_hobby");
+    }
+
+    if (isTrialingWithPayment && plan !== "hobby") {
+      return t("workspace.settings.billing.upgrade_now");
     }
 
     if (

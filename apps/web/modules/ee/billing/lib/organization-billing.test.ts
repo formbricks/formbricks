@@ -1214,16 +1214,95 @@ describe("organization-billing", () => {
 
     // Proceeds through the normal paid path instead of being rejected or cancelled.
     expect(result.mode).toBe("immediate");
+    // Single update: ends the trial AND switches items at once, so the card is invoiced exactly once
+    // for the target plan (a split update would double-invoice — old plan then new plan).
     expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
       "sub_trial",
       expect.objectContaining({
-        payment_behavior: "pending_if_incomplete",
+        trial_end: "now",
         proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
       })
     );
+    // Exactly one items/trial update on the subscription (no separate trial_end-only update).
+    const trialEndUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id]: [string]) => id === "sub_trial"
+    );
+    expect(trialEndUpdateCalls).toHaveLength(1);
     expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
       cancel_at_period_end: true,
     });
+  });
+
+  test("switchOrganizationToCloudPlan converts a card-backed trial to the same paid plan instead of treating it as a no-op", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          // Card is on the subscription itself, so the paid conversion is allowed immediately.
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+      },
+    });
+
+    // Same plan + interval as the one being trialed: pre-change this returned a no-op; a card-backed
+    // trial must instead convert to paid and charge now.
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    // Single update ends the trial and applies the target plan in one invoice.
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({
+        trial_end: "now",
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      })
+    );
+    const trialUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id]: [string]) => id === "sub_trial"
+    );
+    expect(trialUpdateCalls).toHaveLength(1);
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {

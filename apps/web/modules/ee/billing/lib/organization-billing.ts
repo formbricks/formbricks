@@ -682,6 +682,22 @@ const updateSubscriptionItemsImmediately = async (
     });
   }
 
+  // Converting a trial must bill the card now, not defer to trial_end (a stolen-card trial would
+  // otherwise keep paid access for the rest of the ~14-day window). End the trial and switch plans
+  // in a SINGLE update so the card is invoiced exactly once for the target plan. Doing it as two
+  // updates (end trial, then change items) double-invoices — ending the trial bills the OLD plan and
+  // the item change then bills the new one. error_if_incomplete charges synchronously and throws on
+  // a decline, so a bad card blocks the upgrade instead of granting access on an unpaid invoice.
+  if (subscription.status === "trialing") {
+    await stripeClient.subscriptions.update(subscription.id, {
+      items: [...existingDeletions, ...targetItems],
+      trial_end: "now",
+      proration_behavior: "always_invoice",
+      payment_behavior: "error_if_incomplete",
+    });
+    return { clientSecret: null, requiresAction: false };
+  }
+
   const updated = await stripeClient.subscriptions.update(subscription.id, {
     items: [...existingDeletions, ...targetItems],
     proration_behavior: "always_invoice",
@@ -997,8 +1013,12 @@ export const switchOrganizationToCloudPlan = async (input: {
   const isImmediateUpgrade =
     isNonStandardCurrentPlan || CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
   const isSameSelection = currentPlan === input.targetPlan && currentInterval === input.targetInterval;
+  // Converting an active trial to any paid plan is a real state change even when the plan/interval
+  // match what is being trialed (trial Pro -> paid Pro): it ends the trial and bills the card now.
+  const isTrialConversion = subscription.status === "trialing" && input.targetPlan !== "hobby";
 
-  if (isSameSelection) {
+  // A same plan+interval selection is a no-op — except a trial conversion, which must still charge.
+  if (isSameSelection && !isTrialConversion) {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
   }
 
@@ -1019,7 +1039,7 @@ export const switchOrganizationToCloudPlan = async (input: {
     throw new OperationNotAllowedError("payment_method_required");
   }
 
-  if (isImmediateUpgrade) {
+  if (isImmediateUpgrade || isTrialConversion) {
     const confirmation = await updateSubscriptionItemsImmediately(
       subscription,
       input.targetPlan,
@@ -1071,6 +1091,9 @@ export const previewImmediateUpgradeCharge = async (input: {
     subscription_details: {
       items: [...existingDeletions, ...targetItems],
       proration_behavior: "always_invoice",
+      // Mirror updateSubscriptionItemsImmediately: a trial upgrade ends the trial and bills now, so
+      // the preview must end the trial too or the confirmation modal would understate the charge.
+      ...(subscription.status === "trialing" ? { trial_end: "now" as const } : {}),
     },
   });
 
