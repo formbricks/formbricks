@@ -24,7 +24,12 @@ export const GET = withV1ApiWrapper({
           response: responses.notFoundResponse("Survey", params.surveyId),
         };
       }
-      if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
+      // Checked at write level despite being a GET: this endpoint *mints* credentials rather than
+      // reading anything. Each returned link carries a fresh HMAC-signed suId/suToken pair that the
+      // unauthenticated POST /api/v1/client/{workspaceId}/responses accepts, so at "read" a
+      // reporting-only key — the level you would hand an external analyst or BI tool — could generate
+      // thousands of valid submission links and inject responses with them.
+      if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "POST")) {
         return {
           response: responses.unauthorizedResponse(),
         };
