@@ -860,10 +860,16 @@ export const PricingTable = ({
     mode: "upgrade" | "trial-continue"
   ) => {
     setUpgradeConfirmation({ plan, interval, mode });
-    // Fetch the (net) charge to show in the modal. On failure we fall back to the generic copy.
+    // Fetch the charge to show in the modal. Only the trial-continue (no-card "Continue with Pro")
+    // flow nets off the unused-trial credit; the upgrade confirm previews the full price.
     setUpgradePreview(null);
     setIsLoadingUpgradePreview(true);
-    getUpgradeChargePreviewAction({ organizationId, targetPlan: plan, targetInterval: interval })
+    getUpgradeChargePreviewAction({
+      organizationId,
+      targetPlan: plan,
+      targetInterval: interval,
+      applyTrialCredit: mode === "trial-continue",
+    })
       .then((response) => setUpgradePreview(response?.data ?? null))
       .catch(() => setUpgradePreview(null))
       .finally(() => setIsLoadingUpgradePreview(false));
@@ -875,7 +881,9 @@ export const PricingTable = ({
       void handlePlanAction(plan, interval);
       return;
     }
-    if (isProTrialContinue(plan, interval)) {
+    // The two-option "pay prorated now, or keep the free trial" modal is only for a trial WITHOUT a
+    // card yet. Once a card is on file, "Upgrade now" is a normal full-price confirm (below).
+    if (isProTrialContinue(plan, interval) && !hasPaymentMethod) {
       openConfirmation(plan, interval, "trial-continue");
       return;
     }
@@ -1036,26 +1044,6 @@ export const PricingTable = ({
       return t("workspace.settings.billing.confirm_upgrade_calculating");
     }
 
-    // Pro-trial choice: explain both paths — pay the (credit-reduced) amount now to unlock features,
-    // or keep the free trial and pay the full price when it ends.
-    if (upgradeConfirmation.mode === "trial-continue") {
-      const fullPrice =
-        planCards.find(
-          (card) =>
-            card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
-        )?.amount ?? "";
-      if (upgradePreview) {
-        return t("workspace.settings.billing.confirm_trial_continue_body", {
-          plan,
-          period,
-          chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
-          credit: formatMoney(upgradePreview.currency, upgradePreview.trialCreditApplied ?? 0, locale),
-          fullPrice,
-        });
-      }
-      return t("workspace.settings.billing.confirm_trial_continue_body_fallback", { plan, period, fullPrice });
-    }
-
     if (upgradePreview) {
       return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
         plan,
@@ -1079,6 +1067,43 @@ export const PricingTable = ({
       });
     }
     return t("workspace.settings.billing.confirm_trial_continue_pay_now_generic");
+  };
+
+  // Trial-continue modal body, rendered via <Trans> so key words can be bold. Whitespace-pre-line on
+  // the modal's <p> turns the \n\n into paragraph breaks between the two bullet options.
+  const renderTrialContinueBody = () => {
+    if (!upgradeConfirmation) return null;
+    if (isLoadingUpgradePreview) return t("workspace.settings.billing.confirm_upgrade_calculating");
+
+    const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
+    const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
+    const fullPrice =
+      planCards.find(
+        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
+      )?.amount ?? "";
+
+    if (upgradePreview) {
+      return (
+        <Trans
+          i18nKey="workspace.settings.billing.confirm_trial_continue_body"
+          values={{
+            plan,
+            period,
+            fullPrice,
+            chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+            credit: formatMoney(upgradePreview.currency, upgradePreview.trialCreditApplied ?? 0, locale),
+          }}
+          components={{ b: <b /> }}
+        />
+      );
+    }
+    return (
+      <Trans
+        i18nKey="workspace.settings.billing.confirm_trial_continue_body_fallback"
+        values={{ plan, period, fullPrice }}
+        components={{ b: <b /> }}
+      />
+    );
   };
 
   // Plan columns for the comparison table (test variant), reusing the same CTA state as the cards.
@@ -1451,7 +1476,7 @@ export const PricingTable = ({
             plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
           })}
           description={t("workspace.settings.billing.confirm_trial_continue_description")}
-          body={getUpgradeConfirmationBody()}
+          body={renderTrialContinueBody()}
           buttonText={getTrialContinuePayNowLabel()}
           buttonVariant="default"
           buttonLoading={isLoadingUpgradePreview}

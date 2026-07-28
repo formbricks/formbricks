@@ -1373,6 +1373,7 @@ describe("organization-billing", () => {
       customerId: "cus_1",
       targetPlan: "pro",
       targetInterval: "monthly",
+      applyTrialCredit: true,
     });
 
     expect(result.mode).toBe("immediate");
@@ -1404,6 +1405,7 @@ describe("organization-billing", () => {
         customerId: "cus_1",
         targetPlan: "pro",
         targetInterval: "monthly",
+        applyTrialCredit: true,
       })
     ).rejects.toThrow();
 
@@ -1411,6 +1413,27 @@ describe("organization-billing", () => {
     // Applied -4153, then reversed +4153 -> net zero, so no credit can strand on the balance.
     expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === -4153)).toBe(true);
     expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === 4153)).toBe(true);
+  });
+
+  test("switchOrganizationToCloudPlan does NOT credit a card-on-file Pro-trial upgrade (applyTrialCredit omitted)", async () => {
+    setupProTrialForCredit(14);
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+      // no applyTrialCredit -> "Upgrade now" with a card on file is billed the full price.
+    });
+
+    expect(result.mode).toBe("immediate");
+    // Still converts (ends the trial, charges now)...
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({ trial_end: "now", payment_behavior: "error_if_incomplete" })
+    );
+    // ...but applies no unused-trial credit.
+    expect(mocks.customersCreateBalanceTransaction).not.toHaveBeenCalled();
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {

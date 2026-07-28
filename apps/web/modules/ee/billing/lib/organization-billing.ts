@@ -1116,6 +1116,10 @@ export const switchOrganizationToCloudPlan = async (input: {
   customerId: string;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
+  // When true, a same-plan trial conversion credits the unused trial days (the no-card "Continue with
+  // Pro, pay now" perk). A direct card-on-file "Upgrade now" passes false and is billed the full
+  // price, like any other in-place upgrade.
+  applyTrialCredit?: boolean;
 }): Promise<{
   mode: "immediate" | "scheduled";
   pendingChange: TOrganizationStripePendingChange | null;
@@ -1164,7 +1168,10 @@ export const switchOrganizationToCloudPlan = async (input: {
     // immediately, and is billed the full price next cycle. A tier change out of a trial (e.g. Pro
     // trial -> Scale) is a genuine upgrade and is billed in full — no unused-trial credit.
     const isProTrialContinue =
-      isTrialConversion && currentPlan === input.targetPlan && input.targetPlan !== "hobby";
+      isTrialConversion &&
+      currentPlan === input.targetPlan &&
+      input.targetPlan !== "hobby" &&
+      input.applyTrialCredit === true;
     let reverseTrialCredit: (() => Promise<void>) | null = null;
     if (isProTrialContinue) {
       reverseTrialCredit = await applyUnusedTrialCredit(subscription, {
@@ -1225,6 +1232,9 @@ export const previewImmediateUpgradeCharge = async (input: {
   customerId: string;
   targetPlan: Exclude<TStandardCloudPlan, "hobby">;
   targetInterval: TCloudBillingInterval;
+  // Mirror switchOrganizationToCloudPlan: only the no-card "Continue with Pro, pay now" flow nets off
+  // the unused-trial credit. A card-on-file "Upgrade now" previews (and charges) the full price.
+  applyTrialCredit?: boolean;
 }): Promise<{
   amountDue: number;
   currency: string;
@@ -1240,7 +1250,8 @@ export const previewImmediateUpgradeCharge = async (input: {
   // Only a Pro-trial "continue" (same plan being trialed) gets the unused-trial credit, so the modal
   // must net it off there and nowhere else.
   const currentPlan = resolveCloudPlanFromSubscription(subscription);
-  const isProTrialContinue = subscription.status === "trialing" && currentPlan === input.targetPlan;
+  const isProTrialContinue =
+    subscription.status === "trialing" && currentPlan === input.targetPlan && input.applyTrialCredit === true;
 
   if (isProTrialContinue) {
     // Reliable path: gross = the plan's list price (what ending the trial bills), credit computed the
@@ -1362,6 +1373,9 @@ export const applySetupCheckoutUpgrade = async (input: {
     customerId,
     targetPlan,
     targetInterval,
+    // This is the "Continue with Pro, pay now" flow (add a card, then convert): credit the unused
+    // trial days. A same-plan conversion here gets the reduced first charge.
+    applyTrialCredit: true,
   });
 
   return {
