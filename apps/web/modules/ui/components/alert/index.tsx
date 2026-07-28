@@ -67,7 +67,7 @@ const alertVariantIcons: Record<
 
 const Alert = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+  Readonly<React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>>
 >(({ className, variant, size, role = "alert", ...props }, ref) => {
   const variantIcon = variant && variant !== "default" ? alertVariantIcons[variant] : null;
 
