@@ -964,7 +964,8 @@ export const PricingTable = ({
       )
     )
       return "cancel_at_period_end";
-    if (isCurrentSelection && pendingChange?.targetPlan === "hobby") return "pending_plan_cta";
+    // The current plan stays "Current plan" even while a downgrade is scheduled — only the pending
+    // TARGET card (matched by isPendingSelection below) shows "Scheduled". The banner handles undo.
     if (isCurrentSelection) return "current_plan_cta";
     const isPendingSelection =
       pendingChange?.targetPlan === plan && (plan === "hobby" || pendingChange.targetInterval === interval);
@@ -1005,10 +1006,6 @@ export const PricingTable = ({
       )
     ) {
       return t("workspace.settings.billing.cancel_at_period_end");
-    }
-
-    if (isCurrentSelection && pendingChange?.targetPlan === "hobby") {
-      return t("workspace.settings.billing.pending_plan_cta");
     }
 
     if (isCurrentSelection) {
