@@ -132,7 +132,16 @@ jobs:
         # @formbricks/database is already built by the "Build workspace package
         # dependencies" step above, so run the migration runner directly instead
         # of db:migrate:dev (which would rebuild + re-generate the package).
-        run: pnpm --filter=@formbricks/database db:migrate:ci
+        # db:migrate:ci was added in #8627; PR branches cut before it lack the
+        # script (this workflow runs from the base ref against the PR-head code),
+        # so fall back to db:migrate:dev, which every older branch already has.
+        run: |
+          if node -e "process.exit(require('./packages/database/package.json').scripts['db:migrate:ci'] ? 0 : 1)"; then
+            pnpm --filter=@formbricks/database db:migrate:ci
+          else
+            echo "::warning::db:migrate:ci absent on this ref (predates #8627); falling back to db:migrate:dev"
+            pnpm --filter=@formbricks/database db:migrate:dev
+          fi
         shell: bash
 
       # Shared with apps/web/integration/global-setup.ts (the local harness applies the same file) so
