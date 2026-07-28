@@ -8,7 +8,7 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "@/lib/constants";
 import { createIntegrationOAuthState } from "@/lib/oauth/integration-state";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 import { getSession } from "@/modules/auth/lib/session";
 
 const scopes = [
@@ -28,7 +28,7 @@ export const GET = async (req: NextRequest) => {
     return responses.notAuthenticatedResponse();
   }
 
-  const canUserAccessWorkspace = await hasUserWorkspaceAccess(session?.user.id, workspaceId);
+  const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(session?.user.id, workspaceId);
   if (!canUserAccessWorkspace) {
     return responses.unauthorizedResponse();
   }

@@ -405,6 +405,29 @@ describe("storage service", () => {
       expect(result).toEqual(mockError);
       expect(deleteFileFromS3).toHaveBeenCalledTimes(1);
     });
+
+    // Regression: the key is `${id}/${accessType}/${fileName}`, so a `..` segment would delete
+    // objects outside the workspace prefix the caller was authorized against.
+    test.each([
+      "../../ws-victim/private/secret.pdf",
+      "sub/../../../ws-victim/private/secret.pdf",
+      "./file.jpg",
+    ])("should reject traversal in the file name: %s", async (fileName) => {
+      const result = await deleteFile("ws-456", "public" as TAccessType, fileName);
+
+      expect(result.ok).toBe(false);
+      expect(deleteFileFromS3).not.toHaveBeenCalled();
+    });
+
+    test("should still allow nested file paths without dot segments", async () => {
+      const mockSuccess = { ok: true, data: undefined } as MockedDeleteFileReturn;
+      vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccess);
+
+      const result = await deleteFile("ws-456", "public" as TAccessType, "survey-1/q-2/file.jpg");
+
+      expect(result).toEqual(mockSuccess);
+      expect(deleteFileFromS3).toHaveBeenCalledWith("ws-456/public/survey-1/q-2/file.jpg");
+    });
   });
 
   describe("deleteFilesByWorkspaceId", () => {
@@ -449,6 +472,40 @@ describe("storage service", () => {
   });
 
   describe("getFileStreamForDownload", () => {
+    // Regression: `fileName` comes from the `[...filePath]` route param and the key is
+    // `${id}/${accessType}/${fileName}`, so a `..` segment let a caller name an object outside their
+    // own workspace prefix — reachable with no auth at all through the `public/` access type, which
+    // skips authorizePrivateDownload. The `%252e`/`%2e` cases cover the extra decodeURIComponent the
+    // handler applies on top of Next's own param decoding.
+    test.each([
+      "../../ws-victim/private/secret.pdf",
+      "sub/../../../ws-victim/private/secret.pdf",
+      "%2e%2e/%2e%2e/ws-victim/private/secret.pdf",
+      "./secret.pdf",
+    ])("should reject traversal in the file name: %s", async (fileName) => {
+      const result = await getFileStreamForDownload(fileName, "ws-attacker", "public" as TAccessType);
+
+      expect(result.ok).toBe(false);
+      expect(getFileStream).not.toHaveBeenCalled();
+    });
+
+    test("should still allow nested file paths without dot segments", async () => {
+      const mockStreamResult = {
+        ok: true,
+        data: { body: new ReadableStream(), contentType: "image/jpeg", contentLength: 1 },
+      } as MockedFileStreamReturn;
+      vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
+
+      const result = await getFileStreamForDownload(
+        "survey-1/q-2/file.jpg",
+        "ws-456",
+        "public" as TAccessType
+      );
+
+      expect(result.ok).toBe(true);
+      expect(getFileStream).toHaveBeenCalledWith("ws-456/public/survey-1/q-2/file.jpg");
+    });
+
     test("should return file stream for public file", async () => {
       const mockStream = new ReadableStream();
       const mockStreamResult = {

@@ -27,9 +27,13 @@ export const getSurveysForUnifyAction = authenticatedActionClient
       userId: ctx.user.id,
       organizationId,
       access: [
+        // "member" must not appear here: the access items are OR'd, and every org member satisfies an
+        // organization item, which would make the workspaceTeam check below dead and let any member
+        // list surveys in workspaces they have no team access to. Members reach this through their
+        // team permission instead.
         {
           type: "organization",
-          roles: ["owner", "manager", "member"],
+          roles: ["owner", "manager"],
         },
         {
           type: "workspaceTeam",

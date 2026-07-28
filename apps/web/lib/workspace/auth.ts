@@ -94,6 +94,31 @@ export const hasUserWorkspaceAccessForAction = async (
   }
 };
 
+/**
+ * Authorization for the integration OAuth routes (Notion / Airtable / Slack / Google Sheets).
+ *
+ * These are credential *mutations* delivered over GET: completing the flow writes the workspace's
+ * third-party credentials, after which survey responses are forwarded to whichever account was
+ * connected. They must therefore be gated on readWrite, not on mere workspace access —
+ * {@link hasUserWorkspaceAccess} returns true for the `billing` role (which is otherwise excluded from
+ * all product data) and for a `read`-only team member, either of whom could otherwise bind their own
+ * account as the workspace integration and start receiving another team's responses, or overwrite the
+ * credentials an admin configured.
+ */
+export const canUserWriteWorkspaceIntegrations = async (
+  userId: string,
+  workspaceId: string
+): Promise<boolean> => hasUserWorkspaceAccessForAction(userId, workspaceId, "POST");
+
+/**
+ * Read-only counterpart for routes that only surface a connected integration's data. Unlike
+ * {@link hasUserWorkspaceAccess} this still excludes the `billing` role.
+ */
+export const canUserReadWorkspaceIntegrations = async (
+  userId: string,
+  workspaceId: string
+): Promise<boolean> => hasUserWorkspaceAccessForAction(userId, workspaceId, "GET");
+
 export const hasUserWorkspaceAccess = async (userId: string, workspaceId: string) => {
   validateInputs([userId, ZId], [workspaceId, ZId]);
 

@@ -23,6 +23,7 @@ import {
   getOrganizationIdFromFeedbackSourceId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
@@ -336,6 +337,12 @@ export const getResponseCountAction = authenticatedActionClient
       parsedInput: z.infer<typeof ZGetResponseCountAction>;
     }): Promise<number> => {
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
+      // Authorize against the survey's own workspace, not the caller-supplied one: the workspaceTeam
+      // check only proves team access to whatever workspace the caller names, so passing a workspace
+      // they do have access to would otherwise return the response count for any survey in the org.
+      const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -347,7 +354,7 @@ export const getResponseCountAction = authenticatedActionClient
           {
             type: "workspaceTeam",
             minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
+            workspaceId: surveyWorkspaceId,
           },
         ],
       });
@@ -399,6 +406,16 @@ export const importHistoricalResponsesAction = authenticatedActionClient
 
       const survey = await getSurvey(parsedInput.surveyId);
       if (!survey) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
+
+      // The authorization above covers the feedback source's workspace, not this survey — and the
+      // import reads every response of `surveyId` and copies them into the source's feedback
+      // directory. Without this check any caller with readWrite on one workspace could name a survey
+      // from another organization and exfiltrate its responses into their own directory. Survey ids
+      // are public (they appear in `/s/<surveyId>` links), so the id is not a secret. The picker only
+      // ever offers surveys from this workspace (`getSurveysForUnifyAction` → `getSurveys(workspaceId)`).
+      if (survey.workspaceId !== parsedInput.workspaceId) {
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
 
