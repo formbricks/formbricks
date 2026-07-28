@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method -- required for testing */
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
@@ -350,7 +349,6 @@ describe("setup.ts", () => {
       // config updated
       expect(mockConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- required for testing this object
           user: expect.objectContaining({
             data: { userId: "user_abc", segments: [] },
           }),
@@ -397,7 +395,7 @@ describe("setup.ts", () => {
         workspace: {
           data: {
             surveys: [{ name: "SurveyA" }],
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- mock
+
             expiresAt: expect.any(Date),
           },
         },
