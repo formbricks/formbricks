@@ -128,7 +128,10 @@ export const convertToEmbedUrl = (url: string): string | undefined => {
  * `javascript:` or `data:` URL, which executes on click from an anchor `href`.
  */
 export const isSafeMediaUrl = (url: string): boolean => {
-  if (url.startsWith("/")) return true; // relative storage path
+  // One leading slash, not followed by another slash or a backslash: that is a same-origin relative
+  // path. `//host` is protocol-relative and `/\host` is normalized to it by browsers, so both resolve
+  // cross-origin and must not be waved through as "relative".
+  if (/^\/(?![/\\])/.test(url)) return true; // relative storage path
   try {
     const { protocol } = new URL(url);
     return protocol === "https:" || protocol === "http:";

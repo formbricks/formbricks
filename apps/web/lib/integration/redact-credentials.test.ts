@@ -43,6 +43,48 @@ describe("redactIntegrationCredentials", () => {
     expect(slack?.config.key).toEqual({ access_token: "", team: { id: "T1", name: "Acme" } });
   });
 
+  // The point of matching on the field name is that a credential a provider adds later is redacted
+  // without anyone having to remember to extend a list.
+  test("blanks credential-shaped fields it has never seen before", () => {
+    const redacted = redactIntegrationCredentials({
+      config: {
+        key: {
+          id_token: "eyJ-secret",
+          client_secret: "cs-secret",
+          service_account_private_key: "-----BEGIN PRIVATE KEY-----",
+          api_key: "ak-secret",
+          token: "bare-secret",
+        },
+        data: [],
+      },
+    });
+
+    expect(redacted?.config.key).toEqual({
+      id_token: "",
+      client_secret: "",
+      service_account_private_key: "",
+      api_key: "",
+      token: "",
+    });
+  });
+
+  // `token_type` names the scheme, and Slack/Google Sheets type it as a Zod literal — blanking it would
+  // make the redacted object stop satisfying the integration type it is passed as.
+  test.each([
+    ["token_type", "Bearer"],
+    ["workspace_id", "ws_1"],
+    ["bot_user_id", "U1"],
+    ["app_id", "A1"],
+    ["expiry_date", "2026-01-01"],
+  ])("leaves the non-secret field %s alone", (field, value) => {
+    const redacted = redactIntegrationCredentials({
+      config: { key: { [field]: value, access_token: "secret" }, data: [] },
+    });
+
+    expect(redacted?.config.key[field]).toBe(value);
+    expect(redacted?.config.key.access_token).toBe("");
+  });
+
   test("does not mutate the input", () => {
     const key = { access_token: "secret", refresh_token: "secret2" };
     const integration = { config: { key } };

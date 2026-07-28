@@ -34,7 +34,12 @@ import {
   runWithSignupRequestContext,
 } from "@/modules/auth/lib/signup-request-context";
 import { updateUser } from "@/modules/auth/lib/user";
-import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
+import {
+  type InviteMatch,
+  deleteInvite,
+  getInvite,
+  resolveInviteMatch,
+} from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -275,6 +280,34 @@ async function handlePostUserCreation(
   // requireEmailVerification config and the callbackURL chosen in signUpUserSafely.
 }
 
+/**
+ * The two sign-up gates that used to live only in `signup/page.tsx`, enforced here so a direct POST to
+ * this action cannot walk around them. Extracted from `createUserAction` to keep that function within
+ * the cognitive-complexity budget.
+ */
+async function assertSignupPolicyAllows(
+  inviteToken: string | undefined,
+  inviteMatch: InviteMatch
+): Promise<void> {
+  // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
+  // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
+  if (inviteToken && inviteMatch !== "valid") {
+    logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
+    throw new InvalidInputError("Invalid or expired invite token");
+  }
+
+  const isPublicSignupOpen = SIGNUP_ENABLED && (await getIsMultiOrgEnabled());
+  if (isPublicSignupOpen || inviteMatch === "valid") {
+    return;
+  }
+
+  // Closed instance and no invite: the only remaining legitimate case is the initial administrator
+  // during fresh-instance setup, who has no invite to present.
+  if (!(await getIsFreshInstance())) {
+    throw new InvalidInputError("Sign up is disabled");
+  }
+}
+
 export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
   withAuditLogging("created", "user", async ({ ctx, parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
@@ -287,22 +320,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     const inviteToken = parsedInput.inviteToken?.trim() || undefined;
     const inviteMatch = await resolveInviteMatch(inviteToken, parsedInput.email);
 
-    // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
-    // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
-    if (inviteToken && inviteMatch !== "valid") {
-      logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
-      throw new InvalidInputError("Invalid or expired invite token");
-    }
-
-    // Mirror the policy signup/page.tsx applies: when public sign-up is closed, only an invited user
-    // gets through. Enforcing it only in the page left this action open, so anyone could create an
-    // account on a self-hosted instance the operator had configured as closed. The fresh-instance
-    // exception is the initial administrator, who has no invite to present.
-    if (!SIGNUP_ENABLED || !(await getIsMultiOrgEnabled())) {
-      if (inviteMatch !== "valid" && !(await getIsFreshInstance())) {
-        throw new InvalidInputError("Sign up is disabled");
-      }
-    }
+    await assertSignupPolicyAllows(inviteToken, inviteMatch);
 
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.

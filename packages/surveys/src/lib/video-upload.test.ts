@@ -128,6 +128,10 @@ describe("isSafeMediaUrl", () => {
     "vbscript:msgbox(1)",
     "not a url",
     "",
+    // Protocol-relative: a browser resolves these against the page's scheme and lands on the
+    // attacker's origin, so they are not the "relative storage path" the leading slash suggests.
+    "//attacker.example/file",
+    String.raw`/\attacker.example/file`,
   ])("rejects %s", (url) => {
     expect(isSafeMediaUrl(url)).toBe(false);
   });

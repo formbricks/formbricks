@@ -90,6 +90,7 @@ describe("rateLimitConfigs", () => {
         "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
+        "unsplash",
         "inviteMember",
         "bulkInviteMembers",
         "generateExampleResponses",

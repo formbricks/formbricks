@@ -15,7 +15,22 @@
  */
 const REDACTED = "";
 
+/**
+ * Matched against each field name in `config.key`, so a credential a provider adds later is redacted by
+ * default rather than exposed until someone remembers to extend a list.
+ *
+ * Deliberately matches `token` only as a whole word or `*_token` suffix: Slack and Google Sheets type
+ * `token_type` as a Zod *literal* (`"bot"` / `"Bearer"`), so blanking it would make the redacted object
+ * fail to satisfy the integration type it is passed as. `token_type` names a scheme, not a secret.
+ */
+const SECRET_KEY_FIELD_PATTERN = /(^token$|_token$|secret|password|credential|private_key|api_?key)/i;
+
+/** Always redacted, whatever the pattern says. */
 const SECRET_KEY_FIELDS = ["access_token", "refresh_token"] as const;
+
+const isSecretKeyField = (field: string): boolean =>
+  SECRET_KEY_FIELDS.includes(field as (typeof SECRET_KEY_FIELDS)[number]) ||
+  SECRET_KEY_FIELD_PATTERN.test(field);
 
 type TIntegrationWithConfig = {
   config?: { key?: Record<string, unknown> | null } | null;
@@ -29,8 +44,11 @@ export const redactIntegrationCredentials = <T extends TIntegrationWithConfig>(
   }
 
   const redactedKey: Record<string, unknown> = { ...integration.config.key };
-  for (const field of SECRET_KEY_FIELDS) {
-    if (field in redactedKey) {
+  for (const field of Object.keys(redactedKey)) {
+    // Only string values are blanked: every credential these providers issue is a string, and an
+    // object- or number-typed field (Slack's `team`, Google's `expiry_date`) would stop matching its
+    // schema if replaced with "".
+    if (isSecretKeyField(field) && typeof redactedKey[field] === "string") {
       redactedKey[field] = REDACTED;
     }
   }

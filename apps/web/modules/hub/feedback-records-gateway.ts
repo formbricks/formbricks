@@ -53,6 +53,19 @@ const gatewayPermissionToApiKeyPermissionWeight: Record<TFeedbackRecordsGatewayP
   manage: apiKeyPermissionWeight.manage,
 };
 
+/**
+ * Team permission a session principal needs, per gateway permission. Deletes need `manage`; everything
+ * else keeps the existing read/readWrite split.
+ */
+const gatewayPermissionToTeamPermission: Record<
+  TFeedbackRecordsGatewayPermission,
+  "read" | "readWrite" | "manage"
+> = {
+  read: "read",
+  write: "readWrite",
+  manage: "manage",
+};
+
 // Exported so the method -> required-permission map can be asserted directly.
 export const parseFeedbackRecordsGatewayRoute = (
   method: string,
@@ -297,9 +310,7 @@ const authorizeFeedbackRecordsGatewayRequest = async (
   }
 
   try {
-    // Deletes need team `manage`; everything else keeps the read/readWrite split.
-    const minPermission: "read" | "readWrite" | "manage" =
-      requiredPermission === "read" ? "read" : requiredPermission === "manage" ? "manage" : "readWrite";
+    const minPermission = gatewayPermissionToTeamPermission[requiredPermission];
 
     await checkAuthorizationUpdated({
       userId: principal.userId,

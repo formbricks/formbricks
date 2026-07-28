@@ -20,6 +20,8 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
@@ -404,7 +406,11 @@ const ZGetImagesFromUnsplashAction = z.object({
 // from the survey editor, which already requires a session.
 export const getImagesFromUnsplashAction = authenticatedActionClient
   .inputSchema(ZGetImagesFromUnsplashAction)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, ctx }) => {
+    // Per-user: neither action carries a workspace or survey id, so a session is the only thing to
+    // scope against, and the quota being spent belongs to the whole instance.
+    await applyRateLimit(rateLimitConfigs.actions.unsplash, ctx.user.id);
+
     if (!UNSPLASH_ACCESS_KEY) {
       throw new Error("Unsplash access key is not set");
     }
@@ -469,7 +475,9 @@ const ZTriggerDownloadUnsplashImageAction = z.object({
 // from the survey editor, which already requires a session.
 export const triggerDownloadUnsplashImageAction = authenticatedActionClient
   .inputSchema(ZTriggerDownloadUnsplashImageAction)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, ctx }) => {
+    await applyRateLimit(rateLimitConfigs.actions.unsplash, ctx.user.id);
+
     if (!isValidUnsplashUrl(parsedInput.downloadUrl)) {
       throw new Error("Invalid Unsplash URL");
     }

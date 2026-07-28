@@ -220,6 +220,22 @@ export const headlineToRecall = (
   return text;
 };
 
+/** The trailing `\#` a slash-wrapped recall tag ends with. */
+const RECALL_SLASH_SUFFIX = String.raw`\#`;
+
+/**
+ * A response value is `string | number | string[] | Record<string, string>`. Arrays and dates are
+ * already normalized above, but matrix and address answers arrive as records, which would coerce to
+ * `[object Object]` if handed to `String()`.
+ */
+const stringifyRecallValue = (value: TResponseDataValue): string => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ");
+  if (value) return Object.values(value).filter(Boolean).join(", ");
+  return "";
+};
+
 const escapeHtml = (value: string): string =>
   value
     .replaceAll("&", "&amp;")
@@ -292,11 +308,13 @@ export const parseRecallInfo = (
     }
 
     // Replace the recall tag with the value
-    const substitutedValue = escapeValues ? escapeHtml(String(value)) : (value as string);
+    const substitutedValue = escapeValues ? escapeHtml(stringifyRecallValue(value)) : (value as string);
+    // Replacer functions, not replacement strings: `$&`, `` $` `` and friends are special in a
+    // replacement string, so an answer containing them would splice part of the pattern back in.
     if (withSlash) {
-      modifiedText = modifiedText.replace(recallInfo, "#/" + substitutedValue + "\\#");
+      modifiedText = modifiedText.replace(recallInfo, () => `#/${substitutedValue}${RECALL_SLASH_SUFFIX}`);
     } else {
-      modifiedText = modifiedText.replace(recallInfo, substitutedValue);
+      modifiedText = modifiedText.replace(recallInfo, () => substitutedValue);
     }
   }
 

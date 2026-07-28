@@ -34,8 +34,13 @@ const warnOnceAboutUntrustedIp = (): void => {
  *
  * With `hopCount` proxies in front, the address the outermost trusted proxy observed is the
  * `hopCount`-th entry from the right; everything left of it is client-supplied and ignored.
- * `cf-connecting-ip` is honored only when at least one hop is trusted, since it is only meaningful
- * behind Cloudflare — a directly reachable app would let anyone set it.
+ *
+ * `cf-connecting-ip` is deliberately *not* consulted. It is only trustworthy when the request provably
+ * came from Cloudflare's edge, and a hop count cannot establish that: `hopCount >= 1` says "one proxy is
+ * in front", which for most deployments is Traefik, Envoy or nginx — none of which strip
+ * `cf-connecting-ip`. Preferring it would therefore hand the spoof straight back to the caller. Nothing
+ * is lost by dropping it: Cloudflare also puts the visitor address into `X-Forwarded-For`, so a
+ * Cloudflare deployment is just `hopCount = 1` (or 2 with a proxy of its own behind it).
  *
  * Exported separately from {@link getClientIpFromHeaders} so the parsing is unit-testable without
  * mocking `next/headers`.
@@ -49,9 +54,6 @@ export const resolveClientIp = (headersList: Headers, hopCount: number): string 
     }
     return UNTRUSTED_CLIENT_IP;
   }
-
-  const cfConnectingIp = headersList.get("cf-connecting-ip")?.trim();
-  if (cfConnectingIp) return cfConnectingIp;
 
   if (xForwardedFor) {
     const entries = xForwardedFor

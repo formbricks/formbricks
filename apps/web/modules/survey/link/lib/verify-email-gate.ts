@@ -1,4 +1,7 @@
 import "server-only";
+import { TResponseData } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { responses } from "@/app/lib/api/response";
 import { verifyTokenForLinkSurvey } from "@/lib/jwt";
 
 export const VERIFIED_EMAIL_RESPONSE_KEY = "verifiedEmail";
@@ -40,4 +43,41 @@ export const resolveVerifiedEmailFromResponseMeta = (
   }
 
   return verifyTokenForLinkSurvey(token, surveyId);
+};
+
+/**
+ * Applies the email-verification gate to an incoming public response, for both the v1 and v2 endpoints.
+ *
+ * Single implementation on purpose, mirroring {@link verifyResponseRecaptcha}: the same gate enforced in
+ * two places is the drift that let reCAPTCHA end up on one endpoint and not the other. An edit to one
+ * copy that missed the other would silently reopen this bypass on one API version.
+ *
+ * Writes the verified address into `responseData` on success — deliberately taken from the token and
+ * never from the request body, so a caller holding a valid token for their own address cannot record
+ * someone else's.
+ *
+ * @returns an error `Response` when the submission must be rejected, otherwise `null`.
+ */
+export const enforceVerifiedEmailGate = ({
+  survey,
+  responseData,
+  metaUrl,
+}: {
+  survey: TSurvey;
+  responseData: TResponseData;
+  metaUrl: string | undefined | null;
+}): Response | null => {
+  if (!survey.isVerifyEmailEnabled) {
+    return null;
+  }
+
+  const verifiedEmail = resolveVerifiedEmailFromResponseMeta(survey.id, metaUrl);
+  if (!verifiedEmail) {
+    return responses.forbiddenResponse("Survey requires email verification", true, {
+      surveyId: survey.id,
+    });
+  }
+
+  responseData[VERIFIED_EMAIL_RESPONSE_KEY] = verifiedEmail;
+  return null;
 };

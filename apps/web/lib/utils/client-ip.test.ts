@@ -44,12 +44,20 @@ describe("resolveClientIp", () => {
       expect(resolveClientIp(headers, 1)).toBe("203.0.113.7");
     });
 
-    test("honors cf-connecting-ip ahead of the forwarded chain", () => {
+    // A hop count says "one proxy is in front", not "that proxy is Cloudflare". Traefik, Envoy and
+    // nginx all pass cf-connecting-ip through untouched, so believing it ahead of the hop-counted
+    // chain would hand the spoof straight back to the caller.
+    test("ignores cf-connecting-ip in favour of the forwarded chain", () => {
       const headers = buildHeaders({
         "cf-connecting-ip": "198.51.100.5",
         "x-forwarded-for": "1.1.1.1, 203.0.113.7",
       });
-      expect(resolveClientIp(headers, 1)).toBe("198.51.100.5");
+      expect(resolveClientIp(headers, 1)).toBe("203.0.113.7");
+    });
+
+    test("ignores cf-connecting-ip even when it is the only header present", () => {
+      const headers = buildHeaders({ "cf-connecting-ip": "198.51.100.5" });
+      expect(resolveClientIp(headers, 1)).toBe(UNTRUSTED_CLIENT_IP);
     });
 
     test("trims whitespace around the selected entry", () => {
@@ -111,5 +119,44 @@ describe("getClientIpFromHeaders", () => {
     });
 
     await expect(getClientIpFromHeaders()).resolves.toBe(UNTRUSTED_CLIENT_IP);
+  });
+});
+
+describe("misconfiguration warning", () => {
+  // `hasWarnedAboutUntrustedIp` is module-level state, so each case re-imports the module to get a
+  // fresh flag. The logger has to be imported *after* the reset too, or it would be a different mock
+  // instance than the one the re-imported module captured.
+  const loadFresh = async () => {
+    vi.resetModules();
+    const { logger } = await import("@formbricks/logger");
+    const { resolveClientIp: freshResolveClientIp } = await import("./client-ip");
+    return { logger, freshResolveClientIp };
+  };
+
+  test("warns exactly once when forwarding headers arrive but no hop is trusted", async () => {
+    const { logger, freshResolveClientIp } = await loadFresh();
+    const headers = buildHeaders({ "x-forwarded-for": "1.1.1.1, 203.0.113.7" });
+
+    freshResolveClientIp(headers, 0);
+    freshResolveClientIp(headers, 0);
+    freshResolveClientIp(buildHeaders({ "cf-connecting-ip": "1.1.1.1" }), 0);
+
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(logger.error).mock.calls[0][0]).toContain("TRUSTED_PROXY_HOP_COUNT");
+  });
+
+  test("stays quiet when the request carries no forwarding header at all", async () => {
+    const { logger, freshResolveClientIp } = await loadFresh();
+
+    expect(freshResolveClientIp(buildHeaders({}), 0)).toBe(UNTRUSTED_CLIENT_IP);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  test("stays quiet when a hop is trusted", async () => {
+    const { logger, freshResolveClientIp } = await loadFresh();
+
+    freshResolveClientIp(buildHeaders({ "x-forwarded-for": "1.1.1.1, 203.0.113.7" }), 1);
+
+    expect(logger.error).not.toHaveBeenCalled();
   });
 });

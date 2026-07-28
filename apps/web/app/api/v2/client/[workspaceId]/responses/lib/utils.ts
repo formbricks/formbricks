@@ -7,10 +7,7 @@ import { symmetricDecrypt } from "@/lib/crypto";
 import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { verifyResponseRecaptcha } from "@/modules/api/lib/verify-response-recaptcha";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
-import {
-  VERIFIED_EMAIL_RESPONSE_KEY,
-  resolveVerifiedEmailFromResponseMeta,
-} from "@/modules/survey/link/lib/verify-email-gate";
+import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email-gate";
 
 export { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/modules/api/lib/verify-response-recaptcha";
 
@@ -98,16 +95,14 @@ export const checkSurveyValidity = async (
 
   // Email verification, like the PIN above, must be enforced here and not only in the page renderer:
   // this endpoint is public, so a caller could otherwise submit any `verifiedEmail` they like.
-  if (survey.isVerifyEmailEnabled) {
-    const verifiedEmail = resolveVerifiedEmailFromResponseMeta(survey.id, responseInput.meta?.url);
-    if (!verifiedEmail) {
-      return responses.forbiddenResponse("Survey requires email verification", true, {
-        surveyId: survey.id,
-      });
-    }
-
-    // Take the address from the token, never from the request body.
-    responseInput.data[VERIFIED_EMAIL_RESPONSE_KEY] = verifiedEmail;
+  // Shared with the v1 endpoint so the two versions cannot drift apart.
+  const verifiedEmailErrorResponse = enforceVerifiedEmailGate({
+    survey,
+    responseData: responseInput.data,
+    metaUrl: responseInput.meta?.url,
+  });
+  if (verifiedEmailErrorResponse) {
+    return verifiedEmailErrorResponse;
   }
 
   // Shared with the v1 endpoint so the two versions cannot drift apart again.

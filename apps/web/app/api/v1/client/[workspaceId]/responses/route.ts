@@ -20,10 +20,7 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
-import {
-  VERIFIED_EMAIL_RESPONSE_KEY,
-  resolveVerifiedEmailFromResponseMeta,
-} from "@/modules/survey/link/lib/verify-email-gate";
+import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email-gate";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -159,19 +156,14 @@ export const POST = withV1ApiWrapper({
 
     // Email verification, like the PIN above, has to be enforced here and not only in the renderer:
     // this endpoint is public, so a caller could otherwise submit with any `verifiedEmail` they like.
-    if (survey.isVerifyEmailEnabled) {
-      const verifiedEmail = resolveVerifiedEmailFromResponseMeta(survey.id, responseInputData.meta?.url);
-      if (!verifiedEmail) {
-        return {
-          response: responses.forbiddenResponse("Survey requires email verification", true, {
-            surveyId: survey.id,
-          }),
-        };
-      }
-
-      // Take the address from the token, never from the request body — a caller holding a valid token
-      // for their own address must not be able to record someone else's.
-      responseInputData.data[VERIFIED_EMAIL_RESPONSE_KEY] = verifiedEmail;
+    // Shared with the v2 endpoint so the two versions cannot drift apart.
+    const verifiedEmailErrorResponse = enforceVerifiedEmailGate({
+      survey,
+      responseData: responseInputData.data,
+      metaUrl: responseInputData.meta?.url,
+    });
+    if (verifiedEmailErrorResponse) {
+      return { response: verifiedEmailErrorResponse };
     }
 
     // Same gate the v2 endpoint applies — without it, posting to the v1 URL opts the caller out of the
