@@ -1,5 +1,6 @@
 import { FormbricksProvider } from "@/app/formbricks/components/formbricks-provider";
 import { PlainChat } from "@/app/plain/components/plain-chat";
+import { getIsActiveCustomer } from "@/app/plain/lib/customer";
 import { computePlainEmailHash } from "@/app/plain/lib/identity";
 import { PostHogIdentify } from "@/app/posthog/PostHogIdentify";
 import {
@@ -26,6 +27,16 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
     return <ClientLogout />;
   }
 
+  // Resolve the paying-customer label server-side so Plain applies it to threads
+  // from init time. Only queried when a label is configured to avoid extra work.
+  const plainActiveCustomerLabelTypeId =
+    IS_PLAIN_CHAT_CONFIGURED &&
+    PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID &&
+    user &&
+    (await getIsActiveCustomer(user.id))
+      ? PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID
+      : null;
+
   return (
     <>
       <NoMobileOverlay />
@@ -39,7 +50,7 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
           userName={user?.name}
           userId={user?.id}
           emailHash={user?.email ? computePlainEmailHash(user.email) : null}
-          activeCustomerLabelTypeId={PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID}
+          activeCustomerLabelTypeId={plainActiveCustomerLabelTypeId}
         />
       )}
       {IS_FORMBRICKS_SURVEYS_CONFIGURED && FORMBRICKS_WORKSPACE_ID && (
