@@ -124,8 +124,6 @@ describe("getWorkspaceStateData", () => {
         },
       ],
       actionClasses: mockWorkspaceData.actionClasses,
-      // Mock surveys have a null segment, so no survey-interaction targeting exists.
-      hasSurveyInteractionSegments: false,
     });
 
     expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
@@ -339,7 +337,7 @@ describe("getWorkspaceStateData", () => {
     expect(codes).toEqual(["en-US", "fil-PH", "ak-GH", "en", "tl", "ak", "tw"]);
   });
 
-  // Survey-interaction segment gate: per-survey `interactionRefresh` + coarse `hasSurveyInteractionSegments`.
+  // Survey-interaction segment gate: per-survey `interactionRefresh`.
   const interactionSurvey = (id: string, operator: string, targetSurveyId: string) => ({
     ...mockWorkspaceData.surveys[0],
     id,
@@ -364,7 +362,7 @@ describe("getWorkspaceStateData", () => {
     },
   });
 
-  test("attaches per-survey interactionRefresh and sets the coarse flag for an interaction filter", async () => {
+  test("attaches per-survey interactionRefresh for an interaction filter", async () => {
     // survey-B references survey-A via "have seen" → A gets onDisplay only; B (referenced by nobody) all-false.
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspaceData,
@@ -377,7 +375,6 @@ describe("getWorkspaceStateData", () => {
 
     const result = await getWorkspaceStateData(workspaceId);
 
-    expect(result.hasSurveyInteractionSegments).toBe(true);
     const byId = Object.fromEntries(result.surveys.map((s) => [s.id, s]));
     expect((byId["survey-A"] as { interactionRefresh?: unknown }).interactionRefresh).toEqual({
       onDisplay: true,
@@ -442,7 +439,6 @@ describe("getWorkspaceStateData", () => {
 
     const result = await getWorkspaceStateData(workspaceId);
 
-    expect(result.hasSurveyInteractionSegments).toBe(true);
     expect((result.surveys[0] as { interactionRefresh?: unknown }).interactionRefresh).toEqual({
       onDisplay: false,
       onResponse: false,

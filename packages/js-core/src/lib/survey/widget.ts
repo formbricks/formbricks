@@ -33,8 +33,7 @@ type TInteractionSource = keyof NonNullable<TWorkspaceStateSurvey["interactionRe
  *   - Gated per survey and per event via `survey.interactionRefresh`: only interactions that can
  *     actually change some live survey's membership trigger a refetch. E.g. a survey referenced only
  *     by a "have seen" filter refreshes on display but not on response/finish, and a survey referenced
- *     by no interaction filter never refreshes. Falls back to the coarse workspace
- *     `hasSurveyInteractionSegments` flag for SDK states cached before per-survey info shipped.
+ *     by no interaction filter never refreshes.
  *   - Routed through the UpdateQueue instead of a raw `sendUpdates`: the display → response → finish
  *     burst coalesces into a single debounced call, and the ordered flush removes the last-writer-wins
  *     race that concurrent `void sendUpdates` calls had (a stale snapshot could clobber fresh state).
@@ -48,10 +47,7 @@ const refreshSegmentsAfterInteraction = (
 ): void => {
   if (!userId) return;
 
-  const config = Config.getInstance();
-  const shouldRefresh = survey.interactionRefresh
-    ? survey.interactionRefresh[source]
-    : (config.get().workspace.data.hasSurveyInteractionSegments ?? false);
+  const shouldRefresh = survey.interactionRefresh?.[source] ?? false;
   if (!shouldRefresh) return;
 
   const updateQueue = UpdateQueue.getInstance();

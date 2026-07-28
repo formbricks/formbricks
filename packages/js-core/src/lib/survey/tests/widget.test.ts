@@ -742,11 +742,9 @@ describe("widget-file", () => {
     // trigger onDisplayCreated / onResponseCreated / onFinished directly and assert whether a refresh
     // (updateUserId + processUpdates through the UpdateQueue) was enqueued.
     const renderAndGetCallbacks = async ({
-      hasSurveyInteractionSegments,
       userId,
       interactionRefresh,
     }: {
-      hasSurveyInteractionSegments?: boolean;
       userId: string | null;
       interactionRefresh?: { onDisplay: boolean; onResponse: boolean; onFinished: boolean };
     }): Promise<{
@@ -761,7 +759,6 @@ describe("widget-file", () => {
           workspace: {
             data: {
               settings: { clickOutsideClose: true, overlay: "none", placement: "bottomRight" },
-              hasSurveyInteractionSegments,
             },
           },
           user: {
@@ -792,10 +789,10 @@ describe("widget-file", () => {
       };
     };
 
-    test("refreshes on each interaction when the workspace has interaction segments", async () => {
+    test("refreshes on each interaction the survey's interactionRefresh enables", async () => {
       const callbacks = await renderAndGetCallbacks({
-        hasSurveyInteractionSegments: true,
         userId: "user_abc",
+        interactionRefresh: { onDisplay: true, onResponse: true, onFinished: true },
       });
 
       callbacks.onDisplayCreated();
@@ -807,35 +804,7 @@ describe("widget-file", () => {
       expect(mockUpdateQueue.processUpdates).toHaveBeenCalledTimes(3);
     });
 
-    test("skips the refresh entirely when the workspace has no interaction segments", async () => {
-      const callbacks = await renderAndGetCallbacks({
-        hasSurveyInteractionSegments: false,
-        userId: "user_abc",
-      });
-
-      callbacks.onDisplayCreated();
-      callbacks.onResponseCreated();
-      callbacks.onFinished();
-
-      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
-      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
-    });
-
-    test("skips the refresh for anonymous users even with interaction segments", async () => {
-      const callbacks = await renderAndGetCallbacks({
-        hasSurveyInteractionSegments: true,
-        userId: null,
-      });
-
-      callbacks.onDisplayCreated();
-      callbacks.onResponseCreated();
-      callbacks.onFinished();
-
-      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
-      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
-    });
-
-    test("treats an absent hasSurveyInteractionSegments flag (older state) as no refresh", async () => {
+    test("skips every interaction when the survey has no interactionRefresh", async () => {
       const callbacks = await renderAndGetCallbacks({ userId: "user_abc" });
 
       callbacks.onDisplayCreated();
@@ -846,12 +815,24 @@ describe("widget-file", () => {
       expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
     });
 
-    test("per-survey interactionRefresh gates each event independently (seen-only → display only)", async () => {
-      // The seen-only example: this survey is referenced only by a "have seen" filter, so only its
-      // display can change membership — response/finish must not trigger a refresh even though the
-      // workspace has interaction segments.
+    test("skips the refresh for anonymous users even when interactionRefresh is enabled", async () => {
       const callbacks = await renderAndGetCallbacks({
-        hasSurveyInteractionSegments: true,
+        userId: null,
+        interactionRefresh: { onDisplay: true, onResponse: true, onFinished: true },
+      });
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated();
+      callbacks.onFinished();
+
+      expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
+      expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
+    });
+
+    test("interactionRefresh gates each event independently (seen-only → display only)", async () => {
+      // Referenced only by a "have seen" filter, so only its display can change membership;
+      // response/finish must not trigger a refresh.
+      const callbacks = await renderAndGetCallbacks({
         userId: "user_abc",
         interactionRefresh: { onDisplay: true, onResponse: false, onFinished: false },
       });
@@ -864,11 +845,8 @@ describe("widget-file", () => {
       expect(mockUpdateQueue.processUpdates).toHaveBeenCalledTimes(1);
     });
 
-    test("per-survey interactionRefresh all-false skips every event (survey referenced by nobody)", async () => {
-      // interactionRefresh present but all-false wins over a truthy coarse flag: this survey can't
-      // change any membership, so none of its interactions refresh.
+    test("all-false interactionRefresh skips every event (survey referenced by nobody)", async () => {
       const callbacks = await renderAndGetCallbacks({
-        hasSurveyInteractionSegments: true,
         userId: "user_abc",
         interactionRefresh: { onDisplay: false, onResponse: false, onFinished: false },
       });
@@ -879,21 +857,6 @@ describe("widget-file", () => {
 
       expect(mockUpdateQueue.updateUserId).not.toHaveBeenCalled();
       expect(mockUpdateQueue.processUpdates).not.toHaveBeenCalled();
-    });
-
-    test("per-survey interactionRefresh takes precedence over an absent coarse flag", async () => {
-      // No coarse flag (older-style state) but per-survey info present → the per-survey bit decides.
-      const callbacks = await renderAndGetCallbacks({
-        userId: "user_abc",
-        interactionRefresh: { onDisplay: false, onResponse: false, onFinished: true },
-      });
-
-      callbacks.onDisplayCreated();
-      callbacks.onResponseCreated();
-      callbacks.onFinished();
-
-      expect(mockUpdateQueue.updateUserId).toHaveBeenCalledTimes(1);
-      expect(mockUpdateQueue.processUpdates).toHaveBeenCalledTimes(1);
     });
   });
 });

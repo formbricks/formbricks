@@ -28,9 +28,6 @@ export interface WorkspaceStateData {
   };
   surveys: TJsWorkspaceStateSurvey[];
   actionClasses: TJsWorkspaceStateActionClass[];
-  // True when any live app survey's segment uses a `surveyInteraction` filter. Lets the SDK skip the
-  // post-interaction `/user` refresh entirely when no interaction-based targeting exists.
-  hasSurveyInteractionSegments: boolean;
 }
 
 /**
@@ -209,9 +206,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
     // Per-survey gate for the SDK's post-interaction segment refresh. Reverse-indexes every
     // `surveyInteraction` filter used by a live app survey onto the survey(s) it references, so the SDK
     // learns — per survey, per event (display / response / finish) — whether interacting with it can
-    // change any live survey's membership, and skips the heavy `/user` refetch otherwise. The coarse
-    // `hasSurveyInteractionSegments` boolean is derived from the same pass as a back-compat fallback
-    // for SDK states cached before the per-survey info shipped.
+    // change any live survey's membership, and skips the heavy `/user` refetch otherwise.
     const surveysWithFilters = workspaceData.surveys.map((survey) => ({
       id: survey.id,
       segmentFilters: (Array.isArray(survey.segment?.filters)
@@ -234,9 +229,8 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       );
     }
 
-    const { refreshBySurveyId, hasAny: hasSurveyInteractionSegments } = buildSurveyInteractionRefreshMap(
-      surveysWithFilters,
-      (segmentId) => segmentFiltersById?.get(segmentId)
+    const { refreshBySurveyId, hasAny } = buildSurveyInteractionRefreshMap(surveysWithFilters, (segmentId) =>
+      segmentFiltersById?.get(segmentId)
     );
 
     const transformedSurveys = workspaceData.surveys.map((survey) => {
@@ -280,9 +274,8 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       });
 
       // Only attach the per-survey refresh gate when the workspace actually uses interaction
-      // targeting — otherwise it's dead weight on every survey in the response, and the SDK's
-      // coarse-flag fallback (also false) already yields the same "skip" decision.
-      const interactionRefresh = hasSurveyInteractionSegments ? refreshBySurveyId[survey.id] : undefined;
+      // targeting — otherwise it's dead weight on every survey in the response.
+      const interactionRefresh = hasAny ? refreshBySurveyId[survey.id] : undefined;
 
       return {
         ...transformed,
@@ -312,7 +305,6 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       // intentional and only this endpoint's response widens the type.
       surveys: resolveStorageUrlsInObject(transformedSurveys) as unknown as TJsWorkspaceStateSurvey[],
       actionClasses: workspaceData.actionClasses,
-      hasSurveyInteractionSegments,
     };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {

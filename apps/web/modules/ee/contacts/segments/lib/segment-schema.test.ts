@@ -8,7 +8,6 @@ import {
   ZSegmentSurveyInteractionFilterValue,
   ZSegmentUpdateInput,
   buildSurveyInteractionRefreshMap,
-  segmentFiltersContainSurveyInteraction,
 } from "@formbricks/types/segment";
 
 const surveyInteractionFilter = (value: unknown) => [
@@ -108,11 +107,21 @@ describe("survey interaction filter value validation", () => {
   test("accepts specific scope with at least one survey", () => {
     const result = ZSegmentSurveyInteractionFilterValue.safeParse({
       surveyScope: "specific",
-      surveyIds: ["survey_1"],
+      surveyIds: [createId()],
       within: { amount: 3, unit: "weeks" },
     });
 
     expect(result.success).toBe(true);
+  });
+
+  test("rejects a surveyId that is not a valid id", () => {
+    const result = ZSegmentSurveyInteractionFilterValue.safeParse({
+      surveyScope: "specific",
+      surveyIds: ["not-a-valid-id"],
+      within: { amount: 1, unit: "months" },
+    });
+
+    expect(result.success).toBe(false);
   });
 
   test("rejects specific scope with empty surveyIds", () => {
@@ -154,7 +163,7 @@ describe("survey interaction filter value validation", () => {
     const result = ZSegmentFilters.safeParse(
       surveyInteractionFilter({
         surveyScope: "specific",
-        surveyIds: ["survey_1", "survey_2"],
+        surveyIds: [createId(), createId()],
         within: { amount: 6, unit: "months" },
       })
     );
@@ -172,36 +181,6 @@ describe("survey interaction filter value validation", () => {
     );
 
     expect(result.success).toBe(false);
-  });
-});
-
-describe("segmentFiltersContainSurveyInteraction", () => {
-  const validValue = { surveyScope: "any" as const, within: { amount: 1, unit: "months" as const } };
-
-  test("returns false for filters without any surveyInteraction leaf", () => {
-    expect(segmentFiltersContainSurveyInteraction(validFilters as unknown as TBaseFilters)).toBe(false);
-  });
-
-  test("returns true for a top-level surveyInteraction leaf", () => {
-    expect(
-      segmentFiltersContainSurveyInteraction(surveyInteractionFilter(validValue) as unknown as TBaseFilters)
-    ).toBe(true);
-  });
-
-  test("detects a surveyInteraction leaf nested inside a group", () => {
-    const nested = [
-      {
-        id: createId(),
-        connector: null,
-        resource: [...validFilters, { ...surveyInteractionFilter(validValue)[0], connector: "and" as const }],
-      },
-    ];
-
-    expect(segmentFiltersContainSurveyInteraction(nested as unknown as TBaseFilters)).toBe(true);
-  });
-
-  test("returns false for an empty filter list", () => {
-    expect(segmentFiltersContainSurveyInteraction([])).toBe(false);
   });
 });
 

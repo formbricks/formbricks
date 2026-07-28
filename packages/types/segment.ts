@@ -142,10 +142,9 @@ export type TRelativeDateValue = z.infer<typeof ZRelativeDateValue>;
 const ZSegmentSurveyInteractionFilterValueBase = z.object({
   surveyScope: z.enum(["any", "specific"]),
   // Bounded to cap the payload from an untrusted client (no unbounded array). 100 surveys is far
-  // beyond any realistic single-filter selection. Id validity/ownership is enforced at write time by
-  // assertSurveyInteractionSurveyIds (checks the ids exist in the workspace), which is stronger than a
-  // format check, so we do not additionally constrain the string shape here.
-  surveyIds: z.array(z.string()).max(100),
+  // beyond any realistic single-filter selection. Ownership is still enforced at write time by
+  // assertSurveyInteractionSurveyIds (checks the ids exist in the workspace).
+  surveyIds: z.array(ZId).max(100),
   within: z.object({
     amount: z.number().int().min(1).max(999),
     unit: ZSurveyInteractionTimeUnit,
@@ -433,22 +432,6 @@ export const ZJsWorkspaceStateSegment = z.object({
   hasFilters: z.boolean(),
 });
 export type TJsWorkspaceStateSegment = z.infer<typeof ZJsWorkspaceStateSegment>;
-
-/**
- * Recursively scans a segment's filter tree for any `surveyInteraction` leaf. Used server-side to
- * expose a single `hasSurveyInteractionSegments` flag in the workspace state so the SDK only pays for
- * a post-interaction `/user` segment refresh when interaction-based targeting is actually in play.
- */
-export const segmentFiltersContainSurveyInteraction = (filters: TBaseFilters): boolean => {
-  for (const group of filters) {
-    if (Array.isArray(group.resource)) {
-      if (segmentFiltersContainSurveyInteraction(group.resource)) return true;
-    } else if (group.resource.root.type === "surveyInteraction") {
-      return true;
-    }
-  }
-  return false;
-};
 
 /**
  * Per-survey gate for the SDK's post-interaction segment refresh. Each flag says whether interacting

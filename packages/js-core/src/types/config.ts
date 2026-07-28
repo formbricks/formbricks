@@ -97,9 +97,8 @@ export interface TWorkspaceStateSurvey {
   displayPercentage: number | null;
   styling?: TSurveyStyling;
   // Per-survey gate for the post-interaction segment refresh: whether an interaction with THIS survey
-  // (display / response / finish) can change any live survey's membership. Absent for states cached
-  // before this shipped and for workspaces without interaction targeting — the widget then falls back
-  // to the coarse `hasSurveyInteractionSegments` flag.
+  // (display / response / finish) can change any live survey's membership. Absent for workspaces
+  // without interaction targeting, where no refresh is ever needed.
   interactionRefresh?: {
     onDisplay: boolean;
     onResponse: boolean;
@@ -125,9 +124,6 @@ export interface TWorkspaceState {
     actionClasses: TWorkspaceStateActionClass[];
     settings: TWorkspaceStateSettings;
     recaptchaSiteKey?: string;
-    // True when the workspace has survey-interaction segments; gates the post-interaction segment
-    // refresh in the survey widget. Optional: absent in states cached before this field shipped.
-    hasSurveyInteractionSegments?: boolean;
   };
 }
 
