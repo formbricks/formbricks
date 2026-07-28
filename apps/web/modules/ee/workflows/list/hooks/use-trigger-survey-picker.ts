@@ -104,7 +104,11 @@ export const useWorkflowSurveyEndings = (surveyId: string | null | undefined) =>
   const query = useQuery({
     queryKey: ["workflow-trigger", "survey-endings", surveyId],
     enabled: Boolean(surveyId),
-    queryFn: async ({ signal }) => {
+    queryFn: async ({ signal }): Promise<{ surveyId: string | null; endings: TWorkflowSurveyEnding[] }> => {
+      // Unreachable while `enabled` gates on a truthy id; keeps the resolved id non-optional so
+      // callers can compare it without a cast.
+      if (!surveyId) return { surveyId: null, endings: [] };
+
       const response = await fetch(`/api/v3/surveys/${surveyId}`, {
         method: "GET",
         cache: "no-store",
@@ -120,12 +124,19 @@ export const useWorkflowSurveyEndings = (surveyId: string | null | undefined) =>
         typeof body.data.defaultLanguage === "string" && body.data.defaultLanguage.length > 0
           ? body.data.defaultLanguage
           : "default";
-      if (!isEndingArray(body.data.endings)) return [];
+      if (!isEndingArray(body.data.endings)) return { surveyId, endings: [] };
       const endings: TWorkflowSurveyEnding[] = body.data.endings
         .filter((raw): raw is RawEnding & { id: string } => typeof raw.id === "string" && raw.id.length > 0)
         .map((raw) => ({ id: raw.id, label: endingDisplayLabel(raw, defaultLanguage) }));
-      return endings;
+      return { surveyId, endings };
     },
   });
-  return { ...query, endings: query.data ?? [] };
+  return {
+    ...query,
+    endings: query.data?.endings ?? [],
+    // The survey the cached endings actually belong to. Callers that PRUNE stored ids against
+    // this list must check it: reading a previous survey's (or an unsettled) response as the
+    // current one would delete a valid selection.
+    resolvedSurveyId: query.data?.surveyId ?? null,
+  };
 };

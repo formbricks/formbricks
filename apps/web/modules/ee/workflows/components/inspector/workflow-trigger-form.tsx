@@ -4,10 +4,12 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
+import { reconcileEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import {
   useWorkflowSurveyEndings,
   useWorkflowSurveyOptions,
 } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -34,7 +36,22 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   const params = useParams<{ workspaceId: string }>();
   const workspaceId = params?.workspaceId ?? "";
   const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
-  const endingsQuery = useWorkflowSurveyEndings(node.config.surveyId || null);
+  const triggerSurveyId = node.config.surveyId || null;
+  const endingsQuery = useWorkflowSurveyEndings(triggerSurveyId);
+
+  // Endings only become an authority on what exists once the query has SETTLED for the survey the
+  // trigger currently points at. Until then it is null and the stored ids are taken at face value,
+  // so a pending fetch never reads as "the survey has no endings".
+  const surveyEndingIds =
+    endingsQuery.isSuccess && endingsQuery.resolvedSurveyId === triggerSurveyId
+      ? endingsQuery.endings.map((ending) => ending.id)
+      : null;
+  // Ids pointing at endings that were deleted from the survey. The builder page auto-prunes these
+  // while the definition is editable, so what is left here is a workflow that cannot be repaired
+  // (enabled/archived/read-only) — flag it rather than let it fail silently.
+  const staleEndingCardIds = surveyEndingIds
+    ? reconcileEndingCardIds(node.config.endingCardIds, surveyEndingIds).removedEndingCardIds
+    : [];
 
   // Local because "specific with nothing checked yet" is a UI-only state — the config still
   // holds an empty list (= all endings) until the user checks something.
@@ -59,8 +76,14 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   };
 
   const toggleEnding = (endingId: string, checked: boolean) => {
-    const current = node.config.endingCardIds;
-    const next = checked ? [...current, endingId] : current.filter((id) => id !== endingId);
+    // Reconcile BEFORE applying the click so ids from deleted endings can't ride along — appending
+    // onto them is what produced the phantom "trigger on 2 ending cards" after picking one.
+    const current = surveyEndingIds
+      ? reconcileEndingCardIds(node.config.endingCardIds, surveyEndingIds).endingCardIds
+      : node.config.endingCardIds;
+    const next = checked
+      ? Array.from(new Set([...current, endingId]))
+      : current.filter((id) => id !== endingId);
     onChange({ ...node, config: { ...node.config, endingCardIds: next } });
   };
 
@@ -160,6 +183,17 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
         <Label htmlFor="workflow-trigger-ending-scope">
           {t("workspace.workflows.trigger_ending_cards_label")}
         </Label>
+        {/* Only while the definition is locked: an editable one is repaired by the builder page's
+            reconcile, so rendering this there would just flash for a frame. */}
+        {!isEditable && staleEndingCardIds.length > 0 ? (
+          <Alert variant="warning" size="small">
+            <AlertDescription>
+              {t("workspace.workflows.trigger_ending_cards_stale", {
+                count: staleEndingCardIds.length,
+              })}
+            </AlertDescription>
+          </Alert>
+        ) : null}
         {renderEndingChoices()}
       </div>
     </div>
