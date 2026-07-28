@@ -1,0 +1,104 @@
+import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { logger } from "@formbricks/logger";
+import {
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
+import {
+  problemAIUnavailable,
+  problemBadGateway,
+  problemBadRequest,
+  problemNotFound,
+  problemTooManyRequests,
+  problemUnprocessableContent,
+} from "@/app/api/v3/lib/response";
+import { AI_ERROR_CODES, type TAIErrorCode } from "@/lib/ai/service";
+import { V3SurveyGeneratePromptError, V3SurveyGeneratedPayloadValidationError } from "./service";
+
+const AI_UNAVAILABLE_DETAILS: Record<TAIErrorCode, string> = {
+  [AI_ERROR_CODES.FEATURES_NOT_ENABLED]: "AI smart tools are not available for this organization.",
+  [AI_ERROR_CODES.SMART_TOOLS_DISABLED]: "AI smart tools are disabled for this organization.",
+  [AI_ERROR_CODES.INSTANCE_NOT_CONFIGURED]: "AI is not configured for this Formbricks instance.",
+  // Quota exhaustion is surfaced as a 429 (see the TooManyRequestsError branch below), not as an
+  // AI-unavailable 503 — this entry only keeps the code map exhaustive.
+  [AI_ERROR_CODES.QUOTA_EXCEEDED]: "The AI provider is temporarily rate-limited. Try again shortly.",
+};
+
+function isAIErrorCode(value: string): value is TAIErrorCode {
+  return Object.values(AI_ERROR_CODES).includes(value as TAIErrorCode);
+}
+
+interface TGenerateErrorContext {
+  requestId: string;
+  instance: string;
+  workspaceId: string;
+  organizationId: string;
+}
+
+/**
+ * Map an error thrown while generating a survey draft to its problem+json Response. Extracted from
+ * the route handler to keep that handler's cognitive complexity within bounds.
+ */
+export function mapV3SurveyGenerateError(
+  error: unknown,
+  { requestId, instance, workspaceId, organizationId }: TGenerateErrorContext
+): Response {
+  if (error instanceof V3SurveyGeneratePromptError) {
+    return problemBadRequest(requestId, error.message, {
+      instance,
+      invalid_params: error.invalidParams,
+    });
+  }
+
+  if (error instanceof TooManyRequestsError) {
+    return problemTooManyRequests(
+      requestId,
+      "The AI provider is temporarily rate-limited. Try again shortly.",
+      error.retryAfter
+    );
+  }
+
+  if (error instanceof OperationNotAllowedError && isAIErrorCode(error.message)) {
+    return problemAIUnavailable(requestId, AI_UNAVAILABLE_DETAILS[error.message], error.message, instance);
+  }
+
+  if (error instanceof V3SurveyGeneratedPayloadValidationError) {
+    return problemUnprocessableContent(requestId, error.message, {
+      instance,
+      code: "ai_generated_payload_invalid",
+      invalid_params: error.invalidParams,
+    });
+  }
+
+  if (error instanceof AIOutputTokenLimitError) {
+    return problemUnprocessableContent(
+      requestId,
+      "The generated survey exceeded the AI output token limit. Simplify the prompt or split it into smaller surveys.",
+      {
+        instance,
+        code: "ai_output_too_long",
+      }
+    );
+  }
+
+  if (error instanceof ResourceNotFoundError) {
+    return problemNotFound(requestId, "Organization", organizationId, instance);
+  }
+
+  logger.error(
+    {
+      err: error,
+      requestId,
+      workspaceId,
+      organizationId,
+    },
+    "Failed to generate v3 survey create payload"
+  );
+
+  return problemBadGateway(
+    requestId,
+    "The AI provider could not generate a valid survey draft. Try again or add more detail.",
+    instance
+  );
+}
