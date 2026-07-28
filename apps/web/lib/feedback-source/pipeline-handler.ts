@@ -17,7 +17,9 @@ const logFailedRecords = (
     // Debug, not error: createFeedbackRecordsBatch already warned per record with the full error,
     // and the caller warns once with the failure count. At error level a single Hub outage reported
     // itself three times per record and looked like an unhandled fault, when the pipeline handles
-    // it. This line survives only for the per-record index, which the other two don't carry.
+    // it. Note the default level is warn in production and info in dev, so this is off in both
+    // unless LOG_LEVEL=debug — the per-record index it adds is opt-in, and the two warns above are
+    // what you normally see.
     logger.debug(
       {
         feedbackSourceId,

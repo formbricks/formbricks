@@ -37,6 +37,14 @@ yarn-error.log*
 !packages/database/.env
 !apps/web/.env
 
+# local cloud credentials — the Hub's google-gemini (Vertex) enrichment providers need a GCP
+# service-account JSON on disk (GOOGLE_APPLICATION_CREDENTIALS). It belongs outside the repo, but
+# these patterns keep the obvious in-repo spots from being committable if someone drops one here.
+**/gcp*.json
+**/service-account*.json
+**/*-credentials.json
+secrets/
+
 # build tools
 .turbo
 **/*vite.config.*.timestamp-*
