@@ -1,20 +1,31 @@
 import { Download, ExternalLink } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video";
+import {
+  checkForLoomUrl,
+  checkForVimeoUrl,
+  checkForYoutubeUrl,
+  convertToEmbedUrl,
+  isSafeMediaUrl,
+} from "@/lib/video";
 
 //Function to add extra params to videoUrls in order to reduce video controls
-const getVideoUrlWithParams = (videoUrl: string): string => {
-  const isYoutubeVideo = checkForYoutubeUrl(videoUrl);
-  const isVimeoUrl = checkForVimeoUrl(videoUrl);
-  const isLoomUrl = checkForLoomUrl(videoUrl);
-  if (isYoutubeVideo) return videoUrl.concat("?controls=0");
-  else if (isVimeoUrl)
-    return videoUrl.concat(
+const getVideoUrlWithParams = (videoUrl: string): string | undefined => {
+  // Only the three supported platforms may reach the iframe, and only as the normalized embed URL that
+  // convertToEmbedUrl builds from a hardcoded origin plus an extracted id. Returning `videoUrl`
+  // unchanged for anything else put an arbitrary attacker-chosen URL into `<iframe src>` — a
+  // `javascript:`/`data:` payload, or a phishing page framed inside a survey on the customer's site.
+  const embedUrl = convertToEmbedUrl(videoUrl);
+  if (!embedUrl) return undefined;
+
+  if (checkForYoutubeUrl(videoUrl)) return embedUrl.concat("?controls=0");
+  if (checkForVimeoUrl(videoUrl))
+    return embedUrl.concat(
       "?title=false&transcript=false&speed=false&quality_selector=false&progress_bar=false&pip=false&fullscreen=false&cc=false&chromecast=false"
     );
-  else if (isLoomUrl) return videoUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
-  return videoUrl;
+  if (checkForLoomUrl(videoUrl))
+    return embedUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
+  return undefined;
 };
 
 interface ElementMediaProps {
@@ -25,6 +36,9 @@ interface ElementMediaProps {
 
 function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementMediaProps>): React.ReactNode {
   const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
+  // Never emit an unvalidated stored URL as an href: `javascript:` executes on click.
+  const rawHref = imgUrl ?? convertToEmbedUrl(videoUrl ?? "");
+  const safeHref = rawHref && isSafeMediaUrl(rawHref) ? rawHref : undefined;
   const [isLoading, setIsLoading] = React.useState(true);
 
   if (!imgUrl && !videoUrl) {
@@ -70,7 +84,7 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
         </div>
       ) : null}
       <a
-        href={imgUrl ?? convertToEmbedUrl(videoUrl ?? "")}
+        href={safeHref}
         target="_blank"
         rel="noreferrer"
         aria-label="Open in new tab"

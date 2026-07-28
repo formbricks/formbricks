@@ -5,6 +5,7 @@ import {
   checkForYoutubeUrl,
   convertToEmbedUrl,
   extractYoutubeId,
+  isSafeMediaUrl,
 } from "./video-upload";
 
 describe("checkForYoutubeUrl", () => {
@@ -115,4 +116,26 @@ describe("convertToEmbedUrl", () => {
       expect(convertToEmbedUrl(url)).toBe(expectedEmbedUrl);
     });
   });
+});
+
+describe("isSafeMediaUrl", () => {
+  // Regression: these values come from an editable survey field and used to be rendered straight into
+  // an anchor `href`, where a `javascript:` URL executes on click.
+  test.each([
+    "javascript:alert(document.domain)",
+    "JavaScript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+    "not a url",
+    "",
+  ])("rejects %s", (url) => {
+    expect(isSafeMediaUrl(url)).toBe(false);
+  });
+
+  test.each(["https://www.youtube.com/embed/abc", "http://example.com/a.png", "/storage/ws_1/private/a.png"])(
+    "accepts %s",
+    (url) => {
+      expect(isSafeMediaUrl(url)).toBe(true);
+    }
+  );
 });
