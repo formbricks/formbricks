@@ -111,8 +111,15 @@ function taxonomyHubErrorResponse(
 }
 
 /**
- * Log a Hub failure server-side — the diagnostic the response deliberately no longer carries. Ids and
- * statuses only: never the request body, the node label, or record content.
+ * A Hub status that describes the caller's own request rather than a fault on our side. Note that 401/403
+ * are excluded on purpose: from the caller's perspective those are *our* credentials failing, they surface
+ * as a generic 502, and logging them quietly would leave that outage with no explanation anywhere.
+ */
+const CALLER_FAULT_HUB_STATUSES = new Set([400, 404, 409, 413, 422]);
+
+/**
+ * Log a Hub failure server-side — the diagnostic the response deliberately no longer carries. Context is
+ * ids and statuses only: never the request body, the node label, or record content.
  */
 function logHubFailure(params: TBaseParams, error: HubError | null, operation: string): void {
   const { requestId, workspaceId, directoryId } = params;
@@ -120,8 +127,9 @@ function logHubFailure(params: TBaseParams, error: HubError | null, operation: s
   const hubStatus = error?.status ?? 0;
   const context = { hubStatus, hubCode: error?.code };
 
-  // A 4xx is the caller's or the tenant's situation, not a fault of ours — warn, and skip the stack.
-  if (hubStatus >= 400 && hubStatus < 500) {
+  // Nothing is broken and the caller already got the detail in the response, so no stack and no upstream
+  // text — the one place a Hub 4xx can echo caller input back at us.
+  if (CALLER_FAULT_HUB_STATUSES.has(hubStatus)) {
     log.warn(context, `Hub rejected ${operation}`);
     return;
   }

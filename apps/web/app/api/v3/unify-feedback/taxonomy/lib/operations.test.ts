@@ -596,6 +596,21 @@ describe("Hub failure logging", () => {
     expect(logError).not.toHaveBeenCalled();
   });
 
+  test("logs a Hub 401 loudly — it is our credentials, not the caller's request", async () => {
+    const error = { status: 401, message: "invalid api key", detail: "" };
+    vi.mocked(getTaxonomyRun).mockResolvedValue({ data: null, error });
+
+    const response = await getV3TaxonomyRun({ ...base, runId: run.id });
+
+    // The caller gets an opaque 502, so the log is the only place this is explainable.
+    expect(response.status).toBe(502);
+    expect(logError).toHaveBeenCalledWith(
+      { hubStatus: 401, hubCode: undefined, err: error },
+      "Hub getRun failed"
+    );
+    expect(logWarn).not.toHaveBeenCalled();
+  });
+
   test("logs the 200-with-unavailable paths too, where the response says nothing at all", async () => {
     vi.mocked(listTaxonomyFields).mockResolvedValue({
       data: null,
