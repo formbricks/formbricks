@@ -3,7 +3,12 @@ import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { type TOrganizationRole } from "@formbricks/types/memberships";
-import { type TAuthorizationAction, can } from "@/lib/authorization";
+import {
+  type TAuthorizationAction,
+  type TAuthorizationActor,
+  type TAuthorizationResource,
+  can,
+} from "@/lib/authorization";
 import { getWorkspaceActionForPermission } from "@/lib/authorization/compatibility";
 import { getMembershipRole } from "@/lib/membership/hooks/actions";
 import { getTeamRoleByTeamIdUserId, getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -52,6 +57,8 @@ const teamRoleWeight = {
 
 type TOrganizationAction = Extract<TAuthorizationAction, `organization.${string}`>;
 type TTeamAction = Extract<TAuthorizationAction, `team.${string}`>;
+type TUserActor = Extract<TAuthorizationActor, { type: "user" }>;
+type TOrganizationResource = Extract<TAuthorizationResource, { type: "organization" }>;
 
 const ORGANIZATION_ACTION_BY_ROLE_SET: Readonly<Record<string, TOrganizationAction>> = {
   "billing,manager,member,owner": "organization.read",
@@ -62,7 +69,7 @@ const ORGANIZATION_ACTION_BY_ROLE_SET: Readonly<Record<string, TOrganizationActi
 };
 
 const getOrganizationAction = (roles: TOrganizationRole[]): TOrganizationAction | null => {
-  const roleSet = [...new Set(roles)].sort().join(",");
+  const roleSet = [...new Set(roles)].sort((roleA, roleB) => roleA.localeCompare(roleB)).join(",");
   return ORGANIZATION_ACTION_BY_ROLE_SET[roleSet] ?? null;
 };
 
@@ -161,6 +168,28 @@ const checkLegacyAuthorization = async <T extends z.ZodRawShape>({
   throw new AuthorizationError("Not authorized");
 };
 
+const checkCentralAccessItem = async <T extends z.ZodRawShape>(
+  accessItem: TAccess<T>,
+  actor: TUserActor,
+  organization: TOrganizationResource
+) => {
+  if (accessItem.type === "organization") {
+    const validationError = getOrganizationValidationError(accessItem);
+    if (validationError) return validationError;
+
+    const action = getOrganizationAction(accessItem.roles);
+    return action ? can(actor, action, organization) : false;
+  }
+
+  if (accessItem.type === "workspaceTeam") {
+    const action = getWorkspaceActionForPermission(accessItem.minPermission);
+    return can(actor, action, { type: "workspace", id: accessItem.workspaceId });
+  }
+
+  const action = getTeamAction(accessItem.minPermission);
+  return action ? can(actor, action, { type: "team", id: accessItem.teamId }) : false;
+};
+
 /**
  * Compatibility adapter for the pre-ENG-1712 action-client authorization signature.
  *
@@ -189,23 +218,8 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   }
 
   for (const accessItem of access) {
-    if (accessItem.type === "organization") {
-      const validationError = getOrganizationValidationError(accessItem);
-      if (validationError) return validationError;
-
-      const action = getOrganizationAction(accessItem.roles);
-      if (action && (await can(actor, action, organization))) return true;
-    }
-
-    if (accessItem.type === "workspaceTeam") {
-      const action = getWorkspaceActionForPermission(accessItem.minPermission);
-      if (await can(actor, action, { type: "workspace", id: accessItem.workspaceId })) return true;
-    }
-
-    if (accessItem.type === "team") {
-      const action = getTeamAction(accessItem.minPermission);
-      if (action && (await can(actor, action, { type: "team", id: accessItem.teamId }))) return true;
-    }
+    const accessResult = await checkCentralAccessItem(accessItem, actor, organization);
+    if (accessResult) return accessResult;
   }
 
   throw new AuthorizationError("Not authorized");
