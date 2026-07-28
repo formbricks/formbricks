@@ -101,10 +101,9 @@ export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom)
 export const hasBoundTriggerSurveyAtom = atom<boolean>(true);
 
 // Trigger ending-card ids the reconcile dropped this session (see useReconcileTriggerEndingCards).
-// Client-only — deliberately NOT part of the definition: it remembers that the user's "specific
-// endings" intent was emptied by ids that no longer exist, which an empty `endingCardIds` alone
-// cannot express (empty means "all endings"). The trigger form uses it to still open in "specific"
-// scope and ask for a fresh pick, instead of silently presenting the widened "all endings" state.
+// Client-only, not part of the definition: it records that the user's "specific endings" intent was
+// emptied by now-deleted ids — which an empty `endingCardIds` ("all endings") can't express — so the
+// trigger form keeps "specific" scope and asks for a fresh pick.
 export const prunedTriggerEndingCardIdsAtom = atom<string[]>([]);
 
 const toSavedDraft = (state: TWorkflowEditorState): TWorkflowSavedDraft => ({

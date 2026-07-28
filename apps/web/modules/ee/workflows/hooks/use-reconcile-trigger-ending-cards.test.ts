@@ -43,10 +43,8 @@ const surveyWithEndings = (endingIds: string[]) =>
     },
   });
 
-/**
- * Renders the hook against a live editor store and feeds the atom's definition back in, so the
- * reconcile's own write re-enters the effect — a reconcile that never settles would loop here.
- */
+// Renders the hook against a live editor store, feeding the atom's definition back in so the
+// reconcile's own write re-enters the effect — a reconcile that never settles would loop here.
 const renderReconcile = ({
   definition,
   isEditable = true,
@@ -140,6 +138,18 @@ describe("useReconcileTriggerEndingCards", () => {
 
   test("keeps stale ids when the survey lookup fails — a failed fetch is not 'no endings'", async () => {
     vi.mocked(global.fetch).mockResolvedValue(jsonResponse({ status: 500, detail: "boom" }, 500));
+
+    const { result } = renderReconcile({ definition: buildDefinition(["end_deleted"]) });
+
+    await waitFor(() => expect(vi.mocked(global.fetch)).toHaveBeenCalled());
+    expect(result.current.endingCardIds).toEqual(["end_deleted"]);
+    expect(result.current.pruned).toEqual([]);
+  });
+
+  test("keeps stale ids when the endings response shape is malformed — not 'no endings'", async () => {
+    vi.mocked(global.fetch).mockResolvedValue(
+      jsonResponse({ data: { defaultLanguage: "en", endings: "not-an-array" } })
+    );
 
     const { result } = renderReconcile({ definition: buildDefinition(["end_deleted"]) });
 

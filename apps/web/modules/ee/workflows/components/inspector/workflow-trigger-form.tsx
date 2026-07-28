@@ -27,9 +27,7 @@ interface WorkflowTriggerFormProps {
   onChange: (next: TWorkflowResponseCompletedTriggerNode) => void;
 }
 
-// How the trigger filters endings. "all" maps to an empty `endingCardIds` (match any ending,
-// including ones added later); "specific" shows the checkbox list. Same two-mode pattern the
-// survey Follow-Ups modal uses for its ending trigger.
+// "all" = empty `endingCardIds` (match any ending, including future ones); "specific" = checkbox list.
 type TEndingScope = "all" | "specific";
 
 export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<WorkflowTriggerFormProps>) => {
@@ -40,21 +38,15 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   const triggerSurveyId = node.config.surveyId || null;
   const endingsQuery = useWorkflowSurveyEndings(triggerSurveyId);
 
-  // Endings only become an authority on what exists once the query has SETTLED for the survey the
-  // trigger currently points at. Until then it is null and the stored ids are taken at face value,
-  // so a pending fetch never reads as "the survey has no endings".
+  // Only an authority once the query has SETTLED for the current survey; null until then, so a
+  // pending fetch never reads as "no endings" and the stored ids are taken at face value.
   const surveyEndingIds =
     endingsQuery.isSuccess && endingsQuery.resolvedSurveyId === triggerSurveyId
       ? endingsQuery.endings.map((ending) => ending.id)
       : null;
-  // Local because "specific with nothing checked yet" is a UI-only state — the config still
-  // holds an empty list (= all endings) until the user checks something.
-  //
-  // Ids the builder page pruned count as "specific" too, even though they left the list empty: the
-  // user asked for specific endings and the ones they picked are gone, so this opens on the
-  // checkbox list and its "select at least one / with none selected, every ending fires" hint
-  // rather than quietly presenting the widened "all endings" state as their choice. Reads the atom
-  // rather than a prop because it is trigger-specific, and the shared node-form prop shape is not.
+  // Open in "specific" scope when ids are set OR the builder page pruned this trigger's picks: the
+  // user chose specific endings that are now gone, so ask for a fresh pick instead of showing the
+  // widened "all endings" state. Atom (not a prop) since it's trigger-specific.
   const prunedEndingCardIds = useAtomValue(prunedTriggerEndingCardIdsAtom);
   const [endingScope, setEndingScope] = useState<TEndingScope>(
     node.config.endingCardIds.length > 0 || prunedEndingCardIds.length > 0 ? "specific" : "all"
@@ -77,8 +69,8 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   };
 
   const toggleEnding = (endingId: string, checked: boolean) => {
-    // Reconcile BEFORE applying the click so ids from deleted endings can't ride along — appending
-    // onto them is what produced the phantom "trigger on 2 ending cards" after picking one.
+    // Reconcile before applying the click so ids from deleted endings can't ride along (that
+    // appending is what produced the phantom "trigger on 2 ending cards" after picking one).
     const current = surveyEndingIds
       ? reconcileEndingCardIds(node.config.endingCardIds, surveyEndingIds).endingCardIds
       : node.config.endingCardIds;

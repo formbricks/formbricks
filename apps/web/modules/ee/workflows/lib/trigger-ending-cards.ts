@@ -1,25 +1,17 @@
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 
 export interface TEndingCardReconciliation {
-  /** Stored ids that still resolve to an ending on the survey, de-duplicated, order preserved. */
+  /** Stored ids that still resolve to a survey ending, de-duplicated, order preserved. */
   endingCardIds: string[];
-  /**
-   * Stored ids that no longer resolve to an ending on the survey. Duplicates are dropped from
-   * `endingCardIds` too but are deliberately NOT listed here — they are not missing endings, and
-   * counting them would inflate the "N endings were removed" message.
-   */
+  /** Stored ids that no longer resolve to a survey ending. Excludes dropped duplicates — they
+   * aren't missing endings and would inflate the "N endings removed" message. */
   removedEndingCardIds: string[];
 }
 
 /**
- * Reconciles a trigger's stored `endingCardIds` against the endings the survey actually has.
- *
- * Stored ids drift: deleting an ending card in the survey editor leaves its id behind on every
- * workflow trigger that referenced it. The server's enable pre-flight rejects those ids
- * (`verifyTriggerSurvey` -> `missingEndingCardIds`), so a workflow carrying one cannot be enabled
- * until the id is dropped.
- *
- * Pure on purpose — callers pass in the survey's current ending ids; nothing here fetches.
+ * Reconciles a trigger's stored `endingCardIds` against the survey's current ending ids. Deleting
+ * an ending in the survey editor leaves its id on referencing triggers, which the enable pre-flight
+ * then rejects. Pure — callers pass the survey's ending ids; nothing here fetches.
  */
 export const reconcileEndingCardIds = (
   storedEndingCardIds: readonly string[],
@@ -46,8 +38,7 @@ export const reconcileEndingCardIds = (
 
 /**
  * Definition-level wrapper around {@link reconcileEndingCardIds}. Returns `null` when the stored
- * selection is already clean so callers can use it as their "nothing to write" signal and avoid
- * marking the editor dirty on every render.
+ * selection is already clean, so callers can skip writing and not dirty the editor every render.
  */
 export const reconcileDefinitionEndingCardIds = (
   definition: TWorkflowDefinition | null,
@@ -60,8 +51,7 @@ export const reconcileDefinitionEndingCardIds = (
     trigger.config.endingCardIds,
     surveyEndingIds
   );
-  // Reconciling only ever drops entries (never adds or reorders), so a matching length means the
-  // stored list already equals the reconciled one.
+  // Reconciling only drops entries (never adds/reorders), so equal length means already clean.
   if (endingCardIds.length === trigger.config.endingCardIds.length) return null;
 
   return {

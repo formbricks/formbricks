@@ -51,9 +51,8 @@ export const WorkflowBuilderPage = ({
     setHasBoundTriggerSurvey(isBound);
   }, [emailAuthoringContext, definition, surveyOptions, setHasBoundTriggerSurvey]);
 
-  // Prune trigger ending-card ids whose endings were since deleted from the survey. Owned by the
-  // page (not the trigger form) so the canvas summary and the enable gate are correct without the
-  // inspector ever being opened.
+  // Prune trigger ending-card ids whose endings were deleted. On the page (not the trigger form) so
+  // the canvas summary and enable gate stay correct without opening the inspector.
   useReconcileTriggerEndingCards({ definition, isEditable: builder.canEditDefinition });
 
   // Deep-link the inspected node (?node=…) once the editor is hydrated.
