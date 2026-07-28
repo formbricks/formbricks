@@ -236,34 +236,27 @@ export const SurveyDropDownMenu = ({
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
             {isArchived && canManageSurvey && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
-                  data-testid="restore-survey"
-                  className="flex w-full items-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    void handleRestoreSurvey();
-                  }}>
-                  <ArchiveRestoreIcon className="mr-2 size-4" />
-                  {t("workspace.surveys.restore")}
-                </button>
+              <DropdownMenuItem
+                data-testid="restore-survey"
+                icon={<ArchiveRestoreIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  void handleRestoreSurvey();
+                }}>
+                {t("workspace.surveys.restore")}
               </DropdownMenuItem>
             )}
             {isArchived && canManageSurvey && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
-                  data-testid="delete-survey-forever"
-                  className="flex w-full items-center text-red-600 focus:text-red-600"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsDropDownOpen(false);
-                    setDeleteDialogOpen(true);
-                  }}>
-                  <TrashIcon className="mr-2 size-4" />
-                  {t("workspace.surveys.delete_forever")}
-                </button>
+              <DropdownMenuItem
+                data-testid="delete-survey-forever"
+                className="text-red-600 focus:text-red-600"
+                icon={<TrashIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setDeleteDialogOpen(true);
+                }}>
+                {t("workspace.surveys.delete_forever")}
               </DropdownMenuItem>
             )}
             {!isArchived && canManageSurvey && (
@@ -389,19 +382,16 @@ export const SurveyDropDownMenu = ({
               </DropdownMenuItem>
             )}
             {!isArchived && canManageSurvey && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
-                  data-testid="archive-survey"
-                  className="flex w-full items-center text-red-600 focus:text-red-600"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsDropDownOpen(false);
-                    setArchiveDialogOpen(true);
-                  }}>
-                  <ArchiveIcon className="mr-2 size-4" />
-                  {t("workspace.surveys.archive")}
-                </button>
+              <DropdownMenuItem
+                data-testid="archive-survey"
+                className="text-red-600 focus:text-red-600"
+                icon={<ArchiveIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setArchiveDialogOpen(true);
+                }}>
+                {t("workspace.surveys.archive")}
               </DropdownMenuItem>
             )}
           </DropdownMenuGroup>
@@ -414,11 +404,7 @@ export const SurveyDropDownMenu = ({
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
-          text={
-            isArchived
-              ? t("workspace.general.this_action_cannot_be_undone")
-              : t("workspace.surveys.delete_survey_and_responses_warning")
-          }
+          text={t("workspace.surveys.delete_survey_and_responses_warning")}
           isDeleting={loading}
         />
       )}

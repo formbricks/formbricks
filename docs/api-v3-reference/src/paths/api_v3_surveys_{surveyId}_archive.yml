@@ -1,0 +1,84 @@
+post:
+  operationId: archiveSurveyV3
+  summary: Archive a survey
+  description: >
+    Archives (soft-deletes) a survey by id. Archived surveys are hidden from the default list, stop
+    collecting responses, and become read-only until restored — a subsequent `PATCH` returns **422**.
+    Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal
+    lifecycle acknowledgement rather than the full survey resource. Session cookie or x-api-key.
+  tags:
+    - V3 Surveys
+  parameters:
+    - in: path
+      name: surveyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Survey identifier.
+  responses:
+    '200':
+      description: Survey archived successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                  - status
+                  - archivedAt
+                properties:
+                  id:
+                    type: string
+                    description: Survey identifier.
+                  status:
+                    type: string
+                    enum:
+                      - draft
+                      - inProgress
+                      - paused
+                      - completed
+                    description: Current survey status.
+                  archivedAt:
+                    type:
+                      - string
+                      - 'null'
+                    format: date-time
+                    description: >-
+                      Soft-delete/archive marker (ISO 8601). A timestamp after archiving; `null`
+                      when the survey is active.
+          examples:
+            archived:
+              summary: Survey archived
+              value:
+                data:
+                  id: clsv1234567890123456789012
+                  status: paused
+                  archivedAt: '2026-05-18T09:24:54.014Z'
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

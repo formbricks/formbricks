@@ -537,6 +537,14 @@ describe("Tests for getSurveyCount service", () => {
       const count = await getSurveyCount(mockId);
       expect(count).toEqual(0);
     });
+
+    test("Counts archived surveys too so the onboarding gate stays satisfied", async () => {
+      await getSurveyCount(mockId);
+      // The onboarding count must be archive-inclusive: no archivedAt filter in the where clause.
+      expect(prisma.survey.count).toHaveBeenCalledWith({
+        where: { workspaceId: mockId },
+      });
+    });
   });
 
   describe("Sad Path", () => {
@@ -825,6 +833,24 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        // archivedAt is not part of the create schema; a supplied value must never reach the DB,
+        // otherwise the purge cron would hard-delete the survey with no archive audit or retention window.
+        archivedAt: new Date("2020-01-01T00:00:00Z"),
+      } as typeof mockCreateSurveyInput);
+
+      expect(prisma.survey.create).toHaveBeenCalledTimes(1);
+      const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(createArg.data).not.toHaveProperty("archivedAt");
     });
 
     test("throws InvalidInputError when creating a non-draft app survey with no triggers", async () => {

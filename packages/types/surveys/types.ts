@@ -3845,6 +3845,9 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     workspaceOverwrites: true,
     languages: true,
     followUps: true,
+    // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
+    // otherwise a caller could POST an already-archived, purge-eligible survey.
+    archivedAt: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -3893,6 +3896,9 @@ export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
     workspaceOverwrites: true,
     languages: true,
     followUps: true,
+    // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
+    // otherwise a caller could POST an already-archived, purge-eligible survey.
+    archivedAt: true,
   })
   .extend({
     name: z.string(), // Keep name required

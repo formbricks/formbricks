@@ -190,7 +190,7 @@ describe("archiveSurvey", () => {
     vi.clearAllMocks();
   });
 
-  test("should archive an inProgress survey by pausing it and clearing publishOn", async () => {
+  test("should archive an inProgress survey by pausing it, preserving publishOn", async () => {
     const findUniqueMock = vi
       .fn()
       .mockResolvedValue({ id: surveyId, status: "inProgress", archivedAt: null });
@@ -204,12 +204,12 @@ describe("archiveSurvey", () => {
 
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: surveyId },
-      data: { archivedAt: expect.any(Date), publishOn: null, status: "paused" },
+      data: { archivedAt: expect.any(Date), status: "paused" },
       select: { id: true, status: true, archivedAt: true },
     });
   });
 
-  test("should archive a paused survey without changing its status", async () => {
+  test("should archive a paused survey without changing its status or publishOn", async () => {
     const findUniqueMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: null });
     const updateMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
 
@@ -221,7 +221,7 @@ describe("archiveSurvey", () => {
 
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: surveyId },
-      data: { archivedAt: expect.any(Date), publishOn: null },
+      data: { archivedAt: expect.any(Date) },
       select: { id: true, status: true, archivedAt: true },
     });
   });

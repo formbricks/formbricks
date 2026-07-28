@@ -76,7 +76,10 @@ export const deleteSurvey = async (surveyId: string, options?: { requireArchived
 /**
  * Soft-delete (archive) a survey. Archived surveys are hidden from the default list, stop
  * collecting responses, and are permanently deleted by the purge job after the retention window.
- * - Sets archivedAt to now and clears publishOn (so the scheduling job never auto-publishes it).
+ * - Sets archivedAt to now. publishOn is preserved so restore returns the survey unchanged: the
+ *   scheduling job already excludes archived surveys (archivedAt: null) from its publish/close scan,
+ *   so an archived survey can't auto-publish regardless — clearing publishOn would only destroy a
+ *   scheduled launch date that restore is supposed to hand back.
  * - If the survey was inProgress, moves it to paused so response/display intake stops immediately.
  * - Idempotent: archiving an already-archived survey is a no-op.
  */
@@ -102,7 +105,6 @@ export const archiveSurvey = async (surveyId: string) => {
         where: { id: surveyId },
         data: {
           archivedAt: new Date(),
-          publishOn: null,
           ...(survey.status === "inProgress" ? { status: "paused" } : {}),
         },
         select: { id: true, status: true, archivedAt: true },

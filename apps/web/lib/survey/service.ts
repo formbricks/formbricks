@@ -259,11 +259,14 @@ export const getSurveys = reactCache(
 export const getSurveyCount = reactCache(async (workspaceId: string): Promise<number> => {
   validateInputs([workspaceId, ZId]);
   try {
+    // Deliberately archive-inclusive. The sole consumer is the onboarding gate
+    // (redirect-if-onboarding-complete.ts): a workspace whose only survey is archived has already
+    // finished onboarding, so it must count > 0. Excluding archived here bounces such a user back
+    // into the "create your first survey" flow on every login — a full-screen page with no route to
+    // the Archived filter — while their archived survey counts down to permanent deletion.
     const surveyCount = await prisma.survey.count({
       where: {
         workspaceId,
-        // Archived surveys are hidden by default across the app.
-        archivedAt: null,
       },
     });
 
