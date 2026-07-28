@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -30,18 +31,18 @@ export const EditPublicSurveyAlertDialog = ({
   secondaryButtonText,
 }: EditPublicSurveyAlertDialogProps) => {
   const { t } = useTranslation();
+  // Track which action is running so the spinner shows on the clicked button,
+  // regardless of whether the async action is the primary or secondary one.
+  const [pendingLabel, setPendingLabel] = useState<string | null>(null);
   const actions = [] as Array<{
     label?: string;
     onClick: () => void | Promise<void>;
-    disabled?: boolean;
-    loading?: boolean;
     variant: React.ComponentProps<typeof Button>["variant"];
   }>;
   if (secondaryButtonAction) {
     actions.push({
       label: secondaryButtonText,
       onClick: secondaryButtonAction,
-      disabled: isLoading,
       variant: "secondary",
     });
   }
@@ -49,7 +50,6 @@ export const EditPublicSurveyAlertDialog = ({
     actions.push({
       label: primaryButtonText,
       onClick: primaryButtonAction,
-      loading: isLoading,
       variant: "default",
     });
   }
@@ -78,8 +78,16 @@ export const EditPublicSurveyAlertDialog = ({
         </DialogBody>
 
         <DialogFooter>
-          {actions.map(({ label, onClick, loading, variant, disabled }) => (
-            <Button key={label} variant={variant} onClick={onClick} loading={loading} disabled={disabled}>
+          {actions.map(({ label, onClick, variant }) => (
+            <Button
+              key={label}
+              variant={variant}
+              loading={isLoading && pendingLabel === label}
+              disabled={isLoading && pendingLabel !== label}
+              onClick={() => {
+                setPendingLabel(label ?? null);
+                void onClick();
+              }}>
               {label}
             </Button>
           ))}
