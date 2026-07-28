@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -113,15 +114,9 @@ const ZGetTeamsByOrganizationIdAction = z.object({
 export const getTeamsByOrganizationIdAction = authenticatedActionClient
   .inputSchema(ZGetTeamsByOrganizationIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
     const teams = await getTeamsByOrganizationId(parsedInput.organizationId);
     return teams;

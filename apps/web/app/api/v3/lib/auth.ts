@@ -55,7 +55,6 @@ export async function requireSessionWorkspaceAccess(
     // Resolve workspaceId → workspaceId, organizationId (single place to change when Workspace exists).
     const context = await resolveV3WorkspaceContext(workspaceId);
 
-    // Org + workspace-team access; we use internal IDs from context.
     await checkAuthorizationUpdated({
       userId,
       organizationId: context.organizationId,

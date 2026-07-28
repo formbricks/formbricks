@@ -85,6 +85,38 @@ evaluator must continue honoring `USER_MANAGEMENT_MINIMUM_ROLE`:
 This deployment setting is evaluator input. It is not encoded into the static
 actor/action/resource types.
 
+## Migration inventory
+
+The central interface still selects the legacy evaluator. Migration means
+callers use semantic actor/action/resource decisions; it does not enable an
+AuthZed network dependency.
+
+### Migrated by ENG-1714
+
+- Canonical organization, workspace-team, and team-admin patterns accepted by
+  the action-client compatibility adapter.
+- Organization membership and role helper decisions.
+- Action-aware workspace access and shared analysis/V3 session workspace
+  authorization.
+- Organization settings, workspace settings, team operations, and
+  user-managed API-key settings migrated to explicit actions.
+
+### Assigned to ENG-1731
+
+- API-key principals in V1, V2, V3, MCP, and storage authorization paths.
+- `ApiKeyWorkspace` permissions and organization access-control flags.
+- Organization-only API-key opt-in and API-key revocation behavior.
+
+### Assigned to ENG-1737
+
+- The broad, non-action-aware `hasUserWorkspaceAccess` navigation helper.
+- Layout and UI-derived access flags.
+- Unrecognized action-client compatibility shapes and remaining
+  feature-specific role checks.
+
+New authorization-sensitive code must use `can` or `assertCan`; it must not add
+callers to the compatibility fallback or broad workspace helper.
+
 ## Explicit exclusions
 
 The current contract has no system/service principal, survey-level sharing,

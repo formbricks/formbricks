@@ -70,7 +70,11 @@ describe("checkWorkspaceAccess", () => {
       organizationId: workspaceAccessInput.organizationId,
       access: [
         { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", minPermission: "readWrite", workspaceId: workspaceAccessInput.workspaceId },
+        {
+          type: "workspaceTeam",
+          minPermission: "readWrite",
+          workspaceId: workspaceAccessInput.workspaceId,
+        },
       ],
     });
   });

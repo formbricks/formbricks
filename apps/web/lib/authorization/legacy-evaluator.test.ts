@@ -5,10 +5,10 @@ import type { TMembership } from "@formbricks/types/memberships";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getUserManagementAccess } from "@/lib/membership/utils";
-import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import { AUTHORIZATION_PERMISSION_MAP, type TAuthorizationActor } from "./contract";
 import { legacyEvaluator } from "./legacy-evaluator";
+import { hasUserWorkspaceAccessForActionLegacy } from "./legacy-workspace-access";
 import {
   getApiKeyAuthById,
   getApiKeyOrganizationId,
@@ -18,7 +18,7 @@ import {
   getTeamOrganizationId,
 } from "./resolvers";
 
-vi.mock("@/lib/workspace/auth", () => ({ hasUserWorkspaceAccessForAction: vi.fn() }));
+vi.mock("./legacy-workspace-access", () => ({ hasUserWorkspaceAccessForActionLegacy: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
 vi.mock("@/modules/ee/teams/lib/roles", () => ({ getTeamRoleByTeamIdUserId: vi.fn() }));
 // The evaluator only reads USER_MANAGEMENT_MINIMUM_ROLE from constants; stub the module
@@ -62,39 +62,39 @@ beforeEach(() => {
 describe("legacyEvaluator — workspace-derived resources (user)", () => {
   test("survey read/write/manage map to the GET/POST/DELETE workspace gates", async () => {
     vi.mocked(getSurveyWorkspaceId).mockResolvedValue("ws1");
-    vi.mocked(hasUserWorkspaceAccessForAction).mockResolvedValue(true);
+    vi.mocked(hasUserWorkspaceAccessForActionLegacy).mockResolvedValue(true);
 
     await can(USER, "survey.read", { type: "survey", id: "s1" });
-    expect(hasUserWorkspaceAccessForAction).toHaveBeenLastCalledWith("user1", "ws1", "GET");
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenLastCalledWith("user1", "ws1", "GET");
 
     await can(USER, "survey.write", { type: "survey", id: "s1" });
-    expect(hasUserWorkspaceAccessForAction).toHaveBeenLastCalledWith("user1", "ws1", "POST");
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenLastCalledWith("user1", "ws1", "POST");
 
     await can(USER, "survey.manage", { type: "survey", id: "s1" });
-    expect(hasUserWorkspaceAccessForAction).toHaveBeenLastCalledWith("user1", "ws1", "DELETE");
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenLastCalledWith("user1", "ws1", "DELETE");
   });
 
   test("survey delete uses the readWrite gate, response export uses the read gate", async () => {
     vi.mocked(getSurveyWorkspaceId).mockResolvedValue("ws1");
     vi.mocked(getResponseSurveyId).mockResolvedValue("s1");
-    vi.mocked(hasUserWorkspaceAccessForAction).mockResolvedValue(true);
+    vi.mocked(hasUserWorkspaceAccessForActionLegacy).mockResolvedValue(true);
 
     await can(USER, "survey.delete", { type: "survey", id: "s1" });
-    expect(hasUserWorkspaceAccessForAction).toHaveBeenLastCalledWith("user1", "ws1", "POST");
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenLastCalledWith("user1", "ws1", "POST");
 
     await can(USER, "response.export", { type: "response", id: "r1" });
-    expect(hasUserWorkspaceAccessForAction).toHaveBeenLastCalledWith("user1", "ws1", "GET");
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenLastCalledWith("user1", "ws1", "GET");
   });
 
   test("returns false when the resource does not resolve to a workspace", async () => {
     vi.mocked(getSurveyWorkspaceId).mockResolvedValue(null);
     await expect(can(USER, "survey.read", { type: "survey", id: "missing" })).resolves.toBe(false);
-    expect(hasUserWorkspaceAccessForAction).not.toHaveBeenCalled();
+    expect(hasUserWorkspaceAccessForActionLegacy).not.toHaveBeenCalled();
   });
 
   test("propagates operational failures instead of denying", async () => {
     vi.mocked(getSurveyWorkspaceId).mockResolvedValue("ws1");
-    vi.mocked(hasUserWorkspaceAccessForAction).mockRejectedValue(new DatabaseError("db down"));
+    vi.mocked(hasUserWorkspaceAccessForActionLegacy).mockRejectedValue(new DatabaseError("db down"));
     await expect(can(USER, "survey.read", { type: "survey", id: "s1" })).rejects.toBeInstanceOf(
       DatabaseError
     );
@@ -274,7 +274,7 @@ describe("legacyEvaluator — hardening", () => {
     vi.mocked(getSurveyWorkspaceId).mockResolvedValue("ws1");
     vi.mocked(getDashboardWorkspaceId).mockResolvedValue("ws1");
     vi.mocked(getResponseSurveyId).mockResolvedValue("s1");
-    vi.mocked(hasUserWorkspaceAccessForAction).mockResolvedValue(true);
+    vi.mocked(hasUserWorkspaceAccessForActionLegacy).mockResolvedValue(true);
 
     for (const type of ["workspace", "survey", "dashboard", "response"] as const) {
       for (const permission of AUTHORIZATION_PERMISSION_MAP[type]) {

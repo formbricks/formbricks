@@ -3,7 +3,6 @@ import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags, getUserManagementAccess } from "@/lib/membership/utils";
-import { type WorkspaceAction, hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import { hasOrganizationAccess, hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import {
@@ -14,6 +13,7 @@ import {
   type TAuthorizationResourceType,
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
+import { type LegacyWorkspaceAction, hasUserWorkspaceAccessForActionLegacy } from "./legacy-workspace-access";
 import {
   getApiKeyAuthById,
   getApiKeyOrganizationId,
@@ -57,7 +57,7 @@ const rejectUnknownActor = (actor: never): never => {
 };
 
 /** Workspace permission level required by each workspace-derived action (mirrors the contract). */
-const WORKSPACE_ACTION_LEVEL: Partial<Record<TAuthorizationAction, WorkspaceAction>> = {
+const WORKSPACE_ACTION_LEVEL: Partial<Record<TAuthorizationAction, LegacyWorkspaceAction>> = {
   // read level → GET
   "workspace.read": "GET",
   "survey.read": "GET",
@@ -90,7 +90,7 @@ const canWorkspaceScoped = async (
   if (!method) return false;
 
   if (actor.type === "user") {
-    return hasUserWorkspaceAccessForAction(actor.id, workspaceId, method);
+    return hasUserWorkspaceAccessForActionLegacy(actor.id, workspaceId, method);
   }
 
   if (actor.type === "apiKey") {
