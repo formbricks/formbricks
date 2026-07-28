@@ -280,11 +280,16 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
     await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
-    const inviteMatch = await resolveInviteMatch(parsedInput.inviteToken, parsedInput.email);
+    // Normalized once, up front, and used for every downstream decision. The sign-up form always sends
+    // this field as `inviteToken ?? ""`, so an ordinary uninvited sign-up arrives with an empty string —
+    // anything blank has to mean "no invite" everywhere, or the checks below disagree with
+    // `handlePostUserCreation` about which path the request is on.
+    const inviteToken = parsedInput.inviteToken?.trim() || undefined;
+    const inviteMatch = await resolveInviteMatch(inviteToken, parsedInput.email);
 
     // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
     // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
-    if (parsedInput.inviteToken !== undefined && inviteMatch !== "valid") {
+    if (inviteToken && inviteMatch !== "valid") {
       logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
       throw new InvalidInputError("Invalid or expired invite token");
     }
@@ -319,7 +324,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     });
 
     if (!userAlreadyExisted && user) {
-      await handlePostUserCreation(ctx, user, parsedInput.inviteToken);
+      await handlePostUserCreation(ctx, user, inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
@@ -341,7 +346,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           ...attributionProperties,
           auth_provider: "credentials",
           email_domain: user.email.split("@")[1],
-          signup_source: parsedInput.inviteToken ? "invite" : "direct",
+          signup_source: inviteToken ? "invite" : "direct",
           invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
         },
         ctx.auditLoggingCtx.organizationId

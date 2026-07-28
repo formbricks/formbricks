@@ -98,7 +98,9 @@ describe("createUserAction — signup verification email callbackURL", () => {
     notificationSettings: { alert: {} },
   };
 
-  const baseInput = { name: "Ada", email: "Ada@Example.com", password: "Password123!" };
+  // Mirrors what signup-form.tsx actually posts: it always sends the field, as `inviteToken ?? ""`,
+  // so an uninvited sign-up arrives with an empty string rather than undefined.
+  const baseInput = { name: "Ada", email: "Ada@Example.com", password: "Password123!", inviteToken: "" };
 
   const newCtx = () => ({ auditLoggingCtx: { organizationId: "", userId: "" } });
 
@@ -152,6 +154,26 @@ describe("createUserAction — signup verification email callbackURL", () => {
       },
     });
   });
+
+  // Regression: signup-form.tsx sends `inviteToken: inviteToken ?? ""`, so an uninvited sign-up arrives
+  // with an empty string. Guarding the "unusable invite" check on `!== undefined` rather than
+  // truthiness rejected every public sign-up with "Invalid or expired invite token".
+  test.each(["", "   ", undefined])(
+    "treats %p as no invite and completes an ordinary sign-up",
+    async (inviteToken) => {
+      vi.mocked(resolveInviteMatch).mockResolvedValue("missing");
+
+      const result = await createUserAction({
+        ctx: newCtx(),
+        parsedInput: { ...baseInput, inviteToken },
+      } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(auth.api.signUpEmail).toHaveBeenCalled();
+      // No invite means no membership grant — the org-creation path handles it instead.
+      expect(createMembership).not.toHaveBeenCalled();
+    }
+  );
 
   // Regression: an invite binds a role in an organization to one address. Accepting it only on a valid
   // signature meant a leaked or forwarded invite link could be redeemed with any address.
@@ -244,7 +266,12 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     locale: "en-US",
     notificationSettings: { alert: {} },
   };
-  const blockedInput = { name: "Spammer", email: "spammer@gmail.com", password: "Password123!" };
+  const blockedInput = {
+    name: "Spammer",
+    email: "spammer@gmail.com",
+    password: "Password123!",
+    inviteToken: "",
+  };
   const newCtx = () => ({ auditLoggingCtx: { organizationId: "", userId: "" } });
 
   beforeEach(() => {
