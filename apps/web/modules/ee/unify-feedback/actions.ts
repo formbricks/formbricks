@@ -17,7 +17,7 @@ import {
 const ensureAccess = async (
   userId: string,
   workspaceId: string,
-  minPermission: "read" | "readWrite"
+  minPermission: "read" | "readWrite" | "manage"
 ): Promise<void> => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
@@ -91,7 +91,9 @@ export const deleteFeedbackRecordAction = authenticatedActionClient
   .inputSchema(ZDeleteFeedbackRecordAction)
   .action(async ({ ctx, parsedInput }) => {
     const [, workspaceDirectoryIds] = await Promise.all([
-      ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
+      // Deleting feedback records is manage-level, matching the gateway and the DELETE -> manage rule
+      // the rest of the API follows. Org owners/managers still pass via the organization access item.
+      ensureAccess(ctx.user.id, parsedInput.workspaceId, "manage"),
       getWorkspaceDirectoryIds(parsedInput.workspaceId),
     ]);
 

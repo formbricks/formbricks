@@ -23,7 +23,7 @@ import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const ZFeedbackRecordId = z.uuid();
 
-type TFeedbackRecordsGatewayPermission = "read" | "write";
+type TFeedbackRecordsGatewayPermission = "read" | "write" | "manage";
 type TFeedbackRecordsGatewayOperation =
   | "list"
   | "create"
@@ -50,9 +50,14 @@ const apiKeyPermissionWeight: Record<ApiKeyPermission, number> = {
 const gatewayPermissionToApiKeyPermissionWeight: Record<TFeedbackRecordsGatewayPermission, number> = {
   read: apiKeyPermissionWeight.read,
   write: apiKeyPermissionWeight.write,
+  manage: apiKeyPermissionWeight.manage,
 };
 
-const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {
+// Exported so the method -> required-permission map can be asserted directly.
+export const parseFeedbackRecordsGatewayRoute = (
+  method: string,
+  pathname: string
+): TParsedGatewayRoute | null => {
   const normalizedPath = normalizeFeedbackRecordsPath(pathname);
   if (!normalizedPath) {
     return null;
@@ -65,7 +70,7 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
       case "POST":
         return { operation: "create", requiredPermission: "write", tenantSource: "body" };
       case "DELETE":
-        return { operation: "bulkDelete", requiredPermission: "write", tenantSource: "query" };
+        return { operation: "bulkDelete", requiredPermission: "manage", tenantSource: "query" };
       default:
         return null;
     }
@@ -88,7 +93,12 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
       case "PATCH":
         return { operation: "update", requiredPermission: "write", tenantSource: "recordLookup", recordId };
       case "DELETE":
-        return { operation: "delete", requiredPermission: "write", tenantSource: "recordLookup", recordId };
+        return {
+          operation: "delete",
+          requiredPermission: "manage",
+          tenantSource: "recordLookup",
+          recordId,
+        };
       default:
         return null;
     }
@@ -157,7 +167,8 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
   return getBearerTokenFromHeaders(headers);
 };
 
-const hasApiKeyImplicitFeedbackDirectoryAccess = (
+// Exported for tests: this is where an API key's org-level and per-workspace grants are ranked.
+export const hasApiKeyImplicitFeedbackDirectoryAccess = (
   authentication: TAuthenticationApiKey,
   feedbackDirectoryOrganizationId: string,
   workspaceIds: string[],
@@ -174,8 +185,10 @@ const hasApiKeyImplicitFeedbackDirectoryAccess = (
     return false;
   }
 
+  // `organizationAccess.accessControl` only models read and write, so it can never satisfy a `manage`
+  // requirement — deletes must come from a workspace permission that actually grants `manage`.
   const orgAccessControl = authentication.organizationAccess?.accessControl;
-  if (orgAccessControl?.write) {
+  if (orgAccessControl?.write && requiredPermission !== "manage") {
     return true;
   }
   if (orgAccessControl?.read && requiredPermission === "read") {
@@ -292,7 +305,9 @@ const authorizeFeedbackRecordsGatewayRequest = async (
   }
 
   try {
-    const minPermission: "read" | "readWrite" = requiredPermission === "read" ? "read" : "readWrite";
+    // Deletes need team `manage`; everything else keeps the read/readWrite split.
+    const minPermission: "read" | "readWrite" | "manage" =
+      requiredPermission === "read" ? "read" : requiredPermission === "manage" ? "manage" : "readWrite";
 
     await checkAuthorizationUpdated({
       userId: principal.userId,
