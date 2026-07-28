@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { EMBEDDINGS_UNAVAILABLE_DETAIL, handleUnexpectedError, hubErrorToProblemResponse } from "./errors";
+import { handleUnexpectedError, hubErrorToProblemResponse } from "./hub-errors";
 
 vi.mock("server-only", () => ({}));
 
@@ -9,9 +9,9 @@ const instance = "/api/mcp";
 const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() } as any;
 
 /**
- * The status matrix is exercised end-to-end in `operations.test.ts`; what is pinned here is the part that
- * only this module owns — the *bounds* on what a remote service may contribute to our response body, and
- * the unexpected-throw mapping, which no operation test reaches.
+ * The status matrix is exercised end-to-end by the surfaces that use this mapper; what is pinned here is the
+ * part only this module owns — the *bounds* on what a remote service may contribute to our response body, the
+ * vocabulary rewrite, and the unexpected-throw mapping, which no operation test reaches.
  */
 describe("hubErrorToProblemResponse", () => {
   const hubError = (status: number, extra: Record<string, unknown> = {}) => ({
@@ -149,10 +149,10 @@ describe("hubErrorToProblemResponse", () => {
 
   test("uses the caller's wording for a 503 when it knows what is unconfigured", async () => {
     const body = await hubErrorToProblemResponse(hubError(503), requestId, instance, {
-      serviceUnavailableDetail: EMBEDDINGS_UNAVAILABLE_DETAIL,
+      serviceUnavailableDetail: "Feature X needs Y configured.",
     }).json();
 
-    expect(body.detail).toContain("EMBEDDING_PROVIDER");
+    expect(body.detail).toBe("Feature X needs Y configured.");
   });
 
   /**

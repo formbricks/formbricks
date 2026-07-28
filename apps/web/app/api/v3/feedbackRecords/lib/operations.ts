@@ -4,6 +4,12 @@ import type { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import {
+  handleUnexpectedError,
+  hubErrorToProblemResponse,
+  relayableHubDetail,
+  toInvalidParams,
+} from "@/app/api/v3/lib/hub-errors";
+import {
   noContentResponse,
   problemConflict,
   problemUnprocessableContent,
@@ -37,14 +43,7 @@ import {
   requireOwnedFeedbackRecord,
   resolveWorkspaceFeedbackTenant,
 } from "./access";
-import {
-  EMBEDDINGS_UNAVAILABLE_DETAIL,
-  EMBEDDING_PENDING_DETAIL,
-  handleUnexpectedError,
-  hubErrorToProblemResponse,
-  relayableHubDetail,
-  toInvalidParams,
-} from "./errors";
+import { EMBEDDINGS_UNAVAILABLE_DETAIL, EMBEDDING_PENDING_DETAIL } from "./errors";
 import {
   SIMILARITY_LIMIT_DEFAULT,
   SIMILARITY_MIN_SCORE_DEFAULT,

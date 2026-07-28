@@ -6,7 +6,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { retrieveFeedbackRecord } from "@/modules/hub/service";
 import type { FeedbackRecordData } from "@/modules/hub/types";
-import { hubErrorToProblemResponse } from "./errors";
+import { hubErrorToProblemResponse } from "@/app/api/v3/lib/hub-errors";
 
 /**
  * Tenant isolation for the feedback-records surface. Two guards live here, and every operation goes
