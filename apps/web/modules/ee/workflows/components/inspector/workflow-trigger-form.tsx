@@ -1,5 +1,6 @@
 "use client";
 
+import { useAtomValue } from "jotai";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,7 @@ import {
   useWorkflowSurveyEndings,
   useWorkflowSurveyOptions,
 } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { prunedTriggerEndingCardIdsAtom } from "@/modules/ee/workflows/state/editor";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -46,17 +47,17 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
     endingsQuery.isSuccess && endingsQuery.resolvedSurveyId === triggerSurveyId
       ? endingsQuery.endings.map((ending) => ending.id)
       : null;
-  // Ids pointing at endings that were deleted from the survey. The builder page auto-prunes these
-  // while the definition is editable, so what is left here is a workflow that cannot be repaired
-  // (enabled/archived/read-only) — flag it rather than let it fail silently.
-  const staleEndingCardIds = surveyEndingIds
-    ? reconcileEndingCardIds(node.config.endingCardIds, surveyEndingIds).removedEndingCardIds
-    : [];
-
   // Local because "specific with nothing checked yet" is a UI-only state — the config still
   // holds an empty list (= all endings) until the user checks something.
+  //
+  // Ids the builder page pruned count as "specific" too, even though they left the list empty: the
+  // user asked for specific endings and the ones they picked are gone, so this opens on the
+  // checkbox list and its "select at least one / with none selected, every ending fires" hint
+  // rather than quietly presenting the widened "all endings" state as their choice. Reads the atom
+  // rather than a prop because it is trigger-specific, and the shared node-form prop shape is not.
+  const prunedEndingCardIds = useAtomValue(prunedTriggerEndingCardIdsAtom);
   const [endingScope, setEndingScope] = useState<TEndingScope>(
-    node.config.endingCardIds.length > 0 ? "specific" : "all"
+    node.config.endingCardIds.length > 0 || prunedEndingCardIds.length > 0 ? "specific" : "all"
   );
 
   const handleSurveyChange = (surveyId: string) => {
@@ -183,17 +184,6 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
         <Label htmlFor="workflow-trigger-ending-scope">
           {t("workspace.workflows.trigger_ending_cards_label")}
         </Label>
-        {/* Only while the definition is locked: an editable one is repaired by the builder page's
-            reconcile, so rendering this there would just flash for a frame. */}
-        {!isEditable && staleEndingCardIds.length > 0 ? (
-          <Alert variant="warning" size="small">
-            <AlertDescription>
-              {t("workspace.workflows.trigger_ending_cards_stale", {
-                count: staleEndingCardIds.length,
-              })}
-            </AlertDescription>
-          </Alert>
-        ) : null}
         {renderEndingChoices()}
       </div>
     </div>

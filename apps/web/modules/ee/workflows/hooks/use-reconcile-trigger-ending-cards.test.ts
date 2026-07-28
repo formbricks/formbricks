@@ -7,19 +7,13 @@ import { Provider, createStore, useAtomValue } from "jotai";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
-import { setWorkflowDefinitionAtom, workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  prunedTriggerEndingCardIdsAtom,
+  setWorkflowDefinitionAtom,
+  workflowDefinitionAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { createWrapper, newQueryClient } from "./test-utils";
 import { useReconcileTriggerEndingCards } from "./use-reconcile-trigger-ending-cards";
-
-const toastSuccess = vi.fn();
-vi.mock("react-hot-toast", () => ({
-  default: { success: (msg: string) => toastSuccess(msg), error: vi.fn() },
-}));
-vi.mock("react-i18next", () => {
-  // Stable identity: `t` is an effect dependency, and a per-render one would re-run the reconcile.
-  const translation = { t: (key: string) => key };
-  return { useTranslation: () => translation };
-});
 
 const SURVEY_ID = "survey_1";
 const endingsQueryKey = (surveyId: string) => ["workflow-trigger", "survey-endings", surveyId];
@@ -73,7 +67,10 @@ const renderReconcile = ({
     () => {
       const current = useAtomValue(workflowDefinitionAtom);
       useReconcileTriggerEndingCards({ definition: current, isEditable });
-      return current?.trigger?.config.endingCardIds;
+      return {
+        endingCardIds: current?.trigger?.config.endingCardIds,
+        pruned: useAtomValue(prunedTriggerEndingCardIdsAtom),
+      };
     },
     { wrapper }
   );
@@ -81,7 +78,6 @@ const renderReconcile = ({
 };
 
 beforeEach(() => {
-  toastSuccess.mockClear();
   vi.stubGlobal("fetch", vi.fn());
 });
 
@@ -90,24 +86,24 @@ afterEach(() => {
 });
 
 describe("useReconcileTriggerEndingCards", () => {
-  test("prunes ids whose ending was deleted from the survey and says so", async () => {
+  test("prunes ids whose ending was deleted from the survey and records them", async () => {
     vi.mocked(global.fetch).mockResolvedValue(surveyWithEndings(["end_new"]));
 
     const { result } = renderReconcile({ definition: buildDefinition(["end_deleted", "end_new"]) });
 
-    await waitFor(() => expect(result.current).toEqual(["end_new"]));
-    expect(toastSuccess).toHaveBeenCalledWith("workspace.workflows.trigger_ending_cards_pruned");
-    expect(toastSuccess).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(result.current.endingCardIds).toEqual(["end_new"]));
+    expect(result.current.pruned).toEqual(["end_deleted"]);
   });
 
-  test("warns that the trigger widened when every referenced ending is gone", async () => {
+  test("records the drop when every referenced ending is gone", async () => {
     vi.mocked(global.fetch).mockResolvedValue(surveyWithEndings(["end_other"]));
 
     const { result } = renderReconcile({ definition: buildDefinition(["end_deleted"]) });
 
-    // An empty list means "all endings", so clearing the last id is a widening, not a tidy-up.
-    await waitFor(() => expect(result.current).toEqual([]));
-    expect(toastSuccess).toHaveBeenCalledWith("workspace.workflows.trigger_ending_cards_pruned_all");
+    // An empty list means "all endings", so clearing the last id widens the trigger. Publishing
+    // the dropped id is what lets the form keep asking for a specific pick.
+    await waitFor(() => expect(result.current.endingCardIds).toEqual([]));
+    expect(result.current.pruned).toEqual(["end_deleted"]);
   });
 
   test("drops duplicate ids without claiming an ending went missing", async () => {
@@ -115,18 +111,18 @@ describe("useReconcileTriggerEndingCards", () => {
 
     const { result } = renderReconcile({ definition: buildDefinition(["end_1", "end_1"]) });
 
-    await waitFor(() => expect(result.current).toEqual(["end_1"]));
-    expect(toastSuccess).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.endingCardIds).toEqual(["end_1"]));
+    expect(result.current.pruned).toEqual([]);
   });
 
-  test("leaves a clean selection untouched and stays quiet", async () => {
+  test("leaves a clean selection untouched and reports no drift", async () => {
     vi.mocked(global.fetch).mockResolvedValue(surveyWithEndings(["end_1", "end_2"]));
 
     const { result } = renderReconcile({ definition: buildDefinition(["end_1"]) });
 
     await waitFor(() => expect(vi.mocked(global.fetch)).toHaveBeenCalled());
-    expect(result.current).toEqual(["end_1"]);
-    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(result.current.endingCardIds).toEqual(["end_1"]);
+    expect(result.current.pruned).toEqual([]);
   });
 
   test("keeps stale ids when the definition cannot be edited", async () => {
@@ -138,8 +134,8 @@ describe("useReconcileTriggerEndingCards", () => {
     });
 
     await waitFor(() => expect(vi.mocked(global.fetch)).toHaveBeenCalled());
-    expect(result.current).toEqual(["end_deleted"]);
-    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(result.current.endingCardIds).toEqual(["end_deleted"]);
+    expect(result.current.pruned).toEqual([]);
   });
 
   test("keeps stale ids when the survey lookup fails — a failed fetch is not 'no endings'", async () => {
@@ -148,14 +144,16 @@ describe("useReconcileTriggerEndingCards", () => {
     const { result } = renderReconcile({ definition: buildDefinition(["end_deleted"]) });
 
     await waitFor(() => expect(vi.mocked(global.fetch)).toHaveBeenCalled());
-    expect(result.current).toEqual(["end_deleted"]);
+    expect(result.current.endingCardIds).toEqual(["end_deleted"]);
+    expect(result.current.pruned).toEqual([]);
   });
 
   test("does not fetch when the trigger targets all endings", async () => {
     const { result } = renderReconcile({ definition: buildDefinition([]) });
 
-    await waitFor(() => expect(result.current).toEqual([]));
+    await waitFor(() => expect(result.current.endingCardIds).toEqual([]));
     expect(vi.mocked(global.fetch)).not.toHaveBeenCalled();
+    expect(result.current.pruned).toEqual([]);
   });
 
   test("ignores endings that resolved for a different survey", async () => {
@@ -168,6 +166,7 @@ describe("useReconcileTriggerEndingCards", () => {
     const { result } = renderReconcile({ definition: buildDefinition(["end_deleted"]), queryClient });
 
     await waitFor(() => expect(vi.mocked(global.fetch)).toHaveBeenCalled());
-    expect(result.current).toEqual(["end_deleted"]);
+    expect(result.current.endingCardIds).toEqual(["end_deleted"]);
+    expect(result.current.pruned).toEqual([]);
   });
 });

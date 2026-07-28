@@ -2,12 +2,13 @@
 
 import { useSetAtom } from "jotai";
 import { useEffect } from "react";
-import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { reconcileDefinitionEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
-import { setWorkflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  prunedTriggerEndingCardIdsAtom,
+  setWorkflowDefinitionAtom,
+} from "@/modules/ee/workflows/state/editor";
 
 interface UseReconcileTriggerEndingCardsProps {
   definition: TWorkflowDefinition | null;
@@ -24,15 +25,19 @@ interface UseReconcileTriggerEndingCardsProps {
  * the canvas summary counts only real endings and enable is never blocked by a phantom id. The
  * page's autosave persists the repair, which is also what stops the drift from coming back.
  *
- * Read-only / enabled / archived workflows are left alone (their definition cannot be PATCHed);
- * the trigger form flags the leftovers instead.
+ * Pruning the LAST id leaves an empty list, which the trigger reads as "all endings" — a widening
+ * of what fires the workflow. So the dropped ids are also published to
+ * `prunedTriggerEndingCardIdsAtom`, which is how the trigger form knows to keep presenting the
+ * "specific endings" scope and ask for a fresh pick rather than let the widening pass unseen.
+ *
+ * Read-only / enabled / archived workflows are left alone — their definition cannot be PATCHed.
  */
 export const useReconcileTriggerEndingCards = ({
   definition,
   isEditable,
 }: Readonly<UseReconcileTriggerEndingCardsProps>): void => {
-  const { t } = useTranslation();
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
+  const setPrunedEndingCardIds = useSetAtom(prunedTriggerEndingCardIdsAtom);
 
   const trigger = definition?.trigger ?? null;
   const surveyId = trigger?.config.surveyId ?? null;
@@ -57,16 +62,19 @@ export const useReconcileTriggerEndingCards = ({
     if (!reconciled) return;
 
     setDefinition(reconciled.definition);
-    if (reconciled.removedEndingCardIds.length === 0) return; // de-duplication only; nothing to report
-
-    // Pruning the LAST id leaves an empty list, which the trigger reads as "all endings" — that
-    // widens what fires the workflow, so say so instead of letting it pass as a tidy-up.
-    const clearedSelection = reconciled.definition.trigger?.config.endingCardIds.length === 0;
-    const count = reconciled.removedEndingCardIds.length;
-    toast.success(
-      clearedSelection
-        ? t("workspace.workflows.trigger_ending_cards_pruned_all", { count })
-        : t("workspace.workflows.trigger_ending_cards_pruned", { count })
-    );
-  }, [definition, endings, isEditable, isSuccess, resolvedSurveyId, surveyId, setDefinition, t]);
+    // Empty for a de-duplication-only fix, which needs no prompting — the selection still means
+    // what the user picked.
+    if (reconciled.removedEndingCardIds.length > 0) {
+      setPrunedEndingCardIds(reconciled.removedEndingCardIds);
+    }
+  }, [
+    definition,
+    endings,
+    isEditable,
+    isSuccess,
+    resolvedSurveyId,
+    surveyId,
+    setDefinition,
+    setPrunedEndingCardIds,
+  ]);
 };
