@@ -10,7 +10,13 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import {
+  IS_FORMBRICKS_CLOUD,
+  IS_TURNSTILE_CONFIGURED,
+  SIGNUP_ENABLED,
+  TURNSTILE_SECRET_KEY,
+} from "@/lib/constants";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
@@ -131,6 +137,17 @@ async function handleInviteAcceptance(
   inviteToken: string,
   user: TCreatedUser
 ): Promise<void> {
+  // An invite grants a specific address a specific role in a specific organization. Verifying the
+  // signature and loading the row is not enough: without matching the token's email against the account
+  // being created, anyone holding an invite link — they get forwarded, pasted into tickets, and land in
+  // referrer logs — could redeem it with an arbitrary address and take the invited role, which may be
+  // manager or owner. `resolveInviteMatch` also enforces the invite's expiry, which this path skipped.
+  const inviteMatch = await resolveInviteMatch(inviteToken, user.email);
+  if (inviteMatch !== "valid") {
+    logger.warn({ inviteMatch }, "Rejected invite acceptance during sign-up");
+    throw new InvalidInputError("Invalid or expired invite token");
+  }
+
   const inviteTokenData = verifyInviteToken(inviteToken);
   const invite = await getInvite(inviteTokenData.inviteId);
 
@@ -263,14 +280,28 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
     await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
+    const inviteMatch = await resolveInviteMatch(parsedInput.inviteToken, parsedInput.email);
+
+    // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
+    // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
+    if (parsedInput.inviteToken !== undefined && inviteMatch !== "valid") {
+      logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
+      throw new InvalidInputError("Invalid or expired invite token");
+    }
+
+    // Mirror the policy signup/page.tsx applies: when public sign-up is closed, only an invited user
+    // gets through. Enforcing it only in the page left this action open, so anyone could create an
+    // account on a self-hosted instance the operator had configured as closed. The fresh-instance
+    // exception is the initial administrator, who has no invite to present.
+    if (!SIGNUP_ENABLED || !(await getIsMultiOrgEnabled())) {
+      if (inviteMatch !== "valid" && !(await getIsFreshInstance())) {
+        throw new InvalidInputError("Sign up is disabled");
+      }
+    }
+
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
-    if (
-      await isSignupEmailDomainBlocked(
-        parsedInput.email,
-        async () => (await resolveInviteMatch(parsedInput.inviteToken, parsedInput.email)) === "valid"
-      )
-    ) {
+    if (await isSignupEmailDomainBlocked(parsedInput.email, async () => inviteMatch === "valid")) {
       throw new InvalidInputError(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
     }
 

@@ -1,10 +1,8 @@
 import { Response, Survey } from "@formbricks/database/prisma";
-import { logger } from "@formbricks/logger";
 import { Result, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { deleteFile } from "@/modules/storage/service";
-import { parseStorageFileUrl } from "@/modules/storage/utils";
+import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 
 export const findAndDeleteUploadedFilesInResponse = async (
   responseData: Response["data"],
@@ -23,20 +21,7 @@ export const findAndDeleteUploadedFilesInResponse = async (
     .filter(([questionId]) => fileUploadQuestions.has(questionId))
     .flatMap(([, questionResponse]) => questionResponse as string[]);
 
-  const deletionPromises = fileUrls.map(async (fileUrl) => {
-    try {
-      const storageFile = parseStorageFileUrl(fileUrl);
-
-      if (!storageFile) {
-        throw new Error(`Invalid storage file URL: ${fileUrl}`);
-      }
-      return deleteFile(storageFile.storageId, storageFile.accessType, storageFile.fileName, workspaceId);
-    } catch (error) {
-      logger.error({ error, fileUrl }, "Failed to delete file");
-    }
-  });
-
-  await Promise.all(deletionPromises);
+  await deleteResponseFileUrls(fileUrls, workspaceId);
 
   return okVoid();
 };
