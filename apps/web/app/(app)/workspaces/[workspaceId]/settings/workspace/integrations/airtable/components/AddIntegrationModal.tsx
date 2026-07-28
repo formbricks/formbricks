@@ -102,7 +102,7 @@ type AddIntegrationModalProps = {
 const NoBaseFoundError = () => {
   const { t } = useTranslation();
   return (
-    <Alert>
+    <Alert role="status">
       <AlertTitle>{t("workspace.integrations.airtable.no_bases_found")}</AlertTitle>
       <AlertDescription>{t("workspace.integrations.airtable.please_create_a_base")}</AlertDescription>
     </Alert>
