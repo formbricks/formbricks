@@ -70,6 +70,24 @@ export const createResponse = async (
   } = responseInput;
 
   try {
+    // `displayId` is caller-supplied and was connected without any ownership check. Display↔Response is
+    // one-to-one, so naming another workspace's display either failed outright or moved that display
+    // onto this response, corrupting the other tenant's display and completion counts. A display always
+    // belongs to one survey, so matching it against this survey is the tightest check available.
+    if (displayId) {
+      const display = await (tx ?? prisma).display.findUnique({
+        where: { id: displayId },
+        select: { surveyId: true },
+      });
+
+      if (display?.surveyId !== surveyId) {
+        return err({
+          type: "bad_request",
+          details: [{ field: "displayId", issue: "does not belong to the given survey" }],
+        });
+      }
+    }
+
     let contact: { id: string; attributes: TContactAttributes } | null = null;
 
     // If userId is provided, look up the contact by userId
