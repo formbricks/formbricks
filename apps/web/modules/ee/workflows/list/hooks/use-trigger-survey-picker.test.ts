@@ -130,7 +130,10 @@ describe("useWorkflowSurveyEndings", () => {
     ]);
   });
 
-  test("returns [] when endings is not an array", async () => {
+  // Errors rather than resolving to []: an empty success is indistinguishable from "every ending
+  // was deleted", and callers that prune stored ids against this list would delete a valid
+  // selection. Landing in the error branch keeps them on the "leave it alone" path.
+  test("errors when endings is not an array", async () => {
     const fetchMock = vi.mocked(global.fetch);
     fetchMock.mockResolvedValueOnce(jsonResponse({ data: { endings: "nope" } }));
 
@@ -138,8 +141,10 @@ describe("useWorkflowSurveyEndings", () => {
       wrapper: createWrapper(newQueryClient()),
     });
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.isSuccess).toBe(false);
     expect(result.current.endings).toEqual([]);
+    expect(result.current.resolvedSurveyId).toBeNull();
   });
 
   test("throws a parsed error when the response is not ok", async () => {
