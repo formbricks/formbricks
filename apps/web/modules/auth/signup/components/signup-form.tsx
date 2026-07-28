@@ -10,7 +10,9 @@ import { useTranslation } from "react-i18next";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import {
+  INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
@@ -158,6 +160,10 @@ export const SignupForm = ({
         } else if (errorMessage === PASSWORD_COMPROMISED_ERROR_CODE) {
           // Breached password: surface under the password field with a clear, actionable message.
           form.setError("password", { type: "manual", message: t("auth.password_compromised") });
+        } else if (errorMessage === INVITE_TOKEN_INVALID_ERROR_CODE) {
+          toast.error(t("auth.signup.invite_token_invalid"));
+        } else if (errorMessage === SIGNUP_DISABLED_ERROR_CODE) {
+          toast.error(t("auth.signup.signup_disabled"));
         } else {
           toast.error(errorMessage);
         }

@@ -106,6 +106,7 @@
       "captcha_failed": "Captcha failed",
       "company_email_required": "Please sign up with your company email address.",
       "have_an_account": "Have an account?",
+      "invite_token_invalid": "This invite link is invalid or has expired. Ask for a new invite.",
       "log_in": "Log in",
       "password_validation_contain_at_least_1_number": "Contain at least 1 number",
       "password_validation_minimum_8_and_maximum_128_characters": "Minimum 8 & Maximum 128 characters",
@@ -116,6 +117,7 @@
       "product_updates_title": "Monthly product update emails",
       "security_updates_description": "Security relevant information only, Privacy Policy applies.",
       "security_updates_title": "Security updates",
+      "signup_disabled": "Sign up is disabled on this instance.",
       "terms_of_service": "Terms of Service",
       "title": "Create your Formbricks account"
     },

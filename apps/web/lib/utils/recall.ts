@@ -236,13 +236,27 @@ const stringifyRecallValue = (value: TResponseDataValue): string => {
   return "";
 };
 
-const escapeHtml = (value: string): string =>
-  value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+const HTML_ENTITIES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+/**
+ * Encodes a string so it renders as literal text in HTML, in element content or a quoted attribute.
+ *
+ * Encoding, not sanitizing: `sanitize-html` and DOMPurify parse markup and *remove* what isn't allowed,
+ * which is the wrong tool here — a respondent who answers `<b>bold</b>` should see that text in the
+ * email, not have it silently dropped. Escaping is also what makes the value inert regardless of where
+ * the surrounding template puts it.
+ *
+ * Single pass over the five characters rather than chained `replaceAll`s, so `&` cannot be
+ * double-encoded if someone reorders the entries — with sequential replacements, moving the `&` rule
+ * after the others turns `<` into `&amp;lt;`.
+ */
+const escapeHtml = (value: string): string => value.replaceAll(/[&<>"']/g, (char) => HTML_ENTITIES[char]);
 
 /**
  * @param escapeValues HTML-escape each substituted value before splicing it in. Off by default because

@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  INVITE_TOKEN_INVALID_ERROR_CODE,
+  SIGNUP_DISABLED_ERROR_CODE,
+  SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+} from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -157,7 +161,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
   // Regression: signup-form.tsx sends `inviteToken: inviteToken ?? ""`, so an uninvited sign-up arrives
   // with an empty string. Guarding the "unusable invite" check on `!== undefined` rather than
-  // truthiness rejected every public sign-up with "Invalid or expired invite token".
+  // truthiness rejected every public sign-up with INVITE_TOKEN_INVALID_ERROR_CODE.
   test.each(["", "   ", undefined])(
     "treats %p as no invite and completes an ordinary sign-up",
     async (inviteToken) => {
@@ -208,7 +212,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
     test("rejects an uninvited signup and creates no user", async () => {
       await expect(createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never)).rejects.toThrow(
-        "Sign up is disabled"
+        SIGNUP_DISABLED_ERROR_CODE
       );
       expect(auth.api.signUpEmail).not.toHaveBeenCalled();
     });
@@ -330,7 +334,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
         ctx: newCtx(),
         parsedInput: { ...blockedInput, inviteToken: "invite-jwt-123" },
       } as never)
-    ).rejects.toThrow("Invalid or expired invite token");
+    ).rejects.toThrow(INVITE_TOKEN_INVALID_ERROR_CODE);
     expect(auth.api.signUpEmail).not.toHaveBeenCalled();
   });
 

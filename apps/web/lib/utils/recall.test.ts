@@ -581,6 +581,36 @@ describe("parseRecallInfo — escapeValues", () => {
     expect(result).toBe("&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;");
   });
 
+  // Matrix and address answers arrive as records, which would coerce to "[object Object]" if handed
+  // straight to String().
+  test("stringifies a record-shaped answer by joining its filled entries", () => {
+    const result = parseRecallInfo(
+      recall("q1"),
+      { q1: { "Row 1": "Yes", "Row 2": "", "Row 3": "No" } },
+      undefined,
+      false,
+      "en-US",
+      undefined,
+      true
+    );
+
+    expect(result).toBe("Yes, No");
+  });
+
+  test("escapes a record-shaped answer's entries too", () => {
+    const result = parseRecallInfo(
+      recall("q1"),
+      { q1: { street: "<script>alert(1)</script>" } },
+      undefined,
+      false,
+      "en-US",
+      undefined,
+      true
+    );
+
+    expect(result).toBe("&lt;script&gt;alert(1)&lt;/script&gt;");
+  });
+
   test("leaves the author's surrounding markup untouched", () => {
     const result = parseRecallInfo(
       `<p>Thanks <b>${recall("q1")}</b></p>`,

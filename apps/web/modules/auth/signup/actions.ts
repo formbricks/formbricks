@@ -4,8 +4,10 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import {
+  INVITE_TOKEN_INVALID_ERROR_CODE,
   InvalidInputError,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
 } from "@formbricks/types/errors";
@@ -150,7 +152,7 @@ async function handleInviteAcceptance(
   const inviteMatch = await resolveInviteMatch(inviteToken, user.email);
   if (inviteMatch !== "valid") {
     logger.warn({ inviteMatch }, "Rejected invite acceptance during sign-up");
-    throw new InvalidInputError("Invalid or expired invite token");
+    throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
   }
 
   const inviteTokenData = verifyInviteToken(inviteToken);
@@ -293,7 +295,7 @@ async function assertSignupPolicyAllows(
   // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
   if (inviteToken && inviteMatch !== "valid") {
     logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
-    throw new InvalidInputError("Invalid or expired invite token");
+    throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
   }
 
   const isPublicSignupOpen = SIGNUP_ENABLED && (await getIsMultiOrgEnabled());
@@ -304,7 +306,7 @@ async function assertSignupPolicyAllows(
   // Closed instance and no invite: the only remaining legitimate case is the initial administrator
   // during fresh-instance setup, who has no invite to present.
   if (!(await getIsFreshInstance())) {
-    throw new InvalidInputError("Sign up is disabled");
+    throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
   }
 }
 
