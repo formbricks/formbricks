@@ -69,7 +69,18 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
  * completed delete would be misleading.
  */
 export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDelete"]> = async (user) => {
-  await deleteUserOrganizationRelationships(user.id);
+  try {
+    await deleteUserOrganizationRelationships(user.id);
+  } catch {
+    logger.error(
+      {
+        code: "authzed_internal",
+        component: "authzed",
+        operation: "delete_user_organization_relationships",
+      },
+      "Unexpected AuthZed cleanup failure after account deletion"
+    );
+  }
 
   try {
     await deleteBrevoCustomerByEmail({ email: user.email });

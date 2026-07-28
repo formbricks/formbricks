@@ -112,6 +112,28 @@ describe("accountDeletionAfterDelete", () => {
       expect.objectContaining({ status: "success", targetUserId: "user-1" })
     );
   });
+
+  test("continues post-delete cleanup when the AuthZed cleanup unexpectedly rejects", async () => {
+    vi.mocked(deleteUserOrganizationRelationships).mockRejectedValue(new Error("sensitive raw error"));
+
+    await expect(accountDeletionAfterDelete(user)).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        code: "authzed_internal",
+        component: "authzed",
+        operation: "delete_user_organization_relationships",
+      },
+      "Unexpected AuthZed cleanup failure after account deletion"
+    );
+    expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });
+    expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      oldUser: user,
+      status: "success",
+      targetUserId: "user-1",
+    });
+    expect(capturePostHogEvent).toHaveBeenCalledWith("user-1", "delete_account");
+  });
 });
 
 describe("accountDeletionConfig", () => {
