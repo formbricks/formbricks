@@ -22,7 +22,7 @@ export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIden
         capture_exceptions: true,
         debug: process.env.NODE_ENV === "development",
         session_recording: {
-          blockSelector: "#chatwoot_live_chat_widget",
+          blockSelector: "iframe[src*='cdn-plain']",
         },
       });
     }

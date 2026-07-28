@@ -1,13 +1,14 @@
-import { ChatwootWidget } from "@/app/chatwoot/components/chatwoot-widget";
 import { FormbricksProvider } from "@/app/formbricks/components/formbricks-provider";
+import { PlainChat } from "@/app/plain/components/plain-chat";
+import { computePlainEmailHash } from "@/app/plain/lib/identity";
 import { PostHogIdentify } from "@/app/posthog/PostHogIdentify";
 import {
-  CHATWOOT_BASE_URL,
-  CHATWOOT_WEBSITE_TOKEN,
   FORMBRICKS_APP_URL,
   FORMBRICKS_WORKSPACE_ID,
-  IS_CHATWOOT_CONFIGURED,
   IS_FORMBRICKS_SURVEYS_CONFIGURED,
+  IS_PLAIN_CHAT_CONFIGURED,
+  PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID,
+  PLAIN_APP_ID,
   POSTHOG_KEY,
 } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
@@ -31,13 +32,14 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
       {POSTHOG_KEY && user && (
         <PostHogIdentify posthogKey={POSTHOG_KEY} userId={user.id} email={user.email} name={user.name} />
       )}
-      {IS_CHATWOOT_CONFIGURED && (
-        <ChatwootWidget
+      {IS_PLAIN_CHAT_CONFIGURED && PLAIN_APP_ID && (
+        <PlainChat
+          appId={PLAIN_APP_ID}
           userEmail={user?.email}
           userName={user?.name}
           userId={user?.id}
-          chatwootWebsiteToken={CHATWOOT_WEBSITE_TOKEN}
-          chatwootBaseUrl={CHATWOOT_BASE_URL}
+          emailHash={user?.email ? computePlainEmailHash(user.email) : null}
+          activeCustomerLabelTypeId={PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID}
         />
       )}
       {IS_FORMBRICKS_SURVEYS_CONFIGURED && FORMBRICKS_WORKSPACE_ID && (
