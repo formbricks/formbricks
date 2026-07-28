@@ -12,7 +12,6 @@ import { z } from "zod";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
-  SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
@@ -161,10 +160,16 @@ export const SignupForm = ({
           // Breached password: surface under the password field with a clear, actionable message.
           form.setError("password", { type: "manual", message: t("auth.password_compromised") });
         } else if (errorMessage === INVITE_TOKEN_INVALID_ERROR_CODE) {
-          toast.error(t("auth.signup.invite_token_invalid"));
-        } else if (errorMessage === SIGNUP_DISABLED_ERROR_CODE) {
-          toast.error(t("auth.signup.signup_disabled"));
+          // Reachable when the invite expires or is revoked between this page rendering and the form
+          // being submitted. Reuses the existing invite copy rather than naming the specific reason,
+          // matching the server, which returns one code for expired / revoked / wrong-address so it
+          // cannot be used to probe which invites exist.
+          toast.error(t("auth.invite.invite_not_found_description"));
         } else {
+          // SIGNUP_DISABLED_ERROR_CODE lands here deliberately. On an instance with sign-up closed
+          // this form never renders without a valid invite (signup/page.tsx 404s), and a valid invite
+          // returns before that check — so the code is only ever seen by something POSTing the action
+          // directly, for which a stable machine-readable code beats a translated sentence.
           toast.error(errorMessage);
         }
         return;
