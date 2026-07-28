@@ -5,14 +5,17 @@ import {
   getActiveTaxonomyTree,
   getTaxonomyRun,
   listTaxonomyFields,
+  listTaxonomyNodeRecordCounts,
   listTaxonomyNodeRecords,
   listTaxonomyRuns,
   removeTaxonomyNode,
   renameTaxonomyNode,
 } from "@/modules/hub/service";
 import type { FeedbackRecordData, TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
+import { NO_CONFIG_ERROR } from "@/modules/hub/utils";
 import { getSessionUserId, requireUnifyDirectoryAccess } from "./access";
 import {
+  getV3TaxonomyNodeRecordCounts,
   getV3TaxonomyNodeRecords,
   getV3TaxonomyRun,
   getV3TaxonomyState,
@@ -23,6 +26,12 @@ import {
 } from "./operations";
 
 vi.mock("server-only", () => ({}));
+
+const logWarn = vi.fn();
+const logError = vi.fn();
+vi.mock("@formbricks/logger", () => ({
+  logger: { withContext: vi.fn(() => ({ warn: logWarn, error: logError })) },
+}));
 
 vi.mock("./access", () => ({
   requireUnifyDirectoryAccess: vi.fn(),
@@ -36,6 +45,7 @@ vi.mock("@/modules/hub/service", () => ({
   getTaxonomyRun: vi.fn(),
   createTaxonomyRun: vi.fn(),
   listTaxonomyNodeRecords: vi.fn(),
+  listTaxonomyNodeRecordCounts: vi.fn(),
   renameTaxonomyNode: vi.fn(),
   removeTaxonomyNode: vi.fn(),
 }));
@@ -109,10 +119,10 @@ describe("listV3TaxonomyFields", () => {
     expect(await response.json()).toEqual({ data: { fields: [field], unavailable: false } });
   });
 
-  test("returns 200 with unavailable=true on a Hub error (no false gate)", async () => {
+  test("returns 200 with unavailable=true on a Hub error (no false gate), without echoing Hub text", async () => {
     vi.mocked(listTaxonomyFields).mockResolvedValue({
       data: null,
-      error: { status: 503, message: "Embeddings not configured", detail: "" },
+      error: { status: 503, message: "HUB_API_KEY is not set; Hub integration is disabled.", detail: "" },
     });
 
     const response = await listV3TaxonomyFields(base);
@@ -120,7 +130,8 @@ describe("listV3TaxonomyFields", () => {
 
     expect(response.status).toBe(200);
     expect(body.data.unavailable).toBe(true);
-    expect(body.data.unavailableMessage).toBe("Embeddings not configured");
+    expect(body.data.unavailableMessage).toBe("Taxonomy fields are unavailable");
+    expect(JSON.stringify(body)).not.toContain("HUB_API_KEY");
     expect(body.data.fields).toEqual([]);
   });
 
@@ -199,15 +210,19 @@ describe("getV3TaxonomyRun", () => {
     expect(await response.json()).toEqual({ data: run });
   });
 
-  test("returns 502 on a Hub error", async () => {
+  test("maps a Hub 404 to 404 with no resource id, so the client can stop polling", async () => {
     vi.mocked(getTaxonomyRun).mockResolvedValue({
       data: null,
-      error: { status: 500, message: "boom", detail: "" },
+      error: { status: 404, message: "run not found", detail: "", code: "not_found" },
     });
 
     const response = await getV3TaxonomyRun({ ...base, runId: run.id });
+    const body = await response.json();
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(404);
+    expect(body.code).toBe("not_found");
+    expect(body.details).toEqual({ resource_type: "Taxonomy run", resource_id: null });
+    expect(JSON.stringify(body)).not.toContain(run.id);
   });
 });
 
@@ -226,15 +241,18 @@ describe("getV3TaxonomyNodeRecords", () => {
     expect(body.meta).toEqual({ limit: 100 });
   });
 
-  test("returns 502 on a Hub error", async () => {
+  test("returns a fixed-detail 502 on a Hub 500, without the upstream message", async () => {
     vi.mocked(listTaxonomyNodeRecords).mockResolvedValue({
       data: null,
-      error: { status: 500, message: "boom", detail: "" },
+      error: { status: 500, message: "pq: relation \"taxonomy_nodes\" does not exist", detail: "" },
     });
 
     const response = await getV3TaxonomyNodeRecords({ ...base, nodeId: node.id, limit: 100 });
+    const body = await response.json();
 
     expect(response.status).toBe(502);
+    expect(body.detail).toBe("The feedback service is unavailable.");
+    expect(JSON.stringify(body)).not.toContain("taxonomy_nodes");
   });
 });
 
@@ -300,15 +318,18 @@ describe("renameV3TaxonomyNode", () => {
     expect(await response.json()).toEqual({ data: renamed });
   });
 
-  test("returns 502 on a Hub error", async () => {
+  test("returns a fixed-detail 502 on a Hub 500, without the upstream message", async () => {
     vi.mocked(renameTaxonomyNode).mockResolvedValue({
       data: null,
-      error: { status: 500, message: "boom", detail: "" },
+      error: { status: 500, message: "pq: relation \"taxonomy_nodes\" does not exist", detail: "" },
     });
 
     const response = await renameV3TaxonomyNode({ ...base, nodeId: node.id, label: "Copilot" });
+    const body = await response.json();
 
     expect(response.status).toBe(502);
+    expect(body.detail).toBe("The feedback service is unavailable.");
+    expect(JSON.stringify(body)).not.toContain("taxonomy_nodes");
   });
 });
 
@@ -321,14 +342,271 @@ describe("removeV3TaxonomyNode", () => {
     expect(response.status).toBe(204);
   });
 
-  test("returns 502 on a Hub error", async () => {
+  test("returns a fixed-detail 502 on a Hub 500, without the upstream message", async () => {
     vi.mocked(removeTaxonomyNode).mockResolvedValue({
       data: null,
-      error: { status: 500, message: "boom", detail: "" },
+      error: { status: 500, message: "pq: relation \"taxonomy_nodes\" does not exist", detail: "" },
     });
 
     const response = await removeV3TaxonomyNode({ ...base, nodeId: node.id });
+    const body = await response.json();
 
     expect(response.status).toBe(502);
+    expect(body.detail).toBe("The feedback service is unavailable.");
+    expect(JSON.stringify(body)).not.toContain("taxonomy_nodes");
+  });
+});
+
+describe("getV3TaxonomyNodeRecordCounts", () => {
+  const counts = [
+    { node_id: node.id, record_count: 42 },
+    { node_id: "node-2", record_count: 7 },
+  ];
+
+  test("returns the per-node counts on success", async () => {
+    vi.mocked(listTaxonomyNodeRecordCounts).mockResolvedValue({ data: { counts }, error: null });
+
+    const response = await getV3TaxonomyNodeRecordCounts({ ...base, runId: run.id });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ data: { counts } });
+    expect(listTaxonomyNodeRecordCounts).toHaveBeenCalledWith(run.id, directoryId);
+  });
+
+  test("returns the auth Response and skips the Hub call when access is denied", async () => {
+    const denied = new Response("forbidden", { status: 403 });
+    vi.mocked(requireUnifyDirectoryAccess).mockResolvedValue(denied);
+
+    const response = await getV3TaxonomyNodeRecordCounts({ ...base, runId: run.id });
+
+    expect(response).toBe(denied);
+    expect(listTaxonomyNodeRecordCounts).not.toHaveBeenCalled();
+  });
+
+  /**
+   * One table over every Hub status these endpoints can actually produce. The Hub has no 429/413/422 path
+   * for taxonomy, so those shared-mapper branches stay untested here on purpose. `detail` is asserted
+   * because it is the field this change alters — status alone would pass against the old code too.
+   */
+  test.each([
+    { hub: 0, status: 502, code: "bad_gateway", detail: "The feedback service is unavailable." },
+    { hub: 400, status: 400, code: "bad_request", detail: "at least 750 embedded records required; found 12" },
+    { hub: 401, status: 502, code: "bad_gateway", detail: "The feedback service is unavailable." },
+    { hub: 404, status: 404, code: "not_found", detail: "Taxonomy run not found" },
+    { hub: 409, status: 409, code: "conflict", detail: "at least 750 embedded records required; found 12" },
+    { hub: 500, status: 502, code: "bad_gateway", detail: "The feedback service is unavailable." },
+    { hub: 503, status: 503, code: "service_unavailable", detail: undefined },
+  ])("maps Hub $hub to $status", async ({ hub, status, code, detail }) => {
+    vi.mocked(listTaxonomyNodeRecordCounts).mockResolvedValue({
+      data: null,
+      error: {
+        status: hub,
+        message: "GET http://hub.internal:8080/v1/taxonomy/runs failed: upstream boom",
+        detail: "",
+        // Only relayed for the statuses the shared mapper allows; the fixture is the same for all of them
+        // so a status that must not relay is caught by the expected `detail` below.
+        problemDetail: "at least 750 embedded records required; found 12",
+      },
+    });
+
+    const response = await getV3TaxonomyNodeRecordCounts({ ...base, runId: run.id });
+    const body = await response.json();
+
+    expect(response.status).toBe(status);
+    expect(body.code).toBe(code);
+    if (detail !== undefined) {
+      expect(body.detail).toBe(detail);
+    }
+    // Whatever the mapping, the SDK's own error string never reaches the caller.
+    expect(JSON.stringify(body)).not.toContain("hub.internal");
+    expect(JSON.stringify(body)).not.toContain("upstream boom");
+  });
+
+  test("a 503 names the taxonomy subsystems, not embeddings", async () => {
+    vi.mocked(listTaxonomyNodeRecordCounts).mockResolvedValue({
+      data: null,
+      error: { status: 503, message: "embeddings not configured", detail: "" },
+    });
+
+    const response = await getV3TaxonomyNodeRecordCounts({ ...base, runId: run.id });
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    // A taxonomy 503 has four upstream causes and only one is embeddings — and that one is unreachable
+    // through the UI, since /fields gates the button first. Pointing this at feedbackRecords'
+    // embeddings-specific copy would therefore be wrong in exactly the case a user can hit.
+    expect(body.detail).not.toBe("Embeddings are not configured for this deployment.");
+    expect(body.detail).toContain("taxonomy");
+    expect(body.detail).toContain("retry");
+  });
+});
+
+describe("Hub error disclosure", () => {
+  const leaky = {
+    status: 500,
+    message:
+      'HUB_API_KEY is not set; GET http://hub.internal:8080/v1/taxonomy/runs/x?tenant_id=y -> 500 (request_id: hub_req_9f3) at /app/internal/service/taxonomy_service.go:196',
+    detail: "pq: relation \"taxonomy_nodes\" does not exist",
+    problemDetail: "internal: /app/internal/service/taxonomy_service.go:196",
+  };
+  const markers = [
+    "HUB_API_KEY",
+    "hub.internal",
+    "hub_req_9f3",
+    "taxonomy_service.go",
+    "taxonomy_nodes",
+    "/app/internal",
+  ];
+
+  /**
+   * The invariant this whole change exists for: no upstream text on the wire, whichever endpoint failed.
+   * Planted markers rather than a reading of the code, so a future call site that forgets the mapper fails
+   * here instead of shipping.
+   */
+  test.each([
+    {
+      name: "listV3TaxonomyFields",
+      arrange: () => vi.mocked(listTaxonomyFields).mockResolvedValue({ data: null, error: leaky }),
+      act: () => listV3TaxonomyFields(base),
+    },
+    {
+      name: "getV3TaxonomyState",
+      arrange: () => {
+        vi.mocked(listTaxonomyRuns).mockResolvedValue({ data: null, error: leaky });
+        vi.mocked(getActiveTaxonomyTree).mockResolvedValue({ data: null, error: leaky });
+      },
+      act: () => getV3TaxonomyState({ ...base, scopeType: "directory" as const }),
+    },
+    {
+      name: "getV3TaxonomyRun",
+      arrange: () => vi.mocked(getTaxonomyRun).mockResolvedValue({ data: null, error: leaky }),
+      act: () => getV3TaxonomyRun({ ...base, runId: run.id }),
+    },
+    {
+      name: "getV3TaxonomyNodeRecordCounts",
+      arrange: () =>
+        vi.mocked(listTaxonomyNodeRecordCounts).mockResolvedValue({ data: null, error: leaky }),
+      act: () => getV3TaxonomyNodeRecordCounts({ ...base, runId: run.id }),
+    },
+    {
+      name: "triggerV3TaxonomyRun",
+      arrange: () => vi.mocked(createTaxonomyRun).mockResolvedValue({ data: null, error: leaky }),
+      act: () =>
+        triggerV3TaxonomyRun({
+          ...base,
+          scopeType: "field" as const,
+          sourceType: "survey",
+          sourceId: "s1",
+          fieldId: "q1",
+        }),
+    },
+    {
+      name: "getV3TaxonomyNodeRecords",
+      arrange: () => vi.mocked(listTaxonomyNodeRecords).mockResolvedValue({ data: null, error: leaky }),
+      act: () => getV3TaxonomyNodeRecords({ ...base, nodeId: node.id, limit: 100 }),
+    },
+    {
+      name: "renameV3TaxonomyNode",
+      arrange: () => vi.mocked(renameTaxonomyNode).mockResolvedValue({ data: null, error: leaky }),
+      act: () => renameV3TaxonomyNode({ ...base, nodeId: node.id, label: "Copilot" }),
+    },
+    {
+      name: "removeV3TaxonomyNode",
+      arrange: () => vi.mocked(removeTaxonomyNode).mockResolvedValue({ data: null, error: leaky }),
+      act: () => removeV3TaxonomyNode({ ...base, nodeId: node.id }),
+    },
+  ])("$name returns no upstream internals", async ({ arrange, act }) => {
+    arrange();
+
+    const serialised = await (await act()).text();
+
+    for (const marker of markers) {
+      expect(serialised).not.toContain(marker);
+    }
+  });
+});
+
+describe("triggerV3TaxonomyRun error branch", () => {
+  const runParams = {
+    ...base,
+    scopeType: "directory" as const,
+  };
+
+  test("relays a Hub 400's actionable detail so the user learns why the run was refused", async () => {
+    vi.mocked(createTaxonomyRun).mockResolvedValue({
+      data: null,
+      error: {
+        status: 400,
+        message: "bad request",
+        detail: "",
+        code: "bad_request",
+        problemDetail: "at least 750 embedded records required; found 12",
+      },
+    });
+
+    const response = await triggerV3TaxonomyRun(runParams);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.detail).toBe("at least 750 embedded records required; found 12");
+  });
+
+  test("maps the Hub's 'no config' error (status 0) to a fixed 502", async () => {
+    vi.mocked(createTaxonomyRun).mockResolvedValue({
+      data: null,
+      error: { ...NO_CONFIG_ERROR },
+    });
+
+    const response = await triggerV3TaxonomyRun(runParams);
+    const body = await response.json();
+
+    expect(response.status).toBe(502);
+    expect(body.detail).toBe("The feedback service is unavailable.");
+    expect(JSON.stringify(body)).not.toContain("HUB_API_KEY");
+  });
+});
+
+describe("Hub failure logging", () => {
+  /**
+   * The other half of the disclosure rule: the upstream diagnostic still has to exist, just server-side.
+   * Removing it from the response without logging it would make these failures undebuggable.
+   */
+  test("logs a 5xx at error level, with the Hub error under the serialised `err` key", async () => {
+    const error = { status: 500, message: "upstream boom", detail: "" };
+    vi.mocked(getTaxonomyRun).mockResolvedValue({ data: null, error });
+
+    await getV3TaxonomyRun({ ...base, runId: run.id });
+
+    expect(logError).toHaveBeenCalledWith(
+      { hubStatus: 500, hubCode: undefined, err: error },
+      "Hub getRun failed"
+    );
+    expect(logWarn).not.toHaveBeenCalled();
+  });
+
+  test("logs a 4xx at warn level and without a stack, since it is not our fault", async () => {
+    vi.mocked(createTaxonomyRun).mockResolvedValue({
+      data: null,
+      error: { status: 400, message: "too few records", detail: "", code: "bad_request" },
+    });
+
+    await triggerV3TaxonomyRun({ ...base, scopeType: "directory" as const });
+
+    expect(logWarn).toHaveBeenCalledWith({ hubStatus: 400, hubCode: "bad_request" }, "Hub rejected startRun");
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  test("logs the 200-with-unavailable paths too, where the response says nothing at all", async () => {
+    vi.mocked(listTaxonomyFields).mockResolvedValue({
+      data: null,
+      error: { status: 0, message: "HUB_API_KEY is not set; Hub integration is disabled.", detail: "" },
+    });
+
+    await listV3TaxonomyFields(base);
+
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({ hubStatus: 0 }),
+      "Hub listFields failed"
+    );
   });
 });
