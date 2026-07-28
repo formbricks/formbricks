@@ -42,27 +42,16 @@ describe("parseFeedbackRecordsGatewayRoute", () => {
 });
 
 describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
-  // Regression: the tenant is resolved from caller-supplied input, so a key from one organization could
-  // otherwise reach another organization's directory through the organizationAccess shortcuts.
-  test("rejects a key from a different organization", () => {
-    const authentication = buildApiKey({
-      organizationAccess: { accessControl: { read: true, write: true } } as never,
-      workspacePermissions: [{ workspaceId: "ws_1", permission: "manage" }] as never,
-    });
-
-    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, "other_org", ["ws_1"], "read")).toBe(
-      false
-    );
-  });
-
-  // Regression: organizationAccess only models read and write, so it must not stand in for manage.
+  // Binding this decision to the directory's organization is ENG-1980, fixed in #8648; those cases
+  // live in that PR's feedback-records-gateway-authz.test.ts. What this PR changes is that a delete
+  // now requires `manage`, so only the weight behaviour is asserted here.
   test("does not let org-level write satisfy a manage requirement", () => {
     const authentication = buildApiKey({
       organizationAccess: { accessControl: { read: true, write: true } } as never,
     });
 
-    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ORG_ID, ["ws_1"], "write")).toBe(true);
-    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ORG_ID, ["ws_1"], "manage")).toBe(false);
+    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ["ws_1"], "write")).toBe(true);
+    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ["ws_1"], "manage")).toBe(false);
   });
 
   test("accepts a workspace permission of manage for a manage requirement", () => {
@@ -70,7 +59,7 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
       workspacePermissions: [{ workspaceId: "ws_1", permission: "manage" }] as never,
     });
 
-    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ORG_ID, ["ws_1"], "manage")).toBe(true);
+    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ["ws_1"], "manage")).toBe(true);
   });
 
   test("rejects a workspace permission of write for a manage requirement", () => {
@@ -78,8 +67,8 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
       workspacePermissions: [{ workspaceId: "ws_1", permission: "write" }] as never,
     });
 
-    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ORG_ID, ["ws_1"], "write")).toBe(true);
-    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ORG_ID, ["ws_1"], "manage")).toBe(false);
+    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ["ws_1"], "write")).toBe(true);
+    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ["ws_1"], "manage")).toBe(false);
   });
 
   test("ignores permissions for workspaces outside the directory", () => {
@@ -87,6 +76,6 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
       workspacePermissions: [{ workspaceId: "ws_other", permission: "manage" }] as never,
     });
 
-    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ORG_ID, ["ws_1"], "read")).toBe(false);
+    expect(hasApiKeyImplicitFeedbackDirectoryAccess(authentication, ["ws_1"], "read")).toBe(false);
   });
 });

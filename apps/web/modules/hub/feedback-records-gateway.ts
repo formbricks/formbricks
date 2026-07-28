@@ -170,23 +170,16 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
 // Exported for tests: this is where an API key's org-level and per-workspace grants are ranked.
 export const hasApiKeyImplicitFeedbackDirectoryAccess = (
   authentication: TAuthenticationApiKey,
-  feedbackDirectoryOrganizationId: string,
   workspaceIds: string[],
   requiredPermission: TFeedbackRecordsGatewayPermission
 ): boolean => {
-  // The tenant is resolved from caller-supplied input (`tenant_id`, or a record id lookup), so the
-  // directory's organization has to be matched against the key's own before any permission is honored.
-  // The `organizationAccess` shortcuts below are not workspace-scoped, so without this a key holding
-  // `accessControl.read` in one organization could read — and with `write`, mutate or delete — the
-  // feedback records of any other organization's directory. The workspace branch is already safe
-  // (authenticateApiKeyFromHeaders filters workspacePermissions to the key's organization), but
-  // checking once here keeps both paths correct.
-  if (authentication.organizationId !== feedbackDirectoryOrganizationId) {
-    return false;
-  }
-
+  // NOTE: binding this decision to the directory's organization is ENG-1980, fixed in #8648, which
+  // removes these `organizationAccess` shortcuts entirely (org-level access control governs org
+  // management, not workspace data). Deliberately not duplicated here — see this PR's description.
+  //
   // `organizationAccess.accessControl` only models read and write, so it can never satisfy a `manage`
-  // requirement — deletes must come from a workspace permission that actually grants `manage`.
+  // requirement — deletes must come from a workspace permission that actually grants `manage`. This
+  // guard stays correct once #8648 lands and the shortcuts are gone.
   const orgAccessControl = authentication.organizationAccess?.accessControl;
   if (orgAccessControl?.write && requiredPermission !== "manage") {
     return true;
@@ -296,7 +289,6 @@ const authorizeFeedbackRecordsGatewayRequest = async (
   if (principal.type === "apiKey") {
     return hasApiKeyImplicitFeedbackDirectoryAccess(
       principal.authentication,
-      feedbackDirectory.organizationId,
       feedbackDirectory.workspaceIds,
       requiredPermission
     )
