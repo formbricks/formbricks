@@ -249,6 +249,30 @@ describe("action-client-middleware", () => {
       ).rejects.toThrow(new AuthorizationError("Not authorized"));
     });
 
+    test("preserves legacy WorkspaceTeam access when the central workspace decision denies", async () => {
+      vi.mocked(can).mockImplementation(async (_actor, action) => action === "organization.read");
+      vi.mocked(getMembershipRole).mockResolvedValue("billing");
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("manage");
+
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [
+            { type: "organization", roles: ["owner", "manager"] },
+            { type: "workspaceTeam", workspaceId, minPermission: "manage" },
+          ],
+        })
+      ).resolves.toBe(true);
+
+      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.manage", {
+        type: "workspace",
+        id: workspaceId,
+      });
+      expect(getMembershipRole).toHaveBeenCalledWith(userId, organizationId);
+      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
+    });
+
     test("propagates central evaluator failures", async () => {
       const failure = new Error("database unavailable");
       vi.mocked(can).mockRejectedValue(failure);

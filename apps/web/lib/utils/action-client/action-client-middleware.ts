@@ -224,5 +224,8 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
     if (accessResult) return accessResult;
   }
 
-  throw new AuthorizationError("Not authorized");
+  // Some legacy OR signatures grant a WorkspaceTeam permission independently
+  // of the organization role. Keep that edge-case behavior until the
+  // compatibility adapter is removed under ENG-1737.
+  return checkLegacyAuthorization({ userId, organizationId, access });
 };

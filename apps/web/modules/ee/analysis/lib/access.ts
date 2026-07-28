@@ -1,8 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { assertCan } from "@/lib/authorization";
-import { getWorkspaceActionForPermission } from "@/lib/authorization/compatibility";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -14,9 +13,13 @@ export const checkWorkspaceAccess = async (
 ) => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-  await assertCan({ type: "user", id: userId }, getWorkspaceActionForPermission(minPermission), {
-    type: "workspace",
-    id: workspaceId,
+  await checkAuthorizationUpdated({
+    userId,
+    organizationId,
+    access: [
+      { type: "organization", roles: ["owner", "manager"] },
+      { type: "workspaceTeam", minPermission, workspaceId },
+    ],
   });
 
   return { organizationId, workspaceId };
