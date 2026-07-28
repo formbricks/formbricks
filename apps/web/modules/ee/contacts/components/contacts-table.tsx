@@ -142,7 +142,6 @@ export const ContactsTable = ({
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
   // Save settings to localStorage when they change

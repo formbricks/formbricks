@@ -4,12 +4,13 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, updateWorkspace } from "./workspace";
 
 vi.mock("server-only", () => ({}));
 
-const baseWorkspace = {
+const baseWorkspace: TWorkspace = {
   id: "p1",
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -77,7 +78,7 @@ describe("workspace lib", () => {
 
   describe("updateWorkspace", () => {
     test("updates workspace and revalidates cache", async () => {
-      vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace as any);
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace);
       const result = await updateWorkspace("p1", {
         name: "Workspace 1",
       });
@@ -97,10 +98,32 @@ describe("workspace lib", () => {
       await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow();
     });
 
+    test("throws DatabaseError on PrismaClientKnownRequestError", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: "P2010",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(prismaError);
+      await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(new Error("boom"));
+      await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow("boom");
+    });
+
     test("returns workspace data without Zod validation", async () => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, id: 123 } as any);
       const result = await updateWorkspace("p1", { name: "Workspace 1" });
       expect(result).toEqual({ ...baseWorkspace, id: 123 });
+    });
+
+    // ENG-1919: a workspace must not be moved to another organization via update.
+    test("never persists a caller-supplied organizationId", async () => {
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce(baseWorkspace);
+      await updateWorkspace("p1", { name: "Workspace 1", organizationId: "attacker-target-org" });
+      const arg = vi.mocked(prisma.workspace.update).mock.calls[0][0];
+      expect(arg.data).not.toHaveProperty("organizationId");
     });
   });
 

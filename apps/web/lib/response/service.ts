@@ -608,8 +608,8 @@ export const updateResponse = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (
-        error.code === PrismaErrorType.RecordDoesNotExist ||
-        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+        error.code === PrismaErrorType.RelatedRecordNotFound ||
+        error.code === PrismaErrorType.RecordNotFound
       ) {
         throw new ResourceNotFoundError("Response", responseId);
       }

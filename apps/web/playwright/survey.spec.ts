@@ -10,6 +10,11 @@ import {
   uploadImageChoicesForPictureSelection,
 } from "./utils/helper";
 
+// NOTE: slowMo paces every action in this spec's heavy survey-editor flows.
+// It is load-bearing: without it, the question-builder interactions (matrix
+// columns, ranking options) hit "element detached from the DOM" races and the
+// tests fail. Removing it requires first hardening those waits in
+// createSurvey/createSurveyWithLogic (utils/helper.ts). Tracked as a follow-up.
 test.use({
   launchOptions: {
     slowMo: 150,

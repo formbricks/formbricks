@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ApiKey, ApiKeyPermission, Prisma } from "@formbricks/database/prisma";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import {
   createApiKey,
@@ -10,6 +10,7 @@ import {
   getApiKeysWithEnvironmentPermissions,
   updateApiKey,
 } from "./api-key";
+import { getWorkspacesByOrganizationId } from "./workspaces";
 
 const mockApiKey: ApiKey = {
   id: "apikey123",
@@ -50,6 +51,10 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
     },
   },
+}));
+
+vi.mock("./workspaces", () => ({
+  getWorkspacesByOrganizationId: vi.fn(),
 }));
 
 vi.mock("crypto", async () => {
@@ -344,7 +349,7 @@ describe("API Key Management", () => {
           apiKeyWorkspaces: {
             include: {
               workspace: {
-                select: { id: true, name: true },
+                select: { id: true, name: true, organizationId: true },
               },
             },
           },
@@ -366,7 +371,7 @@ describe("API Key Management", () => {
           apiKeyWorkspaces: {
             include: {
               workspace: {
-                select: { id: true, name: true },
+                select: { id: true, name: true, organizationId: true },
               },
             },
           },
@@ -452,6 +457,9 @@ describe("API Key Management", () => {
     });
 
     test("creates an API key with environment permissions successfully", async () => {
+      vi.mocked(getWorkspacesByOrganizationId).mockResolvedValueOnce([
+        { id: "workspace123", name: "Workspace 123" },
+      ]);
       vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKeyWithEnvironments);
 
       const result = await createApiKey("org123", "user123", {
@@ -461,6 +469,23 @@ describe("API Key Management", () => {
 
       expect(result).toEqual({ ...mockApiKeyWithEnvironments, actualKey: "fbk_testSecret123" });
       expect(prisma.apiKey.create).toHaveBeenCalled();
+    });
+
+    test("rejects a workspace permission for a workspace outside the organization (ENG-1749)", async () => {
+      // The organization owns only "own-workspace"; the caller attempts to scope the key to a
+      // victim organization's workspace. This must be refused before any key is persisted.
+      vi.mocked(getWorkspacesByOrganizationId).mockResolvedValueOnce([
+        { id: "own-workspace", name: "Own Workspace" },
+      ]);
+
+      await expect(
+        createApiKey("org123", "user123", {
+          ...mockApiKeyData,
+          workspacePermissions: [{ workspaceId: "victim-workspace", permission: ApiKeyPermission.manage }],
+        })
+      ).rejects.toThrow(OperationNotAllowedError);
+      expect(getWorkspacesByOrganizationId).toHaveBeenCalledWith("org123");
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
     });
 
     test("rejects create input with duplicate workspaceId", async () => {

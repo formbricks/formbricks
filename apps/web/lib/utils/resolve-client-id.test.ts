@@ -29,7 +29,7 @@ describe("resolveClientApiIds", () => {
     });
     expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
       where: { OR: [{ id: "ws-456" }, { legacyEnvironmentId: "ws-456" }] },
-      select: { id: true },
+      select: { id: true, organizationId: true },
     });
   });
 
@@ -42,7 +42,7 @@ describe("resolveClientApiIds", () => {
     expect(prisma.workspace.findFirst).toHaveBeenCalledTimes(1);
     expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
       where: { OR: [{ id: "env-old-123" }, { legacyEnvironmentId: "env-old-123" }] },
-      select: { id: true },
+      select: { id: true, organizationId: true },
     });
   });
 

@@ -18,6 +18,7 @@ const apiKeySelect = {
       workspace: {
         select: {
           id: true,
+          organizationId: true,
           legacyEnvironmentId: true,
           createdAt: true,
           updatedAt: true,
@@ -40,6 +41,7 @@ type ApiKeyData = {
     permission: string;
     workspace: {
       id: string;
+      organizationId: string;
       legacyEnvironmentId: string | null;
       createdAt: Date;
       updatedAt: Date;
@@ -52,11 +54,20 @@ type ApiKeyData = {
 const validateApiKey = async (apiKey: string): Promise<ApiKeyData | null> => {
   const v2Parsed = parseApiKeyV2(apiKey);
 
-  if (v2Parsed) {
-    return validateV2ApiKey(v2Parsed);
+  const apiKeyData = v2Parsed ? await validateV2ApiKey(v2Parsed) : await validateLegacyApiKey(apiKey);
+  if (!apiKeyData) {
+    return null;
   }
 
-  return validateLegacyApiKey(apiKey);
+  // ENG-1749: drop workspace permissions outside the key's organization (defense-in-depth,
+  // mirroring authenticateApiKeyFromHeaders) so a pre-fix cross-org row can't leak workspace
+  // metadata through this legacy route.
+  return {
+    ...apiKeyData,
+    apiKeyWorkspaces: apiKeyData.apiKeyWorkspaces.filter(
+      (workspacePermission) => workspacePermission.workspace.organizationId === apiKeyData.organizationId
+    ),
+  };
 };
 
 const validateV2ApiKey = async (v2Parsed: { secret: string }): Promise<ApiKeyData | null> => {
