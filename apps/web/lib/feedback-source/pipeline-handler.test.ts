@@ -13,6 +13,7 @@ vi.mock("@/modules/hub", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),

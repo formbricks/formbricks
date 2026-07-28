@@ -199,7 +199,16 @@ describe("proxyFeedbackRecordsRequest", () => {
   });
 
   test("returns a sanitized bad gateway response when Hub is unavailable", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED secret-url")));
+    // Carries `code` like a real Node connection failure, and keeps the URL in the message so the
+    // sanitization assertion below is still exercising something.
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockRejectedValue(
+          Object.assign(new Error("connect ECONNREFUSED secret-url"), { code: "ECONNREFUSED" })
+        )
+    );
 
     const response = await proxyFeedbackRecordsRequest(
       new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
@@ -216,9 +225,14 @@ describe("proxyFeedbackRecordsRequest", () => {
         requestId: "request_1",
         method: "GET",
         pathname: "/api/v3/feedbackRecords",
+        hint: expect.stringContaining("Hub looks unreachable"),
       },
       "Feedback records local proxy request failed"
     );
+
+    // The whole point of building this payload by hand: a fetch failure carries the target URL in
+    // its message, so neither the log nor the response body may echo the error itself.
+    expect(JSON.stringify(mockLoggerError.mock.calls)).not.toContain("secret-url");
   });
 
   test("is unavailable in production", async () => {

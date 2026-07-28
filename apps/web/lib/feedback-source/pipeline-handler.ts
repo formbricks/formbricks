@@ -14,7 +14,11 @@ const logFailedRecords = (
 ): void => {
   for (const [index, result] of results.entries()) {
     if (!result.error) continue;
-    logger.error(
+    // Debug, not error: createFeedbackRecordsBatch already warned per record with the full error,
+    // and the caller warns once with the failure count. At error level a single Hub outage reported
+    // itself three times per record and looked like an unhandled fault, when the pipeline handles
+    // it. This line survives only for the per-record index, which the other two don't carry.
+    logger.debug(
       {
         feedbackSourceId,
         feedbackRecordIndex: index,

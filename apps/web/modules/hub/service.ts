@@ -212,7 +212,7 @@ export const listFeedbackRecords = async (
     const data = await client.feedbackRecords.list(params);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err }, "Hub: listFeedbackRecords failed");
+    logger.warn({ err, hint: getHubErrorHint(err) }, "Hub: listFeedbackRecords failed");
     // Via the shared helper so callers also get the Hub's problem members (e.g. an invalid cursor or
     // malformed since/until arrives as a relayable 400 rather than an opaque failure).
     return createHubResultFromError(err);
