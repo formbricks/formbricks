@@ -171,13 +171,15 @@ const checkLegacyAuthorization = async <T extends z.ZodRawShape>({
 const checkCentralAccessItem = async <T extends z.ZodRawShape>(
   accessItem: TAccess<T>,
   actor: TUserActor,
-  organization: TOrganizationResource
+  organization: TOrganizationResource,
+  isOrganizationMember: boolean
 ) => {
   if (accessItem.type === "organization") {
     const validationError = getOrganizationValidationError(accessItem);
     if (validationError) return validationError;
 
     const action = getOrganizationAction(accessItem.roles);
+    if (action === "organization.read") return isOrganizationMember;
     return action ? can(actor, action, organization) : false;
   }
 
@@ -218,7 +220,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   }
 
   for (const accessItem of access) {
-    const accessResult = await checkCentralAccessItem(accessItem, actor, organization);
+    const accessResult = await checkCentralAccessItem(accessItem, actor, organization, isOrganizationMember);
     if (accessResult) return accessResult;
   }
 

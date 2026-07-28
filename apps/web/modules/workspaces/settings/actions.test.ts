@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { getTeamsByOrganizationIdAction, updateWorkspaceAction } from "./actions";
 
@@ -81,6 +82,21 @@ describe("workspace settings authorization", () => {
     expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, { name: "New name" });
   });
 
+  test("does not update the workspace when authorization fails", async () => {
+    const authorizationError = new AuthorizationError("Not authorized");
+    vi.mocked(assertCan).mockRejectedValueOnce(authorizationError);
+
+    await expect(
+      updateWorkspaceAction({
+        ctx,
+        parsedInput: { workspaceId, data: { name: "New name" } },
+      } as never)
+    ).rejects.toBe(authorizationError);
+
+    expect(mocks.getWorkspace).not.toHaveBeenCalled();
+    expect(mocks.updateWorkspace).not.toHaveBeenCalled();
+  });
+
   test("requires organization.manage to list teams for workspace settings", async () => {
     await getTeamsByOrganizationIdAction({
       ctx,
@@ -91,5 +107,19 @@ describe("workspace settings authorization", () => {
       type: "organization",
       id: organizationId,
     });
+  });
+
+  test("does not list teams when authorization fails", async () => {
+    const authorizationError = new AuthorizationError("Not authorized");
+    vi.mocked(assertCan).mockRejectedValueOnce(authorizationError);
+
+    await expect(
+      getTeamsByOrganizationIdAction({
+        ctx,
+        parsedInput: { organizationId },
+      } as never)
+    ).rejects.toBe(authorizationError);
+
+    expect(mocks.getTeamsByOrganizationId).not.toHaveBeenCalled();
   });
 });

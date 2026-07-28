@@ -90,7 +90,9 @@ describe("action-client-middleware", () => {
       [["owner", "manager"], "organization.manage"],
       [["owner"], "organization.write"],
     ] as const)("maps organization roles %j to %s", async (roles, expectedAction) => {
-      vi.mocked(can).mockResolvedValue(true);
+      vi.mocked(can)
+        .mockResolvedValueOnce(true)
+        .mockImplementation(async (_actor, action) => action === expectedAction);
 
       await expect(
         checkAuthorizationUpdated({
@@ -108,6 +110,7 @@ describe("action-client-middleware", () => {
         type: "organization",
         id: organizationId,
       });
+      expect(can).toHaveBeenCalledTimes(expectedAction === "organization.read" ? 1 : 2);
       expect(getMembershipRole).not.toHaveBeenCalled();
     });
 
@@ -329,6 +332,8 @@ describe("action-client-middleware", () => {
           ],
         })
       ).resolves.toBe("validation-error");
+
+      expect(can).not.toHaveBeenCalled();
     });
   });
 });

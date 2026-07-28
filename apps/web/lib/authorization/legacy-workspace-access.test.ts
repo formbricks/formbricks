@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
+import { DatabaseError } from "@formbricks/types/errors";
 import { hasUserWorkspaceAccessForActionLegacy } from "./legacy-workspace-access";
 
 const mocks = vi.hoisted(() => ({
@@ -98,5 +100,21 @@ describe("hasUserWorkspaceAccessForActionLegacy", () => {
     mocks.workspaceTeamFindMany.mockResolvedValue([{ permission: "read" }, { permission: "readWrite" }]);
 
     expect(await hasUserWorkspaceAccessForActionLegacy(userId, workspaceId, "DELETE")).toBe(false);
+  });
+
+  test("wraps known Prisma errors as DatabaseError without losing the database message", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Database unavailable", {
+      code: "P2024",
+      clientVersion: "0.0.0",
+    });
+    mocks.membershipFindFirst.mockRejectedValue(prismaError);
+
+    const caughtError = await hasUserWorkspaceAccessForActionLegacy(userId, workspaceId, "GET").catch(
+      (error: unknown) => error
+    );
+
+    expect(caughtError).toBeInstanceOf(DatabaseError);
+    expect(caughtError).toMatchObject({ message: prismaError.message });
+    expect(mocks.workspaceTeamFindMany).not.toHaveBeenCalled();
   });
 });
