@@ -660,6 +660,125 @@ export type TUpgradePaymentConfirmation = {
   requiresAction: boolean;
 };
 
+// Pro trials can't use the paid-only features (follow-ups, custom links) until the subscription
+// leaves "trialing". A trial user who wants them immediately can convert to paid now; when they do,
+// we credit the value of the trial days they have NOT used yet against that first invoice, so they
+// pay a reduced amount now and the normal price from the next cycle onward. Each unused day is
+// valued at the plan's daily rate (monthly charge / 30). The result is clamped to [0, full charge]
+// so a credit can never exceed — or invert — the amount being billed.
+//
+// NOTE: the /30 daily-rate basis is the single product-tunable in this formula. With a 14-day Pro
+// trial it credits ~half of the first month on day 0, tapering to ~0 as the trial runs out.
+export const TRIAL_CREDIT_BILLING_PERIOD_DAYS = 30;
+
+export const computeUnusedTrialCreditCents = ({
+  fullChargeCents,
+  trialEndSeconds,
+  nowSeconds,
+}: {
+  fullChargeCents: number;
+  trialEndSeconds: number | null | undefined;
+  nowSeconds: number;
+}): number => {
+  if (!Number.isFinite(fullChargeCents) || fullChargeCents <= 0) return 0;
+  if (!trialEndSeconds) return 0;
+  const remainingDays = Math.ceil((trialEndSeconds - nowSeconds) / 86_400);
+  if (remainingDays <= 0) return 0;
+  const cappedDays = Math.min(remainingDays, TRIAL_CREDIT_BILLING_PERIOD_DAYS);
+  const creditCents = Math.round((fullChargeCents * cappedDays) / TRIAL_CREDIT_BILLING_PERIOD_DAYS);
+  return Math.max(0, Math.min(creditCents, fullChargeCents));
+};
+
+// Raw (pre-credit) amount the immediate conversion invoice would bill. Shared by the credit
+// calculation and the confirmation-modal preview so the number the user sees matches the charge.
+const previewFullConversionChargeCents = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  customerId: string,
+  targetPlan: Exclude<TStandardCloudPlan, "hobby">,
+  targetInterval: TCloudBillingInterval
+): Promise<{ amountDue: number; currency: string } | null> => {
+  if (!stripeClient) return null;
+  const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
+  const existingDeletions = subscription.items.data.map((item) => ({ id: item.id, deleted: true as const }));
+  const preview = await stripeClient.invoices.createPreview({
+    customer: customerId,
+    subscription: subscription.id,
+    subscription_details: {
+      items: [...existingDeletions, ...targetItems],
+      proration_behavior: "always_invoice",
+      // Ending the trial resets the cycle to now and bills a full period; mirror that here so the
+      // previewed gross matches the real charge before the unused-trial credit is applied.
+      trial_end: "now",
+    },
+  });
+  return { amountDue: preview.amount_due, currency: preview.currency };
+};
+
+/**
+ * Gross first-charge for converting a trial to paid. Ending a trial resets the cycle and bills a
+ * fresh full period at the plan's list (base) price — verified against Stripe. We source that from
+ * the catalog rather than an invoice preview because a preview can fail on usage-based line items;
+ * the catalog price is what actually gets billed, and it keeps both the credit and the confirmation
+ * amount reliable and identical.
+ */
+const getTrialConversionGrossCents = async (
+  targetPlan: Exclude<TStandardCloudPlan, "hobby">,
+  targetInterval: TCloudBillingInterval
+): Promise<{ cents: number; currency: string }> => {
+  const catalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
+  return {
+    cents: catalogItem.basePrice.unit_amount ?? 0,
+    currency: catalogItem.basePrice.currency ?? "usd",
+  };
+};
+
+/**
+ * Applies the unused-trial-days credit to the customer balance before a Pro-trial conversion, and
+ * returns a reversal function. The caller MUST invoke the reversal if the conversion fails, so a
+ * declined/aborted conversion never leaves a stranded credit that would silently discount a future
+ * invoice. Returns null when no credit applies (no trial days left, no charge, Stripe disabled).
+ */
+const applyUnusedTrialCredit = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  input: { organizationId: string; customerId: string; targetPlan: Exclude<TStandardCloudPlan, "hobby">; targetInterval: TCloudBillingInterval }
+): Promise<(() => Promise<void>) | null> => {
+  if (!stripeClient) return null;
+
+  const gross = await getTrialConversionGrossCents(input.targetPlan, input.targetInterval);
+
+  const creditCents = computeUnusedTrialCreditCents({
+    fullChargeCents: gross.cents,
+    trialEndSeconds: subscription.trial_end,
+    nowSeconds: Math.floor(Date.now() / 1000),
+  });
+  if (creditCents <= 0) return null;
+
+  const currency = gross.currency || subscription.currency || "usd";
+  // Idempotency key scoped to this trial: a double-submit cannot double-credit. (A rare retry after
+  // a failed+reversed attempt falls back to charging full, which is the safe direction.)
+  const idempotencyKey = `trial-credit-${subscription.id}-${subscription.trial_end ?? "na"}`;
+  await stripeClient.customers.createBalanceTransaction(
+    input.customerId,
+    {
+      amount: -creditCents,
+      currency,
+      description: "Unused trial days credit",
+      metadata: { organizationId: input.organizationId, reason: "trial_conversion_credit" },
+    },
+    { idempotencyKey }
+  );
+
+  return async () => {
+    if (!stripeClient) return;
+    await stripeClient.customers.createBalanceTransaction(input.customerId, {
+      amount: creditCents,
+      currency,
+      description: "Reverse unused trial days credit (conversion not completed)",
+      metadata: { organizationId: input.organizationId, reason: "trial_conversion_credit_reversal" },
+    });
+  };
+};
+
 const updateSubscriptionItemsImmediately = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   targetPlan: TStandardCloudPlan,
@@ -1040,11 +1159,44 @@ export const switchOrganizationToCloudPlan = async (input: {
   }
 
   if (isImmediateUpgrade || isTrialConversion) {
-    const confirmation = await updateSubscriptionItemsImmediately(
-      subscription,
-      input.targetPlan,
-      input.targetInterval
-    );
+    // Converting a Pro trial to the SAME plan being trialed ("continue with Pro"): credit the unused
+    // trial days against this first invoice so the user pays a reduced amount now, unlocks features
+    // immediately, and is billed the full price next cycle. A tier change out of a trial (e.g. Pro
+    // trial -> Scale) is a genuine upgrade and is billed in full — no unused-trial credit.
+    const isProTrialContinue =
+      isTrialConversion && currentPlan === input.targetPlan && input.targetPlan !== "hobby";
+    let reverseTrialCredit: (() => Promise<void>) | null = null;
+    if (isProTrialContinue) {
+      reverseTrialCredit = await applyUnusedTrialCredit(subscription, {
+        organizationId: input.organizationId,
+        customerId: input.customerId,
+        targetPlan: input.targetPlan as Exclude<TStandardCloudPlan, "hobby">,
+        targetInterval: input.targetInterval,
+      });
+    }
+
+    let confirmation: TUpgradePaymentConfirmation;
+    try {
+      confirmation = await updateSubscriptionItemsImmediately(
+        subscription,
+        input.targetPlan,
+        input.targetInterval
+      );
+    } catch (error) {
+      // The charge failed (declined card, SCA, etc.) and the subscription stays trialing. Reverse the
+      // credit so it can never strand on the customer balance and silently discount a later invoice.
+      if (reverseTrialCredit) {
+        try {
+          await reverseTrialCredit();
+        } catch (reversalError) {
+          logger.error(
+            { reversalError, organizationId: input.organizationId, subscriptionId: subscription.id },
+            "Failed to reverse unused-trial credit after a failed conversion; balance may be stranded"
+          );
+        }
+      }
+      throw error;
+    }
 
     if (subscription.schedule) {
       await clearPendingPlanState(input.organizationId, subscription);
@@ -1073,31 +1225,55 @@ export const previewImmediateUpgradeCharge = async (input: {
   customerId: string;
   targetPlan: Exclude<TStandardCloudPlan, "hobby">;
   targetInterval: TCloudBillingInterval;
-}): Promise<{ amountDue: number; currency: string } | null> => {
+}): Promise<{
+  amountDue: number;
+  currency: string;
+  grossAmountDue: number;
+  trialCreditApplied: number;
+} | null> => {
   if (!stripeClient) {
     return null;
   }
 
   const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
-  const targetItems = await getCatalogItemsForPlan(input.targetPlan, input.targetInterval);
-  const existingDeletions = subscription.items.data.map((item) => ({
-    id: item.id,
-    deleted: true as const,
-  }));
 
-  const preview = await stripeClient.invoices.createPreview({
-    customer: input.customerId,
-    subscription: subscription.id,
-    subscription_details: {
-      items: [...existingDeletions, ...targetItems],
-      proration_behavior: "always_invoice",
-      // Mirror updateSubscriptionItemsImmediately: a trial upgrade ends the trial and bills now, so
-      // the preview must end the trial too or the confirmation modal would understate the charge.
-      ...(subscription.status === "trialing" ? { trial_end: "now" as const } : {}),
-    },
-  });
+  // Only a Pro-trial "continue" (same plan being trialed) gets the unused-trial credit, so the modal
+  // must net it off there and nowhere else.
+  const currentPlan = resolveCloudPlanFromSubscription(subscription);
+  const isProTrialContinue = subscription.status === "trialing" && currentPlan === input.targetPlan;
 
-  return { amountDue: preview.amount_due, currency: preview.currency };
+  if (isProTrialContinue) {
+    // Reliable path: gross = the plan's list price (what ending the trial bills), credit computed the
+    // exact same way as the real charge in applyUnusedTrialCredit, so the modal amount == the charge.
+    const gross = await getTrialConversionGrossCents(input.targetPlan, input.targetInterval);
+    const trialCreditApplied = computeUnusedTrialCreditCents({
+      fullChargeCents: gross.cents,
+      trialEndSeconds: subscription.trial_end,
+      nowSeconds: Math.floor(Date.now() / 1000),
+    });
+    return {
+      amountDue: Math.max(0, gross.cents - trialCreditApplied),
+      currency: gross.currency,
+      grossAmountDue: gross.cents,
+      trialCreditApplied,
+    };
+  }
+
+  // Non-trial upgrade: the charge is a mid-cycle proration, so an invoice preview is authoritative.
+  const preview = await previewFullConversionChargeCents(
+    subscription,
+    input.customerId,
+    input.targetPlan,
+    input.targetInterval
+  );
+  if (!preview) return null;
+
+  return {
+    amountDue: preview.amountDue,
+    currency: preview.currency,
+    grossAmountDue: preview.amountDue,
+    trialCreditApplied: 0,
+  };
 };
 
 export const undoPendingOrganizationPlanChange = async (

@@ -127,7 +127,7 @@ export const ConfirmationModal = ({
         </DialogHeader>
 
         <DialogBody>
-          <p>{body}</p>
+          <p className="whitespace-pre-line">{body}</p>
         </DialogBody>
 
         <DialogFooter>

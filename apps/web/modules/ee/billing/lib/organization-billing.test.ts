@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   addOptimisticBillingFeature,
   applySetupCheckoutUpgrade,
+  computeUnusedTrialCreditCents,
   createPaidPlanCheckoutSession,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
@@ -34,6 +35,8 @@ const mocks = vi.hoisted(() => ({
   checkoutSessionsCreate: vi.fn(),
   checkoutSessionsRetrieve: vi.fn(),
   invoicesRetrieve: vi.fn(),
+  invoicesCreatePreview: vi.fn(),
+  customersCreateBalanceTransaction: vi.fn(),
   productsList: vi.fn(),
   productsRetrieve: vi.fn(),
   subscriptionsList: vi.fn(),
@@ -127,6 +130,7 @@ vi.mock("./stripe-client", () => ({
       list: mocks.customersList,
       retrieve: mocks.customersRetrieve,
       update: mocks.customersUpdate,
+      createBalanceTransaction: mocks.customersCreateBalanceTransaction,
     },
     products: {
       list: mocks.productsList,
@@ -140,6 +144,7 @@ vi.mock("./stripe-client", () => ({
     },
     invoices: {
       retrieve: mocks.invoicesRetrieve,
+      createPreview: mocks.invoicesCreatePreview,
     },
     subscriptions: {
       list: mocks.subscriptionsList,
@@ -176,6 +181,9 @@ describe("organization-billing", () => {
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
+    // Defaults for the trial-conversion credit path (overridden per-test where relevant).
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 8900, currency: "usd" });
+    mocks.customersCreateBalanceTransaction.mockResolvedValue({ id: "cbtxn_test" });
     mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.productsList.mockResolvedValue({
       data: [
@@ -1232,6 +1240,8 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
       cancel_at_period_end: true,
     });
+    // A tier change out of a trial (Pro trial -> Scale) is a full upgrade: no unused-trial credit.
+    expect(mocks.customersCreateBalanceTransaction).not.toHaveBeenCalled();
   });
 
   test("switchOrganizationToCloudPlan converts a card-backed trial to the same paid plan instead of treating it as a no-op", async () => {
@@ -1303,6 +1313,104 @@ describe("organization-billing", () => {
       ([id]: [string]) => id === "sub_trial"
     );
     expect(trialUpdateCalls).toHaveLength(1);
+  });
+
+  // Shared fixture: a card-backed Pro trial with `remaining` days left on the trial.
+  const setupProTrialForCredit = (remainingDays: number) => {
+    const trialEnd = Math.floor(Date.now() / 1000) + remainingDays * 86_400;
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          currency: "usd",
+          billing_cycle_anchor: trialEnd,
+          cancel_at_period_end: false,
+          default_payment_method: "pm_sub",
+          trial_end: trialEnd,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: trialEnd,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+      },
+    });
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 8900, currency: "usd" });
+  };
+
+  test("switchOrganizationToCloudPlan credits unused trial days when a card-backed Pro trial converts to Pro", async () => {
+    setupProTrialForCredit(14); // 14 days left -> credit = round(8900 * 14 / 30) = 4153
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    // Credit applied once, negative (a credit), with a per-trial idempotency key.
+    expect(mocks.customersCreateBalanceTransaction).toHaveBeenCalledWith(
+      "cus_1",
+      expect.objectContaining({ amount: -4153, currency: "usd" }),
+      expect.objectContaining({ idempotencyKey: expect.stringContaining("trial-credit-sub_trial") })
+    );
+    // The conversion still ran.
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({ trial_end: "now", payment_behavior: "error_if_incomplete" })
+    );
+    // No reversal (positive) balance transaction on the success path.
+    const positive = mocks.customersCreateBalanceTransaction.mock.calls.filter(
+      ([, args]: [string, { amount: number }]) => args.amount > 0
+    );
+    expect(positive).toHaveLength(0);
+  });
+
+  test("switchOrganizationToCloudPlan reverses the unused-trial credit when the conversion charge fails", async () => {
+    setupProTrialForCredit(14);
+    mocks.subscriptionsUpdate.mockRejectedValueOnce(new Error("card_declined"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow();
+
+    const calls = mocks.customersCreateBalanceTransaction.mock.calls;
+    // Applied -4153, then reversed +4153 -> net zero, so no credit can strand on the balance.
+    expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === -4153)).toBe(true);
+    expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === 4153)).toBe(true);
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {
@@ -2843,5 +2951,46 @@ describe("organization-billing", () => {
 
     expect(result.targetPlan).toBeNull();
     expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("computeUnusedTrialCreditCents", () => {
+  const NOW = 1_800_000_000; // fixed reference "now" in seconds
+  const day = (n: number) => NOW + n * 86_400;
+
+  test("credits the unused trial days at the daily rate (14/30 of the charge)", () => {
+    // round(8900 * 14 / 30) = 4153
+    expect(
+      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(14), nowSeconds: NOW })
+    ).toBe(4153);
+  });
+
+  test("credits less as fewer trial days remain", () => {
+    const c7 = computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(7), nowSeconds: NOW });
+    const c14 = computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(14), nowSeconds: NOW });
+    expect(c7).toBeLessThan(c14);
+    expect(c7).toBe(2077); // round(8900 * 7 / 30)
+  });
+
+  test("no credit when the trial has already ended", () => {
+    expect(
+      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(-1), nowSeconds: NOW })
+    ).toBe(0);
+    expect(
+      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: NOW, nowSeconds: NOW })
+    ).toBe(0);
+  });
+
+  test("no credit without a trial end or a positive charge", () => {
+    expect(computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: null, nowSeconds: NOW })).toBe(0);
+    expect(computeUnusedTrialCreditCents({ fullChargeCents: 0, trialEndSeconds: day(14), nowSeconds: NOW })).toBe(0);
+    expect(computeUnusedTrialCreditCents({ fullChargeCents: -100, trialEndSeconds: day(14), nowSeconds: NOW })).toBe(0);
+  });
+
+  test("credit never exceeds the amount being charged (clamped)", () => {
+    // Absurdly long remaining window must not credit more than the full charge.
+    const credit = computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(365), nowSeconds: NOW });
+    expect(credit).toBeLessThanOrEqual(8900);
+    expect(credit).toBe(8900); // capped at the billing-period days -> full charge
   });
 });
