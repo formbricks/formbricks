@@ -6,6 +6,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUserLocale, TUserUpdateInput } from "@formbricks/types/user";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
+import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { publicUserSelect } from "./public-user";
 import { deleteUser, getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
@@ -32,6 +33,9 @@ vi.mock("@/lib/organization/service", () => ({
 
 vi.mock("@/lib/authzed/organization-membership", () => ({
   deleteUserOrganizationRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  deleteUserTeamRelationships: vi.fn(),
 }));
 
 describe("User Service", () => {
@@ -218,6 +222,7 @@ describe("User Service", () => {
         select: publicUserSelect,
       });
       expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user1");
+      expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user1");
     });
 
     // Regression for ENG-1057: Invite.creatorId has no onDelete rule, so any

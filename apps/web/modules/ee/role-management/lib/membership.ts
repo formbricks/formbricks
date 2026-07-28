@@ -6,6 +6,8 @@ import { ZString } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership, TMembershipUpdateInput, ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const updateMembership = async (
@@ -14,6 +16,7 @@ export const updateMembership = async (
   data: TMembershipUpdateInput
 ): Promise<TMembership> => {
   validateInputs([userId, ZString], [organizationId, ZString], [data, ZMembershipUpdateInput]);
+  let affectedTeamIds: string[] = [];
 
   try {
     const membership = await prisma.membership.update({
@@ -28,7 +31,7 @@ export const updateMembership = async (
 
     await reconcileOrganizationMembership(organizationId, userId);
 
-    await prisma.teamUser.findMany({
+    const teamMemberships = await prisma.teamUser.findMany({
       where: {
         userId,
         team: {
@@ -39,6 +42,7 @@ export const updateMembership = async (
         teamId: true,
       },
     });
+    affectedTeamIds = teamMemberships.map(({ teamId }) => teamId);
 
     if (data.role === "owner" || data.role === "manager") {
       await prisma.teamUser.updateMany({
@@ -74,5 +78,11 @@ export const updateMembership = async (
     }
 
     throw error;
+  } finally {
+    await runPostCommitProjection("organization_role_team_membership_update", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamMemberships: affectedTeamIds.map((teamId) => ({ teamId, userId })),
+      })
+    );
   }
 };

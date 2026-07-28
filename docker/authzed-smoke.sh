@@ -257,6 +257,92 @@ jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_projection}" 
     user:application-relationship-smoke --consistency-full
 )" == *"false"* ]]
 
+team_workspace_seed="$(authzed_relationships "${AUTHZED_TOKEN}" seed-team-workspace)"
+jq --exit-status '.status == "projected"' <<<"${team_workspace_seed}" >/dev/null
+[[ "$(
+  zed permission check workspace:application-graph-smoke manage \
+    user:application-graph-alice --consistency-full
+)" == *"true"* ]]
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-bob --consistency-full
+)" == *"true"* ]]
+[[ "$(
+  zed permission check workspace:application-graph-smoke manage \
+    user:application-graph-bob --consistency-full
+)" == *"false"* ]]
+
+downgraded_manager_grant="$(
+  authzed_relationships "${AUTHZED_TOKEN}" downgrade-manager-grant
+)"
+jq --exit-status '.status == "projected"' <<<"${downgraded_manager_grant}" >/dev/null
+[[ "$(
+  zed permission check workspace:application-graph-smoke manage \
+    user:application-graph-alice --consistency-full
+)" == *"false"* ]]
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-alice --consistency-full
+)" == *"true"* ]]
+
+removed_reader_grant="$(authzed_relationships "${AUTHZED_TOKEN}" remove-reader-grant)"
+jq --exit-status '.status == "projected"' <<<"${removed_reader_grant}" >/dev/null
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-bob --consistency-full
+)" == *"false"* ]]
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-alice --consistency-full
+)" == *"true"* ]]
+
+removed_alice_memberships="$(
+  authzed_relationships "${AUTHZED_TOKEN}" remove-alice-memberships
+)"
+jq --exit-status '.status == "projected"' <<<"${removed_alice_memberships}" >/dev/null
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-alice --consistency-full
+)" == *"false"* ]]
+
+team_workspace_reseed="$(authzed_relationships "${AUTHZED_TOKEN}" seed-team-workspace)"
+deleted_manager_team="$(authzed_relationships "${AUTHZED_TOKEN}" delete-manager-team)"
+idempotent_deleted_manager_team="$(
+  authzed_relationships "${AUTHZED_TOKEN}" delete-manager-team
+)"
+jq --exit-status '.status == "projected"' <<<"${team_workspace_reseed}" >/dev/null
+jq --exit-status '.status == "projected"' <<<"${deleted_manager_team}" >/dev/null
+jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_manager_team}" >/dev/null
+zed relationship create team:application-graph-manager admin user:application-graph-alice
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-alice --consistency-full
+)" == *"true"* ]]
+[[ "$(
+  zed permission check workspace:application-graph-smoke manage \
+    user:application-graph-alice --consistency-full
+)" == *"false"* ]]
+
+team_workspace_reseed_for_delete="$(
+  authzed_relationships "${AUTHZED_TOKEN}" seed-team-workspace
+)"
+deleted_graph_workspace="$(authzed_relationships "${AUTHZED_TOKEN}" delete-workspace)"
+idempotent_deleted_graph_workspace="$(
+  authzed_relationships "${AUTHZED_TOKEN}" delete-workspace
+)"
+jq --exit-status '.status == "projected"' <<<"${team_workspace_reseed_for_delete}" >/dev/null
+jq --exit-status '.status == "projected"' <<<"${deleted_graph_workspace}" >/dev/null
+jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_graph_workspace}" >/dev/null
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-bob --consistency-full
+)" == *"false"* ]]
+
+persisted_team_workspace_seed="$(
+  authzed_relationships "${AUTHZED_TOKEN}" seed-team-workspace
+)"
+jq --exit-status '.status == "projected"' <<<"${persisted_team_workspace_seed}" >/dev/null
+
 zed relationship create organization:smoke owner user:alice
 zed relationship create workspace:smoke organization organization:smoke
 zed relationship create survey:smoke workspace workspace:smoke
@@ -303,12 +389,20 @@ jq --exit-status '.status == "projected"' <<<"${restored_projection}" >/dev/null
 
 [[ "$(zed permission check survey:smoke read user:alice --consistency-full)" == *"true"* ]]
 [[ "$(zed permission check survey:smoke read user:bob --consistency-full)" == *"false"* ]]
+[[ "$(
+  zed permission check workspace:application-graph-smoke manage \
+    user:application-graph-alice --consistency-full
+)" == *"true"* ]]
+[[ "$(
+  zed permission check workspace:application-graph-smoke read \
+    user:application-graph-bob --consistency-full
+)" == *"true"* ]]
 
 persisted_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check)"
 jq --exit-status '.status == "matched" and .differenceCount == 0' <<<"${persisted_schema_check}" >/dev/null
 
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${team_workspace_seed}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${persisted_team_workspace_seed}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \
@@ -317,4 +411,4 @@ if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   exit 1
 fi
 
-printf '%s\n' "AuthZed smoke test passed: schema lifecycle, application relationship projection, role transition, idempotent deletion, health, authentication failure, bounded outage handling, migrations, and persistence were verified."
+printf '%s\n' "AuthZed smoke test passed: schema lifecycle, organization/team/workspace projection, multi-team permission union, grant and membership revocation, idempotent cascade cleanup, health, authentication failure, bounded outage handling, migrations, and persistence were verified."

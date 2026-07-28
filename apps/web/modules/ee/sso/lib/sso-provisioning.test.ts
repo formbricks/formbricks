@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
@@ -24,6 +25,9 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
@@ -311,6 +315,9 @@ describe("provisionSsoUserMemberships", () => {
   test("creates a default team membership when requested", async () => {
     await provisionSsoUserMemberships({ ...baseArgs, assignToDefaultTeam: true });
     expect(createDefaultTeamMembership).toHaveBeenCalledWith("u1", expect.anything());
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId: "team-123", userId: "u1" }],
+    });
   });
 
   test("skips org writes when there is no organization but still syncs analytics", async () => {

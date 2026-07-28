@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { createUser, getUsers, updateUser } from "../users";
 
@@ -46,6 +47,9 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
 }));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
 
 describe("Users Lib", () => {
   describe("getUsers", () => {
@@ -88,13 +92,19 @@ describe("Users Lib", () => {
 
   describe("createUser", () => {
     test("creates user and revalidates caches", async () => {
+      (prisma.team.findMany as any).mockResolvedValueOnce([
+        { id: "team123", name: "Test Team", workspaceTeams: [] },
+      ]);
       (prisma.user.create as any).mockResolvedValueOnce(mockUser);
       const result = await createUser(
-        { name: "Test User", email: "test@example.com", role: "member" },
+        { name: "Test User", email: "test@example.com", role: "member", teams: ["Test Team"] },
         "org456"
       );
       expect(prisma.user.create).toHaveBeenCalled();
       expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        teamMemberships: [{ teamId: "team123", userId: mockUser.id }],
+      });
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.id).toBe(mockUser.id);
@@ -164,6 +174,9 @@ describe("Users Lib", () => {
       const result = await updateUser({ email: mockUser.email, name: "Updated User" }, "org456");
       expect(prisma.user.findFirst).toHaveBeenCalled();
       expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+        teamMemberships: [{ teamId: "team123", userId: mockUser.id }],
+      });
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.name).toBe("Updated User");

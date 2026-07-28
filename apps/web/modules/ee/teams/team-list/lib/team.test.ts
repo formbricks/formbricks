@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { TTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 import {
   createTeam,
@@ -30,6 +31,10 @@ vi.mock("@formbricks/database", () => ({
     membership: { findUnique: vi.fn(), count: vi.fn() },
     workspace: { count: vi.fn() },
   },
+}));
+
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 
 const mockTeams = [
@@ -166,6 +171,7 @@ describe("createTeam", () => {
     });
     const result = await createTeam("org1", "Team 1");
     expect(result).toBe("t1");
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["t1"] });
   });
   test("throws InvalidInputError if team exists", async () => {
     vi.mocked(prisma.team.findFirst).mockResolvedValueOnce({
@@ -236,6 +242,7 @@ describe("deleteTeam", () => {
     vi.mocked(prisma.team.delete).mockResolvedValueOnce(mockTeam);
     const result = await deleteTeam("t1");
     expect(result).toBe(true);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["t1"] });
   });
   test("throws DatabaseError on Prisma error", async () => {
     vi.mocked(prisma.team.delete).mockRejectedValueOnce(
@@ -276,6 +283,31 @@ describe("updateTeamDetails", () => {
     });
     const result = await updateTeamDetails("t1", data);
     expect(result).toBe(true);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamIds: ["t1"],
+      teamMemberships: [
+        { teamId: "t1", userId: "u1" },
+        { teamId: "t1", userId: "u2" },
+      ],
+      workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
+    });
+  });
+  test("does not change a successful update result when projection unexpectedly rejects", async () => {
+    vi.mocked(prisma.team.findUnique)
+      .mockResolvedValueOnce({
+        id: "t1",
+        organizationId: "org1",
+        name: "Team 1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .mockResolvedValueOnce(mockTeamDetails);
+    vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
+    vi.mocked(reconcileTeamWorkspaceRelationships).mockRejectedValueOnce(new Error("private"));
+
+    await expect(updateTeamDetails("t1", data)).resolves.toBe(true);
   });
   test("throws ResourceNotFoundError if team not found", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);

@@ -7,6 +7,8 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMember, TMembership } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
@@ -120,6 +122,11 @@ export const deleteMembership = async (
     ]);
 
     await reconcileOrganizationMembership(organizationId, userId);
+    await runPostCommitProjection("organization_membership_team_cleanup", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamMemberships: deletedTeamMemberships.map(({ teamId }) => ({ teamId, userId })),
+      })
+    );
 
     return deletedTeamMemberships;
   } catch (error) {

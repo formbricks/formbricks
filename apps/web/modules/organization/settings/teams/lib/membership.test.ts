@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import {
   deleteMembership,
   getMembersByOrganizationId,
@@ -31,6 +32,9 @@ vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 
 const organizationId = "org-1";
@@ -111,6 +115,9 @@ describe("deleteMembership", () => {
     const result = await deleteMembership(userId, organizationId);
     expect(result[0].teamId).toBe(teamId);
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith(organizationId, userId);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId, userId }],
+    });
   });
   test("throws DatabaseError on prisma error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("db", {

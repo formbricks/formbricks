@@ -4,6 +4,8 @@ import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
@@ -418,7 +420,10 @@ const provisionNewSsoUser = async ({
           { newUserId: createdUser.id, defaultTeamId: DEFAULT_TEAM_ID },
           "Creating default team membership"
         );
-        await createDefaultTeamMembership(createdUser.id, tx);
+        await createDefaultTeamMembership(createdUser.id, {
+          projection: "deferred",
+          transaction: tx,
+        });
       }
 
       const updatedNotificationSettings: TUserNotificationSettings = {
@@ -445,6 +450,14 @@ const provisionNewSsoUser = async ({
 
   if (organization) {
     await reconcileOrganizationMembership(organization.id, userProfile.id);
+    if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+      const defaultTeamId = DEFAULT_TEAM_ID;
+      await runPostCommitProjection("legacy_sso_default_team_membership_create", () =>
+        reconcileTeamWorkspaceRelationships({
+          teamMemberships: [{ teamId: defaultTeamId, userId: userProfile.id }],
+        })
+      );
+    }
   }
 
   contextLogger.debug(

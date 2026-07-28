@@ -5,6 +5,8 @@ import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
@@ -178,7 +180,10 @@ export const provisionSsoUserMemberships = async ({
             { projection: "deferred", transaction: tx }
           );
           if (assignToDefaultTeam) {
-            await createDefaultTeamMembership(userId, tx);
+            await createDefaultTeamMembership(userId, {
+              projection: "deferred",
+              transaction: tx,
+            });
           }
           const dbUser = await tx.user.findUnique({
             where: { id: userId },
@@ -200,6 +205,14 @@ export const provisionSsoUserMemberships = async ({
           );
         });
         await reconcileOrganizationMembership(organizationId, userId);
+        if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
+          const defaultTeamId = DEFAULT_TEAM_ID;
+          await runPostCommitProjection("sso_default_team_membership_create", () =>
+            reconcileTeamWorkspaceRelationships({
+              teamMemberships: [{ teamId: defaultTeamId, userId }],
+            })
+          );
+        }
         assigned = true;
       } catch (error) {
         // The user + account are already committed by Better Auth; never throw here (it would not

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
+import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
@@ -19,6 +20,9 @@ vi.mock("@formbricks/database", () => ({ prisma: { invite: { deleteMany: vi.fn()
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 vi.mock("@/lib/authzed/organization-membership", () => ({
   deleteUserOrganizationRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  deleteUserTeamRelationships: vi.fn(),
 }));
 vi.mock("@/lib/organization/service", () => ({
   deleteOrganization: vi.fn(),
@@ -93,6 +97,7 @@ describe("accountDeletionAfterDelete", () => {
     await accountDeletionAfterDelete(user);
 
     expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user-1");
+    expect(deleteUserTeamRelationships).toHaveBeenCalledWith("user-1");
     expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });
     expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
       oldUser: user,
@@ -122,9 +127,9 @@ describe("accountDeletionAfterDelete", () => {
       {
         code: "authzed_internal",
         component: "authzed",
-        operation: "delete_user_organization_relationships",
+        operation: "account_delete_organization_cleanup",
       },
-      "Unexpected AuthZed cleanup failure after account deletion"
+      "Unexpected AuthZed projection failure after source commit"
     );
     expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });
     expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({

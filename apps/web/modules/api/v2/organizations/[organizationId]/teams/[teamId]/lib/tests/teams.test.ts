@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { deleteTeam, getTeam, updateTeam } from "../teams";
 
 vi.mock("@formbricks/database", () => ({
@@ -12,6 +13,10 @@ vi.mock("@formbricks/database", () => ({
       delete: vi.fn(),
     },
   },
+}));
+
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 
 // Define a mock team
@@ -67,6 +72,7 @@ describe("Teams Lib", () => {
         include: { workspaceTeams: { select: { workspaceId: true } } },
       });
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["team123"] });
       if (result.ok) {
         expect(result.data).toEqual(mockTeam);
       }
@@ -113,6 +119,7 @@ describe("Teams Lib", () => {
         include: { workspaceTeams: { select: { workspaceId: true } } },
       });
       expect(result.ok).toBe(true);
+      expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["team123"] });
       if (result.ok) {
         expect(result.data).toEqual(updatedTeam);
       }
