@@ -2,7 +2,7 @@ import "server-only";
 import { TCloudBillingPlan } from "@formbricks/types/organizations";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 
-const PAID_BILLING_PLANS = new Set<TCloudBillingPlan>(["pro", "scale", "custom"]);
+const PAID_BILLING_PLANS = new Set<TCloudBillingPlan>(["pro", "scale"]);
 
 /**
  * Whether the user belongs to at least one organization on a paid, active plan.

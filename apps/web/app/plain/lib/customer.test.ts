@@ -36,8 +36,13 @@ describe("getIsActiveCustomer", () => {
     await expect(getIsActiveCustomer("user-1")).resolves.toBe(false);
   });
 
-  test("returns false for a free plan even when the subscription is active", async () => {
-    mockOrgs([orgWith("free", "active")]);
+  test("returns false for the hobby plan even when the subscription is active", async () => {
+    mockOrgs([orgWith("hobby", "active")]);
+    await expect(getIsActiveCustomer("user-1")).resolves.toBe(false);
+  });
+
+  test("returns false for the custom plan (not counted as paying)", async () => {
+    mockOrgs([orgWith("custom", "active")]);
     await expect(getIsActiveCustomer("user-1")).resolves.toBe(false);
   });
 
@@ -47,7 +52,7 @@ describe("getIsActiveCustomer", () => {
   });
 
   test("returns true when at least one of several organizations qualifies", async () => {
-    mockOrgs([orgWith("free", "active"), orgWith("custom", "active")]);
+    mockOrgs([orgWith("hobby", "active"), orgWith("scale", "active")]);
     await expect(getIsActiveCustomer("user-1")).resolves.toBe(true);
   });
 
