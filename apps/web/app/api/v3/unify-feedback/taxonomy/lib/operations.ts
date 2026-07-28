@@ -312,8 +312,9 @@ export async function triggerV3TaxonomyRun(
   });
   if (result.error || !result.data) {
     logHubFailure(params, result.error, "startRun");
-    // The most common failure here is a Hub 400 ("at least N embedded text records are required; found
-    // M") — squarely the caller's own situation, so the shared mapper relays that detail (bounded).
+    // The most common failure here is a Hub 400: "at least N embedded text feedback records are required;
+    // found M" — squarely the caller's own situation. Note the Hub puts that in `invalid_params[0].reason`
+    // and keeps a fixed string in `detail`, so it is the relayed params, not the detail, that carry it.
     return taxonomyHubErrorResponse(result.error, requestId, instance, "Taxonomy run");
   }
 

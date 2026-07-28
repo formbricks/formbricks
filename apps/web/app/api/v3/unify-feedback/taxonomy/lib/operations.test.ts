@@ -50,6 +50,12 @@ vi.mock("@/modules/hub/service", () => ({
   removeTaxonomyNode: vi.fn(),
 }));
 
+/**
+ * A Hub 4xx `detail` the shared mapper is allowed to echo back. This is the Hub's real wording: on a
+ * validation failure it keeps `detail` fixed and puts the actionable message in `invalid_params`.
+ */
+const RELAYABLE_HUB_DETAIL = "One or more request parameters are invalid";
+
 const workspaceId = "clxx1234567890123456789012";
 const directoryId = "clfd1234567890123456789012";
 const context: V3WorkspaceContext = { workspaceId, organizationId: "org_1" };
@@ -390,10 +396,10 @@ describe("getV3TaxonomyNodeRecordCounts", () => {
    */
   test.each([
     { hub: 0, status: 502, code: "bad_gateway", detail: "The feedback service is unavailable." },
-    { hub: 400, status: 400, code: "bad_request", detail: "at least 750 embedded records required; found 12" },
+    { hub: 400, status: 400, code: "bad_request", detail: RELAYABLE_HUB_DETAIL },
     { hub: 401, status: 502, code: "bad_gateway", detail: "The feedback service is unavailable." },
     { hub: 404, status: 404, code: "not_found", detail: "Taxonomy run not found" },
-    { hub: 409, status: 409, code: "conflict", detail: "at least 750 embedded records required; found 12" },
+    { hub: 409, status: 409, code: "conflict", detail: RELAYABLE_HUB_DETAIL },
     { hub: 500, status: 502, code: "bad_gateway", detail: "The feedback service is unavailable." },
     { hub: 503, status: 503, code: "service_unavailable", detail: undefined },
   ])("maps Hub $hub to $status", async ({ hub, status, code, detail }) => {
@@ -403,9 +409,9 @@ describe("getV3TaxonomyNodeRecordCounts", () => {
         status: hub,
         message: "GET http://hub.internal:8080/v1/taxonomy/runs failed: upstream boom",
         detail: "",
-        // Only relayed for the statuses the shared mapper allows; the fixture is the same for all of them
-        // so a status that must not relay is caught by the expected `detail` below.
-        problemDetail: "at least 750 embedded records required; found 12",
+        // Same fixture on every row, so a status that must *not* relay is caught by the expected
+        // `detail` below rather than by the fixture simply being absent.
+        problemDetail: RELAYABLE_HUB_DETAIL,
       },
     });
 
@@ -532,15 +538,24 @@ describe("triggerV3TaxonomyRun error branch", () => {
     scopeType: "directory" as const,
   };
 
-  test("relays a Hub 400's actionable detail so the user learns why the run was refused", async () => {
+  /**
+   * The Hub's real 400 body, taken from a live response: `detail` is a fixed "one or more parameters are
+   * invalid" string and the *actionable* message sits in `invalid_params[0].reason`. Relaying `detail`
+   * alone would therefore drop the only text that tells a user why the run was refused.
+   */
+  test("keeps a Hub 400's actionable reason, which lives in invalid_params and not in detail", async () => {
+    const reason = "at least 750 embedded text feedback records are required; found 12";
+    // `TaxonomyScope.tenant_id` in the Hub's wording — the shared mapper rewrites the internal term to the
+    // product's own ("dataset") for every surface, so this asserts the rewritten name.
     vi.mocked(createTaxonomyRun).mockResolvedValue({
       data: null,
       error: {
         status: 400,
         message: "bad request",
         detail: "",
-        code: "bad_request",
-        problemDetail: "at least 750 embedded records required; found 12",
+        code: "validation",
+        problemDetail: RELAYABLE_HUB_DETAIL,
+        invalidParams: [{ name: "TaxonomyScope.tenant_id", reason }],
       },
     });
 
@@ -548,7 +563,10 @@ describe("triggerV3TaxonomyRun error branch", () => {
     const body = await response.json();
 
     expect(response.status).toBe(400);
-    expect(body.detail).toBe("at least 750 embedded records required; found 12");
+    expect(body.detail).toBe(RELAYABLE_HUB_DETAIL);
+    expect(body.invalid_params).toEqual([{ name: "TaxonomyScope.dataset_id", reason }]);
+    // The Hub's own `code` vocabulary ("validation") does not cross over into ours.
+    expect(body.code).toBe("bad_request");
   });
 
   test("maps the Hub's 'no config' error (status 0) to a fixed 502", async () => {

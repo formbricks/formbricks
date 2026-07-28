@@ -52,8 +52,9 @@ const RELAYABLE_HUB_STATUSES = new Set([400, 409, 413, 422]);
  *
  * The Hub's tenant *is* a Formbricks feedback dataset — "dataset" is what the product calls it, and
  * `serializeV3FeedbackRecord` already renames the field on the way out — so a relayed message naming
- * `tenant_id` contradicts the surface it appears on and points a caller at a parameter that does not exist. Reproduced with a duplicate create, whose Hub 409 reads "a feedback
- * record with this tenant_id, submission_id, and field_id already exists".
+ * `tenant_id` contradicts the surface it appears on and points a caller at a parameter that does not exist.
+ * Reproduced with a duplicate create, whose Hub 409 reads "a feedback record with this tenant_id,
+ * submission_id, and field_id already exists".
  *
  * Word-bounded so it renames the term and nothing else. Applied to every relayed string — detail and
  * `invalid_params` alike — because the Hub names fields in both.
