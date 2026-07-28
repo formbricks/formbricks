@@ -9,9 +9,11 @@ describe("AuthZed client facade", () => {
     closeAuthzedClient();
     sdkMocks.close.mockReset();
     sdkMocks.deadlineInterceptor.mockClear();
+    sdkMocks.deleteRelationships.mockReset();
     sdkMocks.diffSchema.mockReset();
     sdkMocks.newClient.mockReset();
     sdkMocks.readSchema.mockReset();
+    sdkMocks.writeRelationships.mockReset();
     sdkMocks.writeSchema.mockReset();
     configMocks.isAuthzedEnabled.mockReset();
     retryMocks.execute.mockClear();
@@ -23,8 +25,10 @@ describe("AuthZed client facade", () => {
     sdkMocks.newClient.mockReturnValue({
       close: sdkMocks.close,
       promises: {
+        deleteRelationships: sdkMocks.deleteRelationships,
         diffSchema: sdkMocks.diffSchema,
         readSchema: sdkMocks.readSchema,
+        writeRelationships: sdkMocks.writeRelationships,
         writeSchema: sdkMocks.writeSchema,
       },
     });
@@ -95,9 +99,11 @@ describe("AuthZed client facade", () => {
     expect(sdkMocks.newClient).toHaveBeenCalledTimes(1);
     expect(Object.keys(first).sort()).toEqual([
       "consistency",
+      "deleteRelationships",
       "diffSchema",
       "readSchema",
       "systemKey",
+      "writeRelationships",
       "writeSchema",
     ]);
     expect(first).not.toHaveProperty("token");
@@ -176,5 +182,149 @@ describe("AuthZed client facade", () => {
 
     expect(sdkMocks.writeSchema).toHaveBeenCalledWith({ schema: "definition user {}" });
     expect(retryMocks.execute).toHaveBeenCalledWith("write_schema", expect.any(Function));
+  });
+
+  test("translates Formbricks relationship updates without exposing SDK responses", async () => {
+    sdkMocks.writeRelationships.mockResolvedValue({ writtenAt: { token: "private-revision" } });
+
+    await expect(
+      getAuthzedClient().writeRelationships([
+        {
+          operation: "touch",
+          relationship: {
+            relation: "owner",
+            resource: { objectId: "org-1", objectType: "organization" },
+            subject: { objectId: "user-1", objectType: "user" },
+          },
+        },
+        {
+          operation: "delete",
+          relationship: {
+            relation: "manager",
+            resource: { objectId: "org-1", objectType: "organization" },
+            subject: { objectId: "user-1", objectType: "user", relation: "member" },
+          },
+        },
+      ])
+    ).resolves.toBeUndefined();
+
+    expect(sdkMocks.writeRelationships).toHaveBeenCalledWith({
+      optionalPreconditions: [],
+      updates: [
+        {
+          operation: 2,
+          relationship: {
+            optionalCaveat: undefined,
+            optionalExpiresAt: undefined,
+            relation: "owner",
+            resource: { objectId: "org-1", objectType: "organization" },
+            subject: {
+              object: { objectId: "user-1", objectType: "user" },
+              optionalRelation: "",
+            },
+          },
+        },
+        {
+          operation: 3,
+          relationship: {
+            optionalCaveat: undefined,
+            optionalExpiresAt: undefined,
+            relation: "manager",
+            resource: { objectId: "org-1", objectType: "organization" },
+            subject: {
+              object: { objectId: "user-1", objectType: "user" },
+              optionalRelation: "member",
+            },
+          },
+        },
+      ],
+    });
+    expect(retryMocks.execute).toHaveBeenCalledWith("write_relationships", expect.any(Function));
+  });
+
+  test.each([0, 1_001])(
+    "rejects a relationship batch with %i updates before an SDK request",
+    async (batchSize) => {
+      const updates = Array.from({ length: batchSize }, () => ({
+        operation: "touch" as const,
+        relationship: {
+          relation: "owner",
+          resource: { objectId: "org-1", objectType: "organization" },
+          subject: { objectId: "user-1", objectType: "user" },
+        },
+      }));
+
+      await expect(getAuthzedClient().writeRelationships(updates)).rejects.toMatchObject({
+        attempts: 0,
+        code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      });
+      expect(sdkMocks.writeRelationships).not.toHaveBeenCalled();
+    }
+  );
+
+  test("requires a narrowed relationship delete filter", async () => {
+    await expect(
+      getAuthzedClient().deleteRelationships({
+        resourceId: "",
+        resourceType: "organization",
+      })
+    ).rejects.toMatchObject({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+    });
+    expect(sdkMocks.deleteRelationships).not.toHaveBeenCalled();
+  });
+
+  test("translates a resource-scoped bulk delete through the resilience pipeline", async () => {
+    sdkMocks.deleteRelationships.mockResolvedValue({ deletedAt: { token: "private-revision" } });
+
+    await expect(
+      getAuthzedClient().deleteRelationships({
+        resourceId: "org-1",
+        resourceType: "organization",
+      })
+    ).resolves.toBeUndefined();
+
+    expect(sdkMocks.deleteRelationships).toHaveBeenCalledWith({
+      optionalAllowPartialDeletions: false,
+      optionalLimit: 0,
+      optionalPreconditions: [],
+      relationshipFilter: {
+        optionalRelation: "",
+        optionalResourceId: "org-1",
+        optionalResourceIdPrefix: "",
+        optionalSubjectFilter: undefined,
+        resourceType: "organization",
+      },
+    });
+    expect(retryMocks.execute).toHaveBeenCalledWith("delete_relationships", expect.any(Function));
+  });
+
+  test("translates a subject-scoped bulk delete without broadening the resource filter", async () => {
+    sdkMocks.deleteRelationships.mockResolvedValue({ deletedAt: { token: "private-revision" } });
+
+    await expect(
+      getAuthzedClient().deleteRelationships({
+        resourceType: "organization",
+        subject: { objectId: "user-1", objectType: "user" },
+      })
+    ).resolves.toBeUndefined();
+
+    expect(sdkMocks.deleteRelationships).toHaveBeenCalledWith({
+      optionalAllowPartialDeletions: false,
+      optionalLimit: 0,
+      optionalPreconditions: [],
+      relationshipFilter: {
+        optionalRelation: "",
+        optionalResourceId: "",
+        optionalResourceIdPrefix: "",
+        optionalSubjectFilter: {
+          optionalRelation: undefined,
+          optionalSubjectId: "user-1",
+          subjectType: "user",
+        },
+        resourceType: "organization",
+      },
+    });
   });
 });

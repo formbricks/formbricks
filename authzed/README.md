@@ -100,6 +100,53 @@ Any schema change must keep `pnpm authzed:validate` green and extend the
 assertions to document the new semantics. Intentional semantic changes require
 updating the assertions in the same PR, with review.
 
+## Organization membership projection
+
+PostgreSQL remains the source of truth for membership lifecycle and roles.
+After a `Membership` source mutation commits, Formbricks reconciles the
+corresponding SpiceDB `organization` relationship:
+
+- `Membership.role` maps exhaustively to exactly one of `owner`, `manager`,
+  `member`, or `billing`.
+- A present membership atomically touches its current role and deletes the
+  other three roles.
+- A deleted membership deletes all four possible role relationships.
+- Repeating the same create, update, or delete is safe and can heal a missed
+  projection.
+- If the source role changes concurrently, reconciliation reads PostgreSQL
+  again and converges for up to three passes.
+
+The current legacy evaluator authorizes every `Membership` row without checking
+`Membership.accepted`. The initial projection deliberately preserves that
+behavior: accepted and pending membership rows project identically. An
+`Invite` alone is not projected.
+
+Projection runs after the source transaction commits and is best-effort.
+AuthZed being disabled performs no projection work. An AuthZed outage never
+changes a successful PostgreSQL mutation into an application error; it produces
+only a sanitized operational result and warning. ENG-1718 must backfill and
+repair all source relationships before AuthZed shadow evaluation or enforcement
+can be enabled.
+
+The organization-membership projection boundary covers:
+
+- the shared `createMembership` service, including idempotent retries;
+- SSO provisioning after its outer transaction commits;
+- organization role updates and explicit membership deletion;
+- API v2 organization-user nested membership creation and role updates;
+- organization deletion and both legacy and Better Auth user-deletion
+  cascades.
+
+User deletion is intentionally scoped to relationships whose resource type is
+`organization`. Team, workspace, and API-key relationship projection is owned
+by later tickets.
+
+The application facade accepts only Formbricks-owned relationship types. It
+supports idempotent `touch`/`delete` batches of at most 1,000 updates and safely
+narrowed bulk deletions. The SDK client, credentials, SDK request/response
+types, and raw errors never cross the facade. Relationship identifiers are
+write-only inputs and never appear in projection results or logs.
+
 ## Mapping from the current system
 
 | Application concept                                                  | Schema element                                                                           |

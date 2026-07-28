@@ -4,6 +4,7 @@ import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
@@ -170,7 +171,12 @@ export const provisionSsoUserMemberships = async ({
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !assigned; attempt++) {
       try {
         await prisma.$transaction(async (tx) => {
-          await createMembership(organizationId, userId, { role: "member", accepted: true }, tx);
+          await createMembership(
+            organizationId,
+            userId,
+            { role: "member", accepted: true },
+            { projection: "deferred", transaction: tx }
+          );
           if (assignToDefaultTeam) {
             await createDefaultTeamMembership(userId, tx);
           }
@@ -193,6 +199,7 @@ export const provisionSsoUserMemberships = async ({
             tx
           );
         });
+        await reconcileOrganizationMembership(organizationId, userId);
         assigned = true;
       } catch (error) {
         // The user + account are already committed by Better Auth; never throw here (it would not

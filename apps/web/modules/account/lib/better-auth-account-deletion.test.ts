@@ -2,6 +2,7 @@ import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
@@ -16,6 +17,9 @@ import {
 
 vi.mock("@formbricks/database", () => ({ prisma: { invite: { deleteMany: vi.fn() } } }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  deleteUserOrganizationRelationships: vi.fn(),
+}));
 vi.mock("@/lib/organization/service", () => ({
   deleteOrganization: vi.fn(),
   getOrganizationsWhereUserIsSingleOwner: vi.fn(),
@@ -88,6 +92,7 @@ describe("accountDeletionAfterDelete", () => {
   test("deletes the Brevo customer and queues a success audit event with the deleted user", async () => {
     await accountDeletionAfterDelete(user);
 
+    expect(deleteUserOrganizationRelationships).toHaveBeenCalledWith("user-1");
     expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });
     expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
       oldUser: user,
@@ -106,6 +111,28 @@ describe("accountDeletionAfterDelete", () => {
     expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: "success", targetUserId: "user-1" })
     );
+  });
+
+  test("continues post-delete cleanup when the AuthZed cleanup unexpectedly rejects", async () => {
+    vi.mocked(deleteUserOrganizationRelationships).mockRejectedValue(new Error("sensitive raw error"));
+
+    await expect(accountDeletionAfterDelete(user)).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        code: "authzed_internal",
+        component: "authzed",
+        operation: "delete_user_organization_relationships",
+      },
+      "Unexpected AuthZed cleanup failure after account deletion"
+    );
+    expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });
+    expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      oldUser: user,
+      status: "success",
+      targetUserId: "user-1",
+    });
+    expect(capturePostHogEvent).toHaveBeenCalledWith("user-1", "delete_account");
   });
 });
 

@@ -3,9 +3,11 @@ import { vi } from "vitest";
 export const sdkMocks = {
   close: vi.fn(),
   deadlineInterceptor: vi.fn((timeoutMs: number) => ({ timeoutMs })),
+  deleteRelationships: vi.fn(),
   diffSchema: vi.fn(),
   newClient: vi.fn(),
   readSchema: vi.fn(),
+  writeRelationships: vi.fn(),
   writeSchema: vi.fn(),
 };
 
@@ -33,6 +35,10 @@ vi.mock("@authzed/authzed-node", () => ({
       SECURE: 0,
     },
     NewClient: sdkMocks.newClient,
+    RelationshipUpdate_Operation: {
+      DELETE: 3,
+      TOUCH: 2,
+    },
   },
 }));
 

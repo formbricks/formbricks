@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { createUser, getUsers, updateUser } from "../users";
 
@@ -40,6 +41,10 @@ vi.mock("@formbricks/database", () => ({
     },
     $transaction: vi.fn(),
   },
+}));
+
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  reconcileOrganizationMembership: vi.fn(),
 }));
 
 describe("Users Lib", () => {
@@ -89,6 +94,7 @@ describe("Users Lib", () => {
         "org456"
       );
       expect(prisma.user.create).toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.id).toBe(mockUser.id);
@@ -157,6 +163,7 @@ describe("Users Lib", () => {
       (prisma.$transaction as any).mockResolvedValueOnce([{ ...mockUser, name: "Updated User" }]);
       const result = await updateUser({ email: mockUser.email, name: "Updated User" }, "org456");
       expect(prisma.user.findFirst).toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.name).toBe("Updated User");

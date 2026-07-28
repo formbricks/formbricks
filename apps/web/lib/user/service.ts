@@ -7,6 +7,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { validateInputs } from "../utils/validate";
@@ -117,6 +118,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
     await prisma.invite.deleteMany({ where: { creatorId: id } });
 
     const deletedUser = await deleteUserById(id);
+    await deleteUserOrganizationRelationships(id);
     await deleteBrevoCustomerByEmail({ email: deletedUser.email });
 
     return deletedUser;

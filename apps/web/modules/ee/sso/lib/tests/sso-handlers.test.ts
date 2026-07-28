@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Organization } from "@formbricks/database/prisma";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -94,6 +95,10 @@ vi.mock("@/modules/ee/sso/lib/team", () => ({
 
 vi.mock("@/lib/membership/service", () => ({
   createMembership: vi.fn(),
+}));
+
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  reconcileOrganizationMembership: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/locale", () => ({
@@ -786,8 +791,9 @@ describe("handleSsoCallback", () => {
       mockOrganization.id,
       mockUser.id,
       { role: "member", accepted: true },
-      expect.anything()
+      expect.objectContaining({ projection: "deferred", transaction: expect.anything() })
     );
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith(mockOrganization.id, mockUser.id);
   });
 
   test("assigns invited SSO users into the resolved organization and syncs notification settings", async () => {
@@ -821,8 +827,9 @@ describe("handleSsoCallback", () => {
       mockOrganization.id,
       mockUser.id,
       { role: "member", accepted: true },
-      expect.anything()
+      expect.objectContaining({ projection: "deferred", transaction: expect.anything() })
     );
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith(mockOrganization.id, mockUser.id);
     expect(updateUser).toHaveBeenCalledWith(
       mockUser.id,
       {
