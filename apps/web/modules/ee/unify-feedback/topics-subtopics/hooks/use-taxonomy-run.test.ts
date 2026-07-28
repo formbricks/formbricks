@@ -82,6 +82,38 @@ describe("useTaxonomyRun", () => {
     }
   });
 
+  test("stops polling once the run is gone (404), instead of asking forever", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.mocked(global.fetch);
+      // A run reaped by the orphan cleaner, or a stale id after a regenerate. Before this behaviour the
+      // status stayed unknown, so the interval kept firing at ~12 req/min while the UI showed "generating".
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ title: "Not Found", status: 404, code: "not_found" }), {
+          status: 404,
+          headers: { "Content-Type": "application/problem+json" },
+        })
+      );
+
+      renderHook(() => useTaxonomyRun({ workspaceId: "w", directoryId: "d", runId: "run-1" }), {
+        wrapper: createWrapper(createQueryClient()),
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      // Several intervals later there must still be exactly the one request.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("stays idle (no fetch) when runId is null", () => {
     const fetchMock = vi.mocked(global.fetch);
 
