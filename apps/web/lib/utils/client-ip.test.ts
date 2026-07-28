@@ -11,8 +11,8 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(),
 }));
 
-// TRUSTED_PROXY_HOP_COUNT defaults to 0, so getClientIpFromHeaders trusts nothing unless configured.
-vi.mock("@/lib/constants", () => ({ TRUSTED_PROXY_HOP_COUNT: 0 }));
+// Mirrors the shipped default of 1: one trusted reverse proxy in front of the app.
+vi.mock("@/lib/constants", () => ({ TRUSTED_PROXY_HOP_COUNT: 1 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: { error: vi.fn() },
@@ -108,8 +108,15 @@ describe("getClientIpFromHeaders", () => {
     vi.clearAllMocks();
   });
 
-  test("trusts nothing at the default hop count of 0", async () => {
-    mockHeaders({ "cf-connecting-ip": "1.2.3.4", "x-forwarded-for": "5.6.7.8" });
+  // At the shipped default of 1, the address is the entry the single trusted proxy appended, and the
+  // client-supplied prefix and `cf-connecting-ip` are both ignored.
+  test("takes the trusted proxy's entry at the default hop count of 1", async () => {
+    mockHeaders({ "cf-connecting-ip": "1.2.3.4", "x-forwarded-for": "9.9.9.9, 203.0.113.7" });
+    await expect(getClientIpFromHeaders()).resolves.toBe("203.0.113.7");
+  });
+
+  test("reports the client as untrusted when no header identifies it", async () => {
+    mockHeaders({});
     await expect(getClientIpFromHeaders()).resolves.toBe(UNTRUSTED_CLIENT_IP);
   });
 

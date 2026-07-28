@@ -116,9 +116,10 @@ deployment:
   # Secret values can use valueFrom.secretKeyRef; omit unused provider variables.
   env:
     # The app sits behind exactly one reverse proxy (Traefik/Envoy) in this chart, so the client address
-    # is the last X-Forwarded-For entry. Leaving this at the code default of 0 makes the app trust no
-    # forwarding header, which means IP-based rate limiting and IP capture cannot tell clients apart.
-    # Raise it only if you add further proxies in front of the ingress.
+    # is the last X-Forwarded-For entry. Pinned here rather than relying on the code default (also 1) so
+    # the assumption is visible next to the ingress it describes. Raise it if you put further proxies —
+    # a CDN, a corporate load balancer — in front of the ingress; setting it higher than the real chain
+    # lets callers spoof their address by prepending entries.
     TRUSTED_PROXY_HOP_COUNT: "1"
 
   # Tolerations for scheduling pods on tainted nodes

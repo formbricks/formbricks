@@ -17,9 +17,9 @@ const warnOnceAboutUntrustedIp = (): void => {
   if (hasWarnedAboutUntrustedIp) return;
   hasWarnedAboutUntrustedIp = true;
   logger.error(
-    "TRUSTED_PROXY_HOP_COUNT is 0 but the request carries forwarding headers. IP-based rate limiting " +
-      "and IP capture cannot identify individual clients until it is set to the number of reverse " +
-      "proxies in front of this app (1 for the shipped Traefik/Envoy and docker-compose topologies)."
+    "TRUSTED_PROXY_HOP_COUNT is set to 0 but the request carries forwarding headers. IP-based rate " +
+      "limiting and IP capture cannot identify individual clients while no hop is trusted. Unset it to " +
+      "take the default of 1, or set it to the number of reverse proxies actually in front of this app."
   );
 };
 
@@ -34,6 +34,8 @@ const warnOnceAboutUntrustedIp = (): void => {
  *
  * With `hopCount` proxies in front, the address the outermost trusted proxy observed is the
  * `hopCount`-th entry from the right; everything left of it is client-supplied and ignored.
+ * `TRUSTED_PROXY_HOP_COUNT` defaults to 1, matching every supported topology; `0` is an explicit
+ * opt-out that trusts nothing and therefore cannot identify a client at all.
  *
  * `cf-connecting-ip` is deliberately *not* consulted. It is only trustworthy when the request provably
  * came from Cloudflare's edge, and a hop count cannot establish that: `hopCount >= 1` says "one proxy is
