@@ -13,7 +13,7 @@ import {
   UNSPLASH_ALLOWED_DOMAINS,
 } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromSurveyId,
@@ -399,7 +399,10 @@ const ZGetImagesFromUnsplashAction = z.object({
   page: z.number().optional(),
 });
 
-export const getImagesFromUnsplashAction = actionClient
+// Authenticated: these spend the instance's UNSPLASH_ACCESS_KEY quota on the caller's behalf, and
+// plain `actionClient` left them reachable by anyone on the internet. Both are only ever called
+// from the survey editor, which already requires a session.
+export const getImagesFromUnsplashAction = authenticatedActionClient
   .inputSchema(ZGetImagesFromUnsplashAction)
   .action(async ({ parsedInput }) => {
     if (!UNSPLASH_ACCESS_KEY) {
@@ -461,7 +464,10 @@ const ZTriggerDownloadUnsplashImageAction = z.object({
   downloadUrl: z.url(),
 });
 
-export const triggerDownloadUnsplashImageAction = actionClient
+// Authenticated: these spend the instance's UNSPLASH_ACCESS_KEY quota on the caller's behalf, and
+// plain `actionClient` left them reachable by anyone on the internet. Both are only ever called
+// from the survey editor, which already requires a session.
+export const triggerDownloadUnsplashImageAction = authenticatedActionClient
   .inputSchema(ZTriggerDownloadUnsplashImageAction)
   .action(async ({ parsedInput }) => {
     if (!isValidUnsplashUrl(parsedInput.downloadUrl)) {

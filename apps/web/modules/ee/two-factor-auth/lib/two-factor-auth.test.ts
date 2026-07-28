@@ -96,6 +96,23 @@ describe("Two Factor Auth", () => {
     );
   });
 
+  // Regression: setup writes `twoFactorEnabled: false` and replaces the secret and backup codes, so
+  // running it against an already-enabled factor switched 2FA off on a password alone — while
+  // disableTwoFactorAuth demands the password *and* a current code or backup code.
+  test("setupTwoFactorAuth should refuse to re-enroll while two factor auth is already enabled", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user123",
+      identityProvider: "email",
+      twoFactorEnabled: true,
+    } as any);
+
+    await expect(setupTwoFactorAuth("user123", "password123")).rejects.toThrow(
+      new InvalidInputError("Two factor authentication is already enabled")
+    );
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(verifyUserPassword).not.toHaveBeenCalled();
+  });
+
   test("setupTwoFactorAuth should throw InvalidInputError when password is incorrect", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user123",
