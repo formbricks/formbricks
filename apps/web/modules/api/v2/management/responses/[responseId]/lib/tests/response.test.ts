@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { getDisplayForResponseValidation } from "@/lib/display/service";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { deleteDisplay } from "../display";
 import {
@@ -34,6 +35,20 @@ const mockQuota: TSurveyQuota = {
   countPartialSubmissions: false,
 };
 
+// ENG-1923 fixtures: the response's own tenant + a display that legitimately belongs to it.
+const responseWorkspaceId = "ws_mock_workspace_id";
+const existingResponseRow = {
+  surveyId: responseInput.surveyId,
+  contactId: responseInput.contactId,
+  survey: { workspaceId: responseWorkspaceId },
+};
+const validDisplay = {
+  surveyId: responseInput.surveyId,
+  workspaceId: responseWorkspaceId,
+  responseId, // linked to this response (self) → allowed on update
+  contactId: responseInput.contactId,
+};
+
 vi.mock("../display", () => ({
   deleteDisplay: vi.fn(),
 }));
@@ -50,12 +65,19 @@ vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: vi.fn(),
 }));
 
+vi.mock("@/lib/display/service", () => ({
+  getDisplayForResponseValidation: vi.fn(),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     response: {
       findUnique: vi.fn(),
       delete: vi.fn(),
       update: vi.fn(),
+    },
+    contact: {
+      findUnique: vi.fn(),
     },
     display: {
       delete: vi.fn(),
@@ -379,6 +401,15 @@ describe("Response Lib", () => {
   });
 
   describe("updateResponse", () => {
+    // ENG-1923: updateResponse now validates the caller-supplied contactId/displayId against the
+    // response's own tenant before writing. Default these lookups to the happy path; reject tests
+    // override them.
+    beforeEach(() => {
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(existingResponseRow as any);
+      vi.mocked(prisma.contact.findUnique).mockResolvedValue({ id: responseInput.contactId } as any);
+      vi.mocked(getDisplayForResponseValidation).mockResolvedValue(validDisplay);
+    });
+
     test("update the response and revalidate caches including singleUseId", async () => {
       vi.mocked(prisma.response.update).mockResolvedValue(response);
 
@@ -442,12 +473,84 @@ describe("Response Lib", () => {
         });
       }
     });
+
+    // ENG-1923: a caller authorized on this response must not re-point it at another tenant's
+    // contact or display. Foreign and nonexistent ids fail identically as a 404 — no oracle.
+    test("rejects a contactId that does not belong to the response's workspace (ENG-1923)", async () => {
+      vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
+
+      const result = await updateResponse(responseId, responseInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "contactId", issue: "not found" }],
+        });
+      }
+      expect(prisma.response.update).not.toHaveBeenCalled();
+    });
+
+    test("rejects a displayId from another workspace (ENG-1923)", async () => {
+      vi.mocked(getDisplayForResponseValidation).mockResolvedValue({
+        ...validDisplay,
+        workspaceId: "another-workspace",
+      });
+
+      const result = await updateResponse(responseId, responseInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "displayId", issue: "not found" }],
+        });
+      }
+      expect(prisma.response.update).not.toHaveBeenCalled();
+    });
+
+    test("rejects a displayId already linked to a different response (ENG-1923)", async () => {
+      vi.mocked(getDisplayForResponseValidation).mockResolvedValue({
+        ...validDisplay,
+        responseId: "some-other-response",
+      });
+
+      const result = await updateResponse(responseId, responseInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "displayId", issue: "not found" }],
+        });
+      }
+      expect(prisma.response.update).not.toHaveBeenCalled();
+    });
+
+    test("returns not_found when the response does not exist (ENG-1923)", async () => {
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(null);
+
+      const result = await updateResponse(responseId, responseInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "response", issue: "not found" }],
+        });
+      }
+      expect(prisma.response.update).not.toHaveBeenCalled();
+    });
   });
 
   describe("updateResponseWithQuotaEvaluation", () => {
     type MockTx = {
       response: {
+        findUnique: ReturnType<typeof vi.fn>;
         update: ReturnType<typeof vi.fn>;
+      };
+      contact: {
+        findUnique: ReturnType<typeof vi.fn>;
       };
     };
     let mockTx: MockTx;
@@ -457,9 +560,15 @@ describe("Response Lib", () => {
 
       mockTx = {
         response: {
+          // ENG-1923: updateResponse loads the response's tenant + validates links before writing.
+          findUnique: vi.fn().mockResolvedValue(existingResponseRow),
           update: vi.fn(),
         },
+        contact: {
+          findUnique: vi.fn().mockResolvedValue({ id: responseInput.contactId }),
+        },
       };
+      vi.mocked(getDisplayForResponseValidation).mockResolvedValue(validDisplay);
 
       prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
     });

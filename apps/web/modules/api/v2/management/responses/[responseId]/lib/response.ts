@@ -4,7 +4,9 @@ import { prisma } from "@formbricks/database";
 import { Prisma, Response } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { ValidationError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
+import { getDisplayForResponseValidation } from "@/lib/display/service";
 import { normalizeResponseLanguage } from "@/lib/response/utils";
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
@@ -146,6 +148,54 @@ export const updateResponse = async (
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
     const prismaClient = tx ?? prisma;
+
+    // ENG-1923: contactId and displayId are caller-supplied FKs mass-assigned into the update
+    // below. Verify each belongs to this response's own workspace/survey before persisting — a
+    // caller authorized on this response must not be able to re-point it at another tenant's
+    // contact or display (cross-tenant BOLA). surveyId is not updatable (omitted from the schema),
+    // so the response's workspace anchor is stable. Foreign and nonexistent ids fail identically
+    // (404, generic) — no cross-tenant existence oracle.
+    const existingResponse = await prismaClient.response.findUnique({
+      where: { id: responseId },
+      select: { surveyId: true, contactId: true, survey: { select: { workspaceId: true } } },
+    });
+    if (!existingResponse) {
+      return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
+    }
+    const workspaceId = existingResponse.survey.workspaceId;
+
+    if (responseInput.contactId) {
+      const contact = await prismaClient.contact.findUnique({
+        where: { id: responseInput.contactId, workspaceId },
+        select: { id: true },
+      });
+      if (!contact) {
+        return err({ type: "not_found", details: [{ field: "contactId", issue: "not found" }] });
+      }
+    }
+
+    if (responseInput.displayId) {
+      const effectiveContactId =
+        responseInput.contactId !== undefined ? responseInput.contactId : existingResponse.contactId;
+      try {
+        const display = await getDisplayForResponseValidation(responseInput.displayId, prismaClient);
+        const displayValid =
+          display !== null &&
+          display.workspaceId === workspaceId &&
+          display.surveyId === existingResponse.surveyId &&
+          (display.responseId === null || display.responseId === responseId) &&
+          (display.contactId === null || display.contactId === effectiveContactId);
+        if (!displayValid) {
+          return err({ type: "not_found", details: [{ field: "displayId", issue: "not found" }] });
+        }
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          return err({ type: "not_found", details: [{ field: "displayId", issue: "not found" }] });
+        }
+        throw error;
+      }
+    }
+
     const updatedResponse = await prismaClient.response.update({
       where: {
         id: responseId,
