@@ -315,6 +315,9 @@ const parsedEnv = createEnv({
       .optional()
       .or(z.string().refine((str) => str === "")),
     RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
+    // Number of reverse proxies in front of the app whose X-Forwarded-For entries can be believed.
+    // 0 (default) trusts no forwarding header at all. See resolveClientIp in lib/utils/client-ip.ts.
+    TRUSTED_PROXY_HOP_COUNT: z.coerce.number().int().min(0).max(10).optional(),
     TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     S3_ACCESS_KEY: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
@@ -480,6 +483,7 @@ const parsedEnv = createEnv({
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
+    TRUSTED_PROXY_HOP_COUNT: process.env.TRUSTED_PROXY_HOP_COUNT,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,

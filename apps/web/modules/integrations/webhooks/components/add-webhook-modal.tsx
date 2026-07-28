@@ -75,6 +75,7 @@ export const AddWebhookModal = ({
       const testEndpointActionResult = await testEndpointAction({
         url: testEndpointInput,
         secret: webhookSecret,
+        workspaceId,
       });
 
       if (!testEndpointActionResult?.data) {

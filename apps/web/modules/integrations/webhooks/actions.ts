@@ -141,6 +141,10 @@ export const updateWebhookAction = authenticatedActionClient.inputSchema(ZUpdate
 const ZTestEndpointAction = z.object({
   url: z.string(),
   webhookId: ZId.optional(),
+  // Required so the not-yet-created-webhook path has something to authorize against; without it this
+  // action did no authorization at all and any logged-in user — including a billing-only member with no
+  // product access — could make the server POST a signed test payload to any URL they named.
+  workspaceId: ZId,
   secret: z.string().optional(),
 });
 
@@ -173,6 +177,23 @@ export const testEndpointAction = authenticatedActionClient
 
       secret = webhookResult.data.secret ?? undefined;
     } else {
+      // No webhook yet: authorize against the workspace the webhook is being created in.
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            minPermission: "readWrite",
+            workspaceId: parsedInput.workspaceId,
+          },
+        ],
+      });
+
       // New webhook, use the provided secret or generate a new one
       secret = parsedInput.secret ?? generateWebhookSecret();
     }

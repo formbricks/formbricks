@@ -114,7 +114,12 @@ deployment:
   # AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
   # AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
   # Secret values can use valueFrom.secretKeyRef; omit unused provider variables.
-  env: {}
+  env:
+    # The app sits behind exactly one reverse proxy (Traefik/Envoy) in this chart, so the client address
+    # is the last X-Forwarded-For entry. Leaving this at the code default of 0 makes the app trust no
+    # forwarding header, which means IP-based rate limiting and IP capture cannot tell clients apart.
+    # Raise it only if you add further proxies in front of the ingress.
+    TRUSTED_PROXY_HOP_COUNT: "1"
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []

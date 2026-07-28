@@ -166,6 +166,7 @@ export const ENTERPRISE_LICENSE_REQUEST_FORM_URL =
 
 export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+export const TRUSTED_PROXY_HOP_COUNT = env.TRUSTED_PROXY_HOP_COUNT ?? 0;
 export const TELEMETRY_DISABLED = env.TELEMETRY_DISABLED === "1";
 
 // Opt-out for the Have-I-Been-Pwned breach check (ENG-1587). Set to "1" on air-gapped /

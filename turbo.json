@@ -320,6 +320,7 @@
         "PLAYWRIGHT_SERVICE_URL",
         "PRIVACY_URL",
         "RATE_LIMITING_DISABLED",
+        "TRUSTED_PROXY_HOP_COUNT",
         "REDIS_URL",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
