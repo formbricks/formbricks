@@ -538,29 +538,36 @@ const sendNotificationEmailsSafely = async ({
 const handleSurveyAutoCompleteSafely = async ({
   logContext,
   organizationId,
-  responseCount,
   survey,
 }: {
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
-  responseCount: number | null;
   survey: TPipelineSurvey;
 }): Promise<void> => {
-  if (responseCount === null) {
-    if (survey.autoComplete) {
-      logger.error(
-        {
-          ...logContext,
-          autoCompleteThreshold: survey.autoComplete,
-        },
-        "Response pipeline survey auto-complete skipped because the response count could not be loaded"
-      );
-    }
+  if (!survey.autoComplete) {
+    return;
+  }
+
+  // The response limit is defined in terms of completed responses, so only finished
+  // responses may count towards the auto-complete threshold. Counting all responses would
+  // close the survey once the number of starts (partial + finished) hits the limit.
+  let finishedResponseCount: number;
+  try {
+    finishedResponseCount = await getResponseCountBySurveyId(survey.id, { finished: true });
+  } catch (error) {
+    logger.error(
+      {
+        ...logContext,
+        autoCompleteThreshold: survey.autoComplete,
+        err: error,
+      },
+      "Response pipeline survey auto-complete skipped because the finished response count could not be loaded"
+    );
 
     return;
   }
 
-  if (!survey.autoComplete || responseCount < survey.autoComplete) {
+  if (finishedResponseCount < survey.autoComplete) {
     return;
   }
 
@@ -685,7 +692,6 @@ const runResponseFinishedSideEffects = async ({
   await handleSurveyAutoCompleteSafely({
     logContext,
     organizationId,
-    responseCount,
     survey,
   });
 };

@@ -416,6 +416,65 @@ describe("processResponsePipelineJob", () => {
     expect(mockSendTelemetryEvents).not.toHaveBeenCalled();
   });
 
+  test("only counts finished responses towards the auto-complete response limit", async () => {
+    // Total responses (starts) exceed the limit, but finished responses do not.
+    mockGetResponseCountBySurveyId.mockImplementation((_surveyId, filterCriteria) =>
+      Promise.resolve(filterCriteria?.finished ? 3 : 500)
+    );
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      autoComplete: 5,
+    });
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    // The auto-complete decision must be based on finished responses only.
+    expect(mockGetResponseCountBySurveyId).toHaveBeenCalledWith("survey_123", { finished: true });
+    // 3 finished responses < limit of 5 → the survey must stay open.
+    expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
+  });
+
+  test("skips auto-complete when the finished response count cannot be loaded", async () => {
+    const countError = new Error("count offline");
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      autoComplete: 1,
+    });
+    mockGetResponseCountBySurveyId.mockImplementation((_surveyId, filterCriteria) => {
+      if (filterCriteria?.finished) {
+        return Promise.reject(countError);
+      }
+      return Promise.resolve(1);
+    });
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        autoCompleteThreshold: 1,
+        err: countError,
+      }),
+      "Response pipeline survey auto-complete skipped because the finished response count could not be loaded"
+    );
+    expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
+  });
+
   test("logs responseFinished side-effect failures without failing the job", async () => {
     mockPrismaUserFindMany.mockResolvedValue([
       {
