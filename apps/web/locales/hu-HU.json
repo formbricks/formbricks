@@ -2471,6 +2471,7 @@
         "payment_error_contact_support": "Kérem, vegye fel a kapcsolatot a következő címmel támogatásért: <supportLink>hola@formbricks.com</supportLink>.",
         "payment_error_failed_invoice": "A fizetés nem volt teljesíthető.",
         "payment_error_requires_action": "A fizetés további hitelesítést igényel.",
+        "payment_method_required": "Adjon hozzá egy fizetési módot a fizetős csomagra való váltáshoz.",
         "pending_change_removed": "Az ütemezett csomagváltoztatás eltávolítva.",
         "pending_plan_badge": "Ütemezett",
         "pending_plan_change_description": "A csomagja {plan} csomagra fog váltani ekkor: {date}.",

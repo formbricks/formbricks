@@ -54,6 +54,24 @@ packages/database/
 - **Schema Migrations**: Continue to be tracked by Prisma in the `_prisma_migrations` table
 - **Data Migrations**: Are tracked in the new `DataMigration` table to avoid reapplying already executed migrations
 
+### ⚠️ Data migrations must be no-ops on an empty database
+
+Data migrations exist to **transform pre-existing rows**. On a brand-new
+(empty) database — every CI run and every fresh install — the migration runner
+takes a fast path: it applies the whole schema in a single `prisma migrate
+deploy` and marks all data migrations **applied without running them**
+(baselining). This is safe only because there is no data to transform, and it
+is necessary because some older data migrations reference columns/tables that
+later schema migrations drop or rename, so they can no longer execute against
+the final schema.
+
+Therefore, a data migration must **only** read and modify existing rows and do
+nothing when its tables are empty (guard writes behind a `SELECT` of existing
+rows, or keep them to `UPDATE`/`DELETE`/`INSERT ... SELECT` that naturally
+affect zero rows on an empty table). **Never seed essential/default data from a
+data migration** — it would be silently skipped on fresh installs. Seed base
+data via the seed script (`src/seed.ts`, `pnpm db:seed`) instead.
+
 ### Directory Structure Example
 
 ```

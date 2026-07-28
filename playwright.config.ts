@@ -19,8 +19,11 @@ export default defineConfig({
   timeout: 120000,
   /* Fail the test run after the first failure */
   maxFailures: process.env.CI ? undefined : 1, // Allow more failures in CI to avoid cascading shutdowns
-  /* Opt out of parallel tests on CI. */
-  // workers: os.cpus().length,
+  /* Pin worker count on CI. The GitHub runner has ~4 vCPUs; Playwright's default
+     is only ~50% of cores (≈2 workers). Running 4 in parallel roughly halves the
+     test-execution portion of the run. Tune down if CPU contention with the app
+     server starts causing timeout-driven flakiness. */
+  workers: process.env.CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
   /* Shared settings for all the workspaces below. See https://playwright.dev/docs/api/class-testoptions. */

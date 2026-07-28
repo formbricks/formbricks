@@ -25,8 +25,8 @@
   "scripts": {
     "go": "vite build --watch --mode dev",
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",

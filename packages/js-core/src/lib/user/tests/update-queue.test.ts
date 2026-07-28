@@ -218,7 +218,7 @@ describe("UpdateQueue", () => {
     (sendUpdates as Mock).mockRejectedValue(new Error("network error"));
 
     updateQueue.updateUserId(mockUserId1);
-    // eslint-disable-next-line @typescript-eslint/no-empty-function -- intentionally swallowing rejection to avoid unhandled promise
+
     const processPromise = updateQueue.processUpdates().catch(() => {});
 
     const result = await updateQueue.waitForPendingWork();
@@ -230,7 +230,7 @@ describe("UpdateQueue", () => {
     vi.useFakeTimers();
 
     // sendUpdates returns a promise that never resolves, simulating a network hang
-    // eslint-disable-next-line @typescript-eslint/no-empty-function -- intentionally never-resolving promise
+
     (sendUpdates as Mock).mockReturnValue(new Promise(() => {}));
 
     updateQueue.updateUserId(mockUserId1);

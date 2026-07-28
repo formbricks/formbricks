@@ -2471,6 +2471,7 @@
         "payment_error_contact_support": "Neem contact op met <supportLink>hola@formbricks.com</supportLink> voor ondersteuning.",
         "payment_error_failed_invoice": "De betaling kon niet worden voltooid.",
         "payment_error_requires_action": "De betaling vereist aanvullende verificatie.",
+        "payment_method_required": "Voeg een betaalmethode toe om over te schakelen naar een betaald abonnement.",
         "pending_change_removed": "Geplande abonnementswijziging verwijderd.",
         "pending_plan_badge": "Gepland",
         "pending_plan_change_description": "Je abonnement wordt op {date} omgezet naar {plan}.",

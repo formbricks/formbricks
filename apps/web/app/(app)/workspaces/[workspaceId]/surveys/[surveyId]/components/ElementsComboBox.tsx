@@ -200,7 +200,6 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
     <Command
       ref={commandRef}
       className="relative h-fit w-full overflow-visible rounded-md border border-slate-300 bg-white hover:border-slate-400">
-      {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role */}
       <div
         role="button"
         tabIndex={0}

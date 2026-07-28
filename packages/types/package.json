@@ -10,7 +10,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf node_modules .turbo"
   },
