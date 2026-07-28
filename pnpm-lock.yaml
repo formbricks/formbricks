@@ -1032,6 +1032,9 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
+      '@formbricks/vite-plugins':
+        specifier: workspace:*
+        version: link:../vite-plugins
       '@types/node':
         specifier: 25.4.0
         version: 25.4.0
