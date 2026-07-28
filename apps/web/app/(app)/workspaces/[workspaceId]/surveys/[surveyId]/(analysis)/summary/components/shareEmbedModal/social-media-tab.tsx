@@ -92,7 +92,7 @@ export const SocialMediaTab: React.FC<SocialMediaTabProps> = ({ surveyUrl, surve
         ))}
       </div>
 
-      <Alert>
+      <Alert role="status">
         <AlertCircleIcon />
         <AlertTitle>{t("workspace.surveys.share.social_media.source_tracking_enabled")}</AlertTitle>
         <AlertDescription>

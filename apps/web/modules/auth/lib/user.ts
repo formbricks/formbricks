@@ -5,6 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUserCreateInput, TUserUpdateInput, ZUserEmail, ZUserUpdateInput } from "@formbricks/types/user";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 
 type TUserDbClient = PrismaClient | Prisma.TransactionClient;
@@ -30,10 +31,7 @@ export const updateUser = async (id: string, data: TUserUpdateInput, tx?: Prisma
 
     return updatedUser;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RecordDoesNotExist
-    ) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("User", id);
     }
     throw error;
@@ -73,10 +71,7 @@ export const updateUserLastLoginAt = async (email: string) => {
       throw error;
     }
 
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RecordDoesNotExist
-    ) {
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("email", email);
     }
     throw error;
@@ -103,7 +98,7 @@ export const getUserByEmail = reactCache(async (email: string) => {
 
     return user;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
 
@@ -129,7 +124,7 @@ export const getUser = reactCache(async (id: string) => {
     }
     return user;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
 
@@ -153,14 +148,11 @@ export const createUser = async (data: TUserCreateInput, tx?: Prisma.Transaction
 
     return user;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.UniqueConstraintViolation
-    ) {
+    if (isUniqueConstraintError(error)) {
       throw new InvalidInputError("User with this email already exists");
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
 

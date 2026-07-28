@@ -37,6 +37,7 @@ interface SurveyClientWrapperProps {
   PRIVACY_URL?: string;
   TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
+  pinAuthToken?: string;
 }
 
 let setBlockId = (_: string) => {};
@@ -62,6 +63,7 @@ export const SurveyClientWrapper = ({
   PRIVACY_URL,
   TERMS_URL,
   IS_FORMBRICKS_CLOUD,
+  pinAuthToken,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
   const { i18n } = useTranslation();
@@ -128,6 +130,7 @@ export const SurveyClientWrapper = ({
       if (answer) fieldsRecord[field] = answer;
     }
     return fieldsRecord;
+    // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
   }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
 
   // Include verified email in hidden fields if available
@@ -244,6 +247,7 @@ export const SurveyClientWrapper = ({
           }}
           singleUseId={singleUseId}
           singleUseResponseId={singleUseResponseId}
+          pinAuthToken={pinAuthToken}
           getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
           contactId={contactId}
           userId={userId}

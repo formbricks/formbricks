@@ -21,6 +21,7 @@ import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-ba
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
+import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
 
@@ -39,6 +40,7 @@ interface SurveyEditorProps {
   isUnsplashConfigured: boolean;
   isQuotasAllowed: boolean;
   isCxMode: boolean;
+  surveySchedulingConfig: TSurveySchedulingConfig;
   locale: TUserLocale;
   workspacePermission: TTeamPermission | null;
   mailFrom: string;
@@ -69,6 +71,7 @@ export const SurveyEditor = ({
   isUnsplashConfigured,
   isQuotasAllowed,
   isCxMode = false,
+  surveySchedulingConfig,
   locale,
   workspacePermission,
   mailFrom,
@@ -127,8 +130,6 @@ export const SurveyEditor = ({
         setActiveElementId(firstBlock.elements?.[0]?.id);
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
   useEffect(() => {
@@ -155,7 +156,6 @@ export const SurveyEditor = ({
     if (firstBlock) {
       setActiveElementId(firstBlock.elements[0]?.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
   useEffect(() => {
@@ -266,6 +266,7 @@ export const SurveyEditor = ({
               isFormbricksCloud={isFormbricksCloud}
               isQuotasAllowed={isQuotasAllowed}
               quotas={quotas}
+              surveySchedulingConfig={surveySchedulingConfig}
               locale={locale}
               appSetupCompleted={localWorkspace.appSetupCompleted}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}

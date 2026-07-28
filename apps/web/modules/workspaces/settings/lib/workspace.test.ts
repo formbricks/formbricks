@@ -98,6 +98,20 @@ describe("workspace lib", () => {
       await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow();
     });
 
+    test("throws DatabaseError on PrismaClientKnownRequestError", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: "P2010",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(prismaError);
+      await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(new Error("boom"));
+      await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow("boom");
+    });
+
     test("returns workspace data without Zod validation", async () => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, id: 123 } as any);
       const result = await updateWorkspace("p1", { name: "Workspace 1" });

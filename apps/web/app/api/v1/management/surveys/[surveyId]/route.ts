@@ -75,9 +75,7 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
 });
@@ -112,9 +110,7 @@ export const DELETE = withV1ApiWrapper({
         response: responses.successResponse(deletedSurvey),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "deleted",
@@ -227,14 +223,10 @@ export const PUT = withV1ApiWrapper({
           ),
         };
       } catch (error) {
-        return {
-          response: handleErrorResponse(error),
-        };
+        return handleErrorResponse(error);
       }
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "updated",

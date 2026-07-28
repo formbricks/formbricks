@@ -1,6 +1,6 @@
-import { logger } from "@formbricks/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -89,20 +89,17 @@ export const POST = withV1ApiWrapper({
     } catch (error) {
       if (error instanceof ResourceNotFoundError) {
         return {
-          response: responses.notFoundResponse("Survey", inputValidation.data.surveyId),
+          response: responses.notFoundResponse("Survey", inputValidation.data.surveyId, true),
         };
-      } else if (error instanceof InvalidInputError) {
+      }
+      if (error instanceof InvalidInputError) {
         return {
           response: responses.forbiddenResponse(error.message, true, {
             surveyId: inputValidation.data.surveyId,
           }),
         };
-      } else {
-        logger.error({ error, url: req.url }, "Error in POST /api/v1/client/[workspaceId]/displays");
-        return {
-          response: responses.internalServerErrorResponse("Something went wrong. Please try again."),
-        };
       }
+      return handleApiError(error, { cors: true });
     }
   },
 });

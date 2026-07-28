@@ -16,6 +16,14 @@ import "dotenv/config";
 export default {
   schema: "packages/database/schema.prisma",
   migrations: {
+    // This points at the GENERATED, git-ignored scratch dir — NOT the checked-in
+    // source of truth `packages/database/migration` (singular). That directory is
+    // *mixed*: schema migrations (`migration.sql`) and custom data migrations
+    // (`migration.ts`) interleaved by timestamp. The migration runner copies only
+    // the schema migrations here so `migrate deploy` sees a pure-SQL directory.
+    // Do NOT repoint this at `packages/database/migration` — Prisma would treat the
+    // data-migration dirs (tracked separately in the DataMigration table, not
+    // `_prisma_migrations`) as pending SQL migrations and break. Decided in ENG-1145.
     path: "packages/database/migrations",
     seed: "tsx packages/database/src/seed.ts",
   },
