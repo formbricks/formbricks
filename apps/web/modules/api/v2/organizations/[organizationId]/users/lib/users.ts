@@ -3,6 +3,7 @@ import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/pri
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
   TGetUsersFilter,
@@ -128,6 +129,8 @@ export const createUser = async (
         },
       },
     });
+
+    await reconcileOrganizationMembership(organizationId, user.id);
 
     const returnedUser = {
       id: user.id,
@@ -299,6 +302,8 @@ export const updateUser = async (
 
     // Retrieve the updated user result. Since the update was the last operation, it is the last item.
     const updatedUser = results[results.length - 1];
+
+    await reconcileOrganizationMembership(organizationId, updatedUser.id);
 
     const returnedUser = {
       id: updatedUser.id,

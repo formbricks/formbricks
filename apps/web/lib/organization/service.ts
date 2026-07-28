@@ -14,6 +14,7 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
+import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
@@ -300,6 +301,8 @@ export const deleteOrganization = async (organizationId: string) => {
         },
       },
     });
+
+    await deleteOrganizationRelationships(organizationId);
 
     const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
     if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {

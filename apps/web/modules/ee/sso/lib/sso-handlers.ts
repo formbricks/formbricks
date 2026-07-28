@@ -3,6 +3,7 @@ import type { IdentityProvider, Organization } from "@formbricks/database/prisma
 import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
@@ -405,7 +406,12 @@ const provisionNewSsoUser = async ({
         { newUserId: createdUser.id, organizationId: organization.id, role: "member" },
         "Assigning user to organization"
       );
-      await createMembership(organization.id, createdUser.id, { role: "member", accepted: true }, tx);
+      await createMembership(
+        organization.id,
+        createdUser.id,
+        { role: "member", accepted: true },
+        { projection: "deferred", transaction: tx }
+      );
 
       if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
         contextLogger.debug(
@@ -436,6 +442,10 @@ const provisionNewSsoUser = async ({
 
     return createdUser;
   });
+
+  if (organization) {
+    await reconcileOrganizationMembership(organization.id, userProfile.id);
+  }
 
   contextLogger.debug(
     { newUserId: userProfile.id, identityProvider: provider },

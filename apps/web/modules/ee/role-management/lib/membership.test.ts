@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { updateMembership } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
@@ -17,6 +18,10 @@ vi.mock("@formbricks/database", () => ({
       updateMany: vi.fn(),
     },
   },
+}));
+
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  reconcileOrganizationMembership: vi.fn(),
 }));
 
 describe("updateMembership", () => {
@@ -54,6 +59,7 @@ describe("updateMembership", () => {
       },
       data: { role: "owner" },
     });
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org1", "user1");
   });
 
   test("should throw ResourceNotFoundError when membership doesn't exist", async () => {

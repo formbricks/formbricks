@@ -15,11 +15,57 @@ export type TAuthzedSchemaDiff = Readonly<{
   differenceKinds: Readonly<Record<string, number>>;
 }>;
 
+export type TAuthzedObjectReference = Readonly<{
+  objectId: string;
+  objectType: string;
+}>;
+
+export type TAuthzedSubjectReference = TAuthzedObjectReference &
+  Readonly<{
+    relation?: string;
+  }>;
+
+export type TAuthzedRelationship = Readonly<{
+  relation: string;
+  resource: TAuthzedObjectReference;
+  subject: TAuthzedSubjectReference;
+}>;
+
+export type TAuthzedRelationshipUpdate = Readonly<{
+  operation: "delete" | "touch";
+  relationship: TAuthzedRelationship;
+}>;
+
+type TAuthzedSubjectFilter = Readonly<{
+  objectId: string;
+  objectType: string;
+  relation?: string;
+}>;
+
+type TAuthzedRelationshipFilterBase = Readonly<{
+  relation?: string;
+  resourceType: string;
+}>;
+
+export type TAuthzedRelationshipFilter =
+  | (TAuthzedRelationshipFilterBase &
+      Readonly<{
+        resourceId: string;
+        subject?: TAuthzedSubjectFilter;
+      }>)
+  | (TAuthzedRelationshipFilterBase &
+      Readonly<{
+        resourceId?: never;
+        subject: TAuthzedSubjectFilter;
+      }>);
+
 export type TAuthzedClient = Readonly<{
   consistency: TAuthzedConsistency;
+  deleteRelationships: (filter: TAuthzedRelationshipFilter) => Promise<void>;
   diffSchema: (schemaText: string) => Promise<TAuthzedSchemaDiff>;
   readSchema: () => Promise<TAuthzedSchema>;
   systemKey: string;
+  writeRelationships: (updates: ReadonlyArray<TAuthzedRelationshipUpdate>) => Promise<void>;
   writeSchema: (schemaText: string) => Promise<void>;
 }>;
 
@@ -46,6 +92,8 @@ type TAuthzedConfig =
 const globalForAuthzed = globalThis as unknown as {
   formbricksAuthzedClient: TAuthzedClientSingleton | undefined;
 };
+
+const AUTHZED_MAX_RELATIONSHIP_UPDATES = 1_000;
 
 const STABLE_SCHEMA_DIFF_KINDS = {
   caveatAdded: "caveat_added",
@@ -101,6 +149,58 @@ const getAuthzedConfig = (): TAuthzedConfig => {
   };
 };
 
+const isNonEmpty = (value: string): boolean => value.length > 0;
+
+const validateRelationshipUpdates = (updates: ReadonlyArray<TAuthzedRelationshipUpdate>): void => {
+  if (updates.length === 0 || updates.length > AUTHZED_MAX_RELATIONSHIP_UPDATES) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      operation: "write_relationships",
+      retryable: false,
+    });
+  }
+
+  const valid = updates.every(
+    ({ relationship }) =>
+      isNonEmpty(relationship.resource.objectType) &&
+      isNonEmpty(relationship.resource.objectId) &&
+      isNonEmpty(relationship.relation) &&
+      isNonEmpty(relationship.subject.objectType) &&
+      isNonEmpty(relationship.subject.objectId) &&
+      (relationship.subject.relation === undefined || isNonEmpty(relationship.subject.relation))
+  );
+
+  if (!valid) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      operation: "write_relationships",
+      retryable: false,
+    });
+  }
+};
+
+const validateRelationshipFilter = (filter: TAuthzedRelationshipFilter): void => {
+  const hasResourceId = filter.resourceId !== undefined && isNonEmpty(filter.resourceId);
+  const hasSubjectId = filter.subject !== undefined && isNonEmpty(filter.subject.objectId);
+  const valid =
+    isNonEmpty(filter.resourceType) &&
+    (filter.relation === undefined || isNonEmpty(filter.relation)) &&
+    (filter.subject === undefined ||
+      (isNonEmpty(filter.subject.objectType) &&
+        (filter.subject.relation === undefined || isNonEmpty(filter.subject.relation))));
+
+  if (!valid || (!hasResourceId && !hasSubjectId)) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      operation: "delete_relationships",
+      retryable: false,
+    });
+  }
+};
+
 const createAuthzedClient = (): TAuthzedClientSingleton => {
   const config = getAuthzedConfig();
 
@@ -122,6 +222,32 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
 
   const facade = Object.freeze<TAuthzedClient>({
     consistency: config.consistency,
+    deleteRelationships: async (filter) => {
+      validateRelationshipFilter(filter);
+
+      await executeAuthzedOperation("delete_relationships", async () => {
+        await sdkClient.promises.deleteRelationships({
+          optionalAllowPartialDeletions: false,
+          optionalLimit: 0,
+          optionalPreconditions: [],
+          relationshipFilter: {
+            optionalRelation: filter.relation ?? "",
+            optionalResourceId: filter.resourceId ?? "",
+            optionalResourceIdPrefix: "",
+            optionalSubjectFilter: filter.subject
+              ? {
+                  optionalRelation: filter.subject.relation
+                    ? { relation: filter.subject.relation }
+                    : undefined,
+                  optionalSubjectId: filter.subject.objectId,
+                  subjectType: filter.subject.objectType,
+                }
+              : undefined,
+            resourceType: filter.resourceType,
+          },
+        });
+      });
+    },
     diffSchema: async (schemaText) =>
       executeAuthzedOperation("diff_schema", async () => {
         const response = await sdkClient.promises.diffSchema({
@@ -161,6 +287,39 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
       return { schemaText };
     },
     systemKey: config.systemKey,
+    // TOUCH and DELETE relationship updates are idempotent. Keep retries opt-in at this facade
+    // operation so future non-idempotent mutations cannot inherit them accidentally.
+    writeRelationships: async (updates) => {
+      validateRelationshipUpdates(updates);
+
+      await executeAuthzedOperation("write_relationships", async () => {
+        await sdkClient.promises.writeRelationships({
+          optionalPreconditions: [],
+          updates: updates.map(({ operation, relationship }) => ({
+            operation:
+              operation === "touch"
+                ? v1.RelationshipUpdate_Operation.TOUCH
+                : v1.RelationshipUpdate_Operation.DELETE,
+            relationship: {
+              optionalCaveat: undefined,
+              optionalExpiresAt: undefined,
+              relation: relationship.relation,
+              resource: {
+                objectId: relationship.resource.objectId,
+                objectType: relationship.resource.objectType,
+              },
+              subject: {
+                object: {
+                  objectId: relationship.subject.objectId,
+                  objectType: relationship.subject.objectType,
+                },
+                optionalRelation: relationship.subject.relation ?? "",
+              },
+            },
+          })),
+        });
+      });
+    },
     // Repeating WriteSchema with the exact same schema is idempotent. Keep this explicit so future
     // relationship writes cannot inherit retries accidentally.
     writeSchema: async (schemaText) => {

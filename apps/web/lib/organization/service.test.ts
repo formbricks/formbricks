@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
+import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import {
@@ -39,6 +40,10 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
+}));
+
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  deleteOrganizationRelationships: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
@@ -362,6 +367,7 @@ describe("Organization Service", () => {
 
       await deleteOrganization("org1");
 
+      expect(deleteOrganizationRelationships).toHaveBeenCalledWith("org1");
       if (IS_FORMBRICKS_CLOUD) {
         expect(cleanupStripeCustomer).toHaveBeenCalledWith("cus_123");
       }

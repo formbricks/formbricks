@@ -5,6 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZString } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership, TMembershipUpdateInput, ZMembershipUpdateInput } from "@formbricks/types/memberships";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const updateMembership = async (
@@ -24,6 +25,8 @@ export const updateMembership = async (
       },
       data,
     });
+
+    await reconcileOrganizationMembership(organizationId, userId);
 
     await prisma.teamUser.findMany({
       where: {

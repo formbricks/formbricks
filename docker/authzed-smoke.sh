@@ -48,6 +48,13 @@ authzed_schema() {
   authzed_cli "${token}" ./scripts/authzed-schema.ts "$@"
 }
 
+authzed_relationships() {
+  local token="$1"
+  shift
+
+  authzed_cli "${token}" ./scripts/authzed-relationships-smoke.ts "$@"
+}
+
 authzed_cli() {
   local token="$1"
   local script="$2"
@@ -67,7 +74,7 @@ authzed_cli() {
     HUB_API_KEY=authzed-smoke-hub-key \
     HUB_API_URL=https://hub.formbricks.local \
     LOG_LEVEL=fatal \
-    NODE_ENV=test \
+    NODE_ENV="${AUTHZED_SMOKE_NODE_ENV:-test}" \
     NODE_OPTIONS=--conditions=react-server \
     pnpm --dir "${REPO_ROOT}/apps/web" exec tsx "${script}" "$@"
 }
@@ -210,6 +217,46 @@ restored_apply="$(
 )"
 jq --exit-status '.status == "applied" and .differenceCount == 0' <<<"${restored_apply}" >/dev/null
 
+if refused_relationship_driver="$(
+  AUTHZED_SMOKE_NODE_ENV=production authzed_relationships "${AUTHZED_TOKEN}" set-owner 2>&1
+)"; then
+  printf '%s\n' "The application relationship smoke driver unexpectedly ran outside test mode." >&2
+  exit 1
+fi
+jq --exit-status \
+  '.status == "failed" and .code == "authzed_smoke_refused" and .retryable == false' \
+  <<<"${refused_relationship_driver}" >/dev/null
+
+owner_projection="$(authzed_relationships "${AUTHZED_TOKEN}" set-owner)"
+jq --exit-status '.status == "projected"' <<<"${owner_projection}" >/dev/null
+[[ "$(
+  zed permission check organization:application-relationship-smoke write \
+    user:application-relationship-smoke --consistency-full
+)" == *"true"* ]]
+
+billing_projection="$(authzed_relationships "${AUTHZED_TOKEN}" set-billing)"
+jq --exit-status '.status == "projected"' <<<"${billing_projection}" >/dev/null
+[[ "$(
+  zed permission check organization:application-relationship-smoke manage_billing \
+    user:application-relationship-smoke --consistency-full
+)" == *"true"* ]]
+[[ "$(
+  zed permission check organization:application-relationship-smoke write \
+    user:application-relationship-smoke --consistency-full
+)" == *"false"* ]]
+
+idempotent_billing_projection="$(authzed_relationships "${AUTHZED_TOKEN}" set-billing)"
+jq --exit-status '.status == "projected"' <<<"${idempotent_billing_projection}" >/dev/null
+
+deleted_projection="$(authzed_relationships "${AUTHZED_TOKEN}" delete)"
+idempotent_deleted_projection="$(authzed_relationships "${AUTHZED_TOKEN}" delete)"
+jq --exit-status '.status == "projected"' <<<"${deleted_projection}" >/dev/null
+jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_projection}" >/dev/null
+[[ "$(
+  zed permission check organization:application-relationship-smoke read \
+    user:application-relationship-smoke --consistency-full
+)" == *"false"* ]]
+
 zed relationship create organization:smoke owner user:alice
 zed relationship create workspace:smoke organization organization:smoke
 zed relationship create survey:smoke workspace workspace:smoke
@@ -229,6 +276,14 @@ fi
 assert_health_result "${unavailable_health}" "unhealthy" "authzed_unavailable"
 jq --exit-status '.latencyMs <= 4000' <<<"${unavailable_health}" >/dev/null
 
+if unavailable_projection="$(authzed_relationships "${AUTHZED_TOKEN}" set-owner 2>&1)"; then
+  printf '%s\n' "Application relationship projection unexpectedly succeeded while SpiceDB was stopped." >&2
+  exit 1
+fi
+jq --exit-status \
+  '.status == "failed" and .code == "authzed_unavailable" and .attempts == 3 and .retryable == true and .latencyMs <= 4000' \
+  <<<"${unavailable_projection}" >/dev/null
+
 compose up --detach --force-recreate spicedb
 wait_for_spicedb
 refresh_spicedb_port
@@ -239,6 +294,13 @@ if ! restored_health="$(authzed_health "${AUTHZED_TOKEN}" 2>&1)"; then
 fi
 assert_health_result "${restored_health}" "healthy"
 
+restored_projection="$(authzed_relationships "${AUTHZED_TOKEN}" set-owner)"
+jq --exit-status '.status == "projected"' <<<"${restored_projection}" >/dev/null
+[[ "$(
+  zed permission check organization:application-relationship-smoke write \
+    user:application-relationship-smoke --consistency-full
+)" == *"true"* ]]
+
 [[ "$(zed permission check survey:smoke read user:alice --consistency-full)" == *"true"* ]]
 [[ "$(zed permission check survey:smoke read user:bob --consistency-full)" == *"false"* ]]
 
@@ -246,7 +308,7 @@ persisted_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check)"
 jq --exit-status '.status == "matched" and .differenceCount == 0' <<<"${persisted_schema_check}" >/dev/null
 
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${unavailable_health}${restored_health}${persisted_schema_check}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \
@@ -255,4 +317,4 @@ if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   exit 1
 fi
 
-printf '%s\n' "AuthZed smoke test passed: schema check/apply/drift recovery, application health, authentication failure, bounded outage handling, idempotent migrations, and persistence were verified."
+printf '%s\n' "AuthZed smoke test passed: schema lifecycle, application relationship projection, role transition, idempotent deletion, health, authentication failure, bounded outage handling, migrations, and persistence were verified."

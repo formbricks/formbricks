@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import {
   deleteMembership,
   getMembersByOrganizationId,
@@ -28,6 +29,9 @@ vi.mock("@/lib/constants", () => ({ ITEMS_PER_PAGE: 2 }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 vi.mock("react", () => ({ cache: (fn: Function) => fn }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
+vi.mock("@/lib/authzed/organization-membership", () => ({
+  reconcileOrganizationMembership: vi.fn(),
+}));
 
 const organizationId = "org-1";
 const userId = "user-1";
@@ -106,6 +110,7 @@ describe("deleteMembership", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue([{}, {}]);
     const result = await deleteMembership(userId, organizationId);
     expect(result[0].teamId).toBe(teamId);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith(organizationId, userId);
   });
   test("throws DatabaseError on prisma error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
