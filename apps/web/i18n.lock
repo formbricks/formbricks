@@ -2344,10 +2344,8 @@ checksums:
     workspace/settings/billing/confirm_trial_continue_pay_now: 1c1d95c36a21cfb3f321904465b6d13a
     workspace/settings/billing/confirm_trial_continue_pay_now_generic: 2729650780f5a79693b940e68b07cb8e
     workspace/settings/billing/confirm_trial_continue_title: 2518855be25efee6572b9e739ab37ac3
-    workspace/settings/billing/confirm_trial_convert_body: 40c4f2c7d6b8fb9a796c8421e3e3e795
-    workspace/settings/billing/confirm_trial_convert_body_fallback: 4351a47a6f3d577dd345def251f1f71d
-    workspace/settings/billing/confirm_upgrade_body: 136720e5ee76ea2888f088201b306603
-    workspace/settings/billing/confirm_upgrade_body_with_charge: ff81c2841016a54cd139aa00e3a7539c
+    workspace/settings/billing/confirm_upgrade_body: bcaa12d47184cf7b93bbfdaeeba01f2b
+    workspace/settings/billing/confirm_upgrade_body_with_charge: 472cdde8bb2781af353ea4404124e538
     workspace/settings/billing/confirm_upgrade_button: 0c91db4f2f989972d493fed2311cbbc0
     workspace/settings/billing/confirm_upgrade_calculating: a738aa8430b5e2e8022784078d2c4ec3
     workspace/settings/billing/confirm_upgrade_description: 802d3a25618fa1922fdb5ffca0594817

@@ -268,13 +268,10 @@ export const PricingTable = ({
   // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
   // mode "upgrade" = single confirm (tier upgrade / card-backed convert); mode "trial-continue" =
   // the Pro-trial choice modal (pay prorated now to unlock, or keep the free trial).
-  // isTrialConversion narrows the single-confirm copy: converting a trial ends it immediately and
-  // bills a full fresh period, which the mid-cycle-proration wording would misdescribe.
   const [upgradeConfirmation, setUpgradeConfirmation] = useState<{
     plan: Exclude<TStandardPlan, "hobby">;
     interval: TCloudBillingInterval;
     mode: "upgrade" | "trial-continue";
-    isTrialConversion: boolean;
   } | null>(null);
   // Amount Stripe would charge now for the pending confirmation, fetched lazily. amountDue is the NET
   // (after any unused-trial credit); grossAmountDue and trialCreditApplied drive the breakdown copy.
@@ -915,7 +912,7 @@ export const PricingTable = ({
     interval: TCloudBillingInterval,
     mode: "upgrade" | "trial-continue"
   ) => {
-    setUpgradeConfirmation({ plan, interval, mode, isTrialConversion: isTrialing });
+    setUpgradeConfirmation({ plan, interval, mode });
     // Fetch the charge to show in the modal. Only the trial-continue (no-card "Continue with Pro")
     // flow nets off the unused-trial credit; the upgrade confirm previews the full price.
     setUpgradePreview(null);
@@ -1120,30 +1117,12 @@ export const PricingTable = ({
         (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
       )?.amount ?? "";
 
-    // A trial conversion is NOT a mid-cycle proration: it ends the trial now and bills a fresh full
-    // period, and the unused trial days are not credited on this path. The generic upgrade copy
-    // ("upgrade to {plan}… for the rest of your current billing period") would misstate both the
-    // reason and the period on what is a payment-consent screen, so it gets its own wording.
-    if (upgradeConfirmation.isTrialConversion) {
-      return upgradePreview ? (
-        <Trans
-          i18nKey="workspace.settings.billing.confirm_trial_convert_body"
-          values={{
-            plan,
-            period,
-            chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
-          }}
-          components={{ b: <b /> }}
-        />
-      ) : (
-        <Trans
-          i18nKey="workspace.settings.billing.confirm_trial_convert_body_fallback"
-          values={{ plan, period, fullPrice: planCardAmount }}
-          components={{ b: <b /> }}
-        />
-      );
-    }
-
+    // NOTE: this copy is deliberately period-neutral ("charged {chargeNow} now") because the same
+    // modal covers two different charges: a mid-cycle proration for an ordinary upgrade, and a full
+    // fresh period for a trial conversion (which also ends the trial immediately and does not credit
+    // the unused days). The previous wording — "for the rest of your current billing period" — was
+    // false for the trial conversion, on a payment-consent screen. Spelling the trial case out needs
+    // its own string; see the i18n note in the PR description.
     if (upgradePreview) {
       return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
         plan,
