@@ -4,7 +4,6 @@ import { hubErrorToProblemResponse } from "@/app/api/v3/lib/hub-errors";
 import {
   noContentResponse,
   problemNotFound,
-  problemServiceUnavailable,
   problemUnauthorized,
   successListResponse,
   successResponse,
@@ -97,14 +96,13 @@ function taxonomyHubErrorResponse(
   instance: string,
   resource: string
 ): Response {
-  if (error?.status === 503) {
-    return problemServiceUnavailable(requestId, TAXONOMY_UNAVAILABLE_DETAIL, instance);
-  }
   // No resource id in the body: the client only needs "this is gone, stop asking". A Hub 404 covers both
   // "no such run" and "not this tenant's run", so it is not an existence oracle either way.
   if (error?.status === 404) {
     return problemNotFound(requestId, resource, null, instance);
   }
+  // 404 is the only status this surface handles itself; the 503 wording is passed through to the shared
+  // mapper rather than special-cased here, which would be the same response written twice.
   return hubErrorToProblemResponse(error, requestId, instance, {
     serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
   });
