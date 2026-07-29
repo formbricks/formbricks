@@ -153,6 +153,7 @@ describe("License Core Logic", () => {
       quotas: true,
       feedbackDirectories: false,
       dashboards: false,
+      workflows: false,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -292,6 +293,7 @@ describe("License Core Logic", () => {
             quotas: false,
             feedbackDirectories: false,
             dashboards: false,
+            workflows: false,
           },
           lastChecked: expect.any(Date),
         },
@@ -315,6 +317,7 @@ describe("License Core Logic", () => {
           quotas: false,
           feedbackDirectories: false,
           dashboards: false,
+          workflows: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -347,6 +350,7 @@ describe("License Core Logic", () => {
         quotas: false,
         feedbackDirectories: false,
         dashboards: false,
+        workflows: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),
@@ -538,6 +542,7 @@ describe("License Core Logic", () => {
           quotas: true,
           feedbackDirectories: false,
           dashboards: false,
+          workflows: false,
         },
       };
 
@@ -604,6 +609,7 @@ describe("License Core Logic", () => {
           quotas: true,
           feedbackDirectories: false,
           dashboards: false,
+          workflows: false,
         },
       };
 
@@ -661,6 +667,7 @@ describe("License Core Logic", () => {
           quotas: true,
           feedbackDirectories: false,
           dashboards: false,
+          workflows: false,
         },
       };
 
@@ -864,6 +871,7 @@ describe("License Core Logic", () => {
                   quotas: false,
                   feedbackDirectories: false,
                   dashboards: false,
+                  workflows: false,
                 },
               },
             },
@@ -1044,6 +1052,7 @@ describe("License Core Logic", () => {
           quotas: true,
           feedbackDirectories: false,
           dashboards: false,
+          workflows: false,
         },
       };
 
@@ -1172,6 +1181,7 @@ describe("License Core Logic", () => {
         quotas: true,
         feedbackDirectories: false,
         dashboards: false,
+        workflows: false,
       },
     };
 

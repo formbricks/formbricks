@@ -65,6 +65,7 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   quotas: false,
   feedbackDirectories: false,
   dashboards: false,
+  workflows: false,
 };
 
 const defaultLicense = {
