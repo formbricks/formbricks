@@ -76,7 +76,7 @@ export const SignupForm = ({
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
-}: SignupFormProps) => {
+}: Readonly<SignupFormProps>) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
   const { t } = useTranslation();

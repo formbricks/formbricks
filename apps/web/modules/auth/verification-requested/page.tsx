@@ -13,9 +13,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/ale
 
 export const VerificationRequestedPage = async ({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ token: string; callbackUrl?: string | string[]; sendFailed?: string }>;
-}) => {
+}>) => {
   const t = await getTranslate();
   const params = await searchParams;
   const { token, callbackUrl } = params;

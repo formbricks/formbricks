@@ -11,7 +11,7 @@ import { test } from "./lib/fixtures";
  *
  * They should land on the login page instead, with the invite still pending.
  */
-test.describe("Invite sign-up with an address that already has an account", async () => {
+test.describe("Invite sign-up with an address that already has an account @slow", async () => {
   test("routes to login with the invite intact", async ({ page, users, browser }) => {
     // The invitee already has a Formbricks account with this address — the precondition for the bug.
     const inviteeEmail = `invitee-existing-${Date.now()}@corporate-example.com`;

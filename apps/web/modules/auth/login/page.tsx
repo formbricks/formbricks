@@ -33,9 +33,9 @@ export const metadata: Metadata = {
 
 export const LoginPage = async ({
   searchParams: searchParamsProps,
-}: {
+}: Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) => {
+}>) => {
   const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled, searchParams] = await Promise.all([
     getIsMultiOrgEnabled(),
     getIsSsoEnabled(),
