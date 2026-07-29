@@ -1,7 +1,13 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
+import {
+  FingerprintIcon,
+  MonitorSmartphoneIcon,
+  MousePointerClickIcon,
+  TagIcon,
+  Users2Icon,
+} from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -10,6 +16,7 @@ import type {
   TSegment,
   TSegmentAttributeFilter,
   TSegmentPersonFilter,
+  TSegmentSurveyInteractionFilter,
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
@@ -27,7 +34,7 @@ interface TAddFilterModalProps {
   segments: TSegment[];
 }
 
-type TFilterType = "attribute" | "segment" | "device" | "person";
+type TFilterType = "attribute" | "segment" | "device" | "person" | "surveyInteraction";
 
 export const handleAddFilter = ({
   type,
@@ -144,6 +151,21 @@ export const handleAddFilter = ({
     onAddFilter(newFilter);
     setOpen(false);
   }
+
+  if (type === "surveyInteraction") {
+    // Created fully valid and pre-filled (operator "haveSeen", any survey, within 1 month) — the
+    // schema requires a valid operator, so an empty "Select…" intermediate state cannot be
+    // persisted. Matches how every other filter type is created pre-filled.
+    const newFilterResource: TSegmentSurveyInteractionFilter = {
+      id: createId(),
+      root: { type: "surveyInteraction" },
+      qualifier: { operator: "haveSeen" },
+      value: { surveyScope: "any", surveyIds: [], within: { amount: 1, unit: "months" } },
+    };
+
+    onAddFilter({ id: createId(), connector: "and", resource: newFilterResource });
+    setOpen(false);
+  }
 };
 
 export function AddFilterModal({
@@ -228,6 +250,12 @@ export function AddFilterModal({
     return devices.filter((deviceType) => deviceType.name.toLowerCase().includes(searchValue.toLowerCase()));
   }, [devices, searchValue]);
 
+  const surveyInteractionLabel = t("workspace.segments.survey_interaction");
+  const showSurveyInteraction = useMemo(() => {
+    if (!searchValue) return true;
+    return surveyInteractionLabel.toLowerCase().includes(searchValue.toLowerCase());
+  }, [searchValue, surveyInteractionLabel]);
+
   const allFiltersFiltered = useMemo(
     () => [
       {
@@ -235,9 +263,16 @@ export function AddFilterModal({
         contactAttributeFiltered,
         segments: segmentsFiltered,
         devices: deviceTypesFiltered,
+        surveyInteraction: showSurveyInteraction,
       },
     ],
-    [contactAttributeKeysFiltered, deviceTypesFiltered, contactAttributeFiltered, segmentsFiltered]
+    [
+      contactAttributeKeysFiltered,
+      deviceTypesFiltered,
+      contactAttributeFiltered,
+      segmentsFiltered,
+      showSurveyInteraction,
+    ]
   );
 
   const getAllTabContent = () => {
@@ -248,7 +283,8 @@ export function AddFilterModal({
             filterArr.attributes.length === 0 &&
             filterArr.segments.length === 0 &&
             filterArr.devices.length === 0 &&
-            filterArr.contactAttributeFiltered.length === 0
+            filterArr.contactAttributeFiltered.length === 0 &&
+            !filterArr.surveyInteraction
           );
         }) ? (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
@@ -317,6 +353,23 @@ export function AddFilterModal({
                 }}
               />
             ))}
+
+            {filters.surveyInteraction ? (
+              <FilterButton
+                data-testid="filter-btn-survey-interaction"
+                icon={<MousePointerClickIcon className="size-4" />}
+                label={surveyInteractionLabel}
+                onClick={() => {
+                  handleAddFilter({ type: "surveyInteraction", onAddFilter, setOpen });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleAddFilter({ type: "surveyInteraction", onAddFilter, setOpen });
+                  }
+                }}
+              />
+            ) : null}
 
             {filters.segments.map((segment) => (
               <FilterButton

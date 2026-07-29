@@ -93,7 +93,7 @@ describe("updateUser", () => {
           },
         },
         responses: {
-          select: { surveyId: true },
+          select: { surveyId: true, createdAt: true, finished: true },
         },
         displays: {
           select: {
@@ -253,12 +253,18 @@ describe("updateUser", () => {
   test("should use device type 'phone'", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     await updateUser(mockWorkspaceId, mockUserId, "phone");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "phone");
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "phone", {
+      displays: [],
+      responses: [],
+    });
   });
 
   test("should use device type 'desktop'", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
     await updateUser(mockWorkspaceId, mockUserId, "desktop");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "desktop");
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "desktop", {
+      displays: [],
+      responses: [],
+    });
   });
 });

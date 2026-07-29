@@ -5,6 +5,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { type TContactInteractionData } from "@/modules/ee/contacts/segments/lib/filter/survey-interaction";
 import { getPersonSegmentIds, getSegments } from "./segments";
 
 vi.mock("@/lib/cache", () => ({
@@ -45,6 +46,7 @@ const mockWorkspaceId = "workspace-id-mock";
 const mockContactId = "test-contact-id";
 const mockContactUserId = "test-contact-user-id";
 const mockDeviceType = "desktop" as const;
+const mockInteractionData: TContactInteractionData = { displays: [], responses: [] };
 
 const mockSegmentsData = [
   { id: "segment1", filters: [{}] as TBaseFilter[] },
@@ -115,7 +117,8 @@ describe("segments lib", () => {
         mockWorkspaceId,
         mockContactId,
         mockContactUserId,
-        mockDeviceType
+        mockDeviceType,
+        mockInteractionData
       );
 
       expect(validateInputs).toHaveBeenCalled();
@@ -136,7 +139,8 @@ describe("segments lib", () => {
         mockWorkspaceId,
         mockContactId,
         mockContactUserId,
-        mockDeviceType
+        mockDeviceType,
+        mockInteractionData
       );
 
       expect(result).toEqual([]);
@@ -151,7 +155,8 @@ describe("segments lib", () => {
         mockWorkspaceId,
         mockContactId,
         mockContactUserId,
-        mockDeviceType
+        mockDeviceType,
+        mockInteractionData
       );
 
       expect(result).toEqual([]);
@@ -162,7 +167,13 @@ describe("segments lib", () => {
     test("should call validateInputs with correct parameters", async () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }, { id: mockContactId }]);
 
-      await getPersonSegmentIds(mockWorkspaceId, mockContactId, mockContactUserId, mockDeviceType);
+      await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        mockInteractionData
+      );
       expect(validateInputs).toHaveBeenCalledWith(
         [mockWorkspaceId, expect.anything()],
         [mockContactId, expect.anything()],
@@ -177,7 +188,8 @@ describe("segments lib", () => {
         mockWorkspaceId,
         mockContactId,
         mockContactUserId,
-        mockDeviceType
+        mockDeviceType,
+        mockInteractionData
       );
 
       expect(result).toEqual([mockSegmentsData[0].id]);
@@ -199,7 +211,8 @@ describe("segments lib", () => {
         mockWorkspaceId,
         mockContactId,
         mockContactUserId,
-        mockDeviceType
+        mockDeviceType,
+        mockInteractionData
       );
 
       expect(result).toContain("segment-no-filter");
@@ -224,10 +237,84 @@ describe("segments lib", () => {
         mockWorkspaceId,
         mockContactId,
         mockContactUserId,
-        mockDeviceType
+        mockDeviceType,
+        mockInteractionData
       );
 
       expect(result).toEqual(["segment1"]);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    const buildInteractionSegment = (id: string, operator: string) => ({
+      id,
+      filters: [
+        {
+          id: `filter-${id}`,
+          connector: null,
+          resource: {
+            id: `resource-${id}`,
+            root: { type: "surveyInteraction" },
+            qualifier: { operator },
+            value: { surveyScope: "any", surveyIds: [], within: { amount: 30, unit: "days" } },
+          },
+        },
+      ],
+    });
+
+    test("should evaluate an interaction-only segment in memory without any DB query", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        buildInteractionSegment("interaction-segment", "haveSeen"),
+      ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        { displays: [{ surveyId: "survey-1", createdAt: new Date() }], responses: [] }
+      );
+
+      expect(result).toEqual(["interaction-segment"]);
+      expect(segmentFilterToPrismaQuery).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    test("should exclude a non-matching interaction-only segment without any DB query", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        buildInteractionSegment("interaction-segment", "haveSeen"),
+      ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        { displays: [], responses: [] }
+      );
+
+      expect(result).toEqual([]);
+      expect(segmentFilterToPrismaQuery).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    test("should evaluate interaction segments in memory and only query the DB for the rest", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        buildInteractionSegment("interaction-segment", "haveSeen"),
+        { id: "attribute-segment", filters: [{}] as TBaseFilter[] },
+      ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }]);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        { displays: [{ surveyId: "survey-1", createdAt: new Date() }], responses: [] }
+      );
+
+      expect(result).toEqual(["interaction-segment", "attribute-segment"]);
+      // Only the non-interaction segment is built into a Prisma query / checked in the transaction.
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledTimes(1);
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
@@ -238,7 +325,8 @@ describe("segments lib", () => {
         mockWorkspaceId,
         mockContactId,
         mockContactUserId,
-        mockDeviceType
+        mockDeviceType,
+        mockInteractionData
       );
 
       expect(result).toEqual([]);

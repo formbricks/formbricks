@@ -123,44 +123,42 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
+      // AND-before-OR precedence: [email AND name] OR [age AND company].
+      // The `or` connector on filter_3 opens a new AND group, so email+name form the first group and
+      // age+company the second — NOT a flat (email AND name AND company) AND age.
+      const emailClause = {
+        attributes: {
+          some: {
+            attributeKey: { key: "email" },
+            value: { equals: "test@example.com", mode: "insensitive" },
+          },
+        },
+      };
+      const nameClause = {
+        attributes: {
+          some: {
+            attributeKey: { key: "name" },
+            value: { contains: "John", mode: "insensitive" },
+          },
+        },
+      };
+      const ageClause = {
+        attributes: {
+          some: {
+            attributeKey: { key: "age" },
+            valueNumber: { gt: 30 },
+          },
+        },
+      };
+      const companyClause = {
+        attributes: {
+          some: {
+            attributeKey: { key: "company" },
+          },
+        },
+      };
       expect(result.data.whereClause.AND?.[1]).toEqual({
-        AND: [
-          {
-            attributes: {
-              some: {
-                attributeKey: { key: "email" },
-                value: { equals: "test@example.com", mode: "insensitive" },
-              },
-            },
-          },
-          {
-            attributes: {
-              some: {
-                attributeKey: { key: "name" },
-                value: { contains: "John", mode: "insensitive" },
-              },
-            },
-          },
-          {
-            attributes: {
-              some: {
-                attributeKey: {
-                  key: "company",
-                },
-              },
-            },
-          },
-        ],
-        OR: [
-          {
-            attributes: {
-              some: {
-                attributeKey: { key: "age" },
-                valueNumber: { gt: 30 },
-              },
-            },
-          },
-        ],
+        OR: [{ AND: [emailClause, nameClause] }, { AND: [ageClause, companyClause] }],
       });
     }
   });
@@ -752,9 +750,17 @@ describe("segmentFilterToPrismaQuery", () => {
       )?.[1] as any;
       expect(whereClause).toBeDefined();
 
-      // First group (AND conditions)
-      const subgroup = whereClause.AND?.[0];
-      expect(subgroup.AND[0].AND[0]).toStrictEqual({
+      // Connectors on group_1's children are [null, and, or, or, and], so AND-before-OR precedence
+      // groups them as: (subgroup AND segment) OR (device) OR (person AND note). The device filter is
+      // built without a deviceType so it drops out, leaving two OR groups:
+      //   (subgroup AND segment) OR (person AND note)
+      const groupClause = whereClause.AND[0];
+      expect(groupClause.OR).toHaveLength(2);
+
+      // First OR group: subgroup (isNotSet AND endsWith AND >=) AND the nested role segment.
+      const firstOrGroup = groupClause.OR[0];
+      const subgroup = firstOrGroup.AND[0];
+      expect(subgroup.AND[0]).toStrictEqual({
         NOT: {
           attributes: {
             some: {
@@ -763,8 +769,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-
-      expect(subgroup.AND[0].AND[1]).toStrictEqual({
+      expect(subgroup.AND[1]).toStrictEqual({
         attributes: {
           some: {
             attributeKey: { key: "email" },
@@ -772,8 +777,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-
-      expect(subgroup.AND[0].AND[2]).toStrictEqual({
+      expect(subgroup.AND[2]).toStrictEqual({
         attributes: {
           some: {
             attributeKey: { key: "age" },
@@ -782,8 +786,8 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // Segment inclusion
-      expect(whereClause.AND[0].AND[1].AND[0]).toStrictEqual({
+      // Segment inclusion (nested role segment) is the second member of the first OR group.
+      expect(firstOrGroup.AND[1].AND[0]).toStrictEqual({
         attributes: {
           some: {
             attributeKey: { key: "role" },
@@ -792,12 +796,9 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // Note: Device filters are evaluated at runtime (from User-Agent), not as database queries.
-      // When no deviceType is provided to segmentFilterToPrismaQuery, device filters return empty constraint.
-      // So we check the person filter which should be in OR[0] since device filter is skipped.
-
-      // Person filter (OR condition) - device filter returns {} so person filter is at OR[0]
-      expect(whereClause.AND[0].OR[0]).toStrictEqual({
+      // Second OR group: person AND note (device filter was skipped — evaluated at runtime, not in SQL).
+      const secondOrGroup = groupClause.OR[1];
+      expect(secondOrGroup.AND[0]).toStrictEqual({
         attributes: {
           some: {
             attributeKey: { key: "userId" },
@@ -805,9 +806,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-
-      // Empty string (AND condition)
-      expect(whereClause.AND[0].AND[2]).toStrictEqual({
+      expect(secondOrGroup.AND[1]).toStrictEqual({
         attributes: {
           some: {
             attributeKey: { key: "note" },
@@ -1152,9 +1151,16 @@ describe("segmentFilterToPrismaQuery", () => {
     if (result.ok) {
       const whereClause = (result.data.whereClause as Prisma.ContactWhereInput as any).AND?.[1];
 
-      // First subgroup (text operators)
-      const firstSubgroup = whereClause.AND?.[0];
-      expect(firstSubgroup.AND[0].AND).toContainEqual({
+      // group_1's children connectors are [null, and, or], so AND-before-OR precedence yields:
+      //   (subgroup_1 AND subgroup_2) OR subgroup_3
+      const groupClause = whereClause.AND[0];
+      expect(groupClause.OR).toHaveLength(2);
+
+      // First OR group: subgroup_1 (text operators) AND subgroup_2 (numeric operators).
+      const firstOrGroup = groupClause.OR[0];
+
+      const firstSubgroup = firstOrGroup.AND[0];
+      expect(firstSubgroup.AND).toContainEqual({
         attributes: {
           some: {
             attributeKey: { key: "firstName" },
@@ -1162,7 +1168,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-      expect(firstSubgroup.AND[0].AND).toContainEqual({
+      expect(firstSubgroup.AND).toContainEqual({
         attributes: {
           some: {
             attributeKey: { key: "lastName" },
@@ -1170,8 +1176,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-
-      expect(firstSubgroup.AND[0].AND).toContainEqual({
+      expect(firstSubgroup.AND).toContainEqual({
         attributes: {
           some: {
             attributeKey: { key: "title" },
@@ -1180,9 +1185,8 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // Second subgroup (numeric operators - uses clean Prisma filter post-backfill)
-      const secondSubgroup = whereClause.AND?.[0];
-      expect(secondSubgroup.AND[1].AND).toContainEqual({
+      const secondSubgroup = firstOrGroup.AND[1];
+      expect(secondSubgroup.AND).toContainEqual({
         attributes: {
           some: {
             attributeKey: { key: "loginCount" },
@@ -1190,7 +1194,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-      expect(secondSubgroup.AND[1].AND).toContainEqual({
+      expect(secondSubgroup.AND).toContainEqual({
         attributes: {
           some: {
             attributeKey: { key: "purchaseAmount" },
@@ -1199,9 +1203,9 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       });
 
-      // Third subgroup (negation operators in OR clause)
-      const thirdSubgroup = whereClause.AND?.[0];
-      expect(thirdSubgroup.OR[0].OR).toContainEqual({
+      // Second OR group: subgroup_3 (all-OR negation operators).
+      const thirdSubgroup = groupClause.OR[1];
+      expect(thirdSubgroup.OR).toContainEqual({
         NOT: {
           attributes: {
             some: {
@@ -1210,8 +1214,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-
-      expect(thirdSubgroup.OR[0].OR).toContainEqual({
+      expect(thirdSubgroup.OR).toContainEqual({
         attributes: {
           some: {
             attributeKey: { key: "company" },
@@ -1219,8 +1222,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       });
-
-      expect(thirdSubgroup.OR[0].OR).toContainEqual({
+      expect(thirdSubgroup.OR).toContainEqual({
         attributes: {
           some: {
             attributeKey: { key: "interests" },
@@ -1785,5 +1787,125 @@ describe("segmentFilterToPrismaQuery", () => {
         expect((andConditions[2] as unknown as any).attributes.some.OR[0].valueDate).toHaveProperty("gte");
       }
     });
+  });
+});
+
+describe("survey interaction filters", () => {
+  const mockSegmentId = "segment-si";
+  const mockWorkspaceId = "workspace-si";
+  // Fixed clock so the window cutoff is deterministic.
+  const now = new Date("2026-07-20T00:00:00.000Z");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.resetAllMocks();
+  });
+
+  const buildFilter = (operator: string, value: unknown): TBaseFilters => [
+    {
+      id: "filter_si",
+      connector: null,
+      resource: {
+        id: "si_1",
+        root: { type: "surveyInteraction" as const },
+        qualifier: { operator: operator as never },
+        value: value as never,
+      },
+    },
+  ];
+
+  // Extract the single filter's where clause from the wrapped result.
+  const extractClause = (result: unknown) => {
+    const whereClause = (result as any).data.whereClause;
+    return whereClause.AND[1].AND[0];
+  };
+
+  test("haveSeen with any scope maps to displays within the window", async () => {
+    const filters = buildFilter("haveSeen", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.displays.some.createdAt.gte).toEqual(new Date("2026-06-20T00:00:00.000Z"));
+    expect(clause.displays.some.surveyId).toBeUndefined();
+  });
+
+  test("haveSeen with specific scope constrains surveyId", async () => {
+    const filters = buildFilter("haveSeen", {
+      surveyScope: "specific",
+      surveyIds: ["survey_a", "survey_b"],
+      within: { amount: 2, unit: "weeks" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.displays.some.surveyId).toEqual({ in: ["survey_a", "survey_b"] });
+    // 2 weeks = 14 days before the fixed clock
+    expect(clause.displays.some.createdAt.gte).toEqual(new Date("2026-07-06T00:00:00.000Z"));
+  });
+
+  test("haveNotSeen wraps the displays clause in NOT", async () => {
+    const filters = buildFilter("haveNotSeen", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "days" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.NOT.displays.some.createdAt.gte).toEqual(new Date("2026-07-19T00:00:00.000Z"));
+  });
+
+  test("haveStartedRespondingTo maps to responses without finished flag", async () => {
+    const filters = buildFilter("haveStartedRespondingTo", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.responses.some.finished).toBeUndefined();
+    expect(clause.responses.some.createdAt.gte).toEqual(new Date("2026-06-20T00:00:00.000Z"));
+  });
+
+  test("haveCompleted maps to responses with finished=true", async () => {
+    const filters = buildFilter("haveCompleted", {
+      surveyScope: "specific",
+      surveyIds: ["survey_a"],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.responses.some.finished).toBe(true);
+    expect(clause.responses.some.surveyId).toEqual({ in: ["survey_a"] });
+  });
+
+  test("haveNotCompleted wraps the completed clause in NOT", async () => {
+    const filters = buildFilter("haveNotCompleted", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 1, unit: "months" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.NOT.responses.some.finished).toBe(true);
   });
 });
