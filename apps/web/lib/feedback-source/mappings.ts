@@ -18,7 +18,7 @@ const resolveSurveyMappings = async (
   // Prisma FK error, and so the app-level check matches the workspace the caller was authorized on
   // rather than the whole organization. Not-found rather than unauthorized: the response must not
   // confirm that a foreign survey id exists.
-  if (!survey || survey.workspaceId !== workspaceId) {
+  if (survey?.workspaceId !== workspaceId) {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
