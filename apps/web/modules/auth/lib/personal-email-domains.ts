@@ -25,16 +25,21 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "yahoo.com",
   "yahoo.co.uk",
   "ymail.com",
+  "rocketmail.com",
   "aol.com",
   // Apple
   "icloud.com",
   "me.com",
   "mac.com",
-  // Privacy-focused
+  // Privacy-focused / relay
   "proton.me",
   "protonmail.com",
   "pm.me",
+  "passmail.com",
   "mailbox.org",
+  "posteo.de",
+  "mozmail.com",
+  "duck.com",
   // Other mainstream / international
   "gmx.com",
   "gmx.net",
@@ -43,7 +48,13 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "zoho.com",
   "mail.com",
   "qq.com",
+  "foxmail.com",
   "163.com",
   "126.com",
   "yeah.net",
+  "emailn.de",
+  "sfr.fr",
+  "ukr.net",
+  // Common typo of gmail.com
+  "gmaill.com",
 ];
