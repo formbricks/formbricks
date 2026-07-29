@@ -12,7 +12,6 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     membership: {
       update: vi.fn(),
-      findMany: vi.fn(),
     },
     teamUser: {
       findMany: vi.fn(),
@@ -45,11 +44,8 @@ describe("updateMembership", () => {
 
     const mockTeamMemberships = [{ teamId: "team1" }, { teamId: "team2" }];
 
-    const mockOrganizationMembers = [{ userId: "user1" }, { userId: "user2" }];
-
     vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue(mockTeamMemberships as any);
-    vi.mocked(prisma.membership.findMany).mockResolvedValue(mockOrganizationMembers as any);
 
     const result = await updateMembership("user1", "org1", { role: "owner" });
 
@@ -97,11 +93,8 @@ describe("updateMembership", () => {
 
     const mockTeamMemberships = [{ teamId: "team1" }, { teamId: "team2" }];
 
-    const mockOrganizationMembers = [{ userId: "user1" }, { userId: "user2" }];
-
     vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue(mockTeamMemberships as any);
-    vi.mocked(prisma.membership.findMany).mockResolvedValue(mockOrganizationMembers as any);
 
     const result = await updateMembership("user1", "org1", { role: "manager" });
 
@@ -144,7 +137,6 @@ describe("updateMembership", () => {
     vi.mocked(prisma.teamUser.findMany).mockImplementation(async () =>
       roleUpdateCompleted ? ([{ teamId: "team1" }, { teamId: "team2" }] as never) : []
     );
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
 
     await updateMembership("user1", "org1", { role: "manager" });
 

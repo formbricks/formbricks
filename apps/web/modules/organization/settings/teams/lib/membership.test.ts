@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -143,6 +144,33 @@ describe("deleteMembership", () => {
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamMemberships: [{ teamId, userId }],
     });
+  });
+  test("retries a serializable transaction conflict up to a successful attempt", async () => {
+    const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
+      code: PrismaErrorType.TransactionConflict,
+      clientVersion: "1.0.0",
+    });
+    vi.mocked(prisma.$transaction).mockRejectedValueOnce(transactionConflict);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
+
+    await expect(deleteMembership(userId, organizationId)).resolves.toEqual([mockTeamMembership]);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledTimes(1);
+  });
+  test("stops retrying a serializable transaction conflict after three attempts", async () => {
+    const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
+      code: PrismaErrorType.TransactionConflict,
+      clientVersion: "1.0.0",
+    });
+    vi.mocked(prisma.$transaction).mockRejectedValue(transactionConflict);
+
+    await expect(deleteMembership(userId, organizationId)).rejects.toThrow(DatabaseError);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+    expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
   });
   test("throws DatabaseError on prisma error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("db", {

@@ -58,15 +58,6 @@ export const updateMembership = async (
     });
     affectedTeamIds = teamMemberships.map(({ teamId }) => teamId);
 
-    await prisma.membership.findMany({
-      where: {
-        organizationId,
-      },
-      select: {
-        userId: true,
-      },
-    });
-
     return membership;
   } catch (error) {
     if (

@@ -196,6 +196,27 @@ organization-user team changes, and user/organization cascades. Existing
 records are not backfilled here: ENG-1718 remains mandatory before AuthZed
 shadow evaluation or enforcement.
 
+## Resource parent resolution during the current-model migration
+
+The initial migration deliberately does not project one relationship for every
+survey, dashboard, and response. ENG-1738's private shadow evaluator must use
+the existing server-only PostgreSQL resolvers to map:
+
+- a survey or dashboard to its workspace;
+- a response to its survey, then to its workspace.
+
+It then checks the equivalent workspace permission in SpiceDB. This preserves
+the current authorization boundary and avoids adding a high-cardinality
+`response#survey` projection to every response mutation before shadow mode.
+Resolver database failures remain operational errors and missing resources
+remain denials, matching the legacy evaluator.
+
+The `survey#workspace`, `dashboard#workspace`, and `response#survey` relations
+remain in the schema for later resource-level sharing. They must not be queried
+directly until a future projector and ENG-1718 backfill cover those edges.
+Phase 2 direct resource grants must add that projection and repair scope before
+enforcement.
+
 ## Mapping from the current system
 
 | Application concept                                                  | Schema element                                                                           |

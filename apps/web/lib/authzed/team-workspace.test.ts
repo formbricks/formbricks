@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
+import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import { deleteUserTeamRelationships, reconcileTeamWorkspaceRelationships } from "./team-workspace";
 
@@ -235,6 +236,24 @@ describe("team and workspace relationship projection", () => {
       resourceId: WORKSPACE_ID,
       resourceType: "workspace",
     });
+  });
+
+  test("bounds parallel relationship deletion for large cascades", async () => {
+    const missingTeamIds = Array.from({ length: 12 }, (_, index) => `missing-team-${index}`);
+    let activeDeletes = 0;
+    let maxActiveDeletes = 0;
+    vi.mocked(prisma.team.findMany).mockResolvedValue([]);
+    clientMocks.deleteRelationships.mockImplementation(async () => {
+      activeDeletes++;
+      maxActiveDeletes = Math.max(maxActiveDeletes, activeDeletes);
+      await Promise.resolve();
+      activeDeletes--;
+    });
+
+    await reconcileTeamWorkspaceRelationships({ teamIds: missingTeamIds });
+
+    expect(clientMocks.deleteRelationships).toHaveBeenCalledTimes(missingTeamIds.length * 2);
+    expect(maxActiveDeletes).toBe(AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES);
   });
 
   test("deduplicates resource and pair targets", async () => {

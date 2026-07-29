@@ -1,7 +1,13 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { TeamUserRole, WorkspaceTeamPermission } from "@formbricks/database/prisma";
-import { type TAuthzedClient, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
+import {
+  type TAuthzedClient,
+  type TAuthzedRelationshipFilter,
+  type TAuthzedRelationshipUpdate,
+  getAuthzedClient,
+} from "./client";
+import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES, AUTHZED_MAX_RELATIONSHIP_UPDATES } from "./constants";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
@@ -22,7 +28,6 @@ const WORKSPACE_TEAM_RELATIONS = {
 
 const TEAM_RELATION_NAMES = Object.values(TEAM_RELATIONS);
 const WORKSPACE_TEAM_RELATION_NAMES = Object.values(WORKSPACE_TEAM_RELATIONS);
-const MAX_RELATIONSHIP_UPDATES = 1_000;
 
 export type TTeamMembershipProjectionTarget = Readonly<{
   teamId: string;
@@ -194,7 +199,7 @@ const packUpdateGroups = (
   let batch: TAuthzedRelationshipUpdate[] = [];
 
   for (const group of groups) {
-    if (batch.length > 0 && batch.length + group.length > MAX_RELATIONSHIP_UPDATES) {
+    if (batch.length > 0 && batch.length + group.length > AUTHZED_MAX_RELATIONSHIP_UPDATES) {
       batches.push(batch);
       batch = [];
     }
@@ -206,6 +211,19 @@ const packUpdateGroups = (
   }
 
   return batches;
+};
+
+const deleteRelationshipsInBoundedBatches = async (
+  client: TAuthzedClient,
+  filters: ReadonlyArray<TAuthzedRelationshipFilter>
+): Promise<void> => {
+  for (let start = 0; start < filters.length; start += AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES) {
+    await Promise.all(
+      filters
+        .slice(start, start + AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES)
+        .map((filter) => client.deleteRelationships(filter))
+    );
+  }
 };
 
 const writeSnapshot = async (
@@ -242,10 +260,11 @@ const writeSnapshot = async (
     await client.writeRelationships(batch);
   }
 
+  const deletionFilters: TAuthzedRelationshipFilter[] = [];
   for (const teamId of targets.teamIds) {
     if (!teamsById.has(teamId)) {
-      await client.deleteRelationships({ resourceId: teamId, resourceType: "team" });
-      await client.deleteRelationships({
+      deletionFilters.push({ resourceId: teamId, resourceType: "team" });
+      deletionFilters.push({
         resourceType: "workspace",
         subject: { objectId: teamId, objectType: "team", relation: "member" },
       });
@@ -253,9 +272,10 @@ const writeSnapshot = async (
   }
   for (const workspaceId of targets.workspaceIds) {
     if (!workspacesById.has(workspaceId)) {
-      await client.deleteRelationships({ resourceId: workspaceId, resourceType: "workspace" });
+      deletionFilters.push({ resourceId: workspaceId, resourceType: "workspace" });
     }
   }
+  await deleteRelationshipsInBoundedBatches(client, deletionFilters);
 };
 
 export const reconcileTeamWorkspaceRelationships = async (
