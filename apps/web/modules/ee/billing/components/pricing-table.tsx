@@ -31,6 +31,7 @@ import {
   reportUpgradePaymentIssueAction,
   retryStripeSetupAction,
   undoPendingPlanChangeAction,
+  waitForBillingPaymentMethodAction,
   waitForBillingPlanAction,
 } from "../actions";
 import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
@@ -180,11 +181,15 @@ const canCancelCurrentPaidPlanAtPeriodEnd = (
   interval: TCloudBillingInterval,
   currentCloudPlan: TDisplayPlan,
   currentBillingInterval: TCloudBillingInterval | null,
-  isTrialingWithoutPayment: boolean,
+  isTrialing: boolean,
   pendingChange: TOrganizationStripePendingChange | null
 ) =>
   plan !== "hobby" &&
-  !isTrialingWithoutPayment &&
+  // Any trial (with or without a card) that selects its current paid plan is CONVERTING the trial to
+  // paid ("Upgrade now"), never cancelling it at period end. Excluding only no-card trials here made a
+  // card-backed trial clicking "Upgrade now" fall into the cancel-at-period-end branch, which
+  // scheduled a Hobby downgrade instead of converting — forcing a second click to actually upgrade.
+  !isTrialing &&
   pendingChange?.targetPlan !== "hobby" &&
   isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
 
@@ -245,6 +250,7 @@ export const PricingTable = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const upgradeDriveRef = useRef(false);
+  const trialCardDriveRef = useRef(false);
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
   // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
@@ -406,8 +412,28 @@ export const PricingTable = ({
     }
 
     if (searchParams.get("upgrade_pending") !== "1") {
-      const timer = setTimeout(() => router.refresh(), 2500);
-      return () => clearTimeout(timer);
+      // Card-only setup checkout (e.g. keeping the trial via "Continue with Pro after trial"):
+      // the card is attached by the async webhook and the read-through billing snapshot won't
+      // re-sync while it's still fresh, so a single router.refresh() races the webhook and can
+      // leave the "add a payment method" CTA showing even though a card was just added. Force a
+      // bounded Stripe resync until the payment method reflects, then hard-reload to the clean URL:
+      // router.refresh() does not reliably refetch the billing snapshot (same reason the immediate
+      // upgrade path reloads), so a full reload is the only deterministic way to drop the CTA.
+      if (globalThis.window === undefined || trialCardDriveRef.current) {
+        return;
+      }
+      trialCardDriveRef.current = true;
+      const billingUrl = `/organizations/${organizationId}/settings/billing`;
+      void (async () => {
+        try {
+          await waitForBillingPaymentMethodAction({ organizationId });
+        } finally {
+          // Full reload to the clean URL: strips checkout_success (so a back-nav/refresh can't
+          // re-run this) and deterministically re-renders against the now-synced snapshot.
+          globalThis.window.location.replace(billingUrl);
+        }
+      })();
+      return;
     }
 
     // Setup checkout saved the card; finalize the (SCA-capable, on-session) upgrade here.
@@ -771,7 +797,7 @@ export const PricingTable = ({
           interval,
           currentCloudPlan,
           currentBillingInterval,
-          isTrialingWithoutPayment,
+          isTrialing,
           pendingChange
         )
       ) {
@@ -803,7 +829,16 @@ export const PricingTable = ({
           return;
         }
         if (response.data.mode === "immediate") {
+          // Force-sync until the converted plan lands in our DB, then hand the success toast across a
+          // full reload. router.refresh() alone does not reliably refetch the billing snapshot, so the
+          // "current plan" copy keeps showing the trial until a manual refresh; a full reload renders
+          // the just-activated plan deterministically.
           await waitForBillingPlanAction({ organizationId, targetPlan: plan });
+          if (globalThis.window !== undefined) {
+            globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
+            globalThis.window.location.reload();
+            return;
+          }
         }
       }
 
@@ -832,7 +867,7 @@ export const PricingTable = ({
         interval,
         currentCloudPlan,
         currentBillingInterval,
-        isTrialingWithoutPayment,
+        isTrialing,
         pendingChange
       )
     );
@@ -959,7 +994,7 @@ export const PricingTable = ({
         interval,
         currentCloudPlan,
         currentBillingInterval,
-        isTrialingWithoutPayment,
+        isTrialing,
         pendingChange
       )
     )
@@ -1001,7 +1036,7 @@ export const PricingTable = ({
         interval,
         currentCloudPlan,
         currentBillingInterval,
-        isTrialingWithoutPayment,
+        isTrialing,
         pendingChange
       )
     ) {
@@ -1120,7 +1155,7 @@ export const PricingTable = ({
       planCard.interval,
       currentCloudPlan,
       currentBillingInterval,
-      isTrialingWithoutPayment,
+      isTrialing,
       pendingChange
     );
     const isSwitchAtPeriodEndCtaForCard = isSwitchAtPeriodEndCta(

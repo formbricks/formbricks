@@ -540,6 +540,47 @@ export const waitForBillingPlanAction = authenticatedActionClient
     })
   );
 
+const ZWaitForBillingPaymentMethodAction = z.object({
+  organizationId: ZId,
+});
+
+// A card saved through the setup-mode Checkout (e.g. keeping the trial via "Continue with Pro
+// after trial") is attached to the subscription by the async webhook, and the billing snapshot is
+// cached. A single page refresh races that webhook and can leave the "add a payment method" CTA
+// showing even though a card was just added. Resync (which invalidates the cache) a few times until
+// the payment method reflects, so the page updates without a manual refresh. Reuses the plan-sync
+// cadence above.
+export const waitForBillingPaymentMethodAction = authenticatedActionClient
+  .inputSchema(ZWaitForBillingPaymentMethodAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      let hasPaymentMethod = false;
+      for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
+        const billing = await syncOrganizationBillingFromStripe(organizationId);
+        hasPaymentMethod = billing?.stripe?.hasPaymentMethod === true;
+        if (hasPaymentMethod) break;
+        if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
+          await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
+        }
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      return { hasPaymentMethod };
+    })
+  );
+
 const ZUndoPendingPlanChangeAction = z.object({
   organizationId: ZId,
 });

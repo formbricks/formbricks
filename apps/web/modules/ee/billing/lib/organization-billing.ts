@@ -740,7 +740,12 @@ const getTrialConversionGrossCents = async (
  */
 const applyUnusedTrialCredit = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
-  input: { organizationId: string; customerId: string; targetPlan: Exclude<TStandardCloudPlan, "hobby">; targetInterval: TCloudBillingInterval }
+  input: {
+    organizationId: string;
+    customerId: string;
+    targetPlan: Exclude<TStandardCloudPlan, "hobby">;
+    targetInterval: TCloudBillingInterval;
+  }
 ): Promise<(() => Promise<void>) | null> => {
   if (!stripeClient) return null;
 
@@ -1145,20 +1150,23 @@ export const switchOrganizationToCloudPlan = async (input: {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
   }
 
-  // A trialing subscription with no payment method must never be converted into a billable
-  // subscription. The scheduled path rebuilds phases without the trial guard, ending the trial and
-  // turning phase 1 into a billable Pro phase; undoing that pending change would then leave the org
-  // on active paid Pro with no card. So special-case it: a downgrade cancels the trial (landing on
-  // Hobby, no card), and any paid switch is rejected and routed through the add-card checkout.
+  // A trialing subscription downgrading to Hobby just lets the trial lapse to Hobby (cancel at
+  // period end) — never rebuild it into a schedule. The scheduled path rebuilds phases without the
+  // trial guard, turning phase 1 into a billable Pro phase (charging the trial early) and phase 2
+  // into Hobby; that schedule then also shows a stale hobby "Scheduled" badge that can survive a
+  // later upgrade. Cancelling at period end is correct whether or not a card is on file: a card-
+  // backed trial that opts back to Hobby should still simply not convert to paid.
+  if (subscription.status === "trialing" && input.targetPlan === "hobby") {
+    const pendingChange = await cancelTrialToHobbyAtPeriodEnd(input.organizationId, subscription);
+    return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
+  }
+
+  // A trialing subscription with no payment method must never be converted into a billable paid
+  // subscription: reject the paid switch and route it through the add-card checkout instead.
   if (
     subscription.status === "trialing" &&
     !(await hasCollectedPaymentMethod(subscription, input.customerId))
   ) {
-    if (input.targetPlan === "hobby") {
-      const pendingChange = await cancelTrialToHobbyAtPeriodEnd(input.organizationId, subscription);
-      return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
-    }
-
     throw new OperationNotAllowedError("payment_method_required");
   }
 
@@ -1205,9 +1213,14 @@ export const switchOrganizationToCloudPlan = async (input: {
       throw error;
     }
 
-    if (subscription.schedule) {
-      await clearPendingPlanState(input.organizationId, subscription);
-    }
+    // This immediate upgrade / trial conversion supersedes any pending downgrade — e.g. a "Return to
+    // Hobby" scheduled during a no-card trial, which is tracked via cancel_at_period_end (no schedule)
+    // rather than a subscription schedule. Clear it unconditionally: release any schedule, undo
+    // cancel_at_period_end, and null the pending-change snapshot, so a stale "Scheduled" badge can't
+    // survive the upgrade. (updateSubscriptionItemsImmediately already cleared cancel_at_period_end for
+    // the trialing case; repeating it here is safe, and this also nulls the DB snapshot the schedule-
+    // only guard previously skipped.)
+    await clearPendingPlanState(input.organizationId, subscription);
 
     return {
       mode: "immediate",

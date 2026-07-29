@@ -1026,6 +1026,73 @@ describe("organization-billing", () => {
     });
   });
 
+  test("switchOrganizationToCloudPlan cancels a CARD-BACKED trial at period end on downgrade instead of building a billable Pro->Hobby schedule", async () => {
+    // A card-backed trial opting back to Hobby must also just lapse to Hobby (cancel at period end),
+    // never build a schedule whose phase 1 is a billable Pro phase and phase 2 is Hobby — that
+    // schedule charges the trial early and leaves a stale hobby "Scheduled" badge that survives a
+    // later upgrade.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          // Card IS on the subscription — previously this fell through to the scheduled path.
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "hobby",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("scheduled");
+    expect(result.pendingChange?.targetPlan).toBe("hobby");
+    // Cancelled at period end, NOT rebuilt into a schedule.
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", {
+      cancel_at_period_end: true,
+    });
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+  });
+
   test("switchOrganizationToCloudPlan rejects a paid switch from a no-card trial", async () => {
     mocks.subscriptionsList.mockResolvedValue({
       data: [
@@ -1313,6 +1380,87 @@ describe("organization-billing", () => {
       ([id]: [string]) => id === "sub_trial"
     );
     expect(trialUpdateCalls).toHaveLength(1);
+  });
+
+  test("switchOrganizationToCloudPlan clears a pending hobby downgrade when converting a card-backed trial to paid", async () => {
+    // A no-card trial that scheduled "Return to Hobby" tracks the downgrade via cancel_at_period_end
+    // (no schedule). Adding a card and upgrading to paid Pro must supersede that pending downgrade,
+    // otherwise the Hobby card keeps showing a stale "Scheduled" badge after the upgrade.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          // The pending hobby downgrade is tracked here, not via a schedule.
+          cancel_at_period_end: true,
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: "2026-08-11T00:00:00.000Z",
+        },
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    expect(result.pendingChange).toBeNull();
+    // Ends the trial and switches items in one update...
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({ trial_end: "now", payment_behavior: "error_if_incomplete" })
+    );
+    // ...clears the cancel_at_period_end that backed the pending hobby downgrade...
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", { cancel_at_period_end: false });
+    // ...and nulls the persisted pending-change snapshot so no stale "Scheduled" badge lingers.
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          stripe: expect.objectContaining({ pendingChange: null }),
+        }),
+      })
+    );
   });
 
   // Shared fixture: a card-backed Pro trial with `remaining` days left on the trial.
@@ -2989,8 +3137,16 @@ describe("computeUnusedTrialCreditCents", () => {
   });
 
   test("credits less as fewer trial days remain", () => {
-    const c7 = computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(7), nowSeconds: NOW });
-    const c14 = computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(14), nowSeconds: NOW });
+    const c7 = computeUnusedTrialCreditCents({
+      fullChargeCents: 8900,
+      trialEndSeconds: day(7),
+      nowSeconds: NOW,
+    });
+    const c14 = computeUnusedTrialCreditCents({
+      fullChargeCents: 8900,
+      trialEndSeconds: day(14),
+      nowSeconds: NOW,
+    });
     expect(c7).toBeLessThan(c14);
     expect(c7).toBe(2077); // round(8900 * 7 / 30)
   });
@@ -3005,14 +3161,24 @@ describe("computeUnusedTrialCreditCents", () => {
   });
 
   test("no credit without a trial end or a positive charge", () => {
-    expect(computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: null, nowSeconds: NOW })).toBe(0);
-    expect(computeUnusedTrialCreditCents({ fullChargeCents: 0, trialEndSeconds: day(14), nowSeconds: NOW })).toBe(0);
-    expect(computeUnusedTrialCreditCents({ fullChargeCents: -100, trialEndSeconds: day(14), nowSeconds: NOW })).toBe(0);
+    expect(
+      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: null, nowSeconds: NOW })
+    ).toBe(0);
+    expect(
+      computeUnusedTrialCreditCents({ fullChargeCents: 0, trialEndSeconds: day(14), nowSeconds: NOW })
+    ).toBe(0);
+    expect(
+      computeUnusedTrialCreditCents({ fullChargeCents: -100, trialEndSeconds: day(14), nowSeconds: NOW })
+    ).toBe(0);
   });
 
   test("credit never exceeds the amount being charged (clamped)", () => {
     // Absurdly long remaining window must not credit more than the full charge.
-    const credit = computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(365), nowSeconds: NOW });
+    const credit = computeUnusedTrialCreditCents({
+      fullChargeCents: 8900,
+      trialEndSeconds: day(365),
+      nowSeconds: NOW,
+    });
     expect(credit).toBeLessThanOrEqual(8900);
     expect(credit).toBe(8900); // capped at the billing-period days -> full charge
   });
