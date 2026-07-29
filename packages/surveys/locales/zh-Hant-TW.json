@@ -37,7 +37,7 @@
     "the_servers_cannot_be_reached_at_the_moment": "目前無法連線到伺服器。",
     "they_will_be_redirected_immediately": "他們將立即被重新導向",
     "welcome_video": "歡迎卡片影片",
-    "your_feedback_is_stuck": "你的意見回饋卡住了 :("
+    "your_feedback_is_stuck": "您的意見回饋卡住了 :("
   },
   "errors": {
     "all_options_must_be_ranked": "請為所有選項排序",
@@ -45,20 +45,20 @@
     "file_extension_must_be": "檔案副檔名必須為 {extension}",
     "file_extension_must_not_be": "檔案副檔名不得為 {extension}",
     "file_input": {
-      "duplicate_files": "以下檔案已上傳:{duplicateNames}。不允許重複的檔案。",
-      "file_size_exceeded": "以下檔案超過 {maxSizeInMB} MB 的大小上限,已被移除:{fileNames}",
+      "duplicate_files": "以下檔案已上傳：{duplicateNames}。不允許重複的檔案。",
+      "file_size_exceeded": "以下檔案超過 {maxSizeInMB} MB 的大小上限，已被移除：{fileNames}",
       "file_size_exceeded_alert": "檔案大小應小於 {maxSizeInMB} MB",
       "invalid_file_name": "檔案名稱包含無效字元。請重新命名檔案後再試一次。",
       "no_valid_file_types_selected": "未選擇有效的檔案類型。請選擇有效的檔案類型。",
       "only_one_file_can_be_uploaded_at_a_time": "一次只能上傳一個檔案。",
       "placeholder_text": "點擊或拖曳以上傳檔案",
-      "upload_failed": "上傳失敗!請再試一次。",
+      "upload_failed": "上傳失敗！請再試一次。",
       "upload_service_unavailable": "檔案上傳服務目前無法使用。請稍後再試或聯絡問卷擁有者。",
       "uploading": "上傳中...",
       "you_can_only_upload_a_maximum_of_files": "您最多只能上傳 {FILE_LIMIT} 個檔案。"
     },
     "invalid_device_error": {
-      "message": "請在問卷設定中停用垃圾訊息防護,以繼續使用此裝置。",
+      "message": "請在問卷設定中停用垃圾訊息防護，以繼續使用此裝置。",
       "title": "此裝置不支援垃圾訊息防護。"
     },
     "invalid_format": "請輸入有效格式",
@@ -81,16 +81,16 @@
     "please_enter_a_valid_url": "請輸入有效的網址",
     "please_fill_out_this_field": "請填寫此欄位",
     "recaptcha_error": {
-      "message": "您的回應無法提交,因為它被標記為自動化活動。如果您是真人,請再試一次。",
-      "title": "我們無法驗證你是真人。"
+      "message": "您的回應無法提交，因為它被標記為自動化活動。如果您是真人，請再試一次。",
+      "title": "我們無法驗證您是真人。"
     },
     "response_already_completed": {
-      "message": "此回覆已經完成且無法再更改。你可以安全地關閉此視窗。",
+      "message": "此回覆已經完成且無法再更改。您可以安全地關閉此視窗。",
       "title": "此回覆已經完成。"
     },
     "response_sending_error_permanent": {
-      "message": "你的回覆無法提交且無法重試。如果問題持續發生,請聯絡問卷擁有者。",
-      "title": "你的回覆無法提交。"
+      "message": "您的回覆無法提交且無法重試。如果問題持續發生，請聯絡問卷擁有者。",
+      "title": "您的回覆無法提交。"
     },
     "value_must_contain": "值必須包含 {value}",
     "value_must_equal": "值必須等於 {value}",
