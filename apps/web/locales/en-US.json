@@ -126,10 +126,8 @@
       "user_successfully_created_info": "We have checked for an account associated with {email}. If none existed, we have created one for you. If an account already existed, no changes were made. Please log in below to continue."
     },
     "verification-requested": {
-      "already_have_an_account": "Already have an account?",
       "invalid_email_address": "Invalid email address",
       "invalid_token": "Invalid token ☹️",
-      "log_in": "Log in",
       "new_email_verification_success": "If the address is valid, a verification email has been sent.",
       "no_email_provided": "No email provided",
       "please_confirm_your_email_address": "Please confirm your email address",

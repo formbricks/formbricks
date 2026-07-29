@@ -61,9 +61,9 @@ export const VerificationRequestedPage = async ({
               out. It reveals nothing: every visitor to this page sees it. (ENG-2091)
             */}
             <p className="mt-4 text-center text-xs text-slate-500">
-              {t("auth.verification-requested.already_have_an_account")}{" "}
+              {t("auth.signup.have_an_account")}{" "}
               <Link href="/auth/login" className="font-semibold text-slate-600 underline">
-                {t("auth.verification-requested.log_in")}
+                {t("auth.signup.log_in")}
               </Link>
             </p>
           </>

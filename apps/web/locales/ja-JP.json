@@ -58,6 +58,8 @@
       "create_an_account": "アカウントを作成",
       "enter_your_backup_code": "バックアップコードを入力してください",
       "enter_your_two_factor_authentication_code": "二段階認証コードを入力してください",
+      "existing_account_invite_description": "既存のパスワードでログインして招待を承認してください。確認メールは送信されません。",
+      "existing_account_invite_title": "すでにアカウントをお持ちです",
       "forgot_your_password": "パスワードを忘れてしまいましたか？",
       "login_to_your_account": "アカウントにログイン",
       "login_with_email": "メールアドレスでログイン",
@@ -130,6 +132,8 @@
       "no_email_provided": "メールアドレスが提供されていません",
       "please_confirm_your_email_address": "メールアドレスを確認してください",
       "resend_verification_email": "確認メールを再送信",
+      "send_failed_description": "アカウントは作成されましたが、確認メールの送信に失敗しました。下から再試行するか、問題が続く場合はサポートにお問い合わせください。",
+      "send_failed_title": "確認メールを送信できませんでした",
       "verification_email_resent_successfully": "確認メールを送信しました！受信トレイを確認してください。",
       "verification_email_successfully_sent_info": "もし {email} に関連するアカウントがあれば、確認リンクがそのアドレスに送信されました。受信トレイを確認してサインアップを完了してください。",
       "you_didnt_receive_an_email_or_your_link_expired": "メールを受け取っていないか、リンクが期限切れですか？"

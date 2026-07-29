@@ -58,6 +58,8 @@
       "create_an_account": "Cria uma conta",
       "enter_your_backup_code": "Digite seu código de backup",
       "enter_your_two_factor_authentication_code": "Digite seu código de autenticação de dois fatores",
+      "existing_account_invite_description": "Faça login com sua senha atual para aceitar o convite. Você não receberá um e-mail de verificação.",
+      "existing_account_invite_title": "Você já tem uma conta",
       "forgot_your_password": "Esqueceu sua senha?",
       "login_to_your_account": "Faça login na sua conta",
       "login_with_email": "Entrar com Email",
@@ -130,6 +132,8 @@
       "no_email_provided": "Nenhum e-mail fornecido",
       "please_confirm_your_email_address": "Por favor, confirme seu endereço de e-mail",
       "resend_verification_email": "Reenviar e-mail de verificação",
+      "send_failed_description": "Sua conta foi criada, mas o e-mail de verificação não pôde ser enviado. Tente novamente abaixo ou entre em contato com o suporte se o problema continuar.",
+      "send_failed_title": "Não conseguimos enviar seu e-mail de verificação",
       "verification_email_resent_successfully": "E-mail de verificação enviado! Por favor, verifique sua caixa de entrada.",
       "verification_email_successfully_sent_info": "Se houver uma conta associada a {email}, enviamos um link de verificação para esse endereço. Por favor, verifique sua caixa de entrada para completar o cadastro.",
       "you_didnt_receive_an_email_or_your_link_expired": "Você não recebeu um e-mail ou seu link expirou?"

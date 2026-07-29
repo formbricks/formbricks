@@ -46,6 +46,8 @@ checksums:
     auth/login/create_an_account: bc53a57281d2701563f94f3169518028
     auth/login/enter_your_backup_code: f2a6905ea0e8d2b4093b5773d72df88b
     auth/login/enter_your_two_factor_authentication_code: 07a020191cd54ee4a0aa1aa4ddc166bf
+    auth/login/existing_account_invite_description: 090d8d3646e1a9eb2703363ef1d1b704
+    auth/login/existing_account_invite_title: a33f023c3fec003e3a8288e0c2d2ed38
     auth/login/forgot_your_password: 0baf970b4598f1af36623b714410dfae
     auth/login/login_to_your_account: 88f0beb509622ce2f3a22128a9ec9ba5
     auth/login/login_with_email: 8596217b9cec74845ebfe02d6d82e67a
@@ -108,6 +110,8 @@ checksums:
     auth/verification-requested/no_email_provided: 3ec84e76a2b1010343b32450adbf6db9
     auth/verification-requested/please_confirm_your_email_address: 73aa4a257a4ccbfed94d888a9e265533
     auth/verification-requested/resend_verification_email: bd0e6492ef0f3dd61eb1e2ba20f3e147
+    auth/verification-requested/send_failed_description: 3ae9eb5edd73fcfa287cf9a8344c3deb
+    auth/verification-requested/send_failed_title: 6b3a753fa548df8ebc8187e4ffa082e5
     auth/verification-requested/verification_email_resent_successfully: ef61258c14559afcd00252f90e6876fb
     auth/verification-requested/verification_email_successfully_sent_info: 2a98caf0d12239699cd3f6bbc987b941
     auth/verification-requested/you_didnt_receive_an_email_or_your_link_expired: cab28d1246e22c11d0c3ce907d55c983

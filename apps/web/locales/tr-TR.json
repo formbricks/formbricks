@@ -58,6 +58,8 @@
       "create_an_account": "Hesap oluştur",
       "enter_your_backup_code": "Yedek kodunuzu girin",
       "enter_your_two_factor_authentication_code": "İki faktörlü doğrulama kodunuzu girin",
+      "existing_account_invite_description": "Daveti kabul etmek için mevcut şifrenizle giriş yapın. Doğrulama email'i almayacaksınız.",
+      "existing_account_invite_title": "Zaten bir hesabınız var",
       "forgot_your_password": "Şifrenizi mi unuttunuz?",
       "login_to_your_account": "Hesabınıza giriş yapın",
       "login_with_email": "Email ile giriş yap",
@@ -130,6 +132,8 @@
       "no_email_provided": "Email sağlanmadı",
       "please_confirm_your_email_address": "Lütfen email adresinizi onaylayın",
       "resend_verification_email": "Doğrulama email'ini tekrar gönder",
+      "send_failed_description": "Hesabınız oluşturuldu ancak doğrulama email'i gönderilemedi. Aşağıdan tekrar deneyin veya sorun devam ederse destek ekibiyle iletişime geçin.",
+      "send_failed_title": "Doğrulama email'inizi gönderemedik",
       "verification_email_resent_successfully": "Doğrulama email'i gönderildi! Lütfen gelen kutunuzu kontrol edin.",
       "verification_email_successfully_sent_info": "{email} ile ilişkili bir hesap varsa, o adrese bir doğrulama bağlantısı gönderdik. Kayıt işlemini tamamlamak için lütfen gelen kutunuzu kontrol edin.",
       "you_didnt_receive_an_email_or_your_link_expired": "Email almadınız mı veya bağlantınızın süresi mi doldu?"

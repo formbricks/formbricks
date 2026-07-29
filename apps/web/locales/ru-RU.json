@@ -58,6 +58,8 @@
       "create_an_account": "Создать аккаунт",
       "enter_your_backup_code": "Введите резервный код",
       "enter_your_two_factor_authentication_code": "Введите код двухфакторной аутентификации",
+      "existing_account_invite_description": "Войдите с существующим паролем, чтобы принять приглашение. Письмо с подтверждением не будет отправлено.",
+      "existing_account_invite_title": "У вас уже есть аккаунт",
       "forgot_your_password": "Забыли пароль?",
       "login_to_your_account": "Войдите в свой аккаунт",
       "login_with_email": "Войти по email",
@@ -130,6 +132,8 @@
       "no_email_provided": "Адрес электронной почты не указан",
       "please_confirm_your_email_address": "Пожалуйста, подтвердите свой адрес электронной почты",
       "resend_verification_email": "Отправить письмо с подтверждением ещё раз",
+      "send_failed_description": "Ваш аккаунт создан, но письмо с подтверждением отправить не удалось. Попробуйте ещё раз ниже или свяжитесь с поддержкой, если ошибка повторяется.",
+      "send_failed_title": "Не удалось отправить письмо с подтверждением",
       "verification_email_resent_successfully": "Письмо с подтверждением отправлено! Проверьте ваш почтовый ящик.",
       "verification_email_successfully_sent_info": "Если с адресом {email} связан аккаунт, мы отправили на него ссылку для подтверждения. Проверьте почту, чтобы завершить регистрацию.",
       "you_didnt_receive_an_email_or_your_link_expired": "Вы не получили письмо или ваша ссылка устарела?"

@@ -58,6 +58,8 @@
       "create_an_account": "Konto erstellen",
       "enter_your_backup_code": "Gib deinen Backup-Code ein",
       "enter_your_two_factor_authentication_code": "Gib deinen Zwei-Faktor-Authentifizierungscode ein",
+      "existing_account_invite_description": "Melde dich mit deinem bestehenden Passwort an, um die Einladung anzunehmen. Du erhältst keine Bestätigungs-E-Mail.",
+      "existing_account_invite_title": "Du hast bereits ein Konto",
       "forgot_your_password": "Passwort vergessen?",
       "login_to_your_account": "Melde dich bei deinem Konto an",
       "login_with_email": "Mit E-Mail anmelden",
@@ -130,6 +132,8 @@
       "no_email_provided": "Keine E-Mail-Adresse angegeben",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
+      "send_failed_description": "Dein Konto wurde erstellt, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Versuche es unten erneut oder kontaktiere den Support, wenn es weiterhin fehlschlägt.",
+      "send_failed_title": "Wir konnten deine Bestätigungs-E-Mail nicht senden",
       "verification_email_resent_successfully": "Bestätigungs-E-Mail versendet! Bitte überprüfe deinen Posteingang.",
       "verification_email_successfully_sent_info": "Falls ein Konto mit {email} verknüpft ist, haben wir einen Bestätigungslink an diese Adresse gesendet. Bitte überprüfe Deinen Posteingang, um die Registrierung abzuschließen.",
       "you_didnt_receive_an_email_or_your_link_expired": "Du hast keine E-Mail erhalten oder Dein Link ist abgelaufen?"

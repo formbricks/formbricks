@@ -58,6 +58,8 @@
       "create_an_account": "创建一个帐户",
       "enter_your_backup_code": "输入 你的 备用代码",
       "enter_your_two_factor_authentication_code": "输入 你的 双因素 认证 代码",
+      "existing_account_invite_description": "请使用现有密码登录以接受邀请。您不会收到验证邮件。",
+      "existing_account_invite_title": "您已有账户",
       "forgot_your_password": "忘记你的密码？",
       "login_to_your_account": "登录您的账户",
       "login_with_email": "使用邮箱登录",
@@ -130,6 +132,8 @@
       "no_email_provided": "未提供 邮箱",
       "please_confirm_your_email_address": "请 确认您的 电子邮件地址",
       "resend_verification_email": "重新 发送 验证 邮件",
+      "send_failed_description": "您的账户已创建，但验证邮件发送失败。请在下方重试，如果问题持续存在，请联系支持团队。",
+      "send_failed_title": "无法发送验证邮件",
       "verification_email_resent_successfully": "验证 电子邮件 已 发送！请 检查 您的 收件箱。",
       "verification_email_successfully_sent_info": "如果有一个 账户 与 {email} 相关 联，我们已将 验证 链接 发送到该 地址 。请查看您的 收件箱 以完成 注册 。",
       "you_didnt_receive_an_email_or_your_link_expired": "您 没 有 收 到 电 子 邮 件 或者 链接 已 过 期 ?"
