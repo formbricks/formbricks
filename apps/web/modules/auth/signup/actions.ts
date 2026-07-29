@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import {
+  INVITE_TOKEN_INVALID_ERROR_CODE,
   InvalidInputError,
   PASSWORD_COMPROMISED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
@@ -131,6 +132,17 @@ async function handleInviteAcceptance(
   inviteToken: string,
   user: TCreatedUser
 ): Promise<void> {
+  // An invite grants a specific address a specific role in a specific organization. Verifying the
+  // signature and loading the row is not enough: without matching the token's email against the account
+  // being created, anyone holding an invite link — they get forwarded, pasted into tickets, and land in
+  // referrer logs — could redeem it with an arbitrary address and take the invited role, which may be
+  // manager or owner. `resolveInviteMatch` also enforces the invite's expiry, which this path skipped.
+  const inviteMatch = await resolveInviteMatch(inviteToken, user.email);
+  if (inviteMatch !== "valid") {
+    logger.warn({ inviteMatch }, "Rejected invite acceptance during sign-up");
+    throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
+  }
+
   const inviteTokenData = verifyInviteToken(inviteToken);
   const invite = await getInvite(inviteTokenData.inviteId);
 
@@ -263,14 +275,23 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
     await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
+    // Normalized once, up front, and used for every downstream decision. The sign-up form always sends
+    // this field as `inviteToken ?? ""`, so an ordinary uninvited sign-up arrives with an empty string —
+    // anything blank has to mean "no invite" everywhere, or the checks below disagree with
+    // `handlePostUserCreation` about which path the request is on.
+    const inviteToken = parsedInput.inviteToken?.trim() || undefined;
+    const inviteMatch = await resolveInviteMatch(inviteToken, parsedInput.email);
+
+    // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
+    // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
+    if (inviteToken && inviteMatch !== "valid") {
+      logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
+      throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
+    }
+
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
-    if (
-      await isSignupEmailDomainBlocked(
-        parsedInput.email,
-        async () => (await resolveInviteMatch(parsedInput.inviteToken, parsedInput.email)) === "valid"
-      )
-    ) {
+    if (await isSignupEmailDomainBlocked(parsedInput.email, async () => inviteMatch === "valid")) {
       throw new InvalidInputError(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
     }
 
@@ -288,7 +309,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     });
 
     if (!userAlreadyExisted && user) {
-      await handlePostUserCreation(ctx, user, parsedInput.inviteToken);
+      await handlePostUserCreation(ctx, user, inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
@@ -310,7 +331,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           ...attributionProperties,
           auth_provider: "credentials",
           email_domain: user.email.split("@")[1],
-          signup_source: parsedInput.inviteToken ? "invite" : "direct",
+          signup_source: inviteToken ? "invite" : "direct",
           invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
         },
         ctx.auditLoggingCtx.organizationId

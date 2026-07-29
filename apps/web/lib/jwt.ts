@@ -16,6 +16,19 @@ const decryptWithFallback = (encryptedText: string, key: string): string => {
   }
 };
 
+/**
+ * Every token minted here is signed with the same `NEXTAUTH_SECRET`, so the signature alone proves
+ * nothing about *which* flow a token was issued for. Tokens that grant something must therefore carry
+ * an explicit `purpose` claim and the verifier must require it, otherwise a token handed out by one
+ * flow is replayable against another (e.g. an email- or invite-token accepted as proof of email
+ * verification for a link survey).
+ */
+export const LINK_SURVEY_EMAIL_VERIFICATION_PURPOSE = "link_survey_email_verification";
+export const EMAIL_DISPLAY_TOKEN_PURPOSE = "email_display";
+
+const LINK_SURVEY_TOKEN_TTL = "7d";
+const EMAIL_DISPLAY_TOKEN_TTL = "1d";
+
 export const VERIFICATION_TOKEN_PURPOSES = ["email_verification", "sso_recovery"] as const;
 
 export type TVerificationTokenPurpose = (typeof VERIFICATION_TOKEN_PURPOSES)[number];
@@ -110,7 +123,11 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
   }
 
   const encryptedEmail = symmetricEncrypt(userEmail, ENCRYPTION_KEY);
-  return jwt.sign({ email: encryptedEmail, surveyId }, NEXTAUTH_SECRET);
+  return jwt.sign(
+    { email: encryptedEmail, surveyId, purpose: LINK_SURVEY_EMAIL_VERIFICATION_PURPOSE },
+    NEXTAUTH_SECRET,
+    { expiresIn: LINK_SURVEY_TOKEN_TTL }
+  );
 };
 
 export const verifyEmailChangeToken = async (token: string): Promise<{ id: string; email: string }> => {
@@ -205,7 +222,11 @@ export const createEmailToken = (email: string): string => {
   }
 
   const encryptedEmail = symmetricEncrypt(email, ENCRYPTION_KEY);
-  return jwt.sign({ email: encryptedEmail }, NEXTAUTH_SECRET);
+  // Handed out by an unauthenticated action purely so the "check your inbox" screen can echo the
+  // address back. It must therefore be inert everywhere else: scope it with a purpose and a TTL.
+  return jwt.sign({ email: encryptedEmail, purpose: EMAIL_DISPLAY_TOKEN_PURPOSE }, NEXTAUTH_SECRET, {
+    expiresIn: EMAIL_DISPLAY_TOKEN_TTL,
+  });
 };
 
 export const getEmailFromEmailToken = (token: string): string => {
@@ -219,7 +240,15 @@ export const getEmailFromEmailToken = (token: string): string => {
 
   const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
     email: string;
+    purpose?: string;
   };
+
+  // Tokens minted before the purpose claim existed have none; anything else was issued for a
+  // different flow and must not resolve to an email here.
+  if (payload.purpose !== undefined && payload.purpose !== EMAIL_DISPLAY_TOKEN_PURPOSE) {
+    throw new Error("Invalid token");
+  }
+
   return decryptWithFallback(payload.email, ENCRYPTION_KEY);
 };
 
@@ -243,7 +272,10 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
   }
 
   try {
-    let payload: JwtPayload & { email: string; surveyId?: string };
+    let payload: JwtPayload & { email: string; surveyId?: string; purpose?: string };
+    // Legacy tokens carry no `surveyId` claim; they are bound to one survey by their signing key
+    // (`NEXTAUTH_SECRET + surveyId`) instead, so that path needs no claim check.
+    let isBoundBySigningKey = false;
 
     // Try primary method first (consistent secret)
     try {
@@ -259,14 +291,23 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
         payload = jwt.verify(token, NEXTAUTH_SECRET + surveyId, { algorithms: ["HS256"] }) as JwtPayload & {
           email: string;
         };
+        isBoundBySigningKey = true;
       } catch (legacyError) {
         logger.error(legacyError, "Token verification failed with legacy method");
         throw new Error("Invalid token");
       }
     }
 
-    // Verify the surveyId matches if present in payload (new format)
-    if (payload.surveyId && payload.surveyId !== surveyId) {
+    // A token verified with the plain secret MUST name this survey. Accepting a missing `surveyId`
+    // here let any NEXTAUTH_SECRET-signed token that happens to carry an `email` claim — e.g. the one
+    // `createEmailToken` hands out for an arbitrary address — pass as a verified email for any survey.
+    if (!isBoundBySigningKey && payload.surveyId !== surveyId) {
+      return null;
+    }
+
+    // Reject tokens explicitly minted for a different flow. Tokens issued before the purpose claim
+    // existed have none; they are already survey-bound by the check above.
+    if (payload.purpose !== undefined && payload.purpose !== LINK_SURVEY_EMAIL_VERIFICATION_PURPOSE) {
       return null;
     }
 

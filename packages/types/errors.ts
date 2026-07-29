@@ -210,6 +210,12 @@ export const SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE = "email_domain_not_allowed"
  */
 export const PASSWORD_COMPROMISED_ERROR_CODE = "password_compromised";
 
+/**
+ * Stable, locale-independent marker used when a sign-up presents an invite token that is malformed,
+ * expired, or issued to a different email address than the account being created.
+ */
+export const INVITE_TOKEN_INVALID_ERROR_CODE = "invite_token_invalid";
+
 export interface ApiErrorResponse {
   code:
     | "not_found"

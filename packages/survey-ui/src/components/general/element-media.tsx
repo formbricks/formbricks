@@ -1,7 +1,13 @@
 import { Download, ExternalLink } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video";
+import {
+  checkForLoomUrl,
+  checkForVimeoUrl,
+  checkForYoutubeUrl,
+  convertToEmbedUrl,
+  isSafeMediaUrl,
+} from "@/lib/video";
 
 //Function to add extra params to videoUrls in order to reduce video controls
 const getVideoUrlWithParams = (videoUrl: string): string => {
@@ -17,6 +23,10 @@ const getVideoUrlWithParams = (videoUrl: string): string => {
   return videoUrl;
 };
 
+/** Validated media URL, or `undefined` when it must not reach a `src`/`href`. */
+const asSafeMediaUrl = (url: string | undefined): string | undefined =>
+  url && isSafeMediaUrl(url) ? url : undefined;
+
 interface ElementMediaProps {
   imgUrl?: string;
   videoUrl?: string;
@@ -24,10 +34,16 @@ interface ElementMediaProps {
 }
 
 function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementMediaProps>): React.ReactNode {
-  const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
+  // Every sink is validated, not just the href. `ZStorageUrl` now rejects unsafe schemes on write, but
+  // this component renders survey JSON straight from the API, and rows written before that validation
+  // can still carry a `javascript:`/`data:` URL. An unsafe value in `<iframe src>` executes; in
+  // `<img src>` it does not, but neither should reach the DOM from stored data.
+  const safeVideoUrl = asSafeMediaUrl(videoUrl ? getVideoUrlWithParams(videoUrl) : undefined);
+  const safeImgUrl = asSafeMediaUrl(imgUrl);
+  const safeHref = asSafeMediaUrl(imgUrl ?? convertToEmbedUrl(videoUrl ?? ""));
   const [isLoading, setIsLoading] = React.useState(true);
 
-  if (!imgUrl && !videoUrl) {
+  if (!safeImgUrl && !safeVideoUrl) {
     return null;
   }
 
@@ -36,10 +52,10 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
       {isLoading ? (
         <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}
-      {imgUrl ? (
+      {safeImgUrl ? (
         <img
-          key={imgUrl}
-          src={imgUrl}
+          key={safeImgUrl}
+          src={safeImgUrl}
           alt={altText}
           className={cn("mx-auto max-h-[40dvh] rounded-md object-contain", isLoading ? "opacity-0" : "")}
           onLoad={() => {
@@ -50,11 +66,11 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
           }}
         />
       ) : null}
-      {videoUrlWithParams ? (
+      {safeVideoUrl ? (
         <div className="relative">
           <div className="rounded-md bg-black">
             <iframe
-              src={videoUrlWithParams}
+              src={safeVideoUrl}
               title="Question video"
               className={cn("aspect-video w-full rounded-md border-0", isLoading ? "opacity-0" : "")}
               onLoad={() => {
@@ -70,7 +86,7 @@ function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: Readonly<ElementM
         </div>
       ) : null}
       <a
-        href={imgUrl ?? convertToEmbedUrl(videoUrl ?? "")}
+        href={safeHref}
         target="_blank"
         rel="noreferrer"
         aria-label="Open in new tab"

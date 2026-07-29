@@ -19,15 +19,20 @@ export const ZStorageUrl = z.string().refine(
     }
     // Otherwise validate as URL
     try {
-      // Using void to satisfy ESLint "no-new" rule while still validating the URL
-      void new URL(val);
-      return true;
+      const parsed = new URL(val);
+      // The scheme has to be constrained, not just parseable: these values are survey image/video
+      // URLs, organization logos and favicons, and styling background URLs, and they are rendered
+      // straight into `src`/`href` attributes. `new URL()` happily accepts `javascript:`, `data:` and
+      // `vbscript:`, so accepting any parseable URL turned an editable survey field into stored XSS —
+      // on a link survey that executes on the Formbricks origin, and in an embedded survey on the
+      // customer's own site.
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
     } catch {
       return false;
     }
   },
   {
-    error: "Must be a valid URL or a relative storage path (/storage/...)",
+    error: "Must be a valid http(s) URL or a relative storage path (/storage/...)",
   }
 );
 

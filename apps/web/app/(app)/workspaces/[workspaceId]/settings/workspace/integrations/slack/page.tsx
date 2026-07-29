@@ -3,6 +3,7 @@ import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/surveys";
 import { SlackWrapper } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/slack/components/SlackWrapper";
 import { DEFAULT_LOCALE, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
+import { redactIntegrationCredentials } from "@/lib/integration/redact-credentials";
 import { getIntegrationByType } from "@/lib/integration/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -38,7 +39,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           isEnabled={isEnabled}
           workspaceId={workspace.id}
           surveys={surveys}
-          slackIntegration={slackIntegration as TIntegrationSlack}
+          slackIntegration={redactIntegrationCredentials(slackIntegration as TIntegrationSlack)}
           webAppUrl={WEBAPP_URL}
           locale={locale ?? DEFAULT_LOCALE}
         />

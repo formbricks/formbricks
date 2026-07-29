@@ -347,6 +347,7 @@
         "TURNSTILE_SITE_KEY",
         "RECAPTCHA_SITE_KEY",
         "RECAPTCHA_SECRET_KEY",
+        "TRUSTED_PROXY_HOP_COUNT",
         "TELEMETRY_DISABLED",
         "TERMS_URL",
         "VERSION",

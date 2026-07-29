@@ -6,6 +6,7 @@ import { AirtableWrapper } from "@/app/(app)/workspaces/[workspaceId]/settings/w
 import { getSurveys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/surveys";
 import { getAirtableTables } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
+import { redactIntegrationCredentials } from "@/lib/integration/redact-credentials";
 import { getIntegrations } from "@/lib/integration/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -52,7 +53,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <div className="h-[75vh] w-full">
         <AirtableWrapper
           isEnabled={isEnabled}
-          airtableIntegration={airtableIntegration}
+          airtableIntegration={redactIntegrationCredentials(airtableIntegration)}
           airtableArray={airtableArray}
           workspaceId={workspace.id}
           surveys={surveys}
