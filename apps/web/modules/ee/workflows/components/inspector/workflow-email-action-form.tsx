@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { ArrowRightIcon, EyeOffIcon, MailIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,7 +9,7 @@ import {
   type TWorkflowSendEmailContentField,
   getBlankSendEmailContentFields,
 } from "@formbricks/workflows";
-import { cn } from "@/lib/cn";
+import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
 import {
   WorkflowFieldError,
   WorkflowFieldLabel,
@@ -27,18 +27,10 @@ import {
   type EmailSendToOption,
   buildEmailSendToOptions,
 } from "@/modules/survey/follow-ups/lib/email-send-to-options";
-import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import { Editor } from "@/modules/ui/components/editor";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface WorkflowEmailActionFormProps {
@@ -204,112 +196,18 @@ export const WorkflowEmailActionForm = ({
     );
   }
 
-  const ELEMENTS_ICON_MAP = getElementIconMap(t);
-
-  const getSelectItemIcon = (type: EmailSendToOption["type"]): React.ReactNode => {
-    switch (type) {
-      case "verifiedEmail":
-        return <MailIcon className="size-4" />;
-      case "hiddenField":
-        return <EyeOffIcon className="size-4" />;
-      case "user":
-        return <UserIcon className="size-4" />;
-      case "openTextElement":
-      case "contactInfoElement":
-        return (
-          <div className="size-4">
-            {ELEMENTS_ICON_MAP[type === "openTextElement" ? "openText" : "contactInfo"]}
-          </div>
-        );
-    }
-  };
-
-  const renderSelectItem = (option: EmailSendToOption) => (
-    <SelectItem key={option.id} value={option.id}>
-      <div className="flex items-center gap-x-2">
-        {getSelectItemIcon(option.type)}
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
-      </div>
-    </SelectItem>
-  );
-
-  const verifiedEmailOptions = emailSendToOptions.filter((option) => option.type === "verifiedEmail");
-  const elementOptions = emailSendToOptions.filter(
-    (option) => option.type === "openTextElement" || option.type === "contactInfoElement"
-  );
-  const hiddenFieldOptions = emailSendToOptions.filter((option) => option.type === "hiddenField");
-  const userOptions = emailSendToOptions.filter((option) => option.type === "user");
-
   return (
     <div className="flex flex-col gap-4">
-      {/* Recipient */}
-      <div className="flex flex-col gap-2">
-        <WorkflowFieldLabel htmlFor="workflow-email-to" isRequired isInvalid={invalidFields.has("to")}>
-          {t("workspace.workflows.email_to_label")}
-        </WorkflowFieldLabel>
-        <p className="text-xs text-slate-500">
-          {t("workspace.surveys.edit.follow_ups_modal_action_to_description")}
-        </p>
-        {emailSendToOptions.length > 0 ? (
-          <Select
-            value={node.config.to || undefined}
-            disabled={!isEditable}
-            // A picked recipient can't be un-picked, so closing the dropdown without choosing is
-            // this control's only "touched while still empty" moment.
-            onOpenChange={(isOpen) => {
-              if (!isOpen) markTouched("to");
-            }}
-            onValueChange={(value) => updateConfig({ to: value })}>
-            <SelectTrigger
-              id="workflow-email-to"
-              aria-invalid={invalidFields.has("to")}
-              aria-describedby={invalidFields.has("to") ? "workflow-email-to-error" : undefined}
-              className={cn(
-                "overflow-hidden bg-white text-ellipsis whitespace-nowrap",
-                invalidFields.has("to") && "border-red-500"
-              )}>
-              <SelectValue placeholder={t("workspace.workflows.email_to_placeholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {verifiedEmailOptions.length > 0 || elementOptions.length > 0 ? (
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-x-2 p-2">
-                    <p className="text-sm text-slate-500">{t("common.questions")}</p>
-                  </div>
-                  {verifiedEmailOptions.map(renderSelectItem)}
-                  {elementOptions.map(renderSelectItem)}
-                </div>
-              ) : null}
-              {hiddenFieldOptions.length > 0 ? (
-                <div className="flex flex-col">
-                  <div className="flex gap-x-2 p-2">
-                    <p className="text-sm text-slate-500">{t("common.hidden_fields")}</p>
-                  </div>
-                  {hiddenFieldOptions.map(renderSelectItem)}
-                </div>
-              ) : null}
-              {userOptions.length > 0 ? (
-                <div className="flex flex-col">
-                  <div className="flex gap-x-2 p-2">
-                    <p className="text-sm text-slate-500">{t("common.members")}</p>
-                  </div>
-                  {userOptions.map(renderSelectItem)}
-                </div>
-              ) : null}
-            </SelectContent>
-          </Select>
-        ) : (
-          <div className="flex items-start gap-2 text-yellow-600">
-            <TriangleAlertIcon className="mt-0.5 size-4 min-h-4 min-w-4" aria-hidden="true" />
-            <p className="text-sm">{t("workspace.surveys.edit.follow_ups_modal_action_to_warning")}</p>
-          </div>
-        )}
-        {invalidFields.has("to") ? (
-          <WorkflowFieldError id="workflow-email-to-error">
-            {t("workspace.workflows.email_to_required")}
-          </WorkflowFieldError>
-        ) : null}
-      </div>
+      <WorkflowEmailRecipientField
+        options={emailSendToOptions}
+        value={node.config.to}
+        isEditable={isEditable}
+        isInvalid={invalidFields.has("to")}
+        onChange={(value) => updateConfig({ to: value })}
+        // A picked recipient can't be un-picked, so closing the dropdown without choosing is this
+        // control's only "touched while still empty" moment.
+        onClose={() => markTouched("to")}
+      />
 
       {/* From (read-only) */}
       <div className="flex flex-col gap-2">
