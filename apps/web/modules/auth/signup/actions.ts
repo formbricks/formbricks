@@ -81,14 +81,29 @@ async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): 
   }
 }
 
+/**
+ * Whether THIS request created the account, as a discriminated union rather than a boolean flag.
+ *
+ * Everything downstream of sign-up — invite acceptance, organization creation, the mailing-list
+ * subscription, the analytics identify, the `created` audit event — may only run for `"created"`.
+ * `createUserAction` is unauthenticated, so running any of it against an account the caller has not
+ * proven they own is an authorization defect (ENG-2091). Encoding that in the type keeps the guard
+ * from being dropped by a later refactor: `handlePostUserCreation` accepts only the `"created"`
+ * variant, so misuse is a compile error rather than a silent privilege hole.
+ */
+type TSignUpOutcome =
+  | { status: "created"; user: TCreatedUser }
+  | { status: "already_existed"; user: TCreatedUser | undefined };
+
 async function signUpUserSafely(
   email: string,
   name: string,
   password: string,
   userLocale: z.infer<typeof ZUserLocale> | undefined
-): Promise<{ user: TCreatedUser | undefined; userAlreadyExisted: boolean }> {
+): Promise<TSignUpOutcome> {
   const normalizedEmail = email.toLowerCase();
 
+  let signedUpUserId: string | undefined;
   try {
     // Better Auth-native signup: creates the User + a bcrypt credential Account (via the password hook
     // in auth.ts) and, when verification is enabled, sends Better Auth's verification email (sendOnSignUp;
@@ -97,7 +112,10 @@ async function signUpUserSafely(
     // verification link is clicked /invite would render "Invite Not Found" (ENG-1527) — the verified,
     // already-provisioned user lands on the app home instead. Replaces the manual hash + createUser + the
     // legacy verification-token email.
-    await auth.api.signUpEmail({ body: { email: normalizedEmail, password, name } });
+    const signUpResult = await auth.api.signUpEmail({
+      body: { email: normalizedEmail, password, name },
+    });
+    signedUpUserId = signUpResult.user.id;
   } catch (error) {
     // A breached password is rejected before any user is created — surface it as an expected error
     // with a stable code the sign-up form maps to a localized message (not an enumeration signal).
@@ -105,26 +123,42 @@ async function signUpUserSafely(
       throw new InvalidInputError(PASSWORD_COMPROMISED_ERROR_CODE);
     }
     // Enumeration-safe: a duplicate email resolves to "already existed", not a surfaced error.
+    // Reachable only when Better Auth is configured to THROW on a duplicate — see the id check below.
     const existing = await getUserByEmail(normalizedEmail);
     if (existing) {
-      return { user: existing, userAlreadyExisted: true };
+      return { status: "already_existed", user: existing };
     }
     throw error;
   }
 
-  let user = await getUserByEmail(normalizedEmail);
+  const user = await getUserByEmail(normalizedEmail);
   if (!user) {
     // signUpEmail succeeded but the row can't be loaded — an invariant violation. Fail loud rather
     // than returning { success: true } with no user, which would skip org creation / invite acceptance.
     throw new UnknownError("Failed to load user after signup");
   }
-  // signUpEmail can't carry the chosen locale (not a Better Auth field), so apply it afterwards.
-  if (userLocale && user.locale !== userLocale) {
-    await updateUser(user.id, { locale: userLocale });
-    user = { ...user, locale: userLocale };
+
+  // ENG-2091: a duplicate email does NOT throw here. Better Auth takes an enumeration-safe branch
+  // whenever `emailAndPassword.requireEmailVerification || autoSignIn === false` — auth.ts sets both —
+  // which hashes the password for timing parity, then returns HTTP 200 carrying a SYNTHETIC user: a
+  // freshly generated id, no row written, no credential linked and (because it returns before the send)
+  // no verification email. So the id it hands back, not a thrown error, is what distinguishes the two:
+  // a synthetic id is never in the database. Do not "simplify" this to the catch above — that branch
+  // only fires under a configuration that makes Better Auth throw USER_ALREADY_EXISTS instead, which
+  // is why both signals are kept.
+  if (user.id !== signedUpUserId) {
+    return { status: "already_existed", user };
   }
 
-  return { user, userAlreadyExisted: false };
+  // signUpEmail can't carry the chosen locale (not a Better Auth field), so apply it afterwards — only
+  // for an account this request created. Applying it on the already-existed path would let an
+  // anonymous caller rewrite an existing user's locale by POSTing their address at sign-up.
+  if (userLocale && user.locale !== userLocale) {
+    await updateUser(user.id, { locale: userLocale });
+    return { status: "created", user: { ...user, locale: userLocale } };
+  }
+
+  return { status: "created", user };
 }
 
 async function handleInviteAcceptance(
@@ -255,9 +289,13 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
   });
 }
 
+/**
+ * Provisioning that must only ever follow a real account creation. Takes the `"created"` outcome
+ * rather than a bare user so an `"already_existed"` sign-up cannot reach it (ENG-2091).
+ */
 async function handlePostUserCreation(
   ctx: ActionClientCtx,
-  user: TCreatedUser,
+  { user }: Extract<TSignUpOutcome, { status: "created" }>,
   inviteToken: string | undefined
 ): Promise<void> {
   if (inviteToken) {
@@ -298,7 +336,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
     // sign-up that went through this action apart from a direct POST to Better Auth's native
     // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
-    const { user, userAlreadyExisted } = await runWithSignupRequestContext(() => {
+    const outcome = await runWithSignupRequestContext(() => {
       markSignupDomainAllowed();
       return signUpUserSafely(
         parsedInput.email,
@@ -308,8 +346,12 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       );
     });
 
-    if (!userAlreadyExisted && user) {
-      await handlePostUserCreation(ctx, user, inviteToken);
+    // Everything below is provisioning + analytics for a NEW account. On "already_existed" the response
+    // is deliberately identical (enumeration-safe) but nothing runs: this endpoint is unauthenticated,
+    // so the caller has proven nothing about an account that already exists (ENG-2091).
+    if (outcome.status === "created") {
+      const { user } = outcome;
+      await handlePostUserCreation(ctx, outcome, inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
@@ -348,9 +390,14 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           // Best-effort; the short cookie lifetime is the backstop.
         }
       }
-    }
 
-    if (user) {
+      // Inside the "created" branch: an audit record claiming a user was created must only exist when
+      // one was. Previously this ran unconditionally, so a duplicate sign-up wrote a `created` event
+      // attributed to the PRE-EXISTING user and carrying their object (ENG-2091 / S1).
+      // Note: withAuditLogging is wrapped around the whole action, so the already-existed path still
+      // emits a `created` event with targetId UNKNOWN_DATA and no newObject. That records an attempt
+      // without falsely attributing it; suppressing it entirely would mean restructuring the wrapper
+      // (and losing its failure-path auditing), which is out of scope here.
       ctx.auditLoggingCtx.userId = user.id;
       ctx.auditLoggingCtx.newObject = user;
     }
