@@ -19,6 +19,7 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   // Microsoft
   "outlook.com",
   "hotmail.com",
+  "hotmail.fr",
   "live.com",
   "msn.com",
   // Yahoo / AOL
