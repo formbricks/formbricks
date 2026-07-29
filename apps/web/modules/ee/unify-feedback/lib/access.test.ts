@@ -27,6 +27,9 @@ describe("getWorkspaceDirectoryIds", () => {
 
     const ids = await getWorkspaceDirectoryIds(workspaceId);
 
+    // Pins the scope of the lookup: the ids must come from the workspace that was asked for, since
+    // the guard downstream compares a record's tenant against exactly this set.
+    expect(getFeedbackDirectoriesByWorkspaceId).toHaveBeenCalledWith(workspaceId);
     expect(ids).toEqual(new Set([sharedDirectoryId, "clfd9876543210987654321098"]));
   });
 
