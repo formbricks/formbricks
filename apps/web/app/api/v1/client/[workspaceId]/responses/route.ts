@@ -15,10 +15,12 @@ import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
+import { verifyResponseRecaptcha } from "@/modules/api/lib/verify-response-recaptcha";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email-gate";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -150,6 +152,29 @@ export const POST = withV1ApiWrapper({
       return {
         response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
       };
+    }
+
+    // Email verification, like the PIN above, has to be enforced here and not only in the renderer:
+    // this endpoint is public, so a caller could otherwise submit with any `verifiedEmail` they like.
+    // Shared with the v2 endpoint so the two versions cannot drift apart.
+    const verifiedEmailErrorResponse = enforceVerifiedEmailGate({
+      survey,
+      responseData: responseInputData.data,
+      metaUrl: responseInputData.meta?.url,
+    });
+    if (verifiedEmailErrorResponse) {
+      return { response: verifiedEmailErrorResponse };
+    }
+
+    // Same gate the v2 endpoint applies — without it, posting to the v1 URL opts the caller out of the
+    // survey's spam protection entirely.
+    const recaptchaErrorResponse = await verifyResponseRecaptcha({
+      survey,
+      workspaceId,
+      recaptchaToken: responseInputData.recaptchaToken,
+    });
+    if (recaptchaErrorResponse) {
+      return { response: recaptchaErrorResponse };
     }
 
     const singleUseValidationResult = validateSingleUseResponseInput(survey, workspaceId, responseInputData);

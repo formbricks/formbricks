@@ -7,17 +7,22 @@ import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
 
 //Function to add extra params to videoUrls in order to reduce video controls
-const getVideoUrlWithParams = (videoUrl: string): string => {
-  const isYoutubeVideo = checkForYoutubeUrl(videoUrl);
-  const isVimeoUrl = checkForVimeoUrl(videoUrl);
-  const isLoomUrl = checkForLoomUrl(videoUrl);
-  if (isYoutubeVideo) return videoUrl.concat("?controls=0");
-  else if (isVimeoUrl)
-    return videoUrl.concat(
+const getVideoUrlWithParams = (videoUrl: string): string | undefined => {
+  // Only the three supported platforms may reach the iframe, and only as the normalized embed URL that
+  // convertToEmbedUrl builds from a hardcoded origin plus an extracted id. Returning `videoUrl`
+  // unchanged for anything else put an arbitrary attacker-chosen URL into `<iframe src>` — a
+  // `javascript:`/`data:` payload, or a phishing page framed inside a survey on the customer's site.
+  const embedUrl = convertToEmbedUrl(videoUrl);
+  if (!embedUrl) return undefined;
+
+  if (checkForYoutubeUrl(videoUrl)) return embedUrl.concat("?controls=0");
+  if (checkForVimeoUrl(videoUrl))
+    return embedUrl.concat(
       "?title=false&transcript=false&speed=false&quality_selector=false&progress_bar=false&pip=false&fullscreen=false&cc=false&chromecast=false"
     );
-  else if (isLoomUrl) return videoUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
-  return videoUrl;
+  if (checkForLoomUrl(videoUrl))
+    return embedUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
+  return undefined;
 };
 
 /** Validated media URL, or `undefined` when it must not reach a `src`/`href`. */
