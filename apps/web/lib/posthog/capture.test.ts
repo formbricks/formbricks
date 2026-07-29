@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { capturePostHogEvent, groupIdentifyPostHog, identifyPostHogPerson } from "./capture";
+import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog, identifyPostHogPerson } from "./capture";
 
 const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
@@ -204,5 +204,21 @@ describe("capturePostHogEvent with null client", () => {
     expect(mocks.groupIdentify).not.toHaveBeenCalled();
     expect(mocks.identify).not.toHaveBeenCalled();
     expect(mocks.loggerWarn).not.toHaveBeenCalled();
+  });
+});
+
+describe("getEmailDomain", () => {
+  test("extracts the domain part of an email", () => {
+    expect(getEmailDomain("user@example.com")).toBe("example.com");
+  });
+
+  test("lowercases the domain", () => {
+    expect(getEmailDomain("User@Example.COM")).toBe("example.com");
+  });
+
+  test("returns undefined when there is no domain part", () => {
+    expect(getEmailDomain("not-an-email")).toBeUndefined();
+    expect(getEmailDomain("trailing@")).toBeUndefined();
+    expect(getEmailDomain("")).toBeUndefined();
   });
 });
