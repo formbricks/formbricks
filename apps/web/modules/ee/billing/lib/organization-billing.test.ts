@@ -1561,6 +1561,14 @@ describe("organization-billing", () => {
     // Applied -4153, then reversed +4153 -> net zero, so no credit can strand on the balance.
     expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === -4153)).toBe(true);
     expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === 4153)).toBe(true);
+
+    // The reversal MUST carry its own idempotency key (distinct from the credit's) so a retried
+    // conversion can't post a second +credit against an already-reversed pair and net-debit the
+    // customer. The credit key is `trial-credit-...`; the reversal is `trial-credit-reversal-...`.
+    const reversalCall = calls.find(([, a]: [string, { amount: number }]) => a.amount === 4153);
+    expect(reversalCall?.[2]).toEqual(
+      expect.objectContaining({ idempotencyKey: expect.stringContaining("trial-credit-reversal-sub_trial") })
+    );
   });
 
   test("switchOrganizationToCloudPlan does NOT credit a card-on-file Pro-trial upgrade (applyTrialCredit omitted)", async () => {
@@ -3181,5 +3189,26 @@ describe("computeUnusedTrialCreditCents", () => {
     });
     expect(credit).toBeLessThanOrEqual(8900);
     expect(credit).toBe(8900); // capped at the billing-period days -> full charge
+  });
+
+  test("uses a 365-day basis for a yearly interval (does not over-credit against the yearly price)", () => {
+    // 14 unused trial days against an 89,000-cent yearly price: round(89000 * 14 / 365) = 3414.
+    // The default (monthly, /30) basis would wrongly credit round(89000 * 14 / 30) = 41,533 — ~12x.
+    const yearly = computeUnusedTrialCreditCents({
+      fullChargeCents: 89_000,
+      trialEndSeconds: day(14),
+      nowSeconds: NOW,
+      interval: "yearly",
+    });
+    expect(yearly).toBe(3414);
+
+    const monthly = computeUnusedTrialCreditCents({
+      fullChargeCents: 89_000,
+      trialEndSeconds: day(14),
+      nowSeconds: NOW,
+      interval: "monthly",
+    });
+    expect(monthly).toBe(41_533);
+    expect(yearly).toBeLessThan(monthly);
   });
 });

@@ -127,7 +127,8 @@ export const ConfirmationModal = ({
         </DialogHeader>
 
         <DialogBody>
-          <p className="whitespace-pre-line">{body}</p>
+          {/* div (not p) so a ReactNode body with block-level children is valid markup */}
+          <div className="whitespace-pre-line">{body}</div>
         </DialogBody>
 
         <DialogFooter>

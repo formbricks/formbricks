@@ -251,6 +251,11 @@ export const PricingTable = ({
   const searchParams = useSearchParams();
   const upgradeDriveRef = useRef(false);
   const trialCardDriveRef = useRef(false);
+  // Monotonic token guarding the lazy upgrade-charge preview: each openConfirmation bumps it and the
+  // async resolution is ignored unless it still matches, so a stale/previous plan's preview can never
+  // leak into the modal (which would mislabel the "Pay $X now" amount). closeUpgradeConfirmation bumps
+  // it too, so a dismissed modal's in-flight preview is discarded.
+  const previewRequestRef = useRef(0);
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
   // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
@@ -899,15 +904,25 @@ export const PricingTable = ({
     // flow nets off the unused-trial credit; the upgrade confirm previews the full price.
     setUpgradePreview(null);
     setIsLoadingUpgradePreview(true);
+    const requestId = ++previewRequestRef.current;
     getUpgradeChargePreviewAction({
       organizationId,
       targetPlan: plan,
       targetInterval: interval,
       applyTrialCredit: mode === "trial-continue",
     })
-      .then((response) => setUpgradePreview(response?.data ?? null))
-      .catch(() => setUpgradePreview(null))
-      .finally(() => setIsLoadingUpgradePreview(false));
+      .then((response) => {
+        if (previewRequestRef.current !== requestId) return;
+        setUpgradePreview(response?.data ?? null);
+      })
+      .catch(() => {
+        if (previewRequestRef.current !== requestId) return;
+        setUpgradePreview(null);
+      })
+      .finally(() => {
+        if (previewRequestRef.current !== requestId) return;
+        setIsLoadingUpgradePreview(false);
+      });
   };
 
   // Gate any charge-now action behind a confirmation modal; everything else runs as before.
@@ -947,6 +962,8 @@ export const PricingTable = ({
   };
 
   const closeUpgradeConfirmation = () => {
+    // Invalidate any in-flight preview so its resolution can't repopulate a just-closed modal.
+    previewRequestRef.current += 1;
     setUpgradeConfirmation(null);
     setUpgradePreview(null);
     setIsLoadingUpgradePreview(false);
@@ -1102,19 +1119,27 @@ export const PricingTable = ({
   };
 
   // Trial-continue modal body, rendered via <Trans> so key words can be bold. Whitespace-pre-line on
-  // the modal's <p> turns the \n\n into paragraph breaks between the two bullet options.
+  // the modal's <div> turns the \n\n into paragraph breaks between the two bullet options.
   const renderTrialContinueBody = () => {
     if (!upgradeConfirmation) return null;
     if (isLoadingUpgradePreview) return t("workspace.settings.billing.confirm_upgrade_calculating");
 
     const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
     const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
-    const fullPrice =
+    // Fallback gross price from the plan card; used only when no live preview is available. The plan
+    // card only carries the selected interval, so it can miss (interpolating "") — hence guarded.
+    const planCardFullPrice =
       planCards.find(
         (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
       )?.amount ?? "";
 
     if (upgradePreview) {
+      // Prefer the preview's gross (the exact basis the credit is netted off), so the "full price ...
+      // minus credit = pay now" breakdown always reconciles regardless of the plan-card lookup.
+      const fullPrice =
+        upgradePreview.grossAmountDue !== undefined
+          ? formatMoney(upgradePreview.currency, upgradePreview.grossAmountDue, locale)
+          : planCardFullPrice;
       return (
         <Trans
           i18nKey="workspace.settings.billing.confirm_trial_continue_body"
@@ -1132,7 +1157,7 @@ export const PricingTable = ({
     return (
       <Trans
         i18nKey="workspace.settings.billing.confirm_trial_continue_body_fallback"
-        values={{ plan, period, fullPrice }}
+        values={{ plan, period, fullPrice: planCardFullPrice }}
         components={{ b: <b /> }}
       />
     );
@@ -1498,7 +1523,7 @@ export const PricingTable = ({
         )}
       </div>
 
-      {upgradeConfirmation && upgradeConfirmation.mode === "trial-continue" && (
+      {upgradeConfirmation?.mode === "trial-continue" && (
         <ConfirmationModal
           open
           setOpen={(value) => {
@@ -1530,7 +1555,7 @@ export const PricingTable = ({
         />
       )}
 
-      {upgradeConfirmation && upgradeConfirmation.mode === "upgrade" && (
+      {upgradeConfirmation?.mode === "upgrade" && (
         <ConfirmationModal
           open
           setOpen={(value) => {
